@@ -737,7 +737,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
-  const renderFightCard = (fight: FightFragment, _idx: number): React.ReactNode => {
+  const renderFightCard = (fight: FightFragment, idx: number): React.ReactNode => {
     // Handle both boss fights and trash fights
     const isBossFight = fight.difficulty != null;
 
@@ -779,8 +779,39 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
     }
 
+    // Accent bar color — shifts by fight outcome and boss health tier
+    const accentBarColor = isWipe
+      ? bossHealthPercent >= 80
+        ? '#ef4444'
+        : bossHealthPercent >= 50
+          ? '#f97316'
+          : bossHealthPercent >= 20
+            ? '#eab308'
+            : bossHealthPercent >= 8
+              ? '#a3e635'
+              : '#4ade80'
+      : isFalsePositive
+        ? '#f59e0b'
+        : darkMode
+          ? '#38bdf8'
+          : '#06b6d4';
+
+    const accentGlow = accentBarColor + '66';
+
+    const statusColor = isWipe
+      ? darkMode
+        ? '#ff9800'
+        : '#dc2626'
+      : isFalsePositive
+        ? darkMode
+          ? '#f59e0b'
+          : '#d97706'
+        : darkMode
+          ? '#4ade80'
+          : '#059669';
+
     return (
-      <ListItem key={fight.id} sx={{ p: 0, overflow: 'visible' }}>
+      <ListItem key={fight.id} sx={{ p: 0 }}>
         <ListItemButton
           data-testid={`fight-button-${fight.id}`}
           selected={fightId === String(fight.id)}
@@ -789,23 +820,20 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             width: '100%',
             height: 64,
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
+            alignItems: 'stretch',
             border: 1,
             borderColor: 'divider',
             borderRadius: 1,
-            py: { xs: 0.25, sm: 0.5 },
-            px: { xs: 0.5, sm: 1 },
+            p: 0,
             position: 'relative',
             backgroundColor: 'transparent',
-            overflow: 'visible',
+            overflow: 'hidden',
             transition:
-              'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
+              'background-color 120ms ease, transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease',
             '&:hover': {
               backgroundColor: getThemeColors.hoverBg,
               borderColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(100, 116, 139, 0.6)',
+              boxShadow: `0 0 12px ${accentGlow}`,
             },
             '&:active': {
               transform: 'translateY(0.5px)',
@@ -850,68 +878,100 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               zIndex: 0,
             }}
           />
-          {/* Wipe badge */}
+          {/* Left accent bar */}
           <Box
             sx={{
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -120%)',
-              px: 0.6,
-              py: 0.15,
-              fontSize: '0.65rem',
-              lineHeight: 1,
-              textAlign: 'center',
-              borderRadius: 10,
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              border: isWipe ? getThemeColors.badgeBorder : getThemeColors.badgeBorderKill,
-              boxShadow: isWipe ? getThemeColors.badgeShadow : getThemeColors.badgeShadowKill,
+              top: 4,
+              bottom: 4,
+              left: 0,
+              width: 3,
+              borderRadius: '0 2px 2px 0',
+              background: accentBarColor,
+              boxShadow: `0 0 8px ${accentGlow}`,
               zIndex: 2,
             }}
+          />
+          {/* Interior content */}
+          <Box
+            sx={{
+              position: 'relative',
+              zIndex: 2,
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              pl: { xs: 1.5, sm: 2 },
+              pr: { xs: 0.75, sm: 1 },
+              py: 0.5,
+            }}
           >
-            <Typography
+            {/* Row 1: Pull # + Status */}
+            <Box
               sx={{
-                color: isWipe
-                  ? darkMode
-                    ? '#ff9800'
-                    : '#dc2626'
-                  : darkMode
-                    ? '#4ade80'
-                    : '#059669',
-                fontSize: '0.75rem',
-                lineHeight: 1,
-                fontWeight: 600,
-                textShadow: darkMode
-                  ? '0 1px 2px rgba(0,0,0,0.5)'
-                  : '0 1px 1px rgba(59, 130, 246, 0.2)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 0.25,
               }}
             >
-              {isWipe ? bossHealthPercent + '%' : isFalsePositive ? '⚠' : '✓'}
+              <Typography
+                sx={{
+                  fontSize: '0.6rem',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  color: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(100,116,139,0.5)',
+                  lineHeight: 1,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                #{idx + 1}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  color: statusColor,
+                  lineHeight: 1,
+                  textShadow: darkMode ? `0 0 8px ${statusColor}88` : 'none',
+                }}
+              >
+                {isWipe ? bossHealthPercent + '%' : isFalsePositive ? '⚠' : '✓'}
+              </Typography>
+            </Box>
+            {/* Row 2: Hero duration */}
+            <Typography
+              sx={{
+                fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                fontWeight: 700,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                textAlign: 'center',
+                color: darkMode ? '#e2e8f0' : '#1e293b',
+                textShadow: darkMode ? `0 0 12px ${accentGlow}` : 'none',
+                lineHeight: 1.2,
+                letterSpacing: '0.04em',
+              }}
+            >
+              {fight.startTime && fight.endTime
+                ? formatDuration(fight.startTime, fight.endTime)
+                : '--'}
+            </Typography>
+            {/* Row 3: Timestamp */}
+            <Typography
+              sx={{
+                fontSize: '0.5rem',
+                color: darkMode ? 'rgba(255,255,255,0.35)' : 'rgba(100,116,139,0.5)',
+                lineHeight: 1,
+                textAlign: 'center',
+                mt: 0.25,
+              }}
+            >
+              {fight.startTime && reportStartTime
+                ? formatTimestamp(fight.startTime, reportStartTime)
+                : ''}
             </Typography>
           </Box>
-          <Typography
-            variant="caption"
-            sx={{
-              color: darkMode ? '#d9e9ff' : 'text.secondary',
-              fontSize: { xs: '0.55rem', sm: '0.66rem' },
-              lineHeight: 1.1,
-              whiteSpace: 'nowrap',
-              position: 'absolute',
-              bottom: { xs: 4, sm: 6 },
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 2,
-            }}
-          >
-            {fight.startTime && fight.endTime && reportStartTime && (
-              <>
-                {formatTimestamp(fight.startTime, reportStartTime)}
-                {'\u00A0'}•{'\u00A0'}
-                {formatDuration(fight.startTime, fight.endTime)}
-              </>
-            )}
-          </Typography>
         </ListItemButton>
       </ListItem>
     );
