@@ -945,6 +945,28 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 Added the bot? Click refresh to see your new server.
               </Typography>
             )}
+
+            {/* Disconnect link */}
+            <Typography
+              variant="caption"
+              onClick={() => {
+                clearDiscordAuth();
+              }}
+              sx={{
+                display: 'block',
+                textAlign: 'center',
+                mt: 2,
+                color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                cursor: 'pointer',
+                fontSize: '0.7rem',
+                '&:hover': {
+                  color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              Disconnect Discord
+            </Typography>
           </>
         )}
 

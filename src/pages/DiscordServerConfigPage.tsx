@@ -843,6 +843,20 @@ export const DiscordServerConfigPage: React.FC = () => {
                 >
                   Add Bot to Another Server
                 </Button>
+                <Button
+                  size="small"
+                  onClick={() => clearDiscordAuth()}
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    fontSize: '0.72rem',
+                    '&:hover': {
+                      color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+                      background: 'transparent',
+                    },
+                  }}
+                >
+                  Disconnect
+                </Button>
               </Box>
             </>
           )}
