@@ -1877,8 +1877,8 @@ export const RosterViewPage: React.FC = () => {
                       color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
                     }}
                   >
-                    {addons.length} addon{addons.length !== 1 ? 's' : ''} &middot;{' '}
-                    Install all at once
+                    {addons.length} addon{addons.length !== 1 ? 's' : ''}
+                    {packId && <> &middot; Install all at once</>}
                   </Typography>
                   {packId ? (
                     <Button
@@ -1891,13 +1891,22 @@ export const RosterViewPage: React.FC = () => {
                         // Fallback: if Kalpa is not installed, the browser silently fails.
                         // After a delay, copy the deep link to clipboard as a fallback.
                         setTimeout(() => {
-                          void navigator.clipboard.writeText(deepLink).then(() => {
-                            setSnackbar({
-                              open: true,
-                              message: 'Deep link copied — install Kalpa to use it',
-                              severity: 'info',
-                            });
-                          });
+                          void navigator.clipboard.writeText(deepLink).then(
+                            () => {
+                              setSnackbar({
+                                open: true,
+                                message: 'Deep link copied — install Kalpa to use it',
+                                severity: 'info',
+                              });
+                            },
+                            () => {
+                              setSnackbar({
+                                open: true,
+                                message: 'Install Kalpa addon manager to use this link',
+                                severity: 'info',
+                              });
+                            },
+                          );
                         }, 1500);
                       }}
                       sx={{

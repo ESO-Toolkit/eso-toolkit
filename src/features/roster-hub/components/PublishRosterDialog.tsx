@@ -1229,7 +1229,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       <li
                         {...props}
                         key={o.id}
-                        style={{ opacity: alreadyAdded ? 0.4 : 1, pointerEvents: alreadyAdded ? 'none' : undefined }}
+                        style={{ ...props.style, opacity: alreadyAdded ? 0.4 : 1, pointerEvents: alreadyAdded ? 'none' : undefined }}
                       >
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
