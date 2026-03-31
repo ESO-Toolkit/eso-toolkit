@@ -382,9 +382,7 @@ export const ReportFightHeader: React.FC = () => {
               color: isDarkMode ? 'rgba(34, 197, 94, 0.9)' : 'rgba(22, 163, 74, 0.9)',
               '&:hover': {
                 borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.5)' : 'rgba(34, 197, 94, 0.4)',
-                backgroundColor: isDarkMode
-                  ? 'rgba(34, 197, 94, 0.08)'
-                  : 'rgba(34, 197, 94, 0.08)',
+                backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.08)',
               },
             }}
           >
@@ -434,14 +432,10 @@ export const ReportFightHeader: React.FC = () => {
               }
               sx={{
                 ...pillBase,
-                borderColor: isDarkMode
-                  ? 'rgba(168, 85, 247, 0.3)'
-                  : 'rgba(147, 51, 234, 0.25)',
+                borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.3)' : 'rgba(147, 51, 234, 0.25)',
                 color: isDarkMode ? 'rgba(168, 85, 247, 0.9)' : 'rgba(126, 34, 206, 0.9)',
                 '&:hover': {
-                  borderColor: isDarkMode
-                    ? 'rgba(168, 85, 247, 0.5)'
-                    : 'rgba(147, 51, 234, 0.4)',
+                  borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.5)' : 'rgba(147, 51, 234, 0.4)',
                   backgroundColor: isDarkMode
                     ? 'rgba(168, 85, 247, 0.08)'
                     : 'rgba(147, 51, 234, 0.08)',
