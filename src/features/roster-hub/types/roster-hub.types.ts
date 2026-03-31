@@ -14,6 +14,7 @@ export interface RecommendedAddonEntry {
 /** Addon recommendations attached to a published roster. */
 export interface RecommendedAddons {
   packId?: string;
+  packTitle?: string;
   addons: RecommendedAddonEntry[];
 }
 

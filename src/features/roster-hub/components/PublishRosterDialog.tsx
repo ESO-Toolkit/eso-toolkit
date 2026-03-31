@@ -168,19 +168,23 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     setExtraTags((prev) => prev.filter((t) => t !== tag));
   };
 
+  const loadPacks = React.useCallback(() => {
+    setPacksLoading(true);
+    packsApi
+      .list()
+      .then((res) => setPacks(res.items))
+      .catch(() => {
+        /* silently ignore — packs are optional */
+      })
+      .finally(() => setPacksLoading(false));
+  }, []);
+
   // Fetch pack list when addon section is first opened
   React.useEffect(() => {
     if (addonSectionOpen && packs.length === 0 && !packsLoading) {
-      setPacksLoading(true);
-      packsApi
-        .list()
-        .then((res) => setPacks(res.items))
-        .catch(() => {
-          /* silently ignore — packs are optional */
-        })
-        .finally(() => setPacksLoading(false));
+      loadPacks();
     }
-  }, [addonSectionOpen, packs.length, packsLoading]);
+  }, [addonSectionOpen, packs.length, packsLoading, loadPacks]);
 
   // Fetch full pack when a pack is selected
   React.useEffect(() => {
@@ -249,6 +253,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   React.useEffect(() => {
     if (addonSearchQuery.trim().length < 2) {
       setAddonSearchResults([]);
+      setAddonSearchLoading(false);
       return;
     }
     setAddonSearchLoading(true);
@@ -313,7 +318,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setNewPackAddons([]);
       setAddonTab(0);
       // Refresh the pack list so the new pack appears
-      setPacks([]);
+      loadPacks();
     } catch (err) {
       setNewPackError(err instanceof Error ? err.message : 'Failed to create pack');
     } finally {
@@ -327,6 +332,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     if (active.length === 0) return null;
     return {
       packId: selectedPackId ?? undefined,
+      packTitle: selectedPack?.name,
       addons: active,
     };
   };
@@ -962,7 +968,11 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           <Collapse in={addonSectionOpen}>
             <Tabs
               value={addonTab}
-              onChange={(_e: React.SyntheticEvent, v: number) => setAddonTab(v as 0 | 1)}
+              onChange={(_e: React.SyntheticEvent, v: number) => {
+                setAddonTab(v as 0 | 1);
+                setCustomAddonName('');
+                setCustomAddonId('');
+              }}
               variant="fullWidth"
               sx={{
                 minHeight: 36,
@@ -1219,8 +1229,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       <li
                         {...props}
                         key={o.id}
-                        onClick={alreadyAdded ? undefined : () => handleAddSearchedAddon(o)}
-                        style={{ opacity: alreadyAdded ? 0.4 : 1 }}
+                        style={{ opacity: alreadyAdded ? 0.4 : 1, pointerEvents: alreadyAdded ? 'none' : undefined }}
                       >
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
