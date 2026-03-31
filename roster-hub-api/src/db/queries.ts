@@ -1065,9 +1065,7 @@ export async function listPacks(db: D1Database, opts: ListPacksOptions): Promise
     bindings.push(opts.packType);
   }
   if (opts.tag) {
-    conditions.push(
-      'EXISTS (SELECT 1 FROM pack_tags pt WHERE pt.pack_id = p.id AND pt.tag = ?)',
-    );
+    conditions.push('EXISTS (SELECT 1 FROM pack_tags pt WHERE pt.pack_id = p.id AND pt.tag = ?)');
     bindings.push(opts.tag);
   }
 
@@ -1093,9 +1091,7 @@ export async function listPacks(db: D1Database, opts: ListPacksOptions): Promise
     const ids = rows.results.map((r) => r.id);
     const placeholders = ids.map(() => '?').join(',');
     const voteRows = await db
-      .prepare(
-        `SELECT pack_id FROM pack_votes WHERE user_id = ? AND pack_id IN (${placeholders})`,
-      )
+      .prepare(`SELECT pack_id FROM pack_votes WHERE user_id = ? AND pack_id IN (${placeholders})`)
       .bind(opts.userId, ...ids)
       .all<{ pack_id: string }>();
     votedSet = new Set(voteRows.results.map((v) => v.pack_id));
@@ -1243,35 +1239,36 @@ export async function togglePackVote(
   packId: string,
   userId: string,
 ): Promise<{ voted: boolean; voteCount: number }> {
-  const existing = await db
-    .prepare('SELECT 1 FROM pack_votes WHERE pack_id = ? AND user_id = ?')
+  // INSERT OR IGNORE is atomic — concurrent requests cannot both insert the same
+  // UNIQUE (pack_id, user_id) pair, eliminating the read-then-write race.
+  const insertResult = await db
+    .prepare(
+      "INSERT OR IGNORE INTO pack_votes (pack_id, user_id, created_at) VALUES (?, ?, datetime('now'))",
+    )
     .bind(packId, userId)
-    .first();
+    .run();
 
-  if (existing) {
+  const voted = (insertResult.meta.changes ?? 0) > 0;
+
+  if (!voted) {
+    // Row already existed → this is an un-vote
     await db
       .prepare('DELETE FROM pack_votes WHERE pack_id = ? AND user_id = ?')
       .bind(packId, userId)
       .run();
-  } else {
-    await db
-      .prepare("INSERT INTO pack_votes (pack_id, user_id, created_at) VALUES (?, ?, datetime('now'))")
-      .bind(packId, userId)
-      .run();
   }
 
+  // Derive the true count from the votes table instead of incrementing/decrementing,
+  // so any prior drift is corrected on the next toggle.
   const countRow = await db
     .prepare('SELECT COUNT(*) AS cnt FROM pack_votes WHERE pack_id = ?')
     .bind(packId)
     .first<{ cnt: number }>();
   const voteCount = countRow?.cnt ?? 0;
 
-  await db
-    .prepare('UPDATE packs SET vote_count = ? WHERE id = ?')
-    .bind(voteCount, packId)
-    .run();
+  await db.prepare('UPDATE packs SET vote_count = ? WHERE id = ?').bind(voteCount, packId).run();
 
-  return { voted: !existing, voteCount };
+  return { voted, voteCount };
 }
 
 export async function checkPackCreateRateLimit(db: D1Database, userId: string): Promise<boolean> {

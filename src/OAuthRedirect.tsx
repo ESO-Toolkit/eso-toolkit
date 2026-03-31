@@ -50,6 +50,7 @@ export const OAuthRedirect: React.FC = () => {
       return;
     }
 
+    const controller = new AbortController();
     const fetchToken = async (): Promise<void> => {
       try {
         const redirectUri = getRedirectUri();
@@ -64,9 +65,13 @@ export const OAuthRedirect: React.FC = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: body.toString(),
+          signal: controller.signal,
         });
         if (!response.ok) throw new Error('Token exchange failed');
-        const data = await response.json();
+        const data = (await response.json()) as Record<string, unknown>;
+        if (!data.access_token || typeof data.access_token !== 'string') {
+          throw new Error('Invalid token response — missing access_token');
+        }
 
         // Check if this is a desktop app auth flow
         const appPort = sessionStorage.getItem(APP_AUTH_PORT_KEY);
@@ -112,9 +117,9 @@ export const OAuthRedirect: React.FC = () => {
         }
 
         // Normal web auth flow
-        localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
+        localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token as string);
         // Store refresh token if provided
-        if (data.refresh_token) {
+        if (data.refresh_token && typeof data.refresh_token === 'string') {
           localStorage.setItem('refresh_token', data.refresh_token);
         }
         rebindAccessToken();
@@ -124,6 +129,7 @@ export const OAuthRedirect: React.FC = () => {
         clearIntendedDestination();
         navigate(destination);
       } catch (err) {
+        if (controller.signal.aborted) return;
         if (err instanceof Error) {
           setError(err.message);
         } else {
@@ -131,7 +137,8 @@ export const OAuthRedirect: React.FC = () => {
         }
       }
     };
-    fetchToken();
+    void fetchToken();
+    return () => controller.abort();
   }, [dispatch, rebindAccessToken, params, navigate]);
 
   if (kalpaSuccess) {

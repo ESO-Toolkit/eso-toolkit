@@ -29,10 +29,15 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
     search: '',
   });
   const fetchKeyRef = React.useRef(0);
+  const abortRef = React.useRef<AbortController | null>(null);
 
   const fetchPage = React.useCallback(
     async (currentFilters: PackHubFilters, append: boolean) => {
       const fetchKey = ++fetchKeyRef.current;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       setLoading(true);
       setError(null);
 
@@ -43,6 +48,7 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
           sort: currentFilters.sort,
           page: currentFilters.page,
           token,
+          signal: controller.signal,
         });
 
         if (fetchKey !== fetchKeyRef.current) return; // stale
@@ -50,6 +56,7 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
         setPacks((prev) => (append ? [...prev, ...res.packs] : res.packs));
         setHasMore(res.packs.length === 20);
       } catch (err) {
+        if (controller.signal.aborted) return;
         if (fetchKey !== fetchKeyRef.current) return;
         setError(err instanceof Error ? err.message : 'Failed to load packs');
       } finally {
@@ -64,6 +71,7 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
     const resetFilters = { ...filters, page: 1 };
     setFilters(resetFilters);
     void fetchPage(resetFilters, false);
+    return () => abortRef.current?.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.packType, filters.tag, filters.sort, fetchPage]);
 

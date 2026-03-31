@@ -18,7 +18,12 @@ const BASE_URL =
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
-async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  token?: string,
+  externalSignal?: AbortSignal,
+): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> | undefined),
@@ -29,6 +34,9 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  // Forward external abort to our internal controller
+  const onExternalAbort = (): void => controller.abort();
+  externalSignal?.addEventListener('abort', onExternalAbort);
 
   let res: Response;
   try {
@@ -40,12 +48,15 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
     });
   } catch (err) {
     clearTimeout(timer);
+    externalSignal?.removeEventListener('abort', onExternalAbort);
+    if (externalSignal?.aborted) throw new DOMException('Aborted', 'AbortError');
     if (err instanceof Error && err.name === 'AbortError') {
       throw new Error('Request timed out. Check your connection and try again.');
     }
     throw err;
   }
   clearTimeout(timer);
+  externalSignal?.removeEventListener('abort', onExternalAbort);
 
   if (!res.ok) {
     const text = await res.text();
@@ -107,6 +118,7 @@ export const packHubApi = {
     sort?: SortOrder;
     page?: number;
     token?: string;
+    signal?: AbortSignal;
   }): Promise<ListPacksResponse> {
     const params = new URLSearchParams();
     if (opts.packType) params.set('type', opts.packType);
@@ -114,7 +126,7 @@ export const packHubApi = {
     if (opts.sort) params.set('sort', opts.sort);
     if (opts.page) params.set('page', String(opts.page));
     const qs = params.toString() ? `?${params.toString()}` : '';
-    const data = await request<ListPacksResponse>(`/packs${qs}`, {}, opts.token);
+    const data = await request<ListPacksResponse>(`/packs${qs}`, {}, opts.token, opts.signal);
     return { ...data, packs: data.packs.map(hydratePack) };
   },
 
