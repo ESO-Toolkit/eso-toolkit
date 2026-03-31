@@ -316,6 +316,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setNewPackTitle('');
       setNewPackDescription('');
       setNewPackAddons([]);
+      setCustomAddonName('');
+      setCustomAddonId('');
       setAddonTab(0);
       // Refresh the pack list so the new pack appears
       loadPacks();

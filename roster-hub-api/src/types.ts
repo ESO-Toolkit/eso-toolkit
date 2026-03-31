@@ -14,6 +14,8 @@ export interface Env {
 }
 
 // ─── Addon recommendation types (shared between rosters & packs) ─────────────
+// NOTE: Mirrored in src/features/roster-hub/types/roster-hub.types.ts (frontend).
+// Keep both definitions in sync until a shared types package is introduced.
 
 export interface RecommendedAddonEntry {
   esouiId: number;

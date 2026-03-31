@@ -3,6 +3,9 @@
  * Mirrors the D1 data model from roster-hub-api.
  */
 
+// NOTE: Mirrored in roster-hub-api/src/types.ts (API worker).
+// Keep both definitions in sync until a shared types package is introduced.
+
 /** A single addon recommendation entry. */
 export interface RecommendedAddonEntry {
   esouiId: number;
