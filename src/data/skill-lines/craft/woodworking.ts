@@ -47,7 +47,15 @@ export const woodworking: SkillLineData = {
       isUltimate: false,
       maxRank: 3,
     },
-    { id: AbilityId.CARPENTRY, alternateIds: [48182, 48183, 58783], icon: 'crafting_forester_plug_component_002', name: 'Carpentry', isPassive: true, isUltimate: false, maxRank: 3 },
+    {
+      id: AbilityId.CARPENTRY,
+      alternateIds: [48182, 48183, 58783],
+      icon: 'crafting_forester_plug_component_002',
+      name: 'Carpentry',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 3,
+    },
     {
       id: AbilityId.RESIN_EXPERTISE,
       icon: 'ability_tradecraft_001',

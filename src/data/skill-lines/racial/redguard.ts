@@ -11,7 +11,14 @@ export const redguard: SkillLineData = {
   class: 'racial',
   category: 'racial',
   skills: [
-    { id: AbilityId.WAYFARER, icon: 'ability_templar_027', name: 'Wayfarer', isPassive: true, isUltimate: false, maxRank: 2 },
+    {
+      id: AbilityId.WAYFARER,
+      icon: 'ability_templar_027',
+      name: 'Wayfarer',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
     {
       id: AbilityId.MARTIAL_TRAINING,
       icon: 'ability_templar_002',

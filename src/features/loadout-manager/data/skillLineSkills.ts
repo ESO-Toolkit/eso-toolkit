@@ -533,4 +533,3 @@ export function getSkillLineIndex(): SkillLineMeta[] {
     className: l.class,
   }));
 }
-

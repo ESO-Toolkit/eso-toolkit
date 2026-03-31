@@ -192,8 +192,7 @@ export const aedricSpear: SkillLineData = {
     {
       id: ClassSkillId.TEMPLAR_BURNING_LIGHT,
       alternateIds: [
-        31718, 31720, 44730, 44731, 80153, 80170, 144021, 144022, 144023, 144028,
-        144029, 144030,
+        31718, 31720, 44730, 44731, 80153, 80170, 144021, 144022, 144023, 144028, 144029, 144030,
       ],
       name: 'Burning Light',
       type: 'passive',

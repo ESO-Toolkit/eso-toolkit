@@ -115,16 +115,8 @@ const InlineChip: React.FC<InlineChipProps> = ({
         fontFamily: 'Space Grotesk, Inter, system-ui',
         lineHeight: 1,
         whiteSpace: 'nowrap',
-        color: isSet
-          ? activeColor
-          : isDark
-            ? 'rgba(255,255,255,0.35)'
-            : 'rgba(0,0,0,0.35)',
-        background: isSet
-          ? isDark
-            ? `${activeColor}14`
-            : `${activeColor}0C`
-          : 'transparent',
+        color: isSet ? activeColor : isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+        background: isSet ? (isDark ? `${activeColor}14` : `${activeColor}0C`) : 'transparent',
         border: `1px solid ${
           isSet
             ? isDark
@@ -136,12 +128,8 @@ const InlineChip: React.FC<InlineChipProps> = ({
         }`,
         transition: 'all 150ms ease',
         '&:hover': {
-          background: isDark
-            ? `${activeColor}20`
-            : `${activeColor}14`,
-          borderColor: isDark
-            ? `${activeColor}50`
-            : `${activeColor}40`,
+          background: isDark ? `${activeColor}20` : `${activeColor}14`,
+          borderColor: isDark ? `${activeColor}50` : `${activeColor}40`,
         },
       }}
     >
@@ -375,9 +363,7 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
             background: isDark
               ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
               : 'rgba(var(--be-accent-rgb, 15, 23, 42), 0.04)',
-            boxShadow: isDark
-              ? '0 2px 12px rgba(0,0,0,0.25)'
-              : '0 2px 8px rgba(0,0,0,0.06)',
+            boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.25)' : '0 2px 8px rgba(0,0,0,0.06)',
           },
           '&:hover .gear-row-remove': { opacity: 1 },
           '@media (hover: none)': {

@@ -11,7 +11,14 @@ export const khajiit: SkillLineData = {
   class: 'racial',
   category: 'racial',
   skills: [
-    { id: AbilityId.CUTPURSE, icon: 'ability_armor_010', name: 'Cutpurse', isPassive: true, isUltimate: false, maxRank: 2 },
+    {
+      id: AbilityId.CUTPURSE,
+      icon: 'ability_armor_010',
+      name: 'Cutpurse',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
     {
       id: AbilityId.ROBUSTNESS,
       icon: 'ability_sorcerer_018',

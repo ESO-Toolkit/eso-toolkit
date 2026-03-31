@@ -11,8 +11,7 @@ export const darkBrotherhood: SkillLineData = {
     {
       id: AbilityId.BLADE_OF_WOE,
       alternateIds: [
-        76325, 77101, 77374, 78219, 80477, 80603, 146297, 146299, 146300, 146301,
-        169629,
+        76325, 77101, 77374, 78219, 80477, 80603, 146297, 146299, 146300, 146301, 169629,
       ],
       name: 'Blade of Woe',
       description:

@@ -311,10 +311,7 @@ export const buildEditorSlice = createSlice({
       state.isDirty = true;
     },
 
-    setGearWeight(
-      state,
-      action: PayloadAction<{ slot: number; weight: ArmorWeight | undefined }>,
-    ) {
+    setGearWeight(state, action: PayloadAction<{ slot: number; weight: ArmorWeight | undefined }>) {
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
       const piece = setup.gear[action.payload.slot];
@@ -325,10 +322,7 @@ export const buildEditorSlice = createSlice({
       }
     },
 
-    setGearTrait(
-      state,
-      action: PayloadAction<{ slot: number; trait: string | undefined }>,
-    ) {
+    setGearTrait(state, action: PayloadAction<{ slot: number; trait: string | undefined }>) {
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
       const piece = setup.gear[action.payload.slot];
@@ -339,10 +333,7 @@ export const buildEditorSlice = createSlice({
       }
     },
 
-    setGearEnchant(
-      state,
-      action: PayloadAction<{ slot: number; enchant: string | undefined }>,
-    ) {
+    setGearEnchant(state, action: PayloadAction<{ slot: number; enchant: string | undefined }>) {
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
       const piece = setup.gear[action.payload.slot];

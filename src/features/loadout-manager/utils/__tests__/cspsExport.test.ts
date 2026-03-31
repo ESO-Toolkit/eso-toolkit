@@ -2,13 +2,18 @@
  * @jest-environment jsdom
  */
 
-import {
-  convertBuildToCSPS,
-  exportBuildToCSPSLua,
-} from '../../../build-editor/utils/cspsExport';
+import { convertBuildToCSPS, exportBuildToCSPSLua } from '../../../build-editor/utils/cspsExport';
 import type { Build, BuildSetup } from '../../../build-editor/types/build.types';
 import { parseLuaAssignments } from '../wizardsWardrobeSavedVariables';
-import { detectCSPSData, extractCSPSCharacters, decompressComp1, decompressComp2, parseGearComp, parseHotbar, parseAttributes } from '../cspsConverter';
+import {
+  detectCSPSData,
+  extractCSPSCharacters,
+  decompressComp1,
+  decompressComp2,
+  parseGearComp,
+  parseHotbar,
+  parseAttributes,
+} from '../cspsConverter';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -134,12 +139,14 @@ describe('cspsExport', () => {
 
     it('exports gear to comp2', () => {
       const build = makeBuild({
-        setups: [makeSetup({
-          gear: {
-            0: { id: 100, trait: '5', enchant: '200' },
-            4: { id: 50, trait: '3', enchant: '100' },
-          },
-        })],
+        setups: [
+          makeSetup({
+            gear: {
+              0: { id: 100, trait: '5', enchant: '200' },
+              4: { id: 50, trait: '3', enchant: '100' },
+            },
+          }),
+        ],
       });
       const csps = convertBuildToCSPS(build);
       const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
@@ -165,9 +172,11 @@ describe('cspsExport', () => {
 
     it('exports scribed abilities with c prefix in hotbar', () => {
       const build = makeBuild({
-        setups: [makeSetup({
-          scribedAbilityIds: [100, 600],
-        })],
+        setups: [
+          makeSetup({
+            scribedAbilityIds: [100, 600],
+          }),
+        ],
       });
       const csps = convertBuildToCSPS(build);
       const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
@@ -182,12 +191,14 @@ describe('cspsExport', () => {
 
     it('exports quickslots to comp1', () => {
       const build = makeBuild({
-        setups: [makeSetup({
-          quickslots: [
-            { type: 5, id: 1234 },
-            { type: 5, id: 5678 },
-          ],
-        })],
+        setups: [
+          makeSetup({
+            quickslots: [
+              { type: 5, id: 1234 },
+              { type: 5, id: 5678 },
+            ],
+          }),
+        ],
       });
       const csps = convertBuildToCSPS(build);
       const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
@@ -197,13 +208,15 @@ describe('cspsExport', () => {
 
     it('exports skilled abilities to werte.prog', () => {
       const build = makeBuild({
-        setups: [makeSetup({
-          skilledAbilities: [
-            { abilityId: 100, morph: 1 },
-            { abilityId: 200, morph: 2 },
-            { abilityId: 300, morph: 0 },
-          ],
-        })],
+        setups: [
+          makeSetup({
+            skilledAbilities: [
+              { abilityId: 100, morph: 1 },
+              { abilityId: 200, morph: 2 },
+              { abilityId: 300, morph: 0 },
+            ],
+          }),
+        ],
       });
       const csps = convertBuildToCSPS(build);
       const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];

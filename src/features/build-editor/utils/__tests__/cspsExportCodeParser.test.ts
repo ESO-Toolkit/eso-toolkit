@@ -166,10 +166,7 @@ describe('parseCSPSExportCode', () => {
     expect(build.setups[0].curse).toBe('none');
 
     // Test with vampire curse
-    const vampCode = EXAMPLE_EXPORT_CODE.replace(
-      /;0;13975;/,
-      ';3;13975;',
-    );
+    const vampCode = EXAMPLE_EXPORT_CODE.replace(/;0;13975;/, ';3;13975;');
     const { build: vampBuild } = parseCSPSExportCode(vampCode);
     expect(vampBuild.setups[0].curse).toBe('vampire-3');
   });

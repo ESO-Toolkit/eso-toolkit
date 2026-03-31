@@ -45,7 +45,12 @@ const CLASS_LABELS: Record<string, string> = {
   arcanist: 'Arcanist',
 };
 
-export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({ build, isOwner, onClose, onEdit }) => {
+export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
+  build,
+  isOwner,
+  onClose,
+  onEdit,
+}) => {
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));

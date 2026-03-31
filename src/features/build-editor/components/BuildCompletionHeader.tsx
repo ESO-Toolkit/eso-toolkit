@@ -345,10 +345,10 @@ export const BuildCompletionHeader: React.FC = () => {
         setCspsCharacters([]);
         setImportParsed(false);
         setImportError(null);
-        enqueueSnackbar(
-          `Imported build from CSPS export code (${result.directBuild.esoClass}).`,
-          { variant: 'success', autoHideDuration: 6000 },
-        );
+        enqueueSnackbar(`Imported build from CSPS export code (${result.directBuild.esoClass}).`, {
+          variant: 'success',
+          autoHideDuration: 6000,
+        });
         return;
       }
 
@@ -1177,8 +1177,8 @@ export const BuildCompletionHeader: React.FC = () => {
               fontFamily: 'Space Grotesk, Inter, system-ui',
             }}
           >
-            Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or SavedVariables file
-            content to import skills, attributes, champion points, and gear into your build.
+            Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or SavedVariables
+            file content to import skills, attributes, champion points, and gear into your build.
           </Typography>
           <Stack spacing={1.5}>
             <TextField
@@ -1204,7 +1204,12 @@ export const BuildCompletionHeader: React.FC = () => {
             {importError && (
               <Alert
                 severity="error"
-                sx={{ py: 0.25, fontSize: 11, borderRadius: 2, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                sx={{
+                  py: 0.25,
+                  fontSize: 11,
+                  borderRadius: 2,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                }}
               >
                 {importError}
               </Alert>
@@ -1214,7 +1219,14 @@ export const BuildCompletionHeader: React.FC = () => {
               <Box>
                 <Typography
                   variant="caption"
-                  sx={{ display: 'block', mb: 1, fontSize: 11, fontWeight: 600, fontFamily: 'Space Grotesk, Inter, system-ui', color: 'text.secondary' }}
+                  sx={{
+                    display: 'block',
+                    mb: 1,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    color: 'text.secondary',
+                  }}
                 >
                   {cspsCharacters.length === 1
                     ? 'Found 1 character:'
@@ -1235,13 +1247,18 @@ export const BuildCompletionHeader: React.FC = () => {
                         borderRadius: 2,
                         ...(idx === selectedCharIndex
                           ? {
-                              background: 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                              background:
+                                'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
                               color: isDark ? '#fff' : '#0b1220',
                             }
-                          : { borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)' }),
+                          : {
+                              borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+                            }),
                       }}
                     >
-                      <Box component="span" sx={{ fontWeight: 700, mr: 1 }}>{char.name}</Box>
+                      <Box component="span" sx={{ fontWeight: 700, mr: 1 }}>
+                        {char.name}
+                      </Box>
                       <Box component="span" sx={{ opacity: 0.7, fontSize: 10 }}>
                         {char.accountName}
                         {char.profileCount > 0 && ` · ${char.profileCount} profiles`}
@@ -1264,8 +1281,11 @@ export const BuildCompletionHeader: React.FC = () => {
                   onClick={handleImportParse}
                   sx={{
                     ...pillBase,
-                    background: 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
-                    '&.Mui-disabled': { background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+                    background:
+                      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                    '&.Mui-disabled': {
+                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                    },
                   }}
                 >
                   Parse
@@ -1278,8 +1298,11 @@ export const BuildCompletionHeader: React.FC = () => {
                   onClick={handleImportLoad}
                   sx={{
                     ...pillBase,
-                    background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.75))',
-                    '&.Mui-disabled': { background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+                    background:
+                      'linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.75))',
+                    '&.Mui-disabled': {
+                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                    },
                   }}
                 >
                   Load Build
@@ -1428,7 +1451,12 @@ export const BuildCompletionHeader: React.FC = () => {
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ display: 'block', mb: 2, fontSize: 12, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+            sx={{
+              display: 'block',
+              mb: 2,
+              fontSize: 12,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
           >
             Your build as a <strong>Caro&apos;s Skill Point Saver</strong> SavedVariables file.
           </Typography>
@@ -1441,10 +1469,18 @@ export const BuildCompletionHeader: React.FC = () => {
               minRows={6}
               maxRows={12}
               slotProps={{ input: { readOnly: true } }}
-              sx={{ ...glassInputSx(isDark), '& textarea': { fontFamily: 'monospace', fontSize: 11 } }}
+              sx={{
+                ...glassInputSx(isDark),
+                '& textarea': { fontFamily: 'monospace', fontSize: 11 },
+              }}
             />
             <Stack direction="row" spacing={1} justifyContent="flex-end">
-              <Button variant="outlined" size="small" onClick={() => setCspsExportOpen(false)} sx={outlinedPill}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setCspsExportOpen(false)}
+                sx={outlinedPill}
+              >
                 Close
               </Button>
               <Tooltip title="Copy to clipboard">
@@ -1455,7 +1491,9 @@ export const BuildCompletionHeader: React.FC = () => {
                   onClick={() => {
                     navigator.clipboard
                       .writeText(exportLua)
-                      .then(() => enqueueSnackbar('Copied CSPS Lua to clipboard!', { variant: 'info' }))
+                      .then(() =>
+                        enqueueSnackbar('Copied CSPS Lua to clipboard!', { variant: 'info' }),
+                      )
                       .catch(() => enqueueSnackbar('Could not copy.', { variant: 'error' }));
                   }}
                   sx={pillBase}
@@ -1469,7 +1507,10 @@ export const BuildCompletionHeader: React.FC = () => {
                   size="small"
                   startIcon={<FileDownloadOutlined sx={{ fontSize: 14 }} />}
                   onClick={() => {
-                    const fileName = `CSPSSavedVariables_${(build.name || 'build').replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '-').toLowerCase()}.lua`;
+                    const fileName = `CSPSSavedVariables_${(build.name || 'build')
+                      .replace(/[^a-zA-Z0-9-_ ]/g, '')
+                      .replace(/\s+/g, '-')
+                      .toLowerCase()}.lua`;
                     const blob = new Blob([exportLua], { type: 'text/plain;charset=utf-8' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');

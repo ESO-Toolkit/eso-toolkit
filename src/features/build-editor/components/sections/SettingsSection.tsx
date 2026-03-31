@@ -71,8 +71,8 @@ export const SettingsSection: React.FC = () => {
           color="text.disabled"
           sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
         >
-          {build.setups.length} setup{build.setups.length !== 1 ? 's' : ''} configured. Manage setups
-          in the setup bar below. Double-click a tab to rename.
+          {build.setups.length} setup{build.setups.length !== 1 ? 's' : ''} configured. Manage
+          setups in the setup bar below. Double-click a tab to rename.
         </Typography>
       </Box>
     </Stack>

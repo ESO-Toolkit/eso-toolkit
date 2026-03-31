@@ -75,8 +75,8 @@ export const heavyArmor: SkillLineData = {
       id: AbilityId.CONSTITUTION,
       icon: 'ability_armor_014',
       alternateIds: [
-        29769, 45526, 58428, 58429, 58430, 58431, 58432, 58503, 88552, 88553,
-        200393, 200394, 200395,
+        29769, 45526, 58428, 58429, 58430, 58431, 58432, 58503, 88552, 88553, 200393, 200394,
+        200395,
       ],
       name: 'Constitution',
       type: 'passive',

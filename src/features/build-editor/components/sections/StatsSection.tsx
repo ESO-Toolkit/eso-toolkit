@@ -4,14 +4,7 @@
  */
 
 import { ExpandMore as ExpandIcon } from '@mui/icons-material';
-import {
-  Box,
-  Checkbox,
-  Collapse,
-  FormControlLabel,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Box, Checkbox, Collapse, FormControlLabel, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';

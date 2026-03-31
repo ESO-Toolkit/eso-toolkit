@@ -194,7 +194,9 @@ export const GeneralSection: React.FC = () => {
                           aria-label={race.label}
                           data-race-id={race.id}
                           onClick={() => toggleRace(race.id)}
-                          onKeyDown={(e: React.KeyboardEvent) => handleRaceKeyDown(e, allRaceIds, race.id)}
+                          onKeyDown={(e: React.KeyboardEvent) =>
+                            handleRaceKeyDown(e, allRaceIds, race.id)
+                          }
                           sx={{
                             border: 'none',
                             cursor: 'pointer',

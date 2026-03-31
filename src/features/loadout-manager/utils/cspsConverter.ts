@@ -103,10 +103,10 @@ export interface CSPSComp2 {
  */
 export interface CSPSGearEntry {
   setId: number;
-  type: number;     // armor type (light/medium/heavy) or weapon type
-  trait: number;     // trait ID from GetItemLinkTraitInfo()
-  quality: number;   // display quality (0=Trash..5=Legendary)
-  enchant: number;   // final enchant ID from GetItemLinkFinalEnchantId()
+  type: number; // armor type (light/medium/heavy) or weapon type
+  trait: number; // trait ID from GetItemLinkTraitInfo()
+  quality: number; // display quality (0=Trash..5=Legendary)
+  enchant: number; // final enchant ID from GetItemLinkFinalEnchantId()
 }
 
 /**
@@ -114,20 +114,20 @@ export interface CSPSGearEntry {
  * CSPS iterates gear in this fixed order (from csps_gear.lua gearSlots).
  */
 export const CSPS_GEAR_SLOT_ORDER = [
-  0,   // HEAD
-  3,   // SHOULDERS
-  2,   // CHEST
-  16,  // HAND (Gloves)
-  6,   // WAIST (Belt)
-  8,   // LEGS
-  9,   // FEET
-  1,   // NECK
-  11,  // RING1
-  12,  // RING2
-  4,   // MAIN_HAND
-  5,   // OFF_HAND
-  20,  // BACKUP_MAIN
-  21,  // BACKUP_OFF
+  0, // HEAD
+  3, // SHOULDERS
+  2, // CHEST
+  16, // HAND (Gloves)
+  6, // WAIST (Belt)
+  8, // LEGS
+  9, // FEET
+  1, // NECK
+  11, // RING1
+  12, // RING2
+  4, // MAIN_HAND
+  5, // OFF_HAND
+  20, // BACKUP_MAIN
+  21, // BACKUP_OFF
   // indices 14,15 are POISON / BACKUP_POISON — we skip them
 ] as const;
 
@@ -324,9 +324,7 @@ export function compressComp2(comp2: CSPSComp2): string {
  *
  * Returns a map of ESO equip slot index → CSPSGearEntry.
  */
-export function parseGearComp(
-  gearCompStr: string,
-): Record<number, CSPSGearEntry> {
+export function parseGearComp(gearCompStr: string): Record<number, CSPSGearEntry> {
   const result: Record<number, CSPSGearEntry> = {};
   if (!gearCompStr) return result;
 
@@ -372,9 +370,7 @@ export function parseGearComp(
  * Serialize gear entries back to CSPS gearComp format.
  * Produces semicolon-separated entries in CSPS_GEAR_SLOT_ORDER + two poison slots.
  */
-export function serializeGearComp(
-  gear: Record<number, CSPSGearEntry>,
-): string {
+export function serializeGearComp(gear: Record<number, CSPSGearEntry>): string {
   const parts: string[] = [];
 
   for (const esoSlot of CSPS_GEAR_SLOT_ORDER) {
@@ -382,9 +378,7 @@ export function serializeGearComp(
     if (!entry || entry.setId === 0) {
       parts.push('0');
     } else {
-      parts.push(
-        `${entry.setId}:${entry.type}:${entry.trait}:${entry.quality}:${entry.enchant}`,
-      );
+      parts.push(`${entry.setId}:${entry.type}:${entry.trait}:${entry.quality}:${entry.enchant}`);
     }
   }
 

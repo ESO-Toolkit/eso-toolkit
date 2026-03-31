@@ -227,8 +227,8 @@ export const destructionStaffSkillLine: SkillLineData = {
       id: AbilityId.TRI_FOCUS,
       icon: 'ability_weapon_001',
       alternateIds: [
-        30948, 30949, 30951, 30952, 34498, 45500, 45502, 45505, 45506, 45507,
-        69773, 69774, 203988, 204009,
+        30948, 30949, 30951, 30952, 34498, 45500, 45502, 45505, 45506, 45507, 69773, 69774, 203988,
+        204009,
       ],
       name: 'Tri Focus',
       type: 'passive',

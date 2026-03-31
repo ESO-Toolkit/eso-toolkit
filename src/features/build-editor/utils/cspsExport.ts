@@ -28,7 +28,13 @@ import {
   type CSPSSkillEntry,
   type CSPSSavedVariables,
 } from '../../loadout-manager/utils/cspsConverter';
-import type { Build, BuildChampionPoints, BuildSetup, CombatRole, QuickslotEntry } from '../types/build.types';
+import type {
+  Build,
+  BuildChampionPoints,
+  BuildSetup,
+  CombatRole,
+  QuickslotEntry,
+} from '../types/build.types';
 
 // ── Reverse mappings (Build Editor → CSPS) ───────────────────────────
 
@@ -52,12 +58,15 @@ const MUNDUS_TO_CSPS: Record<string, number> = {
 /** Build editor CombatRole → CSPS LFG role value */
 function combatRoleToCSPS(role: CombatRole): string {
   switch (role) {
-    case 'tank': return '2';
-    case 'healer': return '4';
+    case 'tank':
+      return '2';
+    case 'healer':
+      return '4';
     case 'magicka-dps':
     case 'stamina-dps':
     case 'hybrid-dps':
-    default: return '1';
+    default:
+      return '1';
   }
 }
 
@@ -100,9 +109,7 @@ function serializeCPPassives(cp: BuildChampionPoints): string {
 /**
  * Convert build editor gear config to CSPS gear entries.
  */
-function convertGearConfigToCSPS(
-  gear: Record<number, GearPiece>,
-): Record<number, CSPSGearEntry> {
+function convertGearConfigToCSPS(gear: Record<number, GearPiece>): Record<number, CSPSGearEntry> {
   const result: Record<number, CSPSGearEntry> = {};
 
   for (const [slotStr, piece] of Object.entries(gear)) {
@@ -192,9 +199,7 @@ function setupToCSPSCharacterData(
   const cpHotbarStr = serializeCPHotbar(setup.cp);
 
   // Mundus
-  const mundusStr = setup.mundusStone
-    ? String(MUNDUS_TO_CSPS[setup.mundusStone] ?? '')
-    : '';
+  const mundusStr = setup.mundusStone ? String(MUNDUS_TO_CSPS[setup.mundusStone] ?? '') : '';
 
   // Quickslots
   const quickslotsStr = serializeQuickslots(setup.quickslots);

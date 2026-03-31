@@ -17,10 +17,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  CHAMPION_POINT_ABILITIES,
-  ChampionPointTree,
-} from '@/types/champion-points';
+import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 import { Logger } from '@/utils/logger';
 
 import type { GearPiece, SkillBar, SkillsConfig } from '../../loadout-manager/types/loadout.types';
@@ -213,10 +210,13 @@ function parseSubclassLines(
 /** CSPS role index → build editor CombatRole */
 function roleIndexToRole(index: number): CombatRole {
   switch (index) {
-    case 2: return 'tank';
-    case 4: return 'healer';
+    case 2:
+      return 'tank';
+    case 4:
+      return 'healer';
     case 1:
-    default: return 'magicka-dps';
+    default:
+      return 'magicka-dps';
   }
 }
 
@@ -261,7 +261,10 @@ function parseIntSafe(s: string): number {
 
 function parseCommaInts(s: string): number[] {
   if (!s || s === '0') return [];
-  return s.split(',').map((v) => parseIntSafe(v.trim())).filter((n) => n > 0);
+  return s
+    .split(',')
+    .map((v) => parseIntSafe(v.trim()))
+    .filter((n) => n > 0);
 }
 
 /**
@@ -374,11 +377,12 @@ function mergePassiveCP(cp: BuildChampionPoints, s: string): void {
     const meta = CHAMPION_POINT_ABILITIES[cpId as keyof typeof CHAMPION_POINT_ABILITIES];
     if (!meta) continue;
 
-    const treeKey = meta.tree === ChampionPointTree.Warfare
-      ? 'warfare'
-      : meta.tree === ChampionPointTree.Fitness
-        ? 'fitness'
-        : 'craft';
+    const treeKey =
+      meta.tree === ChampionPointTree.Warfare
+        ? 'warfare'
+        : meta.tree === ChampionPointTree.Fitness
+          ? 'fitness'
+          : 'craft';
 
     cp[treeKey].passives[String(cpId)] = value;
   }
@@ -643,9 +647,7 @@ export function isCSPSNativeCode(input: string): boolean {
     skillsSection.includes(',') ||
     skillsSection.includes(':');
 
-  const attrLooksValid =
-    attrSection === '-' ||
-    attrSection.includes(';');
+  const attrLooksValid = attrSection === '-' || attrSection.includes(';');
 
   return skillsLooksValid && attrLooksValid;
 }
@@ -766,11 +768,12 @@ function parseNativeCP(s: string): BuildChampionPoints {
       const meta = CHAMPION_POINT_ABILITIES[cpId as keyof typeof CHAMPION_POINT_ABILITIES];
       if (!meta) continue;
 
-      const treeKey = meta.tree === ChampionPointTree.Warfare
-        ? 'warfare'
-        : meta.tree === ChampionPointTree.Fitness
-          ? 'fitness'
-          : 'craft';
+      const treeKey =
+        meta.tree === ChampionPointTree.Warfare
+          ? 'warfare'
+          : meta.tree === ChampionPointTree.Fitness
+            ? 'fitness'
+            : 'craft';
       cp[treeKey].passives[String(cpId)] = value;
     }
   }
@@ -891,7 +894,10 @@ export function parseCSPSNativeCode(input: string): CSPSExportCodeResult {
     let barData: string;
     if (qsStr.startsWith('qs;') || qsStr.startsWith('qs,')) {
       const segments = qsStr.split(';');
-      barData = segments.slice(2).filter((s) => !s.startsWith('aq:')).join(',');
+      barData = segments
+        .slice(2)
+        .filter((s) => !s.startsWith('aq:'))
+        .join(',');
     } else {
       barData = qsStr;
     }

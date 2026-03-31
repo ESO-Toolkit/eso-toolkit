@@ -8,17 +8,10 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import {
-  CHAMPION_POINT_ABILITIES,
-  ChampionPointTree,
-} from '@/types/champion-points';
+import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 import { Logger } from '@/utils/logger';
 
-import type {
-  GearPiece,
-  SkillBar,
-  SkillsConfig,
-} from '../../loadout-manager/types/loadout.types';
+import type { GearPiece, SkillBar, SkillsConfig } from '../../loadout-manager/types/loadout.types';
 import {
   decompressComp1,
   decompressComp2,
@@ -34,9 +27,7 @@ import {
   type CSPSProfile,
   type CSPSSkillData,
 } from '../../loadout-manager/utils/cspsConverter';
-import {
-  parseLuaSavedVariables,
-} from '../../loadout-manager/utils/luaParser';
+import { parseLuaSavedVariables } from '../../loadout-manager/utils/luaParser';
 import {
   findCollectionItemBySetAndSlotType,
   getSetNameOrFallback,
@@ -90,10 +81,14 @@ const CSPS_MUNDUS_MAP: Record<number, string> = {
  */
 function cspsRoleToCombatRole(roleStr: string): CombatRole {
   switch (roleStr) {
-    case '2': return 'tank';
-    case '4': return 'healer';
-    case '1': return 'magicka-dps'; // DPS — default to magicka-dps
-    default: return 'magicka-dps';
+    case '2':
+      return 'tank';
+    case '4':
+      return 'healer';
+    case '1':
+      return 'magicka-dps'; // DPS — default to magicka-dps
+    default:
+      return 'magicka-dps';
   }
 }
 
@@ -316,8 +311,8 @@ export function parseCSPSInput(input: string): CSPSParseResult {
   const detected = detectCSPSData(parsed);
   if (!detected) {
     throw new Error(
-      'No CSPS (Caro\'s Skill Point Saver) data found. ' +
-      'Paste either a SavedVariables file or an export code from the addon.',
+      "No CSPS (Caro's Skill Point Saver) data found. " +
+        'Paste either a SavedVariables file or an export code from the addon.',
     );
   }
 
@@ -416,11 +411,12 @@ function mergeCPPassives(cp: BuildChampionPoints, cpPointsStr: string): void {
     const meta = CHAMPION_POINT_ABILITIES[skillId as keyof typeof CHAMPION_POINT_ABILITIES];
     if (!meta) continue;
 
-    const treeKey = meta.tree === ChampionPointTree.Warfare
-      ? 'warfare'
-      : meta.tree === ChampionPointTree.Fitness
-        ? 'fitness'
-        : 'craft';
+    const treeKey =
+      meta.tree === ChampionPointTree.Warfare
+        ? 'warfare'
+        : meta.tree === ChampionPointTree.Fitness
+          ? 'fitness'
+          : 'craft';
 
     cp[treeKey].passives[String(skillId)] = value;
   }

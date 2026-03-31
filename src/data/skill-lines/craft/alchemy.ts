@@ -38,7 +38,15 @@ export const alchemy: SkillLineData = {
       isUltimate: false,
       maxRank: 3,
     },
-    { id: AbilityId.CHEMISTRY, alternateIds: [45578, 45579], icon: 'ability_alchemy_006', name: 'Chemistry', isPassive: true, isUltimate: false, maxRank: 3 },
+    {
+      id: AbilityId.CHEMISTRY,
+      alternateIds: [45578, 45579],
+      icon: 'ability_alchemy_006',
+      name: 'Chemistry',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 3,
+    },
     {
       id: AbilityId.LABORATORY_USE,
       icon: 'ability_alchemy_002',

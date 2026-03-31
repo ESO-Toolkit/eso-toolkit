@@ -142,7 +142,8 @@ describe('cspsImport', () => {
       // But the test data has "13" which is not a valid mundus ability ID
       // Let's test with a valid mundus ID
       const char = makeCSPSCharacterOption({
-        comp1: '10;54;0#100,200,300,400,500,600;700,800,900,1000,1100,1200#91234-1;91235-1#29,92,78,82;3,25,12,8;46,48,2,51#5001#1#13984',
+        comp1:
+          '10;54;0#100,200,300,400,500,600;700,800,900,1000,1100,1200#91234-1;91235-1#29,92,78,82;3,25,12,8;46,48,2,51#5001#1#13984',
       });
       const build = convertCSPSCharacterToBuild(char);
       expect(build.setups[0].mundusStone).toBe('shadow'); // 13984 = The Shadow

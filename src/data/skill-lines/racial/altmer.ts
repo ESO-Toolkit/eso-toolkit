@@ -23,8 +23,7 @@ export const altmer: SkillLineData = {
       id: AbilityId.SPELL_RECHARGE,
       icon: 'ability_sorcerer_063',
       alternateIds: [
-        35993, 45273, 45274, 118110, 118111, 118112, 118113, 118114, 118115, 118116,
-        118117, 118118,
+        35993, 45273, 45274, 118110, 118111, 118112, 118113, 118114, 118115, 118116, 118117, 118118,
       ],
       name: 'Spell Recharge',
       isPassive: true,

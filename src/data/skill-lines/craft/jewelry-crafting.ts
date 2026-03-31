@@ -11,7 +11,15 @@ export const jewelryCrafting: SkillLineData = {
   class: 'craft',
   category: 'craft',
   skills: [
-    { id: AbilityId.ENGRAVER, alternateIds: [103633, 103634, 103635, 103636], icon: 'passive_jewelerengraver', name: 'Engraver', isPassive: true, isUltimate: false, maxRank: 3 },
+    {
+      id: AbilityId.ENGRAVER,
+      alternateIds: [103633, 103634, 103635, 103636],
+      icon: 'passive_jewelerengraver',
+      name: 'Engraver',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 3,
+    },
     {
       id: AbilityId.KEEN_EYE_JEWELRY,
       icon: 'ability_smith_002',

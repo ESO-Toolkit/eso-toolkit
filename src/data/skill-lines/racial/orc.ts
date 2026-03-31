@@ -11,8 +11,23 @@ export const orc: SkillLineData = {
   class: 'racial',
   category: 'racial',
   skills: [
-    { id: AbilityId.CRAFTSMAN, icon: 'ability_dragonknight_021', name: 'Craftsman', isPassive: true, isUltimate: false, maxRank: 2 },
-    { id: AbilityId.BRAWNY, alternateIds: [36538, 45307, 45308, 45309, 45310], icon: 'ability_dragonknight_020', name: 'Brawny', isPassive: true, isUltimate: false, maxRank: 2 },
+    {
+      id: AbilityId.CRAFTSMAN,
+      icon: 'ability_dragonknight_021',
+      name: 'Craftsman',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
+    {
+      id: AbilityId.BRAWNY,
+      alternateIds: [36538, 45307, 45308, 45309, 45310],
+      icon: 'ability_dragonknight_020',
+      name: 'Brawny',
+      isPassive: true,
+      isUltimate: false,
+      maxRank: 2,
+    },
     {
       id: AbilityId.UNFLINCHING_RAGE,
       icon: 'ability_sorcerer_018',

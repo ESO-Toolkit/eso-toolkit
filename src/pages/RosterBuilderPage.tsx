@@ -365,7 +365,11 @@ function expandInlineSkills(compact?: {
 function compactBuildCP(cp?: BuildChampionPoints): CompactBuildCP | undefined {
   if (!cp) return undefined;
   const result: CompactBuildCP = {};
-  for (const [key, treeKey] of [['w', 'warfare'], ['f', 'fitness'], ['c', 'craft']] as const) {
+  for (const [key, treeKey] of [
+    ['w', 'warfare'],
+    ['f', 'fitness'],
+    ['c', 'craft'],
+  ] as const) {
     const tree = cp[treeKey];
     const hasSlots = tree.slots.some((s) => s !== null);
     const hasPassives = Object.keys(tree.passives).length > 0;
