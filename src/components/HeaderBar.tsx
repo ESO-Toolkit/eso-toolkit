@@ -1,9 +1,9 @@
 import {
-  Build,
   Login,
   Logout,
   Person,
   ExpandMore,
+  Build,
   ExpandLess,
   Assessment,
 } from '@mui/icons-material';
@@ -444,10 +444,12 @@ export const HeaderBar: React.FC = () => {
   const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [reportsAnchorEl, setReportsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileToolsOpen, setMobileToolsOpen] = React.useState(false);
   const [mobileReportsOpen, setMobileReportsOpen] = React.useState(false);
+  const [mobileAccountOpen, setMobileAccountOpen] = React.useState(false);
 
   // Determine logo text based on current location
   const logoText = getLogoText(location.pathname);
@@ -504,11 +506,14 @@ export const HeaderBar: React.FC = () => {
       // Reset submenus when opening mobile menu
       setMobileToolsOpen(false);
       setMobileReportsOpen(false);
+      setMobileAccountOpen(false);
     }
   };
 
   const handleMobileToolsToggle = (): void => {
     if (!mobileToolsOpen) {
+      // Close account and reports submenus if they're open
+      setMobileAccountOpen(false);
       setMobileReportsOpen(false);
     }
     setMobileToolsOpen(!mobileToolsOpen);
@@ -516,17 +521,21 @@ export const HeaderBar: React.FC = () => {
 
   const handleMobileReportsToggle = (): void => {
     if (!mobileReportsOpen) {
+      // Close tools and account submenus if they're open
       setMobileToolsOpen(false);
+      setMobileAccountOpen(false);
     }
     setMobileReportsOpen(!mobileReportsOpen);
   };
 
-  const handleNavigateToProfile = React.useCallback((): void => {
-    if (currentUser?.name) {
-      navigate(`/u/${currentUser.name}`);
+  const handleMobileAccountToggle = (): void => {
+    if (!mobileAccountOpen) {
+      // Close tools and reports submenus if they're open
+      setMobileToolsOpen(false);
+      setMobileReportsOpen(false);
     }
     setMobileAccountOpen(!mobileAccountOpen);
-  }, [currentUser?.name, navigate, mobileAccountOpen]);
+  };
 
   const handleAccountClick = (event: React.MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget);
@@ -583,6 +592,7 @@ export const HeaderBar: React.FC = () => {
     setMobileOpen(false);
     setMobileToolsOpen(false);
     setMobileReportsOpen(false);
+    setMobileAccountOpen(false);
   };
 
   const handleSampleReport = React.useCallback((): void => {
@@ -1551,106 +1561,43 @@ export const HeaderBar: React.FC = () => {
             </MobileSubmenuContainer>
           </Box>
 
-          {/* Profile + auth in mobile menu */}
-          {isLoggedIn ? (
-            <>
-              <MobileNavButton
-                onClick={handleNavigateToProfile}
-                startIcon={<Person />}
-                sx={{
-                  animationDelay: `${(navItems.length + 1) * 0.1}s`,
-                  animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
-                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(59, 130, 246, 0.2)'
-                      : 'rgba(37, 99, 235, 0.15)',
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
-                        : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(59, 130, 246, 0.4)'
-                        : 'rgba(37, 99, 235, 0.25)',
-                  },
-                  '@keyframes slideInUp': {
-                    '0%': { opacity: 0, transform: 'translateY(30px)' },
-                    '100%': { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}
-              >
-                {userLabel || 'My Profile'}
-              </MobileNavButton>
-              <MobileNavButton
-                onClick={() => {
-                  handleLogout();
-                  setMobileOpen(false);
-                }}
-                startIcon={<Logout />}
-                sx={{
-                  animationDelay: `${(navItems.length + 2) * 0.1}s`,
-                  animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
-                      : 'linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(185, 28, 28, 0.04) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(239, 68, 68, 0.2)'
-                      : 'rgba(220, 38, 38, 0.15)',
-                  color: theme.palette.error.main,
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)'
-                        : 'linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(185, 28, 28, 0.08) 100%)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(239, 68, 68, 0.4)'
-                        : 'rgba(220, 38, 38, 0.25)',
-                  },
-                  '@keyframes slideInUp': {
-                    '0%': { opacity: 0, transform: 'translateY(30px)' },
-                    '100%': { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}
-              >
-                Log out
-              </MobileNavButton>
-            </>
-          ) : (
+          {/* Account submenu in mobile menu */}
+          <Box>
             <MobileNavButton
-              onClick={() => {
-                handleLogin();
-                setMobileOpen(false);
-              }}
-              startIcon={<Login />}
+              onClick={handleMobileAccountToggle}
+              endIcon={mobileAccountOpen ? <ExpandLess /> : <ExpandMore />}
+              startIcon={<Person />}
               sx={{
                 animationDelay: `${(navItems.length + 1) * 0.1}s`,
                 animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)'
-                    : 'linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(21, 128, 61, 0.04) 100%)',
-                borderColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(34, 197, 94, 0.2)'
-                    : 'rgba(22, 163, 74, 0.15)',
-                color: theme.palette.success.main,
+                background: mobileAccountOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(29, 78, 216, 0.08) 100%)'
+                  : theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
+                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
+                borderColor: mobileAccountOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(59, 130, 246, 0.4)'
+                    : 'rgba(37, 99, 235, 0.3)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(59, 130, 246, 0.2)'
+                    : 'rgba(37, 99, 235, 0.15)',
+                borderRadius: mobileAccountOpen ? '16px 16px 0 0' : '16px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(21, 128, 61, 0.08) 100%)',
+                  background: mobileAccountOpen
+                    ? theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(29, 78, 216, 0.12) 100%)'
+                    : theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
                   borderColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(34, 197, 94, 0.4)'
-                      : 'rgba(22, 163, 74, 0.25)',
+                      ? 'rgba(59, 130, 246, 0.4)'
+                      : 'rgba(37, 99, 235, 0.25)',
                 },
                 '@keyframes slideInUp': {
                   '0%': { opacity: 0, transform: 'translateY(30px)' },
@@ -1658,9 +1605,25 @@ export const HeaderBar: React.FC = () => {
                 },
               }}
             >
-              Log in
+              Account
             </MobileNavButton>
-          )}
+
+            {/* Account submenu items */}
+            <MobileSubmenuContainer open={mobileAccountOpen} itemCount={accountItems.length}>
+              {accountItems.map((item, index) => (
+                <BaseMobileSubmenuItem
+                  key={item.text}
+                  open={mobileAccountOpen}
+                  index={index}
+                  colorVariant={item.colorVariant}
+                  onClick={item.action}
+                  startIcon={<Box sx={{ mr: 1 }}>{item.icon}</Box>}
+                >
+                  {item.text}
+                </BaseMobileSubmenuItem>
+              ))}
+            </MobileSubmenuContainer>
+          </Box>
         </MobileMenuContent>
       </MobileMenuOverlay>
     </>

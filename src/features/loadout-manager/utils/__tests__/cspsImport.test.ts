@@ -175,13 +175,14 @@ describe('cspsImport', () => {
       });
       const build = convertCSPSCharacterToBuild(char);
       // HEAD (slot 0) from first entry
+      // resolveSetIdToItemId maps CSPS set IDs → item IDs via collection data
       expect(build.setups[0].gear[0]).toBeDefined();
-      expect(build.setups[0].gear[0].id).toBe(100);
+      expect(build.setups[0].gear[0].id).toBe(44132);
       expect(build.setups[0].gear[0].trait).toBe('5');
       expect(build.setups[0].gear[0].enchant).toBe('200');
       // SHOULDERS (slot 3) from second entry
       expect(build.setups[0].gear[3]).toBeDefined();
-      expect(build.setups[0].gear[3].id).toBe(50);
+      expect(build.setups[0].gear[3].id).toBe(43855);
     });
 
     it('imports passives from werte.pass', () => {
