@@ -204,7 +204,6 @@ export const vampire: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.FEED,
-      icon: 'ability_u26_vampire_synergy_feed',
       alternateIds: [
         33152, 33175, 33177, 33182, 39692, 39693, 39698, 40349, 40350, 40351,
         40355, 42054, 46286, 54636, 82424, 112022, 116643, 126606, 129382, 131038,
@@ -225,7 +224,6 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.DARK_STALKER,
-      icon: 'passive_u26_vampire_01',
       alternateIds: [33095, 46041, 80442],
       name: 'Dark Stalker',
       icon: 'passive_u26_vampire_01',
@@ -237,7 +235,6 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.STRIKE_FROM_THE_SHADOWS,
-      icon: 'passive_u26_vampire_02',
       alternateIds: [
         33096, 46040, 79003, 79005, 79006, 79030, 81049, 81050, 81051, 135189,
         135190,
@@ -252,7 +249,6 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.BLOOD_RITUAL,
-      icon: 'passive_u26_vampire_05',
       name: 'Blood Ritual',
       icon: 'passive_u26_vampire_05',
       isPassive: true,
@@ -263,7 +259,6 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.UNDEATH,
-      icon: 'passive_u26_vampire_03',
       alternateIds: [33090, 33093, 122142, 122143, 122144, 130275, 133470, 133473],
       name: 'Undeath',
       icon: 'passive_u26_vampire_03',
@@ -275,7 +270,6 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.UNNATURAL_MOVEMENT,
-      icon: 'passive_u26_vampire_04',
       alternateIds: [
         132844, 132845, 132846, 132847, 132848, 132849, 132850, 132851, 135208, 135209,
         135218, 135219, 135220, 135221, 135222, 135223, 135224, 135225, 135226, 135227,

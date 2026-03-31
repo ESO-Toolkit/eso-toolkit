@@ -10,7 +10,6 @@ export const darkBrotherhood: SkillLineData = {
   skills: [
     {
       id: AbilityId.BLADE_OF_WOE,
-      icon: 'achievement_darkbrotherhood_003',
       alternateIds: [
         76325, 77101, 77374, 78219, 80477, 80603, 146297, 146299, 146300, 146301,
         169629,
@@ -24,7 +23,6 @@ export const darkBrotherhood: SkillLineData = {
     },
     {
       id: AbilityId.SCALES_OF_PITILESS_JUSTICE,
-      icon: 'ability_darkbrotherhood_passive_002',
       alternateIds: [77392, 77394, 77395, 79275, 79865, 79866],
       name: 'Scales of Pitiless Justice',
       description:
@@ -35,7 +33,6 @@ export const darkBrotherhood: SkillLineData = {
     },
     {
       id: AbilityId.PADOMAIC_SPRINT,
-      icon: 'ability_darkbrotherhood_passive_004',
       alternateIds: [77397, 77398, 77399, 79868, 80393],
       name: 'Padomaic Sprint',
       description:
@@ -57,12 +54,10 @@ export const darkBrotherhood: SkillLineData = {
       name: 'Shadow Rider',
       description: 'Aggression radius from hostile monsters is decreased by 50% while mounted.',
       type: 'passive',
-      icon: 'ability_darkbrotherhood_passive_003',
       maxRank: 1,
     },
     {
       id: AbilityId.SPECTRAL_ASSASSIN,
-      icon: 'ability_darkbrotherhood_passive_006',
       alternateIds: [77401, 80636, 151926],
       name: 'Spectral Assassin',
       description:

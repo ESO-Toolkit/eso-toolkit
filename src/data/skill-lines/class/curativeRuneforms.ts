@@ -175,7 +175,6 @@ export const curativeRuneforms: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_PASSAGE_BETWEEN_WORLDS,
-      icon: 'ability_arcanist_016_b',
       name: 'Passage Between Worlds',
       type: 'active',
       icon: 'ability_arcanist_016_b',
@@ -185,7 +184,6 @@ export const curativeRuneforms: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_ERUDITION,
-      icon: 'passive_arcanist_11',
       alternateIds: [185238, 185239, 194650, 194655],
       name: 'Erudition',
       type: 'passive',
@@ -196,7 +194,6 @@ export const curativeRuneforms: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_HEALING_TIDES,
-      icon: 'passive_arcanist_09',
       alternateIds: [185185, 185186],
       name: 'Healing Tides',
       type: 'passive',
@@ -207,7 +204,6 @@ export const curativeRuneforms: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_HIDEOUS_CLARITY,
-      icon: 'passive_arcanist_10',
       alternateIds: [185240, 185241, 185243, 190582, 190583, 190584],
       name: 'Hideous Clarity',
       type: 'passive',
@@ -218,7 +214,6 @@ export const curativeRuneforms: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_INTRICATE_RUNEFORMS,
-      icon: 'passive_arcanist_12',
       alternateIds: [185187, 185190, 185195, 185196],
       name: 'Intricate Runeforms',
       type: 'passive',

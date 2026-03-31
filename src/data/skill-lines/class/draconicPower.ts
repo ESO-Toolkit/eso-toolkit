@@ -173,7 +173,6 @@ export const draconicPower: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_PROTECTIVE_PLATE,
-      icon: 'ability_dragonknight_008_b',
       name: 'Fleetstep Wings',
       type: 'active',
       icon: 'ability_dragonknight_008_b',
@@ -183,7 +182,6 @@ export const draconicPower: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_ELDER_DRAGON,
-      icon: 'ability_dragonknight_025',
       alternateIds: [29460, 44951],
       name: 'Elder Dragon',
       type: 'passive',
@@ -194,7 +192,6 @@ export const draconicPower: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_LANDSLIDE,
-      icon: 'ability_dragonknight_031',
       name: 'The Storm Voice',
       type: 'passive',
       icon: 'ability_dragonknight_031',
@@ -204,7 +201,6 @@ export const draconicPower: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_WORLD_IN_RUIN,
-      icon: 'ability_dragonknight_024',
       alternateIds: [29451, 45029],
       name: 'World in Ruin',
       type: 'passive',
@@ -215,7 +211,6 @@ export const draconicPower: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_IRON_SKIN,
-      icon: 'ability_dragonknight_021',
       name: 'Burnished Scales',
       type: 'passive',
       icon: 'ability_dragonknight_020',

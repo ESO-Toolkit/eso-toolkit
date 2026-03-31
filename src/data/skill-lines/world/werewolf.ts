@@ -223,7 +223,6 @@ export const werewolf: SkillLineData = {
     },
     {
       id: AbilityId.PURSUIT,
-      icon: 'ability_werewolf_010',
       alternateIds: [32636, 46142],
       name: 'Pursuit',
       icon: 'ability_werewolf_010',
@@ -235,7 +234,6 @@ export const werewolf: SkillLineData = {
     },
     {
       id: AbilityId.BLOOD_RAGE,
-      icon: 'ability_werewolf_004',
       alternateIds: [
         32637, 46135, 111924, 111925, 132914, 132921, 132922, 132923, 132924, 134369,
         134370, 134373, 134406, 134566, 134593, 134594, 134920, 134921, 134922, 139816,
@@ -252,7 +250,6 @@ export const werewolf: SkillLineData = {
     },
     {
       id: AbilityId.BLOODMOON,
-      icon: 'ability_werewolf_008',
       name: 'Bloodmoon',
       icon: 'ability_werewolf_008',
       description:
@@ -263,7 +260,6 @@ export const werewolf: SkillLineData = {
     },
     {
       id: AbilityId.SAVAGE_STRENGTH,
-      icon: 'ability_werewolf_009',
       alternateIds: [
         32638, 46139, 111928, 111929, 111932, 111933, 168022, 172383, 172384, 172385,
         172386, 173016,
@@ -278,7 +274,6 @@ export const werewolf: SkillLineData = {
     },
     {
       id: AbilityId.CALL_OF_THE_PACK,
-      icon: 'ability_werewolf_006',
       alternateIds: [
         4051, 13808, 14271, 14272, 14273, 15207, 26658, 26659, 32641, 45720,
         45721, 45751, 45753, 46137, 49257, 49258, 49259, 61616, 61617, 61618,

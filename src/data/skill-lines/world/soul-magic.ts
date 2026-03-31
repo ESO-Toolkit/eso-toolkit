@@ -88,7 +88,6 @@ export const soulMagic: SkillLineData = {
     },
     {
       id: AbilityId.SOUL_SHATTER,
-      icon: 'ability_sorcerer_065',
       alternateIds: [
         39266, 39267, 45583, 45584, 129688, 130737, 130738, 216794, 216795, 216796,
         220272, 228839, 228840, 228841,
@@ -103,7 +102,6 @@ export const soulMagic: SkillLineData = {
     },
     {
       id: AbilityId.SOUL_SUMMONS,
-      icon: 'ability_sorcerer_047',
       alternateIds: [
         39269, 43752, 45590, 136215, 136216, 136219, 136220, 136221, 136302, 136304,
         136344, 136346, 136365, 136370, 136371, 136713, 136768, 136769, 136770, 136771,
@@ -120,7 +118,6 @@ export const soulMagic: SkillLineData = {
     },
     {
       id: AbilityId.SOUL_LOCK,
-      icon: 'ability_sorcerer_043',
       alternateIds: [39263, 39264, 45580, 45582],
       name: 'Soul Lock',
       description: 'Killing an enemy has a 10% chance of automatically filling an empty Soul Gem.',

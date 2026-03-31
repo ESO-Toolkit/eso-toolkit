@@ -10,7 +10,6 @@ export const thievesGuild: SkillLineData = {
   skills: [
     {
       id: AbilityId.FINDERS_KEEPERS,
-      icon: 'ability_thievesguild_passive_001',
       name: 'Finders Keepers',
       description:
         'Thieves Troves are caches that are located all over Tamriel. They can only be opened by members of the Thieves Guild.',
@@ -21,7 +20,6 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.SWIFTLY_FORGOTTEN,
-      icon: 'ability_thievesguild_passive_005',
       alternateIds: [76454, 76455, 76456, 76457, 77331, 77332, 77333],
       name: 'Swiftly Forgotten',
       description:
@@ -33,7 +31,6 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.HAGGLING,
-      icon: 'ability_thievesguild_passive_006',
       alternateIds: [76458, 76459, 76460, 76461],
       name: 'Haggling',
       description: 'Stolen items sold at a fence are worth 10% more. Does not apply to Laundering.',
@@ -44,7 +41,6 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.CLEMENCY,
-      icon: 'ability_thievesguild_passive_002',
       name: 'Clemency',
       description:
         'When a guard accosts you, you may use Clemency once per day. If used, the Guard will not arrest you or take your money and stolen goods. Additionally, Guards will not attempt to accost you for 1 minute after you use Clemency unless you commit other crimes.',
@@ -55,7 +51,6 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.TIMELY_ESCAPE,
-      icon: 'ability_thievesguild_passive_004',
       name: 'Timely Escape',
       description:
         'When you have Bounty and are in combat, you have a chance to spot a "Footpad" in a town with a Refuge. Interacting with the Footpad will transport the player safely into the nearest Refuge.',
@@ -66,7 +61,6 @@ export const thievesGuild: SkillLineData = {
     },
     {
       id: AbilityId.VEIL_OF_SHADOWS,
-      icon: 'ability_thievesguild_passive_003',
       alternateIds: [76453, 77329],
       name: 'Veil of Shadows',
       description:

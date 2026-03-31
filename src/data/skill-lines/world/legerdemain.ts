@@ -21,7 +21,6 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 1: Improved Hiding - Stealth efficiency
     {
       id: AbilityId.IMPROVED_HIDING,
-      icon: 'ability_legerdemain_improvedsneak',
       alternateIds: [63799, 63800, 63801, 63802],
       name: 'Improved Hiding',
       icon: 'ability_legerdemain_improvedsneak',
@@ -34,7 +33,6 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 2: Light Fingers - Pickpocketing success
     {
       id: AbilityId.LIGHT_FINGERS,
-      icon: 'ability_legerdemain_lightfingers',
       alternateIds: [63803, 63804, 63805, 63806],
       name: 'Light Fingers',
       icon: 'ability_legerdemain_lightfingers',
@@ -47,7 +45,6 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 3: Trafficker - Fence interaction limit
     {
       id: AbilityId.TRAFFICKER,
-      icon: 'ability_legerdemain_salesman',
       alternateIds: [63807, 63808, 63809, 63810],
       name: 'Trafficker',
       icon: 'ability_legerdemain_salesman',
@@ -60,7 +57,6 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 4: Locksmith - Lockpicking success
     {
       id: AbilityId.LOCKSMITH,
-      icon: 'ability_legerdemain_lockpick',
       alternateIds: [63811, 63812, 63813, 63814],
       name: 'Locksmith',
       icon: 'ability_legerdemain_lockpick',
@@ -73,7 +69,6 @@ export const legerdemain: SkillLineData = {
     // Passive Skill 5: Kickback - Bounty payment reduction
     {
       id: AbilityId.KICKBACK,
-      icon: 'ability_legerdemain_sly',
       alternateIds: [63815, 63816, 63817, 63818],
       name: 'Kickback',
       icon: 'ability_legerdemain_sly',

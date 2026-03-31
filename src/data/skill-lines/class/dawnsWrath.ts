@@ -173,7 +173,6 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_RADIANT_OPPRESSION,
-      icon: 'ability_templar_stendarr_aura',
       name: 'Radiant Oppression',
       type: 'active',
       icon: 'ability_templar_stendarr_aura',
@@ -183,7 +182,6 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_ENDURING_RAYS,
-      icon: 'ability_templar_020',
       alternateIds: [31739, 45214],
       name: 'Enduring Rays',
       type: 'passive',
@@ -194,7 +192,6 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_ILLUMINATE,
-      icon: 'ability_templar_012',
       alternateIds: [31743, 45215, 111218, 112977],
       name: 'Illuminate',
       type: 'passive',
@@ -205,7 +202,6 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_PRISM,
-      icon: 'ability_templar_031',
       alternateIds: [31744, 31746, 45216, 45217],
       name: 'Prism',
       type: 'passive',
@@ -216,7 +212,6 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_RESTORING_SPIRIT,
-      icon: 'ability_templar_014',
       alternateIds: [31721, 45212, 88446, 88447],
       name: 'Restoring Spirit',
       type: 'passive',

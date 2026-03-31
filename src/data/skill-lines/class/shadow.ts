@@ -173,7 +173,6 @@ export const shadow: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_REFRESHING_PATH,
-      icon: 'ability_nightblade_010_a',
       name: 'Refreshing Path',
       type: 'active',
       icon: 'ability_nightblade_010_a',
@@ -183,7 +182,6 @@ export const shadow: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_DARK_VEIL,
-      icon: 'ability_sorcerer_036',
       alternateIds: [36552, 45115],
       name: 'Dark Veil',
       type: 'passive',
@@ -194,7 +192,6 @@ export const shadow: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_DARK_VIGOR,
-      icon: 'ability_sorcerer_044',
       alternateIds: [36532, 45084, 138925],
       name: 'Dark Vigor',
       type: 'passive',
@@ -204,7 +201,6 @@ export const shadow: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_REFRESHING_SHADOWS,
-      icon: 'ability_sorcerer_038',
       alternateIds: [36549, 45103, 69995, 69996, 69997, 69998],
       name: 'Refreshing Shadows',
       type: 'passive',
@@ -214,7 +210,6 @@ export const shadow: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_SHADOW_BARRIER,
-      icon: 'ability_sorcerer_022',
       alternateIds: [18866, 45071, 88658, 88659, 228663],
       name: 'Shadow Barrier',
       type: 'passive',

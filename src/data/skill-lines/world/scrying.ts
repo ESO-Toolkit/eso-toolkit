@@ -10,7 +10,6 @@ export const scrying: SkillLineData = {
   skills: [
     {
       id: AbilityId.SCRY,
-      icon: 'ability_scrying_01',
       name: 'Scry',
       icon: 'ability_scrying_01',
       maxRank: 1,
@@ -22,7 +21,6 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.ANTIQUARIAN_INSIGHT,
-      icon: 'ability_scrying_05a',
       alternateIds: [139773, 139774, 139775, 139776, 141018],
       name: 'Antiquarian Insight',
       icon: 'ability_scrying_05a',
@@ -34,7 +32,6 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.SCRIERS_PATIENCE,
-      icon: 'ability_scrying_06a',
       name: "Scrier's Patience",
       icon: 'ability_scrying_06a',
       maxRank: 3,
@@ -45,7 +42,6 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.COALESCENCE,
-      icon: 'ability_scrying_02',
       alternateIds: [139305, 139306],
       name: 'Coalescence',
       icon: 'ability_scrying_02',
@@ -58,7 +54,6 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.FUTURE_FOCUS,
-      icon: 'ability_scrying_07b',
       alternateIds: [139780, 139781],
       name: 'Future Focus',
       icon: 'ability_scrying_07b',
@@ -70,7 +65,6 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.DILATION,
-      icon: 'ability_scrying_04',
       alternateIds: [139307, 139308],
       name: 'Dilation',
       icon: 'ability_scrying_04',
@@ -83,7 +77,6 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.FARSIGHT,
-      icon: 'ability_scrying_03',
       alternateIds: [139309, 139321],
       name: 'Farsight',
       icon: 'ability_scrying_03',
@@ -96,7 +89,6 @@ export const scrying: SkillLineData = {
     },
     {
       id: AbilityId.PREEMPTIVE_POWER,
-      icon: 'ability_scrying_09',
       name: 'Preemptive Power',
       icon: 'ability_scrying_09',
       maxRank: 1,

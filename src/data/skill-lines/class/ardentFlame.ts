@@ -206,7 +206,6 @@ export const ardentFlame: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_SEARING_HEAT,
-      icon: 'ability_dragonknight_028',
       name: 'Fan the Flames',
       type: 'passive',
       icon: 'ability_dragonknight_028',
@@ -216,7 +215,6 @@ export const ardentFlame: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_WARMTH,
-      icon: 'ability_dragonknight_023',
       name: 'Traumatic Burns',
       type: 'passive',
       icon: 'ability_dragonknight_023',
@@ -226,7 +224,6 @@ export const ardentFlame: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_BURNING_HEART,
-      icon: 'ability_dragonknight_032',
       name: 'A Soul Ablaze',
       type: 'passive',
       icon: 'ability_weapon_001',
@@ -236,7 +233,6 @@ export const ardentFlame: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_WORLD_IN_RUIN,
-      icon: 'ability_dragonknight_024',
       alternateIds: [29451, 45029],
       name: 'World in Ruin',
       type: 'passive',

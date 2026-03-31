@@ -10,7 +10,6 @@ export const emperor: SkillLineData = {
   skills: [
     {
       id: AbilityId.MONARCH,
-      icon: 'ability_sorcerer_060',
       name: 'Monarch',
       description:
         'WHILE YOU ARE EMPEROR\nIncreases your healing received while in your campaign, depending on how many Home Keeps you own.\n1 or less Keep: 25%\n2 Keeps: 30%\n3 Keeps: 35%\n4 Keeps: 40%\n5 Keeps: 45%\n6 Keeps: 50%',
@@ -20,7 +19,6 @@ export const emperor: SkillLineData = {
     },
     {
       id: AbilityId.AUTHORITY,
-      icon: 'ability_sorcerer_056',
       name: 'Authority',
       description:
         'WHILE YOU ARE EMPEROR\nIncreases your Ultimate generation while in your campaign, depending on how many Home Keeps you own.\n1 or less Keep: 50%\n2 Keeps: 60%\n3 Keeps: 70%\n4 Keeps: 80%\n5 Keeps: 90%\n6 Keeps: 100%',
@@ -30,7 +28,6 @@ export const emperor: SkillLineData = {
     },
     {
       id: AbilityId.DOMINATION,
-      icon: 'ability_sorcerer_038',
       alternateIds: [39644, 39645, 39646, 51404, 51405, 185691, 185692],
       name: 'Domination',
       description:
@@ -41,7 +38,6 @@ export const emperor: SkillLineData = {
     },
     {
       id: AbilityId.TACTICIAN,
-      icon: 'ability_sorcerer_057',
       alternateIds: [39647, 60486],
       name: 'Tactician',
       description:
@@ -52,7 +48,6 @@ export const emperor: SkillLineData = {
     },
     {
       id: AbilityId.EMPEROR,
-      icon: 'ability_sorcerer_045',
       alternateIds: [39641, 39642, 39643],
       name: 'Emperor',
       description:
