@@ -41,13 +41,23 @@ export const ABBREV_TO_TRIAL: Record<string, string> = Object.fromEntries(
 // ── Day normalisation ─────────────────────────────────────────────────────────
 
 const DAY_SHORT: Record<string, string> = {
-  mon: 'mon', monday: 'mon',
-  tue: 'tue', tues: 'tue', tuesday: 'tue',
-  wed: 'wed', wednesday: 'wed',
-  thu: 'thu', thur: 'thu', thurs: 'thu', thursday: 'thu',
-  fri: 'fri', friday: 'fri',
-  sat: 'sat', saturday: 'sat',
-  sun: 'sun', sunday: 'sun',
+  mon: 'mon',
+  monday: 'mon',
+  tue: 'tue',
+  tues: 'tue',
+  tuesday: 'tue',
+  wed: 'wed',
+  wednesday: 'wed',
+  thu: 'thu',
+  thur: 'thu',
+  thurs: 'thu',
+  thursday: 'thu',
+  fri: 'fri',
+  friday: 'fri',
+  sat: 'sat',
+  saturday: 'sat',
+  sun: 'sun',
+  sunday: 'sun',
 };
 
 /** Normalise any common day-of-week form to its 3-letter abbreviation. */
@@ -120,7 +130,10 @@ export function buildChannelName(template: string, context: ChannelNameContext):
     .replace(/\{trial\}/gi, trialToken)
     .replace(/\{tag\}/gi, trialToken) // legacy alias for {trial}
     .replace(/\{trainer\}/gi, '') // legacy — no longer used
-    .replace(/\{difficulty\}/gi, context.difficulty === 'veteran' ? 'vet' : context.difficulty === 'normal' ? 'norm' : '');
+    .replace(
+      /\{difficulty\}/gi,
+      context.difficulty === 'veteran' ? 'vet' : context.difficulty === 'normal' ? 'norm' : '',
+    );
 
   // Discord channel name rules: lowercase, a-z 0-9 hyphens only
   name = name
@@ -180,9 +193,7 @@ export interface ParsedChannelName {
 }
 
 /** All known trial abbreviations sorted longest-first for greedy matching. */
-const KNOWN_ABBREVS = Object.values(TRIAL_ABBREVS).sort(
-  (a, b) => b.length - a.length,
-);
+const KNOWN_ABBREVS = Object.values(TRIAL_ABBREVS).sort((a, b) => b.length - a.length);
 
 /**
  * Attempt to parse a channel name back into its structured components.

@@ -1052,7 +1052,8 @@ export const DiscordServerConfigPage: React.FC = () => {
                                 fontSize: '0.6rem',
                                 fontWeight: 700,
                                 ml: 'auto',
-                                background: 'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))',
+                                background:
+                                  'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))',
                                 border: '1px solid rgba(34,197,94,0.3)',
                                 color: '#22c55e',
                                 '& .MuiChip-label': { px: 0.75 },
@@ -1075,86 +1076,87 @@ export const DiscordServerConfigPage: React.FC = () => {
                   fontSize: '0.68rem',
                 }}
               >
-                The bot creates a new channel per roster inside this category. If none is set, it auto-detects a category named &ldquo;Open Runs&rdquo;.
+                The bot creates a new channel per roster inside this category. If none is set, it
+                auto-detects a category named &ldquo;Open Runs&rdquo;.
               </Typography>
             </ConfigSection>
 
             {/* Channel Name Pattern */}
             <ConfigSection
-                icon={<TextFields sx={{ color: '#5865F2', fontSize: 18 }} />}
-                title="Channel Name Pattern"
-                description="Template for auto-created channel names. Click tokens to insert them."
-                isDark={isDark}
-              >
-                <TextField
-                  fullWidth
-                  size="small"
-                  value={namePattern}
-                  onChange={(e) => setNamePattern(e.target.value)}
-                  placeholder={DEFAULT_NAME_PATTERN}
-                  sx={{ mb: 1 }}
-                />
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1.5 }}>
-                  {NAME_TOKENS.map((t) => (
-                    <Tooltip key={t.token} title={t.desc}>
-                      <Chip
-                        label={t.token}
-                        size="small"
-                        onClick={() => insertToken(t.token)}
-                        sx={{
-                          cursor: 'pointer',
-                          fontSize: '0.7rem',
-                          fontFamily: 'monospace',
-                          bgcolor: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
-                          color: '#5865F2',
-                          border: '1px solid rgba(88,101,242,0.2)',
-                          '&:hover': { bgcolor: 'rgba(88,101,242,0.2)' },
-                        }}
-                      />
-                    </Tooltip>
-                  ))}
-                </Box>
+              icon={<TextFields sx={{ color: '#5865F2', fontSize: 18 }} />}
+              title="Channel Name Pattern"
+              description="Template for auto-created channel names. Click tokens to insert them."
+              isDark={isDark}
+            >
+              <TextField
+                fullWidth
+                size="small"
+                value={namePattern}
+                onChange={(e) => setNamePattern(e.target.value)}
+                placeholder={DEFAULT_NAME_PATTERN}
+                sx={{ mb: 1 }}
+              />
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1.5 }}>
+                {NAME_TOKENS.map((t) => (
+                  <Tooltip key={t.token} title={t.desc}>
+                    <Chip
+                      label={t.token}
+                      size="small"
+                      onClick={() => insertToken(t.token)}
+                      sx={{
+                        cursor: 'pointer',
+                        fontSize: '0.7rem',
+                        fontFamily: 'monospace',
+                        bgcolor: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
+                        color: '#5865F2',
+                        border: '1px solid rgba(88,101,242,0.2)',
+                        '&:hover': { bgcolor: 'rgba(88,101,242,0.2)' },
+                      }}
+                    />
+                  </Tooltip>
+                ))}
+              </Box>
 
-                {/* Live preview */}
-                {channelPreview && (
-                  <Box
+              {/* Live preview */}
+              {channelPreview && (
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 1,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(88,101,242,0.06)' : 'rgba(88,101,242,0.04)',
+                    border: isDark
+                      ? '1px solid rgba(88,101,242,0.15)'
+                      : '1px solid rgba(88,101,242,0.1)',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
                     sx={{
-                      px: 1.5,
-                      py: 1,
-                      borderRadius: '8px',
-                      bgcolor: isDark ? 'rgba(88,101,242,0.06)' : 'rgba(88,101,242,0.04)',
-                      border: isDark
-                        ? '1px solid rgba(88,101,242,0.15)'
-                        : '1px solid rgba(88,101,242,0.1)',
+                      display: 'block',
+                      mb: 0.25,
+                      fontSize: '0.6rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        display: 'block',
-                        mb: 0.25,
-                        fontSize: '0.6rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                      }}
-                    >
-                      Channel name preview
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: 'monospace',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        color: isDark ? '#bcc5f0' : '#4752C4',
-                      }}
-                    >
-                      # {channelPreview || 'roster'}
-                    </Typography>
-                  </Box>
-                )}
-              </ConfigSection>
+                    Channel name preview
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      color: isDark ? '#bcc5f0' : '#4752C4',
+                    }}
+                  >
+                    # {channelPreview || 'roster'}
+                  </Typography>
+                </Box>
+              )}
+            </ConfigSection>
 
             {/* Server Timezone */}
             <ConfigSection

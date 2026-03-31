@@ -121,7 +121,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [customAddonName, setCustomAddonName] = React.useState('');
   const [customAddonId, setCustomAddonId] = React.useState('');
 
-
   const handleTrialChange = (e: SelectChangeEvent): void => {
     setTrialId(e.target.value);
   };
@@ -378,9 +377,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           backdropFilter: 'blur(20px)',
           borderRadius: '20px',
           border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark
-            ? '0 8px 30px rgba(0,0,0,0.25)'
-            : '0 4px 12px rgba(15,23,42,0.06)',
+          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
           maxHeight: '90vh',
         },
       }}
@@ -576,7 +573,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                     alignItems: 'center',
                     height: 30,
                     borderRadius: '20px',
-                    border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.1)'
+                      : '1px solid rgba(0,0,0,0.1)',
                     background: isDark
                       ? 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)'
                       : 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)',
@@ -588,7 +587,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       : '0 1px 4px rgba(0,0,0,0.06)',
                   }}
                 >
-                  {segBtn('Normal', difficulty === 'normal', cNorm, () => handleDifficultyChange('normal'), 'left')}
+                  {segBtn(
+                    'Normal',
+                    difficulty === 'normal',
+                    cNorm,
+                    () => handleDifficultyChange('normal'),
+                    'left',
+                  )}
                   {/* Divider line */}
                   <Box
                     sx={{
@@ -598,7 +603,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       flexShrink: 0,
                     }}
                   />
-                  {segBtn('Veteran', difficulty === 'vet', cVet, () => handleDifficultyChange('vet'), showHm ? 'mid' : 'right')}
+                  {segBtn(
+                    'Veteran',
+                    difficulty === 'vet',
+                    cVet,
+                    () => handleDifficultyChange('vet'),
+                    showHm ? 'mid' : 'right',
+                  )}
                   {showHm && (
                     <>
                       <Box

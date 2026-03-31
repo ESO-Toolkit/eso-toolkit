@@ -589,9 +589,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
           backdropFilter: 'blur(20px)',
           borderRadius: '20px',
           border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark
-            ? '0 8px 30px rgba(0,0,0,0.25)'
-            : '0 4px 12px rgba(15,23,42,0.06)',
+          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
           maxHeight: '90vh',
         },
       }}
@@ -1059,7 +1057,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       const isOpenRuns = /open\s*runs/i.test(cat.name);
                       return (
                         <MenuItem key={cat.id} value={cat.id}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}
+                          >
                             <span>{cat.name}</span>
                             {isOpenRuns && (
                               <Chip
@@ -1070,7 +1070,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                                   fontSize: '0.6rem',
                                   fontWeight: 700,
                                   ml: 'auto',
-                                  background: 'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))',
+                                  background:
+                                    'linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.1))',
                                   border: '1px solid rgba(34,197,94,0.3)',
                                   color: '#22c55e',
                                   '& .MuiChip-label': { px: 0.75 },
@@ -1163,7 +1164,15 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 </FormControl>
 
                 {/* ── Unified chip flow: difficulty toggle → presets → +custom ── */}
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center', mb: selectedTags.length > 0 ? 0 : undefined }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 0.75,
+                    alignItems: 'center',
+                    mb: selectedTags.length > 0 ? 0 : undefined,
+                  }}
+                >
                   {/* ── Segmented difficulty toggle ── */}
                   {(() => {
                     const cNorm = TAG_COLORS.normal;
@@ -1236,7 +1245,9 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                           alignItems: 'center',
                           height: 30,
                           borderRadius: '20px',
-                          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)',
+                          border: isDark
+                            ? '1px solid rgba(255,255,255,0.1)'
+                            : '1px solid rgba(0,0,0,0.1)',
                           background: isDark
                             ? 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)'
                             : 'linear-gradient(135deg, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 100%)',
@@ -1248,13 +1259,51 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                             : '0 1px 4px rgba(0,0,0,0.06)',
                         }}
                       >
-                        {segBtn('Normal', difficulty === 'normal', cNorm, () => { setDifficulty((prev) => (prev === 'normal' ? null : 'normal')); setHmEnabled(false); }, 'left')}
-                        <Box sx={{ width: '1px', height: 16, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', flexShrink: 0 }} />
-                        {segBtn('Veteran', difficulty === 'vet', cVet, () => { setDifficulty((prev) => (prev === 'vet' ? null : 'vet')); if (difficulty === 'vet') setHmEnabled(false); }, showHm ? 'mid' : 'right')}
+                        {segBtn(
+                          'Normal',
+                          difficulty === 'normal',
+                          cNorm,
+                          () => {
+                            setDifficulty((prev) => (prev === 'normal' ? null : 'normal'));
+                            setHmEnabled(false);
+                          },
+                          'left',
+                        )}
+                        <Box
+                          sx={{
+                            width: '1px',
+                            height: 16,
+                            background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            flexShrink: 0,
+                          }}
+                        />
+                        {segBtn(
+                          'Veteran',
+                          difficulty === 'vet',
+                          cVet,
+                          () => {
+                            setDifficulty((prev) => (prev === 'vet' ? null : 'vet'));
+                            if (difficulty === 'vet') setHmEnabled(false);
+                          },
+                          showHm ? 'mid' : 'right',
+                        )}
                         {showHm && (
                           <>
-                            <Box sx={{ width: '1px', height: 16, background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', flexShrink: 0 }} />
-                            {segBtn('HM', hmEnabled, cHm, () => setHmEnabled((prev) => !prev), 'right')}
+                            <Box
+                              sx={{
+                                width: '1px',
+                                height: 16,
+                                background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                flexShrink: 0,
+                              }}
+                            />
+                            {segBtn(
+                              'HM',
+                              hmEnabled,
+                              cHm,
+                              () => setHmEnabled((prev) => !prev),
+                              'right',
+                            )}
                           </>
                         )}
                       </Box>
@@ -1262,23 +1311,53 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   })()}
 
                   {/* Divider dot */}
-                  <Box sx={{ width: 3, height: 3, borderRadius: '50%', bgcolor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)' }} />
+                  <Box
+                    sx={{
+                      width: 3,
+                      height: 3,
+                      borderRadius: '50%',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+                    }}
+                  />
 
                   {/* Preset suggestions (not yet selected) */}
                   {EXTRA_PRESET_TAGS.filter((tag) => !extraTags.includes(tag)).map((tag) => {
                     const isDisabled = selectedTags.length >= MAX_TAGS;
                     const c = TAG_COLORS[tag] ?? '#888';
                     return (
-                      <Chip key={tag} label={tag} size="small"
-                        onClick={isDisabled ? undefined : () => setExtraTags((prev) => [...prev, tag])}
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size="small"
+                        onClick={
+                          isDisabled ? undefined : () => setExtraTags((prev) => [...prev, tag])
+                        }
                         sx={{
-                          fontWeight: 600, fontSize: '0.68rem', height: 26, borderRadius: '28px',
-                          cursor: isDisabled ? 'default' : 'pointer', opacity: isDisabled ? 0.3 : 1,
+                          fontWeight: 600,
+                          fontSize: '0.68rem',
+                          height: 26,
+                          borderRadius: '28px',
+                          cursor: isDisabled ? 'default' : 'pointer',
+                          opacity: isDisabled ? 0.3 : 1,
                           transition: 'all 0.3s ease',
-                          background: isDark ? `linear-gradient(135deg, ${c}12 0%, ${c}08 100%)` : `linear-gradient(135deg, ${c}0a 0%, ${c}05 100%)`,
-                          border: `1px solid ${c}30`, color: c, backdropFilter: 'blur(6px)',
+                          background: isDark
+                            ? `linear-gradient(135deg, ${c}12 0%, ${c}08 100%)`
+                            : `linear-gradient(135deg, ${c}0a 0%, ${c}05 100%)`,
+                          border: `1px solid ${c}30`,
+                          color: c,
+                          backdropFilter: 'blur(6px)',
                           '& .MuiChip-label': { opacity: 0.7 },
-                          '&:hover': isDisabled ? {} : { background: isDark ? `linear-gradient(135deg, ${c}28 0%, ${c}18 100%)` : `linear-gradient(135deg, ${c}1a 0%, ${c}0d 100%)`, borderColor: `${c}55`, boxShadow: `0 2px 8px ${c}1a`, transform: 'translateY(-1px)', '& .MuiChip-label': { opacity: 1 } },
+                          '&:hover': isDisabled
+                            ? {}
+                            : {
+                                background: isDark
+                                  ? `linear-gradient(135deg, ${c}28 0%, ${c}18 100%)`
+                                  : `linear-gradient(135deg, ${c}1a 0%, ${c}0d 100%)`,
+                                borderColor: `${c}55`,
+                                boxShadow: `0 2px 8px ${c}1a`,
+                                transform: 'translateY(-1px)',
+                                '& .MuiChip-label': { opacity: 1 },
+                              },
                         }}
                       />
                     );
@@ -1287,47 +1366,98 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   {/* "+ Custom" chip / inline input */}
                   {selectedTags.length < MAX_TAGS &&
                     (addingCustom ? (
-                      <Box sx={{
-                        display: 'inline-flex', alignItems: 'center', height: 26, borderRadius: '28px',
-                        border: isDark ? '1px solid rgba(88,101,242,0.4)' : '1px solid rgba(88,101,242,0.5)',
-                        background: isDark ? 'linear-gradient(135deg, rgba(88,101,242,0.12) 0%, rgba(88,101,242,0.06) 100%)' : 'linear-gradient(135deg, rgba(88,101,242,0.08) 0%, rgba(88,101,242,0.03) 100%)',
-                        boxShadow: isDark ? '0 0 12px rgba(88,101,242,0.15)' : '0 0 8px rgba(88,101,242,0.1)',
-                        px: 1.25, gap: 0.5, transition: 'all 0.2s ease',
-                      }}>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          height: 26,
+                          borderRadius: '28px',
+                          border: isDark
+                            ? '1px solid rgba(88,101,242,0.4)'
+                            : '1px solid rgba(88,101,242,0.5)',
+                          background: isDark
+                            ? 'linear-gradient(135deg, rgba(88,101,242,0.12) 0%, rgba(88,101,242,0.06) 100%)'
+                            : 'linear-gradient(135deg, rgba(88,101,242,0.08) 0%, rgba(88,101,242,0.03) 100%)',
+                          boxShadow: isDark
+                            ? '0 0 12px rgba(88,101,242,0.15)'
+                            : '0 0 8px rgba(88,101,242,0.1)',
+                          px: 1.25,
+                          gap: 0.5,
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
                         <AddIcon sx={{ fontSize: 14, color: accent, opacity: 0.6 }} />
-                        <input ref={customInputRef} value={tagInput}
+                        <input
+                          ref={customInputRef}
+                          value={tagInput}
                           onChange={(e) => setTagInput(e.target.value.replace(/,/g, ''))}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ',') {
                               e.preventDefault();
                               const trimmed = tagInput.trim().toLowerCase();
-                              if (trimmed && !selectedTags.includes(trimmed)) setExtraTags((prev) => [...prev, trimmed]);
+                              if (trimmed && !selectedTags.includes(trimmed))
+                                setExtraTags((prev) => [...prev, trimmed]);
                               setTagInput('');
-                            } else if (e.key === 'Escape') { setTagInput(''); setAddingCustom(false); }
+                            } else if (e.key === 'Escape') {
+                              setTagInput('');
+                              setAddingCustom(false);
+                            }
                           }}
                           onBlur={() => {
                             const trimmed = tagInput.trim().toLowerCase();
-                            if (trimmed && !selectedTags.includes(trimmed)) setExtraTags((prev) => [...prev, trimmed]);
-                            setTagInput(''); setAddingCustom(false);
+                            if (trimmed && !selectedTags.includes(trimmed))
+                              setExtraTags((prev) => [...prev, trimmed]);
+                            setTagInput('');
+                            setAddingCustom(false);
                           }}
-                          placeholder="type & enter" maxLength={30}
-                          style={{ background: 'transparent', border: 'none', outline: 'none', color: isDark ? '#e5e7eb' : '#1e293b', fontSize: '0.72rem', fontWeight: 500, width: 90, fontFamily: 'inherit' }}
+                          placeholder="type & enter"
+                          maxLength={30}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            color: isDark ? '#e5e7eb' : '#1e293b',
+                            fontSize: '0.72rem',
+                            fontWeight: 500,
+                            width: 90,
+                            fontFamily: 'inherit',
+                          }}
                         />
                       </Box>
                     ) : (
-                      <Chip icon={<AddIcon sx={{ fontSize: 15 }} />} label="Custom" size="small"
-                        onClick={() => { setAddingCustom(true); setTimeout(() => customInputRef.current?.focus(), 0); }}
+                      <Chip
+                        icon={<AddIcon sx={{ fontSize: 15 }} />}
+                        label="Custom"
+                        size="small"
+                        onClick={() => {
+                          setAddingCustom(true);
+                          setTimeout(() => customInputRef.current?.focus(), 0);
+                        }}
                         sx={{
-                          fontWeight: 600, fontSize: '0.68rem', height: 26, borderRadius: '28px',
-                          cursor: 'pointer', transition: 'all 0.3s ease',
-                          background: isDark ? 'linear-gradient(135deg, rgba(88,101,242,0.10) 0%, rgba(88,101,242,0.05) 100%)' : 'linear-gradient(135deg, rgba(88,101,242,0.06) 0%, rgba(88,101,242,0.02) 100%)',
-                          border: isDark ? '1px dashed rgba(88,101,242,0.3)' : '1px dashed rgba(88,101,242,0.35)',
+                          fontWeight: 600,
+                          fontSize: '0.68rem',
+                          height: 26,
+                          borderRadius: '28px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          background: isDark
+                            ? 'linear-gradient(135deg, rgba(88,101,242,0.10) 0%, rgba(88,101,242,0.05) 100%)'
+                            : 'linear-gradient(135deg, rgba(88,101,242,0.06) 0%, rgba(88,101,242,0.02) 100%)',
+                          border: isDark
+                            ? '1px dashed rgba(88,101,242,0.3)'
+                            : '1px dashed rgba(88,101,242,0.35)',
                           color: isDark ? 'rgba(88,101,242,0.7)' : 'rgba(88,101,242,0.8)',
-                          '& .MuiChip-icon': { color: isDark ? 'rgba(88,101,242,0.5)' : 'rgba(88,101,242,0.6)' },
+                          '& .MuiChip-icon': {
+                            color: isDark ? 'rgba(88,101,242,0.5)' : 'rgba(88,101,242,0.6)',
+                          },
                           '&:hover': {
-                            background: isDark ? 'linear-gradient(135deg, rgba(88,101,242,0.20) 0%, rgba(88,101,242,0.10) 100%)' : 'linear-gradient(135deg, rgba(88,101,242,0.12) 0%, rgba(88,101,242,0.06) 100%)',
+                            background: isDark
+                              ? 'linear-gradient(135deg, rgba(88,101,242,0.20) 0%, rgba(88,101,242,0.10) 100%)'
+                              : 'linear-gradient(135deg, rgba(88,101,242,0.12) 0%, rgba(88,101,242,0.06) 100%)',
                             borderColor: isDark ? 'rgba(88,101,242,0.5)' : 'rgba(88,101,242,0.6)',
-                            color: accent, boxShadow: '0 2px 8px rgba(88,101,242,0.15)', transform: 'translateY(-1px)',
+                            color: accent,
+                            boxShadow: '0 2px 8px rgba(88,101,242,0.15)',
+                            transform: 'translateY(-1px)',
                             '& .MuiChip-icon': { color: accent },
                           },
                         }}
@@ -1341,17 +1471,31 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     {selectedTags.map((tag) => {
                       const c = TAG_COLORS[tag] ?? (isDark ? '#94a3b8' : '#64748b');
                       return (
-                        <Chip key={tag} label={tag} size="small"
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
                           onDelete={() => {
-                            if (tag === 'vet' || tag === 'normal') { setDifficulty(null); setHmEnabled(false); }
-                            else if (tag === 'hm') { setHmEnabled(false); }
-                            else { setExtraTags((prev) => prev.filter((t) => t !== tag)); }
+                            if (tag === 'vet' || tag === 'normal') {
+                              setDifficulty(null);
+                              setHmEnabled(false);
+                            } else if (tag === 'hm') {
+                              setHmEnabled(false);
+                            } else {
+                              setExtraTags((prev) => prev.filter((t) => t !== tag));
+                            }
                           }}
                           sx={{
-                            fontWeight: 600, fontSize: '0.7rem', height: 26, borderRadius: '28px',
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            height: 26,
+                            borderRadius: '28px',
                             background: `linear-gradient(135deg, ${c}40 0%, ${c}26 50%, ${c}14 100%)`,
-                            border: `1px solid ${c}4d`, color: c,
-                            boxShadow: isDark ? `0 2px 8px ${c}25, inset 0 1px 0 rgba(255,255,255,0.1)` : `0 1px 4px ${c}20`,
+                            border: `1px solid ${c}4d`,
+                            color: c,
+                            boxShadow: isDark
+                              ? `0 2px 8px ${c}25, inset 0 1px 0 rgba(255,255,255,0.1)`
+                              : `0 1px 4px ${c}20`,
                             '& .MuiChip-label': { textShadow: isDark ? `0 0 8px ${c}40` : 'none' },
                             '& .MuiChip-deleteIcon': { color: `${c}80`, '&:hover': { color: c } },
                           }}
@@ -1364,82 +1508,81 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             )}
 
             {/* Channel name preview */}
-            {
-              (() => {
-                const guildCfg = selectedGuild ? guildConfigs[selectedGuild.id] : null;
-                const rawPattern = guildCfg?.namePattern;
-                const isLegacy =
-                  !rawPattern ||
-                  rawPattern === '{label}' ||
-                  rawPattern === '{day-short}-{time}-{trial}-{tag}';
-                const pattern = isLegacy ? DEFAULT_NAME_PATTERN : rawPattern;
-                const overrideTrimmed = channelNameOverride.trim();
-                const effectiveTrial = roster ? roster.trial_id : selectedTrialId;
-                const effectiveTags = roster ? (roster.tags ?? []) : selectedTags;
-                // Resolve difficulty: use form state for direct-publish, extract from tags for hub rosters
-                const effectiveDifficulty: 'vet' | 'normal' | null = roster
-                  ? (roster.tags ?? []).includes('vet')
-                    ? 'vet'
-                    : (roster.tags ?? []).includes('normal')
-                      ? 'normal'
-                      : null
-                  : difficulty;
-                const preview = overrideTrimmed
-                  ? overrideTrimmed
-                      .toLowerCase()
-                      .replace(/[\s_]+/g, '-')
-                      .replace(/[^a-z0-9-]/g, '')
-                      .replace(/-{2,}/g, '-')
-                      .replace(/^-|-$/g, '')
-                      .slice(0, 100) || 'roster'
-                  : buildChannelPreview({
-                      pattern,
-                      eventTime,
-                      timezone: guildTimezone,
-                      trialId: effectiveTrial,
-                      difficulty: effectiveDifficulty,
-                      tags: effectiveTags,
-                    });
-                return (
-                  <Box
+            {(() => {
+              const guildCfg = selectedGuild ? guildConfigs[selectedGuild.id] : null;
+              const rawPattern = guildCfg?.namePattern;
+              const isLegacy =
+                !rawPattern ||
+                rawPattern === '{label}' ||
+                rawPattern === '{day-short}-{time}-{trial}-{tag}';
+              const pattern = isLegacy ? DEFAULT_NAME_PATTERN : rawPattern;
+              const overrideTrimmed = channelNameOverride.trim();
+              const effectiveTrial = roster ? roster.trial_id : selectedTrialId;
+              const effectiveTags = roster ? (roster.tags ?? []) : selectedTags;
+              // Resolve difficulty: use form state for direct-publish, extract from tags for hub rosters
+              const effectiveDifficulty: 'vet' | 'normal' | null = roster
+                ? (roster.tags ?? []).includes('vet')
+                  ? 'vet'
+                  : (roster.tags ?? []).includes('normal')
+                    ? 'normal'
+                    : null
+                : difficulty;
+              const preview = overrideTrimmed
+                ? overrideTrimmed
+                    .toLowerCase()
+                    .replace(/[\s_]+/g, '-')
+                    .replace(/[^a-z0-9-]/g, '')
+                    .replace(/-{2,}/g, '-')
+                    .replace(/^-|-$/g, '')
+                    .slice(0, 100) || 'roster'
+                : buildChannelPreview({
+                    pattern,
+                    eventTime,
+                    timezone: guildTimezone,
+                    trialId: effectiveTrial,
+                    difficulty: effectiveDifficulty,
+                    tags: effectiveTags,
+                  });
+              return (
+                <Box
+                  sx={{
+                    mb: 1.5,
+                    px: 1.25,
+                    py: 0.75,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(88,101,242,0.06)' : 'rgba(88,101,242,0.04)',
+                    border: isDark
+                      ? '1px solid rgba(88,101,242,0.15)'
+                      : '1px solid rgba(88,101,242,0.1)',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
                     sx={{
-                      mb: 1.5,
-                      px: 1.25,
-                      py: 0.75,
-                      borderRadius: '8px',
-                      bgcolor: isDark ? 'rgba(88,101,242,0.06)' : 'rgba(88,101,242,0.04)',
-                      border: isDark
-                        ? '1px solid rgba(88,101,242,0.15)'
-                        : '1px solid rgba(88,101,242,0.1)',
+                      display: 'block',
+                      mb: 0.25,
+                      fontSize: '0.65rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      opacity: 0.6,
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        display: 'block',
-                        mb: 0.25,
-                        fontSize: '0.65rem',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                        opacity: 0.6,
-                      }}
-                    >
-                      Channel name preview
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: 'monospace',
-                        fontWeight: 600,
-                        fontSize: '0.82rem',
-                        color: '#5865F2',
-                      }}
-                    >
-                      # {preview}
-                    </Typography>
-                  </Box>
-                );
-              })()}
+                    Channel name preview
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      fontSize: '0.82rem',
+                      color: '#5865F2',
+                    }}
+                  >
+                    # {preview}
+                  </Typography>
+                </Box>
+              );
+            })()}
 
             {/* Advanced settings link */}
             <Box sx={{ textAlign: 'center', mb: 1 }}>
