@@ -439,25 +439,25 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       };
     } else {
       return {
-        // Light mode fight card colors — bright pastels for light backgrounds
+        // Light mode fight card colors — soft pastels for light backgrounds
         killGradient:
-          'linear-gradient(135deg, rgba(103, 232, 249, 0.6) 0%, rgba(94, 234, 212, 0.45) 50%, rgba(110, 231, 183, 0.5) 100%)',
+          'linear-gradient(135deg, rgba(153, 238, 255, 0.45) 0%, rgba(147, 240, 226, 0.35) 50%, rgba(167, 243, 208, 0.4) 100%)',
         killShadow: 'none',
         trashGradient:
-          'linear-gradient(135deg, rgba(186, 199, 213, 0.3) 0%, rgba(203, 213, 225, 0.2) 100%)',
+          'linear-gradient(135deg, rgba(186, 199, 213, 0.25) 0%, rgba(203, 213, 225, 0.15) 100%)',
         trashShadow: 'none',
         falsePositiveGradient:
-          'linear-gradient(135deg, rgba(253, 224, 71, 0.55) 0%, rgba(251, 191, 36, 0.4) 100%)',
+          'linear-gradient(135deg, rgba(253, 230, 138, 0.45) 0%, rgba(252, 211, 77, 0.35) 100%)',
         wipeRedGradient:
-          'linear-gradient(135deg, rgba(252, 129, 129, 0.6) 0%, rgba(248, 113, 113, 0.45) 100%)',
+          'linear-gradient(135deg, rgba(254, 178, 178, 0.5) 0%, rgba(252, 165, 165, 0.4) 100%)',
         wipeOrangeGradient:
-          'linear-gradient(135deg, rgba(253, 186, 116, 0.6) 0%, rgba(251, 146, 60, 0.45) 100%)',
+          'linear-gradient(135deg, rgba(254, 215, 170, 0.5) 0%, rgba(253, 186, 116, 0.4) 100%)',
         wipeYellowGradient:
-          'linear-gradient(135deg, rgba(253, 224, 71, 0.55) 0%, rgba(250, 204, 21, 0.4) 100%)',
+          'linear-gradient(135deg, rgba(254, 240, 138, 0.45) 0%, rgba(253, 224, 71, 0.35) 100%)',
         wipeLowGradient:
-          'linear-gradient(135deg, rgba(250, 204, 21, 0.45) 0%, rgba(190, 242, 100, 0.4) 100%)',
+          'linear-gradient(135deg, rgba(254, 240, 138, 0.4) 0%, rgba(217, 249, 157, 0.35) 100%)',
         wipeVeryLowGradient:
-          'linear-gradient(135deg, rgba(190, 242, 100, 0.45) 0%, rgba(134, 239, 172, 0.4) 100%)',
+          'linear-gradient(135deg, rgba(217, 249, 157, 0.4) 0%, rgba(187, 247, 208, 0.35) 100%)',
         wipeShadow: 'none',
         hoverBg: 'rgba(30, 41, 59, 0.04)',
         badgeBorder: '1px solid rgba(100, 116, 139, 0.4)',
@@ -838,7 +838,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           onClick={() => handleFightSelect(fight.id)}
           sx={{
             width: '100%',
-            height: { xs: 68, sm: 72 },
+            height: { xs: 82, sm: 88 },
             display: 'flex',
             alignItems: 'stretch',
             border: '1px solid',
@@ -922,7 +922,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     ? getThemeColors.falsePositiveGradient
                     : getThemeColors.killGradient,
               borderRadius: '8px',
-              opacity: darkMode ? 0.65 : 0.75,
+              opacity: darkMode ? 0.65 : 0.6,
               zIndex: 0,
             }}
           />
@@ -976,99 +976,167 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'center',
-              pl: { xs: 1.5, sm: 2 },
-              pr: { xs: 1, sm: 1.25 },
-              py: 0.75,
+              pl: { xs: 1.25, sm: 1.75 },
+              pr: { xs: 0.75, sm: 1 },
+              py: { xs: 0.75, sm: 1 },
             }}
           >
-            {/* Row 1: Pull # + Status pill */}
+            {/* Zone A: Header — pull # + status badge */}
             <Box
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: 0.5,
               }}
             >
               <Typography
                 sx={{
-                  fontSize: '0.58rem',
+                  fontSize: '0.62rem',
+                  fontWeight: 600,
                   fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  color: darkMode ? 'rgba(255,255,255,0.35)' : 'rgba(100,116,139,0.45)',
+                  color: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(100,116,139,0.5)',
                   lineHeight: 1,
-                  letterSpacing: '0.05em',
+                  letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                 }}
               >
                 #{idx + 1}
               </Typography>
-              {/* Status micro-pill */}
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  px: 0.6,
-                  py: 0.15,
-                  borderRadius: '4px',
-                  background: darkMode
-                    ? `${statusColor}15`
-                    : `${statusColor}12`,
-                  border: `1px solid ${statusColor}30`,
-                  backdropFilter: 'blur(4px)',
-                }}
-              >
-                <Typography
+              {/* Status badge */}
+              {isBossFight && (
+                <Box
                   sx={{
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    color: statusColor,
-                    lineHeight: 1,
-                    textShadow: darkMode
-                      ? `0 0 6px ${statusColor}66, 0 0 12px ${statusColor}33`
-                      : 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 0.5,
+                    py: 0.15,
+                    borderRadius: '3px',
+                    border: `1px solid ${statusColor}40`,
+                    background: darkMode ? `${statusColor}0a` : `${statusColor}08`,
                   }}
                 >
-                  {isWipe ? bossHealthPercent + '%' : isFalsePositive ? '⚠' : '✓'}
-                </Typography>
-              </Box>
+                  <Typography
+                    sx={{
+                      fontSize: isWipe ? '0.65rem' : '0.55rem',
+                      fontWeight: 800,
+                      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                      color: statusColor,
+                      lineHeight: 1,
+                      letterSpacing: isWipe ? '0.04em' : '0.12em',
+                      textTransform: 'uppercase',
+                      textShadow: darkMode
+                        ? `0 0 8px ${statusColor}88`
+                        : 'none',
+                    }}
+                  >
+                    {isWipe ? (
+                      bossHealthPercent + '%'
+                    ) : isFalsePositive ? (
+                      <>
+                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>FP</Box>
+                        <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>⚠</Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>KILL</Box>
+                        <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>✓</Box>
+                      </>
+                    )}
+                  </Typography>
+                </Box>
+              )}
             </Box>
-            {/* Row 2: Hero duration */}
+
+            {/* Zone B: Hero duration — fills remaining vertical space */}
             <Typography
+              component="div"
               sx={{
-                fontSize: { xs: '0.9rem', sm: '1.05rem' },
+                flexGrow: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: { xs: '1.2rem', sm: '1.4rem' },
                 fontWeight: 700,
                 fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                textAlign: 'center',
                 color: darkMode ? '#f1f5f9' : '#0f172a',
                 textShadow: darkMode
-                  ? `0 0 8px ${accentBarColor}40, 0 1px 2px rgba(0,0,0,0.5)`
-                  : `0 1px 2px rgba(0,0,0,0.06)`,
-                lineHeight: 1.2,
-                letterSpacing: '0.06em',
+                  ? `0 0 12px ${accentBarColor}50, 0 1px 3px rgba(0,0,0,0.6)`
+                  : `0 1px 2px rgba(0,0,0,0.08)`,
+                lineHeight: 1,
+                letterSpacing: '0.08em',
               }}
             >
               {fight.startTime && fight.endTime
                 ? formatDuration(fight.startTime, fight.endTime)
                 : '--'}
             </Typography>
-            {/* Row 3: Timestamp */}
-            <Typography
+
+            {/* Zone C: Data strip — timestamp + player count + progress bar */}
+            <Box
               sx={{
-                fontSize: '0.5rem',
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                color: darkMode ? 'rgba(255,255,255,0.28)' : 'rgba(100,116,139,0.45)',
-                lineHeight: 1,
-                textAlign: 'center',
-                mt: 0.5,
-                letterSpacing: '0.03em',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 0.5,
               }}
             >
-              {fight.startTime && reportStartTime
-                ? formatTimestamp(fight.startTime, reportStartTime)
-                : ''}
-            </Typography>
+              <Typography
+                sx={{
+                  fontSize: '0.55rem',
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  color: darkMode ? 'rgba(255,255,255,0.32)' : 'rgba(100,116,139,0.5)',
+                  lineHeight: 1,
+                  letterSpacing: '0.02em',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                {fight.startTime && reportStartTime
+                  ? formatTimestamp(fight.startTime, reportStartTime)
+                  : ''}
+              </Typography>
+              {/* Player count — hidden on xs */}
+              {fight.friendlyPlayers && fight.friendlyPlayers.filter(Boolean).length > 0 && (
+                <Typography
+                  sx={{
+                    fontSize: '0.5rem',
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    color: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(100,116,139,0.4)',
+                    lineHeight: 1,
+                    letterSpacing: '0.04em',
+                    display: { xs: 'none', sm: 'block' },
+                    flexShrink: 0,
+                  }}
+                >
+                  {fight.friendlyPlayers.filter(Boolean).length}p
+                </Typography>
+              )}
+              {/* Progress micro-bar — wipes only */}
+              {isWipe ? (
+                <Box
+                  sx={{
+                    width: { xs: 28, sm: 40 },
+                    height: 3,
+                    borderRadius: '1.5px',
+                    background: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      height: '100%',
+                      width: `${Math.max(2, 100 - bossHealthPercent)}%`,
+                      borderRadius: '1.5px',
+                      background: accentBarColor,
+                      boxShadow: darkMode ? `0 0 4px ${accentBarColor}66` : 'none',
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Box sx={{ width: { xs: 28, sm: 40 }, flexShrink: 0 }} />
+              )}
+            </Box>
           </Box>
         </ListItemButton>
       </ListItem>
