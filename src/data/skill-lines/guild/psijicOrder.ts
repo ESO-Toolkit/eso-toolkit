@@ -6,7 +6,7 @@ export const psijicOrder: SkillLineData = {
   name: 'Psijic Order',
   class: 'guild',
   category: 'guild',
-  icon: 'https://eso-hub.com/storage/icons/ability_psijic_005.png',
+  icon: 'ability_psijic_005',
   skills: [
     {
       id: AbilityId.UNDO,
@@ -139,6 +139,7 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.SEE_THE_UNSEEN,
+      icon: 'ability_psijic_007',
       name: 'See the Unseen',
       description:
         'The insight you have gained from the Psijic Order grants you vision of the spiritual world. You can now interact with rifts all throughout Tamriel.',
@@ -148,6 +149,12 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.CLAIRVOYANCE,
+      icon: 'ability_psijic_008',
+      alternateIds: [
+        72694, 76466, 76467, 77444, 77458, 77806, 77809, 77920, 77937, 77938, 77939, 77940, 77942,
+        77943, 78002, 78003, 79795, 79796, 82899, 82900, 82902, 98154, 98190, 98191, 98192, 98193,
+        98194, 103809, 103811, 109283, 109301,
+      ],
       name: 'Clairvoyance',
       description: 'Reduces the cost of your Psijic Order abilities by 15%.',
       type: 'passive',
@@ -156,6 +163,11 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.SPELL_ORB,
+      icon: 'ability_psijic_009',
+      alternateIds: [
+        103819, 103820, 103826, 103827, 103828, 103829, 103878, 103879, 103880, 103881, 103882,
+        103883,
+      ],
       name: 'Spell Orb',
       description:
         'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 1124 Magic Damage. This effect scales off your highest offensive stats.',
@@ -165,6 +177,12 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.CONCENTRATED_BARRIER,
+      icon: 'ability_psijic_010',
+      alternateIds: [
+        103888, 103923, 103942, 103944, 103949, 103964, 103965, 103966, 103967, 103968, 104311,
+        104312, 104313, 104314, 104330, 104331, 104338, 104339, 104340, 104341, 193305, 193313,
+        202836, 202852,
+      ],
       name: 'Concentrated Barrier',
       description:
         'While you have a Psijic Order ability slotted and are Bracing, you gain a damage shield that absorbs 5000 damage. This damage shield recharges back to full strength after you spend 10 seconds not Bracing.',
@@ -174,6 +192,7 @@ export const psijicOrder: SkillLineData = {
     },
     {
       id: AbilityId.DELIBERATION,
+      icon: 'ability_psijic_011',
       name: 'Deliberation',
       description:
         'While you are casting or channeling a Psijic Order ability you reduce your damage taken by 30%.',

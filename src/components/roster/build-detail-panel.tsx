@@ -10,8 +10,6 @@ import { Box, ButtonBase, Chip, Collapse, Tooltip, Typography } from '@mui/mater
 import React, { useCallback, useState } from 'react';
 
 import { ESO_CONSUMABLE_LOOKUP } from '../../data/esoConsumables';
-import { getEnchantName } from '../../data/esoEnchants';
-import { getTraitName } from '../../data/esoTraits';
 import type { BuildChampionPoints } from '../../features/build-editor/types/build.types';
 import { getChampionPointById } from '../../features/loadout-manager/data/championPointData';
 import { getItemInfo } from '../../features/loadout-manager/data/itemIdMap';
@@ -22,6 +20,11 @@ import { getChampionPointAbilityName } from '../../types/champion-points';
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
+
+/** Resolve an icon value to a full URL, handling both short names and full URLs. */
+const resolveIconUrl = (icon: string): string =>
+  icon.startsWith('http') ? icon : `${SKILL_ICON_URL}${icon}.png`;
+
 const TILE = 36;
 const ULT_TILE = 42;
 const SKILL_SLOTS = [3, 4, 5, 6, 7] as const;
@@ -59,7 +62,7 @@ const SkillTile: React.FC<{
   isDarkMode: boolean;
 }> = ({ abilityId, isUltimate = false, isDarkMode }) => {
   const skill = abilityId ? getSkillById(abilityId) : null;
-  const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate ? ULT_TILE : TILE;
   const accent = isUltimate ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
 
@@ -292,8 +295,6 @@ const GearDisplay: React.FC<{
         const itemName = itemInfo?.name ?? `Item #${piece.id}`;
         const setName = itemInfo?.setName;
         const weight = piece.weight ? WEIGHT_LABELS[piece.weight] : null;
-        const traitLabel = piece.trait ? getTraitName(piece.trait) : null;
-        const enchantLabel = piece.enchant ? getEnchantName(piece.enchant) : null;
 
         return (
           <Box
@@ -345,36 +346,6 @@ const GearDisplay: React.FC<{
                   backgroundColor: isDarkMode ? 'rgba(168,85,247,0.08)' : 'rgba(147,51,234,0.06)',
                   color: isDarkMode ? 'rgba(168,85,247,0.85)' : 'rgba(126,34,206,0.85)',
                   border: `1px solid ${isDarkMode ? 'rgba(168,85,247,0.2)' : 'rgba(147,51,234,0.15)'}`,
-                  '& .MuiChip-label': { px: 0.5 },
-                }}
-              />
-            )}
-            {traitLabel && (
-              <Chip
-                label={traitLabel}
-                size="small"
-                sx={{
-                  height: 16,
-                  fontSize: '0.5rem',
-                  fontWeight: 500,
-                  backgroundColor: isDarkMode ? 'rgba(251,191,36,0.08)' : 'rgba(217,119,6,0.06)',
-                  color: isDarkMode ? 'rgba(251,191,36,0.85)' : 'rgba(180,83,9,0.85)',
-                  border: `1px solid ${isDarkMode ? 'rgba(251,191,36,0.2)' : 'rgba(217,119,6,0.15)'}`,
-                  '& .MuiChip-label': { px: 0.5 },
-                }}
-              />
-            )}
-            {enchantLabel && (
-              <Chip
-                label={enchantLabel}
-                size="small"
-                sx={{
-                  height: 16,
-                  fontSize: '0.5rem',
-                  fontWeight: 500,
-                  backgroundColor: isDarkMode ? 'rgba(56,189,248,0.08)' : 'rgba(14,165,233,0.06)',
-                  color: isDarkMode ? 'rgba(56,189,248,0.85)' : 'rgba(3,105,161,0.85)',
-                  border: `1px solid ${isDarkMode ? 'rgba(56,189,248,0.2)' : 'rgba(14,165,233,0.15)'}`,
                   '& .MuiChip-label': { px: 0.5 },
                 }}
               />
@@ -548,8 +519,6 @@ export const BuildDetailPanel: React.FC<BuildDetailPanelProps> = ({
             <ButtonBase
               key={badge.key}
               onClick={() => toggle(badge.key)}
-              aria-expanded={expanded.has(badge.key)}
-              aria-label={`Toggle ${badge.label} details`}
               sx={{ borderRadius: '9px' }}
             >
               <Chip

@@ -182,6 +182,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_ACCELERATED_GROWTH,
+      alternateIds: [85882, 85883],
       name: 'Accelerated Growth',
       type: 'passive',
       icon: 'passive_warden_008',
@@ -191,6 +192,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_EMERALD_MOSS,
+      alternateIds: [85876, 85877],
       name: 'Emerald Moss',
       type: 'passive',
       icon: 'passive_warden_005',
@@ -200,6 +202,7 @@ export const greenBalance: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_MATURATION,
+      alternateIds: [85880, 85881],
       name: 'Maturation',
       type: 'passive',
       icon: 'passive_warden_007',

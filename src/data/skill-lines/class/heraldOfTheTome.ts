@@ -184,6 +184,7 @@ export const heraldOfTheTome: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_FATED_FORTUNE,
+      alternateIds: [184844, 184847, 194873, 194875],
       name: 'Fated Fortune',
       type: 'passive',
       icon: 'passive_arcanist_04',
@@ -193,6 +194,7 @@ export const heraldOfTheTome: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_HARNESSED_QUINTESSENCE,
+      alternateIds: [184857, 184858, 184859, 184860],
       name: 'Harnessed Quintessence',
       type: 'passive',
       icon: 'passive_arcanist_02',
@@ -202,6 +204,7 @@ export const heraldOfTheTome: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_PSYCHIC_LESION,
+      alternateIds: [184870, 184873, 201231, 201232],
       name: 'Psychic Lesion',
       type: 'passive',
       icon: 'passive_arcanist_03',
@@ -211,6 +214,7 @@ export const heraldOfTheTome: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_SPLINTERED_SECRETS,
+      alternateIds: [184885, 184887],
       name: 'Splintered Secrets',
       type: 'passive',
       icon: 'passive_arcanist_01',

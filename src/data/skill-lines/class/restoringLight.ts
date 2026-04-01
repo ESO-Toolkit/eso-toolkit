@@ -181,6 +181,7 @@ export const restoringLight: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_LIGHT_WEAVER,
+      alternateIds: [31760, 31762, 45208, 45210, 144134, 144136, 144137, 243838, 243841],
       name: 'Light Weaver',
       type: 'passive',
       icon: 'ability_templar_012',
@@ -190,6 +191,7 @@ export const restoringLight: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_MASTER_RITUALIST,
+      alternateIds: [31747, 31748, 31749, 31750, 45202, 45203, 45204, 45205],
       name: 'Master Ritualist',
       type: 'passive',
       icon: 'ability_templar_026',
@@ -199,6 +201,7 @@ export const restoringLight: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_MENDING,
+      alternateIds: [31751, 45206, 214666, 218899],
       name: 'Mending',
       type: 'passive',
       icon: 'ability_templar_004',
@@ -208,6 +211,7 @@ export const restoringLight: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_SACRED_GROUND,
+      alternateIds: [31757, 31759, 45207, 77082, 80195, 80230, 80261],
       name: 'Sacred Ground',
       type: 'passive',
       icon: 'ability_templar_014',

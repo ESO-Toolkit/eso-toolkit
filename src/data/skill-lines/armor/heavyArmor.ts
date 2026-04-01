@@ -17,7 +17,7 @@ export const heavyArmor: SkillLineData = {
   name: 'Heavy Armor',
   class: 'armor',
   category: 'armor',
-  icon: 'https://eso-hub.com/storage/icons/ability_armor_016.png',
+  icon: 'ability_armor_001',
   skills: [
     {
       id: AbilityId.UNSTOPPABLE,
@@ -44,25 +44,27 @@ export const heavyArmor: SkillLineData = {
         'Intensify your physical presence to gain Major Resolve, increasing your Physical and Spell Resistance by 5948 for 20 seconds. While this effect persists, each piece of Heavy Armor worn decreases the cost of Break Free by 5%. Also grants you immunity to knockback and disabling effects for 6 seconds, but reduces your Movement Speed by 65% for the duration.',
     },
     {
-      id: 0,
+      id: 150184,
       name: 'Heavy Armor Bonuses',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: 'https://eso-hub.com/storage/icons/ability_armor_016.png',
+      baseAbilityId: 150184,
+      icon: 'passive_armor2_heavy',
       description:
         'Each piece of Heavy Armor does the following: Reduces damage taken from Martial attacks by 1%, Increases the amount of damage blocked by 1%, Increases damage done with Bash by 30, Reduces your damage taken while immune to crowd control by 1%',
     },
     {
-      id: 0,
+      id: 152780,
       name: 'Heavy Armor Penalties',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: 'https://eso-hub.com/storage/icons/ability_armor_016.png',
+      baseAbilityId: 152780,
+      icon: 'passive_armor2_heavy',
       description:
         'Each piece of Heavy Armor does the following: Increases damage taken from Magical attacks by 1%, Reduces the Movement Speed bonus of Sprint by 1%, Increases the cost of Roll Dodge by 3%, Increases the size of your detection area while Sneaking by 10%',
     },
     {
       id: AbilityId.RESOLVE,
+      icon: 'ability_dragonknight_020',
+      alternateIds: [382, 29825, 45531, 45533, 88549, 88550, 88551, 126535, 138924],
       name: 'Resolve',
       type: 'passive',
       baseAbilityId: AbilityId.RESOLVE,
@@ -71,6 +73,11 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.CONSTITUTION,
+      icon: 'ability_armor_014',
+      alternateIds: [
+        29769, 45526, 58428, 58429, 58430, 58431, 58432, 58503, 88552, 88553, 200393, 200394,
+        200395,
+      ],
       name: 'Constitution',
       type: 'passive',
       baseAbilityId: AbilityId.CONSTITUTION,
@@ -79,6 +86,8 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.JUGGERNAUT,
+      icon: 'ability_armor_012',
+      alternateIds: [4130, 18383, 29804, 45546, 142110],
       name: 'Juggernaut',
       type: 'passive',
       baseAbilityId: AbilityId.JUGGERNAUT,
@@ -86,6 +95,8 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.REVITALIZE,
+      icon: 'ability_armor_013',
+      alternateIds: [29773, 45528],
       name: 'Revitalize',
       type: 'passive',
       baseAbilityId: AbilityId.REVITALIZE,
@@ -94,6 +105,8 @@ export const heavyArmor: SkillLineData = {
     },
     {
       id: AbilityId.RAPID_MENDING,
+      icon: 'ability_armor_015',
+      alternateIds: [29791, 45529, 79994, 79995, 102006, 102007],
       name: 'Rapid Mending',
       type: 'passive',
       baseAbilityId: AbilityId.RAPID_MENDING,

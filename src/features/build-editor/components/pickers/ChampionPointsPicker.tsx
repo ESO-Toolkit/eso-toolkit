@@ -6,7 +6,7 @@
  * ChampionSection wraps this with useSelector / dispatch.
  */
 
-import { Box, ButtonBase, Divider, Stack, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import { Box, ButtonBase, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useMemo, useState } from 'react';
 
@@ -85,7 +85,6 @@ const CPSlot: React.FC<CPSlotProps> = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const entry =
     cpId != null ? CHAMPION_POINT_ABILITIES[cpId as keyof typeof CHAMPION_POINT_ABILITIES] : null;
 
@@ -103,15 +102,15 @@ const CPSlot: React.FC<CPSlotProps> = ({
         onClick={handleClick}
         sx={{
           flex: '1 1 calc(50% - 6px)',
-          minHeight: isMobile ? 60 : 68,
+          minHeight: 68,
           borderRadius: 2.5,
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? 1 : 1.25,
-          px: isMobile ? 1 : 1.5,
-          py: isMobile ? 0.75 : 1,
+          gap: 1.25,
+          px: 1.5,
+          py: 1,
           background: cpId
             ? isDark
               ? `linear-gradient(135deg, rgba(${tree.colorRgb}, 0.14) 0%, rgba(${tree.colorRgb}, 0.04) 100%)`

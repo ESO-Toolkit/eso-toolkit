@@ -15,6 +15,8 @@ import type {
   BuildChampionPoints,
   CombatRole,
   ESOClass,
+  QuickslotEntry,
+  SkilledAbility,
 } from '../features/build-editor/types/build.types';
 import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import type { DPSSlot, HealerSetup, TankSetup } from '../types/roster';
@@ -26,6 +28,9 @@ export interface SlotInlineData {
   cpPoints?: BuildChampionPoints;
   passives?: number[];
   food?: { id?: number; name?: string };
+  quickslots?: QuickslotEntry[];
+  skilledAbilities?: SkilledAbility[];
+  scribedAbilityIds?: number[];
 }
 
 // ─── Build → Slot ─────────────────────────────────────────────────────────────
@@ -44,6 +49,9 @@ export function snapshotBuildToSlot(build: Build, setupIndex: number): SlotInlin
     cpPoints: setup.cp,
     passives: setup.passives.length > 0 ? setup.passives : undefined,
     food: food.id != null || food.name ? food : undefined,
+    quickslots: setup.quickslots?.length ? setup.quickslots : undefined,
+    skilledAbilities: setup.skilledAbilities?.length ? setup.skilledAbilities : undefined,
+    scribedAbilityIds: setup.scribedAbilityIds?.length ? setup.scribedAbilityIds : undefined,
   };
 }
 
@@ -94,6 +102,15 @@ export function createBuildFromSlot(
         consumables: { potions: [], food: slot.food ?? {} },
         passives: slot.passives ?? [],
         screenshots: [],
+        ...('quickslots' in slot && (slot as SlotInlineData).quickslots?.length
+          ? { quickslots: (slot as SlotInlineData).quickslots }
+          : {}),
+        ...('skilledAbilities' in slot && (slot as SlotInlineData).skilledAbilities?.length
+          ? { skilledAbilities: (slot as SlotInlineData).skilledAbilities }
+          : {}),
+        ...('scribedAbilityIds' in slot && (slot as SlotInlineData).scribedAbilityIds?.length
+          ? { scribedAbilityIds: (slot as SlotInlineData).scribedAbilityIds }
+          : {}),
       },
     ],
     guide: { content: '', youtubeUrl: '', bannerImageUrl: '' },

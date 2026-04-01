@@ -7,15 +7,11 @@
  */
 
 import {
-  Close as CloseIcon,
   ContentCopy as CopyIcon,
   Edit as EditIcon,
   FitnessCenter as FitnessIcon,
   LocalFireDepartment as WarfareIcon,
-  NavigateBefore as PrevIcon,
-  NavigateNext as NextIcon,
   OpenInNew as OpenInNewIcon,
-  PhotoLibrary as PhotoLibraryIcon,
   YouTube as YouTubeIcon,
 } from '@mui/icons-material';
 import {
@@ -24,24 +20,17 @@ import {
   Button,
   Chip,
   Container,
-  Dialog,
   Divider,
-  IconButton,
-  ImageList,
-  ImageListItem,
   Skeleton,
   Snackbar,
   Tooltip,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { GearSetTooltip } from '../components/GearSetTooltip';
-import { LazySkillTooltip } from '../components/LazySkillTooltip';
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
 import { ESO_POTION_LOOKUP } from '../data/esoPotions';
@@ -67,24 +56,22 @@ import {
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
-import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
-import { buildTooltipProps } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
 
 const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
 
+/** Resolve an icon value to a full URL, handling both short names and full URLs. */
+const resolveIconUrl = (icon: string): string =>
+  icon.startsWith('http') ? icon : `${SKILL_ICON_URL}${icon}.png`;
+
 /**
- * Hook to ensure the skill cache is populated before rendering skill slots.
- * getSkillById uses a lazy async cache — returns undefined until ready.
- * This calls preloadSkillData() and re-renders once the cache is warm.
+ * Ensure the skill cache is populated before rendering skill slots.
+ * The cache initializes synchronously so this is a no-op after the first call.
  */
 function useSkillCacheReady(): boolean {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    void preloadSkillData().then(() => setReady(true));
-  }, []);
-  return ready;
+  preloadSkillData();
+  return true;
 }
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
@@ -311,20 +298,13 @@ const SkillSlot: React.FC<{
 }> = ({ slotIndex, abilityId, isUltimate = false }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const skill = abilityId ? getSkillById(abilityId) : null;
-  const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate ? ULT_SIZE : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
 
   /** Gold accent for ultimate, class accent for regular abilities */
   const accentA = (a: number): string =>
     isUltimate ? `rgba(255,179,0,${a})` : `rgba(var(--be-accent-rgb, 56,189,248),${a})`;
-
-  const tooltipContent = useMemo(() => {
-    if (!skill) return `Slot ${label}${isUltimate ? ' (Ultimate)' : ''}`;
-    const props = buildTooltipProps({ abilityId: skill.id, abilityName: skill.name });
-    if (props) return <LazySkillTooltip {...props} />;
-    return `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`;
-  }, [skill, label, isUltimate]);
 
   return (
     <Box
@@ -339,12 +319,13 @@ const SkillSlot: React.FC<{
       }}
     >
       <Tooltip
-        title={tooltipContent}
+        title={
+          skill
+            ? `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`
+            : `Slot ${label}${isUltimate ? ' (Ultimate)' : ''}`
+        }
         arrow
         placement="top"
-        enterDelay={300}
-        enterTouchDelay={0}
-        leaveTouchDelay={3000}
       >
         <Box
           sx={{
@@ -492,13 +473,6 @@ const GearSlotDisplay: React.FC<{
   const traitLabel = trait ? getTraitName(trait) : null;
   const enchantLabel = enchant ? getEnchantName(enchant) : null;
 
-  const gearTooltipContent = useMemo(() => {
-    if (!setName) return null;
-    const props = getGearSetTooltipPropsByName(setName);
-    if (props) return <GearSetTooltip {...props} />;
-    return null;
-  }, [setName]);
-
   return (
     <Box
       sx={{
@@ -566,79 +540,32 @@ const GearSlotDisplay: React.FC<{
 
       {/* Item name + set name + trait/enchant */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        {gearTooltipContent ? (
-          <Tooltip
-            title={gearTooltipContent}
-            arrow
-            placement="top"
-            enterDelay={400}
-            enterTouchDelay={0}
-            leaveTouchDelay={3000}
+        <Typography
+          sx={{
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {displayName}
+        </Typography>
+        {setName && setName !== displayName && (
+          <Typography
+            sx={{
+              fontSize: '0.6rem',
+              fontWeight: 500,
+              color: 'var(--be-accent, #38bdf8)',
+              opacity: 0.7,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
           >
-            <Box sx={{ cursor: 'help' }}>
-              <Typography
-                sx={{
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {displayName}
-              </Typography>
-              {setName && setName !== displayName && (
-                <Typography
-                  sx={{
-                    fontSize: '0.6rem',
-                    fontWeight: 500,
-                    color: 'var(--be-accent, #38bdf8)',
-                    opacity: 0.7,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    '&:hover': {
-                      textDecoration: 'underline dotted',
-                      textUnderlineOffset: 2,
-                    },
-                  }}
-                >
-                  {setName}
-                </Typography>
-              )}
-            </Box>
-          </Tooltip>
-        ) : (
-          <>
-            <Typography
-              sx={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {displayName}
-            </Typography>
-            {setName && setName !== displayName && (
-              <Typography
-                sx={{
-                  fontSize: '0.6rem',
-                  fontWeight: 500,
-                  color: 'var(--be-accent, #38bdf8)',
-                  opacity: 0.7,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {setName}
-              </Typography>
-            )}
-          </>
+            {setName}
+          </Typography>
         )}
         {(traitLabel || enchantLabel) && (
           <Box sx={{ display: 'flex', gap: 0.5, mt: 0.25, flexWrap: 'wrap' }}>
@@ -694,197 +621,6 @@ const GearSlotDisplay: React.FC<{
         )}
       </Box>
     </Box>
-  );
-};
-
-// ─── Screenshot Gallery (masonry layout with lightbox) ────────────────────────
-
-const ScreenshotGallery: React.FC<{ screenshots: string[]; setupName: string }> = ({
-  screenshots,
-  setupName,
-}) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const prefersReduced = useReducedMotion();
-  const isXs = useMediaQuery(theme.breakpoints.only('xs'));
-  const isSm = useMediaQuery(theme.breakpoints.only('sm'));
-
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-
-  if (screenshots.length === 0) return null;
-
-  const cols = isXs ? 1 : isSm ? 2 : 3;
-
-  const handlePrev = (): void =>
-    setLightboxIndex((i) => (i !== null ? (i - 1 + screenshots.length) % screenshots.length : 0));
-  const handleNext = (): void =>
-    setLightboxIndex((i) => (i !== null ? (i + 1) % screenshots.length : 0));
-
-  return (
-    <>
-      <motion.div variants={fadeInUp}>
-        <GlassPanel variant="subtle" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel
-            label="Screenshots"
-            count={`${screenshots.length}`}
-            icon={<PhotoLibraryIcon sx={{ fontSize: 16 }} />}
-          />
-
-          <ImageList variant="masonry" cols={cols} gap={10}>
-            {screenshots.map((src, i) => (
-              <ImageListItem
-                key={`${src.slice(0, 48)}-${i}`}
-                sx={{ cursor: 'pointer' }}
-                onClick={() => setLightboxIndex(i)}
-              >
-                <motion.div
-                  initial={prefersReduced ? false : { opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.25, delay: i * 0.05 }}
-                >
-                  <Box
-                    sx={{
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        borderColor: 'var(--be-accent, #38bdf8)',
-                        boxShadow: isDark
-                          ? '0 8px 24px rgba(0,0,0,0.4), 0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)'
-                          : '0 8px 20px rgba(0,0,0,0.12)',
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
-                  >
-                    <img
-                      src={src}
-                      alt={`${setupName} screenshot ${i + 1}`}
-                      loading="lazy"
-                      style={{ width: '100%', display: 'block', borderRadius: 'inherit' }}
-                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </Box>
-                </motion.div>
-              </ImageListItem>
-            ))}
-          </ImageList>
-        </GlassPanel>
-      </motion.div>
-
-      {/* ── Lightbox Dialog ── */}
-      <Dialog
-        open={lightboxIndex !== null}
-        onClose={() => setLightboxIndex(null)}
-        maxWidth={false}
-        slotProps={{
-          paper: {
-            sx: {
-              background: 'rgba(0,0,0,0.92)',
-              backdropFilter: 'blur(12px)',
-              borderRadius: 3,
-              overflow: 'hidden',
-              maxWidth: '92vw',
-              maxHeight: '92vh',
-              m: 1,
-            },
-          },
-          backdrop: {
-            sx: { background: 'rgba(0,0,0,0.85)' },
-          },
-        }}
-      >
-        {lightboxIndex !== null && (
-          <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-            {/* Close button */}
-            <IconButton
-              onClick={() => setLightboxIndex(null)}
-              sx={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                zIndex: 2,
-                color: '#fff',
-                background: 'rgba(0,0,0,0.5)',
-                '&:hover': { background: 'rgba(0,0,0,0.7)' },
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-
-            {/* Nav buttons (only when multiple screenshots) */}
-            {screenshots.length > 1 && (
-              <>
-                <IconButton
-                  onClick={handlePrev}
-                  sx={{
-                    position: 'absolute',
-                    left: 8,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    zIndex: 2,
-                    color: '#fff',
-                    background: 'rgba(0,0,0,0.5)',
-                    '&:hover': { background: 'rgba(0,0,0,0.7)' },
-                  }}
-                >
-                  <PrevIcon />
-                </IconButton>
-                <IconButton
-                  onClick={handleNext}
-                  sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    zIndex: 2,
-                    color: '#fff',
-                    background: 'rgba(0,0,0,0.5)',
-                    '&:hover': { background: 'rgba(0,0,0,0.7)' },
-                  }}
-                >
-                  <NextIcon />
-                </IconButton>
-              </>
-            )}
-
-            <img
-              src={screenshots[lightboxIndex]}
-              alt={`${setupName} screenshot ${lightboxIndex + 1}`}
-              style={{
-                maxWidth: '90vw',
-                maxHeight: '88vh',
-                objectFit: 'contain',
-                display: 'block',
-              }}
-            />
-
-            {/* Counter */}
-            {screenshots.length > 1 && (
-              <Typography
-                sx={{
-                  position: 'absolute',
-                  bottom: 10,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  color: 'rgba(255,255,255,0.7)',
-                  fontSize: '0.72rem',
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  background: 'rgba(0,0,0,0.5)',
-                  px: 1.5,
-                  py: 0.25,
-                  borderRadius: 2,
-                }}
-              >
-                {lightboxIndex + 1} / {screenshots.length}
-              </Typography>
-            )}
-          </Box>
-        )}
-      </Dialog>
-    </>
   );
 };
 
@@ -1654,7 +1390,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                 key: string | number,
               ): React.ReactNode => {
                 const skill = getSkillById(passiveId);
-                const iconUrl = skill?.icon ? `${SKILL_ICON_URL}${skill.icon}.png` : null;
+                const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
                 return (
                   <Box
                     key={key}
@@ -1773,9 +1509,6 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
           <ViewStats setup={setup} build={viewBuild} />
         </GlassPanel>
       </motion.div>
-
-      {/* Row 7: Screenshots (masonry gallery) */}
-      <ScreenshotGallery screenshots={setup.screenshots} setupName={setup.name || 'Setup'} />
     </motion.div>
   );
 };
