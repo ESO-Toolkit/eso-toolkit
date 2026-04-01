@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import type { PackHubFilters, SortOrder } from '../types/pack-hub.types';
+import type { PackHubFilters, PackType, SortOrder } from '../types/pack-hub.types';
 import { PACK_TAG_COLORS, PACK_TYPE_OPTIONS, PRESET_PACK_TAGS } from '../types/pack-hub.types';
 
 interface PackFilterBarProps {
@@ -39,8 +39,8 @@ export const PackFilterBar: React.FC<PackFilterBarProps> = React.memo(
     const borderFocus = 'rgba(96,165,250,0.55)';
     const focusGlow = '0 0 0 3px rgba(96,165,250,0.12)';
 
-    const handleTypeChange = (e: SelectChangeEvent): void => {
-      onFilterChange('packType', e.target.value);
+    const handleTypeChange = (e: SelectChangeEvent<PackHubFilters['packType']>): void => {
+      onFilterChange('packType', e.target.value as PackType | '');
     };
 
     const handleSortChange = (sort: SortOrder): void => {

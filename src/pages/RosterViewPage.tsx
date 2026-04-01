@@ -1333,10 +1333,15 @@ export const RosterViewPage: React.FC = () => {
   }>({ open: false, message: '', severity: 'success' });
   const [recommendedAddons, setRecommendedAddons] = useState<RecommendedAddons | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(false);
-  const deepLinkTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const deepLinkTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clean up deep-link fallback timer on unmount
-  useEffect(() => () => clearTimeout(deepLinkTimerRef.current), []);
+  useEffect(
+    () => () => {
+      if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
+    },
+    [],
+  );
 
   // Default addons shown when no hub roster or no custom recommendations
   const DEFAULT_ADDONS: RecommendedAddonEntry[] = [
@@ -1889,8 +1894,8 @@ export const RosterViewPage: React.FC = () => {
                       color: isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
                     }}
                   >
-                    {addons.length} addon{addons.length !== 1 ? 's' : ''} &middot;{' '}
-                    Install all at once
+                    {addons.length} addon{addons.length !== 1 ? 's' : ''} &middot; Install all at
+                    once
                   </Typography>
                   {packId ? (
                     <Button
@@ -1902,7 +1907,7 @@ export const RosterViewPage: React.FC = () => {
                         window.location.href = deepLink;
                         // Fallback: if Kalpa is not installed, the browser silently fails.
                         // After a delay, copy the deep link to clipboard as a fallback.
-                        clearTimeout(deepLinkTimerRef.current);
+                        if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
                         deepLinkTimerRef.current = setTimeout(() => {
                           void navigator.clipboard.writeText(deepLink).then(
                             () => {

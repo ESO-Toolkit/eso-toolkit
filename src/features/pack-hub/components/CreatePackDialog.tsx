@@ -54,7 +54,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 
 import { type EsouiAddonSearchResult, packHubApi, searchEsouiAddons } from '../api/pack-hub-api';
-import type { HubPack, PackAddonEntry } from '../types/pack-hub.types';
+import type { HubPack, PackAddonEntry, PackType } from '../types/pack-hub.types';
 import { PACK_TAG_COLORS, PACK_TYPE_LABELS, PRESET_PACK_TAGS } from '../types/pack-hub.types';
 
 // ---------------------------------------------------------------------------
@@ -347,7 +347,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
   const [step, setStep] = React.useState(0);
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
-  const [packType, setPackType] = React.useState<string>('addon-pack');
+  const [packType, setPackType] = React.useState<PackType>('addon-pack');
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [isAnonymous, setIsAnonymous] = React.useState(false);
   const [addons, setAddons] = React.useState<PackAddonEntry[]>([]);
@@ -598,7 +598,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
           <Select
             size="small"
             value={packType}
-            onChange={(e: SelectChangeEvent) => setPackType(e.target.value)}
+            onChange={(e: SelectChangeEvent<PackType>) => setPackType(e.target.value)}
             fullWidth
             sx={{
               borderRadius: 2,
