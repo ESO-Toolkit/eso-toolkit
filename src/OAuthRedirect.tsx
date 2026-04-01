@@ -16,12 +16,14 @@ import {
   clearIntendedDestination,
 } from './features/auth/auth';
 import { useAuth } from './features/auth/AuthContext';
+import { KalpaAuthSuccess } from './features/auth/KalpaAuthSuccess';
 import { useAppDispatch } from './store/useAppDispatch';
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token'; // Adjust if needed
 export const OAuthRedirect: React.FC = () => {
   const dispatch = useAppDispatch();
   const [error, setError] = useState<string | null>(null);
+  const [kalpaSuccess, setKalpaSuccess] = useState(false);
   const { rebindAccessToken } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -70,7 +72,7 @@ export const OAuthRedirect: React.FC = () => {
         const appPort = sessionStorage.getItem(APP_AUTH_PORT_KEY);
         if (appPort) {
           sessionStorage.removeItem(APP_AUTH_PORT_KEY);
-          // Send tokens to the desktop app's localhost server
+          // Send tokens to the desktop app's localhost server in the background
           const tokenPayload = btoa(
             JSON.stringify({
               access_token: data.access_token,
@@ -78,7 +80,17 @@ export const OAuthRedirect: React.FC = () => {
               expires_in: data.expires_in || 3600,
             }),
           );
-          window.location.href = `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`;
+          try {
+            await fetch(
+              `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`,
+            );
+          } catch {
+            // Fetch to localhost may be blocked by mixed-content or CORS —
+            // fall back to a full redirect so the desktop app still receives tokens.
+            window.location.href = `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`;
+            return;
+          }
+          setKalpaSuccess(true);
           return;
         }
 
@@ -104,6 +116,10 @@ export const OAuthRedirect: React.FC = () => {
     };
     fetchToken();
   }, [dispatch, rebindAccessToken, params, navigate]);
+
+  if (kalpaSuccess) {
+    return <KalpaAuthSuccess />;
+  }
 
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '4rem' }}>
