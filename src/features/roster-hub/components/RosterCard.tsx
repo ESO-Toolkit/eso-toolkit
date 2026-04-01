@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, EditOutlined, Extension } from '@mui/icons-material';
+import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -13,9 +13,6 @@ import {
 import { useSnackbar } from 'notistack';
 import React from 'react';
 
-import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
-import { formatRelativeDate } from '../../../utils/formatRelativeDate';
-import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
 
@@ -26,6 +23,7 @@ interface RosterCardProps {
   isOwner: boolean;
   isLoggedIn: boolean;
   onVote: (id: string) => void;
+  onPreview: (roster: HubRoster) => void;
   onDelete: (id: string) => void;
   onEdit: (roster: HubRoster) => void;
 }
@@ -87,37 +85,31 @@ export const TRIAL_ACCENT: Record<string, string> = {
   SS: '#0ea5e9', // sky
 };
 
-const formatDate = formatRelativeDate;
+function formatDate(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
-  ({ roster, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
+  ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete, onEdit }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
-    const navigate = useViewTransitionNavigate();
     const isDark = theme.palette.mode === 'dark';
-
-    const handleGetAddons = (e: React.MouseEvent): void => {
-      e.stopPropagation();
-      const packId = roster.recommended_addons?.packId ?? 'trial-essentials';
-      const deepLink = getAddonManagerDeepLink(packId);
-      window.location.href = deepLink;
-      setTimeout(() => {
-        void navigator.clipboard.writeText(deepLink).then(() => {
-          enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
-            variant: 'info',
-            autoHideDuration: 4000,
-          });
-        });
-      }, 1500);
-    };
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
       const url = `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}`;
-      void navigator.clipboard.writeText(url).then(
-        () => enqueueSnackbar('Link copied to clipboard!', { variant: 'success' }),
-        () => enqueueSnackbar('Failed to copy link', { variant: 'error' }),
-      );
+      void navigator.clipboard.writeText(url).then(() => {
+        enqueueSnackbar('Link copied to clipboard!', { variant: 'success' });
+      });
     };
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
@@ -173,11 +165,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() =>
-            navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}&hubId=${roster.id}`)
-          }
+          onClick={() => onPreview(roster)}
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
-          aria-label={`View ${roster.title}`}
+          aria-label={`Preview ${roster.title}`}
         >
           <CardContent
             sx={{
@@ -375,22 +365,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             onVote={() => onVote(roster.id)}
           />
 
-          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            <Tooltip title="Get recommended addons in ESO Addon Manager">
-              <IconButton
-                size="small"
-                onClick={handleGetAddons}
-                aria-label="Get addons"
-                sx={{
-                  width: 36,
-                  height: 36,
-                  color: 'text.disabled',
-                  '&:hover': { color: '#c4a44a' },
-                }}
-              >
-                <Extension sx={{ fontSize: 17 }} />
-              </IconButton>
-            </Tooltip>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Tooltip title="Copy share link">
               <IconButton
                 size="small"

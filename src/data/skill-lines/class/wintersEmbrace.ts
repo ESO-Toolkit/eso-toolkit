@@ -183,6 +183,7 @@ export const wintersEmbrace: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_FROZEN_ARMOR,
+      alternateIds: [86189, 86190],
       name: 'Frozen Armor',
       type: 'passive',
       icon: 'passive_warden_001',
@@ -192,6 +193,7 @@ export const wintersEmbrace: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_GLACIAL_PRESENCE,
+      alternateIds: [86191, 86192, 134679, 134680],
       name: 'Glacial Presence',
       type: 'passive',
       icon: 'passive_warden_002',
@@ -201,6 +203,7 @@ export const wintersEmbrace: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_ICY_AURA,
+      alternateIds: [86193, 86194],
       name: 'Icy Aura',
       type: 'passive',
       icon: 'passive_warden_003',
@@ -210,6 +213,7 @@ export const wintersEmbrace: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_PIERCING_COLD,
+      alternateIds: [86195, 86196, 228521, 228522, 228523, 228524, 228525, 228526],
       name: 'Piercing Cold',
       type: 'passive',
       icon: 'passive_warden_004',

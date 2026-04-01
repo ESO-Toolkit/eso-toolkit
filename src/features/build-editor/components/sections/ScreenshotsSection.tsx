@@ -1,33 +1,17 @@
 /**
- * Screenshots Section — uploads screenshots to ImgBB via the Worker proxy,
- * stores hosted HTTPS URLs instead of base64 data-URLs.
+ * Screenshots Section — character stat screenshots with AnimatePresence transitions.
  */
 
-import {
-  Add as AddIcon,
-  Close as CloseIcon,
-  CloudUpload as CloudUploadIcon,
-} from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Grid,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Add as AddIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Box, Button, Grid, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useSnackbar } from 'notistack';
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { useAuth } from '@/features/auth/AuthContext';
 import type { RootState } from '@/store/storeWithHistory';
 
-import { uploadScreenshot } from '../../api/image-upload-api';
 import { addScreenshot, removeScreenshot } from '../../store/buildEditorSlice';
 
 const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -38,52 +22,30 @@ export const ScreenshotsSection: React.FC = () => {
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const { enqueueSnackbar } = useSnackbar();
-  const { isLoggedIn, accessToken } = useAuth();
   const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
   const setup = build.setups[activeSetupIndex];
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
-    if (!files?.length) return;
-
-    if (!isLoggedIn || !accessToken) {
-      enqueueSnackbar('Sign in to upload screenshots.', { variant: 'warning' });
-      e.target.value = '';
-      return;
-    }
-
-    const validFiles = Array.from(files).filter((file) => {
+    if (!files) return;
+    Array.from(files).forEach((file) => {
       if (file.size > MAX_SCREENSHOT_SIZE) {
         enqueueSnackbar(`"${file.name}" exceeds 5 MB — please resize before uploading.`, {
           variant: 'warning',
         });
-        return false;
+        return;
       }
-      return true;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (ev.target?.result) {
+          dispatch(addScreenshot(ev.target.result as string));
+        }
+      };
+      reader.onerror = () =>
+        enqueueSnackbar(`Failed to read "${file.name}".`, { variant: 'error' });
+      reader.readAsDataURL(file);
     });
-
-    if (!validFiles.length) {
-      e.target.value = '';
-      return;
-    }
-
-    setUploading(true);
-
-    for (const file of validFiles) {
-      try {
-        // Read file as base64 data-URL, then upload via Worker proxy
-        const dataUrl = await readFileAsDataUrl(file);
-        const result = await uploadScreenshot(dataUrl, accessToken, file.name);
-        dispatch(addScreenshot(result.url));
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Upload failed';
-        enqueueSnackbar(`Failed to upload "${file.name}": ${message}`, { variant: 'error' });
-      }
-    }
-
-    setUploading(false);
     e.target.value = '';
   };
 
@@ -97,7 +59,7 @@ export const ScreenshotsSection: React.FC = () => {
         Screenshots of character stats, gear, or skills.
       </Typography>
 
-      {setup.screenshots.length === 0 && !uploading ? (
+      {setup.screenshots.length === 0 ? (
         <Box
           sx={{
             textAlign: 'center',
@@ -117,10 +79,9 @@ export const ScreenshotsSection: React.FC = () => {
             No screenshots yet
           </Typography>
           <Button
-            startIcon={<CloudUploadIcon sx={{ fontSize: 14 }} />}
+            startIcon={<AddIcon sx={{ fontSize: 14 }} />}
             variant="outlined"
             size="small"
-            disabled={!isLoggedIn}
             onClick={() => inputRef.current?.click()}
             sx={{
               fontSize: 11,
@@ -136,7 +97,7 @@ export const ScreenshotsSection: React.FC = () => {
               },
             }}
           >
-            {isLoggedIn ? 'Upload' : 'Sign in to upload'}
+            Upload
           </Button>
         </Box>
       ) : (
@@ -144,7 +105,7 @@ export const ScreenshotsSection: React.FC = () => {
           <Grid container spacing={1}>
             <AnimatePresence>
               {setup.screenshots.map((src, i) => (
-                <Grid key={src.slice(0, 48) + i} size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 6, sm: 4 }} key={src.slice(0, 48) + i}>
                   <motion.div
                     layout={!prefersReduced}
                     initial={prefersReduced ? false : { scale: 0.9, opacity: 0 }}
@@ -178,6 +139,8 @@ export const ScreenshotsSection: React.FC = () => {
                         alt={`Screenshot ${i + 1}`}
                         style={{
                           width: '100%',
+                          aspectRatio: '16/9',
+                          objectFit: 'cover',
                           display: 'block',
                         }}
                       />
@@ -185,7 +148,6 @@ export const ScreenshotsSection: React.FC = () => {
                         <IconButton
                           className="remove-btn"
                           size="small"
-                          aria-label="Remove screenshot"
                           onClick={() => dispatch(removeScreenshot(i))}
                           sx={{
                             position: 'absolute',
@@ -214,42 +176,28 @@ export const ScreenshotsSection: React.FC = () => {
             </AnimatePresence>
           </Grid>
 
-          {uploading ? (
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ py: 0.5 }}>
-              <CircularProgress size={16} sx={{ color: 'var(--be-accent, #38bdf8)' }} />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: 11, fontFamily: 'Space Grotesk, Inter, system-ui' }}
-              >
-                Uploading...
-              </Typography>
-            </Stack>
-          ) : (
-            <Button
-              startIcon={<AddIcon sx={{ fontSize: 14 }} />}
-              variant="outlined"
-              size="small"
-              disabled={!isLoggedIn}
-              sx={{
-                alignSelf: 'flex-start',
-                fontSize: 11,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
-                fontWeight: 600,
-                borderRadius: '99px',
-                textTransform: 'none',
-                borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                color: 'var(--be-accent, #38bdf8)',
-                '&:hover': {
-                  borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
-                  background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-                },
-              }}
-              onClick={() => inputRef.current?.click()}
-            >
-              Add More
-            </Button>
-          )}
+          <Button
+            startIcon={<AddIcon sx={{ fontSize: 14 }} />}
+            variant="outlined"
+            size="small"
+            sx={{
+              alignSelf: 'flex-start',
+              fontSize: 11,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 600,
+              borderRadius: '99px',
+              textTransform: 'none',
+              borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
+              color: 'var(--be-accent, #38bdf8)',
+              '&:hover': {
+                borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
+                background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+              },
+            }}
+            onClick={() => inputRef.current?.click()}
+          >
+            Add More
+          </Button>
         </>
       )}
 
@@ -259,21 +207,8 @@ export const ScreenshotsSection: React.FC = () => {
         accept="image/*"
         multiple
         style={{ display: 'none' }}
-        onChange={(e) => void handleFileChange(e)}
+        onChange={handleFileChange}
       />
     </Stack>
   );
 };
-
-/** Read a File as a base64 data-URL string. */
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (ev.target?.result) resolve(ev.target.result as string);
-      else reject(new Error('FileReader returned empty result'));
-    };
-    reader.onerror = () => reject(new Error(`Failed to read "${file.name}"`));
-    reader.readAsDataURL(file);
-  });
-}

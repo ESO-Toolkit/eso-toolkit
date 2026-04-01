@@ -11,23 +11,6 @@ import { useSelector } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
-/** The 6 skill slot indices per bar (5 actives + 1 ultimate). */
-const SKILL_SLOT_KEYS = [3, 4, 5, 6, 7, 8];
-
-/** The 14 gear slot indices (apparel + weapons + jewelry). */
-const GEAR_SLOT_KEYS = [0, 1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 16, 20, 21];
-
-/** Count how many skill slots in a bar have a valid (> 0) ability assigned. */
-function countFilledSkillSlots(bar: Record<number, number> | undefined): number {
-  if (!bar) return 0;
-  return SKILL_SLOT_KEYS.filter((k) => bar[k] != null && bar[k] > 0).length;
-}
-
-/** Count how many gear slots have an assigned piece (by numeric slot index only). */
-function countFilledGearSlots(gear: Record<number, unknown>): number {
-  return GEAR_SLOT_KEYS.filter((k) => gear[k] != null).length;
-}
-
 export const useBuildCompleteness = (): number => {
   const build = useSelector((s: RootState) => s.buildEditor.build);
   const activeSetupIndex = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
@@ -66,13 +49,13 @@ export const useBuildCompleteness = (): number => {
 
     // Equipment (weight 20 — proportional to filled slots out of 14)
     maxScore += 20;
-    const filledSlots = countFilledGearSlots(setup.gear);
+    const filledSlots = Object.keys(setup.gear).length;
     score += Math.round((filledSlots / 14) * 20);
 
     // Skills (weight 20 — proportional to filled slots out of 12)
     maxScore += 20;
-    const frontCount = countFilledSkillSlots(setup.skills[0]);
-    const backCount = countFilledSkillSlots(setup.skills[1]);
+    const frontCount = Object.keys(setup.skills[0] ?? {}).length;
+    const backCount = Object.keys(setup.skills[1] ?? {}).length;
     score += Math.round(((frontCount + backCount) / 12) * 20);
 
     // Champion points (weight 7 — at least 1 slotted)

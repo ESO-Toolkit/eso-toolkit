@@ -31,26 +31,20 @@ const BuildEditorPageInner: React.FC = () => {
     if (!encoded) return;
     loadedRef.current = true;
 
-    void decodeBuildFromURL(encoded)
-      .then((decoded) => {
-        if (decoded) {
-          dispatch(loadBuild(decoded));
-          // Remove the ?b= param from URL to avoid re-loading on refresh
-          // Keep other params like ?id= for saved build editing
-          const newParams = new URLSearchParams(searchParams);
-          newParams.delete('b');
-          setSearchParams(newParams, { replace: true });
-        } else {
-          enqueueSnackbar('Could not load shared build — the link may be invalid.', {
-            variant: 'warning',
-          });
-        }
-      })
-      .catch(() => {
-        enqueueSnackbar('Could not load shared build — the link may be corrupted.', {
-          variant: 'error',
+    void decodeBuildFromURL(encoded).then((decoded) => {
+      if (decoded) {
+        dispatch(loadBuild(decoded));
+        // Remove the ?b= param from URL to avoid re-loading on refresh
+        // Keep other params like ?id= for saved build editing
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete('b');
+        setSearchParams(newParams, { replace: true });
+      } else {
+        enqueueSnackbar('Could not load shared build — the link may be invalid.', {
+          variant: 'warning',
         });
-      });
+      }
+    });
   }, [searchParams, setSearchParams, dispatch, enqueueSnackbar]);
 
   // Warn before unloading if there are unsaved changes

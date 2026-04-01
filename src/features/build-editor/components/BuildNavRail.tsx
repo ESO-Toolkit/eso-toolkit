@@ -106,20 +106,15 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
           bottom: 0,
           left: 0,
           right: 0,
-          // Height + iOS home indicator clearance
-          height: `calc(${BE_TOKENS.navRail.mobileHeight}px + env(safe-area-inset-bottom, 0px))`,
+          height: BE_TOKENS.navRail.mobileHeight,
           background: railBg,
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop: `1px solid ${borderColor}`,
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'space-around',
-          // Pad icons up above the home indicator bar
-          paddingTop: `${(BE_TOKENS.navRail.mobileHeight - 36) / 2}px`,
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          paddingLeft: 'max(4px, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(4px, env(safe-area-inset-right, 0px))',
+          padding: '0 4px',
           zIndex: 1200,
           overflowX: 'auto',
           scrollbarWidth: 'none',
@@ -132,7 +127,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
             bottom: 0,
             left: 0,
             width: 24,
-            height: `calc(${BE_TOKENS.navRail.mobileHeight}px + env(safe-area-inset-bottom, 0px))`,
+            height: BE_TOKENS.navRail.mobileHeight,
             background: `linear-gradient(to right, rgba(${fadeBg}, 0.9), transparent)`,
             pointerEvents: 'none',
             zIndex: 1201,
@@ -144,7 +139,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
             bottom: 0,
             right: 0,
             width: 24,
-            height: `calc(${BE_TOKENS.navRail.mobileHeight}px + env(safe-area-inset-bottom, 0px))`,
+            height: BE_TOKENS.navRail.mobileHeight,
             background: `linear-gradient(to left, rgba(${fadeBg}, 0.9), transparent)`,
             pointerEvents: 'none',
             zIndex: 1201,
@@ -188,7 +183,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
                       width: 6,
                       height: 6,
                       borderRadius: '50%',
-                      background: 'var(--be-accent, #38bdf8)',
+                      background: 'var(--be-accent, #22c55e)',
                     }}
                   />
                 )}
@@ -323,7 +318,7 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
                   <CheckIcon
                     sx={{
                       fontSize: 15,
-                      color: 'var(--be-accent, #38bdf8)',
+                      color: 'var(--be-accent, #22c55e)',
                       opacity: 0.8,
                       flexShrink: 0,
                     }}

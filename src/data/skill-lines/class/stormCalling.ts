@@ -187,6 +187,7 @@ export const stormCalling: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_AMPLITUDE,
+      alternateIds: [31422, 45192],
       name: 'Amplitude',
       type: 'passive',
       icon: 'ability_sorcerer_049',
@@ -196,6 +197,7 @@ export const stormCalling: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_CAPACITOR,
+      alternateIds: [31419, 45188, 90683],
       name: 'Capacitor',
       type: 'passive',
       icon: 'ability_sorcerer_013',
@@ -204,6 +206,7 @@ export const stormCalling: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_ENERGIZED,
+      alternateIds: [31421, 45190],
       name: 'Energized',
       type: 'passive',
       icon: 'ability_sorcerer_015',
@@ -212,6 +215,7 @@ export const stormCalling: SkillLineData = {
     },
     {
       id: ClassSkillId.SORCERER_EXPERT_MAGE,
+      alternateIds: [31425, 45195],
       name: 'Expert Mage',
       type: 'passive',
       icon: 'ability_sorcerer_044',

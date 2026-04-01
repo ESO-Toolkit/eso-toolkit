@@ -4,7 +4,7 @@
  * glow halos on color dots, and glass-card hover effects.
  */
 
-import { Box, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
 import React, { useCallback, useRef } from 'react';
@@ -33,8 +33,6 @@ export const IconPickerGrid = <T extends string = string>({
 }: IconPickerGridProps<T>): React.ReactElement => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const effectiveColumns = isMobile ? Math.min(columns, 3) : columns;
   const prefersReduced = useReducedMotion();
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -49,10 +47,10 @@ export const IconPickerGrid = <T extends string = string>({
           nextIdx = (idx - 1 + options.length) % options.length;
           break;
         case 'ArrowDown':
-          nextIdx = Math.min(idx + effectiveColumns, options.length - 1);
+          nextIdx = Math.min(idx + columns, options.length - 1);
           break;
         case 'ArrowUp':
-          nextIdx = Math.max(idx - effectiveColumns, 0);
+          nextIdx = Math.max(idx - columns, 0);
           break;
         case 'Enter':
         case ' ':
@@ -66,7 +64,7 @@ export const IconPickerGrid = <T extends string = string>({
       const buttons = gridRef.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
       buttons?.[nextIdx]?.focus();
     },
-    [effectiveColumns, onChange, options],
+    [columns, onChange, options],
   );
 
   return (
@@ -94,7 +92,7 @@ export const IconPickerGrid = <T extends string = string>({
         aria-label={label}
         sx={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${effectiveColumns}, 1fr)`,
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
           gap: 1,
         }}
       >
@@ -137,7 +135,7 @@ export const IconPickerGrid = <T extends string = string>({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 6,
-                    padding: '14px 10px',
+                    padding: '12px 8px',
                     borderRadius: 14,
                     width: '100%',
                     position: 'relative',

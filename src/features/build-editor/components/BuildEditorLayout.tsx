@@ -25,8 +25,7 @@ import {
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
-import { useSnackbar } from 'notistack';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { saveBuild } from '@/store/saved_builds';
@@ -55,49 +54,46 @@ import { SetupTabBar } from './SetupTabBar';
 export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const { isDirty, build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
 
-  // NOTE: beforeunload handler lives in BuildEditorPage (sets e.returnValue for cross-browser compat).
+  // Warn user before leaving with unsaved changes
+  const handleBeforeUnload = useCallback(
+    (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+    },
+    [isDirty],
+  );
 
-  // Ctrl+S / Cmd+S keyboard shortcut to save — use refs to avoid re-registering
-  // the keydown listener on every build mutation.
-  const buildRef = React.useRef(build);
-  buildRef.current = build;
-  const activeSetupIndexRef = React.useRef(activeSetupIndex);
-  activeSetupIndexRef.current = activeSetupIndex;
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [handleBeforeUnload]);
 
+  // Ctrl+S / Cmd+S keyboard shortcut to save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        const currentBuild = buildRef.current;
-        if (!currentBuild.name.trim()) return;
+        if (!build.name.trim()) return;
         try {
           localStorage.setItem(
             BUILD_EDITOR_STORAGE_KEY,
-            JSON.stringify({ build: currentBuild, activeSetupIndex: activeSetupIndexRef.current }),
+            JSON.stringify({ build, activeSetupIndex }),
           );
-        } catch (err) {
-          const isQuota =
-            err instanceof DOMException && (err.name === 'QuotaExceededError' || err.code === 22);
-          enqueueSnackbar(
-            isQuota
-              ? 'Browser storage full — build not saved locally. Try publishing to the Hub.'
-              : 'Could not save to browser storage.',
-            { variant: 'warning', preventDuplicate: true },
-          );
+        } catch {
+          // Silently fail — localStorage might be full
         }
-        dispatch(saveBuild(currentBuild));
+        dispatch(saveBuild(build));
         dispatch(markSaved());
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch, enqueueSnackbar]);
+  }, [build, activeSetupIndex, dispatch]);
 
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
@@ -123,8 +119,7 @@ export const BuildEditorLayout: React.FC = () => {
             minWidth: 0,
             overflowY: 'auto',
             p: { xs: 1.5, md: 2.5 },
-            // Extra bottom padding for mobile nav bar + iOS home indicator
-            pb: isMobile ? `calc(${10 * 8}px + env(safe-area-inset-bottom, 0px))` : 2.5,
+            pb: isMobile ? 10 : 2.5, // Extra bottom padding for mobile nav bar
           }}
         >
           <motion.div

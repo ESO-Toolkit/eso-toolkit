@@ -16,6 +16,15 @@ import {
   serializeAlphaGearToLua,
   type AlphaGearCharacterData,
 } from './alphaGearConverter';
+import {
+  detectCSPSData,
+  extractCSPSCharacters,
+  convertCSPSToLoadoutState,
+  mergeLoadoutStateIntoCSPS,
+  serializeCSPSToLua,
+  type CSPSCharacterData,
+  type CSPSSavedVariables,
+} from './cspsConverter';
 import { parseLuaAssignments } from './wizardsWardrobeSavedVariables';
 import {
   parseWizardsWardrobeSavedVariables,
@@ -29,6 +38,16 @@ export {
   convertLoadoutStateToAlphaGear,
   serializeAlphaGearToLua,
   type AlphaGearCharacterData,
+};
+
+export {
+  detectCSPSData,
+  extractCSPSCharacters,
+  convertCSPSToLoadoutState,
+  mergeLoadoutStateIntoCSPS,
+  serializeCSPSToLua,
+  type CSPSCharacterData,
+  type CSPSSavedVariables,
 };
 
 const luaParserLogger = new Logger({ contextPrefix: 'LuaParser' });
@@ -186,6 +205,41 @@ export function isWizardWardrobeFormat(data: any): data is WizardWardrobeExport 
     typeof data.pages === 'object' &&
     typeof data.version === 'number',
   );
+}
+
+/**
+ * Parse Caro's Skill Point Saver saved variables from Lua source.
+ * Returns the table name and extracted character data, or null if not CSPS format.
+ */
+export function parseCSPSSavedVariables(luaContent: string): {
+  tableName: string;
+  characters: Record<string, { data: CSPSCharacterData; name: string; accountName: string }>;
+} | null {
+  try {
+    const assignments = parseLuaAssignments(luaContent);
+    const detected = detectCSPSData(assignments);
+    if (!detected) {
+      return null;
+    }
+
+    const characters = extractCSPSCharacters(detected.data);
+    if (Object.keys(characters).length === 0) {
+      luaParserLogger.warn('CSPS data found but no characters');
+      return null;
+    }
+
+    luaParserLogger.info('Parsed CSPS data', {
+      tableName: detected.tableName,
+      characterCount: Object.keys(characters).length,
+      characterNames: Object.values(characters).map((c) => c.name),
+    });
+
+    return { tableName: detected.tableName, characters };
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    luaParserLogger.debug('Not a CSPS file', { error: err.message });
+    return null;
+  }
 }
 
 /**
