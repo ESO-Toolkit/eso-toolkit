@@ -75,8 +75,8 @@ let totalFiles = 0;
 for (const filePath of findTsFiles(SKILL_LINES_DIR)) {
   const content = fs.readFileSync(filePath, 'utf8');
 
-  // Only process files with full URL icons
-  if (!content.includes("https://eso-hub.com/storage/icons/")) continue;
+  // Only process files with full URL icons (regex anchors the match to icon: 'https://…')
+  if (!/icon:\s*'https:\/\/eso-hub\.com\/storage\/icons\//.test(content)) continue;
 
   let newContent = content;
   let modified = false;
