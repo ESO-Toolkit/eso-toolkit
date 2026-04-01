@@ -504,7 +504,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 color: string,
                 onClick: () => void,
                 pos: 'left' | 'mid' | 'right' | 'solo',
-              ) => {
+              ): React.ReactNode => {
                 const radiusMap = {
                   left: '20px 0 0 20px',
                   mid: '0',
