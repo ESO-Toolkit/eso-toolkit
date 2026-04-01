@@ -449,15 +449,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         falsePositiveGradient:
           'linear-gradient(135deg, rgba(253, 230, 138, 0.45) 0%, rgba(252, 211, 77, 0.35) 100%)',
         wipeRedGradient:
-          'linear-gradient(135deg, rgba(254, 178, 178, 0.5) 0%, rgba(252, 165, 165, 0.4) 100%)',
+          'linear-gradient(135deg, rgba(248, 113, 113, 0.4) 0%, rgba(251, 146, 146, 0.3) 100%)',
         wipeOrangeGradient:
-          'linear-gradient(135deg, rgba(254, 215, 170, 0.5) 0%, rgba(253, 186, 116, 0.4) 100%)',
+          'linear-gradient(135deg, rgba(251, 146, 60, 0.38) 0%, rgba(253, 186, 116, 0.28) 100%)',
         wipeYellowGradient:
-          'linear-gradient(135deg, rgba(254, 240, 138, 0.45) 0%, rgba(253, 224, 71, 0.35) 100%)',
+          'linear-gradient(135deg, rgba(250, 204, 21, 0.35) 0%, rgba(253, 224, 71, 0.25) 100%)',
         wipeLowGradient:
-          'linear-gradient(135deg, rgba(254, 240, 138, 0.4) 0%, rgba(217, 249, 157, 0.35) 100%)',
+          'linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(163, 230, 53, 0.25) 100%)',
         wipeVeryLowGradient:
-          'linear-gradient(135deg, rgba(217, 249, 157, 0.4) 0%, rgba(187, 247, 208, 0.35) 100%)',
+          'linear-gradient(135deg, rgba(163, 230, 53, 0.3) 0%, rgba(74, 222, 128, 0.25) 100%)',
         wipeShadow: 'none',
         hoverBg: 'rgba(30, 41, 59, 0.04)',
         badgeBorder: '1px solid rgba(100, 116, 139, 0.4)',
