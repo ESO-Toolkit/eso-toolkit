@@ -14,9 +14,9 @@ const getDiscordBotApiUrl = (): string =>
 const DISCORD_OAUTH_AUTHORIZE = 'https://discord.com/oauth2/authorize';
 const SCOPES = 'identify guilds';
 
-// localStorage keys
-export const DISCORD_LS_TOKEN_KEY = 'discord_access_token';
-export const DISCORD_LS_EXPIRY_KEY = 'discord_token_expires_at';
+// sessionStorage keys — token is session-scoped to limit XSS exposure
+export const DISCORD_TOKEN_KEY = 'discord_access_token';
+export const DISCORD_EXPIRY_KEY = 'discord_token_expires_at';
 const DISCORD_SS_RETURN_PATH_KEY = 'discord_oauth_return_path';
 
 // ── Types ───────────────────────────────────────────────────────────────────

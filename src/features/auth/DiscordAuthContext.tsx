@@ -7,7 +7,7 @@
 
 import React from 'react';
 
-import { DISCORD_LS_TOKEN_KEY, DISCORD_LS_EXPIRY_KEY, startDiscordAuth } from './discord-auth';
+import { DISCORD_TOKEN_KEY, DISCORD_EXPIRY_KEY, startDiscordAuth } from './discord-auth';
 
 interface DiscordAuthContextType {
   discordToken: string | null;
@@ -21,27 +21,35 @@ const DiscordAuthContext = React.createContext<DiscordAuthContextType | null>(nu
 
 export const DiscordAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [discordToken, setDiscordTokenState] = React.useState<string | null>(() => {
-    const token = localStorage.getItem(DISCORD_LS_TOKEN_KEY);
-    const expiry = localStorage.getItem(DISCORD_LS_EXPIRY_KEY);
+    // Migrate any token left in localStorage from before sessionStorage switch
+    const legacyToken = localStorage.getItem(DISCORD_TOKEN_KEY);
+    if (legacyToken) {
+      sessionStorage.setItem(DISCORD_TOKEN_KEY, legacyToken);
+      localStorage.removeItem(DISCORD_TOKEN_KEY);
+      localStorage.removeItem(DISCORD_EXPIRY_KEY);
+    }
+
+    const token = sessionStorage.getItem(DISCORD_TOKEN_KEY);
+    const expiry = sessionStorage.getItem(DISCORD_EXPIRY_KEY);
     if (token && expiry && Date.now() > Number(expiry)) {
-      localStorage.removeItem(DISCORD_LS_TOKEN_KEY);
-      localStorage.removeItem(DISCORD_LS_EXPIRY_KEY);
+      sessionStorage.removeItem(DISCORD_TOKEN_KEY);
+      sessionStorage.removeItem(DISCORD_EXPIRY_KEY);
       return null;
     }
     return token;
   });
 
   const setDiscordToken = React.useCallback((token: string, expiresIn?: number) => {
-    localStorage.setItem(DISCORD_LS_TOKEN_KEY, token);
+    sessionStorage.setItem(DISCORD_TOKEN_KEY, token);
     if (expiresIn) {
-      localStorage.setItem(DISCORD_LS_EXPIRY_KEY, String(Date.now() + expiresIn * 1000));
+      sessionStorage.setItem(DISCORD_EXPIRY_KEY, String(Date.now() + expiresIn * 1000));
     }
     setDiscordTokenState(token);
   }, []);
 
   const clearDiscordAuth = React.useCallback(() => {
-    localStorage.removeItem(DISCORD_LS_TOKEN_KEY);
-    localStorage.removeItem(DISCORD_LS_EXPIRY_KEY);
+    sessionStorage.removeItem(DISCORD_TOKEN_KEY);
+    sessionStorage.removeItem(DISCORD_EXPIRY_KEY);
     setDiscordTokenState(null);
   }, []);
 

@@ -25,6 +25,8 @@ import {
   upsertMapping,
   getGuildConfig,
   getDefaultGuildConfig,
+  acquirePublishLock,
+  releasePublishLock,
   KV_PREFIX,
 } from './kv.js';
 import type { ChannelNameContext, DecodedRoster, RosterMapping, RosterSnapshot } from './types.js';
@@ -144,6 +146,20 @@ export interface PublishResult {
 // ── Core Publish ────────────────────────────────────────────────────────────
 
 export async function publishRoster(env: Env, req: PublishRequest): Promise<PublishResult> {
+  // 0. Acquire publish lock to prevent concurrent channel creation
+  const locked = await acquirePublishLock(env, req.guildId, req.rosterId);
+  if (!locked) {
+    return { ok: false, error: 'A publish is already in progress for this roster. Please wait.' };
+  }
+
+  try {
+    return await doPublishRoster(env, req);
+  } finally {
+    await releasePublishLock(env, req.guildId, req.rosterId);
+  }
+}
+
+async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishResult> {
   // 1. Fetch roster snapshot
   const result = await fetchRosterSnapshot(env, req.rosterId);
   if (result.status === 'not_found') {
@@ -361,6 +377,28 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     .join('')
     .slice(0, 6);
   const syntheticId = `direct-${Date.now().toString(36)}-${suffix}`;
+
+  // Acquire lock using the synthetic ID (unique, so no contention here —
+  // but guards against rapid double-clicks sending the same request twice)
+  const locked = await acquirePublishLock(env, req.guildId, syntheticId);
+  if (!locked) {
+    return { ok: false, error: 'A publish is already in progress. Please wait.' };
+  }
+
+  try {
+    return await doPublishDirect(env, req, syntheticId);
+  } finally {
+    await releasePublishLock(env, req.guildId, syntheticId);
+  }
+}
+
+async function doPublishDirect(
+  env: Env,
+  req: DirectPublishRequest,
+  syntheticId: string,
+): Promise<PublishResult> {
+  const DIRECT_TTL = 60 * 60 * 24 * 90; // 90 days
+
   const snapshot: RosterSnapshot = {
     id: syntheticId,
     title: req.title,
@@ -403,7 +441,7 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
 
   if (!result.ok) return result;
 
-  // Persist mapping so refresh still works
+  // Persist mapping with same TTL as roster data so they expire together
   const now = new Date().toISOString();
   const mapping: RosterMapping = {
     rosterId: syntheticId,
@@ -416,12 +454,11 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     createdAt: now,
     updatedAt: now,
   };
-  await upsertMapping(env, mapping);
+  await upsertMapping(env, mapping, DIRECT_TTL);
 
   // Persist roster data so the "View on ESO Toolkit" link can resolve direct-* IDs
-  // 90-day TTL prevents unbounded KV accumulation from direct-publish rosters
   await env.ROSTERS.put(`${KV_PREFIX.ROSTER_DATA}:${syntheticId}`, req.roster_data, {
-    expirationTtl: 60 * 60 * 24 * 90,
+    expirationTtl: DIRECT_TTL,
   });
 
   return { ok: true, channelId: result.channelId, channelName, messageId: result.messageId };

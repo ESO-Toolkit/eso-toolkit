@@ -3,7 +3,8 @@
  * that ts-jest cannot parse.
  */
 
-export const DISCORD_LS_TOKEN_KEY = 'discord_access_token';
+export const DISCORD_TOKEN_KEY = 'discord_access_token';
+export const DISCORD_EXPIRY_KEY = 'discord_token_expires_at';
 
 export function startDiscordAuth(_returnPath?: string): void {
   // no-op in tests

@@ -58,11 +58,16 @@ export async function getMappingByChannelId(
   return getMappingByRosterId(env, guildId, rosterId);
 }
 
-export async function upsertMapping(env: Env, mapping: RosterMapping): Promise<void> {
+export async function upsertMapping(
+  env: Env,
+  mapping: RosterMapping,
+  expirationTtl?: number,
+): Promise<void> {
   const json = JSON.stringify(mapping);
+  const opts = expirationTtl ? { expirationTtl } : undefined;
   await Promise.all([
-    env.ROSTERS.put(mappingKey(mapping.guildId, mapping.rosterId), json),
-    env.ROSTERS.put(reverseKey(mapping.channelId), `${mapping.guildId}:${mapping.rosterId}`),
+    env.ROSTERS.put(mappingKey(mapping.guildId, mapping.rosterId), json, opts),
+    env.ROSTERS.put(reverseKey(mapping.channelId), `${mapping.guildId}:${mapping.rosterId}`, opts),
   ]);
 }
 
@@ -132,6 +137,36 @@ async function listMappingsByPrefix(
   } while (cursor);
 
   return mappings;
+}
+
+// ── Publish Lock (short-lived, prevents concurrent channel creation) ────────
+
+const LOCK_PREFIX = 'publish-lock';
+const LOCK_TTL_SECONDS = 30;
+
+/**
+ * Attempt to acquire a short-lived lock for a roster+guild pair.
+ * Returns true if the lock was acquired, false if already held.
+ * The lock expires after 30 seconds to prevent deadlocks.
+ */
+export async function acquirePublishLock(
+  env: Env,
+  guildId: string,
+  rosterId: string,
+): Promise<boolean> {
+  const key = `${LOCK_PREFIX}:${guildId}:${rosterId}`;
+  const existing = await env.ROSTERS.get(key);
+  if (existing) return false;
+  await env.ROSTERS.put(key, Date.now().toString(), { expirationTtl: LOCK_TTL_SECONDS });
+  return true;
+}
+
+export async function releasePublishLock(
+  env: Env,
+  guildId: string,
+  rosterId: string,
+): Promise<void> {
+  await env.ROSTERS.delete(`${LOCK_PREFIX}:${guildId}:${rosterId}`);
 }
 
 // ── Guild Config CRUD ───────────────────────────────────────────────────────
