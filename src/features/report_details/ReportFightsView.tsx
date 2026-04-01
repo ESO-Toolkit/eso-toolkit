@@ -1,6 +1,4 @@
 // Third-party imports
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import SummarizeIcon from '@mui/icons-material/Summarize';
 import {
   Box,
   Card,
@@ -12,13 +10,13 @@ import {
   Collapse,
   Switch,
   FormControlLabel,
-  Button,
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { ReportActionBar } from '../../components/ReportActionBar';
 import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 import { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 import { RootState } from '../../store/storeWithHistory';
@@ -1138,6 +1136,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   };
 
   return (
+    <>
+    <ReportActionBar
+      reportId={reportId || ''}
+      title={reportData?.title || 'Report Details'}
+      activePage="fights"
+    />
     <Card
       elevation={4}
       sx={{
@@ -1167,83 +1171,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           position: 'relative',
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: { xs: '1.5rem', sm: '2rem' },
-          }}
-        >
-          <Typography
-            variant="h5"
-            sx={{
-              fontSize: { xs: '1.5rem', sm: '2rem' },
-              lineHeight: 1.334,
-              textAlign: { xs: 'center', sm: 'left' },
-              wordBreak: 'break-word',
-              whiteSpace: 'normal',
-              overflow: 'visible',
-              flex: 1,
-              minWidth: 0,
-              px: { xs: 1, sm: 0 },
-              hyphens: 'auto',
-            }}
-          >
-            {reportData?.title || 'Report Details'}
-          </Typography>
-          <Button
-            variant="outlined"
-            startIcon={<DashboardIcon />}
-            onClick={() => navigate(`/report/${reportId}/dashboard`)}
-            sx={{
-              ml: 2,
-              flexShrink: 0,
-              display: { xs: 'none', sm: 'flex' },
-            }}
-          >
-            Dashboard
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<SummarizeIcon />}
-            onClick={() => navigate(`/report/${reportId}/summary`)}
-            sx={{
-              ml: 2,
-              flexShrink: 0,
-              display: { xs: 'none', sm: 'flex' },
-            }}
-          >
-            Report Summary
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => navigate(`/report/${reportId}/dashboard`)}
-            sx={{
-              ml: 2,
-              flexShrink: 0,
-              minWidth: 'auto',
-              px: 2,
-              display: { xs: 'flex', sm: 'none' },
-            }}
-          >
-            <DashboardIcon />
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => navigate(`/report/${reportId}/summary`)}
-            sx={{
-              ml: 2,
-              flexShrink: 0,
-              minWidth: 'auto',
-              px: 2,
-              display: { xs: 'flex', sm: 'none' },
-            }}
-          >
-            <SummarizeIcon />
-          </Button>
-        </Box>
-
         {encounters.length === 0 && <Typography> No Fights Found </Typography>}
         <Box data-testid="fight-list">
           {encounters.map((trialRun) => (
@@ -1653,5 +1580,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         </Box>
       </CardContent>
     </Card>
+    </>
   );
 };

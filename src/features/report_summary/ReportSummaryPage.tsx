@@ -1,5 +1,3 @@
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import {
   Box,
   Typography,
@@ -8,13 +6,12 @@ import {
   LinearProgress,
   Alert,
   Chip,
-  Button,
-  IconButton,
 } from '@mui/material';
 import React, { Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { DynamicMetaTags } from '../../components/DynamicMetaTags';
+import { ReportActionBar } from '../../components/ReportActionBar';
 import { ReportFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
 import { ReportSummaryData } from '../../types/reportSummaryTypes';
@@ -129,91 +126,48 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
   summaryData,
   reportId,
 }) => {
-  const navigate = useNavigate();
-
-  const handleBackToFights = (): void => {
-    navigate(`/report/${reportId}`);
-  };
-
   return (
-    <Card elevation={2} sx={{ mb: 3 }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <IconButton
-            onClick={handleBackToFights}
-            sx={{
-              mr: 1,
-              '&:hover': {
-                bgcolor: 'action.hover',
-              },
-            }}
-            aria-label="Back to fight selector"
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
-              fontWeight: 600,
-              flex: 1,
-            }}
-          >
-            Report Summary
-          </Typography>
-          <Chip
-            label={`${summaryData?.fights.length || 0} Fights`}
-            color="primary"
-            variant="outlined"
-          />
-          <Button
-            variant="outlined"
-            startIcon={<DashboardIcon />}
-            onClick={() => navigate(`/report/${reportId}/dashboard`)}
-            sx={{ display: { xs: 'none', sm: 'flex' } }}
-          >
-            Dashboard
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={handleBackToFights}
-            sx={{ display: { xs: 'none', sm: 'flex' } }}
-          >
-            Back to Fights
-          </Button>
-        </Box>
+    <>
+      <ReportActionBar
+        reportId={reportId}
+        title={reportData?.title || 'Report Summary'}
+        activePage="summary"
+      />
 
-        <Typography variant="h5" color="text.secondary" gutterBottom>
-          {reportData?.title}
-        </Typography>
-
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
-          {reportData?.zone?.name && (
-            <Chip label={reportData.zone.name} size="small" color="secondary" />
-          )}
-          {summaryData?.reportInfo.duration && (
-            <Chip label={formatDuration(summaryData.reportInfo.duration)} size="small" />
-          )}
-          {summaryData?.deathAnalysis.totalDeaths !== undefined && (
+      {/* Summary metadata chips */}
+      <Card elevation={2} sx={{ mb: 3 }}>
+        <CardContent sx={{ py: 2, '&:last-child': { pb: 2 } }}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
             <Chip
-              label={`${summaryData.deathAnalysis.totalDeaths} Total Deaths`}
+              label={`${summaryData?.fights.length || 0} Fights`}
+              color="primary"
+              variant="outlined"
               size="small"
-              color={summaryData.deathAnalysis.totalDeaths === 0 ? 'success' : 'warning'}
             />
-          )}
-        </Box>
-
-        {summaryData?.reportInfo && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Report from {new Date(summaryData.reportInfo.startTime).toLocaleString()}
-            {summaryData.reportInfo.ownerName &&
-              ` • Uploaded by ${summaryData.reportInfo.ownerName}`}
-          </Typography>
-        )}
-      </CardContent>
-    </Card>
+            {reportData?.zone?.name && (
+              <Chip label={reportData.zone.name} size="small" color="secondary" />
+            )}
+            {summaryData?.reportInfo.duration && (
+              <Chip label={formatDuration(summaryData.reportInfo.duration)} size="small" />
+            )}
+            {summaryData?.deathAnalysis.totalDeaths !== undefined && (
+              <Chip
+                label={`${summaryData.deathAnalysis.totalDeaths} Total Deaths`}
+                size="small"
+                color={summaryData.deathAnalysis.totalDeaths === 0 ? 'success' : 'warning'}
+              />
+            )}
+            {summaryData?.reportInfo && (
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
+                {new Date(summaryData.reportInfo.startTime).toLocaleString()}
+                {summaryData.reportInfo.ownerName &&
+                  ` · ${summaryData.reportInfo.ownerName}`}
+              </Typography>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+    </>
   );
 };
 
