@@ -67,7 +67,17 @@ export function startDiscordAuth(returnPath?: string): void {
     state,
   });
 
-  window.location.href = `${DISCORD_OAUTH_AUTHORIZE}?${params.toString()}`;
+  const url = `${DISCORD_OAUTH_AUTHORIZE}?${params.toString()}`;
+
+  // Navigate via a temporary anchor element instead of window.location.href.
+  // On iOS, programmatic location assignments don't trigger Universal Links,
+  // so the Discord OAuth page opens in the browser instead of the Discord app.
+  // Clicking an <a> element within the user-gesture call stack triggers them.
+  const a = document.createElement('a');
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 /**
