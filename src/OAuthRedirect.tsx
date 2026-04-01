@@ -81,8 +81,11 @@ export const OAuthRedirect: React.FC = () => {
             }),
           );
           try {
+            // Use no-cors: the desktop app's local server won't have CORS headers,
+            // but no-cors still delivers the request — we just can't read the response.
             await fetch(
               `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`,
+              { mode: 'no-cors' },
             );
           } catch {
             // Fetch to localhost may be blocked by mixed-content or CORS —
