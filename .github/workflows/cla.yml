@@ -66,7 +66,7 @@ jobs:
           done
 
           SIGNED=$(gh api "repos/${{ github.repository }}/contents/signatures/version1/cla.json?ref=cla-signatures" \
-            --jq '.content' 2>/dev/null | tr -d '\n' | base64 -d | jq -r '.[].login' 2>/dev/null || echo "")
+            --jq '.content' 2>/dev/null | tr -d '\n' | base64 -d | python3 -c "import sys,json; [print(c['name']) for c in json.load(sys.stdin).get('signedContributors',[])]" 2>/dev/null || echo "")
 
           if echo "$SIGNED" | grep -qx "$PR_AUTHOR"; then
             echo "✓ PR author $PR_AUTHOR has signed the CLA"
