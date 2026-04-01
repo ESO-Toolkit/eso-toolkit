@@ -794,7 +794,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               ? '#a3e635'
               : '#4ade80'
       : isFalsePositive
-        ? '#f59e0b'
+        ? darkMode ? '#64748b' : '#94a3b8'
         : darkMode
           ? '#38bdf8'
           : '#06b6d4';
@@ -807,8 +807,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         : '#dc2626'
       : isFalsePositive
         ? darkMode
-          ? '#f59e0b'
-          : '#d97706'
+          ? '#64748b'
+          : '#94a3b8'
         : darkMode
           ? '#4ade80'
           : '#059669';
@@ -818,12 +818,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       ? isWipe
         ? 'rgba(255, 60, 60, 0.06)'
         : isFalsePositive
-          ? 'rgba(245, 158, 11, 0.06)'
+          ? 'rgba(100, 116, 139, 0.06)'
           : 'rgba(56, 189, 248, 0.06)'
       : isWipe
         ? 'rgba(220, 38, 38, 0.04)'
         : isFalsePositive
-          ? 'rgba(217, 119, 6, 0.04)'
+          ? 'rgba(148, 163, 184, 0.04)'
           : 'rgba(6, 182, 212, 0.04)';
 
     const borderColor = darkMode
@@ -916,11 +916,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       return getThemeColors.wipeVeryLowGradient;
                     }
                   })()
-                : fight.difficulty == null
+                : fight.difficulty == null || isFalsePositive
                   ? getThemeColors.trashGradient
-                  : isFalsePositive
-                    ? getThemeColors.falsePositiveGradient
-                    : getThemeColors.killGradient,
+                  : getThemeColors.killGradient,
               borderRadius: '8px',
               opacity: darkMode ? 0.65 : 0.6,
               zIndex: 0,
@@ -1002,8 +1000,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               >
                 #{idx + 1}
               </Typography>
-              {/* Status badge */}
-              {isBossFight && (
+              {/* Status badge — hidden for false positives */}
+              {isBossFight && !isFalsePositive && (
                 <Box
                   sx={{
                     display: 'inline-flex',
