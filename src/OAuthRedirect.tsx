@@ -77,24 +77,33 @@ export const OAuthRedirect: React.FC = () => {
             setError('Invalid desktop app port.');
             return;
           }
-          // Send tokens to the desktop app's localhost server in the background
-          const tokenPayload = btoa(
-            JSON.stringify({
-              access_token: data.access_token,
-              refresh_token: data.refresh_token || null,
-              expires_in: data.expires_in || 3600,
-            }),
-          );
+          // Send tokens to the desktop app's localhost server in the background.
+          // We POST JSON so the desktop app can respond with a confirmation,
+          // letting us verify delivery before showing the success page.
+          const callbackUrl = `http://localhost:${appPort}/callback`;
           try {
-            // Use no-cors: the desktop app's local server won't have CORS headers,
-            // but no-cors still delivers the request — we just can't read the response.
-            await fetch(
-              `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`,
-              { mode: 'no-cors' },
-            );
+            const callbackResp = await fetch(callbackUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token || null,
+                expires_in: data.expires_in || 3600,
+              }),
+            });
+            if (!callbackResp.ok) {
+              throw new Error(`Desktop app responded with ${callbackResp.status}`);
+            }
           } catch {
-            // Fetch to localhost may be blocked by mixed-content or CORS —
-            // fall back to a full redirect so the desktop app still receives tokens.
+            // CORS not supported or connection refused — fall back to GET redirect
+            // so older Kalpa versions still receive tokens.
+            const tokenPayload = btoa(
+              JSON.stringify({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token || null,
+                expires_in: data.expires_in || 3600,
+              }),
+            );
             window.location.href = `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`;
             return;
           }
