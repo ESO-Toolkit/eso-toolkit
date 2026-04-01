@@ -989,7 +989,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             >
               <Typography
                 sx={{
-                  fontSize: '0.62rem',
+                  fontSize: '0.72rem',
                   fontWeight: 600,
                   fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                   color: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(100,116,139,0.5)',
@@ -1015,7 +1015,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 >
                   <Typography
                     sx={{
-                      fontSize: isWipe ? '0.65rem' : '0.55rem',
+                      fontSize: isWipe ? '0.75rem' : '0.65rem',
                       fontWeight: 800,
                       fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                       color: statusColor,
@@ -1053,7 +1053,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: { xs: '1.2rem', sm: '1.4rem' },
+                fontSize: { xs: '1.35rem', sm: '1.55rem' },
                 fontWeight: 700,
                 fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                 color: darkMode ? '#f1f5f9' : '#0f172a',
@@ -1080,9 +1080,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             >
               <Typography
                 sx={{
-                  fontSize: '0.55rem',
+                  fontSize: '0.65rem',
                   fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  color: darkMode ? 'rgba(255,255,255,0.32)' : 'rgba(100,116,139,0.5)',
+                  color: darkMode ? 'rgba(255,255,255,0.35)' : 'rgba(100,116,139,0.55)',
                   lineHeight: 1,
                   letterSpacing: '0.02em',
                   whiteSpace: 'nowrap',
@@ -1097,9 +1097,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               {fight.friendlyPlayers && fight.friendlyPlayers.filter(Boolean).length > 0 && (
                 <Typography
                   sx={{
-                    fontSize: '0.5rem',
+                    fontSize: '0.6rem',
                     fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    color: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(100,116,139,0.4)',
+                    color: darkMode ? 'rgba(255,255,255,0.33)' : 'rgba(100,116,139,0.45)',
                     lineHeight: 1,
                     letterSpacing: '0.04em',
                     display: { xs: 'none', sm: 'block' },
