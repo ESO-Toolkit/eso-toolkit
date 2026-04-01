@@ -1,6 +1,9 @@
 /**
- * Pack Hub API client.
- * Shares the same roster-hub-api Worker backend — packs are just another resource.
+ * Pack Hub API client — talks to the roster-hub-api Worker (VITE_ROSTER_HUB_API_URL).
+ *
+ * NOTE: This is separate from packs-api.ts (build-hub) which talks to the
+ * eso-packs-worker (VITE_PACKS_API_URL). Both expose /packs endpoints but
+ * serve different data stores. This one is used by roster-hub and pack-hub features.
  */
 
 import type {
@@ -123,20 +126,22 @@ export const packHubApi = {
     return { pack: hydratePack(data.pack) };
   },
 
-  create(data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
-    return request<SinglePackResponse>(
+  async create(data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
+    const res = await request<SinglePackResponse>(
       '/packs',
       { method: 'POST', body: JSON.stringify(data) },
       token,
     );
+    return { pack: hydratePack(res.pack) };
   },
 
-  update(id: string, data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
-    return request<SinglePackResponse>(
+  async update(id: string, data: PublishPackPayload, token: string): Promise<SinglePackResponse> {
+    const res = await request<SinglePackResponse>(
       `/packs/${id}`,
       { method: 'PUT', body: JSON.stringify(data) },
       token,
     );
+    return { pack: hydratePack(res.pack) };
   },
 
   delete(id: string, token: string): Promise<{ ok: boolean }> {
