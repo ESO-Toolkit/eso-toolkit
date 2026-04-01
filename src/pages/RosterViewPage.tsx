@@ -35,6 +35,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
+import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
 import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
@@ -57,7 +58,6 @@ import {
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
-import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';

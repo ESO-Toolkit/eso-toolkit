@@ -182,6 +182,7 @@ export const siphoning: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_CATALYST,
+      alternateIds: [36560, 45135, 63705, 63707],
       name: 'Catalyst',
       type: 'passive',
       icon: 'passive_sorcerer_046',
@@ -190,6 +191,7 @@ export const siphoning: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_MAGICKA_FLOOD,
+      alternateIds: [36595, 45150, 243766, 243767],
       name: 'Magicka Flood',
       type: 'passive',
       icon: 'passive_sorcerer_008',
@@ -198,6 +200,7 @@ export const siphoning: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_SOUL_SIPHONER,
+      alternateIds: [36603, 45155],
       name: 'Soul Siphoner',
       type: 'passive',
       icon: 'passive_sorcerer_036',
@@ -206,6 +209,7 @@ export const siphoning: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_TRANSFER,
+      alternateIds: [36587, 36589, 45145, 45146],
       name: 'Transfer',
       type: 'passive',
       icon: 'passive_sorcerer_002',

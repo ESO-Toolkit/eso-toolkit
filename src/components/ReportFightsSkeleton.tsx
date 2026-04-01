@@ -1,4 +1,5 @@
-import { Box, Paper, Skeleton } from '@mui/material';
+import { Box, Card, CardContent, Skeleton } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 interface ReportFightsSkeletonProps {
@@ -13,28 +14,20 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
   'data-testid': dataTestId,
 }) => {
   return (
-    <Paper
-      elevation={0}
-      square
+    <Card
+      elevation={4}
       data-testid={dataTestId}
       sx={{
-        p: 0,
-        m: 0,
-        width: '100%',
-        maxWidth: '100vw',
-        boxSizing: 'border-box',
-        background: 'transparent',
+        borderRadius: 2,
+        border: (t: Theme) => `1px solid ${t.palette.divider}`,
+        background: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+            : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
+        overflow: 'hidden',
       }}
     >
-      <Box
-        sx={{
-          p: { xs: 2, sm: 3 },
-          mb: 3,
-          backgroundColor: 'background.paper',
-          borderRadius: { xs: 0, sm: 1 },
-          boxShadow: 2,
-        }}
-      >
+      <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
         {/* Report Title Skeleton */}
         <Skeleton
           variant="text"
@@ -67,8 +60,13 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
               mb: 3,
               p: 2,
               borderRadius: 2,
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              backgroundColor: 'background.paper',
+              border: (t: Theme) => `1px solid ${t.palette.divider}`,
+              background: (t: Theme) =>
+                t.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
+                  : t.palette.background.paper,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
             }}
           >
             {/* Trial Name and Difficulty */}
@@ -90,7 +88,6 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
                 mb: 2,
                 p: 2,
                 borderRadius: 2,
-                border: '1px solid rgba(255, 255, 255, 0.0)',
                 overflow: 'visible',
               }}
             >
@@ -178,7 +175,7 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
             </Box>
           ))}
         </Box>
-      </Box>
-    </Paper>
+      </CardContent>
+    </Card>
   );
 };

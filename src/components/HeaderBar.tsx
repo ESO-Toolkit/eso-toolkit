@@ -1,9 +1,9 @@
 import {
-  Build,
   Login,
   Logout,
   Person,
   ExpandMore,
+  Build,
   ExpandLess,
   Assessment,
 } from '@mui/icons-material';
@@ -444,10 +444,12 @@ export const HeaderBar: React.FC = () => {
   const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [reportsAnchorEl, setReportsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileToolsOpen, setMobileToolsOpen] = React.useState(false);
   const [mobileReportsOpen, setMobileReportsOpen] = React.useState(false);
+  const [mobileAccountOpen, setMobileAccountOpen] = React.useState(false);
 
   // Determine logo text based on current location
   const logoText = getLogoText(location.pathname);
@@ -504,11 +506,14 @@ export const HeaderBar: React.FC = () => {
       // Reset submenus when opening mobile menu
       setMobileToolsOpen(false);
       setMobileReportsOpen(false);
+      setMobileAccountOpen(false);
     }
   };
 
   const handleMobileToolsToggle = (): void => {
     if (!mobileToolsOpen) {
+      // Close account and reports submenus if they're open
+      setMobileAccountOpen(false);
       setMobileReportsOpen(false);
     }
     setMobileToolsOpen(!mobileToolsOpen);
@@ -516,17 +521,49 @@ export const HeaderBar: React.FC = () => {
 
   const handleMobileReportsToggle = (): void => {
     if (!mobileReportsOpen) {
+      // Close tools and account submenus if they're open
       setMobileToolsOpen(false);
+      setMobileAccountOpen(false);
     }
     setMobileReportsOpen(!mobileReportsOpen);
   };
 
-  const handleNavigateToProfile = React.useCallback((): void => {
-    if (currentUser?.name) {
-      navigate(`/u/${currentUser.name}`);
+  const handleMobileAccountToggle = (): void => {
+    if (!mobileAccountOpen) {
+      // Close tools and reports submenus if they're open
+      setMobileToolsOpen(false);
+      setMobileReportsOpen(false);
     }
-    setMobileOpen(false);
-  }, [currentUser, navigate]);
+    setMobileAccountOpen(!mobileAccountOpen);
+  };
+
+  const handleAccountClick = (event: React.MouseEvent<HTMLElement>): void => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = (): void => {
+    setAnchorEl(null);
+  };
+
+  const handleViewReports = (): void => {
+    navigate('/my-reports');
+    setAnchorEl(null);
+  };
+
+  const handleViewRosters = (): void => {
+    navigate('/my-rosters');
+    setAnchorEl(null);
+  };
+
+  const handleViewBuilds = (): void => {
+    navigate('/my-builds');
+    setAnchorEl(null);
+  };
+
+  const handleLogoutFromMenu = (): void => {
+    handleLogout();
+    setAnchorEl(null);
+  };
 
   const handleToolsClick = (event: React.MouseEvent<HTMLElement>): void => {
     setToolsAnchorEl(event.currentTarget);
@@ -555,6 +592,7 @@ export const HeaderBar: React.FC = () => {
     setMobileOpen(false);
     setMobileToolsOpen(false);
     setMobileReportsOpen(false);
+    setMobileAccountOpen(false);
   };
 
   const handleSampleReport = React.useCallback((): void => {
@@ -563,6 +601,34 @@ export const HeaderBar: React.FC = () => {
     setMobileOpen(false);
     setMobileReportsOpen(false);
   }, [navigate]);
+
+  const handleMobileViewReports = React.useCallback((): void => {
+    navigate('/my-reports');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
+  const handleMobileViewRosters = React.useCallback((): void => {
+    navigate('/my-rosters');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
+  const handleMobileViewBuilds = React.useCallback((): void => {
+    navigate('/my-builds');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [navigate]);
+
+  const handleMobileAuthAction = React.useCallback((): void => {
+    if (isLoggedIn) {
+      handleLogout();
+    } else {
+      handleLogin();
+    }
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  }, [isLoggedIn, handleLogout, handleLogin]);
 
   const toolsItems = [
     {
@@ -594,6 +660,21 @@ export const HeaderBar: React.FC = () => {
       text: 'Build Editor',
       icon: '🔧',
       path: '/build-editor',
+    },
+    {
+      text: 'My Builds',
+      icon: '📋',
+      path: '/my-builds',
+    },
+    {
+      text: 'Gear Sets',
+      icon: '🛡️',
+      path: '/gear-sets',
+    },
+    {
+      text: 'Build Hub',
+      icon: '🏗️',
+      path: '/build-hub',
     },
   ];
 
@@ -630,6 +711,58 @@ export const HeaderBar: React.FC = () => {
 
     return items;
   }, [isLoggedIn, handleSampleReport]);
+
+  const accountItems = React.useMemo(() => {
+    const items: Array<{
+      text: string;
+      icon: React.ReactElement;
+      action: () => void;
+      colorVariant: 'default' | 'destructive' | 'positive';
+    }> = [];
+
+    // My Builds is always accessible (localStorage-backed)
+    items.push({
+      text: 'My builds',
+      icon: <Build sx={{ fontSize: 18 }} />,
+      action: handleMobileViewBuilds,
+      colorVariant: 'default',
+    });
+
+    if (isLoggedIn) {
+      items.push({
+        text: 'My reports',
+        icon: <Person sx={{ fontSize: 18 }} />,
+        action: handleMobileViewReports,
+        colorVariant: 'default',
+      });
+      items.push({
+        text: 'My rosters',
+        icon: <Build sx={{ fontSize: 18 }} />,
+        action: handleMobileViewRosters,
+        colorVariant: 'default',
+      });
+      items.push({
+        text: 'Log out',
+        icon: <Logout sx={{ fontSize: 18 }} />,
+        action: handleMobileAuthAction,
+        colorVariant: 'destructive',
+      });
+    } else {
+      items.push({
+        text: 'Log in',
+        icon: <Login sx={{ fontSize: 18 }} />,
+        action: handleMobileAuthAction,
+        colorVariant: 'positive',
+      });
+    }
+    return items;
+  }, [
+    isLoggedIn,
+    handleMobileAuthAction,
+    handleMobileViewReports,
+    handleMobileViewRosters,
+    handleMobileViewBuilds,
+  ]);
 
   const navItems = [
     {
@@ -884,55 +1017,48 @@ export const HeaderBar: React.FC = () => {
               </Button>
               <ThemeToggle />
               {isLoggedIn ? (
-                <>
-                  <Tooltip title="My profile" arrow placement="bottom">
-                    <Button
-                      onClick={handleNavigateToProfile}
-                      aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
-                      startIcon={<Person />}
-                      sx={{
-                        display: { xs: 'none', sm: 'flex' },
-                        maxWidth: 220,
-                        fontWeight: 600,
-                        color:
-                          theme.palette.mode === 'dark'
-                            ? theme.palette.grey[100]
-                            : theme.palette.text.primary,
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: '999px',
+                <Tooltip title="Account" arrow placement="bottom">
+                  <Button
+                    onClick={handleAccountClick}
+                    aria-label={userLabel ? `Account: ${userLabel}` : 'Account'}
+                    startIcon={<Person />}
+                    sx={{
+                      display: { xs: 'none', sm: 'flex' },
+                      maxWidth: 220,
+                      fontWeight: 600,
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? theme.palette.grey[100]
+                          : theme.palette.text.primary,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: '999px',
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(59,130,246,0.12)'
+                          : 'rgba(59,130,246,0.16)',
+                      textTransform: 'none',
+                      '&:hover': {
                         bgcolor:
                           theme.palette.mode === 'dark'
-                            ? 'rgba(59,130,246,0.12)'
-                            : 'rgba(59,130,246,0.16)',
-                        textTransform: 'none',
-                        '&:hover': {
-                          bgcolor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(59,130,246,0.2)'
-                              : 'rgba(59,130,246,0.24)',
-                        },
+                            ? 'rgba(59,130,246,0.2)'
+                            : 'rgba(59,130,246,0.24)',
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 600,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {userLabel || 'Profile'}
-                      </Typography>
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="Log out" arrow placement="bottom">
-                    <AuthIconButton onClick={handleLogout} aria-label="Log out">
-                      <Logout />
-                    </AuthIconButton>
-                  </Tooltip>
-                </>
+                      {userLabel || 'Account'}
+                    </Typography>
+                  </Button>
+                </Tooltip>
               ) : (
                 <Tooltip title="Log in" arrow placement="bottom">
                   <AuthIconButton onClick={handleLogin} aria-label="Log in">
@@ -959,6 +1085,130 @@ export const HeaderBar: React.FC = () => {
           </Toolbar>
         </Container>
       </AppBar>
+
+      {/* Account Menu for Logged In Users */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        onClick={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+              mt: 1.5,
+              minWidth: 180,
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
+                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
+              backdropFilter: 'blur(20px)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgba(59, 130, 246, 0.15)',
+              borderRadius: 2,
+              '&::before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                right: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0,
+              },
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={handleViewReports}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <Person sx={{ mr: 1.5, fontSize: 20 }} />
+          My reports
+        </MenuItem>
+        <MenuItem
+          onClick={handleViewRosters}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Build sx={{ fontSize: 20 }} />
+          </ListItemIcon>
+          My rosters
+        </MenuItem>
+        <MenuItem
+          onClick={handleViewBuilds}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Build sx={{ fontSize: 20 }} />
+          </ListItemIcon>
+          My builds
+        </MenuItem>
+        <MenuItem
+          onClick={handleLogoutFromMenu}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            color: 'error.main',
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(239, 68, 68, 0.08)'
+                  : 'rgba(220, 38, 38, 0.08)',
+            },
+          }}
+        >
+          <Logout sx={{ mr: 1.5, fontSize: 20 }} />
+          Log out
+        </MenuItem>
+      </Menu>
 
       {/* Tools Submenu */}
       <Menu
@@ -1311,106 +1561,43 @@ export const HeaderBar: React.FC = () => {
             </MobileSubmenuContainer>
           </Box>
 
-          {/* Profile + auth in mobile menu */}
-          {isLoggedIn ? (
-            <>
-              <MobileNavButton
-                onClick={handleNavigateToProfile}
-                startIcon={<Person />}
-                sx={{
-                  animationDelay: `${(navItems.length + 1) * 0.1}s`,
-                  animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
-                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(59, 130, 246, 0.2)'
-                      : 'rgba(37, 99, 235, 0.15)',
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
-                        : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(59, 130, 246, 0.4)'
-                        : 'rgba(37, 99, 235, 0.25)',
-                  },
-                  '@keyframes slideInUp': {
-                    '0%': { opacity: 0, transform: 'translateY(30px)' },
-                    '100%': { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}
-              >
-                {userLabel || 'My Profile'}
-              </MobileNavButton>
-              <MobileNavButton
-                onClick={() => {
-                  handleLogout();
-                  setMobileOpen(false);
-                }}
-                startIcon={<Logout />}
-                sx={{
-                  animationDelay: `${(navItems.length + 2) * 0.1}s`,
-                  animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
-                      : 'linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(185, 28, 28, 0.04) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(239, 68, 68, 0.2)'
-                      : 'rgba(220, 38, 38, 0.15)',
-                  color: theme.palette.error.main,
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)'
-                        : 'linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(185, 28, 28, 0.08) 100%)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(239, 68, 68, 0.4)'
-                        : 'rgba(220, 38, 38, 0.25)',
-                  },
-                  '@keyframes slideInUp': {
-                    '0%': { opacity: 0, transform: 'translateY(30px)' },
-                    '100%': { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}
-              >
-                Log out
-              </MobileNavButton>
-            </>
-          ) : (
+          {/* Account submenu in mobile menu */}
+          <Box>
             <MobileNavButton
-              onClick={() => {
-                handleLogin();
-                setMobileOpen(false);
-              }}
-              startIcon={<Login />}
+              onClick={handleMobileAccountToggle}
+              endIcon={mobileAccountOpen ? <ExpandLess /> : <ExpandMore />}
+              startIcon={<Person />}
               sx={{
                 animationDelay: `${(navItems.length + 1) * 0.1}s`,
                 animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)'
-                    : 'linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(21, 128, 61, 0.04) 100%)',
-                borderColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(34, 197, 94, 0.2)'
-                    : 'rgba(22, 163, 74, 0.15)',
-                color: theme.palette.success.main,
+                background: mobileAccountOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(29, 78, 216, 0.08) 100%)'
+                  : theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
+                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
+                borderColor: mobileAccountOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(59, 130, 246, 0.4)'
+                    : 'rgba(37, 99, 235, 0.3)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(59, 130, 246, 0.2)'
+                    : 'rgba(37, 99, 235, 0.15)',
+                borderRadius: mobileAccountOpen ? '16px 16px 0 0' : '16px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(21, 128, 61, 0.08) 100%)',
+                  background: mobileAccountOpen
+                    ? theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(29, 78, 216, 0.12) 100%)'
+                    : theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
                   borderColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(34, 197, 94, 0.4)'
-                      : 'rgba(22, 163, 74, 0.25)',
+                      ? 'rgba(59, 130, 246, 0.4)'
+                      : 'rgba(37, 99, 235, 0.25)',
                 },
                 '@keyframes slideInUp': {
                   '0%': { opacity: 0, transform: 'translateY(30px)' },
@@ -1418,9 +1605,25 @@ export const HeaderBar: React.FC = () => {
                 },
               }}
             >
-              Log in
+              Account
             </MobileNavButton>
-          )}
+
+            {/* Account submenu items */}
+            <MobileSubmenuContainer open={mobileAccountOpen} itemCount={accountItems.length}>
+              {accountItems.map((item, index) => (
+                <BaseMobileSubmenuItem
+                  key={item.text}
+                  open={mobileAccountOpen}
+                  index={index}
+                  colorVariant={item.colorVariant}
+                  onClick={item.action}
+                  startIcon={<Box sx={{ mr: 1 }}>{item.icon}</Box>}
+                >
+                  {item.text}
+                </BaseMobileSubmenuItem>
+              ))}
+            </MobileSubmenuContainer>
+          </Box>
         </MobileMenuContent>
       </MobileMenuOverlay>
     </>

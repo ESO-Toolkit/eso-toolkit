@@ -6,7 +6,7 @@ export const lightArmor: SkillLineData = {
   name: 'Light Armor',
   class: 'armor',
   category: 'armor',
-  icon: '/images/skills/light-armor.png',
+  icon: 'ability_armor_003',
   skills: [
     // Active Abilities
     {
@@ -35,25 +35,27 @@ export const lightArmor: SkillLineData = {
     },
     // Passive Abilities
     {
-      id: 0,
+      id: 150185,
       name: 'Light Armor Bonuses',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: '/images/skills/light-armor.png',
+      baseAbilityId: 150185,
+      icon: 'passive_armor2_light',
       description:
         'Each piece of Light Armor does the following: Reduces damage taken from Magical attacks by 1%, Reduces the cost of Roll Dodge by 3%, Reduces the Movement Speed penalty of Sneak by 5%, Reduces the cost of Break Free by 5%, Reduces the cost of Bash by 3%',
     },
     {
-      id: 0,
+      id: 152778,
       name: 'Light Armor Penalties',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: '/images/skills/light-armor.png',
+      baseAbilityId: 152778,
+      icon: 'passive_armor2_light',
       description:
         'Each piece of Light Armor does the following: Increases damage taken from Martial attacks by 1%, Increases the cost of Block by 3%, Decreases damage done with Bash by 1%',
     },
     {
       id: AbilityId.GRACE,
+      icon: 'ability_armor_004',
+      alternateIds: [29639, 45548, 45549, 114971, 114972, 114973, 182259],
       name: 'Grace',
       type: 'passive',
       baseAbilityId: AbilityId.GRACE,
@@ -62,6 +64,8 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.EVOCATION,
+      icon: 'ability_armor_005',
+      alternateIds: [29665, 45557, 114959, 114962],
       name: 'Evocation',
       type: 'passive',
       baseAbilityId: AbilityId.EVOCATION,
@@ -70,6 +74,8 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.SPELL_WARDING,
+      icon: 'ability_armor_006',
+      alternateIds: [29663, 45559, 88543, 88544],
       name: 'Spell Warding',
       type: 'passive',
       baseAbilityId: AbilityId.SPELL_WARDING,
@@ -77,6 +83,8 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.PRODIGY,
+      icon: 'ability_sorcerer_038',
+      alternateIds: [29668, 45561],
       name: 'Prodigy',
       type: 'passive',
       baseAbilityId: AbilityId.PRODIGY,
@@ -85,6 +93,8 @@ export const lightArmor: SkillLineData = {
     },
     {
       id: AbilityId.CONCENTRATION,
+      icon: 'ability_sorcerer_060',
+      alternateIds: [29667, 45562, 149152, 149153],
       name: 'Concentration',
       type: 'passive',
       baseAbilityId: AbilityId.CONCENTRATION,

@@ -1,14 +1,16 @@
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import GroupsIcon from '@mui/icons-material/Groups';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
   Box,
   Button,
-  ButtonBase,
   CircularProgress,
+  IconButton,
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import * as React from 'react';
@@ -295,29 +297,96 @@ export const ReportFightHeader: React.FC = () => {
     }
   }, [hasPlayers, playersById, combatantInfoEvents, fight, navigate]);
 
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Shared pill-style base for action buttons
+  const pillBase = {
+    textTransform: 'none' as const,
+    borderRadius: '99px',
+    fontWeight: 500,
+    fontSize: '0.8125rem',
+    padding: isMobile ? '6px' : '6px 14px',
+    minWidth: isMobile ? 36 : 'auto',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    transition: 'all 0.2s ease',
+  };
+
   return (
     <React.Fragment>
-      <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
+      {/* ── Toolbar: back + actions ─────────────────────────────── */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: 0.75, sm: 1 },
+          mb: { xs: 1.5, sm: 2 },
+          py: { xs: 0.75, sm: 1 },
+          px: { xs: 1, sm: 1.5 },
+          borderRadius: '12px',
+          background: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        }}
+      >
+        {/* Back button */}
+        <Tooltip title="Back to Fight List">
+          {isMobile ? (
+            <IconButton
+              onClick={() => navigate(`/report/${reportId}`)}
+              aria-label="Back to Fight List"
+              size="small"
+              sx={{
+                color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
+                '&:hover': {
+                  color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                },
+              }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          ) : (
+            <Button
+              onClick={() => navigate(`/report/${reportId}`)}
+              startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
+              size="small"
+              sx={{
+                ...pillBase,
+                color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
+                padding: '6px 14px',
+                '&:hover': {
+                  color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                },
+              }}
+            >
+              Fight List
+            </Button>
+          )}
+        </Tooltip>
+
+        {/* Spacer */}
+        <Box sx={{ flex: 1 }} />
+
+        {/* Action buttons */}
         <Tooltip title="Interactive Fight Replay">
           <Button
             onClick={() => navigate(`/report/${reportId}/fight/${fightId}/replay`)}
             variant="outlined"
             size="small"
-            startIcon={<PlayArrowIcon />}
+            aria-label="Interactive Fight Replay"
+            startIcon={!isMobile ? <PlayArrowIcon sx={{ fontSize: 16 }} /> : undefined}
             sx={{
-              textTransform: 'none',
-              fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
-              padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
-              minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
+              ...pillBase,
               borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.25)',
               color: isDarkMode ? 'rgba(34, 197, 94, 0.9)' : 'rgba(22, 163, 74, 0.9)',
               '&:hover': {
                 borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.5)' : 'rgba(34, 197, 94, 0.4)',
-                backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.05)' : 'rgba(34, 197, 94, 0.05)',
+                backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.08)',
               },
             }}
           >
-            Replay
+            {isMobile ? <PlayArrowIcon sx={{ fontSize: 18 }} /> : 'Replay'}
           </Button>
         </Tooltip>
         <Tooltip title="View full report on ESO Logs">
@@ -327,19 +396,21 @@ export const ReportFightHeader: React.FC = () => {
             rel="noopener noreferrer"
             variant="outlined"
             size="small"
-            startIcon={<OpenInNewIcon />}
+            aria-label="View full report on ESO Logs"
+            startIcon={!isMobile ? <OpenInNewIcon sx={{ fontSize: 16 }} /> : undefined}
             sx={{
-              textTransform: 'none',
-              fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
-              padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
-              minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
+              ...pillBase,
               borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)',
+              color: isDarkMode ? 'rgba(56, 189, 248, 0.9)' : 'rgba(37, 99, 235, 0.9)',
               '&:hover': {
                 borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
+                backgroundColor: isDarkMode
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
               },
             }}
           >
-            ESO Logs
+            {isMobile ? <OpenInNewIcon sx={{ fontSize: 18 }} /> : 'ESO Logs'}
           </Button>
         </Tooltip>
         {hasPlayers && (
@@ -349,96 +420,49 @@ export const ReportFightHeader: React.FC = () => {
               disabled={rosterLoading}
               variant="outlined"
               size="small"
+              aria-label="Create a roster from this fight's players"
               startIcon={
-                rosterLoading ? <CircularProgress size={14} color="inherit" /> : <GroupsIcon />
+                !isMobile ? (
+                  rosterLoading ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <GroupsIcon sx={{ fontSize: 16 }} />
+                  )
+                ) : undefined
               }
               sx={{
-                textTransform: 'none',
-                fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
-                padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
-                minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
+                ...pillBase,
                 borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.3)' : 'rgba(147, 51, 234, 0.25)',
                 color: isDarkMode ? 'rgba(168, 85, 247, 0.9)' : 'rgba(126, 34, 206, 0.9)',
                 '&:hover': {
                   borderColor: isDarkMode ? 'rgba(168, 85, 247, 0.5)' : 'rgba(147, 51, 234, 0.4)',
                   backgroundColor: isDarkMode
-                    ? 'rgba(168, 85, 247, 0.05)'
-                    : 'rgba(147, 51, 234, 0.05)',
+                    ? 'rgba(168, 85, 247, 0.08)'
+                    : 'rgba(147, 51, 234, 0.08)',
                 },
               }}
             >
-              Roster
+              {isMobile ? (
+                rosterLoading ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <GroupsIcon sx={{ fontSize: 18 }} />
+                )
+              ) : (
+                'Roster'
+              )}
             </Button>
           </Tooltip>
         )}
       </Box>
-      <ButtonBase
-        onClick={() => {
-          navigate(`/report/${reportId}`);
-        }}
-        sx={{
-          mb: 2,
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          cursor: 'pointer',
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '0.875rem',
-          fontWeight: 500,
-          color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
-          position: 'relative',
-          textDecoration: 'none',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 1,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&::before': {
-            content: '"←"',
-            fontSize: '1rem',
-            fontWeight: 600,
-            background: isDarkMode
-              ? 'linear-gradient(135deg, #38bdf8 0%, #9333ea 100%)'
-              : 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            transition: 'transform 0.3s ease',
-            marginRight: '4px',
-          },
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            bottom: -2,
-            left: 0,
-            width: '0%',
-            height: '2px',
-            background: isDarkMode
-              ? 'linear-gradient(135deg, #38bdf8 0%, #9333ea 100%)'
-              : 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
-            borderRadius: '1px',
-            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          },
-          '&:hover': {
-            color: isDarkMode ? '#e2e8f0' : '#1e293b',
-            transform: 'translateX(-4px)',
-            '&::before': {
-              transform: 'translateX(-2px) scale(1.1)',
-            },
-            '&::after': {
-              width: '100%',
-            },
-          },
-          '&:focus-visible': {
-            outline: `2px solid ${isDarkMode ? '#38bdf8' : '#3b82f6'}`,
-            outlineOffset: '4px',
-            borderRadius: '4px',
-          },
-        }}
-      >
-        Back to Fight List
-      </ButtonBase>
 
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 4 }}>
+      {/* ── Fight title ────────────────────────────────────────── */}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        sx={{ mb: { xs: 2, sm: 3, md: 4 } }}
+      >
         <Typography
           ref={titleRef}
           variant="h4"

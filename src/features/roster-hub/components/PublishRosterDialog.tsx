@@ -1227,7 +1227,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                           '&.Mui-disabled': { color: 'text.disabled', bgcolor: 'transparent' },
                         }}
                       >
-                        <Add sx={{ fontSize: 20 }} />
+                        <AddIcon sx={{ fontSize: 20 }} />
                       </IconButton>
                     </span>
                   </Tooltip>
@@ -1437,7 +1437,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                           '&.Mui-disabled': { color: 'text.disabled', bgcolor: 'transparent' },
                         }}
                       >
-                        <Add sx={{ fontSize: 20 }} />
+                        <AddIcon sx={{ fontSize: 20 }} />
                       </IconButton>
                     </span>
                   </Tooltip>

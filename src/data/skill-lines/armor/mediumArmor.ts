@@ -6,7 +6,7 @@ export const mediumArmor: SkillLineData = {
   name: 'Medium Armor',
   class: 'armor',
   category: 'armor',
-  icon: '/icons/skills/armor/medium_armor.png',
+  icon: 'ability_armor_002',
   skills: [
     // Active Abilities
     {
@@ -36,16 +36,18 @@ export const mediumArmor: SkillLineData = {
 
     // Passive Abilities
     {
-      id: 0,
+      id: 150181,
       name: 'Medium Armor Bonuses',
       type: 'passive',
-      baseAbilityId: 0,
-      icon: '/icons/skills/armor/medium_armor.png',
+      baseAbilityId: 150181,
+      icon: 'passive_armor2_medium',
       description:
         'Each piece of Medium Armor does the following: Reduces the cost of Sprint by 1%, Reduces the cost of Sneak by 5%, Reduces the cost of Block by 3%, Reduces damage taken from Area of Effect attacks by 2% for 2 seconds after you use Roll Dodge, Increases Movement Speed by 2% while immune to crowd control.',
     },
     {
       id: AbilityId.DEXTERITY,
+      icon: 'ability_armor_008',
+      alternateIds: [29743, 45563, 45564, 88545, 88546, 88547, 149156, 149160],
       name: 'Dexterity',
       type: 'passive',
       baseAbilityId: AbilityId.DEXTERITY,
@@ -54,6 +56,8 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.WIND_WALKER,
+      icon: 'ability_armor_011',
+      alternateIds: [29687, 45565, 56953, 56959],
       name: 'Wind Walker',
       type: 'passive',
       baseAbilityId: AbilityId.WIND_WALKER,
@@ -62,6 +66,8 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.IMPROVED_SNEAK,
+      icon: 'ability_armor_007',
+      alternateIds: [29738, 29739, 45567, 45568, 85528],
       name: 'Improved Sneak',
       type: 'passive',
       baseAbilityId: AbilityId.IMPROVED_SNEAK,
@@ -70,6 +76,8 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.AGILITY,
+      icon: 'ability_armor_010',
+      alternateIds: [29686, 45572, 149165, 149166],
       name: 'Agility',
       type: 'passive',
       baseAbilityId: AbilityId.AGILITY,
@@ -78,6 +86,8 @@ export const mediumArmor: SkillLineData = {
     },
     {
       id: AbilityId.ATHLETICS,
+      icon: 'ability_armor_009',
+      alternateIds: [29742, 45574],
       name: 'Athletics',
       type: 'passive',
       baseAbilityId: AbilityId.ATHLETICS,
