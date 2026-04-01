@@ -32,7 +32,6 @@ import {
 } from '../types/roster';
 import type { DPSSlot, HealerSetup, RaidRoster, TankSetup } from '../types/roster';
 
-import { detectClassFromTalents } from './classDetectionUtils';
 import { detectFoodFromAuras } from './foodDetectionUtils';
 import { convertChampionPoints, convertGear, convertSkills, resolveFood } from './playerToBuild';
 import { findSetIdByName, getSetDisplayName } from './setNameUtils';
@@ -122,7 +121,7 @@ function categorizeSets(gear: LogGearItem[]): {
 
   for (const item of transformedGear) {
     if (!item.setName) continue;
-    const pieceCount = 1; // Each gear array entry is one equipped piece
+    const pieceCount = item.permanentEnchant ? 2 : 1;
     rawCountMap.set(item.setName, (rawCountMap.get(item.setName) ?? 0) + pieceCount);
     if (isPerfected(item.setName)) {
       perfectedVersions.set(normalizeSetName(item.setName), item.setName);
@@ -397,27 +396,6 @@ function resolveUltimate(
   return shouldReplace ? extractedUltimate : (existingUltimate ?? null);
 }
 
-// ─── Skill Line Detection ────────────────────────────────────────────────────
-
-function extractSkillLines(combatantInfo: LogCombatantInfo | undefined): {
-  line1: string;
-  line2: string;
-  line3: string;
-  isFlex: boolean;
-} {
-  const empty = { line1: '', line2: '', line3: '', isFlex: false };
-  if (!combatantInfo?.talents?.length) return empty;
-
-  const result = detectClassFromTalents(combatantInfo.talents);
-  const top = result.skillLines.slice(0, 3);
-  return {
-    line1: top[0]?.skillLine ?? '',
-    line2: top[1]?.skillLine ?? '',
-    line3: top[2]?.skillLine ?? '',
-    isFlex: false,
-  };
-}
-
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
@@ -461,7 +439,7 @@ export function convertLogPlayersToRoster(
             .filter((id): id is KnownSetIDs => id !== undefined),
         ),
       },
-      skillLines: extractSkillLines(tank.combatantInfo),
+      skillLines: { line1: '', line2: '', line3: '', isFlex: false },
       ultimate: finalUltimate,
       specificSkills: [],
       // Full-mode fields
@@ -498,7 +476,7 @@ export function convertLogPlayersToRoster(
           .map((name) => findSetIdByName(name))
           .filter((id): id is KnownSetIDs => id !== undefined),
       ),
-      skillLines: extractSkillLines(healer.combatantInfo),
+      skillLines: { line1: '', line2: '', line3: '', isFlex: false },
       healerBuff: extractHealerBuff(healer.combatantInfo, healer.id, playerHealerCPs),
       championPoint: extractHealerChampionPoint(healer.combatantInfo, healer.id, playerHealerCPs),
       specificSkills: [],
@@ -518,7 +496,6 @@ export function convertLogPlayersToRoster(
   const parsedDPS: DPSSlot[] = dps.slice(0, 8).map((dpsPlayer, index) => {
     const gear = dpsPlayer.combatantInfo?.gear ?? [];
     const { fivePieceSets, monsterSets, arenaWeapon, dpsMythic, otherSets } = categorizeSets(gear);
-    const extractedUltimate = extractUltimate(dpsPlayer.combatantInfo);
 
     // Full-mode data
     const auras = playerAuras.get(String(dpsPlayer.id)) ?? [];
@@ -537,8 +514,7 @@ export function convertLogPlayersToRoster(
           .map((name) => findSetIdByName(name))
           .filter((id): id is KnownSetIDs => id !== undefined),
       ),
-      skillLines: extractSkillLines(dpsPlayer.combatantInfo),
-      ultimate: extractedUltimate,
+      skillLines: { line1: '', line2: '', line3: '', isFlex: false },
       arenaWeapon,
       // Full-mode fields
       skills: fullMode.skills,

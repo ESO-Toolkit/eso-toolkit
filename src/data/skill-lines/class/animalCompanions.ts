@@ -184,6 +184,7 @@ export const animalCompanions: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_ADVANCED_SPECIES,
+      alternateIds: [86068, 86069],
       name: 'Advanced Species',
       type: 'passive',
       icon: 'passive_warden_011',
@@ -193,6 +194,7 @@ export const animalCompanions: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_BOND_WITH_NATURE,
+      alternateIds: [86064, 86065, 88986, 88988, 159574],
       name: 'Bond with Nature',
       type: 'passive',
       icon: 'passive_warden_010',
@@ -202,6 +204,7 @@ export const animalCompanions: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_FLOURISH,
+      alternateIds: [86066, 86067, 91890, 91944],
       name: 'Flourish',
       type: 'passive',
       icon: 'passive_warden_012',
@@ -210,6 +213,7 @@ export const animalCompanions: SkillLineData = {
     },
     {
       id: ClassSkillId.WARDEN_SAVAGE_BEAST,
+      alternateIds: [86062, 86063, 88512, 88513],
       name: 'Savage Beast',
       type: 'passive',
       icon: 'passive_warden_009',

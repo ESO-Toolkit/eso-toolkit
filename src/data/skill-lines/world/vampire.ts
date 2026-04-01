@@ -6,13 +6,13 @@ export const vampire: SkillLineData = {
   name: 'Vampire',
   class: 'world',
   category: 'world',
-  icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_blood_scion.png',
+  icon: 'ability_u26_vampire_blood_scion',
   skills: [
     // Ultimate abilities
     {
       id: AbilityId.BLOOD_SCION,
       name: 'Blood Scion',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_blood_scion.png',
+      icon: 'ability_u26_vampire_06',
       isPassive: false,
       isUltimate: true,
       maxRank: 4,
@@ -22,7 +22,7 @@ export const vampire: SkillLineData = {
     {
       id: 38931, // Morph of Blood Scion
       name: 'Perfect Scion',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_perfectscion.png',
+      icon: 'ability_u26_vampire_06_b',
       isPassive: false,
       isUltimate: true,
       maxRank: 4,
@@ -32,7 +32,7 @@ export const vampire: SkillLineData = {
     {
       id: 38932, // Morph of Blood Scion
       name: 'Swarming Scion',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_swarmingscion.png',
+      icon: 'ability_u26_vampire_06_a',
       isPassive: false,
       isUltimate: true,
       maxRank: 4,
@@ -44,7 +44,7 @@ export const vampire: SkillLineData = {
     {
       id: AbilityId.EVISCERATE,
       name: 'Eviscerate',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_eviscerate.png',
+      icon: 'ability_u26_vampire_01',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -54,7 +54,7 @@ export const vampire: SkillLineData = {
     {
       id: 38956, // Morph of Eviscerate
       name: 'Arterial Burst',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_arterialburst.png',
+      icon: 'ability_u26_vampire_01_b',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -64,7 +64,7 @@ export const vampire: SkillLineData = {
     {
       id: 38949, // Morph of Eviscerate
       name: 'Blood for Blood',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_bloodforblood.png',
+      icon: 'ability_u26_vampire_01_a',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -76,7 +76,7 @@ export const vampire: SkillLineData = {
     {
       id: AbilityId.BLOOD_FRENZY,
       name: 'Blood Frenzy',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_bloodfrenzy.png',
+      icon: 'ability_mage_065',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -86,7 +86,7 @@ export const vampire: SkillLineData = {
     {
       id: 135841, // Morph of Blood Frenzy
       name: 'Sated Fury',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_satedfury.png',
+      icon: 'ability_u26_vampire_02_b',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -96,7 +96,7 @@ export const vampire: SkillLineData = {
     {
       id: 134160, // Morph of Blood Frenzy
       name: 'Simmering Frenzy',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_simmeringfrenzy.png',
+      icon: 'ability_u26_vampire_02_a',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -108,7 +108,7 @@ export const vampire: SkillLineData = {
     {
       id: AbilityId.VAMPIRIC_DRAIN,
       name: 'Vampiric Drain',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_drain_essence.png',
+      icon: 'death_recap_ranged_basic',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -119,7 +119,7 @@ export const vampire: SkillLineData = {
     {
       id: 135905, // Morph of Vampiric Drain
       name: 'Drain Vigor',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_drainvigor.png',
+      icon: 'ability_u26_vampire_03_a',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -129,7 +129,7 @@ export const vampire: SkillLineData = {
     {
       id: 137259, // Morph of Vampiric Drain
       name: 'Exhilarating Drain',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_exhilaratingdrain.png',
+      icon: 'ability_u26_vampire_03_b',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -141,7 +141,7 @@ export const vampire: SkillLineData = {
     {
       id: AbilityId.MESMERIZE,
       name: 'Mesmerize',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_mesmerize.png',
+      icon: 'ability_u26_vampire_04',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -151,7 +151,7 @@ export const vampire: SkillLineData = {
     {
       id: 137861, // Morph of Mesmerize
       name: 'Hypnosis',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_hypnosis.png',
+      icon: 'ability_u26_vampire_04_a',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -161,7 +161,7 @@ export const vampire: SkillLineData = {
     {
       id: 138097, // Morph of Mesmerize
       name: 'Stupefy',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_stupefy.png',
+      icon: 'ability_u26_vampire_04_b',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -173,7 +173,7 @@ export const vampire: SkillLineData = {
     {
       id: AbilityId.MIST_FORM,
       name: 'Mist Form',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_mist_form.png',
+      icon: 'ability_u26_vampire_05',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -183,7 +183,7 @@ export const vampire: SkillLineData = {
     {
       id: 38965, // Morph of Mist Form
       name: 'Blood Mist',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_bloodmist.png',
+      icon: 'ability_u26_vampire_05_b',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -193,7 +193,7 @@ export const vampire: SkillLineData = {
     {
       id: 38963, // Morph of Mist Form
       name: 'Elusive Mist',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_elusivemist.png',
+      icon: 'ability_u26_vampire_05_a',
       isPassive: false,
       isUltimate: false,
       maxRank: 4,
@@ -204,8 +204,17 @@ export const vampire: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.FEED,
+      alternateIds: [
+        33152, 33175, 33177, 33182, 39692, 39693, 39698, 40349, 40350, 40351, 40355, 42054, 46286,
+        54636, 82424, 112022, 116643, 126606, 129382, 131038, 131143, 131145, 131146, 131147,
+        131148, 131149, 131150, 131151, 131153, 131154, 131162, 131163, 131169, 135375, 136526,
+        137314, 138638, 138758, 138759, 138760, 138780, 138845, 138846, 138847, 138848, 138852,
+        138853, 140004, 140063, 140078, 144149, 144153, 144154, 144155, 144156, 144157, 144158,
+        144159, 144160, 144161, 144162, 144163, 144165, 144166, 145119, 145324, 159134, 159347,
+        161789, 172430, 172431, 191599, 196004,
+      ],
       name: 'Feed',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_synergy_feed.png',
+      icon: 'ability_u26_vampire_synergy_feed',
       isPassive: true,
       isUltimate: false,
       maxRank: 1,
@@ -214,8 +223,9 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.DARK_STALKER,
+      alternateIds: [33095, 46041, 80442],
       name: 'Dark Stalker',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_darkstalker.png',
+      icon: 'passive_u26_vampire_01',
       isPassive: true,
       isUltimate: false,
       maxRank: 2,
@@ -224,8 +234,9 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.STRIKE_FROM_THE_SHADOWS,
+      alternateIds: [33096, 46040, 79003, 79005, 79006, 79030, 81049, 81050, 81051, 135189, 135190],
       name: 'Strike from the Shadows',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_strikefromtheshadows.png',
+      icon: 'passive_u26_vampire_02',
       isPassive: true,
       isUltimate: false,
       maxRank: 2,
@@ -235,7 +246,7 @@ export const vampire: SkillLineData = {
     {
       id: AbilityId.BLOOD_RITUAL,
       name: 'Blood Ritual',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_bloodritual.png',
+      icon: 'passive_u26_vampire_05',
       isPassive: true,
       isUltimate: false,
       maxRank: 1,
@@ -244,8 +255,9 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.UNDEATH,
+      alternateIds: [33090, 33093, 122142, 122143, 122144, 130275, 133470, 133473],
       name: 'Undeath',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_undeath.png',
+      icon: 'passive_u26_vampire_03',
       isPassive: true,
       isUltimate: false,
       maxRank: 2,
@@ -254,8 +266,12 @@ export const vampire: SkillLineData = {
     },
     {
       id: AbilityId.UNNATURAL_MOVEMENT,
+      alternateIds: [
+        132844, 132845, 132846, 132847, 132848, 132849, 132850, 132851, 135208, 135209, 135218,
+        135219, 135220, 135221, 135222, 135223, 135224, 135225, 135226, 135227,
+      ],
       name: 'Unnatural Movement',
-      icon: 'https://eso-hub.com/storage/icons/ability_u26_vampire_unnaturalmovement.png',
+      icon: 'passive_u26_vampire_04',
       isPassive: true,
       isUltimate: false,
       maxRank: 2,

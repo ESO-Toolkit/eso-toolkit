@@ -16,7 +16,6 @@ export const BuildCardSkeleton: React.FC = () => {
           ? 'linear-gradient(160deg, rgba(99,102,241,0.07) 0%, rgba(152,131,227,0.07) 45%, rgba(11,18,32,0.6) 100%)'
           : 'linear-gradient(160deg, rgba(99,102,241,0.05) 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)',
         backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
         border: isDark ? '1px solid rgba(255,255,255,0.09)' : '1px solid rgba(0,0,0,0.09)',
         borderRadius: 3,
         overflow: 'hidden',

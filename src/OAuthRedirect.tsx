@@ -16,12 +16,14 @@ import {
   clearIntendedDestination,
 } from './features/auth/auth';
 import { useAuth } from './features/auth/AuthContext';
+import { KalpaAuthSuccess } from './features/auth/KalpaAuthSuccess';
 import { useAppDispatch } from './store/useAppDispatch';
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token'; // Adjust if needed
 export const OAuthRedirect: React.FC = () => {
   const dispatch = useAppDispatch();
   const [error, setError] = useState<string | null>(null);
+  const [kalpaSuccess, setKalpaSuccess] = useState(false);
   const { rebindAccessToken } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -70,15 +72,42 @@ export const OAuthRedirect: React.FC = () => {
         const appPort = sessionStorage.getItem(APP_AUTH_PORT_KEY);
         if (appPort) {
           sessionStorage.removeItem(APP_AUTH_PORT_KEY);
-          // Send tokens to the desktop app's localhost server
-          const tokenPayload = btoa(
-            JSON.stringify({
-              access_token: data.access_token,
-              refresh_token: data.refresh_token || null,
-              expires_in: data.expires_in || 3600,
-            }),
-          );
-          window.location.href = `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`;
+          const portNum = Number(appPort);
+          if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
+            setError('Invalid desktop app port.');
+            return;
+          }
+          // Send tokens to the desktop app's localhost server in the background.
+          // We POST JSON so the desktop app can respond with a confirmation,
+          // letting us verify delivery before showing the success page.
+          const callbackUrl = `http://localhost:${appPort}/callback`;
+          try {
+            const callbackResp = await fetch(callbackUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token || null,
+                expires_in: data.expires_in || 3600,
+              }),
+            });
+            if (!callbackResp.ok) {
+              throw new Error(`Desktop app responded with ${callbackResp.status}`);
+            }
+          } catch {
+            // CORS not supported or connection refused — fall back to GET redirect
+            // so older Kalpa versions still receive tokens.
+            const tokenPayload = btoa(
+              JSON.stringify({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token || null,
+                expires_in: data.expires_in || 3600,
+              }),
+            );
+            window.location.href = `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`;
+            return;
+          }
+          setKalpaSuccess(true);
           return;
         }
 
@@ -105,11 +134,15 @@ export const OAuthRedirect: React.FC = () => {
     fetchToken();
   }, [dispatch, rebindAccessToken, params, navigate]);
 
+  if (kalpaSuccess) {
+    return <KalpaAuthSuccess />;
+  }
+
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '4rem' }}>
       {error ? (
         <>
-          <Typography color="error" gutterBottom>
+          <Typography color="error" gutterBottom role="alert">
             {error}
           </Typography>
           {error.includes('PKCE code verifier') && (

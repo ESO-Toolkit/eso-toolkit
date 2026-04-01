@@ -29,10 +29,6 @@ interface PublishBuildDialogProps {
   onClose: () => void;
   onPublished: () => void;
   token: string;
-  /** Pre-fill from the editor's build name. */
-  buildName?: string;
-  /** Pre-fill from the editor's short description. */
-  buildShortDescription?: string;
   /** When provided, the dialog operates in edit mode — updates the existing hub build. */
   editingBuild?: HubBuild;
 }
@@ -48,8 +44,6 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
   onClose,
   onPublished,
   token,
-  buildName,
-  buildShortDescription,
   editingBuild,
 }) => {
   const isEditMode = !!editingBuild;
@@ -111,14 +105,14 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
         setSelectedTags(editingBuild.tags ?? []);
         setIsAnonymous(editingBuild.is_anonymous ?? false);
       } else {
-        setTitle(buildName ?? '');
-        setDescription(buildShortDescription ?? '');
+        setTitle('');
+        setDescription('');
         setSelectedTags([]);
         setIsAnonymous(false);
       }
       setError(null);
     }
-  }, [open, editingBuild, buildName, buildShortDescription]);
+  }, [open, editingBuild]);
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
 

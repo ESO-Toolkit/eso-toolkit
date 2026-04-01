@@ -13,20 +13,16 @@ import {
   Autocomplete,
   Box,
   Button,
-  Checkbox,
   Chip,
   CircularProgress,
-  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
   type SelectChangeEvent,
   Stack,
@@ -38,8 +34,6 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { packsApi } from '../../build-hub/api/packs-api';
-import type { Pack, PackAddonEntry, PackIndexItem } from '../../build-hub/api/packs-api';
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
 import type {
@@ -261,7 +255,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         roster_data: rosterData,
         tags: selectedTags,
         is_anonymous: isAnonymous,
-        recommended_addons: buildRecommendedAddons(),
       };
       if (isEditMode) {
         await rosterHubApi.update(editingRoster.id, payload, token);
@@ -295,18 +288,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setExtraTags(tags.filter((t) => t !== 'vet' && t !== 'normal' && t !== 'hm'));
         setTagInput('');
         setIsAnonymous(editingRoster.is_anonymous ?? false);
-        // Restore addon recommendations
-        if (editingRoster.recommended_addons) {
-          setAddonSectionOpen(true);
-          setSelectedPackId(editingRoster.recommended_addons.packId ?? null);
-          setAddonList(editingRoster.recommended_addons.addons);
-          setEnabledAddons(new Set(editingRoster.recommended_addons.addons.map((a) => a.esouiId)));
-        } else {
-          setAddonSectionOpen(false);
-          setSelectedPackId(null);
-          setAddonList([]);
-          setEnabledAddons(new Set());
-        }
       } else {
         setTitle('');
         setDescription('');
@@ -316,20 +297,12 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
         setExtraTags([]);
         setTagInput('');
         setIsAnonymous(false);
-        setAddonSectionOpen(false);
-        setSelectedPackId(null);
-        setSelectedPack(null);
-        setAddonList([]);
-        setEnabledAddons(new Set());
-        setCustomAddonName('');
-        setCustomAddonId('');
       }
       setError(null);
     }
   }, [open, editingRoster]);
 
   const atTagLimit = selectedTags.length >= MAX_TAGS;
-  const activeAddonCount = addonList.filter((a) => enabledAddons.has(a.esouiId)).length;
 
   // ── Panel tokens (matching PlayerCardModal info modal) ──────────────
   const accent = '#38bdf8';
@@ -822,261 +795,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             </Box>
           )}
         </Box>
-
-        {/* ── Addon Recommendations Section ── */}
-        <Paper
-          variant="outlined"
-          sx={{
-            borderColor: addonSectionOpen ? '#c4a44a55' : undefined,
-            borderRadius: 2,
-            overflow: 'hidden',
-            transition: 'border-color 0.2s',
-          }}
-        >
-          <Box
-            onClick={() => setAddonSectionOpen((prev) => !prev)}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              px: 2,
-              py: 1.25,
-              cursor: 'pointer',
-              '&:hover': { bgcolor: 'action.hover' },
-              transition: 'background-color 0.15s',
-            }}
-          >
-            <Extension sx={{ fontSize: 18, color: '#c4a44a' }} />
-            <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>
-              Addon Recommendations
-              {activeAddonCount > 0 && (
-                <Chip
-                  label={activeAddonCount}
-                  size="small"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    fontSize: '0.7rem',
-                    bgcolor: '#c4a44a22',
-                    color: '#c4a44a',
-                    fontWeight: 700,
-                  }}
-                />
-              )}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
-              {addonSectionOpen ? '' : 'optional'}
-            </Typography>
-            {addonSectionOpen ? (
-              <ExpandLess sx={{ fontSize: 20, color: 'text.secondary' }} />
-            ) : (
-              <ExpandMore sx={{ fontSize: 20, color: 'text.secondary' }} />
-            )}
-          </Box>
-
-          <Collapse in={addonSectionOpen}>
-            <Box sx={{ px: 2, pb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Typography variant="caption" color="text.secondary">
-                Recommend addons that viewers should install for this roster. Pick a curated pack or
-                customize individual addons.
-              </Typography>
-
-              {/* Pack selector */}
-              <Autocomplete
-                size="small"
-                options={packs}
-                loading={packsLoading}
-                value={packs.find((p) => p.id === selectedPackId) ?? null}
-                getOptionLabel={(p) => p.name}
-                renderOption={(props, p) => (
-                  <li {...props} key={p.id}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {p.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {p.addonCount} addons · {p.description.slice(0, 60)}
-                        {p.description.length > 60 ? '…' : ''}
-                      </Typography>
-                    </Box>
-                  </li>
-                )}
-                onChange={(_e, value) => setSelectedPackId(value?.id ?? null)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Start from a curated pack"
-                    placeholder="Search packs…"
-                  />
-                )}
-                noOptionsText={packsLoading ? 'Loading packs…' : 'No packs available'}
-              />
-
-              {packDetailLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
-                  <CircularProgress size={20} sx={{ color: '#c4a44a' }} />
-                </Box>
-              )}
-
-              {/* Addon list with toggles */}
-              {addonList.length > 0 && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.5,
-                    maxHeight: 240,
-                    overflowY: 'auto',
-                    '&::-webkit-scrollbar': { width: 6 },
-                    '&::-webkit-scrollbar-thumb': {
-                      bgcolor: 'rgba(255,255,255,0.15)',
-                      borderRadius: 3,
-                    },
-                  }}
-                >
-                  {addonList.map((addon) => {
-                    const isEnabled = enabledAddons.has(addon.esouiId);
-                    return (
-                      <Box
-                        key={addon.esouiId}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.5,
-                          py: 0.5,
-                          px: 1,
-                          borderRadius: 1,
-                          bgcolor: isEnabled ? '#c4a44a0a' : 'transparent',
-                          borderLeft: isEnabled ? '3px solid #c4a44a' : '3px solid transparent',
-                          transition: 'all 0.15s',
-                          '&:hover': { bgcolor: 'action.hover' },
-                        }}
-                      >
-                        <Checkbox
-                          checked={isEnabled}
-                          onChange={() => handleToggleAddon(addon.esouiId)}
-                          size="small"
-                          sx={{
-                            p: 0.5,
-                            color: '#c4a44a55',
-                            '&.Mui-checked': { color: '#c4a44a' },
-                          }}
-                        />
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="body2"
-                            fontWeight={600}
-                            noWrap
-                            sx={{ opacity: isEnabled ? 1 : 0.5 }}
-                          >
-                            {addon.name}
-                          </Typography>
-                          {addon.note && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              noWrap
-                              sx={{ opacity: isEnabled ? 0.7 : 0.4 }}
-                            >
-                              {addon.note}
-                            </Typography>
-                          )}
-                        </Box>
-                        <Tooltip title={addon.required ? 'Mark as optional' : 'Mark as required'}>
-                          <Chip
-                            label={addon.required ? 'Required' : 'Optional'}
-                            size="small"
-                            onClick={() => handleToggleRequired(addon.esouiId)}
-                            sx={{
-                              height: 20,
-                              fontSize: '0.65rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              bgcolor: addon.required ? '#c4a44a22' : 'transparent',
-                              color: addon.required ? '#c4a44a' : 'text.secondary',
-                              border: addon.required ? '1px solid #c4a44a55' : '1px solid',
-                              borderColor: addon.required ? '#c4a44a55' : 'divider',
-                              '&:hover': {
-                                bgcolor: addon.required ? '#c4a44a33' : 'action.hover',
-                              },
-                            }}
-                          />
-                        </Tooltip>
-                        {/* Only allow removing addons that were manually added (not from a pack) */}
-                        {selectedPack &&
-                        selectedPack.addons.some((pa) => pa.esouiId === addon.esouiId) ? null : (
-                          <Tooltip title="Remove addon">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleRemoveAddon(addon.esouiId)}
-                              sx={{ p: 0.5, color: 'text.disabled' }}
-                            >
-                              <RemoveCircleOutline sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-
-              {/* Add custom addon */}
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-end' }}>
-                <TextField
-                  size="small"
-                  label="Addon name"
-                  value={customAddonName}
-                  onChange={(e) => setCustomAddonName(e.target.value)}
-                  sx={{ flex: 2 }}
-                  placeholder="e.g. RaidNotifier"
-                />
-                <TextField
-                  size="small"
-                  label="ESOUI ID"
-                  value={customAddonId}
-                  onChange={(e) => setCustomAddonId(e.target.value.replace(/\D/g, ''))}
-                  sx={{ flex: 1 }}
-                  placeholder="e.g. 1355"
-                />
-                <Tooltip title="Add custom addon">
-                  <span>
-                    <IconButton
-                      size="small"
-                      onClick={handleAddCustomAddon}
-                      disabled={!customAddonName.trim() || !customAddonId}
-                      sx={{
-                        bgcolor: '#c4a44a22',
-                        color: '#c4a44a',
-                        '&:hover': { bgcolor: '#c4a44a33' },
-                        '&.Mui-disabled': { color: 'text.disabled', bgcolor: 'transparent' },
-                      }}
-                    >
-                      <Add sx={{ fontSize: 20 }} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              </Box>
-
-              {activeAddonCount > 0 && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.75,
-                    mt: 0.5,
-                  }}
-                >
-                  <CheckCircle sx={{ fontSize: 14, color: '#22c55e' }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {activeAddonCount} addon{activeAddonCount !== 1 ? 's' : ''} will be recommended
-                    to viewers
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Collapse>
-        </Paper>
 
         <FormControlLabel
           control={

@@ -6,7 +6,7 @@ export const undaunted: SkillLineData = {
   name: 'Undaunted',
   class: 'guild',
   category: 'guild',
-  icon: 'https://eso-hub.com/storage/icons/ability_undaunted_001.png',
+  icon: 'ability_undaunted_001',
   skills: [
     // Active Abilities
     {
@@ -147,6 +147,8 @@ export const undaunted: SkillLineData = {
     // Passive Abilities
     {
       id: AbilityId.UNDAUNTED_COMMAND,
+      icon: 'ability_templar_003',
+      alternateIds: [55584, 55606, 55676, 55677],
       name: 'Undaunted Command',
       description:
         'Activating a synergy restores 4% of your Max Health, Stamina, and Magicka. Health 480 Stamina, and 480 Magicka.',
@@ -156,6 +158,8 @@ export const undaunted: SkillLineData = {
     },
     {
       id: AbilityId.UNDAUNTED_METTLE,
+      icon: 'ability_armor_014',
+      alternateIds: [55366, 55384, 55385, 55386, 55388, 55389],
       name: 'Undaunted Mettle',
       description:
         'Increases your Max Health, Stamina, and Magicka by 2% per type of Armor (Heavy, Medium, Light) that you have equipped.',

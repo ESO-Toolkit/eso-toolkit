@@ -30,8 +30,6 @@ import {
   createBuildComment,
   deleteBuildComment,
   checkBuildCommentRateLimit,
-  checkRosterVoteRateLimit,
-  checkRosterCreateRateLimit,
   checkBuildVoteRateLimit,
   checkBuildCreateRateLimit,
   createTempBuild,
@@ -39,21 +37,6 @@ import {
   checkTempBuildRateLimit,
   recordTempBuildRateLimit,
   cleanupExpiredTempBuilds,
-  createImageUpload,
-  getImageUpload,
-  deleteImageUpload,
-  createImageReport,
-  checkImageUploadRateLimit,
-  getUserProfile,
-  upsertUserBio,
-  listPacks,
-  getPackById,
-  createPack,
-  updatePack,
-  deletePack,
-  togglePackVote,
-  checkPackCreateRateLimit,
-  checkPackVoteRateLimit,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import type { Env } from './types';
@@ -191,20 +174,6 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (roster_data.length > 50_000)
     return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
-  if (!isValidBase64Url(roster_data))
-    return c.json({ error: 'roster_data must be valid base64url' }, 400);
-
-  // Validate recommended_addons if provided
-  let recommendedAddonsJson: string | null = null;
-  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
-    if (recommended_addons.addons.length > 20)
-      return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
-    recommendedAddonsJson = JSON.stringify(recommended_addons);
-  }
-
-  const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
-  if (!createAllowed)
-    return c.json({ error: 'Rate limit exceeded. You can only publish 5 rosters per hour.' }, 429);
 
   // Generate a short unique ID (nanoid-style without the dep)
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
@@ -262,16 +231,6 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (roster_data.length > 50_000)
     return c.json({ error: 'roster_data must be ≤ 50 000 characters' }, 400);
-  if (!isValidBase64Url(roster_data))
-    return c.json({ error: 'roster_data must be valid base64url' }, 400);
-
-  // Validate recommended_addons if provided
-  let recommendedAddonsJson: string | null = null;
-  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
-    if (recommended_addons.addons.length > 20)
-      return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
-    recommendedAddonsJson = JSON.stringify(recommended_addons);
-  }
 
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
@@ -427,7 +386,7 @@ app.get('/builds', async (c) => {
   const gameMode = c.req.query('mode') ?? undefined;
   const tag = c.req.query('tag') ?? undefined;
   const sort = c.req.query('sort') === 'recent' ? 'recent' : 'votes';
-  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1);
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
 
   const builds = await listBuilds(c.env.DB, {
     esoClass,
@@ -498,8 +457,6 @@ app.post('/builds', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
-  if (!isValidBase64Url(build_data))
-    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -513,14 +470,14 @@ app.post('/builds', async (c) => {
   await createBuild(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: escapeHtml(user.name),
-    title: sanitize(title),
-    description: sanitize(description),
-    esoClass: sanitize(eso_class),
-    role: sanitize(role),
-    gameMode: sanitize(game_mode),
+    authorName: user.name,
+    title: title.trim(),
+    description: description.trim(),
+    esoClass: eso_class.trim(),
+    role: role.trim(),
+    gameMode: game_mode.trim(),
     buildData: build_data,
-    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
+    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -572,17 +529,15 @@ app.put('/builds/:id', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
-  if (!isValidBase64Url(build_data))
-    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
-    title: sanitize(title),
-    description: sanitize(description),
-    esoClass: sanitize(eso_class),
-    role: sanitize(role),
-    gameMode: sanitize(game_mode),
+    title: title.trim(),
+    description: description.trim(),
+    esoClass: eso_class.trim(),
+    role: role.trim(),
+    gameMode: game_mode.trim(),
     buildData: build_data,
-    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
+    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -680,7 +635,7 @@ app.post('/builds/:id/comments', async (c) => {
     parentId: body.parent_id ?? null,
     authorId: user.id,
     authorName: user.name,
-    body: escapeHtml(body.body.trim()),
+    body: body.body.trim(),
   });
 
   return c.json({ comment }, 201);
@@ -718,17 +673,12 @@ app.post('/temp-builds', async (c) => {
   if (!body.build_data?.trim()) return c.json({ error: 'build_data is required' }, 400);
   if (body.build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
-  if (!isValidBase64Url(body.build_data))
-    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   // Rate limit by IP (10 per hour)
   const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
   const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
   if (!allowed)
-    return c.json(
-      { error: 'Rate limit exceeded. You can create up to 10 temp builds per hour.' },
-      429,
-    );
+    return c.json({ error: 'Rate limit exceeded. You can create up to 10 temp builds per hour.' }, 429);
 
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
@@ -746,11 +696,8 @@ app.post('/temp-builds', async (c) => {
 app.get('/temp-builds/:id', async (c) => {
   const id = c.req.param('id');
 
-  // Probabilistic cleanup: run ~1-in-50 reads to keep the table small without
-  // adding a synchronous write to every request.
-  if (Math.random() < 0.02) {
-    void cleanupExpiredTempBuilds(c.env.DB);
-  }
+  // Lazy cleanup: remove expired builds on read
+  await cleanupExpiredTempBuilds(c.env.DB);
 
   const row = await getTempBuild(c.env.DB, id);
   if (!row) {
@@ -764,6 +711,7 @@ app.get('/temp-builds/:id', async (c) => {
   });
 });
 
+<<<<<<< HEAD
 // ═══════════════════════════════════════════════════════════════════════════════
 // Image uploads — AI-moderated image hosting via ImgBB
 // ═══════════════════════════════════════════════════════════════════════════════

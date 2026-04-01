@@ -3,7 +3,8 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import {
   Box,
-  Paper,
+  Card,
+  CardContent,
   Typography,
   List,
   ListItem,
@@ -13,6 +14,7 @@ import {
   FormControlLabel,
   Button,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -716,32 +718,22 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   if (!fights?.length) {
     return (
-      <Paper
-        elevation={0}
-        square
+      <Card
+        elevation={4}
         sx={{
-          p: 0,
-          m: 0,
-          width: '100%',
-          maxWidth: '100vw',
-          minWidth: 0,
-          boxSizing: 'border-box',
-          background: 'transparent',
-          overflowX: 'hidden',
+          borderRadius: 2,
+          border: (t: Theme) => `1px solid ${t.palette.divider}`,
+          background: (t: Theme) =>
+            t.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
+          overflow: 'hidden',
         }}
       >
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 },
-            mb: 3,
-            backgroundColor: 'background.paper',
-            borderRadius: { xs: 0, sm: 1 },
-            boxShadow: 2,
-          }}
-        >
+        <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
           <Typography variant="body1">No fights available</Typography>
-        </Box>
-      </Paper>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -926,30 +918,31 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   };
 
   return (
-    <Paper
-      elevation={0}
-      square
+    <Card
+      elevation={4}
       sx={{
-        p: 0,
-        m: 0,
-        width: '100%',
-        minWidth: 'auto',
-        boxSizing: 'border-box',
-        background: 'transparent',
-        overflowX: 'visible',
+        borderRadius: 2,
+        border: (t: Theme) => `1px solid ${t.palette.divider}`,
+        background: (t: Theme) =>
+          t.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+            : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
+        boxShadow: (t: Theme) => (t.palette.mode === 'dark' ? t.shadows[6] : t.shadows[4]),
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: (t: Theme) =>
+            t.palette.mode === 'dark'
+              ? '0 8px 32px rgba(56, 189, 248, 0.15)'
+              : '0 8px 32px rgba(25, 118, 210, 0.1)',
+        },
       }}
     >
-      <Box
+      <CardContent
         sx={{
-          p: { xs: 2, sm: 3 },
-          mb: 3,
-          backgroundColor: 'background.paper',
-          borderRadius: { xs: 0, sm: 1 },
-          boxShadow: 2,
+          p: { xs: 2, sm: 4 },
           overflow: 'visible',
-          minWidth: 'auto',
-          maxWidth: 'none',
-          width: '100%',
           position: 'relative',
         }}
       >
@@ -1052,8 +1045,18 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   mb: 3,
                   p: 2,
                   borderRadius: 2,
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  backgroundColor: 'background.paper',
+                  border: (t: Theme) => `1px solid ${t.palette.divider}`,
+                  background: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
+                      : t.palette.background.paper,
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  boxShadow: (t: Theme) =>
+                    t.palette.mode === 'dark'
+                      ? '0 4px 16px rgba(0, 0, 0, 0.2)'
+                      : '0 2px 8px rgba(15, 23, 42, 0.04)',
+                  transition: 'all 0.3s ease',
                 }}
               >
                 <Box sx={{ minWidth: 0 }}>
@@ -1267,7 +1270,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       mb: 2,
                       p: 2,
                       borderRadius: 2,
-                      border: '1px solid rgba(255, 255, 255, 0.0)',
                       overflow: 'visible',
                     }}
                   >
@@ -1428,7 +1430,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             </Box>
           ))}
         </Box>
-      </Box>
-    </Paper>
+      </CardContent>
+    </Card>
   );
 };

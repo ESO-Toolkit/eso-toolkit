@@ -174,20 +174,8 @@ discord-notify-worker/node_modules/
 /*-failure.md
 /missing-*.txt
 
-
 # Claude session artifacts (screenshots, debug output, prompt drafts)
 /*.png
 /*.a11y.md
 /prompts/
 /showcase-video/
-
-# Code review graph (AST knowledge graph for Claude Code)
-.code-review-graph/
-.claude/settings.local.json
-
-# Debug screenshots from Playwright audits (keep .gitkeep)
-/tests/scratch/*
-!/tests/scratch/.gitkeep
-
-# Auth testing helpers with tokens — never commit
-/public/video-auth.html

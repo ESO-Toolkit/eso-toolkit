@@ -6,7 +6,7 @@ export const bowSkillLine: SkillLineData = {
   name: 'Bow',
   class: 'Weapon',
   category: 'weapon',
-  icon: '/images/skill-lines/weapon/bow.png',
+  icon: 'ability_bow_006',
   skills: [
     // Ultimate abilities
     {
@@ -171,6 +171,8 @@ export const bowSkillLine: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.VINEDUSK_TRAINING,
+      icon: 'ability_weapon_025',
+      alternateIds: [30937, 30941, 45494, 45496],
       name: 'Vinedusk Training',
       type: 'passive',
       baseAbilityId: AbilityId.VINEDUSK_TRAINING,
@@ -179,6 +181,8 @@ export const bowSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.ACCURACY,
+      icon: 'ability_weapon_024',
+      alternateIds: [30930, 45492],
       name: 'Accuracy',
       type: 'passive',
       baseAbilityId: AbilityId.ACCURACY,
@@ -186,6 +190,8 @@ export const bowSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.RANGER,
+      icon: 'ability_armor_011',
+      alternateIds: [30942, 45493],
       name: 'Ranger',
       type: 'passive',
       baseAbilityId: AbilityId.RANGER,
@@ -193,6 +199,8 @@ export const bowSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.HAWK_EYE,
+      icon: 'passive_armor_002',
+      alternateIds: [30936, 45497, 78844, 78854, 78855],
       name: 'Hawk Eye',
       type: 'passive',
       baseAbilityId: AbilityId.HAWK_EYE,
@@ -201,6 +209,8 @@ export const bowSkillLine: SkillLineData = {
     },
     {
       id: AbilityId.HASTY_RETREAT,
+      icon: 'ability_dragonknight_029',
+      alternateIds: [30923, 45498, 50785, 53092, 82120],
       name: 'Hasty Retreat',
       type: 'passive',
       baseAbilityId: AbilityId.HASTY_RETREAT,

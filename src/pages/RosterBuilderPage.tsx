@@ -51,6 +51,8 @@ import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
 import { ServerPickerDialog } from '../features/roster-hub/components/ServerPickerDialog';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
@@ -136,6 +138,19 @@ interface CompactGroup {
   n?: number; // groupNumber
 }
 
+/** Champion tree (slots + passives) for inline build data */
+interface CompactChampionTree {
+  s?: Array<number | null>; // slotted perk IDs (4 slots)
+  p?: Record<string, number>; // passive allocations
+}
+
+/** Champion points across all 3 trees for inline build data */
+interface CompactBuildCP {
+  w?: CompactChampionTree; // warfare
+  f?: CompactChampionTree; // fitness
+  c?: CompactChampionTree; // craft
+}
+
 interface CompactTank {
   pn?: string; // playerName
   pt?: string; // positionTag (e.g. "portal", "bridge")
@@ -149,6 +164,11 @@ interface CompactTank {
   ss?: (number | string)[]; // specificSkills: ability IDs (new) or names (legacy)
   gr?: CompactGroup; // group
   no?: string; // notes
+  // Full detail mode
+  sk?: { 0?: Record<string, number>; 1?: Record<string, number> }; // skills (SkillsConfig)
+  pa?: number[]; // passives
+  cp2?: CompactBuildCP; // champion points
+  fd?: { id?: number; name?: string }; // food
 }
 
 interface CompactHealer {
@@ -168,6 +188,12 @@ interface CompactHealer {
   ul?: number | string; // ultimate: SupportUltimate index or custom string
   gr?: CompactGroup; // group
   no?: string; // notes
+  // Full detail mode
+  ss?: (number | string)[]; // specificSkills
+  sk?: { 0?: Record<string, number>; 1?: Record<string, number> }; // skills (SkillsConfig)
+  pa?: number[]; // passives
+  cp2?: CompactBuildCP; // champion points
+  fd?: { id?: number; name?: string }; // food
 }
 
 interface CompactDPS {
@@ -185,11 +211,17 @@ interface CompactDPS {
   gs?: number[]; // legacy gearSets (backward compat)
   sl?: CompactSkills; // skillLines
   cp?: string; // championPoint
+  ss?: number[]; // specificSkills (ability IDs)
   ul?: number | string; // ultimate (index or custom string)
   gr?: CompactGroup; // group
   no?: string; // notes
   jt?: number; // jailDDType index
   cd?: string; // customDescription
+  // Full detail mode — populated from build attachments
+  sk?: { 0?: Record<string, number>; 1?: Record<string, number> }; // skills (SkillsConfig)
+  pa?: number[]; // passives (ability IDs)
+  cp2?: CompactBuildCP; // champion points (BuildChampionPoints)
+  fd?: { id?: number; name?: string }; // food
 }
 
 interface CompactRoster {
@@ -298,6 +330,78 @@ function expandGroup(c?: CompactGroup): _PlayerGroup | undefined {
   return { groupName: c.g, groupNumber: c.n };
 }
 
+// ── Inline build data (skills, passives, CP, food) ────────────────────
+
+function compactInlineSkills(
+  skills?: SkillsConfig,
+): { 0?: Record<string, number>; 1?: Record<string, number> } | undefined {
+  if (!skills) return undefined;
+  const result: { 0?: Record<string, number>; 1?: Record<string, number> } = {};
+  for (const bar of [0, 1] as const) {
+    const barData = skills[bar];
+    if (barData && Object.keys(barData).length > 0) {
+      result[bar] = { ...barData };
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function expandInlineSkills(compact?: {
+  0?: Record<string, number>;
+  1?: Record<string, number>;
+}): SkillsConfig | undefined {
+  if (!compact) return undefined;
+  const result: SkillsConfig = { 0: {}, 1: {} };
+  for (const bar of [0, 1] as const) {
+    const barData = compact[bar];
+    if (barData) {
+      for (const [slot, abilityId] of Object.entries(barData)) {
+        result[bar][Number(slot)] = abilityId;
+      }
+    }
+  }
+  return result;
+}
+
+function compactBuildCP(cp?: BuildChampionPoints): CompactBuildCP | undefined {
+  if (!cp) return undefined;
+  const result: CompactBuildCP = {};
+  for (const [key, treeKey] of [
+    ['w', 'warfare'],
+    ['f', 'fitness'],
+    ['c', 'craft'],
+  ] as const) {
+    const tree = cp[treeKey];
+    const hasSlots = tree.slots.some((s) => s !== null);
+    const hasPassives = Object.keys(tree.passives).length > 0;
+    if (hasSlots || hasPassives) {
+      const ct: CompactChampionTree = {};
+      if (hasSlots) ct.s = tree.slots;
+      if (hasPassives) ct.p = tree.passives;
+      result[key] = ct;
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function expandBuildCP(compact?: CompactBuildCP): BuildChampionPoints | undefined {
+  if (!compact) return undefined;
+  return {
+    warfare: {
+      slots: compact.w?.s ?? [null, null, null, null],
+      passives: compact.w?.p ?? {},
+    },
+    fitness: {
+      slots: compact.f?.s ?? [null, null, null, null],
+      passives: compact.f?.p ?? {},
+    },
+    craft: {
+      slots: compact.c?.s ?? [null, null, null, null],
+      passives: compact.c?.p ?? {},
+    },
+  };
+}
+
 function compactTank(t: TankSetup): CompactTank {
   const c: CompactTank = {};
   if (t.playerName) c.pn = t.playerName;
@@ -316,6 +420,13 @@ function compactTank(t: TankSetup): CompactTank {
   const gr = compactGroup(t.group);
   if (gr) c.gr = gr;
   if (t.notes) c.no = t.notes;
+  // Inline build data
+  const sk = compactInlineSkills(t.skills);
+  if (sk) c.sk = sk;
+  if (t.passives?.length) c.pa = t.passives;
+  const cp2 = compactBuildCP(t.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (t.food?.id != null || t.food?.name) c.fd = t.food;
   return c;
 }
 
@@ -334,6 +445,11 @@ function expandTank(c?: CompactTank): TankSetup {
     specificSkills: (c?.ss ?? []).filter((v): v is number => typeof v === 'number'),
     group: expandGroup(c?.gr),
     notes: c?.no,
+    // Inline build data
+    skills: expandInlineSkills(c?.sk),
+    passives: c?.pa,
+    cpPoints: expandBuildCP(c?.cp2),
+    food: c?.fd,
   };
 }
 
@@ -364,6 +480,14 @@ function compactHealer(h: HealerSetup): CompactHealer {
   const gr = compactGroup(h.group);
   if (gr) c.gr = gr;
   if (h.notes) c.no = h.notes;
+  // Inline build data
+  if (h.specificSkills?.length) c.ss = h.specificSkills;
+  const sk = compactInlineSkills(h.skills);
+  if (sk) c.sk = sk;
+  if (h.passives?.length) c.pa = h.passives;
+  const cp2 = compactBuildCP(h.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (h.food?.id != null || h.food?.name) c.fd = h.food;
   return c;
 }
 
@@ -387,6 +511,12 @@ function expandHealer(c?: CompactHealer): HealerSetup {
     ultimate: decodeUltimate(c?.ul),
     group: expandGroup(c?.gr),
     notes: c?.no,
+    // Inline build data
+    specificSkills: (c?.ss ?? []).filter((v): v is number => typeof v === 'number'),
+    skills: expandInlineSkills(c?.sk),
+    passives: c?.pa,
+    cpPoints: expandBuildCP(c?.cp2),
+    food: c?.fd,
   };
 }
 
@@ -414,6 +544,14 @@ function compactDPS(d: DPSSlot): CompactDPS {
     if (idx !== undefined) c.jt = idx;
   }
   if (d.customDescription) c.cd = d.customDescription;
+  // Inline build data
+  if (d.specificSkills?.length) c.ss = d.specificSkills;
+  const sk = compactInlineSkills(d.skills);
+  if (sk) c.sk = sk;
+  if (d.passives?.length) c.pa = d.passives;
+  const cp2 = compactBuildCP(d.cpPoints);
+  if (cp2) c.cp2 = cp2;
+  if (d.food?.id != null || d.food?.name) c.fd = d.food;
   return c;
 }
 
@@ -441,11 +579,17 @@ function expandDPS(c: CompactDPS): DPSSlot {
       : {}),
     skillLines: c.sl ? expandSkills(c.sl) : undefined,
     championPoint: c.cp || undefined,
+    specificSkills: (c.ss ?? []).filter((v): v is number => typeof v === 'number'),
     ultimate: c.ul != null ? decodeUltimate(c.ul) : null,
     group: expandGroup(c.gr),
     notes: c.no,
     jailDDType: c.jt != null ? JAIL_DD_TYPE_LIST[c.jt] : undefined,
     customDescription: c.cd,
+    // Inline build data
+    skills: expandInlineSkills(c.sk),
+    passives: c.pa,
+    cpPoints: expandBuildCP(c.cp2),
+    food: c.fd,
   };
 }
 

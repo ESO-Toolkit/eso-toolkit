@@ -182,6 +182,7 @@ export const draconicPower: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_ELDER_DRAGON,
+      alternateIds: [29460, 44951],
       name: 'Elder Dragon',
       type: 'passive',
       icon: 'ability_dragonknight_025',
@@ -200,6 +201,7 @@ export const draconicPower: SkillLineData = {
     },
     {
       id: ClassSkillId.DRAGONKNIGHT_WORLD_IN_RUIN,
+      alternateIds: [29451, 45029],
       name: 'World in Ruin',
       type: 'passive',
       icon: 'ability_sorcerer_010',

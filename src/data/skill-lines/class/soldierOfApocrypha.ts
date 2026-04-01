@@ -185,6 +185,7 @@ export const soldierOfApocrypha: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_AEGIS_OF_THE_UNSEEN,
+      alternateIds: [184918, 184923],
       name: 'Aegis of the Unseen',
       type: 'passive',
       icon: 'passive_arcanist_05',
@@ -194,6 +195,7 @@ export const soldierOfApocrypha: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_CIRCUMVENTED_FATE,
+      alternateIds: [184930, 184932],
       name: 'Circumvented Fate',
       type: 'passive',
       icon: 'passive_arcanist_06',
@@ -203,6 +205,7 @@ export const soldierOfApocrypha: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_IMPLACABLE_OUTCOME,
+      alternateIds: [185050, 185051, 185058, 185070],
       name: 'Implacable Outcome',
       type: 'passive',
       icon: 'passive_arcanist_08',
@@ -212,6 +215,7 @@ export const soldierOfApocrypha: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_WELLSPRING_OF_THE_ABYSS,
+      alternateIds: [185033, 185036],
       name: 'Wellspring of the Abyss',
       type: 'passive',
       icon: 'passive_arcanist_07',
