@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import { alpha, keyframes, styled } from '@mui/material/styles';
-import { useEffect, useId, useRef, useState } from 'react';
+import Typography from '@mui/material/Typography';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Keyframes                                                         */
@@ -145,7 +145,7 @@ const CheckCircle = styled(Box)(({ theme }) => ({
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export const KalpaAuthSuccess = () => {
+export const KalpaAuthSuccess = (): React.JSX.Element => {
   const [showCountdown, setShowCountdown] = useState(false);
   const [seconds, setSeconds] = useState(10);
   const [closeFailed, setCloseFailed] = useState(false);
