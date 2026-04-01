@@ -50,6 +50,7 @@ import discordIcon from '../../../assets/discord-icon.svg';
 import { DatePicker } from '../../../components/DatePicker';
 import {
   getBotInviteUrl,
+  getDiscordBotApiUrl,
   getMutualGuildsFromApi,
   getGuildIconUrl,
   DiscordAuthExpiredError,
@@ -59,10 +60,6 @@ import { TAG_COLORS } from '../types/roster-hub.types';
 import type { HubRoster } from '../types/roster-hub.types';
 
 import { TRIAL_LABELS } from './RosterCard';
-
-const DISCORD_BOT_API_URL =
-  (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
-  'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
 const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}';
 const MAX_TAGS = 5;
@@ -227,7 +224,7 @@ interface ServerPickerDialogProps {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${DISCORD_BOT_API_URL}${path}`, {
+  const res = await fetch(`${getDiscordBotApiUrl()}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -514,7 +511,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
       const categoryOverride = selectedCategoryId || undefined;
 
       if (roster) {
-        endpoint = `${DISCORD_BOT_API_URL}/discord/roster/publish`;
+        endpoint = `${getDiscordBotApiUrl()}/discord/roster/publish`;
         body = {
           guildId: selectedGuild.id,
           rosterId: roster.id,
@@ -523,7 +520,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
           event_time: eventTimeIso,
         };
       } else {
-        endpoint = `${DISCORD_BOT_API_URL}/discord/roster/publish-direct`;
+        endpoint = `${getDiscordBotApiUrl()}/discord/roster/publish-direct`;
         body = {
           guildId: selectedGuild.id,
           title: title ?? 'Untitled',

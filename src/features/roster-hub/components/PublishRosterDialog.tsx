@@ -1,7 +1,6 @@
 import {
   Add as AddIcon,
   PublishRounded,
-  Add,
   CheckCircle,
   ExpandLess,
   ExpandMore,
@@ -131,7 +130,13 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   };
 
   const addTag = (tag: string): void => {
-    const trimmed = tag.trim().toLowerCase();
+    // Sanitize: lowercase, only alphanumeric + hyphens (matches Discord channel name rules)
+    const trimmed = tag
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-|-$/g, '');
     if (!trimmed || selectedTags.includes(trimmed) || selectedTags.length >= MAX_TAGS) return;
     setExtraTags((prev) => [...prev, trimmed]);
   };
@@ -514,7 +519,16 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 return (
                   <Box
                     key={label}
+                    role="radio"
+                    aria-checked={isActive}
+                    tabIndex={0}
                     onClick={onClick}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick();
+                      }
+                    }}
                     sx={{
                       px: 1.5,
                       py: 0.5,
@@ -560,6 +574,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               const showHm = difficulty === 'vet';
               return (
                 <Box
+                  role="radiogroup"
+                  aria-label="Difficulty"
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',

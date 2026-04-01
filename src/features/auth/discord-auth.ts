@@ -7,7 +7,7 @@
 
 const getDiscordClientId = (): string => import.meta.env.VITE_DISCORD_CLIENT_ID as string;
 
-const getDiscordBotApiUrl = (): string =>
+export const getDiscordBotApiUrl = (): string =>
   (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
   'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 

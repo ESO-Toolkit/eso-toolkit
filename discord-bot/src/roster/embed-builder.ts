@@ -220,6 +220,8 @@ export function splitMessages(text: string): string[] {
 // ── Action Rows ─────────────────────────────────────────────────────────────
 
 export function buildRosterActionRows(rosterId: string): DiscordComponent[] {
+  // Discord custom_id max is 100 chars. Longest prefix is "roster_signup:healer:" (22 chars).
+  const id = rosterId.slice(0, 75);
   return [
     {
       type: ComponentType.ACTION_ROW,
@@ -229,21 +231,21 @@ export function buildRosterActionRows(rosterId: string): DiscordComponent[] {
           style: ButtonStyle.PRIMARY,
           label: 'Tank',
           emoji: { name: '🛡️' },
-          custom_id: `${RosterButtonId.SIGNUP_PREFIX}tank:${rosterId}`,
+          custom_id: `${RosterButtonId.SIGNUP_PREFIX}tank:${id}`,
         },
         {
           type: ComponentType.BUTTON,
           style: ButtonStyle.PRIMARY,
           label: 'Healer',
           emoji: { name: '💚' },
-          custom_id: `${RosterButtonId.SIGNUP_PREFIX}healer:${rosterId}`,
+          custom_id: `${RosterButtonId.SIGNUP_PREFIX}healer:${id}`,
         },
         {
           type: ComponentType.BUTTON,
           style: ButtonStyle.PRIMARY,
           label: 'DD',
           emoji: { name: '⚔️' },
-          custom_id: `${RosterButtonId.SIGNUP_PREFIX}dd:${rosterId}`,
+          custom_id: `${RosterButtonId.SIGNUP_PREFIX}dd:${id}`,
         },
       ],
     },
@@ -261,7 +263,7 @@ export function buildRosterActionRows(rosterId: string): DiscordComponent[] {
           style: ButtonStyle.SECONDARY,
           label: 'Refresh',
           emoji: { name: '🔄' },
-          custom_id: `${RosterButtonId.REFRESH}:${rosterId}`,
+          custom_id: `${RosterButtonId.REFRESH}:${id}`,
         },
       ],
     },

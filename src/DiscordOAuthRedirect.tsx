@@ -27,6 +27,8 @@ export const DiscordOAuthRedirect: React.FC = () => {
   const [status, setStatus] = React.useState('Connecting to Discord...');
 
   React.useEffect(() => {
+    let cancelled = false;
+
     const code = params.get('code');
     const oauthError = params.get('error');
     const state = params.get('state');
@@ -50,16 +52,22 @@ export const DiscordOAuthRedirect: React.FC = () => {
 
     exchangeDiscordCode(code)
       .then((tokenData) => {
+        if (cancelled) return;
         setDiscordToken(tokenData.access_token, tokenData.expires_in);
         setStatus('Success! Redirecting...');
         const returnPath = getDiscordReturnPath();
         navigate(returnPath, { replace: true });
       })
       .catch((err) => {
+        if (cancelled) return;
         // eslint-disable-next-line no-console -- intentional debug logging for OAuth errors
         console.error('[discord-oauth] token exchange failed:', err);
         setError(err instanceof Error ? err.message : 'Token exchange failed');
       });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

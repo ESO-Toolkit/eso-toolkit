@@ -57,14 +57,11 @@ import {
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
+import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
 import { getSetDisplayName } from '../utils/setNameUtils';
-
-const DISCORD_BOT_API_URL =
-  (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
-  'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
 // ============================================================
 // Local display helpers
@@ -1404,7 +1401,7 @@ export const RosterViewPage: React.FC = () => {
     } else if (hubId) {
       // Direct-publish rosters (direct-* IDs) are stored in the bot's KV, not the hub API
       const fetchRosterData = hubId.startsWith('direct-')
-        ? fetch(`${DISCORD_BOT_API_URL}/discord/roster/${encodeURIComponent(hubId)}/data`)
+        ? fetch(`${getDiscordBotApiUrl()}/discord/roster/${encodeURIComponent(hubId)}/data`)
             .then((res) => {
               if (!res.ok) throw new Error('Not found');
               return res.json() as Promise<{ roster_data: string }>;

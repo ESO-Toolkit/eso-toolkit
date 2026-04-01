@@ -74,10 +74,12 @@ function buildNameContext(
   const ctx: ChannelNameContext = {};
   if (eventTime) {
     const date = new Date(eventTime);
-    const tz = timezone || DEFAULT_TIMEZONE;
-    const { dayOfWeek, hour } = getDatePartsInTz(date, tz);
-    ctx.dayShort = SHORT_DAYS[dayOfWeek];
-    ctx.time = formatTime12h(hour);
+    if (!isNaN(date.getTime())) {
+      const tz = timezone || DEFAULT_TIMEZONE;
+      const { dayOfWeek, hour } = getDatePartsInTz(date, tz);
+      ctx.dayShort = SHORT_DAYS[dayOfWeek];
+      ctx.time = formatTime12h(hour);
+    }
   }
   const trial = snapshot.trial_id || decoded.trialId;
   if (trial) ctx.trial = trial;

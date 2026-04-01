@@ -50,15 +50,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import discordIcon from '../assets/discord-icon.svg';
 import {
   getBotInviteUrl,
+  getDiscordBotApiUrl,
   getGuildIconUrl,
   getMutualGuildsFromApi,
   DiscordAuthExpiredError,
 } from '../features/auth/discord-auth';
 import { useDiscordAuth } from '../features/auth/DiscordAuthContext';
-
-const DISCORD_BOT_API_URL =
-  (import.meta.env.VITE_DISCORD_BOT_API_URL as string | undefined) ??
-  'https://eso-toolkit-discord-bot.eso-toolkit.workers.dev';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -153,7 +150,7 @@ function roleColorToHex(color: number): string {
 }
 
 async function apiFetch<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${DISCORD_BOT_API_URL}${path}`, {
+  const res = await fetch(`${getDiscordBotApiUrl()}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
