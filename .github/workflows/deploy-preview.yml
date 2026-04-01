@@ -92,6 +92,7 @@ jobs:
           git push
 
       - name: Comment on PR with preview URL
+        continue-on-error: true
         uses: actions/github-script@v8
         with:
           script: |
