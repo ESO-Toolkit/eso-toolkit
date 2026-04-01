@@ -184,9 +184,11 @@ function migrateNamePattern(raw: string | undefined): string {
 function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): string {
   const now = new Date();
   const shortDays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const fullDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' });
   const dayStr = dayFmt.format(now).toLowerCase();
   const dayIdx = shortDays.indexOf(dayStr);
+  const safeDayIndex = dayIdx >= 0 ? dayIdx : now.getDay();
   const hourFmt = new Intl.DateTimeFormat('en-US', {
     timeZone: tz,
     hour: 'numeric',
@@ -197,9 +199,9 @@ function previewChannelName(pattern: string, tz: string = DEFAULT_TIMEZONE): str
   h = h % 12 || 12;
   const time12 = `${h}${suffix}`;
   const resolved = pattern
-    .replace(/{day-short}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
-    .replace(/{day-full}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
-    .replace(/{day}/gi, shortDays[dayIdx >= 0 ? dayIdx : now.getDay()])
+    .replace(/{day-short}/gi, shortDays[safeDayIndex])
+    .replace(/{day-full}/gi, fullDays[safeDayIndex])
+    .replace(/{day}/gi, shortDays[safeDayIndex])
     .replace(/{time}/gi, time12)
     .replace(/{trial}/gi, 'vss')
     .replace(/{tag}/gi, 'vss') // legacy alias

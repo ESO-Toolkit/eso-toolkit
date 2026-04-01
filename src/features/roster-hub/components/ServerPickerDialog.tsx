@@ -68,6 +68,15 @@ const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}';
 const MAX_TAGS = 5;
 
 const SHORT_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+const FULL_DAYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const;
 
 type Difficulty = 'vet' | 'normal';
 const EXTRA_PRESET_TAGS = ['score-push', 'farm'] as const;
@@ -104,6 +113,7 @@ function buildChannelPreview(ctx: {
   tags: string[];
 }): string {
   let dayShort = '';
+  let dayFull = '';
   let time = '';
 
   if (ctx.eventTime) {
@@ -111,7 +121,9 @@ function buildChannelPreview(ctx: {
     const dayFmt = new Intl.DateTimeFormat('en-US', { timeZone: ctx.timezone, weekday: 'short' });
     const dayStr = dayFmt.format(date).toLowerCase();
     const dayIdx = SHORT_DAYS.indexOf(dayStr as (typeof SHORT_DAYS)[number]);
-    dayShort = SHORT_DAYS[dayIdx >= 0 ? dayIdx : date.getDay()];
+    const safeDayIndex = dayIdx >= 0 ? dayIdx : date.getDay();
+    dayShort = SHORT_DAYS[safeDayIndex];
+    dayFull = FULL_DAYS[safeDayIndex];
     const hourFmt = new Intl.DateTimeFormat('en-US', {
       timeZone: ctx.timezone,
       hour: 'numeric',
@@ -130,14 +142,18 @@ function buildChannelPreview(ctx: {
   const abbrev = TRIAL_ABBREVS[ctx.trialId.toUpperCase()] ?? ctx.trialId.toLowerCase();
   const trialToken = diff && ctx.trialId ? `${diff === 'veteran' ? 'v' : 'n'}${abbrev}` : abbrev;
 
-  // Append non-difficulty tags (hm, score-push, farm, custom) after the template
-  const appendTags = ctx.tags.filter((t) => t !== 'vet' && t !== 'normal');
+  // Append non-difficulty tags (hm, score-push, farm, custom) after the template.
+  // Keep this logic aligned with discord-bot/src/roster/publish.ts.
+  const appendTags = ctx.tags.filter((tag) => {
+    const normalized = tag.toLowerCase();
+    return normalized !== 'vet' && normalized !== 'veteran' && normalized !== 'normal';
+  });
   const suffix = appendTags.length > 0 ? `-${appendTags.join('-')}` : '';
 
   const name = (
     ctx.pattern
       .replace(/{day-short}/gi, dayShort)
-      .replace(/{day-full}/gi, dayShort)
+      .replace(/{day-full}/gi, dayFull)
       .replace(/{day}/gi, dayShort)
       .replace(/{time}/gi, time)
       .replace(/{trial}/gi, trialToken)
@@ -1190,7 +1206,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       color: string,
                       onClick: () => void,
                       pos: 'left' | 'mid' | 'right' | 'solo',
-                    ) => {
+                    ): React.ReactNode => {
                       const radiusMap = {
                         left: '20px 0 0 20px',
                         mid: '0',
