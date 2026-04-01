@@ -810,6 +810,23 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           ? '#4ade80'
           : '#059669';
 
+    // Glass background tint based on status
+    const glassBg = darkMode
+      ? isWipe
+        ? 'rgba(255, 60, 60, 0.06)'
+        : isFalsePositive
+          ? 'rgba(245, 158, 11, 0.06)'
+          : 'rgba(56, 189, 248, 0.06)'
+      : isWipe
+        ? 'rgba(220, 38, 38, 0.04)'
+        : isFalsePositive
+          ? 'rgba(217, 119, 6, 0.04)'
+          : 'rgba(6, 182, 212, 0.04)';
+
+    const borderColor = darkMode
+      ? `${accentBarColor}30`
+      : `${accentBarColor}25`;
+
     return (
       <ListItem key={fight.id} sx={{ p: 0 }}>
         <ListItemButton
@@ -818,25 +835,58 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           onClick={() => handleFightSelect(fight.id)}
           sx={{
             width: '100%',
-            height: 64,
+            height: { xs: 68, sm: 72 },
             display: 'flex',
             alignItems: 'stretch',
-            border: 1,
-            borderColor: 'divider',
-            borderRadius: 1,
+            border: '1px solid',
+            borderColor: borderColor,
+            borderRadius: '8px',
             p: 0,
             position: 'relative',
-            backgroundColor: 'transparent',
+            backgroundColor: glassBg,
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             overflow: 'hidden',
-            transition:
-              'background-color 120ms ease, transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease',
+            transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+            // Hover shimmer pseudo-element
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '-100%',
+              width: '100%',
+              height: '100%',
+              background: darkMode
+                ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 60%, transparent 100%)'
+                : 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 40%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.15) 60%, transparent 100%)',
+              transition: 'left 400ms cubic-bezier(0.4, 0, 0.2, 1)',
+              zIndex: 1,
+              pointerEvents: 'none',
+            },
             '&:hover': {
-              backgroundColor: getThemeColors.hoverBg,
-              borderColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(100, 116, 139, 0.6)',
-              boxShadow: `0 0 12px ${accentGlow}`,
+              backgroundColor: darkMode
+                ? `${accentBarColor}12`
+                : `${accentBarColor}0a`,
+              borderColor: `${accentBarColor}50`,
+              boxShadow: darkMode
+                ? `0 0 20px ${accentBarColor}25, inset 0 0 20px ${accentBarColor}08`
+                : `0 0 16px ${accentBarColor}18`,
+              transform: 'translateY(-1px)',
+              '&::after': {
+                left: '100%',
+              },
             },
             '&:active': {
               transform: 'translateY(0.5px)',
+            },
+            '&.Mui-selected': {
+              backgroundColor: darkMode
+                ? `${accentBarColor}18`
+                : `${accentBarColor}12`,
+              borderColor: `${accentBarColor}60`,
+              boxShadow: darkMode
+                ? `0 0 16px ${accentBarColor}30, inset 0 0 16px ${accentBarColor}0a`
+                : `0 0 12px ${accentBarColor}20`,
             },
           }}
         >
@@ -868,13 +918,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   : isFalsePositive
                     ? getThemeColors.falsePositiveGradient
                     : getThemeColors.killGradient,
-              boxShadow: isWipe
-                ? getThemeColors.wipeShadow
-                : fight.difficulty == null
-                  ? getThemeColors.trashShadow
-                  : getThemeColors.killShadow,
-              borderRadius: 1,
-              opacity: 0.4,
+              borderRadius: '8px',
+              opacity: darkMode ? 0.25 : 0.3,
               zIndex: 0,
             }}
           />
@@ -882,14 +927,41 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           <Box
             sx={{
               position: 'absolute',
-              top: 4,
-              bottom: 4,
+              top: 0,
+              bottom: 0,
               left: 0,
               width: 3,
-              borderRadius: '0 2px 2px 0',
-              background: accentBarColor,
-              boxShadow: `0 0 8px ${accentGlow}`,
-              zIndex: 2,
+              background: `linear-gradient(180deg, ${accentBarColor}00 0%, ${accentBarColor} 20%, ${accentBarColor} 80%, ${accentBarColor}00 100%)`,
+              boxShadow: `0 0 10px ${accentGlow}, 0 0 4px ${accentBarColor}44`,
+              zIndex: 3,
+            }}
+          />
+          {/* HUD corner accents — top-left */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 3,
+              left: 5,
+              width: 6,
+              height: 6,
+              borderTop: `1px solid ${accentBarColor}60`,
+              borderLeft: `1px solid ${accentBarColor}60`,
+              zIndex: 3,
+              pointerEvents: 'none',
+            }}
+          />
+          {/* HUD corner accents — bottom-right */}
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 3,
+              right: 5,
+              width: 6,
+              height: 6,
+              borderBottom: `1px solid ${accentBarColor}40`,
+              borderRight: `1px solid ${accentBarColor}40`,
+              zIndex: 3,
+              pointerEvents: 'none',
             }}
           />
           {/* Interior content */}
@@ -903,54 +975,75 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               flexDirection: 'column',
               justifyContent: 'center',
               pl: { xs: 1.5, sm: 2 },
-              pr: { xs: 0.75, sm: 1 },
-              py: 0.5,
+              pr: { xs: 1, sm: 1.25 },
+              py: 0.75,
             }}
           >
-            {/* Row 1: Pull # + Status */}
+            {/* Row 1: Pull # + Status pill */}
             <Box
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                mb: 0.25,
+                mb: 0.5,
               }}
             >
               <Typography
                 sx={{
-                  fontSize: '0.6rem',
+                  fontSize: '0.58rem',
                   fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  color: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(100,116,139,0.5)',
+                  color: darkMode ? 'rgba(255,255,255,0.35)' : 'rgba(100,116,139,0.45)',
                   lineHeight: 1,
-                  letterSpacing: '0.02em',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
                 }}
               >
                 #{idx + 1}
               </Typography>
-              <Typography
+              {/* Status micro-pill */}
+              <Box
                 sx={{
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  color: statusColor,
-                  lineHeight: 1,
-                  textShadow: darkMode ? `0 0 8px ${statusColor}88` : 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  px: 0.6,
+                  py: 0.15,
+                  borderRadius: '4px',
+                  background: darkMode
+                    ? `${statusColor}15`
+                    : `${statusColor}12`,
+                  border: `1px solid ${statusColor}30`,
+                  backdropFilter: 'blur(4px)',
                 }}
               >
-                {isWipe ? bossHealthPercent + '%' : isFalsePositive ? '⚠' : '✓'}
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    color: statusColor,
+                    lineHeight: 1,
+                    textShadow: darkMode
+                      ? `0 0 6px ${statusColor}66, 0 0 12px ${statusColor}33`
+                      : 'none',
+                  }}
+                >
+                  {isWipe ? bossHealthPercent + '%' : isFalsePositive ? '⚠' : '✓'}
+                </Typography>
+              </Box>
             </Box>
             {/* Row 2: Hero duration */}
             <Typography
               sx={{
-                fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                fontSize: { xs: '0.9rem', sm: '1.05rem' },
                 fontWeight: 700,
                 fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
                 textAlign: 'center',
-                color: darkMode ? '#e2e8f0' : '#1e293b',
-                textShadow: darkMode ? `0 0 12px ${accentGlow}` : 'none',
+                color: darkMode ? '#f1f5f9' : '#0f172a',
+                textShadow: darkMode
+                  ? `0 0 8px ${accentBarColor}40, 0 1px 2px rgba(0,0,0,0.5)`
+                  : `0 1px 2px rgba(0,0,0,0.06)`,
                 lineHeight: 1.2,
-                letterSpacing: '0.04em',
+                letterSpacing: '0.06em',
               }}
             >
               {fight.startTime && fight.endTime
@@ -961,10 +1054,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             <Typography
               sx={{
                 fontSize: '0.5rem',
-                color: darkMode ? 'rgba(255,255,255,0.35)' : 'rgba(100,116,139,0.5)',
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                color: darkMode ? 'rgba(255,255,255,0.28)' : 'rgba(100,116,139,0.45)',
                 lineHeight: 1,
                 textAlign: 'center',
-                mt: 0.25,
+                mt: 0.5,
+                letterSpacing: '0.03em',
               }}
             >
               {fight.startTime && reportStartTime
