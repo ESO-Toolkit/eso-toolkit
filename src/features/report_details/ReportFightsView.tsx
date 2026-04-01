@@ -1111,7 +1111,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   {fight.friendlyPlayers.filter(Boolean).length}p
                 </Typography>
               )}
-              {/* Progress micro-bar — wipes only */}
+              {/* Progress micro-bar — wipes only, shows health remaining */}
               {isWipe ? (
                 <Box
                   sx={{
@@ -1126,7 +1126,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   <Box
                     sx={{
                       height: '100%',
-                      width: `${Math.max(2, 100 - bossHealthPercent)}%`,
+                      width: `${bossHealthPercent}%`,
                       borderRadius: '1.5px',
                       background: accentBarColor,
                       boxShadow: darkMode ? `0 0 4px ${accentBarColor}66` : 'none',
