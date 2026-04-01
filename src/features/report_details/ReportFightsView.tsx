@@ -927,8 +927,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           t.palette.mode === 'dark'
             ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
             : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
-        boxShadow: (t: Theme) =>
-          t.palette.mode === 'dark' ? t.shadows[6] : t.shadows[4],
+        boxShadow: (t: Theme) => (t.palette.mode === 'dark' ? t.shadows[6] : t.shadows[4]),
         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         overflow: 'visible',
         '&:hover': {
