@@ -182,6 +182,7 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_ENDURING_RAYS,
+      alternateIds: [31739, 45214],
       name: 'Enduring Rays',
       type: 'passive',
       icon: 'ability_templar_020',
@@ -191,6 +192,7 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_ILLUMINATE,
+      alternateIds: [31743, 45215, 111218, 112977],
       name: 'Illuminate',
       type: 'passive',
       icon: 'ability_templar_012',
@@ -200,6 +202,7 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_PRISM,
+      alternateIds: [31744, 31746, 45216, 45217],
       name: 'Prism',
       type: 'passive',
       icon: 'ability_templar_031',
@@ -209,6 +212,7 @@ export const dawnsWrath: SkillLineData = {
     },
     {
       id: ClassSkillId.TEMPLAR_RESTORING_SPIRIT,
+      alternateIds: [31721, 45212, 88446, 88447],
       name: 'Restoring Spirit',
       type: 'passive',
       icon: 'ability_templar_014',

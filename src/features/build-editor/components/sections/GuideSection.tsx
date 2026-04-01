@@ -331,7 +331,6 @@ export const GuideSection: React.FC = () => {
                         <IconButton
                           className="remove-btn"
                           size="small"
-                          aria-label="Remove screenshot"
                           onClick={() => dispatch(removeScreenshot(i))}
                           sx={{
                             position: 'absolute',

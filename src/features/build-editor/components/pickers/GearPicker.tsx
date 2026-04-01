@@ -16,8 +16,27 @@
  *   currentItemId — currently equipped item (nullable)
  */
 
-import { Shield as ShieldIcon } from '@mui/icons-material';
-import { Box, ButtonBase, Chip, Stack, Typography } from '@mui/material';
+import {
+  Close as CloseIcon,
+  ExpandMore as ExpandIcon,
+  Search as SearchIcon,
+  Shield as ShieldIcon,
+} from '@mui/icons-material';
+import {
+  Box,
+  ButtonBase,
+  Chip,
+  Collapse,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -36,9 +55,6 @@ import {
   SET_TYPE_ORDER,
   type GearSetType,
 } from '../../data/gearSetRegistry';
-import { CollapsibleSection } from '../primitives/CollapsibleSection';
-import { PickerDialog } from '../primitives/PickerDialog';
-import { PickerTabBar } from '../primitives/PickerTabBar';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -63,6 +79,7 @@ function buildSetGroups(targetSlot: SlotType): {
   const setSummaries = getAvailableSetsForSlot(targetSlot);
   const allItems = getItemsBySlot(targetSlot);
 
+  // Build item lookup by set name
   const itemsBySet = new Map<string, { itemId: number; info: ItemInfo }[]>();
   for (const item of allItems) {
     const list = itemsBySet.get(item.info.setName);
@@ -81,6 +98,7 @@ function buildSetGroups(targetSlot: SlotType): {
     };
   });
 
+  // Sort: by setType order, then alphabetically within each type
   groups.sort((a, b) => {
     const ta = SET_TYPE_ORDER.indexOf(a.setType);
     const tb = SET_TYPE_ORDER.indexOf(b.setType);
@@ -151,101 +169,171 @@ const SetBonusPreview: React.FC<{ bonuses: string[] }> = ({ bonuses }) => {
   );
 };
 
-// ─── Gear Item Row ──────────────────────────────────────────────────────────
+// ─── Set Category Section (collapsible) ─────────────────────────────────────
 
-interface GearItemRowProps {
-  itemId: number;
-  info: ItemInfo;
-  isSelected: boolean;
-  catColor?: string;
+interface SetCategorySectionProps {
+  group: SetGroup;
+  currentItemId: number | null;
   onSelect: (itemId: number) => void;
 }
 
-const GearItemRow: React.FC<GearItemRowProps> = ({
-  itemId,
-  info,
-  isSelected,
-  catColor,
+const SetCategorySection: React.FC<SetCategorySectionProps> = ({
+  group,
+  currentItemId,
   onSelect,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
+  const [expanded, setExpanded] = useState(false);
+  const catColor = SET_TYPE_COLORS[group.setType];
 
   return (
-    <ButtonBase
-      onClick={() => onSelect(itemId)}
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        py: 0.6,
-        px: 1,
-        borderRadius: 1.5,
-        width: '100%',
-        textAlign: 'left',
-        background: isSelected
-          ? isDark
-            ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
-            : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
-          : 'transparent',
-        border: isSelected
-          ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
-          : '1px solid transparent',
-        transition: 'all 0.12s ease',
-        '&:hover': {
-          background: isSelected
-            ? isDark
-              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.14)'
-              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-            : isDark
-              ? 'rgba(255,255,255,0.05)'
-              : 'rgba(0,0,0,0.03)',
-        },
-      }}
-    >
-      {catColor && (
-        <ShieldIcon sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }} />
-      )}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Stack direction="row" spacing={0.5} alignItems="center">
+    <Box>
+      <ButtonBase
+        onClick={() => setExpanded(!expanded)}
+        sx={{
+          width: '100%',
+          py: 0.75,
+          px: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderRadius: 1.5,
+          '&:hover': {
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+          },
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, flex: 1 }}>
+          <ShieldIcon
+            sx={{
+              fontSize: 16,
+              color: catColor,
+              opacity: 0.75,
+              flexShrink: 0,
+            }}
+          />
           <Typography
             noWrap
             sx={{
               fontSize: 12,
               fontWeight: 600,
               fontFamily: 'Space Grotesk, Inter, system-ui',
-              lineHeight: 1.3,
+              color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
             }}
           >
-            {info.name}
+            {group.setName}
           </Typography>
-          {isSelected && (
-            <Chip
-              label="EQUIPPED"
-              size="small"
-              sx={{
-                height: 14,
-                fontSize: '0.5rem',
-                fontWeight: 700,
-                fontFamily: 'Space Grotesk',
-                background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-                color: 'var(--be-accent, #38bdf8)',
-                border: 'none',
-              }}
-            />
-          )}
+          <Chip
+            label={group.setType}
+            size="small"
+            sx={{
+              height: 14,
+              fontSize: '0.5rem',
+              fontWeight: 700,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              background: `${catColor}25`,
+              color: catColor,
+              border: 'none',
+              flexShrink: 0,
+            }}
+          />
         </Stack>
-        <Typography
-          sx={{
-            fontSize: 10,
-            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-            lineHeight: 1.2,
-          }}
-        >
-          ID: {itemId}
-          {info.type !== 'Gear' ? ` · ${info.type}` : ''}
-        </Typography>
-      </Box>
-    </ButtonBase>
+        <Stack direction="row" alignItems="center" spacing={0.5}>
+          <Typography
+            sx={{
+              fontSize: 10,
+              color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+              fontFamily: 'Space Grotesk',
+            }}
+          >
+            {group.items.length}
+          </Typography>
+          <ExpandIcon
+            sx={{
+              fontSize: 16,
+              transition: 'transform 0.2s',
+              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+            }}
+          />
+        </Stack>
+      </ButtonBase>
+
+      <Collapse in={expanded} unmountOnExit>
+        {group.bonuses.length > 0 && <SetBonusPreview bonuses={group.bonuses} />}
+        <Stack spacing={0} sx={{ pl: 1, pr: 0.5, pb: 1, pt: 0.25 }}>
+          {group.items.map((item) => {
+            const isSelected = item.itemId === currentItemId;
+            return (
+              <ButtonBase
+                key={item.itemId}
+                onClick={() => onSelect(item.itemId)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  py: 0.6,
+                  px: 1,
+                  borderRadius: 1.5,
+                  width: '100%',
+                  textAlign: 'left',
+                  background: isSelected
+                    ? isDark
+                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
+                      : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
+                    : 'transparent',
+                  border: isSelected
+                    ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
+                    : '1px solid transparent',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                  },
+                }}
+              >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    noWrap
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: 600,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {item.info.name}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 10,
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    ID: {item.itemId}
+                    {item.info.type !== 'Gear' ? ` · ${item.info.type}` : ''}
+                  </Typography>
+                </Box>
+                {isSelected && (
+                  <Chip
+                    label="EQUIPPED"
+                    size="small"
+                    sx={{
+                      height: 14,
+                      fontSize: '0.5rem',
+                      fontWeight: 700,
+                      fontFamily: 'Space Grotesk',
+                      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
+                      color: 'var(--be-accent, #38bdf8)',
+                      border: 'none',
+                    }}
+                  />
+                )}
+              </ButtonBase>
+            );
+          })}
+        </Stack>
+      </Collapse>
+    </Box>
   );
 };
 
@@ -272,6 +360,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | GearSetType>('all');
 
+  // Reset state on open
   useEffect(() => {
     if (open) {
       setSearch('');
@@ -279,24 +368,25 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     }
   }, [open]);
 
+  // Build grouped data for this slot
   const { groups, byType } = useMemo(() => buildSetGroups(targetSlot), [targetSlot]);
 
-  // Build tabs with color coding
-  const tabs = useMemo(() => {
-    const result: { key: 'all' | GearSetType; label: string; color?: string }[] = [
-      { key: 'all', label: 'All' },
-    ];
+  // Available type tabs (only show tabs that have sets)
+  const availableTabs = useMemo(() => {
+    const tabs: ('all' | GearSetType)[] = ['all'];
     for (const t of SET_TYPE_ORDER) {
-      if (byType.has(t)) result.push({ key: t, label: t, color: SET_TYPE_COLORS[t] });
+      if (byType.has(t)) tabs.push(t);
     }
-    return result;
+    return tabs;
   }, [byType]);
 
+  // Visible groups for current tab
   const visibleGroups = useMemo(() => {
     if (activeTab === 'all') return groups;
     return byType.get(activeTab as GearSetType) ?? [];
   }, [activeTab, groups, byType]);
 
+  // Search mode
   const isSearching = search.trim().length >= MIN_SEARCH_LENGTH;
 
   const searchResults = useMemo(() => {
@@ -321,138 +411,344 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     [onSelect, onClose, targetSlot],
   );
 
+  // Currently equipped item info
   const currentInfo = useMemo(() => {
     if (!currentItemId) return null;
     return getItemInfo(currentItemId) ?? null;
   }, [currentItemId]);
 
   return (
-    <PickerDialog open={open} onClose={onClose} title={`Select ${slotName} Gear`}>
-      {/* Currently equipped indicator */}
-      {currentInfo && (
-        <Box
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '16px',
+          backdropFilter: 'blur(24px)',
+          background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
+          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
+          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
+          maxHeight: '80vh',
+        },
+      }}
+    >
+      {/* ── Header ───────────────────────────────────────────── */}
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pb: 1,
+        }}
+      >
+        <Typography
           sx={{
-            mx: 2,
-            mb: 1.5,
-            p: 1,
-            borderRadius: 2,
-            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+            fontWeight: 700,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontSize: '1rem',
+            background: isDark
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={0.75}>
-            <ShieldIcon sx={{ fontSize: 16, color: 'var(--be-accent, #38bdf8)', opacity: 0.6 }} />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Stack direction="row" spacing={0.5} alignItems="center">
+          Select {slotName} Gear
+        </Typography>
+        <IconButton size="small" onClick={onClose} sx={{ color: 'text.disabled' }}>
+          <CloseIcon sx={{ fontSize: 18 }} />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 0 }}>
+        {/* ── Currently equipped ─────────────────────────────── */}
+        {currentInfo && (
+          <Box
+            sx={{
+              mx: 2,
+              mb: 1.5,
+              p: 1,
+              borderRadius: 2,
+              background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={0.75}>
+              <ShieldIcon
+                sx={{
+                  fontSize: 16,
+                  color: 'var(--be-accent, #38bdf8)',
+                  opacity: 0.6,
+                }}
+              />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Typography
+                    noWrap
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                    }}
+                  >
+                    {currentInfo.name}
+                  </Typography>
+                  <Chip
+                    label={currentInfo.setName}
+                    size="small"
+                    sx={{
+                      height: 14,
+                      fontSize: '0.5rem',
+                      fontWeight: 700,
+                      fontFamily: 'Space Grotesk',
+                      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
+                      color: 'var(--be-accent, #38bdf8)',
+                      border: 'none',
+                    }}
+                  />
+                </Stack>
                 <Typography
-                  noWrap
                   sx={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                    fontSize: 9,
+                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                    fontFamily: 'Space Grotesk',
                   }}
                 >
-                  {currentInfo.name}
+                  Currently equipped · ID: {currentItemId}
                 </Typography>
-                <Chip
-                  label={currentInfo.setName}
-                  size="small"
-                  sx={{
-                    height: 14,
-                    fontSize: '0.5rem',
-                    fontWeight: 700,
-                    fontFamily: 'Space Grotesk',
-                    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
-                    color: 'var(--be-accent, #38bdf8)',
-                    border: 'none',
-                  }}
-                />
-              </Stack>
+              </Box>
+            </Stack>
+          </Box>
+        )}
+
+        {/* ── Search bar ────────────────────────────────────── */}
+        <Box sx={{ px: 2, pb: 1.5 }}>
+          <TextField
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Search ${slotName.toLowerCase()} gear by name or set...`}
+            size="small"
+            fullWidth
+            autoFocus
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                borderRadius: 2,
+                fontSize: 13,
+              },
+            }}
+          />
+        </Box>
+
+        {isSearching ? (
+          /* ── Search results ───────────────────────────────── */
+          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
+            {searchResults.length === 0 ? (
               <Typography
                 sx={{
-                  fontSize: 9,
-                  color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                  fontFamily: 'Space Grotesk',
+                  fontSize: 12,
+                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  textAlign: 'center',
+                  py: 3,
                 }}
               >
-                Currently equipped · ID: {currentItemId}
+                No gear found for &ldquo;{search}&rdquo;
               </Typography>
-            </Box>
-          </Stack>
-        </Box>
-      )}
-
-      <PickerDialog.Search
-        value={search}
-        onChange={setSearch}
-        placeholder={`Search ${slotName.toLowerCase()} gear by name or set...`}
-        resultCount={isSearching ? searchResults.length : undefined}
-      />
-
-      {isSearching ? (
-        <PickerDialog.Body
-          empty={searchResults.length === 0}
-          emptyMessage={`No gear found for \u201c${search}\u201d`}
-        >
-          <Stack spacing={0.5} sx={{ px: 1 }}>
-            {searchResults.map((item) => {
-              const setType = getSetType(item.info.setName);
-              const catColor = SET_TYPE_COLORS[setType];
-              return (
-                <GearItemRow
-                  key={item.itemId}
-                  itemId={item.itemId}
-                  info={item.info}
-                  isSelected={item.itemId === currentItemId}
-                  catColor={catColor}
-                  onSelect={handleSelect}
-                />
-              );
-            })}
-          </Stack>
-        </PickerDialog.Body>
-      ) : (
-        <>
-          <PickerDialog.Tabs>
-            <PickerTabBar tabs={tabs} activeKey={activeTab} onChange={setActiveTab} />
-          </PickerDialog.Tabs>
-
-          <PickerDialog.Body
-            empty={visibleGroups.length === 0}
-            emptyMessage="No sets available for this slot"
-          >
-            {visibleGroups.map((group) => {
-              const catColor = SET_TYPE_COLORS[group.setType];
-              return (
-                <CollapsibleSection
-                  key={group.setName}
-                  label={group.setName}
-                  count={group.items.length}
-                  icon={
-                    <ShieldIcon
-                      sx={{ fontSize: 16, color: catColor, opacity: 0.75, flexShrink: 0 }}
-                    />
-                  }
+            ) : (
+              <>
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                    fontFamily: 'Space Grotesk',
+                    mb: 0.75,
+                  }}
                 >
-                  {group.bonuses.length > 0 && <SetBonusPreview bonuses={group.bonuses} />}
-                  <Stack spacing={0} sx={{ pl: 1, pr: 0.5, pb: 1, pt: 0.25 }}>
-                    {group.items.map((item) => (
-                      <GearItemRow
+                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                </Typography>
+                <Stack spacing={0.5}>
+                  {searchResults.map((item) => {
+                    const isSelected = item.itemId === currentItemId;
+                    const setType = getSetType(item.info.setName);
+                    const catColor = SET_TYPE_COLORS[setType];
+                    return (
+                      <ButtonBase
                         key={item.itemId}
-                        itemId={item.itemId}
-                        info={item.info}
-                        isSelected={item.itemId === currentItemId}
-                        onSelect={handleSelect}
-                      />
-                    ))}
-                  </Stack>
-                </CollapsibleSection>
-              );
-            })}
-          </PickerDialog.Body>
-        </>
-      )}
-    </PickerDialog>
+                        onClick={() => handleSelect(item.itemId)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          py: 0.75,
+                          px: 1,
+                          borderRadius: 1.5,
+                          width: '100%',
+                          textAlign: 'left',
+                          background: isSelected
+                            ? isDark
+                              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
+                            : 'transparent',
+                          '&:hover': {
+                            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                          },
+                        }}
+                      >
+                        <ShieldIcon
+                          sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }}
+                        />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Typography
+                              noWrap
+                              sx={{
+                                fontSize: 12,
+                                fontWeight: 600,
+                                fontFamily: 'Space Grotesk, Inter, system-ui',
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {item.info.name}
+                            </Typography>
+                            <Chip
+                              label={item.info.setName}
+                              size="small"
+                              sx={{
+                                height: 14,
+                                fontSize: '0.5rem',
+                                fontWeight: 700,
+                                fontFamily: 'Space Grotesk',
+                                background: `${catColor}25`,
+                                color: catColor,
+                                border: 'none',
+                              }}
+                            />
+                          </Stack>
+                          <Typography
+                            sx={{
+                              fontSize: 10,
+                              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {setType} · ID: {item.itemId}
+                          </Typography>
+                        </Box>
+                      </ButtonBase>
+                    );
+                  })}
+                </Stack>
+              </>
+            )}
+          </Box>
+        ) : (
+          <>
+            {/* ── Set type tabs ─────────────────────────────── */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 0.5,
+                px: 2,
+                pb: 1.5,
+                flexWrap: 'wrap',
+                rowGap: 0.5,
+              }}
+            >
+              {availableTabs.map((tab) => {
+                const isActive = activeTab === tab;
+                const label = tab === 'all' ? 'All' : tab;
+                const count =
+                  tab === 'all' ? groups.length : (byType.get(tab as GearSetType)?.length ?? 0);
+                const color = tab === 'all' ? undefined : SET_TYPE_COLORS[tab as GearSetType];
+                return (
+                  <Tooltip
+                    key={tab}
+                    title={`${count} set${count !== 1 ? 's' : ''}`}
+                    placement="top"
+                  >
+                    <ButtonBase
+                      onClick={() => setActiveTab(tab)}
+                      sx={{
+                        px: 1,
+                        py: 0.4,
+                        borderRadius: 1.5,
+                        fontSize: 10,
+                        fontWeight: isActive ? 700 : 500,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        letterSpacing: 0.3,
+                        flexShrink: 0,
+                        color: isActive
+                          ? (color ?? (isDark ? '#fff' : '#0f172a'))
+                          : isDark
+                            ? 'rgba(255,255,255,0.45)'
+                            : 'rgba(0,0,0,0.45)',
+                        background: isActive
+                          ? color
+                            ? `${color}18`
+                            : isDark
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.06)'
+                          : 'transparent',
+                        border: `1px solid ${
+                          isActive
+                            ? color
+                              ? `${color}35`
+                              : isDark
+                                ? 'rgba(255,255,255,0.12)'
+                                : 'rgba(0,0,0,0.10)'
+                            : 'transparent'
+                        }`,
+                        transition: 'all 0.15s',
+                        '&:hover': {
+                          background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        },
+                      }}
+                    >
+                      {label}
+                    </ButtonBase>
+                  </Tooltip>
+                );
+              })}
+            </Box>
+
+            {/* ── Browse mode: set groups ──────────────────── */}
+            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
+              {visibleGroups.length === 0 ? (
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    textAlign: 'center',
+                    py: 3,
+                  }}
+                >
+                  No sets available for this slot
+                </Typography>
+              ) : (
+                visibleGroups.map((group) => (
+                  <SetCategorySection
+                    key={group.setName}
+                    group={group}
+                    currentItemId={currentItemId}
+                    onSelect={handleSelect}
+                  />
+                ))
+              )}
+            </Box>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };

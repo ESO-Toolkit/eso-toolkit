@@ -149,7 +149,7 @@ function decodeGroupName(grs?: string[], gr?: CompactGroup): { groups?: string[]
   return {};
 }
 
-function collectSets(ids: (number | undefined)[], additional?: number[]): string[] {
+function collectSets(ids: (number | undefined)[], additional?: number[]): string[] | undefined {
   const sets: string[] = [];
   for (const id of ids) {
     if (id != null) sets.push(getSetName(id));
@@ -157,7 +157,7 @@ function collectSets(ids: (number | undefined)[], additional?: number[]): string
   if (additional) {
     for (const id of additional) sets.push(getSetName(id));
   }
-  return sets.length > 0 ? sets : [];
+  return sets.length > 0 ? sets : undefined;
 }
 
 function decodeTank(t: CompactTank): DecodedRosterSlot {
@@ -165,7 +165,7 @@ function decodeTank(t: CompactTank): DecodedRosterSlot {
   return {
     playerName: t.pn,
     roleLabel: t.rl,
-    sets: collectSets([t.gs?.s1, t.gs?.s2, t.gs?.ms], t.gs?.a) || undefined,
+    sets: collectSets([t.gs?.s1, t.gs?.s2, t.gs?.ms], t.gs?.a),
     buildRefName: t.br?.bn,
     buildRefId: t.br?.bi,
     positionTag: t.pt,
@@ -184,7 +184,7 @@ function decodeHealer(h: CompactHealer): DecodedRosterSlot {
   return {
     playerName: h.pn,
     roleLabel: h.rl,
-    sets: collectSets([h.s1, h.s2, h.ms], h.a) || undefined,
+    sets: collectSets([h.s1, h.s2, h.ms], h.a),
     buildRefName: h.br?.bn,
     buildRefId: h.br?.bi,
     positionTag: h.pt,

@@ -6,7 +6,7 @@ export const assault: SkillLineData = {
   name: 'Assault',
   class: 'alliance-war',
   category: 'alliance',
-  icon: 'https://eso-hub.com/storage/icons/ability_ava_003.png',
+  icon: 'ability_ava_003',
   skills: [
     // Ultimate abilities
     {
@@ -130,6 +130,8 @@ export const assault: SkillLineData = {
     // Passive abilities
     {
       id: AbilityId.CONTINUOUS_ATTACK,
+      icon: 'ability_weapon_028',
+      alternateIds: [39248, 39249, 39250, 39251, 45614, 45615, 45616, 45617],
       name: 'Continuous Attack',
       description:
         'Increases your Weapon and Spell Damage by 10% and Health, Magicka, and Stamina Recovery by 20% for 10 minutes after you capture a Lumber Mill, Farm, Mine, or Keep. Gain Gallop at all times, increasing your Mount Speed by 15%.',
@@ -138,6 +140,8 @@ export const assault: SkillLineData = {
     },
     {
       id: AbilityId.REACH,
+      icon: 'ability_weapon_001',
+      alternateIds: [39254, 45621, 109844],
       name: 'Reach',
       description:
         'Increases the range of long-range abilities by 5 meters while near a keep or outpost. Any ability with a range greater than 28 meters is affected.',
@@ -146,6 +150,8 @@ export const assault: SkillLineData = {
     },
     {
       id: AbilityId.COMBAT_FRENZY,
+      icon: 'ability_weapon_023',
+      alternateIds: [39252, 39253, 45619, 45620],
       name: 'Combat Frenzy',
       description: 'You generate 20 Ultimate when you kill an enemy player.',
       isPassive: true,

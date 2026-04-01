@@ -596,11 +596,7 @@ function expandHealer(c?: CompactHealer, slotNumber = 1): HealerSetup {
           : null
         : null,
     championPoint:
-      c?.cp != null
-        ? isValidEnumIndex(c.cp, CHAMPION_POINT_LIST.length)
-          ? (CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint)
-          : null
-        : null,
+      c?.cp != null ? ((CHAMPION_POINT_LIST[c.cp] as HealerChampionPoint) ?? null) : null,
     specificSkills: decodeSpecificSkills(c?.ss),
     ultimate: decodeUltimate(c?.ul),
     groups: expandGroups(c?.grs, c?.gr),
@@ -843,18 +839,9 @@ const DL_LEVELS: RosterDetailLevel[] = ['simple', 'full'];
 /**
  * Expand a v3 compact roster into a full RaidRoster.
  */
-/** Hard caps to prevent DoS via crafted payloads allocating massive arrays. */
-const MAX_TANKS = 4;
-const MAX_HEALERS = 4;
-const MAX_DPS = 24;
-
 function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
   const comp: RoleComposition = c.co
-    ? {
-        tanks: Math.min(Math.max(0, c.co[0] ?? 0), MAX_TANKS),
-        healers: Math.min(Math.max(0, c.co[1] ?? 0), MAX_HEALERS),
-        dps: Math.min(Math.max(0, c.co[2] ?? 0), MAX_DPS),
-      }
+    ? { tanks: c.co[0], healers: c.co[1], dps: c.co[2] }
     : { ...DEFAULT_COMPOSITION };
 
   // Tanks

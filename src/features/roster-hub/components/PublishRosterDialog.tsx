@@ -1,5 +1,5 @@
 import {
-  Add as AddIcon,
+  Add,
   PublishRounded,
   CheckCircle,
   ExpandLess,
@@ -709,7 +709,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  <AddIcon sx={{ fontSize: 14, color: accent, opacity: 0.6 }} />
+                  <Add sx={{ fontSize: 14, color: accent, opacity: 0.6 }} />
                   <input
                     ref={customInputRef}
                     value={tagInput}
@@ -747,7 +747,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 </Box>
               ) : (
                 <Chip
-                  icon={<AddIcon sx={{ fontSize: 15 }} />}
+                  icon={<Add sx={{ fontSize: 15 }} />}
                   label="Custom"
                   size="small"
                   onClick={() => {

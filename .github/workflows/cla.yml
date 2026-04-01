@@ -35,7 +35,7 @@ jobs:
           path-to-signatures: signatures/version1/cla.json
           path-to-document: https://github.com/${{ github.repository }}/blob/main/CLA.md
           branch: cla-signatures
-          allowlist: dependabot[bot],github-actions[bot],renovate[bot]
+          allowlist: dependabot[bot],github-actions[bot],renovate[bot],claude
           custom-notsigned-prcomment: >
             Thank you for your contribution. Please review and sign our CLA at
             https://github.com/${{ github.repository }}/blob/main/CLA.md by commenting exactly:

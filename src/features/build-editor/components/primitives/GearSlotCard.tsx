@@ -13,12 +13,10 @@ import {
   Close as CloseIcon,
   LocalFireDepartment as EnchantIcon,
 } from '@mui/icons-material';
-import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { GearSetTooltip } from '../../../../components/GearSetTooltip';
-import { getGearSetTooltipPropsByName } from '../../../../utils/gearSetTooltipMapper';
 import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import { fetchItemIconUrl, getItemIconUrl } from '../../../loadout-manager/utils/itemIconResolver';
 import type { EquipSlotDef } from '../../data/esoStaticData';
@@ -151,7 +149,6 @@ interface GearSlotCardProps {
   isDisabled?: boolean;
   disabledReason?: string;
   weight?: ArmorWeight;
-  availableWeights?: ArmorWeight[];
   onWeightChange?: (weight: ArmorWeight) => void;
   trait?: string;
   onTraitChange?: (trait: string | undefined) => void;
@@ -171,7 +168,6 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
   isDisabled = false,
   disabledReason,
   weight,
-  availableWeights,
   onWeightChange,
   trait,
   onTraitChange,
@@ -237,13 +233,6 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
 
   const primaryLabel = setName ?? itemName ?? null;
 
-  const gearTooltipContent = useMemo(() => {
-    if (!setName) return null;
-    const props = getGearSetTooltipPropsByName(setName);
-    if (props) return <GearSetTooltip {...props} />;
-    return null;
-  }, [setName]);
-
   const handleClick = (): void => {
     if (!isDisabled) onOpen();
   };
@@ -254,19 +243,6 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
       onOpen();
     }
   };
-
-  // Auto-correct persisted weight when it falls outside the set's available weights
-  const showWeight = slotDef.category === 'apparel' && onWeightChange;
-  const weightPool = availableWeights?.length ? availableWeights : WEIGHT_CYCLE;
-  const rawWeight = weight ?? weightPool[weightPool.length - 1];
-  const currentWeight = weightPool.includes(rawWeight) ? rawWeight : weightPool[0];
-  const canCycleWeight = weightPool.length > 1;
-
-  useEffect(() => {
-    if (hasItem && showWeight && rawWeight !== currentWeight) {
-      onWeightChange!(currentWeight);
-    }
-  }, [hasItem, showWeight, rawWeight, currentWeight, onWeightChange]);
 
   // ── Empty slot ──────────────────────────────────────────────────────────
 
@@ -346,6 +322,9 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
   }
 
   // ── Filled slot ─────────────────────────────────────────────────────────
+
+  const showWeight = slotDef.category === 'apparel' && onWeightChange;
+  const currentWeight = weight ?? 'heavy';
 
   return (
     <>
@@ -450,47 +429,18 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
             >
               {slotDef.name}
             </Typography>
-            {gearTooltipContent ? (
-              <Tooltip
-                title={gearTooltipContent}
-                arrow
-                placement="top"
-                enterDelay={400}
-                enterTouchDelay={0}
-                leaveTouchDelay={3000}
-              >
-                <Typography
-                  noWrap
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    lineHeight: 1.2,
-                    color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
-                    cursor: 'help',
-                    '&:hover': {
-                      textDecoration: 'underline dotted',
-                      textUnderlineOffset: 2,
-                    },
-                  }}
-                >
-                  {primaryLabel}
-                </Typography>
-              </Tooltip>
-            ) : (
-              <Typography
-                noWrap
-                sx={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  lineHeight: 1.2,
-                  color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
-                }}
-              >
-                {primaryLabel}
-              </Typography>
-            )}
+            <Typography
+              noWrap
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                lineHeight: 1.2,
+                color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.80)',
+              }}
+            >
+              {primaryLabel}
+            </Typography>
           </Stack>
 
           {/* Row 2: weight + trait + enchant chips */}
@@ -503,19 +453,14 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
             {/* Weight chip — apparel only */}
             {showWeight && (
               <ButtonBase
-                disabled={!canCycleWeight}
                 onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
-                  const idx = weightPool.indexOf(currentWeight);
-                  const next = weightPool[(idx + 1) % weightPool.length];
+                  const idx = WEIGHT_CYCLE.indexOf(currentWeight);
+                  const next = WEIGHT_CYCLE[(idx + 1) % WEIGHT_CYCLE.length];
                   onWeightChange(next);
                 }}
                 onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
-                aria-label={
-                  canCycleWeight
-                    ? `Weight: ${WEIGHT_FULL_LABELS[currentWeight]} — click to cycle`
-                    : `Weight: ${WEIGHT_FULL_LABELS[currentWeight]} (fixed)`
-                }
+                aria-label={`Weight: ${WEIGHT_FULL_LABELS[currentWeight]} — click to cycle`}
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -528,7 +473,6 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
                   fontFamily: 'Space Grotesk, Inter, system-ui',
                   lineHeight: 1,
                   color: WEIGHT_COLORS[currentWeight],
-                  opacity: canCycleWeight ? 1 : 0.6,
                   background: isDark
                     ? `${WEIGHT_COLORS[currentWeight]}14`
                     : `${WEIGHT_COLORS[currentWeight]}0C`,
@@ -538,14 +482,11 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
                       : `${WEIGHT_COLORS[currentWeight]}25`
                   }`,
                   transition: 'all 150ms ease',
-                  cursor: canCycleWeight ? 'pointer' : 'default',
-                  '&:hover': canCycleWeight
-                    ? {
-                        background: isDark
-                          ? `${WEIGHT_COLORS[currentWeight]}28`
-                          : `${WEIGHT_COLORS[currentWeight]}18`,
-                      }
-                    : {},
+                  '&:hover': {
+                    background: isDark
+                      ? `${WEIGHT_COLORS[currentWeight]}28`
+                      : `${WEIGHT_COLORS[currentWeight]}18`,
+                  },
                 }}
               >
                 {WEIGHT_FULL_LABELS[currentWeight]}

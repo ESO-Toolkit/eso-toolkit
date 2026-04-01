@@ -17,7 +17,7 @@ export const shadow: SkillLineData = {
   name: 'Shadow',
   class: 'nightblade',
   category: 'class',
-  icon: 'https://assets.eso-hub.com/assets/skill-lines/shadow.png',
+  icon: 'ability_nightblade_004',
   skills: [
     // Ultimate Abilities (3 skills: 1 base + 2 morphs)
     {
@@ -134,6 +134,7 @@ export const shadow: SkillLineData = {
     },
     {
       id: 35441,
+      icon: 'ability_nightblade_001_b',
       name: 'Shadow Image',
       type: 'active',
       baseAbilityId: 33195,
@@ -142,24 +143,32 @@ export const shadow: SkillLineData = {
     // Passive Abilities (4 skills)
     {
       id: 33195,
+      icon: 'ability_nightblade_010',
+      alternateIds: [36549, 45103, 69995, 69996, 69997, 69998],
       name: 'Refreshing Shadows',
       type: 'passive',
       baseAbilityId: 33195,
     },
     {
       id: 33211,
+      icon: 'ability_nightblade_001',
+      alternateIds: [18866, 45071, 88658, 88659, 228663],
       name: 'Shadow Barrier',
       type: 'passive',
       baseAbilityId: 33211,
     },
     {
       id: 33231,
+      icon: 'ability_mage_065',
+      alternateIds: [36532, 45084, 138925],
       name: 'Dark Vigor',
       type: 'passive',
       baseAbilityId: 33231,
     },
     {
       id: 33237,
+      icon: 'ability_mage_065',
+      alternateIds: [36552, 45115],
       name: 'Dark Veil',
       type: 'passive',
       baseAbilityId: 33237,

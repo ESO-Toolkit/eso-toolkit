@@ -120,6 +120,7 @@ export const stormCalling: SkillLineData = {
     },
     {
       id: 23277,
+      icon: 'ability_sorcerer_ball_of_lightning',
       name: 'Streak',
       type: 'active',
       baseAbilityId: 23236,
@@ -128,24 +129,32 @@ export const stormCalling: SkillLineData = {
     // Passive abilities
     {
       id: 23239,
+      icon: 'ability_sorcerer_streak',
+      alternateIds: [31419, 45188, 90683],
       name: 'Capacitor',
       type: 'passive',
       baseAbilityId: 23239,
     },
     {
       id: 23242,
+      alternateIds: [31421, 45190],
+      icon: 'ability_sorcerer_015',
       name: 'Energized',
       type: 'passive',
       baseAbilityId: 23242,
     },
     {
       id: 45583,
+      icon: 'ability_sorcerer_065',
+      alternateIds: [31422, 45192],
       name: 'Amplitude',
       type: 'passive',
       baseAbilityId: 45583,
     },
     {
       id: 23252,
+      alternateIds: [31425, 45195],
+      icon: 'ability_sorcerer_044',
       name: 'Expert Mage',
       type: 'passive',
       baseAbilityId: 23252,

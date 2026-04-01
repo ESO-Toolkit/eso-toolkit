@@ -19,7 +19,6 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import discordIcon from '../../../assets/discord-icon.svg';
-import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import { formatRelativeDate } from '../../../utils/formatRelativeDate';
 import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
@@ -32,6 +31,7 @@ interface RosterCardProps {
   isOwner: boolean;
   isLoggedIn: boolean;
   onVote: (id: string) => void;
+  onPreview: (roster: HubRoster) => void;
   onDelete: (id: string) => void;
   onEdit: (roster: HubRoster) => void;
   onPublishDiscord?: (roster: HubRoster) => void;
@@ -97,10 +97,9 @@ export const TRIAL_ACCENT: Record<string, string> = {
 const formatDate = formatRelativeDate;
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
-  ({ roster, isOwner, isLoggedIn, onVote, onDelete, onEdit, onPublishDiscord }) => {
+  ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete, onEdit, onPublishDiscord }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
-    const navigate = useViewTransitionNavigate();
     const isDark = theme.palette.mode === 'dark';
 
     // ── Overflow menu state ─────────────────────────────────────────────────
@@ -208,11 +207,9 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() =>
-            navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}&hubId=${roster.id}`)
-          }
+          onClick={() => onPreview(roster)}
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
-          aria-label={`View ${roster.title}`}
+          aria-label={`Preview ${roster.title}`}
         >
           <CardContent
             sx={{
