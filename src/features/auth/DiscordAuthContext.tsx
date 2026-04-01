@@ -7,30 +7,41 @@
 
 import React from 'react';
 
-import { DISCORD_LS_TOKEN_KEY, startDiscordAuth } from './discord-auth';
+import { DISCORD_LS_TOKEN_KEY, DISCORD_LS_EXPIRY_KEY, startDiscordAuth } from './discord-auth';
 
 interface DiscordAuthContextType {
   discordToken: string | null;
   isDiscordAuthed: boolean;
   startDiscordLogin: (returnPath?: string) => void;
   clearDiscordAuth: () => void;
-  setDiscordToken: (token: string) => void;
+  setDiscordToken: (token: string, expiresIn?: number) => void;
 }
 
 const DiscordAuthContext = React.createContext<DiscordAuthContextType | null>(null);
 
 export const DiscordAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [discordToken, setDiscordTokenState] = React.useState<string | null>(() =>
-    localStorage.getItem(DISCORD_LS_TOKEN_KEY),
-  );
+  const [discordToken, setDiscordTokenState] = React.useState<string | null>(() => {
+    const token = localStorage.getItem(DISCORD_LS_TOKEN_KEY);
+    const expiry = localStorage.getItem(DISCORD_LS_EXPIRY_KEY);
+    if (token && expiry && Date.now() > Number(expiry)) {
+      localStorage.removeItem(DISCORD_LS_TOKEN_KEY);
+      localStorage.removeItem(DISCORD_LS_EXPIRY_KEY);
+      return null;
+    }
+    return token;
+  });
 
-  const setDiscordToken = React.useCallback((token: string) => {
+  const setDiscordToken = React.useCallback((token: string, expiresIn?: number) => {
     localStorage.setItem(DISCORD_LS_TOKEN_KEY, token);
+    if (expiresIn) {
+      localStorage.setItem(DISCORD_LS_EXPIRY_KEY, String(Date.now() + expiresIn * 1000));
+    }
     setDiscordTokenState(token);
   }, []);
 
   const clearDiscordAuth = React.useCallback(() => {
     localStorage.removeItem(DISCORD_LS_TOKEN_KEY);
+    localStorage.removeItem(DISCORD_LS_EXPIRY_KEY);
     setDiscordTokenState(null);
   }, []);
 

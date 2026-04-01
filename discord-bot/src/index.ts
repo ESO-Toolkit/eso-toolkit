@@ -296,7 +296,8 @@ async function handleRosterApi(request: Request, url: URL, env: Env): Promise<Re
   const dataMatch = url.pathname.match(/^\/discord\/roster\/([^/]+)\/data$/);
   if (dataMatch && request.method === 'GET') {
     const rosterId = dataMatch[1];
-    if (rosterId.length > 64) return jsonResponse({ error: 'Invalid roster ID' }, 400);
+    if (rosterId.length > 64 || !/^[a-zA-Z0-9_-]+$/.test(rosterId))
+      return jsonResponse({ error: 'Invalid roster ID' }, 400);
     const rosterData = await env.ROSTERS.get(`${KV_PREFIX.ROSTER_DATA}:${rosterId}`);
     if (!rosterData) return jsonResponse({ error: 'Not found' }, 404);
     return new Response(JSON.stringify({ roster_data: rosterData }), {
@@ -529,9 +530,11 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
       ...(typeof body.defaultCategoryId === 'string' && {
         defaultCategoryId: body.defaultCategoryId,
       }),
-      ...(typeof body.namePattern === 'string' && { namePattern: body.namePattern }),
+      ...(typeof body.namePattern === 'string' &&
+        body.namePattern.length <= 100 && { namePattern: body.namePattern }),
       ...(Array.isArray(body.allowedRoleIds) && {
-        allowedRoleIds: body.allowedRoleIds as string[],
+        allowedRoleIds: (body.allowedRoleIds as unknown[])
+          .filter((id): id is string => typeof id === 'string' && /^\d+$/.test(id)),
       }),
       ...(typeof body.rolePingIds === 'object' &&
         body.rolePingIds !== null && {
@@ -562,7 +565,7 @@ function handleCorsPreflight(request: Request, env: Env): Response {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': origin,
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
     },

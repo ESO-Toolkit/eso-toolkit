@@ -538,7 +538,7 @@ async function createNewRosterChannel(
   const channelOptions: Parameters<typeof createChannel>[2] = {
     name: channelName,
     type: ChannelType.GUILD_TEXT,
-    topic: `ESO Toolkit Roster: ${snapshot.title.replace(/<@[!&]?\d+>|<#\d+>|@everyone|@here/g, '')} (ID: ${snapshot.id})`,
+    topic: `ESO Toolkit Roster: ${snapshot.title.replace(/<@[!&]?\d+>|<#\d+>|@everyone|@here/g, '')} (ID: ${snapshot.id})`.slice(0, 1024),
   };
   if (categoryId) {
     channelOptions.parent_id = categoryId;

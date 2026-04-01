@@ -43,7 +43,12 @@ const JAIL_DD_LABELS: Record<string, string> = {
 
 // ── Base64url → bytes ───────────────────────────────────────────────────────
 
+const MAX_BASE64_INPUT = 700_000; // ~500KB decoded — matches publish-direct limit
+
 function fromBase64Url(str: string): Uint8Array {
+  if (str.length > MAX_BASE64_INPUT) {
+    throw new Error(`Base64 input exceeds ${MAX_BASE64_INPUT} character limit`);
+  }
   let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
   while (b64.length % 4 !== 0) b64 += '=';
   const binary = atob(b64);
@@ -147,7 +152,7 @@ function decodeGroupName(grs?: string[], gr?: CompactGroup): { groups?: string[]
 function collectSets(ids: (number | undefined)[], additional?: number[]): string[] {
   const sets: string[] = [];
   for (const id of ids) {
-    if (id) sets.push(getSetName(id));
+    if (id != null) sets.push(getSetName(id));
   }
   if (additional) {
     for (const id of additional) sets.push(getSetName(id));

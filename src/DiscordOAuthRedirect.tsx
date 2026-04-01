@@ -32,7 +32,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
     const state = params.get('state');
 
     if (oauthError) {
-      setError(`Discord authorization failed: ${params.get('error_description') ?? oauthError}`);
+      setError('Discord authorization was denied or failed. Please try again.');
       return;
     }
 
@@ -50,7 +50,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
 
     exchangeDiscordCode(code)
       .then((tokenData) => {
-        setDiscordToken(tokenData.access_token);
+        setDiscordToken(tokenData.access_token, tokenData.expires_in);
         setStatus('Success! Redirecting...');
         const returnPath = getDiscordReturnPath();
         navigate(returnPath, { replace: true });
