@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { alpha, keyframes, styled } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Keyframes                                                         */
@@ -142,9 +142,11 @@ const CheckCircle = styled(Box)(({ theme }) => ({
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export const KalpaAuthSuccess: React.FC = () => {
+export const KalpaAuthSuccess = () => {
   const [showCountdown, setShowCountdown] = useState(false);
   const [seconds, setSeconds] = useState(10);
+  const [closeFailed, setCloseFailed] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>(null);
 
   useEffect(() => {
     // Show countdown after initial animation settles
@@ -154,13 +156,20 @@ export const KalpaAuthSuccess: React.FC = () => {
 
   useEffect(() => {
     if (!showCountdown) return;
-    if (seconds <= 0) {
-      window.close();
-      return;
-    }
-    const id = setInterval(() => setSeconds((s) => s - 1), 1000);
-    return () => clearInterval(id);
-  }, [showCountdown, seconds]);
+    intervalRef.current = setInterval(() => {
+      setSeconds((s) => {
+        if (s <= 1) {
+          clearInterval(intervalRef.current!);
+          window.close();
+          // window.close() is silently ignored unless the tab was script-opened
+          setCloseFailed(true);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(intervalRef.current!);
+  }, [showCountdown]);
 
   return (
     <Backdrop>
@@ -276,7 +285,9 @@ export const KalpaAuthSuccess: React.FC = () => {
               },
             })}
           >
-            This tab will try to close in {seconds}s
+            {closeFailed
+              ? 'You can safely close this tab now.'
+              : `This tab will try to close in ${seconds}s`}
           </Typography>
         )}
       </GlassCard>
