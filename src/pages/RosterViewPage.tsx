@@ -34,7 +34,9 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
+import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
+import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import { RaidRoster, TankSetup, HealerSetup, DPSSlot, MONSTER_SETS } from '../types/roster';
 import {
   TrialBuildOverrides,
@@ -42,8 +44,6 @@ import {
   encounterHasOverrides,
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
-import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
-import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
@@ -1225,24 +1225,6 @@ export const RosterViewPage: React.FC = () => {
         window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
       }
     };
-
-<<<<<<< HEAD
-    // If navigated from hub, fetch recommended addons
-    const hubIdParam = params.get('hubId');
-    if (hubIdParam) {
-      setAddonsLoading(true);
-      rosterHubApi
-        .get(hubIdParam)
-        .then(({ roster: hubRoster }) => {
-          if (hubRoster.recommended_addons) {
-            setRecommendedAddons(hubRoster.recommended_addons);
-          }
-        })
-        .catch(() => {
-          // Silently fall back to defaults
-        })
-        .finally(() => setAddonsLoading(false));
-    }
 
     if (encoded) {
       setEncodedParam(encoded);

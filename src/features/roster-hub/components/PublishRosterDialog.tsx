@@ -1,16 +1,7 @@
-import {
-  Add as AddIcon,
-  PublishRounded,
-  CheckCircle,
-  ExpandLess,
-  ExpandMore,
-  Extension,
-  RemoveCircleOutline,
-} from '@mui/icons-material';
+import { Add as AddIcon, PublishRounded } from '@mui/icons-material';
 import {
   Alert,
   alpha,
-  Autocomplete,
   Box,
   Button,
   Chip,
@@ -28,7 +19,6 @@ import {
   Stack,
   Switch,
   TextField,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -36,11 +26,7 @@ import React from 'react';
 
 import { TRIALS } from '../../loadout-manager/data/trialConfigs';
 import { rosterHubApi } from '../api/roster-hub-api';
-import type {
-  HubRoster,
-  RecommendedAddonEntry,
-  RecommendedAddons,
-} from '../types/roster-hub.types';
+import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
 
 interface PublishRosterDialogProps {
@@ -58,16 +44,6 @@ const MAX_TAGS = 5;
 
 type Difficulty = 'vet' | 'normal';
 const EXTRA_PRESET_TAGS = ['score-push', 'farm'] as const;
-
-/** Convert a pack addon entry to the roster recommendation format. */
-function packAddonToRecommended(addon: PackAddonEntry): RecommendedAddonEntry {
-  return {
-    esouiId: addon.esouiId,
-    name: addon.name,
-    required: addon.required,
-    note: addon.note,
-  };
-}
 
 export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   open,
@@ -102,18 +78,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
     return tags;
   }, [difficulty, hmEnabled, extraTags]);
 
-  // ── Addon recommendation state ──
-  const [addonSectionOpen, setAddonSectionOpen] = React.useState(false);
-  const [packs, setPacks] = React.useState<PackIndexItem[]>([]);
-  const [packsLoading, setPacksLoading] = React.useState(false);
-  const [selectedPackId, setSelectedPackId] = React.useState<string | null>(null);
-  const [selectedPack, setSelectedPack] = React.useState<Pack | null>(null);
-  const [packDetailLoading, setPackDetailLoading] = React.useState(false);
-  const [addonList, setAddonList] = React.useState<RecommendedAddonEntry[]>([]);
-  const [enabledAddons, setEnabledAddons] = React.useState<Set<number>>(new Set());
-  const [customAddonName, setCustomAddonName] = React.useState('');
-  const [customAddonId, setCustomAddonId] = React.useState('');
-
   const handleTrialChange = (e: SelectChangeEvent): void => {
     setTrialId(e.target.value);
   };
@@ -147,93 +111,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       return;
     }
     setExtraTags((prev) => prev.filter((t) => t !== tag));
-  };
-
-  // Fetch pack list when addon section is first opened
-  React.useEffect(() => {
-    if (addonSectionOpen && packs.length === 0 && !packsLoading) {
-      setPacksLoading(true);
-      packsApi
-        .list()
-        .then((res) => setPacks(res.items))
-        .catch(() => {
-          /* silently ignore — packs are optional */
-        })
-        .finally(() => setPacksLoading(false));
-    }
-  }, [addonSectionOpen, packs.length, packsLoading]);
-
-  // Fetch full pack when a pack is selected
-  React.useEffect(() => {
-    if (!selectedPackId) {
-      setSelectedPack(null);
-      setAddonList([]);
-      setEnabledAddons(new Set());
-      return;
-    }
-    setPackDetailLoading(true);
-    packsApi
-      .get(selectedPackId)
-      .then((pack) => {
-        setSelectedPack(pack);
-        const addons = pack.addons.map(packAddonToRecommended);
-        setAddonList(addons);
-        setEnabledAddons(new Set(addons.map((a) => a.esouiId)));
-      })
-      .catch(() => {
-        setSelectedPack(null);
-        setAddonList([]);
-        setEnabledAddons(new Set());
-      })
-      .finally(() => setPackDetailLoading(false));
-  }, [selectedPackId]);
-
-  const handleToggleAddon = (esouiId: number): void => {
-    setEnabledAddons((prev) => {
-      const next = new Set(prev);
-      if (next.has(esouiId)) {
-        next.delete(esouiId);
-      } else {
-        next.add(esouiId);
-      }
-      return next;
-    });
-  };
-
-  const handleAddCustomAddon = (): void => {
-    const id = parseInt(customAddonId, 10);
-    const name = customAddonName.trim();
-    if (!name || isNaN(id) || id <= 0) return;
-    if (addonList.some((a) => a.esouiId === id)) return;
-    setAddonList((prev) => [...prev, { esouiId: id, name, required: false }]);
-    setEnabledAddons((prev) => new Set([...prev, id]));
-    setCustomAddonName('');
-    setCustomAddonId('');
-  };
-
-  const handleRemoveAddon = (esouiId: number): void => {
-    setAddonList((prev) => prev.filter((a) => a.esouiId !== esouiId));
-    setEnabledAddons((prev) => {
-      const next = new Set(prev);
-      next.delete(esouiId);
-      return next;
-    });
-  };
-
-  const handleToggleRequired = (esouiId: number): void => {
-    setAddonList((prev) =>
-      prev.map((a) => (a.esouiId === esouiId ? { ...a, required: !a.required } : a)),
-    );
-  };
-
-  /** Build the recommended_addons payload. */
-  const buildRecommendedAddons = (): RecommendedAddons | null => {
-    const active = addonList.filter((a) => enabledAddons.has(a.esouiId));
-    if (active.length === 0) return null;
-    return {
-      packId: selectedPackId ?? undefined,
-      addons: active,
-    };
   };
 
   const handlePublish = async (): Promise<void> => {

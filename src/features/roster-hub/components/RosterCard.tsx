@@ -19,8 +19,6 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import discordIcon from '../../../assets/discord-icon.svg';
-import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
-import { formatRelativeDate } from '../../../utils/formatRelativeDate';
 import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
