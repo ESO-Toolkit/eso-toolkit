@@ -6,7 +6,6 @@
  */
 
 import type { GearConfig, SkillsConfig } from '../../loadout-manager/types/loadout.types';
-import type { StatOverrides } from '../engine/stat-types';
 
 // ─── Enums / Unions ──────────────────────────────────────────────────────────
 

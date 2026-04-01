@@ -51,6 +51,8 @@ import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
+import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
 import { GetPlayersForReportQuery } from '../graphql/gql/graphql';
 import { saveRoster, updateRoster } from '../store/saved_rosters';
@@ -76,8 +78,6 @@ import {
   createDefaultDPSSlots,
   CLASS_SKILL_LINES,
 } from '../types/roster';
-import type { BuildChampionPoints } from '../features/build-editor/types/build.types';
-import type { SkillsConfig } from '../features/loadout-manager/types/loadout.types';
 import type { TrialBuildOverrides } from '../types/trial-encounters';
 import {
   convertLogPlayersToRoster,

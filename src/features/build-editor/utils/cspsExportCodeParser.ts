@@ -20,13 +20,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 import { Logger } from '@/utils/logger';
 
-import type { GearPiece, SkillBar, SkillsConfig } from '../../loadout-manager/types/loadout.types';
+import { getItemIdsBySet } from '../../loadout-manager/data/itemIdMap';
 import {
   findCollectionItemBySetAndSlotType,
   getSetNameOrFallback,
 } from '../../loadout-manager/data/itemSetCollections';
-import { getItemIdsBySet } from '../../loadout-manager/data/itemIdMap';
 import type { SlotType } from '../../loadout-manager/data/slotTypes';
+import type { GearPiece, SkillBar, SkillsConfig } from '../../loadout-manager/types/loadout.types';
 import { getDefaultLinesForClass, EQUIP_SLOTS } from '../data/esoStaticData';
 import type {
   Build,

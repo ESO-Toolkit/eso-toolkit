@@ -591,7 +591,7 @@ const AppRoutes: React.FC = () => {
               path="/build-editor"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<BuildEditorLoadingFallback />}>
                     <BuildEditorPage />
                   </Suspense>
                 </ErrorBoundary>
@@ -700,6 +700,16 @@ const AppRoutes: React.FC = () => {
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/pack-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PackHubPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route

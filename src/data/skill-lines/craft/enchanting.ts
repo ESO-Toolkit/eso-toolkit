@@ -1,4 +1,5 @@
-import type { SkillLineData } from '../../types/SkillLineData';
+import type { SkillLineData } from '@/data/types/skill-line-types';
+
 import { AbilityId } from '../ability-ids';
 
 /**
@@ -10,6 +11,7 @@ export const enchanting: SkillLineData = {
   name: 'Enchanting',
   class: 'craft',
   category: 'craft',
+  icon: 'ability_enchanter_002b',
   skills: [
     {
       id: AbilityId.ASPECT_IMPROVEMENT,

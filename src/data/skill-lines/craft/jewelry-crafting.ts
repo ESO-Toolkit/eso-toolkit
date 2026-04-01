@@ -1,4 +1,5 @@
-import type { SkillLineData } from '../../types/SkillLineData';
+import type { SkillLineData } from '@/data/types/skill-line-types';
+
 import { AbilityId } from '../ability-ids';
 
 /**
@@ -10,6 +11,7 @@ export const jewelryCrafting: SkillLineData = {
   name: 'Jewelry Crafting',
   class: 'craft',
   category: 'craft',
+  icon: 'passive_jewelerengraver',
   skills: [
     {
       id: AbilityId.ENGRAVER,

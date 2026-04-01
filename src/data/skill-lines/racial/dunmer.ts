@@ -1,4 +1,5 @@
-import type { SkillLineData } from '../../types/SkillLineData';
+import type { SkillLineData } from '@/data/types/skill-line-types';
+
 import { AbilityId } from '../ability-ids';
 
 /**
@@ -10,6 +11,7 @@ export const dunmer: SkillLineData = {
   name: 'Dark Elf',
   class: 'racial',
   category: 'racial',
+  icon: 'ability_weapon_016',
   skills: [
     {
       id: AbilityId.ASHLANDER,

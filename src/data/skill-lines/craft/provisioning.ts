@@ -1,4 +1,5 @@
-import type { SkillLineData } from '../../types/SkillLineData';
+import type { SkillLineData } from '@/data/types/skill-line-types';
+
 import { AbilityId } from '../ability-ids';
 
 /**
@@ -10,6 +11,7 @@ export const provisioning: SkillLineData = {
   name: 'Provisioning',
   class: 'craft',
   category: 'craft',
+  icon: 'ability_provisioner_006',
   skills: [
     {
       id: AbilityId.RECIPE_QUALITY,

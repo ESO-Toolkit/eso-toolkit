@@ -1,4 +1,5 @@
-import type { SkillLineData } from '../../types/SkillLineData';
+import type { SkillLineData } from '@/data/types/skill-line-types';
+
 import { AbilityId } from '../ability-ids';
 
 /**
@@ -10,6 +11,7 @@ export const bosmer: SkillLineData = {
   name: 'Wood Elf',
   class: 'racial',
   category: 'racial',
+  icon: 'passive_weapon_025',
   skills: [
     {
       id: AbilityId.ACROBAT,
