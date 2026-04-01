@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { alpha, keyframes, styled } from '@mui/material/styles';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Keyframes                                                         */
@@ -57,7 +57,10 @@ const Backdrop = styled(Box)(({ theme }) => ({
       : 'radial-gradient(ellipse 80% 60% at 50% 40%, #e0efff 0%, #f8fafc 70%, #eef4fb 100%)',
 }));
 
-const Orb = styled(Box)<{ size: number; x: string; y: string; delay: number; color: string }>(
+const orbProps = new Set(['size', 'x', 'y', 'delay', 'color']);
+const Orb = styled(Box, {
+  shouldForwardProp: (prop) => !orbProps.has(prop as string),
+})<{ size: number; x: string; y: string; delay: number; color: string }>(
   ({ size, x, y, delay, color }) => ({
     position: 'absolute',
     width: size,
@@ -157,22 +160,28 @@ export const KalpaAuthSuccess = () => {
   useEffect(() => {
     if (!showCountdown) return;
     intervalRef.current = setInterval(() => {
-      setSeconds((s) => {
-        if (s <= 1) {
-          clearInterval(intervalRef.current!);
-          window.close();
-          // window.close() is silently ignored unless the tab was script-opened
-          setCloseFailed(true);
-          return 0;
-        }
-        return s - 1;
-      });
+      setSeconds((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
     return () => clearInterval(intervalRef.current!);
   }, [showCountdown]);
 
+  // Handle close attempt when countdown reaches zero (kept out of updater for React purity)
+  useEffect(() => {
+    if (seconds !== 0) return;
+    clearInterval(intervalRef.current!);
+    window.close();
+    // window.close() is silently ignored unless the tab was script-opened
+    setCloseFailed(true);
+  }, [seconds]);
+
+  const gradientId = useId();
+
+  useEffect(() => {
+    document.title = 'Signed in — ESO Toolkit';
+  }, []);
+
   return (
-    <Backdrop>
+    <Backdrop role="status" aria-live="polite">
       {/* Ambient orbs */}
       <Orb size={260} x="10%" y="20%" delay={0} color="rgba(56,189,248,0.4)" />
       <Orb size={200} x="70%" y="60%" delay={2} color="rgba(34,197,94,0.35)" />
@@ -183,21 +192,28 @@ export const KalpaAuthSuccess = () => {
       <GlassCard>
         {/* Animated check icon */}
         <CheckCircle>
-          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+          <svg
+            width="80"
+            height="80"
+            viewBox="0 0 80 80"
+            fill="none"
+            role="img"
+            aria-label="Success checkmark"
+          >
             {/* Background circle */}
             <circle
               cx="40"
               cy="40"
               r="36"
-              fill="url(#successGradient)"
+              fill={`url(#${gradientId})`}
               fillOpacity="0.12"
-              stroke="url(#successGradient)"
+              stroke={`url(#${gradientId})`}
               strokeWidth="2.5"
             />
             {/* Checkmark */}
             <path
               d="M26 40 L35 50 L54 30"
-              stroke="url(#successGradient)"
+              stroke={`url(#${gradientId})`}
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -210,7 +226,7 @@ export const KalpaAuthSuccess = () => {
               }}
             />
             <defs>
-              <linearGradient id="successGradient" x1="0" y1="0" x2="80" y2="80">
+              <linearGradient id={gradientId} x1="0" y1="0" x2="80" y2="80">
                 <stop offset="0%" stopColor="#22c55e" />
                 <stop offset="100%" stopColor="#38bdf8" />
               </linearGradient>

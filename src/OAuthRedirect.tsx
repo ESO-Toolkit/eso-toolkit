@@ -72,6 +72,11 @@ export const OAuthRedirect: React.FC = () => {
         const appPort = sessionStorage.getItem(APP_AUTH_PORT_KEY);
         if (appPort) {
           sessionStorage.removeItem(APP_AUTH_PORT_KEY);
+          const portNum = Number(appPort);
+          if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
+            setError('Invalid desktop app port.');
+            return;
+          }
           // Send tokens to the desktop app's localhost server in the background
           const tokenPayload = btoa(
             JSON.stringify({
@@ -128,7 +133,7 @@ export const OAuthRedirect: React.FC = () => {
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '4rem' }}>
       {error ? (
         <>
-          <Typography color="error" gutterBottom>
+          <Typography color="error" gutterBottom role="alert">
             {error}
           </Typography>
           {error.includes('PKCE code verifier') && (
