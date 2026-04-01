@@ -291,7 +291,10 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
   const handleAddSearchedAddon = (result: EsouiAddonSearchResult): void => {
     if (newPackAddons.some((a) => a.esouiId === result.id)) return;
-    setNewPackAddons((prev) => [...prev, { esouiId: result.id, name: result.title, required: false }]);
+    setNewPackAddons((prev) => [
+      ...prev,
+      { esouiId: result.id, name: result.title, required: false },
+    ]);
     setAddonSearchQuery('');
     setAddonSearchResults([]);
   };
@@ -1049,7 +1052,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
             {/* ── Browse tab ── */}
             {addonTab === 0 && (
-              <Box sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box
+                sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   Pick a curated pack or customize individual addons.
                 </Typography>
@@ -1237,8 +1242,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5 }}>
                     <CheckCircle sx={{ fontSize: 14, color: '#22c55e' }} />
                     <Typography variant="caption" color="text.secondary">
-                      {activeAddonCount} addon{activeAddonCount !== 1 ? 's' : ''} will be recommended
-                      to viewers
+                      {activeAddonCount} addon{activeAddonCount !== 1 ? 's' : ''} will be
+                      recommended to viewers
                     </Typography>
                   </Box>
                 )}
@@ -1247,7 +1252,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
 
             {/* ── Create New tab ── */}
             {addonTab === 1 && (
-              <Box sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box
+                sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}
+              >
                 <Typography variant="caption" color="text.secondary">
                   Create a reusable addon pack that others can use too.
                 </Typography>
@@ -1291,13 +1298,20 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                       <li
                         {...props}
                         key={o.id}
-                        style={{ opacity: alreadyAdded ? 0.4 : 1, pointerEvents: alreadyAdded ? 'none' : undefined }}
+                        style={{
+                          opacity: alreadyAdded ? 0.4 : 1,
+                          pointerEvents: alreadyAdded ? 'none' : undefined,
+                        }}
                       >
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
                             {o.title}
                             {alreadyAdded && (
-                              <Chip label="Added" size="small" sx={{ ml: 1, height: 18, fontSize: '0.6rem' }} />
+                              <Chip
+                                label="Added"
+                                size="small"
+                                sx={{ ml: 1, height: 18, fontSize: '0.6rem' }}
+                              />
                             )}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -1425,7 +1439,10 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                           const name = customAddonName.trim();
                           if (!name || isNaN(id) || id <= 0) return;
                           if (newPackAddons.some((a) => a.esouiId === id)) return;
-                          setNewPackAddons((prev) => [...prev, { esouiId: id, name, required: false }]);
+                          setNewPackAddons((prev) => [
+                            ...prev,
+                            { esouiId: id, name, required: false },
+                          ]);
                           setCustomAddonName('');
                           setCustomAddonId('');
                         }}
