@@ -66,14 +66,16 @@ interface DeleteDialogProps {
 
 const DeleteDialog: React.FC<DeleteDialogProps> = ({ open, buildName, onConfirm, onCancel }) => (
   <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-    <DialogTitle>Delete Build?</DialogTitle>
+    <DialogTitle sx={{ fontWeight: 700 }}>Delete Build?</DialogTitle>
     <DialogContent>
-      <DialogContentText>
+      <DialogContentText sx={{ color: 'text.secondary' }}>
         Are you sure you want to delete <strong>{buildName}</strong>? This cannot be undone.
       </DialogContentText>
     </DialogContent>
     <DialogActions>
-      <Button onClick={onCancel}>Cancel</Button>
+      <Button onClick={onCancel} variant="text">
+        Cancel
+      </Button>
       <Button onClick={onConfirm} color="error" variant="contained">
         Delete
       </Button>
