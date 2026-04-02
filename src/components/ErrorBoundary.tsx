@@ -1,5 +1,16 @@
 import { ErrorOutline, Refresh, BugReport } from '@mui/icons-material';
-import { Box, Button, Paper, Typography, Stack, Alert, Collapse } from '@mui/material';
+import {
+  Box,
+  Button,
+  Paper,
+  Typography,
+  Stack,
+  Alert,
+  Collapse,
+  Divider,
+  Chip,
+  Link,
+} from '@mui/material';
 import React, { Component, ReactNode } from 'react';
 
 import { reportError, addBreadcrumb } from '../utils/errorTracking';
@@ -155,21 +166,99 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </Typography>
 
               <Typography variant="body1" textAlign="center" color="text.secondary">
-                We&apos;re sorry, but an unexpected error occurred. The error has been automatically
-                reported to our team. You can try refreshing the page or return to the previous
-                state.
+                An unexpected error occurred. This has been automatically reported to our team. You
+                can try again, reload the page, or report the issue if it persists.
               </Typography>
 
-              {eventId && (
-                <Alert severity="info" sx={{ width: '100%' }}>
-                  <Typography variant="body2">
-                    Error ID: <code>{eventId}</code>
+              {/* Error message — always visible so users can reference it */}
+              {error && (
+                <Alert severity="error" sx={{ width: '100%', textAlign: 'left' }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    <strong>Error:</strong>
                   </Typography>
-                  <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    This ID can help our support team track and resolve the issue.
+                  <Typography variant="body2" fontFamily="monospace" fontSize="0.85rem">
+                    {error.message || 'Unknown error'}
                   </Typography>
                 </Alert>
               )}
+
+              {/* Compact error ID chip */}
+              {eventId && (
+                <Chip
+                  label={`Error ID: ${eventId}`}
+                  size="small"
+                  color="error"
+                  variant="outlined"
+                  sx={{ fontFamily: 'monospace' }}
+                />
+              )}
+
+              {/* Technical details — stack traces in dev, error name in prod */}
+              {(error?.stack || errorInfo?.componentStack) && (
+                <Box sx={{ width: '100%' }}>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={this.toggleDetails}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {showDetails ? 'Hide' : 'Show'} Technical Details
+                  </Button>
+                  <Collapse in={showDetails}>
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        mt: 1,
+                        textAlign: 'left',
+                        maxHeight: 300,
+                        overflow: 'auto',
+                      }}
+                    >
+                      {error?.stack && (
+                        <Box sx={{ mb: errorInfo?.componentStack ? 2 : 0 }}>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Stack Trace:
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            component="pre"
+                            fontFamily="monospace"
+                            sx={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              fontSize: '0.7rem',
+                            }}
+                          >
+                            {error.stack}
+                          </Typography>
+                        </Box>
+                      )}
+                      {errorInfo?.componentStack && (
+                        <Box>
+                          <Typography variant="subtitle2" gutterBottom>
+                            Component Stack:
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            component="pre"
+                            fontFamily="monospace"
+                            sx={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              fontSize: '0.7rem',
+                            }}
+                          >
+                            {errorInfo.componentStack}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Paper>
+                  </Collapse>
+                </Box>
+              )}
+
+              <Divider sx={{ width: '100%' }} />
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button
@@ -180,89 +269,30 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 >
                   Try Again
                 </Button>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<Refresh />}
-                  onClick={this.handleReload}
-                >
+                <Button variant="outlined" color="primary" onClick={this.handleReload}>
                   Reload Page
                 </Button>
-                {
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<BugReport />}
-                    onClick={this.handleReportBug}
-                  >
-                    Report Issue
-                  </Button>
-                }
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<BugReport />}
+                  onClick={this.handleReportBug}
+                >
+                  Report Issue
+                </Button>
               </Stack>
 
-              {process.env.NODE_ENV === 'development' && (
-                <>
-                  <Button
-                    variant="text"
-                    startIcon={<BugReport />}
-                    onClick={this.toggleDetails}
-                    color="secondary"
-                  >
-                    {showDetails ? 'Hide' : 'Show'} Error Details
-                  </Button>
-
-                  <Collapse in={showDetails} sx={{ width: '100%' }}>
-                    <Alert severity="error" sx={{ textAlign: 'left' }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Error Message:
-                      </Typography>
-                      <Typography variant="body2" fontFamily="monospace" gutterBottom>
-                        {error?.message || 'Unknown error'}
-                      </Typography>
-
-                      {error?.stack && (
-                        <>
-                          <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                            Stack Trace:
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontFamily="monospace"
-                            sx={{
-                              whiteSpace: 'pre-wrap',
-                              fontSize: '0.75rem',
-                              maxHeight: 200,
-                              overflow: 'auto',
-                            }}
-                          >
-                            {error.stack}
-                          </Typography>
-                        </>
-                      )}
-
-                      {errorInfo?.componentStack && (
-                        <>
-                          <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
-                            Component Stack:
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            fontFamily="monospace"
-                            sx={{
-                              whiteSpace: 'pre-wrap',
-                              fontSize: '0.75rem',
-                              maxHeight: 200,
-                              overflow: 'auto',
-                            }}
-                          >
-                            {errorInfo.componentStack}
-                          </Typography>
-                        </>
-                      )}
-                    </Alert>
-                  </Collapse>
-                </>
-              )}
+              <Typography variant="body2" color="text.secondary" textAlign="center">
+                If this keeps happening, please{' '}
+                <Link
+                  href="https://github.com/ESO-Toolkit/eso-toolkit/issues"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  open an issue
+                </Link>{' '}
+                with the error details above.
+              </Typography>
             </Stack>
           </Paper>
         </Box>
@@ -312,39 +342,7 @@ export const withErrorBoundary = <P extends object>(
 
 /** Top-level app error boundary with a full-page fallback UI. */
 export const AppErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ErrorBoundary
-    fallback={
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        bgcolor="background.default"
-        p={3}
-      >
-        <Paper elevation={3} sx={{ maxWidth: 600, width: '100%', p: 4 }}>
-          <Stack spacing={3} alignItems="center">
-            <ErrorOutline color="error" sx={{ fontSize: 64 }} />
-            <Typography
-              variant="h4"
-              component="h1"
-              textAlign="center"
-              color="error"
-              data-testid="app-error-title"
-            >
-              Application Error
-            </Typography>
-            <Typography variant="body1" textAlign="center" color="text.secondary">
-              An unexpected error occurred. Please reload the page.
-            </Typography>
-            <Button variant="contained" onClick={() => window.location.reload()}>
-              Reload
-            </Button>
-          </Stack>
-        </Paper>
-      </Box>
-    }
-  >
+  <ErrorBoundary>
     {children}
   </ErrorBoundary>
 );
