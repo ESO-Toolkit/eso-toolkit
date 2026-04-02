@@ -1023,11 +1023,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   >
                     {isWipe ? (
                       bossHealthPercent + '%'
-                    ) : isFalsePositive ? (
-                      <>
-                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>FP</Box>
-                        <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>⚠</Box>
-                      </>
                     ) : (
                       <>
                         <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>KILL</Box>
