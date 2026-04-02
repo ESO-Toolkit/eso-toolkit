@@ -109,12 +109,24 @@ export const packsApi = {
     }),
 };
 
+export interface DeepLinkOptions {
+  /** When true, tells the addon manager to skip addons already installed and preserve their settings. */
+  preserveSettings?: boolean;
+}
+
 /**
  * Generate a deep link URL that opens the ESO Addon Manager
  * and navigates directly to a specific pack.
  *
- * Usage: `eso-addon-manager://pack/trial-essentials`
+ * Usage: `eso-addon-manager://pack/trial-essentials?preserve_settings=true`
  */
-export function getAddonManagerDeepLink(packId: string): string {
-  return `eso-addon-manager://pack/${packId}`;
+export function getAddonManagerDeepLink(
+  packId: string,
+  options: DeepLinkOptions = {},
+): string {
+  const { preserveSettings = true } = options;
+  const params = new URLSearchParams();
+  if (preserveSettings) params.set('preserve_settings', 'true');
+  const qs = params.toString();
+  return `eso-addon-manager://pack/${packId}${qs ? `?${qs}` : ''}`;
 }
