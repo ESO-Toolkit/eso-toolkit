@@ -17,10 +17,9 @@ import {
   useTheme,
   Container,
   Tooltip,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
+  Popover,
+  ButtonBase,
+  Divider,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
@@ -368,6 +367,113 @@ const AuthIconButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
+// Modern dropdown item for desktop submenus
+const DropdownItem = styled(ButtonBase, {
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active?: boolean }>(({ theme, active }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  width: '100%',
+  padding: '10px 12px',
+  borderRadius: 10,
+  textAlign: 'left',
+  transition: 'all 0.15s ease-in-out',
+  background: active
+    ? theme.palette.mode === 'dark'
+      ? 'rgba(56, 189, 248, 0.1)'
+      : 'rgba(59, 130, 246, 0.08)'
+    : 'transparent',
+  borderLeft: active
+    ? `2px solid ${theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.6)' : 'rgba(59, 130, 246, 0.5)'}`
+    : '2px solid transparent',
+  '&:hover': {
+    background:
+      theme.palette.mode === 'dark'
+        ? 'rgba(56, 189, 248, 0.08)'
+        : 'rgba(59, 130, 246, 0.06)',
+    transform: 'translateX(2px)',
+    '& .icon-badge': {
+      transform: 'scale(1.08)',
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 4px 12px rgba(56, 189, 248, 0.2)'
+          : '0 4px 12px rgba(59, 130, 246, 0.15)',
+    },
+  },
+}));
+
+// Gradient icon badge container
+const IconBadge = styled(Box)(({ theme }) => ({
+  width: 36,
+  height: 36,
+  borderRadius: 10,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 225, 255, 0.08) 100%)'
+      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.06) 100%)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.15)'
+      : '1px solid rgba(59, 130, 246, 0.1)',
+  fontSize: 18,
+  transition: 'all 0.2s ease',
+}));
+
+// Dropdown paper common styles helper
+const getDropdownPaperSx = (
+  theme: ReturnType<typeof useTheme>,
+  opts: { minWidth?: number; arrowLeft?: number; arrowRight?: number },
+) => ({
+  overflow: 'visible',
+  mt: 1.5,
+  p: 1.5,
+  minWidth: opts.minWidth ?? 240,
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(8,12,24,0.98) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.15)'
+      : '1px solid rgba(59, 130, 246, 0.12)',
+  borderRadius: '14px',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 20px 60px rgba(0,0,0,0.5), 0 0 1px rgba(56,189,248,0.15)'
+      : '0 20px 60px rgba(15,23,42,0.12), 0 0 1px rgba(59,130,246,0.2)',
+  '@keyframes dropdownIn': {
+    from: { opacity: 0, transform: 'translateY(-8px) scale(0.96)' },
+    to: { opacity: 1, transform: 'translateY(0) scale(1)' },
+  },
+  animation: 'dropdownIn 0.2s ease-out',
+  '&::before': {
+    content: '""',
+    display: 'block',
+    position: 'absolute',
+    top: 0,
+    ...(opts.arrowRight != null ? { right: opts.arrowRight } : { left: opts.arrowLeft ?? 24 }),
+    width: 12,
+    height: 12,
+    background:
+      theme.palette.mode === 'dark' ? 'rgba(15,23,42,0.98)' : 'rgba(255,255,255,0.98)',
+    transform: 'translateY(-50%) rotate(45deg)',
+    border:
+      theme.palette.mode === 'dark'
+        ? '1px solid rgba(56, 189, 248, 0.15)'
+        : '1px solid rgba(59, 130, 246, 0.12)',
+    borderBottom: 'none',
+    borderRight: 'none',
+    zIndex: 0,
+  },
+});
+
 // Calculator SVG icon component
 type CalculatorProps = {
   size: string;
@@ -631,82 +737,59 @@ export const HeaderBar: React.FC = () => {
   }, [isLoggedIn, handleLogout, handleLogin]);
 
   const toolsItems = [
-    {
-      text: 'Text Editor',
-      icon: '📝',
-      path: '/text-editor',
-    },
+    { text: 'Text Editor', icon: '📝', path: '/text-editor', desc: 'Chat formatting' },
     {
       text: 'Calculator',
-      icon: <Calculator size="24" />,
+      icon: <Calculator size="20" />,
       path: '/calculator',
+      desc: 'DPS & stat math',
     },
-    {
-      text: 'Parse Analysis',
-      icon: '📈',
-      path: '/parse-analysis',
-    },
+    { text: 'Parse Analysis', icon: '📈', path: '/parse-analysis', desc: 'Deep log breakdowns' },
     {
       text: 'Loadout Manager',
       icon: '⚔️',
       path: '/loadout-manager',
+      desc: 'Gear & skill setups',
     },
     {
       text: 'Roster Builder',
       icon: '👥',
       path: '/roster-builder',
+      desc: 'Team composition',
     },
     {
       text: 'Build Editor',
       icon: '🔧',
       path: '/build-editor',
+      desc: 'Create & share builds',
     },
-    {
-      text: 'My Builds',
-      icon: '📋',
-      path: '/my-builds',
-    },
-    {
-      text: 'Gear Sets',
-      icon: '🛡️',
-      path: '/gear-sets',
-    },
-    {
-      text: 'Build Hub',
-      icon: '🏗️',
-      path: '/build-hub',
-    },
+    { text: 'My Builds', icon: '📋', path: '/my-builds', desc: 'Saved configurations' },
+    { text: 'Gear Sets', icon: '🛡️', path: '/gear-sets', desc: 'Set bonus database' },
+    { text: 'Build Hub', icon: '🏗️', path: '/build-hub', desc: 'Community builds' },
   ];
 
   const reportsItems = React.useMemo(() => {
-    const items = [];
+    const items: Array<{
+      text: string;
+      icon: string;
+      desc: string;
+      path?: string;
+      action?: () => void;
+    }> = [];
 
-    // Add "My Reports" if user is logged in
     if (isLoggedIn) {
       items.push({
         text: 'My Reports',
         icon: '📁',
         path: '/my-reports',
+        desc: 'Your uploaded logs',
       });
     }
 
-    // Always show these items
     items.push(
-      {
-        text: 'Sample Report',
-        icon: '🎲',
-        action: handleSampleReport,
-      },
-      {
-        text: 'Latest Report',
-        icon: '📊',
-        path: '/latest-reports',
-      },
-      {
-        text: 'Leaderboards',
-        icon: '🏆',
-        path: '/leaderboards',
-      },
+      { text: 'Sample Report', icon: '🎲', action: handleSampleReport, desc: 'Try a demo report' },
+      { text: 'Latest Reports', icon: '📊', path: '/latest-reports', desc: 'Recently uploaded' },
+      { text: 'Leaderboards', icon: '🏆', path: '/leaderboards', desc: 'Top rankings' },
     );
 
     return items;
@@ -1087,276 +1170,293 @@ export const HeaderBar: React.FC = () => {
       </AppBar>
 
       {/* Account Menu for Logged In Users */}
-      <Menu
-        anchorEl={anchorEl}
+      <Popover
         open={Boolean(anchorEl)}
+        anchorEl={anchorEl}
         onClose={handleMenuClose}
-        onClick={handleMenuClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         slotProps={{
           paper: {
             elevation: 0,
-            sx: {
-              overflow: 'visible',
-              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-              mt: 1.5,
-              minWidth: 180,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
-              border:
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgba(59, 130, 246, 0.15)',
-              borderRadius: 2,
-              '&::before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-              },
-            },
+            sx: getDropdownPaperSx(theme, { minWidth: 220, arrowRight: 18 }),
           },
         }}
       >
-        <MenuItem
+        {/* User header */}
+        {userLabel && (
+          <>
+            <Box sx={{ px: 1.5, pt: 0.5, pb: 1 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.7)' : 'rgba(100,116,139,0.7)',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontSize: '0.65rem',
+                }}
+              >
+                Signed in as
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.25 }}>
+                {userLabel}
+              </Typography>
+            </Box>
+            <Divider
+              sx={{
+                mx: 1,
+                mb: 0.5,
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.1)'
+                    : 'rgba(59, 130, 246, 0.08)',
+              }}
+            />
+          </>
+        )}
+
+        <DropdownItem
+          active={location.pathname === '/my-reports'}
           onClick={handleViewReports}
-          sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 1,
-            mx: 1,
-            mb: 0.5,
-            '&:hover': {
-              backgroundColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.08)'
-                  : 'rgba(59, 130, 246, 0.08)',
-            },
-          }}
         >
-          <Person sx={{ mr: 1.5, fontSize: 20 }} />
-          My reports
-        </MenuItem>
-        <MenuItem
+          <IconBadge className="icon-badge">
+            <Assessment sx={{ fontSize: 18 }} />
+          </IconBadge>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+              My reports
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
+            >
+              Your uploaded logs
+            </Typography>
+          </Box>
+        </DropdownItem>
+        <DropdownItem
+          active={location.pathname === '/my-rosters'}
           onClick={handleViewRosters}
-          sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 1,
-            mx: 1,
-            mb: 0.5,
-            '&:hover': {
-              backgroundColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.08)'
-                  : 'rgba(59, 130, 246, 0.08)',
-            },
-          }}
         >
-          <ListItemIcon sx={{ minWidth: 32 }}>
-            <Build sx={{ fontSize: 20 }} />
-          </ListItemIcon>
-          My rosters
-        </MenuItem>
-        <MenuItem
+          <IconBadge className="icon-badge">
+            <span role="img" aria-label="rosters" style={{ fontSize: 16 }}>
+              👥
+            </span>
+          </IconBadge>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+              My rosters
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
+            >
+              Saved team setups
+            </Typography>
+          </Box>
+        </DropdownItem>
+        <DropdownItem
+          active={location.pathname === '/my-builds'}
           onClick={handleViewBuilds}
-          sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 1,
-            mx: 1,
-            mb: 0.5,
-            '&:hover': {
-              backgroundColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.08)'
-                  : 'rgba(59, 130, 246, 0.08)',
-            },
-          }}
         >
-          <ListItemIcon sx={{ minWidth: 32 }}>
-            <Build sx={{ fontSize: 20 }} />
-          </ListItemIcon>
-          My builds
-        </MenuItem>
-        <MenuItem
+          <IconBadge className="icon-badge">
+            <Build sx={{ fontSize: 18 }} />
+          </IconBadge>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+              My builds
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
+            >
+              Saved configurations
+            </Typography>
+          </Box>
+        </DropdownItem>
+
+        <Divider
+          sx={{
+            mx: 1,
+            my: 0.5,
+            borderColor:
+              theme.palette.mode === 'dark'
+                ? 'rgba(239, 68, 68, 0.15)'
+                : 'rgba(220, 38, 38, 0.1)',
+          }}
+        />
+
+        <DropdownItem
           onClick={handleLogoutFromMenu}
           sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 1,
-            mx: 1,
-            color: 'error.main',
             '&:hover': {
-              backgroundColor:
+              background:
                 theme.palette.mode === 'dark'
                   ? 'rgba(239, 68, 68, 0.08)'
-                  : 'rgba(220, 38, 38, 0.08)',
+                  : 'rgba(220, 38, 38, 0.06)',
             },
           }}
         >
-          <Logout sx={{ mr: 1.5, fontSize: 20 }} />
-          Log out
-        </MenuItem>
-      </Menu>
+          <IconBadge
+            className="icon-badge"
+            sx={{
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(239, 68, 68, 0.12)'
+                  : 'rgba(220, 38, 38, 0.08)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(239, 68, 68, 0.15)'
+                  : '1px solid rgba(220, 38, 38, 0.1)',
+            }}
+          >
+            <Logout sx={{ fontSize: 18, color: 'error.main' }} />
+          </IconBadge>
+          <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+            Log out
+          </Typography>
+        </DropdownItem>
+      </Popover>
 
-      {/* Tools Submenu */}
-      <Menu
-        anchorEl={toolsAnchorEl}
+      {/* Tools Submenu — Modern 2-column grid */}
+      <Popover
         open={Boolean(toolsAnchorEl)}
+        anchorEl={toolsAnchorEl}
         onClose={handleToolsClose}
-        transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         slotProps={{
           paper: {
             elevation: 0,
-            sx: {
-              overflow: 'visible',
-              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-              mt: 1.5,
-              minWidth: 180,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
-              border:
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgba(59, 130, 246, 0.15)',
-              borderRadius: 2,
-              '&::before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                left: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-              },
-            },
+            sx: getDropdownPaperSx(theme, { minWidth: 460, arrowLeft: 24 }),
           },
         }}
       >
-        {toolsItems.map((item) => (
-          <MenuItem
-            key={item.text}
-            onClick={() => handleToolNavigation(item.path)}
-            sx={{
-              py: 1.5,
-              px: 2,
-              borderRadius: 1,
-              mx: 1,
-              mb: 0.5,
-              '&:hover': {
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.08)'
-                    : 'rgba(59, 130, 246, 0.08)',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              {typeof item.icon === 'string' ? (
-                <Box sx={{ fontSize: 18 }}>{item.icon}</Box>
-              ) : (
-                item.icon
-              )}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </MenuItem>
-        ))}
-      </Menu>
+        <Typography
+          variant="caption"
+          sx={{
+            px: 1.5,
+            pt: 0.25,
+            pb: 0.75,
+            display: 'block',
+            color:
+              theme.palette.mode === 'dark'
+                ? 'rgba(148,163,184,0.6)'
+                : 'rgba(100,116,139,0.6)',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            fontSize: '0.6rem',
+          }}
+        >
+          Tools & Utilities
+        </Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.25 }}>
+          {toolsItems.map((item) => (
+            <DropdownItem
+              key={item.text}
+              active={location.pathname === item.path}
+              onClick={() => handleToolNavigation(item.path)}
+            >
+              <IconBadge className="icon-badge">
+                {typeof item.icon === 'string' ? (
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
+                ) : (
+                  item.icon
+                )}
+              </IconBadge>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, lineHeight: 1.3, fontSize: '0.8rem' }}
+                >
+                  {item.text}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    lineHeight: 1.2,
+                    fontSize: '0.65rem',
+                    display: 'block',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  {item.desc}
+                </Typography>
+              </Box>
+            </DropdownItem>
+          ))}
+        </Box>
+      </Popover>
 
-      {/* Reports Submenu */}
-      <Menu
-        anchorEl={reportsAnchorEl}
+      {/* Reports Submenu — Modern single-column */}
+      <Popover
         open={Boolean(reportsAnchorEl)}
+        anchorEl={reportsAnchorEl}
         onClose={handleReportsClose}
-        transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         slotProps={{
           paper: {
             elevation: 0,
-            sx: {
-              overflow: 'visible',
-              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-              mt: 1.5,
-              minWidth: 180,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
-              border:
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgba(59, 130, 246, 0.15)',
-              borderRadius: 2,
-              '&::before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                left: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-              },
-            },
+            sx: getDropdownPaperSx(theme, { minWidth: 260, arrowLeft: 24 }),
           },
         }}
       >
-        {reportsItems.map((item) => (
-          <MenuItem
-            key={item.text}
-            onClick={() => {
-              if (item.action) {
-                item.action();
-              } else if (item.path) {
-                handleToolNavigation(item.path);
-              }
-            }}
-            sx={{
-              py: 1.5,
-              px: 2,
-              borderRadius: 1,
-              mx: 1,
-              mb: 0.5,
-              '&:hover': {
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.08)'
-                    : 'rgba(59, 130, 246, 0.08)',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              {typeof item.icon === 'string' ? (
-                <Box sx={{ fontSize: 18 }}>{item.icon}</Box>
-              ) : (
-                item.icon
-              )}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </MenuItem>
-        ))}
-      </Menu>
+        <Typography
+          variant="caption"
+          sx={{
+            px: 1.5,
+            pt: 0.25,
+            pb: 0.75,
+            display: 'block',
+            color:
+              theme.palette.mode === 'dark'
+                ? 'rgba(148,163,184,0.6)'
+                : 'rgba(100,116,139,0.6)',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            fontSize: '0.6rem',
+          }}
+        >
+          Reports
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+          {reportsItems.map((item) => (
+            <DropdownItem
+              key={item.text}
+              active={item.path ? location.pathname === item.path : false}
+              onClick={() => {
+                if (item.action) {
+                  item.action();
+                } else if (item.path) {
+                  handleToolNavigation(item.path);
+                }
+              }}
+            >
+              <IconBadge className="icon-badge">
+                <span style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
+              </IconBadge>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+                  {item.text}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
+                >
+                  {item.desc}
+                </Typography>
+              </Box>
+            </DropdownItem>
+          ))}
+        </Box>
+      </Popover>
 
       {/* Modern Mobile Menu Overlay */}
       <MobileMenuOverlay open={mobileOpen}>
