@@ -108,10 +108,7 @@ const ShieldBadge = styled('div')(({ theme }) => ({
   height: 40,
   borderRadius: 10,
   flexShrink: 0,
-  background:
-    theme.palette.mode === 'dark'
-      ? alpha('#38bdf8', 0.1)
-      : alpha('#0f172a', 0.06),
+  background: theme.palette.mode === 'dark' ? alpha('#38bdf8', 0.1) : alpha('#0f172a', 0.06),
   color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a',
 }));
 
@@ -266,7 +263,7 @@ export const CookieConsent: React.FC = () => {
                   },
                 }}
               >
-                Decline
+                Decline All
               </Button>
               <Button
                 size="small"
@@ -382,9 +379,7 @@ export const CookieConsent: React.FC = () => {
               mb: 2.5,
               border: `1px solid ${theme.palette.divider}`,
               background:
-                theme.palette.mode === 'dark'
-                  ? alpha('#22c55e', 0.04)
-                  : alpha('#059669', 0.03),
+                theme.palette.mode === 'dark' ? alpha('#22c55e', 0.04) : alpha('#059669', 0.03),
               overflow: 'hidden',
             }}
           >
@@ -411,9 +406,7 @@ export const CookieConsent: React.FC = () => {
                         ? alpha('#22c55e', 0.12)
                         : alpha('#059669', 0.1),
                     border: `1px solid ${
-                      theme.palette.mode === 'dark'
-                        ? alpha('#22c55e', 0.2)
-                        : alpha('#059669', 0.2)
+                      theme.palette.mode === 'dark' ? alpha('#22c55e', 0.2) : alpha('#059669', 0.2)
                     }`,
                   }}
                 />
