@@ -217,13 +217,17 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
       ? !!getSlotInfo(selectedRoster.roster, selectedSlot).buildName
       : false;
 
-  // Shared dialog paper styles
+  // Shared dialog paper styles (glass-dialog pattern)
   const paperSx = {
-    background: isDark ? 'rgba(8, 14, 26, 0.97)' : 'rgba(248, 250, 252, 0.98)',
+    background: isDark
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+      : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+    backgroundColor: 'transparent',
     backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    borderRadius: 3,
-    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+    borderRadius: '20px',
+    border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+    boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+    maxHeight: '90vh',
   };
 
   const titleSx = {
@@ -248,7 +252,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
   // ── Empty state ──
   if (savedRosters.length === 0) {
     return (
-      <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: paperSx }}>
+      <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth className="glass-dialog" PaperProps={{ sx: paperSx }}>
         <DialogTitle sx={titleSx}>
           Add to Roster
           <IconButton onClick={onClose} size="small" aria-label="Close dialog">
@@ -286,7 +290,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
 
   // ── Main dialog ──
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: paperSx }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth className="glass-dialog" PaperProps={{ sx: paperSx }}>
       <DialogTitle sx={titleSx}>
         Add to Roster
         <IconButton onClick={onClose} size="small" aria-label="Close dialog">
