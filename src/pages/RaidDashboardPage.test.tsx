@@ -133,7 +133,7 @@ describe('RaidDashboardPage', () => {
   it('should render page title', () => {
     renderWithRouter();
 
-    expect(screen.getByText('Raid Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Test Report')).toBeInTheDocument();
   });
 
   it('should render default widgets', () => {
@@ -167,10 +167,10 @@ describe('RaidDashboardPage', () => {
     expect(screen.getByRole('button', { name: /add widget/i })).toBeInTheDocument();
   });
 
-  it('should render back to report button', () => {
+  it('should render navigation buttons to other report pages', () => {
     renderWithRouter();
 
-    expect(screen.getByRole('button', { name: /back to report/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /fights/i })).toBeInTheDocument();
   });
 
   it('should open add widget dialog when add button is clicked', async () => {

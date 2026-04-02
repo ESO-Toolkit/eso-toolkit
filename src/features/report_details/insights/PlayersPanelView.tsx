@@ -19,7 +19,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 
 import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
-import type { PlayerRoleResult } from '../../../features/role_detection';
+import { DetectedRole, type PlayerRoleResult } from '../../../features/role_detection';
 import { toBroadRole, type BroadRole } from '../../../hooks/useRoleDetection';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
@@ -81,6 +81,7 @@ interface PlayersPanelViewProps {
 }
 
 type SortOption =
+  | 'role'
   | 'alphabetical'
   | 'stamina-high'
   | 'stamina-low'
@@ -88,6 +89,20 @@ type SortOption =
   | 'hp-low'
   | 'magicka-high'
   | 'magicka-low';
+
+/**
+ * Default display order for player cards by detected role.
+ * MT → OT → H1 → H2 → Support DPS → DPS
+ */
+const ROLE_SORT_ORDER: Record<DetectedRole, number> = {
+  [DetectedRole.MainTank]: 0,
+  [DetectedRole.OffTank]: 1,
+  [DetectedRole.GroupHealer]: 2,
+  [DetectedRole.ShieldHealer]: 3,
+  [DetectedRole.BuffHealer]: 4,
+  [DetectedRole.SupportDPS]: 5,
+  [DetectedRole.ParseDPS]: 6,
+};
 type RoleFilter = 'all' | 'dps' | 'tank' | 'healer' | 'supports';
 
 export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
@@ -124,7 +139,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     rolesByPlayerId,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
+    const [sortOption, setSortOption] = useState<SortOption>('role');
     const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
     const [chipModalOpen, setChipModalOpen] = useState(false);
 
@@ -282,6 +297,14 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       // Apply sorting
       const sorted = [...filtered].sort((a, b) => {
         switch (sortOption) {
+          case 'role': {
+            const roleA = rolesByPlayerId?.[Number(a.player.id)];
+            const roleB = rolesByPlayerId?.[Number(b.player.id)];
+            const orderA = roleA ? ROLE_SORT_ORDER[roleA.role] : 7;
+            const orderB = roleB ? ROLE_SORT_ORDER[roleB.role] : 7;
+            if (orderA !== orderB) return orderA - orderB;
+            return a.player.name.localeCompare(b.player.name);
+          }
           case 'alphabetical':
             return a.player.name.localeCompare(b.player.name);
           case 'stamina-high':
@@ -302,7 +325,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       });
 
       return sorted;
-    }, [playerCards, searchTerm, roleFilter, sortOption, getEffectiveBroadRole]);
+    }, [playerCards, searchTerm, roleFilter, sortOption, getEffectiveBroadRole, rolesByPlayerId]);
 
     if (isLoading) {
       return <PlayersSkeleton />;
@@ -339,6 +362,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               label="Sort by"
               onChange={(e) => setSortOption(e.target.value as SortOption)}
             >
+              <MenuItem value="role">Role</MenuItem>
               <MenuItem value="alphabetical">Alphabetical</MenuItem>
               <MenuItem value="stamina-high">Stamina (High to Low)</MenuItem>
               <MenuItem value="stamina-low">Stamina (Low to High)</MenuItem>

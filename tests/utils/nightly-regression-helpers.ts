@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { TEST_DATA } from '../selectors';
 
 /**
  * Utility functions for nightly regression tests
@@ -340,6 +341,49 @@ export async function generateTestReport(
   };
 
   console.log(`Test Report for ${testName}:`, JSON.stringify(report, null, 2));
+}
+
+/**
+ * Resolve the first working report ID from the backup list.
+ *
+ * Navigates to each report in TEST_DATA.REAL_REPORT_IDS in order and returns
+ * the first one that loads real content. Falls back to the primary ID if all
+ * checks fail so the test runner still gets a value and can fail with a
+ * meaningful error rather than a TypeError.
+ */
+export async function resolveWorkingReportId(page: Page): Promise<string> {
+  for (const reportId of TEST_DATA.REAL_REPORT_IDS) {
+    try {
+      await page.goto(`/report/${reportId}`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 25000,
+      });
+
+      // A stale/deleted report typically shows an error banner or very little content.
+      const hasError = await page
+        .getByText(/not found|404|report.*not.*exist|invalid.*report/i)
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+
+      const hasContent = await page
+        .locator('.MuiAccordion-root, [data-testid="fight-list"], main, [role="main"]')
+        .first()
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
+
+      if (hasContent && !hasError) {
+        console.log(`✅ resolveWorkingReportId: using ${reportId}`);
+        return reportId;
+      }
+      console.log(`⚠️ resolveWorkingReportId: ${reportId} appears unavailable, trying next…`);
+    } catch {
+      console.log(`⚠️ resolveWorkingReportId: navigation to ${reportId} failed, trying next…`);
+    }
+  }
+
+  const fallback = TEST_DATA.REAL_REPORT_IDS[0];
+  console.warn(`⚠️ resolveWorkingReportId: all IDs failed validation; falling back to ${fallback}`);
+  return fallback;
 }
 
 /**

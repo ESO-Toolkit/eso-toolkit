@@ -13,6 +13,7 @@ import {
 import { useSnackbar } from 'notistack';
 import React from 'react';
 
+import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import { VoteButton } from '../../roster-hub/components/VoteButton';
 import type { HubBuild } from '../types/build-hub.types';
 import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../types/build-hub.types';
@@ -22,7 +23,6 @@ interface BuildCardProps {
   isOwner: boolean;
   isLoggedIn: boolean;
   onVote: (id: string) => void;
-  onPreview: (build: HubBuild) => void;
   onDelete: (id: string) => void;
   onEdit: (build: HubBuild) => void;
 }
@@ -59,9 +59,10 @@ function formatDate(iso: string): string {
 }
 
 export const BuildCard: React.FC<BuildCardProps> = React.memo(
-  ({ build, isOwner, isLoggedIn, onVote, onPreview, onDelete, onEdit }) => {
+  ({ build, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
+    const navigate = useViewTransitionNavigate();
     const isDark = theme.palette.mode === 'dark';
 
     const handleCopyLink = (e: React.MouseEvent): void => {
@@ -124,9 +125,9 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
         />
 
         <CardActionArea
-          onClick={() => onPreview(build)}
+          onClick={() => navigate(`/bv?b=${encodeURIComponent(build.build_data)}`)}
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
-          aria-label={`Preview ${build.title}`}
+          aria-label={`View ${build.title}`}
         >
           <CardContent
             sx={{

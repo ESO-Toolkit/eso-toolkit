@@ -111,7 +111,10 @@ export const TEST_TIMEOUTS = {
  */
 export const TEST_DATA = {
   REAL_REPORT_IDS: [
-    'prV8jWb1NqFJc97Z', // Current valid report (updated 2026-01-21) - Rockgrove with 17 fights
+    'prV8jWb1NqFJc97Z', // Primary (updated 2026-01-21) - Rockgrove with 17 fights
+    '3gjVGWB2dxCL8XAw', // Backup #1 - validate periodically via /latest-reports
+    'baJFfYC8trPhHMQp', // Backup #2 - validate periodically via /latest-reports
+    'VTqBNRdzCfp36gtL', // Backup #3 - validate periodically via /latest-reports
   ],
 
   /**

@@ -1,19 +1,17 @@
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
   Box,
   Typography,
   Card,
   CardContent,
-  IconButton,
   Button,
   Switch,
   FormControlLabel,
 } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import {
   BuildIssuesWidget,
@@ -25,6 +23,7 @@ import {
 } from '../components/dashboard';
 import { AddWidgetDialog } from '../components/dashboard/AddWidgetDialog';
 import { DynamicMetaTags } from '../components/DynamicMetaTags';
+import { ReportActionBar } from '../components/ReportActionBar';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/gql/graphql';
@@ -44,7 +43,6 @@ const REFETCH_INTERVAL = 5000; // 5 seconds
 
 export const RaidDashboardPage: React.FC = () => {
   const { reportId } = useParams<{ reportId: string }>();
-  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const client = useEsoLogsClientInstance();
 
@@ -84,10 +82,6 @@ export const RaidDashboardPage: React.FC = () => {
         return bEnd - aEnd;
       });
   }, [reportData?.fights]);
-
-  const handleBackToReport = (): void => {
-    navigate(`/report/${reportId}`);
-  };
 
   const handleAddWidget = (type: WidgetType): void => {
     dispatch(addWidget({ type }));
@@ -151,59 +145,54 @@ export const RaidDashboardPage: React.FC = () => {
       <WorkInProgressDisclaimer featureName="Raid Dashboard" sx={{ mb: 3 }} />
 
       {/* Header */}
-      <Card elevation={2} sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <IconButton onClick={handleBackToReport} aria-label="Back to report">
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography
-              variant="h4"
-              component="h1"
-              sx={{ flex: 1, fontSize: { xs: '1.5rem', md: '2.125rem' } }}
-            >
-              Raid Dashboard
-            </Typography>
+      <ReportActionBar
+        reportId={reportId || ''}
+        title={reportData.title || 'Raid Dashboard'}
+        activePage="dashboard"
+        actions={
+          <>
             <FormControlLabel
-              control={<Switch checked={autoRefreshEnabled} onChange={handleToggleAutoRefresh} />}
-              label="Auto-refresh"
+              control={
+                <Switch
+                  checked={autoRefreshEnabled}
+                  onChange={handleToggleAutoRefresh}
+                  size="small"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                    Auto-refresh
+                  </Typography>
+                  {autoRefreshEnabled && (
+                    <RefreshIcon
+                      color="primary"
+                      sx={{
+                        fontSize: '0.9rem',
+                        animation: 'spin 2s linear infinite',
+                        '@keyframes spin': {
+                          '0%': { transform: 'rotate(0deg)' },
+                          '100%': { transform: 'rotate(360deg)' },
+                        },
+                      }}
+                    />
+                  )}
+                </Box>
+              }
+              sx={{ mr: 0 }}
             />
             <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setAddWidgetDialogOpen(true)}
               size="small"
+              sx={{ fontSize: '0.8rem', textTransform: 'none' }}
             >
               Add Widget
             </Button>
-          </Box>
-
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            {reportData.title}
-          </Typography>
-
-          {sortedFights.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                Monitoring {sortedFights.length} fight{sortedFights.length !== 1 ? 's' : ''}
-              </Typography>
-              {autoRefreshEnabled && (
-                <RefreshIcon
-                  color="primary"
-                  fontSize="small"
-                  sx={{
-                    animation: 'spin 2s linear infinite',
-                    '@keyframes spin': {
-                      '0%': { transform: 'rotate(0deg)' },
-                      '100%': { transform: 'rotate(360deg)' },
-                    },
-                  }}
-                />
-              )}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        }
+      />
 
       {/* Widgets Grid */}
       {sortedFights.length === 0 ? (

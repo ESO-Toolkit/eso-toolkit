@@ -44,7 +44,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
-      const deepLink = getAddonManagerDeepLink(pack.id);
+      const deepLink = getAddonManagerDeepLink(pack.id, { preserveSettings: true });
       void navigator.clipboard.writeText(deepLink).then(
         () => enqueueSnackbar('Deep link copied to clipboard!', { variant: 'success' }),
         () => enqueueSnackbar('Failed to copy link', { variant: 'error' }),
@@ -53,7 +53,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
 
     const handleInstall = (e: React.MouseEvent): void => {
       e.stopPropagation();
-      const deepLink = getAddonManagerDeepLink(pack.id);
+      const deepLink = getAddonManagerDeepLink(pack.id, { preserveSettings: true });
       window.location.href = deepLink;
       setTimeout(() => {
         void navigator.clipboard.writeText(deepLink).then(() => {
@@ -353,7 +353,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
             onVote={() => onVote(pack.id)}
           />
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            <Tooltip title="Install with ESO Addon Manager">
+            <Tooltip title="Install with ESO Addon Manager — already-installed addons and their settings are preserved">
               <IconButton
                 size="small"
                 onClick={handleInstall}

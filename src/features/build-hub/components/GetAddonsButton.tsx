@@ -25,7 +25,7 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
   iconOnly = false,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
-  const deepLink = getAddonManagerDeepLink(packId);
+  const deepLink = getAddonManagerDeepLink(packId, { preserveSettings: true });
 
   const handleClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
@@ -52,7 +52,7 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
 
   if (iconOnly) {
     return (
-      <Tooltip title={`Open "${packId}" in Kalpa`}>
+      <Tooltip title={`Open "${packId}" in ESO Addon Manager — existing settings preserved`}>
         <Button
           size="small"
           onClick={handleClick}
@@ -71,7 +71,7 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
   }
 
   return (
-    <Tooltip title="Opens Kalpa to install recommended addons">
+    <Tooltip title="Opens ESO Addon Manager to install recommended addons — your existing addon settings are preserved">
       <Button
         size="small"
         variant="outlined"

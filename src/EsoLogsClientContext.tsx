@@ -3,6 +3,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useState, useCall
 
 import { useLogger } from './contexts/LoggerContext';
 import { EsoLogsClient } from './esologsClient';
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './features/auth/auth';
 import { addBreadcrumb } from './utils/errorTracking';
 
 interface EsoLogsClientContextType {
@@ -15,15 +16,21 @@ interface EsoLogsClientContextType {
 
 export const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
 
+// Read the initial token once at module level so the first render is already
+// synchronised with AuthContext (which also reads from localStorage).  This
+// eliminates the one-frame lag where AuthContext.isLoggedIn=true but
+// EsoLogsClientContext.isLoggedIn=false, which caused visible layout shifts.
+const initialToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!initialToken);
   const logger = useLogger('EsoLogsClient');
 
   // We want a singleton here - create client once and update token via methods
 
   const client = useMemo(() => {
     logger.info('Creating new EsoLogsClient instance');
-    return new EsoLogsClient(''); // Start with empty token
+    return new EsoLogsClient(initialToken);
   }, [logger]);
 
   // Method to set auth token from AuthContext

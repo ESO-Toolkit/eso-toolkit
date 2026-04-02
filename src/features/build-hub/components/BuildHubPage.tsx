@@ -24,7 +24,6 @@ import type { HubBuild } from '../types/build-hub.types';
 import { BuildCard } from './BuildCard';
 import { BuildCardSkeleton } from './BuildCardSkeleton';
 import { BuildFilterBar } from './BuildFilterBar';
-import { BuildPreviewDialog } from './BuildPreviewDialog';
 import { PublishBuildDialog } from './PublishBuildDialog';
 
 const SKELETON_COUNT = 8;
@@ -38,7 +37,6 @@ export const BuildHubPage: React.FC = () => {
   const { filteredBuilds, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useBuildHub(token);
 
-  const [previewBuild, setPreviewBuild] = React.useState<HubBuild | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editBuild, setEditBuild] = React.useState<HubBuild | null>(null);
@@ -277,7 +275,6 @@ export const BuildHubPage: React.FC = () => {
                     isOwner={isLoggedIn && build.author_id === currentUserId}
                     isLoggedIn={isLoggedIn}
                     onVote={handleVote}
-                    onPreview={setPreviewBuild}
                     onDelete={setDeleteTarget}
                     onEdit={setEditBuild}
                   />
@@ -307,17 +304,6 @@ export const BuildHubPage: React.FC = () => {
           Log in with your ESO Logs account to vote on builds or publish your own.
         </Alert>
       )}
-
-      {/* Preview dialog */}
-      <BuildPreviewDialog
-        build={previewBuild}
-        isOwner={isLoggedIn && previewBuild?.author_id === currentUserId}
-        onClose={() => setPreviewBuild(null)}
-        onEdit={(b) => {
-          setPreviewBuild(null);
-          setEditBuild(b);
-        }}
-      />
 
       {/* Edit published build dialog */}
       {editBuild && token && (
