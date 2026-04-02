@@ -16,9 +16,9 @@ import {
   Stack,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
-import type { Theme } from '@mui/material/styles';
 import type { FilterOptionsState } from '@mui/material/useAutocomplete';
 import React from 'react';
 
@@ -56,6 +56,8 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
   currentItemId,
 }) => {
   const logger = useLogger('ItemPickerDialog');
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const [inputValue, setInputValue] = React.useState('');
   const coverageStats = React.useMemo(() => getSlotCoverageStats(), []);
 
@@ -152,16 +154,20 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
       ? `Enter at least ${MIN_SEARCH_LENGTH} characters to search`
       : 'No gear matches your search';
 
+  const isWarning = slotCoverageCount > 0;
+
   return (
     <Dialog
       open={open}
       onClose={handleDialogClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          minHeight: '60vh',
-          maxHeight: '80vh',
+      slotProps={{
+        paper: {
+          sx: {
+            minHeight: '60vh',
+            maxHeight: '80vh',
+          },
         },
       }}
     >
@@ -176,14 +182,14 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
 
       <DialogContent dividers>
         <Stack spacing={3}>
-          <Alert severity={slotCoverageCount > 0 ? 'warning' : 'error'} icon={false}>
+          <Alert severity={isWarning ? 'warning' : 'error'} icon={false}>
             <Typography variant="body2">
               {slotCoverageCount > 0 ? (
                 <>
                   Only <strong>{slotCoverageCount.toLocaleString()}</strong> confirmed{' '}
                   {slotName.toLowerCase()} items are available ({slotCoveragePercent.toFixed(2)}% of
-                  the full database, {slotCoverageShare.toFixed(1)}% of known-slot items). We’re
-                  limiting selections to avoid invalid Wizards Wardrobe exports.
+                  the full database, {slotCoverageShare.toFixed(1)}% of known-slot items).
+                  We&apos;re limiting selections to avoid invalid Wizards Wardrobe exports.
                 </>
               ) : (
                 <>
@@ -219,7 +225,18 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
                 <Stack spacing={0.5} width="100%">
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Typography fontWeight={600}>{option.info.name}</Typography>
-                    <Chip label={option.info.setName} size="small" color="success" />
+                    <Chip
+                      label={option.info.setName}
+                      size="small"
+                      sx={{
+                        backgroundColor: isDarkMode
+                          ? 'rgba(56, 189, 248, 0.12)'
+                          : 'rgba(15, 23, 42, 0.08)',
+                        color: isDarkMode ? '#38bdf8' : '#0f172a',
+                        border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.2)'}`,
+                        fontWeight: 500,
+                      }}
+                    />
                   </Stack>
                   <Typography variant="caption" color="text.secondary">
                     {option.info.type} {slotName}
@@ -247,8 +264,11 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
               sx={{
                 px: 2,
                 py: 1.5,
-                borderRadius: 1,
-                border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+                borderRadius: '12px',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
+                backdropFilter: 'blur(8px)',
+                border: `1px solid ${isDarkMode ? '#1f2937' : '#bcd9ff'}`,
+                transition: 'all 0.2s ease',
               }}
             >
               <Typography variant="subtitle2" gutterBottom>
@@ -257,7 +277,18 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
               <Stack spacing={0.5}>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Typography fontWeight={600}>{currentItem.info.name}</Typography>
-                  <Chip label={currentItem.info.setName} size="small" color="primary" />
+                  <Chip
+                    label={currentItem.info.setName}
+                    size="small"
+                    sx={{
+                      backgroundColor: isDarkMode
+                        ? 'rgba(56, 189, 248, 0.15)'
+                        : 'rgba(15, 23, 42, 0.1)',
+                      color: isDarkMode ? '#38bdf8' : '#0f172a',
+                      border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(15, 23, 42, 0.25)'}`,
+                      fontWeight: 600,
+                    }}
+                  />
                 </Stack>
                 <Typography variant="caption" color="text.secondary">
                   Item ID: {currentItem.itemId}

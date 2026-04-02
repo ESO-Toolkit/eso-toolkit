@@ -43,6 +43,7 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
   context,
 }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   // Animation state
   const [isTransitioning, setIsTransitioning] = React.useState(false);
@@ -125,14 +126,8 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(15,23,42,0.97), rgba(30,41,59,0.97))'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backdropFilter: 'blur(20px)',
-          borderRadius: 3,
-          border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
           maxHeight: '90vh',
+          overflow: 'hidden',
         },
       }}
     >
@@ -144,7 +139,7 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
           justifyContent: 'space-between',
           px: 2,
           py: 1,
-          borderBottom: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+          borderBottom: `1px solid ${isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(15, 23, 42, 0.06)'}`,
         }}
       >
         {/* Left: prev button */}
@@ -152,7 +147,14 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
           onClick={goToPreviousPlayer}
           disabled={!canNavigate || isTransitioning}
           size="small"
-          sx={{ opacity: canNavigate ? 1 : 0.3 }}
+          sx={{
+            opacity: canNavigate ? 1 : 0.3,
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: isDark ? 'rgba(56, 189, 248, 0.08)' : 'rgba(15, 23, 42, 0.05)',
+              transform: 'translateX(-2px)',
+            },
+          }}
         >
           <ChevronLeftIcon />
         </IconButton>
@@ -164,6 +166,9 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
             color: 'text.secondary',
             fontVariantNumeric: 'tabular-nums',
             userSelect: 'none',
+            fontSize: '0.7rem',
+            letterSpacing: 0.5,
+            textTransform: 'uppercase',
           }}
         >
           {positionLabel}
@@ -175,11 +180,28 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
             onClick={goToNextPlayer}
             disabled={!canNavigate || isTransitioning}
             size="small"
-            sx={{ opacity: canNavigate ? 1 : 0.3 }}
+            sx={{
+              opacity: canNavigate ? 1 : 0.3,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: isDark ? 'rgba(56, 189, 248, 0.08)' : 'rgba(15, 23, 42, 0.05)',
+                transform: 'translateX(2px)',
+              },
+            }}
           >
             <ChevronRightIcon />
           </IconButton>
-          <IconButton onClick={onClose} size="small">
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                color: isDark ? '#ff8a80' : '#d32f2f',
+                backgroundColor: isDark ? 'rgba(244, 67, 54, 0.08)' : 'rgba(244, 67, 54, 0.05)',
+              },
+            }}
+          >
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -191,6 +213,7 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
           p: { xs: 1, sm: 2 },
           opacity: fadeOpacity,
           transition: 'opacity 0.25s ease-in-out',
+          overflow: 'auto',
         }}
       >
         <PlayerCardModalContent playerId={displayedPlayerId} context={context} />
