@@ -8,8 +8,8 @@
 
 import {
   Close as CloseIcon,
-  Cookie as CookieIcon,
   ExpandMore as ExpandMoreIcon,
+  Security as SecurityIcon,
   Shield as ShieldIcon,
 } from '@mui/icons-material';
 import {
@@ -26,13 +26,13 @@ import {
   FormControlLabel,
   IconButton,
   Link,
-  Paper,
   Slide,
   Switch,
   Typography,
   alpha,
   useTheme,
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { TransitionProps } from '@mui/material/transitions';
 import React from 'react';
 
@@ -49,6 +49,68 @@ const Transition = React.forwardRef(function Transition(
 ) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
+
+/** Floating glassmorphism banner container */
+const BannerRoot = styled('div')(({ theme }) => ({
+  position: 'fixed',
+  bottom: 24,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: theme.zIndex.snackbar,
+  width: 'calc(100% - 32px)',
+  maxWidth: 720,
+  borderRadius: 14,
+  border: `1px solid ${theme.palette.divider}`,
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(15,23,42,0.82) 0%, rgba(3,7,18,0.88) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(248,250,252,0.96) 100%)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 8px 30px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(56, 189, 248, 0.06)'
+      : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+  overflow: 'hidden',
+  animation: 'bannerSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+
+  '@keyframes bannerSlideUp': {
+    from: { opacity: 0, transform: 'translateX(-50%) translateY(20px)' },
+    to: { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
+  },
+
+  '@media (prefers-reduced-motion: reduce)': {
+    animation: 'none',
+  },
+
+  [theme.breakpoints.down('sm')]: {
+    bottom: 16,
+    width: 'calc(100% - 24px)',
+    maxWidth: 'none',
+  },
+}));
+
+/** Decorative gradient accent line at top of banner */
+const AccentBar = styled('div')(({ theme }) => ({
+  height: 2,
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(90deg, transparent, #38bdf8, #00e1ff, #38bdf8, transparent)'
+      : 'linear-gradient(90deg, transparent, #0f172a, #1e293b, #0f172a, transparent)',
+}));
+
+/** Shield icon container with subtle glow */
+const ShieldBadge = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: 40,
+  height: 40,
+  borderRadius: 10,
+  flexShrink: 0,
+  background: theme.palette.mode === 'dark' ? alpha('#38bdf8', 0.1) : alpha('#0f172a', 0.06),
+  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a',
+}));
 
 export const CookieConsent: React.FC = () => {
   const theme = useTheme();
@@ -109,132 +171,91 @@ export const CookieConsent: React.FC = () => {
 
   return (
     <>
-      {/* Consent Banner */}
-      {showBanner && (
-        <Paper
-          elevation={8}
-          sx={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: theme.zIndex.snackbar,
-            borderRadius: 0,
-            borderTop:
-              theme.palette.mode === 'dark'
-                ? '2px solid rgba(56, 189, 248, 0.25)'
-                : '2px solid rgba(15, 23, 42, 0.1)',
-            background:
-              theme.palette.mode === 'dark'
-                ? 'linear-gradient(180deg, rgba(15,23,42,0.92) 0%, rgba(3,7,18,0.96) 100%)'
-                : 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? '0 -8px 30px rgba(0, 0, 0, 0.25)'
-                : '0 -4px 12px rgba(15, 23, 42, 0.06), 0 -1px 3px rgba(15, 23, 42, 0.03)',
-            transition: 'all 0.3s ease',
-          }}
-        >
-          <Box
-            sx={{
-              maxWidth: 1200,
-              margin: '0 auto',
-              padding: { xs: 2, sm: 3 },
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              alignItems: { xs: 'flex-start', md: 'center' },
-              gap: 2,
-            }}
-          >
-            {/* Cookie Icon */}
-            <Box
+      {/* Consent Banner — hidden when preferences dialog is open */}
+      {showBanner && !showDetails && (
+        <BannerRoot>
+          <AccentBar />
+
+          <Box sx={{ p: { xs: 2, sm: 2.5 }, position: 'relative' }}>
+            {/* Close button */}
+            <IconButton
+              size="small"
+              onClick={handleDeclineAll}
+              aria-label="close"
               sx={{
-                display: { xs: 'none', sm: 'flex' },
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                color: theme.palette.text.secondary,
+                transition: 'all 0.15s ease-in-out',
+                '&:hover': {
+                  color: theme.palette.text.primary,
+                  backgroundColor: alpha(theme.palette.text.primary, 0.05),
+                },
               }}
             >
-              <CookieIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />
-            </Box>
+              <CloseIcon sx={{ fontSize: 18 }} />
+            </IconButton>
 
-            {/* Message */}
-            <Box sx={{ flex: 1 }}>
+            {/* Header row */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1, pr: 4 }}>
+              <ShieldBadge>
+                <SecurityIcon sx={{ fontSize: 22 }} />
+              </ShieldBadge>
               <Typography
-                variant="h6"
+                variant="subtitle1"
                 sx={{
                   fontWeight: 600,
-                  mb: 0.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: '-0.01em',
                 }}
               >
-                <CookieIcon
-                  sx={{
-                    display: { xs: 'inline', sm: 'none' },
-                    fontSize: 24,
-                    color: theme.palette.primary.main,
-                  }}
-                />
-                We Value Your Privacy
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                We use essential storage (localStorage) for app functionality. Optional analytics
-                and error tracking help us improve your experience. You choose which categories to
-                enable.{' '}
-                <button
-                  type="button"
-                  onClick={handleCustomize}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    color: 'var(--accent)',
-                    cursor: 'pointer',
-                    font: 'inherit',
-                    fontSize: '0.875rem',
-                    textDecoration: 'underline',
-                  }}
-                >
-                  Customize
-                </button>{' '}
-                |{' '}
-                <Link
-                  href="/privacy"
-                  variant="body2"
-                  underline="hover"
-                  sx={{
-                    color: 'var(--accent)',
-                    cursor: 'pointer',
-                    transition: 'color 0.15s ease-in-out',
-                    '&:hover': { color: 'var(--accent-2)' },
-                  }}
-                >
-                  Privacy Policy
-                </Link>
+                Privacy & Cookies
               </Typography>
             </Box>
+
+            {/* Description */}
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ lineHeight: 1.6, mb: 2, pr: 4 }}
+            >
+              We use essential storage for app functionality. Optional analytics and error tracking
+              help us improve.{' '}
+              <Link
+                href="/privacy"
+                variant="body2"
+                underline="hover"
+                sx={{
+                  color: 'var(--accent)',
+                  transition: 'color 0.15s ease-in-out',
+                  '&:hover': { color: 'var(--accent-2)' },
+                }}
+              >
+                Privacy Policy
+              </Link>
+            </Typography>
 
             {/* Actions */}
             <Box
               sx={{
                 display: 'flex',
-                gap: 1.5,
-                flexShrink: 0,
-                width: { xs: '100%', md: 'auto' },
+                gap: 1,
+                flexWrap: 'wrap',
               }}
             >
               <Button
+                size="small"
                 variant="outlined"
                 onClick={handleDeclineAll}
                 sx={{
-                  flex: { xs: 1, md: 'initial' },
                   borderColor: theme.palette.divider,
                   color: theme.palette.text.secondary,
                   borderRadius: '8px',
+                  px: 2,
+                  fontSize: '0.8125rem',
+                  textTransform: 'none',
+                  fontWeight: 500,
                   transition: 'all 0.15s ease-in-out',
                   '&:hover': {
                     borderColor: theme.palette.text.primary,
@@ -245,34 +266,48 @@ export const CookieConsent: React.FC = () => {
                 Decline All
               </Button>
               <Button
+                size="small"
                 variant="outlined"
                 onClick={handleCustomize}
                 sx={{
-                  flex: { xs: 1, md: 'initial' },
-                  borderColor: theme.palette.primary.main,
+                  borderColor: alpha(theme.palette.primary.main, 0.4),
                   color: theme.palette.primary.main,
                   borderRadius: '8px',
+                  px: 2,
+                  fontSize: '0.8125rem',
+                  textTransform: 'none',
+                  fontWeight: 500,
                   transition: 'all 0.15s ease-in-out',
                   '&:hover': {
-                    borderColor: theme.palette.primary.dark,
-                    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                    borderColor: theme.palette.primary.main,
+                    backgroundColor: alpha(theme.palette.primary.main, 0.06),
                   },
                 }}
               >
                 Customize
               </Button>
               <Button
+                size="small"
                 variant="contained"
                 onClick={handleAcceptAll}
                 sx={{
-                  flex: { xs: 1, md: 'initial' },
-                  fontWeight: 600,
                   borderRadius: '8px',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.mode === 'dark' ? '#00e1ff' : theme.palette.primary.dark})`,
+                  px: 2.5,
+                  fontSize: '0.8125rem',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, #38bdf8, #00e1ff)'
+                      : 'linear-gradient(135deg, #0f172a, #1e293b)',
+                  color: theme.palette.mode === 'dark' ? '#0b1220' : '#ffffff',
+                  boxShadow: 'none',
                   transition: 'all 0.15s ease-in-out',
-                  boxShadow: theme.shadows[2],
                   '&:hover': {
-                    boxShadow: theme.shadows[4],
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 4px 16px rgba(56, 189, 248, 0.25)'
+                        : '0 4px 16px rgba(15, 23, 42, 0.2)',
                     transform: 'translateY(-1px)',
                   },
                 }}
@@ -280,27 +315,8 @@ export const CookieConsent: React.FC = () => {
                 Accept All
               </Button>
             </Box>
-
-            {/* Close = Decline */}
-            <IconButton
-              size="small"
-              onClick={handleDeclineAll}
-              aria-label="close"
-              sx={{
-                position: { xs: 'absolute', md: 'relative' },
-                top: { xs: 8, md: 'auto' },
-                right: { xs: 8, md: 'auto' },
-                color: theme.palette.text.secondary,
-                '&:hover': {
-                  color: theme.palette.text.primary,
-                  backgroundColor: alpha(theme.palette.text.primary, 0.05),
-                },
-              }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
           </Box>
-        </Paper>
+        </BannerRoot>
       )}
 
       {/* Granular Preferences Dialog */}
@@ -309,34 +325,95 @@ export const CookieConsent: React.FC = () => {
         TransitionComponent={Transition}
         keepMounted
         onClose={handleCloseDetails}
-        maxWidth="md"
+        maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '14px',
+            border: `1px solid ${theme.palette.divider}`,
+            background:
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(3,7,18,0.98) 100%)'
+                : theme.palette.background.paper,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+                : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+          },
+        }}
       >
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ShieldIcon color="primary" />
-            Privacy Preferences
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <ShieldIcon sx={{ color: theme.palette.primary.main, fontSize: 24 }} />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              Privacy Preferences
+            </Typography>
           </Box>
         </DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Choose which categories of data processing you consent to. Essential storage is always
-            enabled for the app to function. You can change these preferences at any time from the
-            privacy page.
+        <DialogContent dividers sx={{ borderColor: theme.palette.divider }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+            Choose which categories of data processing you consent to. You can change these
+            preferences at any time from the{' '}
+            <Link href="/privacy" color="primary" underline="hover">
+              privacy page
+            </Link>
+            .
           </Typography>
 
           {/* Essential — always on */}
-          <Accordion defaultExpanded disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Accordion
+            defaultExpanded
+            disableGutters
+            sx={{
+              '&:before': { display: 'none' },
+              borderRadius: '12px !important',
+              mb: 2.5,
+              border: `1px solid ${theme.palette.divider}`,
+              background:
+                theme.palette.mode === 'dark' ? alpha('#22c55e', 0.04) : alpha('#059669', 0.03),
+              overflow: 'hidden',
+            }}
+          >
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{ '& .MuiAccordionSummary-content': { my: 1.5 } }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
                   Essential
                 </Typography>
-                <Chip label="Always Active" size="small" color="success" variant="outlined" />
+                <Chip
+                  label="Always Active"
+                  size="small"
+                  sx={{
+                    height: 24,
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.02em',
+                    borderRadius: '28px',
+                    color: theme.palette.mode === 'dark' ? '#22c55e' : '#059669',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? alpha('#22c55e', 0.12)
+                        : alpha('#059669', 0.1),
+                    border: `1px solid ${
+                      theme.palette.mode === 'dark' ? alpha('#22c55e', 0.2) : alpha('#059669', 0.2)
+                    }`,
+                  }}
+                />
               </Box>
             </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary">
+            <AccordionDetails sx={{ pt: 0 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                 Required for core functionality. Stores your UI preferences (theme, layout), ESO
                 Logs authentication tokens, and this consent choice in your browser&apos;s
                 localStorage. No data is sent to external servers.
@@ -345,16 +422,29 @@ export const CookieConsent: React.FC = () => {
           </Accordion>
 
           {/* Analytics */}
-          <Accordion disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Accordion
+            disableGutters
+            sx={{
+              '&:before': { display: 'none' },
+              borderRadius: '12px !important',
+              mb: 1.5,
+              border: `1px solid ${theme.palette.divider}`,
+              overflow: 'hidden',
+            }}
+          >
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{ '& .MuiAccordionSummary-content': { my: 1.5 } }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
                   Analytics
                 </Typography>
                 <FormControlLabel
                   control={
                     <Switch
                       checked={analyticsEnabled}
+                      size="small"
                       onChange={(e) => {
                         e.stopPropagation();
                         setAnalyticsEnabled(e.target.checked);
@@ -367,8 +457,8 @@ export const CookieConsent: React.FC = () => {
                 />
               </Box>
             </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary">
+            <AccordionDetails sx={{ pt: 0 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                 Google Analytics 4 helps us understand which features are used most, so we can focus
                 development efforts. We track page views (with report codes anonymized), feature
                 usage events, and build metadata. Your numeric user ID may be sent if you are logged
@@ -379,16 +469,29 @@ export const CookieConsent: React.FC = () => {
           </Accordion>
 
           {/* Error Tracking */}
-          <Accordion disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Accordion
+            disableGutters
+            sx={{
+              '&:before': { display: 'none' },
+              borderRadius: '12px !important',
+              mb: 1.5,
+              border: `1px solid ${theme.palette.divider}`,
+              overflow: 'hidden',
+            }}
+          >
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{ '& .MuiAccordionSummary-content': { my: 1.5 } }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', pr: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, flex: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1 }}>
                   Error Tracking
                 </Typography>
                 <FormControlLabel
                   control={
                     <Switch
                       checked={errorTrackingEnabled}
+                      size="small"
                       onChange={(e) => {
                         e.stopPropagation();
                         setErrorTrackingEnabled(e.target.checked);
@@ -401,8 +504,8 @@ export const CookieConsent: React.FC = () => {
                 />
               </Box>
             </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="body2" color="text.secondary">
+            <AccordionDetails sx={{ pt: 0 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                 Sentry monitors runtime errors and performance so we can quickly fix bugs. When
                 enabled, crash reports include browser info, UI state (no personal data), and
                 performance metrics. Your numeric user ID and username may be attached to help us
@@ -410,25 +513,66 @@ export const CookieConsent: React.FC = () => {
               </Typography>
             </AccordionDetails>
           </Accordion>
-
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              For full details, see our{' '}
-              <Link href="/privacy" color="primary" underline="hover">
-                Privacy Policy
-              </Link>
-              . You can also manage your data (export or delete) from that page.
-            </Typography>
-          </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2, gap: 1 }}>
-          <Button onClick={handleDeclineAll} color="inherit">
+        <DialogActions
+          sx={{
+            p: 2,
+            gap: 1,
+            borderTop: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <Button
+            onClick={handleDeclineAll}
+            size="small"
+            sx={{
+              color: theme.palette.text.secondary,
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': { backgroundColor: alpha(theme.palette.text.primary, 0.05) },
+            }}
+          >
             Decline All
           </Button>
-          <Button onClick={handleAcceptAll} variant="outlined">
+          <Button
+            onClick={handleAcceptAll}
+            variant="outlined"
+            size="small"
+            sx={{
+              textTransform: 'none',
+              fontWeight: 500,
+              borderRadius: '8px',
+              borderColor: alpha(theme.palette.primary.main, 0.4),
+              '&:hover': {
+                borderColor: theme.palette.primary.main,
+                backgroundColor: alpha(theme.palette.primary.main, 0.06),
+              },
+            }}
+          >
             Accept All
           </Button>
-          <Button onClick={handleSavePreferences} variant="contained" autoFocus>
+          <Button
+            onClick={handleSavePreferences}
+            variant="contained"
+            size="small"
+            autoFocus
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: '8px',
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #38bdf8, #00e1ff)'
+                  : 'linear-gradient(135deg, #0f172a, #1e293b)',
+              color: theme.palette.mode === 'dark' ? '#0b1220' : '#ffffff',
+              boxShadow: 'none',
+              '&:hover': {
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 4px 16px rgba(56, 189, 248, 0.25)'
+                    : '0 4px 16px rgba(15, 23, 42, 0.2)',
+              },
+            }}
+          >
             Save Preferences
           </Button>
         </DialogActions>

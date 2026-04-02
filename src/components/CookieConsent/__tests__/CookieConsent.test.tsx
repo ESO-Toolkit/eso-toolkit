@@ -22,7 +22,7 @@ describe('CookieConsent', () => {
 
   it('should show banner when no consent has been given', () => {
     render(<CookieConsent />);
-    expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
+    expect(screen.getByText('Privacy & Cookies')).toBeInTheDocument();
   });
 
   it('should not show banner when valid consent exists', async () => {
@@ -34,7 +34,7 @@ describe('CookieConsent', () => {
 
     await waitFor(
       () => {
-        expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
+        expect(screen.queryByText('Privacy & Cookies')).not.toBeInTheDocument();
       },
       { timeout: 1000 },
     );
@@ -48,7 +48,7 @@ describe('CookieConsent', () => {
     );
 
     render(<CookieConsent />);
-    expect(screen.getByText('We Value Your Privacy')).toBeInTheDocument();
+    expect(screen.getByText('Privacy & Cookies')).toBeInTheDocument();
   });
 
   it('should hide banner and save all-accepted when Accept All is clicked', async () => {
@@ -63,7 +63,7 @@ describe('CookieConsent', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
+      expect(screen.queryByText('Privacy & Cookies')).not.toBeInTheDocument();
     });
 
     const prefs = getConsentPreferences();
@@ -83,7 +83,7 @@ describe('CookieConsent', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
+      expect(screen.queryByText('Privacy & Cookies')).not.toBeInTheDocument();
     });
 
     const prefs = getConsentPreferences();
@@ -182,7 +182,7 @@ describe('CookieConsent', () => {
     });
 
     await waitFor(() => {
-      expect(screen.queryByText('We Value Your Privacy')).not.toBeInTheDocument();
+      expect(screen.queryByText('Privacy & Cookies')).not.toBeInTheDocument();
     });
 
     const prefs = getConsentPreferences();
