@@ -252,7 +252,14 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
   // ── Empty state ──
   if (savedRosters.length === 0) {
     return (
-      <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth className="glass-dialog" PaperProps={{ sx: paperSx }}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="xs"
+        fullWidth
+        className="glass-dialog"
+        PaperProps={{ sx: paperSx }}
+      >
         <DialogTitle sx={titleSx}>
           Add to Roster
           <IconButton onClick={onClose} size="small" aria-label="Close dialog">
@@ -290,7 +297,14 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
 
   // ── Main dialog ──
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth className="glass-dialog" PaperProps={{ sx: paperSx }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      className="glass-dialog"
+      PaperProps={{ sx: paperSx }}
+    >
       <DialogTitle sx={titleSx}>
         Add to Roster
         <IconButton onClick={onClose} size="small" aria-label="Close dialog">

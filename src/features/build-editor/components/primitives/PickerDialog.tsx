@@ -284,9 +284,7 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
             : isDark
               ? '1px solid #1f2937'
               : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark
-            ? '0 8px 30px rgba(0,0,0,0.25)'
-            : '0 4px 12px rgba(15,23,42,0.06)',
+          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
           maxHeight: isMobile ? '100vh' : '90vh',
           // Subtle top-edge glow
           '&::after': isMobile
