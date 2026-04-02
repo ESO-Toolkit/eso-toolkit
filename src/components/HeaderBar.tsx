@@ -373,10 +373,10 @@ const DropdownItem = styled(ButtonBase, {
 })<{ active?: boolean }>(({ theme, active }) => ({
   display: 'flex',
   alignItems: 'center',
-  gap: 12,
+  gap: 10,
   width: '100%',
-  padding: '10px 12px',
-  borderRadius: 10,
+  padding: '8px 10px',
+  borderRadius: 8,
   textAlign: 'left',
   transition: 'all 0.15s ease-in-out',
   background: active
@@ -385,43 +385,41 @@ const DropdownItem = styled(ButtonBase, {
       : 'rgba(59, 130, 246, 0.08)'
     : 'transparent',
   borderLeft: active
-    ? `2px solid ${theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.6)' : 'rgba(59, 130, 246, 0.5)'}`
+    ? `2px solid ${theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.7)' : 'rgba(59, 130, 246, 0.6)'}`
     : '2px solid transparent',
+  color: active
+    ? theme.palette.mode === 'dark'
+      ? '#38bdf8'
+      : '#0369a1'
+    : theme.palette.text.primary,
   '&:hover': {
     background:
       theme.palette.mode === 'dark'
         ? 'rgba(56, 189, 248, 0.08)'
         : 'rgba(59, 130, 246, 0.06)',
-    transform: 'translateX(2px)',
-    '& .icon-badge': {
-      transform: 'scale(1.08)',
-      boxShadow:
-        theme.palette.mode === 'dark'
-          ? '0 4px 12px rgba(56, 189, 248, 0.2)'
-          : '0 4px 12px rgba(59, 130, 246, 0.15)',
-    },
+    borderLeftColor:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.35)',
   },
 }));
 
-// Gradient icon badge container
+// Compact icon badge container
 const IconBadge = styled(Box)(({ theme }) => ({
-  width: 36,
-  height: 36,
-  borderRadius: 10,
+  width: 28,
+  height: 28,
+  borderRadius: 8,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
   background:
     theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 225, 255, 0.08) 100%)'
-      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.06) 100%)',
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 225, 255, 0.07) 100%)'
+      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%)',
   border:
     theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.15)'
+      ? '1px solid rgba(56, 189, 248, 0.12)'
       : '1px solid rgba(59, 130, 246, 0.1)',
-  fontSize: 18,
-  transition: 'all 0.2s ease',
+  fontSize: 14,
 }));
 
 // Dropdown paper common styles helper
@@ -431,8 +429,8 @@ const getDropdownPaperSx = (
 ) => ({
   overflow: 'visible',
   mt: 1.5,
-  p: 1.5,
-  minWidth: opts.minWidth ?? 240,
+  p: 1,
+  minWidth: opts.minWidth ?? 200,
   background:
     theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(8,12,24,0.98) 100%)'
@@ -1183,106 +1181,40 @@ export const HeaderBar: React.FC = () => {
           },
         }}
       >
-        {/* User header */}
-        {userLabel && (
-          <>
-            <Box sx={{ px: 1.5, pt: 0.5, pb: 1 }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.7)' : 'rgba(100,116,139,0.7)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  fontSize: '0.65rem',
-                }}
-              >
-                Signed in as
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.25 }}>
-                {userLabel}
-              </Typography>
-            </Box>
-            <Divider
-              sx={{
-                mx: 1,
-                mb: 0.5,
-                borderColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.1)'
-                    : 'rgba(59, 130, 246, 0.08)',
-              }}
-            />
-          </>
-        )}
-
-        <DropdownItem
-          active={location.pathname === '/my-reports'}
-          onClick={handleViewReports}
-        >
-          <IconBadge className="icon-badge">
-            <Assessment sx={{ fontSize: 18 }} />
+        <DropdownItem active={location.pathname === '/my-reports'} onClick={handleViewReports}>
+          <IconBadge>
+            <Assessment sx={{ fontSize: 16 }} />
           </IconBadge>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-              My reports
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
-            >
-              Your uploaded logs
-            </Typography>
-          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            My reports
+          </Typography>
         </DropdownItem>
-        <DropdownItem
-          active={location.pathname === '/my-rosters'}
-          onClick={handleViewRosters}
-        >
-          <IconBadge className="icon-badge">
-            <span role="img" aria-label="rosters" style={{ fontSize: 16 }}>
+        <DropdownItem active={location.pathname === '/my-rosters'} onClick={handleViewRosters}>
+          <IconBadge>
+            <span role="img" aria-label="rosters" style={{ fontSize: 14, lineHeight: 1 }}>
               👥
             </span>
           </IconBadge>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-              My rosters
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
-            >
-              Saved team setups
-            </Typography>
-          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            My rosters
+          </Typography>
         </DropdownItem>
-        <DropdownItem
-          active={location.pathname === '/my-builds'}
-          onClick={handleViewBuilds}
-        >
-          <IconBadge className="icon-badge">
-            <Build sx={{ fontSize: 18 }} />
+        <DropdownItem active={location.pathname === '/my-builds'} onClick={handleViewBuilds}>
+          <IconBadge>
+            <Build sx={{ fontSize: 16 }} />
           </IconBadge>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-              My builds
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
-            >
-              Saved configurations
-            </Typography>
-          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            My builds
+          </Typography>
         </DropdownItem>
 
         <Divider
           sx={{
-            mx: 1,
+            mx: 0.5,
             my: 0.5,
             borderColor:
               theme.palette.mode === 'dark'
-                ? 'rgba(239, 68, 68, 0.15)'
+                ? 'rgba(239, 68, 68, 0.12)'
                 : 'rgba(220, 38, 38, 0.1)',
           }}
         />
@@ -1290,16 +1222,18 @@ export const HeaderBar: React.FC = () => {
         <DropdownItem
           onClick={handleLogoutFromMenu}
           sx={{
+            color: 'error.main',
             '&:hover': {
               background:
                 theme.palette.mode === 'dark'
                   ? 'rgba(239, 68, 68, 0.08)'
                   : 'rgba(220, 38, 38, 0.06)',
+              borderLeftColor:
+                theme.palette.mode === 'dark' ? 'rgba(239,68,68,0.5)' : 'rgba(220,38,38,0.4)',
             },
           }}
         >
           <IconBadge
-            className="icon-badge"
             sx={{
               background:
                 theme.palette.mode === 'dark'
@@ -1307,19 +1241,19 @@ export const HeaderBar: React.FC = () => {
                   : 'rgba(220, 38, 38, 0.08)',
               border:
                 theme.palette.mode === 'dark'
-                  ? '1px solid rgba(239, 68, 68, 0.15)'
+                  ? '1px solid rgba(239, 68, 68, 0.12)'
                   : '1px solid rgba(220, 38, 38, 0.1)',
             }}
           >
-            <Logout sx={{ fontSize: 18, color: 'error.main' }} />
+            <Logout sx={{ fontSize: 16, color: 'error.main' }} />
           </IconBadge>
-          <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+          <Typography variant="body2" sx={{ fontWeight: 500, color: 'error.main' }}>
             Log out
           </Typography>
         </DropdownItem>
       </Popover>
 
-      {/* Tools Submenu — Modern 2-column grid */}
+      {/* Tools Submenu */}
       <Popover
         open={Boolean(toolsAnchorEl)}
         anchorEl={toolsAnchorEl}
@@ -1329,71 +1263,31 @@ export const HeaderBar: React.FC = () => {
         slotProps={{
           paper: {
             elevation: 0,
-            sx: getDropdownPaperSx(theme, { minWidth: 460, arrowLeft: 24 }),
+            sx: getDropdownPaperSx(theme, { minWidth: 200, arrowLeft: 24 }),
           },
         }}
       >
-        <Typography
-          variant="caption"
-          sx={{
-            px: 1.5,
-            pt: 0.25,
-            pb: 0.75,
-            display: 'block',
-            color:
-              theme.palette.mode === 'dark'
-                ? 'rgba(148,163,184,0.6)'
-                : 'rgba(100,116,139,0.6)',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            fontSize: '0.6rem',
-          }}
-        >
-          Tools & Utilities
-        </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.25 }}>
-          {toolsItems.map((item) => (
-            <DropdownItem
-              key={item.text}
-              active={location.pathname === item.path}
-              onClick={() => handleToolNavigation(item.path)}
-            >
-              <IconBadge className="icon-badge">
-                {typeof item.icon === 'string' ? (
-                  <span style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
-                ) : (
-                  item.icon
-                )}
-              </IconBadge>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 600, lineHeight: 1.3, fontSize: '0.8rem' }}
-                >
-                  {item.text}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.secondary',
-                    lineHeight: 1.2,
-                    fontSize: '0.65rem',
-                    display: 'block',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {item.desc}
-                </Typography>
-              </Box>
-            </DropdownItem>
-          ))}
-        </Box>
+        {toolsItems.map((item) => (
+          <DropdownItem
+            key={item.text}
+            active={location.pathname === item.path}
+            onClick={() => handleToolNavigation(item.path)}
+          >
+            <IconBadge>
+              {typeof item.icon === 'string' ? (
+                <span style={{ fontSize: 14, lineHeight: 1 }}>{item.icon}</span>
+              ) : (
+                item.icon
+              )}
+            </IconBadge>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {item.text}
+            </Typography>
+          </DropdownItem>
+        ))}
       </Popover>
 
-      {/* Reports Submenu — Modern single-column */}
+      {/* Reports Submenu */}
       <Popover
         open={Boolean(reportsAnchorEl)}
         anchorEl={reportsAnchorEl}
@@ -1403,59 +1297,30 @@ export const HeaderBar: React.FC = () => {
         slotProps={{
           paper: {
             elevation: 0,
-            sx: getDropdownPaperSx(theme, { minWidth: 260, arrowLeft: 24 }),
+            sx: getDropdownPaperSx(theme, { minWidth: 200, arrowLeft: 24 }),
           },
         }}
       >
-        <Typography
-          variant="caption"
-          sx={{
-            px: 1.5,
-            pt: 0.25,
-            pb: 0.75,
-            display: 'block',
-            color:
-              theme.palette.mode === 'dark'
-                ? 'rgba(148,163,184,0.6)'
-                : 'rgba(100,116,139,0.6)',
-            fontWeight: 600,
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            fontSize: '0.6rem',
-          }}
-        >
-          Reports
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-          {reportsItems.map((item) => (
-            <DropdownItem
-              key={item.text}
-              active={item.path ? location.pathname === item.path : false}
-              onClick={() => {
-                if (item.action) {
-                  item.action();
-                } else if (item.path) {
-                  handleToolNavigation(item.path);
-                }
-              }}
-            >
-              <IconBadge className="icon-badge">
-                <span style={{ fontSize: 16, lineHeight: 1 }}>{item.icon}</span>
-              </IconBadge>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-                  {item.text}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: 'text.secondary', lineHeight: 1.2, fontSize: '0.7rem' }}
-                >
-                  {item.desc}
-                </Typography>
-              </Box>
-            </DropdownItem>
-          ))}
-        </Box>
+        {reportsItems.map((item) => (
+          <DropdownItem
+            key={item.text}
+            active={item.path ? location.pathname === item.path : false}
+            onClick={() => {
+              if (item.action) {
+                item.action();
+              } else if (item.path) {
+                handleToolNavigation(item.path);
+              }
+            }}
+          >
+            <IconBadge>
+              <span style={{ fontSize: 14, lineHeight: 1 }}>{item.icon}</span>
+            </IconBadge>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              {item.text}
+            </Typography>
+          </DropdownItem>
+        ))}
       </Popover>
 
       {/* Modern Mobile Menu Overlay */}
