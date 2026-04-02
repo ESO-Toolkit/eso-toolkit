@@ -379,7 +379,7 @@ export const CookieConsent: React.FC = () => {
             sx={{
               '&:before': { display: 'none' },
               borderRadius: '12px !important',
-              mb: 1.5,
+              mb: 2.5,
               border: `1px solid ${theme.palette.divider}`,
               background:
                 theme.palette.mode === 'dark'
