@@ -230,11 +230,6 @@ export const MyRostersPage: React.FC = () => {
     setPublishTarget({ data, saved });
   };
 
-  const handlePublish = async (saved: SavedRoster): Promise<void> => {
-    const data = await encodeRosterToURL(saved.roster);
-    setPublishTarget({ data, saved });
-  };
-
   const handleDeleteConfirm = (): void => {
     if (pendingDelete) {
       dispatch(deleteRoster(pendingDelete.id));
