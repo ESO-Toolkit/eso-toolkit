@@ -342,7 +342,5 @@ export const withErrorBoundary = <P extends object>(
 
 /** Top-level app error boundary with a full-page fallback UI. */
 export const AppErrorBoundary: React.FC<{ children: ReactNode }> = ({ children }) => (
-  <ErrorBoundary>
-    {children}
-  </ErrorBoundary>
+  <ErrorBoundary>{children}</ErrorBoundary>
 );
