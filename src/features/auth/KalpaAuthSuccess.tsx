@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box';
-import { alpha, keyframes, styled } from '@mui/material/styles';
+import { alpha, keyframes, styled, Theme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useId, useRef, useState } from 'react';
 
@@ -258,7 +258,7 @@ export const KalpaAuthSuccess = (): React.JSX.Element => {
 
         {/* Subtitle */}
         <Typography
-          sx={(theme) => ({
+          sx={(theme: Theme) => ({
             color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
             fontSize: '1.05rem',
             textAlign: 'center',
@@ -290,7 +290,7 @@ export const KalpaAuthSuccess = (): React.JSX.Element => {
         {/* Auto-close countdown */}
         {showCountdown && (
           <Typography
-            sx={(theme) => ({
+            sx={(theme: Theme) => ({
               color: alpha(theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b', 0.6),
               fontSize: '0.8rem',
               textAlign: 'center',

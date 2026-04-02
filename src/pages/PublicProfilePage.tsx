@@ -523,7 +523,6 @@ export const PublicProfilePage: React.FC = () => {
     }
   }, [deleteTarget, accessToken, enqueueSnackbar]);
 
-
   // ── Loading ───────────────────────────────────────────────────────────────
 
   if (loading) {
