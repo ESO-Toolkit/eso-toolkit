@@ -19,8 +19,8 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import discordIcon from '../../../assets/discord-icon.svg';
-import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
+import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
 import { TAG_COLORS } from '../types/roster-hub.types';
 
@@ -107,7 +107,7 @@ function formatDate(iso: string): string {
 }
 
 export const RosterCard: React.FC<RosterCardProps> = React.memo(
-  ({ roster, isOwner, isLoggedIn, onVote, onPreview, onDelete, onEdit, onPublishDiscord }) => {
+  ({ roster, isOwner, isLoggedIn, onVote, onDelete, onEdit, onPublishDiscord }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const navigate = useViewTransitionNavigate();

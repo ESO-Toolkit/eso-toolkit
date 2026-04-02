@@ -25,7 +25,6 @@ import { FilterBar } from './FilterBar';
 import { PublishRosterDialog } from './PublishRosterDialog';
 import { RosterCard } from './RosterCard';
 import { RosterCardSkeleton } from './RosterCardSkeleton';
-import { RosterPreviewDialog } from './RosterPreviewDialog';
 import { ServerPickerDialog } from './ServerPickerDialog';
 
 const SKELETON_COUNT = 8;
