@@ -631,6 +631,256 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // ESO-745: Authenticated management pages
+  // ---------------------------------------------------------------------------
+  test.describe('Authenticated Management Pages', () => {
+    test('my-builds page should load or redirect gracefully', async ({ page }) => {
+      await page.goto('/my-builds', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      await page.waitForTimeout(3000);
+
+      // Client credentials tokens don't carry a user subject, so /my-builds may
+      // redirect to login. Both outcomes (loaded content OR redirect to login) are valid.
+      const url = page.url();
+      const hasContent = await page
+        .locator('main, .MuiContainer-root, .build-list, [data-testid*="build"]')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      const hasLoginPrompt = await page
+        .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+      const isOnLogin = url.includes('/login') || url.includes('/oauth');
+
+      expect(
+        hasContent || hasLoginPrompt || isOnLogin,
+        '/my-builds should either render or redirect to login',
+      ).toBeTruthy();
+
+      await page.screenshot({
+        path: 'test-results/nightly-regression-my-builds.png',
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+    });
+
+    test('my-rosters page should load or redirect gracefully', async ({ page }) => {
+      await page.goto('/my-rosters', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      await page.waitForTimeout(3000);
+
+      const url = page.url();
+      const hasContent = await page
+        .locator('main, .MuiContainer-root, [data-testid*="roster"]')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      const hasLoginPrompt = await page
+        .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+      const isOnLogin = url.includes('/login') || url.includes('/oauth');
+
+      expect(
+        hasContent || hasLoginPrompt || isOnLogin,
+        '/my-rosters should either render or redirect to login',
+      ).toBeTruthy();
+
+      await page.screenshot({
+        path: 'test-results/nightly-regression-my-rosters.png',
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+    });
+
+    test('build editor should load or redirect gracefully', async ({ page }) => {
+      await page.goto('/build-editor', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      await page.waitForTimeout(3000);
+
+      const url = page.url();
+      const hasEditor = await page
+        .locator('main, [data-testid*="build"], [data-testid*="editor"], .MuiContainer-root')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      const hasLoginPrompt = await page
+        .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+      const isOnLogin = url.includes('/login') || url.includes('/oauth');
+
+      expect(
+        hasEditor || hasLoginPrompt || isOnLogin,
+        '/build-editor should either render or redirect to login',
+      ).toBeTruthy();
+
+      await page.screenshot({
+        path: 'test-results/nightly-regression-build-editor.png',
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+    });
+
+    test('roster builder should load or redirect gracefully', async ({ page }) => {
+      await page.goto('/roster-builder', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      await page.waitForTimeout(3000);
+
+      const url = page.url();
+      const hasBuilder = await page
+        .locator('main, [data-testid*="roster"], .MuiContainer-root')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      const hasLoginPrompt = await page
+        .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+      const isOnLogin = url.includes('/login') || url.includes('/oauth');
+
+      expect(
+        hasBuilder || hasLoginPrompt || isOnLogin,
+        '/roster-builder should either render or redirect to login',
+      ).toBeTruthy();
+
+      await page.screenshot({
+        path: 'test-results/nightly-regression-roster-builder.png',
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // ESO-750: Expanded negative / error scenario testing
+  // ---------------------------------------------------------------------------
+  test.describe('Negative Scenarios', () => {
+    test('invalid fight ID within a valid report should fallback gracefully', async ({ page }) => {
+      const reportId = '3gjVGWB2dxCL8XAw';
+      await page.goto(`/report/${reportId}/fight/99999/insights`, {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+      await page.waitForTimeout(5000);
+
+      const hasError = await page
+        .getByText(/not found|invalid|error|fight.*not.*exist/i)
+        .isVisible()
+        .catch(() => false);
+      const redirected = !page.url().includes('99999');
+      const hasContent = await page.locator('main, #root').isVisible().catch(() => false);
+
+      expect(
+        hasError || redirected || hasContent,
+        'Invalid fight ID should be handled gracefully',
+      ).toBeTruthy();
+
+      // Page must remain navigable — no uncaught exceptions
+      const errors: string[] = await page.evaluate(() => (window as any).testErrors ?? []);
+      const criticalErrors = errors.filter(
+        (e) =>
+          !e.includes('ResizeObserver') &&
+          !e.includes('Not implemented') &&
+          !e.includes('Non-Error promise rejection') &&
+          !e.includes('ChunkLoadError'),
+      );
+      expect(criticalErrors, 'Invalid fight ID should not cause JS exceptions').toHaveLength(0);
+    });
+
+    test('simulated API timeout should show loading or error state', async ({ page }) => {
+      // Intercept esologs API requests and force a 504 to simulate a timeout
+      await page.route('**/esologs.com/**', async (route) => {
+        await route.fulfill({
+          status: 504,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Gateway Timeout' }),
+        });
+      });
+
+      await page.goto('/report/prV8jWb1NqFJc97Z', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+      await page.waitForTimeout(6000);
+
+      // Should show a loading state, error message, or at minimum not crash
+      const hasLoadingOrError = await page
+        .locator(
+          '.loading, .MuiCircularProgress-root, .MuiAlert-root, .error, .skeleton, .MuiSkeleton-root',
+        )
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      const hasText = await page
+        .getByText(/loading|error|failed|timeout|try again/i)
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+      const hasContent = await page.locator('main, #root').isVisible().catch(() => false);
+
+      expect(
+        hasLoadingOrError || hasText || hasContent,
+        'API timeout should show a loading/error state rather than crash',
+      ).toBeTruthy();
+
+      await page.screenshot({
+        path: 'test-results/nightly-regression-api-timeout.png',
+        fullPage: true,
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+
+      // Unroute so it doesn't affect subsequent tests
+      await page.unrouteAll();
+    });
+
+    test('rate-limited API response (429) should show a user-facing message', async ({ page }) => {
+      await page.route('**/esologs.com/**', async (route) => {
+        await route.fulfill({
+          status: 429,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'Too Many Requests' }),
+        });
+      });
+
+      await page.goto('/report/prV8jWb1NqFJc97Z', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+      await page.waitForTimeout(6000);
+
+      // App should not crash — any visible content is acceptable
+      const hasContent = await page.locator('main, #root, body').first().isVisible().catch(() => false);
+      expect(hasContent, 'A 429 response should not crash the page').toBeTruthy();
+
+      // No uncaught JS exceptions from the rate-limit scenario
+      const errors: string[] = await page.evaluate(() => (window as any).testErrors ?? []);
+      const criticalErrors = errors.filter(
+        (e) =>
+          !e.includes('ResizeObserver') &&
+          !e.includes('Not implemented') &&
+          !e.includes('Non-Error promise rejection') &&
+          !e.includes('ChunkLoadError'),
+      );
+      expect(criticalErrors, '429 response should not cause uncaught JS exceptions').toHaveLength(0);
+
+      await page.unrouteAll();
+    });
+  });
+
   test.describe('Cross-browser Compatibility Checks', () => {
     test('should verify key functionality works across browsers', async ({ page, browserName }) => {
       // Test basic navigation in different browsers

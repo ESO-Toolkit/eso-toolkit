@@ -121,7 +121,11 @@ export default defineConfig({
           ],
         },
       },
-      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+      testMatch: [
+        '**/nightly-regression.spec.ts',
+        '**/nightly-regression-interactive.spec.ts',
+        '**/nightly-regression-pages.spec.ts',
+      ],
     },
     {
       name: 'firefox-desktop',
@@ -138,7 +142,11 @@ export default defineConfig({
           },
         },
       },
-      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+      testMatch: [
+        '**/nightly-regression.spec.ts',
+        '**/nightly-regression-interactive.spec.ts',
+        '**/nightly-regression-pages.spec.ts',
+      ],
     },
     {
       name: 'webkit-desktop',
@@ -148,7 +156,11 @@ export default defineConfig({
         storageState: getOptionalAuthState(),
         // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
-      testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+      testMatch: [
+        '**/nightly-regression.spec.ts',
+        '**/nightly-regression-interactive.spec.ts',
+        '**/nightly-regression-pages.spec.ts',
+      ],
     },
 
     /* Additional Authenticated Tests for specific auth scenarios */

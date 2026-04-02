@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
+import { resolveWorkingReportId } from './utils/nightly-regression-helpers';
 
 /**
  * Nightly Regression Tests - Interactive Features
@@ -13,7 +14,8 @@ import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
  */
 
 const REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS.slice(0, 3); // Use first 3 for better coverage
-const REPORT_WITH_FIGHTS = REAL_REPORT_IDS[0]; // prV8jWb1NqFJc97Z - Rockgrove with 17 fights
+// Resolved dynamically in test.beforeAll to survive report ID expiry — see ESO-740.
+let REPORT_WITH_FIGHTS = TEST_DATA.REAL_REPORT_IDS[0];
 
 /**
  * Enhanced error handling wrapper for browser operations
@@ -152,6 +154,17 @@ async function findUsableFightButton(
 }
 
 test.describe('Nightly Regression - Interactive Features', () => {
+  // Resolve the primary report ID once before all tests run so the suite
+  // survives expiry of the hardcoded primary ID (ESO-740).
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    try {
+      REPORT_WITH_FIGHTS = await resolveWorkingReportId(page);
+    } finally {
+      await page.close();
+    }
+  });
+
   test.beforeEach(async ({ page }) => {
     // No API mocking - we need real data for these features
     test.setTimeout(180000); // 3 minutes per test for complex features
