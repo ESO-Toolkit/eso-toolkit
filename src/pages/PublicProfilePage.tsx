@@ -39,10 +39,7 @@ import { useAuth } from '../features/auth/AuthContext';
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
-import {
-  TRIAL_ACCENT,
-  TRIAL_LABELS,
-} from '../features/roster-hub/components/RosterCard';
+import { TRIAL_ACCENT, TRIAL_LABELS } from '../features/roster-hub/components/RosterCard';
 import type {
   ProfileBuildSummary,
   ProfileRosterSummary,
@@ -238,7 +235,11 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
 
           <Typography
             variant="caption"
-            sx={{ display: 'block', color: isDarkMode ? '#475569' : '#94a3b8', fontSize: '0.65rem' }}
+            sx={{
+              display: 'block',
+              color: isDarkMode ? '#475569' : '#94a3b8',
+              fontSize: '0.65rem',
+            }}
           >
             {formatDate(build.created_at)}
           </Typography>
@@ -399,7 +400,11 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
 
           <Typography
             variant="caption"
-            sx={{ display: 'block', color: isDarkMode ? '#475569' : '#94a3b8', fontSize: '0.65rem' }}
+            sx={{
+              display: 'block',
+              color: isDarkMode ? '#475569' : '#94a3b8',
+              fontSize: '0.65rem',
+            }}
           >
             {formatDate(roster.created_at)}
           </Typography>
@@ -493,7 +498,11 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({ icon, label, count }) =
       <Box sx={{ color: isDarkMode ? '#38bdf8' : '#3b82f6', display: 'flex' }}>{icon}</Box>
       <Typography
         variant="h6"
-        sx={{ fontWeight: 700, color: theme.palette.text.primary, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+        sx={{
+          fontWeight: 700,
+          color: theme.palette.text.primary,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+        }}
       >
         {label}
       </Typography>
@@ -538,11 +547,19 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, message, actionLabel, onA
       }}
     >
       <Box sx={{ color: isDarkMode ? '#334155' : '#cbd5e1', mb: 1 }}>{icon}</Box>
-      <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: actionLabel ? 1.5 : 0 }}>
+      <Typography
+        variant="body2"
+        sx={{ color: theme.palette.text.secondary, mb: actionLabel ? 1.5 : 0 }}
+      >
         {message}
       </Typography>
       {actionLabel && onAction && (
-        <Button size="small" variant="outlined" onClick={onAction} sx={{ textTransform: 'none', fontWeight: 600 }}>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={onAction}
+          sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
           {actionLabel}
         </Button>
       )}
@@ -701,9 +718,19 @@ export const PublicProfilePage: React.FC = () => {
           }}
         >
           <Skeleton variant="circular" width={80} height={80} sx={{ flexShrink: 0 }} />
-          <Box sx={{ flex: 1, minWidth: 0, textAlign: { xs: 'center', sm: 'left' }, width: '100%' }}>
+          <Box
+            sx={{ flex: 1, minWidth: 0, textAlign: { xs: 'center', sm: 'left' }, width: '100%' }}
+          >
             <Skeleton variant="text" width={180} height={36} sx={{ mx: { xs: 'auto', sm: 0 } }} />
-            <Box sx={{ display: 'flex', gap: 2, mt: 0.75, mb: 1.5, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                mt: 0.75,
+                mb: 1.5,
+                justifyContent: { xs: 'center', sm: 'flex-start' },
+              }}
+            >
               <Skeleton variant="text" width={70} height={18} />
               <Skeleton variant="text" width={70} height={18} />
             </Box>
@@ -761,9 +788,7 @@ export const PublicProfilePage: React.FC = () => {
               width: 72,
               height: 72,
               borderRadius: '50%',
-              background: isDarkMode
-                ? alpha('#334155', 0.3)
-                : alpha('#cbd5e1', 0.3),
+              background: isDarkMode ? alpha('#334155', 0.3) : alpha('#cbd5e1', 0.3),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -775,7 +800,12 @@ export const PublicProfilePage: React.FC = () => {
           </Box>
           <Typography
             variant="h5"
-            sx={{ fontWeight: 700, color: theme.palette.text.primary, mb: 1, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+            sx={{
+              fontWeight: 700,
+              color: theme.palette.text.primary,
+              mb: 1,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
           >
             Player not found
           </Typography>
@@ -857,7 +887,15 @@ export const PublicProfilePage: React.FC = () => {
 
         {/* Name + bio */}
         <Box sx={{ flex: 1, minWidth: 0, textAlign: { xs: 'center', sm: 'left' } }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              flexWrap: 'wrap',
+              justifyContent: { xs: 'center', sm: 'flex-start' },
+            }}
+          >
             <Typography
               variant="h4"
               sx={{
@@ -977,11 +1015,7 @@ export const PublicProfilePage: React.FC = () => {
 
       {/* ── Builds ─────────────────────────────────────────────────────── */}
       <Box sx={{ mb: 5 }}>
-        <SectionHeading
-          icon={<ConstructionIcon />}
-          label="Builds"
-          count={profile.build_count}
-        />
+        <SectionHeading icon={<ConstructionIcon />} label="Builds" count={profile.build_count} />
         {hasBuild ? (
           <>
             <Grid container spacing={2}>
@@ -1004,7 +1038,9 @@ export const PublicProfilePage: React.FC = () => {
                 size="small"
                 variant="outlined"
                 sx={{ mt: 2.5, textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-                onClick={() => navigate(`/build-hub?author=${encodeURIComponent(profile.username)}`)}
+                onClick={() =>
+                  navigate(`/build-hub?author=${encodeURIComponent(profile.username)}`)
+                }
               >
                 View all {profile.build_count} builds
               </Button>
@@ -1022,11 +1058,7 @@ export const PublicProfilePage: React.FC = () => {
 
       {/* ── Rosters ────────────────────────────────────────────────────── */}
       <Box>
-        <SectionHeading
-          icon={<GroupsIcon />}
-          label="Rosters"
-          count={profile.roster_count}
-        />
+        <SectionHeading icon={<GroupsIcon />} label="Rosters" count={profile.roster_count} />
         {hasRoster ? (
           <>
             <Grid container spacing={2}>
@@ -1049,7 +1081,9 @@ export const PublicProfilePage: React.FC = () => {
                 size="small"
                 variant="outlined"
                 sx={{ mt: 2.5, textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-                onClick={() => navigate(`/roster-hub?author=${encodeURIComponent(profile.username)}`)}
+                onClick={() =>
+                  navigate(`/roster-hub?author=${encodeURIComponent(profile.username)}`)
+                }
               >
                 View all {profile.roster_count} rosters
               </Button>
