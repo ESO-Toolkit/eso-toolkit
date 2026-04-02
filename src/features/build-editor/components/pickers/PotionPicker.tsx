@@ -344,14 +344,18 @@ const PotionPickerDialog: React.FC<PotionPickerDialogProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      className="glass-dialog"
       PaperProps={{
         sx: {
-          borderRadius: '16px',
-          backdropFilter: 'blur(24px)',
-          background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
-          maxHeight: '80vh',
+          borderRadius: '20px',
+          backdropFilter: 'blur(20px)',
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+          backgroundColor: 'transparent',
+          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+          maxHeight: '90vh',
         },
       }}
     >
