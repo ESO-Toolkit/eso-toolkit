@@ -174,8 +174,8 @@ export const CookieConsent: React.FC = () => {
 
   return (
     <>
-      {/* Consent Banner */}
-      {showBanner && (
+      {/* Consent Banner — hidden when preferences dialog is open */}
+      {showBanner && !showDetails && (
         <BannerRoot>
           <AccentBar />
 
