@@ -30,11 +30,7 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
   return (
     <>
       {/* Real ReportActionBar with placeholder title */}
-      <ReportActionBar
-        reportId=""
-        title="Loading Report..."
-        activePage="fights"
-      />
+      <ReportActionBar reportId="" title="Loading Report..." activePage="fights" />
 
       <Card
         elevation={4}
@@ -46,8 +42,7 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
             t.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
               : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
-          boxShadow: (t: Theme) =>
-            t.palette.mode === 'dark' ? t.shadows[6] : t.shadows[4],
+          boxShadow: (t: Theme) => (t.palette.mode === 'dark' ? t.shadows[6] : t.shadows[4]),
           overflow: 'visible',
         }}
       >
@@ -147,8 +142,7 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
                         width={70}
                         height={18}
                         sx={{
-                          color: (t: Theme) =>
-                            t.palette.mode === 'dark' ? '#d2e5ff' : '#64748b',
+                          color: (t: Theme) => (t.palette.mode === 'dark' ? '#d2e5ff' : '#64748b'),
                         }}
                       />
                       <Skeleton variant="text" width={20} height={18} />
@@ -157,7 +151,12 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
                   {/* Trash toggle on alternate encounters */}
                   {encounterIndex % 2 === 1 && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 2 }}>
-                      <Skeleton variant="rounded" width={34} height={20} sx={{ borderRadius: 10 }} />
+                      <Skeleton
+                        variant="rounded"
+                        width={34}
+                        height={20}
+                        sx={{ borderRadius: 10 }}
+                      />
                       <Skeleton variant="text" width={30} height={16} />
                     </Box>
                   )}
@@ -302,7 +301,12 @@ const FightCardSkeleton: React.FC = () => (
           width={16}
           sx={{ fontSize: '0.6rem', display: { xs: 'none', sm: 'block' }, flexShrink: 0 }}
         />
-        <Skeleton variant="rounded" width={28} height={3} sx={{ borderRadius: '1.5px', flexShrink: 0 }} />
+        <Skeleton
+          variant="rounded"
+          width={28}
+          height={3}
+          sx={{ borderRadius: '1.5px', flexShrink: 0 }}
+        />
       </Box>
     </Box>
   </Box>

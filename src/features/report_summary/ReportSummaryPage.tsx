@@ -1,12 +1,4 @@
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  LinearProgress,
-  Alert,
-  Chip,
-} from '@mui/material';
+import { Box, Typography, Card, CardContent, LinearProgress, Alert, Chip } from '@mui/material';
 import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 
@@ -160,8 +152,7 @@ const ReportSummaryHeader: React.FC<ReportSummaryHeaderProps> = ({
             {summaryData?.reportInfo && (
               <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
                 {new Date(summaryData.reportInfo.startTime).toLocaleString()}
-                {summaryData.reportInfo.ownerName &&
-                  ` · ${summaryData.reportInfo.ownerName}`}
+                {summaryData.reportInfo.ownerName && ` · ${summaryData.reportInfo.ownerName}`}
               </Typography>
             )}
           </Box>

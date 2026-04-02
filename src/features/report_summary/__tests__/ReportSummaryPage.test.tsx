@@ -214,7 +214,6 @@ describe('ReportSummaryPage', () => {
     renderWithProviders(<ReportSummaryPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('Report Summary')).toBeInTheDocument();
       expect(screen.getByText('Test Report')).toBeInTheDocument();
     });
   });

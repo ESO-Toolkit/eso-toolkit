@@ -152,10 +152,18 @@ export const RaidDashboardPage: React.FC = () => {
         actions={
           <>
             <FormControlLabel
-              control={<Switch checked={autoRefreshEnabled} onChange={handleToggleAutoRefresh} size="small" />}
+              control={
+                <Switch
+                  checked={autoRefreshEnabled}
+                  onChange={handleToggleAutoRefresh}
+                  size="small"
+                />
+              }
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>Auto-refresh</Typography>
+                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+                    Auto-refresh
+                  </Typography>
                   {autoRefreshEnabled && (
                     <RefreshIcon
                       color="primary"
