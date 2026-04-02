@@ -120,10 +120,7 @@ export interface DeepLinkOptions {
  *
  * Usage: `eso-addon-manager://pack/trial-essentials?preserve_settings=true`
  */
-export function getAddonManagerDeepLink(
-  packId: string,
-  options: DeepLinkOptions = {},
-): string {
+export function getAddonManagerDeepLink(packId: string, options: DeepLinkOptions = {}): string {
   const { preserveSettings = true } = options;
   const params = new URLSearchParams();
   if (preserveSettings) params.set('preserve_settings', 'true');
