@@ -5,11 +5,17 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import type {
+  BuildSummary,
   CommentRow,
   CommentWithReplies,
+  ImageReportRow,
+  ImageUploadRow,
   RosterRow,
+  RosterSummary,
   RosterTagRow,
   RosterWithMeta,
+  UserProfileResponse,
+  UserProfileRow,
 } from '../types';
 
 const PAGE_SIZE = 20;
@@ -429,12 +435,18 @@ export async function listBuilds(
     votedSet = new Set(voteRows.results.map((v) => v.build_id));
   }
 
-  return rows.results.map((row) => ({
-    ...row,
-    is_anonymous: row.is_anonymous ? true : false,
-    tags: row.tags_concat ? row.tags_concat.split(',') : [],
-    user_voted: opts.userId ? votedSet.has(row.id) : undefined,
-  }));
+  return rows.results.map((row) => {
+    const isAnon = row.is_anonymous ? true : false;
+    const isOwner = opts.userId === row.author_id;
+    return {
+      ...row,
+      author_id: isAnon && !isOwner ? '' : row.author_id,
+      author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+      is_anonymous: isAnon,
+      tags: row.tags_concat ? row.tags_concat.split(',') : [],
+      user_voted: opts.userId ? votedSet.has(row.id) : undefined,
+    };
+  });
 }
 
 export async function getBuildById(
@@ -459,9 +471,13 @@ export async function getBuildById(
     userVoted = vote !== null;
   }
 
+  const isAnon = row.is_anonymous ? true : false;
+  const isOwner = userId === row.author_id;
   return {
     ...row,
-    is_anonymous: row.is_anonymous ? true : false,
+    author_id: isAnon && !isOwner ? '' : row.author_id,
+    author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+    is_anonymous: isAnon,
     tags: tagRows.results.map((t) => t.tag),
     user_voted: userId ? userVoted : undefined,
   };
@@ -560,40 +576,32 @@ export async function toggleBuildVote(
   buildId: string,
   userId: string,
 ): Promise<{ voted: boolean; voteCount: number }> {
-  const existing = await db
-    .prepare('SELECT 1 FROM build_votes WHERE build_id = ? AND user_id = ?')
+  const insertResult = await db
+    .prepare('INSERT OR IGNORE INTO build_votes (build_id, user_id) VALUES (?, ?)')
     .bind(buildId, userId)
-    .first();
+    .run();
 
-  if (existing) {
+  const voted = (insertResult.meta.changes ?? 0) > 0;
+
+  if (!voted) {
     await db
       .prepare('DELETE FROM build_votes WHERE build_id = ? AND user_id = ?')
       .bind(buildId, userId)
       .run();
-    await db
-      .prepare('UPDATE builds SET vote_count = vote_count - 1 WHERE id = ? AND vote_count > 0')
-      .bind(buildId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM builds WHERE id = ?')
-      .bind(buildId)
-      .first<{ vote_count: number }>();
-    return { voted: false, voteCount: updated?.vote_count ?? 0 };
-  } else {
-    await db
-      .prepare('INSERT INTO build_votes (build_id, user_id) VALUES (?, ?)')
-      .bind(buildId, userId)
-      .run();
-    await db
-      .prepare('UPDATE builds SET vote_count = vote_count + 1 WHERE id = ?')
-      .bind(buildId)
-      .run();
-    const updated = await db
-      .prepare('SELECT vote_count FROM builds WHERE id = ?')
-      .bind(buildId)
-      .first<{ vote_count: number }>();
-    return { voted: true, voteCount: updated?.vote_count ?? 1 };
   }
+
+  const countRow = await db
+    .prepare('SELECT COUNT(*) AS cnt FROM build_votes WHERE build_id = ?')
+    .bind(buildId)
+    .first<{ cnt: number }>();
+  const voteCount = countRow?.cnt ?? 0;
+
+  await db
+    .prepare('UPDATE builds SET vote_count = ? WHERE id = ?')
+    .bind(voteCount, buildId)
+    .run();
+
+  return { voted, voteCount };
 }
 
 // ─── Build Comments ───────────────────────────────────────────────────────────
@@ -680,6 +688,17 @@ export async function checkBuildCommentRateLimit(db: D1Database, userId: string)
 const VOTE_RATE_LIMIT_WINDOW_SEC = 3600;
 const VOTE_RATE_LIMIT_MAX = 20;
 
+export async function checkRosterVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM roster_votes
+       WHERE user_id = ? AND created_at > datetime('now', '-${VOTE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < VOTE_RATE_LIMIT_MAX;
+}
+
 export async function checkBuildVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
@@ -689,6 +708,21 @@ export async function checkBuildVoteRateLimit(db: D1Database, userId: string): P
     .bind(userId)
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < VOTE_RATE_LIMIT_MAX;
+}
+
+// Roster create rate limit: 5 creates per hour per user
+const ROSTER_CREATE_RATE_LIMIT_WINDOW_SEC = 3600;
+const ROSTER_CREATE_RATE_LIMIT_MAX = 5;
+
+export async function checkRosterCreateRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM rosters
+       WHERE author_id = ? AND created_at > datetime('now', '-${ROSTER_CREATE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < ROSTER_CREATE_RATE_LIMIT_MAX;
 }
 
 // Build create rate limit: 5 creates per hour per user
@@ -745,10 +779,7 @@ export async function createTempBuild(
   return row!;
 }
 
-export async function getTempBuild(
-  db: D1Database,
-  id: string,
-): Promise<TempBuildRow | null> {
+export async function getTempBuild(db: D1Database, id: string): Promise<TempBuildRow | null> {
   const row = await db
     .prepare("SELECT * FROM temp_builds WHERE id = ? AND expires_at > datetime('now')")
     .bind(id)
@@ -773,6 +804,13 @@ export async function recordTempBuildRateLimit(db: D1Database, ip: string): Prom
     .prepare("INSERT INTO temp_build_rate_limits (ip, created_at) VALUES (?, datetime('now'))")
     .bind(ip)
     .run();
+  // Prune expired entries on every write so the table stays bounded even if the
+  // scheduled cleanup (cleanupExpiredTempBuilds) is delayed or skipped.
+  await db
+    .prepare(
+      `DELETE FROM temp_build_rate_limits WHERE created_at < datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .run();
 }
 
 export async function cleanupExpiredTempBuilds(db: D1Database): Promise<void> {
@@ -783,4 +821,472 @@ export async function cleanupExpiredTempBuilds(db: D1Database): Promise<void> {
       `DELETE FROM temp_build_rate_limits WHERE created_at < datetime('now', '-${TEMP_BUILD_RATE_LIMIT_WINDOW_SEC} seconds')`,
     )
     .run();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Image uploads — CRUD + rate limiting + reporting
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const IMAGE_UPLOAD_RATE_LIMIT_MAX = 10;
+const IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC = 3600; // 1 hour
+
+export async function createImageUpload(
+  db: D1Database,
+  data: {
+    id: string;
+    uploaderId: string;
+    uploaderName: string;
+    url: string;
+    thumbUrl: string;
+    deleteUrl: string;
+  },
+): Promise<ImageUploadRow> {
+  await db
+    .prepare(
+      `INSERT INTO image_uploads (id, uploader_id, uploader_name, url, thumb_url, delete_url)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(data.id, data.uploaderId, data.uploaderName, data.url, data.thumbUrl, data.deleteUrl)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM image_uploads WHERE id = ?')
+    .bind(data.id)
+    .first<ImageUploadRow>();
+
+  return row!;
+}
+
+export async function getImageUpload(db: D1Database, id: string): Promise<ImageUploadRow | null> {
+  const row = await db
+    .prepare('SELECT * FROM image_uploads WHERE id = ?')
+    .bind(id)
+    .first<ImageUploadRow>();
+
+  return row ?? null;
+}
+
+export async function deleteImageUpload(
+  db: D1Database,
+  id: string,
+  userId: string,
+): Promise<{ deleted: boolean; deleteUrl: string | null }> {
+  const row = await db
+    .prepare('SELECT delete_url FROM image_uploads WHERE id = ? AND uploader_id = ?')
+    .bind(id, userId)
+    .first<{ delete_url: string }>();
+
+  if (!row) return { deleted: false, deleteUrl: null };
+
+  await db
+    .prepare('DELETE FROM image_uploads WHERE id = ? AND uploader_id = ?')
+    .bind(id, userId)
+    .run();
+
+  return { deleted: true, deleteUrl: row.delete_url };
+}
+
+export async function createImageReport(
+  db: D1Database,
+  data: { id: string; imageId: string; reporterId: string; reason: string },
+): Promise<ImageReportRow> {
+  await db
+    .prepare(
+      `INSERT INTO image_reports (id, image_id, reporter_id, reason)
+       VALUES (?, ?, ?, ?)`,
+    )
+    .bind(data.id, data.imageId, data.reporterId, data.reason)
+    .run();
+
+  const row = await db
+    .prepare('SELECT * FROM image_reports WHERE id = ?')
+    .bind(data.id)
+    .first<ImageReportRow>();
+
+  return row!;
+}
+
+export async function checkImageUploadRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM image_uploads
+       WHERE uploader_id = ? AND created_at > datetime('now', '-${IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+
+  return (row?.cnt ?? 0) < IMAGE_UPLOAD_RATE_LIMIT_MAX;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// User profiles — zero content storage; aggregates from existing builds/rosters
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PROFILE_PAGE_SIZE = 12;
+
+type BuildSummaryRow = BuildSummary & { tags_concat: string | null; author_name: string };
+type RosterSummaryRow = RosterSummary & { tags_concat: string | null; author_name: string };
+
+export async function getUserProfile(
+  db: D1Database,
+  username: string,
+): Promise<UserProfileResponse | null> {
+  // Run all 5 reads in a single parallel batch — counts included upfront to
+  // avoid a second round-trip to D1.
+  const [profileRow, buildsResult, rostersResult, buildCountRow, rosterCountRow] =
+    await Promise.all([
+      db
+        .prepare('SELECT * FROM user_profiles WHERE author_name = ? COLLATE NOCASE')
+        .bind(username)
+        .first<UserProfileRow>(),
+
+      db
+        .prepare(
+          `SELECT b.id, b.author_name, b.title, b.description, b.eso_class, b.role, b.game_mode,
+                  b.vote_count, b.created_at, GROUP_CONCAT(DISTINCT bt.tag) AS tags_concat
+           FROM builds b
+           LEFT JOIN build_tags bt ON bt.build_id = b.id
+           WHERE b.author_name = ? COLLATE NOCASE AND b.is_anonymous = 0
+           GROUP BY b.id
+           ORDER BY b.vote_count DESC, b.created_at DESC
+           LIMIT ?`,
+        )
+        .bind(username, PROFILE_PAGE_SIZE)
+        .all<BuildSummaryRow>(),
+
+      db
+        .prepare(
+          `SELECT r.id, r.author_name, r.title, r.description, r.trial_id,
+                  r.vote_count, r.created_at, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
+           FROM rosters r
+           LEFT JOIN roster_tags rt ON rt.roster_id = r.id
+           WHERE r.author_name = ? COLLATE NOCASE AND r.is_anonymous = 0
+           GROUP BY r.id
+           ORDER BY r.vote_count DESC, r.created_at DESC
+           LIMIT ?`,
+        )
+        .bind(username, PROFILE_PAGE_SIZE)
+        .all<RosterSummaryRow>(),
+
+      db
+        .prepare(
+          'SELECT COUNT(*) AS cnt FROM builds WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+        )
+        .bind(username)
+        .first<{ cnt: number }>(),
+
+      db
+        .prepare(
+          'SELECT COUNT(*) AS cnt FROM rosters WHERE author_name = ? COLLATE NOCASE AND is_anonymous = 0',
+        )
+        .bind(username)
+        .first<{ cnt: number }>(),
+    ]);
+
+  // Unknown user — no bio row and no public content
+  if (!profileRow && buildsResult.results.length === 0 && rostersResult.results.length === 0) {
+    return null;
+  }
+
+  // Prefer the canonical casing from content rows, fall back to the URL slug
+  const displayName =
+    buildsResult.results[0]?.author_name ??
+    rostersResult.results[0]?.author_name ??
+    profileRow?.author_name ??
+    username;
+
+  return {
+    username: displayName,
+    bio: profileRow?.bio ?? '',
+    build_count: buildCountRow?.cnt ?? 0,
+    roster_count: rosterCountRow?.cnt ?? 0,
+    builds: buildsResult.results.map((b) => ({
+      id: b.id,
+      title: b.title,
+      description: b.description,
+      eso_class: b.eso_class,
+      role: b.role,
+      game_mode: b.game_mode,
+      vote_count: b.vote_count,
+      tags: b.tags_concat ? b.tags_concat.split(',') : [],
+      created_at: b.created_at,
+    })),
+    rosters: rostersResult.results.map((r) => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      trial_id: r.trial_id,
+      vote_count: r.vote_count,
+      tags: r.tags_concat ? r.tags_concat.split(',') : [],
+      created_at: r.created_at,
+    })),
+  };
+}
+
+export async function upsertUserBio(
+  db: D1Database,
+  authorId: string,
+  authorName: string,
+  bio: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO user_profiles (author_id, author_name, bio, updated_at)
+       VALUES (?, ?, ?, datetime('now'))
+       ON CONFLICT (author_id) DO UPDATE SET
+         author_name = excluded.author_name,
+         bio         = excluded.bio,
+         updated_at  = excluded.updated_at`,
+    )
+    .bind(authorId, authorName, bio)
+    .run();
+}
+
+// ─── Pack Hub queries ─────────────────────────────────────────────────────────
+
+export interface ListPacksOptions {
+  packType?: string;
+  tag?: string;
+  sort: 'votes' | 'recent';
+  page: number;
+  userId?: string;
+}
+
+export async function listPacks(db: D1Database, opts: ListPacksOptions): Promise<PackWithMeta[]> {
+  const offset = (opts.page - 1) * PAGE_SIZE;
+  const orderBy =
+    opts.sort === 'votes' ? 'p.vote_count DESC, p.created_at DESC' : 'p.created_at DESC';
+
+  const conditions: string[] = [];
+  const bindings: (string | number)[] = [];
+
+  if (opts.packType) {
+    conditions.push('p.pack_type = ?');
+    bindings.push(opts.packType);
+  }
+  if (opts.tag) {
+    conditions.push('EXISTS (SELECT 1 FROM pack_tags pt WHERE pt.pack_id = p.id AND pt.tag = ?)');
+    bindings.push(opts.tag);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const sql = `
+    SELECT p.*, GROUP_CONCAT(DISTINCT pt.tag) AS tags_concat
+    FROM packs p
+    LEFT JOIN pack_tags pt ON pt.pack_id = p.id
+    ${where}
+    GROUP BY p.id
+    ORDER BY ${orderBy}
+    LIMIT ${PAGE_SIZE} OFFSET ${offset}
+  `;
+
+  const rows = await db
+    .prepare(sql)
+    .bind(...bindings)
+    .all<PackRow & { tags_concat: string | null }>();
+
+  let votedSet = new Set<string>();
+  if (opts.userId && rows.results.length > 0) {
+    const ids = rows.results.map((r) => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    const voteRows = await db
+      .prepare(`SELECT pack_id FROM pack_votes WHERE user_id = ? AND pack_id IN (${placeholders})`)
+      .bind(opts.userId, ...ids)
+      .all<{ pack_id: string }>();
+    votedSet = new Set(voteRows.results.map((v) => v.pack_id));
+  }
+
+  return rows.results.map((row) => {
+    const isAnon = row.is_anonymous ? true : false;
+    const isOwner = opts.userId === row.author_id;
+    return {
+      ...row,
+      author_id: isAnon && !isOwner ? '' : row.author_id,
+      author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+      is_anonymous: isAnon,
+      tags: row.tags_concat ? row.tags_concat.split(',') : [],
+      user_voted: opts.userId ? votedSet.has(row.id) : undefined,
+    };
+  });
+}
+
+export async function getPackById(
+  db: D1Database,
+  id: string,
+  userId?: string,
+): Promise<PackWithMeta | null> {
+  const row = await db.prepare('SELECT * FROM packs WHERE id = ?').bind(id).first<PackRow>();
+  if (!row) return null;
+
+  const tagRows = await db
+    .prepare('SELECT tag FROM pack_tags WHERE pack_id = ?')
+    .bind(id)
+    .all<PackTagRow>();
+
+  let userVoted = false;
+  if (userId) {
+    const vote = await db
+      .prepare('SELECT 1 FROM pack_votes WHERE pack_id = ? AND user_id = ?')
+      .bind(id, userId)
+      .first();
+    userVoted = vote !== null;
+  }
+
+  const isAnon = row.is_anonymous ? true : false;
+  const isOwner = userId === row.author_id;
+  return {
+    ...row,
+    author_id: isAnon && !isOwner ? '' : row.author_id,
+    author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
+    is_anonymous: isAnon,
+    tags: tagRows.results.map((t) => t.tag),
+    user_voted: userId ? userVoted : undefined,
+  };
+}
+
+async function insertPackTags(db: D1Database, packId: string, tags: string[]): Promise<void> {
+  for (const tag of tags) {
+    await db
+      .prepare('INSERT OR IGNORE INTO pack_tags (pack_id, tag) VALUES (?, ?)')
+      .bind(packId, tag)
+      .run();
+  }
+}
+
+export async function createPack(
+  db: D1Database,
+  data: {
+    id: string;
+    authorId: string;
+    authorName: string;
+    title: string;
+    description: string;
+    packType: string;
+    addons: string; // JSON array
+    tags: string[];
+    isAnonymous: boolean;
+  },
+): Promise<void> {
+  await db
+    .prepare(
+      'INSERT INTO packs (id, author_id, author_name, title, description, pack_type, addons, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    )
+    .bind(
+      data.id,
+      data.authorId,
+      data.authorName,
+      data.title,
+      data.description,
+      data.packType,
+      data.addons,
+      data.isAnonymous ? 1 : 0,
+    )
+    .run();
+
+  if (data.tags.length > 0) {
+    await insertPackTags(db, data.id, data.tags);
+  }
+}
+
+export async function updatePack(
+  db: D1Database,
+  id: string,
+  authorId: string,
+  data: {
+    title: string;
+    description: string;
+    packType: string;
+    addons: string;
+    tags: string[];
+    isAnonymous: boolean;
+  },
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      "UPDATE packs SET title = ?, description = ?, pack_type = ?, addons = ?, is_anonymous = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
+    )
+    .bind(
+      data.title,
+      data.description,
+      data.packType,
+      data.addons,
+      data.isAnonymous ? 1 : 0,
+      id,
+      authorId,
+    )
+    .run();
+
+  if (!result.meta.changes || result.meta.changes === 0) return false;
+
+  await db.prepare('DELETE FROM pack_tags WHERE pack_id = ?').bind(id).run();
+  if (data.tags.length > 0) {
+    await insertPackTags(db, id, data.tags);
+  }
+  return true;
+}
+
+export async function deletePack(db: D1Database, id: string, authorId: string): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM packs WHERE id = ? AND author_id = ?')
+    .bind(id, authorId)
+    .run();
+  return (result.meta.changes ?? 0) > 0;
+}
+
+export async function togglePackVote(
+  db: D1Database,
+  packId: string,
+  userId: string,
+): Promise<{ voted: boolean; voteCount: number }> {
+  // INSERT OR IGNORE is atomic — concurrent requests cannot both insert the same
+  // UNIQUE (pack_id, user_id) pair, eliminating the read-then-write race.
+  const insertResult = await db
+    .prepare(
+      "INSERT OR IGNORE INTO pack_votes (pack_id, user_id, created_at) VALUES (?, ?, datetime('now'))",
+    )
+    .bind(packId, userId)
+    .run();
+
+  const voted = (insertResult.meta.changes ?? 0) > 0;
+
+  if (!voted) {
+    // Row already existed → this is an un-vote
+    await db
+      .prepare('DELETE FROM pack_votes WHERE pack_id = ? AND user_id = ?')
+      .bind(packId, userId)
+      .run();
+  }
+
+  // Derive the true count from the votes table instead of incrementing/decrementing,
+  // so any prior drift is corrected on the next toggle.
+  const countRow = await db
+    .prepare('SELECT COUNT(*) AS cnt FROM pack_votes WHERE pack_id = ?')
+    .bind(packId)
+    .first<{ cnt: number }>();
+  const voteCount = countRow?.cnt ?? 0;
+
+  await db.prepare('UPDATE packs SET vote_count = ? WHERE id = ?').bind(voteCount, packId).run();
+
+  return { voted, voteCount };
+}
+
+export async function checkPackCreateRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      "SELECT COUNT(*) AS cnt FROM packs WHERE author_id = ? AND created_at > datetime('now', '-1 hour')",
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < 10;
+}
+
+export async function checkPackVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      "SELECT COUNT(*) AS cnt FROM pack_votes WHERE user_id = ? AND created_at > datetime('now', '-1 hour')",
+    )
+    .bind(userId)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < 30;
 }

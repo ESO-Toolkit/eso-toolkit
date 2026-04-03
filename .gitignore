@@ -156,8 +156,9 @@ Icon?
 tmp/
 .github/tmp-pr-body.md
 
-# Discord bot / worker dependencies
+# Discord bot / worker dependencies & secrets
 discord-bot/node_modules/
+discord-bot/.dev.vars
 discord-notify-worker/node_modules/
 
 # Debug and test files in root

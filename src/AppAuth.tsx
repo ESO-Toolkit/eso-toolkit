@@ -29,7 +29,8 @@ export const AppAuth: React.FC = () => {
 
   useEffect(() => {
     const port = params.get('port');
-    if (!port || !/^\d+$/.test(port)) {
+    const portNum = port ? parseInt(port, 10) : NaN;
+    if (!port || isNaN(portNum) || portNum < 1 || portNum > 65535) {
       setError('Missing or invalid port parameter.');
       return;
     }

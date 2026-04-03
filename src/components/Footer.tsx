@@ -761,7 +761,13 @@ export const Footer: React.FC = React.memo(() => {
               target="_blank"
               rel="noopener noreferrer"
               sx={primaryButtonSx}
-              startIcon={<img src={discordIcon} alt="" style={{ width: 20, height: 20 }} />}
+              startIcon={
+                <img
+                  src={discordIcon}
+                  alt=""
+                  style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }}
+                />
+              }
             >
               Join Discord
             </Button>

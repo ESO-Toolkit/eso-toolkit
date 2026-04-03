@@ -35,6 +35,9 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
+    const installTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    React.useEffect(() => () => clearTimeout(installTimerRef.current), []);
 
     const tagAccent = pack.tags.map((t) => PACK_TAG_COLORS[t]).find((c): c is string => c != null);
     const accentColor = tagAccent ?? PACK_TYPE_ACCENT[pack.pack_type] ?? '#c4a44a';
@@ -55,7 +58,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
       e.stopPropagation();
       const deepLink = getAddonManagerDeepLink(pack.id, { preserveSettings: true });
       window.location.href = deepLink;
-      setTimeout(() => {
+      installTimerRef.current = setTimeout(() => {
         void navigator.clipboard.writeText(deepLink).then(() => {
           enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
             variant: 'info',

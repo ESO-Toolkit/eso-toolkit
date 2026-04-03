@@ -22,6 +22,7 @@ interface CachedAuth {
 
 const tokenCache = new Map<string, CachedAuth>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_MAX_SIZE = 100;
 
 function getCached(token: string): AuthUser | null {
   const entry = tokenCache.get(token);
@@ -30,15 +31,24 @@ function getCached(token: string): AuthUser | null {
     tokenCache.delete(token);
     return null;
   }
+  // Move to end for LRU ordering (Map preserves insertion order)
+  tokenCache.delete(token);
+  tokenCache.set(token, entry);
   return entry.user;
 }
 
 function setCache(token: string, user: AuthUser): void {
-  // Evict stale entries if cache grows (prevent memory leak in long-lived isolates)
-  if (tokenCache.size > 200) {
+  // Evict expired entries first, then oldest if still over capacity
+  if (tokenCache.size >= CACHE_MAX_SIZE) {
     const now = Date.now();
     for (const [key, val] of tokenCache) {
       if (now > val.expiresAt) tokenCache.delete(key);
+    }
+    // If still at capacity after purging expired, evict oldest (first in Map)
+    while (tokenCache.size >= CACHE_MAX_SIZE) {
+      const oldest = tokenCache.keys().next().value;
+      if (oldest !== undefined) tokenCache.delete(oldest);
+      else break;
     }
   }
   tokenCache.set(token, { user, expiresAt: Date.now() + CACHE_TTL_MS });
