@@ -4,8 +4,9 @@
 
 import { deleteChannelPermission, isStaff } from '../discord.js';
 import { getTicket } from '../kv.js';
-import { InteractionResponseType, MessageFlags } from '../types.js';
+import { InteractionResponseType } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral } from '../utils.js';
 
 export async function handleTicketRemove(
   env: Env,
@@ -56,9 +57,3 @@ export async function handleTicketRemove(
   }
 }
 
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

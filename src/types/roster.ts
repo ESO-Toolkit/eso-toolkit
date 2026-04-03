@@ -37,7 +37,11 @@ export enum HealerBuff {
 }
 
 /**
- * Healer champion point slot selections
+ * Healer champion point slot selections.
+ *
+ * Values intentionally mirror HealerBuff — both track the same two
+ * champion-point abilities but serve different semantic roles (buff
+ * assignment vs CP slot selection) and are encoded independently.
  */
 export enum HealerChampionPoint {
   ENLIVENING_OVERFLOW = 'Enlivening Overflow',

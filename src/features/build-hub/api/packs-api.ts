@@ -1,6 +1,10 @@
 /**
- * Packs API client — talks to the eso-packs-worker.
- * Separate from the build/roster hub API since packs live on a different worker.
+ * Packs API client — talks to the eso-packs-worker (VITE_PACKS_API_URL).
+ *
+ * NOTE: This is separate from pack-hub-api.ts which talks to the roster-hub-api
+ * worker (VITE_ROSTER_HUB_API_URL). The two backends serve different pack
+ * scopes: this one serves build-hub packs, pack-hub-api serves roster-hub packs.
+ * Both expose /packs endpoints but are distinct data stores.
  */
 
 const PACKS_API_URL = (import.meta.env.VITE_PACKS_API_URL || 'http://localhost:8787').replace(
@@ -11,8 +15,7 @@ const PACKS_API_URL = (import.meta.env.VITE_PACKS_API_URL || 'http://localhost:8
 export interface PackAddonEntry {
   esouiId: number;
   name: string;
-  required: boolean;
-  defaultEnabled: boolean;
+  required?: boolean;
   note?: string;
 }
 
@@ -115,8 +118,8 @@ export interface DeepLinkOptions {
 }
 
 /**
- * Generate a deep link URL that opens the ESO Addon Manager
- * and navigates directly to a specific pack.
+ * Generate a deep link URL that opens Kalpa (ESO Addon Manager)
+ * and installs a specific pack.
  *
  * Usage: `eso-addon-manager://pack/trial-essentials?preserve_settings=true`
  */

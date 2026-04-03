@@ -25,6 +25,7 @@ import { FilterBar } from './FilterBar';
 import { PublishRosterDialog } from './PublishRosterDialog';
 import { RosterCard } from './RosterCard';
 import { RosterCardSkeleton } from './RosterCardSkeleton';
+import { ServerPickerDialog } from './ServerPickerDialog';
 
 const SKELETON_COUNT = 8;
 
@@ -40,6 +41,7 @@ export const RosterHubPage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editRoster, setEditRoster] = React.useState<HubRoster | null>(null);
+  const [discordPublishRoster, setDiscordPublishRoster] = React.useState<HubRoster | null>(null);
 
   const currentUserId = String(currentUser?.id ?? '');
 
@@ -281,6 +283,7 @@ export const RosterHubPage: React.FC = () => {
                     onVote={handleVote}
                     onDelete={setDeleteTarget}
                     onEdit={setEditRoster}
+                    onPublishDiscord={setDiscordPublishRoster}
                   />
                 </Grid>
               ))}
@@ -334,6 +337,17 @@ export const RosterHubPage: React.FC = () => {
         loading={deleteLoading}
         onConfirm={() => void handleDeleteConfirm()}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* Discord publish dialog */}
+      <ServerPickerDialog
+        open={discordPublishRoster !== null}
+        roster={discordPublishRoster}
+        onClose={() => setDiscordPublishRoster(null)}
+        onSuccess={() => {
+          setDiscordPublishRoster(null);
+          enqueueSnackbar('Roster published to Discord!', { variant: 'success' });
+        }}
       />
     </Container>
   );

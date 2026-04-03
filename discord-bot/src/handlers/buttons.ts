@@ -9,10 +9,12 @@ import { handleCloseButton } from '../buttons/close.js';
 import { handleConfirmCloseButton } from '../buttons/confirm-close.js';
 import { handleCreateTicketButton } from '../buttons/create-ticket.js';
 import { handleRemoveUserButton } from '../buttons/remove-user.js';
+import { handleRosterRefreshButton } from '../buttons/roster-refresh.js';
+import { handleRosterSignupButton } from '../buttons/roster-signup.js';
 import { handleStaffNoteButton } from '../buttons/staff-note.js';
 import { handleTemplateButton } from '../buttons/template-response.js';
 import { handleUnclaimButton } from '../buttons/unclaim.js';
-import { ButtonId, InteractionResponseType, MessageFlags } from '../types.js';
+import { ButtonId, InteractionResponseType, MessageFlags, RosterButtonId } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
 export async function handleButton(
@@ -21,6 +23,8 @@ export async function handleButton(
   ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
   const customId = interaction.data?.custom_id ?? '';
+
+  // ── Ticket buttons ──────────────────────────────────────────────────────
 
   // Panel buttons: create_ticket:bug | create_ticket:feature | create_ticket:feedback
   if (
@@ -37,6 +41,22 @@ export async function handleButton(
     return handleTemplateButton(env, interaction, templateKey);
   }
 
+  // ── Roster buttons ──────────────────────────────────────────────────────
+
+  // Sign-up buttons: roster_signup:tank:<rosterId>, roster_signup:healer:<rosterId>, etc.
+  if (customId.startsWith(RosterButtonId.SIGNUP_PREFIX)) {
+    const parts = customId.slice(RosterButtonId.SIGNUP_PREFIX.length).split(':');
+    const role = parts[0]; // tank, healer, dd
+    return handleRosterSignupButton(env, interaction, role);
+  }
+
+  // Refresh button: roster_refresh:<rosterId>
+  if (customId.startsWith(`${RosterButtonId.REFRESH}:`)) {
+    return handleRosterRefreshButton(env, interaction, ctx);
+  }
+
+  // ── Ticket action buttons ───────────────────────────────────────────────
+
   switch (customId) {
     case ButtonId.CLAIM:
       return handleClaimButton(env, interaction, ctx);
@@ -51,10 +71,10 @@ export async function handleButton(
       return handleConfirmCloseButton(env, interaction, ctx);
 
     case ButtonId.ADD_USER:
-      return handleAddUserButton(env);
+      return handleAddUserButton(env, interaction);
 
     case ButtonId.REMOVE_USER:
-      return handleRemoveUserButton(env);
+      return handleRemoveUserButton(env, interaction);
 
     case ButtonId.STAFF_NOTE:
       return handleStaffNoteButton(env, interaction);

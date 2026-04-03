@@ -3,15 +3,21 @@
  * Shows a modal to enter the username/ID to remove from the channel.
  */
 
+import { isStaff } from '../discord.js';
 import {
   ComponentType,
   InteractionResponseType,
   ModalId,
   TextInputStyle,
 } from '../types.js';
-import type { Env, InteractionResponse } from '../types.js';
+import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral } from '../utils.js';
 
-export function handleRemoveUserButton(_env: Env): InteractionResponse {
+export function handleRemoveUserButton(_env: Env, interaction: DiscordInteraction): InteractionResponse {
+  if (!isStaff(interaction)) {
+    return ephemeral('❌ Only staff can remove users from a ticket.');
+  }
+
   return {
     type: InteractionResponseType.MODAL,
     data: {
