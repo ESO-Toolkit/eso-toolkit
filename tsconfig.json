@@ -6,9 +6,9 @@
     "skipLibCheck": true,
     "module": "ESNext",
 
-    /* Bundler mode - but keeping it compatible with TypeScript */
+    /* Bundler mode */
     "ignoreDeprecations": "5.0",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -31,15 +31,14 @@
     "tsBuildInfoFile": "./node_modules/.cache/.tsbuildinfo",
 
     /* Path mapping */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@features/*": ["src/features/*"],
-      "@store/*": ["src/store/*"],
-      "@types/*": ["src/types/*"],
-      "@utils/*": ["src/utils/*"],
-      "@graphql/*": ["src/graphql/*"]
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@features/*": ["./src/features/*"],
+      "@store/*": ["./src/store/*"],
+      "@types/*": ["./src/types/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@graphql/*": ["./src/graphql/*"]
     }
   },
   "include": [
