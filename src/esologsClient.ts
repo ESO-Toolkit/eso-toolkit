@@ -170,8 +170,14 @@ export class EsoLogsClient {
                 // Retry the request
                 const subscriber = {
                   next: observer.next.bind(observer),
-                  error: observer.error.bind(observer),
-                  complete: observer.complete.bind(observer),
+                  error: (err: unknown) => {
+                    this.isRefreshingToken = false;
+                    observer.error(err);
+                  },
+                  complete: () => {
+                    this.isRefreshingToken = false;
+                    observer.complete();
+                  },
                 };
 
                 forward(operation).subscribe(subscriber);
@@ -180,15 +186,14 @@ export class EsoLogsClient {
                 logger.error('Token refresh failed - user needs to re-authenticate');
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
+                this.isRefreshingToken = false;
                 observer.error(new Error('Authentication failed. Please log in again.'));
               }
             })
             .catch((err) => {
               logger.error('Error during token refresh', err);
-              observer.error(err);
-            })
-            .finally(() => {
               this.isRefreshingToken = false;
+              observer.error(err);
             });
         });
       }
