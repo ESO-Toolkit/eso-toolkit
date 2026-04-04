@@ -423,6 +423,10 @@ const navButtonSx = (theme: Theme) =>
     '&:active': { transform: 'translateY(0)' },
   }) as const;
 
+// ─── SVG noise texture for dropdown panels ──────────────────────────────────
+
+const noiseTexture = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E")`;
+
 // ─── Shared dropdown paper styles ────────────────────────────────────────────
 
 const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
@@ -433,23 +437,28 @@ const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
   return {
     overflow: 'hidden',
     mt: 1,
-    minWidth: 260,
+    minWidth: 280,
     background: isDark
       ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(3, 7, 18, 0.88) 100%)'
       : 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.94) 100%)',
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
     border: `1px solid ${alpha(accent, isDark ? 0.12 : 0.1)}`,
-    borderRadius: '14px',
+    borderRadius: '16px',
     boxShadow: isDark
-      ? `0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px ${alpha(accent, 0.08)}, inset 0 1px 0 ${alpha('#fff', 0.04)}`
-      : `0 8px 32px rgba(15, 23, 42, 0.12), 0 0 0 1px ${alpha(accent, 0.06)}`,
-    py: 0.5,
-    // Animated shimmer accent line
+      ? `0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px ${alpha(accent, 0.08)}, inset 0 1px 0 ${alpha('#fff', 0.05)}`
+      : `0 20px 60px rgba(15, 23, 42, 0.15), 0 0 0 1px ${alpha(accent, 0.06)}`,
+    py: 0,
+    // Stagger entrance for children
     '@keyframes dropdownShimmer': {
       '0%': { backgroundPosition: '-200% center' },
       '100%': { backgroundPosition: '200% center' },
     },
+    '@keyframes menuItemIn': {
+      '0%': { opacity: 0, transform: 'translateY(8px) scale(0.96)' },
+      '100%': { opacity: 1, transform: 'translateY(0) scale(1)' },
+    },
+    // Animated shimmer accent line
     '&::before': {
       content: '""',
       display: 'block',
@@ -458,29 +467,78 @@ const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
       left: 0,
       right: 0,
       height: '2px',
-      background: `linear-gradient(90deg, transparent 0%, ${accent} 20%, ${accentAlt} 50%, ${accent} 80%, transparent 100%)`,
+      background: `linear-gradient(90deg, transparent 0%, ${accent} 15%, ${accentAlt} 50%, ${accent} 85%, transparent 100%)`,
       backgroundSize: '200% 100%',
       animation: 'dropdownShimmer 3s linear infinite',
-      zIndex: 1,
+      zIndex: 2,
     },
-    // Subtle inner glow
+    // Noise texture + spotlight layer
     '&::after': {
       content: '""',
       position: 'absolute',
-      top: 2,
-      left: '15%',
-      right: '15%',
-      height: '40px',
-      background: `radial-gradient(ellipse at center, ${alpha(accent, isDark ? 0.06 : 0.04)} 0%, transparent 70%)`,
+      inset: 0,
+      backgroundImage: noiseTexture,
+      backgroundSize: '128px 128px',
+      opacity: isDark ? 0.4 : 0.2,
       pointerEvents: 'none',
       zIndex: 0,
+      borderRadius: 'inherit',
+    },
+    // Spotlight glow follows --mouse-x / --mouse-y (set via JS)
+    '& > .dropdown-spotlight': {
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+      zIndex: 0,
+      borderRadius: 'inherit',
+      background: `radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 0%), ${alpha(accent, isDark ? 0.07 : 0.05)}, transparent 60%)`,
+      transition: 'background 0.15s ease',
     },
   };
 };
 
-const menuItemSx = (theme: Theme): SxProps<Theme> => {
+// ─── Dropdown section header ─────────────────────────────────────────────────
+
+const dropdownHeaderSx = (theme: Theme, label: string): SxProps<Theme> => {
   const isDark = theme.palette.mode === 'dark';
   const accent = isDark ? '#38bdf8' : '#3b82f6';
+  const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
+
+  return {
+    px: 2,
+    pt: 2,
+    pb: 1,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    position: 'relative',
+    zIndex: 1,
+    // Section label gradient
+    '& .dropdown-header-label': {
+      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontWeight: 700,
+      fontSize: '0.7rem',
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const,
+      background: `linear-gradient(135deg, ${accent} 0%, ${accentAlt} 100%)`,
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    },
+    // Fading separator line
+    '&::after': {
+      content: '""',
+      flex: 1,
+      height: '1px',
+      background: `linear-gradient(90deg, ${alpha(accent, 0.25)}, transparent)`,
+    },
+  };
+};
+
+// ─── Dropdown menu item ──────────────────────────────────────────────────────
+
+const menuItemSx = (theme: Theme, itemAccent: string, index: number): SxProps<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
 
   return {
     py: 1,
@@ -489,39 +547,50 @@ const menuItemSx = (theme: Theme): SxProps<Theme> => {
     mx: 0.75,
     my: 0.25,
     position: 'relative',
-    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    zIndex: 1,
+    // Staggered entrance animation
+    opacity: 0,
+    animation: 'menuItemIn 0.3s ease-out forwards',
+    animationDelay: `${index * 0.04}s`,
+    transition:
+      'background 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease',
     '& .MuiListItemIcon-root': {
-      transition: 'all 0.25s ease',
-      minWidth: 36,
+      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      minWidth: 40,
     },
     '& .MuiListItemText-primary': {
       fontSize: '0.875rem',
-      fontWeight: 500,
+      fontWeight: 550,
       lineHeight: 1.3,
     },
     '& .MuiListItemText-secondary': {
       fontSize: '0.7rem',
-      opacity: 0.5,
+      opacity: 0.45,
       lineHeight: 1.3,
       mt: 0.15,
+      transition: 'opacity 0.25s ease',
     },
     '&:hover': {
       background: isDark
-        ? `linear-gradient(135deg, ${alpha(accent, 0.12)} 0%, ${alpha(accent, 0.04)} 100%)`
-        : `linear-gradient(135deg, ${alpha(accent, 0.1)} 0%, ${alpha(accent, 0.03)} 100%)`,
-      transform: 'translateX(2px)',
-      '& .MuiListItemIcon-root': {
-        color: accent,
-        transform: 'scale(1.15)',
-        filter: isDark ? `drop-shadow(0 0 6px ${alpha(accent, 0.4)})` : 'none',
+        ? `linear-gradient(135deg, ${alpha(itemAccent, 0.12)} 0%, ${alpha(itemAccent, 0.03)} 100%)`
+        : `linear-gradient(135deg, ${alpha(itemAccent, 0.1)} 0%, ${alpha(itemAccent, 0.02)} 100%)`,
+      transform: 'translateX(4px)',
+      boxShadow: isDark
+        ? `inset 2px 0 0 ${itemAccent}, 0 2px 12px ${alpha(itemAccent, 0.1)}`
+        : `inset 2px 0 0 ${itemAccent}, 0 2px 8px ${alpha(itemAccent, 0.06)}`,
+      '& .menu-icon-badge': {
+        borderColor: alpha(itemAccent, 0.5),
+        background: alpha(itemAccent, isDark ? 0.2 : 0.12),
+        boxShadow: isDark ? `0 0 12px ${alpha(itemAccent, 0.25)}` : 'none',
+        transform: 'scale(1.1)',
       },
       '& .MuiListItemText-secondary': {
-        opacity: 0.7,
+        opacity: 0.75,
       },
     },
     '&:active': {
-      transform: 'translateX(1px) scale(0.99)',
-      background: alpha(accent, isDark ? 0.16 : 0.12),
+      transform: 'translateX(2px) scale(0.99)',
+      background: alpha(itemAccent, isDark ? 0.16 : 0.12),
     },
   };
 };
@@ -589,6 +658,7 @@ export const HeaderBar: React.FC = () => {
   const navigate = useViewTransitionNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -705,36 +775,42 @@ export const HeaderBar: React.FC = () => {
       text: 'Text Editor',
       desc: 'Format guild announcements',
       icon: '📝',
+      accent: '#f59e0b',
       path: '/text-editor',
     },
     {
       text: 'Calculator',
       desc: 'Stat & damage math',
-      icon: <Calculator size="24" />,
+      icon: <Calculator size="16" />,
+      accent: '#22c55e',
       path: '/calculator',
     },
     {
       text: 'Parse Analysis',
       desc: 'Break down your parses',
       icon: '📈',
+      accent: '#a855f7',
       path: '/parse-analysis',
     },
     {
       text: 'Loadout Manager',
       desc: 'Manage gear loadouts',
       icon: '⚔️',
+      accent: '#ef4444',
       path: '/loadout-manager',
     },
     {
       text: 'Roster Builder',
       desc: 'Plan trial compositions',
       icon: '👥',
+      accent: '#06b6d4',
       path: '/roster-builder',
     },
     {
       text: 'Build Editor',
       desc: 'Create & share builds',
       icon: '🔧',
+      accent: '#3b82f6',
       path: '/build-editor',
     },
   ];
@@ -748,6 +824,7 @@ export const HeaderBar: React.FC = () => {
         text: 'My Reports',
         desc: 'Your uploaded logs',
         icon: '📁',
+        accent: '#f59e0b',
         path: '/my-reports',
       });
     }
@@ -758,18 +835,21 @@ export const HeaderBar: React.FC = () => {
         text: 'Sample Report',
         desc: 'Explore a demo log',
         icon: '🎲',
+        accent: '#a855f7',
         action: handleSampleReport,
       },
       {
         text: 'Latest Report',
         desc: 'Recently uploaded',
         icon: '📊',
+        accent: '#06b6d4',
         path: '/latest-reports',
       },
       {
         text: 'Leaderboards',
         desc: 'Top parse rankings',
         icon: '🏆',
+        accent: '#eab308',
         path: '/leaderboards',
       },
     );
@@ -993,36 +1073,58 @@ export const HeaderBar: React.FC = () => {
         TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
-        slotProps={{ paper: { elevation: 0, sx: dropdownPaperSx(theme) } }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: dropdownPaperSx(theme),
+            onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty(
+                '--mouse-x',
+                `${((e.clientX - rect.left) / rect.width) * 100}%`,
+              );
+              e.currentTarget.style.setProperty(
+                '--mouse-y',
+                `${((e.clientY - rect.top) / rect.height) * 100}%`,
+              );
+            },
+          },
+        }}
       >
-        {toolsItems.map((item) => (
+        <Box className="dropdown-spotlight" />
+        <Box sx={dropdownHeaderSx(theme, 'Tools')}>
+          <Build sx={{ fontSize: 14, color: isDark ? '#38bdf8' : '#3b82f6' }} />
+          <span className="dropdown-header-label">Tools</span>
+        </Box>
+        {toolsItems.map((item, index) => (
           <MenuItem
             key={item.text}
             onClick={() => handleToolNavigation(item.path)}
-            sx={menuItemSx(theme)}
+            sx={menuItemSx(theme, item.accent, index)}
           >
             <ListItemIcon>
               <Box
+                className="menu-icon-badge"
                 sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: '8px',
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background:
-                    theme.palette.mode === 'dark' ? alpha('#38bdf8', 0.08) : alpha('#3b82f6', 0.06),
-                  border: `1px solid ${alpha(theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6', 0.1)}`,
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
                   fontSize: typeof item.icon === 'string' ? 15 : undefined,
-                  transition: 'all 0.25s ease',
+                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
               >
-                {typeof item.icon === 'string' ? item.icon : item.icon}
+                {item.icon}
               </Box>
             </ListItemIcon>
             <ListItemText primary={item.text} secondary={item.desc} />
           </MenuItem>
         ))}
+        <Box sx={{ pb: 0.5 }} />
       </Menu>
 
       {/* Reports Submenu */}
@@ -1034,9 +1136,30 @@ export const HeaderBar: React.FC = () => {
         TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
-        slotProps={{ paper: { elevation: 0, sx: dropdownPaperSx(theme) } }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: dropdownPaperSx(theme),
+            onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty(
+                '--mouse-x',
+                `${((e.clientX - rect.left) / rect.width) * 100}%`,
+              );
+              e.currentTarget.style.setProperty(
+                '--mouse-y',
+                `${((e.clientY - rect.top) / rect.height) * 100}%`,
+              );
+            },
+          },
+        }}
       >
-        {reportsItems.map((item) => (
+        <Box className="dropdown-spotlight" />
+        <Box sx={dropdownHeaderSx(theme, 'Reports')}>
+          <Assessment sx={{ fontSize: 14, color: isDark ? '#38bdf8' : '#3b82f6' }} />
+          <span className="dropdown-header-label">Reports</span>
+        </Box>
+        {reportsItems.map((item, index) => (
           <MenuItem
             key={item.text}
             onClick={() => {
@@ -1046,30 +1169,31 @@ export const HeaderBar: React.FC = () => {
                 handleToolNavigation(item.path);
               }
             }}
-            sx={menuItemSx(theme)}
+            sx={menuItemSx(theme, item.accent, index)}
           >
             <ListItemIcon>
               <Box
+                className="menu-icon-badge"
                 sx={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: '8px',
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background:
-                    theme.palette.mode === 'dark' ? alpha('#38bdf8', 0.08) : alpha('#3b82f6', 0.06),
-                  border: `1px solid ${alpha(theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6', 0.1)}`,
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
                   fontSize: 15,
-                  transition: 'all 0.25s ease',
+                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
               >
-                {typeof item.icon === 'string' ? item.icon : item.icon}
+                {item.icon}
               </Box>
             </ListItemIcon>
             <ListItemText primary={item.text} secondary={item.desc} />
           </MenuItem>
         ))}
+        <Box sx={{ pb: 0.5 }} />
       </Menu>
 
       {/* Modern Mobile Menu Overlay */}
