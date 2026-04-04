@@ -25,12 +25,12 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../features/auth/AuthContext';
 import { PublishRosterDialog } from '../features/roster-hub/components/PublishRosterDialog';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import type { SavedRoster } from '../store/saved_rosters';
 import { deleteRoster, selectSavedRosters } from '../store/saved_rosters';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -81,6 +81,7 @@ interface RosterCardProps {
   onPublish: (saved: SavedRoster) => void;
   onDelete: (saved: SavedRoster) => void;
   isDarkMode: boolean;
+  cardRef?: (el: HTMLDivElement | null) => void;
 }
 
 const RosterCard: React.FC<RosterCardProps> = ({
@@ -90,11 +91,13 @@ const RosterCard: React.FC<RosterCardProps> = ({
   onPublish,
   onDelete,
   isDarkMode,
+  cardRef,
 }) => {
   const playerCount = countPlayers(saved.roster);
 
   return (
     <Card
+      ref={cardRef}
       elevation={0}
       sx={{
         border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
@@ -196,7 +199,7 @@ const RosterCard: React.FC<RosterCardProps> = ({
 export const MyRostersPage: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const dispatch = useAppDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const savedRosters = useSelector(selectSavedRosters);
@@ -206,11 +209,15 @@ export const MyRostersPage: React.FC = () => {
     data: string;
     saved: SavedRoster;
   } | null>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const handleEdit = async (saved: SavedRoster): Promise<void> => {
     try {
       const encoded = await encodeRosterToURL(saved.roster);
-      navigate(`/roster-builder?r=${encoded}&id=${saved.id}`);
+      navigate(`/roster-builder?r=${encoded}&id=${saved.id}`, {
+        vtType: 'forward',
+        morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'roster-hero' },
+      });
     } catch {
       enqueueSnackbar('Failed to encode roster', { variant: 'error' });
     }
@@ -219,7 +226,10 @@ export const MyRostersPage: React.FC = () => {
   const handleView = async (saved: SavedRoster): Promise<void> => {
     try {
       const encoded = await encodeRosterToURL(saved.roster);
-      navigate(`/rv?r=${encoded}`);
+      navigate(`/rv?r=${encoded}`, {
+        vtType: 'forward',
+        morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'roster-hero' },
+      });
     } catch {
       enqueueSnackbar('Failed to encode roster', { variant: 'error' });
     }
@@ -264,7 +274,7 @@ export const MyRostersPage: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/roster-builder')}
+          onClick={() => navigate('/roster-builder', { vtType: 'forward' })}
           sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
         >
           New Roster
@@ -287,7 +297,7 @@ export const MyRostersPage: React.FC = () => {
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/roster-builder')}
+            onClick={() => navigate('/roster-builder', { vtType: 'forward' })}
             sx={{ textTransform: 'none' }}
           >
             Create your first roster
@@ -304,6 +314,10 @@ export const MyRostersPage: React.FC = () => {
               onPublish={handlePublish}
               onDelete={setPendingDelete}
               isDarkMode={isDarkMode}
+              cardRef={(el) => {
+                if (el) cardRefs.current.set(saved.id, el);
+                else cardRefs.current.delete(saved.id);
+              }}
             />
           ))}
         </Stack>

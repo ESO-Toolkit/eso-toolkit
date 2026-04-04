@@ -425,6 +425,7 @@ export const BuildCompletionHeader: React.FC = () => {
   return (
     <Box
       sx={{
+        viewTransitionName: 'build-hero',
         display: 'flex',
         alignItems: 'center',
         gap: { xs: 1.5, md: 2 },

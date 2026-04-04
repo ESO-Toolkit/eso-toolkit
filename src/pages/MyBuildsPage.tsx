@@ -24,12 +24,12 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../features/auth/AuthContext';
 import { PublishBuildDialog } from '../features/build-hub/components/PublishBuildDialog';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import type { SavedBuild } from '../store/saved_builds';
 import { deleteSavedBuild, selectSavedBuilds } from '../store/saved_builds';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -93,6 +93,7 @@ interface BuildCardProps {
   onPublish: (saved: SavedBuild) => void;
   onDelete: (saved: SavedBuild) => void;
   isDarkMode: boolean;
+  cardRef?: (el: HTMLDivElement | null) => void;
 }
 
 const BuildCardItem: React.FC<BuildCardProps> = ({
@@ -102,12 +103,14 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
   onPublish,
   onDelete,
   isDarkMode,
+  cardRef,
 }) => {
   const classLabel = CLASS_LABELS[saved.build.esoClass] ?? saved.build.esoClass;
   const roleLabel = ROLE_LABELS[saved.build.role] ?? saved.build.role;
 
   return (
     <Card
+      ref={cardRef}
       elevation={0}
       sx={{
         border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.1)',
@@ -206,7 +209,7 @@ const BuildCardItem: React.FC<BuildCardProps> = ({
 export const MyBuildsPage: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const dispatch = useAppDispatch();
   const savedBuilds = useSelector(selectSavedBuilds);
   const { accessToken } = useAuth();
@@ -215,15 +218,22 @@ export const MyBuildsPage: React.FC = () => {
     data: string;
     saved: SavedBuild;
   } | null>(null);
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const handleEdit = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
-    navigate(`/build-editor?b=${encoded}&id=${saved.id}`);
+    navigate(`/build-editor?b=${encoded}&id=${saved.id}`, {
+      vtType: 'forward',
+      morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'build-hero' },
+    });
   };
 
   const handleView = async (saved: SavedBuild): Promise<void> => {
     const encoded = await encodeBuildToURL(saved.build);
-    navigate(`/bv?b=${encoded}`);
+    navigate(`/bv?b=${encoded}`, {
+      vtType: 'forward',
+      morph: { ref: { current: cardRefs.current.get(saved.id) ?? null }, name: 'build-hero' },
+    });
   };
 
   const handlePublish = async (saved: SavedBuild): Promise<void> => {
@@ -265,7 +275,7 @@ export const MyBuildsPage: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => navigate('/build-editor')}
+          onClick={() => navigate('/build-editor', { vtType: 'forward' })}
           sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
         >
           New Build
@@ -288,7 +298,7 @@ export const MyBuildsPage: React.FC = () => {
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/build-editor')}
+            onClick={() => navigate('/build-editor', { vtType: 'forward' })}
             sx={{ textTransform: 'none' }}
           >
             Create your first build
@@ -305,6 +315,10 @@ export const MyBuildsPage: React.FC = () => {
               onPublish={handlePublish}
               onDelete={setPendingDelete}
               isDarkMode={isDarkMode}
+              cardRef={(el) => {
+                if (el) cardRefs.current.set(saved.id, el);
+                else cardRefs.current.delete(saved.id);
+              }}
             />
           ))}
         </Stack>

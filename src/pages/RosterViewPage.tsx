@@ -1334,6 +1334,7 @@ export const RosterViewPage: React.FC = () => {
       {/* ── Page header ── */}
       <Box
         sx={{
+          viewTransitionName: 'roster-hero',
           display: 'flex',
           alignItems: { xs: 'flex-start', sm: 'center' },
           justifyContent: 'space-between',

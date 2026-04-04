@@ -1609,6 +1609,7 @@ export const RosterBuilderPage: React.FC = () => {
         {/* Row 1 — Title lockup + Mode pill toggle + Hub link */}
         <Box
           sx={{
+            viewTransitionName: 'roster-hero',
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
             alignItems: { xs: 'stretch', sm: 'center' },
