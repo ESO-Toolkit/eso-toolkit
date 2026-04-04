@@ -9,6 +9,7 @@ import {
   MenuItem,
   Typography,
   Box,
+  useTheme,
 } from '@mui/material';
 import React from 'react';
 
@@ -40,6 +41,8 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
   children,
   isEmpty = false,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [scopeMenuAnchor, setScopeMenuAnchor] = React.useState<null | HTMLElement>(null);
 
   const handleScopeMenuOpen = (event: React.MouseEvent<HTMLElement>): void => {
@@ -58,31 +61,43 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
   return (
     <Card
       data-testid={`widget-${_id}`}
-      elevation={3}
+      elevation={0}
       sx={{
         minHeight: 200,
         display: 'flex',
         flexDirection: 'column',
         opacity: isEmpty ? 0.6 : 1,
-        borderRadius: 2,
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         transition: 'all 0.3s ease',
         '&:hover': {
-          elevation: 6,
-          transform: 'translateY(-2px)',
+          borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.15)',
+          boxShadow: isDark
+            ? '0 10px 40px rgba(0,0,0,0.3), 0 0 60px rgba(56,189,248,0.06)'
+            : '0 6px 20px rgba(15,23,42,0.08)',
         },
       }}
     >
       <CardHeader
         title={title}
-        titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+        titleTypographyProps={{
+          variant: 'h6',
+          fontWeight: 600,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+        }}
         subheader={
           <Typography
             variant="caption"
             sx={{
               textTransform: 'uppercase',
-              letterSpacing: 0.5,
+              letterSpacing: 0.8,
+              fontSize: '0.65rem',
               cursor: 'pointer',
-              '&:hover': { textDecoration: 'underline' },
+              color: 'text.secondary',
+              transition: 'color 0.2s ease',
+              '&:hover': {
+                color: isDark ? '#38bdf8' : '#0f172a',
+              },
             }}
             onClick={handleScopeMenuOpen}
           >
@@ -90,19 +105,42 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
           </Typography>
         }
         action={
-          <Box>
-            <IconButton size="small" onClick={handleScopeMenuOpen} aria-label="Settings">
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <IconButton
+              size="small"
+              onClick={handleScopeMenuOpen}
+              aria-label="Settings"
+              sx={{
+                color: 'text.secondary',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  color: isDark ? '#38bdf8' : '#0f172a',
+                  backgroundColor: isDark ? 'rgba(56, 189, 248, 0.08)' : 'rgba(15, 23, 42, 0.05)',
+                },
+              }}
+            >
               <SettingsIcon fontSize="small" />
             </IconButton>
-            <IconButton size="small" onClick={onRemove} aria-label="Remove widget">
+            <IconButton
+              size="small"
+              onClick={onRemove}
+              aria-label="Remove widget"
+              sx={{
+                color: 'text.secondary',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  color: isDark ? '#ff8a80' : '#d32f2f',
+                  backgroundColor: isDark ? 'rgba(244, 67, 54, 0.08)' : 'rgba(244, 67, 54, 0.05)',
+                },
+              }}
+            >
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
         }
         sx={{
           pb: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
+          borderBottom: `1px solid ${isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(15, 23, 42, 0.06)'}`,
         }}
       />
       <CardContent
@@ -111,20 +149,6 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
           pb: 2,
           maxHeight: 500,
           overflow: 'auto',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: 'rgba(0,0,0,0.05)',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            borderRadius: '4px',
-            '&:hover': {
-              backgroundColor: 'rgba(0,0,0,0.3)',
-            },
-          },
         }}
       >
         {isEmpty ? (
