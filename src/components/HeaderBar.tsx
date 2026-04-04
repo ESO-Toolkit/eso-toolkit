@@ -21,9 +21,10 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Fade,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { styled } from '@mui/material/styles';
+import { alpha, styled } from '@mui/material/styles';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -206,25 +207,50 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
 
 const MobileSubmenuContainer = styled(Box, {
   shouldForwardProp: (prop) => !['open', 'itemCount'].includes(prop as string),
-})<{ open: boolean; itemCount?: number }>(({ theme, open, itemCount = 3 }) => ({
-  width: '100%',
-  overflow: 'hidden',
-  // Calculate height dynamically based on number of items: items × (52px height + 4px margin) + top padding
-  height: open ? `${itemCount * 56 + 4}px` : 0,
-  transition: 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  marginBottom: open ? theme.spacing(1) : 0,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  paddingTop: open ? theme.spacing(0.5) : 0,
-  background: open
-    ? theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.6) 100%)'
-      : 'linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.8) 100%)'
-    : 'transparent',
-  borderRadius: open ? '0 0 16px 16px' : 0,
-  backdropFilter: open ? 'blur(10px)' : 'none',
-}));
+})<{ open: boolean; itemCount?: number }>(({ theme, open, itemCount = 3 }) => {
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? '#38bdf8' : '#3b82f6';
+
+  return {
+    width: '100%',
+    overflow: 'hidden',
+    // Calculate height dynamically based on number of items: items × (52px height + 4px margin) + top padding + border
+    height: open ? `${itemCount * 56 + 8}px` : 0,
+    transition:
+      'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
+    marginBottom: open ? theme.spacing(1) : 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingTop: open ? theme.spacing(0.5) : 0,
+    background: open
+      ? isDark
+        ? `linear-gradient(180deg, ${alpha('#0f172a', 0.5)} 0%, ${alpha('#030718', 0.65)} 100%)`
+        : `linear-gradient(180deg, ${alpha('#ffffff', 0.5)} 0%, ${alpha('#f8fafc', 0.7)} 100%)`
+      : 'transparent',
+    borderRadius: open ? '0 0 14px 14px' : 0,
+    backdropFilter: open ? 'blur(16px)' : 'none',
+    WebkitBackdropFilter: open ? 'blur(16px)' : 'none',
+    borderLeft: open ? `1px solid ${alpha(accent, isDark ? 0.1 : 0.08)}` : '1px solid transparent',
+    borderRight: open ? `1px solid ${alpha(accent, isDark ? 0.1 : 0.08)}` : '1px solid transparent',
+    borderBottom: open
+      ? `1px solid ${alpha(accent, isDark ? 0.1 : 0.08)}`
+      : '1px solid transparent',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: '10%',
+      right: '10%',
+      height: '1px',
+      background: open
+        ? `linear-gradient(90deg, transparent, ${alpha(accent, 0.3)}, transparent)`
+        : 'transparent',
+      transition: 'background 0.3s ease',
+    },
+  };
+});
 
 const BaseMobileSubmenuItem = styled(Button, {
   shouldForwardProp: (prop) => !['open', 'index', 'colorVariant'].includes(prop as string),
@@ -233,74 +259,13 @@ const BaseMobileSubmenuItem = styled(Button, {
   index: number;
   colorVariant: 'default' | 'destructive' | 'positive';
 }>(({ theme, open, index, colorVariant }) => {
-  // Define color schemes for different variants
-  const getColors = (): {
-    borderLeft: string;
-    borderLeftHover: string;
-    borderHover: string;
-    gradient: string;
-    shadow: string;
-  } => {
-    switch (colorVariant) {
-      case 'destructive':
-        return {
-          borderLeft:
-            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(220, 38, 38, 0.5)',
-          borderLeftHover:
-            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.8)' : 'rgba(220, 38, 38, 0.9)',
-          borderHover:
-            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(220, 38, 38, 0.3)',
-          gradient:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(220, 38, 38, 0.02) 50%, transparent 100%)'
-              : 'linear-gradient(135deg, rgba(220, 38, 38, 0.04) 0%, rgba(185, 28, 28, 0.02) 50%, transparent 100%)',
-          shadow:
-            theme.palette.mode === 'dark'
-              ? '0 4px 12px rgba(239, 68, 68, 0.12)'
-              : '0 4px 12px rgba(220, 38, 38, 0.1)',
-        };
-      case 'positive':
-        return {
-          borderLeft:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.5)',
-          borderLeftHover:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.8)' : 'rgba(100, 116, 139, 0.9)',
-          borderHover:
-            theme.palette.mode === 'dark'
-              ? 'rgba(148, 163, 184, 0.25)'
-              : 'rgba(100, 116, 139, 0.3)',
-          gradient:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.06) 0%, rgba(100, 116, 139, 0.02) 50%, transparent 100%)'
-              : 'linear-gradient(135deg, rgba(100, 116, 139, 0.04) 0%, rgba(71, 85, 105, 0.02) 50%, transparent 100%)',
-          shadow:
-            theme.palette.mode === 'dark'
-              ? '0 4px 12px rgba(148, 163, 184, 0.1)'
-              : '0 4px 12px rgba(100, 116, 139, 0.08)',
-        };
-      default:
-        return {
-          borderLeft:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.3)' : 'rgba(100, 116, 139, 0.4)',
-          borderLeftHover:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.8)',
-          borderHover:
-            theme.palette.mode === 'dark'
-              ? 'rgba(148, 163, 184, 0.2)'
-              : 'rgba(100, 116, 139, 0.25)',
-          gradient:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.06) 0%, rgba(100, 116, 139, 0.02) 50%, transparent 100%)'
-              : 'linear-gradient(135deg, rgba(100, 116, 139, 0.04) 0%, rgba(71, 85, 105, 0.02) 50%, transparent 100%)',
-          shadow:
-            theme.palette.mode === 'dark'
-              ? '0 4px 12px rgba(148, 163, 184, 0.1)'
-              : '0 4px 12px rgba(100, 116, 139, 0.08)',
-        };
-    }
-  };
+  const isDark = theme.palette.mode === 'dark';
 
-  const colors = getColors();
+  const variantAccent = {
+    destructive: isDark ? '#ef4444' : '#dc2626',
+    positive: isDark ? '#38bdf8' : '#3b82f6',
+    default: isDark ? '#38bdf8' : '#3b82f6',
+  }[colorVariant];
 
   return {
     width: '100%',
@@ -309,9 +274,9 @@ const BaseMobileSubmenuItem = styled(Button, {
     marginBottom: theme.spacing(0.5),
     background: 'transparent',
     border: `1px solid transparent`,
-    borderLeft: `2px solid ${colors.borderLeft}`,
-    borderRadius: 8,
-    color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
+    borderLeft: `2px solid ${alpha(variantAccent, 0.35)}`,
+    borderRadius: '10px',
+    color: isDark ? '#ffffff' : '#0f172a',
     fontSize: '0.95rem',
     fontWeight: 500,
     textTransform: 'none',
@@ -323,6 +288,9 @@ const BaseMobileSubmenuItem = styled(Button, {
     transform: open ? 'translateX(0) scale(1)' : 'translateX(-20px) scale(0.95)',
     transition: `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)`,
     transitionDelay: open ? `${0.1 + index * 0.08}s` : '0s',
+    '& .MuiButton-startIcon': {
+      transition: 'color 0.2s ease',
+    },
     '&::before': {
       content: '""',
       position: 'absolute',
@@ -330,27 +298,30 @@ const BaseMobileSubmenuItem = styled(Button, {
       left: 0,
       right: 0,
       bottom: 0,
-      background: colors.gradient,
+      background: `linear-gradient(135deg, ${alpha(variantAccent, 0.08)} 0%, ${alpha(variantAccent, 0.02)} 50%, transparent 100%)`,
       opacity: 0,
       transition: 'opacity 0.3s ease',
-      borderRadius: 8,
+      borderRadius: '10px',
     },
     '&:hover': {
-      background:
-        theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.6)',
-      borderColor: colors.borderHover,
-      borderLeftColor: colors.borderLeftHover,
+      background: isDark
+        ? `linear-gradient(135deg, ${alpha(variantAccent, 0.1)} 0%, ${alpha(variantAccent, 0.04)} 100%)`
+        : `linear-gradient(135deg, ${alpha(variantAccent, 0.08)} 0%, ${alpha(variantAccent, 0.03)} 100%)`,
+      borderColor: alpha(variantAccent, 0.15),
+      borderLeftColor: alpha(variantAccent, 0.7),
       borderLeftWidth: '3px',
-      transform: open ? 'translateX(2px) scale(1.02)' : 'translateX(-20px) scale(0.95)',
-      boxShadow: colors.shadow,
+      transform: open ? 'translateX(2px) scale(1.01)' : 'translateX(-20px) scale(0.95)',
+      boxShadow: `0 2px 12px ${alpha(variantAccent, isDark ? 0.12 : 0.08)}`,
+      '& .MuiButton-startIcon': {
+        color: variantAccent,
+      },
       '&::before': {
         opacity: 1,
       },
     },
     '&:active': {
       transform: open ? 'translateX(1px) scale(1)' : 'translateX(-20px) scale(0.95)',
-      background:
-        theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(248, 250, 252, 0.8)',
+      background: alpha(variantAccent, isDark ? 0.12 : 0.08),
     },
   };
 });
@@ -454,46 +425,71 @@ const navButtonSx = (theme: Theme) =>
 
 // ─── Shared dropdown paper styles ────────────────────────────────────────────
 
-const dropdownPaperSx = (theme: Theme): SxProps<Theme> => ({
-  overflow: 'visible',
-  filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-  mt: 1.5,
-  minWidth: 180,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-      : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-  backdropFilter: 'blur(20px)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
-      : '1px solid rgba(59, 130, 246, 0.15)',
-  borderRadius: 2,
-  '&::before': {
-    content: '""',
-    display: 'block',
-    position: 'absolute',
-    top: 0,
-    left: 14,
-    width: 10,
-    height: 10,
-    bgcolor: 'background.paper',
-    transform: 'translateY(-50%) rotate(45deg)',
-    zIndex: 0,
-  },
-});
+const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? '#38bdf8' : '#3b82f6';
+  const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
 
-const menuItemSx = (theme: Theme): SxProps<Theme> => ({
-  py: 1.5,
-  px: 2,
-  borderRadius: 1,
-  mx: 1,
-  mb: 0.5,
-  '&:hover': {
-    backgroundColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(59, 130, 246, 0.08)',
-  },
-});
+  return {
+    overflow: 'hidden',
+    mt: 1.5,
+    minWidth: 200,
+    background: isDark
+      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.82) 0%, rgba(3, 7, 18, 0.92) 100%)'
+      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    border: `1px solid ${alpha(accent, isDark ? 0.15 : 0.12)}`,
+    borderRadius: '12px',
+    boxShadow: isDark
+      ? `0 8px 30px rgba(0, 0, 0, 0.45), 0 0 1px ${alpha(accent, 0.2)}, inset 0 1px 0 rgba(255, 255, 255, 0.04)`
+      : `0 4px 24px rgba(15, 23, 42, 0.1), 0 0 1px ${alpha(accent, 0.15)}`,
+    py: 0.75,
+    // Accent shimmer line at top
+    '&::before': {
+      content: '""',
+      display: 'block',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '2px',
+      background: `linear-gradient(90deg, transparent 0%, ${accent} 30%, ${accentAlt} 70%, transparent 100%)`,
+      zIndex: 1,
+      opacity: 0.7,
+    },
+  };
+};
+
+const menuItemSx = (theme: Theme): SxProps<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? '#38bdf8' : '#3b82f6';
+
+  return {
+    py: 1.25,
+    px: 2,
+    borderRadius: '8px',
+    mx: 0.75,
+    mb: 0.25,
+    borderLeft: `2px solid transparent`,
+    transition: 'all 0.2s ease',
+    '& .MuiListItemIcon-root': {
+      transition: 'color 0.2s ease',
+    },
+    '&:hover': {
+      background: isDark
+        ? `linear-gradient(135deg, ${alpha(accent, 0.1)} 0%, ${alpha(accent, 0.04)} 100%)`
+        : `linear-gradient(135deg, ${alpha(accent, 0.08)} 0%, ${alpha(accent, 0.03)} 100%)`,
+      borderLeftColor: alpha(accent, 0.6),
+      '& .MuiListItemIcon-root': {
+        color: accent,
+      },
+    },
+    '&:active': {
+      background: alpha(accent, isDark ? 0.14 : 0.1),
+    },
+  };
+};
 
 // ─── Mobile submenu button style helper ──────────────────────────────────────
 
@@ -935,6 +931,8 @@ export const HeaderBar: React.FC = () => {
         anchorEl={toolsAnchorEl}
         open={Boolean(toolsAnchorEl)}
         onClose={handleToolsClose}
+        TransitionComponent={Fade}
+        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
         slotProps={{ paper: { elevation: 0, sx: dropdownPaperSx(theme) } }}
@@ -962,6 +960,8 @@ export const HeaderBar: React.FC = () => {
         anchorEl={reportsAnchorEl}
         open={Boolean(reportsAnchorEl)}
         onClose={handleReportsClose}
+        TransitionComponent={Fade}
+        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
         slotProps={{ paper: { elevation: 0, sx: dropdownPaperSx(theme) } }}
