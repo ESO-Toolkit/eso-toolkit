@@ -71,10 +71,7 @@ export const TransitionLink: React.FC<TransitionLinkProps> = ({
       try {
         (
           document as unknown as {
-            startViewTransition: (opts: {
-              update: () => Promise<void>;
-              types?: string[];
-            }) => void;
+            startViewTransition: (opts: { update: () => Promise<void>; types?: string[] }) => void;
           }
         ).startViewTransition({
           update: doNavigate,

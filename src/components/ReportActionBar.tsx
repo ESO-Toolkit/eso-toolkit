@@ -18,10 +18,30 @@ interface ReportActionBarProps {
   actions?: React.ReactNode;
 }
 
-const NAV_ITEMS: { key: ReportPage; label: string; icon: React.ReactNode; path: (id: string) => string }[] = [
-  { key: 'fights', label: 'Fights', icon: <ListAltIcon sx={{ fontSize: '1.1rem' }} />, path: (id) => `/report/${id}` },
-  { key: 'dashboard', label: 'Dashboard', icon: <DashboardIcon sx={{ fontSize: '1.1rem' }} />, path: (id) => `/report/${id}/dashboard` },
-  { key: 'summary', label: 'Summary', icon: <SummarizeIcon sx={{ fontSize: '1.1rem' }} />, path: (id) => `/report/${id}/summary` },
+const NAV_ITEMS: {
+  key: ReportPage;
+  label: string;
+  icon: React.ReactNode;
+  path: (id: string) => string;
+}[] = [
+  {
+    key: 'fights',
+    label: 'Fights',
+    icon: <ListAltIcon sx={{ fontSize: '1.1rem' }} />,
+    path: (id) => `/report/${id}`,
+  },
+  {
+    key: 'dashboard',
+    label: 'Dashboard',
+    icon: <DashboardIcon sx={{ fontSize: '1.1rem' }} />,
+    path: (id) => `/report/${id}/dashboard`,
+  },
+  {
+    key: 'summary',
+    label: 'Summary',
+    icon: <SummarizeIcon sx={{ fontSize: '1.1rem' }} />,
+    path: (id) => `/report/${id}/summary`,
+  },
 ];
 
 export const ReportActionBar: React.FC<ReportActionBarProps> = ({
@@ -72,8 +92,7 @@ export const ReportActionBar: React.FC<ReportActionBarProps> = ({
             textAlign: 'center',
             wordBreak: 'break-word',
             lineHeight: 1.3,
-            color: (t: Theme) =>
-              t.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a',
+            color: (t: Theme) => (t.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a'),
           }}
         >
           {title}
@@ -135,8 +154,7 @@ export const ReportActionBar: React.FC<ReportActionBarProps> = ({
                       : t.palette.mode === 'dark'
                         ? 'rgba(56, 189, 248, 0.06)'
                         : 'rgba(59, 130, 246, 0.04)',
-                  color: (t: Theme) =>
-                    t.palette.mode === 'dark' ? '#38bdf8' : '#2563eb',
+                  color: (t: Theme) => (t.palette.mode === 'dark' ? '#38bdf8' : '#2563eb'),
                 },
               }}
             >
@@ -180,12 +198,9 @@ export const ReportActionBar: React.FC<ReportActionBarProps> = ({
               t.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.7)',
             border: '1px solid transparent',
             '&:hover': {
-              color: (t: Theme) =>
-                t.palette.mode === 'dark' ? '#38bdf8' : '#2563eb',
+              color: (t: Theme) => (t.palette.mode === 'dark' ? '#38bdf8' : '#2563eb'),
               background: (t: Theme) =>
-                t.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.06)'
-                  : 'rgba(59, 130, 246, 0.04)',
+                t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.06)' : 'rgba(59, 130, 246, 0.04)',
             },
           }}
         >

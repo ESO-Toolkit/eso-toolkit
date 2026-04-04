@@ -37,24 +37,29 @@ import { useParams } from 'react-router-dom';
 import { ClassIcon } from '../components/ClassIcon';
 import { useAuth } from '../features/auth/AuthContext';
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
-import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
+import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
+import { ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
-import { TRIAL_ACCENT, TRIAL_LABELS } from '../features/roster-hub/components/RosterCard';
+import {
+  TRIAL_ACCENT,
+  TRIAL_LABELS,
+  TRIAL_SHORT,
+} from '../features/roster-hub/components/RosterCard';
 import type {
   ProfileBuildSummary,
   ProfileRosterSummary,
   UserProfile,
 } from '../features/roster-hub/types/roster-hub.types';
-import { TAG_COLORS } from '../features/roster-hub/types/roster-hub.types';
+
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 const CLASS_LABELS: Record<string, string> = {
-  dragonknight: 'Dragonknight',
-  sorcerer: 'Sorcerer',
-  nightblade: 'Nightblade',
+  dragonknight: 'DK',
+  sorcerer: 'Sorc',
+  nightblade: 'NB',
   templar: 'Templar',
   warden: 'Warden',
-  necromancer: 'Necromancer',
+  necromancer: 'Necro',
   arcanist: 'Arcanist',
 };
 
@@ -67,7 +72,16 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 // ─── Shared card styles ──────────────────────────────────────────────────────
@@ -84,8 +98,8 @@ function useCardSx(accentColor: string, isDarkMode: boolean): object {
     overflow: 'hidden',
     border: isDarkMode ? '1px solid rgba(255,255,255,0.09)' : '1px solid rgba(0,0,0,0.09)',
     background: isDarkMode
-      ? `linear-gradient(160deg, ${accentColor}12 0%, rgba(152,131,227,0.07) 45%, rgba(11,18,32,0.6) 100%)`
-      : `linear-gradient(160deg, ${accentColor}0c 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)`,
+      ? `linear-gradient(135deg, ${accentColor}14 0%, rgba(56, 189, 248, 0.10) 50%, rgba(0, 225, 255, 0.10) 100%)`
+      : `linear-gradient(135deg, ${accentColor}12 0%, rgba(219, 234, 254, 0.45) 50%, rgba(224, 242, 254, 0.45) 100%)`,
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
     boxShadow: isDarkMode
@@ -132,7 +146,8 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
   const navigate = useViewTransitionNavigate();
   const theme = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
-  const roleColor = ROLE_ACCENT[build.role] ?? '#64748b';
+  const classTheme = CLASS_COLOR_MAP[build.eso_class as keyof typeof CLASS_COLOR_MAP];
+  const roleColor = classTheme?.accent ?? ROLE_ACCENT[build.role] ?? '#64748b';
   const classLabel = CLASS_LABELS[build.eso_class] ?? build.eso_class;
   const roleLabel = ROLE_LABELS[build.role] ?? build.role;
   const cardSx = useCardSx(roleColor, isDarkMode);
@@ -167,7 +182,12 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
         </Tooltip>
       )}
       <CardActionArea
-        onClick={() => navigate(`/build-editor?id=${build.id}`, { vtType: 'forward', morph: { ref: cardRef, name: 'build-hero' } })}
+        onClick={() =>
+          navigate(`/build-editor?id=${build.id}`, {
+            vtType: 'forward',
+            morph: { ref: cardRef, name: 'build-hero' },
+          })
+        }
         sx={{ flexGrow: 1, alignItems: 'flex-start' }}
       >
         <CardContent
@@ -180,49 +200,77 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
             pb: '20px !important',
           }}
         >
-          {/* Role + class badge row */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1.75 }}>
+          {/* Class + Role badges */}
+          <Box sx={{ display: 'flex', gap: 0.75, mb: 1.75 }}>
+            <Tooltip title={build.eso_class}>
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: '6px',
+                  background: isDarkMode ? `${roleColor}22` : `${roleColor}18`,
+                  border: `1px solid ${roleColor}45`,
+                  boxShadow: `0 0 8px ${roleColor}25`,
+                }}
+              >
+                <ClassIcon className={build.eso_class} size={13} />
+                <Typography
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.07em',
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
+                    background: `linear-gradient(135deg, ${roleColor}, ${roleColor}cc, ${roleColor})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    textShadow: `0 0 12px ${roleColor}40`,
+                    filter: isDarkMode ? 'brightness(1.2)' : 'none',
+                  }}
+                >
+                  {classLabel}
+                </Typography>
+              </Box>
+            </Tooltip>
             <Box
               component="span"
               sx={{
                 display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.5,
                 px: 1,
                 py: 0.5,
                 borderRadius: '6px',
-                background: isDarkMode
-                  ? `linear-gradient(90deg, ${roleColor}22 0%, ${roleColor}10 100%)`
-                  : `linear-gradient(90deg, ${roleColor}18 0%, ${roleColor}08 100%)`,
-                border: `1px solid ${roleColor}45`,
-                boxShadow: `0 0 8px ${roleColor}25`,
+                background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.08)',
               }}
             >
-              <ClassIcon className={build.eso_class} size={13} />
               <Typography
                 sx={{
-                  fontSize: '0.7rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.07em',
-                  color: roleColor,
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
                   lineHeight: 1,
                   textTransform: 'uppercase',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45))'
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.40))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: isDarkMode
+                    ? '0 0 10px rgba(255,255,255,0.15)'
+                    : '0 0 10px rgba(0,0,0,0.08)',
                 }}
               >
                 {roleLabel}
               </Typography>
             </Box>
-            {/* Class label — subtle secondary badge */}
-            <Typography
-              sx={{
-                fontSize: '0.68rem',
-                fontWeight: 600,
-                color: isDarkMode ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.4)',
-                letterSpacing: '0.01em',
-              }}
-            >
-              {classLabel}
-            </Typography>
           </Box>
 
           {/* Title — clamped to 2 lines */}
@@ -270,7 +318,6 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
           {build.tags.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
               {build.tags.slice(0, 3).map((tag) => {
-                const tc = BUILD_TAG_COLORS[tag] ?? '#64748b';
                 return (
                   <Box
                     key={tag}
@@ -286,9 +333,11 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
                       letterSpacing: '0.02em',
                       backdropFilter: 'blur(8px)',
                       WebkitBackdropFilter: 'blur(8px)',
-                      background: isDarkMode ? `${tc}25` : `${tc}18`,
-                      border: `1px solid ${tc}50`,
-                      color: tc,
+                      background: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                      border: isDarkMode
+                        ? '1px solid rgba(255,255,255,0.12)'
+                        : '1px solid rgba(0,0,0,0.10)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
                       lineHeight: 1.4,
                       whiteSpace: 'nowrap',
                     }}
@@ -297,6 +346,25 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
                   </Box>
                 );
               })}
+              {build.tags.length > 3 && (
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 0.75,
+                    py: 0.4,
+                    borderRadius: '6px',
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                    lineHeight: 1.4,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  +{build.tags.length - 3}
+                </Box>
+              )}
             </Box>
           )}
 
@@ -343,14 +411,19 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <ThumbUpIcon sx={{ fontSize: 13, color: roleColor, opacity: 0.8 }} />
+                <ThumbUpIcon
+                  sx={{
+                    fontSize: 13,
+                    color: isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
                 <Typography
                   noWrap
                   sx={{
                     fontSize: '0.78rem',
                     fontWeight: 700,
                     lineHeight: 1.3,
-                    color: roleColor,
+                    color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
@@ -368,6 +441,9 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
                 }}
               >
                 {formatDate(build.created_at)}
+                {build.updated_at &&
+                  build.updated_at !== build.created_at &&
+                  ` · updated ${formatDate(build.updated_at)}`}
               </Typography>
             </Box>
           </Box>
@@ -390,7 +466,8 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
   const theme = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
   const trialColor = TRIAL_ACCENT[roster.trial_id] ?? '#38bdf8';
-  const trialLabel = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
+  const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
+  const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
   const cardSx = useCardSx(trialColor, isDarkMode);
 
   return (
@@ -423,7 +500,12 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
         </Tooltip>
       )}
       <CardActionArea
-        onClick={() => navigate(`/roster-builder?id=${roster.id}`, { vtType: 'forward', morph: { ref: cardRef, name: 'roster-hero' } })}
+        onClick={() =>
+          navigate(`/roster-builder?id=${roster.id}`, {
+            vtType: 'forward',
+            morph: { ref: cardRef, name: 'roster-hero' },
+          })
+        }
         sx={{ flexGrow: 1, alignItems: 'flex-start' }}
       >
         <CardContent
@@ -437,7 +519,7 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
           }}
         >
           {/* Trial badge */}
-          <Tooltip title={trialLabel} placement="top">
+          <Tooltip title={trialFull} placement="top">
             <Box
               component="span"
               sx={{
@@ -460,12 +542,17 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
                   fontSize: '0.7rem',
                   fontWeight: 800,
                   letterSpacing: '0.07em',
-                  color: trialColor,
                   lineHeight: 1,
                   textTransform: 'uppercase',
+                  background: `linear-gradient(135deg, ${trialColor}, ${trialColor}cc, ${trialColor})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: `0 0 12px ${trialColor}40`,
+                  filter: isDarkMode ? 'brightness(1.2)' : 'none',
                 }}
               >
-                {trialLabel}
+                {trialShort}
               </Typography>
             </Box>
           </Tooltip>
@@ -515,7 +602,6 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
           {roster.tags.length > 0 && (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
               {roster.tags.slice(0, 3).map((tag) => {
-                const tc = TAG_COLORS[tag] ?? '#64748b';
                 return (
                   <Box
                     key={tag}
@@ -531,9 +617,11 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
                       letterSpacing: '0.02em',
                       backdropFilter: 'blur(8px)',
                       WebkitBackdropFilter: 'blur(8px)',
-                      background: isDarkMode ? `${tc}25` : `${tc}18`,
-                      border: `1px solid ${tc}50`,
-                      color: tc,
+                      background: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                      border: isDarkMode
+                        ? '1px solid rgba(255,255,255,0.12)'
+                        : '1px solid rgba(0,0,0,0.10)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
                       lineHeight: 1.4,
                       whiteSpace: 'nowrap',
                     }}
@@ -542,6 +630,25 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
                   </Box>
                 );
               })}
+              {roster.tags.length > 3 && (
+                <Box
+                  component="span"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 0.75,
+                    py: 0.4,
+                    borderRadius: '6px',
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                    lineHeight: 1.4,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  +{roster.tags.length - 3}
+                </Box>
+              )}
             </Box>
           )}
 
@@ -588,14 +695,19 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <ThumbUpIcon sx={{ fontSize: 13, color: trialColor, opacity: 0.8 }} />
+                <ThumbUpIcon
+                  sx={{
+                    fontSize: 13,
+                    color: isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
                 <Typography
                   noWrap
                   sx={{
                     fontSize: '0.78rem',
                     fontWeight: 700,
                     lineHeight: 1.3,
-                    color: trialColor,
+                    color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
