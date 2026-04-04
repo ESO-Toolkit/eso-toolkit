@@ -13,17 +13,17 @@
      slide-right Lateral slide — peer page to the right
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Spring-tuned easing tokens ───────────────────────────── */
-/* Named references for consistency across all animations.
-   "spring" overshoots slightly; "decel" is a smooth deceleration. */
+/* ── Easing tokens ────────────────────────────────────────── */
 :root {
-  --vt-spring: cubic-bezier(0.22, 0.68, 0, 1.2);
   --vt-decel: cubic-bezier(0.16, 1, 0.3, 1);
   --vt-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
   --vt-snap: cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 /* ── Keyframes ─────────────────────────────────────────────── */
+/* No filter: blur() — it forces software rasterization on the
+   full-page snapshot, causing visible jank. Use only opacity,
+   transform, and clip-path (all GPU-composited).              */
 
 @keyframes vt-fade-out {
   from {
@@ -47,25 +47,21 @@
   from {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0);
   }
   to {
     opacity: 0;
-    transform: scale(0.92);
-    filter: blur(4px);
+    transform: scale(0.95);
   }
 }
 
 @keyframes vt-card-expand {
   from {
-    clip-path: inset(5% round 16px);
+    clip-path: inset(4% round 16px);
     opacity: 0;
-    filter: blur(2px);
   }
   to {
     clip-path: inset(0% round 0px);
     opacity: 1;
-    filter: blur(0);
   }
 }
 
@@ -73,25 +69,21 @@
   from {
     clip-path: inset(0% round 0px);
     opacity: 1;
-    filter: blur(0);
   }
   to {
-    clip-path: inset(5% round 16px);
+    clip-path: inset(4% round 16px);
     opacity: 0;
-    filter: blur(2px);
   }
 }
 
 @keyframes vt-surface {
   from {
     opacity: 0;
-    transform: scale(0.92);
-    filter: blur(4px);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0);
   }
 }
 
@@ -111,7 +103,7 @@
   }
   to {
     opacity: 0;
-    transform: scale(0.88);
+    transform: scale(0.92);
   }
 }
 
@@ -129,7 +121,7 @@
 @keyframes vt-grow-in {
   from {
     opacity: 0;
-    transform: scale(0.88);
+    transform: scale(0.92);
   }
   to {
     opacity: 1;
@@ -137,21 +129,21 @@
   }
 }
 
-/* Lateral slides — peer-level page navigation */
+/* Lateral slides */
 @keyframes vt-slide-to-left {
   from {
     transform: translateX(0);
     opacity: 1;
   }
   to {
-    transform: translateX(-8%);
+    transform: translateX(-6%);
     opacity: 0;
   }
 }
 
 @keyframes vt-slide-from-right {
   from {
-    transform: translateX(8%);
+    transform: translateX(6%);
     opacity: 0;
   }
   to {
@@ -166,14 +158,14 @@
     opacity: 1;
   }
   to {
-    transform: translateX(8%);
+    transform: translateX(6%);
     opacity: 0;
   }
 }
 
 @keyframes vt-slide-from-left {
   from {
-    transform: translateX(-8%);
+    transform: translateX(-6%);
     opacity: 0;
   }
   to {
@@ -182,30 +174,26 @@
   }
 }
 
-/* Content entrance — used on page-content layer */
-@keyframes vt-content-enter {
+/* Tab content swap */
+@keyframes vt-tab-exit {
   from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-    filter: blur(3px);
-  }
-  to {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
   }
 }
 
-@keyframes vt-content-exit {
+@keyframes vt-tab-enter {
   from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
   }
   to {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-    filter: blur(3px);
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -221,6 +209,11 @@
 
 ::view-transition-image-pair(root) {
   isolation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
 }
 
 /* ── Header isolation ──────────────────────────────────────── */
@@ -241,11 +234,11 @@
 /* ── Hero morph (shared element) ──────────────────────────── */
 /* The ::view-transition-group handles position + size
    interpolation (the actual morph). Old/new pseudos crossfade
-   the card contents into the shell contents.                  */
+   the card contents into the detail contents.                 */
 
 ::view-transition-group(build-hero),
 ::view-transition-group(roster-hero) {
-  animation-duration: 450ms;
+  animation-duration: 400ms;
   animation-timing-function: var(--vt-snap);
   z-index: 10;
 }
@@ -257,53 +250,49 @@
 
 ::view-transition-old(build-hero),
 ::view-transition-old(roster-hero) {
-  animation: vt-fade-out 180ms ease-out both;
+  animation: vt-fade-out 160ms ease-out both;
   mix-blend-mode: normal;
 }
 
 ::view-transition-new(build-hero),
 ::view-transition-new(roster-hero) {
-  animation: vt-fade-in 220ms ease-in 100ms both;
+  animation: vt-fade-in 200ms ease-in 80ms both;
   mix-blend-mode: normal;
 }
 
 /* ── Default (crossfade) ──────────────────────────────────── */
+/* Matched durations prevent old-disappears-before-new-appears
+   flash that exposes the raw DOM.                             */
 
 ::view-transition-old(root) {
-  animation: vt-fade-out 160ms ease-out both;
-  mix-blend-mode: normal;
+  animation: vt-fade-out 150ms ease-out both;
 }
 
 ::view-transition-new(root) {
-  animation: vt-fade-in 160ms ease-out both;
-  mix-blend-mode: normal;
+  animation: vt-fade-in 150ms ease-out both;
 }
 
 /* ── Forward (container expand) ───────────────────────────── */
 
 html:active-view-transition-type(forward)::view-transition-old(root) {
-  animation: vt-recede 220ms ease-in both;
-  mix-blend-mode: normal;
+  animation: vt-recede 200ms ease-in both;
   z-index: 1;
 }
 
 html:active-view-transition-type(forward)::view-transition-new(root) {
-  animation: vt-card-expand 300ms var(--vt-decel) both;
-  mix-blend-mode: normal;
+  animation: vt-card-expand 280ms var(--vt-decel) both;
   z-index: 2;
 }
 
 /* ── Back (container collapse) ────────────────────────────── */
 
 html:active-view-transition-type(back)::view-transition-old(root) {
-  animation: vt-card-collapse 260ms ease-in both;
-  mix-blend-mode: normal;
+  animation: vt-card-collapse 220ms ease-in both;
   z-index: 2;
 }
 
 html:active-view-transition-type(back)::view-transition-new(root) {
-  animation: vt-surface 280ms var(--vt-decel) both;
-  mix-blend-mode: normal;
+  animation: vt-surface 250ms var(--vt-decel) both;
   z-index: 1;
 }
 
@@ -313,78 +302,69 @@ html:active-view-transition-type(back)::view-transition-new(root) {
    "forward" so equal specificity wins by source order.        */
 
 html:active-view-transition-type(hero)::view-transition-old(root) {
-  animation: vt-fade-out 240ms ease-out both;
-  mix-blend-mode: normal;
+  animation: vt-fade-out 200ms ease-out both;
   z-index: 1;
 }
 
 html:active-view-transition-type(hero)::view-transition-new(root) {
-  animation: vt-fade-in 320ms var(--vt-decel) 60ms both;
-  mix-blend-mode: normal;
+  animation: vt-fade-in 280ms var(--vt-decel) 40ms both;
   z-index: 2;
 }
 
 /* ── Up (circle reveal) ──────────────────────────────────── */
 
 html:active-view-transition-type(up)::view-transition-old(root) {
-  animation: vt-shrink-out 220ms ease-in both;
-  mix-blend-mode: normal;
+  animation: vt-shrink-out 200ms ease-in both;
   z-index: 1;
 }
 
 html:active-view-transition-type(up)::view-transition-new(root) {
-  animation: vt-circle-reveal 380ms var(--vt-ease-out) both;
-  mix-blend-mode: normal;
+  animation: vt-circle-reveal 350ms var(--vt-ease-out) both;
   z-index: 2;
 }
 
 /* ── Down (circle close) ─────────────────────────────────── */
 
 html:active-view-transition-type(down)::view-transition-old(root) {
-  animation: vt-circle-close 320ms ease-in both;
-  mix-blend-mode: normal;
+  animation: vt-circle-close 280ms ease-in both;
   z-index: 2;
 }
 
 html:active-view-transition-type(down)::view-transition-new(root) {
-  animation: vt-grow-in 320ms var(--vt-decel) 50ms both;
-  mix-blend-mode: normal;
+  animation: vt-grow-in 280ms var(--vt-decel) 30ms both;
   z-index: 1;
 }
 
 /* ── Slide Left (lateral: current page → left peer) ───────── */
 
 html:active-view-transition-type(slide-left)::view-transition-old(root) {
-  animation: vt-slide-to-left 260ms ease-in both;
-  mix-blend-mode: normal;
+  animation: vt-slide-to-left 220ms ease-in both;
   z-index: 1;
 }
 
 html:active-view-transition-type(slide-left)::view-transition-new(root) {
-  animation: vt-slide-from-right 300ms var(--vt-decel) both;
-  mix-blend-mode: normal;
+  animation: vt-slide-from-right 260ms var(--vt-decel) both;
   z-index: 2;
 }
 
 /* ── Slide Right (lateral: current page → right peer) ─────── */
 
 html:active-view-transition-type(slide-right)::view-transition-old(root) {
-  animation: vt-slide-to-right 260ms ease-in both;
-  mix-blend-mode: normal;
+  animation: vt-slide-to-right 220ms ease-in both;
   z-index: 1;
 }
 
 html:active-view-transition-type(slide-right)::view-transition-new(root) {
-  animation: vt-slide-from-left 300ms var(--vt-decel) both;
-  mix-blend-mode: normal;
+  animation: vt-slide-from-left 260ms var(--vt-decel) both;
   z-index: 2;
 }
 
 /* ── Tab content transitions ───────────────────────────────── */
-/* Applied when AnimatedTabContent swaps tab panels.           */
+/* Applied when AnimatedTabContent swaps tab panels.
+   No filter — only opacity + transform for GPU compositing.  */
 
 ::view-transition-group(tab-content) {
-  animation-duration: 220ms;
+  animation-duration: 200ms;
   animation-timing-function: var(--vt-decel);
 }
 
@@ -393,12 +373,12 @@ html:active-view-transition-type(slide-right)::view-transition-new(root) {
 }
 
 ::view-transition-old(tab-content) {
-  animation: vt-content-exit 150ms ease-out both;
+  animation: vt-tab-exit 120ms ease-out both;
   mix-blend-mode: normal;
 }
 
 ::view-transition-new(tab-content) {
-  animation: vt-content-enter 250ms var(--vt-decel) 20ms both;
+  animation: vt-tab-enter 180ms var(--vt-decel) both;
   mix-blend-mode: normal;
 }
 

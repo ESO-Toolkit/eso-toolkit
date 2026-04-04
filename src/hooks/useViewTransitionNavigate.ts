@@ -10,6 +10,11 @@
  *    Promise is pending, so requestAnimationFrame creates a deadlock.
  * 3. Solution: MutationObserver fires as a microtask after React's synchronous
  *    DOM commit phase, which runs normally during rendering suppression.
+ *
+ * Concurrent transition guard:
+ *    Calling startViewTransition() while one is active cancels the running
+ *    transition (skipping all animations and revealing raw DOM). We track the
+ *    active transition and skip the VT wrapper for rapid-fire navigations.
  */
 
 import { useCallback, type RefObject } from 'react';
@@ -27,6 +32,9 @@ interface ViewTransitionHandle {
   ready: Promise<void>;
   updateCallbackDone: Promise<void>;
 }
+
+// Module-level flag — only one view transition can be active at a time.
+let vtActive = false;
 
 /**
  * Returns a Promise that resolves once React commits DOM changes.
@@ -65,14 +73,20 @@ function waitForDomCommit(): Promise<void> {
 
 export const useViewTransitionNavigate = (): ((
   to: To | number,
-  options?: NavigateOptions & { vtType?: ViewTransitionType; morph?: MorphTarget },
+  options?: NavigateOptions & {
+    vtType?: ViewTransitionType;
+    morph?: MorphTarget;
+  },
 ) => void) => {
   const navigate = useNavigate();
 
   return useCallback(
     (
       to: To | number,
-      options?: NavigateOptions & { vtType?: ViewTransitionType; morph?: MorphTarget },
+      options?: NavigateOptions & {
+        vtType?: ViewTransitionType;
+        morph?: MorphTarget;
+      },
     ) => {
       if (typeof to === 'number') {
         navigate(to);
@@ -81,7 +95,15 @@ export const useViewTransitionNavigate = (): ((
 
       const { vtType, morph, ...navOptions } = options ?? {};
 
+      // No VT support — fall through to plain navigate
       if (!('startViewTransition' in document)) {
+        navigate(to, navOptions);
+        return;
+      }
+
+      // If a transition is already running, skip VT to avoid the
+      // cancel-and-jump behavior. Navigate instantly instead.
+      if (vtActive) {
         navigate(to, navOptions);
         return;
       }
@@ -99,6 +121,8 @@ export const useViewTransitionNavigate = (): ((
 
       const types = [vtType, morph ? 'hero' : undefined].filter(Boolean) as string[];
 
+      vtActive = true;
+
       // Level 2 API: object param with types
       try {
         const handle = (
@@ -113,24 +137,36 @@ export const useViewTransitionNavigate = (): ((
           types,
         });
 
-        // Clean up the morph name after the transition finishes
-        if (morph?.ref.current) {
-          const el = morph.ref.current;
-          handle?.finished
-            ?.then(() => {
-              el.style.viewTransitionName = '';
-            })
-            .catch(() => {
-              el.style.viewTransitionName = '';
-            });
-        }
+        const cleanup = (): void => {
+          vtActive = false;
+          // Clean up the morph name
+          if (morph?.ref.current) {
+            morph.ref.current.style.viewTransitionName = '';
+          }
+        };
+
+        handle.finished.then(cleanup).catch(cleanup);
       } catch {
         // Fallback: Level 1 API (no types support)
-        (
-          document as unknown as {
-            startViewTransition: (cb: () => Promise<void>) => void;
-          }
-        ).startViewTransition(doNavigate);
+        try {
+          const handle = (
+            document as unknown as {
+              startViewTransition: (cb: () => Promise<void>) => ViewTransitionHandle;
+            }
+          ).startViewTransition(doNavigate);
+
+          handle.finished
+            .then(() => {
+              vtActive = false;
+            })
+            .catch(() => {
+              vtActive = false;
+            });
+        } catch {
+          // VT completely failed — just navigate
+          vtActive = false;
+          navigate(to, navOptions);
+        }
       }
     },
     [navigate],

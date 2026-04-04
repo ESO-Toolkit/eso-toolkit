@@ -6,15 +6,20 @@ interface AnimatedTabContentProps {
   tabKey: string;
 }
 
+interface VTHandle {
+  finished: Promise<void>;
+}
+
 /**
  * GPU-accelerated tab content transitions using the native View Transitions API.
- * Falls back to an instant swap when the API isn't available.
+ * Falls back to an instant swap when the API isn't available or when a
+ * route-level transition is already in flight.
  */
 export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children, tabKey }) => {
   const [displayContent, setDisplayContent] = useState(children);
   const prevTabKey = useRef(tabKey);
   const containerRef = useRef<HTMLDivElement>(null);
-  const activeTransition = useRef<{ finished: Promise<void> } | null>(null);
+  const transitioning = useRef(false);
 
   useEffect(() => {
     if (tabKey === prevTabKey.current) {
@@ -25,47 +30,48 @@ export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children
 
     prevTabKey.current = tabKey;
 
-    // Skip VT if API is missing or container isn't mounted
-    if (!('startViewTransition' in document) || !containerRef.current) {
-      setDisplayContent(children);
-      return;
-    }
-
     const el = containerRef.current;
 
-    // If a previous transition is still in flight, skip animation to
-    // avoid stacking view-transition-name on an already-captured element.
-    if (activeTransition.current) {
-      el.style.viewTransitionName = '';
+    // Skip VT when: API missing, element unmounted, or another
+    // transition (route-level or previous tab) is still active.
+    // document.activeViewTransition is non-null when any VT is running.
+    const docHasActiveVT = !!(document as unknown as { activeViewTransition?: object })
+      .activeViewTransition;
+
+    if (!('startViewTransition' in document) || !el || transitioning.current || docHasActiveVT) {
       setDisplayContent(children);
-      activeTransition.current = null;
       return;
     }
 
-    // Give the container a unique VT name for the duration of the transition
+    transitioning.current = true;
     el.style.viewTransitionName = 'tab-content';
 
-    const transition = (
-      document as unknown as {
-        startViewTransition: (cb: () => Promise<void>) => {
-          finished: Promise<void>;
-        };
-      }
-    ).startViewTransition(() => {
-      setDisplayContent(children);
-      return new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    let handle: VTHandle;
+    try {
+      handle = (
+        document as unknown as {
+          startViewTransition: (cb: () => Promise<void>) => VTHandle;
+        }
+      ).startViewTransition(() => {
+        setDisplayContent(children);
+        return new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
       });
-    });
-
-    activeTransition.current = transition;
+    } catch {
+      // VT failed — instant swap
+      el.style.viewTransitionName = '';
+      transitioning.current = false;
+      setDisplayContent(children);
+      return;
+    }
 
     const cleanup = (): void => {
       el.style.viewTransitionName = '';
-      activeTransition.current = null;
+      transitioning.current = false;
     };
 
-    transition.finished.then(cleanup).catch(cleanup);
+    handle.finished.then(cleanup).catch(cleanup);
   }, [children, tabKey]);
 
   return (
