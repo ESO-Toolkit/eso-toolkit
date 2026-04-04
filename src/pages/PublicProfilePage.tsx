@@ -36,8 +36,8 @@ import { useParams } from 'react-router-dom';
 
 import { ClassIcon } from '../components/ClassIcon';
 import { useAuth } from '../features/auth/AuthContext';
-import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
+import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import {
@@ -50,7 +50,6 @@ import type {
   ProfileRosterSummary,
   UserProfile,
 } from '../features/roster-hub/types/roster-hub.types';
-
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 const CLASS_LABELS: Record<string, string> = {
