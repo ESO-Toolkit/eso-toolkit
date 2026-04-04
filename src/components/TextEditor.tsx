@@ -37,7 +37,10 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: 'var(--panel)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+      : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
   padding: '24px',
   borderRadius: '14px',
   border: '1px solid var(--border)',
@@ -45,8 +48,8 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
-      : '0 8px 30px rgba(0, 0, 0, 0.15)',
+      ? theme.shadows[6]
+      : theme.shadows[4],
   transition: 'all 0.3s ease',
   backdropFilter: 'blur(12px) saturate(180%)',
   WebkitBackdropFilter: 'blur(12px) saturate(180%)',
@@ -63,7 +66,10 @@ const EditorTool = styled(Box)(({ theme }) => ({
     borderRadius: '0', // Remove border radius for full-width
     border: 'none', // Remove border
     backdropFilter: 'blur(8px) saturate(160%)',
-    background: 'var(--panel)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+        : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
     minHeight: '100vh', // Full height on mobile
     maxWidth: '100%', // Full width
   },
