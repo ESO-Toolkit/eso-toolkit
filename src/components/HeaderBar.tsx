@@ -4,8 +4,9 @@ import {
   Person,
   ExpandMore,
   Build,
-  ExpandLess,
   Assessment,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
 } from '@mui/icons-material';
 import {
   AppBar,
@@ -22,6 +23,7 @@ import {
   ListItemIcon,
   ListItemText,
   Fade,
+  Divider,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { alpha, styled } from '@mui/material/styles';
@@ -31,6 +33,7 @@ import { useLocation } from 'react-router-dom';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { usePersistentDarkMode } from '../hooks/usePersistentDarkMode';
 import {
   useViewTransitionNavigate,
   type ViewTransitionType,
@@ -78,270 +81,122 @@ const HamburgerLines = styled(Box)({
   justifyContent: 'center',
 });
 
-// Modern Mobile Menu Overlay
-const MobileMenuOverlay = styled(Box)<{ open: boolean }>(({ theme, open }) => ({
+// ─── Mobile Bottom Sheet Components ─────────────────────────────────────────
+
+const MobileBackdrop = styled(Box)<{ open: boolean }>(({ open }) => ({
   position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-      : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-  backdropFilter: 'blur(20px)',
-  zIndex: 1300,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
+  inset: 0,
+  background: 'rgba(0, 0, 0, 0.6)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  zIndex: 1299,
   opacity: open ? 1 : 0,
   visibility: open ? 'visible' : 'hidden',
-  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
+  transition: 'opacity 0.3s ease, visibility 0.3s ease',
+}));
+
+const MobileBottomSheet = styled(Box)<{ open: boolean }>(({ theme, open }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    position: 'fixed',
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    background:
-      theme.palette.mode === 'dark'
-        ? 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 70%)'
-        : 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 70%)',
-    animation: open ? 'pulse-bg 4s ease-in-out infinite alternate' : 'none',
-  },
-  '@keyframes pulse-bg': {
-    '0%': { opacity: 0.3, transform: 'scale(0.8)' },
-    '100%': { opacity: 0.6, transform: 'scale(1.2)' },
-  },
-}));
-
-const MobileMenuContent = styled(Box)<{ open: boolean }>(({ theme: _theme, open }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '2rem',
-  zIndex: 1,
-  transform: open ? 'translateY(0) scale(1)' : 'translateY(50px) scale(0.9)',
-  opacity: open ? 1 : 0,
-  transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-  transitionDelay: open ? '0.1s' : '0s',
-}));
-
-const MobileNavButton = styled(Button)(({ theme }) => ({
-  minWidth: 280,
-  height: 64,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(0, 225, 255, 0.05) 100%)'
-      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
-      : '1px solid rgba(59, 130, 246, 0.15)',
-  borderRadius: 16,
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-  fontSize: '1.1rem',
-  fontWeight: 600,
-  textTransform: 'none',
-  backdropFilter: 'blur(10px)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  position: 'relative',
-  overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: '-100%',
-    width: '100%',
-    height: '100%',
-    background:
-      theme.palette.mode === 'dark'
-        ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)'
-        : 'linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.1), transparent)',
-    transition: 'left 0.6s ease',
-  },
-  '&:hover': {
-    background:
-      theme.palette.mode === 'dark'
-        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
-        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%)',
-    borderColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.25)',
-    transform: 'translateY(-2px) scale(1.02)',
-    boxShadow:
-      theme.palette.mode === 'dark'
-        ? '0 10px 30px rgba(56, 189, 248, 0.2)'
-        : '0 10px 30px rgba(59, 130, 246, 0.15)',
-    '&::before': {
-      left: '100%',
+    maxHeight: '80dvh',
+    boxSizing: 'border-box',
+    zIndex: 1300,
+    background: isDark
+      ? 'linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.99) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.99) 100%)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    borderRadius: '20px 20px 0 0',
+    border: `1px solid ${isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)'}`,
+    borderBottom: 'none',
+    boxShadow: isDark
+      ? '0 -20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
+      : '0 -20px 60px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)',
+    transform: open ? 'translateY(0)' : 'translateY(100%)',
+    transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    overscrollBehavior: 'contain',
+    paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 24px)',
+    '@keyframes sheetItemIn': {
+      from: { opacity: 0, transform: 'translateY(8px)' },
+      to: { opacity: 1, transform: 'translateY(0)' },
     },
-  },
-  '&:active': {
-    transform: 'translateY(0) scale(1)',
-  },
-}));
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      backgroundImage: noiseTexture,
+      backgroundSize: '128px 128px',
+      opacity: isDark ? 0.3 : 0.15,
+      pointerEvents: 'none',
+      borderRadius: 'inherit',
+      zIndex: 0,
+    },
+    '&::-webkit-scrollbar': { width: 4 },
+    '&::-webkit-scrollbar-track': { background: 'transparent' },
+    '&::-webkit-scrollbar-thumb': {
+      background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+      borderRadius: 2,
+    },
+  };
+});
 
-const CloseButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  top: 20,
-  right: 20,
-  width: 48,
-  height: 48,
-  background:
-    theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
-      : '1px solid rgba(59, 130, 246, 0.15)',
-  borderRadius: 12,
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    background:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.12)',
-    transform: 'rotate(90deg) scale(1.1)',
-  },
-}));
-
-const MobileSubmenuContainer = styled(Box, {
-  shouldForwardProp: (prop) => !['open', 'itemCount'].includes(prop as string),
-})<{ open: boolean; itemCount?: number }>(({ theme, open, itemCount = 3 }) => {
+const MobileSheetItem = styled(Box)<{ active?: boolean }>(({ theme, active }) => {
   const isDark = theme.palette.mode === 'dark';
   const accent = isDark ? '#38bdf8' : '#3b82f6';
-
   return {
-    width: '100%',
-    overflow: 'hidden',
-    // Calculate height dynamically based on number of items: items × (52px height + 4px margin) + top padding + border
-    height: open ? `${itemCount * 56 + 8}px` : 0,
-    transition:
-      'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
-    marginBottom: open ? theme.spacing(1) : 0,
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
-    paddingTop: open ? theme.spacing(0.5) : 0,
-    background: open
-      ? isDark
-        ? `linear-gradient(180deg, ${alpha('#0f172a', 0.5)} 0%, ${alpha('#030718', 0.65)} 100%)`
-        : `linear-gradient(180deg, ${alpha('#ffffff', 0.5)} 0%, ${alpha('#f8fafc', 0.7)} 100%)`
-      : 'transparent',
-    borderRadius: open ? '0 0 14px 14px' : 0,
-    backdropFilter: open ? 'blur(16px)' : 'none',
-    WebkitBackdropFilter: open ? 'blur(16px)' : 'none',
-    borderLeft: open ? `1px solid ${alpha(accent, isDark ? 0.1 : 0.08)}` : '1px solid transparent',
-    borderRight: open ? `1px solid ${alpha(accent, isDark ? 0.1 : 0.08)}` : '1px solid transparent',
-    borderBottom: open
-      ? `1px solid ${alpha(accent, isDark ? 0.1 : 0.08)}`
-      : '1px solid transparent',
+    gap: 12,
+    padding: '10px 12px',
+    borderRadius: 12,
+    cursor: 'pointer',
     position: 'relative',
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: '10%',
-      right: '10%',
-      height: '1px',
-      background: open
-        ? `linear-gradient(90deg, transparent, ${alpha(accent, 0.3)}, transparent)`
-        : 'transparent',
-      transition: 'background 0.3s ease',
-    },
-  };
-});
-
-const BaseMobileSubmenuItem = styled(Button, {
-  shouldForwardProp: (prop) => !['open', 'index', 'colorVariant'].includes(prop as string),
-})<{
-  open: boolean;
-  index: number;
-  colorVariant: 'default' | 'destructive' | 'positive';
-}>(({ theme, open, index, colorVariant }) => {
-  const isDark = theme.palette.mode === 'dark';
-
-  const variantAccent = {
-    destructive: isDark ? '#ef4444' : '#dc2626',
-    positive: isDark ? '#38bdf8' : '#3b82f6',
-    default: isDark ? '#38bdf8' : '#3b82f6',
-  }[colorVariant];
-
-  return {
-    width: '100%',
-    maxWidth: 'none',
-    height: 52,
-    marginBottom: theme.spacing(0.5),
-    background: 'transparent',
-    border: `1px solid transparent`,
-    borderLeft: `2px solid ${alpha(variantAccent, 0.35)}`,
-    borderRadius: '10px',
-    color: isDark ? '#ffffff' : '#0f172a',
-    fontSize: '0.95rem',
-    fontWeight: 500,
-    textTransform: 'none',
-    position: 'relative',
-    overflow: 'hidden',
-    justifyContent: 'flex-start',
-    paddingLeft: theme.spacing(2),
-    opacity: open ? 1 : 0,
-    transform: open ? 'translateX(0) scale(1)' : 'translateX(-20px) scale(0.95)',
-    transition: `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)`,
-    transitionDelay: open ? `${0.1 + index * 0.08}s` : '0s',
-    '& .MuiButton-startIcon': {
-      transition: 'color 0.2s ease',
-    },
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: `linear-gradient(135deg, ${alpha(variantAccent, 0.08)} 0%, ${alpha(variantAccent, 0.02)} 50%, transparent 100%)`,
-      opacity: 0,
-      transition: 'opacity 0.3s ease',
-      borderRadius: '10px',
-    },
-    '&:hover': {
-      background: isDark
-        ? `linear-gradient(135deg, ${alpha(variantAccent, 0.1)} 0%, ${alpha(variantAccent, 0.04)} 100%)`
-        : `linear-gradient(135deg, ${alpha(variantAccent, 0.08)} 0%, ${alpha(variantAccent, 0.03)} 100%)`,
-      borderColor: alpha(variantAccent, 0.15),
-      borderLeftColor: alpha(variantAccent, 0.7),
-      borderLeftWidth: '3px',
-      transform: open ? 'translateX(2px) scale(1.01)' : 'translateX(-20px) scale(0.95)',
-      boxShadow: `0 2px 12px ${alpha(variantAccent, isDark ? 0.12 : 0.08)}`,
-      '& .MuiButton-startIcon': {
-        color: variantAccent,
-      },
+    transition: 'all 0.2s ease',
+    background: active ? (isDark ? alpha(accent, 0.1) : alpha(accent, 0.06)) : 'transparent',
+    ...(active && {
       '&::before': {
-        opacity: 1,
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '20%',
+        bottom: '20%',
+        width: 3,
+        borderRadius: 2,
+        background: accent,
       },
-    },
+    }),
     '&:active': {
-      transform: open ? 'translateX(1px) scale(1)' : 'translateX(-20px) scale(0.95)',
-      background: alpha(variantAccent, isDark ? 0.12 : 0.08),
+      transform: 'scale(0.98)',
+      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    },
+    '@media (hover: hover)': {
+      '&:hover': {
+        background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+      },
     },
   };
 });
 
-const AuthIconButton = styled(IconButton)(({ theme }) => ({
-  width: 40,
-  height: 40,
-  borderRadius: 8,
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-  '&:hover': {
-    backgroundColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
-    transform: 'scale(1.1)',
-    boxShadow:
-      theme.palette.mode === 'dark'
-        ? '0 4px 20px rgba(56, 189, 248, 0.15)'
-        : '0 4px 20px rgba(59, 130, 246, 0.12)',
-  },
-}));
+const MobileSectionLabel = styled(Typography)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    fontSize: '0.65rem',
+    fontWeight: 700,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)',
+    padding: '16px 20px 6px',
+    fontFamily: 'Space Grotesk, Inter, system-ui',
+    position: 'relative',
+    zIndex: 1,
+  };
+});
 
 // Calculator SVG icon component
 type CalculatorProps = {
@@ -499,7 +354,7 @@ const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
 
 // ─── Dropdown section header ─────────────────────────────────────────────────
 
-const dropdownHeaderSx = (theme: Theme, label: string): SxProps<Theme> => {
+const dropdownHeaderSx = (theme: Theme, _label: string): SxProps<Theme> => {
   const isDark = theme.palette.mode === 'dark';
   const accent = isDark ? '#38bdf8' : '#3b82f6';
   const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
@@ -595,60 +450,28 @@ const menuItemSx = (theme: Theme, itemAccent: string, index: number): SxProps<Th
   };
 };
 
-// ─── Mobile submenu button style helper ──────────────────────────────────────
+// ─── Avatar gradient helper ─────────────────────────────────────────────────
 
-const mobileSubmenuButtonSx = (
-  theme: Theme,
-  isOpen: boolean,
-  navItemCount: number,
-  mobileOpen: boolean,
-): SxProps<Theme> => {
-  const isDark = theme.palette.mode === 'dark';
-  const accent = isDark ? '#38bdf8' : '#3b82f6';
-  const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
+const avatarGradients: [string, string][] = [
+  ['#f59e0b', '#ef4444'],
+  ['#3b82f6', '#8b5cf6'],
+  ['#06b6d4', '#3b82f6'],
+  ['#22c55e', '#06b6d4'],
+  ['#8b5cf6', '#ec4899'],
+  ['#ef4444', '#f59e0b'],
+  ['#ec4899', '#f43f5e'],
+  ['#14b8a6', '#22c55e'],
+];
 
-  return {
-    animationDelay: `${navItemCount * 0.1}s`,
-    animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-    background: isOpen
-      ? isDark
-        ? `linear-gradient(135deg, ${alpha(accent, 0.2)} 0%, ${alpha(accentAlt, 0.1)} 100%)`
-        : `linear-gradient(135deg, ${alpha(accent, 0.15)} 0%, ${alpha(accentAlt, 0.08)} 100%)`
-      : isDark
-        ? `linear-gradient(135deg, ${alpha(accent, 0.1)} 0%, ${alpha(accentAlt, 0.05)} 100%)`
-        : `linear-gradient(135deg, ${alpha(accent, 0.08)} 0%, ${alpha(accentAlt, 0.04)} 100%)`,
-    borderColor: isOpen ? alpha(accent, isDark ? 0.4 : 0.3) : alpha(accent, isDark ? 0.2 : 0.15),
-    borderRadius: isOpen ? '14px 14px 0 0' : '14px',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    position: 'relative',
-    overflow: 'hidden',
-    // Top shimmer when open
-    '&::after': isOpen
-      ? {
-          content: '""',
-          position: 'absolute',
-          bottom: 0,
-          left: '10%',
-          right: '10%',
-          height: '1px',
-          background: `linear-gradient(90deg, transparent, ${alpha(accent, 0.3)}, transparent)`,
-        }
-      : {},
-    '&:hover': {
-      background: isOpen
-        ? isDark
-          ? `linear-gradient(135deg, ${alpha(accent, 0.25)} 0%, ${alpha(accentAlt, 0.15)} 100%)`
-          : `linear-gradient(135deg, ${alpha(accent, 0.2)} 0%, ${alpha(accentAlt, 0.12)} 100%)`
-        : isDark
-          ? `linear-gradient(135deg, ${alpha(accent, 0.2)} 0%, ${alpha(accentAlt, 0.1)} 100%)`
-          : `linear-gradient(135deg, ${alpha(accent, 0.12)} 0%, ${alpha(accentAlt, 0.08)} 100%)`,
-      borderColor: alpha(accent, isDark ? 0.4 : 0.25),
-    },
-    '@keyframes slideInUp': {
-      '0%': { opacity: 0, transform: 'translateY(30px)' },
-      '100%': { opacity: 1, transform: 'translateY(0)' },
-    },
-  };
+const getAvatarProps = (name: string): { gradient: string; color: string; initials: string } => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % avatarGradients.length;
+  const [c1, c2] = avatarGradients[idx];
+  const initials = name.slice(0, 2).toUpperCase();
+  return { gradient: `linear-gradient(135deg, ${c1}, ${c2})`, color: c1, initials };
 };
 
 export const HeaderBar: React.FC = () => {
@@ -659,12 +482,14 @@ export const HeaderBar: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { darkMode, toggleDarkMode } = usePersistentDarkMode();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [reportsAnchorEl, setReportsAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [mobileToolsOpen, setMobileToolsOpen] = React.useState(false);
-  const [mobileReportsOpen, setMobileReportsOpen] = React.useState(false);
+  const [profileAnchorEl, setProfileAnchorEl] = React.useState<null | HTMLElement>(null);
+  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const dragStartY = React.useRef(0);
 
   const userDisplayName = React.useMemo(() => {
     if (!currentUser) return '';
@@ -684,6 +509,19 @@ export const HeaderBar: React.FC = () => {
     if (userError) return 'Account';
     return '';
   }, [userDisplayName, userLoading, userError]);
+
+  const avatarProps = React.useMemo(
+    () => getAvatarProps(userDisplayName || 'U'),
+    [userDisplayName],
+  );
+
+  const handleProfileMenuOpen = React.useCallback((event: React.MouseEvent<HTMLElement>): void => {
+    setProfileAnchorEl(event.currentTarget);
+  }, []);
+
+  const handleProfileMenuClose = React.useCallback((): void => {
+    setProfileAnchorEl(null);
+  }, []);
 
   React.useEffect(() => {
     const onScroll = (): void => setScrolled(window.scrollY > 8);
@@ -706,26 +544,28 @@ export const HeaderBar: React.FC = () => {
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
-    if (!mobileOpen) {
-      // Reset submenus when opening mobile menu
-      setMobileToolsOpen(false);
-      setMobileReportsOpen(false);
-    }
   };
 
-  const handleMobileToolsToggle = (): void => {
-    if (!mobileToolsOpen) {
-      setMobileReportsOpen(false);
-    }
-    setMobileToolsOpen(!mobileToolsOpen);
-  };
+  const handleSheetTouchStart = React.useCallback((e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+  }, []);
 
-  const handleMobileReportsToggle = (): void => {
-    if (!mobileReportsOpen) {
-      setMobileToolsOpen(false);
+  const handleSheetTouchMove = React.useCallback((e: React.TouchEvent) => {
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy > 0 && sheetRef.current) {
+      sheetRef.current.style.transform = `translateY(${dy}px)`;
     }
-    setMobileReportsOpen(!mobileReportsOpen);
-  };
+  }, []);
+
+  const handleSheetTouchEnd = React.useCallback((e: React.TouchEvent) => {
+    const dy = e.changedTouches[0].clientY - dragStartY.current;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = '';
+      sheetRef.current.style.transform = '';
+    }
+    if (dy > 80) setMobileOpen(false);
+  }, []);
 
   const handleNavigateToProfile = React.useCallback((): void => {
     if (currentUser?.name) {
@@ -759,15 +599,12 @@ export const HeaderBar: React.FC = () => {
     setToolsAnchorEl(null);
     setReportsAnchorEl(null);
     setMobileOpen(false);
-    setMobileToolsOpen(false);
-    setMobileReportsOpen(false);
   };
 
   const handleSampleReport = React.useCallback((): void => {
     navigate('/sample-report', { vtType: 'forward' });
     setReportsAnchorEl(null);
     setMobileOpen(false);
-    setMobileReportsOpen(false);
   }, [navigate]);
 
   const toolsItems = [
@@ -986,68 +823,151 @@ export const HeaderBar: React.FC = () => {
               >
                 Tools
               </Button>
-              <ThemeToggle />
+              {!isLoggedIn && <ThemeToggle />}
               {isLoggedIn ? (
-                <>
-                  <Tooltip title="My profile" arrow placement="bottom">
-                    <Button
-                      onClick={handleNavigateToProfile}
-                      aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
-                      startIcon={<Person />}
+                <Tooltip title="" arrow={false} open={false}>
+                  <Box
+                    onClick={handleProfileMenuOpen}
+                    aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+                      if (e.key === 'Enter' || e.key === ' ')
+                        handleProfileMenuOpen(e as unknown as React.MouseEvent<HTMLElement>);
+                    }}
+                    sx={{
+                      display: { xs: 'none', sm: 'flex' },
+                      alignItems: 'center',
+                      gap: 1,
+                      cursor: 'pointer',
+                      px: 1,
+                      py: 0.5,
+                      borderRadius: '12px',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
+                      background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                      '&:hover': {
+                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                        boxShadow: isDark
+                          ? `0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.04)`
+                          : `0 4px 16px rgba(0,0,0,0.06)`,
+                        '& .profile-chevron': { opacity: 0.7, transform: 'translateY(1px)' },
+                      },
+                      '&:active': { transform: 'scale(0.97)' },
+                    }}
+                  >
+                    {/* Avatar */}
+                    <Box
                       sx={{
-                        display: { xs: 'none', sm: 'flex' },
-                        maxWidth: 220,
-                        fontWeight: 600,
-                        color:
-                          theme.palette.mode === 'dark'
-                            ? theme.palette.grey[100]
-                            : theme.palette.text.primary,
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: '999px',
-                        bgcolor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(59,130,246,0.12)'
-                            : 'rgba(59,130,246,0.16)',
-                        textTransform: 'none',
-                        '&:hover': {
-                          bgcolor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(59,130,246,0.2)'
-                              : 'rgba(59,130,246,0.24)',
-                        },
+                        width: 32,
+                        height: 32,
+                        borderRadius: '9px',
+                        background: avatarProps.gradient,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        color: '#fff',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                        position: 'relative',
+                        flexShrink: 0,
+                        boxShadow: `0 2px 8px ${alpha(avatarProps.color, 0.35)}`,
+                        transition: 'box-shadow 0.25s ease',
                       }}
                     >
-                      <Typography
-                        variant="body2"
+                      {avatarProps.initials}
+                      {/* Online indicator */}
+                      <Box
                         sx={{
-                          fontWeight: 600,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
+                          position: 'absolute',
+                          bottom: -2,
+                          right: -2,
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          background: '#22c55e',
+                          border: `2px solid ${isDark ? '#0f172a' : '#ffffff'}`,
+                          boxShadow: '0 0 6px rgba(34,197,94,0.5)',
                         }}
-                      >
-                        {userLabel || 'Profile'}
-                      </Typography>
-                    </Button>
-                  </Tooltip>
-                  <Tooltip title="Log out" arrow placement="bottom">
-                    <AuthIconButton onClick={handleLogout} aria-label="Log out">
-                      <Logout />
-                    </AuthIconButton>
-                  </Tooltip>
-                </>
-              ) : (
-                <Tooltip title="Log in" arrow placement="bottom">
-                  <AuthIconButton onClick={handleLogin} aria-label="Log in">
-                    <Login />
-                  </AuthIconButton>
+                      />
+                    </Box>
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        maxWidth: 140,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        color: isDark ? '#e2e8f0' : '#1e293b',
+                      }}
+                    >
+                      {userLabel || 'Profile'}
+                    </Typography>
+                    <ExpandMore
+                      className="profile-chevron"
+                      sx={{
+                        fontSize: 16,
+                        opacity: 0.4,
+                        transition: 'all 0.25s ease',
+                        color: isDark ? '#94a3b8' : '#64748b',
+                      }}
+                    />
+                  </Box>
                 </Tooltip>
+              ) : (
+                <Button
+                  onClick={handleLogin}
+                  startIcon={<Login sx={{ fontSize: '18px !important' }} />}
+                  aria-label="Sign in with ESO Logs"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    px: 2.5,
+                    py: 0.75,
+                    borderRadius: '10px',
+                    background: isDark
+                      ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                      : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: isDark
+                      ? '0 4px 16px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)'
+                      : '0 4px 16px rgba(59,130,246,0.25), inset 0 1px 0 rgba(255,255,255,0.2)',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      inset: 0,
+                      background:
+                        'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+                      opacity: 0,
+                      transition: 'opacity 0.25s ease',
+                    },
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: isDark
+                        ? '0 8px 24px rgba(59,130,246,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                        : '0 8px 24px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.25)',
+                      '&::before': { opacity: 1 },
+                    },
+                    '&:active': { transform: 'translateY(0) scale(0.97)' },
+                  }}
+                >
+                  Sign in
+                </Button>
               )}
             </Box>
 
             <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
-              <ThemeToggle />
               <HamburgerButton
                 open={mobileOpen}
                 onClick={handleDrawerToggle}
@@ -1196,234 +1116,581 @@ export const HeaderBar: React.FC = () => {
         <Box sx={{ pb: 0.5 }} />
       </Menu>
 
-      {/* Modern Mobile Menu Overlay */}
-      <MobileMenuOverlay open={mobileOpen}>
-        <CloseButton onClick={handleDrawerToggle} aria-label="close menu">
-          ✕
-        </CloseButton>
-
-        <MobileMenuContent open={mobileOpen}>
-          <Typography
-            variant="h4"
+      {/* Profile Dropdown */}
+      <Menu
+        anchorEl={profileAnchorEl}
+        open={Boolean(profileAnchorEl)}
+        onClose={handleProfileMenuClose}
+        TransitionComponent={Fade}
+        TransitionProps={{ timeout: 200 }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              ...dropdownPaperSx(theme),
+              minWidth: 240,
+            } as SxProps<Theme>,
+            onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty(
+                '--mouse-x',
+                `${((e.clientX - rect.left) / rect.width) * 100}%`,
+              );
+              e.currentTarget.style.setProperty(
+                '--mouse-y',
+                `${((e.clientY - rect.top) / rect.height) * 100}%`,
+              );
+            },
+          },
+        }}
+      >
+        <Box className="dropdown-spotlight" />
+        {/* User info header */}
+        <Box
+          sx={{
+            px: 2,
+            pt: 2,
+            pb: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <Box
             sx={{
-              fontWeight: 800,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
-                  : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              mb: 2,
+              width: 40,
+              height: 40,
+              borderRadius: '11px',
+              background: avatarProps.gradient,
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
-              textTransform:
-                location.pathname === '/' || location.pathname === '' ? 'uppercase' : 'none',
+              justifyContent: 'center',
+              fontSize: '0.9rem',
+              fontWeight: 800,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+              flexShrink: 0,
+              boxShadow: `0 4px 12px ${alpha(avatarProps.color, 0.35)}`,
+              position: 'relative',
             }}
           >
-            <img src={esoLogo} alt="ESO Helpers" style={{ width: 32, height: 32 }} />
-            ESO Toolkit
-          </Typography>
+            {avatarProps.initials}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: -2,
+                right: -2,
+                width: 11,
+                height: 11,
+                borderRadius: '50%',
+                background: '#22c55e',
+                border: `2.5px solid ${isDark ? 'rgba(15,23,42,0.95)' : '#ffffff'}`,
+                boxShadow: '0 0 8px rgba(34,197,94,0.5)',
+              }}
+            />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                lineHeight: 1.3,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {userLabel || 'Profile'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.72rem',
+                opacity: 0.45,
+                lineHeight: 1.3,
+                mt: 0.15,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
+            >
+              ESO Logs account
+            </Typography>
+          </Box>
+        </Box>
+        <Divider
+          sx={{
+            mx: 1.5,
+            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+          }}
+        />
+        <MenuItem
+          onClick={() => {
+            handleNavigateToProfile();
+            handleProfileMenuClose();
+          }}
+          sx={menuItemSx(theme, isDark ? '#38bdf8' : '#3b82f6', 0)}
+        >
+          <ListItemIcon>
+            <Box
+              className="menu-icon-badge"
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: alpha(isDark ? '#38bdf8' : '#3b82f6', isDark ? 0.12 : 0.08),
+                border: `1px solid ${alpha(isDark ? '#38bdf8' : '#3b82f6', 0.15)}`,
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
+              <Person sx={{ fontSize: 18, color: isDark ? '#38bdf8' : '#3b82f6' }} />
+            </Box>
+          </ListItemIcon>
+          <ListItemText primary="My Profile" secondary="View your public profile" />
+        </MenuItem>
+        <MenuItem
+          onClick={(e: React.MouseEvent) => {
+            e.stopPropagation();
+            toggleDarkMode();
+          }}
+          sx={menuItemSx(theme, isDark ? '#f59e0b' : '#6366f1', 1)}
+        >
+          <ListItemIcon>
+            <Box
+              className="menu-icon-badge"
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.12 : 0.08),
+                border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.15)}`,
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
+              {darkMode ? (
+                <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              ) : (
+                <DarkModeIcon sx={{ fontSize: 18, color: '#6366f1' }} />
+              )}
+            </Box>
+          </ListItemIcon>
+          <ListItemText
+            primary={darkMode ? 'Light mode' : 'Dark mode'}
+            secondary="Toggle appearance"
+          />
+        </MenuItem>
+        <Divider
+          sx={{
+            mx: 1.5,
+            my: 0.5,
+            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+          }}
+        />
+        <MenuItem
+          onClick={() => {
+            handleLogout();
+            handleProfileMenuClose();
+          }}
+          sx={{
+            ...menuItemSx(theme, '#ef4444', 1),
+            '& .MuiListItemText-primary': {
+              color: isDark ? '#f87171' : '#dc2626',
+              fontSize: '0.875rem',
+              fontWeight: 550,
+              lineHeight: 1.3,
+            },
+          }}
+        >
+          <ListItemIcon>
+            <Box
+              className="menu-icon-badge"
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '9px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: alpha('#ef4444', isDark ? 0.12 : 0.08),
+                border: `1px solid ${alpha('#ef4444', 0.15)}`,
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
+              <Logout sx={{ fontSize: 18, color: isDark ? '#f87171' : '#dc2626' }} />
+            </Box>
+          </ListItemIcon>
+          <ListItemText primary="Log out" />
+        </MenuItem>
+        <Box sx={{ pb: 0.5 }} />
+      </Menu>
 
-          {navItems.map((item, index) => (
-            <MobileNavButton
+      {/* Mobile Bottom Sheet */}
+      <MobileBackdrop open={mobileOpen} onClick={() => setMobileOpen(false)} />
+      <MobileBottomSheet open={mobileOpen} ref={sheetRef}>
+        {/* Drag Handle */}
+        <Box
+          onTouchStart={handleSheetTouchStart}
+          onTouchMove={handleSheetTouchMove}
+          onTouchEnd={handleSheetTouchEnd}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            pt: 1.5,
+            pb: 1,
+            cursor: 'grab',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <Box
+            sx={{
+              width: 36,
+              height: 4,
+              borderRadius: 2,
+              background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+            }}
+          />
+        </Box>
+
+        {/* User Card */}
+        {isLoggedIn && (
+          <Box
+            onClick={handleNavigateToProfile}
+            sx={{
+              mx: 2,
+              mb: 0.5,
+              p: 1.5,
+              borderRadius: 3,
+              background: isDark
+                ? `linear-gradient(135deg, ${alpha(avatarProps.color, 0.08)} 0%, rgba(15,23,42,0.4) 100%)`
+                : `linear-gradient(135deg, ${alpha(avatarProps.color, 0.06)} 0%, rgba(255,255,255,0.4) 100%)`,
+              border: `1px solid ${alpha(avatarProps.color, isDark ? 0.15 : 0.12)}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              cursor: 'pointer',
+              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
+              zIndex: 1,
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                background: `radial-gradient(120px circle at 20% 50%, ${alpha(avatarProps.color, 0.1)}, transparent 60%)`,
+                pointerEvents: 'none',
+              },
+              '&:active': { transform: 'scale(0.98)' },
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '11px',
+                background: avatarProps.gradient,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: '#fff',
+                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                flexShrink: 0,
+                boxShadow: `0 4px 12px ${alpha(avatarProps.color, 0.35)}`,
+                position: 'relative',
+              }}
+            >
+              {avatarProps.initials}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: -2,
+                  right: -2,
+                  width: 11,
+                  height: 11,
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  border: `2.5px solid ${isDark ? 'rgba(15,23,42,0.95)' : '#ffffff'}`,
+                  boxShadow: '0 0 6px rgba(34,197,94,0.5)',
+                }}
+              />
+            </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  lineHeight: 1.3,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {userLabel || 'Profile'}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  opacity: 0.45,
+                  lineHeight: 1.3,
+                  mt: 0.15,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                }}
+              >
+                View profile
+              </Typography>
+            </Box>
+            <ExpandMore
+              sx={{
+                fontSize: 18,
+                opacity: 0.3,
+                color: isDark ? '#94a3b8' : '#64748b',
+                flexShrink: 0,
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Navigate */}
+        <MobileSectionLabel>Navigate</MobileSectionLabel>
+        <Box sx={{ px: 1.5, position: 'relative', zIndex: 1 }}>
+          {navItems.map((item, i) => (
+            <MobileSheetItem
               key={item.text}
-              onClick={(_e: React.MouseEvent) => {
+              active={location.pathname === item.path}
+              onClick={() => {
                 navigate(item.path, { vtType: getLateralTransitionType(item.path) });
-                handleDrawerToggle();
+                setMobileOpen(false);
               }}
-              startIcon={
-                typeof item.icon === 'string' ? (
-                  <Box sx={{ fontSize: 20, mr: 1 }}>{item.icon}</Box>
-                ) : (
-                  <Box sx={{ mr: 1 }}>{item.icon}</Box>
-                )
-              }
               sx={{
-                animationDelay: `${index * 0.1}s`,
-                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                '@keyframes slideInUp': {
-                  '0%': { opacity: 0, transform: 'translateY(30px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
+                opacity: 0,
+                animation: mobileOpen
+                  ? `sheetItemIn 0.3s ease-out ${0.05 + i * 0.03}s both`
+                  : 'none',
               }}
             >
-              {item.text}
-            </MobileNavButton>
+              <Box sx={{ fontSize: 18, width: 24, textAlign: 'center', flexShrink: 0 }}>
+                {item.icon}
+              </Box>
+              <Typography sx={{ fontWeight: 500, fontSize: '0.925rem' }}>{item.text}</Typography>
+            </MobileSheetItem>
           ))}
+        </Box>
 
-          {/* Reports submenu in mobile menu */}
-          <Box>
-            <MobileNavButton
-              onClick={handleMobileReportsToggle}
-              endIcon={mobileReportsOpen ? <ExpandLess /> : <ExpandMore />}
-              startIcon={<Assessment />}
-              sx={mobileSubmenuButtonSx(theme, mobileReportsOpen, navItems.length, mobileOpen)}
-            >
-              Reports
-            </MobileNavButton>
-            <MobileSubmenuContainer open={mobileReportsOpen} itemCount={reportsItems.length}>
-              {reportsItems.map((item, index) => (
-                <BaseMobileSubmenuItem
-                  key={item.text}
-                  open={mobileReportsOpen}
-                  index={index}
-                  colorVariant="default"
-                  onClick={() => {
-                    if (item.action) {
-                      item.action();
-                    } else if (item.path) {
-                      handleToolNavigation(item.path);
-                    }
-                  }}
-                  startIcon={
-                    typeof item.icon === 'string' ? (
-                      <Box sx={{ fontSize: 18, mr: 1 }}>{item.icon}</Box>
-                    ) : (
-                      <Box sx={{ mr: 1 }}>{item.icon}</Box>
-                    )
-                  }
-                >
-                  {item.text}
-                </BaseMobileSubmenuItem>
-              ))}
-            </MobileSubmenuContainer>
-          </Box>
-
-          {/* Tools submenu in mobile menu */}
-          <Box>
-            <MobileNavButton
-              onClick={handleMobileToolsToggle}
-              endIcon={mobileToolsOpen ? <ExpandLess /> : <ExpandMore />}
-              startIcon={<Build />}
-              sx={mobileSubmenuButtonSx(theme, mobileToolsOpen, navItems.length, mobileOpen)}
-            >
-              Tools
-            </MobileNavButton>
-            <MobileSubmenuContainer open={mobileToolsOpen} itemCount={toolsItems.length}>
-              {toolsItems.map((item, index) => (
-                <BaseMobileSubmenuItem
-                  key={item.text}
-                  open={mobileToolsOpen}
-                  index={index}
-                  colorVariant="default"
-                  onClick={() => handleToolNavigation(item.path)}
-                  startIcon={
-                    typeof item.icon === 'string' ? (
-                      <Box sx={{ fontSize: 18, mr: 1 }}>{item.icon}</Box>
-                    ) : (
-                      <Box sx={{ mr: 1 }}>{item.icon}</Box>
-                    )
-                  }
-                >
-                  {item.text}
-                </BaseMobileSubmenuItem>
-              ))}
-            </MobileSubmenuContainer>
-          </Box>
-
-          {/* Profile + auth in mobile menu */}
-          {isLoggedIn ? (
-            <>
-              <MobileNavButton
-                onClick={handleNavigateToProfile}
-                startIcon={<Person />}
-                sx={{
-                  animationDelay: `${(navItems.length + 1) * 0.1}s`,
-                  animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
-                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(59, 130, 246, 0.2)'
-                      : 'rgba(37, 99, 235, 0.15)',
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
-                        : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(59, 130, 246, 0.4)'
-                        : 'rgba(37, 99, 235, 0.25)',
-                  },
-                  '@keyframes slideInUp': {
-                    '0%': { opacity: 0, transform: 'translateY(30px)' },
-                    '100%': { opacity: 1, transform: 'translateY(0)' },
-                  },
-                }}
-              >
-                {userLabel || 'My Profile'}
-              </MobileNavButton>
-              <MobileNavButton
-                onClick={() => {
-                  handleLogout();
-                  setMobileOpen(false);
-                }}
-                startIcon={<Logout />}
-                sx={{
-                  animationDelay: `${(navItems.length + 2) * 0.1}s`,
-                  animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
-                      : 'linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(185, 28, 28, 0.04) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(239, 68, 68, 0.2)'
-                      : 'rgba(220, 38, 38, 0.15)',
-                  color: theme.palette.error.main,
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)'
-                        : 'linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(185, 28, 28, 0.08) 100%)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(239, 68, 68, 0.4)'
-                        : 'rgba(220, 38, 38, 0.25)',
-                  },
-                }}
-              >
-                Log out
-              </MobileNavButton>
-            </>
-          ) : (
-            <MobileNavButton
-              onClick={handleLogin}
-              startIcon={<Login />}
+        {/* Reports */}
+        <MobileSectionLabel>Reports</MobileSectionLabel>
+        <Box sx={{ px: 1.5, position: 'relative', zIndex: 1 }}>
+          {reportsItems.map((item, i) => (
+            <MobileSheetItem
+              key={item.text}
+              onClick={() => {
+                if (item.action) item.action();
+                else if (item.path) handleToolNavigation(item.path);
+              }}
               sx={{
-                animationDelay: `${(navItems.length + 1) * 0.1}s`,
-                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)'
-                    : 'linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(21, 128, 61, 0.04) 100%)',
-                borderColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(34, 197, 94, 0.2)'
-                    : 'rgba(22, 163, 74, 0.15)',
-                color: theme.palette.success.main,
-                '&:hover': {
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(21, 128, 61, 0.08) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(34, 197, 94, 0.4)'
-                      : 'rgba(22, 163, 74, 0.25)',
-                },
+                opacity: 0,
+                animation: mobileOpen
+                  ? `sheetItemIn 0.3s ease-out ${0.15 + i * 0.03}s both`
+                  : 'none',
               }}
             >
-              Log in
-            </MobileNavButton>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
+                  fontSize: 15,
+                  flexShrink: 0,
+                }}
+              >
+                {item.icon}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                  {item.text}
+                </Typography>
+                <Typography sx={{ fontSize: '0.7rem', opacity: 0.45, lineHeight: 1.3, mt: 0.15 }}>
+                  {item.desc}
+                </Typography>
+              </Box>
+            </MobileSheetItem>
+          ))}
+        </Box>
+
+        {/* Tools */}
+        <MobileSectionLabel>Tools</MobileSectionLabel>
+        <Box sx={{ px: 1.5, position: 'relative', zIndex: 1 }}>
+          {toolsItems.map((item, i) => (
+            <MobileSheetItem
+              key={item.text}
+              onClick={() => handleToolNavigation(item.path)}
+              sx={{
+                opacity: 0,
+                animation: mobileOpen
+                  ? `sheetItemIn 0.3s ease-out ${0.25 + i * 0.03}s both`
+                  : 'none',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
+                  fontSize: typeof item.icon === 'string' ? 15 : undefined,
+                  flexShrink: 0,
+                }}
+              >
+                {item.icon}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                  {item.text}
+                </Typography>
+                <Typography sx={{ fontSize: '0.7rem', opacity: 0.45, lineHeight: 1.3, mt: 0.15 }}>
+                  {item.desc}
+                </Typography>
+              </Box>
+            </MobileSheetItem>
+          ))}
+        </Box>
+
+        {/* Theme toggle + Auth */}
+        <Box sx={{ px: 1.5, pt: 1, position: 'relative', zIndex: 1 }}>
+          <MobileSheetItem
+            onClick={toggleDarkMode}
+            sx={{
+              opacity: 0,
+              animation: mobileOpen ? `sheetItemIn 0.3s ease-out 0.35s both` : 'none',
+            }}
+          >
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.12 : 0.08),
+                border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.15)}`,
+                flexShrink: 0,
+              }}
+            >
+              {darkMode ? (
+                <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              ) : (
+                <DarkModeIcon sx={{ fontSize: 18, color: '#6366f1' }} />
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                {darkMode ? 'Light mode' : 'Dark mode'}
+              </Typography>
+              <Typography sx={{ fontSize: '0.7rem', opacity: 0.45, lineHeight: 1.3, mt: 0.15 }}>
+                Toggle appearance
+              </Typography>
+            </Box>
+          </MobileSheetItem>
+        </Box>
+        <Box sx={{ px: 2, pt: 1.5, pb: 1, position: 'relative', zIndex: 1 }}>
+          {isLoggedIn ? (
+            <Button
+              onClick={() => {
+                handleLogout();
+                setMobileOpen(false);
+              }}
+              startIcon={<Logout sx={{ fontSize: 18 }} />}
+              fullWidth
+              sx={{
+                py: 1.25,
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                background: isDark ? 'rgba(239,68,68,0.06)' : 'rgba(220,38,38,0.04)',
+                border: `1px solid ${isDark ? 'rgba(239,68,68,0.12)' : 'rgba(220,38,38,0.08)'}`,
+                color: isDark ? '#f87171' : '#dc2626',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  background: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(220,38,38,0.08)',
+                  borderColor: isDark ? 'rgba(239,68,68,0.25)' : 'rgba(220,38,38,0.18)',
+                },
+                '&:active': { transform: 'scale(0.98)' },
+              }}
+            >
+              Log out
+            </Button>
+          ) : (
+            <Button
+              onClick={handleLogin}
+              startIcon={<Login sx={{ fontSize: 20 }} />}
+              fullWidth
+              sx={{
+                py: 1.5,
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                letterSpacing: '0.01em',
+                background: isDark
+                  ? 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(59,130,246,0.12) 100%)'
+                  : 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(37,99,235,0.1) 100%)',
+                border: `1px solid ${isDark ? 'rgba(56,189,248,0.25)' : 'rgba(59,130,246,0.2)'}`,
+                color: isDark ? '#e0f2fe' : '#1e40af',
+                boxShadow: isDark
+                  ? '0 4px 16px rgba(56,189,248,0.12), inset 0 1px 0 rgba(255,255,255,0.06)'
+                  : '0 4px 16px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.5)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.25s ease',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: 0,
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(56,189,248,0.08), transparent 60%)'
+                    : 'linear-gradient(135deg, rgba(59,130,246,0.06), transparent 60%)',
+                  opacity: 0,
+                  transition: 'opacity 0.25s ease',
+                },
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: isDark
+                    ? '0 8px 24px rgba(56,189,248,0.18), inset 0 1px 0 rgba(255,255,255,0.08)'
+                    : '0 8px 24px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.6)',
+                  borderColor: isDark ? 'rgba(56,189,248,0.35)' : 'rgba(59,130,246,0.3)',
+                  '&::before': { opacity: 1 },
+                },
+                '&:active': { transform: 'translateY(0) scale(0.98)' },
+              }}
+            >
+              Sign in with ESO Logs
+            </Button>
           )}
-        </MobileMenuContent>
-      </MobileMenuOverlay>
+        </Box>
+      </MobileBottomSheet>
     </>
   );
 };
