@@ -15,7 +15,7 @@
 import { useCallback, type RefObject } from 'react';
 import { useNavigate, type NavigateOptions, type To } from 'react-router-dom';
 
-export type ViewTransitionType = 'forward' | 'back' | 'up' | 'down';
+export type ViewTransitionType = 'forward' | 'back' | 'up' | 'down' | 'slide-left' | 'slide-right';
 
 export interface MorphTarget {
   ref: RefObject<HTMLElement | null> | { current: HTMLElement | null };
@@ -70,7 +70,10 @@ export const useViewTransitionNavigate = (): ((
   const navigate = useNavigate();
 
   return useCallback(
-    (to: To | number, options?: NavigateOptions & { vtType?: ViewTransitionType; morph?: MorphTarget }) => {
+    (
+      to: To | number,
+      options?: NavigateOptions & { vtType?: ViewTransitionType; morph?: MorphTarget },
+    ) => {
       if (typeof to === 'number') {
         navigate(to);
         return;
@@ -113,11 +116,13 @@ export const useViewTransitionNavigate = (): ((
         // Clean up the morph name after the transition finishes
         if (morph?.ref.current) {
           const el = morph.ref.current;
-          handle?.finished?.then(() => {
-            el.style.viewTransitionName = '';
-          }).catch(() => {
-            el.style.viewTransitionName = '';
-          });
+          handle?.finished
+            ?.then(() => {
+              el.style.viewTransitionName = '';
+            })
+            .catch(() => {
+              el.style.viewTransitionName = '';
+            });
         }
       } catch {
         // Fallback: Level 1 API (no types support)

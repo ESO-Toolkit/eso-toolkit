@@ -30,7 +30,10 @@ import { useLocation } from 'react-router-dom';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
-import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
+import {
+  useViewTransitionNavigate,
+  type ViewTransitionType,
+} from '../hooks/useViewTransitionNavigate';
 
 import { ThemeToggle } from './ThemeToggle';
 
@@ -684,21 +687,6 @@ export const HeaderBar: React.FC = () => {
       icon: '🔧',
       path: '/build-editor',
     },
-    {
-      text: 'My Builds',
-      icon: '📋',
-      path: '/my-builds',
-    },
-    {
-      text: 'Gear Sets',
-      icon: '🛡️',
-      path: '/gear-sets',
-    },
-    {
-      text: 'Build Hub',
-      icon: '🏗️',
-      path: '/build-hub',
-    },
   ];
 
   const reportsItems = React.useMemo(() => {
@@ -753,6 +741,22 @@ export const HeaderBar: React.FC = () => {
     },
   ];
 
+  // Lateral peer paths — ordered left-to-right for slide direction
+  const lateralPeers = navItems.map((i) => i.path);
+
+  const getLateralTransitionType = React.useCallback(
+    (targetPath: string): ViewTransitionType => {
+      const fromIdx = lateralPeers.indexOf(location.pathname);
+      const toIdx = lateralPeers.indexOf(targetPath);
+      if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+        return toIdx > fromIdx ? 'slide-left' : 'slide-right';
+      }
+      return 'forward';
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [location.pathname],
+  );
+
   return (
     <>
       <AppBar
@@ -805,7 +809,9 @@ export const HeaderBar: React.FC = () => {
                 <Button
                   key={item.text}
                   color="inherit"
-                  onClick={() => navigate(item.path, { vtType: 'forward' })}
+                  onClick={() =>
+                    navigate(item.path, { vtType: getLateralTransitionType(item.path) })
+                  }
                   startIcon={
                     typeof item.icon === 'string' ? (
                       <span
@@ -1018,7 +1024,7 @@ export const HeaderBar: React.FC = () => {
             <MobileNavButton
               key={item.text}
               onClick={(_e: React.MouseEvent) => {
-                navigate(item.path, { vtType: 'forward' });
+                navigate(item.path, { vtType: getLateralTransitionType(item.path) });
                 handleDrawerToggle();
               }}
               startIcon={
