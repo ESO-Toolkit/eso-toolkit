@@ -432,20 +432,24 @@ const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
 
   return {
     overflow: 'hidden',
-    mt: 1.5,
-    minWidth: 200,
+    mt: 1,
+    minWidth: 260,
     background: isDark
-      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.82) 0%, rgba(3, 7, 18, 0.92) 100%)'
-      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 250, 252, 0.96) 100%)',
+      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(3, 7, 18, 0.88) 100%)'
+      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.94) 100%)',
     backdropFilter: 'blur(24px)',
     WebkitBackdropFilter: 'blur(24px)',
-    border: `1px solid ${alpha(accent, isDark ? 0.15 : 0.12)}`,
-    borderRadius: '12px',
+    border: `1px solid ${alpha(accent, isDark ? 0.12 : 0.1)}`,
+    borderRadius: '14px',
     boxShadow: isDark
-      ? `0 8px 30px rgba(0, 0, 0, 0.45), 0 0 1px ${alpha(accent, 0.2)}, inset 0 1px 0 rgba(255, 255, 255, 0.04)`
-      : `0 4px 24px rgba(15, 23, 42, 0.1), 0 0 1px ${alpha(accent, 0.15)}`,
-    py: 0.75,
-    // Accent shimmer line at top
+      ? `0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px ${alpha(accent, 0.08)}, inset 0 1px 0 ${alpha('#fff', 0.04)}`
+      : `0 8px 32px rgba(15, 23, 42, 0.12), 0 0 0 1px ${alpha(accent, 0.06)}`,
+    py: 0.5,
+    // Animated shimmer accent line
+    '@keyframes dropdownShimmer': {
+      '0%': { backgroundPosition: '-200% center' },
+      '100%': { backgroundPosition: '200% center' },
+    },
     '&::before': {
       content: '""',
       display: 'block',
@@ -454,9 +458,22 @@ const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
       left: 0,
       right: 0,
       height: '2px',
-      background: `linear-gradient(90deg, transparent 0%, ${accent} 30%, ${accentAlt} 70%, transparent 100%)`,
+      background: `linear-gradient(90deg, transparent 0%, ${accent} 20%, ${accentAlt} 50%, ${accent} 80%, transparent 100%)`,
+      backgroundSize: '200% 100%',
+      animation: 'dropdownShimmer 3s linear infinite',
       zIndex: 1,
-      opacity: 0.7,
+    },
+    // Subtle inner glow
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: 2,
+      left: '15%',
+      right: '15%',
+      height: '40px',
+      background: `radial-gradient(ellipse at center, ${alpha(accent, isDark ? 0.06 : 0.04)} 0%, transparent 70%)`,
+      pointerEvents: 'none',
+      zIndex: 0,
     },
   };
 };
@@ -466,27 +483,45 @@ const menuItemSx = (theme: Theme): SxProps<Theme> => {
   const accent = isDark ? '#38bdf8' : '#3b82f6';
 
   return {
-    py: 1.25,
-    px: 2,
-    borderRadius: '8px',
+    py: 1,
+    px: 1.5,
+    borderRadius: '10px',
     mx: 0.75,
-    mb: 0.25,
-    borderLeft: `2px solid transparent`,
-    transition: 'all 0.2s ease',
+    my: 0.25,
+    position: 'relative',
+    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
     '& .MuiListItemIcon-root': {
-      transition: 'color 0.2s ease',
+      transition: 'all 0.25s ease',
+      minWidth: 36,
+    },
+    '& .MuiListItemText-primary': {
+      fontSize: '0.875rem',
+      fontWeight: 500,
+      lineHeight: 1.3,
+    },
+    '& .MuiListItemText-secondary': {
+      fontSize: '0.7rem',
+      opacity: 0.5,
+      lineHeight: 1.3,
+      mt: 0.15,
     },
     '&:hover': {
       background: isDark
-        ? `linear-gradient(135deg, ${alpha(accent, 0.1)} 0%, ${alpha(accent, 0.04)} 100%)`
-        : `linear-gradient(135deg, ${alpha(accent, 0.08)} 0%, ${alpha(accent, 0.03)} 100%)`,
-      borderLeftColor: alpha(accent, 0.6),
+        ? `linear-gradient(135deg, ${alpha(accent, 0.12)} 0%, ${alpha(accent, 0.04)} 100%)`
+        : `linear-gradient(135deg, ${alpha(accent, 0.1)} 0%, ${alpha(accent, 0.03)} 100%)`,
+      transform: 'translateX(2px)',
       '& .MuiListItemIcon-root': {
         color: accent,
+        transform: 'scale(1.15)',
+        filter: isDark ? `drop-shadow(0 0 6px ${alpha(accent, 0.4)})` : 'none',
+      },
+      '& .MuiListItemText-secondary': {
+        opacity: 0.7,
       },
     },
     '&:active': {
-      background: alpha(accent, isDark ? 0.14 : 0.1),
+      transform: 'translateX(1px) scale(0.99)',
+      background: alpha(accent, isDark ? 0.16 : 0.12),
     },
   };
 };
@@ -498,41 +533,54 @@ const mobileSubmenuButtonSx = (
   isOpen: boolean,
   navItemCount: number,
   mobileOpen: boolean,
-): SxProps<Theme> => ({
-  animationDelay: `${navItemCount * 0.1}s`,
-  animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-  background: isOpen
-    ? theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
-      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.08) 100%)'
-    : theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%)'
-      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%)',
-  borderColor: isOpen
-    ? theme.palette.mode === 'dark'
-      ? 'rgba(56, 189, 248, 0.4)'
-      : 'rgba(59, 130, 246, 0.3)'
-    : theme.palette.mode === 'dark'
-      ? 'rgba(56, 189, 248, 0.2)'
-      : 'rgba(59, 130, 246, 0.15)',
-  borderRadius: isOpen ? '16px 16px 0 0' : '16px',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  '&:hover': {
+): SxProps<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? '#38bdf8' : '#3b82f6';
+  const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
+
+  return {
+    animationDelay: `${navItemCount * 0.1}s`,
+    animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
     background: isOpen
-      ? theme.palette.mode === 'dark'
-        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%)'
-        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.12) 100%)'
-      : theme.palette.mode === 'dark'
-        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
-        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)',
-    borderColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.25)',
-  },
-  '@keyframes slideInUp': {
-    '0%': { opacity: 0, transform: 'translateY(30px)' },
-    '100%': { opacity: 1, transform: 'translateY(0)' },
-  },
-});
+      ? isDark
+        ? `linear-gradient(135deg, ${alpha(accent, 0.2)} 0%, ${alpha(accentAlt, 0.1)} 100%)`
+        : `linear-gradient(135deg, ${alpha(accent, 0.15)} 0%, ${alpha(accentAlt, 0.08)} 100%)`
+      : isDark
+        ? `linear-gradient(135deg, ${alpha(accent, 0.1)} 0%, ${alpha(accentAlt, 0.05)} 100%)`
+        : `linear-gradient(135deg, ${alpha(accent, 0.08)} 0%, ${alpha(accentAlt, 0.04)} 100%)`,
+    borderColor: isOpen ? alpha(accent, isDark ? 0.4 : 0.3) : alpha(accent, isDark ? 0.2 : 0.15),
+    borderRadius: isOpen ? '14px 14px 0 0' : '14px',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    overflow: 'hidden',
+    // Top shimmer when open
+    '&::after': isOpen
+      ? {
+          content: '""',
+          position: 'absolute',
+          bottom: 0,
+          left: '10%',
+          right: '10%',
+          height: '1px',
+          background: `linear-gradient(90deg, transparent, ${alpha(accent, 0.3)}, transparent)`,
+        }
+      : {},
+    '&:hover': {
+      background: isOpen
+        ? isDark
+          ? `linear-gradient(135deg, ${alpha(accent, 0.25)} 0%, ${alpha(accentAlt, 0.15)} 100%)`
+          : `linear-gradient(135deg, ${alpha(accent, 0.2)} 0%, ${alpha(accentAlt, 0.12)} 100%)`
+        : isDark
+          ? `linear-gradient(135deg, ${alpha(accent, 0.2)} 0%, ${alpha(accentAlt, 0.1)} 100%)`
+          : `linear-gradient(135deg, ${alpha(accent, 0.12)} 0%, ${alpha(accentAlt, 0.08)} 100%)`,
+      borderColor: alpha(accent, isDark ? 0.4 : 0.25),
+    },
+    '@keyframes slideInUp': {
+      '0%': { opacity: 0, transform: 'translateY(30px)' },
+      '100%': { opacity: 1, transform: 'translateY(0)' },
+    },
+  };
+};
 
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, currentUser, userLoading, userError, refetchUser, rebindAccessToken } =
@@ -655,31 +703,37 @@ export const HeaderBar: React.FC = () => {
   const toolsItems = [
     {
       text: 'Text Editor',
+      desc: 'Format guild announcements',
       icon: '📝',
       path: '/text-editor',
     },
     {
       text: 'Calculator',
+      desc: 'Stat & damage math',
       icon: <Calculator size="24" />,
       path: '/calculator',
     },
     {
       text: 'Parse Analysis',
+      desc: 'Break down your parses',
       icon: '📈',
       path: '/parse-analysis',
     },
     {
       text: 'Loadout Manager',
+      desc: 'Manage gear loadouts',
       icon: '⚔️',
       path: '/loadout-manager',
     },
     {
       text: 'Roster Builder',
+      desc: 'Plan trial compositions',
       icon: '👥',
       path: '/roster-builder',
     },
     {
       text: 'Build Editor',
+      desc: 'Create & share builds',
       icon: '🔧',
       path: '/build-editor',
     },
@@ -692,6 +746,7 @@ export const HeaderBar: React.FC = () => {
     if (isLoggedIn) {
       items.push({
         text: 'My Reports',
+        desc: 'Your uploaded logs',
         icon: '📁',
         path: '/my-reports',
       });
@@ -701,16 +756,19 @@ export const HeaderBar: React.FC = () => {
     items.push(
       {
         text: 'Sample Report',
+        desc: 'Explore a demo log',
         icon: '🎲',
         action: handleSampleReport,
       },
       {
         text: 'Latest Report',
+        desc: 'Recently uploaded',
         icon: '📊',
         path: '/latest-reports',
       },
       {
         text: 'Leaderboards',
+        desc: 'Top parse rankings',
         icon: '🏆',
         path: '/leaderboards',
       },
@@ -943,14 +1001,26 @@ export const HeaderBar: React.FC = () => {
             onClick={() => handleToolNavigation(item.path)}
             sx={menuItemSx(theme)}
           >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              {typeof item.icon === 'string' ? (
-                <Box sx={{ fontSize: 18 }}>{item.icon}</Box>
-              ) : (
-                item.icon
-              )}
+            <ListItemIcon>
+              <Box
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background:
+                    theme.palette.mode === 'dark' ? alpha('#38bdf8', 0.08) : alpha('#3b82f6', 0.06),
+                  border: `1px solid ${alpha(theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6', 0.1)}`,
+                  fontSize: typeof item.icon === 'string' ? 15 : undefined,
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                {typeof item.icon === 'string' ? item.icon : item.icon}
+              </Box>
             </ListItemIcon>
-            <ListItemText primary={item.text} />
+            <ListItemText primary={item.text} secondary={item.desc} />
           </MenuItem>
         ))}
       </Menu>
@@ -978,14 +1048,26 @@ export const HeaderBar: React.FC = () => {
             }}
             sx={menuItemSx(theme)}
           >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              {typeof item.icon === 'string' ? (
-                <Box sx={{ fontSize: 18 }}>{item.icon}</Box>
-              ) : (
-                item.icon
-              )}
+            <ListItemIcon>
+              <Box
+                sx={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background:
+                    theme.palette.mode === 'dark' ? alpha('#38bdf8', 0.08) : alpha('#3b82f6', 0.06),
+                  border: `1px solid ${alpha(theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6', 0.1)}`,
+                  fontSize: 15,
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                {typeof item.icon === 'string' ? item.icon : item.icon}
+              </Box>
             </ListItemIcon>
-            <ListItemText primary={item.text} />
+            <ListItemText primary={item.text} secondary={item.desc} />
           </MenuItem>
         ))}
       </Menu>
