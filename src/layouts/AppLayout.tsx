@@ -65,7 +65,6 @@ export const AppLayout: React.FC = () => {
                 pt: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 8 },
                 pb: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 4 },
                 minHeight: 'calc(100vh - 200px)',
-                viewTransitionName: 'page-content',
               }}
             >
               <Outlet />

@@ -14,6 +14,7 @@ export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children
   const [displayContent, setDisplayContent] = useState(children);
   const prevTabKey = useRef(tabKey);
   const containerRef = useRef<HTMLDivElement>(null);
+  const activeTransition = useRef<{ finished: Promise<void> } | null>(null);
 
   useEffect(() => {
     if (tabKey === prevTabKey.current) {
@@ -24,38 +25,47 @@ export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children
 
     prevTabKey.current = tabKey;
 
-    // Use View Transitions API if available
-    if ('startViewTransition' in document && containerRef.current) {
-      const el = containerRef.current;
-
-      // Give the container a unique VT name for the duration of the transition
-      el.style.viewTransitionName = 'tab-content';
-
-      const transition = (
-        document as unknown as {
-          startViewTransition: (cb: () => Promise<void>) => {
-            finished: Promise<void>;
-          };
-        }
-      ).startViewTransition(() => {
-        setDisplayContent(children);
-        // Return a promise that resolves after React commits
-        return new Promise<void>((resolve) => {
-          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-        });
-      });
-
-      transition.finished
-        .then(() => {
-          el.style.viewTransitionName = '';
-        })
-        .catch(() => {
-          el.style.viewTransitionName = '';
-        });
-    } else {
-      // Fallback: instant swap
+    // Skip VT if API is missing or container isn't mounted
+    if (!('startViewTransition' in document) || !containerRef.current) {
       setDisplayContent(children);
+      return;
     }
+
+    const el = containerRef.current;
+
+    // If a previous transition is still in flight, skip animation to
+    // avoid stacking view-transition-name on an already-captured element.
+    if (activeTransition.current) {
+      el.style.viewTransitionName = '';
+      setDisplayContent(children);
+      activeTransition.current = null;
+      return;
+    }
+
+    // Give the container a unique VT name for the duration of the transition
+    el.style.viewTransitionName = 'tab-content';
+
+    const transition = (
+      document as unknown as {
+        startViewTransition: (cb: () => Promise<void>) => {
+          finished: Promise<void>;
+        };
+      }
+    ).startViewTransition(() => {
+      setDisplayContent(children);
+      return new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+    });
+
+    activeTransition.current = transition;
+
+    const cleanup = (): void => {
+      el.style.viewTransitionName = '';
+      activeTransition.current = null;
+    };
+
+    transition.finished.then(cleanup).catch(cleanup);
   }, [children, tabKey]);
 
   return (

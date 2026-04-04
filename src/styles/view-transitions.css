@@ -238,50 +238,6 @@
   animation: none;
 }
 
-/* ── Page content layer ────────────────────────────────────── */
-/* Separate transition for the main content area so it can
-   animate independently from the full-page root snapshot.    */
-
-::view-transition-group(page-content) {
-  animation-duration: 280ms;
-  animation-timing-function: var(--vt-decel);
-  z-index: 5;
-}
-
-::view-transition-image-pair(page-content) {
-  isolation: auto;
-}
-
-::view-transition-old(page-content) {
-  animation: vt-content-exit 180ms ease-out both;
-  mix-blend-mode: normal;
-}
-
-::view-transition-new(page-content) {
-  animation: vt-content-enter 320ms var(--vt-decel) 40ms both;
-  mix-blend-mode: normal;
-}
-
-/* Override page-content for typed transitions */
-html:active-view-transition-type(forward) ::view-transition-old(page-content),
-html:active-view-transition-type(back) ::view-transition-old(page-content),
-html:active-view-transition-type(up) ::view-transition-old(page-content),
-html:active-view-transition-type(down) ::view-transition-old(page-content),
-html:active-view-transition-type(slide-left) ::view-transition-old(page-content),
-html:active-view-transition-type(slide-right) ::view-transition-old(page-content) {
-  animation: none;
-  display: none;
-}
-
-html:active-view-transition-type(forward) ::view-transition-new(page-content),
-html:active-view-transition-type(back) ::view-transition-new(page-content),
-html:active-view-transition-type(up) ::view-transition-new(page-content),
-html:active-view-transition-type(down) ::view-transition-new(page-content),
-html:active-view-transition-type(slide-left) ::view-transition-new(page-content),
-html:active-view-transition-type(slide-right) ::view-transition-new(page-content) {
-  animation: none;
-}
-
 /* ── Hero morph (shared element) ──────────────────────────── */
 /* The ::view-transition-group handles position + size
    interpolation (the actual morph). Old/new pseudos crossfade
