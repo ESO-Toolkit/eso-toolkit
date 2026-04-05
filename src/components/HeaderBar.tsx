@@ -1,12 +1,12 @@
 import {
   Login,
   Logout,
-  Person,
   ExpandMore,
   Build,
   Assessment,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
+  ChevronRight,
 } from '@mui/icons-material';
 import {
   AppBar,
@@ -17,13 +17,13 @@ import {
   IconButton,
   useTheme,
   Container,
-  Tooltip,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
   Fade,
   Divider,
+  ButtonBase,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { alpha, styled } from '@mui/material/styles';
@@ -39,15 +39,20 @@ import {
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
 
+import { useCurrentUserAvatar } from '../hooks/useCurrentUserAvatar';
+
 import { ThemeToggle } from './ThemeToggle';
 
 // Animated Hamburger Icon
-const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) => ({
+const HamburgerButton = styled(IconButton, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{ open: boolean }>(({ theme, open }) => ({
   width: 48,
   height: 48,
   padding: 12,
   borderRadius: 8,
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  transition:
+    'background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
     backgroundColor: 'rgba(56, 189, 248, 0.1)',
     transform: 'scale(1.05)',
@@ -57,7 +62,8 @@ const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) 
     height: 2,
     backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
     borderRadius: 2,
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition:
+      'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     transformOrigin: 'center',
     '&:nth-of-type(1)': {
       transform: open ? 'translateY(7px) rotate(45deg)' : 'translateY(0) rotate(0)',
@@ -83,7 +89,9 @@ const HamburgerLines = styled(Box)({
 
 // ─── Mobile Bottom Sheet Components ─────────────────────────────────────────
 
-const MobileBackdrop = styled(Box)<{ open: boolean }>(({ open }) => ({
+const MobileBackdrop = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{ open: boolean }>(({ open }) => ({
   position: 'fixed',
   inset: 0,
   background: 'rgba(0, 0, 0, 0.6)',
@@ -95,7 +103,9 @@ const MobileBackdrop = styled(Box)<{ open: boolean }>(({ open }) => ({
   transition: 'opacity 0.3s ease, visibility 0.3s ease',
 }));
 
-const MobileBottomSheet = styled(Box)<{ open: boolean }>(({ theme, open }) => {
+const MobileBottomSheet = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{ open: boolean }>(({ theme, open }) => {
   const isDark = theme.palette.mode === 'dark';
   return {
     position: 'fixed',
@@ -146,18 +156,21 @@ const MobileBottomSheet = styled(Box)<{ open: boolean }>(({ theme, open }) => {
   };
 });
 
-const MobileSheetItem = styled(Box)<{ active?: boolean }>(({ theme, active }) => {
+const MobileSheetItem = styled(ButtonBase, {
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active?: boolean }>(({ theme, active }) => {
   const isDark = theme.palette.mode === 'dark';
   const accent = isDark ? '#38bdf8' : '#3b82f6';
   return {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     gap: 12,
     padding: '10px 12px',
     borderRadius: 12,
-    cursor: 'pointer',
+    width: '100%',
     position: 'relative',
-    transition: 'all 0.2s ease',
+    transition: 'background 0.2s ease, transform 0.2s ease',
     background: active ? (isDark ? alpha(accent, 0.1) : alpha(accent, 0.06)) : 'transparent',
     ...(active && {
       '&::before': {
@@ -245,7 +258,8 @@ const navButtonSx = (theme: Theme) =>
     fontWeight: 500,
     position: 'relative',
     overflow: 'hidden',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition:
+      'background 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     background: 'transparent',
     border: '1px solid transparent',
     '&::before': {
@@ -354,7 +368,7 @@ const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
 
 // ─── Dropdown section header ─────────────────────────────────────────────────
 
-const dropdownHeaderSx = (theme: Theme, _label: string): SxProps<Theme> => {
+const dropdownHeaderSx = (theme: Theme): SxProps<Theme> => {
   const isDark = theme.palette.mode === 'dark';
   const accent = isDark ? '#38bdf8' : '#3b82f6';
   const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
@@ -410,7 +424,8 @@ const menuItemSx = (theme: Theme, itemAccent: string, index: number): SxProps<Th
     transition:
       'background 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease',
     '& .MuiListItemIcon-root': {
-      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      transition:
+        'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
       minWidth: 40,
     },
     '& .MuiListItemText-primary': {
@@ -510,14 +525,19 @@ export const HeaderBar: React.FC = () => {
     return '';
   }, [userDisplayName, userLoading, userError]);
 
+  const { avatarThumbUrl } = useCurrentUserAvatar();
+
   const avatarProps = React.useMemo(
     () => getAvatarProps(userDisplayName || 'U'),
     [userDisplayName],
   );
 
-  const handleProfileMenuOpen = React.useCallback((event: React.MouseEvent<HTMLElement>): void => {
-    setProfileAnchorEl(event.currentTarget);
-  }, []);
+  const handleProfileMenuOpen = React.useCallback(
+    (event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>): void => {
+      setProfileAnchorEl(event.currentTarget);
+    },
+    [],
+  );
 
   const handleProfileMenuClose = React.useCallback((): void => {
     setProfileAnchorEl(null);
@@ -529,6 +549,34 @@ export const HeaderBar: React.FC = () => {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Lock body scroll when mobile sheet is open
+  React.useEffect(() => {
+    if (mobileOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [mobileOpen]);
+
+  // Close mobile sheet on Escape
+  React.useEffect(() => {
+    if (!mobileOpen) return;
+    const handleEscape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [mobileOpen]);
 
   const handleLogin = React.useCallback((): void => {
     startPKCEAuth();
@@ -825,100 +873,114 @@ export const HeaderBar: React.FC = () => {
               </Button>
               {!isLoggedIn && <ThemeToggle />}
               {isLoggedIn ? (
-                <Tooltip title="" arrow={false} open={false}>
+                <Box
+                  onClick={handleProfileMenuOpen}
+                  aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleProfileMenuOpen(e);
+                    }
+                  }}
+                  sx={{
+                    display: { xs: 'none', sm: 'flex' },
+                    alignItems: 'center',
+                    gap: 1,
+                    cursor: 'pointer',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: '12px',
+                    transition:
+                      'background 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
+                    background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                    '&:hover': {
+                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                      boxShadow: isDark
+                        ? `0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.04)`
+                        : `0 4px 16px rgba(0,0,0,0.06)`,
+                      '& .profile-chevron': { opacity: 0.7, transform: 'translateY(1px)' },
+                    },
+                    '&:active': { transform: 'scale(0.97)' },
+                  }}
+                >
+                  {/* Avatar */}
                   <Box
-                    onClick={handleProfileMenuOpen}
-                    aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
-                      if (e.key === 'Enter' || e.key === ' ')
-                        handleProfileMenuOpen(e as unknown as React.MouseEvent<HTMLElement>);
-                    }}
                     sx={{
-                      display: { xs: 'none', sm: 'flex' },
+                      width: 32,
+                      height: 32,
+                      borderRadius: '9px',
+                      background: avatarThumbUrl ? 'transparent' : avatarProps.gradient,
+                      display: 'flex',
                       alignItems: 'center',
-                      gap: 1,
-                      cursor: 'pointer',
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: '12px',
-                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
-                      background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
-                      '&:hover': {
-                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
-                        boxShadow: isDark
-                          ? `0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.04)`
-                          : `0 4px 16px rgba(0,0,0,0.06)`,
-                        '& .profile-chevron': { opacity: 0.7, transform: 'translateY(1px)' },
-                      },
-                      '&:active': { transform: 'scale(0.97)' },
+                      justifyContent: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: '#fff',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                      position: 'relative',
+                      flexShrink: 0,
+                      boxShadow: `0 2px 8px ${alpha(avatarProps.color, 0.35)}`,
+                      transition: 'box-shadow 0.25s ease',
                     }}
                   >
-                    {/* Avatar */}
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '9px',
-                        background: avatarProps.gradient,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.75rem',
-                        fontWeight: 800,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        color: '#fff',
-                        textShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                        position: 'relative',
-                        flexShrink: 0,
-                        boxShadow: `0 2px 8px ${alpha(avatarProps.color, 0.35)}`,
-                        transition: 'box-shadow 0.25s ease',
-                      }}
-                    >
-                      {avatarProps.initials}
-                      {/* Online indicator */}
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          bottom: -2,
-                          right: -2,
-                          width: 10,
-                          height: 10,
-                          borderRadius: '50%',
-                          background: '#22c55e',
-                          border: `2px solid ${isDark ? '#0f172a' : '#ffffff'}`,
-                          boxShadow: '0 0 6px rgba(34,197,94,0.5)',
+                    {avatarThumbUrl ? (
+                      <img
+                        src={avatarThumbUrl}
+                        alt=""
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '9px',
                         }}
                       />
-                    </Box>
-                    <Typography
+                    ) : (
+                      avatarProps.initials
+                    )}
+                    {/* Online indicator */}
+                    <Box
                       sx={{
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        maxWidth: 140,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        color: isDark ? '#e2e8f0' : '#1e293b',
-                      }}
-                    >
-                      {userLabel || 'Profile'}
-                    </Typography>
-                    <ExpandMore
-                      className="profile-chevron"
-                      sx={{
-                        fontSize: 16,
-                        opacity: 0.4,
-                        transition: 'all 0.25s ease',
-                        color: isDark ? '#94a3b8' : '#64748b',
+                        position: 'absolute',
+                        bottom: -2,
+                        right: -2,
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: '#22c55e',
+                        border: `2px solid ${isDark ? '#0f172a' : '#ffffff'}`,
+                        boxShadow: '0 0 6px rgba(34,197,94,0.5)',
                       }}
                     />
                   </Box>
-                </Tooltip>
+                  <Typography
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      maxWidth: 140,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: isDark ? '#e2e8f0' : '#1e293b',
+                    }}
+                  >
+                    {userLabel || 'Profile'}
+                  </Typography>
+                  <ExpandMore
+                    className="profile-chevron"
+                    sx={{
+                      fontSize: 16,
+                      opacity: 0.4,
+                      transition: 'opacity 0.25s ease, transform 0.25s ease',
+                      color: isDark ? '#94a3b8' : '#64748b',
+                    }}
+                  />
+                </Box>
               ) : (
                 <Button
                   onClick={handleLogin}
@@ -942,7 +1004,8 @@ export const HeaderBar: React.FC = () => {
                     boxShadow: isDark
                       ? '0 4px 16px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)'
                       : '0 4px 16px rgba(59,130,246,0.25), inset 0 1px 0 rgba(255,255,255,0.2)',
-                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition:
+                      'box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&::before': {
                       content: '""',
                       position: 'absolute',
@@ -1012,7 +1075,7 @@ export const HeaderBar: React.FC = () => {
         }}
       >
         <Box className="dropdown-spotlight" />
-        <Box sx={dropdownHeaderSx(theme, 'Tools')}>
+        <Box sx={dropdownHeaderSx(theme)}>
           <Build sx={{ fontSize: 14, color: isDark ? '#38bdf8' : '#3b82f6' }} />
           <span className="dropdown-header-label">Tools</span>
         </Box>
@@ -1035,7 +1098,8 @@ export const HeaderBar: React.FC = () => {
                   background: alpha(item.accent, isDark ? 0.12 : 0.08),
                   border: `1px solid ${alpha(item.accent, 0.15)}`,
                   fontSize: typeof item.icon === 'string' ? 15 : undefined,
-                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  transition:
+                    'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
               >
                 {item.icon}
@@ -1075,7 +1139,7 @@ export const HeaderBar: React.FC = () => {
         }}
       >
         <Box className="dropdown-spotlight" />
-        <Box sx={dropdownHeaderSx(theme, 'Reports')}>
+        <Box sx={dropdownHeaderSx(theme)}>
           <Assessment sx={{ fontSize: 14, color: isDark ? '#38bdf8' : '#3b82f6' }} />
           <span className="dropdown-header-label">Reports</span>
         </Box>
@@ -1104,7 +1168,8 @@ export const HeaderBar: React.FC = () => {
                   background: alpha(item.accent, isDark ? 0.12 : 0.08),
                   border: `1px solid ${alpha(item.accent, 0.15)}`,
                   fontSize: 15,
-                  transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  transition:
+                    'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
                 }}
               >
                 {item.icon}
@@ -1147,29 +1212,44 @@ export const HeaderBar: React.FC = () => {
         }}
       >
         <Box className="dropdown-spotlight" />
-        {/* User info header */}
-        <Box
+        {/* Clickable user card → navigates to profile */}
+        <ButtonBase
+          onClick={() => {
+            handleNavigateToProfile();
+            handleProfileMenuClose();
+          }}
           sx={{
+            width: '100%',
             px: 2,
             pt: 2,
-            pb: 1.5,
+            pb: 1.75,
             display: 'flex',
             alignItems: 'center',
             gap: 1.5,
             position: 'relative',
             zIndex: 1,
+            borderRadius: '12px 12px 0 0',
+            textAlign: 'left',
+            transition: 'background 0.2s ease',
+            '&:hover': {
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              '& .profile-card-arrow': {
+                opacity: 0.7,
+                transform: 'translateX(2px)',
+              },
+            },
           }}
         >
           <Box
             sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '11px',
-              background: avatarProps.gradient,
+              width: 44,
+              height: 44,
+              borderRadius: '12px',
+              background: avatarThumbUrl ? 'transparent' : avatarProps.gradient,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.9rem',
+              fontSize: '0.95rem',
               fontWeight: 800,
               fontFamily: 'Space Grotesk, Inter, system-ui',
               color: '#fff',
@@ -1179,14 +1259,27 @@ export const HeaderBar: React.FC = () => {
               position: 'relative',
             }}
           >
-            {avatarProps.initials}
+            {avatarThumbUrl ? (
+              <img
+                src={avatarThumbUrl}
+                alt=""
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '12px',
+                }}
+              />
+            ) : (
+              avatarProps.initials
+            )}
             <Box
               sx={{
                 position: 'absolute',
                 bottom: -2,
                 right: -2,
-                width: 11,
-                height: 11,
+                width: 12,
+                height: 12,
                 borderRadius: '50%',
                 background: '#22c55e',
                 border: `2.5px solid ${isDark ? 'rgba(15,23,42,0.95)' : '#ffffff'}`,
@@ -1211,126 +1304,113 @@ export const HeaderBar: React.FC = () => {
             <Typography
               sx={{
                 fontSize: '0.72rem',
-                opacity: 0.45,
+                opacity: 0.4,
                 lineHeight: 1.3,
-                mt: 0.15,
+                mt: 0.25,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
+                letterSpacing: '0.01em',
               }}
             >
-              ESO Logs account
+              View profile
             </Typography>
           </Box>
-        </Box>
-        <Divider
-          sx={{
-            mx: 1.5,
-            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-          }}
-        />
-        <MenuItem
-          onClick={() => {
-            handleNavigateToProfile();
-            handleProfileMenuClose();
-          }}
-          sx={menuItemSx(theme, isDark ? '#38bdf8' : '#3b82f6', 0)}
-        >
-          <ListItemIcon>
-            <Box
-              className="menu-icon-badge"
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '9px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: alpha(isDark ? '#38bdf8' : '#3b82f6', isDark ? 0.12 : 0.08),
-                border: `1px solid ${alpha(isDark ? '#38bdf8' : '#3b82f6', 0.15)}`,
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              }}
-            >
-              <Person sx={{ fontSize: 18, color: isDark ? '#38bdf8' : '#3b82f6' }} />
-            </Box>
-          </ListItemIcon>
-          <ListItemText primary="My Profile" secondary="View your public profile" />
-        </MenuItem>
-        <MenuItem
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            toggleDarkMode();
-          }}
-          sx={menuItemSx(theme, isDark ? '#f59e0b' : '#6366f1', 1)}
-        >
-          <ListItemIcon>
-            <Box
-              className="menu-icon-badge"
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '9px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.12 : 0.08),
-                border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.15)}`,
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              }}
-            >
-              {darkMode ? (
-                <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
-              ) : (
-                <DarkModeIcon sx={{ fontSize: 18, color: '#6366f1' }} />
-              )}
-            </Box>
-          </ListItemIcon>
-          <ListItemText
-            primary={darkMode ? 'Light mode' : 'Dark mode'}
-            secondary="Toggle appearance"
+          <ChevronRight
+            className="profile-card-arrow"
+            sx={{
+              fontSize: 18,
+              opacity: 0.25,
+              color: isDark ? '#94a3b8' : '#64748b',
+              flexShrink: 0,
+              ml: 'auto',
+              transition: 'opacity 0.2s ease, transform 0.2s ease',
+            }}
           />
-        </MenuItem>
-        <Divider
+        </ButtonBase>
+        {/* Footer toolbar: sign-out + theme toggle */}
+        <Box
           sx={{
-            mx: 1.5,
-            my: 0.5,
-            borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-          }}
-        />
-        <MenuItem
-          onClick={() => {
-            handleLogout();
-            handleProfileMenuClose();
-          }}
-          sx={{
-            ...menuItemSx(theme, '#ef4444', 1),
-            '& .MuiListItemText-primary': {
-              color: isDark ? '#f87171' : '#dc2626',
-              fontSize: '0.875rem',
-              fontWeight: 550,
-              lineHeight: 1.3,
-            },
+            display: 'flex',
+            alignItems: 'center',
+            px: 1.5,
+            py: 1,
+            position: 'relative',
+            zIndex: 1,
+            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
           }}
         >
-          <ListItemIcon>
-            <Box
-              className="menu-icon-badge"
+          <ButtonBase
+            onClick={() => {
+              handleLogout();
+              handleProfileMenuClose();
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              px: 1,
+              py: 0.625,
+              borderRadius: '8px',
+              transition: 'background 0.2s ease, color 0.2s ease',
+              '&:hover': {
+                background: isDark ? 'rgba(248,113,113,0.1)' : 'rgba(220,38,38,0.06)',
+                '& .sign-out-icon, & .sign-out-text': {
+                  color: isDark ? '#f87171' : '#dc2626',
+                },
+              },
+            }}
+          >
+            <Logout
+              className="sign-out-icon"
               sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '9px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: alpha('#ef4444', isDark ? 0.12 : 0.08),
-                border: `1px solid ${alpha('#ef4444', 0.15)}`,
-                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                fontSize: 14,
+                color: isDark ? 'rgba(148,163,184,0.5)' : 'rgba(100,116,139,0.5)',
+                transition: 'color 0.2s ease',
+              }}
+            />
+            <Typography
+              className="sign-out-text"
+              sx={{
+                fontSize: '0.76rem',
+                fontWeight: 500,
+                color: isDark ? 'rgba(148,163,184,0.5)' : 'rgba(100,116,139,0.5)',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                lineHeight: 1,
+                transition: 'color 0.2s ease',
               }}
             >
-              <Logout sx={{ fontSize: 18, color: isDark ? '#f87171' : '#dc2626' }} />
-            </Box>
-          </ListItemIcon>
-          <ListItemText primary="Log out" />
-        </MenuItem>
-        <Box sx={{ pb: 0.5 }} />
+              Sign out
+            </Typography>
+          </ButtonBase>
+          <Box sx={{ flex: 1 }} />
+          <IconButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              toggleDarkMode();
+            }}
+            size="small"
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '9px',
+              background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.08 : 0.05),
+              border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.1)}`,
+              transition: 'background 0.2s ease, border-color 0.2s ease, transform 0.15s ease',
+              '&:hover': {
+                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.16 : 0.1),
+                borderColor: alpha(isDark ? '#f59e0b' : '#6366f1', 0.22),
+                transform: 'scale(1.06)',
+              },
+              '&:active': { transform: 'scale(0.95)' },
+            }}
+          >
+            {darkMode ? (
+              <LightModeIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+            ) : (
+              <DarkModeIcon sx={{ fontSize: 16, color: '#6366f1' }} />
+            )}
+          </IconButton>
+        </Box>
       </Menu>
 
       {/* Mobile Bottom Sheet */}
@@ -1365,6 +1445,14 @@ export const HeaderBar: React.FC = () => {
         {isLoggedIn && (
           <Box
             onClick={handleNavigateToProfile}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleNavigateToProfile();
+              }
+            }}
             sx={{
               mx: 2,
               mb: 0.5,
@@ -1378,7 +1466,7 @@ export const HeaderBar: React.FC = () => {
               alignItems: 'center',
               gap: 1.5,
               cursor: 'pointer',
-              transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               zIndex: 1,
               overflow: 'hidden',
@@ -1397,7 +1485,7 @@ export const HeaderBar: React.FC = () => {
                 width: 40,
                 height: 40,
                 borderRadius: '11px',
-                background: avatarProps.gradient,
+                background: avatarThumbUrl ? 'transparent' : avatarProps.gradient,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1411,7 +1499,20 @@ export const HeaderBar: React.FC = () => {
                 position: 'relative',
               }}
             >
-              {avatarProps.initials}
+              {avatarThumbUrl ? (
+                <img
+                  src={avatarThumbUrl}
+                  alt=""
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '11px',
+                  }}
+                />
+              ) : (
+                avatarProps.initials
+              )}
               <Box
                 sx={{
                   position: 'absolute',
@@ -1452,7 +1553,7 @@ export const HeaderBar: React.FC = () => {
                 View profile
               </Typography>
             </Box>
-            <ExpandMore
+            <ChevronRight
               sx={{
                 fontSize: 18,
                 opacity: 0.3,
@@ -1577,44 +1678,46 @@ export const HeaderBar: React.FC = () => {
         </Box>
 
         {/* Theme toggle + Auth */}
-        <Box sx={{ px: 1.5, pt: 1, position: 'relative', zIndex: 1 }}>
-          <MobileSheetItem
+        <Box
+          sx={{
+            px: 2,
+            pt: 1.5,
+            pb: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            position: 'relative',
+            zIndex: 1,
+            opacity: 0,
+            animation: mobileOpen ? `sheetItemIn 0.3s ease-out 0.35s both` : 'none',
+          }}
+        >
+          <Divider sx={{ flex: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }} />
+          <IconButton
             onClick={toggleDarkMode}
+            size="small"
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             sx={{
-              opacity: 0,
-              animation: mobileOpen ? `sheetItemIn 0.3s ease-out 0.35s both` : 'none',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.1 : 0.06),
+              border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.12)}`,
+              transition: 'background 0.2s ease, border-color 0.2s ease',
+              '&:hover': {
+                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.18 : 0.12),
+              },
+              '&:active': { transform: 'scale(0.92)' },
             }}
           >
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.12 : 0.08),
-                border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.15)}`,
-                flexShrink: 0,
-              }}
-            >
-              {darkMode ? (
-                <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
-              ) : (
-                <DarkModeIcon sx={{ fontSize: 18, color: '#6366f1' }} />
-              )}
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
-                {darkMode ? 'Light mode' : 'Dark mode'}
-              </Typography>
-              <Typography sx={{ fontSize: '0.7rem', opacity: 0.45, lineHeight: 1.3, mt: 0.15 }}>
-                Toggle appearance
-              </Typography>
-            </Box>
-          </MobileSheetItem>
+            {darkMode ? (
+              <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+            ) : (
+              <DarkModeIcon sx={{ fontSize: 18, color: '#6366f1' }} />
+            )}
+          </IconButton>
         </Box>
-        <Box sx={{ px: 2, pt: 1.5, pb: 1, position: 'relative', zIndex: 1 }}>
+        <Box sx={{ px: 2, pt: 1, pb: 1, position: 'relative', zIndex: 1 }}>
           {isLoggedIn ? (
             <Button
               onClick={() => {
@@ -1632,7 +1735,7 @@ export const HeaderBar: React.FC = () => {
                 background: isDark ? 'rgba(239,68,68,0.06)' : 'rgba(220,38,38,0.04)',
                 border: `1px solid ${isDark ? 'rgba(239,68,68,0.12)' : 'rgba(220,38,38,0.08)'}`,
                 color: isDark ? '#f87171' : '#dc2626',
-                transition: 'all 0.2s ease',
+                transition: 'background 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
                 '&:hover': {
                   background: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(220,38,38,0.08)',
                   borderColor: isDark ? 'rgba(239,68,68,0.25)' : 'rgba(220,38,38,0.18)',
@@ -1664,7 +1767,7 @@ export const HeaderBar: React.FC = () => {
                   : '0 4px 16px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.5)',
                 position: 'relative',
                 overflow: 'hidden',
-                transition: 'all 0.25s ease',
+                transition: 'box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease',
                 '&::before': {
                   content: '""',
                   position: 'absolute',
