@@ -10,6 +10,7 @@ import { CookieConsent } from './components/CookieConsent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
+import { KalpaBanner } from './components/KalpaBanner';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
@@ -221,6 +222,7 @@ const BuildEditorLoadingFallback: React.FC = () => <BuildEditorSkeleton />;
 const MainApp: React.FC = () => {
   return (
     <ReduxThemeProvider>
+      <KalpaBanner />
       <HeaderBar />
       <LandingPage />
     </ReduxThemeProvider>
