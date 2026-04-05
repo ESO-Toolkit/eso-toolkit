@@ -555,196 +555,298 @@ export const LogInputContainer = styled(Box)(({ theme }) => ({
 }));
 
 const CommunitySection = styled(Box)(({ theme }) => ({
-  padding: '2rem 0',
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.3) 50%, transparent 100%)'
-      : 'linear-gradient(180deg, transparent 0%, rgba(241, 245, 249, 0.5) 50%, transparent 100%)',
+  padding: '6rem 0 4rem',
   position: 'relative',
+  overflow: 'hidden',
+  // Dot grid pattern background
+  backgroundImage: theme.palette.mode === 'dark'
+    ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)'
+    : 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px)',
+  backgroundSize: '24px 24px',
+  // Animated gradient orbs
   '&::before': {
     content: '""',
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent)',
+    width: '800px',
+    height: '800px',
+    borderRadius: '50%',
+    top: '-300px',
+    right: '-300px',
+    background: theme.palette.mode === 'dark'
+      ? 'radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, transparent 60%)'
+      : 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 60%)',
+    animation: 'communityOrb1 16s ease-in-out infinite',
+    pointerEvents: 'none',
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    width: '700px',
+    height: '700px',
+    borderRadius: '50%',
+    bottom: '-250px',
+    left: '-250px',
+    background: theme.palette.mode === 'dark'
+      ? 'radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 60%)'
+      : 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 60%)',
+    animation: 'communityOrb2 20s ease-in-out infinite',
+    pointerEvents: 'none',
+  },
+  '@keyframes communityOrb1': {
+    '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+    '33%': { transform: 'translate(-60px, 40px) scale(1.15)' },
+    '66%': { transform: 'translate(20px, -20px) scale(0.95)' },
+  },
+  '@keyframes communityOrb2': {
+    '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+    '33%': { transform: 'translate(40px, -50px) scale(1.1)' },
+    '66%': { transform: 'translate(-30px, 30px) scale(1.05)' },
+  },
+  '@keyframes borderRotate': {
+    '0%': { '--border-angle': '0deg' },
+    '100%': { '--border-angle': '360deg' },
+  },
+  '@keyframes pulseGlow': {
+    '0%, 100%': { opacity: 0.4 },
+    '50%': { opacity: 0.8 },
   },
   [theme.breakpoints.down('md')]: {
-    padding: '3rem 0',
+    padding: '4rem 0 3rem',
   },
   [theme.breakpoints.down('sm')]: {
-    padding: '2rem 0',
+    padding: '3rem 0 2rem',
   },
 }));
 
 const CommunityGrid = styled(Box)(({ theme }) => ({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-  gap: '2rem',
+  // Asymmetric bento: hero card spans left 2/3, card 02 right 1/3, card 03 full bottom
+  gridTemplateColumns: '1.6fr 1fr',
+  gridTemplateRows: 'auto auto',
+  gap: '1rem',
   maxWidth: '1200px',
   margin: '0 auto',
   padding: '0 2rem',
+  // Card 01 - tall left
+  '& > *:nth-of-type(1)': {
+    gridRow: '1 / 2',
+    gridColumn: '1 / 2',
+  },
+  // Card 02 - right
+  '& > *:nth-of-type(2)': {
+    gridRow: '1 / 2',
+    gridColumn: '2 / 3',
+  },
+  // Card 03 - full bottom
+  '& > *:nth-of-type(3)': {
+    gridRow: '2 / 3',
+    gridColumn: '1 / -1',
+  },
   [theme.breakpoints.down('md')]: {
     gridTemplateColumns: '1fr',
-    gap: '1.5rem',
+    gridTemplateRows: 'auto',
+    gap: '1rem',
     padding: '0 1rem',
+    '& > *:nth-of-type(1), & > *:nth-of-type(2), & > *:nth-of-type(3)': {
+      gridRow: 'auto',
+      gridColumn: '1',
+    },
   },
 }));
 
-const CommunityCard = styled(Box)(({ theme }) => ({
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-      : 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-  backdropFilter: 'blur(10px)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.1)'
-      : '1px solid rgba(30, 41, 59, 0.1)',
-  borderRadius: '16px',
-  padding: '2rem',
-  textAlign: 'center',
-  transition: 'all 0.3s ease',
+const CommunityCard = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'accent',
+})<{ accent?: 'blue' | 'purple' | 'emerald' }>(({ theme, accent = 'blue' }) => {
+  const isDark = theme.palette.mode === 'dark';
+  const accents = {
+    blue: {
+      primary: isDark ? '#38bdf8' : '#0ea5e9',
+      secondary: isDark ? '#3b82f6' : '#2563eb',
+      bg: isDark
+        ? 'linear-gradient(145deg, rgba(56, 189, 248, 0.06) 0%, rgba(15, 23, 42, 0.4) 40%, rgba(59, 130, 246, 0.03) 100%)'
+        : 'linear-gradient(145deg, rgba(56, 189, 248, 0.05) 0%, rgba(255, 255, 255, 0.5) 40%, rgba(59, 130, 246, 0.02) 100%)',
+      border: isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(56, 189, 248, 0.08)',
+      number: isDark ? 'rgba(56, 189, 248, 0.06)' : 'rgba(56, 189, 248, 0.04)',
+    },
+    purple: {
+      primary: isDark ? '#a78bfa' : '#8b5cf6',
+      secondary: isDark ? '#c084fc' : '#a855f7',
+      bg: isDark
+        ? 'linear-gradient(145deg, rgba(139, 92, 246, 0.06) 0%, rgba(15, 23, 42, 0.4) 40%, rgba(168, 85, 247, 0.03) 100%)'
+        : 'linear-gradient(145deg, rgba(139, 92, 246, 0.05) 0%, rgba(255, 255, 255, 0.5) 40%, rgba(168, 85, 247, 0.02) 100%)',
+      border: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.08)',
+      number: isDark ? 'rgba(139, 92, 246, 0.06)' : 'rgba(139, 92, 246, 0.04)',
+    },
+    emerald: {
+      primary: isDark ? '#34d399' : '#10b981',
+      secondary: isDark ? '#6ee7b7' : '#059669',
+      bg: isDark
+        ? 'linear-gradient(145deg, rgba(52, 211, 153, 0.06) 0%, rgba(15, 23, 42, 0.4) 40%, rgba(16, 185, 129, 0.03) 100%)'
+        : 'linear-gradient(145deg, rgba(52, 211, 153, 0.05) 0%, rgba(255, 255, 255, 0.5) 40%, rgba(16, 185, 129, 0.02) 100%)',
+      border: isDark ? 'rgba(52, 211, 153, 0.1)' : 'rgba(52, 211, 153, 0.08)',
+      number: isDark ? 'rgba(52, 211, 153, 0.06)' : 'rgba(52, 211, 153, 0.04)',
+    },
+  };
+  const a = accents[accent];
+  return {
+    background: a.bg,
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    border: `1px solid ${a.border}`,
+    borderRadius: '20px',
+    padding: '1.75rem',
+    textAlign: 'left',
+    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    overflow: 'hidden',
+    // Large editorial number watermark
+    '&::before': {
+      content: 'attr(data-number)',
+      position: 'absolute',
+      top: '-0.5rem',
+      right: '1rem',
+      fontSize: '7.5rem',
+      fontWeight: 900,
+      lineHeight: 1,
+      color: a.number,
+      pointerEvents: 'none',
+      userSelect: 'none',
+      fontFamily: '"Inter", system-ui, sans-serif',
+      letterSpacing: '-0.04em',
+    },
+    // Animated gradient sweep on left border
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '2px',
+      height: '100%',
+      background: `linear-gradient(180deg, transparent 0%, ${a.primary} 50%, transparent 100%)`,
+      opacity: 0,
+      transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+    },
+    '&:hover': {
+      transform: 'translateY(-5px)',
+      border: `1px solid ${a.primary}22`,
+      boxShadow: `0 24px 64px rgba(0, 0, 0, ${isDark ? '0.4' : '0.08'}), 0 0 40px ${a.primary}08`,
+      '&::after': {
+        opacity: 0.8,
+      },
+    },
+    [theme.breakpoints.down('sm')]: {
+      padding: '1.25rem',
+      borderRadius: '16px',
+      '&::before': {
+        fontSize: '4.5rem',
+        right: '0.5rem',
+      },
+    },
+  };
+});
+
+const CommunityIcon = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'accent',
+})<{ accent?: 'blue' | 'purple' | 'emerald' }>(({ theme, accent = 'blue' }) => {
+  const colors = {
+    blue: { bg: 'rgba(56, 189, 248, 0.12)', border: 'rgba(56, 189, 248, 0.2)', shadow: 'rgba(56, 189, 248, 0.25)' },
+    purple: { bg: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.2)', shadow: 'rgba(139, 92, 246, 0.25)' },
+    emerald: { bg: 'rgba(52, 211, 153, 0.12)', border: 'rgba(52, 211, 153, 0.2)', shadow: 'rgba(52, 211, 153, 0.25)' },
+  };
+  const c = colors[accent];
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '42px',
+    height: '42px',
+    marginBottom: '0.75rem',
+    background: c.bg,
+    border: `1px solid ${c.border}`,
+    borderRadius: '12px',
+    fontSize: '1.2rem',
+    boxShadow: `0 0 20px ${c.shadow}`,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    flexShrink: 0,
+    [theme.breakpoints.down('sm')]: {
+      width: '36px',
+      height: '36px',
+      borderRadius: '10px',
+      fontSize: '1rem',
+    },
+  };
+});
+
+// Infinite scrolling marquee for tool names
+const MarqueeWrapper = styled(Box)(({ theme }) => ({
   position: 'relative',
+  width: '100vw',
+  marginLeft: 'calc(-50vw + 50%)',
   overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent)',
-    opacity: 0,
+  margin: '2rem calc(-50vw + 50%) 2rem',
+  // Fade edges
+  maskImage: 'linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+  // Top and bottom borders
+  borderTop: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
+  borderBottom: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
+  padding: '1rem 0',
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(255, 255, 255, 0.01)'
+    : 'rgba(0, 0, 0, 0.01)',
+  [theme.breakpoints.down('sm')]: {
+    margin: '1.5rem calc(-50vw + 50%) 1.5rem',
+    padding: '0.75rem 0',
+  },
+}));
+
+const MarqueeTrack = styled(Box)(() => ({
+  display: 'flex',
+  gap: '3rem',
+  width: 'max-content',
+  animation: 'marqueeScroll 25s linear infinite',
+  '&:hover': {
+    animationPlayState: 'paused',
+  },
+  '@keyframes marqueeScroll': {
+    '0%': { transform: 'translateX(0)' },
+    '100%': { transform: 'translateX(-50%)' },
+  },
+}));
+
+const MarqueeItem = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  whiteSpace: 'nowrap',
+  cursor: 'default',
+  color: theme.palette.mode === 'dark'
+    ? 'rgba(255, 255, 255, 0.3)'
+    : 'rgba(0, 0, 0, 0.3)',
+  fontSize: '0.82rem',
+  fontWeight: 500,
+  letterSpacing: '0.02em',
+  transition: 'color 0.3s ease',
+  '& svg': {
+    width: '1rem',
+    height: '1rem',
+    opacity: 0.5,
     transition: 'opacity 0.3s ease',
   },
   '&:hover': {
-    transform: 'translateY(-4px)',
-    borderColor: 'rgba(56, 189, 248, 0.2)',
-    '&::before': {
+    color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
+    '& svg': {
       opacity: 1,
     },
   },
   [theme.breakpoints.down('sm')]: {
-    padding: '1.5rem',
-  },
-}));
-
-const CommunityIcon = styled(Box)(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '0.75rem',
-  margin: '0 auto 1.5rem',
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1))'
-      : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(0, 225, 255, 0.05))',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
-      : '1px solid rgba(56, 189, 248, 0.15)',
-  borderRadius: '10px',
-  padding: '0.75rem 1.5rem',
-  fontSize: '2rem',
-  fontWeight: 600,
-  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
-  backdropFilter: 'blur(10px)',
-  boxShadow:
-    theme.palette.mode === 'dark'
-      ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 0 20px rgba(56, 189, 248, 0.1)'
-      : '0 4px 20px rgba(15, 23, 42, 0.08), 0 0 20px rgba(56, 189, 248, 0.05)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  animation: 'float 3s ease-in-out infinite',
-  '&:hover': {
-    transform: 'translateY(-2px) scale(1.05)',
-    borderColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.25)',
-    boxShadow:
-      theme.palette.mode === 'dark'
-        ? '0 8px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(56, 189, 248, 0.15)'
-        : '0 8px 30px rgba(15, 23, 42, 0.12), 0 0 30px rgba(56, 189, 248, 0.12)',
-  },
-  '@keyframes float': {
-    '0%, 100%': { transform: 'translateY(0px)' },
-    '50%': { transform: 'translateY(-3px)' },
-  },
-  [theme.breakpoints.down('sm')]: {
-    padding: '0.6rem 1.2rem',
-    fontSize: '1.75rem',
-    gap: '0.6rem',
-    '&:hover': {
-      transform: 'translateY(-1px) scale(1.02)',
+    fontSize: '0.75rem',
+    gap: '0.4rem',
+    '& svg': {
+      width: '0.85rem',
+      height: '0.85rem',
     },
   },
-  [theme.breakpoints.down(480)]: {
-    padding: '0.5rem 1rem',
-    fontSize: '1.5rem',
-    gap: '0.5rem',
-  },
-}));
-
-const CommunityStats = styled(Box)(({ theme }) => ({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, 1fr)',
-  gap: '2rem',
-  maxWidth: '1200px',
-  margin: '3rem auto',
-
-  // Medium screens (tablets) - switch to 2x2 grid
-  [theme.breakpoints.down('lg')]: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '2rem',
-    margin: '2.5rem 1rem',
-  },
-
-  // Small screens (mobile) - maintain 2x2 grid with adjusted spacing
-  [theme.breakpoints.down('md')]: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '1.5rem',
-    margin: '2rem 1rem',
-  },
-
-  // Extra small screens - still maintain 2x2 but with tighter spacing
-  [theme.breakpoints.down('sm')]: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '1rem',
-    margin: '2rem 1rem',
-  },
-}));
-
-const StatItem = styled(Box)(({ theme: _theme }) => ({
-  textAlign: 'center',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minWidth: '0',
-}));
-
-const StatNumber = styled(Typography)(({ theme }) => ({
-  fontSize: '2.5rem',
-  fontWeight: 800,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 100%)'
-      : 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  marginBottom: '0.5rem',
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '2rem',
-  },
-}));
-
-const StatLabel = styled(Typography)(({ theme }) => ({
-  fontSize: '0.9rem',
-  color: theme.palette.text.secondary,
-  fontWeight: 500,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
 }));
 
 const SectionTitle = styled(Typography, {
@@ -768,40 +870,75 @@ const SectionTitle = styled(Typography, {
   },
 }));
 
-const CommunityTitle = styled(Typography)(({ theme }) => ({
-  textAlign: 'center',
-  fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-  fontWeight: 700,
-  marginBottom: '1.5rem',
-  marginTop: '8rem',
-  color: theme.palette.text.primary,
-  lineHeight: 1.1,
-  maxWidth: '800px',
-  margin: '8rem auto 1.5rem auto',
-  [theme.breakpoints.down('md')]: {
-    marginTop: '6rem',
-    marginBottom: '1.25rem',
-    lineHeight: 1.2,
-  },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(1.6rem, 5vw, 2.2rem)',
-    marginTop: '4rem',
-    marginBottom: '1rem',
-    lineHeight: 1.3,
-  },
-  [theme.breakpoints.down(480)]: {
-    fontSize: 'clamp(1.4rem, 6vw, 1.8rem)',
-    marginTop: '3rem',
-    marginBottom: '0.8rem',
-    lineHeight: 1.4,
-  },
-  [theme.breakpoints.down(360)]: {
-    fontSize: 'clamp(1.2rem, 7vw, 1.6rem)',
-    marginTop: '2rem',
-    marginBottom: '0.6rem',
-    lineHeight: 1.4,
-  },
-}));
+const CommunityTitle = styled(Box)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    textAlign: 'center',
+    maxWidth: '900px',
+    margin: '0 auto 1.25rem auto',
+    position: 'relative',
+    lineHeight: 1.1,
+    // Light prefix: "Built By Players,"
+    '& .community-title-light': {
+      display: 'block',
+      fontSize: 'clamp(1.1rem, 2.5vw, 1.6rem)',
+      fontWeight: 400,
+      letterSpacing: '0.12em',
+      textTransform: 'uppercase',
+      color: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.25)',
+      marginBottom: '0.25em',
+      [theme.breakpoints.down('sm')]: {
+        fontSize: 'clamp(0.85rem, 3.5vw, 1.1rem)',
+        letterSpacing: '0.08em',
+      },
+    },
+    // Bold gradient: "For Players"
+    '& .community-title-bold': {
+      display: 'inline-block',
+      fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
+      fontWeight: 800,
+      letterSpacing: '-0.04em',
+      background: isDark
+        ? 'linear-gradient(135deg, #38bdf8 0%, #818cf8 40%, #c084fc 70%, #f0abfc 100%)'
+        : 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 40%, #a855f7 70%, #d946ef 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      backgroundSize: '200% 200%',
+      animation: 'gradientShift 6s ease-in-out infinite',
+      position: 'relative',
+      // Animated underline accent
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: '-0.05em',
+        left: '15%',
+        width: '70%',
+        height: '2px',
+        borderRadius: '2px',
+        background: isDark
+          ? 'linear-gradient(90deg, #38bdf8, #818cf8, #c084fc)'
+          : 'linear-gradient(90deg, #0ea5e9, #6366f1, #a855f7)',
+        backgroundSize: '200% 100%',
+        animation: 'underlineShift 3s ease-in-out infinite',
+        opacity: 0.6,
+      },
+      // Soft glow behind text
+      filter: isDark ? 'drop-shadow(0 0 40px rgba(129, 140, 248, 0.18))' : 'none',
+      [theme.breakpoints.down('sm')]: {
+        fontSize: 'clamp(2rem, 8vw, 3rem)',
+      },
+    },
+    '@keyframes gradientShift': {
+      '0%, 100%': { backgroundPosition: '0% 50%' },
+      '50%': { backgroundPosition: '100% 50%' },
+    },
+    '@keyframes underlineShift': {
+      '0%, 100%': { backgroundPosition: '0% 0', opacity: 0.4 },
+      '50%': { backgroundPosition: '100% 0', opacity: 0.8 },
+    },
+  };
+});
 
 const SectionSubtitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
@@ -2696,96 +2833,225 @@ export const LandingPage: React.FC = () => {
             maxWidth: '1200px',
             margin: '0 auto',
             padding: '0 2rem',
+            position: 'relative',
+            zIndex: 1,
             '@media (max-width: 899.95px)': {
-              padding: '0 1rem',
-            },
-            '@media (max-width: 599.95px)': {
               padding: '0 1rem',
             },
           }}
         >
-          <CommunityTitle variant="h2">Built By Players, For Players</CommunityTitle>
-          <SectionSubtitle sx={{ maxWidth: '800px' }}>
-            ESO Toolkit is a community-driven project dedicated to enhancing your Elder Scrolls
-            Online experience. Our tools are constantly updated to match the latest game patches and
-            meta changes.
+          <CommunityTitle>
+            <span className="community-title-light">Built By Players,</span>
+            <span className="community-title-bold">For Players</span>
+          </CommunityTitle>
+          <SectionSubtitle sx={{ maxWidth: '440px', mb: 0, fontSize: '0.9rem', opacity: 0.6, lineHeight: 1.5 }}>
+            A community-driven toolkit for Elder Scrolls Online — always updated, always free.
           </SectionSubtitle>
 
-          <CommunityStats
-            sx={{
-              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
-            }}
-          >
-            <StatItem>
-              <StatNumber>
-                <CalculatorIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Build Calculator</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>
-                <CvIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Text-Editor</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>
-                <FileLoopIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Log Analyzer</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber sx={{ color: '#8b5cf6' }}>
-                <KalpaIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Kalpa</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>
-                <AddonIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>ESOTK Addon</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>
-                <PeopleIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Roster-Bot</StatLabel>
-            </StatItem>
-          </CommunityStats>
+          {/* Infinite scrolling marquee */}
+          <MarqueeWrapper>
+            <MarqueeTrack>
+              {/* Doubled for seamless loop */}
+              {[0, 1].map((dupeIdx) => (
+                <Box key={dupeIdx} sx={{ display: 'flex', gap: '3rem' }}>
+                  <MarqueeItem><CalculatorIcon size="1rem" /> Build Calculator</MarqueeItem>
+                  <MarqueeItem><CvIcon size="1rem" /> Text-Editor</MarqueeItem>
+                  <MarqueeItem><FileLoopIcon size="1rem" /> Log Analyzer</MarqueeItem>
+                  <MarqueeItem><KalpaIcon size="1rem" /> Kalpa</MarqueeItem>
+                  <MarqueeItem><AddonIcon size="1rem" /> ESOTK Addon</MarqueeItem>
+                  <MarqueeItem><PeopleIcon size="1rem" /> Roster-Bot</MarqueeItem>
+                </Box>
+              ))}
+            </MarqueeTrack>
+          </MarqueeWrapper>
 
           <CommunityGrid>
-            <CommunityCard>
-              <CommunityIcon>🎮</CommunityIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Passionate Gamers
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                We&apos;re dedicated ESO players who understand the game&apos;s mechanics and
-                community needs. Our tools are built from real gameplay experience.
-              </Typography>
+            {/* Card 01 — Hero left */}
+            <CommunityCard accent="blue" data-number="01">
+              <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <CommunityIcon accent="blue">🎮</CommunityIcon>
+                <Typography
+                  variant="h5"
+                  sx={(t: Theme) => ({
+                    mb: 0.5,
+                    color: 'text.primary',
+                    fontWeight: 700,
+                    fontSize: '1.2rem',
+                    letterSpacing: '-0.02em',
+                    [t.breakpoints.down('sm')]: { fontSize: '1.05rem' },
+                  })}
+                >
+                  Built from Real Gameplay
+                </Typography>
+                <Typography
+                  sx={(t: Theme) => ({
+                    color: 'text.secondary',
+                    lineHeight: 1.65,
+                    fontSize: '0.88rem',
+                    maxWidth: '380px',
+                    [t.breakpoints.down('sm')]: { fontSize: '0.82rem' },
+                  })}
+                >
+                  Every tool is shaped by hundreds of hours of actual gameplay across all content types — not guesswork.
+                </Typography>
+                {/* Content-type chips */}
+                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 'auto', pt: 1.5 }}>
+                  {['Trials', 'PvP', 'Dungeons', 'Overland'].map((tag) => (
+                    <Box
+                      key={tag}
+                      sx={(t: Theme) => ({
+                        px: 1.25,
+                        py: 0.3,
+                        borderRadius: '6px',
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        color: t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.6)' : 'rgba(14, 165, 233, 0.7)',
+                        background: t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.05)' : 'rgba(14, 165, 233, 0.04)',
+                        border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(14, 165, 233, 0.06)'}`,
+                      })}
+                    >
+                      {tag}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
             </CommunityCard>
 
-            <CommunityCard>
-              <CommunityIcon>🔄</CommunityIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Up to Date
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                Stay current with the latest patches, balance changes, and meta shifts. Our tools
-                are updated regularly to ensure you have the best resources at your fingertips.
-              </Typography>
+            {/* Card 02 — Right side */}
+            <CommunityCard accent="purple" data-number="02">
+              <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <CommunityIcon accent="purple">🔄</CommunityIcon>
+                <Typography
+                  variant="h5"
+                  sx={(t: Theme) => ({
+                    mb: 0.5,
+                    color: 'text.primary',
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    letterSpacing: '-0.01em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    [t.breakpoints.down('sm')]: { fontSize: '1rem' },
+                  })}
+                >
+                  Always Current
+                  <Box
+                    sx={{
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      background: '#34d399',
+                      boxShadow: '0 0 6px rgba(52, 211, 153, 0.5)',
+                      animation: 'livePulse 2s ease-in-out infinite',
+                      '@keyframes livePulse': {
+                        '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                        '50%': { opacity: 0.4, transform: 'scale(0.75)' },
+                      },
+                    }}
+                  />
+                </Typography>
+                <Typography
+                  sx={(t: Theme) => ({
+                    color: 'text.secondary',
+                    lineHeight: 1.65,
+                    fontSize: '0.85rem',
+                    [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
+                  })}
+                >
+                  Updated with every patch, balance change, and meta shift so you&apos;re never behind.
+                </Typography>
+                <Typography
+                  sx={(t: Theme) => ({
+                    mt: 'auto',
+                    pt: 1.5,
+                    fontSize: '0.68rem',
+                    fontWeight: 500,
+                    color: t.palette.mode === 'dark' ? 'rgba(167, 139, 250, 0.4)' : 'rgba(139, 92, 246, 0.4)',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  })}
+                >
+                  Tracking latest patches
+                </Typography>
+              </Box>
             </CommunityCard>
 
-            <CommunityCard>
-              <CommunityIcon>💬</CommunityIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Community Driven
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                Your feedback shapes our development. Join our Discord community to suggest
-                features, report bugs, and connect with fellow players.
-              </Typography>
+            {/* Card 03 — Full-width bottom, horizontal layout */}
+            <CommunityCard accent="emerald" data-number="03">
+              <Box
+                sx={(t: Theme) => ({
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  [t.breakpoints.down('sm')]: {
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                  },
+                })}
+              >
+                <CommunityIcon accent="emerald" sx={{ mb: 0, flexShrink: 0 }}>💬</CommunityIcon>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="h5"
+                    sx={(t: Theme) => ({
+                      mb: 0.25,
+                      color: 'text.primary',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                      letterSpacing: '-0.01em',
+                      [t.breakpoints.down('sm')]: { fontSize: '1rem' },
+                    })}
+                  >
+                    Community Driven
+                  </Typography>
+                  <Typography
+                    sx={(t: Theme) => ({
+                      color: 'text.secondary',
+                      lineHeight: 1.6,
+                      fontSize: '0.85rem',
+                      maxWidth: '520px',
+                      [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
+                    })}
+                  >
+                    Your feedback shapes development. Join Discord to suggest features and connect with players.
+                  </Typography>
+                </Box>
+                <Box
+                  component="a"
+                  href="https://discord.gg/esotk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={(t: Theme) => ({
+                    px: 2,
+                    py: 0.75,
+                    borderRadius: '10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    color: t.palette.mode === 'dark' ? '#34d399' : '#059669',
+                    background: t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.06)' : 'rgba(16, 185, 129, 0.05)',
+                    border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(16, 185, 129, 0.1)'}`,
+                    transition: 'all 0.3s ease',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    '&:hover': {
+                      background: t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+                      transform: 'translateY(-1px)',
+                    },
+                    [t.breakpoints.down('sm')]: {
+                      alignSelf: 'flex-start',
+                    },
+                  })}
+                >
+                  Join Discord &rarr;
+                </Box>
+              </Box>
             </CommunityCard>
           </CommunityGrid>
         </Box>
