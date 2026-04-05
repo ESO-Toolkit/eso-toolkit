@@ -46,11 +46,25 @@ import {
   checkImageUploadRateLimit,
   getUserProfile,
   upsertUserBio,
+  upsertUserAvatar,
+  deleteUserAvatar,
+  getAvatarDeleteUrl,
+  checkAvatarUploadRateLimit,
+  updateDisplayNames,
+  lookupAvatarsByDisplayNames,
+  type PlayerLookupEntry,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import type { Env } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
+
+/** Best-effort delete of an ImgBB-hosted image via its delete URL (fire-and-forget). */
+function tryDeleteImgBBImage(deleteUrl: string | null): void {
+  if (deleteUrl && /^https:\/\/ibb\.co\//.test(deleteUrl)) {
+    fetch(deleteUrl).catch(() => {});
+  }
+}
 
 // ─── Validation helpers ──────────────────────────────────────────────────────
 
@@ -1044,6 +1058,156 @@ app.put('/users/me/bio', async (c) => {
 
   await upsertUserBio(c.env.DB, user.id, user.name, body.bio.trim());
   return c.json({ ok: true });
+});
+
+// ─── PUT /users/me/avatar — upload avatar image ─────────────────────────────
+
+/** Maximum avatar size in bytes (2 MB). */
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
+app.put('/users/me/avatar', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  // Rate limit: 1 avatar upload per hour
+  const allowed = await checkAvatarUploadRateLimit(c.env.DB, user.id);
+  if (!allowed) {
+    return c.json({ error: 'Rate limit exceeded. You can update your avatar once per hour.' }, 429);
+  }
+
+  interface AvatarBody {
+    image: string; // base64 (raw or data-URL)
+  }
+
+  let body: AvatarBody;
+  try {
+    body = await c.req.json<AvatarBody>();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
+  }
+
+  if (!body.image?.trim()) return c.json({ error: 'image is required' }, 400);
+
+  // Strip data-URL prefix if present
+  let base64 = body.image;
+  const commaIdx = base64.indexOf(',');
+  if (commaIdx !== -1 && base64.startsWith('data:')) {
+    base64 = base64.slice(commaIdx + 1);
+  }
+
+  // Decode base64 → bytes
+  let imageBytes: Uint8Array;
+  try {
+    const binaryString = atob(base64);
+    imageBytes = Uint8Array.from(binaryString, (ch) => ch.charCodeAt(0));
+  } catch {
+    return c.json({ error: 'Invalid base64 image data' }, 400);
+  }
+
+  if (imageBytes.byteLength > MAX_AVATAR_BYTES) {
+    return c.json({ error: 'Avatar image must be ≤ 2 MB' }, 400);
+  }
+
+  // ── Workers AI moderation ────────────────────────────────────────────────
+  try {
+    const moderation = await moderateImage(c.env.AI, imageBytes);
+    if (!moderation.safe) {
+      return c.json(
+        {
+          error: 'Image flagged as inappropriate and cannot be used as an avatar.',
+          label: moderation.blockedLabel,
+        },
+        400,
+      );
+    }
+  } catch (err) {
+    console.error('Workers AI moderation unavailable:', err);
+    return c.json({ error: 'Image moderation service unavailable. Please try again.' }, 503);
+  }
+
+  // ── Proxy to ImgBB ───────────────────────────────────────────────────────
+  const formData = new FormData();
+  formData.append('key', c.env.IMGBB_API_KEY);
+  formData.append('image', base64);
+  formData.append('name', `avatar_${user.id}`);
+
+  const imgbbRes = await fetch('https://api.imgbb.com/1/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!imgbbRes.ok) {
+    const errBody = await imgbbRes.text();
+    console.error('ImgBB avatar upload failed:', errBody);
+    return c.json({ error: 'Image host upload failed' }, 502);
+  }
+
+  interface ImgBBResponse {
+    data: {
+      id: string;
+      url: string;
+      thumb: { url: string };
+      delete_url: string;
+    };
+  }
+
+  const imgbb = (await imgbbRes.json()) as ImgBBResponse;
+
+  // ── Delete previous avatar from ImgBB before overwriting ────────────────
+  const oldDeleteUrl = await getAvatarDeleteUrl(c.env.DB, user.id);
+  tryDeleteImgBBImage(oldDeleteUrl);
+
+  // ── Store avatar URL + delete handle in profile ─────────────────────────
+  await upsertUserAvatar(
+    c.env.DB, user.id, user.name,
+    imgbb.data.url, imgbb.data.thumb.url, imgbb.data.delete_url,
+  );
+
+  return c.json({ avatar_url: imgbb.data.url, avatar_thumb_url: imgbb.data.thumb.url });
+});
+
+// ─── DELETE /users/me/avatar — remove avatar ────────────────────────────────
+
+app.delete('/users/me/avatar', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const { avatarDeleteUrl } = await deleteUserAvatar(c.env.DB, user.id);
+  tryDeleteImgBBImage(avatarDeleteUrl);
+  return c.json({ ok: true });
+});
+
+// ─── PUT /users/me/display-names — sync ESO @handles ────────────────────────
+
+app.put('/users/me/display-names', async (c) => {
+  const user = await validateToken(c.req.header('Authorization'), c.env);
+  if (!user) return c.json({ error: 'Unauthorized' }, 401);
+
+  const body = await c.req.json<{
+    na_display_name?: string | null;
+    eu_display_name?: string | null;
+  }>();
+
+  const na = body.na_display_name?.trim() || null;
+  const eu = body.eu_display_name?.trim() || null;
+
+  await updateDisplayNames(c.env.DB, user.id, user.name, na, eu);
+  return c.json({ ok: true });
+});
+
+// ─── POST /users/avatars/lookup — batch avatar lookup by @displayName+server ─
+
+app.post('/users/avatars/lookup', async (c) => {
+  const body = await c.req.json<{ players: PlayerLookupEntry[] }>();
+
+  if (!Array.isArray(body.players) || body.players.length === 0) {
+    return c.json({ avatars: {} });
+  }
+
+  // Cap at 24 entries (max group size in ESO)
+  const players = body.players.slice(0, 24);
+  const avatars = await lookupAvatarsByDisplayNames(c.env.DB, players);
+  return c.json({ avatars });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

@@ -133,6 +133,12 @@ export interface UserProfileRow {
   author_id: string;
   author_name: string;
   bio: string;
+  avatar_url: string | null;
+  avatar_thumb_url: string | null;
+  avatar_delete_url: string | null;
+  avatar_uploaded_at: string | null;
+  na_display_name: string | null;
+  eu_display_name: string | null;
   updated_at: string;
 }
 
@@ -163,6 +169,8 @@ export interface RosterSummary {
 export interface UserProfileResponse {
   username: string;
   bio: string;
+  avatar_url: string | null;
+  avatar_thumb_url: string | null;
   build_count: number;
   roster_count: number;
   builds: BuildSummary[];

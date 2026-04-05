@@ -120,6 +120,8 @@ export interface ProfileRosterSummary {
 export interface UserProfile {
   username: string;
   bio: string;
+  avatar_url: string | null;
+  avatar_thumb_url: string | null;
   build_count: number;
   roster_count: number;
   builds: ProfileBuildSummary[];

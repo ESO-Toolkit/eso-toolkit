@@ -201,4 +201,51 @@ export const rosterHubApi = {
       token,
     );
   },
+
+  uploadAvatar(
+    imageDataUrl: string,
+    token: string,
+  ): Promise<{ avatar_url: string; avatar_thumb_url: string }> {
+    // Strip data-URL prefix if present
+    let image = imageDataUrl;
+    const idx = image.indexOf(',');
+    if (idx !== -1 && image.startsWith('data:')) image = image.slice(idx + 1);
+
+    return request<{ avatar_url: string; avatar_thumb_url: string }>(
+      '/users/me/avatar',
+      { method: 'PUT', body: JSON.stringify({ image }) },
+      token,
+    );
+  },
+
+  deleteAvatar(token: string): Promise<{ ok: boolean }> {
+    return request<{ ok: boolean }>('/users/me/avatar', { method: 'DELETE' }, token);
+  },
+
+  syncDisplayNames(
+    naDisplayName: string | null,
+    euDisplayName: string | null,
+    token: string,
+  ): Promise<{ ok: boolean }> {
+    return request<{ ok: boolean }>(
+      '/users/me/display-names',
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          na_display_name: naDisplayName,
+          eu_display_name: euDisplayName,
+        }),
+      },
+      token,
+    );
+  },
+
+  lookupPlayerAvatars(
+    players: { display_name: string; server: 'na' | 'eu' }[],
+  ): Promise<{ avatars: Record<string, string> }> {
+    return request<{ avatars: Record<string, string> }>(
+      '/users/avatars/lookup',
+      { method: 'POST', body: JSON.stringify({ players }) },
+    );
+  },
 };

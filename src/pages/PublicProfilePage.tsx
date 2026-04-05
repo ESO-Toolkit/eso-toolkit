@@ -1,5 +1,7 @@
 import {
   ArrowBack as ArrowBackIcon,
+  CameraAlt as CameraAltIcon,
+  Close as CloseIcon,
   Construction as ConstructionIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -15,6 +17,7 @@ import {
   CardActionArea,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
   Dialog,
   DialogActions,
@@ -948,6 +951,8 @@ export const PublicProfilePage: React.FC = () => {
     type: 'build' | 'roster';
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner =
     isLoggedIn &&
@@ -1010,6 +1015,72 @@ export const PublicProfilePage: React.FC = () => {
     },
     [accessToken, enqueueSnackbar],
   );
+
+  const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_AVATAR_MB = 2;
+
+  const handleAvatarSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !accessToken) return;
+
+      // Reset input so the same file can be re-selected
+      e.target.value = '';
+
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        enqueueSnackbar('Only JPEG, PNG, and WebP images are allowed.', { variant: 'error' });
+        return;
+      }
+      if (file.size > MAX_AVATAR_MB * 1024 * 1024) {
+        enqueueSnackbar(`Avatar must be under ${MAX_AVATAR_MB} MB.`, { variant: 'error' });
+        return;
+      }
+
+      // Read as data-URL for base64 upload
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      setAvatarUploading(true);
+      try {
+        const res = await rosterHubApi.uploadAvatar(dataUrl, accessToken);
+        setProfile((prev) =>
+          prev
+            ? { ...prev, avatar_url: res.avatar_url, avatar_thumb_url: res.avatar_thumb_url }
+            : prev,
+        );
+        enqueueSnackbar('Avatar updated!', { variant: 'success' });
+      } catch (err) {
+        enqueueSnackbar(err instanceof Error ? err.message : 'Failed to upload avatar', {
+          variant: 'error',
+        });
+      } finally {
+        setAvatarUploading(false);
+      }
+    },
+    [accessToken, enqueueSnackbar],
+  );
+
+  const handleRemoveAvatar = useCallback(async () => {
+    if (!accessToken) return;
+    setAvatarUploading(true);
+    try {
+      await rosterHubApi.deleteAvatar(accessToken);
+      setProfile((prev) =>
+        prev ? { ...prev, avatar_url: null, avatar_thumb_url: null } : prev,
+      );
+      enqueueSnackbar('Avatar removed.', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(err instanceof Error ? err.message : 'Failed to remove avatar', {
+        variant: 'error',
+      });
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [accessToken, enqueueSnackbar]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget || !accessToken) return;
@@ -1204,10 +1275,80 @@ export const PublicProfilePage: React.FC = () => {
                 boxShadow: isDarkMode
                   ? `0 0 32px ${accent}20, inset 0 0 16px ${accent}08`
                   : `0 0 24px ${accent}14, inset 0 0 12px ${accent}06`,
+                overflow: 'hidden',
+                cursor: isOwner ? 'pointer' : 'default',
+                '&:hover .avatar-overlay': isOwner ? { opacity: 1 } : {},
               }}
+              onClick={isOwner && !avatarUploading ? () => avatarInputRef.current?.click() : undefined}
             >
-              <PersonIcon sx={{ fontSize: 42, color: accent }} />
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={`${profile.username}'s avatar`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <PersonIcon sx={{ fontSize: 42, color: accent }} />
+              )}
+
+              {/* Upload overlay (own profile only) */}
+              {isOwner && (
+                <Box
+                  className="avatar-overlay"
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    bgcolor: 'rgba(0,0,0,0.55)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0,
+                    transition: 'opacity 0.2s',
+                  }}
+                >
+                  {avatarUploading ? (
+                    <CircularProgress size={28} sx={{ color: '#fff' }} />
+                  ) : (
+                    <CameraAltIcon sx={{ color: '#fff', fontSize: 28 }} />
+                  )}
+                </Box>
+              )}
             </Box>
+
+            {/* Hidden file input */}
+            {isOwner && (
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={handleAvatarSelect}
+              />
+            )}
+
+            {/* Remove avatar button */}
+            {isOwner && profile?.avatar_url && !avatarUploading && (
+              <Tooltip title="Remove avatar">
+                <IconButton
+                  size="small"
+                  onClick={handleRemoveAvatar}
+                  sx={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    bgcolor: isDarkMode ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.9)',
+                    border: `1px solid ${accent}40`,
+                    width: 24,
+                    height: 24,
+                    '&:hover': { bgcolor: isDarkMode ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,1)' },
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 14, color: accent }} />
+                </IconButton>
+              </Tooltip>
+            )}
+
             {/* Outer glow ring */}
             <Box
               sx={{
@@ -1216,6 +1357,7 @@ export const PublicProfilePage: React.FC = () => {
                 borderRadius: '50%',
                 border: isDarkMode ? `1.5px solid ${accent}15` : `1.5px solid ${accent}10`,
                 boxShadow: `0 0 20px ${accent}0a`,
+                pointerEvents: 'none',
               }}
             />
           </Box>

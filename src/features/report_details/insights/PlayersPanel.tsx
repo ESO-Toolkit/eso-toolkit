@@ -94,6 +94,8 @@ const formatScribingRecipeForDisplay = (
   tooltipInfo: '',
 });
 
+import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
+
 import { PlayersPanelView } from './PlayersPanelView';
 
 // This panel now uses report actors from masterData
@@ -1325,6 +1327,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
   }, [scribingSkillsByPlayer, scribingRecipes]);
 
   return (
+    <PlayerAvatarsProvider players={playerData?.playersById}>
     <div data-testid="players-panel-loaded">
       <PlayersPanelView
         playerActors={playerData?.playersById}
@@ -1359,5 +1362,6 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
         rolesByPlayerId={rolesByPlayerId}
       />
     </div>
+    </PlayerAvatarsProvider>
   );
 };
