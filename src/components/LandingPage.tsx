@@ -874,30 +874,41 @@ const CommunityTitle = styled(Box)(({ theme }) => {
   const isDark = theme.palette.mode === 'dark';
   return {
     textAlign: 'center',
-    maxWidth: '900px',
-    margin: '0 auto 1.25rem auto',
+    maxWidth: '720px',
+    margin: '0 auto',
     position: 'relative',
-    lineHeight: 1.1,
-    // Light prefix: "Built By Players,"
-    '& .community-title-light': {
-      display: 'block',
-      fontSize: 'clamp(1.1rem, 2.5vw, 1.6rem)',
-      fontWeight: 400,
-      letterSpacing: '0.12em',
-      textTransform: 'uppercase',
-      color: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.25)',
-      marginBottom: '0.25em',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.6rem',
+
+    // Headline — single line on desktop, wraps on mobile
+    '& .community-headline': {
+      lineHeight: 1.15,
+      textAlign: 'center',
+      whiteSpace: 'nowrap',
       [theme.breakpoints.down('sm')]: {
-        fontSize: 'clamp(0.85rem, 3.5vw, 1.1rem)',
-        letterSpacing: '0.08em',
+        whiteSpace: 'normal',
       },
     },
-    // Bold gradient: "For Players"
+
+    // Thin weight: "Built by players,"
+    '& .community-title-light': {
+      fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+      fontWeight: 300,
+      letterSpacing: '-0.01em',
+      color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+      [theme.breakpoints.down('sm')]: {
+        display: 'block',
+        fontSize: 'clamp(1.3rem, 5.5vw, 1.8rem)',
+      },
+    },
+
+    // Bold gradient: "for players."
     '& .community-title-bold': {
-      display: 'inline-block',
-      fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
+      fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
       fontWeight: 800,
-      letterSpacing: '-0.04em',
+      letterSpacing: '-0.02em',
       background: isDark
         ? 'linear-gradient(135deg, #38bdf8 0%, #818cf8 40%, #c084fc 70%, #f0abfc 100%)'
         : 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 40%, #a855f7 70%, #d946ef 100%)',
@@ -906,36 +917,48 @@ const CommunityTitle = styled(Box)(({ theme }) => {
       backgroundClip: 'text',
       backgroundSize: '200% 200%',
       animation: 'gradientShift 6s ease-in-out infinite',
-      position: 'relative',
-      // Animated underline accent
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        bottom: '-0.05em',
-        left: '15%',
-        width: '70%',
-        height: '2px',
-        borderRadius: '2px',
-        background: isDark
-          ? 'linear-gradient(90deg, #38bdf8, #818cf8, #c084fc)'
-          : 'linear-gradient(90deg, #0ea5e9, #6366f1, #a855f7)',
-        backgroundSize: '200% 100%',
-        animation: 'underlineShift 3s ease-in-out infinite',
-        opacity: 0.6,
-      },
-      // Soft glow behind text
-      filter: isDark ? 'drop-shadow(0 0 40px rgba(129, 140, 248, 0.18))' : 'none',
+      filter: isDark ? 'drop-shadow(0 0 30px rgba(129, 140, 248, 0.15))' : 'none',
       [theme.breakpoints.down('sm')]: {
-        fontSize: 'clamp(2rem, 8vw, 3rem)',
+        fontSize: 'clamp(1.3rem, 5.5vw, 1.8rem)',
       },
     },
+
+    // Caption line with side rules
+    '& .community-caption': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      fontSize: '0.78rem',
+      fontWeight: 400,
+      letterSpacing: '0.02em',
+      color: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+      // Side rules
+      '&::before, &::after': {
+        content: '""',
+        width: '2rem',
+        height: '1px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15))'
+          : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.1))',
+        flexShrink: 0,
+      },
+      '&::after': {
+        background: isDark
+          ? 'linear-gradient(90deg, rgba(255,255,255,0.15), transparent)'
+          : 'linear-gradient(90deg, rgba(0,0,0,0.1), transparent)',
+      },
+      [theme.breakpoints.down('sm')]: {
+        fontSize: '0.7rem',
+        gap: '0.5rem',
+        '&::before, &::after': {
+          width: '1.25rem',
+        },
+      },
+    },
+
     '@keyframes gradientShift': {
       '0%, 100%': { backgroundPosition: '0% 50%' },
       '50%': { backgroundPosition: '100% 50%' },
-    },
-    '@keyframes underlineShift': {
-      '0%, 100%': { backgroundPosition: '0% 0', opacity: 0.4 },
-      '50%': { backgroundPosition: '100% 0', opacity: 0.8 },
     },
   };
 });
@@ -2841,12 +2864,12 @@ export const LandingPage: React.FC = () => {
           }}
         >
           <CommunityTitle>
-            <span className="community-title-light">Built By Players,</span>
-            <span className="community-title-bold">For Players</span>
+            <div className="community-headline">
+              <span className="community-title-light">Built by players,</span>
+              <span className="community-title-bold"> for players.</span>
+            </div>
+            <span className="community-caption">Always updated · Always free · Elder Scrolls Online</span>
           </CommunityTitle>
-          <SectionSubtitle sx={{ maxWidth: '440px', mb: 0, fontSize: '0.9rem', opacity: 0.6, lineHeight: 1.5 }}>
-            A community-driven toolkit for Elder Scrolls Online — always updated, always free.
-          </SectionSubtitle>
 
           {/* Infinite scrolling marquee */}
           <MarqueeWrapper>
