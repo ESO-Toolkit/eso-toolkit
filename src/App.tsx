@@ -1,5 +1,5 @@
 import { SnackbarProvider } from 'notistack';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -201,23 +201,61 @@ const PublicProfilePage = React.lazy(() =>
 // feedback during navigation, so a skeleton loader is unnecessary and jarring.
 const LoadingFallback: React.FC = () => null;
 
+// Delays rendering of skeleton fallbacks so fast page loads never flash them.
+// If the real content arrives within the delay window, the user sees nothing.
+const DelayedFallback: React.FC<{ delay?: number; children: React.ReactNode }> = ({
+  delay = 200,
+  children,
+}) => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(id);
+  }, [delay]);
+  return show ? <>{children}</> : null;
+};
+
 // Text Editor specific loading fallback
-const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
+const TextEditorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <TextEditorSkeleton />
+  </DelayedFallback>
+);
 
 // Report fights specific loading fallback
-const ReportFightsLoadingFallback: React.FC = () => <ReportFightsSkeleton />;
+const ReportFightsLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <ReportFightsSkeleton />
+  </DelayedFallback>
+);
 
 // Calculator specific loading fallback
-const CalculatorLoadingFallback: React.FC = () => <SmartCalculatorSkeleton />;
+const CalculatorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <SmartCalculatorSkeleton />
+  </DelayedFallback>
+);
 
 // Roster Builder specific loading fallback
-const RosterBuilderLoadingFallback: React.FC = () => <RosterBuilderSkeleton />;
+const RosterBuilderLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <RosterBuilderSkeleton />
+  </DelayedFallback>
+);
 
 // Roster Hub specific loading fallback
-const RosterHubLoadingFallback: React.FC = () => <RosterHubSkeleton />;
+const RosterHubLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <RosterHubSkeleton />
+  </DelayedFallback>
+);
 
 // Build Editor specific loading fallback
-const BuildEditorLoadingFallback: React.FC = () => <BuildEditorSkeleton />;
+const BuildEditorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <BuildEditorSkeleton />
+  </DelayedFallback>
+);
 
 const MainApp: React.FC = () => {
   return (
