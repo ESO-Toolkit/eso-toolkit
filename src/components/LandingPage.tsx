@@ -1,4 +1,5 @@
-import { Box, Button, Container, Typography, CircularProgress } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { Box, Button, Container, IconButton, Typography, CircularProgress } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import React, { useState, JSX, useEffect, useRef } from 'react';
 
@@ -9,6 +10,28 @@ import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
 import { Footer } from './Footer';
 import { UnauthenticatedLandingSection } from './UnauthenticatedLandingSection';
+
+// Kalpa desktop app icon
+const KalpaIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <rect x="2" y="3" width="20" height="18" rx="3" fill="currentColor" opacity=".2" />
+    <rect x="2" y="3" width="20" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <path d="M2 7h20" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="5" cy="5" r=".75" fill="currentColor" />
+    <circle cx="7.5" cy="5" r=".75" fill="currentColor" />
+    <circle cx="10" cy="5" r=".75" fill="currentColor" />
+    <path d="M7 12l3 3-3 3M12 18h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+// In-game addon icon (puzzle piece)
+const AddonIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z" fill="currentColor" opacity=".2" />
+    <path d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+  </svg>
+);
+
 // Import icon components directly
 const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
   <svg
@@ -775,10 +798,10 @@ const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => 
         gridTemplateColumns: {
           xs: '1fr',
           sm: '1fr',
-          md: '1fr 1fr',
-          lg: '1fr 1fr',
+          md: 'repeat(2, 1fr)',
+          lg: 'repeat(3, 1fr)',
         },
-        maxWidth: '800px',
+        maxWidth: '1100px',
         margin: '0 auto',
         perspective: '1000px',
         [theme.breakpoints.down('sm')]: {
@@ -1053,6 +1076,222 @@ const ComingSoonBadge = styled(Box)({
   },
 });
 
+// ─── Kalpa Announcement Banner ───────────────────────────────────────────────
+const KalpaBanner = styled(Box)(({ theme }) => ({
+  width: '100%',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(59, 130, 246, 0.12) 50%, rgba(14, 165, 233, 0.1) 100%)'
+      : 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(14, 165, 233, 0.05) 100%)',
+  backdropFilter: 'blur(20px)',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(139, 92, 246, 0.2)'
+      : '1px solid rgba(139, 92, 246, 0.12)',
+  padding: '0.65rem 1.5rem',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '0.75rem',
+  position: 'relative',
+  overflow: 'hidden',
+  zIndex: 10,
+  animation: 'bannerSlideDown 0.4s ease-out',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), rgba(59, 130, 246, 0.5), transparent)',
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: '-100%',
+    width: '200%',
+    height: '100%',
+    background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.04), transparent)',
+    animation: 'bannerShimmer 4s ease-in-out infinite',
+  },
+  '@keyframes bannerSlideDown': {
+    from: { opacity: 0, transform: 'translateY(-100%)' },
+    to: { opacity: 1, transform: 'translateY(0)' },
+  },
+  '@keyframes bannerShimmer': {
+    '0%': { transform: 'translateX(-50%)' },
+    '100%': { transform: 'translateX(50%)' },
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '0.5rem 0.75rem',
+    gap: '0.5rem',
+  },
+}));
+
+const BannerNewBadge = styled(Box)({
+  background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+  color: '#fff',
+  padding: '0.15rem 0.6rem',
+  borderRadius: '20px',
+  fontSize: '0.65rem',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  flexShrink: 0,
+  boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
+});
+
+const BannerLink = styled('a')(({ theme }) => ({
+  color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
+  fontWeight: 600,
+  fontSize: '0.85rem',
+  textDecoration: 'none',
+  transition: 'all 0.2s ease',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.35rem',
+  '&:hover': {
+    color: theme.palette.mode === 'dark' ? '#ddd6fe' : '#6d28d9',
+    textDecoration: 'underline',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.78rem',
+  },
+}));
+
+// ─── Kalpa Showcase Section ──────────────────────────────────────────────────
+const KalpaSection = styled(Box)(({ theme }) => ({
+  padding: '6rem 2rem',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.4), rgba(59, 130, 246, 0.3), transparent)',
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '800px',
+    height: '600px',
+    background: theme.palette.mode === 'dark'
+      ? 'radial-gradient(ellipse, rgba(139, 92, 246, 0.06) 0%, transparent 70%)'
+      : 'radial-gradient(ellipse, rgba(139, 92, 246, 0.03) 0%, transparent 70%)',
+    pointerEvents: 'none',
+    zIndex: 0,
+  },
+  [theme.breakpoints.down('md')]: {
+    padding: '4rem 1.5rem',
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '3rem 1rem',
+  },
+}));
+
+const KalpaContent = styled(Box)(({ theme }) => ({
+  maxWidth: '1100px',
+  margin: '0 auto',
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: '4rem',
+  alignItems: 'center',
+  position: 'relative',
+  zIndex: 1,
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: '1fr',
+    gap: '2.5rem',
+    textAlign: 'center',
+  },
+}));
+
+const KalpaFeatureGrid = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: '1rem',
+  marginTop: '2rem',
+  [theme.breakpoints.down('sm')]: {
+    gridTemplateColumns: '1fr',
+    gap: '0.75rem',
+  },
+}));
+
+const KalpaFeatureChip = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.6rem',
+  padding: '0.65rem 1rem',
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(139, 92, 246, 0.08)'
+    : 'rgba(139, 92, 246, 0.04)',
+  border: theme.palette.mode === 'dark'
+    ? '1px solid rgba(139, 92, 246, 0.15)'
+    : '1px solid rgba(139, 92, 246, 0.1)',
+  borderRadius: '10px',
+  fontSize: '0.85rem',
+  fontWeight: 500,
+  color: theme.palette.text.secondary,
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    background: theme.palette.mode === 'dark'
+      ? 'rgba(139, 92, 246, 0.12)'
+      : 'rgba(139, 92, 246, 0.07)',
+    borderColor: theme.palette.mode === 'dark'
+      ? 'rgba(139, 92, 246, 0.25)'
+      : 'rgba(139, 92, 246, 0.18)',
+    transform: 'translateY(-1px)',
+  },
+  '& .chip-icon': {
+    fontSize: '1rem',
+    flexShrink: 0,
+  },
+}));
+
+const KalpaHeroVisual = styled(Box)(({ theme }) => ({
+  background: theme.palette.mode === 'dark'
+    ? 'linear-gradient(145deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(15, 23, 42, 0.6) 100%)'
+    : 'linear-gradient(145deg, rgba(139, 92, 246, 0.06) 0%, rgba(59, 130, 246, 0.04) 50%, rgba(255, 255, 255, 0.8) 100%)',
+  backdropFilter: 'blur(16px)',
+  border: theme.palette.mode === 'dark'
+    ? '1px solid rgba(139, 92, 246, 0.15)'
+    : '1px solid rgba(139, 92, 246, 0.1)',
+  borderRadius: '24px',
+  padding: '3rem 2.5rem',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textAlign: 'center',
+  gap: '1.5rem',
+  position: 'relative',
+  overflow: 'hidden',
+  minHeight: '360px',
+  boxShadow: theme.palette.mode === 'dark'
+    ? '0 20px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(139, 92, 246, 0.08)'
+    : '0 20px 60px rgba(15, 23, 42, 0.08), 0 0 40px rgba(139, 92, 246, 0.04)',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent)',
+  },
+  [theme.breakpoints.down('md')]: {
+    minHeight: '280px',
+    padding: '2.5rem 2rem',
+  },
+}));
+
 const ParticleContainer = styled(Box)(({ theme }) => ({
   position: 'absolute',
   top: 0,
@@ -1187,6 +1426,7 @@ const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
 export const LandingPage: React.FC = () => {
   const [showAnimations, setShowAnimations] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
   const { isLoggedIn } = useAuth();
   const { isReady, isLoggedIn: clientIsLoggedIn } = useEsoLogsClientContext();
   const toolsSectionRef = useRef<HTMLDivElement>(null);
@@ -1226,6 +1466,41 @@ export const LandingPage: React.FC = () => {
 
   return (
     <LandingContainer>
+      {showBanner && (
+        <KalpaBanner>
+          <BannerNewBadge>New</BannerNewBadge>
+          <Typography
+            sx={{
+              fontSize: { xs: '0.78rem', sm: '0.85rem' },
+              color: 'text.secondary',
+              fontWeight: 400,
+            }}
+          >
+            Introducing <strong>Kalpa</strong> — a fast, open-source addon manager for ESO.
+          </Typography>
+          <BannerLink
+            href="https://github.com/ESO-Toolkit/kalpa"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn more →
+          </BannerLink>
+          <IconButton
+            size="small"
+            onClick={() => setShowBanner(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              color: 'text.secondary',
+              opacity: 0.6,
+              '&:hover': { opacity: 1 },
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </KalpaBanner>
+      )}
+
       <HeroSection id="home" showAnimations={showAnimations}>
         <ParticleContainer>
           {/* Floating particles with magical glow */}
@@ -1327,7 +1602,7 @@ export const LandingPage: React.FC = () => {
                 <CalculatorIcon size="2rem" />
               </ToolIcon>
               <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Build Caclulator
+                Build Calculator
               </Typography>
               <Typography
                 sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
@@ -1383,6 +1658,38 @@ export const LandingPage: React.FC = () => {
             </ToolCard>
 
             <ToolCard index={3}>
+              <ToolIcon>
+                <AddonIcon size="2rem" />
+              </ToolIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                ESOTK Addon
+              </Typography>
+              <Typography
+                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+              >
+                Bridge the gap between web and game. Our in-game addon provides roster validation,
+                group management, and gear inspection right inside ESO.
+              </Typography>
+              <ToolFeatures>
+                <li>Roster import &amp; validation</li>
+                <li>Group info &amp; management</li>
+                <li>Gear inspection tools</li>
+                <li>Slash command interface</li>
+              </ToolFeatures>
+              <ToolAction
+                onClick={() =>
+                  window.open(
+                    'https://github.com/ESO-Toolkit/esotk-addon',
+                    '_blank',
+                    'noopener,noreferrer',
+                  )
+                }
+              >
+                View on GitHub
+              </ToolAction>
+            </ToolCard>
+
+            <ToolCard index={4}>
               <ComingSoonBadge>Coming Soon</ComingSoonBadge>
               <ToolIcon>
                 <PeopleIcon size="2rem" />
@@ -1408,6 +1715,197 @@ export const LandingPage: React.FC = () => {
         </Box>
       </ToolsSection>
 
+      <KalpaSection id="kalpa">
+        <KalpaContent>
+          <Box>
+            <Typography
+              sx={{
+                fontSize: { xs: '0.8rem', sm: '0.85rem' },
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                color: '#8b5cf6',
+                mb: 1.5,
+              }}
+            >
+              Desktop App
+            </Typography>
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '2rem', sm: '2.4rem', md: '2.8rem' },
+                lineHeight: 1.15,
+                color: 'text.primary',
+                mb: 2,
+              }}
+            >
+              Meet{' '}
+              <Box
+                component="span"
+                sx={{
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Kalpa
+              </Box>
+            </Typography>
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: '1rem', sm: '1.1rem' },
+                lineHeight: 1.7,
+                fontWeight: 300,
+                mb: 3,
+                maxWidth: '480px',
+              }}
+            >
+              A fast, open-source addon manager for ESO. Built with Rust and Tauri for native
+              performance — just 15 MB, no Java runtime required. The modern alternative to Minion.
+            </Typography>
+
+            <KalpaFeatureGrid>
+              <KalpaFeatureChip>
+                <span className="chip-icon">⚡</span> One-click installs &amp; updates
+              </KalpaFeatureChip>
+              <KalpaFeatureChip>
+                <span className="chip-icon">📦</span> Auto dependency resolution
+              </KalpaFeatureChip>
+              <KalpaFeatureChip>
+                <span className="chip-icon">🔄</span> Addon profiles &amp; switching
+              </KalpaFeatureChip>
+              <KalpaFeatureChip>
+                <span className="chip-icon">🌐</span> Pack Hub — share addon collections
+              </KalpaFeatureChip>
+              <KalpaFeatureChip>
+                <span className="chip-icon">💾</span> SavedVariables backup &amp; restore
+              </KalpaFeatureChip>
+              <KalpaFeatureChip>
+                <span className="chip-icon">🔀</span> One-click Minion migration
+              </KalpaFeatureChip>
+            </KalpaFeatureGrid>
+
+            <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                href="https://github.com/ESO-Toolkit/kalpa"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  padding: '0.75rem 2rem',
+                  fontSize: '0.95rem',
+                  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                    boxShadow: '0 8px 30px rgba(139, 92, 246, 0.4)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Get Kalpa
+              </Button>
+              <Button
+                variant="outlined"
+                href="https://github.com/ESO-Toolkit/kalpa"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={(theme) => ({
+                  borderColor: 'rgba(139, 92, 246, 0.3)',
+                  color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '12px',
+                  padding: '0.75rem 2rem',
+                  fontSize: '0.95rem',
+                  '&:hover': {
+                    borderColor: 'rgba(139, 92, 246, 0.5)',
+                    background: 'rgba(139, 92, 246, 0.05)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s ease',
+                })}
+              >
+                View on GitHub
+              </Button>
+            </Box>
+          </Box>
+
+          <KalpaHeroVisual>
+            <Box sx={{ color: '#8b5cf6', mb: 1 }}>
+              <KalpaIcon size="4rem" />
+            </Box>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: '2rem',
+                background: 'linear-gradient(135deg, #8b5cf6, #6366f1, #3b82f6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Kalpa
+            </Typography>
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: '0.9rem',
+                fontWeight: 400,
+                maxWidth: '280px',
+                lineHeight: 1.6,
+              }}
+            >
+              Lightning-fast addon management, built with Rust
+            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 3,
+                mt: 2,
+              }}
+            >
+              {[
+                { label: 'Install Size', value: '~15 MB' },
+                { label: 'Runtime', value: 'Native' },
+                { label: 'License', value: 'Open Source' },
+              ].map((stat) => (
+                <Box key={stat.label} sx={{ textAlign: 'center' }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                      color: '#8b5cf6',
+                    }}
+                  >
+                    {stat.value}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '0.7rem',
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {stat.label}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </KalpaHeroVisual>
+        </KalpaContent>
+      </KalpaSection>
+
       <CommunitySection id="about">
         <Box
           sx={{
@@ -1424,17 +1922,21 @@ export const LandingPage: React.FC = () => {
         >
           <CommunityTitle variant="h2">Built By Players, For Players</CommunityTitle>
           <SectionSubtitle sx={{ maxWidth: '800px' }}>
-            ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
+            ESO Toolkit is a community-driven project dedicated to enhancing your Elder Scrolls
             Online experience. Our tools are constantly updated to match the latest game patches and
             meta changes.
           </SectionSubtitle>
 
-          <CommunityStats>
+          <CommunityStats
+            sx={{
+              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
+            }}
+          >
             <StatItem>
               <StatNumber>
                 <CalculatorIcon size="2.5rem" />
               </StatNumber>
-              <StatLabel>Build Caclulator</StatLabel>
+              <StatLabel>Build Calculator</StatLabel>
             </StatItem>
             <StatItem>
               <StatNumber>
@@ -1447,6 +1949,18 @@ export const LandingPage: React.FC = () => {
                 <FileLoopIcon size="2.5rem" />
               </StatNumber>
               <StatLabel>Log Analyzer</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber sx={{ color: '#8b5cf6' }}>
+                <KalpaIcon size="2.5rem" />
+              </StatNumber>
+              <StatLabel>Kalpa</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber>
+                <AddonIcon size="2.5rem" />
+              </StatNumber>
+              <StatLabel>ESOTK Addon</StatLabel>
             </StatItem>
             <StatItem>
               <StatNumber>
