@@ -235,10 +235,14 @@ export class EsoLogsClient {
     });
 
     const authLink = setContext((_, { headers }) => {
+      // Always read this.accessToken rather than the constructor closure so that
+      // token updates from the error-link refresh path (which sets this.accessToken
+      // without rebuilding the Apollo client) are immediately reflected in retries
+      // and subsequent requests on the same client instance.
       return {
         headers: {
           ...headers,
-          Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+          Authorization: this.accessToken ? `Bearer ${this.accessToken}` : undefined,
         },
       };
     });
