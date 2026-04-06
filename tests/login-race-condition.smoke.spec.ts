@@ -122,10 +122,10 @@ async function mockEsoLogsApi(
  * Intercepts the ESO Logs OAuth token endpoint and returns a fresh mock token.
  * Returns a counter so tests can assert how many refresh calls were made.
  */
-function mockRefreshEndpoint(page: Page): { getCallCount: () => number } {
+async function mockRefreshEndpoint(page: Page): Promise<{ getCallCount: () => number }> {
   let callCount = 0;
 
-  void page.route('**/oauth/token', async (route) => {
+  await page.route('**/oauth/token', async (route) => {
     const body = route.request().postData() ?? '';
     // Only intercept refresh_token grant requests — ignore other token exchange calls
     if (body.includes('grant_type=refresh_token')) {
@@ -158,7 +158,7 @@ test.describe('Login race condition (token refresh)', () => {
     await mockEsoLogsApi(page);
 
     await page.goto('/my-reports');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
 
     // Wait for the page to settle (auth context → user fetch → reports fetch)
     await expect(page.getByRole('heading', { name: /my reports/i })).toBeVisible({
@@ -188,7 +188,7 @@ test.describe('Login race condition (token refresh)', () => {
     }, 100);
 
     await page.goto('/my-reports');
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     clearInterval(pollingHandle);
 
     // "Please log in" should never appear during the load — the skeleton takes its place
@@ -206,12 +206,10 @@ test.describe('Login race condition (token refresh)', () => {
     // The first getCurrentUser call will get a 401, triggering the error-link refresh.
     // Simultaneously the proactive timer fires. Both share one pending promise.
     await mockEsoLogsApi(page, { rejectFirstNUserRequests: 1 });
-    const { getCallCount } = mockRefreshEndpoint(page);
+    const { getCallCount } = await mockRefreshEndpoint(page);
 
     await page.goto('/my-reports');
-
-    // Allow time for both refresh paths to have fired
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle');
 
     // No redirect to login — the page recovered
     expect(page.url()).not.toContain('/login');
@@ -226,9 +224,10 @@ test.describe('Login race condition (token refresh)', () => {
     // Reject the first getCurrentUser — simulates a server-side token rejection
     // even though the local JWT appears valid (clock skew / revocation).
     await mockEsoLogsApi(page, { rejectFirstNUserRequests: 1 });
-    mockRefreshEndpoint(page);
+    await mockRefreshEndpoint(page);
 
     await page.goto('/my-reports');
+    await page.waitForLoadState('networkidle');
 
     // After the refresh + retry cycle the page should load normally
     await expect(page.getByRole('heading', { name: /my reports/i })).toBeVisible({
@@ -249,7 +248,7 @@ test.describe('Login race condition (token refresh)', () => {
     await page.route('**/oauth/token', (route) => route.abort());
 
     await page.goto('/my-reports');
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     // Should land on /login
     expect(page.url()).toContain('/login');

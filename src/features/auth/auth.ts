@@ -133,6 +133,19 @@ const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token';
 // so we never burn the single-use refresh token on two concurrent requests.
 let pendingRefreshPromise: Promise<string | null> | null = null;
 
+// Cooldown guard: after a successful refresh, subsequent calls within the
+// cooldown window return the cached token instead of starting a new request.
+// This handles the case where the proactive refresh completes before a concurrent
+// error-link 401 refresh starts (pendingRefreshPromise is already cleared).
+let lastSuccessfulRefresh: { token: string; timestamp: number } | null = null;
+const REFRESH_COOLDOWN_MS = 10_000;
+
+/** @internal Reset module-level refresh state — for tests only. */
+export function _resetRefreshState(): void {
+  pendingRefreshPromise = null;
+  lastSuccessfulRefresh = null;
+}
+
 /**
  * Refreshes the access token using the stored refresh token.
  * Concurrent calls share a single in-flight request to avoid burning single-use
@@ -142,6 +155,12 @@ let pendingRefreshPromise: Promise<string | null> | null = null;
 export async function refreshAccessToken(): Promise<string | null> {
   if (pendingRefreshPromise !== null) {
     return pendingRefreshPromise;
+  }
+
+  // Return cached token if we refreshed recently (covers the gap between
+  // pendingRefreshPromise clearing and a late concurrent caller arriving).
+  if (lastSuccessfulRefresh && Date.now() - lastSuccessfulRefresh.timestamp < REFRESH_COOLDOWN_MS) {
+    return lastSuccessfulRefresh.token;
   }
 
   const refreshToken = localStorage.getItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
@@ -182,6 +201,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       }
 
       logger.info('Token refreshed successfully');
+      lastSuccessfulRefresh = { token: data.access_token, timestamp: Date.now() };
       return data.access_token;
     } catch (error) {
       logger.error('Token refresh error', error instanceof Error ? error : undefined);

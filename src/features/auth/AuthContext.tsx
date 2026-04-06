@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     if (!accessToken || !accessTokenExpiry || accessTokenExpired) return;
 
-    const msUntilRefresh = accessTokenExpiry * 1000 - Date.now() - 60_000;
+    const msUntilRefresh = accessTokenExpiry - Date.now() - 60_000;
     const doRefresh = (): void => {
       void refreshAccessToken()
         ?.then((newToken) => {

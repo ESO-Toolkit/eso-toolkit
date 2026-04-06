@@ -8,6 +8,7 @@ import {
   getRedirectUri,
   DEV_PREVIEW_OAUTH_RETURN_KEY,
   refreshAccessToken,
+  _resetRefreshState,
 } from './auth';
 import { getBaseUrl } from '../../utils/envUtils';
 
@@ -99,6 +100,7 @@ describe('refreshAccessToken', () => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue(null);
     global.fetch = mockFetch;
+    _resetRefreshState();
   });
 
   it('should return null and warn when no refresh token is stored', async () => {
@@ -175,7 +177,26 @@ describe('refreshAccessToken', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('should allow a fresh call after the previous one completes', async () => {
+  it('should return cached token within the cooldown window after a successful refresh', async () => {
+    mockLocalStorage.getItem.mockImplementation((key: string) => {
+      if (key === LOCAL_STORAGE_REFRESH_TOKEN_KEY) return 'refresh-token';
+      return null;
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ access_token: 'token-1' }),
+    });
+
+    const result1 = await refreshAccessToken();
+    const result2 = await refreshAccessToken();
+
+    expect(result1).toBe('token-1');
+    expect(result2).toBe('token-1'); // cooldown returns cached token
+    expect(mockFetch).toHaveBeenCalledTimes(1); // no second HTTP call
+  });
+
+  it('should allow a fresh call after the cooldown window expires', async () => {
+    jest.useFakeTimers();
     mockLocalStorage.getItem.mockImplementation((key: string) => {
       if (key === LOCAL_STORAGE_REFRESH_TOKEN_KEY) return 'refresh-token';
       return null;
@@ -191,10 +212,16 @@ describe('refreshAccessToken', () => {
       });
 
     const result1 = await refreshAccessToken();
+
+    // Advance past the 10 s cooldown
+    jest.advanceTimersByTime(11_000);
+
     const result2 = await refreshAccessToken();
 
     expect(result1).toBe('token-1');
     expect(result2).toBe('token-2');
     expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    jest.useRealTimers();
   });
 });
