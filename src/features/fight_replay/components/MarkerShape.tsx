@@ -1,7 +1,7 @@
 /**
  * Marker shape geometries based on M0RMarkers texture types
  */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 
 // THREE.Shape is missing from @types/three 0.183.x (packaging bug — the class exists at runtime).
@@ -155,6 +155,13 @@ export const MarkerShape: React.FC<MarkerShapeProps> = ({ texturePath, size, col
         return new THREE.CircleGeometry(radius, 32);
     }
   }, [shapeType, radius]);
+
+  // Dispose geometry on unmount or when shape/radius changes
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+    };
+  }, [geometry]);
 
   return (
     <mesh geometry={geometry}>

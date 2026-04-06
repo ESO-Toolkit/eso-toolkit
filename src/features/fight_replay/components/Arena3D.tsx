@@ -562,7 +562,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: '#1a1a1a',
-          color: '#white',
+          color: 'white',
         }}
       >
         Loading 3D Arena...

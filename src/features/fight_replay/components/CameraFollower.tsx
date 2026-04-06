@@ -30,6 +30,10 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
   const wasFollowingRef = useRef(false);
   const smoothingFactor = 0.05; // Adjust for smoother/faster following
 
+  // Pre-allocated scratch vectors to avoid per-frame allocations
+  const _scratchActorPos = useRef(new Vector3());
+  const _scratchDesiredCamPos = useRef(new Vector3());
+
   // Run after camera controls (higher priority number = later execution)
   useFrame(() => {
     const isFollowing = !!followingActorIdRef.current;
@@ -66,7 +70,7 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
 
     if (actorPosition) {
       const [x, y, z] = actorPosition.position;
-      const newTargetPosition = new Vector3(x, y, z);
+      const newTargetPosition = _scratchActorPos.current.set(x, y, z);
 
       // Initialize camera offset when we first start following
       if (!cameraOffsetRef.current) {
@@ -82,7 +86,7 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
       targetPositionRef.current.lerp(newTargetPosition, smoothingFactor);
 
       // Calculate where camera should be based on target position and maintained offset
-      const desiredCameraPosition = new Vector3()
+      const desiredCameraPosition = _scratchDesiredCamPos.current
         .copy(targetPositionRef.current)
         .add(cameraOffsetRef.current);
 

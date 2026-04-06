@@ -104,11 +104,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         textArea.select();
 
         try {
-          // Try the modern approach first
-          await navigator.clipboard.writeText(shareUrl);
+          // Use deprecated execCommand as fallback for non-secure contexts
+          document.execCommand('copy');
           setShowShareSnackbar(true);
         } catch {
-          // Last resort - let user manually copy
+          // Last resort - show the textarea for manual copy
           textArea.style.position = 'static';
           textArea.style.left = 'auto';
           textArea.style.top = 'auto';
