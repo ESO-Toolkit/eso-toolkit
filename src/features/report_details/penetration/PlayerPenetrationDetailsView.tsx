@@ -7,43 +7,22 @@ import {
   AccordionDetails,
   Paper,
 } from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
+import '../../../utils/chartRegistration';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
+import {
+  usePhaseAnnotations,
+  useInactiveIntervalAnnotations,
+} from '../../../hooks/useChartAnnotations';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin,
-);
 
 interface PenetrationDataPoint {
   timestamp: number;
@@ -128,56 +107,10 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
     );
   }, [penetrationData?.dataPoints]);
 
-  const phaseAnnotations = React.useMemo(() => {
-    if (
-      !phaseTransitionInfo?.phaseTransitions ||
-      phaseTransitionInfo.phaseTransitions.length === 0
-    ) {
-      return null;
-    }
-
-    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
-      fightStartTime: phaseTransitionInfo.fightStartTime,
-      fightEndTime: phaseTransitionInfo.fightEndTime,
-      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
-    });
-  }, [phaseTransitionInfo]);
-
-  // Create annotations for inactive combat periods (downtime)
-  const inactiveTimeAnnotations = React.useMemo(() => {
-    if (
-      !penetrationData?.inactiveCombatIntervals ||
-      penetrationData.inactiveCombatIntervals.length === 0
-    ) {
-      return null;
-    }
-
-    const annotations: Record<string, unknown> = {};
-
-    penetrationData.inactiveCombatIntervals.forEach(
-      (interval: { start: number; end: number }, index: number) => {
-        annotations[`inactive_${index}`] = {
-          type: 'box',
-          xMin: interval.start,
-          xMax: interval.end,
-          backgroundColor: 'rgba(128, 128, 128, 0.15)',
-          borderWidth: 0,
-          label: {
-            display: interval.end - interval.start > 2, // Only show label if gap is > 2 seconds
-            content: 'Inactive',
-            position: 'center',
-            color: 'rgba(128, 128, 128, 0.7)',
-            font: {
-              size: 10,
-              weight: 'bold',
-            },
-          },
-        };
-      },
-    );
-
-    return annotations;
-  }, [penetrationData?.inactiveCombatIntervals]);
+  const phaseAnnotations = usePhaseAnnotations(phaseTransitionInfo);
+  const inactiveTimeAnnotations = useInactiveIntervalAnnotations(
+    penetrationData?.inactiveCombatIntervals,
+  );
 
   if (!penetrationData) {
     return (

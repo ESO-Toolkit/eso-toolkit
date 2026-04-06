@@ -12,37 +12,23 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import {
-  CategoryScale,
+import type {
   Chart as ChartJS,
-  Legend,
-  LineElement,
-  LinearScale,
-  PointElement,
-  TimeSeriesScale,
-  Title,
-  Tooltip as ChartTooltip,
+  ChartData,
+  ChartDataset,
+  ChartOptions,
+  LegendItem,
+  TooltipItem,
 } from 'chart.js';
-import type { ChartData, ChartDataset, ChartOptions, LegendItem, TooltipItem } from 'chart.js';
 import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
+import '../../../utils/chartRegistration';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import { msToSeconds } from '../../../utils/fightDuration';
 
 import type { BuffUptime } from './BuffUptimeProgressBar';
 import { buildUptimeTimelineSeries, type UptimeTimelineSeries } from './utils/buildUptimeTimeline';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  TimeSeriesScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-);
 
 const TIMELINE_COLORS = [
   '#7c3aed',
