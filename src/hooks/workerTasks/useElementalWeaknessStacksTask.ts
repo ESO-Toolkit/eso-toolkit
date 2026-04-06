@@ -34,7 +34,7 @@ export function useElementalWeaknessStacksTask(): {
         executeElementalWeaknessStacksTask({
           debuffsLookup: debuffsLookup,
           fightStartTime: selectedFight.startTime,
-          fightEndTime: selectedFight?.endTime,
+          fightEndTime: selectedFight.endTime,
         }),
       );
       return () => {

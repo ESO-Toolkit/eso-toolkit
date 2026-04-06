@@ -91,9 +91,12 @@ export class WorkerPool {
 
       // Set up timeout
       if (this.config.taskTimeout) {
-        setTimeout(() => {
+        task.timeoutId = setTimeout(() => {
           if (this.pendingTasks.has(taskId)) {
-            this.handleTaskError(taskId, new Error('Task timeout'));
+            this.handleTaskError(
+              taskId,
+              new Error(`Task timeout after ${this.config.taskTimeout}ms: ${taskType}`),
+            );
           }
         }, this.config.taskTimeout);
       }
@@ -264,6 +267,8 @@ export class WorkerPool {
     const task = this.pendingTasks.get(taskId);
     if (!task) return;
 
+    this.cleanupTask(task);
+
     const executionTime = Date.now() - task.createdAt;
     this.taskTimes.push(executionTime);
 
@@ -294,6 +299,8 @@ export class WorkerPool {
     const task = this.pendingTasks.get(taskId);
     if (!task) return;
 
+    this.cleanupTask(task);
+
     this.stats.failedTasks++;
     this.pendingTasks.delete(taskId);
     this.updateStats();
@@ -305,6 +312,16 @@ export class WorkerPool {
         taskId,
         taskType: task.type,
       });
+    }
+  }
+
+  /**
+   * Clean up task resources (timeout timer)
+   */
+  private cleanupTask(task: WorkerTask<unknown, unknown>): void {
+    if (task.timeoutId !== undefined) {
+      clearTimeout(task.timeoutId);
+      task.timeoutId = undefined;
     }
   }
 

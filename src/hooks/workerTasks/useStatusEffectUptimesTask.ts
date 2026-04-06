@@ -43,7 +43,7 @@ export function useStatusEffectUptimesTask(): {
           hostileBuffsLookup: hostileBuffLookupData,
           debuffsLookup: debuffLookupData,
           fightStartTime: selectedFight.startTime,
-          fightEndTime: selectedFight?.endTime,
+          fightEndTime: selectedFight.endTime,
           friendlyPlayerIds:
             selectedFight.friendlyPlayers?.filter((id): id is number => id !== null) || [],
         }),

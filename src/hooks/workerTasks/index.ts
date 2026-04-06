@@ -11,6 +11,8 @@ export { useDamageReductionTask } from './useDamageReductionTask';
 export { useTouchOfZenStacksTask } from './useTouchOfZenStacksTask';
 export { useStaggerStacksTask } from './useStaggerStacksTask';
 export { usePlayerTravelDistanceTask } from './usePlayerTravelDistanceTask';
+export { useElementalWeaknessStacksTask } from './useElementalWeaknessStacksTask';
+export { useActorPositionsTask } from './useActorPositionsTask';
 
 // Shared dependencies helper
 export { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
