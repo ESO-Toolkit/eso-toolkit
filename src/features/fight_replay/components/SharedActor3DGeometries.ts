@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import * as THREE from 'three';
 
 // Geometry constants - Base sizes for full-arena (100x100) scale
@@ -148,14 +149,28 @@ class SharedActor3DGeometries {
 // Export singleton instance
 export const sharedActor3DGeometries = SharedActor3DGeometries.getInstance();
 
+// Track mount count so we only dispose when all consumers have unmounted
+let sharedGeometryConsumers = 0;
+
 /**
  * Hook to get shared geometries for actor components
- * This replaces individual useMemo geometry creation with shared instances
+ * This replaces individual useMemo geometry creation with shared instances.
+ * Disposes all cached geometries when the last consumer unmounts.
  */
 export function useSharedActor3DGeometries(scale = 1): {
   puckGeometry: THREE.CylinderGeometry;
   visionConeGeometry: THREE.BufferGeometry;
   tauntRingGeometry: THREE.RingGeometry;
 } {
+  useEffect(() => {
+    sharedGeometryConsumers++;
+    return () => {
+      sharedGeometryConsumers--;
+      if (sharedGeometryConsumers === 0) {
+        sharedActor3DGeometries.dispose();
+      }
+    };
+  }, []);
+
   return sharedActor3DGeometries.getGeometries(scale);
 }

@@ -97,24 +97,29 @@ export class PlayerColorManager {
     }
 
     // If no role preference or role color taken, use next available color
-    let colorKey: PlayerPathColorKey = preferredColorKey || 'dps';
-    if (!preferredColorKey) {
+    let colorKey: PlayerPathColorKey;
+    if (preferredColorKey) {
+      colorKey = preferredColorKey;
+    } else {
       // Find next unused color in sequence
+      let found: PlayerPathColorKey | null = null;
       while (this.colorIndex < COLOR_SEQUENCE.length) {
         const candidate = COLOR_SEQUENCE[this.colorIndex];
+        this.colorIndex++;
         if (!this.usedColors.has(candidate)) {
-          colorKey = candidate;
+          found = candidate;
           break;
         }
-        this.colorIndex++;
       }
 
       // If all colors used, wrap around (should be rare with 15 colors)
-      if (!colorKey) {
+      if (!found) {
         this.colorIndex = 0;
         this.usedColors.clear();
-        colorKey = COLOR_SEQUENCE[0];
+        found = COLOR_SEQUENCE[0];
       }
+
+      colorKey = found;
     }
 
     // Create assignment

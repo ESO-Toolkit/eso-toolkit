@@ -34,6 +34,11 @@ interface KeyState {
   sprint: boolean;
 }
 
+// Pre-allocated scratch vectors to avoid per-frame allocations in useFrame
+const _scratchForward = new Vector3();
+const _scratchRight = new Vector3();
+const _scratchMovement = new Vector3();
+
 export const KeyboardCameraControls: React.FC<KeyboardCameraControlsProps> = ({
   enabled = true,
   moveSpeed = 20,
@@ -110,6 +115,17 @@ export const KeyboardCameraControls: React.FC<KeyboardCameraControlsProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
+    // Reset key state when disabled to prevent stuck keys
+    if (!enabled) {
+      keyStateRef.current = {
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+        sprint: false,
+      };
+    }
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
@@ -132,37 +148,35 @@ export const KeyboardCameraControls: React.FC<KeyboardCameraControlsProps> = ({
     const effectiveSpeed = keyState.sprint ? moveSpeed * sprintMultiplier : moveSpeed;
     const moveDistance = effectiveSpeed * delta;
 
-    // Get camera's forward direction (projected onto XZ plane)
-    const forward = new Vector3();
-    camera.getWorldDirection(forward);
-    forward.y = 0; // Project onto horizontal plane
-    forward.normalize();
+    // Get camera's forward direction (projected onto XZ plane) — reuse scratch vectors
+    camera.getWorldDirection(_scratchForward);
+    _scratchForward.y = 0; // Project onto horizontal plane
+    _scratchForward.normalize();
 
     // Get camera's right direction (perpendicular to forward on XZ plane)
-    const right = new Vector3();
-    right.crossVectors(forward, camera.up).normalize();
+    _scratchRight.crossVectors(_scratchForward, camera.up).normalize();
 
     // Calculate movement vector
-    const movement = new Vector3();
+    _scratchMovement.set(0, 0, 0);
 
     if (keyState.forward) {
-      movement.add(forward.clone().multiplyScalar(moveDistance));
+      _scratchMovement.addScaledVector(_scratchForward, moveDistance);
     }
     if (keyState.backward) {
-      movement.add(forward.clone().multiplyScalar(-moveDistance));
+      _scratchMovement.addScaledVector(_scratchForward, -moveDistance);
     }
     if (keyState.right) {
-      movement.add(right.clone().multiplyScalar(moveDistance));
+      _scratchMovement.addScaledVector(_scratchRight, moveDistance);
     }
     if (keyState.left) {
-      movement.add(right.clone().multiplyScalar(-moveDistance));
+      _scratchMovement.addScaledVector(_scratchRight, -moveDistance);
     }
 
     // Apply movement to both camera and OrbitControls target
-    camera.position.add(movement);
+    camera.position.add(_scratchMovement);
 
     if (orbitControls.target) {
-      orbitControls.target.add(movement);
+      orbitControls.target.add(_scratchMovement);
     }
 
     // Update the controls to reflect the new position
