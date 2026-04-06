@@ -207,6 +207,7 @@ Skills are `SKILL.md` files in `.agents/skills/`, following the [Agent Skills sp
 
 **UI & Meta:**
 - **Create New Skill**: [.agents/skills/create-skill/SKILL.md](.agents/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
+- **MCP Gap Audit**: [.agents/skills/mcp-gaps/SKILL.md](.agents/skills/mcp-gaps/SKILL.md) - Audit Bash fallbacks that should be MCP tools, classify gaps, and file tickets
 - **Scratch Directory**: [.agents/skills/scratch-dir/SKILL.md](.agents/skills/scratch-dir/SKILL.md) - Gitignored directory for ad-hoc output files
 - **UI Updates**: [.agents/skills/ui-updates/SKILL.md](.agents/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
 
@@ -343,6 +344,14 @@ See: [.agents/skills/rebase-conflicts/SKILL.md](.agents/skills/rebase-conflicts/
 @workspace Analyze structure of report 3gjVGWB2dxCL8XAw
 ```
 See: [.agents/skills/reports/SKILL.md](.agents/skills/reports/SKILL.md)
+
+**MCP Gap Audit** (Tooling Health):
+```
+@workspace Audit MCP tool coverage and find CLI fallbacks
+@workspace Which skills should use MCP tools instead of raw CLI?
+@workspace Run an MCP gap audit and classify findings
+```
+See: [.agents/skills/mcp-gaps/SKILL.md](.agents/skills/mcp-gaps/SKILL.md)
 
 **Rollbar** (Error Tracking):
 ```
