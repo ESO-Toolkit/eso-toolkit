@@ -36,6 +36,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { Suspense } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
+import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportMasterData } from '../../hooks';
 import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
@@ -704,104 +705,144 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           data-testid={`tab-content-${validSelectedTabId}`}
         >
           {validSelectedTabId === TabId.INSIGHTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
-              <InsightsPanel fight={fight} />
-            </Suspense>
+            <PanelErrorBoundary panelName="Insights">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
+                <InsightsPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.PLAYERS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.PLAYERS} />}>
-              <PlayersPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Players">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.PLAYERS} />}>
+                <PlayersPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.DAMAGE_DONE && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
-              <DamageDonePanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Damage Done">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
+                <DamageDonePanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.HEALING_DONE && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
-              <HealingDonePanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Healing Done">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
+                <HealingDonePanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.DEATHS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
-              <DeathEventPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Deaths">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
+                <DeathEventPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
-              <CriticalDamagePanel phaseTransitionInfo={phaseTransitionInfo} />
-            </Suspense>
+            <PanelErrorBoundary panelName="Critical Damage">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
+                <CriticalDamagePanel phaseTransitionInfo={phaseTransitionInfo} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.PENETRATION && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
-              <PenetrationPanel phaseTransitionInfo={phaseTransitionInfo} />
-            </Suspense>
+            <PanelErrorBoundary panelName="Penetration">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
+                <PenetrationPanel phaseTransitionInfo={phaseTransitionInfo} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
-              <DamageReductionPanel phaseTransitionInfo={phaseTransitionInfo} />
-            </Suspense>
+            <PanelErrorBoundary panelName="Damage Reduction">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
+                <DamageReductionPanel phaseTransitionInfo={phaseTransitionInfo} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {validSelectedTabId === TabId.SYNERGIES && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.SYNERGIES} />}>
-              <SynergyPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Synergies">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.SYNERGIES} />}>
+                <SynergyPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
-              <LocationHeatmapPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Location Heatmap">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
+                <LocationHeatmapPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.RAW_EVENTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.RAW_EVENTS} />}>
-              <EventsPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Raw Events">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.RAW_EVENTS} />}>
+                <EventsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.TARGET_EVENTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.TARGET_EVENTS} />}>
-              <TargetEventsPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Target Events">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.TARGET_EVENTS} />}>
+                <TargetEventsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.DIAGNOSTICS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DIAGNOSTICS} />}>
-              <DiagnosticsPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Diagnostics">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DIAGNOSTICS} />}>
+                <DiagnosticsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.ACTORS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.ACTORS} />}>
-              <ActorsPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Actors">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.ACTORS} />}>
+                <ActorsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.TALENTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.TALENTS} />}>
-              <TalentsGridPanel fight={fight} />
-            </Suspense>
+            <PanelErrorBoundary panelName="Talents">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.TALENTS} />}>
+                <TalentsGridPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.ROTATION_ANALYSIS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.ROTATION_ANALYSIS} />}>
-              <RotationAnalysisPanel fight={fight} />
-            </Suspense>
+            <PanelErrorBoundary panelName="Rotation Analysis">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.ROTATION_ANALYSIS} />}>
+                <RotationAnalysisPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.AURAS_OVERVIEW && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.AURAS_OVERVIEW} />}>
-              <AurasPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Auras Overview">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.AURAS_OVERVIEW} />}>
+                <AurasPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.BUFFS_OVERVIEW && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.BUFFS_OVERVIEW} />}>
-              <BuffsOverviewPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Buffs Overview">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.BUFFS_OVERVIEW} />}>
+                <BuffsOverviewPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.DEBUFFS_OVERVIEW && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
-              <DebuffsOverviewPanel />
-            </Suspense>
+            <PanelErrorBoundary panelName="Debuffs Overview">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
+                <DebuffsOverviewPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.MAPS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.MAPS} />}>
-              <MapsPanel fight={fight} />
-            </Suspense>
+            <PanelErrorBoundary panelName="Maps">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.MAPS} />}>
+                <MapsPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
         </AnimatedTabContent>
       </Box>
