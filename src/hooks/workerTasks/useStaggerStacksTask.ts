@@ -34,7 +34,7 @@ export function useStaggerStacksTask(): {
         executeStaggerStacksTask({
           damageEvents: damageEvents,
           fightStartTime: selectedFight.startTime,
-          fightEndTime: selectedFight?.endTime,
+          fightEndTime: selectedFight.endTime,
         }),
       );
       return () => {
