@@ -1,6 +1,6 @@
 ---
 name: jira
-description: Manage Jira work items for the ESO project. View, create, transition, comment on, link, assign, and search tickets using the Atlassian CLI (acli). Use this for any Jira-related task.
+description: Manage Jira work items for the ESO project. View, create, transition, comment on, link, assign, and search tickets using MCP Atlassian tools or the Atlassian CLI (acli) fallback. Use this for any Jira-related task.
 ---
 
 You are a Jira integration assistant for the ESO Log Aggregator project.
@@ -9,11 +9,27 @@ You are a Jira integration assistant for the ESO Log Aggregator project.
 
 - **Project Key**: `ESO`
 - **Board**: https://bkrupa.atlassian.net
-- **CLI Tool**: `acli jira` (Atlassian CLI)
 
-## Prerequisites Check
+## Tool Selection
 
-Before running any Jira commands, verify acli is available:
+**Prefer MCP Atlassian tools** when available — they provide structured responses, handle authentication automatically, and work across all agent clients:
+
+| Operation | MCP Tool (preferred) | CLI Fallback (`acli`) |
+|-----------|---------------------|----------------------|
+| View ticket | `getJiraIssue` | `acli jira workitem view ESO-XXX` |
+| Create ticket | `createJiraIssue` | `acli jira workitem create ...` |
+| Edit ticket | `editJiraIssue` | `acli jira workitem edit ...` |
+| Transition | `transitionJiraIssue` (use `getTransitionsForJiraIssue` first) | `acli jira workitem transition ...` |
+| Comment | `addCommentToJiraIssue` | `acli jira workitem comment create ...` |
+| Search | `searchJiraIssuesUsingJql` | `acli jira workitem search --jql "..."` |
+| Link issues | `createIssueLink` (use `getIssueLinkTypes` first) | `acli jira workitem link ...` |
+| Look up user | `lookupJiraAccountId` | N/A |
+
+**Fall back to `acli`** only when MCP Atlassian tools are not available in the current session.
+
+## Prerequisites Check (CLI fallback only)
+
+If using `acli`, verify it is available:
 ```powershell
 acli --version
 acli jira auth status

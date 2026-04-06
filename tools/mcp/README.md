@@ -35,6 +35,18 @@ node --import tsx tools/mcp/<server-name>/src/index.ts
 2. `GITHUB_TOKEN` environment variable
 3. `gh auth token` CLI fallback
 
+## Cross-Client Parity
+
+All three config files **must** register the same servers. Each client uses a different env var syntax and top-level key:
+
+| Client | Top-level key | Env var example |
+|--------|--------------|-----------------|
+| Claude Code CLI | `mcpServers` | `"${GH_TOKEN:-}"` |
+| VS Code | `servers` | `"${env:GH_TOKEN}"` |
+| GitHub Copilot | `servers` | `"${GH_TOKEN}"` |
+
+When adding or modifying a server, update **all three files** and verify parity with the [mcp-gaps skill](../../.agents/skills/mcp-gaps/SKILL.md).
+
 ## Adding a New Server
 
 1. Create `tools/mcp/<name>/` with `package.json`, `tsconfig.json`, `src/index.ts`
@@ -42,3 +54,12 @@ node --import tsx tools/mcp/<server-name>/src/index.ts
 3. Import shared utilities from `_shared/` (types.ts, github-api.ts)
 4. Register in all three config files (`.claude/mcp.json`, `.vscode/mcp.json`, `.github/copilot/mcp.json`)
 5. Add tool permissions to `.claude/settings.json`
+6. Update agent skills that cover the same operations to reference the MCP tool as preferred
+
+## Security
+
+- **Never** hardcode tokens or secrets in server source or config files
+- Use environment variables for all authentication (GH_TOKEN, GITHUB_TOKEN)
+- Token values are automatically redacted from error messages in `_shared/github-api.ts`
+- The worktree-server refuses to run commands in the main repo when worktrees exist
+- The worktree-server refuses to push `main` or `master` branches

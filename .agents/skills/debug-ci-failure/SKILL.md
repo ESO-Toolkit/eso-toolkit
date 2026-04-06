@@ -50,8 +50,13 @@ Step-by-step playbook for triaging and fixing a failed CI run in ESO Log Aggrega
 
 ### 1. Find the failed run
 
-```powershell
-# List recent runs on the current branch
+**Prefer MCP tools** when available (structured data, safer than raw CLI):
+
+```
+# MCP tool (preferred — structured response, no shell escaping issues)
+ci_list_runs  branch: <current-branch>  limit: 5
+
+# CLI fallback
 gh run list --branch (git branch --show-current) --limit 5
 
 # Or check PR checks directly
@@ -62,15 +67,18 @@ Note the `RUN_ID` of the failed run for subsequent commands.
 
 ### 2. Fetch failed logs and extract the actual error
 
-```powershell
-# Show only logs from failed steps (fastest)
+```
+# MCP tool (preferred — built-in filtering and truncation)
+ci_get_logs  runId: RUN_ID  failedOnly: true
+
+# MCP tool — regex search across all logs
+ci_search_logs  runId: RUN_ID  pattern: "error TS\\d+|FAIL.*\\.test\\.|\\d+:\\d+\\s+error"
+
+# CLI fallback
 gh run view RUN_ID --log-failed
 
 # Save to a file for easier searching
 gh run view RUN_ID --log-failed > scratch/ci-failed.txt
-
-# If --log-failed is empty, fetch all logs
-gh run view RUN_ID --log > scratch/ci-full.txt
 ```
 
 **Your goal in this step is to find the exact error line(s).** Do not proceed until you can cite the specific error message, file path, line number, or error code from the logs.
@@ -231,7 +239,11 @@ Some CI failures are not caused by your code:
 
 In these cases, rerun the failed jobs:
 
-```powershell
+```
+# MCP tool (preferred)
+ci_rerun  runId: RUN_ID  failedOnly: true
+
+# CLI fallback
 gh run rerun RUN_ID --failed
 ```
 
