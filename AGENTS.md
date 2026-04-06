@@ -208,6 +208,7 @@ Skills are `SKILL.md` files in `.agents/skills/`, following the [Agent Skills sp
 **UI & Meta:**
 - **Create New Skill**: [.agents/skills/create-skill/SKILL.md](.agents/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
 - **MCP Gap Audit**: [.agents/skills/mcp-gaps/SKILL.md](.agents/skills/mcp-gaps/SKILL.md) - Audit Bash fallbacks that should be MCP tools, classify gaps, and file tickets
+- **Tooling Audit**: [.agents/skills/tooling-audit/SKILL.md](.agents/skills/tooling-audit/SKILL.md) - Comprehensive gap audit of MCP tools, skills, and documentation with Jira ticket creation
 - **Scratch Directory**: [.agents/skills/scratch-dir/SKILL.md](.agents/skills/scratch-dir/SKILL.md) - Gitignored directory for ad-hoc output files
 - **UI Updates**: [.agents/skills/ui-updates/SKILL.md](.agents/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
 
@@ -352,6 +353,14 @@ See: [.agents/skills/reports/SKILL.md](.agents/skills/reports/SKILL.md)
 @workspace Run an MCP gap audit and classify findings
 ```
 See: [.agents/skills/mcp-gaps/SKILL.md](.agents/skills/mcp-gaps/SKILL.md)
+
+**Tooling Audit** (Comprehensive Gap Audit):
+```
+@workspace Audit MCP tool coverage, skills, and docs — file tickets for gaps
+@workspace Run a tooling audit and create Jira tickets for missing tools
+@workspace Check for Bash workarounds that should be MCP tools or skills
+```
+See: [.agents/skills/tooling-audit/SKILL.md](.agents/skills/tooling-audit/SKILL.md)
 
 **Rollbar** (Error Tracking):
 ```
