@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
+/* eslint-disable no-console, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -282,7 +282,7 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
         setIsLoading(false);
       }
     },
-    [client, fights, fetcher, reportCode],
+    [client, fights, fetcher, reportCode, reportMasterData],
   );
 
   return {

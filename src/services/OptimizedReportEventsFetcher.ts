@@ -1,8 +1,7 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { EsoLogsClient } from '../esologsClient';
 import { FightFragment, HostilityType } from '../graphql/gql/graphql';
 import {
-  GET_ALL_EVENTS_FOR_SUMMARY,
   GET_ALL_EVENTS_TIME_BASED,
   GET_REPORT_DAMAGE_EVENTS,
   GET_REPORT_DEATH_EVENTS,
@@ -280,8 +279,10 @@ export class OptimizedReportEventsFetcher {
       for (const fight of fights) {
         for (const hostilityType of hostilityTypes) {
           let nextPageTimestamp: number | null = null;
+          let pageCount = 0;
 
           do {
+            pageCount++;
             const response = (await this.client.query({
               query: GetDamageEventsDocument,
               fetchPolicy: 'no-cache',
@@ -299,7 +300,7 @@ export class OptimizedReportEventsFetcher {
               allDamageEvents = allDamageEvents.concat(page.data);
             }
             nextPageTimestamp = page?.nextPageTimestamp ?? null;
-          } while (nextPageTimestamp);
+          } while (nextPageTimestamp && pageCount < 50);
         }
       }
 
@@ -330,8 +331,10 @@ export class OptimizedReportEventsFetcher {
       for (const fight of fights) {
         for (const hostilityType of hostilityTypes) {
           let nextPageTimestamp: number | null = null;
+          let pageCount = 0;
 
           do {
+            pageCount++;
             const response = (await this.client.query({
               query: GetHealingEventsDocument,
               fetchPolicy: 'no-cache',
@@ -349,7 +352,7 @@ export class OptimizedReportEventsFetcher {
               allHealingEvents = allHealingEvents.concat(page.data);
             }
             nextPageTimestamp = page?.nextPageTimestamp ?? null;
-          } while (nextPageTimestamp);
+          } while (nextPageTimestamp && pageCount < 50);
         }
       }
 
@@ -385,8 +388,10 @@ export class OptimizedReportEventsFetcher {
 
         for (const hostilityType of hostilityTypes) {
           let nextPageTimestamp: number | null = null;
+          let pageCount = 0;
 
           do {
+            pageCount++;
             const response = (await this.client.query({
               query: GetDeathEventsDocument,
               fetchPolicy: 'no-cache',
@@ -405,7 +410,7 @@ export class OptimizedReportEventsFetcher {
               console.log(`📊 Fight ${fight.id} ${hostilityType}: +${page.data.length} deaths`);
             }
             nextPageTimestamp = page?.nextPageTimestamp ?? null;
-          } while (nextPageTimestamp);
+          } while (nextPageTimestamp && pageCount < 50);
         }
       }
 
@@ -419,195 +424,6 @@ export class OptimizedReportEventsFetcher {
     } catch (error) {
       console.error('❌ Error with working deathEventsSlice approach:', error);
       return [];
-    }
-  }
-
-  /**
-   * Diagnostic check using the working GetDeathEventsDocument approach
-   * Tests different batch sizes to find API limits
-   */
-  private async diagnosticDeathCheck(
-    reportCode: string,
-    reportStartTime: number,
-    reportEndTime: number,
-  ): Promise<void> {
-    try {
-      console.log('🔬 Running comprehensive diagnostic death check...');
-
-      // Import the working query
-      const { GetDeathEventsDocument } = await import('../graphql/gql/graphql');
-
-      // Test 1: Single fight ID (we know this works from download script)
-      console.log('🔬 TEST 1: Single fight ID [92] (known to have 2 deaths)');
-
-      const testVariables = {
-        code: reportCode,
-        fightIds: [92], // Fight 92 has 2 deaths according to download
-        startTime: 6585258, // Fight 92 specific start time from download
-        endTime: 6641698, // Fight 92 specific end time from download
-        hostilityType: 'Friendlies' as any, // Use string like download script!
-        limit: 100000, // Use same high limit as download script
-      };
-
-      console.log('🔬 EXACT query variables being sent:', JSON.stringify(testVariables, null, 2));
-
-      try {
-        const result1 = (await this.client.query({
-          query: GetDeathEventsDocument,
-          variables: testVariables,
-          fetchPolicy: 'no-cache', // Same as download script
-        })) as any;
-
-        console.log('🔬 Raw GraphQL response structure:', {
-          hasData: !!result1.data,
-          hasReportData: !!result1.data?.reportData,
-          hasReport: !!result1.data?.reportData?.report,
-          hasEvents: !!result1.data?.reportData?.report?.events,
-          eventsStructure: result1.data?.reportData?.report?.events,
-        });
-
-        const events1 = result1.data?.reportData?.report?.events?.data || [];
-        console.log(`🔬 Single fight [92]: ${events1.length} death events found`);
-
-        if (events1.length > 0) {
-          console.log('🔬 SUCCESS! Single fight query works. Sample event:', events1[0]);
-        } else {
-          console.log('🔬 FAIL: Query returned valid structure but no events');
-        }
-      } catch (error) {
-        console.log('🔬 Single fight query failed with error:', error);
-        console.log('🔬 Error details:', {
-          message: (error as any).message,
-          networkError: (error as any).networkError,
-          graphQLErrors: (error as any).graphQLErrors,
-        });
-      }
-
-      // CRITICAL TEST: Try exact same approach as working deathEventsSlice
-      console.log('🔬 CRITICAL TEST: Exact deathEventsSlice approach');
-      try {
-        // This mimics deathEventsSlice.ts lines 53-65 exactly
-        const deathSliceResult = (await this.client.query({
-          query: GetDeathEventsDocument,
-          fetchPolicy: 'no-cache',
-          variables: {
-            code: reportCode,
-            fightIds: [92], // Single fight like deathEventsSlice
-            startTime: 6585258, // Fight 92 start time
-            endTime: 6641698, // Fight 92 end time
-            hostilityType: 'Friendlies' as any,
-          },
-        })) as any;
-
-        const deathSliceEvents = deathSliceResult?.reportData?.report?.events;
-        const deathSliceData = deathSliceEvents?.data || [];
-
-        console.log('🔬 DeathEventsSlice approach result:', {
-          eventsCount: deathSliceData.length,
-          nextPageTimestamp: deathSliceEvents?.nextPageTimestamp,
-          structure: deathSliceEvents,
-        });
-
-        if (deathSliceData.length > 0) {
-          console.log('🔬 SUCCESS! DeathEventsSlice approach works!');
-          console.log('🔬 First death event:', deathSliceData[0]);
-        }
-      } catch (error) {
-        console.log('🔬 DeathEventsSlice approach failed:', error);
-      }
-
-      // Test 2: Two fight IDs WITHOUT timestamps (let fightIds define the boundaries)
-      console.log(
-        '🔬 TEST 2: Two fight IDs [92, 93] WITHOUT timestamps (should have 2+17=19 deaths)',
-      );
-      try {
-        const result2 = (await this.client.query({
-          query: GetDeathEventsDocument,
-          variables: {
-            code: reportCode,
-            fightIds: [92, 93], // Both fights have deaths
-            // NO startTime/endTime - let fightIds define boundaries
-            hostilityType: 'Friendlies' as any,
-            limit: 100,
-          },
-        })) as any;
-
-        const events2 = result2.data?.reportData?.report?.events?.data || [];
-        console.log(`🔬 Two fights [92, 93] NO TIMESTAMPS: ${events2.length} death events found`);
-        if (events2.length > 0) {
-          console.log('🔬 SUCCESS! Batching works when we omit timestamps!');
-        }
-      } catch (error) {
-        console.log('🔬 Two fights (no timestamps) query failed:', error);
-      }
-
-      // Test 3: Five fight IDs WITHOUT timestamps
-      console.log('🔬 TEST 3: Five fight IDs [89, 90, 91, 92, 93] WITHOUT timestamps');
-      try {
-        const result3 = (await this.client.query({
-          query: GetDeathEventsDocument,
-          variables: {
-            code: reportCode,
-            fightIds: [89, 90, 91, 92, 93], // Last 5 fights
-            // NO startTime/endTime
-            hostilityType: 'Friendlies' as any,
-            limit: 100,
-          },
-        })) as any;
-
-        const events3 = result3.data?.reportData?.report?.events?.data || [];
-        console.log(`🔬 Five fights [89-93] NO TIMESTAMPS: ${events3.length} death events found`);
-      } catch (error) {
-        console.log('🔬 Five fights (no timestamps) query failed:', error);
-      }
-
-      // Test 4: Ten fight IDs WITHOUT timestamps
-      console.log('🔬 TEST 4: Ten fight IDs [84-93] WITHOUT timestamps');
-      try {
-        const result4 = (await this.client.query({
-          query: GetDeathEventsDocument,
-          variables: {
-            code: reportCode,
-            fightIds: [84, 85, 86, 87, 88, 89, 90, 91, 92, 93], // Last 10 fights
-            // NO startTime/endTime
-            hostilityType: 'Friendlies' as any,
-            limit: 100,
-          },
-        })) as any;
-
-        const events4 = result4.data?.reportData?.report?.events?.data || [];
-        console.log(`🔬 Ten fights [84-93] NO TIMESTAMPS: ${events4.length} death events found`);
-      } catch (error) {
-        console.log('🔬 Ten fights (no timestamps) query failed:', error);
-      }
-
-      // Test 5: ALL 93 fight IDs WITHOUT timestamps (ultimate test!)
-      console.log('🔬 TEST 5: ALL 93 fight IDs [1-93] WITHOUT timestamps');
-      try {
-        const allFightIds = Array.from({ length: 93 }, (_, i) => i + 1); // [1, 2, 3, ..., 93]
-        const result5 = (await this.client.query({
-          query: GetDeathEventsDocument,
-          variables: {
-            code: reportCode,
-            fightIds: allFightIds, // ALL fights
-            // NO startTime/endTime
-            hostilityType: 'Friendlies' as any,
-            limit: 1000, // Higher limit for all events
-          },
-        })) as any;
-
-        const events5 = result5.data?.reportData?.report?.events?.data || [];
-        console.log(`🔬 ALL 93 fights NO TIMESTAMPS: ${events5.length} death events found`);
-        if (events5.length > 0) {
-          console.log(
-            '🎉 JACKPOT! ESO API supports ALL fights in single query when we omit timestamps!',
-          );
-        }
-      } catch (error) {
-        console.log('🔬 All fights (no timestamps) query failed:', error);
-      }
-    } catch (error) {
-      console.log('🔬 Diagnostic check failed:', error);
     }
   }
 
