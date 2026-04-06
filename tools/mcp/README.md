@@ -45,7 +45,7 @@ All three config files **must** register the same servers. Each client uses a di
 | VS Code | `servers` | `"${env:GH_TOKEN}"` |
 | GitHub Copilot | `servers` | `"${GH_TOKEN}"` |
 
-When adding or modifying a server, update **all three files** and verify parity with the [mcp-gaps skill](../../.agents/skills/mcp-gaps/SKILL.md).
+When adding or modifying a server, update **all three files** and verify parity with the [tooling-audit skill](../../.agents/skills/tooling-audit/SKILL.md).
 
 ## Adding a New Server
 
