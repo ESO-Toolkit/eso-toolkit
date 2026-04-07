@@ -73,6 +73,25 @@ git checkout -b ESO-XXX/description-here
 **ALWAYS work on feature branches**
 **ALWAYS continue through to PR creation after implementation** (see below)
 
+### Branch Naming Convention
+
+All branches **must** match one of these patterns:
+
+| Pattern | When to use | Example |
+|---------|-------------|---------|
+| `ESO-<number>/<kebab-case>` | Any work tied to a Jira ticket (the default) | `ESO-569/fix-scribing-resource-events` |
+| `claude/<kebab-case>` | Exploratory or non-ticket work only | `claude/refactor-worker-pool` |
+
+Rules:
+- Lowercase letters, digits, and hyphens only after the slash.
+- No underscores, spaces, uppercase, or trailing random suffixes.
+- Prefer the `ESO-<ticket>` form whenever a Jira ticket exists — create one first if it doesn't.
+
+This convention is enforced automatically by a `PreToolUse` hook
+(`scripts/validate-branch-name.mjs`, wired up in `.claude/settings.json`) that
+blocks any `git checkout -b`, `git switch -c`, or `git branch <name>` command
+whose branch name does not match.
+
 Optional: [twig](https://github.com/gittwig/twig) for branch stacking (all commands have plain git fallbacks)
 
 **If you've already made changes on main:**
