@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Skeleton,
   Avatar,
   useTheme,
   Link as MuiLink,
@@ -12,6 +11,8 @@ import {
 } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
+
+import { DeathEventPanelSkeleton } from '@/components/DeathEventPanelSkeleton';
 
 import { timestampToFightTime } from '@/utils/fightTimeUtils';
 
@@ -86,55 +87,29 @@ const glassCard = (mode: string) =>
       : '0 1px 0 0 rgba(255,255,255,0.9) inset, 0 8px 40px rgba(0,0,0,0.06)',
   }) as const;
 
-/** Compact stat badge */
-const statBadge = (mode: string, hue: string): Record<string, unknown> => {
-  const colors: Record<string, { bg: string; border: string; text: string }> = {
-    green: {
-      bg: isDark(mode) ? 'rgba(34,197,94,0.10)' : 'rgba(34,197,94,0.07)',
-      border: isDark(mode) ? 'rgba(34,197,94,0.20)' : 'rgba(34,197,94,0.15)',
-      text: isDark(mode) ? '#4ade80' : '#059669',
-    },
-    red: {
-      bg: isDark(mode) ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.05)',
-      border: isDark(mode) ? 'rgba(239,68,68,0.20)' : 'rgba(239,68,68,0.15)',
-      text: isDark(mode) ? '#f87171' : '#dc2626',
-    },
-    orange: {
-      bg: isDark(mode) ? 'rgba(251,146,60,0.10)' : 'rgba(251,146,60,0.05)',
-      border: isDark(mode) ? 'rgba(251,146,60,0.20)' : 'rgba(251,146,60,0.15)',
-      text: isDark(mode) ? '#fb923c' : '#ea580c',
-    },
-    blue: {
-      bg: isDark(mode) ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.05)',
-      border: isDark(mode) ? 'rgba(56,189,248,0.18)' : 'rgba(56,189,248,0.15)',
-      text: isDark(mode) ? '#38bdf8' : '#0284c7',
-    },
-  };
-  const c = colors[hue] || colors.red;
-  return {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '5px',
-    px: 1,
-    py: 0.4,
-    borderRadius: '8px',
-    background: c.bg,
-    border: `1px solid ${c.border}`,
-    color: c.text,
-    fontSize: '0.72rem',
-    fontWeight: 600,
-    lineHeight: 1,
-    whiteSpace: 'nowrap' as const,
-    fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
-  };
-};
+/** Compact stat label — muted label with monospace values */
+const statLabel = (mode: string): Record<string, unknown> => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '4px',
+  fontSize: '0.72rem',
+  fontWeight: 600,
+  lineHeight: 1,
+  whiteSpace: 'nowrap' as const,
+  fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+  color: isDark(mode) ? '#94a3b8' : '#64748b',
+});
 
-/** Thin progress bar for resource visualization */
-const resourceBar = (pct: number, color: string, bgColor: string): Record<string, unknown> => ({
+/** Thin progress bar with contextual color */
+const resourceBar = (
+  pct: number,
+  color: string,
+  mode: string,
+): Record<string, unknown> => ({
   position: 'relative',
   height: '3px',
   borderRadius: '2px',
-  background: bgColor,
+  background: isDark(mode) ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.10)',
   overflow: 'hidden',
   mt: 0.5,
   '&::after': {
@@ -240,65 +215,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 
   // Show skeleton loading while data is being fetched
   if (isLoading) {
-    return (
-      <Box mt={2}>
-        {/* Header skeleton */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-          <Skeleton variant="rounded" width={180} height={28} sx={{ borderRadius: '8px' }} />
-          <Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: '8px' }} />
-          <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '8px' }} />
-        </Box>
-
-        {/* Summary chips skeleton */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              variant="rounded"
-              width={70 + i * 12}
-              height={26}
-              sx={{ borderRadius: '8px' }}
-            />
-          ))}
-        </Box>
-
-        {/* Card grid skeleton */}
-        <Box sx={gridSx}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} sx={{ ...glassCard(theme.palette.mode), overflow: 'hidden' }}>
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                  <Skeleton variant="circular" width={36} height={36} />
-                  <Box sx={{ flex: 1 }}>
-                    <Skeleton variant="text" width="60%" height={18} />
-                    <Skeleton variant="text" width="35%" height={14} />
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 0.75, mb: 1.5, flexWrap: 'wrap' }}>
-                  <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '8px' }} />
-                  <Skeleton variant="rounded" width={95} height={24} sx={{ borderRadius: '8px' }} />
-                </Box>
-                <Skeleton
-                  variant="rounded"
-                  width="100%"
-                  height={56}
-                  sx={{ borderRadius: '10px', mb: 1.5 }}
-                />
-                {Array.from({ length: 3 }).map((_, j) => (
-                  <Skeleton
-                    key={j}
-                    variant="rounded"
-                    width="100%"
-                    height={20}
-                    sx={{ borderRadius: '6px', mb: 0.5 }}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
-      </Box>
-    );
+    return <DeathEventPanelSkeleton />;
   }
 
   if (deathInfos.length === 0) {
@@ -313,9 +230,11 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             textAlign: 'center',
             borderRadius: '16px',
             background: dark
-              ? 'linear-gradient(165deg, rgba(34,197,94,0.06) 0%, rgba(10,15,30,0.4) 100%)'
-              : 'linear-gradient(165deg, rgba(34,197,94,0.04) 0%, rgba(240,253,244,0.6) 100%)',
-            border: dark ? '1px solid rgba(34,197,94,0.15)' : '1px solid rgba(34,197,94,0.10)',
+              ? 'linear-gradient(165deg, rgba(34,197,94,0.04) 0%, rgba(10,15,30,0.4) 100%)'
+              : 'linear-gradient(165deg, rgba(34,197,94,0.03) 0%, rgba(248,250,252,0.6) 100%)',
+            border: dark
+              ? '1px solid rgba(34,197,94,0.10)'
+              : '1px solid rgba(34,197,94,0.08)',
             backdropFilter: 'blur(20px)',
           }}
         >
@@ -386,9 +305,11 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
             height: 24,
             minWidth: 24,
-            background: dark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)',
+            background: dark ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.06)',
             color: dark ? '#f87171' : '#dc2626',
-            border: dark ? '1px solid rgba(239,68,68,0.22)' : '1px solid rgba(220,38,38,0.15)',
+            border: dark
+              ? '1px solid rgba(239,68,68,0.18)'
+              : '1px solid rgba(220,38,38,0.12)',
             '& .MuiChip-label': { px: 0.75 },
           }}
         />
@@ -463,6 +384,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                           fontWeight: 800,
                           fontSize: '0.7rem',
                           ml: '2px',
+                          fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
                           color: dark ? '#f87171' : '#dc2626',
                         }}
                       >
@@ -473,18 +395,20 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   size="small"
                   sx={{
                     height: 26,
-                    background: dark ? 'rgba(239,68,68,0.06)' : 'rgba(239,68,68,0.04)',
+                    background: dark ? 'rgba(148,163,184,0.06)' : 'rgba(241,245,249,0.6)',
                     border: dark
-                      ? '1px solid rgba(239,68,68,0.18)'
-                      : '1px solid rgba(220,38,38,0.12)',
+                      ? '1px solid rgba(148,163,184,0.12)'
+                      : '1px solid rgba(148,163,184,0.15)',
                     color: theme.palette.text.primary,
                     cursor: link ? 'pointer' : 'default',
                     transition: 'all 0.15s ease',
                     '&:hover': link
                       ? {
-                          background: dark ? 'rgba(239,68,68,0.14)' : 'rgba(239,68,68,0.08)',
+                          background: dark ? 'rgba(148,163,184,0.12)' : 'rgba(241,245,249,0.9)',
                           transform: 'translateY(-1px)',
-                          boxShadow: '0 2px 8px rgba(239,68,68,0.15)',
+                          boxShadow: dark
+                            ? '0 2px 8px rgba(0,0,0,0.2)'
+                            : '0 2px 8px rgba(0,0,0,0.06)',
                         }
                       : {},
                     '& .MuiChip-label': { px: 1 },
@@ -548,8 +472,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          background: dark ? 'rgba(251,146,60,0.20)' : 'rgba(234,88,12,0.10)',
-                          color: dark ? '#fb923c' : '#ea580c',
+                          fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+                          background: dark ? 'rgba(148,163,184,0.15)' : 'rgba(148,163,184,0.10)',
+                          color: dark ? '#e5e7eb' : '#1e293b',
                         }}
                       >
                         {data.count}
@@ -559,22 +484,16 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   size="small"
                   sx={{
                     height: 26,
-                    background: dark
-                      ? i === 0
-                        ? 'rgba(251,146,60,0.10)'
-                        : 'rgba(148,163,184,0.06)'
-                      : i === 0
-                        ? 'rgba(251,146,60,0.06)'
-                        : 'rgba(241,245,249,0.6)',
+                    background: dark ? 'rgba(148,163,184,0.06)' : 'rgba(241,245,249,0.6)',
                     border: dark
-                      ? `1px solid ${i === 0 ? 'rgba(251,146,60,0.25)' : 'rgba(148,163,184,0.12)'}`
-                      : `1px solid ${i === 0 ? 'rgba(234,88,12,0.18)' : 'rgba(148,163,184,0.18)'}`,
+                      ? '1px solid rgba(148,163,184,0.12)'
+                      : '1px solid rgba(148,163,184,0.15)',
                     color: theme.palette.text.primary,
                     transition: 'all 0.15s ease',
                     '&:hover': {
                       transform: 'translateY(-1px)',
                       boxShadow: dark
-                        ? '0 2px 8px rgba(251,146,60,0.12)'
+                        ? '0 2px 8px rgba(0,0,0,0.2)'
                         : '0 2px 8px rgba(0,0,0,0.06)',
                     },
                     '& .MuiChip-label': { px: 1 },
@@ -609,19 +528,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             info.killingBlow?.sourceName,
           );
 
-          // Determine health % color
           const healthPct =
             info.health !== null && info.maxHealth
               ? Math.round((info.health / info.maxHealth) * 100)
               : null;
-          const healthHue =
-            healthPct === null
-              ? 'red'
-              : healthPct === 0
-                ? 'red'
-                : healthPct < 25
-                  ? 'orange'
-                  : 'green';
 
           return (
             <Card
@@ -632,7 +542,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 overflow: 'hidden',
                 transition:
                   'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                // Top accent gradient bar
+                // Top accent line — player role color, fading out
                 '&::before': {
                   content: '""',
                   position: 'absolute',
@@ -640,7 +550,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   left: 0,
                   right: 0,
                   height: '2px',
-                  background: `linear-gradient(90deg, ${playerColor} 0%, ${dark ? 'rgba(239,68,68,0.6)' : 'rgba(220,38,38,0.4)'} 50%, transparent 100%)`,
+                  background: `linear-gradient(90deg, ${playerColor}60 0%, transparent 60%)`,
                 },
                 '&:hover': {
                   transform: 'translateY(-3px)',
@@ -658,13 +568,12 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       sx={{
                         width: 36,
                         height: 36,
-                        background: `linear-gradient(145deg, ${playerColor} 0%, ${playerColor}99 100%)`,
+                        background: `${playerColor}18`,
                         fontSize: '0.8rem',
                         fontWeight: 800,
                         fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
-                        color: '#fff',
-                        border: `2px solid ${playerColor}60`,
-                        boxShadow: `0 2px 12px ${playerColor}30`,
+                        color: playerColor,
+                        border: `1.5px solid ${playerColor}30`,
                         letterSpacing: '-0.02em',
                       }}
                     >
@@ -708,31 +617,20 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               borderRadius: '5px',
                               fontSize: '0.6rem',
                               fontWeight: 700,
+                              fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
                               lineHeight: 1,
-                              background: info.resurrectionTime
-                                ? dark
-                                  ? 'rgba(34,197,94,0.12)'
-                                  : 'rgba(34,197,94,0.08)'
-                                : dark
-                                  ? 'rgba(148,163,184,0.10)'
-                                  : 'rgba(148,163,184,0.08)',
-                              border: info.resurrectionTime
-                                ? dark
-                                  ? '1px solid rgba(34,197,94,0.22)'
-                                  : '1px solid rgba(34,197,94,0.15)'
-                                : dark
-                                  ? '1px solid rgba(148,163,184,0.15)'
-                                  : '1px solid rgba(148,163,184,0.12)',
-                              color: info.resurrectionTime
-                                ? dark
-                                  ? '#4ade80'
-                                  : '#059669'
-                                : theme.palette.text.secondary,
+                              background: dark
+                                ? 'rgba(148,163,184,0.08)'
+                                : 'rgba(148,163,184,0.06)',
+                              border: dark
+                                ? '1px solid rgba(148,163,184,0.12)'
+                                : '1px solid rgba(148,163,184,0.10)',
+                              color: dark ? '#94a3b8' : '#64748b',
                               cursor: 'help',
                               flexShrink: 0,
                             }}
                           >
-                            {info.resurrectionTime ? '↻' : '⏱'} {deathDuration}
+                            {deathDuration}
                           </Box>
                         </Tooltip>
                       )}
@@ -769,7 +667,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                           justifyContent: 'space-between',
                         }}
                       >
-                        <Box sx={statBadge(theme.palette.mode, healthHue)}>
+                        <Box sx={statLabel(theme.palette.mode)}>
                           HP {info.health.toLocaleString()}/{info.maxHealth.toLocaleString()}
                         </Box>
                         <Typography
@@ -778,17 +676,13 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             fontWeight: 700,
                             fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
                             color:
-                              healthHue === 'red'
+                              healthPct !== null && healthPct <= 25
                                 ? dark
                                   ? '#f87171'
                                   : '#dc2626'
-                                : healthHue === 'orange'
-                                  ? dark
-                                    ? '#fb923c'
-                                    : '#ea580c'
-                                  : dark
-                                    ? '#4ade80'
-                                    : '#059669',
+                                : dark
+                                  ? '#94a3b8'
+                                  : '#64748b',
                           }}
                         >
                           {healthPct}%
@@ -797,18 +691,14 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       <Box
                         sx={resourceBar(
                           healthPct ?? 0,
-                          healthHue === 'red'
+                          healthPct !== null && healthPct <= 25
                             ? dark
                               ? '#ef4444'
                               : '#dc2626'
-                            : healthHue === 'orange'
-                              ? dark
-                                ? '#fb923c'
-                                : '#ea580c'
-                              : dark
-                                ? '#4ade80'
-                                : '#059669',
-                          dark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.10)',
+                            : dark
+                              ? 'rgba(148,163,184,0.35)'
+                              : 'rgba(100,116,139,0.30)',
+                          theme.palette.mode,
                         )}
                       />
                     </Box>
@@ -824,7 +714,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                           justifyContent: 'space-between',
                         }}
                       >
-                        <Box sx={statBadge(theme.palette.mode, 'green')}>
+                        <Box sx={statLabel(theme.palette.mode)}>
                           STA {info.stamina.toLocaleString()}/{info.maxStamina.toLocaleString()}
                         </Box>
                         <Typography
@@ -832,7 +722,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             fontSize: '0.7rem',
                             fontWeight: 700,
                             fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
-                            color: dark ? '#4ade80' : '#059669',
+                            color: dark ? '#94a3b8' : '#64748b',
                           }}
                         >
                           {Math.round((info.stamina / info.maxStamina) * 100)}%
@@ -841,8 +731,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       <Box
                         sx={resourceBar(
                           Math.round((info.stamina / info.maxStamina) * 100),
-                          dark ? '#4ade80' : '#059669',
-                          dark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.10)',
+                          dark ? 'rgba(148,163,184,0.35)' : 'rgba(100,116,139,0.30)',
+                          theme.palette.mode,
                         )}
                       />
                     </Box>
@@ -851,7 +741,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   {/* Inline badges row */}
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 0.25 }}>
                     {info.wasBlocking && (
-                      <Box sx={statBadge(theme.palette.mode, 'blue')}>BLOCKING</Box>
+                      <Box sx={statLabel(theme.palette.mode)}>BLOCKING</Box>
                     )}
                   </Box>
                 </Box>
@@ -863,24 +753,11 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     p: 1.5,
                     borderRadius: '12px',
                     background: dark
-                      ? 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(15,23,42,0.4) 100%)'
-                      : 'linear-gradient(135deg, rgba(239,68,68,0.03) 0%, rgba(254,242,242,0.4) 100%)',
+                      ? 'rgba(239,68,68,0.04)'
+                      : 'rgba(220,38,38,0.02)',
                     border: dark
-                      ? '1px solid rgba(239,68,68,0.12)'
-                      : '1px solid rgba(220,38,38,0.08)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '1px',
-                      background: dark
-                        ? 'linear-gradient(90deg, rgba(239,68,68,0.3) 0%, transparent 70%)'
-                        : 'linear-gradient(90deg, rgba(220,38,38,0.15) 0%, transparent 70%)',
-                    },
+                      ? '1px solid rgba(239,68,68,0.10)'
+                      : '1px solid rgba(220,38,38,0.06)',
                   }}
                 >
                   {info.killingBlow ? (
@@ -901,7 +778,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             fontSize: '0.6rem',
                             textTransform: 'uppercase',
                             letterSpacing: '0.08em',
-                            color: dark ? 'rgba(248,113,113,0.7)' : 'rgba(220,38,38,0.5)',
+                            color: dark ? 'rgba(148,163,184,0.6)' : 'rgba(100,116,139,0.5)',
                             mr: 0.5,
                           }}
                         >
@@ -971,14 +848,16 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               sx={{
                                 fontWeight: 700,
                                 fontSize: '0.88rem',
-                                color: dark ? '#f674ab' : '#be185d',
+                                color: dark ? '#e5e7eb' : '#1e293b',
                                 cursor: 'help',
-                                borderBottom: `1px dashed ${dark ? 'rgba(246,116,171,0.3)' : 'rgba(190,24,93,0.2)'}`,
+                                borderBottom: dark
+                                  ? '1px dashed rgba(148,163,184,0.25)'
+                                  : '1px dashed rgba(148,163,184,0.30)',
                                 transition: 'border-color 0.15s',
                                 '&:hover': {
                                   borderBottomColor: dark
-                                    ? 'rgba(246,116,171,0.6)'
-                                    : 'rgba(190,24,93,0.4)',
+                                    ? 'rgba(148,163,184,0.5)'
+                                    : 'rgba(148,163,184,0.6)',
                                 },
                               }}
                             >
@@ -991,7 +870,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             sx={{
                               fontWeight: 700,
                               fontSize: '0.88rem',
-                              color: dark ? '#f674ab' : '#be185d',
+                              color: dark ? '#e5e7eb' : '#1e293b',
                             }}
                           >
                             {info.killingBlow.abilityName || 'Unknown'}
@@ -1021,7 +900,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             <span
                               style={{
                                 fontWeight: 600,
-                                color: dark ? '#f9a8d4' : '#9d174d',
+                                color: dark ? '#e5e7eb' : '#1e293b',
                               }}
                             >
                               {killingBlowSourceName}
@@ -1039,10 +918,12 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               px: 1,
                               py: 0.3,
                               borderRadius: '7px',
-                              background: dark ? 'rgba(239,68,68,0.10)' : 'rgba(220,38,38,0.06)',
+                              background: dark
+                                ? 'rgba(239,68,68,0.08)'
+                                : 'rgba(220,38,38,0.05)',
                               border: dark
-                                ? '1px solid rgba(239,68,68,0.18)'
-                                : '1px solid rgba(220,38,38,0.12)',
+                                ? '1px solid rgba(239,68,68,0.15)'
+                                : '1px solid rgba(220,38,38,0.10)',
                             }}
                           >
                             <Typography
@@ -1078,13 +959,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                   fontWeight: 800,
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.06em',
-                                  color: '#fff',
-                                  background: dark
-                                    ? 'linear-gradient(135deg, #f97316, #ef4444)'
-                                    : 'linear-gradient(135deg, #ea580c, #dc2626)',
+                                  color: dark ? '#ef4444' : '#dc2626',
                                   px: 0.5,
                                   py: 0.15,
-                                  borderRadius: '3px',
                                   lineHeight: 1.2,
                                 }}
                               >
@@ -1110,27 +987,13 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             fontWeight: 700,
                             textTransform: 'uppercase',
                             letterSpacing: '0.06em',
-                            background: info.killingBlow.attackerWasTaunted
-                              ? dark
-                                ? 'rgba(34,197,94,0.10)'
-                                : 'rgba(34,197,94,0.06)'
-                              : dark
-                                ? 'rgba(239,68,68,0.08)'
-                                : 'rgba(239,68,68,0.04)',
-                            border: info.killingBlow.attackerWasTaunted
-                              ? dark
-                                ? '1px solid rgba(34,197,94,0.18)'
-                                : '1px solid rgba(34,197,94,0.12)'
-                              : dark
-                                ? '1px solid rgba(239,68,68,0.15)'
-                                : '1px solid rgba(239,68,68,0.10)',
-                            color: info.killingBlow.attackerWasTaunted
-                              ? dark
-                                ? '#4ade80'
-                                : '#059669'
-                              : dark
-                                ? '#f87171'
-                                : '#dc2626',
+                            background: dark
+                              ? 'rgba(148,163,184,0.06)'
+                              : 'rgba(148,163,184,0.04)',
+                            border: dark
+                              ? '1px solid rgba(148,163,184,0.10)'
+                              : '1px solid rgba(148,163,184,0.08)',
+                            color: dark ? '#94a3b8' : '#64748b',
                           }}
                         >
                           <Box
@@ -1140,7 +1003,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               height: 5,
                               borderRadius: '50%',
                               backgroundColor: 'currentColor',
-                              opacity: 0.8,
+                              opacity: 0.5,
                             }}
                           />
                           {info.killingBlow.attackerWasTaunted ? 'Taunted' : 'Not taunted'}
@@ -1225,8 +1088,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                     bottom: 0,
                                     width: `${dmgPct}%`,
                                     background: dark
-                                      ? 'rgba(251,146,60,0.06)'
-                                      : 'rgba(251,146,60,0.04)',
+                                      ? 'rgba(148,163,184,0.05)'
+                                      : 'rgba(148,163,184,0.04)',
                                     borderRadius: '8px',
                                     transition: 'width 0.3s ease',
                                   },
@@ -1253,14 +1116,12 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        width: 14,
                                         mr: '3px',
-                                        fontSize: '0.55rem',
-                                        color: dark ? '#38bdf8' : '#0284c7',
-                                        fontWeight: 700,
+                                        fontSize: '0.65rem',
+                                        lineHeight: 1,
                                       }}
                                     >
-                                      BLK
+                                      🛡️
                                     </Box>
                                   )}
                                   <span style={{ fontWeight: 500 }}>
@@ -1272,7 +1133,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                       style={{
                                         marginRight: '2px',
                                         fontSize: '0.55rem',
-                                        color: dark ? '#4ade80' : '#059669',
+                                        color: dark ? '#94a3b8' : '#64748b',
                                         fontWeight: 700,
                                       }}
                                       title="Attacker was taunted"
@@ -1294,7 +1155,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                       fontFamily:
                                         '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
                                       flexShrink: 0,
-                                      color: dark ? '#fb923c' : '#ea580c',
+                                      color: dark ? '#e5e7eb' : '#1e293b',
                                     }}
                                   >
                                     {attack.amount.toLocaleString()}
