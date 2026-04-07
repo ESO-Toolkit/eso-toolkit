@@ -37,9 +37,5 @@ export const PlayerAvatarsProvider: React.FC<Props> = ({ players, children }) =>
 
   const avatars = usePlayerAvatars(identities);
 
-  return (
-    <PlayerAvatarsContext.Provider value={avatars}>
-      {children}
-    </PlayerAvatarsContext.Provider>
-  );
+  return <PlayerAvatarsContext.Provider value={avatars}>{children}</PlayerAvatarsContext.Provider>;
 };

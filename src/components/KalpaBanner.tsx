@@ -40,8 +40,7 @@ const Banner = styled(Box)(({ theme }) => ({
     left: '-100%',
     width: '200%',
     height: '100%',
-    background:
-      'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.04), transparent)',
+    background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.04), transparent)',
     animation: 'bannerShimmer 4s ease-in-out infinite',
   },
   '@keyframes bannerSlideDown': {

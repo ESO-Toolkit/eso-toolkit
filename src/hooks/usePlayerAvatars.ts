@@ -20,9 +20,7 @@ function toRegion(server: string): 'na' | 'eu' {
  * Given player identities (displayName + server), returns a map
  * keyed by `displayName|region` -> avatar thumbnail URL.
  */
-export function usePlayerAvatars(
-  players: PlayerIdentity[],
-): Record<string, string> {
+export function usePlayerAvatars(players: PlayerIdentity[]): Record<string, string> {
   const [avatars, setAvatars] = useState<Record<string, string>>({});
   const cacheKeyRef = useRef<string>('');
 
