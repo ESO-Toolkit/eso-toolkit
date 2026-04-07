@@ -38,7 +38,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
       class="MuiBox-root css-1pwbuk6"
     >
       <span
-        class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+        class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qa5oht-MuiSkeleton-root"
         style="width: 72px; height: 28px;"
       />
       <span
@@ -57,52 +57,117 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
         class="MuiBox-root css-1u1d3zt"
       >
         <span
-          class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qyyp53-MuiSkeleton-root"
+          class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
           style="width: 56px; height: 10px;"
         />
         <div
           class="MuiBox-root css-wq87pz"
         >
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-dxyk98-MuiSkeleton-root"
-            style="width: 95px; height: 26px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-dxyk98-MuiSkeleton-root"
-            style="width: 108px; height: 26px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-dxyk98-MuiSkeleton-root"
-            style="width: 85px; height: 26px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-dxyk98-MuiSkeleton-root"
-            style="width: 100px; height: 26px;"
-          />
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-12lgpnu"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 55px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-18r0n0i"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 68px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-gr9uwn"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 45px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-uelm9t"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 60px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
         </div>
       </div>
       <div
         class="MuiBox-root css-1u1d3zt"
       >
         <span
-          class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qyyp53-MuiSkeleton-root"
+          class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
           style="width: 105px; height: 10px;"
         />
         <div
           class="MuiBox-root css-wq87pz"
         >
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-dxyk98-MuiSkeleton-root"
-            style="width: 110px; height: 26px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-dxyk98-MuiSkeleton-root"
-            style="width: 90px; height: 26px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-dxyk98-MuiSkeleton-root"
-            style="width: 120px; height: 26px;"
-          />
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 74px; height: 12px;"
+            />
+            <div
+              class="MuiBox-root css-1yf9lv5"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 54px; height: 12px;"
+            />
+            <div
+              class="MuiBox-root css-1yf9lv5"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 84px; height: 12px;"
+            />
+            <div
+              class="MuiBox-root css-1yf9lv5"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -122,10 +187,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
           <div
             class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-c4to7h-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
+            <div
+              class="MuiBox-root css-79elbk"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
+              />
+            </div>
             <div
               class="MuiBox-root css-1xhmi63"
             >
@@ -136,9 +205,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
                   style="width: 50%; height: 18px;"
                 />
-                <span
-                  class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-12yw3d3-MuiSkeleton-root"
-                  style="width: 32px; height: 16px;"
+                <div
+                  class="MuiBox-root css-vyefzp"
                 />
               </div>
               <span
@@ -165,9 +233,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-9uwrx2"
               />
             </div>
             <div
@@ -185,79 +252,90 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-lhry5c"
               />
             </div>
           </div>
           <div
             class="MuiBox-root css-149oe1j"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-h6anj4-MuiSkeleton-root"
-              style="width: 72px; height: 10px;"
-            />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
-              style="width: 45%; height: 18px;"
-            />
             <div
-              class="MuiBox-root css-m1vq39"
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 45%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
             >
               <span
                 class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
                 style="width: 90px; height: 12px;"
               />
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-19m878p-MuiSkeleton-root"
-                style="width: 72px; height: 24px;"
-              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
             </div>
           </div>
           <div
             class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qyyp53-MuiSkeleton-root"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
               style="width: 88px; height: 10px;"
             />
             <div
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-ehxgom"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 55%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-18io2ej"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 67%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-7ht3r5"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 79%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
@@ -278,10 +356,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
           <div
             class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-c4to7h-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
+            <div
+              class="MuiBox-root css-79elbk"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
+              />
+            </div>
             <div
               class="MuiBox-root css-1xhmi63"
             >
@@ -292,9 +374,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
                   style="width: 60%; height: 18px;"
                 />
-                <span
-                  class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-12yw3d3-MuiSkeleton-root"
-                  style="width: 32px; height: 16px;"
+                <div
+                  class="MuiBox-root css-vyefzp"
                 />
               </div>
               <span
@@ -321,9 +402,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-9uwrx2"
               />
             </div>
             <div
@@ -341,79 +421,90 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-lhry5c"
               />
             </div>
           </div>
           <div
             class="MuiBox-root css-149oe1j"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-h6anj4-MuiSkeleton-root"
-              style="width: 72px; height: 10px;"
-            />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
-              style="width: 57%; height: 18px;"
-            />
             <div
-              class="MuiBox-root css-m1vq39"
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 57%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
             >
               <span
                 class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
                 style="width: 90px; height: 12px;"
               />
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-19m878p-MuiSkeleton-root"
-                style="width: 72px; height: 24px;"
-              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
             </div>
           </div>
           <div
             class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qyyp53-MuiSkeleton-root"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
               style="width: 88px; height: 10px;"
             />
             <div
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-ehxgom"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 55%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-18io2ej"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 67%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-7ht3r5"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 79%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
@@ -434,10 +525,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
           <div
             class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-c4to7h-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
+            <div
+              class="MuiBox-root css-79elbk"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
+              />
+            </div>
             <div
               class="MuiBox-root css-1xhmi63"
             >
@@ -448,9 +543,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
                   style="width: 70%; height: 18px;"
                 />
-                <span
-                  class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-12yw3d3-MuiSkeleton-root"
-                  style="width: 32px; height: 16px;"
+                <div
+                  class="MuiBox-root css-vyefzp"
                 />
               </div>
               <span
@@ -477,9 +571,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-9uwrx2"
               />
             </div>
             <div
@@ -497,79 +590,90 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-lhry5c"
               />
             </div>
           </div>
           <div
             class="MuiBox-root css-149oe1j"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-h6anj4-MuiSkeleton-root"
-              style="width: 72px; height: 10px;"
-            />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
-              style="width: 69%; height: 18px;"
-            />
             <div
-              class="MuiBox-root css-m1vq39"
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 69%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
             >
               <span
                 class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
                 style="width: 90px; height: 12px;"
               />
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-19m878p-MuiSkeleton-root"
-                style="width: 72px; height: 24px;"
-              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
             </div>
           </div>
           <div
             class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qyyp53-MuiSkeleton-root"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
               style="width: 88px; height: 10px;"
             />
             <div
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-ehxgom"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 55%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-18io2ej"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 67%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-7ht3r5"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 79%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
@@ -590,10 +694,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
           <div
             class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-c4to7h-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
+            <div
+              class="MuiBox-root css-79elbk"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
+              />
+            </div>
             <div
               class="MuiBox-root css-1xhmi63"
             >
@@ -604,9 +712,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
                   style="width: 50%; height: 18px;"
                 />
-                <span
-                  class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-12yw3d3-MuiSkeleton-root"
-                  style="width: 32px; height: 16px;"
+                <div
+                  class="MuiBox-root css-vyefzp"
                 />
               </div>
               <span
@@ -633,9 +740,8 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-9uwrx2"
               />
             </div>
             <div
@@ -653,79 +759,90 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
                   style="width: 28px; height: 12px;"
                 />
               </div>
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1s8k0m0-MuiSkeleton-root"
-                style="width: 100%; height: 3px;"
+              <div
+                class="MuiBox-root css-lhry5c"
               />
             </div>
           </div>
           <div
             class="MuiBox-root css-149oe1j"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-h6anj4-MuiSkeleton-root"
-              style="width: 72px; height: 10px;"
-            />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
-              style="width: 81%; height: 18px;"
-            />
             <div
-              class="MuiBox-root css-m1vq39"
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 81%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
             >
               <span
                 class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
                 style="width: 90px; height: 12px;"
               />
-              <span
-                class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-19m878p-MuiSkeleton-root"
-                style="width: 72px; height: 24px;"
-              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
             </div>
           </div>
           <div
             class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qyyp53-MuiSkeleton-root"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
               style="width: 88px; height: 10px;"
             />
             <div
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-ehxgom"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 55%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-18io2ej"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 67%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
               <div
-                class="MuiBox-root css-1iwi8xl"
+                class="MuiBox-root css-7ht3r5"
               >
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
                   style="width: 79%; height: 12px;"
                 />
                 <span
-                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-2jly6o-MuiSkeleton-root"
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
                   style="width: 42px; height: 12px;"
                 />
               </div>
