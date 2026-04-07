@@ -9,5 +9,7 @@
  */
 import "./anthropic-api.js";
 import "./oauth-device.js";
+import "./bedrock.js";
+import "./vertex.js";
 
 export { getProviderFactory, listProviderKinds } from "./registry.js";
