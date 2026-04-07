@@ -50,6 +50,12 @@ export interface DispatcherDeps {
    * triage. Used by `router run --tier <name>`.
    */
   forcedTier?: string;
+  /**
+   * Per-task cap on how many times consult_expert can fire. Defaults to 5.
+   * Hard cap to keep cheap-shell workers from running away with consultation
+   * cost. Independent of the broader budget caps in config.
+   */
+  maxConsultationsPerTask?: number;
 }
 
 export interface DispatchInput {
@@ -78,6 +84,8 @@ export type DispatcherEvent =
 
 export class Dispatcher {
   private readonly tracker: BudgetTracker;
+  /** Per-root-task consultation counts, keyed by root envelope id. */
+  private readonly consultationCounts = new Map<string, number>();
 
   constructor(private readonly deps: DispatcherDeps) {
     this.tracker = new BudgetTracker(deps.config);
@@ -89,6 +97,214 @@ export class Dispatcher {
 
   async run(input: DispatchInput): Promise<void> {
     await this.runInternal(input.envelope, input.signal, input.onEvent);
+  }
+
+  /**
+   * Borrow expertise from a higher-tier model for a single self-contained
+   * question. Runs as a one-shot worker with NO tools and NO escalation —
+   * pure reasoning that returns a digest. Cost rolls into the parent task's
+   * BudgetTracker.
+   *
+   * Throws if the consultation cap for the parent root task has been reached.
+   */
+  async consult(
+    parent: TaskEnvelope,
+    question: string,
+    tierName?: string,
+    parentSignal?: AbortSignal,
+  ): Promise<{ digest: string; cost: number }> {
+    const rootId = parent.parentEnvelopeId ?? parent.id;
+    const cap = this.deps.maxConsultationsPerTask ?? 5;
+    const current = this.consultationCounts.get(rootId) ?? 0;
+    if (current >= cap) {
+      throw new RouterError(
+        `Consultation cap reached for this task (${cap}). The cheap shell is consulting too aggressively — refine its prompt or raise maxConsultationsPerTask.`,
+        "CONSULTATION_CAP",
+      );
+    }
+    this.consultationCounts.set(rootId, current + 1);
+
+    const targetTier = tierName ?? this.bumpTierName(parent.triage.tier);
+    const tier = this.deps.config.tiers[targetTier];
+    if (!tier) {
+      throw new RouterError(
+        `Consultation tier "${targetTier}" is not defined in config.`,
+        "TIER_UNKNOWN",
+      );
+    }
+
+    const consultationEnvelope: TaskEnvelope = {
+      id: `${parent.id}-c${current + 1}`,
+      createdAt: new Date().toISOString(),
+      parentSessionId: parent.parentSessionId,
+      parentEnvelopeId: rootId,
+      decompositionMode: "consultation",
+      goal: `Expert consultation: ${question.slice(0, 80)}`,
+      originalPrompt: question,
+      triage: {
+        ...parent.triage,
+        tier: targetTier,
+        provider: tier.provider,
+        model: tier.model,
+        source: "user-override",
+        rationale: `Consultation requested by ${parent.triage.tier} worker`,
+      },
+      context: { files: [], constraints: ["pure-reasoning", "no-tools"] },
+      budget: {
+        maxTokens: tier.maxTokens ?? 2048,
+        escalationAllowed: false,
+      },
+    };
+
+    return this.runOneShot(consultationEnvelope, parentSignal);
+  }
+
+  /**
+   * Spawn a child sub-task envelope as a full autonomous worker. Unlike
+   * consultation, the sub-task can use tools, has its own escalation budget,
+   * and runs to completion. Used by planner/executor patterns where an
+   * expensive planner parcels out work to cheaper executors.
+   */
+  async delegate(
+    parent: TaskEnvelope,
+    prompt: string,
+    tierName?: string,
+    parentSignal?: AbortSignal,
+  ): Promise<{ digest: string; status: "success" | "failure"; cost: number }> {
+    const rootId = parent.parentEnvelopeId ?? parent.id;
+    const targetTier =
+      tierName ?? this.dropTierName(parent.triage.tier);
+    const tier = this.deps.config.tiers[targetTier];
+    if (!tier) {
+      throw new RouterError(
+        `Delegation tier "${targetTier}" is not defined in config.`,
+        "TIER_UNKNOWN",
+      );
+    }
+
+    const subtaskEnvelope: TaskEnvelope = {
+      id: `${parent.id}-d-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      parentEnvelopeId: rootId,
+      decompositionMode: "delegation",
+      goal: prompt.split("\n")[0]?.slice(0, 120) ?? "delegated subtask",
+      originalPrompt: prompt,
+      triage: {
+        ...parent.triage,
+        tier: targetTier,
+        provider: tier.provider,
+        model: tier.model,
+        source: "user-override",
+        rationale: `Delegated by ${parent.triage.tier} worker`,
+      },
+      context: { files: [], constraints: [] },
+      budget: {
+        maxTokens: tier.maxTokens,
+        escalationAllowed: true,
+      },
+    };
+
+    const startUsd = this.tracker.state.usd;
+    let digest = "";
+    let status: "success" | "failure" = "success";
+    try {
+      await this.runInternal(
+        subtaskEnvelope,
+        parentSignal ?? new AbortController().signal,
+        (event) => {
+          if (event.type === "done") {
+            digest = event.digest;
+            status = event.status === "success" ? "success" : "failure";
+          }
+        },
+      );
+    } catch (err) {
+      status = "failure";
+      digest = err instanceof Error ? err.message : String(err);
+    }
+    return { digest, status, cost: this.tracker.state.usd - startUsd };
+  }
+
+  /**
+   * Run a one-shot envelope (consultation form): no tools, no escalation,
+   * single provider.dispatch call. Returns the final assistant text and the
+   * incremental cost.
+   */
+  private async runOneShot(
+    envelope: TaskEnvelope,
+    parentSignal?: AbortSignal,
+  ): Promise<{ digest: string; cost: number }> {
+    const provider = this.deps.providers.get(envelope.triage.provider);
+    if (!provider) {
+      throw new RouterError(
+        `Provider "${envelope.triage.provider}" not instantiated.`,
+        "PROVIDER_MISSING",
+      );
+    }
+    const credential = await this.deps.store.get(provider.id);
+    if (!credential) {
+      throw new AuthError(
+        `No credential for provider "${provider.id}".`,
+        "missing_credential",
+      );
+    }
+
+    this.deps.logger.log({
+      kind: "consultation",
+      envelopeId: envelope.id,
+      parentEnvelopeId: envelope.parentEnvelopeId,
+      tier: envelope.triage.tier,
+      model: envelope.triage.model,
+    });
+
+    const startUsd = this.tracker.state.usd;
+    const controller = new AbortController();
+    const fwd = () => controller.abort();
+    parentSignal?.addEventListener("abort", fwd, { once: true });
+
+    let digest = "";
+    try {
+      await provider.dispatch(
+        {
+          envelope,
+          signal: controller.signal,
+          // Deliberately no tools and no executeTool — consultation is
+          // pure reasoning. The provider will return after one round.
+          onEvent: (event) => {
+            this.tracker.observe(event, envelope.triage.model);
+            if (event.type === "worker_done") {
+              digest = event.digest;
+            }
+          },
+        },
+        credential,
+      );
+    } finally {
+      parentSignal?.removeEventListener("abort", fwd);
+    }
+
+    const cost = this.tracker.state.usd - startUsd;
+    this.deps.logger.log({
+      kind: "consultation_done",
+      envelopeId: envelope.id,
+      cost,
+      digestLength: digest.length,
+    });
+    return { digest, cost };
+  }
+
+  private bumpTierName(current: string): string {
+    const tiers = Object.keys(this.deps.config.tiers);
+    const idx = tiers.indexOf(current);
+    if (idx === -1 || idx === tiers.length - 1) return current;
+    return tiers[idx + 1] ?? current;
+  }
+
+  private dropTierName(current: string): string {
+    const tiers = Object.keys(this.deps.config.tiers);
+    const idx = tiers.indexOf(current);
+    if (idx <= 0) return current;
+    return tiers[idx - 1] ?? current;
   }
 
   private async runInternal(
@@ -194,6 +410,13 @@ export class Dispatcher {
             requestEscalation: (reason, digest) => {
               escalationPromise.controller.triggerManually(reason, digest);
             },
+            // Wire consult/delegate so worker tools can call back into the
+            // dispatcher. The current envelope is the parent for any
+            // child envelopes spawned during this turn.
+            consultExpert: (question, tier) =>
+              this.consult(envelope, question, tier, controller.signal),
+            delegateSubtask: (prompt, tier) =>
+              this.delegate(envelope, prompt, tier, controller.signal),
           });
           return result;
         }
