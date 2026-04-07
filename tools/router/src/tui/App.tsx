@@ -1,12 +1,13 @@
 import { Box, Text, useApp, useInput } from "ink";
 import TextInput from "ink-text-input";
 import React, { useCallback, useEffect, useState } from "react";
-import { spawn } from "node:child_process";
+import { spawnSync, spawn } from "node:child_process";
 import type { RouterConfig } from "../config/schema.js";
 import type { CredentialStore } from "../credentials/store.js";
 import type { PreflightCache } from "../dispatch/preflight.js";
 import { Dispatcher, type DispatcherEvent } from "../dispatch/dispatcher.js";
 import type { JsonlLogger } from "../telemetry/jsonl-logger.js";
+import type { ToolRegistry } from "../tools/index.js";
 import { buildEnvelope } from "../triage/envelope.js";
 import { triage } from "../triage/triage.js";
 import type {
@@ -32,7 +33,12 @@ interface Props {
   store: CredentialStore;
   cache: PreflightCache;
   logger: JsonlLogger;
+  tools?: ToolRegistry;
   initialPrompt?: string;
+  forcedTier?: string;
+  requireTier?: string;
+  downgradePolicy?: "auto" | "never" | "ask";
+  ciMode?: boolean;
 }
 
 type Screen =
@@ -55,7 +61,12 @@ export function App({
   store,
   cache,
   logger,
+  tools,
   initialPrompt,
+  forcedTier,
+  requireTier,
+  downgradePolicy = "ask",
+  ciMode = false,
 }: Props): React.ReactElement {
   const { exit } = useApp();
   const [screen, setScreen] = useState<Screen>({ kind: "prompt" });
@@ -71,7 +82,16 @@ export function App({
     startedAt: Date.now(),
   });
   const [dispatcher] = useState(
-    () => new Dispatcher({ config, providers, store, cache, logger }),
+    () =>
+      new Dispatcher({
+        config,
+        providers,
+        store,
+        cache,
+        logger,
+        tools,
+        downgradePolicy,
+      }),
   );
 
   // Global hotkeys
@@ -79,7 +99,31 @@ export function App({
     if (key.ctrl && input === "c") {
       exit();
     }
+    // [e] from the prompt screen → spawn $EDITOR on the config file.
+    if (input === "e" && screen.kind === "prompt") {
+      openEditor();
+    }
   });
+
+  const openEditor = useCallback(() => {
+    const editor = process.env.EDITOR ?? process.env.VISUAL ?? "vi";
+    try {
+      spawnSync(editor, ["router.config.ts"], {
+        stdio: "inherit",
+        cwd: process.cwd(),
+      });
+      appendLine({
+        kind: "status",
+        content: "Config reload: restart the TUI for changes to take effect.",
+      });
+    } catch (err) {
+      appendLine({
+        kind: "error",
+        content: `Could not launch ${editor}: ${(err as Error).message}`,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const appendLine = useCallback((line: StreamLine) => {
     setStreamLines((prev) => [...prev, line]);
@@ -98,7 +142,42 @@ export function App({
           config,
           triageCredential: triageCred,
         });
-        const env = buildEnvelope({ prompt: text, config, verdict });
+
+        // Apply --tier override: replace the triaged tier.
+        const effectiveVerdict = forcedTier
+          ? {
+              ...verdict,
+              recommendedTier: forcedTier,
+              source: "user-override" as const,
+              rationale: `${verdict.rationale} [forced: ${forcedTier}]`,
+            }
+          : verdict;
+
+        const env = buildEnvelope({
+          prompt: text,
+          config,
+          verdict: effectiveVerdict,
+        });
+
+        // Apply --require-tier: fail loudly if the chosen tier isn't the
+        // required one (e.g. heuristic picked "default" but CI demanded "deep").
+        if (requireTier && env.triage.tier !== requireTier) {
+          appendLine({
+            kind: "error",
+            content: `--require-tier ${requireTier} but triage chose ${env.triage.tier}.`,
+          });
+          setScreen({
+            kind: "done",
+            envelope: env,
+            status: "failure",
+          });
+          if (ciMode) {
+            process.exitCode = 4;
+            exit();
+          }
+          return;
+        }
+
         setEnvelope(env);
         setScreen({ kind: "running", envelope: env });
 
