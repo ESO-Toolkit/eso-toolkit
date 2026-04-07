@@ -138,7 +138,7 @@ export class AnthropicApiProvider implements Provider {
     request: DispatchRequest,
     credential: Credential,
   ): Promise<void> {
-    const { envelope, signal, onEvent } = request;
+    const { envelope, signal, onEvent, tools, executeTool } = request;
     const client = new Anthropic({
       apiKey: credential.secret,
       baseURL: this.baseURL,
@@ -146,58 +146,155 @@ export class AnthropicApiProvider implements Provider {
 
     onEvent({ type: "worker_start", model: envelope.triage.model });
 
-    const systemPrompt = buildSystemPrompt(envelope);
-    const userMessage = buildUserMessage(envelope);
+    const systemPrompt = buildSystemPrompt(envelope, Boolean(tools?.length));
+    const anthropicTools: Anthropic.Tool[] | undefined = tools?.length
+      ? tools.map((t) => ({
+          name: t.name,
+          description: t.description,
+          input_schema: t.inputSchema as Anthropic.Tool.InputSchema,
+        }))
+      : undefined;
+
+    const messages: Anthropic.MessageParam[] = [
+      { role: "user", content: buildUserMessage(envelope) },
+    ];
+
+    const maxIterations = 20; // hard cap on tool-use rounds per worker
+    let finalText = "";
 
     try {
-      const stream = client.messages.stream({
-        model: envelope.triage.model,
-        max_tokens: envelope.budget.maxTokens ?? 4096,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
-      });
-
-      for await (const event of stream) {
+      for (let iter = 0; iter < maxIterations; iter++) {
         if (signal.aborted) {
-          stream.controller.abort();
-          break;
+          onEvent({
+            type: "worker_done",
+            digest: finalText || "aborted",
+            status: "failure",
+          });
+          return;
         }
-        if (
-          event.type === "content_block_delta" &&
-          event.delta.type === "text_delta"
-        ) {
-          onEvent({ type: "assistant_text", text: event.delta.text });
-        }
-      }
 
-      const final = await stream.finalMessage();
-      if (final.usage) {
-        onEvent({
-          type: "token_usage",
-          inputTokens: final.usage.input_tokens,
-          outputTokens: final.usage.output_tokens,
+        const stream = client.messages.stream({
+          model: envelope.triage.model,
+          max_tokens: envelope.budget.maxTokens ?? 4096,
+          system: systemPrompt,
+          messages,
+          ...(anthropicTools ? { tools: anthropicTools } : {}),
         });
+
+        // Stream assistant text to the TUI as it arrives.
+        for await (const event of stream) {
+          if (signal.aborted) {
+            stream.controller.abort();
+            break;
+          }
+          if (
+            event.type === "content_block_delta" &&
+            event.delta.type === "text_delta"
+          ) {
+            onEvent({ type: "assistant_text", text: event.delta.text });
+          }
+        }
+
+        const final = await stream.finalMessage();
+        if (final.usage) {
+          onEvent({
+            type: "token_usage",
+            inputTokens: final.usage.input_tokens,
+            outputTokens: final.usage.output_tokens,
+          });
+        }
+
+        // Accumulate text output for the final digest.
+        finalText += final.content
+          .filter((b): b is Anthropic.TextBlock => b.type === "text")
+          .map((b) => b.text)
+          .join("\n");
+
+        // Append the assistant turn to the running conversation.
+        messages.push({ role: "assistant", content: final.content });
+
+        const toolUses = final.content.filter(
+          (b): b is Anthropic.ToolUseBlock => b.type === "tool_use",
+        );
+
+        if (final.stop_reason !== "tool_use" || toolUses.length === 0) {
+          // Natural stop — the worker is done.
+          onEvent({
+            type: "worker_done",
+            digest: finalText.slice(0, 2000),
+            status: "success",
+          });
+          return;
+        }
+
+        if (!executeTool) {
+          // Model asked for tools but the dispatcher didn't provide a handler.
+          onEvent({
+            type: "worker_done",
+            digest: "Model requested tools but no executor was provided.",
+            status: "failure",
+          });
+          return;
+        }
+
+        // Execute every tool_use block in this turn and feed the results
+        // back as a single user message.
+        const toolResults: Anthropic.ToolResultBlockParam[] = [];
+        for (const use of toolUses) {
+          onEvent({ type: "tool_call", name: use.name, input: use.input });
+          let result;
+          try {
+            result = await executeTool(use.name, use.input);
+          } catch (err) {
+            result = {
+              isError: true,
+              content:
+                err instanceof Error ? err.message : String(err),
+            };
+          }
+          onEvent({
+            type: "tool_result",
+            name: use.name,
+            ok: !result.isError,
+          });
+          toolResults.push({
+            type: "tool_result",
+            tool_use_id: use.id,
+            content: result.content,
+            is_error: result.isError,
+          });
+        }
+        messages.push({ role: "user", content: toolResults });
       }
 
-      const digest = summarizeFinalMessage(final);
-      onEvent({ type: "worker_done", digest, status: "success" });
+      // Fell off the iteration cap without a natural stop.
+      onEvent({
+        type: "worker_done",
+        digest:
+          finalText.slice(0, 2000) + "\n\n[stopped: max tool iterations]",
+        status: "failure",
+      });
     } catch (err) {
       if (signal.aborted) {
         onEvent({
           type: "worker_done",
-          digest: "aborted",
+          digest: finalText || "aborted",
           status: "failure",
         });
         return;
       }
       const { reason, message } = classifyAnthropicError(err);
-      throw new AuthError(message, reason);
+      throw new AuthError(message, reason, {
+        provider: this.id,
+        model: envelope.triage.model,
+      });
     }
   }
 }
 
 function buildSystemPrompt(
   envelope: DispatchRequest["envelope"],
+  hasTools: boolean,
 ): string {
   const parts = [
     "You are a router-dispatched worker agent.",
@@ -207,9 +304,14 @@ function buildSystemPrompt(
   if (envelope.context.constraints.length > 0) {
     parts.push(`Constraints: ${envelope.context.constraints.join(", ")}`);
   }
+  if (hasTools) {
+    parts.push(
+      "You have access to tools for reading files, writing files, listing directories, and running shell commands. Use them to explore the workspace and make changes as needed.",
+    );
+  }
   if (envelope.budget.escalationAllowed) {
     parts.push(
-      "If this task is larger or more ambiguous than it appears, respond with the literal token [ESCALATE: <reason>] followed by a one-paragraph digest of what you tried and where you got stuck. Do not retry blindly.",
+      "If this task is larger or more ambiguous than it appears, call the request_escalation tool with a reason and a one-paragraph digest of what you tried and where you got stuck. Do not retry blindly.",
     );
   }
   if (envelope.escalation) {
@@ -231,15 +333,6 @@ function buildUserMessage(envelope: DispatchRequest["envelope"]): string {
     parts.push(`\nPrior findings:\n${envelope.context.priorFindings}`);
   }
   return parts.join("\n");
-}
-
-function summarizeFinalMessage(final: Anthropic.Message): string {
-  const text = final.content
-    .filter((b): b is Anthropic.TextBlock => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
-  // Keep digests short — they feed into escalation envelopes.
-  return text.length > 2000 ? text.slice(0, 2000) + "…" : text;
 }
 
 /**

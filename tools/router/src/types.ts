@@ -183,6 +183,24 @@ export interface DispatchRequest {
   envelope: TaskEnvelope;
   signal: AbortSignal;
   onEvent: (event: DispatchEvent) => void;
+  /** Tools the worker can invoke. Passed in by the dispatcher. */
+  tools?: ToolSpec[];
+  /** Callback for executing a tool the provider surfaced from the model. */
+  executeTool?: (
+    name: string,
+    input: unknown,
+  ) => Promise<{ content: string; isError?: boolean }>;
+}
+
+/**
+ * Provider-agnostic tool specification. The dispatcher converts its internal
+ * ToolRegistry to this shape before handing off to a Provider, so providers
+ * don't need to know about the ToolRegistry class.
+ */
+export interface ToolSpec {
+  name: string;
+  description: string;
+  inputSchema: unknown;
 }
 
 export type DispatchEvent =
