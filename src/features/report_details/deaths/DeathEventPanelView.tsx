@@ -74,39 +74,39 @@ const isDark = (mode: string): boolean => mode === 'dark';
 /** Glass card base for both skeleton and real cards */
 const glassCard = (mode: string) =>
   ({
-    borderRadius: '14px',
+    borderRadius: '16px',
     background: isDark(mode)
-      ? 'linear-gradient(160deg, rgba(15,23,42,0.82) 0%, rgba(15,23,42,0.60) 100%)'
-      : 'linear-gradient(160deg, rgba(255,255,255,0.92) 0%, rgba(241,245,249,0.80) 100%)',
-    border: isDark(mode) ? '1px solid rgba(148,163,184,0.12)' : '1px solid rgba(148,163,184,0.22)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
+      ? 'linear-gradient(165deg, rgba(15,23,42,0.88) 0%, rgba(10,15,30,0.72) 100%)'
+      : 'linear-gradient(165deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.85) 100%)',
+    border: 'none',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
     boxShadow: isDark(mode)
-      ? '0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04)'
-      : '0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
+      ? '0 1px 0 0 rgba(255,255,255,0.03) inset, 0 8px 40px rgba(0,0,0,0.5)'
+      : '0 1px 0 0 rgba(255,255,255,0.9) inset, 0 8px 40px rgba(0,0,0,0.06)',
   }) as const;
 
 /** Compact stat badge */
 const statBadge = (mode: string, hue: string): Record<string, unknown> => {
   const colors: Record<string, { bg: string; border: string; text: string }> = {
     green: {
-      bg: isDark(mode) ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)',
-      border: isDark(mode) ? 'rgba(34,197,94,0.25)' : 'rgba(34,197,94,0.18)',
+      bg: isDark(mode) ? 'rgba(34,197,94,0.10)' : 'rgba(34,197,94,0.07)',
+      border: isDark(mode) ? 'rgba(34,197,94,0.20)' : 'rgba(34,197,94,0.15)',
       text: isDark(mode) ? '#4ade80' : '#059669',
     },
     red: {
-      bg: isDark(mode) ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.06)',
-      border: isDark(mode) ? 'rgba(239,68,68,0.25)' : 'rgba(239,68,68,0.18)',
+      bg: isDark(mode) ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.05)',
+      border: isDark(mode) ? 'rgba(239,68,68,0.20)' : 'rgba(239,68,68,0.15)',
       text: isDark(mode) ? '#f87171' : '#dc2626',
     },
     orange: {
-      bg: isDark(mode) ? 'rgba(251,146,60,0.12)' : 'rgba(251,146,60,0.06)',
-      border: isDark(mode) ? 'rgba(251,146,60,0.25)' : 'rgba(251,146,60,0.18)',
+      bg: isDark(mode) ? 'rgba(251,146,60,0.10)' : 'rgba(251,146,60,0.05)',
+      border: isDark(mode) ? 'rgba(251,146,60,0.20)' : 'rgba(251,146,60,0.15)',
       text: isDark(mode) ? '#fb923c' : '#ea580c',
     },
     blue: {
-      bg: isDark(mode) ? 'rgba(56,189,248,0.10)' : 'rgba(56,189,248,0.06)',
-      border: isDark(mode) ? 'rgba(56,189,248,0.22)' : 'rgba(56,189,248,0.18)',
+      bg: isDark(mode) ? 'rgba(56,189,248,0.08)' : 'rgba(56,189,248,0.05)',
+      border: isDark(mode) ? 'rgba(56,189,248,0.18)' : 'rgba(56,189,248,0.15)',
       text: isDark(mode) ? '#38bdf8' : '#0284c7',
     },
   };
@@ -114,19 +114,41 @@ const statBadge = (mode: string, hue: string): Record<string, unknown> => {
   return {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '6px',
-    px: 1.25,
-    py: 0.5,
+    gap: '5px',
+    px: 1,
+    py: 0.4,
     borderRadius: '8px',
     background: c.bg,
     border: `1px solid ${c.border}`,
     color: c.text,
-    fontSize: '0.75rem',
+    fontSize: '0.72rem',
     fontWeight: 600,
     lineHeight: 1,
     whiteSpace: 'nowrap' as const,
+    fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
   };
 };
+
+/** Thin progress bar for resource visualization */
+const resourceBar = (pct: number, color: string, bgColor: string): Record<string, unknown> => ({
+  position: 'relative',
+  height: '3px',
+  borderRadius: '2px',
+  background: bgColor,
+  overflow: 'hidden',
+  mt: 0.5,
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+    width: `${Math.min(pct, 100)}%`,
+    borderRadius: '2px',
+    background: color,
+    transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+});
 
 /** Format death duration to human-readable string */
 const formatDeathDuration = (ms: number | null): string | null => {
@@ -213,7 +235,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
       md: 'repeat(2, 1fr)',
       xl: 'repeat(3, 1fr)',
     },
-    gap: 2,
+    gap: 2.5,
   };
 
   // Show skeleton loading while data is being fetched
@@ -282,29 +304,37 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   if (deathInfos.length === 0) {
     return (
       <Box mt={2}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
-          Death Events
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 800, letterSpacing: '-0.02em' }}>
+          Deaths
         </Typography>
         <Box
           sx={{
             p: 4,
             textAlign: 'center',
-            borderRadius: '14px',
+            borderRadius: '16px',
             background: dark
-              ? 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(34,197,94,0.03) 100%)'
-              : 'linear-gradient(135deg, rgba(34,197,94,0.06) 0%, rgba(240,253,244,0.8) 100%)',
-            border: dark ? '1px solid rgba(34,197,94,0.20)' : '1px solid rgba(34,197,94,0.15)',
-            backdropFilter: 'blur(12px)',
+              ? 'linear-gradient(165deg, rgba(34,197,94,0.06) 0%, rgba(10,15,30,0.4) 100%)'
+              : 'linear-gradient(165deg, rgba(34,197,94,0.04) 0%, rgba(240,253,244,0.6) 100%)',
+            border: dark ? '1px solid rgba(34,197,94,0.15)' : '1px solid rgba(34,197,94,0.10)',
+            backdropFilter: 'blur(20px)',
           }}
         >
           <Typography
             variant="h6"
-            sx={{ color: dark ? '#4ade80' : '#059669', mb: 0.5, fontWeight: 700 }}
+            sx={{
+              color: dark ? '#4ade80' : '#059669',
+              mb: 0.5,
+              fontWeight: 800,
+              letterSpacing: '-0.02em',
+            }}
           >
-            Flawless Victory
+            Flawless
           </Typography>
-          <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-            No deaths detected in this fight.
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary, fontSize: '0.78rem', opacity: 0.8 }}
+          >
+            No deaths recorded in this fight.
           </Typography>
         </Box>
       </Box>
@@ -329,52 +359,56 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
       <Box
         sx={{
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'baseline',
           flexWrap: 'wrap',
           gap: 1.5,
           mb: 3,
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 700, mr: 0.5 }}>
-          Death Events
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 800,
+            mr: 0.5,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          Deaths
         </Typography>
 
         {/* Total deaths badge */}
         <Chip
-          label={`${totalDeaths} Death${totalDeaths !== 1 ? 's' : ''}`}
+          label={totalDeaths}
           size="small"
           sx={{
-            fontWeight: 700,
-            fontSize: '0.75rem',
-            height: 26,
-            background: dark
-              ? 'linear-gradient(135deg, rgba(239,68,68,0.18) 0%, rgba(220,38,38,0.10) 100%)'
-              : 'linear-gradient(135deg, rgba(239,68,68,0.10) 0%, rgba(254,226,226,0.6) 100%)',
+            fontWeight: 800,
+            fontSize: '0.78rem',
+            fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+            height: 24,
+            minWidth: 24,
+            background: dark ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)',
             color: dark ? '#f87171' : '#dc2626',
-            border: dark ? '1px solid rgba(239,68,68,0.30)' : '1px solid rgba(220,38,38,0.20)',
-            backdropFilter: 'blur(8px)',
-            '& .MuiChip-label': { px: 1.25 },
+            border: dark ? '1px solid rgba(239,68,68,0.22)' : '1px solid rgba(220,38,38,0.15)',
+            '& .MuiChip-label': { px: 0.75 },
           }}
         />
 
-        {/* Player count badge */}
-        <Chip
-          label={`${uniquePlayers} Player${uniquePlayers !== 1 ? 's' : ''}`}
-          size="small"
+        {/* Player count */}
+        <Typography
+          variant="caption"
           sx={{
-            fontWeight: 600,
-            fontSize: '0.75rem',
-            height: 26,
-            background: dark ? 'rgba(148,163,184,0.08)' : 'rgba(100,116,139,0.06)',
+            fontSize: '0.72rem',
+            fontWeight: 500,
             color: theme.palette.text.secondary,
-            border: dark ? '1px solid rgba(148,163,184,0.15)' : '1px solid rgba(148,163,184,0.20)',
-            '& .MuiChip-label': { px: 1.25 },
+            opacity: 0.8,
           }}
-        />
+        >
+          across {uniquePlayers} player{uniquePlayers !== 1 ? 's' : ''}
+        </Typography>
       </Box>
 
       {/* ─── Death Summary + Skills Summary — side by side ─── */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3.5 }}>
         {/* Per-player summary */}
         <Box sx={{ flex: '1 1 280px' }}>
           <Typography
@@ -383,13 +417,14 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
               display: 'block',
               mb: 1,
               fontWeight: 700,
-              fontSize: '0.7rem',
+              fontSize: '0.6rem',
               textTransform: 'uppercase',
-              letterSpacing: '0.06em',
+              letterSpacing: '0.1em',
               color: theme.palette.text.secondary,
+              opacity: 0.7,
             }}
           >
-            Deaths by Player
+            By Player
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
             {Object.entries(deathSummary).map(([playerId, count]) => {
@@ -483,10 +518,11 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 display: 'block',
                 mb: 1,
                 fontWeight: 700,
-                fontSize: '0.7rem',
+                fontSize: '0.6rem',
                 textTransform: 'uppercase',
-                letterSpacing: '0.06em',
+                letterSpacing: '0.1em',
                 color: theme.palette.text.secondary,
+                opacity: 0.7,
               }}
             >
               Deadliest Abilities
@@ -594,48 +630,47 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 ...glassCard(theme.palette.mode),
                 position: 'relative',
                 overflow: 'hidden',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                // Left accent bar
+                transition:
+                  'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                // Top accent gradient bar
                 '&::before': {
                   content: '""',
                   position: 'absolute',
                   top: 0,
                   left: 0,
-                  width: '3px',
-                  height: '100%',
-                  background: `linear-gradient(180deg, ${dark ? '#ef4444' : '#dc2626'} 0%, ${dark ? 'rgba(239,68,68,0.15)' : 'rgba(220,38,38,0.10)'} 100%)`,
+                  right: 0,
+                  height: '2px',
+                  background: `linear-gradient(90deg, ${playerColor} 0%, ${dark ? 'rgba(239,68,68,0.6)' : 'rgba(220,38,38,0.4)'} 50%, transparent 100%)`,
                 },
                 '&:hover': {
-                  transform: 'translateY(-2px)',
+                  transform: 'translateY(-3px)',
                   boxShadow: dark
-                    ? '0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)'
-                    : '0 8px 32px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.9)',
+                    ? `0 12px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(148,163,184,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`
+                    : `0 12px 48px rgba(0,0,0,0.08), 0 0 0 1px rgba(148,163,184,0.12), inset 0 1px 0 rgba(255,255,255,0.95)`,
                 },
               }}
             >
-              <CardContent sx={{ p: 2, pl: 2.5 }}>
+              <CardContent sx={{ p: 2.5, pt: 3 }}>
                 {/* ── Player Header ── */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                  <Avatar
-                    sx={{
-                      width: 34,
-                      height: 34,
-                      background: dark
-                        ? 'linear-gradient(145deg, #dc2626 0%, #991b1b 100%)'
-                        : 'linear-gradient(145deg, #ef4444 0%, #dc2626 100%)',
-                      fontSize: '0.75rem',
-                      fontWeight: 800,
-                      color: '#fff',
-                      border: dark
-                        ? '2px solid rgba(239,68,68,0.35)'
-                        : '2px solid rgba(220,38,38,0.40)',
-                      boxShadow: dark
-                        ? '0 2px 8px rgba(220,38,38,0.25)'
-                        : '0 2px 8px rgba(220,38,38,0.30)',
-                    }}
-                  >
-                    #{idx + 1}
-                  </Avatar>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.75 }}>
+                  <Box sx={{ position: 'relative' }}>
+                    <Avatar
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        background: `linear-gradient(145deg, ${playerColor} 0%, ${playerColor}99 100%)`,
+                        fontSize: '0.8rem',
+                        fontWeight: 800,
+                        fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+                        color: '#fff',
+                        border: `2px solid ${playerColor}60`,
+                        boxShadow: `0 2px 12px ${playerColor}30`,
+                        letterSpacing: '-0.02em',
+                      }}
+                    >
+                      {idx + 1}
+                    </Avatar>
+                  </Box>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                       <Typography
@@ -722,52 +757,130 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   </Box>
                 </Box>
 
-                {/* ── Compact Stat Badges Row ── */}
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.5 }}>
-                  {/* Blocking badge */}
-                  {info.wasBlocking && (
-                    <Box sx={statBadge(theme.palette.mode, 'blue')}>
-                      <span style={{ fontSize: '0.7rem' }}>🛡️</span> Blocking
+                {/* ── Resource Bars + Badges ── */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 2 }}>
+                  {/* Health bar */}
+                  {info.health !== null && info.maxHealth !== null && (
+                    <Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <Box sx={statBadge(theme.palette.mode, healthHue)}>
+                          HP {info.health.toLocaleString()}/{info.maxHealth.toLocaleString()}
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+                            color:
+                              healthHue === 'red'
+                                ? dark
+                                  ? '#f87171'
+                                  : '#dc2626'
+                                : healthHue === 'orange'
+                                  ? dark
+                                    ? '#fb923c'
+                                    : '#ea580c'
+                                  : dark
+                                    ? '#4ade80'
+                                    : '#059669',
+                          }}
+                        >
+                          {healthPct}%
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={resourceBar(
+                          healthPct ?? 0,
+                          healthHue === 'red'
+                            ? dark
+                              ? '#ef4444'
+                              : '#dc2626'
+                            : healthHue === 'orange'
+                              ? dark
+                                ? '#fb923c'
+                                : '#ea580c'
+                              : dark
+                                ? '#4ade80'
+                                : '#059669',
+                          dark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.10)',
+                        )}
+                      />
                     </Box>
                   )}
 
-                  {/* Stamina badge */}
-                  <Box sx={statBadge(theme.palette.mode, 'green')}>
-                    <span style={{ fontSize: '0.7rem' }}>⚡</span>
-                    {info.stamina !== null && info.maxStamina !== null ? (
-                      <span>
-                        {info.stamina.toLocaleString()}/{info.maxStamina.toLocaleString()}{' '}
-                        <strong>{Math.round((info.stamina / info.maxStamina) * 100)}%</strong>
-                      </span>
-                    ) : (
-                      <span>{info.stamina ?? '?'}</span>
+                  {/* Stamina bar */}
+                  {info.stamina !== null && info.maxStamina !== null && (
+                    <Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                      >
+                        <Box sx={statBadge(theme.palette.mode, 'green')}>
+                          STA {info.stamina.toLocaleString()}/{info.maxStamina.toLocaleString()}
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+                            color: dark ? '#4ade80' : '#059669',
+                          }}
+                        >
+                          {Math.round((info.stamina / info.maxStamina) * 100)}%
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={resourceBar(
+                          Math.round((info.stamina / info.maxStamina) * 100),
+                          dark ? '#4ade80' : '#059669',
+                          dark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.10)',
+                        )}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Inline badges row */}
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 0.25 }}>
+                    {info.wasBlocking && (
+                      <Box sx={statBadge(theme.palette.mode, 'blue')}>BLOCKING</Box>
                     )}
                   </Box>
-
-                  {/* Health badge */}
-                  {info.health !== null && info.maxHealth !== null && (
-                    <Box sx={statBadge(theme.palette.mode, healthHue)}>
-                      <span style={{ fontSize: '0.7rem' }}>❤️</span>
-                      <span>
-                        {info.health.toLocaleString()}/{info.maxHealth.toLocaleString()}{' '}
-                        <strong>{healthPct}%</strong>
-                      </span>
-                    </Box>
-                  )}
                 </Box>
 
                 {/* ── Killing Blow Panel ── */}
                 <Box
                   sx={{
-                    mb: 1.5,
-                    p: 1.25,
-                    borderRadius: '10px',
+                    mb: 2,
+                    p: 1.5,
+                    borderRadius: '12px',
                     background: dark
-                      ? 'linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(220,38,38,0.03) 100%)'
-                      : 'linear-gradient(135deg, rgba(239,68,68,0.04) 0%, rgba(254,242,242,0.5) 100%)',
+                      ? 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(15,23,42,0.4) 100%)'
+                      : 'linear-gradient(135deg, rgba(239,68,68,0.03) 0%, rgba(254,242,242,0.4) 100%)',
                     border: dark
-                      ? '1px solid rgba(239,68,68,0.15)'
-                      : '1px solid rgba(220,38,38,0.10)',
+                      ? '1px solid rgba(239,68,68,0.12)'
+                      : '1px solid rgba(220,38,38,0.08)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '1px',
+                      background: dark
+                        ? 'linear-gradient(90deg, rgba(239,68,68,0.3) 0%, transparent 70%)'
+                        : 'linear-gradient(90deg, rgba(220,38,38,0.15) 0%, transparent 70%)',
+                    },
                   }}
                 >
                   {info.killingBlow ? (
@@ -785,10 +898,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                           variant="caption"
                           sx={{
                             fontWeight: 700,
-                            fontSize: '0.65rem',
+                            fontSize: '0.6rem',
                             textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                            color: theme.palette.text.secondary,
+                            letterSpacing: '0.08em',
+                            color: dark ? 'rgba(248,113,113,0.7)' : 'rgba(220,38,38,0.5)',
                             mr: 0.5,
                           }}
                         >
@@ -797,34 +910,57 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                         {info.killingBlow.individualAttacks ? (
                           <Tooltip
                             title={
-                              <Box>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontWeight: 700, mb: 0.75, fontSize: '0.75rem' }}
-                                >
-                                  Simultaneous Attacks
-                                </Typography>
-                                {info.killingBlow.individualAttacks.map((attack, atkIdx) => (
-                                  <Typography
-                                    key={atkIdx}
-                                    variant="body2"
-                                    sx={{ fontSize: '0.7rem', mb: 0.25, '&:last-child': { mb: 0 } }}
-                                  >
-                                    {attack.abilityName}: {attack.amount.toLocaleString()}
-                                  </Typography>
-                                ))}
+                              <Box sx={{ p: 0.5 }}>
                                 <Typography
                                   variant="body2"
                                   sx={{
                                     fontWeight: 700,
-                                    mt: 0.75,
-                                    pt: 0.75,
-                                    fontSize: '0.7rem',
-                                    borderTop: '1px solid rgba(255,255,255,0.15)',
+                                    mb: 0.75,
+                                    fontSize: '0.72rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.04em',
                                   }}
                                 >
-                                  Total: {info.killingBlowDamage?.toLocaleString()}
+                                  Simultaneous Attacks
                                 </Typography>
+                                {info.killingBlow.individualAttacks.map((attack, atkIdx) => (
+                                  <Box
+                                    key={atkIdx}
+                                    sx={{
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      gap: 2,
+                                      mb: 0.25,
+                                      fontSize: '0.7rem',
+                                      '&:last-child': { mb: 0 },
+                                    }}
+                                  >
+                                    <span>{attack.abilityName}</span>
+                                    <span
+                                      style={{
+                                        fontWeight: 700,
+                                        fontFamily: '"JetBrains Mono", monospace',
+                                      }}
+                                    >
+                                      {attack.amount.toLocaleString()}
+                                    </span>
+                                  </Box>
+                                ))}
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    fontWeight: 700,
+                                    mt: 0.75,
+                                    pt: 0.75,
+                                    fontSize: '0.72rem',
+                                    borderTop: '1px solid rgba(255,255,255,0.12)',
+                                    fontFamily: '"JetBrains Mono", monospace',
+                                  }}
+                                >
+                                  <span>Total</span>
+                                  <span>{info.killingBlowDamage?.toLocaleString()}</span>
+                                </Box>
                               </Box>
                             }
                             arrow
@@ -834,10 +970,16 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               component="span"
                               sx={{
                                 fontWeight: 700,
-                                fontSize: '0.85rem',
+                                fontSize: '0.88rem',
                                 color: dark ? '#f674ab' : '#be185d',
                                 cursor: 'help',
-                                borderBottom: '1px dotted currentColor',
+                                borderBottom: `1px dashed ${dark ? 'rgba(246,116,171,0.3)' : 'rgba(190,24,93,0.2)'}`,
+                                transition: 'border-color 0.15s',
+                                '&:hover': {
+                                  borderBottomColor: dark
+                                    ? 'rgba(246,116,171,0.6)'
+                                    : 'rgba(190,24,93,0.4)',
+                                },
                               }}
                             >
                               {info.killingBlow.abilityName || 'Unknown'}
@@ -848,7 +990,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             component="span"
                             sx={{
                               fontWeight: 700,
-                              fontSize: '0.85rem',
+                              fontSize: '0.88rem',
                               color: dark ? '#f674ab' : '#be185d',
                             }}
                           >
@@ -893,21 +1035,22 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             sx={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '4px',
+                              gap: '5px',
                               px: 1,
-                              py: 0.25,
-                              borderRadius: '6px',
-                              background: dark ? 'rgba(239,68,68,0.14)' : 'rgba(220,38,38,0.08)',
+                              py: 0.3,
+                              borderRadius: '7px',
+                              background: dark ? 'rgba(239,68,68,0.10)' : 'rgba(220,38,38,0.06)',
                               border: dark
-                                ? '1px solid rgba(239,68,68,0.25)'
-                                : '1px solid rgba(220,38,38,0.15)',
+                                ? '1px solid rgba(239,68,68,0.18)'
+                                : '1px solid rgba(220,38,38,0.12)',
                             }}
                           >
                             <Typography
                               variant="caption"
                               sx={{
                                 fontWeight: 800,
-                                fontSize: '0.78rem',
+                                fontSize: '0.8rem',
+                                fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
                                 color: dark ? '#f87171' : '#dc2626',
                                 lineHeight: 1,
                               }}
@@ -917,10 +1060,13 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             <Typography
                               variant="caption"
                               sx={{
-                                fontSize: '0.6rem',
-                                fontWeight: 500,
+                                fontSize: '0.58rem',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
                                 color: theme.palette.text.secondary,
                                 lineHeight: 1,
+                                opacity: 0.7,
                               }}
                             >
                               dmg
@@ -928,15 +1074,21 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             {info.maxHealth && info.killingBlowDamage >= info.maxHealth && (
                               <Box
                                 sx={{
-                                  fontSize: '0.55rem',
+                                  fontSize: '0.5rem',
                                   fontWeight: 800,
                                   textTransform: 'uppercase',
-                                  letterSpacing: '0.04em',
-                                  color: dark ? '#fb923c' : '#ea580c',
-                                  ml: '2px',
+                                  letterSpacing: '0.06em',
+                                  color: '#fff',
+                                  background: dark
+                                    ? 'linear-gradient(135deg, #f97316, #ef4444)'
+                                    : 'linear-gradient(135deg, #ea580c, #dc2626)',
+                                  px: 0.5,
+                                  py: 0.15,
+                                  borderRadius: '3px',
+                                  lineHeight: 1.2,
                                 }}
                               >
-                                EXEC
+                                ONE-SHOT
                               </Box>
                             )}
                           </Box>
@@ -945,26 +1097,54 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 
                       {/* Taunt indicator */}
                       {info.killingBlow.attackerWasTaunted !== null && (
-                        <Typography
-                          variant="caption"
+                        <Box
                           sx={{
-                            display: 'block',
-                            mt: 0.5,
-                            fontSize: '0.65rem',
-                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            mt: 0.75,
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: '5px',
+                            fontSize: '0.58rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.06em',
+                            background: info.killingBlow.attackerWasTaunted
+                              ? dark
+                                ? 'rgba(34,197,94,0.10)'
+                                : 'rgba(34,197,94,0.06)'
+                              : dark
+                                ? 'rgba(239,68,68,0.08)'
+                                : 'rgba(239,68,68,0.04)',
+                            border: info.killingBlow.attackerWasTaunted
+                              ? dark
+                                ? '1px solid rgba(34,197,94,0.18)'
+                                : '1px solid rgba(34,197,94,0.12)'
+                              : dark
+                                ? '1px solid rgba(239,68,68,0.15)'
+                                : '1px solid rgba(239,68,68,0.10)',
                             color: info.killingBlow.attackerWasTaunted
                               ? dark
                                 ? '#4ade80'
                                 : '#059669'
                               : dark
-                                ? '#94a3b8'
-                                : '#64748b',
+                                ? '#f87171'
+                                : '#dc2626',
                           }}
                         >
-                          {info.killingBlow.attackerWasTaunted
-                            ? '🎯 Killer was taunted'
-                            : '🔴 Killer was NOT taunted'}
-                        </Typography>
+                          <Box
+                            component="span"
+                            sx={{
+                              width: 5,
+                              height: 5,
+                              borderRadius: '50%',
+                              backgroundColor: 'currentColor',
+                              opacity: 0.8,
+                            }}
+                          />
+                          {info.killingBlow.attackerWasTaunted ? 'Taunted' : 'Not taunted'}
+                        </Box>
                       )}
                     </>
                   ) : (
@@ -983,113 +1163,158 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     variant="caption"
                     sx={{
                       display: 'block',
-                      mb: 0.75,
+                      mb: 1,
                       fontWeight: 700,
-                      fontSize: '0.65rem',
+                      fontSize: '0.6rem',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
+                      letterSpacing: '0.08em',
                       color: theme.palette.text.secondary,
+                      opacity: 0.8,
                     }}
                   >
                     Recent Attacks
                   </Typography>
                   {info.lastAttacks.length > 0 ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                      {info.lastAttacks.slice(0, 3).map((attack, i) => {
-                        const attackSourceActor = attack.sourceID
-                          ? actorsById[attack.sourceID]
-                          : undefined;
-                        const attackSourceName = resolveActorName(
-                          attackSourceActor,
-                          attack.sourceID,
-                          attack.sourceName,
-                        );
-                        const sourceId = attack.sourceID?.toString();
-                        const sourceRole = sourceId ? playerMap.get(sourceId)?.role : undefined;
-                        const sourceColor = roleColors.getPlayerColor(
-                          sourceRole as 'dps' | 'healer' | 'tank',
-                        );
+                    (() => {
+                      const attacks = info.lastAttacks.slice(0, 3);
+                      const maxDmg = Math.max(
+                        ...attacks.map((a) => (typeof a.amount === 'number' ? a.amount : 0)),
+                        1,
+                      );
+                      return (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {attacks.map((attack, i) => {
+                            const attackSourceActor = attack.sourceID
+                              ? actorsById[attack.sourceID]
+                              : undefined;
+                            const attackSourceName = resolveActorName(
+                              attackSourceActor,
+                              attack.sourceID,
+                              attack.sourceName,
+                            );
+                            const sourceId = attack.sourceID?.toString();
+                            const sourceRole = sourceId ? playerMap.get(sourceId)?.role : undefined;
+                            const sourceColor = roleColors.getPlayerColor(
+                              sourceRole as 'dps' | 'healer' | 'tank',
+                            );
+                            const dmgPct =
+                              typeof attack.amount === 'number'
+                                ? (attack.amount / maxDmg) * 100
+                                : 0;
 
-                        return (
-                          <Box
-                            key={i}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: 0.75,
-                              px: 1,
-                              py: 0.5,
-                              borderRadius: '6px',
-                              background:
-                                i % 2 === 0
-                                  ? dark
-                                    ? 'rgba(148,163,184,0.04)'
-                                    : 'rgba(148,163,184,0.03)'
-                                  : 'transparent',
-                              minHeight: '22px',
-                            }}
-                          >
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: theme.palette.text.primary,
-                                fontSize: '0.7rem',
-                                lineHeight: 1.3,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                flex: 1,
-                                minWidth: 0,
-                              }}
-                            >
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  width: '14px',
-                                  textAlign: 'center',
-                                  marginRight: '4px',
-                                  fontSize: '0.6rem',
-                                  opacity: 0.7,
-                                }}
-                              >
-                                {attack.wasBlocked ? '🛡️' : '✕'}
-                              </span>
-                              {attack.abilityName || 'Unknown'}
-                              <span style={{ opacity: 0.5 }}>{' by '}</span>
-                              {attack.attackerWasTaunted && (
-                                <span
-                                  style={{ marginRight: '2px', fontSize: '0.6rem' }}
-                                  title="Attacker was taunted"
-                                >
-                                  🎯
-                                </span>
-                              )}
-                              <span style={{ color: sourceColor, fontWeight: 600 }}>
-                                {attackSourceName}
-                              </span>
-                            </Typography>
-                            {typeof attack.amount === 'number' && (
-                              <Typography
-                                variant="caption"
+                            return (
+                              <Box
+                                key={i}
                                 sx={{
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  flexShrink: 0,
-                                  color: dark ? '#fb923c' : '#ea580c',
+                                  position: 'relative',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: 0.75,
+                                  px: 1,
+                                  py: 0.5,
+                                  borderRadius: '8px',
+                                  overflow: 'hidden',
+                                  minHeight: '26px',
+                                  // Damage bar background fill
+                                  '&::before': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    bottom: 0,
+                                    width: `${dmgPct}%`,
+                                    background: dark
+                                      ? 'rgba(251,146,60,0.06)'
+                                      : 'rgba(251,146,60,0.04)',
+                                    borderRadius: '8px',
+                                    transition: 'width 0.3s ease',
+                                  },
                                 }}
                               >
-                                {attack.amount.toLocaleString()}
-                              </Typography>
-                            )}
-                          </Box>
-                        );
-                      })}
-                    </Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    position: 'relative',
+                                    color: theme.palette.text.primary,
+                                    fontSize: '0.7rem',
+                                    lineHeight: 1.3,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    flex: 1,
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  {attack.wasBlocked && (
+                                    <Box
+                                      component="span"
+                                      sx={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: 14,
+                                        mr: '3px',
+                                        fontSize: '0.55rem',
+                                        color: dark ? '#38bdf8' : '#0284c7',
+                                        fontWeight: 700,
+                                      }}
+                                    >
+                                      BLK
+                                    </Box>
+                                  )}
+                                  <span style={{ fontWeight: 500 }}>
+                                    {attack.abilityName || 'Unknown'}
+                                  </span>
+                                  <span style={{ opacity: 0.4, margin: '0 3px' }}>{'/'}</span>
+                                  {attack.attackerWasTaunted && (
+                                    <span
+                                      style={{
+                                        marginRight: '2px',
+                                        fontSize: '0.55rem',
+                                        color: dark ? '#4ade80' : '#059669',
+                                        fontWeight: 700,
+                                      }}
+                                      title="Attacker was taunted"
+                                    >
+                                      TAUNT
+                                    </span>
+                                  )}
+                                  <span style={{ color: sourceColor, fontWeight: 600 }}>
+                                    {attackSourceName}
+                                  </span>
+                                </Typography>
+                                {typeof attack.amount === 'number' && (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      position: 'relative',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                      fontFamily:
+                                        '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+                                      flexShrink: 0,
+                                      color: dark ? '#fb923c' : '#ea580c',
+                                    }}
+                                  >
+                                    {attack.amount.toLocaleString()}
+                                  </Typography>
+                                )}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      );
+                    })()
                   ) : (
                     <Typography
                       variant="body2"
-                      sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem' }}
+                      sx={{
+                        color: theme.palette.text.secondary,
+                        fontSize: '0.72rem',
+                        fontStyle: 'italic',
+                        opacity: 0.7,
+                      }}
                     >
                       No recent attacks recorded
                     </Typography>
