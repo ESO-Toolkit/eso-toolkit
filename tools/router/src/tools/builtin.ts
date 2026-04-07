@@ -269,10 +269,141 @@ export const requestEscalationTool: Tool = {
   },
 };
 
+const ConsultExpertInput = z.object({
+  question: z
+    .string()
+    .min(1)
+    .describe(
+      "A self-contained question for the expert. Include all context the expert needs since it has no access to your conversation history.",
+    ),
+  tier: z
+    .string()
+    .optional()
+    .describe(
+      "Optional tier name. Defaults to one tier above the current worker.",
+    ),
+});
+
+export const consultExpertTool: Tool = {
+  name: "consult_expert",
+  description:
+    "Borrow expertise from a higher-tier model for one focused question. Use this BEFORE making any architectural, naming, or refactoring decision you're not confident about. The expert has NO access to your conversation history, your tools, or the workspace — your question must be entirely self-contained, including code snippets and constraints. Returns a one-paragraph answer. Cheap to call sparingly, expensive to call constantly.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      question: {
+        type: "string",
+        description:
+          "Self-contained question. Include code snippets, constraints, and what you've already considered.",
+      },
+      tier: {
+        type: "string",
+        description:
+          "Optional tier name. Defaults to one tier above current.",
+      },
+    },
+    required: ["question"],
+    additionalProperties: false,
+  },
+  async execute(input, ctx): Promise<ToolResult> {
+    const parsed = ConsultExpertInput.safeParse(input);
+    if (!parsed.success) {
+      return { isError: true, content: `Invalid input: ${parsed.error.message}` };
+    }
+    if (!ctx.consultExpert) {
+      return {
+        isError: true,
+        content:
+          "Expert consultation is not available in this dispatcher (no consultExpert callback wired).",
+      };
+    }
+    try {
+      const { digest, cost } = await ctx.consultExpert(
+        parsed.data.question,
+        parsed.data.tier,
+      );
+      return {
+        content: `[expert response, $${cost.toFixed(4)}]:\n${digest}`,
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: `Consultation failed: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+  },
+};
+
+const DelegateSubtaskInput = z.object({
+  prompt: z
+    .string()
+    .min(1)
+    .describe("Self-contained sub-task prompt for an autonomous worker."),
+  tier: z
+    .string()
+    .optional()
+    .describe(
+      "Optional tier name. Defaults to one tier below the current worker.",
+    ),
+});
+
+export const delegateSubtaskTool: Tool = {
+  name: "delegate_subtask",
+  description:
+    "Spawn an autonomous sub-worker to handle a focused sub-task. Use this from a planner role: split your work into independent steps and delegate each to a cheaper executor. The sub-worker has its own tool loop and can read/write files independently. Your prompt must be entirely self-contained (filenames, constraints, expected output). Returns the sub-worker's final digest.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      prompt: {
+        type: "string",
+        description:
+          "Self-contained sub-task. Specify filenames, constraints, and expected output format.",
+      },
+      tier: {
+        type: "string",
+        description:
+          "Optional tier name. Defaults to one tier below current.",
+      },
+    },
+    required: ["prompt"],
+    additionalProperties: false,
+  },
+  async execute(input, ctx): Promise<ToolResult> {
+    const parsed = DelegateSubtaskInput.safeParse(input);
+    if (!parsed.success) {
+      return { isError: true, content: `Invalid input: ${parsed.error.message}` };
+    }
+    if (!ctx.delegateSubtask) {
+      return {
+        isError: true,
+        content:
+          "Subtask delegation is not available in this dispatcher (no delegateSubtask callback wired).",
+      };
+    }
+    try {
+      const { digest, status, cost } = await ctx.delegateSubtask(
+        parsed.data.prompt,
+        parsed.data.tier,
+      );
+      return {
+        content: `[subtask ${status}, $${cost.toFixed(4)}]:\n${digest}`,
+        isError: status === "failure",
+      };
+    } catch (err) {
+      return {
+        isError: true,
+        content: `Delegation failed: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+  },
+};
+
 export const BUILTIN_TOOLS: Tool[] = [
   readFileTool,
   writeFileTool,
   listFilesTool,
   runBashTool,
   requestEscalationTool,
+  consultExpertTool,
+  delegateSubtaskTool,
 ];
