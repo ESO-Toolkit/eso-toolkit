@@ -1,6 +1,7 @@
 import type { RouterConfig } from "../config/schema.js";
 import type { CredentialStore } from "../credentials/store.js";
 import type { JsonlLogger } from "../telemetry/jsonl-logger.js";
+import type { ToolRegistry } from "../tools/index.js";
 import { escalateEnvelope } from "../triage/envelope.js";
 import {
   AuthError,
@@ -9,9 +10,11 @@ import {
   type EscalationReason,
   type Provider,
   type TaskEnvelope,
+  type ToolSpec,
 } from "../types.js";
 import { BudgetTracker } from "./budget.js";
 import { EscalationController } from "./escalation.js";
+import { runHook } from "./hooks.js";
 import { PreflightCache, preflight } from "./preflight.js";
 
 /**
@@ -35,6 +38,18 @@ export interface DispatcherDeps {
   store: CredentialStore;
   cache: PreflightCache;
   logger: JsonlLogger;
+  tools?: ToolRegistry;
+  /**
+   * Optional policy hook. When non-null, controls whether the dispatcher is
+   * allowed to downgrade a task on preflight failure. CI mode sets this to
+   * "never" so auth errors become hard failures instead of silent downgrades.
+   */
+  downgradePolicy?: "auto" | "never" | "ask";
+  /**
+   * When set, forces the dispatcher to use this exact tier name, ignoring
+   * triage. Used by `router run --tier <name>`.
+   */
+  forcedTier?: string;
 }
 
 export interface DispatchInput {
@@ -121,6 +136,11 @@ export class Dispatcher {
         reason: pre.result.reason,
         message: pre.result.message,
       });
+
+      // Try the fallback chain for this tier before surfacing the error.
+      const fallback = await this.tryFallback(envelope, parentSignal, onEvent);
+      if (fallback) return;
+
       throw new AuthError(
         pre.result.message ?? "Preflight failed.",
         pre.result.reason ?? "unknown",
@@ -147,11 +167,45 @@ export class Dispatcher {
     let finalDigest = "";
     let finalStatus: "success" | "failure" | "aborted" = "success";
 
+    // Snapshot the tool registry so mutations mid-worker don't leak between
+    // dispatches. Build ToolSpecs to hand to the provider.
+    const toolRegistry = this.deps.tools?.snapshot();
+    const toolSpecs: ToolSpec[] | undefined = toolRegistry
+      ? toolRegistry.list().map((t) => ({
+          name: t.name,
+          description: t.description,
+          inputSchema: t.inputSchema,
+        }))
+      : undefined;
+
+    const executeTool = toolRegistry
+      ? async (
+          name: string,
+          input: unknown,
+        ): Promise<{ content: string; isError?: boolean }> => {
+          const tool = toolRegistry.get(name);
+          if (!tool) {
+            return { isError: true, content: `Unknown tool: ${name}` };
+          }
+          const result = await tool.execute(input, {
+            cwd: process.cwd(),
+            signal: controller.signal,
+            config: this.deps.config,
+            requestEscalation: (reason, digest) => {
+              escalationPromise.controller.triggerManually(reason, digest);
+            },
+          });
+          return result;
+        }
+      : undefined;
+
     try {
       await provider.dispatch(
         {
           envelope,
           signal: controller.signal,
+          tools: toolSpecs,
+          executeTool,
           onEvent: (event) => {
             this.tracker.observe(event, envelope.triage.model);
             escalationPromise.controller.observe(event);
@@ -216,12 +270,49 @@ export class Dispatcher {
           reason: escalation.reason,
           bumpCount: next.escalation?.bumpCount,
         });
+        if (this.deps.config.hooks.onEscalation) {
+          try {
+            await runHook(this.deps.config.hooks.onEscalation, {
+              event: "onEscalation",
+              from: envelope,
+              to: next,
+              reason: escalation.reason,
+              digest: escalation.digest,
+            });
+          } catch (err) {
+            this.deps.logger.log({
+              kind: "hook_error",
+              hook: "onEscalation",
+              message: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
         return this.runInternal(next, parentSignal, onEvent);
       } catch (err) {
         // Escalation cap hit — surface as a done event with failure status.
         finalStatus = "failure";
         finalDigest =
           err instanceof Error ? err.message : "Escalation failed.";
+      }
+    }
+
+    // Fire the afterDispatch hook. Best-effort; hook errors are logged but
+    // never propagate — the dispatcher's job is done at this point.
+    if (this.deps.config.hooks.afterDispatch) {
+      try {
+        await runHook(this.deps.config.hooks.afterDispatch, {
+          event: "afterDispatch",
+          envelope,
+          status: finalStatus,
+          digest: finalDigest,
+          budget: this.tracker.state,
+        });
+      } catch (err) {
+        this.deps.logger.log({
+          kind: "hook_error",
+          hook: "afterDispatch",
+          message: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 
@@ -237,6 +328,82 @@ export class Dispatcher {
       status: finalStatus,
       budget: this.tracker.state,
     });
+  }
+
+  /**
+   * Walk `config.fallback[envelope.triage.tier]` trying each entry until one
+   * passes preflight. Returns true if a fallback dispatched successfully
+   * (caller should stop); false if no fallback was configured or none worked.
+   *
+   * Fallback entries are either:
+   *   - a tier name (looked up in config.tiers)
+   *   - a "provider:model" pair (built ad-hoc without a named tier)
+   *
+   * The downgradePolicy gates this behavior: "never" skips fallback entirely
+   * (caller surfaces the auth error), "auto" walks the chain silently, "ask"
+   * is treated as "auto" at the dispatcher level — the TUI handles prompting
+   * before calling the dispatcher.
+   */
+  private async tryFallback(
+    envelope: TaskEnvelope,
+    parentSignal: AbortSignal,
+    onEvent: (e: DispatcherEvent) => void,
+  ): Promise<boolean> {
+    if (this.deps.downgradePolicy === "never") return false;
+
+    const chain = this.deps.config.fallback[envelope.triage.tier];
+    if (!chain || chain.length === 0) return false;
+
+    for (const entry of chain) {
+      const fallbackTier = this.resolveFallbackEntry(entry);
+      if (!fallbackTier) continue;
+
+      const fallbackEnvelope: TaskEnvelope = {
+        ...envelope,
+        triage: {
+          ...envelope.triage,
+          tier: fallbackTier.tierName,
+          provider: fallbackTier.provider,
+          model: fallbackTier.model,
+          rationale: `${envelope.triage.rationale} [fallback: ${entry}]`,
+          source: "user-override",
+        },
+      };
+
+      const provider = this.deps.providers.get(fallbackTier.provider);
+      if (!provider) continue;
+      const pre = await preflight({
+        provider,
+        model: fallbackTier.model,
+        store: this.deps.store,
+        cache: this.deps.cache,
+      });
+      if (!pre.result.ok) continue;
+
+      this.deps.logger.log({
+        kind: "fallback",
+        fromEnvelope: envelope.id,
+        toTier: fallbackTier.tierName,
+        entry,
+      });
+      await this.runInternal(fallbackEnvelope, parentSignal, onEvent);
+      return true;
+    }
+    return false;
+  }
+
+  private resolveFallbackEntry(
+    entry: string,
+  ): { tierName: string; provider: string; model: string } | null {
+    // "provider:model" form bypasses named tiers entirely.
+    if (entry.includes(":")) {
+      const [provider, model] = entry.split(":", 2) as [string, string];
+      return { tierName: `${provider}:${model}`, provider, model };
+    }
+    // Named tier form.
+    const tier = this.deps.config.tiers[entry];
+    if (!tier) return null;
+    return { tierName: entry, provider: tier.provider, model: tier.model };
   }
 
   /**
