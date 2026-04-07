@@ -145,6 +145,12 @@ interface ParseAnalysisState {
   penCritCapResult: PenCritCapResult | null;
 }
 
+interface SkeletonConfig {
+  metricsCount: number; // How many metric cards to show (DPS, CPM, etc.)
+  checklistRows: number; // How many checklist rows to show
+  hasBuildIssues: boolean | null; // null = unknown
+}
+
 interface PlayerRoleEntry {
   id: number | null;
   name: string | null;
@@ -414,6 +420,12 @@ const ParseAnalysisPageContent: React.FC = () => {
     dummyId: number; // Trial dummy ID for buff analysis
   } | null>(null);
 
+  const [skeletonConfig, setSkeletonConfig] = useState<SkeletonConfig>({
+    metricsCount: 4, // DPS + CPM + Active + Weave
+    checklistRows: 8, // Reasonable default
+    hasBuildIssues: null,
+  });
+
   /** Supported dummy fights found in the current report — drives the navigation strip and polling */
   const [availableFights, setAvailableFights] = useState<Array<{ id: number; name: string }>>([]);
 
@@ -639,6 +651,13 @@ const ParseAnalysisPageContent: React.FC = () => {
         dpsResult: null,
         rotationResult: null,
         activeTimeResult: null,
+      }));
+
+      // Reset skeleton config for this analysis run (use defaults or last-known values)
+      setSkeletonConfig((prev) => ({
+        metricsCount: 4,
+        checklistRows: prev.checklistRows, // Preserve from last run if available
+        hasBuildIssues: null,
       }));
 
       // Set pending analysis - this will trigger the useEffect to run analysis once events load
@@ -872,6 +891,13 @@ const ParseAnalysisPageContent: React.FC = () => {
       resourceSustainResult,
       penCritCapResult,
     }));
+
+    // Persist skeleton config from actual results so subsequent re-analyses show accurate skeletons
+    setSkeletonConfig({
+      metricsCount: 4,
+      checklistRows: parseChecklist?.length ?? 8,
+      hasBuildIssues: buildIssues.length > 0,
+    });
 
     // Clear pending analysis
     setPendingAnalysis(null);
@@ -2255,10 +2281,28 @@ const ParseAnalysisPageContent: React.FC = () => {
               ))}
             </Box>
           </Card>
-          {/* Analysis results skeleton */}
+          {/* Metric cards grid — mirrors real grid layout */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+              gap: 2,
+            }}
+          >
+            {Array.from({ length: skeletonConfig.metricsCount }).map((_, i) => (
+              <Card key={i} sx={{ p: 2.5 }}>
+                <Skeleton variant="text" width={100} height={14} sx={{ mb: 2 }} />
+                <Skeleton variant="text" width={80} height={40} sx={{ mb: 1.5 }} />
+                <Skeleton variant="rounded" height={6} sx={{ mb: 2, borderRadius: 3 }} />
+                <Skeleton variant="text" width="60%" height={12} />
+              </Card>
+            ))}
+          </Box>
+
+          {/* Checklist skeleton — rows match expected output count */}
           <Card sx={{ p: 2.5 }}>
             <Skeleton variant="text" width={160} height={24} sx={{ mb: 2 }} />
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: skeletonConfig.checklistRows }).map((_, i) => (
               <Box
                 key={i}
                 sx={{
@@ -2271,7 +2315,6 @@ const ParseAnalysisPageContent: React.FC = () => {
               >
                 <Skeleton variant="text" width={`${30 + ((i * 11) % 25)}%`} height={16} />
                 <Box sx={{ flex: 1 }} />
-                <Skeleton variant="text" width={60} height={16} />
                 <Skeleton variant="rounded" width={48} height={20} sx={{ borderRadius: '4px' }} />
               </Box>
             ))}
