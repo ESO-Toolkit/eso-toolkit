@@ -29,6 +29,27 @@ export interface ToolContext {
   config: RouterConfig;
   /** Called by tools that want to signal escalation to the controller. */
   requestEscalation?: (reason: EscalationReason, digest: string) => void;
+  /**
+   * Synchronous expert consultation. Spawns a one-shot child envelope at the
+   * requested tier (or the next tier up if unspecified), runs it as a pure
+   * Q&A worker with NO tools, and returns the digest. The cost rolls into
+   * the parent task's budget. This is the "expensive consultant" pattern:
+   * cheap shell stays in control, expensive model is borrowed surgically.
+   */
+  consultExpert?: (
+    question: string,
+    tier?: string,
+  ) => Promise<{ digest: string; cost: number }>;
+  /**
+   * Spawn a child sub-task envelope. The child runs as a full worker with
+   * its own tool loop and can escalate independently. Used by planners that
+   * want to parcel out independent sub-tasks to cheaper executors. The cost
+   * rolls into the parent task's budget.
+   */
+  delegateSubtask?: (
+    prompt: string,
+    tier?: string,
+  ) => Promise<{ digest: string; status: "success" | "failure"; cost: number }>;
 }
 
 export interface ToolResult {

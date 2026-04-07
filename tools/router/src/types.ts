@@ -61,6 +61,19 @@ export interface TaskEnvelope {
   id: string;
   createdAt: string;
   parentSessionId?: string;
+  /**
+   * If this envelope was spawned by a parent worker via consult_expert or
+   * delegate_subtask, this points back to the parent envelope. Used by the
+   * cost analyzer and the TUI to attribute child cost to its parent task.
+   */
+  parentEnvelopeId?: string;
+  /**
+   * Mode of decomposition. "consultation" envelopes are one-shot Q&A workers
+   * with no tools and no further escalation; "delegation" envelopes are full
+   * sub-tasks that can use tools and escalate. The dispatcher uses this to
+   * pick the right code path.
+   */
+  decompositionMode?: "consultation" | "delegation";
   goal: string;
   originalPrompt: string;
   triage: TriageVerdict & {
