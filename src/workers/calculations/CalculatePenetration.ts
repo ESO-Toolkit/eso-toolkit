@@ -260,8 +260,10 @@ export function calculatePenetrationData(
       activeDataPoints.length > 0
         ? activeDataPoints.reduce((sum, point) => sum + point.penetration, 0) /
           activeDataPoints.length
-        : playerData.dataPoints.reduce((sum, point) => sum + point.penetration, 0) /
-          playerData.dataPoints.length;
+        : playerData.dataPoints.length > 0
+          ? playerData.dataPoints.reduce((sum, point) => sum + point.penetration, 0) /
+            playerData.dataPoints.length
+          : 0;
 
     playerDataRecord[playerData.playerId] = {
       playerId: playerData.playerId,

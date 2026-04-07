@@ -18,7 +18,11 @@ import { onError, ErrorLink } from '@apollo/client/link/error';
 import { RetryLink } from '@apollo/client/link/retry';
 import { getOperationAST } from 'graphql';
 
-import { refreshAccessToken } from './features/auth/auth';
+import {
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
+  refreshAccessToken,
+} from './features/auth/auth';
 import { Logger, LogLevel } from './utils/logger';
 
 type ErrorWithGraphQLErrors = {
@@ -143,8 +147,8 @@ export class EsoLogsClient {
         // avoid an infinite refresh→retry→401→refresh loop.
         if (this.isRefreshingToken) {
           logger.error('Token refresh already attempted — aborting to prevent infinite loop');
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+          localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+          localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
           return;
         }
 
@@ -184,8 +188,8 @@ export class EsoLogsClient {
               } else {
                 // Refresh failed, clear tokens and notify user
                 logger.error('Token refresh failed - user needs to re-authenticate');
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
+                localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+                localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
                 this.isRefreshingToken = false;
                 observer.error(new Error('Authentication failed. Please log in again.'));
               }
@@ -235,10 +239,14 @@ export class EsoLogsClient {
     });
 
     const authLink = setContext((_, { headers }) => {
+      // Always read this.accessToken rather than the constructor closure so that
+      // token updates from the error-link refresh path (which sets this.accessToken
+      // without rebuilding the Apollo client) are immediately reflected in retries
+      // and subsequent requests on the same client instance.
       return {
         headers: {
           ...headers,
-          Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+          Authorization: this.accessToken ? `Bearer ${this.accessToken}` : undefined,
         },
       };
     });
@@ -255,6 +263,12 @@ export class EsoLogsClient {
    */
   public updateAccessToken(newAccessToken: string): void {
     this.accessToken = newAccessToken;
+    // Reset refresh guard — a previous error link's Observable may have been
+    // abandoned mid-flight, leaving the flag stuck at true.
+    this.isRefreshingToken = false;
+    // Clear cached data from the previous session to avoid leaking stale
+    // query results across different user identities.
+    EsoLogsClient.CACHE.reset();
     this.client = this.createApolloClient(newAccessToken);
   }
 

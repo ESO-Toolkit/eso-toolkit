@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useRef, useCallback, useMemo } from 'react';
+import { useRef, useCallback, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 
 import { DARK_ROLE_COLORS } from '../../../utils/roleColors';
@@ -85,6 +85,13 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
     return new THREE.RingGeometry(innerRadius, outerRadius, 32);
   }, [scale]);
 
+  // Dispose selection ring geometry on unmount or scale change
+  useEffect(() => {
+    return () => {
+      selectionRingGeometry.dispose();
+    };
+  }, [selectionRingGeometry]);
+
   // Color calculation
   const getActorColor = (actor: ActorPosition | null): string => {
     if (!actor) return ACTOR_COLORS.player.default;
@@ -105,13 +112,31 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
     return ACTOR_COLORS.player.default;
   };
 
-  // Update materials based on actor state
+  // Track previous material state to avoid unnecessary GPU uploads
+  const prevMaterialStateRef = useRef<{
+    color: string;
+    isDead: boolean;
+    isTaunted: boolean;
+    isSelected: boolean;
+  } | null>(null);
+
+  // Update materials based on actor state — only set needsUpdate when values change
   const updateMaterials = useCallback(
     (actor: ActorPosition): void => {
       const actorColor = getActorColor(actor);
+      const isSelected = selectedActorRef.current === actorId;
+      const isTaunted = actor.isTaunted || false;
+
+      const prev = prevMaterialStateRef.current;
+      const changed =
+        !prev ||
+        prev.color !== actorColor ||
+        prev.isDead !== actor.isDead ||
+        prev.isTaunted !== isTaunted ||
+        prev.isSelected !== isSelected;
 
       // Update puck material
-      if (puckMaterialRef.current) {
+      if (puckMaterialRef.current && changed) {
         puckMaterialRef.current.color.set(actorColor);
         puckMaterialRef.current.opacity = !actor.isDead ? ALIVE_PUCK_OPACITY : DEAD_PUCK_OPACITY;
         puckMaterialRef.current.transparent = actor.isDead;
@@ -119,7 +144,7 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
       }
 
       // Update vision cone material
-      if (visionConeMaterialRef.current) {
+      if (visionConeMaterialRef.current && changed) {
         visionConeMaterialRef.current.color.set(actorColor);
         visionConeMaterialRef.current.opacity = !actor.isDead
           ? ALIVE_VISION_CONE_OPACITY
@@ -130,12 +155,19 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
 
       // Update taunt ring visibility
       if (tauntRingMeshRef.current) {
-        tauntRingMeshRef.current.visible = actor.isTaunted || false;
+        tauntRingMeshRef.current.visible = isTaunted;
       }
 
       if (selectedRingMeshRef.current) {
-        selectedRingMeshRef.current.visible = selectedActorRef.current === actorId;
+        selectedRingMeshRef.current.visible = isSelected;
       }
+
+      prevMaterialStateRef.current = {
+        color: actorColor,
+        isDead: actor.isDead,
+        isTaunted,
+        isSelected,
+      };
     },
     [actorId, selectedActorRef],
   );

@@ -161,6 +161,7 @@ Skills are `SKILL.md` files in `.agents/skills/`, following the [Agent Skills sp
 
 **UI & Meta:**
 - **Create New Skill**: [.agents/skills/create-skill/SKILL.md](.agents/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
+- **Tooling Audit**: [.agents/skills/tooling-audit/SKILL.md](.agents/skills/tooling-audit/SKILL.md) - Comprehensive gap audit of MCP tools, skills, documentation, cross-client config parity, and the ticket-to-PR pipeline, with Jira ticket creation
 - **Scratch Directory**: [.agents/skills/scratch-dir/SKILL.md](.agents/skills/scratch-dir/SKILL.md) - Gitignored directory for ad-hoc output files
 - **UI Updates**: [.agents/skills/ui-updates/SKILL.md](.agents/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
 

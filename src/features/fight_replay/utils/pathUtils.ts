@@ -133,14 +133,16 @@ export function extractPlayerPaths(
       }
 
       path.points.push(newPoint);
-
-      // Enforce maximum points limit
-      if (path.points.length > config.maxPoints) {
-        path.points.shift(); // Remove oldest point
-      }
     }
 
     lastSampleTime = timestamp;
+  }
+
+  // Trim paths that exceed maxPoints — single splice is O(n) once instead of O(n) per shift
+  for (const path of paths.values()) {
+    if (path.points.length > config.maxPoints) {
+      path.points = path.points.slice(path.points.length - config.maxPoints);
+    }
   }
 
   // Apply smoothing if enabled
@@ -181,22 +183,22 @@ function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
   for (let i = 0; i < points.length; i++) {
     const start = Math.max(0, i - halfWindow);
     const end = Math.min(points.length, i + halfWindow + 1);
-    const windowPoints = points.slice(start, end);
+    const windowLen = end - start;
 
-    // Calculate weighted average position
+    // Calculate weighted average position — iterate by index to avoid per-point allocation
     let x = 0,
       y = 0,
       z = 0;
     let totalWeight = 0;
 
-    for (let j = 0; j < windowPoints.length; j++) {
+    for (let j = start; j < end; j++) {
       // Gaussian weight (higher weight for closer points)
-      const distance = Math.abs(j - windowPoints.length / 2);
+      const distance = Math.abs(j - start - windowLen / 2);
       const weight = Math.exp(-(distance * distance) / (2 * factor * factor));
 
-      x += windowPoints[j].position[0] * weight;
-      y += windowPoints[j].position[1] * weight;
-      z += windowPoints[j].position[2] * weight;
+      x += points[j].position[0] * weight;
+      y += points[j].position[1] * weight;
+      z += points[j].position[2] * weight;
       totalWeight += weight;
     }
 
@@ -211,10 +213,27 @@ function smoothPath(points: PathPoint[], factor: number): PathPoint[] {
 }
 
 /**
- * Get path points up to a specific timestamp (for animated playback)
+ * Get path points up to a specific timestamp (for animated playback).
+ * Uses binary search since points are time-sorted — O(log n) instead of O(n).
  */
 export function getPathPointsUpToTime(path: PlayerPath, currentTime: number): PathPoint[] {
-  return path.points.filter((point) => point.timestamp <= currentTime);
+  const { points } = path;
+  if (points.length === 0 || points[0].timestamp > currentTime) return [];
+  if (points[points.length - 1].timestamp <= currentTime) return points;
+
+  // Binary search for the last point with timestamp <= currentTime
+  let lo = 0;
+  let hi = points.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >>> 1;
+    if (points[mid].timestamp <= currentTime) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
+  }
+
+  return points.slice(0, lo + 1);
 }
 
 /**

@@ -46,5 +46,18 @@
       "mcp__eso-logs-worktree__worktree_diff"
     ],
     "deny": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/scripts/validate-branch-name.mjs"
+          }
+        ]
+      }
+    ]
   }
 }

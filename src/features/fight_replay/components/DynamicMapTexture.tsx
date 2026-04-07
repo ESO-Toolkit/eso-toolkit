@@ -42,17 +42,6 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
 
   const { fight } = useCurrentFight();
 
-  // Create default material
-  const defaultMaterial = useMemo(
-    () =>
-      new THREE.MeshPhongMaterial({
-        color: '#2a2a2a',
-        transparent: true,
-        opacity: 0.8,
-      }),
-    [],
-  );
-
   // Create geometry
   const geometry = useMemo(() => new THREE.PlaneGeometry(size, size), [size]);
 
@@ -151,10 +140,10 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      defaultMaterial.dispose();
       geometry.dispose();
+      clearMapTextureCache();
     };
-  }, [defaultMaterial, geometry]);
+  }, [geometry]);
 
   return (
     <mesh
@@ -167,7 +156,6 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
     >
       <meshPhongMaterial
         ref={materialRef}
-        {...defaultMaterial}
         transparent
         opacity={0.8}
         color={mapTimeline.entries.length > 0 ? '#ffffff' : '#2a2a2a'}

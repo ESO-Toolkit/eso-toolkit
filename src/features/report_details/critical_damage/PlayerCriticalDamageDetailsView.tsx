@@ -8,47 +8,26 @@ import {
   Paper,
 } from '@mui/material';
 import type { TooltipItem } from 'chart.js';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
-import { Line } from 'react-chartjs-2';
 
+import { LineChart } from '../../../components/LazyCharts';
 import { MetricPill } from '../../../components/MetricPill';
+import '../../../utils/chartRegistration';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
+import {
+  usePhaseAnnotations,
+  useInactiveIntervalAnnotations,
+} from '../../../hooks/useChartAnnotations';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import {
   CriticalDamageSource,
   CriticalDamageSourceWithActiveState,
 } from '../../../utils/CritDamageUtils';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin,
-);
 
 // Chart callback functions - extracted to module level for performance
 const formatTooltipTitle = (context: TooltipItem<'line'>[]): string => {
@@ -179,56 +158,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
     );
   }, [criticalDamageData?.dataPoints]);
 
-  const phaseAnnotations = React.useMemo(() => {
-    if (
-      !phaseTransitionInfo?.phaseTransitions ||
-      phaseTransitionInfo.phaseTransitions.length === 0
-    ) {
-      return null;
-    }
-
-    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
-      fightStartTime: phaseTransitionInfo.fightStartTime,
-      fightEndTime: phaseTransitionInfo.fightEndTime,
-      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
-    });
-  }, [phaseTransitionInfo]);
-
-  // Create annotations for inactive combat periods (downtime)
-  const inactiveTimeAnnotations = React.useMemo(() => {
-    if (
-      !criticalDamageData?.inactiveCombatIntervals ||
-      criticalDamageData.inactiveCombatIntervals.length === 0
-    ) {
-      return null;
-    }
-
-    const annotations: Record<string, unknown> = {};
-
-    criticalDamageData.inactiveCombatIntervals.forEach(
-      (interval: { start: number; end: number }, index: number) => {
-        annotations[`inactive_${index}`] = {
-          type: 'box',
-          xMin: interval.start,
-          xMax: interval.end,
-          backgroundColor: 'rgba(128, 128, 128, 0.15)',
-          borderWidth: 0,
-          label: {
-            display: interval.end - interval.start > 2, // Only show label if gap is > 2 seconds
-            content: 'Inactive',
-            position: 'center',
-            color: 'rgba(128, 128, 128, 0.7)',
-            font: {
-              size: 10,
-              weight: 'bold',
-            },
-          },
-        };
-      },
-    );
-
-    return annotations;
-  }, [criticalDamageData?.inactiveCombatIntervals]);
+  const phaseAnnotations = usePhaseAnnotations(phaseTransitionInfo);
+  const inactiveTimeAnnotations = useInactiveIntervalAnnotations(
+    criticalDamageData?.inactiveCombatIntervals,
+  );
 
   if (!criticalDamageData) {
     return (
@@ -542,7 +475,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 Critical Damage vs Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>
-                <Line
+                <LineChart
                   data={{
                     labels: chartLabels,
                     datasets: [

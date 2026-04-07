@@ -155,7 +155,8 @@ After that, compliant AI agents should pick up the new skill automatically from 
 | `gear-data-regen/` | Gear set bonus/tooltip data from ESO-Hub |
 | `git/` | Branch management (twig with plain git fallbacks) |
 | `github-actions-logs/` | Parse and analyze GitHub Actions logs |
-| `jira/` | Jira ticket management via acli |
+| `jira/` | Jira ticket management via MCP tools or acli |
+| `tooling-audit/` | Comprehensive gap audit: MCP tool coverage, skills, docs, cross-client config parity, and pipeline gaps |
 | `no-edit-generated/` | Never manually edit generated files |
 | `playwright/` | E2E test execution |
 | `rebase/` | Post-squash branch tree recovery |

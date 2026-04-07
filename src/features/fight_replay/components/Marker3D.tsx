@@ -3,7 +3,7 @@
  * Supports both M0R and Elms marker formats
  */
 import { Billboard } from '@react-three/drei';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 
 import { MorMarker } from '../../../types/mapMarkers';
@@ -91,6 +91,13 @@ export const Marker3D: React.FC<Marker3DProps> = ({
     }
     return null;
   }, [marker.text]);
+
+  // Dispose texture on unmount or when text changes
+  useEffect(() => {
+    return () => {
+      textTexture?.dispose();
+    };
+  }, [textTexture]);
 
   // Determine if marker should be a billboard (always face camera) or have orientation
   const isFloating = marker.orientation === undefined;
