@@ -1,4 +1,5 @@
 import type { RouterConfig } from "../config/schema.js";
+import { runHook } from "../dispatch/hooks.js";
 import type { Credential, TriageVerdict } from "../types.js";
 import {
   buildHeuristicVerdict,
@@ -6,6 +7,7 @@ import {
   matchHeuristics,
 } from "./heuristics.js";
 import { runLlmTriage } from "./llm-triage.js";
+import { applyWeights } from "./weights.js";
 
 /**
  * Top-level triage entrypoint. Runs heuristics first, then falls back to the
@@ -21,6 +23,18 @@ export interface TriageInput {
 }
 
 export async function triage(input: TriageInput): Promise<TriageVerdict> {
+  // beforeTriage hook — lets callers mutate signals or short-circuit triage.
+  if (input.config.hooks.beforeTriage) {
+    try {
+      await runHook(input.config.hooks.beforeTriage, {
+        event: "beforeTriage",
+        prompt: input.prompt,
+      });
+    } catch {
+      // Non-fatal: triage proceeds even if the hook crashes.
+    }
+  }
+
   const signals = extractSignals(input.prompt);
   const match = matchHeuristics(signals, input.config);
   if (match) {
@@ -44,12 +58,16 @@ export async function triage(input: TriageInput): Promise<TriageVerdict> {
     };
   }
 
-  const verdict = await runLlmTriage({
+  const rawVerdict = await runLlmTriage({
     prompt: input.prompt,
     config: input.config,
     credential: input.triageCredential,
     signal: input.signal,
   });
+
+  // Apply weights-based scoring. This may nudge the tier up or down based
+  // on user preferences expressed in config.weights.
+  const { verdict } = applyWeights(rawVerdict, input.config);
 
   if (verdict.confidence < input.config.triage.minConfidence) {
     // Low confidence → bump one tier up (toward more capability).
