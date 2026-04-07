@@ -10,6 +10,7 @@ import { PreflightCache } from "./dispatch/preflight.js";
 import "./providers/index.js"; // self-registers built-in providers
 import { resolveProviders } from "./providers/resolve.js";
 import { JsonlLogger } from "./telemetry/jsonl-logger.js";
+import { createDefaultRegistry } from "./tools/index.js";
 import { App } from "./tui/App.js";
 import {
   authDoctor,
@@ -18,6 +19,7 @@ import {
   authStatus,
   type AuthCommandDeps,
 } from "./auth/commands.js";
+import { runInit } from "./commands/init.js";
 import { ConfigError, RouterError } from "./types.js";
 
 /**
@@ -25,10 +27,16 @@ import { ConfigError, RouterError } from "./types.js";
  *
  *   router                → interactive TUI
  *   router run "prompt"   → one-shot TUI seeded with a prompt
+ *   router init           → scaffold a router.config.ts at cwd
  *   router auth login     → device/api-key auth for a provider
  *   router auth status    → show stored credentials
  *   router auth logout    → delete stored credential
  *   router auth doctor    → probe every configured tier
+ *
+ * Environment:
+ *   ROUTER_NO_KEYRING=1  → in-memory credential store (tests, CI)
+ *   ROUTER_NO_PROMPT=1   → fail fast on interactive prompts (CI mode)
+ *   ROUTER_DEBUG=1       → print stack traces on errors
  */
 
 async function buildDeps(): Promise<{
@@ -70,6 +78,47 @@ function handleError(err: unknown): never {
   process.exit(1);
 }
 
+function isCiMode(): boolean {
+  return process.env.ROUTER_NO_PROMPT === "1";
+}
+
+interface RunOptions {
+  tier?: string;
+  requireTier?: string;
+  allowDowngrade?: boolean;
+  noDowngrade?: boolean;
+}
+
+function renderApp(
+  deps: AuthCommandDeps,
+  logger: JsonlLogger,
+  initialPrompt: string | undefined,
+  opts: RunOptions,
+): ReturnType<typeof render> {
+  const downgradePolicy = opts.noDowngrade
+    ? "never"
+    : opts.allowDowngrade
+      ? "auto"
+      : isCiMode()
+        ? "never"
+        : "ask";
+  return render(
+    React.createElement(App, {
+      config: deps.config,
+      providers: deps.providers,
+      store: deps.store,
+      cache: deps.cache,
+      logger,
+      tools: createDefaultRegistry(),
+      initialPrompt,
+      forcedTier: opts.tier,
+      requireTier: opts.requireTier,
+      downgradePolicy,
+      ciMode: isCiMode(),
+    }),
+  );
+}
+
 async function main(): Promise<void> {
   const program = new Command();
   program
@@ -79,27 +128,31 @@ async function main(): Promise<void> {
     )
     .version("0.1.0");
 
+  // `router init`
+  program
+    .command("init")
+    .description("Scaffold a router.config.ts in the current directory")
+    .option("--force", "Overwrite an existing router.config.ts")
+    .action((opts: { force?: boolean }) => {
+      runInit({ force: opts.force });
+    });
+
   // Default command: interactive TUI
   program
     .command("tui", { isDefault: true })
     .description("Launch the interactive TUI")
     .argument("[prompt...]", "Optional initial prompt")
-    .action(async (promptWords: string[]) => {
+    .option("--tier <name>", "Force a specific tier")
+    .option("--require-tier <name>", "Fail if the given tier is unauthorized")
+    .option("--allow-downgrade", "Silently downgrade on auth failures")
+    .option("--no-downgrade", "Never downgrade; hard-fail on auth failures")
+    .action(async (promptWords: string[], opts: RunOptions) => {
       try {
         const { deps, logger } = await buildDeps();
         const initialPrompt = promptWords.length
           ? promptWords.join(" ")
           : undefined;
-        const { waitUntilExit } = render(
-          React.createElement(App, {
-            config: deps.config,
-            providers: deps.providers,
-            store: deps.store,
-            cache: deps.cache,
-            logger,
-            initialPrompt,
-          }),
-        );
+        const { waitUntilExit } = renderApp(deps, logger, initialPrompt, opts);
         await waitUntilExit();
       } catch (err) {
         handleError(err);
@@ -109,22 +162,20 @@ async function main(): Promise<void> {
   // `router run "..."`
   program
     .command("run")
-    .description("Run a one-shot prompt (opens the TUI)")
+    .description("Run a one-shot prompt")
     .argument("<prompt...>", "Prompt to dispatch")
     .option("--tier <name>", "Force a specific tier")
     .option("--require-tier <name>", "Fail if the given tier is unauthorized")
-    .action(async (promptWords: string[]) => {
+    .option("--allow-downgrade", "Silently downgrade on auth failures")
+    .option("--no-downgrade", "Never downgrade; hard-fail on auth failures")
+    .action(async (promptWords: string[], opts: RunOptions) => {
       try {
         const { deps, logger } = await buildDeps();
-        const { waitUntilExit } = render(
-          React.createElement(App, {
-            config: deps.config,
-            providers: deps.providers,
-            store: deps.store,
-            cache: deps.cache,
-            logger,
-            initialPrompt: promptWords.join(" "),
-          }),
+        const { waitUntilExit } = renderApp(
+          deps,
+          logger,
+          promptWords.join(" "),
+          opts,
         );
         await waitUntilExit();
       } catch (err) {
@@ -142,6 +193,11 @@ async function main(): Promise<void> {
     .action(async (opts: { provider?: string }) => {
       try {
         const { deps } = await buildDeps();
+        if (isCiMode() && !opts.provider) {
+          throw new Error(
+            "ROUTER_NO_PROMPT is set; --provider is required in CI mode.",
+          );
+        }
         const providerId =
           opts.provider ??
           (await pickProviderInteractively([...deps.providers.keys()]));
@@ -194,7 +250,6 @@ async function main(): Promise<void> {
 async function pickProviderInteractively(ids: string[]): Promise<string> {
   if (ids.length === 0) throw new Error("No providers configured.");
   if (ids.length === 1) return ids[0]!;
-  // Minimal non-TTY-safe picker: read from stdin.
   console.log("Configured providers:");
   ids.forEach((id, i) => console.log(`  [${i + 1}] ${id}`));
   process.stdout.write("Pick a number: ");
