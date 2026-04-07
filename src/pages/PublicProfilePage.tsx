@@ -932,6 +932,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, message, actionLabel, onA
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
 export const PublicProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const theme = useTheme();
@@ -1016,7 +1018,6 @@ export const PublicProfilePage: React.FC = () => {
     [accessToken, enqueueSnackbar],
   );
 
-  const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   const MAX_AVATAR_MB = 2;
 
   const handleAvatarSelect = useCallback(
@@ -1069,9 +1070,7 @@ export const PublicProfilePage: React.FC = () => {
     setAvatarUploading(true);
     try {
       await rosterHubApi.deleteAvatar(accessToken);
-      setProfile((prev) =>
-        prev ? { ...prev, avatar_url: null, avatar_thumb_url: null } : prev,
-      );
+      setProfile((prev) => (prev ? { ...prev, avatar_url: null, avatar_thumb_url: null } : prev));
       enqueueSnackbar('Avatar removed.', { variant: 'success' });
     } catch (err) {
       enqueueSnackbar(err instanceof Error ? err.message : 'Failed to remove avatar', {
@@ -1279,7 +1278,9 @@ export const PublicProfilePage: React.FC = () => {
                 cursor: isOwner ? 'pointer' : 'default',
                 '&:hover .avatar-overlay': isOwner ? { opacity: 1 } : {},
               }}
-              onClick={isOwner && !avatarUploading ? () => avatarInputRef.current?.click() : undefined}
+              onClick={
+                isOwner && !avatarUploading ? () => avatarInputRef.current?.click() : undefined
+              }
             >
               {profile?.avatar_url ? (
                 <img

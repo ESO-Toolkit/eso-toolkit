@@ -16,6 +16,7 @@ import {
 } from '@/store/worker_results';
 
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
 import {
   useCastEvents,
   useCombatantInfoEvents,
@@ -70,6 +71,7 @@ import {
   analyzeBarSwaps,
   type BarSwapAnalysisResult,
 } from '../../parse_analysis/utils/parseAnalysisUtils';
+
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 const analyzeAllPlayersScribingSkills = (..._args: unknown[]): Record<string, never> => ({});
@@ -93,8 +95,6 @@ const formatScribingRecipeForDisplay = (
   recipeSummary: '',
   tooltipInfo: '',
 });
-
-import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
@@ -1328,40 +1328,40 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
 
   return (
     <PlayerAvatarsProvider players={playerData?.playersById}>
-    <div data-testid="players-panel-loaded">
-      <PlayersPanelView
-        playerActors={playerData?.playersById}
-        mundusBuffsByPlayer={mundusBuffsByPlayer}
-        championPointsByPlayer={championPointsByPlayer}
-        scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
-        buildIssuesByPlayer={buildIssuesByPlayer}
-        classAnalysisByPlayer={classAnalysisByPlayer}
-        deathsByPlayer={deathsByPlayer}
-        resurrectsByPlayer={resurrectsByPlayer}
-        cpmByPlayer={cpmByPlayer}
-        aurasByPlayer={aurasByPlayer}
-        maxHealthByPlayer={maxHealthByPlayer}
-        maxStaminaByPlayer={maxStaminaByPlayer}
-        maxMagickaByPlayer={maxMagickaByPlayer}
-        distanceByPlayer={distanceByPlayer}
-        reportId={reportId}
-        fightId={fightId}
-        isLoading={isLoading}
-        playerGear={playerGear}
-        fightStartTime={fight?.startTime}
-        fightEndTime={fight?.endTime}
-        dpsValueByPlayer={dpsValueByPlayer}
-        hpsValueByPlayer={hpsValueByPlayer}
-        totalDamageByPlayer={totalDamageByPlayer}
-        totalCritDamageByPlayer={totalCritDamageByPlayer}
-        critDpsByPlayer={critDpsByPlayer}
-        critChanceByPlayer={critChanceByPlayer}
-        criticalDamageByPlayer={criticalDamageByPlayer}
-        barSwapByPlayer={barSwapByPlayer}
-        potionResultsByPlayer={potionResultsByPlayer}
-        rolesByPlayerId={rolesByPlayerId}
-      />
-    </div>
+      <div data-testid="players-panel-loaded">
+        <PlayersPanelView
+          playerActors={playerData?.playersById}
+          mundusBuffsByPlayer={mundusBuffsByPlayer}
+          championPointsByPlayer={championPointsByPlayer}
+          scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
+          buildIssuesByPlayer={buildIssuesByPlayer}
+          classAnalysisByPlayer={classAnalysisByPlayer}
+          deathsByPlayer={deathsByPlayer}
+          resurrectsByPlayer={resurrectsByPlayer}
+          cpmByPlayer={cpmByPlayer}
+          aurasByPlayer={aurasByPlayer}
+          maxHealthByPlayer={maxHealthByPlayer}
+          maxStaminaByPlayer={maxStaminaByPlayer}
+          maxMagickaByPlayer={maxMagickaByPlayer}
+          distanceByPlayer={distanceByPlayer}
+          reportId={reportId}
+          fightId={fightId}
+          isLoading={isLoading}
+          playerGear={playerGear}
+          fightStartTime={fight?.startTime}
+          fightEndTime={fight?.endTime}
+          dpsValueByPlayer={dpsValueByPlayer}
+          hpsValueByPlayer={hpsValueByPlayer}
+          totalDamageByPlayer={totalDamageByPlayer}
+          totalCritDamageByPlayer={totalCritDamageByPlayer}
+          critDpsByPlayer={critDpsByPlayer}
+          critChanceByPlayer={critChanceByPlayer}
+          criticalDamageByPlayer={criticalDamageByPlayer}
+          barSwapByPlayer={barSwapByPlayer}
+          potionResultsByPlayer={potionResultsByPlayer}
+          rolesByPlayerId={rolesByPlayerId}
+        />
+      </div>
     </PlayerAvatarsProvider>
   );
 };

@@ -33,13 +33,12 @@ import { useLocation } from 'react-router-dom';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { useCurrentUserAvatar } from '../hooks/useCurrentUserAvatar';
 import { usePersistentDarkMode } from '../hooks/usePersistentDarkMode';
 import {
   useViewTransitionNavigate,
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
-
-import { useCurrentUserAvatar } from '../hooks/useCurrentUserAvatar';
 
 import { ThemeToggle } from './ThemeToggle';
 
@@ -1692,7 +1691,9 @@ export const HeaderBar: React.FC = () => {
             animation: mobileOpen ? `sheetItemIn 0.3s ease-out 0.35s both` : 'none',
           }}
         >
-          <Divider sx={{ flex: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }} />
+          <Divider
+            sx={{ flex: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
+          />
           <IconButton
             onClick={toggleDarkMode}
             size="small"

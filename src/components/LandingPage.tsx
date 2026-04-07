@@ -4,7 +4,8 @@ import React, { useState, JSX, useEffect, useRef } from 'react';
 
 // ─── 2026 CSS: @property animated gradients + scroll-driven animations ──────
 const showcaseGlobalStyles = (
-  <GlobalStyles styles={`
+  <GlobalStyles
+    styles={`
     @property --divider-pos {
       syntax: '<percentage>';
       inherits: false;
@@ -49,9 +50,9 @@ const showcaseGlobalStyles = (
     :root {
       --spring: linear(0, 0.01, 0.04 1.7%, 0.16 3.3%, 0.56 6.9%, 0.72, 0.87 11.4%, 0.97 13.5%, 1.04 16%, 1.07 18.5%, 1.08 21.2%, 1.05 27.5%, 1.02 33%, 1 45%, 0.99 55%, 1);
     }
-  `} />
+  `}
+  />
 );
-
 
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
@@ -63,22 +64,58 @@ import { UnauthenticatedLandingSection } from './UnauthenticatedLandingSection';
 
 // Kalpa desktop app icon
 const KalpaIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+  >
     <rect x="2" y="3" width="20" height="18" rx="3" fill="currentColor" opacity=".2" />
-    <rect x="2" y="3" width="20" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" fill="none" />
+    <rect
+      x="2"
+      y="3"
+      width="20"
+      height="18"
+      rx="3"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+    />
     <path d="M2 7h20" stroke="currentColor" strokeWidth="1.5" />
     <circle cx="5" cy="5" r=".75" fill="currentColor" />
     <circle cx="7.5" cy="5" r=".75" fill="currentColor" />
     <circle cx="10" cy="5" r=".75" fill="currentColor" />
-    <path d="M7 12l3 3-3 3M12 18h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M7 12l3 3-3 3M12 18h5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
 // In-game addon icon (puzzle piece)
 const AddonIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z" fill="currentColor" opacity=".2" />
-    <path d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z" stroke="currentColor" strokeWidth="1.5" fill="none" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+    <path
+      d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z"
+      fill="currentColor"
+      opacity=".2"
+    />
+    <path
+      d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+    />
   </svg>
 );
 
@@ -559,9 +596,10 @@ const CommunitySection = styled(Box)(({ theme }) => ({
   position: 'relative',
   overflow: 'hidden',
   // Dot grid pattern background
-  backgroundImage: theme.palette.mode === 'dark'
-    ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)'
-    : 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px)',
+  backgroundImage:
+    theme.palette.mode === 'dark'
+      ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)'
+      : 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px)',
   backgroundSize: '24px 24px',
   // Animated gradient orbs
   '&::before': {
@@ -572,9 +610,10 @@ const CommunitySection = styled(Box)(({ theme }) => ({
     borderRadius: '50%',
     top: '-300px',
     right: '-300px',
-    background: theme.palette.mode === 'dark'
-      ? 'radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, transparent 60%)'
-      : 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 60%)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, transparent 60%)'
+        : 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 60%)',
     animation: 'communityOrb1 16s ease-in-out infinite',
     pointerEvents: 'none',
   },
@@ -586,9 +625,10 @@ const CommunitySection = styled(Box)(({ theme }) => ({
     borderRadius: '50%',
     bottom: '-250px',
     left: '-250px',
-    background: theme.palette.mode === 'dark'
-      ? 'radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 60%)'
-      : 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 60%)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 60%)'
+        : 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 60%)',
     animation: 'communityOrb2 20s ease-in-out infinite',
     pointerEvents: 'none',
   },
@@ -749,9 +789,21 @@ const CommunityIcon = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'accent',
 })<{ accent?: 'blue' | 'purple' | 'emerald' }>(({ theme, accent = 'blue' }) => {
   const colors = {
-    blue: { bg: 'rgba(56, 189, 248, 0.12)', border: 'rgba(56, 189, 248, 0.2)', shadow: 'rgba(56, 189, 248, 0.25)' },
-    purple: { bg: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.2)', shadow: 'rgba(139, 92, 246, 0.25)' },
-    emerald: { bg: 'rgba(52, 211, 153, 0.12)', border: 'rgba(52, 211, 153, 0.2)', shadow: 'rgba(52, 211, 153, 0.25)' },
+    blue: {
+      bg: 'rgba(56, 189, 248, 0.12)',
+      border: 'rgba(56, 189, 248, 0.2)',
+      shadow: 'rgba(56, 189, 248, 0.25)',
+    },
+    purple: {
+      bg: 'rgba(139, 92, 246, 0.12)',
+      border: 'rgba(139, 92, 246, 0.2)',
+      shadow: 'rgba(139, 92, 246, 0.25)',
+    },
+    emerald: {
+      bg: 'rgba(52, 211, 153, 0.12)',
+      border: 'rgba(52, 211, 153, 0.2)',
+      shadow: 'rgba(52, 211, 153, 0.25)',
+    },
   };
   const c = colors[accent];
   return {
@@ -791,9 +843,7 @@ const MarqueeWrapper = styled(Box)(({ theme }) => ({
   borderTop: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
   borderBottom: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
   padding: '1rem 0',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(255, 255, 255, 0.01)'
-    : 'rgba(0, 0, 0, 0.01)',
+  background: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.01)',
   [theme.breakpoints.down('sm')]: {
     margin: '1.5rem calc(-50vw + 50%) 1.5rem',
     padding: '0.75rem 0',
@@ -820,9 +870,7 @@ const MarqueeItem = styled(Box)(({ theme }) => ({
   gap: '0.5rem',
   whiteSpace: 'nowrap',
   cursor: 'default',
-  color: theme.palette.mode === 'dark'
-    ? 'rgba(255, 255, 255, 0.3)'
-    : 'rgba(0, 0, 0, 0.3)',
+  color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
   fontSize: '0.82rem',
   fontWeight: 500,
   letterSpacing: '0.02em',
@@ -849,7 +897,7 @@ const MarqueeItem = styled(Box)(({ theme }) => ({
   },
 }));
 
-const SectionTitle = styled(Typography, {
+const _SectionTitle = styled(Typography, {
   shouldForwardProp: (prop) => prop !== 'theme',
 })<{ theme?: Theme }>(({ theme: _theme }) => ({
   textAlign: 'center',
@@ -963,7 +1011,7 @@ const CommunityTitle = styled(Box)(({ theme }) => {
   };
 });
 
-const SectionSubtitle = styled(Typography)(({ theme }) => ({
+const _SectionSubtitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
   color: theme.palette.text.secondary,
   marginBottom: '4rem',
@@ -995,6 +1043,151 @@ const ToolsSection = styled(Container)(({ theme }) => ({
     padding: '0 1rem 2rem',
   },
 }));
+
+// ─── Hero → Tools transition bridge ────────────────────────────────────────────
+const ToolsBridge = styled(Box)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    position: 'relative',
+    width: '100%',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '4rem 2rem 3rem',
+    zIndex: 1,
+
+    [theme.breakpoints.down('md')]: {
+      padding: '3rem 1.5rem 2rem',
+    },
+    [theme.breakpoints.down('sm')]: {
+      padding: '2rem 1rem 1.5rem',
+    },
+
+    // ── Full-width ruled line with gradient glow ──
+    '& .bridge-rule': {
+      position: 'relative',
+      width: '100%',
+      height: '1px',
+      background: isDark
+        ? 'linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.3) 20%, rgba(129, 140, 248, 0.4) 50%, rgba(192, 132, 252, 0.3) 80%, transparent 100%)'
+        : 'linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 20%, rgba(99, 102, 241, 0.3) 50%, rgba(168, 85, 247, 0.2) 80%, transparent 100%)',
+      marginBottom: '3rem',
+
+      // Glow bloom behind the line
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: '-8px',
+        left: '10%',
+        right: '10%',
+        height: '16px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.08) 30%, rgba(129, 140, 248, 0.12) 50%, rgba(192, 132, 252, 0.08) 70%, transparent)'
+          : 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.05) 30%, rgba(99, 102, 241, 0.08) 50%, transparent)',
+        filter: 'blur(6px)',
+      },
+
+      // Scanning light dot
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '-3px',
+        left: 0,
+        width: '7px',
+        height: '7px',
+        borderRadius: '50%',
+        background: isDark ? '#38bdf8' : '#0ea5e9',
+        boxShadow: isDark
+          ? '0 0 12px 3px rgba(56, 189, 248, 0.4)'
+          : '0 0 10px 2px rgba(14, 165, 233, 0.3)',
+        animation: 'scanDot 4s ease-in-out infinite',
+      },
+
+      [theme.breakpoints.down('sm')]: {
+        marginBottom: '2rem',
+      },
+    },
+
+    // ── Heading row: number + text + counter ──
+    '& .bridge-heading': {
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: '1.25rem',
+      justifyContent: 'center',
+      flexWrap: 'wrap',
+
+      [theme.breakpoints.down('sm')]: {
+        gap: '0.75rem',
+      },
+    },
+
+    // Main title text
+    '& .bridge-title': {
+      fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+      fontWeight: 800,
+      lineHeight: 1.1,
+      letterSpacing: '-0.03em',
+      background: isDark
+        ? 'linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%)'
+        : 'linear-gradient(135deg, #1e293b 0%, #475569 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    },
+
+    // Gradient-accented word
+    '& .bridge-accent': {
+      fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+      fontWeight: 800,
+      lineHeight: 1.1,
+      letterSpacing: '-0.03em',
+      background: isDark
+        ? 'linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%)'
+        : 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #a855f7 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      backgroundSize: '200% 200%',
+      animation: 'gradientShift 6s ease-in-out infinite',
+    },
+
+    // Caption below heading
+    '& .bridge-caption': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.75rem',
+      marginTop: '1rem',
+      fontSize: '0.78rem',
+      fontWeight: 500,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const,
+      color: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.25)',
+
+      '&::before, &::after': {
+        content: '""',
+        width: '2.5rem',
+        height: '1px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12))'
+          : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.08))',
+        flexShrink: 0,
+      },
+      '&::after': {
+        background: isDark
+          ? 'linear-gradient(90deg, rgba(255,255,255,0.12), transparent)'
+          : 'linear-gradient(90deg, rgba(0,0,0,0.08), transparent)',
+      },
+    },
+
+    '@keyframes scanDot': {
+      '0%, 100%': { left: '0%', opacity: 0 },
+      '5%': { opacity: 1 },
+      '50%': { left: '100%', opacity: 1 },
+      '55%': { opacity: 0 },
+      '56%': { left: '0%' },
+    },
+  };
+});
 
 const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -1267,7 +1460,8 @@ const ToolAction = styled(Button)(({ theme }) => ({
 }));
 
 // Shared noise texture overlay (tiny inline SVG)
-const noiseOverlay = "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")";
+const noiseOverlay =
+  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")";
 
 // ─── Kalpa Showcase Section ──────────────────────────────────────────────────
 const kalpaAurora = {
@@ -1278,53 +1472,59 @@ const kalpaAurora = {
   },
 };
 
-const KalpaSection = styled(Box)(({ theme }) => ({
-  padding: '8rem 2rem',
-  position: 'relative',
-  overflow: 'hidden',
-  ...kalpaAurora,
-  // Scroll-driven reveal
-  animation: 'sectionReveal linear both',
-  animationTimeline: 'view()',
-  animationRange: 'entry 0% cover 20%',
-  // Dot grid pattern layer
-  backgroundImage: theme.palette.mode === 'dark'
-    ? 'radial-gradient(circle, rgba(139, 92, 246, 0.07) 1px, transparent 1px)'
-    : 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 1px, transparent 1px)',
-  backgroundSize: '28px 28px',
-  backgroundPosition: '14px 14px',
-  // Aurora gradient overlay + noise
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    inset: 0,
-    background: theme.palette.mode === 'dark'
-      ? `linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, transparent 35%, rgba(59, 130, 246, 0.04) 55%, transparent 100%), ${noiseOverlay}`
-      : `linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, transparent 35%, rgba(59, 130, 246, 0.02) 55%, transparent 100%), ${noiseOverlay}`,
-    backgroundSize: '200% 200%, 256px 256px',
-    animation: 'kalpaAurora 15s ease-in-out infinite',
-    pointerEvents: 'none',
-  },
-  // Animated gradient divider — shimmers via @property
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '2px',
-    background: theme.palette.mode === 'dark'
-      ? 'linear-gradient(90deg, transparent, rgba(139, 92, 246, var(--glow-opacity)) var(--divider-pos), transparent)'
-      : 'linear-gradient(90deg, transparent, rgba(139, 92, 246, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent)',
-    animation: 'dividerShimmer 6s ease-in-out infinite',
-  },
-  [theme.breakpoints.down('md')]: {
-    padding: '5rem 1.5rem',
-  },
-  [theme.breakpoints.down('sm')]: {
-    padding: '3.5rem 1rem',
-  },
-} as any));
+const KalpaSection = styled(Box)(
+  ({ theme }) =>
+    ({
+      padding: '8rem 2rem',
+      position: 'relative',
+      overflow: 'hidden',
+      ...kalpaAurora,
+      // Scroll-driven reveal
+      animation: 'sectionReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 20%',
+      // Dot grid pattern layer
+      backgroundImage:
+        theme.palette.mode === 'dark'
+          ? 'radial-gradient(circle, rgba(139, 92, 246, 0.07) 1px, transparent 1px)'
+          : 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 1px, transparent 1px)',
+      backgroundSize: '28px 28px',
+      backgroundPosition: '14px 14px',
+      // Aurora gradient overlay + noise
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        background:
+          theme.palette.mode === 'dark'
+            ? `linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, transparent 35%, rgba(59, 130, 246, 0.04) 55%, transparent 100%), ${noiseOverlay}`
+            : `linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, transparent 35%, rgba(59, 130, 246, 0.02) 55%, transparent 100%), ${noiseOverlay}`,
+        backgroundSize: '200% 200%, 256px 256px',
+        animation: 'kalpaAurora 15s ease-in-out infinite',
+        pointerEvents: 'none',
+      },
+      // Animated gradient divider — shimmers via @property
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '2px',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, transparent, rgba(139, 92, 246, var(--glow-opacity)) var(--divider-pos), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(139, 92, 246, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent)',
+        animation: 'dividerShimmer 6s ease-in-out infinite',
+      },
+      [theme.breakpoints.down('md')]: {
+        padding: '5rem 1.5rem',
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: '3.5rem 1rem',
+      },
+    }) as Record<string, unknown>,
+);
 
 const KalpaContent = styled(Box)(({ theme }) => ({
   maxWidth: '1100px',
@@ -1351,158 +1551,164 @@ const KalpaFeatureList = styled(Box)({
   marginTop: '2rem',
 });
 
-const KalpaFeatureRow = styled(Box)<{ delay?: number }>(({ theme, delay = 0 }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '0.75rem 1rem',
-  position: 'relative',
-  borderRadius: '10px',
-  cursor: 'default',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(139, 92, 246, 0.03)'
-    : 'rgba(139, 92, 246, 0.015)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  border: theme.palette.mode === 'dark'
-    ? '1px solid rgba(139, 92, 246, 0.06)'
-    : '1px solid rgba(139, 92, 246, 0.04)',
-  transition: 'all 0.4s var(--spring, cubic-bezier(0.4, 0, 0.2, 1))',
-  // Animated left accent bar
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    left: 0,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '3px',
-    height: '0%',
-    borderRadius: '0 3px 3px 0',
-    background: 'linear-gradient(180deg, #a78bfa, #8b5cf6, #6366f1)',
-    transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-    boxShadow: '0 0 8px rgba(139, 92, 246, 0.3)',
-  },
-  '&:hover': {
-    background: theme.palette.mode === 'dark'
-      ? 'rgba(139, 92, 246, 0.08)'
-      : 'rgba(139, 92, 246, 0.04)',
-    borderColor: theme.palette.mode === 'dark'
-      ? 'rgba(139, 92, 246, 0.15)'
-      : 'rgba(139, 92, 246, 0.1)',
-    transform: 'translateX(4px)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 4px 24px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(139, 92, 246, 0.06)'
-      : '0 4px 24px rgba(139, 92, 246, 0.04), inset 0 1px 0 rgba(139, 92, 246, 0.03)',
-    '&::before': {
-      height: '60%',
-    },
-    '& .feature-index': {
-      color: '#8b5cf6',
-      opacity: 1,
-      textShadow: '0 0 12px rgba(139, 92, 246, 0.4)',
-    },
-    '& .feature-title': {
-      color: theme.palette.text.primary,
-    },
-  },
-  // Scroll-driven reveal — each row appears as it enters the viewport
-  animation: 'featureReveal linear both',
-  animationTimeline: 'view()',
-  animationRange: 'entry 0% cover 30%',
-  '& .feature-index': {
-    fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
-    fontSize: '0.68rem',
-    fontWeight: 500,
-    color: theme.palette.text.disabled,
-    opacity: 0.5,
-    letterSpacing: '0.02em',
-    flexShrink: 0,
-    width: '1.5rem',
-    transition: 'all 0.35s var(--spring, ease)',
-  },
-  '& .feature-title': {
-    fontSize: '0.88rem',
-    fontWeight: 600,
-    color: theme.palette.text.secondary,
-    transition: 'color 0.35s var(--spring, ease)',
-    flexShrink: 0,
-  },
-  '& .feature-desc': {
-    fontSize: '0.78rem',
-    fontWeight: 300,
-    color: theme.palette.text.disabled,
-    marginLeft: 'auto',
-    textAlign: 'right',
-    opacity: 0.7,
-    [theme.breakpoints.down('sm')]: {
-      display: 'none',
-    },
-  },
-} as any));
+const KalpaFeatureRow = styled(Box)<{ delay?: number }>(
+  ({ theme, delay: _delay = 0 }) =>
+    ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1rem',
+      padding: '0.75rem 1rem',
+      position: 'relative',
+      borderRadius: '10px',
+      cursor: 'default',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.03)' : 'rgba(139, 92, 246, 0.015)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      border:
+        theme.palette.mode === 'dark'
+          ? '1px solid rgba(139, 92, 246, 0.06)'
+          : '1px solid rgba(139, 92, 246, 0.04)',
+      transition: 'all 0.4s var(--spring, cubic-bezier(0.4, 0, 0.2, 1))',
+      // Animated left accent bar
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: '3px',
+        height: '0%',
+        borderRadius: '0 3px 3px 0',
+        background: 'linear-gradient(180deg, #a78bfa, #8b5cf6, #6366f1)',
+        transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 0 8px rgba(139, 92, 246, 0.3)',
+      },
+      '&:hover': {
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(139, 92, 246, 0.04)',
+        borderColor:
+          theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)',
+        transform: 'translateX(4px)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 4px 24px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(139, 92, 246, 0.06)'
+            : '0 4px 24px rgba(139, 92, 246, 0.04), inset 0 1px 0 rgba(139, 92, 246, 0.03)',
+        '&::before': {
+          height: '60%',
+        },
+        '& .feature-index': {
+          color: '#8b5cf6',
+          opacity: 1,
+          textShadow: '0 0 12px rgba(139, 92, 246, 0.4)',
+        },
+        '& .feature-title': {
+          color: theme.palette.text.primary,
+        },
+      },
+      // Scroll-driven reveal — each row appears as it enters the viewport
+      animation: 'featureReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 30%',
+      '& .feature-index': {
+        fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+        fontSize: '0.68rem',
+        fontWeight: 500,
+        color: theme.palette.text.disabled,
+        opacity: 0.5,
+        letterSpacing: '0.02em',
+        flexShrink: 0,
+        width: '1.5rem',
+        transition: 'all 0.35s var(--spring, ease)',
+      },
+      '& .feature-title': {
+        fontSize: '0.88rem',
+        fontWeight: 600,
+        color: theme.palette.text.secondary,
+        transition: 'color 0.35s var(--spring, ease)',
+        flexShrink: 0,
+      },
+      '& .feature-desc': {
+        fontSize: '0.78rem',
+        fontWeight: 300,
+        color: theme.palette.text.disabled,
+        marginLeft: 'auto',
+        textAlign: 'right',
+        opacity: 0.7,
+        [theme.breakpoints.down('sm')]: {
+          display: 'none',
+        },
+      },
+    }) as Record<string, unknown>,
+);
 
 // Mock desktop app window with 3D depth + scroll-driven parallax
-const KalpaAppWindow = styled(Box)(({ theme }) => ({
-  '--panel-ry': '-2deg',
-  '--panel-rx': '1deg',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(15, 15, 25, 0.95)'
-    : 'rgba(250, 250, 252, 0.98)',
-  borderRadius: '14px',
-  overflow: 'hidden',
-  position: 'relative',
-  zIndex: 1,
-  transform: 'rotateY(-2deg) rotateX(1deg)',
-  transformStyle: 'preserve-3d',
-  // Scroll-driven parallax — drifts vertically as section scrolls
-  animation: 'panelParallax linear both',
-  animationTimeline: 'view()',
-  animationRange: 'cover 0% cover 100%',
-  boxShadow: theme.palette.mode === 'dark'
-    ? '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.1), 0 0 60px rgba(139, 92, 246, 0.06)'
-    : '0 25px 80px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.08), 0 0 60px rgba(139, 92, 246, 0.03)',
-  // Spring easing on hover
-  transition: 'box-shadow 0.5s ease',
-  // Floating glow orb behind — large and visible
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: '10%',
-    left: '-25%',
-    width: '80%',
-    height: '80%',
-    borderRadius: '50%',
-    background: theme.palette.mode === 'dark'
-      ? 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 65%)'
-      : 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 65%)',
-    filter: 'blur(50px)',
-    zIndex: -1,
-    pointerEvents: 'none',
-    transition: 'opacity 0.5s ease',
-  },
-  '&:hover': {
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 40px 100px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.2), 0 0 100px rgba(139, 92, 246, 0.12)'
-      : '0 40px 100px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(139, 92, 246, 0.15), 0 0 100px rgba(139, 92, 246, 0.06)',
-  },
-  [theme.breakpoints.down('md')]: {
-    maxWidth: '420px',
-    margin: '0 auto',
-    animation: 'none',
-    transform: 'none',
-  },
-} as any));
+const KalpaAppWindow = styled(Box)(
+  ({ theme }) =>
+    ({
+      '--panel-ry': '-2deg',
+      '--panel-rx': '1deg',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(15, 15, 25, 0.95)' : 'rgba(250, 250, 252, 0.98)',
+      borderRadius: '14px',
+      overflow: 'hidden',
+      position: 'relative',
+      zIndex: 1,
+      transform: 'rotateY(-2deg) rotateX(1deg)',
+      transformStyle: 'preserve-3d',
+      // Scroll-driven parallax — drifts vertically as section scrolls
+      animation: 'panelParallax linear both',
+      animationTimeline: 'view()',
+      animationRange: 'cover 0% cover 100%',
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.1), 0 0 60px rgba(139, 92, 246, 0.06)'
+          : '0 25px 80px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.08), 0 0 60px rgba(139, 92, 246, 0.03)',
+      // Spring easing on hover
+      transition: 'box-shadow 0.5s ease',
+      // Floating glow orb behind — large and visible
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '10%',
+        left: '-25%',
+        width: '80%',
+        height: '80%',
+        borderRadius: '50%',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 65%)'
+            : 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 65%)',
+        filter: 'blur(50px)',
+        zIndex: -1,
+        pointerEvents: 'none',
+        transition: 'opacity 0.5s ease',
+      },
+      '&:hover': {
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 40px 100px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.2), 0 0 100px rgba(139, 92, 246, 0.12)'
+            : '0 40px 100px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(139, 92, 246, 0.15), 0 0 100px rgba(139, 92, 246, 0.06)',
+      },
+      [theme.breakpoints.down('md')]: {
+        maxWidth: '420px',
+        margin: '0 auto',
+        animation: 'none',
+        transform: 'none',
+      },
+    }) as Record<string, unknown>,
+);
 
 const KalpaWindowTitleBar = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: '0.5rem',
   padding: '0.75rem 1rem',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(30, 30, 45, 0.9)'
-    : 'rgba(240, 240, 244, 0.95)',
-  borderBottom: theme.palette.mode === 'dark'
-    ? '1px solid rgba(255, 255, 255, 0.06)'
-    : '1px solid rgba(0, 0, 0, 0.06)',
+  background: theme.palette.mode === 'dark' ? 'rgba(30, 30, 45, 0.9)' : 'rgba(240, 240, 244, 0.95)',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.06)'
+      : '1px solid rgba(0, 0, 0, 0.06)',
 }));
 
 const KalpaAddonRow = styled(Box)(({ theme }) => ({
@@ -1510,14 +1716,14 @@ const KalpaAddonRow = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '0.7rem 1rem',
-  borderBottom: theme.palette.mode === 'dark'
-    ? '1px solid rgba(255, 255, 255, 0.04)'
-    : '1px solid rgba(0, 0, 0, 0.04)',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.04)'
+      : '1px solid rgba(0, 0, 0, 0.04)',
   transition: 'background 0.15s ease',
   '&:hover': {
-    background: theme.palette.mode === 'dark'
-      ? 'rgba(139, 92, 246, 0.06)'
-      : 'rgba(139, 92, 246, 0.03)',
+    background:
+      theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.06)' : 'rgba(139, 92, 246, 0.03)',
   },
   '&:last-child': {
     borderBottom: 'none',
@@ -1532,53 +1738,59 @@ const esotkScanline = {
   },
 };
 
-const EsotkSection = styled(Box)(({ theme }) => ({
-  padding: '8rem 2rem',
-  position: 'relative',
-  overflow: 'hidden',
-  // Scroll-driven reveal
-  animation: 'sectionReveal linear both',
-  animationTimeline: 'view()',
-  animationRange: 'entry 0% cover 20%',
-  // Dot grid pattern
-  backgroundImage: theme.palette.mode === 'dark'
-    ? 'radial-gradient(circle, rgba(245, 158, 11, 0.06) 1px, transparent 1px)'
-    : 'radial-gradient(circle, rgba(180, 120, 20, 0.035) 1px, transparent 1px)',
-  backgroundSize: '28px 28px',
-  backgroundPosition: '14px 14px',
-  // Animated gradient divider
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '2px',
-    background: theme.palette.mode === 'dark'
-      ? 'linear-gradient(90deg, transparent, rgba(245, 158, 11, var(--glow-opacity)) var(--divider-pos), transparent)'
-      : 'linear-gradient(90deg, transparent, rgba(180, 120, 20, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent)',
-    animation: 'dividerShimmer 6s ease-in-out infinite',
-    animationDelay: '-3s',
-  },
-  // Gradient blobs + noise
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    inset: 0,
-    background: theme.palette.mode === 'dark'
-      ? `radial-gradient(ellipse at 30% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(217, 119, 6, 0.04) 0%, transparent 50%), ${noiseOverlay}`
-      : `radial-gradient(ellipse at 30% 40%, rgba(245, 158, 11, 0.025) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(217, 119, 6, 0.02) 0%, transparent 50%), ${noiseOverlay}`,
-    backgroundSize: '100% 100%, 100% 100%, 256px 256px',
-    pointerEvents: 'none',
-    zIndex: 0,
-  },
-  [theme.breakpoints.down('md')]: {
-    padding: '5rem 1.5rem',
-  },
-  [theme.breakpoints.down('sm')]: {
-    padding: '3.5rem 1rem',
-  },
-} as any));
+const EsotkSection = styled(Box)(
+  ({ theme }) =>
+    ({
+      padding: '8rem 2rem',
+      position: 'relative',
+      overflow: 'hidden',
+      // Scroll-driven reveal
+      animation: 'sectionReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 20%',
+      // Dot grid pattern
+      backgroundImage:
+        theme.palette.mode === 'dark'
+          ? 'radial-gradient(circle, rgba(245, 158, 11, 0.06) 1px, transparent 1px)'
+          : 'radial-gradient(circle, rgba(180, 120, 20, 0.035) 1px, transparent 1px)',
+      backgroundSize: '28px 28px',
+      backgroundPosition: '14px 14px',
+      // Animated gradient divider
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '2px',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, transparent, rgba(245, 158, 11, var(--glow-opacity)) var(--divider-pos), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(180, 120, 20, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent)',
+        animation: 'dividerShimmer 6s ease-in-out infinite',
+        animationDelay: '-3s',
+      },
+      // Gradient blobs + noise
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        background:
+          theme.palette.mode === 'dark'
+            ? `radial-gradient(ellipse at 30% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(217, 119, 6, 0.04) 0%, transparent 50%), ${noiseOverlay}`
+            : `radial-gradient(ellipse at 30% 40%, rgba(245, 158, 11, 0.025) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(217, 119, 6, 0.02) 0%, transparent 50%), ${noiseOverlay}`,
+        backgroundSize: '100% 100%, 100% 100%, 256px 256px',
+        pointerEvents: 'none',
+        zIndex: 0,
+      },
+      [theme.breakpoints.down('md')]: {
+        padding: '5rem 1.5rem',
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: '3.5rem 1rem',
+      },
+    }) as Record<string, unknown>,
+);
 
 const EsotkContent = styled(Box)(({ theme }) => ({
   maxWidth: '1100px',
@@ -1608,171 +1820,185 @@ const EsotkFeatureList = styled(Box)({
   marginTop: '2rem',
 });
 
-const EsotkFeatureRow = styled(Box)<{ delay?: number }>(({ theme, delay = 0 }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '0.75rem 1rem',
-  position: 'relative',
-  borderRadius: '10px',
-  cursor: 'default',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(245, 158, 11, 0.02)'
-    : 'rgba(180, 120, 20, 0.01)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  border: theme.palette.mode === 'dark'
-    ? '1px solid rgba(245, 158, 11, 0.05)'
-    : '1px solid rgba(180, 120, 20, 0.04)',
-  transition: 'all 0.4s var(--spring, cubic-bezier(0.4, 0, 0.2, 1))',
-  // Animated left accent bar
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    left: 0,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '3px',
-    height: '0%',
-    borderRadius: '0 3px 3px 0',
-    background: theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, #fbbf24, #f59e0b, #d97706)'
-      : 'linear-gradient(180deg, #b47814, #92610e, #7a510c)',
-    transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 0 8px rgba(245, 158, 11, 0.3)'
-      : '0 0 8px rgba(180, 120, 20, 0.15)',
-  },
-  '&:hover': {
-    background: theme.palette.mode === 'dark'
-      ? 'rgba(245, 158, 11, 0.06)'
-      : 'rgba(180, 120, 20, 0.03)',
-    borderColor: theme.palette.mode === 'dark'
-      ? 'rgba(245, 158, 11, 0.12)'
-      : 'rgba(180, 120, 20, 0.08)',
-    transform: 'translateX(4px)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 4px 24px rgba(245, 158, 11, 0.06), inset 0 1px 0 rgba(245, 158, 11, 0.04)'
-      : '0 4px 24px rgba(180, 120, 20, 0.03), inset 0 1px 0 rgba(180, 120, 20, 0.02)',
-    '&::before': {
-      height: '60%',
-    },
-    '& .feature-index': {
-      color: theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
-      opacity: 1,
-      textShadow: theme.palette.mode === 'dark'
-        ? '0 0 12px rgba(245, 158, 11, 0.4)'
-        : '0 0 12px rgba(180, 120, 20, 0.2)',
-    },
-    '& .feature-title': {
-      color: theme.palette.text.primary,
-    },
-  },
-  // Scroll-driven reveal
-  animation: 'featureReveal linear both',
-  animationTimeline: 'view()',
-  animationRange: 'entry 0% cover 30%',
-  '& .feature-index': {
-    fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
-    fontSize: '0.68rem',
-    fontWeight: 500,
-    color: theme.palette.text.disabled,
-    opacity: 0.5,
-    letterSpacing: '0.02em',
-    flexShrink: 0,
-    width: '1.5rem',
-    transition: 'all 0.35s var(--spring, ease)',
-  },
-  '& .feature-title': {
-    fontSize: '0.88rem',
-    fontWeight: 600,
-    color: theme.palette.text.secondary,
-    transition: 'color 0.35s var(--spring, ease)',
-    flexShrink: 0,
-  },
-  '& .feature-desc': {
-    fontSize: '0.78rem',
-    fontWeight: 300,
-    color: theme.palette.text.disabled,
-    marginLeft: 'auto',
-    textAlign: 'right',
-    opacity: 0.7,
-    [theme.breakpoints.down('sm')]: {
-      display: 'none',
-    },
-  },
-} as any));
+const EsotkFeatureRow = styled(Box)<{ delay?: number }>(
+  ({ theme, delay: _delay = 0 }) =>
+    ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1rem',
+      padding: '0.75rem 1rem',
+      position: 'relative',
+      borderRadius: '10px',
+      cursor: 'default',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.02)' : 'rgba(180, 120, 20, 0.01)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      border:
+        theme.palette.mode === 'dark'
+          ? '1px solid rgba(245, 158, 11, 0.05)'
+          : '1px solid rgba(180, 120, 20, 0.04)',
+      transition: 'all 0.4s var(--spring, cubic-bezier(0.4, 0, 0.2, 1))',
+      // Animated left accent bar
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: '3px',
+        height: '0%',
+        borderRadius: '0 3px 3px 0',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, #fbbf24, #f59e0b, #d97706)'
+            : 'linear-gradient(180deg, #b47814, #92610e, #7a510c)',
+        transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 0 8px rgba(245, 158, 11, 0.3)'
+            : '0 0 8px rgba(180, 120, 20, 0.15)',
+      },
+      '&:hover': {
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.06)' : 'rgba(180, 120, 20, 0.03)',
+        borderColor:
+          theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(180, 120, 20, 0.08)',
+        transform: 'translateX(4px)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 4px 24px rgba(245, 158, 11, 0.06), inset 0 1px 0 rgba(245, 158, 11, 0.04)'
+            : '0 4px 24px rgba(180, 120, 20, 0.03), inset 0 1px 0 rgba(180, 120, 20, 0.02)',
+        '&::before': {
+          height: '60%',
+        },
+        '& .feature-index': {
+          color: theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
+          opacity: 1,
+          textShadow:
+            theme.palette.mode === 'dark'
+              ? '0 0 12px rgba(245, 158, 11, 0.4)'
+              : '0 0 12px rgba(180, 120, 20, 0.2)',
+        },
+        '& .feature-title': {
+          color: theme.palette.text.primary,
+        },
+      },
+      // Scroll-driven reveal
+      animation: 'featureReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 30%',
+      '& .feature-index': {
+        fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+        fontSize: '0.68rem',
+        fontWeight: 500,
+        color: theme.palette.text.disabled,
+        opacity: 0.5,
+        letterSpacing: '0.02em',
+        flexShrink: 0,
+        width: '1.5rem',
+        transition: 'all 0.35s var(--spring, ease)',
+      },
+      '& .feature-title': {
+        fontSize: '0.88rem',
+        fontWeight: 600,
+        color: theme.palette.text.secondary,
+        transition: 'color 0.35s var(--spring, ease)',
+        flexShrink: 0,
+      },
+      '& .feature-desc': {
+        fontSize: '0.78rem',
+        fontWeight: 300,
+        color: theme.palette.text.disabled,
+        marginLeft: 'auto',
+        textAlign: 'right',
+        opacity: 0.7,
+        [theme.breakpoints.down('sm')]: {
+          display: 'none',
+        },
+      },
+    }) as Record<string, unknown>,
+);
 
 // Game-UI styled panel with ornate borders, 3D depth + scroll parallax
-const EsotkGamePanel = styled(Box)(({ theme }) => ({
-  '--panel-ry': '2deg',
-  '--panel-rx': '1deg',
-  position: 'relative',
-  padding: '4px',
-  borderRadius: '4px',
-  zIndex: 1,
-  transform: 'rotateY(2deg) rotateX(1deg)',
-  transformStyle: 'preserve-3d',
-  // Scroll-driven parallax
-  animation: 'panelParallax linear both',
-  animationTimeline: 'view()',
-  animationRange: 'cover 0% cover 100%',
-  background: theme.palette.mode === 'dark'
-    ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0%, rgba(217, 119, 6, 0.2) 25%, rgba(245, 158, 11, 0.35) 50%, rgba(217, 119, 6, 0.2) 75%, rgba(245, 158, 11, 0.4) 100%)'
-    : 'linear-gradient(135deg, rgba(180, 120, 20, 0.35) 0%, rgba(160, 100, 20, 0.15) 25%, rgba(180, 120, 20, 0.3) 50%, rgba(160, 100, 20, 0.15) 75%, rgba(180, 120, 20, 0.35) 100%)',
-  transition: 'box-shadow 0.5s ease',
-  boxShadow: theme.palette.mode === 'dark'
-    ? '0 25px 80px rgba(0, 0, 0, 0.4), 0 0 60px rgba(245, 158, 11, 0.04)'
-    : '0 25px 80px rgba(15, 23, 42, 0.1), 0 0 60px rgba(180, 120, 20, 0.02)',
-  ...esotkScanline,
-  // Scanline effect
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    left: '8px',
-    right: '8px',
-    height: '4px',
-    background: theme.palette.mode === 'dark'
-      ? 'linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.15), transparent)'
-      : 'linear-gradient(90deg, transparent, rgba(180, 120, 20, 0.08), transparent)',
-    animation: 'esotkScanline 4s linear infinite',
-    pointerEvents: 'none',
-    zIndex: 2,
-    borderRadius: '2px',
-  },
-  // Floating glow orb behind — large and visible
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: '10%',
-    right: '-25%',
-    width: '80%',
-    height: '80%',
-    borderRadius: '50%',
-    background: theme.palette.mode === 'dark'
-      ? 'radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.07) 40%, transparent 65%)'
-      : 'radial-gradient(circle, rgba(180, 120, 20, 0.1) 0%, rgba(160, 100, 20, 0.03) 40%, transparent 65%)',
-    filter: 'blur(50px)',
-    zIndex: -1,
-    pointerEvents: 'none',
-  },
-  '&:hover': {
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 40px 100px rgba(0, 0, 0, 0.5), 0 0 100px rgba(245, 158, 11, 0.08)'
-      : '0 40px 100px rgba(15, 23, 42, 0.14), 0 0 100px rgba(180, 120, 20, 0.04)',
-  },
-  [theme.breakpoints.down('md')]: {
-    maxWidth: '420px',
-    margin: '0 auto',
-    animation: 'none',
-    transform: 'none',
-  },
-} as any));
+const EsotkGamePanel = styled(Box)(
+  ({ theme }) =>
+    ({
+      '--panel-ry': '2deg',
+      '--panel-rx': '1deg',
+      position: 'relative',
+      padding: '4px',
+      borderRadius: '4px',
+      zIndex: 1,
+      transform: 'rotateY(2deg) rotateX(1deg)',
+      transformStyle: 'preserve-3d',
+      // Scroll-driven parallax
+      animation: 'panelParallax linear both',
+      animationTimeline: 'view()',
+      animationRange: 'cover 0% cover 100%',
+      background:
+        theme.palette.mode === 'dark'
+          ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0%, rgba(217, 119, 6, 0.2) 25%, rgba(245, 158, 11, 0.35) 50%, rgba(217, 119, 6, 0.2) 75%, rgba(245, 158, 11, 0.4) 100%)'
+          : 'linear-gradient(135deg, rgba(180, 120, 20, 0.35) 0%, rgba(160, 100, 20, 0.15) 25%, rgba(180, 120, 20, 0.3) 50%, rgba(160, 100, 20, 0.15) 75%, rgba(180, 120, 20, 0.35) 100%)',
+      transition: 'box-shadow 0.5s ease',
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 25px 80px rgba(0, 0, 0, 0.4), 0 0 60px rgba(245, 158, 11, 0.04)'
+          : '0 25px 80px rgba(15, 23, 42, 0.1), 0 0 60px rgba(180, 120, 20, 0.02)',
+      ...esotkScanline,
+      // Scanline effect
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: '8px',
+        right: '8px',
+        height: '4px',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.15), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(180, 120, 20, 0.08), transparent)',
+        animation: 'esotkScanline 4s linear infinite',
+        pointerEvents: 'none',
+        zIndex: 2,
+        borderRadius: '2px',
+      },
+      // Floating glow orb behind — large and visible
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '10%',
+        right: '-25%',
+        width: '80%',
+        height: '80%',
+        borderRadius: '50%',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.07) 40%, transparent 65%)'
+            : 'radial-gradient(circle, rgba(180, 120, 20, 0.1) 0%, rgba(160, 100, 20, 0.03) 40%, transparent 65%)',
+        filter: 'blur(50px)',
+        zIndex: -1,
+        pointerEvents: 'none',
+      },
+      '&:hover': {
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 40px 100px rgba(0, 0, 0, 0.5), 0 0 100px rgba(245, 158, 11, 0.08)'
+            : '0 40px 100px rgba(15, 23, 42, 0.14), 0 0 100px rgba(180, 120, 20, 0.04)',
+      },
+      [theme.breakpoints.down('md')]: {
+        maxWidth: '420px',
+        margin: '0 auto',
+        animation: 'none',
+        transform: 'none',
+      },
+    }) as Record<string, unknown>,
+);
 
 const EsotkGamePanelInner = styled(Box)(({ theme }) => ({
-  background: theme.palette.mode === 'dark'
-    ? 'linear-gradient(180deg, rgba(15, 12, 8, 0.97) 0%, rgba(20, 16, 10, 0.95) 100%)'
-    : 'linear-gradient(180deg, rgba(255, 252, 245, 0.98) 0%, rgba(250, 245, 235, 0.96) 100%)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(15, 12, 8, 0.97) 0%, rgba(20, 16, 10, 0.95) 100%)'
+      : 'linear-gradient(180deg, rgba(255, 252, 245, 0.98) 0%, rgba(250, 245, 235, 0.96) 100%)',
   borderRadius: '2px',
   overflow: 'hidden',
   position: 'relative',
@@ -1783,12 +2009,14 @@ const EsotkPanelTitleBar = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   padding: '0.6rem 1rem',
-  background: theme.palette.mode === 'dark'
-    ? 'linear-gradient(180deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)'
-    : 'linear-gradient(180deg, rgba(180, 120, 20, 0.08) 0%, rgba(180, 120, 20, 0.02) 100%)',
-  borderBottom: theme.palette.mode === 'dark'
-    ? '1px solid rgba(245, 158, 11, 0.15)'
-    : '1px solid rgba(180, 120, 20, 0.1)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)'
+      : 'linear-gradient(180deg, rgba(180, 120, 20, 0.08) 0%, rgba(180, 120, 20, 0.02) 100%)',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(245, 158, 11, 0.15)'
+      : '1px solid rgba(180, 120, 20, 0.1)',
   position: 'relative',
   '&::before, &::after': {
     content: '"◆"',
@@ -1807,14 +2035,14 @@ const EsotkAddonRow = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   gap: '0.75rem',
   padding: '0.65rem 1rem',
-  borderBottom: theme.palette.mode === 'dark'
-    ? '1px solid rgba(245, 158, 11, 0.06)'
-    : '1px solid rgba(180, 120, 20, 0.04)',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(245, 158, 11, 0.06)'
+      : '1px solid rgba(180, 120, 20, 0.04)',
   transition: 'background 0.15s ease',
   '&:hover': {
-    background: theme.palette.mode === 'dark'
-      ? 'rgba(245, 158, 11, 0.05)'
-      : 'rgba(180, 120, 20, 0.03)',
+    background:
+      theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(180, 120, 20, 0.03)',
   },
   '&:last-child': {
     borderBottom: 'none',
@@ -2047,18 +2275,24 @@ export const LandingPage: React.FC = () => {
         </HeroContent>
       </HeroSection>
 
-      <ToolsSection id="tools" ref={toolsSectionRef}>
-        <Box
-          sx={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.6s ease-out',
-          }}
-        >
-          <SectionTitle variant="h2">Our Tools</SectionTitle>
-          <SectionSubtitle>Everything you need to excel in Tamriel</SectionSubtitle>
-        </Box>
+      {/* ── Hero → Tools transition bridge ── */}
+      <ToolsBridge
+        sx={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
+          filter: isVisible ? 'blur(0)' : 'blur(4px)',
+          transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        <div className="bridge-rule" />
+        <div className="bridge-heading">
+          <span className="bridge-title">The&nbsp;</span>
+          <span className="bridge-accent">Arsenal</span>
+        </div>
+        <div className="bridge-caption">Craft &middot; Optimize &middot; Dominate</div>
+      </ToolsBridge>
 
+      <ToolsSection id="tools" ref={toolsSectionRef}>
         <Box
           sx={{
             opacity: isVisible ? 1 : 0,
@@ -2138,16 +2372,8 @@ export const LandingPage: React.FC = () => {
                 <li>Skill usage tracking</li>
                 <li>Real-time fight insights</li>
               </ToolFeatures>
-              <ToolAction
-                onClick={() =>
-                  window.open(
-                    'https://github.com/ESO-Toolkit/eso-toolkit',
-                    '_blank',
-                    'noopener,noreferrer',
-                  )
-                }
-              >
-                View on GitHub
+              <ToolAction onClick={() => navigate('/my-reports', { vtType: 'up' })}>
+                Open Log Analyzer
               </ToolAction>
             </ToolCard>
 
@@ -2170,16 +2396,8 @@ export const LandingPage: React.FC = () => {
                 <li>Raid signup tracking</li>
                 <li>Role assignment system</li>
               </ToolFeatures>
-              <ToolAction
-                onClick={() =>
-                  window.open(
-                    'https://github.com/ESO-Toolkit/eso-toolkit/pull/924',
-                    '_blank',
-                    'noopener,noreferrer',
-                  )
-                }
-              >
-                View on GitHub
+              <ToolAction onClick={() => navigate('/roster-builder', { vtType: 'up' })}>
+                Open Roster Builder
               </ToolAction>
             </ToolCard>
           </ToolsGrid>
@@ -2197,9 +2415,10 @@ export const LandingPage: React.FC = () => {
             fontWeight: 900,
             lineHeight: 1,
             color: 'transparent',
-            WebkitTextStroke: theme.palette.mode === 'dark'
-              ? '1px rgba(139, 92, 246, 0.06)'
-              : '1px rgba(139, 92, 246, 0.04)',
+            WebkitTextStroke:
+              theme.palette.mode === 'dark'
+                ? '1px rgba(139, 92, 246, 0.06)'
+                : '1px rgba(139, 92, 246, 0.04)',
             userSelect: 'none',
             pointerEvents: 'none',
             zIndex: 0,
@@ -2266,7 +2485,8 @@ export const LandingPage: React.FC = () => {
               <Box
                 component="span"
                 sx={{
-                  background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 40%, #6366f1 70%, #818cf8 100%)',
+                  background:
+                    'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 40%, #6366f1 70%, #818cf8 100%)',
                   backgroundSize: '200% 200%',
                   animation: 'kalpaAurora 6s ease-in-out infinite',
                   WebkitBackgroundClip: 'text',
@@ -2387,7 +2607,8 @@ export const LandingPage: React.FC = () => {
                 sx={(theme: Theme) => ({
                   fontSize: '0.7rem',
                   fontWeight: 500,
-                  color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                  color:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
                   letterSpacing: '0.02em',
                   flex: 1,
                   textAlign: 'center',
@@ -2407,8 +2628,12 @@ export const LandingPage: React.FC = () => {
                 px: 1,
                 py: 0.5,
                 borderRadius: '6px',
-                background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                border: theme.palette.mode === 'dark' ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+                background:
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                border:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255,255,255,0.06)'
+                    : '1px solid rgba(0,0,0,0.06)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
@@ -2418,7 +2643,8 @@ export const LandingPage: React.FC = () => {
               <Typography
                 sx={(theme: Theme) => ({
                   fontSize: '0.72rem',
-                  color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                  color:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
                   fontWeight: 400,
                 })}
               >
@@ -2445,7 +2671,8 @@ export const LandingPage: React.FC = () => {
                         width: 24,
                         height: 24,
                         borderRadius: '5px',
-                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
+                        background:
+                          'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
                         border: '1px solid rgba(139, 92, 246, 0.15)',
                         flexShrink: 0,
                         display: 'flex',
@@ -2489,7 +2716,8 @@ export const LandingPage: React.FC = () => {
                       flexShrink: 0,
                       ...(addon.status === 'Update'
                         ? {
-                            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
+                            background:
+                              'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
                             color: '#a78bfa',
                             border: '1px solid rgba(139, 92, 246, 0.2)',
                           }
@@ -2514,7 +2742,10 @@ export const LandingPage: React.FC = () => {
                 alignItems: 'center',
                 px: '1rem',
                 py: '0.45rem',
-                borderTop: theme.palette.mode === 'dark' ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(0,0,0,0.04)',
+                borderTop:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255,255,255,0.04)'
+                    : '1px solid rgba(0,0,0,0.04)',
               })}
             >
               <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
@@ -2550,9 +2781,10 @@ export const LandingPage: React.FC = () => {
             fontWeight: 900,
             lineHeight: 1,
             color: 'transparent',
-            WebkitTextStroke: theme.palette.mode === 'dark'
-              ? '1px rgba(245, 158, 11, 0.06)'
-              : '1px rgba(180, 120, 20, 0.04)',
+            WebkitTextStroke:
+              theme.palette.mode === 'dark'
+                ? '1px rgba(245, 158, 11, 0.06)'
+                : '1px rgba(180, 120, 20, 0.04)',
             userSelect: 'none',
             pointerEvents: 'none',
             zIndex: 0,
@@ -2590,29 +2822,32 @@ export const LandingPage: React.FC = () => {
                   fontWeight: 600,
                   textTransform: 'uppercase',
                   letterSpacing: '0.12em',
-                  color: (theme: Theme) =>
-                    theme.palette.mode === 'dark' ? '#f59e0b' : '#b47814',
+                  color: (theme: Theme) => (theme.palette.mode === 'dark' ? '#f59e0b' : '#b47814'),
                 }}
               >
                 In-Game Addon
               </Typography>
               <Box
                 sx={{
-                  px: 0.6,
-                  py: 0.1,
-                  borderRadius: '3px',
+                  px: 0.8,
+                  py: 0.2,
+                  borderRadius: '4px',
                   background: (theme: Theme) =>
                     theme.palette.mode === 'dark'
-                      ? 'rgba(245, 158, 11, 0.15)'
-                      : 'rgba(180, 120, 20, 0.1)',
-                  fontSize: '0.6rem',
+                      ? 'rgba(245, 158, 11, 0.18)'
+                      : 'rgba(180, 120, 20, 0.12)',
+                  fontSize: '0.65rem',
                   fontWeight: 700,
-                  color: (theme: Theme) =>
-                    theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
-                  letterSpacing: '0.05em',
+                  color: (theme: Theme) => (theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e'),
+                  letterSpacing: '0.08em',
+                  animation: 'pulse 2s ease-in-out infinite',
+                  '@keyframes pulse': {
+                    '0%, 100%': { opacity: 1 },
+                    '50%': { opacity: 0.7 },
+                  },
                 }}
               >
-                SOON
+                COMING SOON
               </Box>
             </Box>
             <Typography
@@ -2654,8 +2889,9 @@ export const LandingPage: React.FC = () => {
                 maxWidth: '460px',
               }}
             >
-              Bridge the gap between web and game. Roster validation, group management, and gear
-              inspection — all directly inside your ESO client.
+              We&apos;re building a companion addon that bridges the gap between web and game.
+              Roster validation, group management, and gear inspection — all directly inside your
+              ESO client. Currently in development.
             </Typography>
 
             <EsotkFeatureList>
@@ -2691,16 +2927,17 @@ export const LandingPage: React.FC = () => {
               </EsotkFeatureRow>
             </EsotkFeatureList>
 
-            <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
               <Button
                 variant="outlined"
                 href="https://github.com/ESO-Toolkit/esotk-addon"
                 target="_blank"
                 rel="noopener noreferrer"
                 sx={(theme: Theme) => ({
-                  borderColor: theme.palette.mode === 'dark'
-                    ? 'rgba(245, 158, 11, 0.25)'
-                    : 'rgba(180, 120, 20, 0.2)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(245, 158, 11, 0.25)'
+                      : 'rgba(180, 120, 20, 0.2)',
                   color: theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
                   fontWeight: 600,
                   textTransform: 'none',
@@ -2708,19 +2945,31 @@ export const LandingPage: React.FC = () => {
                   padding: '0.7rem 1.8rem',
                   fontSize: '0.9rem',
                   '&:hover': {
-                    borderColor: theme.palette.mode === 'dark'
-                      ? 'rgba(245, 158, 11, 0.5)'
-                      : 'rgba(180, 120, 20, 0.4)',
-                    background: theme.palette.mode === 'dark'
-                      ? 'rgba(245, 158, 11, 0.04)'
-                      : 'rgba(180, 120, 20, 0.03)',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.5)'
+                        : 'rgba(180, 120, 20, 0.4)',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.04)'
+                        : 'rgba(180, 120, 20, 0.03)',
                     transform: 'translateY(-2px)',
                   },
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 })}
               >
-                View on GitHub
+                Follow on GitHub
               </Button>
+              <Typography
+                sx={{
+                  fontSize: '0.8rem',
+                  color: 'text.disabled',
+                  fontWeight: 400,
+                  fontStyle: 'italic',
+                }}
+              >
+                Not yet available for download
+              </Typography>
             </Box>
           </Box>
 
@@ -2734,7 +2983,10 @@ export const LandingPage: React.FC = () => {
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.15em',
-                    color: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.7)' : 'rgba(180, 120, 20, 0.6)',
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.7)'
+                        : 'rgba(180, 120, 20, 0.6)',
                   })}
                 >
                   ESOTK — Group Panel
@@ -2779,7 +3031,10 @@ export const LandingPage: React.FC = () => {
                         sx={(theme: Theme) => ({
                           fontSize: '0.73rem',
                           fontWeight: 600,
-                          color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.85)'
+                              : 'rgba(0,0,0,0.8)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -2790,7 +3045,10 @@ export const LandingPage: React.FC = () => {
                       <Typography
                         sx={(theme: Theme) => ({
                           fontSize: '0.6rem',
-                          color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.35)'
+                              : 'rgba(0,0,0,0.35)',
                         })}
                       >
                         {player.cls} · {player.role}
@@ -2800,7 +3058,10 @@ export const LandingPage: React.FC = () => {
                       sx={(theme: Theme) => ({
                         fontSize: '0.62rem',
                         fontWeight: 600,
-                        color: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.6)' : 'rgba(180, 120, 20, 0.5)',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(245, 158, 11, 0.6)'
+                            : 'rgba(180, 120, 20, 0.5)',
                         fontVariantNumeric: 'tabular-nums',
                         flexShrink: 0,
                       })}
@@ -2819,15 +3080,17 @@ export const LandingPage: React.FC = () => {
                   alignItems: 'center',
                   px: '1rem',
                   py: '0.5rem',
-                  borderTop: theme.palette.mode === 'dark'
-                    ? '1px solid rgba(245, 158, 11, 0.08)'
-                    : '1px solid rgba(180, 120, 20, 0.05)',
+                  borderTop:
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(245, 158, 11, 0.08)'
+                      : '1px solid rgba(180, 120, 20, 0.05)',
                 })}
               >
                 <Typography
                   sx={(theme: Theme) => ({
                     fontSize: '0.58rem',
-                    color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                    color:
+                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                   })}
@@ -2837,7 +3100,10 @@ export const LandingPage: React.FC = () => {
                 <Typography
                   sx={(theme: Theme) => ({
                     fontSize: '0.58rem',
-                    color: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(180, 120, 20, 0.3)',
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.4)'
+                        : 'rgba(180, 120, 20, 0.3)',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                   })}
@@ -2868,7 +3134,9 @@ export const LandingPage: React.FC = () => {
               <span className="community-title-light">Built by players,</span>
               <span className="community-title-bold"> for players.</span>
             </div>
-            <span className="community-caption">Always updated · Always free · Elder Scrolls Online</span>
+            <span className="community-caption">
+              Always updated · Always free · Elder Scrolls Online
+            </span>
           </CommunityTitle>
 
           {/* Infinite scrolling marquee */}
@@ -2877,12 +3145,24 @@ export const LandingPage: React.FC = () => {
               {/* Doubled for seamless loop */}
               {[0, 1].map((dupeIdx) => (
                 <Box key={dupeIdx} sx={{ display: 'flex', gap: '3rem' }}>
-                  <MarqueeItem><CalculatorIcon size="1rem" /> Build Calculator</MarqueeItem>
-                  <MarqueeItem><CvIcon size="1rem" /> Text-Editor</MarqueeItem>
-                  <MarqueeItem><FileLoopIcon size="1rem" /> Log Analyzer</MarqueeItem>
-                  <MarqueeItem><KalpaIcon size="1rem" /> Kalpa</MarqueeItem>
-                  <MarqueeItem><AddonIcon size="1rem" /> ESOTK Addon</MarqueeItem>
-                  <MarqueeItem><PeopleIcon size="1rem" /> Roster-Bot</MarqueeItem>
+                  <MarqueeItem>
+                    <CalculatorIcon size="1rem" /> Build Calculator
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <CvIcon size="1rem" /> Text-Editor
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <FileLoopIcon size="1rem" /> Log Analyzer
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <KalpaIcon size="1rem" /> Kalpa
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <AddonIcon size="1rem" /> ESOTK Addon
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <PeopleIcon size="1rem" /> Roster-Bot
+                  </MarqueeItem>
                 </Box>
               ))}
             </MarqueeTrack>
@@ -2891,7 +3171,15 @@ export const LandingPage: React.FC = () => {
           <CommunityGrid>
             {/* Card 01 — Hero left */}
             <CommunityCard accent="blue" data-number="01">
-              <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
                 <CommunityIcon accent="blue">🎮</CommunityIcon>
                 <Typography
                   variant="h5"
@@ -2915,7 +3203,8 @@ export const LandingPage: React.FC = () => {
                     [t.breakpoints.down('sm')]: { fontSize: '0.82rem' },
                   })}
                 >
-                  Every tool is shaped by hundreds of hours of actual gameplay across all content types — not guesswork.
+                  Every tool is shaped by hundreds of hours of actual gameplay across all content
+                  types — not guesswork.
                 </Typography>
                 {/* Content-type chips */}
                 <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 'auto', pt: 1.5 }}>
@@ -2930,8 +3219,14 @@ export const LandingPage: React.FC = () => {
                         fontWeight: 600,
                         letterSpacing: '0.05em',
                         textTransform: 'uppercase',
-                        color: t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.6)' : 'rgba(14, 165, 233, 0.7)',
-                        background: t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.05)' : 'rgba(14, 165, 233, 0.04)',
+                        color:
+                          t.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.6)'
+                            : 'rgba(14, 165, 233, 0.7)',
+                        background:
+                          t.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.05)'
+                            : 'rgba(14, 165, 233, 0.04)',
                         border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(14, 165, 233, 0.06)'}`,
                       })}
                     >
@@ -2944,7 +3239,15 @@ export const LandingPage: React.FC = () => {
 
             {/* Card 02 — Right side */}
             <CommunityCard accent="purple" data-number="02">
-              <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
                 <CommunityIcon accent="purple">🔄</CommunityIcon>
                 <Typography
                   variant="h5"
@@ -2984,7 +3287,8 @@ export const LandingPage: React.FC = () => {
                     [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
                   })}
                 >
-                  Updated with every patch, balance change, and meta shift so you&apos;re never behind.
+                  Updated with every patch, balance change, and meta shift so you&apos;re never
+                  behind.
                 </Typography>
                 <Typography
                   sx={(t: Theme) => ({
@@ -2992,7 +3296,10 @@ export const LandingPage: React.FC = () => {
                     pt: 1.5,
                     fontSize: '0.68rem',
                     fontWeight: 500,
-                    color: t.palette.mode === 'dark' ? 'rgba(167, 139, 250, 0.4)' : 'rgba(139, 92, 246, 0.4)',
+                    color:
+                      t.palette.mode === 'dark'
+                        ? 'rgba(167, 139, 250, 0.4)'
+                        : 'rgba(139, 92, 246, 0.4)',
                     letterSpacing: '0.04em',
                     textTransform: 'uppercase',
                   })}
@@ -3018,7 +3325,9 @@ export const LandingPage: React.FC = () => {
                   },
                 })}
               >
-                <CommunityIcon accent="emerald" sx={{ mb: 0, flexShrink: 0 }}>💬</CommunityIcon>
+                <CommunityIcon accent="emerald" sx={{ mb: 0, flexShrink: 0 }}>
+                  💬
+                </CommunityIcon>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
                     variant="h5"
@@ -3042,7 +3351,8 @@ export const LandingPage: React.FC = () => {
                       [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
                     })}
                   >
-                    Your feedback shapes development. Join Discord to suggest features and connect with players.
+                    Your feedback shapes development. Join Discord to suggest features and connect
+                    with players.
                   </Typography>
                 </Box>
                 <Box
@@ -3058,13 +3368,19 @@ export const LandingPage: React.FC = () => {
                     fontWeight: 600,
                     textDecoration: 'none',
                     color: t.palette.mode === 'dark' ? '#34d399' : '#059669',
-                    background: t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.06)' : 'rgba(16, 185, 129, 0.05)',
+                    background:
+                      t.palette.mode === 'dark'
+                        ? 'rgba(52, 211, 153, 0.06)'
+                        : 'rgba(16, 185, 129, 0.05)',
                     border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(16, 185, 129, 0.1)'}`,
                     transition: 'all 0.3s ease',
                     whiteSpace: 'nowrap',
                     flexShrink: 0,
                     '&:hover': {
-                      background: t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+                      background:
+                        t.palette.mode === 'dark'
+                          ? 'rgba(52, 211, 153, 0.1)'
+                          : 'rgba(16, 185, 129, 0.08)',
                       transform: 'translateY(-1px)',
                     },
                     [t.breakpoints.down('sm')]: {

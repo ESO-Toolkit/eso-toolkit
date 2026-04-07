@@ -4,6 +4,7 @@
  * during development so the Worker dev server Just Works.
  */
 
+import { getBaseUrl, getEnvVar } from '../../../utils/envUtils';
 import type {
   HubRoster,
   ListCommentsResponse,
@@ -38,8 +39,7 @@ function hydrateRoster(roster: HubRoster): HubRoster {
 }
 
 const BASE_URL =
-  (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ??
-  'https://roster-hub-api.eso-toolkit.workers.dev';
+  getEnvVar('VITE_ROSTER_HUB_API_URL') ?? 'https://roster-hub-api.eso-toolkit.workers.dev';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -159,7 +159,7 @@ export const rosterHubApi = {
 
   loadRosterIntoBuilder(roster: HubRoster): void {
     // Navigate to roster builder with the encoded roster data as the ?r= param
-    window.location.href = `${import.meta.env.BASE_URL}roster-builder?r=${encodeURIComponent(roster.roster_data)}`;
+    window.location.href = `${getBaseUrl()}roster-builder?r=${encodeURIComponent(roster.roster_data)}`;
   },
 
   // ─── Comments ──────────────────────────────────────────────────────────────
@@ -243,9 +243,9 @@ export const rosterHubApi = {
   lookupPlayerAvatars(
     players: { display_name: string; server: 'na' | 'eu' }[],
   ): Promise<{ avatars: Record<string, string> }> {
-    return request<{ avatars: Record<string, string> }>(
-      '/users/avatars/lookup',
-      { method: 'POST', body: JSON.stringify({ players }) },
-    );
+    return request<{ avatars: Record<string, string> }>('/users/avatars/lookup', {
+      method: 'POST',
+      body: JSON.stringify({ players }),
+    });
   },
 };
