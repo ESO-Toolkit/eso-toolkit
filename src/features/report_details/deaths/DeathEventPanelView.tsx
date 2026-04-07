@@ -69,7 +69,7 @@ interface DeathEventPanelViewProps {
 }
 
 // --- Shared style helpers ---
-const isDark = (mode: string) => mode === 'dark';
+const isDark = (mode: string): boolean => mode === 'dark';
 
 /** Glass card base for both skeleton and real cards */
 const glassCard = (mode: string) =>
@@ -87,7 +87,7 @@ const glassCard = (mode: string) =>
   }) as const;
 
 /** Compact stat badge */
-const statBadge = (mode: string, hue: string) => {
+const statBadge = (mode: string, hue: string): Record<string, unknown> => {
   const colors: Record<string, { bg: string; border: string; text: string }> = {
     green: {
       bg: isDark(mode) ? 'rgba(34,197,94,0.12)' : 'rgba(34,197,94,0.08)',
