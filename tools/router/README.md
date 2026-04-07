@@ -87,6 +87,60 @@ next tier up with the prior attempt's digest attached, and a fresh worker is
 dispatched. The old session is NOT resumed on a new model — cold-start with a
 digest is the only safe handoff.
 
+## Consultation and delegation (cheap-shell pattern)
+
+In addition to escalation (bottom-up handoff), the router supports two
+top-down decomposition primitives that let cheaper models stay in the driver's
+seat while borrowing expensive reasoning surgically:
+
+- **`consult_expert(question, tier?)`** — A tool the worker can call to ask a
+  one-shot question of a higher-tier model. The expert runs as a child
+  envelope with NO tools and NO further escalation — pure reasoning. The
+  digest comes back as a tool result and the cheap shell stays in control.
+  Use for: architectural decisions, naming, "is this safe?" questions.
+
+- **`delegate_subtask(prompt, tier?)`** — A tool that spawns a fully
+  autonomous sub-worker (typically at a lower tier) to handle a focused
+  sub-task. The sub-worker has its own tool loop and runs to completion.
+  Use for: planner→executor patterns where an expensive planner parcels out
+  mechanical work.
+
+Both patterns roll their cost into the parent task's budget. Consultation is
+capped per task by `maxConsultationsPerTask` (default 5) to keep over-eager
+shells from running away with cost.
+
+The system prompt instructs cheap-shell workers: *consult before any
+architectural, naming, or refactoring decision you're not confident about*.
+The contract distinction:
+
+| Verb | Direction | Loses control? | Has tools? | Use case |
+|---|---|---|---|---|
+| escalation | up | yes | yes | "I'm out of my depth, take over" |
+| consultation | up | no | no | "Hold on, I need a second opinion" |
+| delegation | down | no (parent waits) | yes | "You handle this, report back" |
+
+## Cost analysis
+
+```bash
+router cost                      # last 30 days, table output
+router cost --since 2026-04-01   # filter by date
+router cost --top 20             # top N most expensive envelopes
+router cost --json               # machine-readable
+```
+
+`router cost` reads `.router/logs/*.jsonl` and produces:
+
+- **Realized spend** broken down by tier, provider, and day
+- **Counterfactual baselines** — what your tasks would have cost at every
+  configured tier (e.g. "always-deep would have cost $X, you saved $Y")
+- **Top N most expensive envelopes** for rubric-tuning targets
+- **Consultation overhead** — fraction of total cost spent on `consult_expert`
+  vs main worker turns
+
+The counterfactual is the headline. It tells you what the router actually
+saved — without it you can't tell whether the routing rules are pulling
+their weight.
+
 ## Adding a provider
 
 1. Create `src/providers/my-provider.ts`.

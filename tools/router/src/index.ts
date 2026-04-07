@@ -20,6 +20,7 @@ import {
   type AuthCommandDeps,
 } from "./auth/commands.js";
 import { runInit } from "./commands/init.js";
+import { analyzeCost, printCostReport } from "./commands/cost.js";
 import { ConfigError, RouterError } from "./types.js";
 
 /**
@@ -136,6 +137,40 @@ async function main(): Promise<void> {
     .action((opts: { force?: boolean }) => {
       runInit({ force: opts.force });
     });
+
+  // `router cost`
+  program
+    .command("cost")
+    .description("Analyze JSONL telemetry and report cost vs counterfactuals")
+    .option("--since <date>", "Earliest day to include (YYYY-MM-DD)")
+    .option("--until <date>", "Latest day to include (YYYY-MM-DD)")
+    .option("--top <n>", "Top N most expensive envelopes to show", "10")
+    .option("--json", "Emit a machine-readable JSON report instead of a table")
+    .action(
+      async (opts: {
+        since?: string;
+        until?: string;
+        top?: string;
+        json?: boolean;
+      }) => {
+        try {
+          const { deps } = await buildDeps();
+          const report = analyzeCost({
+            config: deps.config,
+            since: opts.since,
+            until: opts.until,
+            topN: opts.top ? parseInt(opts.top, 10) : 10,
+          });
+          if (opts.json) {
+            console.log(JSON.stringify(report, null, 2));
+          } else {
+            printCostReport(report);
+          }
+        } catch (err) {
+          handleError(err);
+        }
+      },
+    );
 
   // Default command: interactive TUI
   program
