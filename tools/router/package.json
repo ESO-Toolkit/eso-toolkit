@@ -1,0 +1,41 @@
+{
+  "name": "@eso-toolkit/router",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agentic model router with TUI, device auth, and runtime escalation",
+  "type": "module",
+  "bin": {
+    "router": "./bin/router.mjs"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --experimental-vm-modules --import tsx/esm --test test/**/*.test.ts",
+    "lint": "eslint src test"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0",
+    "@anthropic-ai/sdk": "^0.40.0",
+    "@napi-rs/keyring": "^1.1.6",
+    "commander": "^12.1.0",
+    "cosmiconfig": "^9.0.0",
+    "cosmiconfig-typescript-loader": "^6.1.0",
+    "ink": "^5.1.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "pino": "^9.5.0",
+    "react": "^18.3.1",
+    "ulid": "^2.3.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
