@@ -32,7 +32,7 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.secondary.main, 0.12)} 100%)`,
+  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.15 : 0.4),
   padding: '24px',
   borderRadius: '14px',
   border: '1px solid var(--border)',
@@ -58,7 +58,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
     borderRadius: '0', // Remove border radius for full-width
     border: 'none', // Remove border
     backdropFilter: 'blur(8px) saturate(160%)',
-    background: theme.palette.background.paper,
+    background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.6 : 0.8),
     minHeight: '100vh', // Full height on mobile
     maxWidth: '100%', // Full width
   },
@@ -70,7 +70,7 @@ const Toolbar = styled(Box)(({ theme }) => ({
   gap: '12px',
   marginBottom: '20px',
   padding: '16px',
-  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.5 : 0.6),
+  background: theme.palette.background.paper,
   borderRadius: '12px',
   border: '1px solid var(--border)',
   alignItems: 'center',
@@ -165,7 +165,7 @@ const FormatRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '8px',
   padding: '12px',
-  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.5 : 0.6),
+  background: theme.palette.background.paper,
   borderRadius: '12px',
   border: '1px solid var(--border)',
   alignItems: 'center',
@@ -309,7 +309,7 @@ const StatusBar = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '16px 20px',
-  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.5 : 0.6),
+  background: theme.palette.background.paper,
   border: '1px solid var(--border)',
   borderTop: 'none',
   borderBottomLeftRadius: '12px',
