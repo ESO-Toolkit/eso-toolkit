@@ -70,7 +70,7 @@ const Toolbar = styled(Box)(({ theme }) => ({
   gap: '12px',
   marginBottom: '20px',
   padding: '16px',
-  background: 'var(--panel2)',
+  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.5 : 0.6),
   borderRadius: '12px',
   border: '1px solid var(--border)',
   alignItems: 'center',
@@ -161,16 +161,16 @@ const FormatContainer = styled(Box)({
   },
 });
 
-const FormatRow = styled(Box)({
+const FormatRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '8px',
   padding: '12px',
-  background: 'var(--panel2)',
+  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.5 : 0.6),
   borderRadius: '12px',
   border: '1px solid var(--border)',
   alignItems: 'center',
   flexWrap: 'nowrap',
-});
+}));
 
 const ColorSection = styled(Box)({
   display: 'none', // Hidden on desktop
@@ -304,12 +304,12 @@ const WysiwygEditor = styled('div')(({ theme }) => ({
   },
 }));
 
-const StatusBar = styled(Box)(({ theme: _theme }) => ({
+const StatusBar = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '16px 20px',
-  background: 'var(--panel2)',
+  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.5 : 0.6),
   border: '1px solid var(--border)',
   borderTop: 'none',
   borderBottomLeftRadius: '12px',
