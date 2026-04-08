@@ -32,19 +32,12 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.15 : 0.4),
+  background: 'transparent',
   padding: '24px',
   borderRadius: '14px',
-  border: '1px solid var(--border)',
   fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   color: 'var(--text)',
-  boxShadow:
-    theme.palette.mode === 'dark'
-      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
-      : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
-  backdropFilter: 'blur(12px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
   position: 'relative',
   zIndex: 1,
 
@@ -57,8 +50,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
     padding: '16px', // Reduce padding
     borderRadius: '0', // Remove border radius for full-width
     border: 'none', // Remove border
-    backdropFilter: 'blur(8px) saturate(160%)',
-    background: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.6 : 0.8),
+    background: 'transparent',
     minHeight: '100vh', // Full height on mobile
     maxWidth: '100%', // Full width
   },
