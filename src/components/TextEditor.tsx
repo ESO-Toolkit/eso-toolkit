@@ -12,17 +12,16 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import '../styles/text-editor-page-background.css';
+// text-editor-page-background.css import removed — no longer using background image
 import '../styles/texteditor-theme-bridge.css';
 import { HexColorPicker } from 'react-colorful';
 
-import { usePageBackground } from '../hooks/usePageBackground';
+// usePageBackground import removed — page now uses plain theme background
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
 
 // Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  backgroundColor: 'transparent',
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
   position: 'relative',
@@ -37,10 +36,7 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-      : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
+  background: 'var(--panel)',
   padding: '24px',
   borderRadius: '14px',
   border: '1px solid var(--border)',
@@ -48,8 +44,8 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? theme.shadows[6]
-      : theme.shadows[4],
+      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
+      : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
   backdropFilter: 'blur(12px) saturate(180%)',
   WebkitBackdropFilter: 'blur(12px) saturate(180%)',
@@ -66,10 +62,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
     borderRadius: '0', // Remove border radius for full-width
     border: 'none', // Remove border
     backdropFilter: 'blur(8px) saturate(160%)',
-    background:
-      theme.palette.mode === 'dark'
-        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-        : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
+    background: 'var(--panel)',
     minHeight: '100vh', // Full height on mobile
     maxWidth: '100%', // Full width
   },
@@ -509,8 +502,8 @@ const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#F
 // Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
-  // Apply page-specific background and theme management
-  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
+  // Page background: use plain theme default (no background image)
+  // usePageBackground is intentionally not called so the page matches the reports page
   const [charCount, setCharCount] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -570,21 +563,8 @@ export const TextEditor: React.FC = () => {
     return { x, y };
   }, []);
 
-  // Simple fix for light mode background loading
-  useEffect(() => {
-    // Simple fix for light mode background loading
-    if (theme.palette.mode === 'light') {
-      const body = document.body;
-      // Force light mode background image
-      setTimeout(() => {
-        body.style.backgroundImage = `url("${import.meta.env.BASE_URL}text-editor/text-editor-bg-light.jpg")`;
-        body.style.backgroundSize = 'cover';
-        body.style.backgroundPosition = 'center';
-        body.style.backgroundRepeat = 'no-repeat';
-        body.style.backgroundAttachment = 'fixed';
-      }, 100); // Small delay to ensure it applies
-    }
-  }, [theme.palette.mode]);
+  // Background image removal: no longer setting body background image
+  // The page now uses the plain MUI theme default background like the reports page
 
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
