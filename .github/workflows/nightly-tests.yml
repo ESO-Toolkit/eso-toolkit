@@ -544,7 +544,11 @@ jobs:
           WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ARTIFACTS_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
 
-          # Create the error tracking issue
+          # Create the error tracking issue (skip gracefully if the script is absent)
+          if [ ! -f "scripts/create-error-tracking-issue.cjs" ]; then
+            echo "⚠️ scripts/create-error-tracking-issue.cjs not found — skipping error tracking"
+            exit 0
+          fi
           node scripts/create-error-tracking-issue.cjs \
             --title "$TITLE" \
             --description "$DESCRIPTION" \
