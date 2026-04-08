@@ -32,7 +32,7 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: 'var(--panel)',
+  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.secondary.main, 0.12)} 100%)`,
   padding: '24px',
   borderRadius: '14px',
   border: '1px solid var(--border)',
@@ -58,7 +58,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
     borderRadius: '0', // Remove border radius for full-width
     border: 'none', // Remove border
     backdropFilter: 'blur(8px) saturate(160%)',
-    background: 'var(--panel)',
+    background: theme.palette.background.paper,
     minHeight: '100vh', // Full height on mobile
     maxWidth: '100%', // Full width
   },
