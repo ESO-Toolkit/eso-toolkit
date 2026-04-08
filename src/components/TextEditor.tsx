@@ -32,11 +32,16 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: 'transparent',
+  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.secondary.main, 0.12)} 100%)`,
   padding: '24px',
   borderRadius: '14px',
+  border: '1px solid var(--border)',
   fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   color: 'var(--text)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
+      : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
   position: 'relative',
   zIndex: 1,
@@ -50,7 +55,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
     padding: '16px', // Reduce padding
     borderRadius: '0', // Remove border radius for full-width
     border: 'none', // Remove border
-    background: 'transparent',
+    background: theme.palette.background.paper,
     minHeight: '100vh', // Full height on mobile
     maxWidth: '100%', // Full width
   },
@@ -70,8 +75,6 @@ const Toolbar = styled(Box)(({ theme }) => ({
   boxShadow:
     theme.palette.mode === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
   overflowX: 'auto',
-  backdropFilter: 'blur(8px) saturate(150%)',
-  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
     display: 'none', // Hide on mobile, use grid containers instead
@@ -309,8 +312,6 @@ const StatusBar = styled(Box)(({ theme }) => ({
   fontSize: '14px',
   fontWeight: 500,
   transition: 'all 0.15s ease-in-out',
-  backdropFilter: 'blur(8px) saturate(150%)',
-  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
 }));
 
 const CharCounter = styled(Box)(({ theme }) => ({
