@@ -12,12 +12,8 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-// text-editor-page-background.css import removed — no longer using background image
 import '../styles/texteditor-theme-bridge.css';
 import { HexColorPicker } from 'react-colorful';
-
-// usePageBackground import removed — page now uses plain theme background
-// The background image is located in public/text-editor/text-editor-bg-light.jpg
 
 // Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
@@ -44,7 +40,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
+      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
       : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
   backdropFilter: 'blur(12px) saturate(180%)',
@@ -502,8 +498,6 @@ const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#F
 // Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
-  // Page background: use plain theme default (no background image)
-  // usePageBackground is intentionally not called so the page matches the reports page
   const [charCount, setCharCount] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -562,9 +556,6 @@ export const TextEditor: React.FC = () => {
 
     return { x, y };
   }, []);
-
-  // Background image removal: no longer setting body background image
-  // The page now uses the plain MUI theme default background like the reports page
 
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
