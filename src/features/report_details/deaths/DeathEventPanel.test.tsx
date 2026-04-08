@@ -35,6 +35,10 @@ jest.mock('../../../hooks/workerTasks/useDebuffLookupTask', () => ({
   useDebuffLookupTask: jest.fn(),
 }));
 
+jest.mock('../../../hooks/useSkeletonCount', () => ({
+  useSkeletonCount: jest.fn(),
+}));
+
 jest.mock('../../../ReportFightContext', () => ({
   useSelectedReportAndFight: jest.fn(),
 }));
@@ -60,6 +64,7 @@ const {
 } = jest.requireMock('../../../hooks');
 
 const { useDebuffLookupTask } = jest.requireMock('../../../hooks/workerTasks/useDebuffLookupTask');
+const { useSkeletonCount } = jest.requireMock('../../../hooks/useSkeletonCount');
 const { useSelectedReportAndFight } = jest.requireMock('../../../ReportFightContext');
 
 const theme = createTheme();
@@ -155,6 +160,7 @@ const setupMocks = (overrides: any = {}) => {
   usePlayerData.mockReturnValue(mergedMocks.usePlayerData);
   useResolvedReportFightContext.mockReturnValue(mergedMocks.useResolvedReportFightContext);
   useFightForContext.mockReturnValue(mergedMocks.useFightForContext);
+  useSkeletonCount.mockReturnValue([4, jest.fn()]);
 
   // Setup calculateDeathDurations mock to return empty array
   calculateDeathDurations.mockReturnValue([]);
