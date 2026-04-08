@@ -30,6 +30,8 @@ interface DamageTypeBreakdownViewProps {
   damageTypeBreakdown: DamageTypeBreakdown[];
   totalDamage: number;
   isLoading: boolean;
+  /** Number of skeleton rows to show while loading. Defaults to 4. */
+  skeletonRows?: number;
 }
 
 // Color mapping for different damage types
@@ -111,6 +113,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
   damageTypeBreakdown,
   totalDamage,
   isLoading,
+  skeletonRows = 4,
 }) => {
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
@@ -146,7 +149,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
           <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
         </Typography>
         <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
-          {[...Array(4)].map((_, index) => (
+          {Array.from({ length: skeletonRows }).map((_, index) => (
             <Box
               key={index}
               sx={{

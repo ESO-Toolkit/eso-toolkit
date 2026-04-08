@@ -415,7 +415,7 @@ const AbilityRow: React.FC<{
 };
 
 /** Loading skeleton for the synergy panel. */
-const SynergyPanelSkeleton: React.FC = () => (
+const SynergyPanelSkeleton: React.FC<{ cardCount?: number }> = ({ cardCount = 4 }) => (
   <Box sx={{ mt: 1 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
       <Skeleton width={180} height={32} />
@@ -430,7 +430,7 @@ const SynergyPanelSkeleton: React.FC = () => (
         mb: 4,
       }}
     >
-      {Array.from({ length: 4 }).map((_, i) => (
+      {Array.from({ length: cardCount }).map((_, i) => (
         <Skeleton key={i} variant="rounded" height={100} sx={{ borderRadius: 3 }} />
       ))}
     </Box>

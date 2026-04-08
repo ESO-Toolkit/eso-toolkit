@@ -118,6 +118,9 @@ export const LeaderboardLogsPage: React.FC = () => {
     React.useState<FightRankingsParsed>(createEmptyRankings());
   const [rankingsLoading, setRankingsLoading] = React.useState<boolean>(false);
   const [rankingsError, setRankingsError] = React.useState<string | null>(null);
+  /** Skeleton row counts — persisted from last successful fetch for accurate loading skeletons. */
+  const [skeletonZoneRows, setSkeletonZoneRows] = React.useState(10);
+  const [skeletonRankingRows, setSkeletonRankingRows] = React.useState(6);
   const partitionPreferenceRef = React.useRef<Map<string, number>>(new Map());
   const clientUnavailable = !client;
 
@@ -156,6 +159,7 @@ export const LeaderboardLogsPage: React.FC = () => {
       const parsedZones = parseTrialZones(response);
       setZones(parsedZones);
       if (parsedZones.length > 0) {
+        setSkeletonZoneRows(Math.min(parsedZones.length, 15));
         setSelectedZoneId((previous) => previous ?? parsedZones[0].id);
       }
     } catch (error) {
@@ -294,6 +298,9 @@ export const LeaderboardLogsPage: React.FC = () => {
           }
 
           setRankingsState(parsed);
+          if (parsed.rankings.length > 0) {
+            setSkeletonRankingRows(Math.min(parsed.rankings.length, 15));
+          }
           if (variables.partition === 0) {
             partitionPreferenceRef.current.set(preferenceKey, variables.partition);
           } else {
@@ -505,7 +512,7 @@ export const LeaderboardLogsPage: React.FC = () => {
               <Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: '16px' }} />
             </Stack>
             {/* Table rows skeleton */}
-            {Array.from({ length: 10 }).map((_, i) => (
+            {Array.from({ length: skeletonZoneRows }).map((_, i) => (
               <Box
                 key={i}
                 sx={{
@@ -691,7 +698,7 @@ export const LeaderboardLogsPage: React.FC = () => {
           <Box sx={{ mt: 3 }}>
             {rankingsLoading && rankingsState.rankings.length === 0 ? (
               <Box py={2}>
-                {Array.from({ length: 6 }).map((_, i) => (
+                {Array.from({ length: skeletonRankingRows }).map((_, i) => (
                   <Box
                     key={i}
                     sx={{

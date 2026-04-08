@@ -66,6 +66,8 @@ interface DeathEventPanelViewProps {
   fightId?: number;
   fight: FightFragment;
   isLoading?: boolean;
+  /** Number of skeleton death cards to show while loading. Defaults to 4. */
+  skeletonCardCount?: number;
 }
 
 export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
@@ -76,6 +78,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   fightId,
   fight,
   isLoading = false,
+  skeletonCardCount = 4,
 }) => {
   const theme = useTheme();
 
@@ -201,7 +204,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             gap: 2,
           }}
         >
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: skeletonCardCount }).map((_, i) => (
             <Card
               key={i}
               sx={{

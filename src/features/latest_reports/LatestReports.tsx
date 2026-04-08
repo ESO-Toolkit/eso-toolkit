@@ -72,6 +72,9 @@ export const LatestReports: React.FC = () => {
     },
   });
 
+  /** Skeleton row count — persisted from last successful fetch so re-loads show accurate skeletons. */
+  const [skeletonRowCount, setSkeletonRowCount] = useState(8);
+
   // Fetch functions
   const fetchLatestReports = useCallback(
     async (page = 1): Promise<void> => {
@@ -103,12 +106,14 @@ export const LatestReports: React.FC = () => {
           return;
         }
 
+        const filteredReports = (reportPagination.data || []).filter(
+          (report: UserReportSummaryFragment | null): report is UserReportSummaryFragment =>
+            report !== null,
+        );
+
         setState((prev) => ({
           ...prev,
-          reports: (reportPagination.data || []).filter(
-            (report: UserReportSummaryFragment | null): report is UserReportSummaryFragment =>
-              report !== null,
-          ),
+          reports: filteredReports,
           loading: false,
           pagination: {
             currentPage: reportPagination.current_page || 1,
@@ -118,6 +123,11 @@ export const LatestReports: React.FC = () => {
             hasMorePages: reportPagination.has_more_pages || false,
           },
         }));
+
+        // Persist skeleton row count from actual results
+        if (filteredReports.length > 0) {
+          setSkeletonRowCount(Math.min(filteredReports.length, 12));
+        }
       } catch (error) {
         setState((prev) => ({
           ...prev,
@@ -172,7 +182,7 @@ export const LatestReports: React.FC = () => {
               <Skeleton variant="rounded" width={100} height={28} sx={{ borderRadius: '16px' }} />
             </Box>
             {/* Table rows skeleton */}
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: skeletonRowCount }).map((_, i) => (
               <Box
                 key={i}
                 sx={{

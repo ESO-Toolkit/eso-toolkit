@@ -34,6 +34,8 @@ interface StatChecklistProps {
   loading?: boolean;
   titleSx?: SxProps<Theme>;
   onToggleSource?: (sourceId: string, nextValue: boolean) => void;
+  /** Number of skeleton rows to show while loading. Defaults to sources.length or 5. */
+  skeletonRows?: number;
 }
 
 export const StatChecklist: React.FC<StatChecklistProps> = ({
@@ -42,6 +44,7 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
   loading = false,
   titleSx,
   onToggleSource,
+  skeletonRows,
 }) => {
   const [showUnchecked, setShowUnchecked] = React.useState(false);
   const missedCount = React.useMemo(() => sources.filter((s) => !s.wasActive).length, [sources]);
@@ -61,7 +64,7 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
         <Card variant="outlined" className="u-hover-lift u-fade-in-up">
           <CardContent sx={{ p: 2 }}>
             <List dense>
-              {Array.from({ length: 5 }).map((_, index) => (
+              {Array.from({ length: (skeletonRows ?? sources.length) || 5 }).map((_, index) => (
                 <ListItem key={index} disablePadding>
                   <ListItemIcon sx={{ minWidth: 36 }}>
                     <Skeleton variant="circular" width={18} height={18} />

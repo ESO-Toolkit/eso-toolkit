@@ -26,6 +26,8 @@ interface StatusEffectUptimesViewProps {
   fightId: string | null;
   onOpenTimeline?: () => void;
   canOpenTimeline?: boolean;
+  /** Number of skeleton rows to show while loading. Defaults to 7. */
+  skeletonRows?: number;
 }
 
 export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
@@ -36,6 +38,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   fightId,
   onOpenTimeline,
   canOpenTimeline = false,
+  skeletonRows = 7,
 }) => {
   const descriptionId = React.useId();
   const [nameFilter, setNameFilter] = React.useState('');
@@ -56,7 +59,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
           <Skeleton variant="circular" width={36} height={36} />
         </Stack>
         <Box sx={{ height: '100%', overflowY: 'auto' }}>
-          {[...Array(7)].map((_, index) => (
+          {Array.from({ length: skeletonRows }).map((_, index) => (
             <Box
               key={index}
               sx={{

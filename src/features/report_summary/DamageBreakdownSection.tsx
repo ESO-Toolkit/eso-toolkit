@@ -399,7 +399,7 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
   );
 };
 
-const DamageBreakdownSkeleton: React.FC = () => {
+const DamageBreakdownSkeleton: React.FC<{ skeletonRows?: number }> = ({ skeletonRows = 5 }) => {
   return (
     <Box>
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
@@ -421,7 +421,7 @@ const DamageBreakdownSkeleton: React.FC = () => {
         <Skeleton width="45%" />
       </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {[...Array(5)].map((_, i) => (
+        {Array.from({ length: skeletonRows }).map((_, i) => (
           <Skeleton key={i} variant="rectangular" height={48} />
         ))}
       </Box>

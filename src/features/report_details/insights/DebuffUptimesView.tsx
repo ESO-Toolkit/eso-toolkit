@@ -29,6 +29,8 @@ interface DebuffUptimesViewProps {
   fightId: string | null;
   onOpenTimeline?: () => void;
   canOpenTimeline?: boolean;
+  /** Number of skeleton rows to show while loading. Defaults to 5. */
+  skeletonRows?: number;
 }
 
 export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
@@ -41,6 +43,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   fightId,
   onOpenTimeline,
   canOpenTimeline = false,
+  skeletonRows = 5,
 }) => {
   const descriptionId = React.useId();
   const [nameFilter, setNameFilter] = React.useState('');
@@ -67,7 +70,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
           Shows average debuff uptimes against hostile targets
         </Typography>
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
-          {[...Array(5)].map((_, index) => (
+          {Array.from({ length: skeletonRows }).map((_, index) => (
             <Box
               key={index}
               sx={{
