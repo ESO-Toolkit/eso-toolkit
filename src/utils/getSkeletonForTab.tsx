@@ -1,11 +1,11 @@
 import { Box } from '@mui/material';
 import React from 'react';
 
-import { DeathEventPanelSkeleton } from '../components/DeathEventPanelSkeleton';
 import { CriticalDamageSkeleton } from '../components/CriticalDamageSkeleton';
 import { DamageDoneTableSkeleton } from '../components/DamageDoneTableSkeleton';
 import { DamageReductionSkeleton } from '../components/DamageReductionSkeleton';
 import { DataGridPanelSkeleton } from '../components/DataGridPanelSkeleton';
+import { DeathEventPanelSkeleton } from '../components/DeathEventPanelSkeleton';
 import { GenericTabSkeleton } from '../components/GenericTabSkeleton';
 import { HealingDoneTableSkeleton } from '../components/HealingDoneTableSkeleton';
 import { InsightsSkeletonLayout } from '../components/InsightsSkeletonLayout';

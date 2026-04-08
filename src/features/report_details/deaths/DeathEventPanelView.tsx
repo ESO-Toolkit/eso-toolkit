@@ -13,7 +13,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { DeathEventPanelSkeleton } from '@/components/DeathEventPanelSkeleton';
-
 import { timestampToFightTime } from '@/utils/fightTimeUtils';
 
 import { FightFragment, ReportActorFragment } from '../../../graphql/gql/graphql';
@@ -101,11 +100,7 @@ const statLabel = (mode: string): Record<string, unknown> => ({
 });
 
 /** Thin progress bar with contextual color */
-const resourceBar = (
-  pct: number,
-  color: string,
-  mode: string,
-): Record<string, unknown> => ({
+const resourceBar = (pct: number, color: string, mode: string): Record<string, unknown> => ({
   position: 'relative',
   height: '3px',
   borderRadius: '2px',
@@ -309,9 +304,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             minWidth: 24,
             background: dark ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.06)',
             color: dark ? '#f87171' : '#dc2626',
-            border: dark
-              ? '1px solid rgba(239,68,68,0.18)'
-              : '1px solid rgba(220,38,38,0.12)',
+            border: dark ? '1px solid rgba(239,68,68,0.18)' : '1px solid rgba(220,38,38,0.12)',
             '& .MuiChip-label': { px: 0.75 },
           }}
         />
@@ -454,7 +447,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
               Deadliest Abilities
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-              {skillsSummary.map(([skillName, data], i) => (
+              {skillsSummary.map(([skillName, data]) => (
                 <Chip
                   key={skillName}
                   label={
@@ -494,9 +487,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     transition: 'all 0.15s ease',
                     '&:hover': {
                       transform: 'translateY(-1px)',
-                      boxShadow: dark
-                        ? '0 2px 8px rgba(0,0,0,0.2)'
-                        : '0 2px 8px rgba(0,0,0,0.06)',
+                      boxShadow: dark ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.06)',
                     },
                     '& .MuiChip-label': { px: 1 },
                   }}
@@ -759,9 +750,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 
                   {/* Inline badges row */}
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 0.25 }}>
-                    {info.wasBlocking && (
-                      <Box sx={statLabel(theme.palette.mode)}>BLOCKING</Box>
-                    )}
+                    {info.wasBlocking && <Box sx={statLabel(theme.palette.mode)}>BLOCKING</Box>}
                   </Box>
                 </Box>
 
@@ -1030,9 +1019,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             fontWeight: 700,
                             textTransform: 'uppercase',
                             letterSpacing: '0.06em',
-                            background: dark
-                              ? 'rgba(148,163,184,0.06)'
-                              : 'rgba(148,163,184,0.04)',
+                            background: dark ? 'rgba(148,163,184,0.06)' : 'rgba(148,163,184,0.04)',
                             border: dark
                               ? '1px solid rgba(148,163,184,0.10)'
                               : '1px solid rgba(148,163,184,0.08)',
