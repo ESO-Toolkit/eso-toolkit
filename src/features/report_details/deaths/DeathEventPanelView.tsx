@@ -76,14 +76,14 @@ const glassCard = (mode: string) =>
   ({
     borderRadius: '16px',
     background: isDark(mode)
-      ? 'linear-gradient(165deg, rgba(15,23,42,0.88) 0%, rgba(10,15,30,0.72) 100%)'
-      : 'linear-gradient(165deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.85) 100%)',
-    border: 'none',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    boxShadow: isDark(mode)
-      ? '0 1px 0 0 rgba(255,255,255,0.03) inset, 0 8px 40px rgba(0,0,0,0.5)'
-      : '0 1px 0 0 rgba(255,255,255,0.9) inset, 0 8px 40px rgba(0,0,0,0.06)',
+      ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
+      : 'linear-gradient(135deg, rgb(110 170 240 / 18%) 0%, rgb(152 131 227 / 10%) 50%, rgb(173 192 255 / 6%) 100%)',
+    border: isDark(mode)
+      ? '1px solid rgba(255, 255, 255, 0.15)'
+      : '1px solid rgba(59, 130, 246, 0.3)',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
+    boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
   }) as const;
 
 /** Compact stat badge */
@@ -268,7 +268,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             <Card key={i} sx={{ ...glassCard(theme.palette.mode), overflow: 'hidden' }}>
               <CardContent sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                  <Skeleton variant="circular" width={36} height={36} />
+                  <Skeleton variant="circular" width={40} height={40} />
                   <Box sx={{ flex: 1 }}>
                     <Skeleton variant="text" width="60%" height={18} />
                     <Skeleton variant="text" width="35%" height={14} />
@@ -313,10 +313,14 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             textAlign: 'center',
             borderRadius: '16px',
             background: dark
-              ? 'linear-gradient(165deg, rgba(34,197,94,0.06) 0%, rgba(10,15,30,0.4) 100%)'
-              : 'linear-gradient(165deg, rgba(34,197,94,0.04) 0%, rgba(240,253,244,0.6) 100%)',
-            border: dark ? '1px solid rgba(34,197,94,0.15)' : '1px solid rgba(34,197,94,0.10)',
-            backdropFilter: 'blur(20px)',
+              ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(76, 175, 80, 0.15) 50%, rgba(76, 175, 80, 0.08) 100%)'
+              : 'linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(220, 252, 231, 0.6) 100%)',
+            border: dark ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid rgba(34, 197, 94, 0.2)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            boxShadow: dark
+              ? '0 4px 16px rgba(76, 175, 80, 0.15)'
+              : '0 2px 8px rgba(34, 197, 94, 0.1)',
           }}
         >
           <Typography
@@ -630,45 +634,58 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 ...glassCard(theme.palette.mode),
                 position: 'relative',
                 overflow: 'hidden',
-                transition:
-                  'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                // Top accent gradient bar
+                transition: 'all 0.3s ease',
+                // Shimmer sweep on hover
                 '&::before': {
                   content: '""',
                   position: 'absolute',
                   top: 0,
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: `linear-gradient(90deg, ${playerColor} 0%, ${dark ? 'rgba(239,68,68,0.6)' : 'rgba(220,38,38,0.4)'} 50%, transparent 100%)`,
+                  left: '-100%',
+                  width: '100%',
+                  height: '100%',
+                  background: dark
+                    ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)'
+                    : 'linear-gradient(90deg, transparent, rgba(15,23,42,0.08), transparent)',
+                  transform: 'skewX(-15deg)',
+                  transformOrigin: 'center center',
+                  transition: 'left 0.5s ease',
                 },
                 '&:hover': {
-                  transform: 'translateY(-3px)',
-                  boxShadow: dark
-                    ? `0 12px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(148,163,184,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`
-                    : `0 12px 48px rgba(0,0,0,0.08), 0 0 0 1px rgba(148,163,184,0.12), inset 0 1px 0 rgba(255,255,255,0.95)`,
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3)',
+                },
+                '&:hover::before': {
+                  left: '100%',
                 },
               }}
             >
-              <CardContent sx={{ p: 2.5, pt: 3 }}>
+              <CardContent sx={{ p: 2.5, pt: 3, position: 'relative', zIndex: 1 }}>
                 {/* ── Player Header ── */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.75 }}>
                   <Box sx={{ position: 'relative' }}>
                     <Avatar
                       sx={{
-                        width: 36,
-                        height: 36,
-                        background: `linear-gradient(145deg, ${playerColor} 0%, ${playerColor}99 100%)`,
-                        fontSize: '0.8rem',
-                        fontWeight: 800,
-                        fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+                        width: 40,
+                        height: 40,
+                        background: `linear-gradient(145deg, ${playerColor} 0%, ${playerColor}99 50%, ${playerColor}55 100%)`,
+                        fontSize: '0.9rem',
+                        fontWeight: 900,
+                        fontFamily: '"Arial Black", "Helvetica Neue", Arial, sans-serif',
                         color: '#fff',
-                        border: `2px solid ${playerColor}60`,
-                        boxShadow: `0 2px 12px ${playerColor}30`,
-                        letterSpacing: '-0.02em',
+                        textShadow: dark
+                          ? '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.3)'
+                          : '0 2px 4px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.2)',
+                        border: `2px solid ${playerColor}80`,
+                        boxShadow: `0 4px 12px ${playerColor}50`,
+                        transform: 'perspective(50px) rotateX(5deg)',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'perspective(50px) rotateX(5deg) scale(1.1)',
+                          boxShadow: `0 6px 16px ${playerColor}60`,
+                        },
                       }}
                     >
-                      {idx + 1}
+                      #{idx + 1}
                     </Avatar>
                   </Box>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
@@ -682,6 +699,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                           lineHeight: 1.3,
+                          textShadow: dark
+                            ? '0 1px 3px rgba(0,0,0,0.5)'
+                            : '0 1px 1px rgba(255,255,255,0.8)',
                         }}
                       >
                         {playerName}
@@ -861,13 +881,17 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   sx={{
                     mb: 2,
                     p: 1.5,
-                    borderRadius: '12px',
+                    borderRadius: '16px',
                     background: dark
-                      ? 'linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(15,23,42,0.4) 100%)'
-                      : 'linear-gradient(135deg, rgba(239,68,68,0.03) 0%, rgba(254,242,242,0.4) 100%)',
+                      ? 'linear-gradient(135deg, rgba(244, 67, 54, 0.15) 0%, rgba(220, 38, 38, 0.08) 100%)'
+                      : 'linear-gradient(135deg, rgba(254, 226, 226, 0.8) 0%, rgba(252, 242, 242, 0.9) 100%)',
                     border: dark
-                      ? '1px solid rgba(239,68,68,0.12)'
-                      : '1px solid rgba(220,38,38,0.08)',
+                      ? '1px solid rgba(244, 67, 54, 0.3)'
+                      : '1px solid rgba(220, 38, 38, 0.2)',
+                    backdropFilter: 'blur(8px)',
+                    boxShadow: dark
+                      ? '0 2px 8px rgba(244, 67, 54, 0.15)'
+                      : '0 1px 4px rgba(220, 38, 38, 0.1)',
                     position: 'relative',
                     overflow: 'hidden',
                     '&::before': {
@@ -878,8 +902,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       right: 0,
                       height: '1px',
                       background: dark
-                        ? 'linear-gradient(90deg, rgba(239,68,68,0.3) 0%, transparent 70%)'
-                        : 'linear-gradient(90deg, rgba(220,38,38,0.15) 0%, transparent 70%)',
+                        ? 'linear-gradient(90deg, rgba(244,67,54,0.4) 0%, transparent 70%)'
+                        : 'linear-gradient(90deg, rgba(220,38,38,0.2) 0%, transparent 70%)',
                     },
                   }}
                 >
@@ -1036,23 +1060,32 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '5px',
-                              px: 1,
-                              py: 0.3,
-                              borderRadius: '7px',
-                              background: dark ? 'rgba(239,68,68,0.10)' : 'rgba(220,38,38,0.06)',
+                              px: 1.25,
+                              py: 0.5,
+                              borderRadius: '12px',
+                              background: dark
+                                ? 'linear-gradient(135deg, rgba(255, 87, 34, 0.15) 0%, rgba(244, 67, 54, 0.08) 100%)'
+                                : 'linear-gradient(135deg, rgba(255, 241, 220, 0.8) 0%, rgba(254, 245, 238, 0.9) 100%)',
                               border: dark
-                                ? '1px solid rgba(239,68,68,0.18)'
-                                : '1px solid rgba(220,38,38,0.12)',
+                                ? '1px solid rgba(255, 87, 34, 0.3)'
+                                : '1px solid rgba(255, 87, 34, 0.2)',
+                              backdropFilter: 'blur(8px)',
+                              boxShadow: dark
+                                ? '0 2px 8px rgba(255, 87, 34, 0.15)'
+                                : '0 1px 4px rgba(255, 87, 34, 0.1)',
                             }}
                           >
                             <Typography
                               variant="caption"
                               sx={{
-                                fontWeight: 800,
-                                fontSize: '0.8rem',
+                                fontWeight: 900,
+                                fontSize: '0.85rem',
                                 fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
                                 color: dark ? '#f87171' : '#dc2626',
                                 lineHeight: 1,
+                                textShadow: dark
+                                  ? '0 1px 2px rgba(0,0,0,0.8)'
+                                  : '0 1px 0 rgba(255,255,255,0.7)',
                               }}
                             >
                               {info.killingBlowDamage.toLocaleString()}
@@ -1289,12 +1322,17 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                     variant="caption"
                                     sx={{
                                       position: 'relative',
-                                      fontSize: '0.72rem',
-                                      fontWeight: 700,
+                                      fontSize: '0.75rem',
+                                      fontWeight: 900,
                                       fontFamily:
                                         '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
                                       flexShrink: 0,
-                                      color: dark ? '#fb923c' : '#ea580c',
+                                      color: dark ? '#ff845a' : '#c2410c',
+                                      ...(dark && {
+                                        background: 'linear-gradient(180deg, #ffb199, #ff6b35)',
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                      }),
                                     }}
                                   >
                                     {attack.amount.toLocaleString()}
