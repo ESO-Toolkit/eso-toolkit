@@ -5,6 +5,8 @@ import React from 'react';
 interface PlayersSkeletonProps {
   /** Test ID for testing */
   'data-testid'?: string;
+  /** Number of player card skeletons to show. Defaults to 2. */
+  playerCount?: number;
 }
 
 /**
@@ -294,6 +296,7 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
 
 export const PlayersSkeleton: React.FC<PlayersSkeletonProps> = ({
   'data-testid': dataTestId = 'players-skeleton',
+  playerCount = 2,
 }) => {
   return (
     <Box data-testid={dataTestId} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -331,7 +334,7 @@ export const PlayersSkeleton: React.FC<PlayersSkeletonProps> = ({
           maxWidth: '100vw',
         }}
       >
-        {Array.from({ length: 2 }).map((_, index) => (
+        {Array.from({ length: playerCount }).map((_, index) => (
           <Box
             key={index}
             sx={{

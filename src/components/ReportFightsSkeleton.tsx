@@ -9,7 +9,19 @@ interface ReportFightsSkeletonProps {
   instanceCount?: number;
   /** Test ID for testing */
   'data-testid'?: string;
+  /**
+   * Encounter configs: [bossNameWidth, cardCount] tuples.
+   * Pass from previous report data for an accurate skeleton on re-loads.
+   */
+  encounters?: Array<[number, number]>;
 }
+
+const DEFAULT_ENCOUNTERS: Array<[number, number]> = [
+  [130, 3],
+  [110, 2],
+  [150, 4],
+  [120, 3],
+];
 
 /**
  * Skeleton placeholder for the ReportFightsView.
@@ -18,15 +30,8 @@ interface ReportFightsSkeletonProps {
 export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
   instanceCount: _instanceCount,
   'data-testid': dataTestId,
+  encounters = DEFAULT_ENCOUNTERS,
 }) => {
-  // Encounter configs: [bossNameWidth, cardCount]
-  const encounters: Array<[number, number]> = [
-    [130, 3],
-    [110, 2],
-    [150, 4],
-    [120, 3],
-  ];
-
   return (
     <>
       {/* Real ReportActionBar with placeholder title */}

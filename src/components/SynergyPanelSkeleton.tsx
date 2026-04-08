@@ -1,12 +1,25 @@
 import { Box, Skeleton } from '@mui/material';
 import React from 'react';
 
+interface SynergyPanelSkeletonProps {
+  /** Number of player cards in the "Who is taking synergies?" grid. Defaults to 4. */
+  playerCardCount?: number;
+  /** Number of synergy ability rows. Defaults to 6. */
+  abilityRowCount?: number;
+  /** Number of timeline rows. Defaults to 8. */
+  timelineRowCount?: number;
+}
+
 /**
  * Skeleton for the Synergies tab.
  * Mirrors: summary chips → "Who is taking synergies?" header → player cards grid →
  *          "Synergy Abilities" header → ability table → "Activation Timeline" header → timeline table.
  */
-export const SynergyPanelSkeleton: React.FC = () => (
+export const SynergyPanelSkeleton: React.FC<SynergyPanelSkeletonProps> = ({
+  playerCardCount = 4,
+  abilityRowCount = 6,
+  timelineRowCount = 8,
+}) => (
   <Box sx={{ mt: 1 }}>
     {/* Summary header row: title + toggle + chips */}
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
@@ -40,7 +53,7 @@ export const SynergyPanelSkeleton: React.FC = () => (
         mb: 4,
       }}
     >
-      {Array.from({ length: 4 }).map((_, i) => (
+      {Array.from({ length: playerCardCount }).map((_, i) => (
         <Skeleton key={i} variant="rounded" height={110} sx={{ borderRadius: 3 }} />
       ))}
     </Box>
@@ -81,7 +94,7 @@ export const SynergyPanelSkeleton: React.FC = () => (
       </Box>
 
       {/* Ability rows */}
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: abilityRowCount }).map((_, i) => (
         <Box
           key={i}
           sx={{
@@ -90,7 +103,7 @@ export const SynergyPanelSkeleton: React.FC = () => (
             px: 2,
             py: 1,
             minHeight: 44,
-            borderBottom: i < 5 ? '1px solid' : 'none',
+            borderBottom: i < abilityRowCount - 1 ? '1px solid' : 'none',
             borderColor: 'divider',
           }}
         >
@@ -145,7 +158,7 @@ export const SynergyPanelSkeleton: React.FC = () => (
       </Box>
 
       {/* Timeline rows */}
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: timelineRowCount }).map((_, i) => (
         <Box
           key={i}
           sx={{
@@ -154,7 +167,7 @@ export const SynergyPanelSkeleton: React.FC = () => (
             px: 2,
             py: 0.75,
             minHeight: 40,
-            borderBottom: i < 7 ? '1px solid' : 'none',
+            borderBottom: i < timelineRowCount - 1 ? '1px solid' : 'none',
             borderColor: 'divider',
           }}
         >

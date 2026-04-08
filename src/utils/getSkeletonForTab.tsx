@@ -106,7 +106,7 @@ const HeaderSkeleton: React.FC = () => (
 );
 
 // Shared tabs skeleton
-const TabsSkeleton: React.FC = () => (
+const TabsSkeleton: React.FC<{ tabCount?: number }> = ({ tabCount = 8 }) => (
   <Box
     sx={{
       display: 'flex',
@@ -118,7 +118,7 @@ const TabsSkeleton: React.FC = () => (
     }}
   >
     <Box sx={{ display: 'flex', gap: 1, flexGrow: 1 }}>
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: tabCount }).map((_, i) => (
         <Box
           key={i}
           sx={{
@@ -135,10 +135,21 @@ const TabsSkeleton: React.FC = () => (
   </Box>
 );
 
+/** Optional config to drive skeleton counts from previously-known data. */
+export interface SkeletonTabConfig {
+  /** Number of tab icons to show. Defaults to 8. */
+  tabCount?: number;
+  /** Number of player cards for the Players tab. Defaults to 2. */
+  playerCount?: number;
+  /** Number of death event cards for the Deaths tab. Defaults to 4. */
+  deathCardCount?: number;
+}
+
 export const getSkeletonForTab = (
   tabId: TabId | undefined,
   includeHeaderAndTabs = false,
   showMinimalSkeleton = false,
+  config: SkeletonTabConfig = {},
 ): React.ReactElement => {
   const getContentSkeleton = (): React.ReactElement => {
     switch (tabId) {
@@ -150,7 +161,7 @@ export const getSkeletonForTab = (
           />
         );
       case TabId.PLAYERS:
-        return <PlayersSkeleton />;
+        return <PlayersSkeleton playerCount={config.playerCount} />;
       case TabId.DAMAGE_DONE:
         return <DamageDoneTableSkeleton rowCount={10} />;
       case TabId.HEALING_DONE:
@@ -253,7 +264,7 @@ export const getSkeletonForTab = (
                 gap: 2,
               }}
             >
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: config.deathCardCount ?? 4 }).map((_, i) => (
                 <Box
                   key={i}
                   sx={{
@@ -487,7 +498,7 @@ export const getSkeletonForTab = (
     return (
       <Box sx={{ minHeight: '400px' }}>
         <HeaderSkeleton />
-        <TabsSkeleton />
+        <TabsSkeleton tabCount={config.tabCount} />
         {contentSkeleton}
       </Box>
     );
