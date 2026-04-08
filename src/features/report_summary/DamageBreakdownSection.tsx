@@ -23,6 +23,7 @@ import {
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
+import { useSkeletonCount } from '../../hooks/useSkeletonCount';
 import { ReportDamageBreakdown } from '../../types/reportSummaryTypes';
 
 // Damage type icon mapping (from insights panel)
@@ -92,18 +93,25 @@ interface DamageBreakdownSectionProps {
   damageBreakdown?: ReportDamageBreakdown;
   isLoading: boolean;
   error?: string;
+  /** Report ID used to scope the skeleton count cache. */
+  reportId?: string;
 }
 
 const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
   damageBreakdown,
   isLoading,
   error,
+  reportId,
 }) => {
-  // Persist player row count across loading cycles so skeleton matches actual layout
-  const skeletonRowsRef = React.useRef(5);
-  if (!isLoading && (damageBreakdown?.playerBreakdown?.length ?? 0) > 0) {
-    skeletonRowsRef.current = damageBreakdown!.playerBreakdown.length;
-  }
+  const [skeletonRows, persistSkeletonRows] = useSkeletonCount(
+    `dmg-players:${reportId ?? 'global'}`,
+    5,
+  );
+
+  React.useEffect(() => {
+    const n = damageBreakdown?.playerBreakdown?.length ?? 0;
+    if (!isLoading && n > 0) persistSkeletonRows(n);
+  }, [isLoading, damageBreakdown?.playerBreakdown?.length, persistSkeletonRows]);
 
   if (error) {
     return (
@@ -125,7 +133,7 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
           <Typography variant="h5" gutterBottom>
             Damage Breakdown
           </Typography>
-          <DamageBreakdownSkeleton skeletonRows={skeletonRowsRef.current} />
+          <DamageBreakdownSkeleton skeletonRows={skeletonRows} />
         </CardContent>
       </Card>
     );

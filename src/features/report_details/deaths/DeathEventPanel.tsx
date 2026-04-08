@@ -11,6 +11,7 @@ import {
   useResolvedReportFightContext,
   useFightForContext,
 } from '../../../hooks';
+import { useSkeletonCount } from '../../../hooks/useSkeletonCount';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { KnownAbilities } from '../../../types/abilities';
@@ -468,11 +469,16 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
     isDebuffLookupLoading ||
     isMasterDataLoading;
 
-  // Persist death card count across loading cycles so skeleton matches actual layout
-  const skeletonCardCountRef = React.useRef(4);
-  if (!isLoading && deathInfos.length > 0) {
-    skeletonCardCountRef.current = deathInfos.length;
-  }
+  const [skeletonCardCount, persistSkeletonCardCount] = useSkeletonCount(
+    `deaths:${reportId}:${resolvedFightId ?? 'unknown'}`,
+    4,
+  );
+
+  React.useEffect(() => {
+    if (!isLoading && deathInfos.length > 0) {
+      persistSkeletonCardCount(deathInfos.length);
+    }
+  }, [isLoading, deathInfos.length, persistSkeletonCardCount]);
 
   if (!fight) {
     return null;
@@ -487,7 +493,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
         fightId={resolvedFightId ?? undefined}
         fight={fight}
         isLoading={true}
-        skeletonCardCount={skeletonCardCountRef.current}
+        skeletonCardCount={skeletonCardCount}
       />
     );
   }

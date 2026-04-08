@@ -23,7 +23,9 @@ export const DeathEventPanelSkeleton: React.FC<{
   const sk = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
   const skLight = dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
   const chipBg = dark ? 'rgba(148,163,184,0.06)' : 'rgba(241,245,249,0.6)';
-  const chipBorder = dark ? '1px solid rgba(148,163,184,0.12)' : '1px solid rgba(148,163,184,0.15)';
+  const chipBorder = dark
+    ? '1px solid rgba(148,163,184,0.12)'
+    : '1px solid rgba(148,163,184,0.15)';
   const badgeBg = dark ? 'rgba(148,163,184,0.08)' : 'rgba(148,163,184,0.06)';
   const badgeBorder = dark
     ? '1px solid rgba(148,163,184,0.12)'
@@ -50,13 +52,7 @@ export const DeathEventPanelSkeleton: React.FC<{
   const accentColor = dark ? 'rgba(148,163,184,0.18)' : 'rgba(148,163,184,0.12)';
 
   // ── Player summary chip — dot + name bar + count ────────────────────
-  const PlayerChip = ({
-    width,
-    dotColor,
-  }: {
-    width: number;
-    dotColor: string;
-  }): React.ReactElement => (
+  const PlayerChip = ({ width, dotColor }: { width: number; dotColor: string }): React.ReactElement => (
     <Box
       sx={{
         display: 'inline-flex',
@@ -275,7 +271,9 @@ export const DeathEventPanelSkeleton: React.FC<{
             p: 1.5,
             borderRadius: '12px',
             background: dark ? 'rgba(239,68,68,0.04)' : 'rgba(220,38,38,0.02)',
-            border: dark ? '1px solid rgba(239,68,68,0.10)' : '1px solid rgba(220,38,38,0.06)',
+            border: dark
+              ? '1px solid rgba(239,68,68,0.10)'
+              : '1px solid rgba(220,38,38,0.06)',
           }}
         >
           {/* "KILLING BLOW" label + ability name — single baseline row like real */}
@@ -287,7 +285,12 @@ export const DeathEventPanelSkeleton: React.FC<{
               gap: '4px',
             }}
           >
-            <Skeleton variant="text" width={72} height={10} sx={{ bgcolor: skLight, mr: 0.5 }} />
+            <Skeleton
+              variant="text"
+              width={72}
+              height={10}
+              sx={{ bgcolor: skLight, mr: 0.5 }}
+            />
             <Skeleton
               variant="text"
               width={`${45 + (index % 4) * 12}%`}
@@ -317,7 +320,9 @@ export const DeathEventPanelSkeleton: React.FC<{
                 py: 0.3,
                 borderRadius: '7px',
                 background: dark ? 'rgba(239,68,68,0.08)' : 'rgba(220,38,38,0.05)',
-                border: dark ? '1px solid rgba(239,68,68,0.15)' : '1px solid rgba(220,38,38,0.10)',
+                border: dark
+                  ? '1px solid rgba(239,68,68,0.15)'
+                  : '1px solid rgba(220,38,38,0.10)',
               }}
             >
               <Skeleton
@@ -381,7 +386,9 @@ export const DeathEventPanelSkeleton: React.FC<{
           sx={{
             borderRadius: '12px',
             bgcolor: dark ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.06)',
-            border: dark ? '1px solid rgba(239,68,68,0.18)' : '1px solid rgba(220,38,38,0.12)',
+            border: dark
+              ? '1px solid rgba(239,68,68,0.18)'
+              : '1px solid rgba(220,38,38,0.12)',
           }}
         />
         {/* "across N players" */}

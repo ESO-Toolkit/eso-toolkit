@@ -6,6 +6,7 @@ import {
   useResolvedReportFightContext,
   useFightForContext,
 } from '../../../hooks';
+import { useSkeletonCount } from '../../../hooks/useSkeletonCount';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 
 import { SynergyPanelView } from './SynergyPanelView';
@@ -49,11 +50,16 @@ export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
     friendlyPlayerIds,
   ]);
 
-  // Persist player card count across loading cycles so skeleton matches actual layout
-  const skeletonCardCountRef = React.useRef(4);
-  if (!isLoading && synergyData.byPlayer.length > 0) {
-    skeletonCardCountRef.current = synergyData.byPlayer.length;
-  }
+  const [skeletonCardCount, persistSkeletonCardCount] = useSkeletonCount(
+    `synergy-players:${resolvedContext.reportCode}:${resolvedContext.fightId ?? 'unknown'}`,
+    4,
+  );
+
+  React.useEffect(() => {
+    if (!isLoading && synergyData.byPlayer.length > 0) {
+      persistSkeletonCardCount(synergyData.byPlayer.length);
+    }
+  }, [isLoading, synergyData.byPlayer.length, persistSkeletonCardCount]);
 
   if (!fight) {
     return null;
@@ -67,7 +73,7 @@ export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
       actorsById={reportMasterData.actorsById}
       reportCode={resolvedContext.reportCode}
       fightId={resolvedContext.fightId}
-      skeletonCardCount={skeletonCardCountRef.current}
+      skeletonCardCount={skeletonCardCount}
     />
   );
 };

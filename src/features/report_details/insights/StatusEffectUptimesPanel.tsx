@@ -11,6 +11,7 @@ import {
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { ALL_TARGETS_SENTINEL } from '../../../hooks/useSelectedTargetIds';
+import { useSkeletonCount } from '../../../hooks/useSkeletonCount';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
@@ -461,6 +462,17 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
   const canOpenTimeline = prefetchedSeries.length > 0;
 
+  const [skeletonRows, persistSkeletonRows] = useSkeletonCount(
+    `status-rows:${reportId}:${fightId}`,
+    7,
+  );
+
+  React.useEffect(() => {
+    if (!isDataLoading && enhancedStatusEffectUptimes.length > 0) {
+      persistSkeletonRows(enhancedStatusEffectUptimes.length);
+    }
+  }, [isDataLoading, enhancedStatusEffectUptimes.length, persistSkeletonRows]);
+
   if (isDataLoading) {
     return (
       <StatusEffectUptimesView
@@ -470,6 +482,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
         reportId={reportId}
         fightId={fightId}
         canOpenTimeline={false}
+        skeletonRows={skeletonRows}
       />
     );
   }

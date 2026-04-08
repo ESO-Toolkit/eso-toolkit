@@ -88,6 +88,7 @@ export const ReportSummaryPage: React.FC = () => {
               damageBreakdown={summaryData?.damageBreakdown}
               isLoading={isSummaryLoading}
               error={summaryError ?? undefined}
+              reportId={stableReportId}
             />
           </Suspense>
         </Box>

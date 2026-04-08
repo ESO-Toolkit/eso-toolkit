@@ -3,6 +3,7 @@ import React from 'react';
 
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
+import { useSkeletonCount } from '../../hooks/useSkeletonCount';
 import { useReportFightDetailsNavigation } from '../../ReportFightContext';
 import { TabId, getSkeletonForTab, SkeletonTabConfig } from '../../utils/getSkeletonForTab';
 
@@ -25,14 +26,21 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   const { selectedTabId } = useReportFightDetailsNavigation();
   const { reportData } = useReportData();
 
-  // Persist player count across loading cycles so skeleton matches actual fight layout.
+  // Persist player count so the Players-tab skeleton matches the actual fight on re-loads.
   // 9 = the stable count of always-visible core tabs in FightDetailsView.
-  const playerCountRef = React.useRef(2);
-  if (fight?.friendlyPlayers) {
-    const count = fight.friendlyPlayers.filter(Boolean).length;
-    if (count > 0) playerCountRef.current = count;
-  }
-  const skeletonConfig: SkeletonTabConfig = { tabCount: 9, playerCount: playerCountRef.current };
+  const [playerCount, persistPlayerCount] = useSkeletonCount(
+    `fight-players:${fightId ?? 'unknown'}`,
+    2,
+  );
+
+  React.useEffect(() => {
+    if (fight?.friendlyPlayers) {
+      const count = fight.friendlyPlayers.filter(Boolean).length;
+      if (count > 0) persistPlayerCount(count);
+    }
+  }, [fight?.friendlyPlayers, persistPlayerCount]);
+
+  const skeletonConfig: SkeletonTabConfig = { tabCount: 9, playerCount };
 
   // Immediate render strategy: show layout immediately for better LCP
   // Only show full loading state if we don't have a fightId yet

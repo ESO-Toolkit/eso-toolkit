@@ -6,6 +6,7 @@ import { useReportMasterData } from '../../../hooks';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
 import { useWorkerDebuffLookup } from '../../../hooks/events/useDebuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { useSkeletonCount } from '../../../hooks/useSkeletonCount';
 import { useElementalWeaknessStacksTask } from '../../../hooks/workerTasks/useElementalWeaknessStacksTask';
 import { useStaggerStacksTask } from '../../../hooks/workerTasks/useStaggerStacksTask';
 import { useTouchOfZenStacksTask } from '../../../hooks/workerTasks/useTouchOfZenStacksTask';
@@ -985,6 +986,15 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
 
   const canOpenTimeline = prefetchedSeries.length > 0;
 
+  const [skeletonRows, persistSkeletonRows] = useSkeletonCount(
+    `debuff-rows:${reportId}:${fightId}`,
+    5,
+  );
+
+  React.useEffect(() => {
+    if (!isDataLoading && debuffUptimes.length > 0) persistSkeletonRows(debuffUptimes.length);
+  }, [isDataLoading, debuffUptimes.length, persistSkeletonRows]);
+
   if (isDataLoading) {
     return (
       <DebuffUptimesView
@@ -996,6 +1006,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
         reportId={reportId}
         fightId={fightId}
         canOpenTimeline={false}
+        skeletonRows={skeletonRows}
       />
     );
   }

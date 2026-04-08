@@ -3,6 +3,7 @@ import React from 'react';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { useSkeletonCount } from '../../../hooks/useSkeletonCount';
 import { DamageTypeFlags, KnownAbilities } from '../../../types/abilities';
 import { DamageEvent } from '../../../types/combatlogEvents';
 
@@ -480,8 +481,23 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
     return { damageTypeBreakdown: breakdown, totalDamage };
   }, [damageEvents, reportMasterData?.abilitiesById, selectedTargetIds, selectedPlayerId]);
 
-  if (isMasterDataLoading || isDamageEventsLoading) {
-    return <DamageTypeBreakdownView damageTypeBreakdown={[]} totalDamage={0} isLoading={true} />;
+  const isLoading = isMasterDataLoading || isDamageEventsLoading;
+
+  const [skeletonRows, persistSkeletonRows] = useSkeletonCount(`dmg-type-rows:${_fight.id}`, 4);
+
+  React.useEffect(() => {
+    if (!isLoading && damageTypeBreakdown.length > 0) persistSkeletonRows(damageTypeBreakdown.length);
+  }, [isLoading, damageTypeBreakdown.length, persistSkeletonRows]);
+
+  if (isLoading) {
+    return (
+      <DamageTypeBreakdownView
+        damageTypeBreakdown={[]}
+        totalDamage={0}
+        isLoading={true}
+        skeletonRows={skeletonRows}
+      />
+    );
   }
 
   return (

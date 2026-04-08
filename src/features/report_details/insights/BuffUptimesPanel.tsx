@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
+import { useSkeletonCount } from '../../../hooks/useSkeletonCount';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
@@ -241,6 +242,15 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
 
   const canOpenTimeline = prefetchedSeries.length > 0;
 
+  const [skeletonRows, persistSkeletonRows] = useSkeletonCount(
+    `buff-rows:${reportId}:${fightId}`,
+    5,
+  );
+
+  React.useEffect(() => {
+    if (!isDataLoading && buffUptimes.length > 0) persistSkeletonRows(buffUptimes.length);
+  }, [isDataLoading, buffUptimes.length, persistSkeletonRows]);
+
   if (isDataLoading) {
     return (
       <BuffUptimesView
@@ -252,6 +262,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
         fightId={fightId}
         selectedTargetId={null}
         canOpenTimeline={false}
+        skeletonRows={skeletonRows}
       />
     );
   }
