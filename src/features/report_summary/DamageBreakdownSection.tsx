@@ -99,6 +99,12 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
   isLoading,
   error,
 }) => {
+  // Persist player row count across loading cycles so skeleton matches actual layout
+  const skeletonRowsRef = React.useRef(5);
+  if (!isLoading && (damageBreakdown?.playerBreakdown?.length ?? 0) > 0) {
+    skeletonRowsRef.current = damageBreakdown!.playerBreakdown.length;
+  }
+
   if (error) {
     return (
       <Card elevation={2}>
@@ -119,7 +125,7 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
           <Typography variant="h5" gutterBottom>
             Damage Breakdown
           </Typography>
-          <DamageBreakdownSkeleton />
+          <DamageBreakdownSkeleton skeletonRows={skeletonRowsRef.current} />
         </CardContent>
       </Card>
     );

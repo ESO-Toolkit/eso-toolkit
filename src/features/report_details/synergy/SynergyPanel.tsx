@@ -49,6 +49,12 @@ export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
     friendlyPlayerIds,
   ]);
 
+  // Persist player card count across loading cycles so skeleton matches actual layout
+  const skeletonCardCountRef = React.useRef(4);
+  if (!isLoading && synergyData.byPlayer.length > 0) {
+    skeletonCardCountRef.current = synergyData.byPlayer.length;
+  }
+
   if (!fight) {
     return null;
   }
@@ -61,6 +67,7 @@ export const SynergyPanel: React.FC<SynergyPanelProps> = ({ context }) => {
       actorsById={reportMasterData.actorsById}
       reportCode={resolvedContext.reportCode}
       fightId={resolvedContext.fightId}
+      skeletonCardCount={skeletonCardCountRef.current}
     />
   );
 };

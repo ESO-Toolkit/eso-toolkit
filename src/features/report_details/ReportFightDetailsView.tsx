@@ -4,7 +4,7 @@ import React from 'react';
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportData } from '../../hooks';
 import { useReportFightDetailsNavigation } from '../../ReportFightContext';
-import { TabId, getSkeletonForTab } from '../../utils/getSkeletonForTab';
+import { TabId, getSkeletonForTab, SkeletonTabConfig } from '../../utils/getSkeletonForTab';
 
 import { FightDetails } from './FightDetails';
 import { ReportFightHeader } from './ReportFightHeader';
@@ -24,6 +24,15 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
 }) => {
   const { selectedTabId } = useReportFightDetailsNavigation();
   const { reportData } = useReportData();
+
+  // Persist player count across loading cycles so skeleton matches actual fight layout.
+  // 9 = the stable count of always-visible core tabs in FightDetailsView.
+  const playerCountRef = React.useRef(2);
+  if (fight?.friendlyPlayers) {
+    const count = fight.friendlyPlayers.filter(Boolean).length;
+    if (count > 0) playerCountRef.current = count;
+  }
+  const skeletonConfig: SkeletonTabConfig = { tabCount: 9, playerCount: playerCountRef.current };
 
   // Immediate render strategy: show layout immediately for better LCP
   // Only show full loading state if we don't have a fightId yet
@@ -56,7 +65,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         </Stack>
 
         <Box sx={{ mt: 2, minHeight: '600px' }}>
-          {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true)}
+          {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true, false, skeletonConfig)}
         </Box>
       </Paper>
     );
@@ -95,7 +104,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
           </Stack>
 
           <Box sx={{ mt: 2, minHeight: '600px' }}>
-            {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true)}
+            {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true, false, skeletonConfig)}
           </Box>
         </Paper>
       );
@@ -120,7 +129,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         <FightDetails />
       ) : (
         <Box sx={{ mt: 2, minHeight: '600px' }}>
-          {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true)}
+          {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true, false, skeletonConfig)}
         </Box>
       )}
     </Paper>

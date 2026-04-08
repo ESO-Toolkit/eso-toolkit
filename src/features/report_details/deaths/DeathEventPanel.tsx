@@ -468,6 +468,12 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
     isDebuffLookupLoading ||
     isMasterDataLoading;
 
+  // Persist death card count across loading cycles so skeleton matches actual layout
+  const skeletonCardCountRef = React.useRef(4);
+  if (!isLoading && deathInfos.length > 0) {
+    skeletonCardCountRef.current = deathInfos.length;
+  }
+
   if (!fight) {
     return null;
   }
@@ -481,6 +487,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
         fightId={resolvedFightId ?? undefined}
         fight={fight}
         isLoading={true}
+        skeletonCardCount={skeletonCardCountRef.current}
       />
     );
   }

@@ -41,6 +41,8 @@ interface SynergyPanelViewProps {
   actorsById: Record<string | number, ReportActorFragment>;
   reportCode: string | null;
   fightId: number | null;
+  /** Number of player cards in the skeleton. Defaults to 4. */
+  skeletonCardCount?: number;
 }
 
 export const SynergyPanelView: React.FC<SynergyPanelViewProps> = ({
@@ -50,6 +52,7 @@ export const SynergyPanelView: React.FC<SynergyPanelViewProps> = ({
   actorsById,
   reportCode,
   fightId,
+  skeletonCardCount,
 }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -61,7 +64,7 @@ export const SynergyPanelView: React.FC<SynergyPanelViewProps> = ({
   );
 
   if (isLoading) {
-    return <SynergyPanelSkeleton />;
+    return <SynergyPanelSkeleton cardCount={skeletonCardCount} />;
   }
 
   if (data.totalCount === 0) {
