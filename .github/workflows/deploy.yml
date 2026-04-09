@@ -45,3 +45,4 @@ jobs:
           enable_sourcemaps: 'true'
           release_version: ${{ github.sha }}
           vite_ga_measurement_id: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          vite_discord_client_id: ${{ vars.VITE_DISCORD_CLIENT_ID }}
