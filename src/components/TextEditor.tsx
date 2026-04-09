@@ -12,17 +12,12 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
 import { HexColorPicker } from 'react-colorful';
-
-import { usePageBackground } from '../hooks/usePageBackground';
-// The background image is located in public/text-editor/text-editor-bg-light.jpg
 
 // Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  backgroundColor: 'transparent',
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
   position: 'relative',
@@ -37,7 +32,7 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: 'var(--panel)',
+  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.secondary.main, 0.12)} 100%)`,
   padding: '24px',
   borderRadius: '14px',
   border: '1px solid var(--border)',
@@ -45,11 +40,9 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
-      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
+      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
       : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
-  backdropFilter: 'blur(12px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
   position: 'relative',
   zIndex: 1,
 
@@ -62,8 +55,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
     padding: '16px', // Reduce padding
     borderRadius: '0', // Remove border radius for full-width
     border: 'none', // Remove border
-    backdropFilter: 'blur(8px) saturate(160%)',
-    background: 'var(--panel)',
+    background: theme.palette.background.paper,
     minHeight: '100vh', // Full height on mobile
     maxWidth: '100%', // Full width
   },
@@ -75,7 +67,7 @@ const Toolbar = styled(Box)(({ theme }) => ({
   gap: '12px',
   marginBottom: '20px',
   padding: '16px',
-  background: 'var(--panel2)',
+  background: theme.palette.background.paper,
   borderRadius: '12px',
   border: '1px solid var(--border)',
   alignItems: 'center',
@@ -83,8 +75,6 @@ const Toolbar = styled(Box)(({ theme }) => ({
   boxShadow:
     theme.palette.mode === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
   overflowX: 'auto',
-  backdropFilter: 'blur(8px) saturate(150%)',
-  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
     display: 'none', // Hide on mobile, use grid containers instead
@@ -166,16 +156,16 @@ const FormatContainer = styled(Box)({
   },
 });
 
-const FormatRow = styled(Box)({
+const FormatRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '8px',
   padding: '12px',
-  background: 'var(--panel2)',
+  background: theme.palette.background.paper,
   borderRadius: '12px',
   border: '1px solid var(--border)',
   alignItems: 'center',
   flexWrap: 'nowrap',
-});
+}));
 
 const ColorSection = styled(Box)({
   display: 'none', // Hidden on desktop
@@ -309,12 +299,12 @@ const WysiwygEditor = styled('div')(({ theme }) => ({
   },
 }));
 
-const StatusBar = styled(Box)(({ theme: _theme }) => ({
+const StatusBar = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '16px 20px',
-  background: 'var(--panel2)',
+  background: theme.palette.background.paper,
   border: '1px solid var(--border)',
   borderTop: 'none',
   borderBottomLeftRadius: '12px',
@@ -322,8 +312,6 @@ const StatusBar = styled(Box)(({ theme: _theme }) => ({
   fontSize: '14px',
   fontWeight: 500,
   transition: 'all 0.15s ease-in-out',
-  backdropFilter: 'blur(8px) saturate(150%)',
-  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
 }));
 
 const CharCounter = styled(Box)(({ theme }) => ({
@@ -503,8 +491,6 @@ const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#F
 // Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
-  // Apply page-specific background and theme management
-  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
   const [charCount, setCharCount] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -563,22 +549,6 @@ export const TextEditor: React.FC = () => {
 
     return { x, y };
   }, []);
-
-  // Simple fix for light mode background loading
-  useEffect(() => {
-    // Simple fix for light mode background loading
-    if (theme.palette.mode === 'light') {
-      const body = document.body;
-      // Force light mode background image
-      setTimeout(() => {
-        body.style.backgroundImage = `url("${import.meta.env.BASE_URL}text-editor/text-editor-bg-light.jpg")`;
-        body.style.backgroundSize = 'cover';
-        body.style.backgroundPosition = 'center';
-        body.style.backgroundRepeat = 'no-repeat';
-        body.style.backgroundAttachment = 'fixed';
-      }, 100); // Small delay to ensure it applies
-    }
-  }, [theme.palette.mode]);
 
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
