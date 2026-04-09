@@ -25,6 +25,7 @@ import {
   Colors,
   ComponentType,
   InteractionResponseType,
+  MessageFlags,
   ResponseTemplates,
 } from '../types.js';
 import type {
@@ -36,6 +37,7 @@ import type {
   TicketCategory,
   TicketState,
 } from '../types.js';
+import { findInputValue, type ModalComponentRow } from '../utils.js';
 
 // ── Shared embed + button builders ──────────────────────────────────────────
 
@@ -201,14 +203,15 @@ export async function handleTicketFormModal(
   const customId = interaction.data?.custom_id ?? '';
   const categoryRaw = customId.split(':')[1] as TicketCategory | undefined;
   const category: TicketCategory =
-    categoryRaw && ['Bug', 'Feature', 'Feedback'].includes(categoryRaw)
-      ? categoryRaw
-      : 'Feedback';
+    categoryRaw && ['Bug', 'Feature', 'Feedback'].includes(categoryRaw) ? categoryRaw : 'Feedback';
 
   // Extract field values from modal components
   const components = interaction.data?.components ?? [];
-  const title = findInputValue(components as any, 'ticket_title') ?? 'Untitled';
-  const description = findInputValue(components as any, 'ticket_description') ?? '(no description)';
+  const title =
+    findInputValue(components as unknown as ModalComponentRow[], 'ticket_title') ?? 'Untitled';
+  const description =
+    findInputValue(components as unknown as ModalComponentRow[], 'ticket_description') ??
+    '(no description)';
 
   const user = interaction.member?.user ?? interaction.user;
   if (!user) {
@@ -216,19 +219,17 @@ export async function handleTicketFormModal(
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content: 'Unable to identify the user for this interaction. Please try again.',
-        flags: 64, // ephemeral
+        flags: MessageFlags.EPHEMERAL,
       },
     };
   }
 
   // Immediately defer — channel creation + AI + GitHub all take >3s
-  ctx.waitUntil(
-    processTicketCreation(env, interaction, user, category, title, description),
-  );
+  ctx.waitUntil(processTicketCreation(env, interaction, user, category, title, description));
 
   return {
     type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { flags: 64 }, // ephemeral deferred
+    data: { flags: MessageFlags.EPHEMERAL },
   };
 }
 
@@ -296,7 +297,13 @@ async function processTicketCreation(
     ]);
 
     const ai = aiResult.status === 'fulfilled' ? aiResult.value : null;
+    if (aiResult.status === 'rejected') {
+      console.error('[ticket-form] AI classification failed:', aiResult.reason);
+    }
     const github = githubIssue.status === 'fulfilled' ? githubIssue.value : null;
+    if (githubIssue.status === 'rejected') {
+      console.error('[ticket-form] GitHub issue creation failed:', githubIssue.reason);
+    }
 
     // 7. Update KV with AI + GitHub data (only include defined values)
     const aiPatch = {
@@ -325,7 +332,8 @@ async function processTicketCreation(
     console.error('[ticket-form] processTicketCreation error:', err);
     try {
       await editFollowup(env, interaction.token, '@original', {
-        content: '❌ Something went wrong creating your ticket. Please try again or contact a staff member.',
+        content:
+          '❌ Something went wrong creating your ticket. Please try again or contact a staff member.',
       });
     } catch (followupErr) {
       console.error('[ticket-form] failed to send error followup:', followupErr);
@@ -344,9 +352,7 @@ async function processTicketCreation(
 async function buildPermissionOverwrites(
   env: Env,
   userId: string,
-): Promise<
-  { id: string; type: 0 | 1; allow?: string; deny?: string }[]
-> {
+): Promise<{ id: string; type: 0 | 1; allow?: string; deny?: string }[]> {
   const memberPerms = allow(
     Permission.VIEW_CHANNEL,
     Permission.SEND_MESSAGES,
@@ -378,18 +384,6 @@ async function buildPermissionOverwrites(
   }
 
   return overwrites;
-}
-
-function findInputValue(
-  rows: { type: number; components?: { type: number; custom_id?: string; value?: string }[] }[],
-  customId: string,
-): string | undefined {
-  for (const row of rows) {
-    for (const comp of row.components ?? []) {
-      if (comp.custom_id === customId) return comp.value;
-    }
-  }
-  return undefined;
 }
 
 function capitalise(s: string): string {

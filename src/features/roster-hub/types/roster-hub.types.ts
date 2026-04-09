@@ -3,6 +3,9 @@
  * Mirrors the D1 data model from roster-hub-api.
  */
 
+// NOTE: Mirrored in roster-hub-api/src/types.ts (API worker).
+// Keep both definitions in sync until a shared types package is introduced.
+
 /** A single addon recommendation entry. */
 export interface RecommendedAddonEntry {
   esouiId: number;
@@ -14,6 +17,7 @@ export interface RecommendedAddonEntry {
 /** Addon recommendations attached to a published roster. */
 export interface RecommendedAddons {
   packId?: string;
+  packTitle?: string;
   addons: RecommendedAddonEntry[];
 }
 
@@ -59,7 +63,7 @@ export interface RosterHubFilters {
   search: string; // '' = no text filter (client-side)
 }
 
-export const PRESET_TAGS = ['beginner', 'score-push', 'fun', '#1'] as const;
+export const PRESET_TAGS = ['beginner', 'score-push', 'farm', '#1'] as const;
 
 export type PresetTag = (typeof PRESET_TAGS)[number];
 
@@ -67,8 +71,13 @@ export type PresetTag = (typeof PRESET_TAGS)[number];
 export const TAG_COLORS: Record<string, string> = {
   beginner: '#22c55e', // green
   'score-push': '#ef4444', // red
+  farm: '#14b8a6', // teal
   '#1': '#eab308', // gold
-  fun: '#a855f7', // purple
+  // Legacy colors for existing data
+  normal: '#22c55e',
+  vet: '#f97316',
+  hm: '#ef4444',
+  trainer: '#60a5fa',
 };
 
 // ─── Comments ──────────────────────────────────────────────────────────────

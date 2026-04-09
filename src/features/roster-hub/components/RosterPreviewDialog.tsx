@@ -154,6 +154,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       fullWidth
       fullScreen={isMobile}
       disableEnforceFocus
+      className="glass-dialog"
       TransitionComponent={SlideUpTransition}
       slotProps={{
         paper: {

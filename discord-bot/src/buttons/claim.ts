@@ -6,8 +6,9 @@
 import { editMessage, isStaff } from '../discord.js';
 import { getTicket, updateTicket } from '../kv.js';
 import { buildTicketEmbed, buildTicketActionRows } from '../modals/ticket-form.js';
-import { InteractionResponseType, MessageFlags } from '../types.js';
+import { InteractionResponseType } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral } from '../utils.js';
 
 export async function handleClaimButton(
   env: Env,
@@ -41,11 +42,16 @@ export async function handleClaimButton(
     return ephemeral('You have already claimed this ticket.');
   }
 
+  if (ticket.claimedBy) {
+    return ephemeral(`This ticket is already claimed by <@${ticket.claimedBy}>.`);
+  }
+
   // Update ticket state
   const updated = await updateTicket(env, channelId, {
     status: 'claimed',
     claimedBy: claimingUser.id,
     claimedByUsername: claimingUser.username,
+    claimedAt: new Date().toISOString(),
   });
 
   if (!updated) {
@@ -76,9 +82,3 @@ export async function handleClaimButton(
   };
 }
 
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

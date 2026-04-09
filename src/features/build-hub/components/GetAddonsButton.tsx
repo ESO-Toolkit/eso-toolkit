@@ -15,7 +15,7 @@ interface GetAddonsButtonProps {
 }
 
 /**
- * Button that opens the ESO Addon Manager via deep link to install
+ * Button that opens the Kalpa via deep link to install
  * a specific addon pack. Falls back to copying the deep link URL
  * if the app isn't installed.
  */
@@ -36,12 +36,17 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
 
     // After a short delay, copy link as fallback (if app didn't intercept)
     setTimeout(() => {
-      void navigator.clipboard.writeText(deepLink).then(() => {
-        enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
-          variant: 'info',
-          autoHideDuration: 4000,
-        });
-      });
+      void navigator.clipboard.writeText(deepLink).then(
+        () => {
+          enqueueSnackbar('Deep link copied — install Kalpa to use it', {
+            variant: 'info',
+            autoHideDuration: 4000,
+          });
+        },
+        () => {
+          /* clipboard denied — silently ignore */
+        },
+      );
     }, 1500);
   };
 

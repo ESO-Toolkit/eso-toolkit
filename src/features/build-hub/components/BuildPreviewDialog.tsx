@@ -133,6 +133,7 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
       fullWidth
       fullScreen={isMobile}
       disableEnforceFocus
+      className="glass-dialog"
       TransitionComponent={SlideUpTransition}
       slotProps={{
         paper: {

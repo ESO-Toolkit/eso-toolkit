@@ -4,8 +4,9 @@
 
 import { addChannelPermission, isStaff, removeChannelPermission } from '../discord.js';
 import { getTicket } from '../kv.js';
-import { InteractionResponseType, MessageFlags } from '../types.js';
+import { InteractionResponseType } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral, findInputValue, type ModalComponentRow } from '../utils.js';
 
 export async function handleAddUserModal(
   env: Env,
@@ -27,7 +28,10 @@ export async function handleAddUserModal(
 
   // Extract user input from modal
   const components = interaction.data?.components ?? [];
-  const userInput = findInputValue(components as any, 'user_input')?.trim();
+  const userInput = findInputValue(
+    components as unknown as ModalComponentRow[],
+    'user_input',
+  )?.trim();
 
   if (!userInput) {
     return ephemeral('Please provide a user ID or mention.');
@@ -50,6 +54,8 @@ export async function handleAddUserModal(
       READ_MESSAGE_HISTORY: true,
       EMBED_LINKS: true,
       ATTACH_FILES: true,
+      ADD_REACTIONS: true,
+      USE_EXTERNAL_EMOJIS: true,
     });
   } catch (err) {
     console.error('[add-user] failed to add permission:', err);
@@ -84,7 +90,10 @@ export async function handleRemoveUserModal(
 
   // Extract user input from modal
   const components = interaction.data?.components ?? [];
-  const userInput = findInputValue(components as any, 'user_input')?.trim();
+  const userInput = findInputValue(
+    components as unknown as ModalComponentRow[],
+    'user_input',
+  )?.trim();
 
   if (!userInput) {
     return ephemeral('Please provide a user ID or mention.');
@@ -109,7 +118,9 @@ export async function handleRemoveUserModal(
     await removeChannelPermission(env, channelId, userId);
   } catch (err) {
     console.error('[remove-user] failed to remove permission:', err);
-    return ephemeral('Failed to remove user from the ticket. Please check the user ID and try again.');
+    return ephemeral(
+      'Failed to remove user from the ticket. Please check the user ID and try again.',
+    );
   }
 
   return {
@@ -117,24 +128,5 @@ export async function handleRemoveUserModal(
     data: {
       content: `➖ Removed <@${userId}> from this ticket.`,
     },
-  };
-}
-
-function findInputValue(
-  rows: { type: number; components?: { type: number; custom_id?: string; value?: string }[] }[],
-  customId: string,
-): string | undefined {
-  for (const row of rows) {
-    for (const comp of row.components ?? []) {
-      if (comp.custom_id === customId) return comp.value;
-    }
-  }
-  return undefined;
-}
-
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
   };
 }

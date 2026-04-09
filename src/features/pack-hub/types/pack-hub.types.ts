@@ -17,7 +17,7 @@ export interface HubPack {
   is_anonymous: boolean;
   title: string;
   description: string;
-  pack_type: string; // 'addon-pack' | 'build-pack' | 'roster-pack'
+  pack_type: PackType;
   addons: PackAddonEntry[]; // parsed from JSON
   vote_count: number;
   created_at: string;
@@ -44,17 +44,19 @@ export interface VoteResponse {
 export type SortOrder = 'votes' | 'recent';
 
 export interface PackHubFilters {
-  packType: string; // '' = all types
+  packType: PackType | ''; // '' = all types
   tag: string; // '' = any tag
   sort: SortOrder;
   page: number;
   search: string; // client-side text filter
 }
 
+export type PackType = 'addon-pack' | 'build-pack' | 'roster-pack';
+
 export interface PublishPackPayload {
   title: string;
   description?: string;
-  pack_type?: string;
+  pack_type?: PackType;
   addons: PackAddonEntry[];
   tags?: string[];
   is_anonymous?: boolean;

@@ -9,10 +9,13 @@ import type {
   DiscordComponent,
   DiscordInteraction,
   DiscordMessage,
+  DiscordUser,
   Env,
 } from './types.js';
 
 const API_BASE = 'https://discord.com/api/v10';
+
+const MAX_RETRIES = 2;
 
 async function discordFetch<T>(
   env: Env,
@@ -20,25 +23,48 @@ async function discordFetch<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
-      'Content-Type': 'application/json',
-      'User-Agent': 'ESO-Toolkit-DiscordBot/1.0',
-    },
-    body: body !== undefined ? JSON.stringify(body) : null,
-  });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'ESO-Toolkit-DiscordBot/1.0',
+      },
+      body: body !== undefined ? JSON.stringify(body) : null,
+    });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Discord API error ${res.status} on ${method} ${path}: ${text}`);
+    // Handle rate limits (429) — wait and retry
+    if (res.status === 429) {
+      const retryAfterRaw = parseFloat(res.headers.get('Retry-After') ?? '1');
+      const retryAfter = Number.isFinite(retryAfterRaw) ? retryAfterRaw : 1;
+      const waitMs = Math.min(retryAfter * 1000, 5000); // cap at 5s
+      console.warn(`[discord] rate limited on ${method} ${path}, retry after ${retryAfter}s`);
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+    }
+
+    // Retry on 5xx server errors
+    if (res.status >= 500 && attempt < MAX_RETRIES) {
+      console.warn(`[discord] server error ${res.status} on ${method} ${path}, retrying...`);
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      continue;
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Discord API error ${res.status} on ${method} ${path}: ${text}`);
+    }
+
+    // 204 No Content
+    if (res.status === 204) return undefined as T;
+
+    return res.json() as Promise<T>;
   }
 
-  // 204 No Content
-  if (res.status === 204) return undefined as T;
-
-  return res.json() as Promise<T>;
+  throw new Error(`Discord API failed after ${MAX_RETRIES + 1} attempts on ${method} ${path}`);
 }
 
 // ── Channels ────────────────────────────────────────────────────────────────
@@ -171,6 +197,14 @@ export function getMessages(
   );
 }
 
+export function deleteMessage(
+  env: Env,
+  channelId: string,
+  messageId: string,
+): Promise<void> {
+  return discordFetch<void>(env, 'DELETE', `/channels/${channelId}/messages/${messageId}`);
+}
+
 // ── Interaction followups ────────────────────────────────────────────────────
 
 export interface FollowupOptions {
@@ -225,9 +259,23 @@ export function getGuildChannels(env: Env, guildId: string): Promise<DiscordChan
   return discordFetch<DiscordChannel[]>(env, 'GET', `/guilds/${guildId}/channels`);
 }
 
+// ── Bot guilds ──────────────────────────────────────────────────────────────
+
+export interface DiscordPartialGuild {
+  id: string;
+  name: string;
+  icon: string | null;
+}
+
+export function getBotGuilds(env: Env): Promise<DiscordPartialGuild[]> {
+  return discordFetch<DiscordPartialGuild[]>(env, 'GET', '/users/@me/guilds');
+}
+
 // Permission bits used throughout the bot
 export const Permission = {
   // Decimal values as bigint for safe bitwise ops
+  ADMINISTRATOR: 1n << 3n,
+  MANAGE_GUILD: 1n << 5n,
   MANAGE_CHANNELS: 1n << 4n,
   SEND_MESSAGES: 1n << 11n,
   READ_MESSAGE_HISTORY: 1n << 16n,
@@ -248,4 +296,22 @@ export function isStaff(interaction: DiscordInteraction): boolean {
   const memberPermissions = interaction.member?.permissions;
   if (!memberPermissions) return false;
   return (BigInt(memberPermissions) & Permission.MANAGE_CHANNELS) === Permission.MANAGE_CHANNELS;
+}
+
+/** Returns true if the interaction member has MANAGE_GUILD permission (admin check). */
+export function isAdmin(interaction: DiscordInteraction): boolean {
+  const memberPermissions = interaction.member?.permissions;
+  if (!memberPermissions) return false;
+  return (BigInt(memberPermissions) & Permission.MANAGE_GUILD) === Permission.MANAGE_GUILD;
+}
+
+/**
+ * Fetch a guild member by user ID using the bot token.
+ */
+export function getGuildMember(
+  env: Env,
+  guildId: string,
+  userId: string,
+): Promise<{ user?: DiscordUser; roles: string[]; permissions?: string }> {
+  return discordFetch(env, 'GET', `/guilds/${guildId}/members/${userId}`);
 }
