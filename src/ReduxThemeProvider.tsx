@@ -63,15 +63,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         },
         shape: { borderRadius: 10 },
         typography: {
-          // Inter variable as the default UI/body font; Space Grotesk for headings
+          // Barlow as the default UI/body font; Chakra Petch for display headings
           fontFamily:
-            "Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
-          h1: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h2: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h3: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h4: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h5: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-          h6: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+            "'Barlow', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
+          h1: { fontFamily: "'Chakra Petch', 'Barlow', system-ui", fontWeight: 700 },
+          h2: { fontFamily: "'Chakra Petch', 'Barlow', system-ui", fontWeight: 700 },
+          h3: { fontFamily: "'Chakra Petch', 'Barlow', system-ui", fontWeight: 600 },
+          h4: { fontFamily: "'Chakra Petch', 'Barlow', system-ui", fontWeight: 600 },
+          h5: { fontFamily: "'Chakra Petch', 'Barlow', system-ui", fontWeight: 600 },
+          h6: { fontFamily: "'Chakra Petch', 'Barlow', system-ui", fontWeight: 600 },
         },
         components: {
           MuiCssBaseline: {
