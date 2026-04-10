@@ -249,40 +249,12 @@ const HeroContent = styled(Box)(({ theme }) => ({
 
 const HeroTitle = styled(Typography, {
   shouldForwardProp: (prop) => prop !== 'showAnimations',
-})<{ showAnimations?: boolean }>(({ theme, showAnimations = false }) => ({
-  fontWeight: 900,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #fff 0%, #38bdf8 50%, #00e1ff 100%)'
-      : 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  letterSpacing: '-0.02em',
-  lineHeight: 1.5,
-  // Reduce complex shadows and animations during initial load
-  textShadow: showAnimations
-    ? theme.palette.mode === 'dark'
-      ? `
-        0 0 20px rgba(56, 189, 248, 0.5),
-        0 0 40px rgba(56, 189, 248, 0.3),
-        0 0 60px rgba(0, 225, 255, 0.2),
-        0 4px 8px rgba(0, 0, 0, 0.3),
-        0 8px 16px rgba(0, 0, 0, 0.2),
-        0 16px 32px rgba(0, 0, 0, 0.1)
-      `
-      : '0 1px 2px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.05)'
-    : theme.palette.mode === 'dark'
-      ? '0 2px 4px rgba(0, 0, 0, 0.3)'
-      : '0 1px 2px rgba(15, 23, 42, 0.1)',
-  animation: showAnimations ? 'shimmer 3s ease-in-out infinite' : 'none',
-  '@media (max-width: 480px) and (prefers-reduced-motion: reduce)': {
-    animation: 'none',
-    textShadow:
-      theme.palette.mode === 'dark'
-        ? '0 2px 4px rgba(0, 0, 0, 0.3)'
-        : '0 1px 2px rgba(15, 23, 42, 0.1)',
-  },
+})<{ showAnimations?: boolean }>(({ theme }) => ({
+  fontWeight: 700,
+  color: theme.palette.mode === 'dark' ? '#e8eeff' : '#1e293b',
+  letterSpacing: '-0.03em',
+  lineHeight: 1.08,
+  textShadow: 'none',
   margin: '0 auto 2rem auto',
   textAlign: 'center',
   width: '100%',
@@ -316,25 +288,15 @@ const HeroTitle = styled(Typography, {
     fontSize: 'clamp(2.2rem, 7vw, 2.5rem)',
     lineHeight: 1.5,
   },
-  '@keyframes shimmer': {
-    '0%, 100%': { opacity: 1 },
-    '50%': { opacity: 0.85 },
-  },
   '& .light-text': {
-    fontFamily: 'Inter, sans-serif !important',
-    fontWeight: '100 !important',
-    background:
-      theme.palette.mode === 'dark'
-        ? 'white !important'
-        : 'linear-gradient(135deg, #475569 0%, #64748b 100%) !important',
-    WebkitBackgroundClip: 'text !important',
-    WebkitTextFillColor: 'transparent !important',
-    backgroundClip: 'text !important',
+    fontWeight: 300,
+    color: theme.palette.mode === 'dark' ? 'rgba(228, 236, 255, 0.5)' : 'rgba(30, 41, 59, 0.55)',
     display: 'block',
     width: '100%',
     textAlign: 'center',
     whiteSpace: 'nowrap',
     overflow: 'visible',
+    letterSpacing: '-0.01em',
   },
   '& .gradient-text': {
     display: 'block',
@@ -346,70 +308,40 @@ const HeroTitle = styled(Typography, {
   '& .highlight-text': {
     position: 'relative',
     display: 'inline-block',
-    background:
-      theme.palette.mode === 'dark'
-        ? 'linear-gradient(135deg, #fff 0%, #38bdf8 50%, #00e1ff 100%)'
-        : 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0284c7',
     '&::after': {
       content: '""',
       position: 'absolute',
-      bottom: '-2px',
-      left: '37%',
-      transform: 'translateX(-50%)',
-      width: '80%',
-      height: '4px',
-      background: 'linear-gradient(90deg, transparent, #38bdf8, #00e1ff, transparent)',
-      borderRadius: '2px',
-      animation: 'glow 2s ease-in-out infinite alternate',
+      bottom: '0.06em',
+      left: 0,
+      width: '100%',
+      height: '2px',
+      background: theme.palette.mode === 'dark' ? '#38bdf8' : '#0284c7',
+      opacity: 0.35,
+      borderRadius: '1px',
     },
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      bottom: '-6px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '80%',
-      height: '8px',
-      background: 'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.3) 0%, transparent 70%)',
-      borderRadius: '50%',
-      animation: 'pulse-glow 2s ease-in-out infinite alternate',
-    },
-  },
-  '@keyframes glow': {
-    '0%': { opacity: 0.6, transform: 'translateX(-50%) scaleX(0.8)' },
-    '100%': { opacity: 1, transform: 'translateX(-50%) scaleX(1)' },
-  },
-  '@keyframes pulse-glow': {
-    '0%': { opacity: 0.3, transform: 'translateX(-50%) scaleX(0.9)' },
-    '100%': { opacity: 0.6, transform: 'translateX(-50%) scaleX(1.1)' },
   },
 }));
 
 const HeroSubtitle = styled(Typography)(({ theme }) => ({
-  fontSize: 'clamp(1.1rem,2vw,1.4rem)',
-  color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(51, 65, 85, 0.8)',
-  marginTop: theme.spacing(3),
-  marginBottom: theme.spacing(6),
+  fontSize: 'clamp(1.05rem, 1.8vw, 1.25rem)',
+  color: theme.palette.mode === 'dark' ? 'rgba(228, 236, 255, 0.72)' : 'rgba(51, 65, 85, 0.8)',
   fontWeight: 300,
-  lineHeight: 1.7,
-  maxWidth: '800px',
+  lineHeight: 1.75,
+  maxWidth: '60ch',
   margin: '24px auto 48px auto',
   [theme.breakpoints.down('md')]: {
-    fontSize: '1.25rem',
-    maxWidth: '700px',
+    fontSize: '1.1rem',
     margin: '20px auto 40px auto',
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(1.1rem,2vw,1.4rem)',
-    minWidth: '100%',
+    fontSize: '1rem',
+    maxWidth: '100%',
     margin: '16px auto 32px auto',
-    lineHeight: 1.6,
+    lineHeight: 1.65,
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     margin: '12px auto 24px auto',
   },
 }));
@@ -534,23 +466,10 @@ const CommunityCard = styled(Box)(({ theme }) => ({
   transition: 'all 0.3s ease',
   position: 'relative',
   overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent)',
-    opacity: 0,
-    transition: 'opacity 0.3s ease',
-  },
   '&:hover': {
     transform: 'translateY(-4px)',
-    borderColor: 'rgba(56, 189, 248, 0.2)',
-    '&::before': {
-      opacity: 1,
-    },
+    borderColor:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(30, 41, 59, 0.2)',
   },
   [theme.breakpoints.down('sm')]: {
     padding: '1.5rem',
@@ -652,13 +571,7 @@ const StatItem = styled(Box)(({ theme: _theme }) => ({
 const StatNumber = styled(Typography)(({ theme }) => ({
   fontSize: '2.5rem',
   fontWeight: 800,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 100%)'
-      : 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
+  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0284c7',
   marginBottom: '0.5rem',
   [theme.breakpoints.down('sm')]: {
     fontSize: '2rem',
@@ -837,45 +750,14 @@ const ToolCard = styled(Box)<{ index?: number }>(({ theme, index = 0 }) => ({
   opacity: 0,
   transform: 'translateY(20px)',
   animation: `cardEntrance 0.5s ease-out ${index * 0.1}s forwards`,
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent)',
-    opacity: 0,
-    transition: 'opacity 0.4s ease',
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background:
-      theme.palette.mode === 'dark'
-        ? 'radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(56, 189, 248, 0.06), transparent 40%)'
-        : 'radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(56, 189, 248, 0.04), transparent 40%)',
-    opacity: 0,
-    transition: 'opacity 0.4s ease',
-    pointerEvents: 'none',
-  },
   '&:hover': {
-    transform: 'translateY(-12px) scale(1.02)',
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    transform: 'translateY(-6px)',
+    borderColor:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(15, 23, 42, 0.2)',
     boxShadow:
       theme.palette.mode === 'dark'
-        ? '0 20px 60px rgba(0, 0, 0, 0.4), 0 0 60px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-        : '0 20px 60px rgba(15, 23, 42, 0.12), 0 0 40px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-    '&::before': {
-      opacity: 1,
-    },
-    '&::after': {
-      opacity: 1,
-    },
+        ? '0 16px 40px rgba(0, 0, 0, 0.35), 0 0 24px rgba(56, 189, 248, 0.08)'
+        : '0 12px 32px rgba(15, 23, 42, 0.1)',
   },
   [theme.breakpoints.down('sm')]: {
     padding: '1.5rem',
@@ -1052,136 +934,6 @@ const ComingSoonBadge = styled(Box)({
   },
 });
 
-const ParticleContainer = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  pointerEvents: 'none',
-  zIndex: 1,
-  overflow: 'hidden',
-  [theme.breakpoints.down('sm')]: {
-    display: 'none',
-  },
-  '@media (max-width: 480px) and (prefers-reduced-motion: reduce)': {
-    display: 'none',
-  },
-}));
-
-const FloatingParticle = styled(Box)<{
-  delay?: number;
-  duration?: number;
-  x?: string;
-  y?: string;
-  size?: string;
-  color?: string;
-}>(
-  ({ delay = 0, duration = 12, x = '50%', y = '50%', size = '4px', color = '#3b82f6', theme }) => ({
-    position: 'absolute',
-    left: x,
-    top: y,
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    background: `radial-gradient(circle, ${color}60, ${color}30, transparent)`,
-    boxShadow: `0 0 ${parseInt(size) * 3}px ${color}40`,
-    animation: `floatParticle-${delay % 3} ${duration}s ease-in-out ${delay}s infinite`,
-    opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
-    '@keyframes floatParticle-0': {
-      '0%': {
-        transform: 'translate(0, 0) scale(0.5)',
-        opacity: 0,
-      },
-      '10%': {
-        opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
-      },
-      '90%': {
-        opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
-      },
-      '100%': {
-        transform: 'translate(40px, -120px) scale(1.5)',
-        opacity: 0,
-      },
-    },
-    '@keyframes floatParticle-1': {
-      '0%': {
-        transform: 'translate(0, 0) scale(0.8)',
-        opacity: 0,
-      },
-      '15%': {
-        opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
-      },
-      '85%': {
-        opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
-      },
-      '100%': {
-        transform: 'translate(-30px, -100px) scale(1.2)',
-        opacity: 0,
-      },
-    },
-    '@keyframes floatParticle-2': {
-      '0%': {
-        transform: 'translate(0, 0) scale(0.6)',
-        opacity: 0,
-      },
-      '12%': {
-        opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
-      },
-      '88%': {
-        opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
-      },
-      '100%': {
-        transform: 'translate(25px, -110px) scale(1)',
-        opacity: 0,
-      },
-    },
-  }),
-);
-
-const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
-  ({ delay = 0, x = '20%', y = '20%', theme }) => ({
-    position: 'absolute',
-    left: x,
-    top: y,
-    width: '32px',
-    height: '32px',
-    opacity: theme.palette.mode === 'dark' ? 0.2 : 0.12,
-    animation: `runeGlow ${10 + delay}s ease-in-out ${delay}s infinite alternate`,
-    '&::before': {
-      content: '"⟐"',
-      position: 'absolute',
-      fontSize: '32px',
-      color: theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6',
-      textShadow:
-        theme.palette.mode === 'dark'
-          ? '0 0 12px #60a5fa50, 0 0 24px #3b82f630'
-          : '0 0 6px #3b82f640',
-      transform: 'rotate(0deg)',
-    },
-    '@keyframes runeGlow': {
-      '0%': {
-        transform: 'rotate(0deg) scale(1)',
-        opacity: theme.palette.mode === 'dark' ? 0.15 : 0.08,
-      },
-      '50%': {
-        transform: 'rotate(180deg) scale(1.05)',
-        opacity: theme.palette.mode === 'dark' ? 0.3 : 0.18,
-      },
-      '100%': {
-        transform: 'rotate(360deg) scale(1)',
-        opacity: theme.palette.mode === 'dark' ? 0.2 : 0.12,
-      },
-    },
-    [theme.breakpoints.down('md')]: {
-      width: '24px',
-      height: '24px',
-      '&::before': {
-        fontSize: '24px',
-      },
-    },
-  }),
-);
 
 export const LandingPage: React.FC = () => {
   const [showAnimations, setShowAnimations] = useState(false);
@@ -1225,31 +977,57 @@ export const LandingPage: React.FC = () => {
   return (
     <LandingContainer>
       <HeroSection id="home" showAnimations={showAnimations}>
-        <ParticleContainer>
-          {/* Floating particles with magical glow */}
-          <FloatingParticle delay={0} duration={8} x="15%" y="80%" size="6px" color="#60a5fa" />
-          <FloatingParticle delay={2} duration={12} x="25%" y="75%" size="4px" color="#a78bfa" />
-          <FloatingParticle delay={4} duration={10} x="35%" y="85%" size="5px" color="#34d399" />
-          <FloatingParticle delay={1} duration={9} x="50%" y="90%" size="3px" color="#fbbf24" />
-          <FloatingParticle delay={3} duration={11} x="65%" y="80%" size="6px" color="#f472b6" />
-          <FloatingParticle delay={5} duration={13} x="75%" y="75%" size="4px" color="#06b6d4" />
-          <FloatingParticle delay={6} duration={14} x="85%" y="85%" size="5px" color="#8b5cf6" />
-
-          {/* Second layer of particles */}
-          <FloatingParticle delay={7} duration={15} x="20%" y="70%" size="3px" color="#3b82f6" />
-          <FloatingParticle delay={8} duration={10} x="40%" y="78%" size="4px" color="#10b981" />
-          <FloatingParticle delay={9} duration={12} x="60%" y="88%" size="5px" color="#f59e0b" />
-          <FloatingParticle delay={10} duration={11} x="80%" y="70%" size="3px" color="#ec4899" />
-
-          {/* ESO runes for magical atmosphere */}
-          <ESORune delay={0} x="18%" y="25%" />
-          <ESORune delay={3} x="82%" y="30%" />
-          <ESORune delay={6} x="50%" y="15%" />
-          <ESORune delay={9} x="25%" y="50%" />
-          <ESORune delay={12} x="75%" y="55%" />
-        </ParticleContainer>
+        {/* Subtle dot-grid backdrop — structural, not decorative noise */}
+        <Box
+          aria-hidden
+          sx={(theme) => ({
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 0,
+            backgroundImage:
+              theme.palette.mode === 'dark'
+                ? 'radial-gradient(rgba(56,189,248,0.12) 1px, transparent 1px)'
+                : 'radial-gradient(rgba(15,23,42,0.08) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%)',
+            WebkitMaskImage:
+              'radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%)',
+          })}
+        />
 
         <HeroContent className="u-fade-in-up">
+          {/* Eyebrow — HUD-style structural accent above headline */}
+          <Box
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1.5,
+              mb: 3,
+              '& span': {
+                fontSize: '0.7rem',
+                fontFamily: "'Chakra Petch', sans-serif",
+                fontWeight: 600,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color:
+                  theme.palette.mode === 'dark' ? 'rgba(56,189,248,0.7)' : 'rgba(2,132,199,0.7)',
+              },
+              '&::before, &::after': {
+                content: '""',
+                flex: '0 0 48px',
+                height: '1px',
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56,189,248,0.4)'
+                    : 'rgba(2,132,199,0.3)',
+              },
+            })}
+          >
+            <span>ESO Toolkit</span>
+          </Box>
+
           <HeroTitle variant="h1" showAnimations={showAnimations}>
             <span className="light-text">Essential Tools</span>
             <span className="gradient-text">
