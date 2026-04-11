@@ -10,25 +10,22 @@ import {
 } from '../store/report/reportSelectors';
 import { fetchReportData } from '../store/report/reportSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
-import { isSampleReport } from '../utils/sampleReports';
 
 export function useReportData(): {
   reportData: ReportFragment | null;
   isReportLoading: boolean;
 } {
-  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
+  const { client, isReady } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const { reportId } = useSelectedReportAndFight();
 
   React.useEffect(() => {
-    // Fetch if client is ready and user is logged in.
-    // For bundled sample reports, also fetch even without login — the thunk
-    // will serve data from the static JSON instead of hitting the API.
-    const canFetch = isLoggedIn || isSampleReport(reportId);
-    if (reportId && isReady && canFetch && client) {
+    // Fetch if client is ready — the Cloudflare Worker GQL proxy handles
+    // token injection for public queries so no login is required.
+    if (reportId && isReady && client) {
       dispatch(fetchReportData({ reportId, client }));
     }
-  }, [dispatch, reportId, client, isReady, isLoggedIn]);
+  }, [dispatch, reportId, client, isReady]);
 
   const combinedReportData = useSelector(selectCombinedReportData);
   const isReportLoading = useSelector(selectReportLoadingState);

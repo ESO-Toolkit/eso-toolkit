@@ -29,7 +29,7 @@ export function useCastEvents(options?: UseCastEventsOptions): {
 } {
   const dispatch = useAppDispatch();
 
-  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
+  const { client, isReady } = useEsoLogsClientContext();
   const context = useResolvedReportFightContext(options?.context);
   const selectedFight = useFightForContext(context);
 
@@ -43,8 +43,7 @@ export function useCastEvents(options?: UseCastEventsOptions): {
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
   React.useEffect(() => {
-    // Only fetch if client is ready, user is logged in, and we have required data
-    if (context.reportCode && selectedFight && isReady && isLoggedIn && client) {
+    if (context.reportCode && selectedFight && isReady && client) {
       dispatch(
         fetchCastEvents({
           reportCode: context.reportCode,
@@ -61,7 +60,6 @@ export function useCastEvents(options?: UseCastEventsOptions): {
     selectedFight,
     client,
     isReady,
-    isLoggedIn,
     restrictToFightWindow,
   ]);
 

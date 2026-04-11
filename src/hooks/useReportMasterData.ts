@@ -31,7 +31,7 @@ interface UseReportMasterDataOptions {
 export function useReportMasterData(
   options?: UseReportMasterDataOptions,
 ): UseReportMasterDataResult {
-  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
+  const { client, isReady } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const context = useResolvedReportFightContext(options?.context);
 
@@ -48,10 +48,10 @@ export function useReportMasterData(
   const isLoaded = masterDataEntry?.status === 'succeeded';
 
   React.useEffect(() => {
-    if (context.reportCode && isReady && isLoggedIn && client) {
+    if (context.reportCode && isReady && client) {
       dispatch(fetchReportMasterData({ reportCode: context.reportCode, client }));
     }
-  }, [dispatch, context.reportCode, client, isReady, isLoggedIn]);
+  }, [dispatch, context.reportCode, client, isReady]);
 
   return React.useMemo(
     () => ({
