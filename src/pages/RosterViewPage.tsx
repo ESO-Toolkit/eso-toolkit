@@ -36,7 +36,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
-import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
+import {
+  KALPA_DOWNLOAD_URL,
+  getAddonManagerDeepLink,
+} from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import type {
@@ -1328,8 +1331,9 @@ export const RosterViewPage: React.FC = () => {
   const [encodedParam, setEncodedParam] = useState<string>('');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
-    message: string;
+    message: React.ReactNode;
     severity: 'success' | 'error' | 'info';
+    autoHideDuration?: number;
   }>({ open: false, message: '', severity: 'success' });
   const [recommendedAddons, setRecommendedAddons] = useState<RecommendedAddons | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(false);
@@ -1907,21 +1911,32 @@ export const RosterViewPage: React.FC = () => {
                         const deepLink = getAddonManagerDeepLink(packId);
                         window.location.href = deepLink;
                         // Fallback: if Kalpa is not installed, the browser silently fails.
-                        // After a delay, copy the deep link to clipboard as a fallback.
+                        // After a delay, prompt the user to download Kalpa.
                         if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
                         deepLinkTimerRef.current = setTimeout(() => {
-                          void navigator.clipboard.writeText(deepLink).then(
-                            () => {
-                              setSnackbar({
-                                open: true,
-                                message: 'Deep link copied — install Kalpa to use it',
-                                severity: 'info',
-                              });
-                            },
-                            () => {
-                              /* clipboard denied — silently ignore */
-                            },
-                          );
+                          void navigator.clipboard.writeText(deepLink).catch(() => {});
+                          setSnackbar({
+                            open: true,
+                            message: (
+                              <>
+                                Kalpa not detected.{' '}
+                                <a
+                                  href={KALPA_DOWNLOAD_URL}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    color: 'inherit',
+                                    fontWeight: 700,
+                                    textDecoration: 'underline',
+                                  }}
+                                >
+                                  Download it here
+                                </a>
+                              </>
+                            ),
+                            severity: 'info',
+                            autoHideDuration: 6000,
+                          });
                         }, 1500);
                       }}
                       sx={{
@@ -1986,7 +2001,7 @@ export const RosterViewPage: React.FC = () => {
       {/* ── Snackbar feedback ── */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={2500}
+        autoHideDuration={snackbar.autoHideDuration ?? 2500}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >

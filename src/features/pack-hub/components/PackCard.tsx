@@ -1,6 +1,7 @@
 import { ContentCopy, DeleteOutline, EditOutlined, Extension } from '@mui/icons-material';
 import {
   Box,
+  Button,
   Card,
   CardActions,
   CardContent,
@@ -14,7 +15,7 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import { formatRelativeDate } from '../../../utils/formatRelativeDate';
-import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
+import { KALPA_DOWNLOAD_URL, getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import { VoteButton } from '../../roster-hub/components/VoteButton';
 import type { HubPack } from '../types/pack-hub.types';
 import { PACK_TAG_COLORS, PACK_TYPE_ACCENT, PACK_TYPE_LABELS } from '../types/pack-hub.types';
@@ -59,11 +60,21 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
       const deepLink = getAddonManagerDeepLink(pack.id, { preserveSettings: true });
       window.location.href = deepLink;
       installTimerRef.current = setTimeout(() => {
-        void navigator.clipboard.writeText(deepLink).then(() => {
-          enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
-            variant: 'info',
-            autoHideDuration: 4000,
-          });
+        void navigator.clipboard.writeText(deepLink).catch(() => {});
+        enqueueSnackbar('Kalpa not detected — download it to install addon packs', {
+          variant: 'info',
+          autoHideDuration: 6000,
+          action: () => (
+            <Button
+              size="small"
+              href={KALPA_DOWNLOAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+            >
+              Download
+            </Button>
+          ),
         });
       }, 1500);
     };
