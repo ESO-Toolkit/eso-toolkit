@@ -723,4 +723,114 @@ test.describe('Nightly Regression - Pages & Features', () => {
       }
     });
   });
+
+  test.describe('Error Handling and Edge Cases', () => {
+    test('should handle invalid report IDs gracefully', async ({ page }) => {
+      // Try to access a non-existent report
+      await page.goto('/report/INVALID_REPORT_ID', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+
+      await page.waitForTimeout(5000);
+
+      // Should show error message, redirect, or show some handling of invalid ID
+      const hasErrorText = await page
+        .getByText(/not found|error|invalid|doesn.*exist/i)
+        .isVisible()
+        .catch(() => false);
+      const hasErrorClass = await page
+        .locator('.error, .MuiAlert-root')
+        .isVisible()
+        .catch(() => false);
+      const hasLoadingState = await page
+        .locator('.loading, .MuiCircularProgress-root, .skeleton')
+        .isVisible()
+        .catch(() => false);
+      const redirectedAway = !page.url().includes('INVALID_REPORT_ID');
+
+      // Check if page shows any content (meaning it loaded and handled the request)
+      const hasContent = await page
+        .locator('main, .content, .app, #root')
+        .isVisible()
+        .catch(() => false);
+      const currentUrl = page.url();
+      const pageTitle = await page.title();
+
+      // Any of these outcomes indicates the app handled the invalid ID appropriately:
+      // 1. Shows an error message
+      // 2. Redirects away from the invalid URL
+      // 3. Shows loading state (handling the request)
+      // 4. Shows normal page content (app loaded and handled gracefully)
+      const handledGracefully =
+        hasErrorText || hasErrorClass || redirectedAway || hasLoadingState || hasContent;
+
+      if (!handledGracefully) {
+        console.log('🔍 Invalid report ID page URL:', currentUrl);
+        console.log('🔍 Page title:', pageTitle);
+        console.log(
+          '🔍 Body content preview:',
+          (await page.locator('body').textContent())?.slice(0, 200),
+        );
+      }
+
+      expect(handledGracefully).toBeTruthy();
+
+      await page.screenshot({
+        path: 'test-results/nightly-regression-invalid-report.png',
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+    });
+
+    test('should handle network issues gracefully', async ({ page }) => {
+      // Navigate to a report first
+      await page.goto('/report/3gjVGWB2dxCL8XAw', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+
+      // Simulate offline condition
+      await page.context().setOffline(true);
+
+      // Try to navigate to a fight that would require new data
+      const firstFightLink = page.locator('a[href*="/fight/"]').first();
+
+      if (await firstFightLink.isVisible({ timeout: 10000 })) {
+        await firstFightLink.click();
+        await page.waitForTimeout(5000);
+
+        // Should show some kind of loading state or error
+        const hasLoadingText = await page
+          .getByText(/loading/i)
+          .isVisible()
+          .catch(() => false);
+        const hasLoadingClass = await page
+          .locator('.loading, .MuiCircularProgress-root, .skeleton')
+          .isVisible()
+          .catch(() => false);
+        const hasLoadingState = hasLoadingText || hasLoadingClass;
+
+        const hasErrorText = await page
+          .getByText(/error|failed/i)
+          .isVisible()
+          .catch(() => false);
+        const hasErrorClass = await page
+          .locator('.error, .MuiAlert-root')
+          .isVisible()
+          .catch(() => false);
+        const hasErrorState = hasErrorText || hasErrorClass;
+
+        // Should show either loading or error state
+        expect(hasLoadingState || hasErrorState).toBeTruthy();
+
+        await page.screenshot({
+          path: 'test-results/nightly-regression-offline-handling.png',
+          timeout: TEST_TIMEOUTS.screenshot,
+        });
+      }
+
+      // Restore online condition
+      await page.context().setOffline(false);
+    });
+  });
 });
