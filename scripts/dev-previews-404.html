@@ -34,7 +34,9 @@
         // Base path for this PR preview, e.g. /dev-previews/pr-860/
         var base = parts.slice(0, prIndex + 1).join('/') + '/';
 
-        // Full original URL to restore in the SPA (path + query + hash)
+        // Full path including the /dev-previews/pr-N prefix so that
+        // index.html's history.replaceState restores the correct absolute path.
+        // e.g. /dev-previews/pr-860/roster-builder?r=…
         var full = l.pathname + l.search + l.hash;
 
         // Method 1: sessionStorage (no visible flash)

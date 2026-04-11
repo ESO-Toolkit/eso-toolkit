@@ -12,6 +12,8 @@ module.exports = {
     // Worker mocks - Mock web workers that use import.meta.url
     '^.*/workers$': '<rootDir>/src/test/__mocks__/workersMock.ts',
     '^.*/workers/(.*)$': '<rootDir>/src/test/__mocks__/workerFactoriesMock.ts',
+    // Discord auth uses import.meta.env which Jest/ts-jest cannot parse
+    '^.*/discord-auth$': '<rootDir>/src/test/__mocks__/discordAuthMock.ts',
     // Path mappings - After asset mocks
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',

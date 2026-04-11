@@ -39,6 +39,22 @@
     var(--scrollbar-track, rgba(255, 255, 255, 0.05));
 }
 
+/* Click / tap responsiveness — eliminates the 300ms double-tap detection
+   delay on touch devices and removes the default tap flash. */
+button,
+a,
+[role='button'],
+[role='tab'],
+[role='menuitem'],
+[role='option'],
+input,
+select,
+label,
+summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   font-family:
@@ -108,37 +124,4 @@ code {
   --site-border: #333333;
   --site-shadow: rgba(0, 0, 0, 0.8);
   --site-radius: 8px;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   View Transitions — Page Navigation
-   GPU-composited crossfade via native View Transitions API.
-   ═══════════════════════════════════════════════════════════════ */
-
-::view-transition-old(root) {
-  animation: vt-fade-out 0.15s ease-out both;
-}
-
-::view-transition-new(root) {
-  animation: vt-fade-in 0.15s ease-in both;
-}
-
-@keyframes vt-fade-out {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes vt-fade-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
-  }
 }

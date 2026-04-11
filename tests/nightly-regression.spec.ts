@@ -453,11 +453,25 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         });
       }
 
-      // Navigate to insights tab first to enable experimental tabs
-      await page.goto(`/report/${reportId}/fight/${fightId}/insights`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
+      // Navigate to insights tab first to enable experimental tabs.
+      // WebKit (and mobile Safari) throw "interrupted by another navigation" when
+      // GitHub Pages' 404.html SPA-redirect fires before domcontentloaded; catch
+      // that specific error and wait for the page to settle at whatever URL it
+      // ends up on, then continue — the tab content check below handles the rest.
+      try {
+        await page.goto(`/report/${reportId}/fight/${fightId}/insights`, {
+          waitUntil: 'domcontentloaded',
+          timeout: TEST_TIMEOUTS.navigation,
+        });
+      } catch (navError) {
+        if ((navError as Error).message.includes('interrupted by another navigation')) {
+          await page
+            .waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation })
+            .catch(() => {});
+        } else {
+          throw navError;
+        }
+      }
 
       // Enable experimental tabs if toggle exists
       const experimentalToggle = page
@@ -522,11 +536,21 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const reportId = REAL_REPORT_IDS[0];
       const fightId = TEST_DATA.KNOWN_FIGHT_ID;
 
-      // Navigate directly to players tab
-      await page.goto(`/report/${reportId}/fight/${fightId}/players`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
+      // Navigate directly to players tab (guarded for WebKit SPA-redirect interruptions)
+      try {
+        await page.goto(`/report/${reportId}/fight/${fightId}/players`, {
+          waitUntil: 'domcontentloaded',
+          timeout: TEST_TIMEOUTS.navigation,
+        });
+      } catch (navError) {
+        if ((navError as Error).message.includes('interrupted by another navigation')) {
+          await page
+            .waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation })
+            .catch(() => {});
+        } else {
+          throw navError;
+        }
+      }
 
       // Try networkidle but fallback to content check if it times out
       try {
@@ -591,11 +615,21 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       const reportId = REAL_REPORT_IDS[0];
       const fightId = '1'; // Use direct fight ID to avoid navigation issues
 
-      // Navigate directly to damage tab which should have target selector
-      await page.goto(`/report/${reportId}/fight/${fightId}/damage-done`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
+      // Navigate directly to damage tab (guarded for WebKit SPA-redirect interruptions)
+      try {
+        await page.goto(`/report/${reportId}/fight/${fightId}/damage-done`, {
+          waitUntil: 'domcontentloaded',
+          timeout: TEST_TIMEOUTS.navigation,
+        });
+      } catch (navError) {
+        if ((navError as Error).message.includes('interrupted by another navigation')) {
+          await page
+            .waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation })
+            .catch(() => {});
+        } else {
+          throw navError;
+        }
+      }
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
@@ -719,12 +753,22 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       // Track performance metrics
       const startTime = Date.now();
 
-      // Navigate to insights tab and measure load time
+      // Navigate to insights tab and measure load time (guarded for WebKit SPA-redirect interruptions)
       const insightsStartTime = Date.now();
-      await page.goto(`/report/${reportId}/fight/${performanceFightId}/insights`, {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
+      try {
+        await page.goto(`/report/${reportId}/fight/${performanceFightId}/insights`, {
+          waitUntil: 'domcontentloaded',
+          timeout: TEST_TIMEOUTS.navigation,
+        });
+      } catch (navError) {
+        if ((navError as Error).message.includes('interrupted by another navigation')) {
+          await page
+            .waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation })
+            .catch(() => {});
+        } else {
+          throw navError;
+        }
+      }
 
       // Try networkidle but fallback to content check if it times out
       try {

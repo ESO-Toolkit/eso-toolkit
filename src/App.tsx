@@ -1,5 +1,5 @@
 import { SnackbarProvider } from 'notistack';
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -10,6 +10,7 @@ import { CookieConsent } from './components/CookieConsent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
+import { KalpaBanner } from './components/KalpaBanner';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
@@ -20,10 +21,12 @@ import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
+import { DiscordOAuthRedirect } from './DiscordOAuthRedirect';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
 import { BanRedirect } from './features/auth/BanRedirect';
+import { DiscordAuthProvider } from './features/auth/DiscordAuthContext';
 import { Login } from './features/auth/Login';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
@@ -36,7 +39,6 @@ import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
-
 // Initialize error tracking before the app starts
 initializeErrorTracking();
 
@@ -136,6 +138,12 @@ const AboutPage = React.lazy(() =>
   import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
 );
 
+const DiscordServerConfigPage = React.lazy(() =>
+  import('./pages/DiscordServerConfigPage').then((module) => ({
+    default: module.DiscordServerConfigPage,
+  })),
+);
+
 const MyRostersPage = React.lazy(() =>
   import('./pages/MyRostersPage').then((module) => ({ default: module.MyRostersPage })),
 );
@@ -200,27 +208,66 @@ const PublicProfilePage = React.lazy(() =>
 // feedback during navigation, so a skeleton loader is unnecessary and jarring.
 const LoadingFallback: React.FC = () => null;
 
+// Delays rendering of skeleton fallbacks so fast page loads never flash them.
+// If the real content arrives within the delay window, the user sees nothing.
+const DelayedFallback: React.FC<{ delay?: number; children: React.ReactNode }> = ({
+  delay = 200,
+  children,
+}) => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(id);
+  }, [delay]);
+  return show ? <>{children}</> : null;
+};
+
 // Text Editor specific loading fallback
-const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
+const TextEditorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <TextEditorSkeleton />
+  </DelayedFallback>
+);
 
 // Report fights specific loading fallback
-const ReportFightsLoadingFallback: React.FC = () => <ReportFightsSkeleton />;
+const ReportFightsLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <ReportFightsSkeleton />
+  </DelayedFallback>
+);
 
 // Calculator specific loading fallback
-const CalculatorLoadingFallback: React.FC = () => <SmartCalculatorSkeleton />;
+const CalculatorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <SmartCalculatorSkeleton />
+  </DelayedFallback>
+);
 
 // Roster Builder specific loading fallback
-const RosterBuilderLoadingFallback: React.FC = () => <RosterBuilderSkeleton />;
+const RosterBuilderLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <RosterBuilderSkeleton />
+  </DelayedFallback>
+);
 
 // Roster Hub specific loading fallback
-const RosterHubLoadingFallback: React.FC = () => <RosterHubSkeleton />;
+const RosterHubLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <RosterHubSkeleton />
+  </DelayedFallback>
+);
 
 // Build Editor specific loading fallback
-const BuildEditorLoadingFallback: React.FC = () => <BuildEditorSkeleton />;
+const BuildEditorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <BuildEditorSkeleton />
+  </DelayedFallback>
+);
 
 const MainApp: React.FC = () => {
   return (
     <ReduxThemeProvider>
+      <KalpaBanner />
       <HeaderBar />
       <LandingPage />
     </ReduxThemeProvider>
@@ -280,20 +327,22 @@ const App: React.FC = () => {
           <ReduxThemeProvider>
             <EsoLogsClientProvider>
               <AuthProvider>
-                <SnackbarProvider
-                  maxSnack={3}
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                  autoHideDuration={4000}
-                  preventDuplicate
-                >
-                  {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
-                  {!window.location.search.includes('embed=1') && <SiteBackground />}
-                  <AppRoutes />
-                  {/* Update notification for new versions */}
-                  {!window.location.search.includes('embed=1') && <UpdateNotification />}
-                  {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
-                  {!window.location.search.includes('embed=1') && <CookieConsent />}
-                </SnackbarProvider>
+                <DiscordAuthProvider>
+                  <SnackbarProvider
+                    maxSnack={3}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                    autoHideDuration={4000}
+                    preventDuplicate
+                  >
+                    {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                    {!window.location.search.includes('embed=1') && <SiteBackground />}
+                    <AppRoutes />
+                    {/* Update notification for new versions */}
+                    {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                    {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                    {!window.location.search.includes('embed=1') && <CookieConsent />}
+                  </SnackbarProvider>
+                </DiscordAuthProvider>
               </AuthProvider>
             </EsoLogsClientProvider>
           </ReduxThemeProvider>
@@ -346,6 +395,14 @@ const AppRoutes: React.FC = () => {
                 <Suspense fallback={<LoadingFallback />}>
                   <OAuthRedirect />
                 </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/discord-oauth-redirect"
+            element={
+              <ErrorBoundary>
+                <DiscordOAuthRedirect />
               </ErrorBoundary>
             }
           />
@@ -718,6 +775,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <AboutPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/discord-server-config"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <DiscordServerConfigPage />
                   </Suspense>
                 </ErrorBoundary>
               }

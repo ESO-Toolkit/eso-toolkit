@@ -249,7 +249,13 @@ async function githubGraphQL<T>(env: Env, query: string, variables: Record<strin
       console.error(`[github] graphql failed ${res.status}: ${text}`);
       return null;
     }
-    return res.json() as Promise<T>;
+    const json = (await res.json()) as T & { errors?: { message: string }[] };
+    // GraphQL can return 200 with errors — check for them
+    if (json.errors && json.errors.length > 0) {
+      console.error(`[github] graphql errors: ${json.errors.map((e) => e.message).join(', ')}`);
+      return null;
+    }
+    return json;
   } catch (err) {
     console.error('[github] graphql error:', err);
     return null;

@@ -269,7 +269,7 @@ export const SampleReportButton: React.FC = () => {
           ? `/report/${sampleRow.reportCode}/fight/${sampleRow.fightId}`
           : `/report/${sampleRow.reportCode}`;
 
-      navigate(targetPath);
+      navigate(targetPath, { vtType: 'up' });
     } catch (fetchError) {
       const err = toError(fetchError);
       logger.error('Failed to open sample leaderboard report', err);

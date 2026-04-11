@@ -3,7 +3,7 @@
  * Posts the ticket panel embed with 3 action buttons in #create-ticket.
  */
 
-import { editFollowup, sendMessage } from '../discord.js';
+import { editFollowup, Permission, sendMessage } from '../discord.js';
 import {
   ButtonId,
   ButtonStyle,
@@ -13,9 +13,7 @@ import {
   MessageFlags,
 } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
-
-// Permission bit for ADMINISTRATOR
-const ADMINISTRATOR = 1n << 3n;
+import { ephemeral } from '../utils.js';
 
 export async function handleTicketSetup(
   env: Env,
@@ -29,7 +27,7 @@ export async function handleTicketSetup(
   }
 
   const perms = BigInt(permsStr);
-  const isAdmin = (perms & ADMINISTRATOR) === ADMINISTRATOR;
+  const isAdmin = (perms & Permission.ADMINISTRATOR) === Permission.ADMINISTRATOR;
   if (!isAdmin) {
     return ephemeral('❌ You need the **Administrator** permission to run this command.');
   }
@@ -104,9 +102,3 @@ async function postPanel(env: Env, interaction: DiscordInteraction): Promise<voi
   }
 }
 
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

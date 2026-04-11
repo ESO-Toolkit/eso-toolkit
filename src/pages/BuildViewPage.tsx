@@ -1827,6 +1827,7 @@ export const BuildViewPage: React.FC = () => {
             <motion.div variants={fadeInUp}>
               <Box
                 sx={{
+                  viewTransitionName: 'build-hero',
                   display: 'flex',
                   alignItems: { xs: 'flex-start', sm: 'center' },
                   justifyContent: 'space-between',
