@@ -56,6 +56,7 @@ jobs:
     timeout-minutes: 3
     permissions:
       contents: read
+      actions: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -65,9 +66,24 @@ jobs:
       - name: Build Changelog
         id: changelog
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          COMMITS=$(git log --pretty=format:'[`%h`](https://github.com/${{ github.repository }}/commit/%H) %s' \
-            --no-merges -10)
+          # Find the SHA of the previous successful deploy
+          PREV_SHA=$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/deploy.yml/runs?branch=main&status=success&per_page=5" \
+            --jq "[.workflow_runs[] | select(.head_sha != \"${{ github.sha }}\")][0].head_sha // empty" \
+          ) || true
+
+          if [ -n "$PREV_SHA" ] && git merge-base --is-ancestor "$PREV_SHA" HEAD 2>/dev/null; then
+            COMMITS=$(git log --pretty=format:'[`%h`](https://github.com/${{ github.repository }}/commit/%H) %s' \
+              "${PREV_SHA}..HEAD")
+          else
+            # First deploy or ancestor not found — show last 10 commits
+            COMMITS=$(git log --pretty=format:'[`%h`](https://github.com/${{ github.repository }}/commit/%H) %s' \
+              -10)
+          fi
+
           {
             echo "commits<<CHANGELOG_EOF"
             echo "$COMMITS"
