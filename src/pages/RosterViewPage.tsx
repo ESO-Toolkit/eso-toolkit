@@ -36,10 +36,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
-import {
-  KALPA_DOWNLOAD_URL,
-  getAddonManagerDeepLink,
-} from '../features/build-hub/api/packs-api';
+import { KALPA_DOWNLOAD_URL, getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import type {
