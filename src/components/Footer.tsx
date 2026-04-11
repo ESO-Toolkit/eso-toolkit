@@ -34,7 +34,7 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'Text Editor', href: '/text-editor' },
 
-      { label: 'Log Analyzer', href: '/logs' },
+      { label: 'Log Analyzer', href: '/my-reports' },
 
       { label: 'Roster Builder', href: '/roster-builder' },
 

@@ -16,13 +16,12 @@ import {
   useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import React, { useRef } from 'react';
 
 import discordIcon from '../../../assets/discord-icon.svg';
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
-import { TAG_COLORS } from '../types/roster-hub.types';
 
 import { VoteButton } from './VoteButton';
 
@@ -111,6 +110,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const navigate = useViewTransitionNavigate();
+    const cardRef = useRef<HTMLDivElement>(null);
     const isDark = theme.palette.mode === 'dark';
 
     // ── Overflow menu state ─────────────────────────────────────────────────
@@ -166,22 +166,21 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
-    // Tag color takes priority over trial color — leaderboard cards glow gold, etc.
-    const tagAccent = roster.tags.map((t) => TAG_COLORS[t]).find((c): c is string => c != null);
-    const accentColor = tagAccent ?? TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
+    const accentColor = TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
 
     const displayName = roster.is_anonymous ? 'Anonymous' : roster.author_name || '?';
 
     return (
       <Card
+        ref={cardRef}
         sx={{
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
           position: 'relative',
           background: isDark
-            ? `linear-gradient(160deg, ${accentColor}12 0%, rgba(152,131,227,0.07) 45%, rgba(11,18,32,0.6) 100%)`
-            : `linear-gradient(160deg, ${accentColor}0c 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)`,
+            ? `linear-gradient(135deg, ${accentColor}14 0%, rgba(56, 189, 248, 0.10) 50%, rgba(0, 225, 255, 0.10) 100%)`
+            : `linear-gradient(135deg, ${accentColor}12 0%, rgba(219, 234, 254, 0.45) 50%, rgba(224, 242, 254, 0.45) 100%)`,
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           border: isDark ? `1px solid rgba(255,255,255,0.09)` : `1px solid rgba(0,0,0,0.09)`,
@@ -217,7 +216,12 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
         {/* Clickable area — opens preview */}
         <CardActionArea
-          onClick={() => navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}`)}
+          onClick={() =>
+            navigate(`/rv?r=${encodeURIComponent(roster.roster_data)}`, {
+              vtType: 'forward',
+              morph: { ref: cardRef, name: 'roster-hero' },
+            })
+          }
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
           aria-label={`View ${roster.title}`}
         >
@@ -255,9 +259,14 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                     fontSize: '0.7rem',
                     fontWeight: 800,
                     letterSpacing: '0.07em',
-                    color: accentColor,
                     lineHeight: 1,
                     textTransform: 'uppercase',
+                    background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc, ${accentColor})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    textShadow: `0 0 12px ${accentColor}40`,
+                    filter: isDark ? 'brightness(1.2)' : 'none',
                   }}
                 >
                   {trialShort}
@@ -280,6 +289,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                 wordBreak: 'break-word',
                 fontSize: '1.05rem',
                 letterSpacing: '-0.01em',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
               }}
             >
               {roster.title}
@@ -309,7 +319,6 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             {roster.tags.length > 0 && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
                 {roster.tags.map((tag) => {
-                  const tagColor = TAG_COLORS[tag] ?? '#94a3b8';
                   return (
                     <Box
                       key={tag}
@@ -325,9 +334,11 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                         letterSpacing: '0.02em',
                         backdropFilter: 'blur(8px)',
                         WebkitBackdropFilter: 'blur(8px)',
-                        background: isDark ? `${tagColor}25` : `${tagColor}18`,
-                        border: `1px solid ${tagColor}50`,
-                        color: tagColor,
+                        background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                        border: isDark
+                          ? '1px solid rgba(255,255,255,0.12)'
+                          : '1px solid rgba(0,0,0,0.10)',
+                        color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
                         lineHeight: 1.4,
                         whiteSpace: 'nowrap',
                       }}

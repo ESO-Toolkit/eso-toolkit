@@ -1,100 +1,88 @@
 import { Box } from '@mui/material';
-import React, { useEffect, useState, useRef, startTransition } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface AnimatedTabContentProps {
   children: React.ReactNode;
   tabKey: string;
 }
 
+interface VTHandle {
+  finished: Promise<void>;
+}
+
+/**
+ * GPU-accelerated tab content transitions using the native View Transitions API.
+ * Falls back to an instant swap when the API isn't available or when a
+ * route-level transition is already in flight.
+ */
 export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children, tabKey }) => {
-  const [currentContent, setCurrentContent] = useState(children);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const previousTabKey = useRef(tabKey);
-  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingContentRef = useRef<React.ReactNode>(null);
+  const [displayContent, setDisplayContent] = useState(children);
+  const prevTabKey = useRef(tabKey);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const transitioning = useRef(false);
 
   useEffect(() => {
-    if (tabKey !== previousTabKey.current) {
-      // Clear any existing transition
-      if (transitionTimeoutRef.current) {
-        clearTimeout(transitionTimeoutRef.current);
-      }
-
-      // Store the new content but don't switch to it immediately
-      pendingContentRef.current = children;
-
-      // Start animation immediately
-      setIsTransitioning(true);
-
-      // Use React's concurrent features to avoid blocking
-      startTransition(() => {
-        // After fade out completes, switch to new content
-        transitionTimeoutRef.current = setTimeout(() => {
-          // Only switch to pending content if we still have the same tabKey
-          // This prevents race conditions with rapid tab switching
-          if (pendingContentRef.current) {
-            setCurrentContent(pendingContentRef.current);
-            pendingContentRef.current = null;
-          }
-
-          // Brief pause to let DOM update, then fade in
-          transitionTimeoutRef.current = setTimeout(() => {
-            setIsTransitioning(false);
-            previousTabKey.current = tabKey;
-          }, 50); // Reduced pause for faster perceived loading
-        }, 150); // Quick fade out
-      });
-    } else {
-      // Tab hasn't changed, but children might have (e.g., Suspense resolved)
-      // Update content immediately without animation if not transitioning
-      if (!isTransitioning) {
-        setCurrentContent(children);
-      }
+    if (tabKey === prevTabKey.current) {
+      // Same tab — just update content (e.g. Suspense resolved)
+      setDisplayContent(children);
+      return;
     }
 
-    return () => {
-      if (transitionTimeoutRef.current) {
-        clearTimeout(transitionTimeoutRef.current);
-      }
+    prevTabKey.current = tabKey;
+
+    const el = containerRef.current;
+
+    // Skip VT when: API missing, element unmounted, or another
+    // transition (route-level or previous tab) is still active.
+    // document.activeViewTransition is non-null when any VT is running.
+    const docHasActiveVT = !!(document as unknown as { activeViewTransition?: object })
+      .activeViewTransition;
+
+    if (!('startViewTransition' in document) || !el || transitioning.current || docHasActiveVT) {
+      setDisplayContent(children);
+      return;
+    }
+
+    transitioning.current = true;
+    el.style.viewTransitionName = 'tab-content';
+
+    let handle: VTHandle;
+    try {
+      handle = (
+        document as unknown as {
+          startViewTransition: (cb: () => Promise<void>) => VTHandle;
+        }
+      ).startViewTransition(() => {
+        setDisplayContent(children);
+        return new Promise<void>((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
+      });
+    } catch {
+      // VT failed — instant swap
+      el.style.viewTransitionName = '';
+      transitioning.current = false;
+      setDisplayContent(children);
+      return;
+    }
+
+    const cleanup = (): void => {
+      el.style.viewTransitionName = '';
+      transitioning.current = false;
     };
-  }, [children, tabKey, isTransitioning]);
+
+    handle.finished.then(cleanup).catch(cleanup);
+  }, [children, tabKey]);
 
   return (
     <Box
+      ref={containerRef}
       sx={{
         position: 'relative',
         minHeight: '600px',
-        perspective: '1000px',
-        // Add padding to prevent shadow clipping during animations
-        padding: '0 4px 16px 4px',
-        margin: '0 -4px -16px -4px',
       }}
     >
-      <Box
-        sx={{
-          width: '100%',
-          transform: isTransitioning
-            ? 'translateY(6px) scale(0.99) rotateX(1deg)'
-            : 'translateY(0px) scale(1) rotateX(0deg)',
-          opacity: isTransitioning ? 0 : 1,
-          filter: isTransitioning ? 'blur(2px)' : 'blur(0px)',
-          transition: isTransitioning
-            ? 'all 150ms cubic-bezier(0.4, 0, 1, 1)' // Fast out
-            : 'all 200ms cubic-bezier(0, 0, 0.2, 1)', // Smooth in
-          transformOrigin: 'center top',
-          backfaceVisibility: 'hidden',
-          willChange: 'transform, opacity, filter',
-          // Optimize for accordion content
-          '& .MuiAccordion-root': {
-            transition: 'none !important', // Disable accordion animations during tab transition
-          },
-          '& .MuiCollapse-root': {
-            transition: isTransitioning ? 'none !important' : undefined,
-          },
-        }}
-      >
-        {currentContent}
-      </Box>
+      {displayContent}
     </Box>
   );
 };

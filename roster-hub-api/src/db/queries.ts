@@ -10,6 +10,9 @@ import type {
   CommentWithReplies,
   ImageReportRow,
   ImageUploadRow,
+  PackRow,
+  PackTagRow,
+  PackWithMeta,
   RosterRow,
   RosterSummary,
   RosterTagRow,
@@ -998,6 +1001,8 @@ export async function getUserProfile(
   return {
     username: displayName,
     bio: profileRow?.bio ?? '',
+    avatar_url: profileRow?.avatar_url ?? null,
+    avatar_thumb_url: profileRow?.avatar_thumb_url ?? null,
     build_count: buildCountRow?.cnt ?? 0,
     roster_count: rosterCountRow?.cnt ?? 0,
     builds: buildsResult.results.map((b) => ({
@@ -1040,6 +1045,222 @@ export async function upsertUserBio(
     )
     .bind(authorId, authorName, bio)
     .run();
+}
+
+export async function upsertUserAvatar(
+  db: D1Database,
+  authorId: string,
+  authorName: string,
+  avatarUrl: string,
+  avatarThumbUrl: string,
+  avatarDeleteUrl: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO user_profiles (author_id, author_name, avatar_url, avatar_thumb_url, avatar_delete_url, avatar_uploaded_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+       ON CONFLICT (author_id) DO UPDATE SET
+         author_name       = excluded.author_name,
+         avatar_url        = excluded.avatar_url,
+         avatar_thumb_url  = excluded.avatar_thumb_url,
+         avatar_delete_url = excluded.avatar_delete_url,
+         avatar_uploaded_at = excluded.avatar_uploaded_at,
+         updated_at        = excluded.updated_at`,
+    )
+    .bind(authorId, authorName, avatarUrl, avatarThumbUrl, avatarDeleteUrl)
+    .run();
+}
+
+export async function deleteUserAvatar(
+  db: D1Database,
+  authorId: string,
+): Promise<{ avatarDeleteUrl: string | null }> {
+  // Retrieve the host-side delete URL before clearing it
+  const row = await db
+    .prepare('SELECT avatar_delete_url FROM user_profiles WHERE author_id = ?')
+    .bind(authorId)
+    .first<{ avatar_delete_url: string | null }>();
+
+  await db
+    .prepare(
+      `UPDATE user_profiles
+       SET avatar_url = NULL, avatar_thumb_url = NULL, avatar_delete_url = NULL, updated_at = datetime('now')
+       WHERE author_id = ?`,
+    )
+    .bind(authorId)
+    .run();
+
+  return { avatarDeleteUrl: row?.avatar_delete_url ?? null };
+}
+
+/** Retrieve the current avatar's ImgBB delete URL (used before overwriting). */
+export async function getAvatarDeleteUrl(
+  db: D1Database,
+  authorId: string,
+): Promise<string | null> {
+  const row = await db
+    .prepare('SELECT avatar_delete_url FROM user_profiles WHERE author_id = ?')
+    .bind(authorId)
+    .first<{ avatar_delete_url: string | null }>();
+  return row?.avatar_delete_url ?? null;
+}
+
+export async function checkAvatarUploadRateLimit(
+  db: D1Database,
+  authorId: string,
+): Promise<boolean> {
+  // Allow 1 avatar upload per hour — uses dedicated avatar_uploaded_at column
+  // so bio updates / display-name syncs don't interfere with the cooldown.
+  const row = await db
+    .prepare(
+      `SELECT 1 FROM user_profiles
+       WHERE author_id = ? AND avatar_uploaded_at > datetime('now', '-3600 seconds')`,
+    )
+    .bind(authorId)
+    .first();
+  return !row;
+}
+
+// ─── Display name sync ──────────────────────────────────────────────────────
+
+export async function updateDisplayNames(
+  db: D1Database,
+  authorId: string,
+  authorName: string,
+  naDisplayName: string | null,
+  euDisplayName: string | null,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO user_profiles (author_id, author_name, na_display_name, eu_display_name, updated_at)
+       VALUES (?, ?, ?, ?, datetime('now'))
+       ON CONFLICT (author_id) DO UPDATE SET
+         author_name      = excluded.author_name,
+         na_display_name  = excluded.na_display_name,
+         eu_display_name  = excluded.eu_display_name,
+         updated_at       = excluded.updated_at`,
+    )
+    .bind(authorId, authorName, naDisplayName, euDisplayName)
+    .run();
+}
+
+/** A player identity: @displayName + megaserver region (na or eu). */
+export interface PlayerLookupEntry {
+  display_name: string;
+  server: 'na' | 'eu';
+}
+
+/**
+ * Batch-lookup avatar thumbnails for players, keyed by `displayName|server`.
+ * Queries the correct column (na_display_name or eu_display_name) per entry
+ * so two users with the same @handle on different megaservers are never confused.
+ */
+export async function lookupAvatarsByDisplayNames(
+  db: D1Database,
+  players: PlayerLookupEntry[],
+): Promise<Record<string, string>> {
+  if (players.length === 0) return {};
+
+  const naNames = players.filter((p) => p.server === 'na').map((p) => p.display_name);
+  const euNames = players.filter((p) => p.server === 'eu').map((p) => p.display_name);
+
+  const result: Record<string, string> = {};
+
+  // Query NA matches
+  if (naNames.length > 0) {
+    const ph = naNames.map(() => '?').join(', ');
+    const rows = await db
+      .prepare(
+        `SELECT na_display_name, avatar_thumb_url FROM user_profiles
+         WHERE avatar_thumb_url IS NOT NULL AND na_display_name IN (${ph})`,
+      )
+      .bind(...naNames)
+      .all<{ na_display_name: string; avatar_thumb_url: string }>();
+    for (const row of rows.results) {
+      result[`${row.na_display_name}|na`] = row.avatar_thumb_url;
+    }
+  }
+
+  // Query EU matches
+  if (euNames.length > 0) {
+    const ph = euNames.map(() => '?').join(', ');
+    const rows = await db
+      .prepare(
+        `SELECT eu_display_name, avatar_thumb_url FROM user_profiles
+         WHERE avatar_thumb_url IS NOT NULL AND eu_display_name IN (${ph})`,
+      )
+      .bind(...euNames)
+      .all<{ eu_display_name: string; avatar_thumb_url: string }>();
+    for (const row of rows.results) {
+      result[`${row.eu_display_name}|eu`] = row.avatar_thumb_url;
+    }
+  }
+
+  return result;
+}
+
+// ─── Leaderboard sync queries ───────────────────────────────────────────────
+
+export async function findSystemRoster(
+  db: D1Database,
+  authorId: string,
+  trialId: string,
+): Promise<{ id: string } | null> {
+  return db
+    .prepare('SELECT id FROM rosters WHERE author_id = ? AND trial_id = ? LIMIT 1')
+    .bind(authorId, trialId)
+    .first<{ id: string }>();
+}
+
+export async function upsertSystemRoster(
+  db: D1Database,
+  opts: {
+    existingId?: string;
+    newId: string;
+    authorId: string;
+    authorName: string;
+    title: string;
+    description: string;
+    trialId: string;
+    rosterData: string;
+    tags: string[];
+  },
+): Promise<void> {
+  if (opts.existingId) {
+    await db
+      .prepare(
+        `UPDATE rosters SET title = ?, description = ?, roster_data = ?, updated_at = datetime('now')
+         WHERE id = ?`,
+      )
+      .bind(opts.title, opts.description, opts.rosterData, opts.existingId)
+      .run();
+  } else {
+    await db
+      .prepare(
+        `INSERT INTO rosters (id, author_id, author_name, is_anonymous, title, description, trial_id, roster_data, vote_count, created_at, updated_at)
+         VALUES (?, ?, ?, 0, ?, ?, ?, ?, 0, datetime('now'), datetime('now'))`,
+      )
+      .bind(
+        opts.newId,
+        opts.authorId,
+        opts.authorName,
+        opts.title,
+        opts.description,
+        opts.trialId,
+        opts.rosterData,
+      )
+      .run();
+  }
+
+  // Upsert tags
+  const rosterId = opts.existingId ?? opts.newId;
+  await db.prepare('DELETE FROM roster_tags WHERE roster_id = ?').bind(rosterId).run();
+  for (const tag of opts.tags) {
+    await db
+      .prepare('INSERT INTO roster_tags (roster_id, tag) VALUES (?, ?)')
+      .bind(rosterId, tag)
+      .run();
+  }
 }
 
 // ─── Pack Hub queries ─────────────────────────────────────────────────────────

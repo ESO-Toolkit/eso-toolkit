@@ -113,6 +113,7 @@ export interface ProfileBuildSummary {
   vote_count: number;
   tags: string[];
   created_at: string;
+  updated_at?: string;
 }
 
 export interface ProfileRosterSummary {
@@ -128,6 +129,8 @@ export interface ProfileRosterSummary {
 export interface UserProfile {
   username: string;
   bio: string;
+  avatar_url: string | null;
+  avatar_thumb_url: string | null;
   build_count: number;
   roster_count: number;
   builds: ProfileBuildSummary[];
