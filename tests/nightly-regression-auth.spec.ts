@@ -19,7 +19,9 @@ import { createEsoPage } from './utils/EsoLogAggregatorPage';
 const TEST_TIMEOUTS = {
   navigation: 30000,
   dataLoad: 45000,
-  screenshot: 10000,
+  // Increased from 10 000 ms: WebKit can be slow to settle before screenshots
+  // on CI, especially for auth-gated pages that render redirect logic.
+  screenshot: 20000,
 };
 
 test.describe('Nightly Regression - Authentication and Reports', () => {

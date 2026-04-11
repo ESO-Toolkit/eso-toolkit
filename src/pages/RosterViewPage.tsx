@@ -1,9 +1,9 @@
 /**
  * RosterViewPage — read-only, shareable view of a roster.
  *
- * Accessible only via a direct link: /rv?r=<encoded>
- * The encoded roster is the same compact format used by the RosterBuilderPage
- * so existing share links remain compatible.
+ * Accessible via direct link: /rv?r=<encoded> or /rv?id=<hubRosterId>
+ * The ?r= format uses the same compact encoding as RosterBuilderPage.
+ * The ?id= format fetches roster data from the Roster Hub API by ID.
  */
 
 import {
@@ -35,6 +35,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
+import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
 import { getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
@@ -1328,10 +1329,11 @@ export const RosterViewPage: React.FC = () => {
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error';
+    severity: 'success' | 'error' | 'info';
   }>({ open: false, message: '', severity: 'success' });
   const [recommendedAddons, setRecommendedAddons] = useState<RecommendedAddons | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(false);
+  const deepLinkTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Default addons shown when no hub roster or no custom recommendations
   const DEFAULT_ADDONS: RecommendedAddonEntry[] = [
@@ -1353,19 +1355,43 @@ export const RosterViewPage: React.FC = () => {
     { esouiId: 3170, name: "Wizard's Wardrobe", note: 'Gear & skill setup management' },
   ];
 
-  // Decode roster from ?r= on mount
+  // Clean up deep-link fallback timer on unmount
+  useEffect(
+    () => () => {
+      if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
+    },
+    [],
+  );
+
+  // Decode roster from ?r= or fetch by ?id= on mount
   useEffect(() => {
+    let cancelled = false;
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') ?? '';
-    setEncodedParam(encoded);
+    const hubId = params.get('id') ?? '';
+
+    const onDecoded = (decoded: RaidRoster | null, rosterData: string): void => {
+      if (cancelled) return;
+      if (decoded) {
+        setRoster(decoded);
+        setEncodedParam(rosterData);
+      } else {
+        setNotFound(true);
+      }
+      setLoading(false);
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
+      }
+    };
 
     // If navigated from hub, fetch recommended addons
-    const hubId = params.get('hubId');
-    if (hubId) {
+    const hubIdParam = params.get('hubId');
+    if (hubIdParam) {
       setAddonsLoading(true);
       rosterHubApi
-        .get(hubId)
+        .get(hubIdParam)
         .then(({ roster: hubRoster }) => {
+          if (cancelled) return;
           if (hubRoster.recommended_addons) {
             setRecommendedAddons(hubRoster.recommended_addons);
           }
@@ -1373,33 +1399,46 @@ export const RosterViewPage: React.FC = () => {
         .catch(() => {
           // Silently fall back to defaults
         })
-        .finally(() => setAddonsLoading(false));
+        .finally(() => {
+          if (!cancelled) setAddonsLoading(false);
+        });
     }
 
-    if (!encoded) {
+    if (encoded) {
+      setEncodedParam(encoded);
+      void decodeRosterFromURL(encoded)
+        .then((decoded) => onDecoded(decoded, encoded))
+        .catch(() => {
+          if (cancelled) return;
+          setNotFound(true);
+          setLoading(false);
+        });
+    } else if (hubId) {
+      // Direct-publish rosters (direct-* IDs) are stored in the bot's KV, not the hub API
+      const fetchRosterData = hubId.startsWith('direct-')
+        ? fetch(`${getDiscordBotApiUrl()}/discord/roster/${encodeURIComponent(hubId)}/data`)
+            .then((res) => {
+              if (!res.ok) throw new Error('Not found');
+              return res.json() as Promise<{ roster_data: string }>;
+            })
+            .then((json) => json.roster_data)
+        : rosterHubApi.get(hubId).then((res) => res.roster.roster_data);
+
+      void fetchRosterData
+        .then((data) => decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)))
+        .catch(() => {
+          if (cancelled) return;
+          setNotFound(true);
+          setLoading(false);
+        });
+    } else {
       setNotFound(true);
       setLoading(false);
-      return;
     }
 
-    void decodeRosterFromURL(encoded)
-      .then((decoded) => {
-        if (decoded) {
-          setRoster(decoded);
-        } else {
-          setNotFound(true);
-        }
-        setLoading(false);
-
-        // Signal to the parent frame (RosterPreviewDialog) that content is ready
-        if (window.parent !== window) {
-          window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
-        }
-      })
-      .catch(() => {
-        setNotFound(true);
-        setLoading(false);
-      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Copy this shareable link to clipboard
@@ -1728,8 +1767,8 @@ export const RosterViewPage: React.FC = () => {
       {/* ── Recommended Addons section ── */}
       {(() => {
         const addons = recommendedAddons?.addons ?? DEFAULT_ADDONS;
-        const packId = recommendedAddons?.packId ?? 'trial-essentials';
         const isCustom = !!recommendedAddons;
+        const packId = recommendedAddons?.packId ?? (isCustom ? undefined : 'trial-essentials');
         return (
           <Box sx={{ mb: 3 }}>
             <SectionLabel
@@ -1760,8 +1799,8 @@ export const RosterViewPage: React.FC = () => {
                   {addonsLoading
                     ? 'Loading addon recommendations…'
                     : isCustom
-                      ? 'The roster creator recommends these addons. Install them all with one click using the ESO Addon Manager.'
-                      : 'These addons are essential for trial content. Install them all with one click using the ESO Addon Manager.'}
+                      ? 'The roster creator recommends these addons. Install them all with one click using Kalpa.'
+                      : 'These addons are essential for trial content. Install them all with one click using Kalpa.'}
                 </Typography>
               </Box>
 
@@ -1859,30 +1898,61 @@ export const RosterViewPage: React.FC = () => {
                     {addons.length} addon{addons.length !== 1 ? 's' : ''} &middot; Install all at
                     once
                   </Typography>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
-                    onClick={() => {
-                      const deepLink = getAddonManagerDeepLink(packId);
-                      window.location.href = deepLink;
-                    }}
-                    sx={{
-                      borderRadius: '8px',
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      background: 'linear-gradient(135deg, #c4a44a 0%, #d4b45a 100%)',
-                      color: '#0b1220',
-                      boxShadow: '0 2px 8px rgba(196,164,74,0.3)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #d4b45a 0%, #e4c46a 100%)',
-                        boxShadow: '0 4px 16px rgba(196,164,74,0.4)',
-                      },
-                    }}
-                  >
-                    Install with Addon Manager
-                  </Button>
+                  {packId ? (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
+                      onClick={() => {
+                        const deepLink = getAddonManagerDeepLink(packId);
+                        window.location.href = deepLink;
+                        // Fallback: if Kalpa is not installed, the browser silently fails.
+                        // After a delay, copy the deep link to clipboard as a fallback.
+                        if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
+                        deepLinkTimerRef.current = setTimeout(() => {
+                          void navigator.clipboard.writeText(deepLink).then(
+                            () => {
+                              setSnackbar({
+                                open: true,
+                                message: 'Deep link copied — install Kalpa to use it',
+                                severity: 'info',
+                              });
+                            },
+                            () => {
+                              /* clipboard denied — silently ignore */
+                            },
+                          );
+                        }, 1500);
+                      }}
+                      sx={{
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        background: 'linear-gradient(135deg, #c4a44a 0%, #d4b45a 100%)',
+                        color: '#0b1220',
+                        boxShadow: '0 2px 8px rgba(196,164,74,0.3)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #d4b45a 0%, #e4c46a 100%)',
+                          boxShadow: '0 4px 16px rgba(196,164,74,0.4)',
+                        },
+                      }}
+                    >
+                      Open in Kalpa
+                    </Button>
+                  ) : (
+                    <Tooltip title="No pack ID — copy the addon list manually">
+                      <Typography
+                        sx={{
+                          fontSize: '0.72rem',
+                          color: isDarkMode ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        No linked pack
+                      </Typography>
+                    </Tooltip>
+                  )}
                 </Box>
               )}
             </Paper>
@@ -1936,9 +2006,14 @@ export const RosterViewPage: React.FC = () => {
 // Discord text builder (mirrors generateDiscordFormat in RosterBuilderPage)
 // ============================================================
 
+/** Escape Discord markdown special characters in user-supplied text. */
+function escapeDiscordMd(text: string): string {
+  return text.replace(/([*_~`|\\])/g, '\\$1');
+}
+
 function buildDiscordText(roster: RaidRoster): string {
   const lines: string[] = [];
-  lines.push(`**${roster.rosterName}**`, '');
+  lines.push(`**${escapeDiscordMd(roster.rosterName)}**`, '');
 
   const fmtUlt = (u: string | null): string => (u ? ` [${u}]` : '');
   const fmtSkillLines = (

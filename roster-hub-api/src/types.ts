@@ -7,7 +7,30 @@ export interface Env {
   ESOLOGS_CLIENT_ID: string;
   /** ESO Logs OAuth client secret — set via `wrangler secret put ESOLOGS_CLIENT_SECRET` */
   ESOLOGS_CLIENT_SECRET: string;
+  /** Discord bot Worker URL for roster sync webhooks (optional) */
+  DISCORD_BOT_URL?: string;
+  /** Shared secret for authenticating webhook calls to the discord bot */
+  DISCORD_WEBHOOK_SECRET?: string;
 }
+
+// ─── Addon recommendation types (shared between rosters & packs) ─────────────
+// NOTE: Mirrored in src/features/roster-hub/types/roster-hub.types.ts (frontend).
+// Keep both definitions in sync until a shared types package is introduced.
+
+export interface RecommendedAddonEntry {
+  esouiId: number;
+  name: string;
+  required?: boolean;
+  note?: string;
+}
+
+export interface RecommendedAddons {
+  packId?: string;
+  packTitle?: string;
+  addons: RecommendedAddonEntry[];
+}
+
+// ─── ROSTERS ─────────────────────────────────────────────────────────
 
 export interface RosterRow {
   id: string;
@@ -164,6 +187,33 @@ export interface RosterSummary {
   vote_count: number;
   tags: string[];
   created_at: string;
+}
+
+// ─── Pack Hub types ──────────────────────────────────────────────────────────
+
+export interface PackRow {
+  id: string;
+  author_id: string;
+  author_name: string;
+  is_anonymous: number; // SQLite boolean: 0 = false, 1 = true
+  title: string;
+  description: string;
+  pack_type: string;
+  addons: string; // JSON array
+  vote_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PackTagRow {
+  pack_id: string;
+  tag: string;
+}
+
+export interface PackWithMeta extends Omit<PackRow, 'is_anonymous'> {
+  is_anonymous: boolean;
+  tags: string[];
+  user_voted?: boolean;
 }
 
 export interface UserProfileResponse {

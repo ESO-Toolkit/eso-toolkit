@@ -17,7 +17,9 @@ import { test, expect } from '@playwright/test';
 const TEST_TIMEOUTS = {
   navigation: 30000,
   dataLoad: 45000,
-  screenshot: 10000,
+  // Increased from 10 000 ms: WebKit can be slow to settle before a screenshot,
+  // especially when fullPage capture requires a full-page scroll pass.
+  screenshot: 20000,
 };
 
 /**
@@ -65,7 +67,9 @@ async function expectPageLoads(
 
   await page.screenshot({
     path: `test-results/nightly-regression-pages-${screenshotName}.png`,
-    fullPage: true,
+    // fullPage removed: WebKit hangs scrolling through long pages under CI load,
+    // causing 10-20 s screenshot timeouts. Viewport capture is sufficient for
+    // smoke-level evidence that the page rendered correctly.
     timeout: TEST_TIMEOUTS.screenshot,
   });
 }
@@ -108,7 +112,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-home.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -149,7 +152,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-sample-report.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -184,7 +186,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-build-hub.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -226,7 +227,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-shared-build.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -260,7 +260,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-roster-hub.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -297,7 +296,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-shared-roster.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -331,7 +329,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-scribing-simulator.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -378,7 +375,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-scribing-interaction.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -413,7 +409,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-leaderboards.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -460,7 +455,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-user-profile.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -523,7 +517,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await page.screenshot({
         path: 'test-results/nightly-regression-pages-logs.png',
-        fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
     });
@@ -565,7 +558,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
         await page.screenshot({
           path: `test-results/nightly-regression-pages-${name}.png`,
-          fullPage: true,
           timeout: TEST_TIMEOUTS.screenshot,
         });
       });
@@ -593,7 +585,6 @@ test.describe('Nightly Regression - Pages & Features', () => {
             console.log(`✅ Role guide ${role} loaded at ${candidate}`);
             await page.screenshot({
               path: `test-results/nightly-regression-pages-role-${role}.png`,
-              fullPage: true,
               timeout: TEST_TIMEOUTS.screenshot,
             });
             break;

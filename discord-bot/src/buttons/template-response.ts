@@ -13,6 +13,7 @@ import {
 import { getTicket, updateTicket } from '../kv.js';
 import { InteractionResponseType, MessageFlags, ResponseTemplates } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral } from '../utils.js';
 
 export async function handleTemplateButton(
   env: Env,
@@ -88,44 +89,48 @@ async function syncAcknowledgedToGitHub(
 
   // Bug with existing GitHub issue — label + comment
   if (ticket.githubIssueNumber) {
-    await Promise.all([
-      addGitHubIssueLabel(env, ticket.githubIssueNumber, ['acknowledged']),
-      addGitHubIssueComment(
-        env,
-        ticket.githubIssueNumber,
-        `✅ **Acknowledged** by staff member **${staffName}** via Discord ticket #${ticket.id}.`,
-      ),
-    ]);
-    return `\n🔗 Updated [GitHub #${ticket.githubIssueNumber}](${ticket.githubIssueUrl}) with acknowledged label.`;
+    try {
+      await Promise.all([
+        addGitHubIssueLabel(env, ticket.githubIssueNumber, ['acknowledged']),
+        addGitHubIssueComment(
+          env,
+          ticket.githubIssueNumber,
+          `✅ **Acknowledged** by staff member **${staffName}** via Discord ticket #${ticket.id}.`,
+        ),
+      ]);
+      return `\n🔗 Updated [GitHub #${ticket.githubIssueNumber}](${ticket.githubIssueUrl}) with acknowledged label.`;
+    } catch (err) {
+      console.error('[template] failed to sync acknowledged to GitHub:', err);
+      return '\n⚠️ GitHub sync failed — please update the issue manually.';
+    }
   }
 
   // Feature or Feedback — create a GitHub Discussion (not an Issue)
   if (ticket.category === 'Feature' || ticket.category === 'Feedback') {
-    const discussion = await createGitHubDiscussionOnAcknowledge(
-      env,
-      ticket.id,
-      ticket.category,
-      ticket.title,
-      ticket.description,
-      ticket.username,
-      ticket.userId,
-      staffName,
-    );
-    if (discussion) {
-      await updateTicket(env, channelId, {
-        githubIssueNumber: discussion.number,
-        githubIssueUrl: discussion.html_url,
-      });
-      return `\n💬 Added to GitHub Discussions: [#${discussion.number}](${discussion.html_url}).`;
+    try {
+      const discussion = await createGitHubDiscussionOnAcknowledge(
+        env,
+        ticket.id,
+        ticket.category,
+        ticket.title,
+        ticket.description,
+        ticket.username,
+        ticket.userId,
+        staffName,
+      );
+      if (discussion) {
+        await updateTicket(env, channelId, {
+          githubIssueNumber: discussion.number,
+          githubIssueUrl: discussion.html_url,
+        });
+        return `\n💬 Added to GitHub Discussions: [#${discussion.number}](${discussion.html_url}).`;
+      }
+    } catch (err) {
+      console.error('[template] failed to sync discussion to GitHub:', err);
+      return '\n⚠️ GitHub Discussion sync failed — please create it manually.';
     }
   }
 
   return '';
 }
 
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
-  };
-}

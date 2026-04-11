@@ -50,9 +50,11 @@ export interface Env {
   DISCORD_PUBLIC_KEY: string;
   DISCORD_BOT_TOKEN: string;
   DISCORD_APPLICATION_ID: string;
+  DISCORD_CLIENT_SECRET: string;
   GITHUB_TOKEN: string;
   ZAI_API_KEY: string;
   TICKETS: KVNamespace;
+  ROSTERS: KVNamespace;
   // Config constants (set in wrangler.toml vars)
   GUILD_ID: string;
   TICKET_CATEGORY_ID: string;
@@ -60,6 +62,9 @@ export interface Env {
   PANEL_CHANNEL_ID: string;
   GITHUB_OWNER: string;
   GITHUB_REPO: string;
+  ROSTER_HUB_API_URL: string;
+  WEBHOOK_SECRET?: string | undefined;
+  ENVIRONMENT?: string | undefined;
 }
 
 // Discord Interaction payloads
@@ -69,6 +74,7 @@ export interface DiscordUser {
   discriminator: string;
   global_name?: string;
   avatar?: string | null;
+  bot?: boolean;
 }
 
 export interface DiscordMember {
@@ -203,8 +209,6 @@ export interface TicketState {
   aiPriority?: TicketPriority;
   aiRefinedCategory?: TicketCategory;
   staffNotes?: string; // Internal notes visible only to staff
-  feedbackRating?: 1 | 2 | 3 | 4 | 5; // User satisfaction rating
-  feedbackComment?: string; // Optional feedback comment
   embedMessageId?: string;
   createdAt: string; // ISO timestamp
 }
@@ -232,7 +236,6 @@ export const ButtonId = {
   UNCLAIM: 'ticket_unclaim',
   CLOSE: 'ticket_close',
   CONFIRM_CLOSE: 'ticket_confirm_close',
-  REOPEN: 'ticket_reopen',
   ADD_USER: 'ticket_add_user',
   REMOVE_USER: 'ticket_remove_user',
   STAFF_NOTE: 'ticket_staff_note',
@@ -285,4 +288,20 @@ export const Colors = {
   PRIORITY_HIGH: 0xe67e22, // orange
   PRIORITY_MEDIUM: 0xf1c40f, // yellow
   PRIORITY_LOW: 0x2ecc71, // green
+  ROSTER_EMBED: 0xc8aa6e, // ESO gold — roster embeds
+} as const;
+
+// ── Roster button/modal IDs ────────────────────────────────────────────────
+
+export const RosterButtonId = {
+  SIGNUP_TANK: 'roster_signup:tank',
+  SIGNUP_HEALER: 'roster_signup:healer',
+  SIGNUP_DD: 'roster_signup:dd',
+  VIEW_BUILDS: 'roster_view_builds',
+  REFRESH: 'roster_refresh',
+  SIGNUP_PREFIX: 'roster_signup:',
+} as const;
+
+export const RosterModalId = {
+  CONFIG_NAME_PATTERN: 'roster_config:name_pattern',
 } as const;

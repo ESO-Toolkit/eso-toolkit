@@ -1,0 +1,319 @@
+/* ── DatePicker input group ─────────────────────────────────── */
+.eso-datepicker-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #5865f2;
+}
+
+.eso-datepicker-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0 8px 0 12px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  font-family: inherit;
+}
+
+.eso-datepicker-group:focus-within {
+  border-color: #5865f2;
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.25);
+}
+
+.eso-datepicker-input {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  color: inherit;
+  font-size: 0.875rem;
+}
+
+/* Individual date/time segments */
+.react-aria-DateSegment {
+  padding: 1px 2px;
+  border-radius: 3px;
+  color: inherit;
+  caret-color: transparent;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.react-aria-DateSegment[data-placeholder] {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.react-aria-DateSegment:focus {
+  background: #5865f2;
+  color: #fff;
+}
+
+.react-aria-DateSegment[data-type='literal'] {
+  padding: 0;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.eso-datepicker-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none;
+  transition: background 0.15s;
+}
+
+.eso-datepicker-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.eso-datepicker-button:focus-visible {
+  outline: 2px solid #5865f2;
+  outline-offset: 1px;
+}
+
+.eso-datepicker-description {
+  display: block;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Popover ───────────────────────────────────────────────── */
+.eso-datepicker-popover {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #1e1e2e;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(88, 101, 242, 0.1);
+  padding: 12px;
+  z-index: 1500;
+  outline: none;
+}
+
+.eso-datepicker-popover[data-entering] {
+  animation: datepicker-fade-in 0.15s ease-out;
+}
+
+.eso-datepicker-popover[data-exiting] {
+  animation: datepicker-fade-out 0.1s ease-in;
+}
+
+@keyframes datepicker-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes datepicker-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ── Calendar ──────────────────────────────────────────────── */
+.eso-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.eso-calendar-heading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.eso-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  cursor: pointer;
+  outline: none;
+  transition: background 0.15s;
+}
+
+.eso-calendar-nav:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.eso-calendar-nav:focus-visible {
+  outline: 2px solid #5865f2;
+  outline-offset: 1px;
+}
+
+.eso-calendar-nav[data-disabled] {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Calendar grid */
+.react-aria-CalendarGridHeader {
+  /* Day-of-week header row */
+}
+
+.react-aria-CalendarHeaderCell {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  text-align: center;
+  padding: 4px 0;
+  width: 36px;
+}
+
+.react-aria-CalendarCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  outline: none;
+  transition: background 0.1s;
+}
+
+.react-aria-CalendarCell:hover {
+  background: rgba(88, 101, 242, 0.15);
+}
+
+.react-aria-CalendarCell:focus-visible {
+  outline: 2px solid #5865f2;
+  outline-offset: -2px;
+}
+
+.react-aria-CalendarCell[data-selected] {
+  background: #5865f2;
+  color: #fff;
+  font-weight: 600;
+}
+
+.react-aria-CalendarCell[data-today] {
+  font-weight: 700;
+  color: #5865f2;
+}
+
+.react-aria-CalendarCell[data-today][data-selected] {
+  color: #fff;
+}
+
+.react-aria-CalendarCell[data-outside-month] {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.react-aria-CalendarCell[data-disabled] {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.react-aria-CalendarCell[data-unavailable] {
+  text-decoration: line-through;
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* ── Light mode overrides ──────────────────────────────────── */
+[data-mui-color-scheme='light'] .eso-datepicker-group,
+.light .eso-datepicker-group {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+[data-mui-color-scheme='light'] .react-aria-DateSegment[data-placeholder],
+.light .react-aria-DateSegment[data-placeholder] {
+  color: rgba(0, 0, 0, 0.38);
+}
+
+[data-mui-color-scheme='light'] .react-aria-DateSegment[data-type='literal'],
+.light .react-aria-DateSegment[data-type='literal'] {
+  color: rgba(0, 0, 0, 0.38);
+}
+
+[data-mui-color-scheme='light'] .eso-datepicker-button,
+.light .eso-datepicker-button {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+[data-mui-color-scheme='light'] .eso-datepicker-button:hover,
+.light .eso-datepicker-button:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-mui-color-scheme='light'] .eso-datepicker-description,
+.light .eso-datepicker-description {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-mui-color-scheme='light'] .eso-datepicker-popover,
+.light .eso-datepicker-popover {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(88, 101, 242, 0.08);
+}
+
+[data-mui-color-scheme='light'] .eso-calendar-heading,
+.light .eso-calendar-heading {
+  color: #1a1a2e;
+}
+
+[data-mui-color-scheme='light'] .eso-calendar-nav,
+.light .eso-calendar-nav {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+[data-mui-color-scheme='light'] .eso-calendar-nav:hover,
+.light .eso-calendar-nav:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-mui-color-scheme='light'] .react-aria-CalendarHeaderCell,
+.light .react-aria-CalendarHeaderCell {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-mui-color-scheme='light'] .react-aria-CalendarCell,
+.light .react-aria-CalendarCell {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+[data-mui-color-scheme='light'] .react-aria-CalendarCell[data-outside-month],
+.light .react-aria-CalendarCell[data-outside-month] {
+  color: rgba(0, 0, 0, 0.2);
+}

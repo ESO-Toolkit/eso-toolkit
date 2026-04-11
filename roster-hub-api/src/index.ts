@@ -53,9 +53,17 @@ import {
   updateDisplayNames,
   lookupAvatarsByDisplayNames,
   type PlayerLookupEntry,
+  listPacks,
+  getPackById,
+  createPack,
+  updatePack,
+  deletePack,
+  togglePackVote,
+  checkPackCreateRateLimit,
+  checkPackVoteRateLimit,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
-import type { Env } from './types';
+import type { Env, RecommendedAddonEntry, RecommendedAddons } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -83,28 +91,23 @@ const escapeHtml = (s: string): string =>
 /** Sanitize and trim a user-provided text field. */
 const sanitize = (s: string): string => escapeHtml(s.trim());
 
+/** Validate and sanitize an addon entry. Returns null if invalid. */
+const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
+  if (!a || typeof a !== 'object') return null;
+  const entry = a as Record<string, unknown>;
+  if (typeof entry.esouiId !== 'number' || !Number.isInteger(entry.esouiId) || entry.esouiId <= 0) return null;
+  if (typeof entry.name !== 'string' || !entry.name.trim() || entry.name.length > 200) return null;
+  return {
+    esouiId: entry.esouiId,
+    name: sanitize(entry.name),
+    required: typeof entry.required === 'boolean' ? entry.required : undefined,
+    note: typeof entry.note === 'string' ? sanitize(entry.note.slice(0, 500)) : undefined,
+  };
+};
+
 /** Validate a tag: must be non-empty, ≤30 chars, alphanumeric/hyphens/underscores/spaces. */
 const isValidTag = (t: string): boolean =>
   typeof t === 'string' && t.length > 0 && t.length <= 30 && /^[\w\s-]+$/.test(t);
-
-/** Validate an addon entry: must have a positive integer esouiId, a non-empty name ≤100 chars,
- *  an optional boolean `required`, and an optional string `note` ≤200 chars. */
-const isValidAddon = (
-  a: unknown,
-): a is { esouiId: number; name: string; required?: boolean; note?: string } => {
-  if (typeof a !== 'object' || a === null) return false;
-  const obj = a as Record<string, unknown>;
-  return (
-    typeof obj.esouiId === 'number' &&
-    Number.isInteger(obj.esouiId) &&
-    obj.esouiId > 0 &&
-    typeof obj.name === 'string' &&
-    obj.name.trim().length > 0 &&
-    obj.name.length <= 100 &&
-    (obj.required === undefined || typeof obj.required === 'boolean') &&
-    (obj.note === undefined || (typeof obj.note === 'string' && obj.note.length <= 200))
-  );
-};
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 
@@ -113,7 +116,7 @@ app.use('*', async (c, next) => {
   const origin = c.req.header('Origin') ?? '';
   const isAllowed =
     allowedOrigins.includes(origin) ||
-    /^https:\/\/[a-f0-9]+\.eso-toolkit\.pages\.dev$/.test(origin);
+    /^https:\/\/[a-z0-9-]+\.eso-toolkit\.pages\.dev$/.test(origin);
   const corsMiddleware = cors({
     origin: isAllowed ? origin : allowedOrigins[0],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -196,10 +199,7 @@ app.post('/rosters', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
-    recommended_addons?: {
-      packId?: string;
-      addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
-    } | null;
+    recommended_addons?: RecommendedAddons | null;
   }
 
   let body: CreateBody;
@@ -209,15 +209,7 @@ app.post('/rosters', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const {
-    title,
-    description = '',
-    trial_id,
-    roster_data,
-    tags = [],
-    is_anonymous = false,
-    recommended_addons = null,
-  } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false, recommended_addons = null } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -232,22 +224,19 @@ app.post('/rosters', async (c) => {
 
   // Validate recommended_addons if provided
   let recommendedAddonsJson: string | null = null;
-  if (
-    recommended_addons &&
-    Array.isArray(recommended_addons.addons) &&
-    recommended_addons.addons.length > 0
-  ) {
+  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
     if (recommended_addons.addons.length > 20)
       return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
-    if (!recommended_addons.addons.every(isValidAddon))
-      return c.json(
-        {
-          error:
-            'Each recommended addon must have a positive integer esouiId and a name (≤100 chars)',
-        },
-        400,
-      );
-    recommendedAddonsJson = JSON.stringify(recommended_addons);
+    const sanitizedAddons = recommended_addons.addons
+      .map(sanitizeAddonEntry)
+      .filter(Boolean) as RecommendedAddonEntry[];
+    if (sanitizedAddons.length > 0) {
+      recommendedAddonsJson = JSON.stringify({
+        packId: typeof recommended_addons.packId === 'string' ? sanitize(recommended_addons.packId) : undefined,
+        packTitle: typeof recommended_addons.packTitle === 'string' ? sanitize(recommended_addons.packTitle) : undefined,
+        addons: sanitizedAddons,
+      });
+    }
   }
 
   const createAllowed = await checkRosterCreateRateLimit(c.env.DB, user.id);
@@ -290,10 +279,7 @@ app.put('/rosters/:id', async (c) => {
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
-    recommended_addons?: {
-      packId?: string;
-      addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
-    } | null;
+    recommended_addons?: RecommendedAddons | null;
   }
 
   let body: UpdateBody;
@@ -303,15 +289,7 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const {
-    title,
-    description = '',
-    trial_id,
-    roster_data,
-    tags = [],
-    is_anonymous = false,
-    recommended_addons = null,
-  } = body;
+  const { title, description = '', trial_id, roster_data, tags = [], is_anonymous = false, recommended_addons = null } = body;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -326,22 +304,19 @@ app.put('/rosters/:id', async (c) => {
 
   // Validate recommended_addons if provided
   let recommendedAddonsJson: string | null = null;
-  if (
-    recommended_addons &&
-    Array.isArray(recommended_addons.addons) &&
-    recommended_addons.addons.length > 0
-  ) {
+  if (recommended_addons && Array.isArray(recommended_addons.addons) && recommended_addons.addons.length > 0) {
     if (recommended_addons.addons.length > 20)
       return c.json({ error: 'recommended_addons: max 20 addons' }, 400);
-    if (!recommended_addons.addons.every(isValidAddon))
-      return c.json(
-        {
-          error:
-            'Each recommended addon must have a positive integer esouiId and a name (≤100 chars)',
-        },
-        400,
-      );
-    recommendedAddonsJson = JSON.stringify(recommended_addons);
+    const sanitizedAddons = recommended_addons.addons
+      .map(sanitizeAddonEntry)
+      .filter(Boolean) as RecommendedAddonEntry[];
+    if (sanitizedAddons.length > 0) {
+      recommendedAddonsJson = JSON.stringify({
+        packId: typeof recommended_addons.packId === 'string' ? sanitize(recommended_addons.packId) : undefined,
+        packTitle: typeof recommended_addons.packTitle === 'string' ? sanitize(recommended_addons.packTitle) : undefined,
+        addons: sanitizedAddons,
+      });
+    }
   }
 
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
@@ -356,6 +331,10 @@ app.put('/rosters/:id', async (c) => {
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
   const roster = await getRosterById(c.env.DB, c.req.param('id'), user.id);
+
+  // Notify Discord bot to refresh any linked channels (fire-and-forget)
+  c.executionCtx.waitUntil(notifyDiscordSync(c.env, c.req.param('id')));
+
   return c.json({ roster });
 });
 
@@ -565,6 +544,8 @@ app.post('/builds', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(build_data))
+    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   const createAllowed = await checkBuildCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -578,14 +559,14 @@ app.post('/builds', async (c) => {
   await createBuild(c.env.DB, {
     id,
     authorId: user.id,
-    authorName: user.name,
-    title: title.trim(),
-    description: description.trim(),
-    esoClass: eso_class.trim(),
-    role: role.trim(),
-    gameMode: game_mode.trim(),
+    authorName: escapeHtml(user.name),
+    title: sanitize(title),
+    description: sanitize(description),
+    esoClass: sanitize(eso_class),
+    role: sanitize(role),
+    gameMode: sanitize(game_mode),
     buildData: build_data,
-    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -637,15 +618,17 @@ app.put('/builds/:id', async (c) => {
     return c.json({ error: 'description must be ≤ 500 characters' }, 400);
   if (build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(build_data))
+    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   const updated = await updateBuild(c.env.DB, c.req.param('id'), user.id, {
-    title: title.trim(),
-    description: description.trim(),
-    esoClass: eso_class.trim(),
-    role: role.trim(),
-    gameMode: game_mode.trim(),
+    title: sanitize(title),
+    description: sanitize(description),
+    esoClass: sanitize(eso_class),
+    role: sanitize(role),
+    gameMode: sanitize(game_mode),
     buildData: build_data,
-    tags: Array.isArray(tags) ? tags.filter((t) => typeof t === 'string').slice(0, 10) : [],
+    tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
 
@@ -743,7 +726,7 @@ app.post('/builds/:id/comments', async (c) => {
     parentId: body.parent_id ?? null,
     authorId: user.id,
     authorName: user.name,
-    body: body.body.trim(),
+    body: escapeHtml(body.body.trim()),
   });
 
   return c.json({ comment }, 201);
@@ -781,6 +764,8 @@ app.post('/temp-builds', async (c) => {
   if (!body.build_data?.trim()) return c.json({ error: 'build_data is required' }, 400);
   if (body.build_data.length > 50_000)
     return c.json({ error: 'build_data must be ≤ 50 000 characters' }, 400);
+  if (!isValidBase64Url(body.build_data))
+    return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   // Rate limit by IP (10 per hour)
   const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
@@ -1056,7 +1041,7 @@ app.put('/users/me/bio', async (c) => {
   if (typeof body.bio !== 'string') return c.json({ error: 'bio must be a string' }, 400);
   if (body.bio.length > 200) return c.json({ error: 'bio must be ≤ 200 characters' }, 400);
 
-  await upsertUserBio(c.env.DB, user.id, user.name, body.bio.trim());
+  await upsertUserBio(c.env.DB, user.id, escapeHtml(user.name), sanitize(body.bio));
   return c.json({ ok: true });
 });
 
@@ -1257,7 +1242,7 @@ app.post('/packs', async (c) => {
     title: string;
     description?: string;
     pack_type?: string;
-    addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
+    addons: RecommendedAddonEntry[];
     tags?: string[];
     is_anonymous?: boolean;
   }
@@ -1286,12 +1271,12 @@ app.post('/packs', async (c) => {
     return c.json({ error: `pack_type must be one of: ${VALID_PACK_TYPES.join(', ')}` }, 400);
   if (!Array.isArray(addons) || addons.length === 0)
     return c.json({ error: 'At least one addon is required' }, 400);
-  if (addons.length > 30) return c.json({ error: 'Maximum 30 addons per pack' }, 400);
-  if (!addons.every(isValidAddon))
-    return c.json(
-      { error: 'Each addon must have a positive integer esouiId and a name (≤100 chars)' },
-      400,
-    );
+  if (addons.length > 30)
+    return c.json({ error: 'Maximum 30 addons per pack' }, 400);
+
+  const sanitizedAddons = addons.map(sanitizeAddonEntry).filter(Boolean) as RecommendedAddonEntry[];
+  if (sanitizedAddons.length === 0)
+    return c.json({ error: 'No valid addon entries provided' }, 400);
 
   const createAllowed = await checkPackCreateRateLimit(c.env.DB, user.id);
   if (!createAllowed)
@@ -1309,7 +1294,7 @@ app.post('/packs', async (c) => {
     title: sanitize(title),
     description: sanitize(description),
     packType: sanitize(pack_type),
-    addons: JSON.stringify(addons),
+    addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
@@ -1328,7 +1313,7 @@ app.put('/packs/:id', async (c) => {
     title: string;
     description?: string;
     pack_type?: string;
-    addons: { esouiId: number; name: string; required?: boolean; note?: string }[];
+    addons: RecommendedAddonEntry[];
     tags?: string[];
     is_anonymous?: boolean;
   }
@@ -1357,18 +1342,18 @@ app.put('/packs/:id', async (c) => {
     return c.json({ error: `pack_type must be one of: ${VALID_PACK_TYPES.join(', ')}` }, 400);
   if (!Array.isArray(addons) || addons.length === 0)
     return c.json({ error: 'At least one addon is required' }, 400);
-  if (addons.length > 30) return c.json({ error: 'Maximum 30 addons per pack' }, 400);
-  if (!addons.every(isValidAddon))
-    return c.json(
-      { error: 'Each addon must have a positive integer esouiId and a name (≤100 chars)' },
-      400,
-    );
+  if (addons.length > 30)
+    return c.json({ error: 'Maximum 30 addons per pack' }, 400);
+
+  const sanitizedAddons = addons.map(sanitizeAddonEntry).filter(Boolean) as RecommendedAddonEntry[];
+  if (sanitizedAddons.length === 0)
+    return c.json({ error: 'No valid addon entries provided' }, 400);
 
   const updated = await updatePack(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
     description: sanitize(description),
     packType: sanitize(pack_type),
-    addons: JSON.stringify(addons),
+    addons: JSON.stringify(sanitizedAddons),
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
   });
@@ -1399,11 +1384,40 @@ app.post('/packs/:id/vote', async (c) => {
   if (!pack) return c.json({ error: 'Not found' }, 404);
 
   const voteAllowed = await checkPackVoteRateLimit(c.env.DB, user.id);
-  if (!voteAllowed) return c.json({ error: 'Rate limit exceeded. Max 30 votes per hour.' }, 429);
+  if (!voteAllowed)
+    return c.json({ error: 'Rate limit exceeded. Max 30 votes per hour.' }, 429);
 
   const result = await togglePackVote(c.env.DB, c.req.param('id'), user.id);
   return c.json(result);
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Discord sync webhook — notify discord-bot when a roster changes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fire-and-forget notification to the discord-bot Worker to refresh
+ * any Discord channels linked to the given roster. Non-blocking and
+ * failure-safe: if the bot is unavailable the roster save still succeeds.
+ */
+async function notifyDiscordSync(env: Env, rosterId: string): Promise<void> {
+  if (!env.DISCORD_BOT_URL) return;
+  try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (env.DISCORD_WEBHOOK_SECRET) {
+      headers['Authorization'] = `Bearer ${env.DISCORD_WEBHOOK_SECRET}`;
+    }
+    await fetch(`${env.DISCORD_BOT_URL}/discord/roster/refresh`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ rosterId }),
+    });
+  } catch (err) {
+    console.error('[discord-sync] failed to notify:', err);
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Worker export — fetch (Hono) + scheduled (cron: cleanup + leaderboard sync)

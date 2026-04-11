@@ -14,8 +14,12 @@ import {
   TextInputStyle,
 } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
+import { ephemeral, findInputValue, type ModalComponentRow } from '../utils.js';
 
-export function handleStaffNoteButton(_env: Env, interaction: DiscordInteraction): InteractionResponse {
+export function handleStaffNoteButton(
+  _env: Env,
+  interaction: DiscordInteraction,
+): InteractionResponse {
   if (!isStaff(interaction)) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -69,7 +73,8 @@ export async function handleStaffNoteModal(
 
   // Extract note content from modal
   const components = interaction.data?.components ?? [];
-  const noteContent = findInputValue(components as any, 'note_content') ?? '';
+  const noteContent =
+    findInputValue(components as unknown as ModalComponentRow[], 'note_content') ?? '';
 
   const staffUser = interaction.member?.user ?? interaction.user;
 
@@ -79,11 +84,13 @@ export async function handleStaffNoteModal(
     minute: '2-digit',
     day: '2-digit',
     month: 'short',
+    year: 'numeric',
   });
 
   let newNotes = ticket.staffNotes || '';
   if (noteContent.trim()) {
-    newNotes = `${newNotes}\n[${timestamp}] **${staffUser?.username ?? 'Staff'}**: ${noteContent}`.trim();
+    newNotes =
+      `${newNotes}\n[${timestamp}] **${staffUser?.username ?? 'Staff'}**: ${noteContent}`.trim();
   }
 
   // Update ticket state
@@ -115,29 +122,8 @@ export async function handleStaffNoteModal(
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {
-      content: noteContent.trim()
-        ? '📝 Staff note added successfully.'
-        : '📝 Staff notes cleared.',
+      content: noteContent.trim() ? '📝 Staff note added successfully.' : '📝 Staff notes cleared.',
       flags: MessageFlags.EPHEMERAL,
     },
-  };
-}
-
-function findInputValue(
-  rows: { type: number; components?: { type: number; custom_id?: string; value?: string }[] }[],
-  customId: string,
-): string | undefined {
-  for (const row of rows) {
-    for (const comp of row.components ?? []) {
-      if (comp.custom_id === customId) return comp.value;
-    }
-  }
-  return undefined;
-}
-
-function ephemeral(content: string): InteractionResponse {
-  return {
-    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    data: { content, flags: MessageFlags.EPHEMERAL },
   };
 }
