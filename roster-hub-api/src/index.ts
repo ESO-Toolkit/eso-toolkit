@@ -1446,6 +1446,12 @@ app.get('/search-addons', async (c) => {
   // Simple in-memory rate limit per IP (resets each minute)
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const now = Date.now();
+
+  // Prune expired buckets to prevent unbounded map growth
+  for (const [key, val] of searchRateCounts) {
+    if (val.expires <= now) searchRateCounts.delete(key);
+  }
+
   const bucket = searchRateCounts.get(ip);
   if (bucket && bucket.expires > now) {
     if (bucket.count >= SEARCH_RATE_LIMIT) {
