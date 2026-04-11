@@ -63,6 +63,7 @@ import {
   checkPackVoteRateLimit,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
+import { handleGraphqlProxy } from './graphql-proxy';
 import type { Env, RecommendedAddonEntry, RecommendedAddons } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -139,6 +140,12 @@ app.use('*', async (c, next) => {
     c.res.headers.set('Cache-Control', 'no-store');
   }
 });
+
+// ─── ESO Logs GQL proxy ────────────────────────────────────────────────────────
+// Forwards POST /graphql to https://www.esologs.com/api/v2/client, injecting
+// a server-side OAuth token so unauthenticated users can query public data.
+
+app.post('/graphql', handleGraphqlProxy);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 

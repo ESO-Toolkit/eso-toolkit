@@ -6,22 +6,23 @@ import { EsoLogsClient, createEsoLogsClient } from './esologsClient';
 describe('EsoLogsClient', () => {
   const mockAccessToken = 'mock-access-token';
   const newMockAccessToken = 'new-mock-access-token';
+  const mockProxyUrl = 'http://localhost:8787/graphql';
 
   describe('Class-based implementation with composition', () => {
     it('should create an instance with access token', () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       expect(client).toBeInstanceOf(EsoLogsClient);
       expect(client.getAccessToken()).toBe(mockAccessToken);
     });
 
     it('should contain an Apollo client instance', () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
       expect(apolloClient).toBeInstanceOf(ApolloClient);
     });
 
     it('should update access token and recreate internal client', () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       expect(client.getAccessToken()).toBe(mockAccessToken);
       const originalClient = client.getClient();
 
@@ -34,7 +35,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should delegate Apollo client methods', () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       // Mock the Apollo client methods with proper types
@@ -89,14 +90,14 @@ describe('EsoLogsClient', () => {
 
   describe('Backward compatibility', () => {
     it('should work with factory function', () => {
-      const client = createEsoLogsClient(mockAccessToken);
+      const client = createEsoLogsClient(mockAccessToken, mockProxyUrl);
       expect(client).toBeInstanceOf(EsoLogsClient);
       expect(client.getAccessToken()).toBe(mockAccessToken);
     });
 
     it('should return same type from factory function', () => {
-      const client1 = new EsoLogsClient(mockAccessToken);
-      const client2 = createEsoLogsClient(mockAccessToken);
+      const client1 = new EsoLogsClient(mockAccessToken, mockProxyUrl);
+      const client2 = createEsoLogsClient(mockAccessToken, mockProxyUrl);
 
       // Both should be instances of EsoLogsClient
       expect(client1.constructor).toBe(client2.constructor);
@@ -105,7 +106,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should maintain same public interface', () => {
-      const client = createEsoLogsClient(mockAccessToken);
+      const client = createEsoLogsClient(mockAccessToken, mockProxyUrl);
 
       // Should have access token management
       expect(typeof client.getAccessToken).toBe('function');
@@ -124,7 +125,7 @@ describe('EsoLogsClient', () => {
 
   describe('Smart endpoint routing', () => {
     it('should use user endpoint for user-specific operations', () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       // Mock the httpLink to capture the URI being used
@@ -161,7 +162,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should use client endpoint for public operations', () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       // Mock the httpLink to capture the URI being used
@@ -198,7 +199,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should default to client endpoint for operations without names', () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       // Mock the httpLink
@@ -222,7 +223,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should use client endpoint when no access token is provided', () => {
-      const client = new EsoLogsClient(''); // Empty token
+      const client = new EsoLogsClient('', mockProxyUrl); // Empty token
       const apolloClient = client.getClient();
 
       // Mock the httpLink
@@ -248,7 +249,7 @@ describe('EsoLogsClient', () => {
 
   describe('Network error handling', () => {
     it('should surface a user-friendly message when a network error occurs (no statusCode)', async () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       // Simulate a network-level failure (no HTTP response — statusCode undefined)
@@ -261,7 +262,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should surface a user-friendly message when statusCode is 0', async () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       // Simulate a status-0 network failure
@@ -276,7 +277,7 @@ describe('EsoLogsClient', () => {
     it('converts an ApolloError with nested networkError.statusCode 429 to a human-readable message (ESO-582)', async () => {
       // ApolloClient.query() throws an ApolloError whose .networkError is the
       // ServerError — the statusCode sits one level deeper than the raw thrown error.
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       const apolloError = Object.assign(
@@ -294,7 +295,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should surface a user-friendly message when a 429 rate-limit error occurs (direct statusCode)', async () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       const rateLimitError = Object.assign(new Error('Too Many Requests'), { statusCode: 429 });
@@ -306,7 +307,7 @@ describe('EsoLogsClient', () => {
     });
 
     it('should rethrow other errors unchanged', async () => {
-      const client = new EsoLogsClient(mockAccessToken);
+      const client = new EsoLogsClient(mockAccessToken, mockProxyUrl);
       const apolloClient = client.getClient();
 
       const serverError = Object.assign(new Error('Internal Server Error'), { statusCode: 500 });

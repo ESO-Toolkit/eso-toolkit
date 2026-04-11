@@ -62,10 +62,12 @@ export class EsoLogsClient {
   });
 
   private accessToken: string;
+  private clientApiProxyUrl: string;
   private client: ApolloClient;
 
-  constructor(accessToken: string) {
+  constructor(accessToken: string, clientApiProxyUrl: string) {
     this.accessToken = accessToken;
+    this.clientApiProxyUrl = clientApiProxyUrl;
     this.client = this.createApolloClient(accessToken);
   }
 
@@ -225,7 +227,7 @@ export class EsoLogsClient {
         const baseUrl =
           isUserOperation && accessToken
             ? 'https://www.esologs.com/api/v2/user'
-            : 'https://www.esologs.com/api/v2/client';
+            : this.clientApiProxyUrl;
 
         // Log which endpoint is being used for debugging
         logger.debug(`Operation ${operation.operationName} using endpoint: ${baseUrl}`);
@@ -270,6 +272,10 @@ export class EsoLogsClient {
     // query results across different user identities.
     EsoLogsClient.CACHE.reset();
     this.client = this.createApolloClient(newAccessToken);
+  }
+
+  public getClientApiProxyUrl(): string {
+    return this.clientApiProxyUrl;
   }
 
   /**
@@ -379,6 +385,6 @@ export class EsoLogsClient {
     this.client.stop();
   }
 } // Factory function for backward compatibility
-export function createEsoLogsClient(accessToken: string): EsoLogsClient {
-  return new EsoLogsClient(accessToken);
+export function createEsoLogsClient(accessToken: string, clientApiProxyUrl: string): EsoLogsClient {
+  return new EsoLogsClient(accessToken, clientApiProxyUrl);
 }

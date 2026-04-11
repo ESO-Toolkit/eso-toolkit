@@ -4,6 +4,7 @@ import React, { createContext, useContext, useMemo, ReactNode, useState, useCall
 import { useLogger } from './contexts/LoggerContext';
 import { EsoLogsClient } from './esologsClient';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './features/auth/auth';
+import { getEnvVar } from './utils/envUtils';
 import { addBreadcrumb } from './utils/errorTracking';
 
 interface EsoLogsClientContextType {
@@ -22,6 +23,12 @@ export const EsoLogsClientContext = createContext<EsoLogsClientContextType | und
 // EsoLogsClientContext.isLoggedIn=false, which caused visible layout shifts.
 const initialToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
 
+// Proxy URL for public /api/v2/client queries — routes through the Cloudflare
+// Worker so the server-side OAuth secret is never exposed to the browser.
+const workerBaseUrl =
+  getEnvVar('VITE_ROSTER_HUB_API_URL') ?? 'https://roster-hub-api.eso-toolkit.workers.dev';
+const CLIENT_API_PROXY_URL = `${workerBaseUrl}/graphql`;
+
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!initialToken);
   const logger = useLogger('EsoLogsClient');
@@ -30,7 +37,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const client = useMemo(() => {
     logger.info('Creating new EsoLogsClient instance');
-    return new EsoLogsClient(initialToken);
+    return new EsoLogsClient(initialToken, CLIENT_API_PROXY_URL);
   }, [logger]);
 
   // Method to set auth token from AuthContext
