@@ -18,7 +18,7 @@ else
 	RM_ESLINT := rm -rf .eslintcache
 endif
 
-.PHONY: help install build test test-all lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr clean-test-data test-screen-sizes test-screen-sizes-mobile test-screen-sizes-tablet test-screen-sizes-desktop test-screen-sizes-report test-screen-sizes-update
+.PHONY: help install build test test-all lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck pr clean-test-data test-screen-sizes test-screen-sizes-mobile test-screen-sizes-tablet test-screen-sizes-desktop test-screen-sizes-report test-screen-sizes-update wt-setup kill-stale refresh
 
 # Default target
 help:
@@ -56,6 +56,10 @@ help:
 	@$(COLOR) color brightMagenta "  setup         - Initial project setup for new developers"
 	@$(COLOR) color brightMagenta "  all           - Run clean, install, lint, test, and build"
 	@$(COLOR) color brightMagenta "  pr            - Create a pull request using twig"
+	@$(COLOR) info "Worktree Commands:"
+	@$(COLOR) color brightCyan "  wt-setup WT=<path>  - Set up worktree deps (node_modules junction + .env + .twig)"
+	@$(COLOR) color brightCyan "  kill-stale          - Kill stale Node.js processes"
+	@$(COLOR) color brightCyan "  refresh             - Pull latest main and reinstall shared node_modules"
 	@$(COLOR) info "Screen Size Testing Commands:"
 	@$(COLOR) color brightBlue "  test-screen-sizes         - Run all screen size validation tests"
 	@$(COLOR) color brightBlue "  test-screen-sizes-mobile  - Test mobile device screen sizes"
@@ -258,3 +262,34 @@ test-screen-sizes-update:
 	@$(COLOR) subheader "Updating Screen Size Test Snapshots"
 	@$(COLOR) warning "Updating visual regression baselines..."
 	npm run test:screen-sizes:update-snapshots
+
+# Set up a worktree's dependencies (node_modules junction + .env + .twig)
+# Usage: make wt-setup WT=D:/code/eso-log-aggregator-worktrees/ESO-123/my-feature
+wt-setup:
+	@$(COLOR) subheader "Setting Up Worktree"
+ifndef WT
+	@$(COLOR) error "Usage: make wt-setup WT=<worktree-path>"
+	@exit 1
+endif
+	pwsh -File scripts/setup-worktree.ps1 -WorktreePath "$(WT)"
+
+# Kill stale Node.js processes (useful when ports are stuck or .node file locks block installs)
+kill-stale:
+	@$(COLOR) subheader "Killing Stale Node Processes"
+	@$(COLOR) warning "Terminating node.exe processes..."
+ifeq ($(OS),Windows_NT)
+	-taskkill //F //IM node.exe 2>nul || true
+else
+	-pkill -f "node" 2>/dev/null || true
+endif
+	@$(COLOR) success "Done."
+
+# Pull latest main and reinstall shared node_modules
+refresh:
+	@$(COLOR) subheader "Refreshing Repository"
+	@$(COLOR) info "Fetching and pulling latest main..."
+	git fetch origin
+	git pull --ff-only
+	@$(COLOR) info "Reinstalling dependencies..."
+	npm ci
+	@$(COLOR) success "Refresh complete!"
