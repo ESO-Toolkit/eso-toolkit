@@ -873,7 +873,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       <Tooltip title="Advanced settings">
                         <IconButton
                           size="small"
-                          onClick={(e) => {
+                          onClick={(e: React.MouseEvent) => {
                             e.stopPropagation();
                             onClose();
                             navigate(`/discord-server-config?guild=${guild.id}&from=publish`);
@@ -1009,21 +1009,27 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   sx={{ display: 'block', mt: 0.5 }}
                 >
                   Pick the category where roster channels should be created, or{' '}
-                  <Box
-                    component="span"
+                  <span
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       onClose();
                       navigate(`/discord-server-config?guild=${selectedGuild.id}&from=publish`);
                     }}
-                    sx={{
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        onClose();
+                        navigate(`/discord-server-config?guild=${selectedGuild.id}&from=publish`);
+                      }
+                    }}
+                    style={{
                       color: '#5865F2',
                       cursor: 'pointer',
                       fontWeight: 600,
-                      '&:hover': { textDecoration: 'underline' },
                     }}
                   >
                     set up defaults
-                  </Box>{' '}
+                  </span>{' '}
                   for this server so you don&apos;t have to pick every time.
                 </Typography>
               </Box>
