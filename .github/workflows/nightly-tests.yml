@@ -313,6 +313,56 @@ jobs:
               });
             }
 
+  # Post a "starting" Discord notification and open a forum thread before tests run.
+  # Runs in parallel with nightly-tests (both depend only on setup).
+  notify-nightly-start:
+    name: "Nightly Start"
+    runs-on: ubuntu-latest
+    needs: [setup]
+    if: always()
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    outputs:
+      thread-id: ${{ steps.notify.outputs.thread-id }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Compute notification params
+        id: params
+        shell: bash
+        run: |
+          SHARDS="${{ needs.setup.outputs.total_shards }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "title=Nightly Playwright Suite" >> "$GITHUB_OUTPUT"
+            {
+              echo 'description<<EOF_NOTIFY'
+              echo "**Shards:** ${SHARDS} · **Suite:** all · **Browsers:** chromium, firefox, webkit, mobile"
+              echo 'EOF_NOTIFY'
+            } >> "$GITHUB_OUTPUT"
+            echo "thread_name=Nightly Playwright — ${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          else
+            SUITE="${{ github.event.inputs.test_suite || 'all' }}"
+            echo "title=Manual Playwright Suite" >> "$GITHUB_OUTPUT"
+            {
+              echo 'description<<EOF_NOTIFY'
+              echo "**Suite:** ${SUITE} · **Shards:** ${SHARDS}"
+              echo 'EOF_NOTIFY'
+            } >> "$GITHUB_OUTPUT"
+            echo "thread_name=Manual Playwright — ${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Discord Playwright Starting
+        id: notify
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_NIGHTLY_TESTS }}
+          status: running
+          title: ${{ steps.params.outputs.title }}
+          description: ${{ steps.params.outputs.description }}
+          thread-name: ${{ steps.params.outputs.thread_name }}
+
   # Job to consolidate results from all shards
   consolidate-results:
     runs-on: ubuntu-latest
@@ -444,67 +494,58 @@ jobs:
               });
             }
 
-  # Post nightly test results to Discord
+  # Post nightly test results to Discord, replying in the thread opened by notify-nightly-start
   discord-notify:
+    name: "Nightly Results"
     runs-on: ubuntu-latest
-    needs: [setup, nightly-tests, consolidate-results]
+    needs: [setup, nightly-tests, consolidate-results, notify-nightly-start]
     if: always()
-    permissions: {}
+    timeout-minutes: 3
+    permissions:
+      contents: read
 
     steps:
-      - name: Post Discord Notification
-        uses: actions/github-script@v8
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_NIGHTLY_TESTS }}
-          TESTS_RESULT: ${{ needs.nightly-tests.result }}
-          TOTAL_SHARDS: ${{ needs.setup.outputs.total_shards }}
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Resolve Status
+        id: status
+        shell: bash
+        run: |
+          TESTS_RESULT="${{ needs.nightly-tests.result }}"
+          case "$TESTS_RESULT" in
+            success) STATUS="success" ;;
+            failure) STATUS="failure" ;;
+            *) STATUS="failure" ;;
+          esac
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+
+          if [ "$STATUS" != "success" ]; then
+            echo "content=<@205483185893670912> <@266089059028434944>" >> "$GITHUB_OUTPUT"
+          else
+            echo "content=" >> "$GITHUB_OUTPUT"
+          fi
+
+          SHARDS="${{ needs.setup.outputs.total_shards }}"
+          TRIGGER="${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo 'description<<EOF_NOTIFY'
+            echo "**[View Run](${RUN_URL})**"
+            echo ""
+            echo "**Shards:** ${SHARDS} · **Trigger:** ${TRIGGER}"
+            echo 'EOF_NOTIFY'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Discord Playwright Results
+        uses: ./.github/actions/discord-notify
         with:
-          script: |
-            const webhook = process.env.DISCORD_WEBHOOK;
-            if (!webhook) {
-              console.log('DISCORD_WEBHOOK_NIGHTLY_TESTS secret not set — skipping notification');
-              return;
-            }
-
-            const result = process.env.TESTS_RESULT;       // success | failure | cancelled | skipped
-            const shards = process.env.TOTAL_SHARDS || '3';
-            const runUrl  = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
-            const trigger = '${{ github.event_name }}' === 'schedule' ? 'Scheduled' : 'Manual';
-
-            const passed = result === 'success';
-            const color  = passed ? 0x2ecc71 : 0xe74c3c;   // green / red
-            const status = passed ? 'Passed' : result.charAt(0).toUpperCase() + result.slice(1);
-            const icon   = passed ? '✅' : '❌';
-
-            const payload = {
-              // Ping users on failure (mentions must be in content, not embeds)
-              ...(!passed && { content: '<@205483185893670912> <@266089059028434944>' }),
-              embeds: [{
-                title: `${icon} Nightly Tests ${status}`,
-                color,
-                fields: [
-                  { name: 'Status',  value: status,  inline: true },
-                  { name: 'Shards',  value: shards,  inline: true },
-                  { name: 'Trigger', value: trigger,  inline: true },
-                ],
-                url: runUrl,
-                timestamp: new Date().toISOString(),
-                footer: { text: 'ESO Log Aggregator · Nightly Tests' },
-              }],
-            };
-
-            const res = await fetch(webhook, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-              const body = await res.text();
-              core.setFailed(`Discord webhook returned ${res.status}: ${body}`);
-            } else {
-              console.log('Discord notification sent successfully');
-            }
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_NIGHTLY_TESTS }}
+          status: ${{ steps.status.outputs.status }}
+          title: "${{ github.event_name == 'schedule' && 'Nightly Playwright Suite — Results' || 'Manual Playwright Suite — Results' }}"
+          description: ${{ steps.status.outputs.description }}
+          content: ${{ steps.status.outputs.content }}
+          thread-id: ${{ needs.notify-nightly-start.outputs.thread-id }}
 
   notify-on-failure:
     runs-on: ubuntu-latest

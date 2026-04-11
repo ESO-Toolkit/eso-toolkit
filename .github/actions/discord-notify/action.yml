@@ -1,0 +1,226 @@
+name: "Discord Notification"
+description: "Post deployment status or CI failure notifications to a Discord webhook channel"
+
+inputs:
+  webhook-url:
+    description: "Discord webhook URL. If empty, the step is silently skipped."
+    required: false
+    default: ""
+  status:
+    description: "Event status: success, failure, cancelled, or running"
+    required: true
+  title:
+    description: "Embed title (e.g. 'Deploy to GitHub Pages', 'Nightly Playwright Suite')"
+    required: true
+  environment:
+    description: "Target environment (e.g. production, staging). Omit for CI notifications."
+    required: false
+    default: ""
+  commit-sha:
+    description: "Git commit SHA"
+    required: false
+    default: ${{ github.sha }}
+  actor:
+    description: "User who triggered the workflow"
+    required: false
+    default: ${{ github.actor }}
+  run-id:
+    description: "GitHub Actions run ID (used to build the run URL)"
+    required: false
+    default: ${{ github.run_id }}
+  description:
+    description: "Optional extra description text for the embed body"
+    required: false
+    default: ""
+  content:
+    description: "Top-level message content (outside embed). Use for Discord user mentions like <@USER_ID>."
+    required: false
+    default: ""
+  thread-name:
+    description: "Create a new forum thread with this name (forum channels only). Returns thread-id as output."
+    required: false
+    default: ""
+  thread-id:
+    description: "Post into an existing thread instead of the channel root."
+    required: false
+    default: ""
+  commits:
+    description: "Newline-separated commit log (e.g. 'abc1234 feat: thing'). Shown as a 'Changes' field. Truncated to fit Discord embed limits."
+    required: false
+    default: ""
+
+outputs:
+  thread-id:
+    description: "Thread/channel ID from the Discord response (available when thread-name is set and the webhook targets a forum channel)"
+    value: ${{ steps.post.outputs.thread-id }}
+  message-id:
+    description: "Message ID from the Discord response (available when ?wait=true is used)"
+    value: ${{ steps.post.outputs.message-id }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Post to Discord"
+      id: post
+      if: inputs.webhook-url != ''
+      shell: bash
+      env:
+        DISCORD_WEBHOOK_URL: ${{ inputs.webhook-url }}
+        NOTIFY_STATUS: ${{ inputs.status }}
+        NOTIFY_TITLE: ${{ inputs.title }}
+        NOTIFY_ENV: ${{ inputs.environment }}
+        NOTIFY_SHA: ${{ inputs.commit-sha }}
+        NOTIFY_ACTOR: ${{ inputs.actor }}
+        NOTIFY_RUN_ID: ${{ inputs.run-id }}
+        NOTIFY_DESC: ${{ inputs.description }}
+        NOTIFY_CONTENT: ${{ inputs.content }}
+        NOTIFY_THREAD_NAME: ${{ inputs.thread-name }}
+        NOTIFY_THREAD_ID: ${{ inputs.thread-id }}
+        NOTIFY_COMMITS: ${{ inputs.commits }}
+        GITHUB_REPO: ${{ github.repository }}
+        GITHUB_SERVER: ${{ github.server_url }}
+      run: |
+        # Ensure required CLI tools are available
+        for cmd in jq curl; do
+          if ! command -v "$cmd" &>/dev/null; then
+            echo "::warning::Discord notification skipped: '$cmd' is not installed on this runner"
+            exit 0
+          fi
+        done
+
+        # Map status to color and emoji
+        case "$NOTIFY_STATUS" in
+          success)
+            COLOR=5763719   # Green (0x57F287)
+            EMOJI="✅"
+            STATUS_TEXT="Succeeded"
+            ;;
+          failure)
+            COLOR=15548997  # Red (0xED4245)
+            EMOJI="❌"
+            STATUS_TEXT="Failed"
+            ;;
+          cancelled)
+            COLOR=16705372  # Yellow (0xFEE75C)
+            EMOJI="⚠️"
+            STATUS_TEXT="Cancelled"
+            ;;
+          *)
+            COLOR=5793266   # Blurple (0x5865F2)
+            EMOJI="ℹ️"
+            STATUS_TEXT="$NOTIFY_STATUS"
+            ;;
+        esac
+
+        SHORT_SHA="${NOTIFY_SHA:0:7}"
+        RUN_URL="${GITHUB_SERVER}/${GITHUB_REPO}/actions/runs/${NOTIFY_RUN_ID}"
+        COMMIT_URL="${GITHUB_SERVER}/${GITHUB_REPO}/commit/${NOTIFY_SHA}"
+        TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+        # Build fields array
+        FIELDS="[]"
+        FIELDS=$(echo "$FIELDS" | jq \
+          --arg status "${EMOJI} ${STATUS_TEXT}" \
+          '. + [{"name": "Status", "value": $status, "inline": true}]')
+
+        if [ -n "$NOTIFY_ENV" ]; then
+          FIELDS=$(echo "$FIELDS" | jq \
+            --arg env "$NOTIFY_ENV" \
+            '. + [{"name": "Environment", "value": $env, "inline": true}]')
+        fi
+
+        FIELDS=$(echo "$FIELDS" | jq \
+          --arg actor "$NOTIFY_ACTOR" \
+          '. + [{"name": "Triggered by", "value": $actor, "inline": true}]')
+
+        FIELDS=$(echo "$FIELDS" | jq \
+          --arg sha "[${SHORT_SHA}](${COMMIT_URL})" \
+          '. + [{"name": "Commit", "value": $sha, "inline": true}]')
+
+        FIELDS=$(echo "$FIELDS" | jq \
+          --arg url "[View Run](${RUN_URL})" \
+          '. + [{"name": "Workflow", "value": $url, "inline": true}]')
+
+        # Append commits as a non-inline "Changes" field (truncated to 1024 chars — Discord field limit)
+        if [ -n "$NOTIFY_COMMITS" ]; then
+          # Truncate to 1000 chars to leave room for the ellipsis marker
+          COMMIT_TEXT="$NOTIFY_COMMITS"
+          if [ ${#COMMIT_TEXT} -gt 1000 ]; then
+            COMMIT_TEXT="${COMMIT_TEXT:0:1000}…"
+          fi
+          FIELDS=$(echo "$FIELDS" | jq \
+            --arg commits "$COMMIT_TEXT" \
+            '. + [{"name": "Changes", "value": $commits, "inline": false}]')
+        fi
+
+        # Build description
+        DESC=""
+        if [ -n "$NOTIFY_DESC" ]; then
+          DESC="$NOTIFY_DESC"
+        fi
+
+        # Build the embed payload
+        PAYLOAD=$(jq -n \
+          --arg title "$NOTIFY_TITLE" \
+          --arg desc "$DESC" \
+          --arg content "$NOTIFY_CONTENT" \
+          --argjson color "$COLOR" \
+          --argjson fields "$FIELDS" \
+          --arg timestamp "$TIMESTAMP" \
+          '{
+            content: (if $content == "" then null else $content end),
+            embeds: [{
+              title: $title,
+              description: (if $desc == "" then null else $desc end),
+              color: $color,
+              fields: $fields,
+              timestamp: $timestamp,
+              footer: { text: "ESO Log Aggregator CI/CD" }
+            }]
+          }')
+
+        # thread_name must be a top-level JSON body field for forum channels (not a query param).
+        # thread_id goes in the query string to target an existing thread.
+        if [ -n "$NOTIFY_THREAD_NAME" ]; then
+          PAYLOAD=$(echo "$PAYLOAD" | jq --arg tn "$NOTIFY_THREAD_NAME" '. + {thread_name: $tn}')
+        fi
+
+        # Build webhook URL with query params
+        # ?wait=true returns the message object so we can extract IDs
+        WEBHOOK_URL="${DISCORD_WEBHOOK_URL}?wait=true"
+        if [ -n "$NOTIFY_THREAD_ID" ]; then
+          WEBHOOK_URL="${WEBHOOK_URL}&thread_id=${NOTIFY_THREAD_ID}"
+        fi
+
+        # Send to Discord
+        HTTP_CODE=$(curl --connect-timeout 5 --max-time 15 --retry 3 --retry-all-errors \
+          -s -o /tmp/discord-response.txt -w "%{http_code}" \
+          -X POST "$WEBHOOK_URL" \
+          -H "Content-Type: application/json" \
+          -d "$PAYLOAD" || echo "000")
+
+        if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+          echo "✅ Discord notification sent (status=$NOTIFY_STATUS, http=$HTTP_CODE)"
+
+          # Extract IDs from response for threading support
+          MESSAGE_ID=$(jq -r '.id // empty' /tmp/discord-response.txt 2>/dev/null || true)
+          # channel_id in the response is the thread ID when thread_name creates a forum thread
+          THREAD_ID=$(jq -r '.channel_id // empty' /tmp/discord-response.txt 2>/dev/null || true)
+
+          echo "message-id=${MESSAGE_ID}" >> "$GITHUB_OUTPUT"
+          # Only set thread-id when a thread was actually created (thread-name was provided);
+          # for non-forum webhooks, channel_id is the root channel, not a thread.
+          if [ -n "$NOTIFY_THREAD_NAME" ] && [ -n "$THREAD_ID" ]; then
+            echo "thread-id=${THREAD_ID}" >> "$GITHUB_OUTPUT"
+          else
+            echo "thread-id=" >> "$GITHUB_OUTPUT"
+          fi
+        else
+          RESPONSE=$(cat /tmp/discord-response.txt 2>/dev/null || echo "(empty)")
+          echo "::warning::Discord notification failed (http=$HTTP_CODE): $RESPONSE"
+          echo "message-id=" >> "$GITHUB_OUTPUT"
+          echo "thread-id=" >> "$GITHUB_OUTPUT"
+          # Don't fail the workflow for a notification issue
+        fi
+
+        rm -f /tmp/discord-response.txt

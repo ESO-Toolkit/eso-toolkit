@@ -46,3 +46,51 @@ jobs:
           release_version: ${{ github.sha }}
           vite_ga_measurement_id: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
           vite_discord_client_id: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+
+  # Post deploy status to Discord. Runs after `deploy` regardless of outcome.
+  discord-notify:
+    name: "Deploy Notification"
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: always()
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Build Changelog
+        id: changelog
+        shell: bash
+        run: |
+          COMMITS=$(git log --pretty=format:'[`%h`](https://github.com/${{ github.repository }}/commit/%H) %s' \
+            --no-merges -10)
+          {
+            echo "commits<<CHANGELOG_EOF"
+            echo "$COMMITS"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Discord Release Announcement
+        if: needs.deploy.result == 'success'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_RELEASES }}
+          status: success
+          title: "ESO Log Aggregator — New Release"
+          environment: production
+          commits: ${{ steps.changelog.outputs.commits }}
+          thread-name: "Deploy #${{ github.run_number }}"
+
+      - name: Discord Deploy Failure
+        if: needs.deploy.result == 'failure'
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_RELEASES }}
+          status: failure
+          title: "Deploy to GitHub Pages"
+          environment: production
+          commits: ${{ steps.changelog.outputs.commits }}
