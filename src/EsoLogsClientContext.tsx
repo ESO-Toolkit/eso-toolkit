@@ -110,13 +110,18 @@ export const useEsoLogsClientContext = (): EsoLogsClientContextType => {
 
 /**
  * Hook to get the EsoLogsClient instance directly.
- * Throws an error if called when not authenticated or client is not ready.
+ * Throws an error if the client is not ready.
+ *
+ * Note: Authentication is no longer required — the Cloudflare Worker GQL proxy
+ * (ESO-765) injects tokens for public /api/v2/client queries. User-specific
+ * hooks should check `isLoggedIn` from AuthContext before making user-scoped
+ * requests.
  */
 export const useEsoLogsClientInstance = (): EsoLogsClient => {
-  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
+  const { client, isReady } = useEsoLogsClientContext();
 
-  if (!isReady || !client || !isLoggedIn) {
-    throw new Error('EsoLogsClient is not ready. User must be authenticated.');
+  if (!isReady || !client) {
+    throw new Error('EsoLogsClient is not ready.');
   }
 
   return client;

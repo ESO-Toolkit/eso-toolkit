@@ -3,7 +3,6 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 import { useEsoLogsClientContext } from '@/EsoLogsClientContext';
 import { addBreadcrumb } from '@/utils/errorTracking';
-import { isSampleReport } from '@/utils/sampleReports';
 
 import { setIntendedDestination } from './auth';
 import { useAuth } from './AuthContext';
@@ -14,7 +13,9 @@ interface AuthenticatedRouteProps {
 }
 
 /**
- * A wrapper component that protects routes by redirecting unauthenticated users to the login page.
+ * A wrapper component that protects routes requiring user identity by redirecting
+ * unauthenticated users to the login page. Only used for user-specific pages
+ * (My Reports, Latest Reports, etc.) — public pages no longer use this guard.
  *
  * @param children - The component(s) to render if the user is authenticated
  * @param redirectTo - The path to redirect to if not authenticated (defaults to '/login')
@@ -27,18 +28,10 @@ export const AuthenticatedRoute: React.FC<AuthenticatedRouteProps> = ({
   const location = useLocation();
   const { isReady, isLoggedIn: clientLoggedIn } = useEsoLogsClientContext();
 
-  // Allow unauthenticated access to bundled sample report overview pages.
-  // Only the fight-list route (/report/:code) matches; fight-detail sub-paths
-  // still require login so that deeper data loads go through the normal API.
-  const sampleReportMatch = location.pathname.match(/^\/report\/([^/]+)$/);
-  if (sampleReportMatch && isSampleReport(sampleReportMatch[1])) {
-    return <>{children}</>;
-  }
-
   // Show loading state while checking authentication or while client is not ready
   // Also ensure both auth states are in sync before rendering
   if (userLoading || !isReady || isLoggedIn !== clientLoggedIn) {
-    return null; // Or you could return a loading spinner here
+    return null;
   }
 
   // If not logged in, store the intended destination and redirect to login page

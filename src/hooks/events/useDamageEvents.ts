@@ -28,7 +28,7 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
   isDamageEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
-  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
+  const { client, isReady } = useEsoLogsClientContext();
   const dispatch = useAppDispatch();
   const context = useResolvedReportFightContext(options?.context);
   const selectedFight = useFightForContext(context);
@@ -44,8 +44,7 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
   React.useEffect(() => {
-    // Only fetch if client is ready, user is logged in, and we have required data
-    if (context.reportCode && selectedFight && isReady && isLoggedIn && client) {
+    if (context.reportCode && selectedFight && isReady && client) {
       dispatch(
         fetchDamageEvents({
           reportCode: context.reportCode,
@@ -62,7 +61,6 @@ export function useDamageEvents(options?: UseDamageEventsOptions): {
     selectedFight,
     client,
     isReady,
-    isLoggedIn,
     restrictToFightWindow,
   ]);
 
