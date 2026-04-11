@@ -766,8 +766,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           ? Math.round(fight.bossPercentage)
           : 0;
 
-      // If boss was killed, show full green bar, otherwise show health percentage for wipes
-      backgroundFillPercent = bossWasKilled ? 100 : isWipe ? bossHealthPercent : 100;
+      // Fill represents progress (damage dealt): kills = full, wipes = 100 - health remaining
+      backgroundFillPercent = bossWasKilled ? 100 : isWipe ? 100 - bossHealthPercent : 100;
     } else {
       // Trash fight logic - use the kill field to determine success/wipe
       // kill === true means success, kill === false means wipe, kill === null means unknown (treat as successful)
@@ -1096,7 +1096,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   {fight.friendlyPlayers.filter(Boolean).length}p
                 </Typography>
               )}
-              {/* Progress micro-bar — wipes only, shows health remaining */}
+              {/* Progress micro-bar — wipes only, shows damage progress */}
               {isWipe ? (
                 <Box
                   sx={{
@@ -1111,7 +1111,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   <Box
                     sx={{
                       height: '100%',
-                      width: `${bossHealthPercent}%`,
+                      width: `${backgroundFillPercent}%`,
                       borderRadius: '1.5px',
                       background: accentBarColor,
                       boxShadow: darkMode ? `0 0 4px ${accentBarColor}66` : 'none',
