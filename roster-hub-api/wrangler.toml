@@ -15,8 +15,8 @@ binding = "AI"
 
 # Secrets (set via `wrangler secret put <NAME>`):
 #   IMGBB_API_KEY            — ImgBB API key for image uploads
-#   ESOLOGS_CLIENT_ID        — ESO Logs OAuth client ID (leaderboard sync)
-#   ESOLOGS_CLIENT_SECRET    — ESO Logs OAuth client secret (leaderboard sync)
+#   ESOLOGS_CLIENT_ID        — ESO Logs OAuth client ID (leaderboard sync + GQL proxy)
+#   ESOLOGS_CLIENT_SECRET    — ESO Logs OAuth client secret (leaderboard sync + GQL proxy)
 
 # Cleanup expired temp builds daily at 04:00 UTC
 [triggers]

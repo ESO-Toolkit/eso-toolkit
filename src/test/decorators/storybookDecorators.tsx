@@ -98,7 +98,7 @@ const MockReduxProvider: React.FC<{ children: React.ReactNode }> = ({ children }
 // Mock ESOLogs Client Provider for Storybook
 const MockEsoLogsClientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const mockClient = React.useMemo(() => {
-    return new EsoLogsClient('some-token');
+    return new EsoLogsClient('some-token', 'https://www.esologs.com/api/v2/client');
   }, []);
 
   // Mock EsoLogsClient context value
