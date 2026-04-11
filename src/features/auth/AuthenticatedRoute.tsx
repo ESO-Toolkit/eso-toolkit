@@ -15,7 +15,8 @@ interface AuthenticatedRouteProps {
 /**
  * A wrapper component that protects routes requiring user identity by redirecting
  * unauthenticated users to the login page. Only used for user-specific pages
- * (My Reports, Latest Reports, etc.) — public pages no longer use this guard.
+ * (My Reports, WhoAmI, etc.) — public pages use the Cloudflare Worker GQL
+ * proxy and do not need this guard.
  *
  * @param children - The component(s) to render if the user is authenticated
  * @param redirectTo - The path to redirect to if not authenticated (defaults to '/login')
