@@ -11,6 +11,9 @@ on:
           - roster-hub-api
           - discord-bot
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
