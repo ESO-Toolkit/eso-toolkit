@@ -1111,7 +1111,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   <Box
                     sx={{
                       height: '100%',
-                      width: `${100 - bossHealthPercent}%`,
+                      width: `${backgroundFillPercent}%`,
                       borderRadius: '1.5px',
                       background: accentBarColor,
                       boxShadow: darkMode ? `0 0 4px ${accentBarColor}66` : 'none',
