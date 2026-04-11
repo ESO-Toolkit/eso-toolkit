@@ -724,7 +724,7 @@ export const HeaderBar: React.FC = () => {
         action: handleSampleReport,
       },
       {
-        text: 'Latest Report',
+        text: 'Latest Reports',
         desc: 'Recently uploaded',
         icon: '📊',
         accent: '#06b6d4',
