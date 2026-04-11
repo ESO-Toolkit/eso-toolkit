@@ -224,9 +224,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
             fontWeight: 400,
             fontSize: '0.875rem',
             color:
-              theme.palette.mode === 'dark'
-                ? 'rgba(255, 255, 255, 0.7)'
-                : 'rgba(51, 65, 85, 0.7)',
+              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(51, 65, 85, 0.7)',
             '&:hover': {
               textDecoration: 'underline',
               backgroundColor: 'transparent',
