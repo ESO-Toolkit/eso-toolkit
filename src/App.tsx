@@ -750,13 +750,11 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/build-hub"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <BuildHubPage />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildHubPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
