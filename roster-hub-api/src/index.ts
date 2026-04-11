@@ -1401,13 +1401,42 @@ app.post('/packs/:id/vote', async (c) => {
   return c.json(result);
 });
 
-// ─── GET /search-addons — ESOUI addon search proxy ──────────────────────────
-// Scrapes the ESOUI search page and returns structured results.
-// No auth required — anyone can search.  Rate-limited to prevent abuse.
+// ─── GET /search-addons — ESOUI addon search via MMOUI API ─────────────────
+// Fetches the full addon catalog from api.mmoui.com and caches it in Worker
+// memory.  Search is a case-insensitive substring match on title + author,
+// ranked: exact title match → title startsWith → title/author includes.
 
-const ESOUI_SEARCH_URL = 'https://www.esoui.com/downloads/search.php';
+const MMOUI_FILELIST_URL = 'https://api.mmoui.com/v4/game/ESO/filelist.json';
+const ADDON_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const SEARCH_RATE_LIMIT = 20; // max requests per minute per IP
 const searchRateCounts = new Map<string, { count: number; expires: number }>();
+
+interface MmoUiAddon {
+  id: number;
+  title: string;
+  author: string;
+  downloads: number;
+  downloadsMonthly: number;
+  favorites: number;
+}
+
+let addonCache: { addons: MmoUiAddon[]; fetchedAt: number } | null = null;
+
+async function getAddonCatalog(): Promise<MmoUiAddon[]> {
+  const now = Date.now();
+  if (addonCache && now - addonCache.fetchedAt < ADDON_CACHE_TTL_MS) {
+    return addonCache.addons;
+  }
+
+  const res = await fetch(MMOUI_FILELIST_URL, {
+    headers: { 'User-Agent': 'ESO-Toolkit/1.0' },
+  });
+  if (!res.ok) throw new Error(`MMOUI API returned ${res.status}`);
+
+  const raw = (await res.json()) as MmoUiAddon[];
+  addonCache = { addons: raw, fetchedAt: now };
+  return raw;
+}
 
 app.get('/search-addons', async (c) => {
   const q = (c.req.query('q') ?? '').trim();
@@ -1428,16 +1457,13 @@ app.get('/search-addons', async (c) => {
   }
 
   try {
-    const params = new URLSearchParams({ search: q, se_search: 'files' });
-    const res = await fetch(`${ESOUI_SEARCH_URL}?${params.toString()}`, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ESOToolkit/1.0',
-        Accept: 'text/html',
-      },
-    });
-    if (!res.ok) return c.json({ error: 'ESOUI search unavailable' }, 502);
+    const addons = await getAddonCatalog();
+    const lower = q.toLowerCase();
 
-    const html = await res.text();
+    // Bucket matches by relevance
+    const exact: typeof results = [];
+    const starts: typeof results = [];
+    const contains: typeof results = [];
 
     interface SearchResult {
       id: number;
@@ -1448,45 +1474,29 @@ app.get('/search-addons', async (c) => {
     }
 
     const results: SearchResult[] = [];
-    const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-    const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-    const linkRegex = /fileinfo\.php\?id=(\d+)[^"]*"[^>]*>([^<]+)/;
-    const stripTags = (s: string): string => s.replace(/<[^>]+>/g, '').trim();
 
-    let rowMatch: RegExpExecArray | null;
-    while ((rowMatch = rowRegex.exec(html)) !== null) {
-      const rowHtml = rowMatch[1];
-      const cells: string[] = [];
-      let cellMatch: RegExpExecArray | null;
-      while ((cellMatch = cellRegex.exec(rowHtml)) !== null) {
-        cells.push(cellMatch[1]);
-      }
-      if (cells.length < 5) continue;
+    for (const a of addons) {
+      const tLower = a.title.toLowerCase();
+      const aLower = a.author.toLowerCase();
+      if (tLower !== lower && !tLower.includes(lower) && !aLower.includes(lower)) continue;
 
-      let id = 0;
-      let title = '';
-      let titleIdx = -1;
-      for (let i = 0; i < cells.length; i++) {
-        const lm = linkRegex.exec(cells[i]);
-        if (lm) {
-          id = parseInt(lm[1], 10);
-          title = lm[2].trim();
-          titleIdx = i;
-          break;
-        }
-      }
-      if (!id || titleIdx < 0) continue;
+      const hit: SearchResult = {
+        id: a.id,
+        title: a.title,
+        author: a.author,
+        category: '',
+        downloads: String(a.downloads),
+      };
 
-      const author = stripTags(cells[titleIdx + 1] ?? '');
-      const category = stripTags(cells[titleIdx + 2] ?? '');
-      const downloads = stripTags(cells[titleIdx + 3] ?? '');
-
-      results.push({ id, title, author, category, downloads });
+      if (tLower === lower) exact.push(hit);
+      else if (tLower.startsWith(lower)) starts.push(hit);
+      else contains.push(hit);
     }
 
-    return c.json({ results });
+    results.push(...exact, ...starts, ...contains);
+    return c.json({ results: results.slice(0, 25) });
   } catch (err) {
-    console.error('ESOUI search failed:', err);
+    console.error('Addon search failed:', err);
     return c.json({ error: 'Search failed' }, 502);
   }
 });
