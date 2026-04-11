@@ -53,7 +53,10 @@ const Banner = styled(Box)(({ theme }) => ({
   },
   [theme.breakpoints.down('sm')]: {
     padding: '0.5rem 0.75rem',
-    gap: '0.5rem',
+    gap: '0.35rem',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingRight: '2.5rem',
   },
 }));
 
@@ -103,7 +106,16 @@ export const KalpaBanner: React.FC = () => {
           fontWeight: 400,
         }}
       >
-        Introducing <strong>Kalpa</strong> — a fast, open-source addon manager for ESO.
+        Introducing <strong>Kalpa</strong> — a fast, open-source addon manager for ESO.{' '}
+        <Box
+          component="span"
+          sx={{
+            opacity: 0.7,
+            fontStyle: 'italic',
+          }}
+        >
+          Currently in alpha.
+        </Box>
       </Typography>
       <BannerLink
         href="https://github.com/ESO-Toolkit/kalpa"
