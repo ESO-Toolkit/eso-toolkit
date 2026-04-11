@@ -567,13 +567,11 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/latest-reports"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LatestReports />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LatestReports />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
@@ -611,13 +609,11 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/parse-analysis/:reportId?/:fightId?"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <ParseAnalysisPage />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ParseAnalysisPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
