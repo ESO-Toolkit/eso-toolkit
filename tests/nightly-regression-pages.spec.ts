@@ -598,4 +598,129 @@ test.describe('Nightly Regression - Pages & Features', () => {
       });
     }
   });
+
+  test.describe('Landing Page and Navigation', () => {
+    test('should load landing page correctly', async ({ page }) => {
+      await page.goto('/', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+
+      // Wait for app to render
+      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      await page.waitForTimeout(3000);
+
+      // Landing page should load - check title flexibly
+      const title = await page.title();
+      const hasTitleContent = title && title.length > 0 && !title.includes('Error');
+      expect(hasTitleContent).toBeTruthy();
+
+      // Should have main navigation or landing content - be more flexible
+      const hasNav = await page
+        .locator('nav')
+        .isVisible()
+        .catch(() => false);
+      const hasHeader = await page
+        .locator('header')
+        .isVisible()
+        .catch(() => false);
+      const hasLanding = await page
+        .locator('.landing')
+        .isVisible()
+        .catch(() => false);
+      const hasHero = await page
+        .locator('.hero')
+        .isVisible()
+        .catch(() => false);
+      const hasButton = await page
+        .locator('button')
+        .isVisible()
+        .catch(() => false);
+      const hasLink = await page
+        .locator('a')
+        .isVisible()
+        .catch(() => false);
+      const hasEsoText = await page
+        .getByText(/eso/i)
+        .isVisible()
+        .catch(() => false);
+      const hasMainContent = await page
+        .locator('main, .app, #root, .content')
+        .isVisible()
+        .catch(() => false);
+      const hasAnyText = await page
+        .locator('body')
+        .textContent()
+        .then((text) => text && text.trim().length > 50)
+        .catch(() => false);
+
+      const hasLandingContent =
+        hasNav ||
+        hasHeader ||
+        hasLanding ||
+        hasHero ||
+        hasButton ||
+        hasLink ||
+        hasEsoText ||
+        hasMainContent ||
+        hasAnyText;
+
+      if (!hasLandingContent) {
+        console.log('🔍 Landing page URL:', page.url());
+        console.log('🔍 Landing page title:', title);
+        console.log(
+          '🔍 Landing body content preview:',
+          (await page.locator('body').textContent())?.slice(0, 200),
+        );
+      }
+
+      expect(hasLandingContent).toBeTruthy();
+
+      await page.screenshot({
+        path: 'test-results/nightly-regression-landing-page.png',
+        timeout: TEST_TIMEOUTS.screenshot,
+      });
+    });
+
+    test('should handle search functionality if available', async ({ page }) => {
+      await page.goto('/', {
+        waitUntil: 'domcontentloaded',
+        timeout: TEST_TIMEOUTS.navigation,
+      });
+
+      // Look for search functionality
+      const searchInput = page.locator(
+        'input[placeholder*="search"], input[placeholder*="report"], input[type="search"]',
+      );
+
+      if (await searchInput.isVisible({ timeout: 5000 })) {
+        // Test report search with a known report ID
+        await searchInput.fill('3gjVGWB2dxCL8XAw');
+
+        // Look for search button or enter key
+        const searchButton = page.locator('button:has-text("Search"), button[type="submit"]');
+
+        if (await searchButton.isVisible({ timeout: 3000 })) {
+          await searchButton.click();
+        } else {
+          await searchInput.press('Enter');
+        }
+
+        await page.waitForTimeout(3000);
+
+        await page.screenshot({
+          path: 'test-results/nightly-regression-search-functionality.png',
+          timeout: TEST_TIMEOUTS.screenshot,
+        });
+
+        // Should either navigate to report or show search results
+        const isOnReport = page.url().includes('/report/');
+        const hasResults = await page
+          .locator('.search-results, .report-item, a[href*="/report/"]')
+          .isVisible({ timeout: 5000 });
+
+        expect(isOnReport || hasResults).toBeTruthy();
+      }
+    });
+  });
 });
