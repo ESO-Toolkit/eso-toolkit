@@ -184,8 +184,15 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
                           <LinearProgress
                             variant="determinate"
                             value={(player.totalDamage / highestDamage) * 100}
-                            sx={{ height: 6, borderRadius: 3 }}
-                            color={getPerformanceColor(player.damagePercentage)}
+                            sx={{
+                              height: 6,
+                              borderRadius: 3,
+                              '& .MuiLinearProgress-bar': {
+                                backgroundColor: getPerformanceGradientColor(
+                                  player.damagePercentage,
+                                ),
+                              },
+                            }}
                           />
                         </Box>
                       }
@@ -384,8 +391,13 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
                       <LinearProgress
                         variant="determinate"
                         value={(player.totalDamage / highestDamage) * 100}
-                        sx={{ height: 8, borderRadius: 4 }}
-                        color={getPerformanceColor(player.damagePercentage)}
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          '& .MuiLinearProgress-bar': {
+                            backgroundColor: getPerformanceGradientColor(player.damagePercentage),
+                          },
+                        }}
                       />
                     </TableCell>
                   </TableRow>
@@ -463,11 +475,10 @@ function getRoleColor(
   }
 }
 
-function getPerformanceColor(
-  percentage: number,
-): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
-  if (percentage >= 20) return 'success';
-  if (percentage >= 15) return 'primary';
-  if (percentage >= 10) return 'warning';
-  return 'error';
+function getPerformanceGradientColor(percentage: number): string {
+  // Smoothly interpolate from red (0%) → orange (~10%) → green (20%+)
+  // HSL hue: 0 = red, ~30 = orange, ~60 = yellow, 120 = green
+  const clamped = Math.max(0, Math.min(20, percentage));
+  const hue = (clamped / 20) * 120;
+  return `hsl(${hue}, 80%, 45%)`;
 }
