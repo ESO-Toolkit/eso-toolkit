@@ -68,6 +68,16 @@ import type { Env, RecommendedAddonEntry, RecommendedAddons } from './types';
 
 const app = new Hono<{ Bindings: Env }>();
 
+// ─── Global error handler ───────────────────────────────────────────────────
+// Returns a JSON body with the error message instead of Cloudflare's generic
+// "Internal Server Error" plain-text response.
+
+app.onError((err, c) => {
+  console.error(`[${c.req.method} ${c.req.path}]`, err.message, err.stack);
+  const status = 'status' in err && typeof err.status === 'number' ? err.status : 500;
+  return c.json({ error: err.message || 'Internal server error' }, status as 500);
+});
+
 /** Best-effort delete of an ImgBB-hosted image via its delete URL (fire-and-forget). */
 function tryDeleteImgBBImage(deleteUrl: string | null): void {
   if (deleteUrl && /^https:\/\/ibb\.co\//.test(deleteUrl)) {
@@ -1396,6 +1406,112 @@ app.post('/packs/:id/vote', async (c) => {
 
   const result = await togglePackVote(c.env.DB, c.req.param('id'), user.id);
   return c.json(result);
+});
+
+// ─── GET /search-addons — ESOUI addon search via MMOUI API ─────────────────
+// Fetches the full addon catalog from api.mmoui.com and caches it in Worker
+// memory.  Search is a case-insensitive substring match on title + author,
+// ranked: exact title match → title startsWith → title/author includes.
+
+const MMOUI_FILELIST_URL = 'https://api.mmoui.com/v4/game/ESO/filelist.json';
+const ADDON_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const SEARCH_RATE_LIMIT = 20; // max requests per minute per IP
+const searchRateCounts = new Map<string, { count: number; expires: number }>();
+
+interface MmoUiAddon {
+  id: number;
+  title: string;
+  author: string;
+  downloads: number;
+  downloadsMonthly: number;
+  favorites: number;
+}
+
+let addonCache: { addons: MmoUiAddon[]; fetchedAt: number } | null = null;
+
+async function getAddonCatalog(): Promise<MmoUiAddon[]> {
+  const now = Date.now();
+  if (addonCache && now - addonCache.fetchedAt < ADDON_CACHE_TTL_MS) {
+    return addonCache.addons;
+  }
+
+  const res = await fetch(MMOUI_FILELIST_URL, {
+    headers: { 'User-Agent': 'ESO-Toolkit/1.0' },
+  });
+  if (!res.ok) throw new Error(`MMOUI API returned ${res.status}`);
+
+  const raw = (await res.json()) as MmoUiAddon[];
+  addonCache = { addons: raw, fetchedAt: now };
+  return raw;
+}
+
+app.get('/search-addons', async (c) => {
+  const q = (c.req.query('q') ?? '').trim();
+  if (!q || q.length < 2) return c.json({ results: [] });
+  if (q.length > 100) return c.json({ error: 'Query too long' }, 400);
+
+  // Simple in-memory rate limit per IP (resets each minute)
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const now = Date.now();
+
+  // Prune expired buckets to prevent unbounded map growth
+  for (const [key, val] of searchRateCounts) {
+    if (val.expires <= now) searchRateCounts.delete(key);
+  }
+
+  const bucket = searchRateCounts.get(ip);
+  if (bucket && bucket.expires > now) {
+    if (bucket.count >= SEARCH_RATE_LIMIT) {
+      return c.json({ error: 'Rate limit exceeded' }, 429);
+    }
+    bucket.count++;
+  } else {
+    searchRateCounts.set(ip, { count: 1, expires: now + 60_000 });
+  }
+
+  try {
+    const addons = await getAddonCatalog();
+    const lower = q.toLowerCase();
+
+    // Bucket matches by relevance
+    const exact: typeof results = [];
+    const starts: typeof results = [];
+    const contains: typeof results = [];
+
+    interface SearchResult {
+      id: number;
+      title: string;
+      author: string;
+      category: string;
+      downloads: string;
+    }
+
+    const results: SearchResult[] = [];
+
+    for (const a of addons) {
+      const tLower = a.title.toLowerCase();
+      const aLower = a.author.toLowerCase();
+      if (tLower !== lower && !tLower.includes(lower) && !aLower.includes(lower)) continue;
+
+      const hit: SearchResult = {
+        id: a.id,
+        title: a.title,
+        author: a.author,
+        category: '',
+        downloads: String(a.downloads),
+      };
+
+      if (tLower === lower) exact.push(hit);
+      else if (tLower.startsWith(lower)) starts.push(hit);
+      else contains.push(hit);
+    }
+
+    results.push(...exact, ...starts, ...contains);
+    return c.json({ results: results.slice(0, 25) });
+  } catch (err) {
+    console.error('Addon search failed:', err);
+    return c.json({ error: 'Search failed' }, 502);
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

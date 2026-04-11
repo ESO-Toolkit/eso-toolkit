@@ -168,6 +168,7 @@ const MobileSheetItem = styled(ButtonBase, {
     padding: '10px 12px',
     borderRadius: 12,
     width: '100%',
+    textAlign: 'left',
     position: 'relative',
     transition: 'background 0.2s ease, transform 0.2s ease',
     background: active ? (isDark ? alpha(accent, 0.1) : alpha(accent, 0.06)) : 'transparent',
