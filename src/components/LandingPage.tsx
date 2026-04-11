@@ -1,4 +1,12 @@
-import { Box, Button, Container, GlobalStyles, Typography, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  GlobalStyles,
+  Link,
+  Typography,
+  CircularProgress,
+} from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import React, { useState, JSX, useEffect, useRef } from 'react';
 
@@ -3355,18 +3363,18 @@ export const LandingPage: React.FC = () => {
                     with players.
                   </Typography>
                 </Box>
-                <Box
-                  component="a"
+                <Link
                   href="https://discord.gg/esotk"
                   target="_blank"
                   rel="noopener noreferrer"
+                  underline="none"
                   sx={(t: Theme) => ({
+                    display: 'inline-block',
                     px: 2,
                     py: 0.75,
                     borderRadius: '10px',
                     fontSize: '0.78rem',
                     fontWeight: 600,
-                    textDecoration: 'none',
                     color: t.palette.mode === 'dark' ? '#34d399' : '#059669',
                     background:
                       t.palette.mode === 'dark'
@@ -3389,7 +3397,7 @@ export const LandingPage: React.FC = () => {
                   })}
                 >
                   Join Discord &rarr;
-                </Box>
+                </Link>
               </Box>
             </CommunityCard>
           </CommunityGrid>

@@ -39,6 +39,22 @@
     var(--scrollbar-track, rgba(255, 255, 255, 0.05));
 }
 
+/* Click / tap responsiveness — eliminates the 300ms double-tap detection
+   delay on touch devices and removes the default tap flash. */
+button,
+a,
+[role='button'],
+[role='tab'],
+[role='menuitem'],
+[role='option'],
+input,
+select,
+label,
+summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   font-family:
