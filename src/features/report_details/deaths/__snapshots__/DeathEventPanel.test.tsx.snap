@@ -11,7 +11,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle empty event
       Deaths
     </h6>
     <div
-      class="MuiBox-root css-vjdh4i"
+      class="MuiBox-root css-1oxvza7"
     >
       <h6
         class="MuiTypography-root MuiTypography-h6 css-900zel-MuiTypography-root"
@@ -32,280 +32,822 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle loading sta
 <div>
   <div
     class="MuiBox-root css-1yuhvjn"
+    data-testid="deaths-skeleton"
   >
     <div
-      class="MuiBox-root css-1rwr1qx"
+      class="MuiBox-root css-1pwbuk6"
     >
       <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 180px; height: 28px;"
+        class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-qa5oht-MuiSkeleton-root"
+        style="width: 72px; height: 28px;"
       />
       <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 100px; height: 24px;"
+        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-h0jxw-MuiSkeleton-root"
+        style="width: 28px; height: 24px;"
       />
       <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 80px; height: 24px;"
+        class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+        style="width: 100px; height: 14px;"
       />
     </div>
     <div
-      class="MuiBox-root css-1m8lytx"
+      class="MuiBox-root css-1sn3mpk"
     >
-      <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 70px; height: 26px;"
-      />
-      <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 82px; height: 26px;"
-      />
-      <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 94px; height: 26px;"
-      />
-      <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 106px; height: 26px;"
-      />
-      <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 118px; height: 26px;"
-      />
-      <span
-        class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-        style="width: 130px; height: 26px;"
-      />
+      <div
+        class="MuiBox-root css-1u1d3zt"
+      >
+        <span
+          class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
+          style="width: 56px; height: 10px;"
+        />
+        <div
+          class="MuiBox-root css-wq87pz"
+        >
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-12lgpnu"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 55px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-18r0n0i"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 68px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-gr9uwn"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 45px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <div
+              class="MuiBox-root css-uelm9t"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 60px; height: 12px;"
+            />
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-np76hd-MuiSkeleton-root"
+              style="width: 12px; height: 12px;"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="MuiBox-root css-1u1d3zt"
+      >
+        <span
+          class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
+          style="width: 105px; height: 10px;"
+        />
+        <div
+          class="MuiBox-root css-wq87pz"
+        >
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 74px; height: 12px;"
+            />
+            <div
+              class="MuiBox-root css-1yf9lv5"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 54px; height: 12px;"
+            />
+            <div
+              class="MuiBox-root css-1yf9lv5"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-1pnk43m"
+          >
+            <span
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1da8h3r-MuiSkeleton-root"
+              style="width: 84px; height: 12px;"
+            />
+            <div
+              class="MuiBox-root css-1yf9lv5"
+            />
+          </div>
+        </div>
+      </div>
     </div>
     <div
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1p2nao2-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-15silrg-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-kacebu-MuiCardContent-root"
+          class="MuiBox-root css-y6ynwm"
+        />
+        <div
+          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
         >
           <div
-            class="MuiBox-root css-5c4gil"
+            class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1epbneo-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
             <div
-              class="MuiBox-root css-1rr4qq7"
+              class="MuiBox-root css-79elbk"
             >
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 60%; height: 18px;"
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
               />
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <div
+                class="MuiBox-root css-172hjuw"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                  style="width: 50%; height: 18px;"
+                />
+                <div
+                  class="MuiBox-root css-vyefzp"
+                />
+              </div>
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 35%; height: 14px;"
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 65px; height: 12px;"
               />
             </div>
           </div>
           <div
-            class="MuiBox-root css-t6mquf"
+            class="MuiBox-root css-ekoppn"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 120px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-9uwrx2"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 100px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-lhry5c"
+              />
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-149oe1j"
+          >
+            <div
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 45%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 90px; height: 12px;"
+              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 80px; height: 24px;"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
+              style="width: 88px; height: 10px;"
             />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 95px; height: 24px;"
-            />
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-ehxgom"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 55%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-18io2ej"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 67%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-7ht3r5"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 79%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+            </div>
           </div>
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1tbaoeo-MuiSkeleton-root"
-            style="width: 100%; height: 56px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
         </div>
       </div>
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1p2nao2-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-15silrg-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-kacebu-MuiCardContent-root"
+          class="MuiBox-root css-y6ynwm"
+        />
+        <div
+          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
         >
           <div
-            class="MuiBox-root css-5c4gil"
+            class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1epbneo-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
             <div
-              class="MuiBox-root css-1rr4qq7"
+              class="MuiBox-root css-79elbk"
             >
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 60%; height: 18px;"
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
               />
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <div
+                class="MuiBox-root css-172hjuw"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                  style="width: 60%; height: 18px;"
+                />
+                <div
+                  class="MuiBox-root css-vyefzp"
+                />
+              </div>
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 35%; height: 14px;"
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 65px; height: 12px;"
               />
             </div>
           </div>
           <div
-            class="MuiBox-root css-t6mquf"
+            class="MuiBox-root css-ekoppn"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 120px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-9uwrx2"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 100px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-lhry5c"
+              />
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-149oe1j"
+          >
+            <div
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 57%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 90px; height: 12px;"
+              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 80px; height: 24px;"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
+              style="width: 88px; height: 10px;"
             />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 95px; height: 24px;"
-            />
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-ehxgom"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 55%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-18io2ej"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 67%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-7ht3r5"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 79%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+            </div>
           </div>
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1tbaoeo-MuiSkeleton-root"
-            style="width: 100%; height: 56px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
         </div>
       </div>
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1p2nao2-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-15silrg-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-kacebu-MuiCardContent-root"
+          class="MuiBox-root css-y6ynwm"
+        />
+        <div
+          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
         >
           <div
-            class="MuiBox-root css-5c4gil"
+            class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1epbneo-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
             <div
-              class="MuiBox-root css-1rr4qq7"
+              class="MuiBox-root css-79elbk"
             >
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 60%; height: 18px;"
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
               />
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <div
+                class="MuiBox-root css-172hjuw"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                  style="width: 70%; height: 18px;"
+                />
+                <div
+                  class="MuiBox-root css-vyefzp"
+                />
+              </div>
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 35%; height: 14px;"
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 65px; height: 12px;"
               />
             </div>
           </div>
           <div
-            class="MuiBox-root css-t6mquf"
+            class="MuiBox-root css-ekoppn"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 120px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-9uwrx2"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 100px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-lhry5c"
+              />
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-149oe1j"
+          >
+            <div
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 69%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 90px; height: 12px;"
+              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 80px; height: 24px;"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
+              style="width: 88px; height: 10px;"
             />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 95px; height: 24px;"
-            />
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-ehxgom"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 55%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-18io2ej"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 67%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-7ht3r5"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 79%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+            </div>
           </div>
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1tbaoeo-MuiSkeleton-root"
-            style="width: 100%; height: 56px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
         </div>
       </div>
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1p2nao2-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-15silrg-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-kacebu-MuiCardContent-root"
+          class="MuiBox-root css-y6ynwm"
+        />
+        <div
+          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
         >
           <div
-            class="MuiBox-root css-5c4gil"
+            class="MuiBox-root css-1im2w00"
           >
-            <span
-              class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1epbneo-MuiSkeleton-root"
-              style="width: 36px; height: 36px;"
-            />
             <div
-              class="MuiBox-root css-1rr4qq7"
+              class="MuiBox-root css-79elbk"
             >
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 60%; height: 18px;"
+                class="MuiSkeleton-root MuiSkeleton-circular MuiSkeleton-pulse css-1ixbd66-MuiSkeleton-root"
+                style="width: 36px; height: 36px;"
               />
+            </div>
+            <div
+              class="MuiBox-root css-1xhmi63"
+            >
+              <div
+                class="MuiBox-root css-172hjuw"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                  style="width: 50%; height: 18px;"
+                />
+                <div
+                  class="MuiBox-root css-vyefzp"
+                />
+              </div>
               <span
-                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-kkcbhd-MuiSkeleton-root"
-                style="width: 35%; height: 14px;"
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 65px; height: 12px;"
               />
             </div>
           </div>
           <div
-            class="MuiBox-root css-t6mquf"
+            class="MuiBox-root css-ekoppn"
+          >
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 120px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-9uwrx2"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-0"
+            >
+              <div
+                class="MuiBox-root css-1lekzkb"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 100px; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                  style="width: 28px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-lhry5c"
+              />
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-149oe1j"
+          >
+            <div
+              class="MuiBox-root css-sxp0th"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-19trald-MuiSkeleton-root"
+                style="width: 72px; height: 10px;"
+              />
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-umdq0d-MuiSkeleton-root"
+                style="width: 81%; height: 16px;"
+              />
+            </div>
+            <div
+              class="MuiBox-root css-1aj22jf"
+            >
+              <span
+                class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-afzza8-MuiSkeleton-root"
+                style="width: 90px; height: 12px;"
+              />
+              <div
+                class="MuiBox-root css-gjecpl"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-133574g-MuiSkeleton-root"
+                  style="width: 48px; height: 14px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1o4cayv-MuiSkeleton-root"
+                  style="width: 20px; height: 10px;"
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            class="MuiBox-root css-0"
           >
             <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 80px; height: 24px;"
+              class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1a3clxn-MuiSkeleton-root"
+              style="width: 88px; height: 10px;"
             />
-            <span
-              class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-r06cbe-MuiSkeleton-root"
-              style="width: 95px; height: 24px;"
-            />
+            <div
+              class="MuiBox-root css-1kkt86i"
+            >
+              <div
+                class="MuiBox-root css-ehxgom"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 55%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-18io2ej"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 67%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+              <div
+                class="MuiBox-root css-7ht3r5"
+              >
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1cw06ey-MuiSkeleton-root"
+                  style="width: 79%; height: 12px;"
+                />
+                <span
+                  class="MuiSkeleton-root MuiSkeleton-text MuiSkeleton-pulse css-1n1pk4i-MuiSkeleton-root"
+                  style="width: 42px; height: 12px;"
+                />
+              </div>
+            </div>
           </div>
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1tbaoeo-MuiSkeleton-root"
-            style="width: 100%; height: 56px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
-          <span
-            class="MuiSkeleton-root MuiSkeleton-rounded MuiSkeleton-pulse css-1al3ag1-MuiSkeleton-root"
-            style="width: 100%; height: 20px;"
-          />
         </div>
       </div>
     </div>
@@ -327,7 +869,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -364,7 +906,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -377,7 +919,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -399,7 +941,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -409,7 +951,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
               >
                 Hurricane
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -423,11 +965,11 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -436,8 +978,9 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -448,7 +991,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -474,7 +1017,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -482,14 +1025,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -497,18 +1040,18 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Hurricane
               </span>
@@ -522,7 +1065,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
@@ -564,7 +1107,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -601,7 +1144,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -614,7 +1157,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -636,7 +1179,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -646,7 +1189,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
               >
                 Hurricane
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -660,11 +1203,11 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -673,8 +1216,9 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -685,7 +1229,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -711,7 +1255,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -719,14 +1263,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -736,7 +1280,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -744,14 +1288,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -759,18 +1303,18 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Hurricane
               </span>
@@ -784,7 +1328,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Unknown
                 </span>
@@ -803,7 +1347,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -825,7 +1369,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   2,000
                 </span>
@@ -853,7 +1397,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -890,7 +1434,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -903,7 +1447,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -925,7 +1469,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -935,7 +1479,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
               >
                 Hurricane
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -949,11 +1493,11 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -962,8 +1506,9 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -974,7 +1519,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -1000,7 +1545,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -1008,14 +1553,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -1025,7 +1570,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -1033,14 +1578,14 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -1048,18 +1593,18 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Hurricane
               </span>
@@ -1073,17 +1618,17 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
             </div>
             <div
-              class="MuiBox-root css-ndnp5i"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Taunted
             </div>
@@ -1100,15 +1645,15 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
                 >
                   <span
-                    class="MuiBox-root css-1ekshga"
+                    class="MuiBox-root css-2pxnzs"
                   >
-                    BLK
+                    🛡️
                   </span>
                   <span
                     style="font-weight: 500;"
@@ -1121,7 +1666,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -1133,7 +1678,7 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   1,000
                 </span>
@@ -1161,7 +1706,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1198,7 +1743,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1211,7 +1756,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -1233,7 +1778,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1243,7 +1788,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               >
                 Hurricane
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -1257,11 +1802,11 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -1270,8 +1815,9 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -1282,7 +1828,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -1308,7 +1854,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -1316,14 +1862,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -1333,7 +1879,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -1341,14 +1887,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -1356,18 +1902,18 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Hurricane
               </span>
@@ -1381,17 +1927,17 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
             </div>
             <div
-              class="MuiBox-root css-19gvdbd"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Not taunted
             </div>
@@ -1408,7 +1954,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -1430,7 +1976,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   2,000
                 </span>
@@ -1458,7 +2004,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1495,7 +2041,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1508,7 +2054,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -1530,7 +2076,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1540,7 +2086,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               >
                 Juggernaut
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -1554,11 +2100,11 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -1567,8 +2113,9 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -1579,7 +2126,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -1605,7 +2152,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -1613,14 +2160,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -1630,7 +2177,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -1638,14 +2185,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -1653,18 +2200,18 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Juggernaut
               </span>
@@ -1678,16 +2225,16 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
               <div
-                class="MuiBox-root css-xe3jus"
+                class="MuiBox-root css-1ep796m"
               >
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-16pxqwf-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-kymklv-MuiTypography-root"
                 >
                   2,500
                 </span>
@@ -1699,10 +2246,10 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               </div>
             </div>
             <div
-              class="MuiBox-root css-ndnp5i"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Taunted
             </div>
@@ -1719,7 +2266,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-15ku3ti"
+                class="MuiBox-root css-1w52miw"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -1735,7 +2282,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -1747,13 +2294,13 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   2,000
                 </span>
               </div>
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -1775,7 +2322,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   3,000
                 </span>
@@ -1803,7 +2350,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1840,7 +2387,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1853,7 +2400,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -1875,7 +2422,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -1885,7 +2432,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               >
                 Juggernaut
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -1899,11 +2446,11 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -1912,8 +2459,9 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -1924,7 +2472,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -1950,7 +2498,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -1958,14 +2506,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -1975,7 +2523,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -1983,14 +2531,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -1998,18 +2546,18 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Juggernaut
               </span>
@@ -2023,16 +2571,16 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
               <div
-                class="MuiBox-root css-xe3jus"
+                class="MuiBox-root css-1ep796m"
               >
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-16pxqwf-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-kymklv-MuiTypography-root"
                 >
                   2,500
                 </span>
@@ -2044,10 +2592,10 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               </div>
             </div>
             <div
-              class="MuiBox-root css-ndnp5i"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Taunted
             </div>
@@ -2064,7 +2612,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-15ku3ti"
+                class="MuiBox-root css-1w52miw"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -2080,7 +2628,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -2092,13 +2640,13 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   2,000
                 </span>
               </div>
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -2114,7 +2662,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -2126,7 +2674,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   3,000
                 </span>
@@ -2154,7 +2702,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2191,7 +2739,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2204,7 +2752,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -2226,7 +2774,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2236,7 +2784,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               >
                 Hurricane
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -2250,11 +2798,11 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -2263,8 +2811,9 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -2275,7 +2824,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -2301,7 +2850,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -2309,14 +2858,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -2326,7 +2875,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -2334,14 +2883,14 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -2349,18 +2898,18 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Hurricane
               </span>
@@ -2374,17 +2923,17 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
             </div>
             <div
-              class="MuiBox-root css-ndnp5i"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Taunted
             </div>
@@ -2401,7 +2950,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -2417,7 +2966,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -2429,7 +2978,7 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   2,000
                 </span>
@@ -2457,7 +3006,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2494,7 +3043,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2507,7 +3056,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -2529,7 +3078,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2539,7 +3088,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
               >
                 Multiple attacks (2)
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -2553,11 +3102,11 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -2566,8 +3115,9 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -2578,7 +3128,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -2604,7 +3154,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -2612,14 +3162,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -2629,7 +3179,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -2637,14 +3187,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -2652,18 +3202,18 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-cp96vf-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-h962lr-MuiTypography-root"
                 data-mui-internal-clone-element="true"
               >
                 Multiple attacks (2)
@@ -2678,16 +3228,16 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Add Enemy
                 </span>
               </span>
               <div
-                class="MuiBox-root css-xe3jus"
+                class="MuiBox-root css-1ep796m"
               >
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-16pxqwf-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-kymklv-MuiTypography-root"
                 >
                   5,000
                 </span>
@@ -2699,10 +3249,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
               </div>
             </div>
             <div
-              class="MuiBox-root css-19gvdbd"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Not taunted
             </div>
@@ -2719,7 +3269,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -2735,7 +3285,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -2747,7 +3297,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   3,000
                 </span>
@@ -2775,7 +3325,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2812,7 +3362,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2825,7 +3375,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -2847,7 +3397,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -2857,7 +3407,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               >
                 Juggernaut
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -2871,11 +3421,11 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -2884,8 +3434,9 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -2896,7 +3447,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -2922,7 +3473,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -2930,14 +3481,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -2947,7 +3498,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -2955,14 +3506,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -2970,18 +3521,18 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Juggernaut
               </span>
@@ -2995,16 +3546,16 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
               <div
-                class="MuiBox-root css-xe3jus"
+                class="MuiBox-root css-1ep796m"
               >
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-16pxqwf-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-kymklv-MuiTypography-root"
                 >
                   2,500
                 </span>
@@ -3016,10 +3567,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               </div>
             </div>
             <div
-              class="MuiBox-root css-ndnp5i"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Taunted
             </div>
@@ -3036,7 +3587,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-15ku3ti"
+                class="MuiBox-root css-1w52miw"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -3058,13 +3609,13 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   2,000
                 </span>
               </div>
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -3080,7 +3631,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -3092,7 +3643,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   3,000
                 </span>
@@ -3120,7 +3671,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3157,7 +3708,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3170,7 +3721,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -3192,7 +3743,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3202,7 +3753,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               >
                 Hurricane
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -3216,11 +3767,11 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -3229,8 +3780,9 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -3241,7 +3793,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -3267,7 +3819,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -3275,14 +3827,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -3290,18 +3842,18 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Hurricane
               </span>
@@ -3315,17 +3867,17 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
             </div>
             <div
-              class="MuiBox-root css-19gvdbd"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Not taunted
             </div>
@@ -3365,7 +3917,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3402,7 +3954,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3415,7 +3967,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -3437,7 +3989,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3447,7 +3999,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               >
                 Hurricane
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -3461,11 +4013,11 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -3474,8 +4026,9 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -3486,7 +4039,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -3512,7 +4065,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -3520,14 +4073,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -3535,18 +4088,18 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Hurricane
               </span>
@@ -3560,17 +4113,17 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
             </div>
             <div
-              class="MuiBox-root css-ndnp5i"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Taunted
             </div>
@@ -3610,7 +4163,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
         Deaths
       </h6>
       <div
-        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-cnwqy8-MuiChip-root"
+        class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a2vtxd-MuiChip-root"
       >
         <span
           class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3647,7 +4200,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             target="_blank"
           >
             <div
-              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-a4l5qs-MuiChip-root"
+              class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1cx1gy5-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3660,7 +4213,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   />
                   DPS Player
                   <span
-                    class="MuiBox-root css-36rdjr"
+                    class="MuiBox-root css-1wg5klk"
                   >
                     1
                   </span>
@@ -3682,7 +4235,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <div
-            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-tnv8ct-MuiChip-root"
+            class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-gvun8u-MuiChip-root"
           >
             <span
               class="MuiChip-label MuiChip-labelSmall css-eccknh-MuiChip-label"
@@ -3692,7 +4245,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               >
                 Juggernaut
                 <span
-                  class="MuiBox-root css-hs3tlx"
+                  class="MuiBox-root css-17cvvf0"
                 >
                   1
                 </span>
@@ -3706,11 +4259,11 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
       class="MuiBox-root css-1tehbdx"
     >
       <div
-        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-1u5z663-MuiPaper-root-MuiCard-root"
+        class="MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 MuiCard-root css-tiq6zl-MuiPaper-root-MuiCard-root"
         style="--Paper-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);"
       >
         <div
-          class="MuiCardContent-root css-1a876nh-MuiCardContent-root"
+          class="MuiCardContent-root css-vtw494-MuiCardContent-root"
         >
           <div
             class="MuiBox-root css-1im2w00"
@@ -3719,8 +4272,9 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               class="MuiBox-root css-79elbk"
             >
               <div
-                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-bp9fwp-MuiAvatar-root"
+                class="MuiAvatar-root MuiAvatar-circular MuiAvatar-colorDefault css-gb3wxl-MuiAvatar-root"
               >
+                #
                 1
               </div>
             </div>
@@ -3731,7 +4285,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-172hjuw"
               >
                 <h6
-                  class="MuiTypography-root MuiTypography-subtitle2 css-1truju7-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-subtitle2 css-ysvbh5-MuiTypography-root"
                 >
                   DPS Player
                 </h6>
@@ -3757,7 +4311,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   HP 
                   25,000
@@ -3765,14 +4319,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   30,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   83
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-1ciwm4n"
+                class="MuiBox-root css-9ldu1d"
               />
             </div>
             <div
@@ -3782,7 +4336,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 class="MuiBox-root css-1lekzkb"
               >
                 <div
-                  class="MuiBox-root css-kyv5ur"
+                  class="MuiBox-root css-994eo2"
                 >
                   STA 
                   12,000
@@ -3790,14 +4344,14 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   12,000
                 </div>
                 <p
-                  class="MuiTypography-root MuiTypography-body1 css-1g3vf78-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-body1 css-n2pyeh-MuiTypography-root"
                 >
                   100
                   %
                 </p>
               </div>
               <div
-                class="MuiBox-root css-uqb2tn"
+                class="MuiBox-root css-1e1gdxr"
               />
             </div>
             <div
@@ -3805,18 +4359,18 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
             />
           </div>
           <div
-            class="MuiBox-root css-1idz158"
+            class="MuiBox-root css-15j3nkd"
           >
             <div
               class="MuiBox-root css-sxp0th"
             >
               <span
-                class="MuiTypography-root MuiTypography-caption css-1cs2sk8-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-caption css-hxch88-MuiTypography-root"
               >
                 Killing Blow
               </span>
               <span
-                class="MuiTypography-root MuiTypography-body1 css-wdb1qv-MuiTypography-root"
+                class="MuiTypography-root MuiTypography-body1 css-6bckd8-MuiTypography-root"
               >
                 Juggernaut
               </span>
@@ -3830,16 +4384,16 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                 from
                  
                 <span
-                  style="font-weight: 600; color: rgb(157, 23, 77);"
+                  style="font-weight: 600; color: rgb(30, 41, 59);"
                 >
                   Enemy Boss
                 </span>
               </span>
               <div
-                class="MuiBox-root css-xe3jus"
+                class="MuiBox-root css-1ep796m"
               >
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-16pxqwf-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-kymklv-MuiTypography-root"
                 >
                   2,500
                 </span>
@@ -3851,10 +4405,10 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               </div>
             </div>
             <div
-              class="MuiBox-root css-ndnp5i"
+              class="MuiBox-root css-ixvrym"
             >
               <span
-                class="MuiBox-root css-19zocwj"
+                class="MuiBox-root css-jb55ig"
               />
               Taunted
             </div>
@@ -3871,7 +4425,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
               class="MuiBox-root css-1kkt86i"
             >
               <div
-                class="MuiBox-root css-15ku3ti"
+                class="MuiBox-root css-1w52miw"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -3887,7 +4441,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                     /
                   </span>
                   <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(5, 150, 105); font-weight: 700;"
+                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
                     title="Attacker was taunted"
                   >
                     TAUNT
@@ -3899,13 +4453,13 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   2,000
                 </span>
               </div>
               <div
-                class="MuiBox-root css-1e4vpbe"
+                class="MuiBox-root css-1gvzuft"
               >
                 <span
                   class="MuiTypography-root MuiTypography-caption css-1ppp3ui-MuiTypography-root"
@@ -3927,7 +4481,7 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
                   </span>
                 </span>
                 <span
-                  class="MuiTypography-root MuiTypography-caption css-7t2kvr-MuiTypography-root"
+                  class="MuiTypography-root MuiTypography-caption css-rp8sd2-MuiTypography-root"
                 >
                   3,000
                 </span>
