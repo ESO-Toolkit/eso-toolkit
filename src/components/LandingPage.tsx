@@ -1,13 +1,132 @@
-import { Box, Button, Container, Typography, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  GlobalStyles,
+  Link,
+  Typography,
+  CircularProgress,
+} from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import React, { useState, JSX, useEffect, useRef } from 'react';
 
+// ─── 2026 CSS: @property animated gradients + scroll-driven animations ──────
+const showcaseGlobalStyles = (
+  <GlobalStyles
+    styles={`
+    @property --divider-pos {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 50%;
+    }
+    @property --glow-opacity {
+      syntax: '<number>';
+      inherits: false;
+      initial-value: 0.3;
+    }
+
+    @keyframes dividerShimmer {
+      0% { --divider-pos: 20%; --glow-opacity: 0.3; }
+      50% { --divider-pos: 80%; --glow-opacity: 0.6; }
+      100% { --divider-pos: 20%; --glow-opacity: 0.3; }
+    }
+
+    @keyframes sectionReveal {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+        filter: blur(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes panelParallax {
+      from { transform: translateY(30px) rotateY(var(--panel-ry, -2deg)) rotateX(var(--panel-rx, 1deg)); }
+      to { transform: translateY(-30px) rotateY(var(--panel-ry, -2deg)) rotateX(var(--panel-rx, 1deg)); }
+    }
+
+    @keyframes featureReveal {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Spring easing function — slight overshoot for bouncy feel */
+    :root {
+      --spring: linear(0, 0.01, 0.04 1.7%, 0.16 3.3%, 0.56 6.9%, 0.72, 0.87 11.4%, 0.97 13.5%, 1.04 16%, 1.07 18.5%, 1.08 21.2%, 1.05 27.5%, 1.02 33%, 1 45%, 0.99 55%, 1);
+    }
+  `}
+  />
+);
+
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
 import { Footer } from './Footer';
 import { UnauthenticatedLandingSection } from './UnauthenticatedLandingSection';
+
+// Kalpa desktop app icon
+const KalpaIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+    <rect x="2" y="3" width="20" height="18" rx="3" fill="currentColor" opacity=".2" />
+    <rect
+      x="2"
+      y="3"
+      width="20"
+      height="18"
+      rx="3"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+    />
+    <path d="M2 7h20" stroke="currentColor" strokeWidth="1.5" />
+    <circle cx="5" cy="5" r=".75" fill="currentColor" />
+    <circle cx="7.5" cy="5" r=".75" fill="currentColor" />
+    <circle cx="10" cy="5" r=".75" fill="currentColor" />
+    <path
+      d="M7 12l3 3-3 3M12 18h5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+// In-game addon icon (puzzle piece)
+const AddonIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+  >
+    <path
+      d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z"
+      fill="currentColor"
+      opacity=".2"
+    />
+    <path
+      d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      fill="none"
+    />
+  </svg>
+);
+
 // Import icon components directly
 const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
   <svg
@@ -481,199 +600,312 @@ export const LogInputContainer = styled(Box)(({ theme }) => ({
 }));
 
 const CommunitySection = styled(Box)(({ theme }) => ({
-  padding: '2rem 0',
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.3) 50%, transparent 100%)'
-      : 'linear-gradient(180deg, transparent 0%, rgba(241, 245, 249, 0.5) 50%, transparent 100%)',
+  padding: '6rem 0 4rem',
   position: 'relative',
+  overflow: 'hidden',
+  // Dot grid pattern background
+  backgroundImage:
+    theme.palette.mode === 'dark'
+      ? 'radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px)'
+      : 'radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px)',
+  backgroundSize: '24px 24px',
+  // Animated gradient orbs
   '&::before': {
     content: '""',
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent)',
+    width: '800px',
+    height: '800px',
+    borderRadius: '50%',
+    top: '-300px',
+    right: '-300px',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, transparent 60%)'
+        : 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 60%)',
+    animation: 'communityOrb1 16s ease-in-out infinite',
+    pointerEvents: 'none',
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    width: '700px',
+    height: '700px',
+    borderRadius: '50%',
+    bottom: '-250px',
+    left: '-250px',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 60%)'
+        : 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 0%, transparent 60%)',
+    animation: 'communityOrb2 20s ease-in-out infinite',
+    pointerEvents: 'none',
+  },
+  '@keyframes communityOrb1': {
+    '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+    '33%': { transform: 'translate(-60px, 40px) scale(1.15)' },
+    '66%': { transform: 'translate(20px, -20px) scale(0.95)' },
+  },
+  '@keyframes communityOrb2': {
+    '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+    '33%': { transform: 'translate(40px, -50px) scale(1.1)' },
+    '66%': { transform: 'translate(-30px, 30px) scale(1.05)' },
+  },
+  '@keyframes borderRotate': {
+    '0%': { '--border-angle': '0deg' },
+    '100%': { '--border-angle': '360deg' },
+  },
+  '@keyframes pulseGlow': {
+    '0%, 100%': { opacity: 0.4 },
+    '50%': { opacity: 0.8 },
   },
   [theme.breakpoints.down('md')]: {
-    padding: '3rem 0',
+    padding: '4rem 0 3rem',
   },
   [theme.breakpoints.down('sm')]: {
-    padding: '2rem 0',
+    padding: '3rem 0 2rem',
   },
 }));
 
 const CommunityGrid = styled(Box)(({ theme }) => ({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-  gap: '2rem',
+  // Asymmetric bento: hero card spans left 2/3, card 02 right 1/3, card 03 full bottom
+  gridTemplateColumns: '1.6fr 1fr',
+  gridTemplateRows: 'auto auto',
+  gap: '1rem',
   maxWidth: '1200px',
   margin: '0 auto',
   padding: '0 2rem',
+  // Card 01 - tall left
+  '& > *:nth-of-type(1)': {
+    gridRow: '1 / 2',
+    gridColumn: '1 / 2',
+  },
+  // Card 02 - right
+  '& > *:nth-of-type(2)': {
+    gridRow: '1 / 2',
+    gridColumn: '2 / 3',
+  },
+  // Card 03 - full bottom
+  '& > *:nth-of-type(3)': {
+    gridRow: '2 / 3',
+    gridColumn: '1 / -1',
+  },
   [theme.breakpoints.down('md')]: {
     gridTemplateColumns: '1fr',
-    gap: '1.5rem',
+    gridTemplateRows: 'auto',
+    gap: '1rem',
     padding: '0 1rem',
+    '& > *:nth-of-type(1), & > *:nth-of-type(2), & > *:nth-of-type(3)': {
+      gridRow: 'auto',
+      gridColumn: '1',
+    },
   },
 }));
 
-const CommunityCard = styled(Box)(({ theme }) => ({
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-      : 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-  backdropFilter: 'blur(10px)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.1)'
-      : '1px solid rgba(30, 41, 59, 0.1)',
-  borderRadius: '16px',
-  padding: '2rem',
-  textAlign: 'center',
-  transition: 'all 0.3s ease',
+const CommunityCard = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'accent',
+})<{ accent?: 'blue' | 'purple' | 'emerald' }>(({ theme, accent = 'blue' }) => {
+  const isDark = theme.palette.mode === 'dark';
+  const accents = {
+    blue: {
+      primary: isDark ? '#38bdf8' : '#0ea5e9',
+      secondary: isDark ? '#3b82f6' : '#2563eb',
+      bg: isDark
+        ? 'linear-gradient(145deg, rgba(56, 189, 248, 0.06) 0%, rgba(15, 23, 42, 0.4) 40%, rgba(59, 130, 246, 0.03) 100%)'
+        : 'linear-gradient(145deg, rgba(56, 189, 248, 0.05) 0%, rgba(255, 255, 255, 0.5) 40%, rgba(59, 130, 246, 0.02) 100%)',
+      border: isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(56, 189, 248, 0.08)',
+      number: isDark ? 'rgba(56, 189, 248, 0.06)' : 'rgba(56, 189, 248, 0.04)',
+    },
+    purple: {
+      primary: isDark ? '#a78bfa' : '#8b5cf6',
+      secondary: isDark ? '#c084fc' : '#a855f7',
+      bg: isDark
+        ? 'linear-gradient(145deg, rgba(139, 92, 246, 0.06) 0%, rgba(15, 23, 42, 0.4) 40%, rgba(168, 85, 247, 0.03) 100%)'
+        : 'linear-gradient(145deg, rgba(139, 92, 246, 0.05) 0%, rgba(255, 255, 255, 0.5) 40%, rgba(168, 85, 247, 0.02) 100%)',
+      border: isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.08)',
+      number: isDark ? 'rgba(139, 92, 246, 0.06)' : 'rgba(139, 92, 246, 0.04)',
+    },
+    emerald: {
+      primary: isDark ? '#34d399' : '#10b981',
+      secondary: isDark ? '#6ee7b7' : '#059669',
+      bg: isDark
+        ? 'linear-gradient(145deg, rgba(52, 211, 153, 0.06) 0%, rgba(15, 23, 42, 0.4) 40%, rgba(16, 185, 129, 0.03) 100%)'
+        : 'linear-gradient(145deg, rgba(52, 211, 153, 0.05) 0%, rgba(255, 255, 255, 0.5) 40%, rgba(16, 185, 129, 0.02) 100%)',
+      border: isDark ? 'rgba(52, 211, 153, 0.1)' : 'rgba(52, 211, 153, 0.08)',
+      number: isDark ? 'rgba(52, 211, 153, 0.06)' : 'rgba(52, 211, 153, 0.04)',
+    },
+  };
+  const a = accents[accent];
+  return {
+    background: a.bg,
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    border: `1px solid ${a.border}`,
+    borderRadius: '20px',
+    padding: '1.75rem',
+    textAlign: 'left',
+    transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    overflow: 'hidden',
+    // Large editorial number watermark
+    '&::before': {
+      content: 'attr(data-number)',
+      position: 'absolute',
+      top: '-0.5rem',
+      right: '1rem',
+      fontSize: '7.5rem',
+      fontWeight: 900,
+      lineHeight: 1,
+      color: a.number,
+      pointerEvents: 'none',
+      userSelect: 'none',
+      fontFamily: '"Inter", system-ui, sans-serif',
+      letterSpacing: '-0.04em',
+    },
+    // Animated gradient sweep on left border
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: '2px',
+      height: '100%',
+      background: `linear-gradient(180deg, transparent 0%, ${a.primary} 50%, transparent 100%)`,
+      opacity: 0,
+      transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+    },
+    '&:hover': {
+      transform: 'translateY(-5px)',
+      border: `1px solid ${a.primary}22`,
+      boxShadow: `0 24px 64px rgba(0, 0, 0, ${isDark ? '0.4' : '0.08'}), 0 0 40px ${a.primary}08`,
+      '&::after': {
+        opacity: 0.8,
+      },
+    },
+    [theme.breakpoints.down('sm')]: {
+      padding: '1.25rem',
+      borderRadius: '16px',
+      '&::before': {
+        fontSize: '4.5rem',
+        right: '0.5rem',
+      },
+    },
+  };
+});
+
+const CommunityIcon = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'accent',
+})<{ accent?: 'blue' | 'purple' | 'emerald' }>(({ theme, accent = 'blue' }) => {
+  const colors = {
+    blue: {
+      bg: 'rgba(56, 189, 248, 0.12)',
+      border: 'rgba(56, 189, 248, 0.2)',
+      shadow: 'rgba(56, 189, 248, 0.25)',
+    },
+    purple: {
+      bg: 'rgba(139, 92, 246, 0.12)',
+      border: 'rgba(139, 92, 246, 0.2)',
+      shadow: 'rgba(139, 92, 246, 0.25)',
+    },
+    emerald: {
+      bg: 'rgba(52, 211, 153, 0.12)',
+      border: 'rgba(52, 211, 153, 0.2)',
+      shadow: 'rgba(52, 211, 153, 0.25)',
+    },
+  };
+  const c = colors[accent];
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '42px',
+    height: '42px',
+    marginBottom: '0.75rem',
+    background: c.bg,
+    border: `1px solid ${c.border}`,
+    borderRadius: '12px',
+    fontSize: '1.2rem',
+    boxShadow: `0 0 20px ${c.shadow}`,
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    flexShrink: 0,
+    [theme.breakpoints.down('sm')]: {
+      width: '36px',
+      height: '36px',
+      borderRadius: '10px',
+      fontSize: '1rem',
+    },
+  };
+});
+
+// Infinite scrolling marquee for tool names
+const MarqueeWrapper = styled(Box)(({ theme }) => ({
   position: 'relative',
+  width: '100vw',
+  marginLeft: 'calc(-50vw + 50%)',
   overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent)',
-    opacity: 0,
+  margin: '2rem calc(-50vw + 50%) 2rem',
+  // Fade edges
+  maskImage: 'linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+  WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+  // Top and bottom borders
+  borderTop: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
+  borderBottom: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
+  padding: '1rem 0',
+  background: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.01)' : 'rgba(0, 0, 0, 0.01)',
+  [theme.breakpoints.down('sm')]: {
+    margin: '1.5rem calc(-50vw + 50%) 1.5rem',
+    padding: '0.75rem 0',
+  },
+}));
+
+const MarqueeTrack = styled(Box)(() => ({
+  display: 'flex',
+  gap: '3rem',
+  width: 'max-content',
+  animation: 'marqueeScroll 25s linear infinite',
+  '&:hover': {
+    animationPlayState: 'paused',
+  },
+  '@keyframes marqueeScroll': {
+    '0%': { transform: 'translateX(0)' },
+    '100%': { transform: 'translateX(-50%)' },
+  },
+}));
+
+const MarqueeItem = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  whiteSpace: 'nowrap',
+  cursor: 'default',
+  color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+  fontSize: '0.82rem',
+  fontWeight: 500,
+  letterSpacing: '0.02em',
+  transition: 'color 0.3s ease',
+  '& svg': {
+    width: '1rem',
+    height: '1rem',
+    opacity: 0.5,
     transition: 'opacity 0.3s ease',
   },
   '&:hover': {
-    transform: 'translateY(-4px)',
-    borderColor: 'rgba(56, 189, 248, 0.2)',
-    '&::before': {
+    color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
+    '& svg': {
       opacity: 1,
     },
   },
   [theme.breakpoints.down('sm')]: {
-    padding: '1.5rem',
-  },
-}));
-
-const CommunityIcon = styled(Box)(({ theme }) => ({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '0.75rem',
-  margin: '0 auto 1.5rem',
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1))'
-      : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(0, 225, 255, 0.05))',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
-      : '1px solid rgba(56, 189, 248, 0.15)',
-  borderRadius: '10px',
-  padding: '0.75rem 1.5rem',
-  fontSize: '2rem',
-  fontWeight: 600,
-  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
-  backdropFilter: 'blur(10px)',
-  boxShadow:
-    theme.palette.mode === 'dark'
-      ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 0 20px rgba(56, 189, 248, 0.1)'
-      : '0 4px 20px rgba(15, 23, 42, 0.08), 0 0 20px rgba(56, 189, 248, 0.05)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  animation: 'float 3s ease-in-out infinite',
-  '&:hover': {
-    transform: 'translateY(-2px) scale(1.05)',
-    borderColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.25)',
-    boxShadow:
-      theme.palette.mode === 'dark'
-        ? '0 8px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(56, 189, 248, 0.15)'
-        : '0 8px 30px rgba(15, 23, 42, 0.12), 0 0 30px rgba(56, 189, 248, 0.12)',
-  },
-  '@keyframes float': {
-    '0%, 100%': { transform: 'translateY(0px)' },
-    '50%': { transform: 'translateY(-3px)' },
-  },
-  [theme.breakpoints.down('sm')]: {
-    padding: '0.6rem 1.2rem',
-    fontSize: '1.75rem',
-    gap: '0.6rem',
-    '&:hover': {
-      transform: 'translateY(-1px) scale(1.02)',
+    fontSize: '0.75rem',
+    gap: '0.4rem',
+    '& svg': {
+      width: '0.85rem',
+      height: '0.85rem',
     },
   },
-  [theme.breakpoints.down(480)]: {
-    padding: '0.5rem 1rem',
-    fontSize: '1.5rem',
-    gap: '0.5rem',
-  },
 }));
 
-const CommunityStats = styled(Box)(({ theme }) => ({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, 1fr)',
-  gap: '2rem',
-  maxWidth: '1200px',
-  margin: '3rem auto',
-
-  // Medium screens (tablets) - switch to 2x2 grid
-  [theme.breakpoints.down('lg')]: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '2rem',
-    margin: '2.5rem 1rem',
-  },
-
-  // Small screens (mobile) - maintain 2x2 grid with adjusted spacing
-  [theme.breakpoints.down('md')]: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '1.5rem',
-    margin: '2rem 1rem',
-  },
-
-  // Extra small screens - still maintain 2x2 but with tighter spacing
-  [theme.breakpoints.down('sm')]: {
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '1rem',
-    margin: '2rem 1rem',
-  },
-}));
-
-const StatItem = styled(Box)(({ theme: _theme }) => ({
-  textAlign: 'center',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minWidth: '0',
-}));
-
-const StatNumber = styled(Typography)(({ theme }) => ({
-  fontSize: '2.5rem',
-  fontWeight: 800,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 100%)'
-      : 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  marginBottom: '0.5rem',
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '2rem',
-  },
-}));
-
-const StatLabel = styled(Typography)(({ theme }) => ({
-  fontSize: '0.9rem',
-  color: theme.palette.text.secondary,
-  fontWeight: 500,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-}));
-
-const SectionTitle = styled(Typography, {
+const _SectionTitle = styled(Typography, {
   shouldForwardProp: (prop) => prop !== 'theme',
 })<{ theme?: Theme }>(({ theme: _theme }) => ({
   textAlign: 'center',
@@ -694,42 +926,100 @@ const SectionTitle = styled(Typography, {
   },
 }));
 
-const CommunityTitle = styled(Typography)(({ theme }) => ({
-  textAlign: 'center',
-  fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
-  fontWeight: 700,
-  marginBottom: '1.5rem',
-  marginTop: '8rem',
-  color: theme.palette.text.primary,
-  lineHeight: 1.1,
-  maxWidth: '800px',
-  margin: '8rem auto 1.5rem auto',
-  [theme.breakpoints.down('md')]: {
-    marginTop: '6rem',
-    marginBottom: '1.25rem',
-    lineHeight: 1.2,
-  },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(1.6rem, 5vw, 2.2rem)',
-    marginTop: '4rem',
-    marginBottom: '1rem',
-    lineHeight: 1.3,
-  },
-  [theme.breakpoints.down(480)]: {
-    fontSize: 'clamp(1.4rem, 6vw, 1.8rem)',
-    marginTop: '3rem',
-    marginBottom: '0.8rem',
-    lineHeight: 1.4,
-  },
-  [theme.breakpoints.down(360)]: {
-    fontSize: 'clamp(1.2rem, 7vw, 1.6rem)',
-    marginTop: '2rem',
-    marginBottom: '0.6rem',
-    lineHeight: 1.4,
-  },
-}));
+const CommunityTitle = styled(Box)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    textAlign: 'center',
+    maxWidth: '720px',
+    margin: '0 auto',
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.6rem',
 
-const SectionSubtitle = styled(Typography)(({ theme }) => ({
+    // Headline — single line on desktop, wraps on mobile
+    '& .community-headline': {
+      lineHeight: 1.15,
+      textAlign: 'center',
+      whiteSpace: 'nowrap',
+      [theme.breakpoints.down('sm')]: {
+        whiteSpace: 'normal',
+      },
+    },
+
+    // Thin weight: "Built by players,"
+    '& .community-title-light': {
+      fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+      fontWeight: 300,
+      letterSpacing: '-0.01em',
+      color: isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+      [theme.breakpoints.down('sm')]: {
+        display: 'block',
+        fontSize: 'clamp(1.3rem, 5.5vw, 1.8rem)',
+      },
+    },
+
+    // Bold gradient: "for players."
+    '& .community-title-bold': {
+      fontSize: 'clamp(1.5rem, 3vw, 2.2rem)',
+      fontWeight: 800,
+      letterSpacing: '-0.02em',
+      background: isDark
+        ? 'linear-gradient(135deg, #38bdf8 0%, #818cf8 40%, #c084fc 70%, #f0abfc 100%)'
+        : 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 40%, #a855f7 70%, #d946ef 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      backgroundSize: '200% 200%',
+      animation: 'gradientShift 6s ease-in-out infinite',
+      filter: isDark ? 'drop-shadow(0 0 30px rgba(129, 140, 248, 0.15))' : 'none',
+      [theme.breakpoints.down('sm')]: {
+        fontSize: 'clamp(1.3rem, 5.5vw, 1.8rem)',
+      },
+    },
+
+    // Caption line with side rules
+    '& .community-caption': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      fontSize: '0.78rem',
+      fontWeight: 400,
+      letterSpacing: '0.02em',
+      color: isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+      // Side rules
+      '&::before, &::after': {
+        content: '""',
+        width: '2rem',
+        height: '1px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15))'
+          : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.1))',
+        flexShrink: 0,
+      },
+      '&::after': {
+        background: isDark
+          ? 'linear-gradient(90deg, rgba(255,255,255,0.15), transparent)'
+          : 'linear-gradient(90deg, rgba(0,0,0,0.1), transparent)',
+      },
+      [theme.breakpoints.down('sm')]: {
+        fontSize: '0.7rem',
+        gap: '0.5rem',
+        '&::before, &::after': {
+          width: '1.25rem',
+        },
+      },
+    },
+
+    '@keyframes gradientShift': {
+      '0%, 100%': { backgroundPosition: '0% 50%' },
+      '50%': { backgroundPosition: '100% 50%' },
+    },
+  };
+});
+
+const _SectionSubtitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
   color: theme.palette.text.secondary,
   marginBottom: '4rem',
@@ -762,6 +1052,151 @@ const ToolsSection = styled(Container)(({ theme }) => ({
   },
 }));
 
+// ─── Hero → Tools transition bridge ────────────────────────────────────────────
+const ToolsBridge = styled(Box)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    position: 'relative',
+    width: '100%',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '4rem 2rem 3rem',
+    zIndex: 1,
+
+    [theme.breakpoints.down('md')]: {
+      padding: '3rem 1.5rem 2rem',
+    },
+    [theme.breakpoints.down('sm')]: {
+      padding: '2rem 1rem 1.5rem',
+    },
+
+    // ── Full-width ruled line with gradient glow ──
+    '& .bridge-rule': {
+      position: 'relative',
+      width: '100%',
+      height: '1px',
+      background: isDark
+        ? 'linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.3) 20%, rgba(129, 140, 248, 0.4) 50%, rgba(192, 132, 252, 0.3) 80%, transparent 100%)'
+        : 'linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.2) 20%, rgba(99, 102, 241, 0.3) 50%, rgba(168, 85, 247, 0.2) 80%, transparent 100%)',
+      marginBottom: '3rem',
+
+      // Glow bloom behind the line
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: '-8px',
+        left: '10%',
+        right: '10%',
+        height: '16px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.08) 30%, rgba(129, 140, 248, 0.12) 50%, rgba(192, 132, 252, 0.08) 70%, transparent)'
+          : 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.05) 30%, rgba(99, 102, 241, 0.08) 50%, transparent)',
+        filter: 'blur(6px)',
+      },
+
+      // Scanning light dot
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '-3px',
+        left: 0,
+        width: '7px',
+        height: '7px',
+        borderRadius: '50%',
+        background: isDark ? '#38bdf8' : '#0ea5e9',
+        boxShadow: isDark
+          ? '0 0 12px 3px rgba(56, 189, 248, 0.4)'
+          : '0 0 10px 2px rgba(14, 165, 233, 0.3)',
+        animation: 'scanDot 4s ease-in-out infinite',
+      },
+
+      [theme.breakpoints.down('sm')]: {
+        marginBottom: '2rem',
+      },
+    },
+
+    // ── Heading row: number + text + counter ──
+    '& .bridge-heading': {
+      display: 'flex',
+      alignItems: 'baseline',
+      gap: '1.25rem',
+      justifyContent: 'center',
+      flexWrap: 'wrap',
+
+      [theme.breakpoints.down('sm')]: {
+        gap: '0.75rem',
+      },
+    },
+
+    // Main title text
+    '& .bridge-title': {
+      fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+      fontWeight: 800,
+      lineHeight: 1.1,
+      letterSpacing: '-0.03em',
+      background: isDark
+        ? 'linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%)'
+        : 'linear-gradient(135deg, #1e293b 0%, #475569 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    },
+
+    // Gradient-accented word
+    '& .bridge-accent': {
+      fontSize: 'clamp(2rem, 4.5vw, 3.2rem)',
+      fontWeight: 800,
+      lineHeight: 1.1,
+      letterSpacing: '-0.03em',
+      background: isDark
+        ? 'linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%)'
+        : 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #a855f7 100%)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      backgroundSize: '200% 200%',
+      animation: 'gradientShift 6s ease-in-out infinite',
+    },
+
+    // Caption below heading
+    '& .bridge-caption': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.75rem',
+      marginTop: '1rem',
+      fontSize: '0.78rem',
+      fontWeight: 500,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const,
+      color: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.25)',
+
+      '&::before, &::after': {
+        content: '""',
+        width: '2.5rem',
+        height: '1px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.12))'
+          : 'linear-gradient(90deg, transparent, rgba(0,0,0,0.08))',
+        flexShrink: 0,
+      },
+      '&::after': {
+        background: isDark
+          ? 'linear-gradient(90deg, rgba(255,255,255,0.12), transparent)'
+          : 'linear-gradient(90deg, rgba(0,0,0,0.08), transparent)',
+      },
+    },
+
+    '@keyframes scanDot': {
+      '0%, 100%': { left: '0%', opacity: 0 },
+      '5%': { opacity: 1 },
+      '50%': { left: '100%', opacity: 1 },
+      '55%': { opacity: 0 },
+      '56%': { left: '0%' },
+    },
+  };
+});
+
 const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -774,10 +1209,9 @@ const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => 
         gridTemplateColumns: {
           xs: '1fr',
           sm: '1fr',
-          md: '1fr 1fr',
-          lg: '1fr 1fr',
+          md: 'repeat(2, 1fr)',
         },
-        maxWidth: '800px',
+        maxWidth: '900px',
         margin: '0 auto',
         perspective: '1000px',
         [theme.breakpoints.down('sm')]: {
@@ -1033,24 +1467,595 @@ const ToolAction = styled(Button)(({ theme }) => ({
   },
 }));
 
-const ComingSoonBadge = styled(Box)({
-  position: 'absolute',
-  top: '1rem',
-  right: '1rem',
-  background: 'linear-gradient(135deg, #f59e0b, #f97316)',
-  color: '#fff',
-  padding: '0.3rem 0.8rem',
-  borderRadius: '20px',
-  fontSize: '0.75rem',
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  animation: 'pulse 2s ease-in-out infinite',
-  '@keyframes pulse': {
-    '0%, 100%': { opacity: 1, transform: 'scale(1)' },
-    '50%': { opacity: 0.9, transform: 'scale(1.05)' },
+// Shared noise texture overlay (tiny inline SVG)
+const noiseOverlay =
+  "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E\")";
+
+// ─── Kalpa Showcase Section ──────────────────────────────────────────────────
+const kalpaAurora = {
+  '@keyframes kalpaAurora': {
+    '0%': { backgroundPosition: '0% 50%' },
+    '50%': { backgroundPosition: '100% 50%' },
+    '100%': { backgroundPosition: '0% 50%' },
   },
+};
+
+const KalpaSection = styled(Box)(
+  ({ theme }) =>
+    ({
+      padding: '8rem 2rem',
+      position: 'relative',
+      overflow: 'hidden',
+      ...kalpaAurora,
+      // Scroll-driven reveal
+      animation: 'sectionReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 20%',
+      // Dot grid pattern layer
+      backgroundImage:
+        theme.palette.mode === 'dark'
+          ? 'radial-gradient(circle, rgba(139, 92, 246, 0.07) 1px, transparent 1px)'
+          : 'radial-gradient(circle, rgba(139, 92, 246, 0.04) 1px, transparent 1px)',
+      backgroundSize: '28px 28px',
+      backgroundPosition: '14px 14px',
+      // Aurora gradient overlay + noise
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        background:
+          theme.palette.mode === 'dark'
+            ? `linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, transparent 35%, rgba(59, 130, 246, 0.04) 55%, transparent 100%), ${noiseOverlay}`
+            : `linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, transparent 35%, rgba(59, 130, 246, 0.02) 55%, transparent 100%), ${noiseOverlay}`,
+        backgroundSize: '200% 200%, 256px 256px',
+        animation: 'kalpaAurora 15s ease-in-out infinite',
+        pointerEvents: 'none',
+      },
+      // Animated gradient divider — shimmers via @property
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '2px',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, transparent, rgba(139, 92, 246, var(--glow-opacity)) var(--divider-pos), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(139, 92, 246, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent)',
+        animation: 'dividerShimmer 6s ease-in-out infinite',
+      },
+      [theme.breakpoints.down('md')]: {
+        padding: '5rem 1.5rem',
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: '3.5rem 1rem',
+      },
+    }) as Record<string, unknown>,
+);
+
+const KalpaContent = styled(Box)(({ theme }) => ({
+  maxWidth: '1100px',
+  margin: '0 auto',
+  display: 'grid',
+  gridTemplateColumns: '1.1fr 0.9fr',
+  gap: '3rem',
+  alignItems: 'center',
+  position: 'relative',
+  zIndex: 1,
+  perspective: '1200px',
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: '1fr',
+    gap: '3rem',
+    textAlign: 'center',
+    perspective: 'none',
+  },
+}));
+
+const KalpaFeatureList = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.5rem',
+  marginTop: '2rem',
 });
+
+const KalpaFeatureRow = styled(Box)<{ delay?: number }>(
+  ({ theme, delay: _delay = 0 }) =>
+    ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1rem',
+      padding: '0.75rem 1rem',
+      position: 'relative',
+      borderRadius: '10px',
+      cursor: 'default',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.03)' : 'rgba(139, 92, 246, 0.015)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      border:
+        theme.palette.mode === 'dark'
+          ? '1px solid rgba(139, 92, 246, 0.06)'
+          : '1px solid rgba(139, 92, 246, 0.04)',
+      transition: 'all 0.4s var(--spring, cubic-bezier(0.4, 0, 0.2, 1))',
+      // Animated left accent bar
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: '3px',
+        height: '0%',
+        borderRadius: '0 3px 3px 0',
+        background: 'linear-gradient(180deg, #a78bfa, #8b5cf6, #6366f1)',
+        transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 0 8px rgba(139, 92, 246, 0.3)',
+      },
+      '&:hover': {
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(139, 92, 246, 0.04)',
+        borderColor:
+          theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)',
+        transform: 'translateX(4px)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 4px 24px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(139, 92, 246, 0.06)'
+            : '0 4px 24px rgba(139, 92, 246, 0.04), inset 0 1px 0 rgba(139, 92, 246, 0.03)',
+        '&::before': {
+          height: '60%',
+        },
+        '& .feature-index': {
+          color: '#8b5cf6',
+          opacity: 1,
+          textShadow: '0 0 12px rgba(139, 92, 246, 0.4)',
+        },
+        '& .feature-title': {
+          color: theme.palette.text.primary,
+        },
+      },
+      // Scroll-driven reveal — each row appears as it enters the viewport
+      animation: 'featureReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 30%',
+      '& .feature-index': {
+        fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+        fontSize: '0.68rem',
+        fontWeight: 500,
+        color: theme.palette.text.disabled,
+        opacity: 0.5,
+        letterSpacing: '0.02em',
+        flexShrink: 0,
+        width: '1.5rem',
+        transition: 'all 0.35s var(--spring, ease)',
+      },
+      '& .feature-title': {
+        fontSize: '0.88rem',
+        fontWeight: 600,
+        color: theme.palette.text.secondary,
+        transition: 'color 0.35s var(--spring, ease)',
+        flexShrink: 0,
+      },
+      '& .feature-desc': {
+        fontSize: '0.78rem',
+        fontWeight: 300,
+        color: theme.palette.text.disabled,
+        marginLeft: 'auto',
+        textAlign: 'right',
+        opacity: 0.7,
+        [theme.breakpoints.down('sm')]: {
+          display: 'none',
+        },
+      },
+    }) as Record<string, unknown>,
+);
+
+// Mock desktop app window with 3D depth + scroll-driven parallax
+const KalpaAppWindow = styled(Box)(
+  ({ theme }) =>
+    ({
+      '--panel-ry': '-2deg',
+      '--panel-rx': '1deg',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(15, 15, 25, 0.95)' : 'rgba(250, 250, 252, 0.98)',
+      borderRadius: '14px',
+      overflow: 'hidden',
+      position: 'relative',
+      zIndex: 1,
+      transform: 'rotateY(-2deg) rotateX(1deg)',
+      transformStyle: 'preserve-3d',
+      // Scroll-driven parallax — drifts vertically as section scrolls
+      animation: 'panelParallax linear both',
+      animationTimeline: 'view()',
+      animationRange: 'cover 0% cover 100%',
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.1), 0 0 60px rgba(139, 92, 246, 0.06)'
+          : '0 25px 80px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.08), 0 0 60px rgba(139, 92, 246, 0.03)',
+      // Spring easing on hover
+      transition: 'box-shadow 0.5s ease',
+      // Floating glow orb behind — large and visible
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '10%',
+        left: '-25%',
+        width: '80%',
+        height: '80%',
+        borderRadius: '50%',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 65%)'
+            : 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.04) 40%, transparent 65%)',
+        filter: 'blur(50px)',
+        zIndex: -1,
+        pointerEvents: 'none',
+        transition: 'opacity 0.5s ease',
+      },
+      '&:hover': {
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 40px 100px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.2), 0 0 100px rgba(139, 92, 246, 0.12)'
+            : '0 40px 100px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(139, 92, 246, 0.15), 0 0 100px rgba(139, 92, 246, 0.06)',
+      },
+      [theme.breakpoints.down('md')]: {
+        maxWidth: '420px',
+        margin: '0 auto',
+        animation: 'none',
+        transform: 'none',
+      },
+    }) as Record<string, unknown>,
+);
+
+const KalpaWindowTitleBar = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  padding: '0.75rem 1rem',
+  background: theme.palette.mode === 'dark' ? 'rgba(30, 30, 45, 0.9)' : 'rgba(240, 240, 244, 0.95)',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.06)'
+      : '1px solid rgba(0, 0, 0, 0.06)',
+}));
+
+const KalpaAddonRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '0.7rem 1rem',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.04)'
+      : '1px solid rgba(0, 0, 0, 0.04)',
+  transition: 'background 0.15s ease',
+  '&:hover': {
+    background:
+      theme.palette.mode === 'dark' ? 'rgba(139, 92, 246, 0.06)' : 'rgba(139, 92, 246, 0.03)',
+  },
+  '&:last-child': {
+    borderBottom: 'none',
+  },
+}));
+
+// ─── ESOTK Addon Showcase Section ────────────────────────────────────────────
+const esotkScanline = {
+  '@keyframes esotkScanline': {
+    '0%': { top: '-4px' },
+    '100%': { top: '100%' },
+  },
+};
+
+const EsotkSection = styled(Box)(
+  ({ theme }) =>
+    ({
+      padding: '8rem 2rem',
+      position: 'relative',
+      overflow: 'hidden',
+      // Scroll-driven reveal
+      animation: 'sectionReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 20%',
+      // Dot grid pattern
+      backgroundImage:
+        theme.palette.mode === 'dark'
+          ? 'radial-gradient(circle, rgba(245, 158, 11, 0.06) 1px, transparent 1px)'
+          : 'radial-gradient(circle, rgba(180, 120, 20, 0.035) 1px, transparent 1px)',
+      backgroundSize: '28px 28px',
+      backgroundPosition: '14px 14px',
+      // Animated gradient divider
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '2px',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, transparent, rgba(245, 158, 11, var(--glow-opacity)) var(--divider-pos), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(180, 120, 20, calc(var(--glow-opacity) * 0.7)) var(--divider-pos), transparent)',
+        animation: 'dividerShimmer 6s ease-in-out infinite',
+        animationDelay: '-3s',
+      },
+      // Gradient blobs + noise
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        background:
+          theme.palette.mode === 'dark'
+            ? `radial-gradient(ellipse at 30% 40%, rgba(245, 158, 11, 0.05) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(217, 119, 6, 0.04) 0%, transparent 50%), ${noiseOverlay}`
+            : `radial-gradient(ellipse at 30% 40%, rgba(245, 158, 11, 0.025) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(217, 119, 6, 0.02) 0%, transparent 50%), ${noiseOverlay}`,
+        backgroundSize: '100% 100%, 100% 100%, 256px 256px',
+        pointerEvents: 'none',
+        zIndex: 0,
+      },
+      [theme.breakpoints.down('md')]: {
+        padding: '5rem 1.5rem',
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: '3.5rem 1rem',
+      },
+    }) as Record<string, unknown>,
+);
+
+const EsotkContent = styled(Box)(({ theme }) => ({
+  maxWidth: '1100px',
+  margin: '0 auto',
+  display: 'grid',
+  gridTemplateColumns: '0.9fr 1.1fr',
+  gap: '3rem',
+  alignItems: 'center',
+  position: 'relative',
+  zIndex: 1,
+  perspective: '1200px',
+  direction: 'rtl',
+  '& > *': { direction: 'ltr' },
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: '1fr',
+    gap: '3rem',
+    textAlign: 'center',
+    direction: 'ltr',
+    perspective: 'none',
+  },
+}));
+
+const EsotkFeatureList = styled(Box)({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.5rem',
+  marginTop: '2rem',
+});
+
+const EsotkFeatureRow = styled(Box)<{ delay?: number }>(
+  ({ theme, delay: _delay = 0 }) =>
+    ({
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1rem',
+      padding: '0.75rem 1rem',
+      position: 'relative',
+      borderRadius: '10px',
+      cursor: 'default',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.02)' : 'rgba(180, 120, 20, 0.01)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      border:
+        theme.palette.mode === 'dark'
+          ? '1px solid rgba(245, 158, 11, 0.05)'
+          : '1px solid rgba(180, 120, 20, 0.04)',
+      transition: 'all 0.4s var(--spring, cubic-bezier(0.4, 0, 0.2, 1))',
+      // Animated left accent bar
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        width: '3px',
+        height: '0%',
+        borderRadius: '0 3px 3px 0',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, #fbbf24, #f59e0b, #d97706)'
+            : 'linear-gradient(180deg, #b47814, #92610e, #7a510c)',
+        transition: 'height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 0 8px rgba(245, 158, 11, 0.3)'
+            : '0 0 8px rgba(180, 120, 20, 0.15)',
+      },
+      '&:hover': {
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.06)' : 'rgba(180, 120, 20, 0.03)',
+        borderColor:
+          theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(180, 120, 20, 0.08)',
+        transform: 'translateX(4px)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 4px 24px rgba(245, 158, 11, 0.06), inset 0 1px 0 rgba(245, 158, 11, 0.04)'
+            : '0 4px 24px rgba(180, 120, 20, 0.03), inset 0 1px 0 rgba(180, 120, 20, 0.02)',
+        '&::before': {
+          height: '60%',
+        },
+        '& .feature-index': {
+          color: theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
+          opacity: 1,
+          textShadow:
+            theme.palette.mode === 'dark'
+              ? '0 0 12px rgba(245, 158, 11, 0.4)'
+              : '0 0 12px rgba(180, 120, 20, 0.2)',
+        },
+        '& .feature-title': {
+          color: theme.palette.text.primary,
+        },
+      },
+      // Scroll-driven reveal
+      animation: 'featureReveal linear both',
+      animationTimeline: 'view()',
+      animationRange: 'entry 0% cover 30%',
+      '& .feature-index': {
+        fontFamily: '"JetBrains Mono", "Fira Code", "SF Mono", monospace',
+        fontSize: '0.68rem',
+        fontWeight: 500,
+        color: theme.palette.text.disabled,
+        opacity: 0.5,
+        letterSpacing: '0.02em',
+        flexShrink: 0,
+        width: '1.5rem',
+        transition: 'all 0.35s var(--spring, ease)',
+      },
+      '& .feature-title': {
+        fontSize: '0.88rem',
+        fontWeight: 600,
+        color: theme.palette.text.secondary,
+        transition: 'color 0.35s var(--spring, ease)',
+        flexShrink: 0,
+      },
+      '& .feature-desc': {
+        fontSize: '0.78rem',
+        fontWeight: 300,
+        color: theme.palette.text.disabled,
+        marginLeft: 'auto',
+        textAlign: 'right',
+        opacity: 0.7,
+        [theme.breakpoints.down('sm')]: {
+          display: 'none',
+        },
+      },
+    }) as Record<string, unknown>,
+);
+
+// Game-UI styled panel with ornate borders, 3D depth + scroll parallax
+const EsotkGamePanel = styled(Box)(
+  ({ theme }) =>
+    ({
+      '--panel-ry': '2deg',
+      '--panel-rx': '1deg',
+      position: 'relative',
+      padding: '4px',
+      borderRadius: '4px',
+      zIndex: 1,
+      transform: 'rotateY(2deg) rotateX(1deg)',
+      transformStyle: 'preserve-3d',
+      // Scroll-driven parallax
+      animation: 'panelParallax linear both',
+      animationTimeline: 'view()',
+      animationRange: 'cover 0% cover 100%',
+      background:
+        theme.palette.mode === 'dark'
+          ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0%, rgba(217, 119, 6, 0.2) 25%, rgba(245, 158, 11, 0.35) 50%, rgba(217, 119, 6, 0.2) 75%, rgba(245, 158, 11, 0.4) 100%)'
+          : 'linear-gradient(135deg, rgba(180, 120, 20, 0.35) 0%, rgba(160, 100, 20, 0.15) 25%, rgba(180, 120, 20, 0.3) 50%, rgba(160, 100, 20, 0.15) 75%, rgba(180, 120, 20, 0.35) 100%)',
+      transition: 'box-shadow 0.5s ease',
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 25px 80px rgba(0, 0, 0, 0.4), 0 0 60px rgba(245, 158, 11, 0.04)'
+          : '0 25px 80px rgba(15, 23, 42, 0.1), 0 0 60px rgba(180, 120, 20, 0.02)',
+      ...esotkScanline,
+      // Scanline effect
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: '8px',
+        right: '8px',
+        height: '4px',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.15), transparent)'
+            : 'linear-gradient(90deg, transparent, rgba(180, 120, 20, 0.08), transparent)',
+        animation: 'esotkScanline 4s linear infinite',
+        pointerEvents: 'none',
+        zIndex: 2,
+        borderRadius: '2px',
+      },
+      // Floating glow orb behind — large and visible
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        top: '10%',
+        right: '-25%',
+        width: '80%',
+        height: '80%',
+        borderRadius: '50%',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'radial-gradient(circle, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.07) 40%, transparent 65%)'
+            : 'radial-gradient(circle, rgba(180, 120, 20, 0.1) 0%, rgba(160, 100, 20, 0.03) 40%, transparent 65%)',
+        filter: 'blur(50px)',
+        zIndex: -1,
+        pointerEvents: 'none',
+      },
+      '&:hover': {
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 40px 100px rgba(0, 0, 0, 0.5), 0 0 100px rgba(245, 158, 11, 0.08)'
+            : '0 40px 100px rgba(15, 23, 42, 0.14), 0 0 100px rgba(180, 120, 20, 0.04)',
+      },
+      [theme.breakpoints.down('md')]: {
+        maxWidth: '420px',
+        margin: '0 auto',
+        animation: 'none',
+        transform: 'none',
+      },
+    }) as Record<string, unknown>,
+);
+
+const EsotkGamePanelInner = styled(Box)(({ theme }) => ({
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(15, 12, 8, 0.97) 0%, rgba(20, 16, 10, 0.95) 100%)'
+      : 'linear-gradient(180deg, rgba(255, 252, 245, 0.98) 0%, rgba(250, 245, 235, 0.96) 100%)',
+  borderRadius: '2px',
+  overflow: 'hidden',
+  position: 'relative',
+}));
+
+const EsotkPanelTitleBar = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '0.6rem 1rem',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 100%)'
+      : 'linear-gradient(180deg, rgba(180, 120, 20, 0.08) 0%, rgba(180, 120, 20, 0.02) 100%)',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(245, 158, 11, 0.15)'
+      : '1px solid rgba(180, 120, 20, 0.1)',
+  position: 'relative',
+  '&::before, &::after': {
+    content: '"◆"',
+    position: 'absolute',
+    color: theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(180, 120, 20, 0.2)',
+    fontSize: '0.55rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+  },
+  '&::before': { left: '0.75rem' },
+  '&::after': { right: '0.75rem' },
+}));
+
+const EsotkAddonRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+  padding: '0.65rem 1rem',
+  borderBottom:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(245, 158, 11, 0.06)'
+      : '1px solid rgba(180, 120, 20, 0.04)',
+  transition: 'background 0.15s ease',
+  '&:hover': {
+    background:
+      theme.palette.mode === 'dark' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(180, 120, 20, 0.03)',
+  },
+  '&:last-child': {
+    borderBottom: 'none',
+  },
+}));
 
 const ParticleContainer = styled(Box)(({ theme }) => ({
   position: 'absolute',
@@ -1189,6 +2194,7 @@ export const LandingPage: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const { isReady, isLoggedIn: clientIsLoggedIn } = useEsoLogsClientContext();
   const toolsSectionRef = useRef<HTMLDivElement>(null);
+  const navigate = useViewTransitionNavigate();
 
   // Defer complex animations until after initial render
   React.useEffect(() => {
@@ -1224,6 +2230,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <LandingContainer>
+      {showcaseGlobalStyles}
       <HeroSection id="home" showAnimations={showAnimations}>
         <ParticleContainer>
           {/* Floating particles with magical glow */}
@@ -1276,18 +2283,24 @@ export const LandingPage: React.FC = () => {
         </HeroContent>
       </HeroSection>
 
-      <ToolsSection id="tools" ref={toolsSectionRef}>
-        <Box
-          sx={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.6s ease-out',
-          }}
-        >
-          <SectionTitle variant="h2">Our Tools</SectionTitle>
-          <SectionSubtitle>Everything you need to excel in Tamriel</SectionSubtitle>
-        </Box>
+      {/* ── Hero → Tools transition bridge ── */}
+      <ToolsBridge
+        sx={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
+          filter: isVisible ? 'blur(0)' : 'blur(4px)',
+          transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        <div className="bridge-rule" />
+        <div className="bridge-heading">
+          <span className="bridge-title">The&nbsp;</span>
+          <span className="bridge-accent">Arsenal</span>
+        </div>
+        <div className="bridge-caption">Craft &middot; Optimize &middot; Dominate</div>
+      </ToolsBridge>
 
+      <ToolsSection id="tools" ref={toolsSectionRef}>
         <Box
           sx={{
             opacity: isVisible ? 1 : 0,
@@ -1315,7 +2328,9 @@ export const LandingPage: React.FC = () => {
                 <li>Preview before posting</li>
                 <li>Save templates for reuse</li>
               </ToolFeatures>
-              <ToolAction href="/text-editor">Launch Editor</ToolAction>
+              <ToolAction onClick={() => navigate('/text-editor', { vtType: 'up' })}>
+                Launch Editor
+              </ToolAction>
             </ToolCard>
 
             <ToolCard index={1}>
@@ -1323,7 +2338,7 @@ export const LandingPage: React.FC = () => {
                 <CalculatorIcon size="2rem" />
               </ToolIcon>
               <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Build Caclulator
+                Build Calculator
               </Typography>
               <Typography
                 sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
@@ -1341,7 +2356,9 @@ export const LandingPage: React.FC = () => {
                 <li>Armor resistance planner</li>
                 <li>Real-time cap status indicators</li>
               </ToolFeatures>
-              <ToolAction href="/calculator">Launch Calculator</ToolAction>
+              <ToolAction onClick={() => navigate('/calculator', { vtType: 'up' })}>
+                Launch Calculator
+              </ToolAction>
             </ToolCard>
 
             <ToolCard index={2}>
@@ -1363,44 +2380,749 @@ export const LandingPage: React.FC = () => {
                 <li>Skill usage tracking</li>
                 <li>Real-time fight insights</li>
               </ToolFeatures>
-              <ToolAction
-                onClick={() =>
-                  window.open(
-                    'https://github.com/ESO-Toolkit/eso-toolkit',
-                    '_blank',
-                    'noopener,noreferrer',
-                  )
-                }
-              >
-                View on GitHub
+              <ToolAction onClick={() => navigate('/my-reports', { vtType: 'up' })}>
+                Open Log Analyzer
               </ToolAction>
             </ToolCard>
 
             <ToolCard index={3}>
-              <ComingSoonBadge>Coming Soon</ComingSoonBadge>
               <ToolIcon>
                 <PeopleIcon size="2rem" />
               </ToolIcon>
               <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Roster-Bot
+                Roster Builder
               </Typography>
               <Typography
                 sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
               >
-                Manage your guild roster effortlessly with our Discord bot. Track members, roles,
-                and raid signups all in one place.
+                Build and manage your guild rosters with our web tools and Discord bot. Organize
+                members, assign roles, and track raid signups across platforms.
               </Typography>
               <ToolFeatures>
-                <li>Automated roster management</li>
+                <li>Visual roster builder</li>
+                <li>Discord bot integration</li>
                 <li>Raid signup tracking</li>
                 <li>Role assignment system</li>
-                <li>Activity monitoring</li>
               </ToolFeatures>
-              <ToolAction disabled>Coming Soon</ToolAction>
+              <ToolAction onClick={() => navigate('/roster-builder', { vtType: 'up' })}>
+                Open Roster Builder
+              </ToolAction>
             </ToolCard>
           </ToolsGrid>
         </Box>
       </ToolsSection>
+
+      <KalpaSection id="kalpa">
+        {/* Large watermark number for depth */}
+        <Typography
+          sx={(theme: Theme) => ({
+            position: 'absolute',
+            top: { xs: '-1rem', md: '-2rem' },
+            right: { xs: '1rem', md: '5%' },
+            fontSize: { xs: '12rem', sm: '16rem', md: '22rem' },
+            fontWeight: 900,
+            lineHeight: 1,
+            color: 'transparent',
+            WebkitTextStroke:
+              theme.palette.mode === 'dark'
+                ? '1px rgba(139, 92, 246, 0.06)'
+                : '1px rgba(139, 92, 246, 0.04)',
+            userSelect: 'none',
+            pointerEvents: 'none',
+            zIndex: 0,
+            fontFamily: '"Inter", "Helvetica Neue", sans-serif',
+            letterSpacing: '-0.05em',
+          })}
+        >
+          01
+        </Typography>
+        <KalpaContent>
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                mb: 2,
+                px: 1.2,
+                py: 0.4,
+                borderRadius: '6px',
+                background: (theme: Theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(139, 92, 246, 0.08)'
+                    : 'rgba(139, 92, 246, 0.04)',
+                border: (theme: Theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(139, 92, 246, 0.15)'
+                    : '1px solid rgba(139, 92, 246, 0.1)',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  color: '#8b5cf6',
+                }}
+              >
+                Desktop App
+              </Typography>
+              <Box
+                sx={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  boxShadow: '0 0 6px rgba(34, 197, 94, 0.5)',
+                }}
+              />
+            </Box>
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' },
+                lineHeight: 1.1,
+                color: 'text.primary',
+                mb: 2,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Meet{' '}
+              <Box
+                component="span"
+                sx={{
+                  background:
+                    'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 40%, #6366f1 70%, #818cf8 100%)',
+                  backgroundSize: '200% 200%',
+                  animation: 'kalpaAurora 6s ease-in-out infinite',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                Kalpa
+              </Box>
+            </Typography>
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: '1rem', sm: '1.05rem' },
+                lineHeight: 1.7,
+                fontWeight: 300,
+                mb: 3,
+                maxWidth: '460px',
+              }}
+            >
+              A fast, open-source addon manager for ESO. Built with Rust and Tauri for native
+              performance — just 15 MB, no Java runtime required.
+            </Typography>
+
+            <KalpaFeatureList>
+              <KalpaFeatureRow delay={1}>
+                <span className="feature-index">01</span>
+                <span className="feature-title">One-click installs</span>
+                <span className="feature-desc">Install and update addons instantly</span>
+              </KalpaFeatureRow>
+              <KalpaFeatureRow delay={2}>
+                <span className="feature-index">02</span>
+                <span className="feature-title">Dependency resolution</span>
+                <span className="feature-desc">Automatically handles required libraries</span>
+              </KalpaFeatureRow>
+              <KalpaFeatureRow delay={3}>
+                <span className="feature-index">03</span>
+                <span className="feature-title">Addon profiles</span>
+                <span className="feature-desc">Switch loadouts per character or role</span>
+              </KalpaFeatureRow>
+              <KalpaFeatureRow delay={4}>
+                <span className="feature-index">04</span>
+                <span className="feature-title">Pack Hub</span>
+                <span className="feature-desc">Share and discover addon collections</span>
+              </KalpaFeatureRow>
+              <KalpaFeatureRow delay={5}>
+                <span className="feature-index">05</span>
+                <span className="feature-title">SavedVariables backup</span>
+                <span className="feature-desc">Never lose your addon settings again</span>
+              </KalpaFeatureRow>
+              <KalpaFeatureRow delay={6}>
+                <span className="feature-index">06</span>
+                <span className="feature-title">Minion migration</span>
+                <span className="feature-desc">One-click import from your old manager</span>
+              </KalpaFeatureRow>
+            </KalpaFeatureList>
+
+            <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                href="https://github.com/ESO-Toolkit/kalpa"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '10px',
+                  padding: '0.7rem 1.8rem',
+                  fontSize: '0.9rem',
+                  boxShadow: '0 4px 20px rgba(139, 92, 246, 0.25)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                    boxShadow: '0 8px 30px rgba(139, 92, 246, 0.35)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                Get Kalpa
+              </Button>
+              <Button
+                variant="outlined"
+                href="https://github.com/ESO-Toolkit/kalpa"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={(theme: Theme) => ({
+                  borderColor: 'rgba(139, 92, 246, 0.25)',
+                  color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '10px',
+                  padding: '0.7rem 1.8rem',
+                  fontSize: '0.9rem',
+                  '&:hover': {
+                    borderColor: 'rgba(139, 92, 246, 0.5)',
+                    background: 'rgba(139, 92, 246, 0.04)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                })}
+              >
+                View on GitHub
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Mock desktop app window */}
+          <KalpaAppWindow>
+            <KalpaWindowTitleBar>
+              <Box sx={{ display: 'flex', gap: '6px', mr: 1 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e' }} />
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
+              </Box>
+              <Typography
+                sx={(theme: Theme) => ({
+                  fontSize: '0.7rem',
+                  fontWeight: 500,
+                  color:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                  letterSpacing: '0.02em',
+                  flex: 1,
+                  textAlign: 'center',
+                  mr: '36px',
+                })}
+              >
+                Kalpa — Addon Manager
+              </Typography>
+            </KalpaWindowTitleBar>
+
+            {/* Search bar */}
+            <Box
+              sx={(theme: Theme) => ({
+                mx: '0.75rem',
+                mt: '0.6rem',
+                mb: '0.4rem',
+                px: 1,
+                py: 0.5,
+                borderRadius: '6px',
+                background:
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                border:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255,255,255,0.06)'
+                    : '1px solid rgba(0,0,0,0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              })}
+            >
+              <Typography sx={{ fontSize: '0.7rem', opacity: 0.3 }}>🔍</Typography>
+              <Typography
+                sx={(theme: Theme) => ({
+                  fontSize: '0.72rem',
+                  color:
+                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                  fontWeight: 400,
+                })}
+              >
+                Search addons...
+              </Typography>
+            </Box>
+
+            {/* Mock addon list */}
+            <Box sx={{ py: 0.25 }}>
+              {[
+                { name: 'Dressing Room Reborn', version: 'v3.8.1', status: 'Updated' },
+                { name: 'Combat Metrics', version: 'v2.5.0', status: 'Update' },
+                { name: 'Azurah - Interface Enhanced', version: 'v4.1.2', status: 'Updated' },
+                { name: 'Inventory Insight', version: 'v1.9.4', status: 'Updated' },
+                { name: 'RaidNotifier', version: 'v3.2.1', status: 'Update' },
+                { name: 'Srendarr - Aura Tracker', version: 'v2.7.3', status: 'Updated' },
+                { name: 'Beam Me Up', version: 'v1.4.0', status: 'Updated' },
+                { name: 'Harvest Map', version: 'v5.1.6', status: 'Update' },
+              ].map((addon) => (
+                <KalpaAddonRow key={addon.name}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '5px',
+                        background:
+                          'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
+                        border: '1px solid rgba(139, 92, 246, 0.15)',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Typography sx={{ fontSize: '0.6rem', opacity: 0.6 }}>📦</Typography>
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography
+                        sx={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: 'text.primary',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {addon.name}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '0.62rem',
+                          color: 'text.secondary',
+                          opacity: 0.6,
+                        }}
+                      >
+                        {addon.version}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box
+                    sx={{
+                      px: 0.8,
+                      py: 0.25,
+                      borderRadius: '4px',
+                      fontSize: '0.62rem',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                      ...(addon.status === 'Update'
+                        ? {
+                            background:
+                              'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
+                            color: '#a78bfa',
+                            border: '1px solid rgba(139, 92, 246, 0.2)',
+                          }
+                        : {
+                            background: 'rgba(34, 197, 94, 0.08)',
+                            color: 'rgba(34, 197, 94, 0.7)',
+                            border: '1px solid rgba(34, 197, 94, 0.12)',
+                          }),
+                    }}
+                  >
+                    {addon.status}
+                  </Box>
+                </KalpaAddonRow>
+              ))}
+            </Box>
+
+            {/* Status bar */}
+            <Box
+              sx={(theme: Theme) => ({
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                px: '1rem',
+                py: '0.45rem',
+                borderTop:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255,255,255,0.04)'
+                    : '1px solid rgba(0,0,0,0.04)',
+              })}
+            >
+              <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
+                8 addons installed
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: '50%',
+                    background: '#22c55e',
+                    boxShadow: '0 0 4px rgba(34, 197, 94, 0.4)',
+                  }}
+                />
+                <Typography sx={{ fontSize: '0.6rem', color: 'text.secondary', opacity: 0.5 }}>
+                  All synced
+                </Typography>
+              </Box>
+            </Box>
+          </KalpaAppWindow>
+        </KalpaContent>
+      </KalpaSection>
+
+      <EsotkSection id="esotk-addon">
+        {/* Large watermark number for depth */}
+        <Typography
+          sx={(theme: Theme) => ({
+            position: 'absolute',
+            top: { xs: '-1rem', md: '-2rem' },
+            left: { xs: '1rem', md: '5%' },
+            fontSize: { xs: '12rem', sm: '16rem', md: '22rem' },
+            fontWeight: 900,
+            lineHeight: 1,
+            color: 'transparent',
+            WebkitTextStroke:
+              theme.palette.mode === 'dark'
+                ? '1px rgba(245, 158, 11, 0.06)'
+                : '1px rgba(180, 120, 20, 0.04)',
+            userSelect: 'none',
+            pointerEvents: 'none',
+            zIndex: 0,
+            fontFamily: '"Inter", "Helvetica Neue", sans-serif',
+            letterSpacing: '-0.05em',
+          })}
+        >
+          02
+        </Typography>
+        <EsotkContent>
+          {/* Text content (visually on right due to RTL direction) */}
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                mb: 2,
+                px: 1.2,
+                py: 0.4,
+                borderRadius: '6px',
+                background: (theme: Theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(245, 158, 11, 0.08)'
+                    : 'rgba(180, 120, 20, 0.04)',
+                border: (theme: Theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(245, 158, 11, 0.15)'
+                    : '1px solid rgba(180, 120, 20, 0.1)',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  color: (theme: Theme) => (theme.palette.mode === 'dark' ? '#f59e0b' : '#b47814'),
+                }}
+              >
+                In-Game Addon
+              </Typography>
+              <Box
+                sx={{
+                  px: 0.8,
+                  py: 0.2,
+                  borderRadius: '4px',
+                  background: (theme: Theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(245, 158, 11, 0.18)'
+                      : 'rgba(180, 120, 20, 0.12)',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  color: (theme: Theme) => (theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e'),
+                  letterSpacing: '0.08em',
+                  animation: 'pulse 2s ease-in-out infinite',
+                  '@keyframes pulse': {
+                    '0%, 100%': { opacity: 1 },
+                    '50%': { opacity: 0.7 },
+                  },
+                }}
+              >
+                COMING SOON
+              </Box>
+            </Box>
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '2.2rem', sm: '2.6rem', md: '3rem' },
+                lineHeight: 1.1,
+                color: 'text.primary',
+                mb: 2,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              The{' '}
+              <Box
+                component="span"
+                sx={{
+                  background: (theme: Theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 40%, #d97706 70%, #f59e0b 100%)'
+                      : 'linear-gradient(135deg, #b47814 0%, #92610e 40%, #7a510c 70%, #b47814 100%)',
+                  backgroundSize: '200% 200%',
+                  animation: 'kalpaAurora 6s ease-in-out infinite',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                ESOTK Addon
+              </Box>
+            </Typography>
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: { xs: '1rem', sm: '1.05rem' },
+                lineHeight: 1.7,
+                fontWeight: 300,
+                mb: 3,
+                maxWidth: '460px',
+              }}
+            >
+              We&apos;re building a companion addon that bridges the gap between web and game.
+              Roster validation, group management, and gear inspection — all directly inside your
+              ESO client. Currently in development.
+            </Typography>
+
+            <EsotkFeatureList>
+              <EsotkFeatureRow delay={1}>
+                <span className="feature-index">01</span>
+                <span className="feature-title">Roster import</span>
+                <span className="feature-desc">Validate and sync rosters from the web</span>
+              </EsotkFeatureRow>
+              <EsotkFeatureRow delay={2}>
+                <span className="feature-index">02</span>
+                <span className="feature-title">Group management</span>
+                <span className="feature-desc">View and organize your trial group in-game</span>
+              </EsotkFeatureRow>
+              <EsotkFeatureRow delay={3}>
+                <span className="feature-index">03</span>
+                <span className="feature-title">Gear inspection</span>
+                <span className="feature-desc">Check builds and equipment at a glance</span>
+              </EsotkFeatureRow>
+              <EsotkFeatureRow delay={4}>
+                <span className="feature-index">04</span>
+                <span className="feature-title">Slash commands</span>
+                <span className="feature-desc">Quick access via /esotk in chat</span>
+              </EsotkFeatureRow>
+              <EsotkFeatureRow delay={5}>
+                <span className="feature-index">05</span>
+                <span className="feature-title">Web toolkit sync</span>
+                <span className="feature-desc">Live connection to your ESOTK dashboard</span>
+              </EsotkFeatureRow>
+              <EsotkFeatureRow delay={6}>
+                <span className="feature-index">06</span>
+                <span className="feature-title">Real-time stats</span>
+                <span className="feature-desc">Group performance data as it happens</span>
+              </EsotkFeatureRow>
+            </EsotkFeatureList>
+
+            <Box sx={{ mt: 3, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button
+                variant="outlined"
+                href="https://github.com/ESO-Toolkit/esotk-addon"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={(theme: Theme) => ({
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(245, 158, 11, 0.25)'
+                      : 'rgba(180, 120, 20, 0.2)',
+                  color: theme.palette.mode === 'dark' ? '#fbbf24' : '#92610e',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '10px',
+                  padding: '0.7rem 1.8rem',
+                  fontSize: '0.9rem',
+                  '&:hover': {
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.5)'
+                        : 'rgba(180, 120, 20, 0.4)',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.04)'
+                        : 'rgba(180, 120, 20, 0.03)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                })}
+              >
+                Follow on GitHub
+              </Button>
+              <Typography
+                sx={{
+                  fontSize: '0.8rem',
+                  color: 'text.disabled',
+                  fontWeight: 400,
+                  fontStyle: 'italic',
+                }}
+              >
+                Not yet available for download
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Game-UI panel (visually on left due to RTL direction) */}
+          <EsotkGamePanel>
+            <EsotkGamePanelInner>
+              <EsotkPanelTitleBar>
+                <Typography
+                  sx={(theme: Theme) => ({
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.15em',
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.7)'
+                        : 'rgba(180, 120, 20, 0.6)',
+                  })}
+                >
+                  ESOTK — Group Panel
+                </Typography>
+              </EsotkPanelTitleBar>
+
+              {/* Mock in-game roster list */}
+              <Box sx={{ py: 0.25 }}>
+                {[
+                  { name: 'Aethon Dragonguard', role: 'Tank', cls: 'Dragonknight', hp: '42,800' },
+                  { name: 'Selene Moonweaver', role: 'Healer', cls: 'Templar', hp: '28,200' },
+                  { name: 'Razum-dar Jr', role: 'DPS', cls: 'Nightblade', hp: '25,600' },
+                  { name: 'Valkyn Stormborn', role: 'DPS', cls: 'Sorcerer', hp: '26,100' },
+                  { name: 'Khajiit Has-Wares', role: 'DPS', cls: 'Necromancer', hp: '24,900' },
+                  { name: 'Tharn the Unbroken', role: 'Tank', cls: 'Warden', hp: '44,200' },
+                  { name: 'Mirri Elendis', role: 'Healer', cls: 'Arcanist', hp: '27,800' },
+                  { name: 'Fennorian Ravenwatch', role: 'DPS', cls: 'Dragonknight', hp: '25,300' },
+                ].map((player) => (
+                  <EsotkAddonRow key={player.name}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '2px',
+                        flexShrink: 0,
+                        background:
+                          player.role === 'Tank'
+                            ? 'linear-gradient(135deg, #60a5fa, #3b82f6)'
+                            : player.role === 'Healer'
+                              ? 'linear-gradient(135deg, #4ade80, #22c55e)'
+                              : 'linear-gradient(135deg, #f87171, #ef4444)',
+                        boxShadow:
+                          player.role === 'Tank'
+                            ? '0 0 4px rgba(59, 130, 246, 0.4)'
+                            : player.role === 'Healer'
+                              ? '0 0 4px rgba(34, 197, 94, 0.4)'
+                              : '0 0 4px rgba(239, 68, 68, 0.4)',
+                      }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        sx={(theme: Theme) => ({
+                          fontSize: '0.73rem',
+                          fontWeight: 600,
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.85)'
+                              : 'rgba(0,0,0,0.8)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        })}
+                      >
+                        {player.name}
+                      </Typography>
+                      <Typography
+                        sx={(theme: Theme) => ({
+                          fontSize: '0.6rem',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.35)'
+                              : 'rgba(0,0,0,0.35)',
+                        })}
+                      >
+                        {player.cls} · {player.role}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      sx={(theme: Theme) => ({
+                        fontSize: '0.62rem',
+                        fontWeight: 600,
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(245, 158, 11, 0.6)'
+                            : 'rgba(180, 120, 20, 0.5)',
+                        fontVariantNumeric: 'tabular-nums',
+                        flexShrink: 0,
+                      })}
+                    >
+                      {player.hp}
+                    </Typography>
+                  </EsotkAddonRow>
+                ))}
+              </Box>
+
+              {/* Panel footer */}
+              <Box
+                sx={(theme: Theme) => ({
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  px: '1rem',
+                  py: '0.5rem',
+                  borderTop:
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(245, 158, 11, 0.08)'
+                      : '1px solid rgba(180, 120, 20, 0.05)',
+                })}
+              >
+                <Typography
+                  sx={(theme: Theme) => ({
+                    fontSize: '0.58rem',
+                    color:
+                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  })}
+                >
+                  8/12 members
+                </Typography>
+                <Typography
+                  sx={(theme: Theme) => ({
+                    fontSize: '0.58rem',
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(245, 158, 11, 0.4)'
+                        : 'rgba(180, 120, 20, 0.3)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  })}
+                >
+                  /esotk roster
+                </Typography>
+              </Box>
+            </EsotkGamePanelInner>
+          </EsotkGamePanel>
+        </EsotkContent>
+      </EsotkSection>
 
       <CommunitySection id="about">
         <Box
@@ -1408,80 +3130,275 @@ export const LandingPage: React.FC = () => {
             maxWidth: '1200px',
             margin: '0 auto',
             padding: '0 2rem',
+            position: 'relative',
+            zIndex: 1,
             '@media (max-width: 899.95px)': {
-              padding: '0 1rem',
-            },
-            '@media (max-width: 599.95px)': {
               padding: '0 1rem',
             },
           }}
         >
-          <CommunityTitle variant="h2">Built By Players, For Players</CommunityTitle>
-          <SectionSubtitle sx={{ maxWidth: '800px' }}>
-            ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
-            Online experience. Our tools are constantly updated to match the latest game patches and
-            meta changes.
-          </SectionSubtitle>
+          <CommunityTitle>
+            <div className="community-headline">
+              <span className="community-title-light">Built by players,</span>
+              <span className="community-title-bold"> for players.</span>
+            </div>
+            <span className="community-caption">
+              Always updated · Always free · Elder Scrolls Online
+            </span>
+          </CommunityTitle>
 
-          <CommunityStats>
-            <StatItem>
-              <StatNumber>
-                <CalculatorIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Build Caclulator</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>
-                <CvIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Text-Editor</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>
-                <FileLoopIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Log Analyzer</StatLabel>
-            </StatItem>
-            <StatItem>
-              <StatNumber>
-                <PeopleIcon size="2.5rem" />
-              </StatNumber>
-              <StatLabel>Roster-Bot</StatLabel>
-            </StatItem>
-          </CommunityStats>
+          {/* Infinite scrolling marquee */}
+          <MarqueeWrapper>
+            <MarqueeTrack>
+              {/* Doubled for seamless loop */}
+              {[0, 1].map((dupeIdx) => (
+                <Box key={dupeIdx} sx={{ display: 'flex', gap: '3rem' }}>
+                  <MarqueeItem>
+                    <CalculatorIcon size="1rem" /> Build Calculator
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <CvIcon size="1rem" /> Text-Editor
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <FileLoopIcon size="1rem" /> Log Analyzer
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <KalpaIcon size="1rem" /> Kalpa
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <AddonIcon size="1rem" /> ESOTK Addon
+                  </MarqueeItem>
+                  <MarqueeItem>
+                    <PeopleIcon size="1rem" /> Roster-Bot
+                  </MarqueeItem>
+                </Box>
+              ))}
+            </MarqueeTrack>
+          </MarqueeWrapper>
 
           <CommunityGrid>
-            <CommunityCard>
-              <CommunityIcon>🎮</CommunityIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Passionate Gamers
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                We&apos;re dedicated ESO players who understand the game&apos;s mechanics and
-                community needs. Our tools are built from real gameplay experience.
-              </Typography>
+            {/* Card 01 — Hero left */}
+            <CommunityCard accent="blue" data-number="01">
+              <Box
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
+                <CommunityIcon accent="blue">🎮</CommunityIcon>
+                <Typography
+                  variant="h5"
+                  sx={(t: Theme) => ({
+                    mb: 0.5,
+                    color: 'text.primary',
+                    fontWeight: 700,
+                    fontSize: '1.2rem',
+                    letterSpacing: '-0.02em',
+                    [t.breakpoints.down('sm')]: { fontSize: '1.05rem' },
+                  })}
+                >
+                  Built from Real Gameplay
+                </Typography>
+                <Typography
+                  sx={(t: Theme) => ({
+                    color: 'text.secondary',
+                    lineHeight: 1.65,
+                    fontSize: '0.88rem',
+                    maxWidth: '380px',
+                    [t.breakpoints.down('sm')]: { fontSize: '0.82rem' },
+                  })}
+                >
+                  Every tool is shaped by hundreds of hours of actual gameplay across all content
+                  types — not guesswork.
+                </Typography>
+                {/* Content-type chips */}
+                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 'auto', pt: 1.5 }}>
+                  {['Trials', 'PvP', 'Dungeons', 'Overland'].map((tag) => (
+                    <Box
+                      key={tag}
+                      sx={(t: Theme) => ({
+                        px: 1.25,
+                        py: 0.3,
+                        borderRadius: '6px',
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        color:
+                          t.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.6)'
+                            : 'rgba(14, 165, 233, 0.7)',
+                        background:
+                          t.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.05)'
+                            : 'rgba(14, 165, 233, 0.04)',
+                        border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(14, 165, 233, 0.06)'}`,
+                      })}
+                    >
+                      {tag}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
             </CommunityCard>
 
-            <CommunityCard>
-              <CommunityIcon>🔄</CommunityIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Up to Date
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                Stay current with the latest patches, balance changes, and meta shifts. Our tools
-                are updated regularly to ensure you have the best resources at your fingertips.
-              </Typography>
+            {/* Card 02 — Right side */}
+            <CommunityCard accent="purple" data-number="02">
+              <Box
+                sx={{
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                }}
+              >
+                <CommunityIcon accent="purple">🔄</CommunityIcon>
+                <Typography
+                  variant="h5"
+                  sx={(t: Theme) => ({
+                    mb: 0.5,
+                    color: 'text.primary',
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    letterSpacing: '-0.01em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    [t.breakpoints.down('sm')]: { fontSize: '1rem' },
+                  })}
+                >
+                  Always Current
+                  <Box
+                    sx={{
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      background: '#34d399',
+                      boxShadow: '0 0 6px rgba(52, 211, 153, 0.5)',
+                      animation: 'livePulse 2s ease-in-out infinite',
+                      '@keyframes livePulse': {
+                        '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                        '50%': { opacity: 0.4, transform: 'scale(0.75)' },
+                      },
+                    }}
+                  />
+                </Typography>
+                <Typography
+                  sx={(t: Theme) => ({
+                    color: 'text.secondary',
+                    lineHeight: 1.65,
+                    fontSize: '0.85rem',
+                    [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
+                  })}
+                >
+                  Updated with every patch, balance change, and meta shift so you&apos;re never
+                  behind.
+                </Typography>
+                <Typography
+                  sx={(t: Theme) => ({
+                    mt: 'auto',
+                    pt: 1.5,
+                    fontSize: '0.68rem',
+                    fontWeight: 500,
+                    color:
+                      t.palette.mode === 'dark'
+                        ? 'rgba(167, 139, 250, 0.4)'
+                        : 'rgba(139, 92, 246, 0.4)',
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  })}
+                >
+                  Tracking latest patches
+                </Typography>
+              </Box>
             </CommunityCard>
 
-            <CommunityCard>
-              <CommunityIcon>💬</CommunityIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Community Driven
-              </Typography>
-              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
-                Your feedback shapes our development. Join our Discord community to suggest
-                features, report bugs, and connect with fellow players.
-              </Typography>
+            {/* Card 03 — Full-width bottom, horizontal layout */}
+            <CommunityCard accent="emerald" data-number="03">
+              <Box
+                sx={(t: Theme) => ({
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  [t.breakpoints.down('sm')]: {
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: 1,
+                  },
+                })}
+              >
+                <CommunityIcon accent="emerald" sx={{ mb: 0, flexShrink: 0 }}>
+                  💬
+                </CommunityIcon>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="h5"
+                    sx={(t: Theme) => ({
+                      mb: 0.25,
+                      color: 'text.primary',
+                      fontWeight: 700,
+                      fontSize: '1.1rem',
+                      letterSpacing: '-0.01em',
+                      [t.breakpoints.down('sm')]: { fontSize: '1rem' },
+                    })}
+                  >
+                    Community Driven
+                  </Typography>
+                  <Typography
+                    sx={(t: Theme) => ({
+                      color: 'text.secondary',
+                      lineHeight: 1.6,
+                      fontSize: '0.85rem',
+                      maxWidth: '520px',
+                      [t.breakpoints.down('sm')]: { fontSize: '0.8rem' },
+                    })}
+                  >
+                    Your feedback shapes development. Join Discord to suggest features and connect
+                    with players.
+                  </Typography>
+                </Box>
+                <Link
+                  href="https://discord.gg/esotk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  underline="none"
+                  sx={(t: Theme) => ({
+                    display: 'inline-block',
+                    px: 2,
+                    py: 0.75,
+                    borderRadius: '10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600,
+                    color: t.palette.mode === 'dark' ? '#34d399' : '#059669',
+                    background:
+                      t.palette.mode === 'dark'
+                        ? 'rgba(52, 211, 153, 0.06)'
+                        : 'rgba(16, 185, 129, 0.05)',
+                    border: `1px solid ${t.palette.mode === 'dark' ? 'rgba(52, 211, 153, 0.12)' : 'rgba(16, 185, 129, 0.1)'}`,
+                    transition: 'all 0.3s ease',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    '&:hover': {
+                      background:
+                        t.palette.mode === 'dark'
+                          ? 'rgba(52, 211, 153, 0.1)'
+                          : 'rgba(16, 185, 129, 0.08)',
+                      transform: 'translateY(-1px)',
+                    },
+                    [t.breakpoints.down('sm')]: {
+                      alignSelf: 'flex-start',
+                    },
+                  })}
+                >
+                  Join Discord &rarr;
+                </Link>
+              </Box>
             </CommunityCard>
           </CommunityGrid>
         </Box>

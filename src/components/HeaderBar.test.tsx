@@ -27,6 +27,24 @@ jest.mock('./ThemeToggle', () => ({
   ThemeToggle: () => null,
 }));
 
+jest.mock('../hooks/usePersistentDarkMode', () => ({
+  usePersistentDarkMode: () => ({
+    darkMode: false,
+    toggleDarkMode: jest.fn(),
+  }),
+}));
+
+jest.mock('../hooks/useCurrentUserAvatar', () => ({
+  useCurrentUserAvatar: () => ({
+    avatarUrl: null,
+    loading: false,
+  }),
+}));
+
+jest.mock('../hooks/useViewTransitionNavigate', () => ({
+  useViewTransitionNavigate: () => jest.fn(),
+}));
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 describe('HeaderBar', () => {

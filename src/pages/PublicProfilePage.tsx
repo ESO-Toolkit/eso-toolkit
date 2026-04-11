@@ -1,5 +1,7 @@
 import {
   ArrowBack as ArrowBackIcon,
+  CameraAlt as CameraAltIcon,
+  Close as CloseIcon,
   Construction as ConstructionIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -15,6 +17,7 @@ import {
   CardActionArea,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
   Dialog,
   DialogActions,
@@ -31,29 +34,34 @@ import {
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { useSnackbar } from 'notistack';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { ClassIcon } from '../components/ClassIcon';
 import { useAuth } from '../features/auth/AuthContext';
+import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
-import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
+import { ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
-import { TRIAL_ACCENT, TRIAL_LABELS } from '../features/roster-hub/components/RosterCard';
+import {
+  TRIAL_ACCENT,
+  TRIAL_LABELS,
+  TRIAL_SHORT,
+} from '../features/roster-hub/components/RosterCard';
 import type {
   ProfileBuildSummary,
   ProfileRosterSummary,
   UserProfile,
 } from '../features/roster-hub/types/roster-hub.types';
-import { TAG_COLORS } from '../features/roster-hub/types/roster-hub.types';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 const CLASS_LABELS: Record<string, string> = {
-  dragonknight: 'Dragonknight',
-  sorcerer: 'Sorcerer',
-  nightblade: 'Nightblade',
+  dragonknight: 'DK',
+  sorcerer: 'Sorc',
+  nightblade: 'NB',
   templar: 'Templar',
   warden: 'Warden',
-  necromancer: 'Necromancer',
+  necromancer: 'Necro',
   arcanist: 'Arcanist',
 };
 
@@ -66,10 +74,69 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
+  const diff = Date.now() - new Date(iso).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  if (days < 30) return `${Math.floor(days / 7)}w ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-// ─── Build card ───────────────────────────────────────────────────────────────
+// ─── Shared card styles ──────────────────────────────────────────────────────
+
+const CARD_RADIUS = '16px';
+
+function useCardSx(accentColor: string, isDarkMode: boolean): object {
+  return {
+    display: 'flex',
+    flexDirection: 'column',
+    position: 'relative',
+    height: '100%',
+    borderRadius: CARD_RADIUS,
+    overflow: 'hidden',
+    border: isDarkMode ? '1px solid rgba(255,255,255,0.09)' : '1px solid rgba(0,0,0,0.09)',
+    background: isDarkMode
+      ? `linear-gradient(135deg, ${accentColor}14 0%, rgba(56, 189, 248, 0.10) 50%, rgba(0, 225, 255, 0.10) 100%)`
+      : `linear-gradient(135deg, ${accentColor}12 0%, rgba(219, 234, 254, 0.45) 50%, rgba(224, 242, 254, 0.45) 100%)`,
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    boxShadow: isDarkMode
+      ? `0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)`
+      : `0 2px 12px rgba(0,0,0,0.07), inset 0 1px 0 rgba(255,255,255,0.9)`,
+    transition: 'transform 0.22s ease, box-shadow 0.22s ease',
+    '&:hover': {
+      transform: 'translateY(-5px)',
+      boxShadow: isDarkMode
+        ? `0 0 0 1px ${accentColor}35, 0 16px 40px -8px ${accentColor}50, 0 6px 20px -4px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08)`
+        : `0 0 0 1px ${accentColor}25, 0 16px 40px -8px ${accentColor}35, 0 6px 20px -4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.9)`,
+    },
+    '&:hover .delete-btn': { opacity: 1 },
+  };
+}
+
+/** Glowing feathered accent bar rendered at the top of each card */
+const AccentBar: React.FC<{ color: string }> = ({ color }) => (
+  <Box
+    sx={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '4px',
+      background: `linear-gradient(90deg, transparent 0%, ${color}80 20%, ${color} 50%, ${color}80 80%, transparent 100%)`,
+      boxShadow: `0 0 12px ${color}80, 0 0 28px ${color}40`,
+      borderRadius: '16px 16px 0 0',
+      zIndex: 2,
+    }}
+    aria-hidden="true"
+  />
+);
+
+// ─── Build card ──────────────────────────────────────────────────────────────
 
 interface BuildCardProps {
   build: ProfileBuildSummary;
@@ -78,39 +145,18 @@ interface BuildCardProps {
 }
 
 const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) => {
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const theme = useTheme();
-  const roleColor = ROLE_ACCENT[build.role] ?? '#64748b';
+  const cardRef = useRef<HTMLDivElement>(null);
+  const classTheme = CLASS_COLOR_MAP[build.eso_class as keyof typeof CLASS_COLOR_MAP];
+  const roleColor = classTheme?.accent ?? ROLE_ACCENT[build.role] ?? '#64748b';
   const classLabel = CLASS_LABELS[build.eso_class] ?? build.eso_class;
   const roleLabel = ROLE_LABELS[build.role] ?? build.role;
+  const cardSx = useCardSx(roleColor, isDarkMode);
 
   return (
-    <Card
-      elevation={0}
-      sx={{
-        position: 'relative',
-        borderRadius: '14px',
-        border: `1px solid ${theme.palette.divider}`,
-        borderTop: `3px solid ${roleColor}`,
-        background: isDarkMode
-          ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-          : theme.palette.background.paper,
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: isDarkMode
-          ? '0 8px 30px rgba(0, 0, 0, 0.25)'
-          : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          borderColor: alpha(roleColor, 0.4),
-          transform: 'translateY(-2px)',
-          boxShadow: isDarkMode
-            ? `0 10px 40px rgba(0,0,0,0.3), 0 0 60px ${alpha(roleColor, 0.08)}`
-            : '0 8px 24px rgba(15, 23, 42, 0.1)',
-        },
-        '&:hover .delete-btn': { opacity: 1 },
-      }}
-    >
+    <Card ref={cardRef} elevation={0} sx={cardSx}>
+      <AccentBar color={roleColor} />
       {onDelete && (
         <Tooltip title="Delete build" arrow>
           <IconButton
@@ -122,13 +168,14 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
             }}
             sx={{
               position: 'absolute',
-              top: 8,
-              right: 8,
-              zIndex: 2,
+              top: 10,
+              right: 10,
+              zIndex: 3,
               opacity: 0,
               transition: 'opacity 0.15s',
               color: theme.palette.error.main,
-              bgcolor: isDarkMode ? 'rgba(15,23,42,0.8)' : 'rgba(255,255,255,0.9)',
+              bgcolor: isDarkMode ? 'rgba(11,18,32,0.85)' : 'rgba(255,255,255,0.9)',
+              backdropFilter: 'blur(8px)',
               '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.12) },
             }}
           >
@@ -136,120 +183,279 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
           </IconButton>
         </Tooltip>
       )}
-      <CardActionArea onClick={() => navigate(`/build-editor?id=${build.id}`)}>
-        <CardContent sx={{ pb: '12px !important', pt: 1.5 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              mb: 0.75,
-            }}
-          >
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 700,
-                color: theme.palette.text.primary,
-                lineHeight: 1.3,
-                flex: 1,
-                mr: 1,
-              }}
-            >
-              {build.title}
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                flexShrink: 0,
-              }}
-            >
-              <ThumbUpIcon sx={{ fontSize: 12, color: theme.palette.text.secondary }} />
-              <Typography
-                variant="caption"
-                sx={{ color: theme.palette.text.secondary, fontVariantNumeric: 'tabular-nums' }}
+      <CardActionArea
+        onClick={() =>
+          navigate(`/build-editor?id=${build.id}`, {
+            vtType: 'forward',
+            morph: { ref: cardRef, name: 'build-hero' },
+          })
+        }
+        sx={{ flexGrow: 1, alignItems: 'flex-start' }}
+      >
+        <CardContent
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            pt: 3,
+            px: 2.5,
+            pb: '20px !important',
+          }}
+        >
+          {/* Class + Role badges */}
+          <Box sx={{ display: 'flex', gap: 0.75, mb: 1.75 }}>
+            <Tooltip title={build.eso_class}>
+              <Box
+                component="span"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: '6px',
+                  background: isDarkMode ? `${roleColor}22` : `${roleColor}18`,
+                  border: `1px solid ${roleColor}45`,
+                  boxShadow: `0 0 8px ${roleColor}25`,
+                }}
               >
-                {build.vote_count}
+                <ClassIcon className={build.eso_class} size={13} />
+                <Typography
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.07em',
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
+                    background: `linear-gradient(135deg, ${roleColor}, ${roleColor}cc, ${roleColor})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    textShadow: `0 0 12px ${roleColor}40`,
+                    filter: isDarkMode ? 'brightness(1.2)' : 'none',
+                  }}
+                >
+                  {classLabel}
+                </Typography>
+              </Box>
+            </Tooltip>
+            <Box
+              component="span"
+              sx={{
+                display: 'inline-flex',
+                px: 1,
+                py: 0.5,
+                borderRadius: '6px',
+                background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                border: isDarkMode
+                  ? '1px solid rgba(255,255,255,0.1)'
+                  : '1px solid rgba(0,0,0,0.08)',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  lineHeight: 1,
+                  textTransform: 'uppercase',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45))'
+                    : 'linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.40))',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: isDarkMode
+                    ? '0 0 10px rgba(255,255,255,0.15)'
+                    : '0 0 10px rgba(0,0,0,0.08)',
+                }}
+              >
+                {roleLabel}
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.75, alignItems: 'center' }}>
-            <Chip
-              icon={<ClassIcon className={build.eso_class} size={14} />}
-              label={classLabel}
-              size="small"
-              sx={{ fontSize: '0.65rem', height: 22, fontWeight: 600 }}
-            />
-            <Chip
-              label={roleLabel}
-              size="small"
-              variant="outlined"
-              sx={{
-                fontSize: '0.65rem',
-                height: 22,
-                borderColor: alpha(roleColor, 0.5),
-                color: roleColor,
-                fontWeight: 600,
-              }}
-            />
-          </Box>
+          {/* Title — clamped to 2 lines */}
+          <Typography
+            variant="body1"
+            component="h3"
+            sx={{
+              fontWeight: 800,
+              lineHeight: 1.4,
+              mb: 1,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              fontSize: '1.05rem',
+              letterSpacing: '-0.01em',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+            }}
+          >
+            {build.title}
+          </Typography>
 
+          {/* Description — clamped to 2 lines */}
           {build.description && (
             <Typography
-              variant="caption"
+              variant="body2"
+              color="text.secondary"
               sx={{
+                mb: 1.75,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                color: theme.palette.text.secondary,
-                lineHeight: 1.4,
-                mb: 0.75,
+                lineHeight: 1.6,
+                fontSize: '0.85rem',
+                opacity: 0.75,
               }}
             >
               {build.description}
             </Typography>
           )}
 
+          {/* Tags — glassmorphic mini chips */}
           {build.tags.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.75 }}>
-              {build.tags.slice(0, 3).map((tag) => (
-                <Chip
-                  key={tag}
-                  label={tag}
-                  size="small"
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
+              {build.tags.slice(0, 3).map((tag) => {
+                return (
+                  <Box
+                    key={tag}
+                    component="span"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: 1,
+                      py: 0.4,
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      background: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                      border: isDarkMode
+                        ? '1px solid rgba(255,255,255,0.12)'
+                        : '1px solid rgba(0,0,0,0.10)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
+                      lineHeight: 1.4,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {tag}
+                  </Box>
+                );
+              })}
+              {build.tags.length > 3 && (
+                <Box
+                  component="span"
                   sx={{
-                    fontSize: '0.6rem',
-                    height: 18,
-                    bgcolor: alpha(BUILD_TAG_COLORS[tag] ?? '#64748b', 0.13),
-                    color: BUILD_TAG_COLORS[tag] ?? '#64748b',
-                    border: `1px solid ${alpha(BUILD_TAG_COLORS[tag] ?? '#64748b', 0.25)}`,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 0.75,
+                    py: 0.4,
+                    borderRadius: '6px',
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                    lineHeight: 1.4,
+                    whiteSpace: 'nowrap',
                   }}
-                />
-              ))}
+                >
+                  +{build.tags.length - 3}
+                </Box>
+              )}
             </Box>
           )}
 
-          <Typography
-            variant="caption"
+          {/* Spacer pushes footer to bottom */}
+          <Box sx={{ flexGrow: 1, minHeight: 12 }} />
+
+          {/* Footer — glassmorphic bar with accent stripe, votes + date */}
+          <Box
             sx={{
-              display: 'block',
-              color: isDarkMode ? '#475569' : '#94a3b8',
-              fontSize: '0.65rem',
+              display: 'flex',
+              alignItems: 'stretch',
+              mt: 0.5,
+              borderRadius: '8px',
+              background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.05)',
+              overflow: 'hidden',
             }}
           >
-            {formatDate(build.created_at)}
-          </Typography>
+            {/* Vertical accent bar */}
+            <Box
+              sx={{
+                width: '3px',
+                flexShrink: 0,
+                background: `linear-gradient(180deg, ${roleColor} 0%, ${roleColor}40 100%)`,
+                boxShadow: `0 0 6px ${roleColor}30`,
+              }}
+              aria-hidden="true"
+            />
+
+            {/* Vote count + date */}
+            <Box
+              sx={{
+                minWidth: 0,
+                flex: 1,
+                px: 1.25,
+                py: 0.9,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <ThumbUpIcon
+                  sx={{
+                    fontSize: 13,
+                    color: isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
+                <Typography
+                  noWrap
+                  sx={{
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                    color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {build.vote_count}
+                </Typography>
+              </Box>
+              <Typography
+                noWrap
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 500,
+                  lineHeight: 1.3,
+                  color: isDarkMode ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.4)',
+                  letterSpacing: '0.01em',
+                }}
+              >
+                {formatDate(build.created_at)}
+                {build.updated_at &&
+                  build.updated_at !== build.created_at &&
+                  ` · updated ${formatDate(build.updated_at)}`}
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </CardActionArea>
     </Card>
   );
 };
 
-// ─── Roster card ──────────────────────────────────────────────────────────────
+// ─── Roster card ─────────────────────────────────────────────────────────────
 
 interface RosterCardProps {
   roster: ProfileRosterSummary;
@@ -258,38 +464,17 @@ interface RosterCardProps {
 }
 
 const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete }) => {
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const theme = useTheme();
+  const cardRef = useRef<HTMLDivElement>(null);
   const trialColor = TRIAL_ACCENT[roster.trial_id] ?? '#38bdf8';
-  const trialLabel = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
+  const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
+  const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
+  const cardSx = useCardSx(trialColor, isDarkMode);
 
   return (
-    <Card
-      elevation={0}
-      sx={{
-        position: 'relative',
-        borderRadius: '14px',
-        border: `1px solid ${theme.palette.divider}`,
-        borderTop: `3px solid ${trialColor}`,
-        background: isDarkMode
-          ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-          : theme.palette.background.paper,
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: isDarkMode
-          ? '0 8px 30px rgba(0, 0, 0, 0.25)'
-          : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          borderColor: alpha(trialColor, 0.4),
-          transform: 'translateY(-2px)',
-          boxShadow: isDarkMode
-            ? `0 10px 40px rgba(0,0,0,0.3), 0 0 60px ${alpha(trialColor, 0.08)}`
-            : '0 8px 24px rgba(15, 23, 42, 0.1)',
-        },
-        '&:hover .delete-btn': { opacity: 1 },
-      }}
-    >
+    <Card ref={cardRef} elevation={0} sx={cardSx}>
+      <AccentBar color={trialColor} />
       {onDelete && (
         <Tooltip title="Delete roster" arrow>
           <IconButton
@@ -301,13 +486,14 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
             }}
             sx={{
               position: 'absolute',
-              top: 8,
-              right: 8,
-              zIndex: 2,
+              top: 10,
+              right: 10,
+              zIndex: 3,
               opacity: 0,
               transition: 'opacity 0.15s',
               color: theme.palette.error.main,
-              bgcolor: isDarkMode ? 'rgba(15,23,42,0.8)' : 'rgba(255,255,255,0.9)',
+              bgcolor: isDarkMode ? 'rgba(11,18,32,0.85)' : 'rgba(255,255,255,0.9)',
+              backdropFilter: 'blur(8px)',
               '&:hover': { bgcolor: alpha(theme.palette.error.main, 0.12) },
             }}
           >
@@ -315,106 +501,242 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
           </IconButton>
         </Tooltip>
       )}
-      <CardActionArea onClick={() => navigate(`/roster-builder?id=${roster.id}`)}>
-        <CardContent sx={{ pb: '12px !important', pt: 1.5 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              mb: 0.75,
-            }}
-          >
-            <Typography
-              variant="subtitle2"
+      <CardActionArea
+        onClick={() =>
+          navigate(`/roster-builder?id=${roster.id}`, {
+            vtType: 'forward',
+            morph: { ref: cardRef, name: 'roster-hero' },
+          })
+        }
+        sx={{ flexGrow: 1, alignItems: 'flex-start' }}
+      >
+        <CardContent
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            pt: 3,
+            px: 2.5,
+            pb: '20px !important',
+          }}
+        >
+          {/* Trial badge */}
+          <Tooltip title={trialFull} placement="top">
+            <Box
+              component="span"
               sx={{
-                fontWeight: 700,
-                color: theme.palette.text.primary,
-                lineHeight: 1.3,
-                flex: 1,
-                mr: 1,
+                display: 'inline-flex',
+                alignItems: 'center',
+                mb: 1.75,
+                px: 1,
+                py: 0.5,
+                borderRadius: '6px',
+                background: isDarkMode
+                  ? `linear-gradient(90deg, ${trialColor}22 0%, ${trialColor}10 100%)`
+                  : `linear-gradient(90deg, ${trialColor}18 0%, ${trialColor}08 100%)`,
+                border: `1px solid ${trialColor}45`,
+                boxShadow: `0 0 8px ${trialColor}25`,
+                alignSelf: 'flex-start',
               }}
             >
-              {roster.title}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
-              <ThumbUpIcon sx={{ fontSize: 12, color: theme.palette.text.secondary }} />
               <Typography
-                variant="caption"
-                sx={{ color: theme.palette.text.secondary, fontVariantNumeric: 'tabular-nums' }}
+                sx={{
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.07em',
+                  lineHeight: 1,
+                  textTransform: 'uppercase',
+                  background: `linear-gradient(135deg, ${trialColor}, ${trialColor}cc, ${trialColor})`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: `0 0 12px ${trialColor}40`,
+                  filter: isDarkMode ? 'brightness(1.2)' : 'none',
+                }}
               >
-                {roster.vote_count}
+                {trialShort}
               </Typography>
             </Box>
-          </Box>
+          </Tooltip>
 
-          <Chip
-            label={trialLabel}
-            size="small"
+          {/* Title — clamped to 2 lines */}
+          <Typography
+            variant="body1"
+            component="h3"
             sx={{
-              fontSize: '0.65rem',
-              height: 22,
-              mb: 0.75,
-              fontWeight: 600,
-              borderColor: alpha(trialColor, 0.5),
-              color: trialColor,
+              fontWeight: 800,
+              lineHeight: 1.4,
+              mb: 1,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              fontSize: '1.05rem',
+              letterSpacing: '-0.01em',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
             }}
-            variant="outlined"
-          />
+          >
+            {roster.title}
+          </Typography>
 
+          {/* Description — clamped to 2 lines */}
           {roster.description && (
             <Typography
-              variant="caption"
+              variant="body2"
+              color="text.secondary"
               sx={{
+                mb: 1.75,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                color: theme.palette.text.secondary,
-                lineHeight: 1.4,
-                mb: 0.75,
+                lineHeight: 1.6,
+                fontSize: '0.85rem',
+                opacity: 0.75,
               }}
             >
               {roster.description}
             </Typography>
           )}
 
+          {/* Tags — glassmorphic mini chips */}
           {roster.tags.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.75 }}>
-              {roster.tags.slice(0, 3).map((tag) => (
-                <Chip
-                  key={tag}
-                  label={tag}
-                  size="small"
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
+              {roster.tags.slice(0, 3).map((tag) => {
+                return (
+                  <Box
+                    key={tag}
+                    component="span"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: 1,
+                      py: 0.4,
+                      borderRadius: '6px',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      background: isDarkMode ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                      border: isDarkMode
+                        ? '1px solid rgba(255,255,255,0.12)'
+                        : '1px solid rgba(0,0,0,0.10)',
+                      color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
+                      lineHeight: 1.4,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {tag}
+                  </Box>
+                );
+              })}
+              {roster.tags.length > 3 && (
+                <Box
+                  component="span"
                   sx={{
-                    fontSize: '0.6rem',
-                    height: 18,
-                    bgcolor: alpha(TAG_COLORS[tag] ?? '#64748b', 0.13),
-                    color: TAG_COLORS[tag] ?? '#64748b',
-                    border: `1px solid ${alpha(TAG_COLORS[tag] ?? '#64748b', 0.25)}`,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 0.75,
+                    py: 0.4,
+                    borderRadius: '6px',
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                    lineHeight: 1.4,
+                    whiteSpace: 'nowrap',
                   }}
-                />
-              ))}
+                >
+                  +{roster.tags.length - 3}
+                </Box>
+              )}
             </Box>
           )}
 
-          <Typography
-            variant="caption"
+          {/* Spacer pushes footer to bottom */}
+          <Box sx={{ flexGrow: 1, minHeight: 12 }} />
+
+          {/* Footer — glassmorphic bar with accent stripe, votes + date */}
+          <Box
             sx={{
-              display: 'block',
-              color: isDarkMode ? '#475569' : '#94a3b8',
-              fontSize: '0.65rem',
+              display: 'flex',
+              alignItems: 'stretch',
+              mt: 0.5,
+              borderRadius: '8px',
+              background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+              border: isDarkMode
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.05)',
+              overflow: 'hidden',
             }}
           >
-            {formatDate(roster.created_at)}
-          </Typography>
+            {/* Vertical accent bar */}
+            <Box
+              sx={{
+                width: '3px',
+                flexShrink: 0,
+                background: `linear-gradient(180deg, ${trialColor} 0%, ${trialColor}40 100%)`,
+                boxShadow: `0 0 6px ${trialColor}30`,
+              }}
+              aria-hidden="true"
+            />
+
+            {/* Vote count + date */}
+            <Box
+              sx={{
+                minWidth: 0,
+                flex: 1,
+                px: 1.25,
+                py: 0.9,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <ThumbUpIcon
+                  sx={{
+                    fontSize: 13,
+                    color: isDarkMode ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                  }}
+                />
+                <Typography
+                  noWrap
+                  sx={{
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                    color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {roster.vote_count}
+                </Typography>
+              </Box>
+              <Typography
+                noWrap
+                sx={{
+                  fontSize: '0.68rem',
+                  fontWeight: 500,
+                  lineHeight: 1.3,
+                  color: isDarkMode ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.4)',
+                  letterSpacing: '0.01em',
+                }}
+              >
+                {formatDate(roster.created_at)}
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </CardActionArea>
     </Card>
   );
 };
 
-// ─── Bio edit dialog ──────────────────────────────────────────────────────────
+// ─── Bio edit dialog ─────────────────────────────────────────────────────────
 
 interface BioDialogProps {
   open: boolean;
@@ -423,6 +745,15 @@ interface BioDialogProps {
   onSave: (bio: string) => void;
   onClose: () => void;
 }
+
+const DIALOG_PAPER_SX = (isDarkMode: boolean, divider: string): object => ({
+  borderRadius: CARD_RADIUS,
+  background: isDarkMode ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.95)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+  border: `1px solid ${divider}`,
+  boxShadow: isDarkMode ? '0 24px 64px rgba(0,0,0,0.5)' : '0 24px 64px rgba(0,0,0,0.12)',
+});
 
 const BioDialog: React.FC<BioDialogProps> = ({ open, current, saving, onSave, onClose }) => {
   const [value, setValue] = useState(current);
@@ -439,21 +770,11 @@ const BioDialog: React.FC<BioDialogProps> = ({ open, current, saving, onSave, on
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: '14px',
-            background: isDarkMode
-              ? 'linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(3,7,18,0.95) 100%)'
-              : theme.palette.background.paper,
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${theme.palette.divider}`,
-          },
-        },
-      }}
+      slotProps={{ paper: { sx: DIALOG_PAPER_SX(isDarkMode, theme.palette.divider) } }}
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>Edit Bio</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Space Grotesk, Inter, system-ui' }}>
+        Edit Bio
+      </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -469,11 +790,16 @@ const BioDialog: React.FC<BioDialogProps> = ({ open, current, saving, onSave, on
           sx={{ mt: 1 }}
         />
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} disabled={saving}>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} disabled={saving} sx={{ textTransform: 'none' }}>
           Cancel
         </Button>
-        <Button onClick={() => onSave(value)} variant="contained" disabled={saving}>
+        <Button
+          onClick={() => onSave(value)}
+          variant="contained"
+          disabled={saving}
+          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px', px: 3 }}
+        >
           {saving ? 'Saving...' : 'Save'}
         </Button>
       </DialogActions>
@@ -481,7 +807,7 @@ const BioDialog: React.FC<BioDialogProps> = ({ open, current, saving, onSave, on
   );
 };
 
-// ─── Section heading ──────────────────────────────────────────────────────────
+// ─── Section heading ─────────────────────────────────────────────────────────
 
 interface SectionHeadingProps {
   icon: React.ReactNode;
@@ -492,16 +818,36 @@ interface SectionHeadingProps {
 const SectionHeading: React.FC<SectionHeadingProps> = ({ icon, label, count }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const accent = isDarkMode ? '#38bdf8' : '#3b82f6';
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-      <Box sx={{ color: isDarkMode ? '#38bdf8' : '#3b82f6', display: 'flex' }}>{icon}</Box>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+      <Box
+        sx={{
+          width: 38,
+          height: 38,
+          borderRadius: '11px',
+          background: isDarkMode
+            ? `linear-gradient(135deg, ${accent}30 0%, ${accent}18 100%)`
+            : `linear-gradient(135deg, ${accent}22 0%, ${accent}10 100%)`,
+          border: `1px solid ${accent}55`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: accent,
+          boxShadow: `0 0 10px ${accent}35, inset 0 1px 0 rgba(255,255,255,0.12)`,
+        }}
+      >
+        {icon}
+      </Box>
       <Typography
         variant="h6"
         sx={{
           fontWeight: 700,
           color: theme.palette.text.primary,
           fontFamily: 'Space Grotesk, Inter, system-ui',
+          letterSpacing: '-0.01em',
+          fontSize: '1.15rem',
         }}
       >
         {label}
@@ -510,19 +856,32 @@ const SectionHeading: React.FC<SectionHeadingProps> = ({ icon, label, count }) =
         label={count}
         size="small"
         sx={{
-          height: 22,
-          fontSize: '0.7rem',
-          fontWeight: 600,
+          height: 24,
+          minWidth: 30,
+          fontSize: '0.75rem',
+          fontWeight: 700,
           fontVariantNumeric: 'tabular-nums',
-          bgcolor: isDarkMode ? alpha('#38bdf8', 0.12) : alpha('#3b82f6', 0.1),
-          color: isDarkMode ? '#38bdf8' : '#3b82f6',
+          background: isDarkMode
+            ? `linear-gradient(90deg, ${accent}22, ${accent}10)`
+            : `linear-gradient(90deg, ${accent}18, ${accent}08)`,
+          color: accent,
+          border: `1px solid ${accent}45`,
+          boxShadow: `0 0 6px ${accent}20`,
+        }}
+      />
+      <Box
+        sx={{
+          flex: 1,
+          height: '1px',
+          background: `linear-gradient(to right, ${accent}35, transparent 80%)`,
+          ml: 0.5,
         }}
       />
     </Box>
   );
 };
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
+// ─── Empty state ─────────────────────────────────────────────────────────────
 
 interface EmptyStateProps {
   icon: React.ReactNode;
@@ -538,18 +897,22 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, message, actionLabel, onA
   return (
     <Box
       sx={{
-        py: 4,
+        py: 5,
         px: 3,
         textAlign: 'center',
-        borderRadius: '14px',
-        border: `1px dashed ${theme.palette.divider}`,
-        background: isDarkMode ? alpha('#0f172a', 0.3) : alpha('#f8fafc', 0.5),
+        borderRadius: CARD_RADIUS,
+        border: isDarkMode ? '1px dashed rgba(255,255,255,0.09)' : '1px dashed rgba(0,0,0,0.09)',
+        background: isDarkMode
+          ? 'linear-gradient(160deg, rgba(152,131,227,0.04) 0%, rgba(11,18,32,0.4) 100%)'
+          : 'linear-gradient(160deg, rgba(152,131,227,0.03) 0%, rgba(255,255,255,0.6) 100%)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
       }}
     >
-      <Box sx={{ color: isDarkMode ? '#334155' : '#cbd5e1', mb: 1 }}>{icon}</Box>
+      <Box sx={{ color: theme.palette.text.disabled, mb: 1.5 }}>{icon}</Box>
       <Typography
         variant="body2"
-        sx={{ color: theme.palette.text.secondary, mb: actionLabel ? 1.5 : 0 }}
+        sx={{ color: theme.palette.text.secondary, mb: actionLabel ? 2 : 0 }}
       >
         {message}
       </Typography>
@@ -558,7 +921,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, message, actionLabel, onA
           size="small"
           variant="outlined"
           onClick={onAction}
-          sx={{ textTransform: 'none', fontWeight: 600 }}
+          sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px', px: 3 }}
         >
           {actionLabel}
         </Button>
@@ -567,13 +930,15 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, message, actionLabel, onA
   );
 };
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// ─── Main page ───────────────────────────────────────────────────────────────
+
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export const PublicProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { isLoggedIn, accessToken, currentUser } = useAuth();
 
@@ -588,6 +953,8 @@ export const PublicProfilePage: React.FC = () => {
     type: 'build' | 'roster';
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const isOwner =
     isLoggedIn &&
@@ -651,6 +1018,69 @@ export const PublicProfilePage: React.FC = () => {
     [accessToken, enqueueSnackbar],
   );
 
+  const MAX_AVATAR_MB = 2;
+
+  const handleAvatarSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !accessToken) return;
+
+      // Reset input so the same file can be re-selected
+      e.target.value = '';
+
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        enqueueSnackbar('Only JPEG, PNG, and WebP images are allowed.', { variant: 'error' });
+        return;
+      }
+      if (file.size > MAX_AVATAR_MB * 1024 * 1024) {
+        enqueueSnackbar(`Avatar must be under ${MAX_AVATAR_MB} MB.`, { variant: 'error' });
+        return;
+      }
+
+      // Read as data-URL for base64 upload
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      setAvatarUploading(true);
+      try {
+        const res = await rosterHubApi.uploadAvatar(dataUrl, accessToken);
+        setProfile((prev) =>
+          prev
+            ? { ...prev, avatar_url: res.avatar_url, avatar_thumb_url: res.avatar_thumb_url }
+            : prev,
+        );
+        enqueueSnackbar('Avatar updated!', { variant: 'success' });
+      } catch (err) {
+        enqueueSnackbar(err instanceof Error ? err.message : 'Failed to upload avatar', {
+          variant: 'error',
+        });
+      } finally {
+        setAvatarUploading(false);
+      }
+    },
+    [accessToken, enqueueSnackbar],
+  );
+
+  const handleRemoveAvatar = useCallback(async () => {
+    if (!accessToken) return;
+    setAvatarUploading(true);
+    try {
+      await rosterHubApi.deleteAvatar(accessToken);
+      setProfile((prev) => (prev ? { ...prev, avatar_url: null, avatar_thumb_url: null } : prev));
+      enqueueSnackbar('Avatar removed.', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(err instanceof Error ? err.message : 'Failed to remove avatar', {
+        variant: 'error',
+      });
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [accessToken, enqueueSnackbar]);
+
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget || !accessToken) return;
     setDeleting(true);
@@ -691,146 +1121,78 @@ export const PublicProfilePage: React.FC = () => {
     }
   }, [deleteTarget, accessToken, enqueueSnackbar]);
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  const accent = isDarkMode ? '#38bdf8' : '#3b82f6';
+
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Profile header skeleton */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'center', sm: 'flex-start' },
-            gap: 3,
-            mb: 5,
-            p: 3,
-            borderRadius: '14px',
-            border: `1px solid ${theme.palette.divider}`,
-            background: isDarkMode
-              ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-              : theme.palette.background.paper,
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            boxShadow: isDarkMode
-              ? '0 8px 30px rgba(0, 0, 0, 0.25)'
-              : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
-          }}
-        >
-          <Skeleton variant="circular" width={80} height={80} sx={{ flexShrink: 0 }} />
-          <Box
-            sx={{ flex: 1, minWidth: 0, textAlign: { xs: 'center', sm: 'left' }, width: '100%' }}
-          >
-            <Skeleton variant="text" width={180} height={36} sx={{ mx: { xs: 'auto', sm: 0 } }} />
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                mt: 0.75,
-                mb: 1.5,
-                justifyContent: { xs: 'center', sm: 'flex-start' },
-              }}
-            >
-              <Skeleton variant="text" width={70} height={18} />
-              <Skeleton variant="text" width={70} height={18} />
-            </Box>
-            <Skeleton variant="text" width="65%" height={16} sx={{ mx: { xs: 'auto', sm: 0 } }} />
-          </Box>
-        </Box>
-        {/* Builds section skeleton */}
-        <Box sx={{ mb: 5 }}>
-          <Skeleton variant="text" width={100} height={28} sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
-            {[0, 1, 2].map((i) => (
-              <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Skeleton variant="rounded" height={180} sx={{ borderRadius: '14px' }} />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-        {/* Rosters section skeleton */}
-        <Box>
-          <Skeleton variant="text" width={110} height={28} sx={{ mb: 2 }} />
-          <Grid container spacing={2}>
-            {[0, 1, 2].map((i) => (
-              <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Skeleton variant="rounded" height={180} sx={{ borderRadius: '14px' }} />
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
+      <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6 } }}>
+        <Skeleton variant="rounded" height={140} sx={{ borderRadius: '20px', mb: 5 }} />
+        <Skeleton variant="text" width={120} height={28} sx={{ mb: 3 }} />
+        <Grid container spacing={2.5}>
+          {[0, 1, 2].map((i) => (
+            <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
+              <Skeleton variant="rounded" height={200} sx={{ borderRadius: CARD_RADIUS }} />
+            </Grid>
+          ))}
+        </Grid>
       </Container>
     );
   }
 
-  // ── 404 ───────────────────────────────────────────────────────────────────
+  // ── 404 ────────────────────────────────────────────────────────────────────
 
   if (notFound || !profile) {
     return (
-      <Container maxWidth="sm" sx={{ py: 8, textAlign: 'center' }}>
+      <Container maxWidth="sm" sx={{ py: { xs: 8, sm: 12 }, textAlign: 'center' }}>
         <Box
           sx={{
-            p: 4,
-            borderRadius: '14px',
-            border: `1px solid ${theme.palette.divider}`,
-            background: isDarkMode
-              ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-              : theme.palette.background.paper,
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            boxShadow: isDarkMode
-              ? '0 8px 30px rgba(0, 0, 0, 0.25)'
-              : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+            width: 88,
+            height: 88,
+            borderRadius: '50%',
+            background: isDarkMode ? alpha('#334155', 0.2) : alpha('#cbd5e1', 0.25),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mx: 'auto',
+            mb: 3,
           }}
         >
-          <Box
-            sx={{
-              width: 72,
-              height: 72,
-              borderRadius: '50%',
-              background: isDarkMode ? alpha('#334155', 0.3) : alpha('#cbd5e1', 0.3),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              mx: 'auto',
-              mb: 2.5,
-            }}
-          >
-            <PersonIcon sx={{ fontSize: 36, color: isDarkMode ? '#334155' : '#cbd5e1' }} />
-          </Box>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              color: theme.palette.text.primary,
-              mb: 1,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-            }}
-          >
-            Player not found
-          </Typography>
-          <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 3 }}>
-            <strong>{username}</strong> hasn&apos;t published any public builds or rosters yet.
-          </Typography>
-          <Stack direction="row" spacing={1.5} justifyContent="center">
-            <Button
-              size="small"
-              startIcon={<ArrowBackIcon />}
-              onClick={() => navigate(-1)}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            >
-              Go back
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => navigate('/build-hub')}
-              sx={{ textTransform: 'none', fontWeight: 600 }}
-            >
-              Browse Build Hub
-            </Button>
-          </Stack>
+          <PersonIcon sx={{ fontSize: 44, color: theme.palette.text.disabled }} />
         </Box>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            color: theme.palette.text.primary,
+            mb: 1,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
+        >
+          Player not found
+        </Typography>
+        <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 4 }}>
+          <strong>{username}</strong> hasn&apos;t published any public builds or rosters yet.
+        </Typography>
+        <Stack direction="row" spacing={1.5} justifyContent="center">
+          <Button
+            size="small"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate(-1)}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px' }}
+          >
+            Go back
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => navigate('/build-hub', { vtType: 'back' })}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px' }}
+          >
+            Browse Build Hub
+          </Button>
+        </Stack>
       </Container>
     );
   }
@@ -839,186 +1201,376 @@ export const PublicProfilePage: React.FC = () => {
   const hasRoster = profile.rosters.length > 0;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* ── Profile header ─────────────────────────────────────────────── */}
+    <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6 }, position: 'relative' }}>
+      {/* Ambient background orbs */}
       <Box
         sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'center', sm: 'flex-start' },
-          gap: 3,
-          mb: 5,
-          p: 3,
-          borderRadius: '14px',
-          border: `1px solid ${theme.palette.divider}`,
+          position: 'absolute',
+          top: -60,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 600,
+          height: 400,
           background: isDarkMode
-            ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-            : theme.palette.background.paper,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+            ? `radial-gradient(ellipse at center, ${accent}0a 0%, rgba(152,131,227,0.04) 40%, transparent 70%)`
+            : `radial-gradient(ellipse at center, ${accent}08 0%, rgba(152,131,227,0.03) 40%, transparent 70%)`,
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      {/* ── Profile header — horizontal banner card ──────────────────── */}
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          mb: 5,
+          borderRadius: '20px',
+          overflow: 'hidden',
+          border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.07)',
+          background: isDarkMode
+            ? `linear-gradient(135deg, ${accent}0c 0%, rgba(152,131,227,0.06) 40%, rgba(11,18,32,0.7) 100%)`
+            : `linear-gradient(135deg, ${accent}08 0%, rgba(152,131,227,0.04) 40%, rgba(255,255,255,0.85) 100%)`,
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           boxShadow: isDarkMode
-            ? '0 8px 30px rgba(0, 0, 0, 0.25)'
-            : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+            ? `0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)`
+            : `0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)`,
         }}
       >
-        {/* Avatar */}
+        {/* Top accent bar */}
         <Box
           sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            background: isDarkMode
-              ? 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%)'
-              : 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+            height: '3px',
+            background: `linear-gradient(90deg, transparent, ${accent}80 30%, ${accent} 50%, ${accent}80 70%, transparent)`,
+            boxShadow: `0 0 16px ${accent}50, 0 0 32px ${accent}20`,
+          }}
+          aria-hidden="true"
+        />
+
+        {/* Card inner content */}
+        <Box
+          sx={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            border: isDarkMode
-              ? '2px solid rgba(56,189,248,0.25)'
-              : '2px solid rgba(59,130,246,0.25)',
-            boxShadow: isDarkMode
-              ? '0 0 20px rgba(56,189,248,0.1)'
-              : '0 0 20px rgba(59,130,246,0.08)',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'center', sm: 'flex-start' },
+            gap: { xs: 2, sm: 3.5 },
+            p: { xs: 3, sm: 3.5 },
           }}
         >
-          <PersonIcon sx={{ fontSize: 40, color: isDarkMode ? '#38bdf8' : '#3b82f6' }} />
-        </Box>
-
-        {/* Name + bio */}
-        <Box sx={{ flex: 1, minWidth: 0, textAlign: { xs: 'center', sm: 'left' } }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              flexWrap: 'wrap',
-              justifyContent: { xs: 'center', sm: 'flex-start' },
-            }}
-          >
-            <Typography
-              variant="h4"
+          {/* Avatar */}
+          <Box sx={{ position: 'relative', flexShrink: 0 }}>
+            <Box
               sx={{
-                fontWeight: 800,
-                fontFamily: 'Space Grotesk, Inter, system-ui',
+                width: { xs: 80, sm: 88 },
+                height: { xs: 80, sm: 88 },
+                borderRadius: '50%',
                 background: isDarkMode
-                  ? 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)'
-                  : 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                fontSize: { xs: '1.5rem', sm: '2.125rem' },
+                  ? `linear-gradient(135deg, ${accent}30 0%, rgba(152,131,227,0.12) 50%, ${accent}18 100%)`
+                  : `linear-gradient(135deg, ${accent}22 0%, rgba(152,131,227,0.08) 50%, ${accent}10 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: `2px solid ${accent}45`,
+                boxShadow: isDarkMode
+                  ? `0 0 32px ${accent}20, inset 0 0 16px ${accent}08`
+                  : `0 0 24px ${accent}14, inset 0 0 12px ${accent}06`,
+                overflow: 'hidden',
+                cursor: isOwner ? 'pointer' : 'default',
+                '&:hover .avatar-overlay': isOwner ? { opacity: 1 } : {},
               }}
+              onClick={
+                isOwner && !avatarUploading ? () => avatarInputRef.current?.click() : undefined
+              }
             >
-              {profile.username}
-            </Typography>
-            <Tooltip title="Search on ESO Logs" arrow>
-              <Box
-                component="a"
-                href={`https://www.esologs.com/search?term=${encodeURIComponent(profile.username)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.75rem',
-                  color: theme.palette.text.secondary,
-                  textDecoration: 'none',
-                  px: 1,
-                  py: 0.25,
-                  borderRadius: 1,
-                  transition: 'all 0.15s ease-in-out',
-                  '&:hover': {
-                    color: isDarkMode ? '#38bdf8' : '#3b82f6',
-                    bgcolor: isDarkMode ? alpha('#38bdf8', 0.08) : alpha('#3b82f6', 0.06),
-                  },
-                }}
-              >
-                ESO Logs
-                <OpenInNewIcon sx={{ fontSize: '0.7rem' }} />
-              </Box>
-            </Tooltip>
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={`${profile.username}'s avatar`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <PersonIcon sx={{ fontSize: 42, color: accent }} />
+              )}
+
+              {/* Upload overlay (own profile only) */}
+              {isOwner && (
+                <Box
+                  className="avatar-overlay"
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    bgcolor: 'rgba(0,0,0,0.55)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0,
+                    transition: 'opacity 0.2s',
+                  }}
+                >
+                  {avatarUploading ? (
+                    <CircularProgress size={28} sx={{ color: '#fff' }} />
+                  ) : (
+                    <CameraAltIcon sx={{ color: '#fff', fontSize: 28 }} />
+                  )}
+                </Box>
+              )}
+            </Box>
+
+            {/* Hidden file input */}
+            {isOwner && (
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={handleAvatarSelect}
+              />
+            )}
+
+            {/* Remove avatar button */}
+            {isOwner && profile?.avatar_url && !avatarUploading && (
+              <Tooltip title="Remove avatar">
+                <IconButton
+                  size="small"
+                  onClick={handleRemoveAvatar}
+                  sx={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    bgcolor: isDarkMode ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.9)',
+                    border: `1px solid ${accent}40`,
+                    width: 24,
+                    height: 24,
+                    '&:hover': { bgcolor: isDarkMode ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,1)' },
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 14, color: accent }} />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            {/* Outer glow ring */}
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: -4,
+                borderRadius: '50%',
+                border: isDarkMode ? `1.5px solid ${accent}15` : `1.5px solid ${accent}10`,
+                boxShadow: `0 0 20px ${accent}0a`,
+                pointerEvents: 'none',
+              }}
+            />
           </Box>
 
-          <Stack
-            direction="row"
-            spacing={2}
-            sx={{ mt: 1, mb: 1.5, justifyContent: { xs: 'center', sm: 'flex-start' } }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <ConstructionIcon sx={{ fontSize: 16, color: isDarkMode ? '#38bdf8' : '#3b82f6' }} />
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                <strong
-                  style={{
-                    color: isDarkMode ? '#38bdf8' : '#3b82f6',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {profile.build_count}
-                </strong>{' '}
-                build{profile.build_count !== 1 ? 's' : ''}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <GroupsIcon sx={{ fontSize: 16, color: isDarkMode ? '#38bdf8' : '#3b82f6' }} />
-              <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                <strong
-                  style={{
-                    color: isDarkMode ? '#38bdf8' : '#3b82f6',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {profile.roster_count}
-                </strong>{' '}
-                roster{profile.roster_count !== 1 ? 's' : ''}
-              </Typography>
-            </Box>
-          </Stack>
-
-          {profile.bio ? (
-            <Typography
-              variant="body2"
-              sx={{ color: theme.palette.text.secondary, lineHeight: 1.6, maxWidth: 560 }}
-            >
-              {profile.bio}
-            </Typography>
-          ) : isOwner ? (
-            <Typography
-              variant="body2"
-              sx={{ color: isDarkMode ? '#475569' : '#94a3b8', fontStyle: 'italic' }}
-            >
-              Add a bio to tell the community about yourself.
-            </Typography>
-          ) : null}
-        </Box>
-
-        {/* Edit bio button (owner only) */}
-        {isOwner && (
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<EditIcon />}
-            onClick={() => setBioDialogOpen(true)}
+          {/* Info column — fills remaining space */}
+          <Box
             sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              flexShrink: 0,
-              borderRadius: '8px',
-              alignSelf: { xs: 'center', sm: 'flex-start' },
+              flex: 1,
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: { xs: 'center', sm: 'flex-start' },
+              textAlign: { xs: 'center', sm: 'left' },
+              gap: 0.5,
             }}
           >
-            {profile.bio ? 'Edit bio' : 'Add bio'}
-          </Button>
-        )}
+            {/* Username row */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flexWrap: 'wrap',
+                justifyContent: { xs: 'center', sm: 'flex-start' },
+              }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 800,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  color: theme.palette.text.primary,
+                  fontSize: { xs: '1.5rem', sm: '1.65rem' },
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.2,
+                }}
+              >
+                {profile.username}
+              </Typography>
+              <Tooltip title="Search on ESO Logs" arrow>
+                <Box
+                  component={'a' as const}
+                  href={`https://www.esologs.com/search?term=${encodeURIComponent(profile.username)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '0.75rem',
+                    color: theme.palette.text.disabled,
+                    textDecoration: 'none',
+                    transition: 'color 0.15s ease',
+                    '&:hover': { color: accent },
+                  }}
+                >
+                  esologs.com
+                  <OpenInNewIcon sx={{ fontSize: '0.65rem' }} />
+                </Box>
+              </Tooltip>
+            </Box>
+
+            {/* Bio */}
+            {profile.bio ? (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  lineHeight: 1.65,
+                  maxWidth: 520,
+                  fontSize: '0.85rem',
+                  mt: 0.25,
+                }}
+              >
+                {profile.bio}
+              </Typography>
+            ) : isOwner ? (
+              <Typography
+                variant="body2"
+                sx={{
+                  color: theme.palette.text.disabled,
+                  fontStyle: 'italic',
+                  fontSize: '0.82rem',
+                }}
+              >
+                Add a bio to tell the community about yourself.
+              </Typography>
+            ) : null}
+
+            {/* Stats row + edit button — inline on desktop */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                mt: 1.5,
+                flexWrap: 'wrap',
+                justifyContent: { xs: 'center', sm: 'flex-start' },
+              }}
+            >
+              {/* Inline stat pills */}
+              {[
+                {
+                  icon: <ConstructionIcon sx={{ fontSize: 15 }} />,
+                  value: profile.build_count,
+                  label: profile.build_count === 1 ? 'Build' : 'Builds',
+                },
+                {
+                  icon: <GroupsIcon sx={{ fontSize: 15 }} />,
+                  value: profile.roster_count,
+                  label: profile.roster_count === 1 ? 'Roster' : 'Rosters',
+                },
+              ].map((stat) => (
+                <Box
+                  key={stat.label}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: '10px',
+                    background: isDarkMode
+                      ? `linear-gradient(135deg, ${accent}14 0%, rgba(11,18,32,0.4) 100%)`
+                      : `linear-gradient(135deg, ${accent}0c 0%, rgba(255,255,255,0.6) 100%)`,
+                    border: isDarkMode ? `1px solid ${accent}28` : `1px solid ${accent}1a`,
+                    boxShadow: isDarkMode ? `0 0 12px ${accent}0a` : 'none',
+                  }}
+                >
+                  <Box sx={{ color: accent, display: 'flex', opacity: 0.8 }}>{stat.icon}</Box>
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      fontVariantNumeric: 'tabular-nums',
+                      color: accent,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontSize: '1rem',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {stat.value}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {stat.label}
+                  </Typography>
+                </Box>
+              ))}
+
+              {/* Divider dot */}
+              {isOwner && (
+                <Box
+                  sx={{
+                    width: 3,
+                    height: 3,
+                    borderRadius: '50%',
+                    bgcolor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)',
+                  }}
+                />
+              )}
+
+              {/* Edit bio button */}
+              {isOwner && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<EditIcon sx={{ fontSize: '14px !important' }} />}
+                  onClick={() => setBioDialogOpen(true)}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: '10px',
+                    px: 2,
+                    py: 0.5,
+                    fontSize: '0.78rem',
+                    color: theme.palette.text.secondary,
+                    borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      borderColor: `${accent}80`,
+                      color: accent,
+                      background: `${accent}0a`,
+                      boxShadow: `0 0 12px ${accent}18`,
+                    },
+                  }}
+                >
+                  {profile.bio ? 'Edit bio' : 'Add bio'}
+                </Button>
+              )}
+            </Box>
+          </Box>
+        </Box>
       </Box>
 
       {/* ── Builds ─────────────────────────────────────────────────────── */}
-      <Box sx={{ mb: 5 }}>
-        <SectionHeading icon={<ConstructionIcon />} label="Builds" count={profile.build_count} />
+      <Box sx={{ mb: 6 }}>
+        <SectionHeading
+          icon={<ConstructionIcon sx={{ fontSize: 20 }} />}
+          label="Builds"
+          count={profile.build_count}
+        />
         {hasBuild ? (
           <>
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               {profile.builds.map((build) => (
                 <Grid key={build.id} size={{ xs: 12, sm: 6, md: 4 }}>
                   <BuildCard
@@ -1034,16 +1586,28 @@ export const PublicProfilePage: React.FC = () => {
               ))}
             </Grid>
             {profile.build_count > profile.builds.length && (
-              <Button
-                size="small"
-                variant="outlined"
-                sx={{ mt: 2.5, textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-                onClick={() =>
-                  navigate(`/build-hub?author=${encodeURIComponent(profile.username)}`)
-                }
-              >
-                View all {profile.build_count} builds
-              </Button>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: '10px',
+                    px: 3,
+                    borderColor: `${accent}35`,
+                    transition: 'all 0.2s ease',
+                    '&:hover': { borderColor: `${accent}80`, boxShadow: `0 0 16px ${accent}20` },
+                  }}
+                  onClick={() =>
+                    navigate(`/build-hub?author=${encodeURIComponent(profile.username)}`, {
+                      vtType: 'forward',
+                    })
+                  }
+                >
+                  View all {profile.build_count} builds
+                </Button>
+              </Box>
             )}
           </>
         ) : (
@@ -1051,17 +1615,21 @@ export const PublicProfilePage: React.FC = () => {
             icon={<ConstructionIcon sx={{ fontSize: 40 }} />}
             message="No public builds yet."
             actionLabel={isOwner ? 'Create a build' : undefined}
-            onAction={isOwner ? () => navigate('/build-editor') : undefined}
+            onAction={isOwner ? () => navigate('/build-editor', { vtType: 'forward' }) : undefined}
           />
         )}
       </Box>
 
       {/* ── Rosters ────────────────────────────────────────────────────── */}
       <Box>
-        <SectionHeading icon={<GroupsIcon />} label="Rosters" count={profile.roster_count} />
+        <SectionHeading
+          icon={<GroupsIcon sx={{ fontSize: 20 }} />}
+          label="Rosters"
+          count={profile.roster_count}
+        />
         {hasRoster ? (
           <>
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               {profile.rosters.map((roster) => (
                 <Grid key={roster.id} size={{ xs: 12, sm: 6, md: 4 }}>
                   <RosterCard
@@ -1077,16 +1645,28 @@ export const PublicProfilePage: React.FC = () => {
               ))}
             </Grid>
             {profile.roster_count > profile.rosters.length && (
-              <Button
-                size="small"
-                variant="outlined"
-                sx={{ mt: 2.5, textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
-                onClick={() =>
-                  navigate(`/roster-hub?author=${encodeURIComponent(profile.username)}`)
-                }
-              >
-                View all {profile.roster_count} rosters
-              </Button>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    borderRadius: '10px',
+                    px: 3,
+                    borderColor: `${accent}35`,
+                    transition: 'all 0.2s ease',
+                    '&:hover': { borderColor: `${accent}80`, boxShadow: `0 0 16px ${accent}20` },
+                  }}
+                  onClick={() =>
+                    navigate(`/roster-hub?author=${encodeURIComponent(profile.username)}`, {
+                      vtType: 'forward',
+                    })
+                  }
+                >
+                  View all {profile.roster_count} rosters
+                </Button>
+              </Box>
             )}
           </>
         ) : (
@@ -1094,12 +1674,14 @@ export const PublicProfilePage: React.FC = () => {
             icon={<GroupsIcon sx={{ fontSize: 40 }} />}
             message="No public rosters yet."
             actionLabel={isOwner ? 'Create a roster' : undefined}
-            onAction={isOwner ? () => navigate('/roster-builder') : undefined}
+            onAction={
+              isOwner ? () => navigate('/roster-builder', { vtType: 'forward' }) : undefined
+            }
           />
         )}
       </Box>
 
-      {/* ── Bio edit dialog ─────────────────────────────────────────────── */}
+      {/* ── Bio edit dialog ────────────────────────────────────────────── */}
       <BioDialog
         open={bioDialogOpen}
         current={profile.bio}
@@ -1108,35 +1690,29 @@ export const PublicProfilePage: React.FC = () => {
         onClose={() => setBioDialogOpen(false)}
       />
 
-      {/* ── Delete confirmation dialog ────────────────────────────────── */}
+      {/* ── Delete confirmation dialog ─────────────────────────────────── */}
       <Dialog
         open={!!deleteTarget}
         onClose={() => !deleting && setDeleteTarget(null)}
         maxWidth="xs"
         fullWidth
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: '14px',
-              background: isDarkMode
-                ? 'linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(3,7,18,0.95) 100%)'
-                : theme.palette.background.paper,
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: `1px solid ${theme.palette.divider}`,
-            },
-          },
-        }}
+        slotProps={{ paper: { sx: DIALOG_PAPER_SX(isDarkMode, theme.palette.divider) } }}
       >
-        <DialogTitle sx={{ fontWeight: 700 }}>Delete {deleteTarget?.type}?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, fontFamily: 'Space Grotesk, Inter, system-ui' }}>
+          Delete {deleteTarget?.type}?
+        </DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you sure you want to delete <strong>{deleteTarget?.title}</strong>? This action
             cannot be undone.
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteTarget(null)} disabled={deleting}>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={() => setDeleteTarget(null)}
+            disabled={deleting}
+            sx={{ textTransform: 'none' }}
+          >
             Cancel
           </Button>
           <Button
@@ -1144,6 +1720,7 @@ export const PublicProfilePage: React.FC = () => {
             color="error"
             variant="contained"
             disabled={deleting}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '10px' }}
           >
             {deleting ? 'Deleting...' : 'Delete'}
           </Button>

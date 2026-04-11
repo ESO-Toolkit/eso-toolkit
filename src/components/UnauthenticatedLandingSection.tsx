@@ -115,7 +115,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
       >
         Want to learn more about privacy and data security?{' '}
         <span
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/login', { vtType: 'up' })}
           style={{
             color: theme.palette.primary.main,
             textDecoration: 'underline',

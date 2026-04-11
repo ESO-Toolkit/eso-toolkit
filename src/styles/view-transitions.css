@@ -1,0 +1,394 @@
+/* ═══════════════════════════════════════════════════════════════
+   View Transitions — 2026 Edition
+   ═══════════════════════════════════════════════════════════════
+   View Transitions API Level 2 + :active-view-transition-type()
+
+     (none)      Clean crossfade
+     forward     Container expand — card reveals into full page
+     back        Container collapse — page shrinks back to card
+     up          Circle reveal — landing → app
+     down        Circle close — app → landing
+     hero        Shared element morph — card morphs into page
+     slide-left  Lateral slide — peer page to the left
+     slide-right Lateral slide — peer page to the right
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Easing tokens ────────────────────────────────────────── */
+:root {
+  --vt-decel: cubic-bezier(0.16, 1, 0.3, 1);
+  --vt-ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+  --vt-snap: cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+/* ── Keyframes ─────────────────────────────────────────────── */
+/* No filter: blur() — it forces software rasterization on the
+   full-page snapshot, causing visible jank. Use only opacity,
+   transform, and clip-path (all GPU-composited).              */
+
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-recede {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes vt-card-expand {
+  from {
+    clip-path: inset(4% round 16px);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0% round 0px);
+    opacity: 1;
+  }
+}
+
+@keyframes vt-card-collapse {
+  from {
+    clip-path: inset(0% round 0px);
+    opacity: 1;
+  }
+  to {
+    clip-path: inset(4% round 16px);
+    opacity: 0;
+  }
+}
+
+@keyframes vt-surface {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes vt-circle-reveal {
+  from {
+    clip-path: circle(0% at 50% 45%);
+  }
+  to {
+    clip-path: circle(100% at 50% 45%);
+  }
+}
+
+@keyframes vt-shrink-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes vt-circle-close {
+  from {
+    clip-path: circle(100% at 50% 45%);
+    opacity: 1;
+  }
+  to {
+    clip-path: circle(0% at 50% 45%);
+    opacity: 0;
+  }
+}
+
+@keyframes vt-grow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Lateral slides */
+@keyframes vt-slide-to-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-6%);
+    opacity: 0;
+  }
+}
+
+@keyframes vt-slide-from-right {
+  from {
+    transform: translateX(6%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide-to-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(6%);
+    opacity: 0;
+  }
+}
+
+@keyframes vt-slide-from-left {
+  from {
+    transform: translateX(-6%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Tab content swap */
+@keyframes vt-tab-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+}
+
+@keyframes vt-tab-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Global resets ─────────────────────────────────────────── */
+/* Override UA defaults: the browser applies a 250ms group
+   animation, plus-lighter blend mode, and isolate on the
+   image-pair. These fight with custom animations causing
+   stutter and brightness flicker.                            */
+
+::view-transition-group(root) {
+  animation: none;
+}
+
+::view-transition-image-pair(root) {
+  isolation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
+/* ── Header isolation ──────────────────────────────────────── */
+
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-header) {
+  display: none;
+}
+
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* ── Hero morph (shared element) ──────────────────────────── */
+/* The ::view-transition-group handles position + size
+   interpolation (the actual morph). Old/new pseudos crossfade
+   the card contents into the detail contents.                 */
+
+::view-transition-group(build-hero),
+::view-transition-group(roster-hero) {
+  animation-duration: 400ms;
+  animation-timing-function: var(--vt-snap);
+  z-index: 10;
+}
+
+::view-transition-image-pair(build-hero),
+::view-transition-image-pair(roster-hero) {
+  isolation: auto;
+}
+
+::view-transition-old(build-hero),
+::view-transition-old(roster-hero) {
+  animation: vt-fade-out 160ms ease-out both;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(build-hero),
+::view-transition-new(roster-hero) {
+  animation: vt-fade-in 200ms ease-in 80ms both;
+  mix-blend-mode: normal;
+}
+
+/* ── Default (crossfade) ──────────────────────────────────── */
+/* Matched durations prevent old-disappears-before-new-appears
+   flash that exposes the raw DOM.                             */
+
+::view-transition-old(root) {
+  animation: vt-fade-out 150ms ease-out both;
+}
+
+::view-transition-new(root) {
+  animation: vt-fade-in 150ms ease-out both;
+}
+
+/* ── Forward (container expand) ───────────────────────────── */
+
+html:active-view-transition-type(forward)::view-transition-old(root) {
+  animation: vt-recede 200ms ease-in both;
+  z-index: 1;
+}
+
+html:active-view-transition-type(forward)::view-transition-new(root) {
+  animation: vt-card-expand 280ms var(--vt-decel) both;
+  z-index: 2;
+}
+
+/* ── Back (container collapse) ────────────────────────────── */
+
+html:active-view-transition-type(back)::view-transition-old(root) {
+  animation: vt-card-collapse 220ms ease-in both;
+  z-index: 2;
+}
+
+html:active-view-transition-type(back)::view-transition-new(root) {
+  animation: vt-surface 250ms var(--vt-decel) both;
+  z-index: 1;
+}
+
+/* ── Hero override (softens root when a hero morph is active) */
+/* When a card morphs into the page, the root just fades
+   instead of doing the clip-path expand.  Placed after
+   "forward" so equal specificity wins by source order.        */
+
+html:active-view-transition-type(hero)::view-transition-old(root) {
+  animation: vt-fade-out 200ms ease-out both;
+  z-index: 1;
+}
+
+html:active-view-transition-type(hero)::view-transition-new(root) {
+  animation: vt-fade-in 280ms var(--vt-decel) 40ms both;
+  z-index: 2;
+}
+
+/* ── Up (circle reveal) ──────────────────────────────────── */
+
+html:active-view-transition-type(up)::view-transition-old(root) {
+  animation: vt-shrink-out 200ms ease-in both;
+  z-index: 1;
+}
+
+html:active-view-transition-type(up)::view-transition-new(root) {
+  animation: vt-circle-reveal 350ms var(--vt-ease-out) both;
+  z-index: 2;
+}
+
+/* ── Down (circle close) ─────────────────────────────────── */
+
+html:active-view-transition-type(down)::view-transition-old(root) {
+  animation: vt-circle-close 280ms ease-in both;
+  z-index: 2;
+}
+
+html:active-view-transition-type(down)::view-transition-new(root) {
+  animation: vt-grow-in 280ms var(--vt-decel) 30ms both;
+  z-index: 1;
+}
+
+/* ── Slide Left (lateral: current page → left peer) ───────── */
+
+html:active-view-transition-type(slide-left)::view-transition-old(root) {
+  animation: vt-slide-to-left 220ms ease-in both;
+  z-index: 1;
+}
+
+html:active-view-transition-type(slide-left)::view-transition-new(root) {
+  animation: vt-slide-from-right 260ms var(--vt-decel) both;
+  z-index: 2;
+}
+
+/* ── Slide Right (lateral: current page → right peer) ─────── */
+
+html:active-view-transition-type(slide-right)::view-transition-old(root) {
+  animation: vt-slide-to-right 220ms ease-in both;
+  z-index: 1;
+}
+
+html:active-view-transition-type(slide-right)::view-transition-new(root) {
+  animation: vt-slide-from-left 260ms var(--vt-decel) both;
+  z-index: 2;
+}
+
+/* ── Tab content transitions ───────────────────────────────── */
+/* Applied when AnimatedTabContent swaps tab panels.
+   No filter — only opacity + transform for GPU compositing.  */
+
+::view-transition-group(tab-content) {
+  animation-duration: 200ms;
+  animation-timing-function: var(--vt-decel);
+}
+
+::view-transition-image-pair(tab-content) {
+  isolation: auto;
+}
+
+::view-transition-old(tab-content) {
+  animation: vt-tab-exit 120ms ease-out both;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(tab-content) {
+  animation: vt-tab-enter 180ms var(--vt-decel) both;
+  mix-blend-mode: normal;
+}
+
+/* ── Accessibility ─────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

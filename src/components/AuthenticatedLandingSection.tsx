@@ -56,9 +56,9 @@ export const AuthenticatedLandingSection: React.FC = () => {
       dispatch(clearReport());
 
       if (result.fightId) {
-        navigate(`/report/${result.reportId}/fight/${result.fightId}/insights`);
+        navigate(`/report/${result.reportId}/fight/${result.fightId}/insights`, { vtType: 'up' });
       } else {
-        navigate(`/report/${result.reportId}`);
+        navigate(`/report/${result.reportId}`, { vtType: 'up' });
       }
     } else {
       alert('Invalid ESOLogs report URL');
@@ -228,7 +228,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
             <Skeleton variant="text" width={190} height={22} sx={{ borderRadius: 1 }} />
           ) : latestReport ? (
             <Box
-              onClick={() => navigate(`/report/${latestReport.code}`)}
+              onClick={() => navigate(`/report/${latestReport.code}`, { vtType: 'up' })}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -304,7 +304,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
           <Button
             variant="text"
             size="small"
-            onClick={() => navigate('/my-reports')}
+            onClick={() => navigate('/my-reports', { vtType: 'up' })}
             startIcon={<AssignmentIcon sx={{ fontSize: 18 }} />}
             sx={{
               px: 0,
@@ -350,7 +350,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
         ) : latestReport ? (
           <Typography
             variant="body2"
-            onClick={() => navigate(`/report/${latestReport.code}`)}
+            onClick={() => navigate(`/report/${latestReport.code}`, { vtType: 'up' })}
             sx={{
               color:
                 theme.palette.mode === 'dark'
@@ -411,7 +411,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
         <Button
           variant="text"
           size="small"
-          onClick={() => navigate('/my-reports')}
+          onClick={() => navigate('/my-reports', { vtType: 'up' })}
           startIcon={<AssignmentIcon sx={{ fontSize: 16 }} />}
           sx={{
             px: 1,

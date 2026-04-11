@@ -15,8 +15,7 @@ inputs:
     default: ''
   vite_discord_client_id:
     description: 'Discord OAuth client ID for the build'
-    required: false
-    default: ''
+    required: true
   vite_roster_hub_api_url:
     description: 'Roster Hub API URL for the build'
     required: false

@@ -1335,14 +1335,6 @@ export const RosterViewPage: React.FC = () => {
   const [addonsLoading, setAddonsLoading] = useState(false);
   const deepLinkTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clean up deep-link fallback timer on unmount
-  useEffect(
-    () => () => {
-      if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
-    },
-    [],
-  );
-
   // Default addons shown when no hub roster or no custom recommendations
   const DEFAULT_ADDONS: RecommendedAddonEntry[] = [
     {
@@ -1362,6 +1354,14 @@ export const RosterViewPage: React.FC = () => {
     { esouiId: 1536, name: 'Action Duration Reminder', note: 'Buff/skill duration timers' },
     { esouiId: 3170, name: "Wizard's Wardrobe", note: 'Gear & skill setup management' },
   ];
+
+  // Clean up deep-link fallback timer on unmount
+  useEffect(
+    () => () => {
+      if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
+    },
+    [],
+  );
 
   // Decode roster from ?r= or fetch by ?id= on mount
   useEffect(() => {
@@ -1538,6 +1538,7 @@ export const RosterViewPage: React.FC = () => {
       {/* ── Page header ── */}
       <Box
         sx={{
+          viewTransitionName: 'roster-hero',
           display: 'flex',
           alignItems: { xs: 'flex-start', sm: 'center' },
           justifyContent: 'space-between',

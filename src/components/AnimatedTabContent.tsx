@@ -1,100 +1,38 @@
 import { Box } from '@mui/material';
-import React, { useEffect, useState, useRef, startTransition } from 'react';
+import React from 'react';
 
 interface AnimatedTabContentProps {
   children: React.ReactNode;
   tabKey: string;
 }
 
+/**
+ * Tab content wrapper with a lightweight CSS fade-in animation.
+ *
+ * Previously this used the View Transitions API (`document.startViewTransition`)
+ * to cross-fade between tabs. That approach freezes the page because VT places
+ * an opaque screenshot overlay while React synchronously renders heavy panel
+ * trees (Players, Insights, etc.), blocking all interaction for 2-3+ seconds.
+ *
+ * The current approach uses `key` to remount on tab change, triggering a simple
+ * CSS fade-in. React handles the heavy rendering normally — Suspense shows
+ * loading skeletons while panels mount, and the browser stays responsive.
+ */
 export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children, tabKey }) => {
-  const [currentContent, setCurrentContent] = useState(children);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const previousTabKey = useRef(tabKey);
-  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingContentRef = useRef<React.ReactNode>(null);
-
-  useEffect(() => {
-    if (tabKey !== previousTabKey.current) {
-      // Clear any existing transition
-      if (transitionTimeoutRef.current) {
-        clearTimeout(transitionTimeoutRef.current);
-      }
-
-      // Store the new content but don't switch to it immediately
-      pendingContentRef.current = children;
-
-      // Start animation immediately
-      setIsTransitioning(true);
-
-      // Use React's concurrent features to avoid blocking
-      startTransition(() => {
-        // After fade out completes, switch to new content
-        transitionTimeoutRef.current = setTimeout(() => {
-          // Only switch to pending content if we still have the same tabKey
-          // This prevents race conditions with rapid tab switching
-          if (pendingContentRef.current) {
-            setCurrentContent(pendingContentRef.current);
-            pendingContentRef.current = null;
-          }
-
-          // Brief pause to let DOM update, then fade in
-          transitionTimeoutRef.current = setTimeout(() => {
-            setIsTransitioning(false);
-            previousTabKey.current = tabKey;
-          }, 50); // Reduced pause for faster perceived loading
-        }, 150); // Quick fade out
-      });
-    } else {
-      // Tab hasn't changed, but children might have (e.g., Suspense resolved)
-      // Update content immediately without animation if not transitioning
-      if (!isTransitioning) {
-        setCurrentContent(children);
-      }
-    }
-
-    return () => {
-      if (transitionTimeoutRef.current) {
-        clearTimeout(transitionTimeoutRef.current);
-      }
-    };
-  }, [children, tabKey, isTransitioning]);
-
   return (
     <Box
+      key={tabKey}
       sx={{
         position: 'relative',
         minHeight: '600px',
-        perspective: '1000px',
-        // Add padding to prevent shadow clipping during animations
-        padding: '0 4px 16px 4px',
-        margin: '0 -4px -16px -4px',
+        animation: 'tabFadeIn 150ms ease-out',
+        '@keyframes tabFadeIn': {
+          from: { opacity: 0 },
+          to: { opacity: 1 },
+        },
       }}
     >
-      <Box
-        sx={{
-          width: '100%',
-          transform: isTransitioning
-            ? 'translateY(6px) scale(0.99) rotateX(1deg)'
-            : 'translateY(0px) scale(1) rotateX(0deg)',
-          opacity: isTransitioning ? 0 : 1,
-          filter: isTransitioning ? 'blur(2px)' : 'blur(0px)',
-          transition: isTransitioning
-            ? 'all 150ms cubic-bezier(0.4, 0, 1, 1)' // Fast out
-            : 'all 200ms cubic-bezier(0, 0, 0.2, 1)', // Smooth in
-          transformOrigin: 'center top',
-          backfaceVisibility: 'hidden',
-          willChange: 'transform, opacity, filter',
-          // Optimize for accordion content
-          '& .MuiAccordion-root': {
-            transition: 'none !important', // Disable accordion animations during tab transition
-          },
-          '& .MuiCollapse-root': {
-            transition: isTransitioning ? 'none !important' : undefined,
-          },
-        }}
-      >
-        {currentContent}
-      </Box>
+      {children}
     </Box>
   );
 };

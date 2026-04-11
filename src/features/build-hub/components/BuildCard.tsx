@@ -11,12 +11,14 @@ import {
   useTheme,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import React, { useRef } from 'react';
 
+import { ClassIcon } from '../../../components/ClassIcon';
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
+import { CLASS_COLOR_MAP } from '../../build-editor/theme/classColorMap';
 import { VoteButton } from '../../roster-hub/components/VoteButton';
 import type { HubBuild } from '../types/build-hub.types';
-import { BUILD_TAG_COLORS, ROLE_ACCENT } from '../types/build-hub.types';
+import { ROLE_ACCENT } from '../types/build-hub.types';
 
 interface BuildCardProps {
   build: HubBuild;
@@ -63,6 +65,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const navigate = useViewTransitionNavigate();
+    const cardRef = useRef<HTMLDivElement>(null);
     const isDark = theme.palette.mode === 'dark';
 
     const handleCopyLink = (e: React.MouseEvent): void => {
@@ -75,23 +78,22 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
 
     const classShort = CLASS_LABELS[build.eso_class] ?? build.eso_class;
     const roleLabel = ROLE_LABELS[build.role] ?? build.role;
-    const tagAccent = build.tags
-      .map((t) => BUILD_TAG_COLORS[t])
-      .find((c): c is string => c != null);
-    const accentColor = tagAccent ?? ROLE_ACCENT[build.role] ?? '#3b82f6';
+    const classTheme = CLASS_COLOR_MAP[build.eso_class as keyof typeof CLASS_COLOR_MAP];
+    const accentColor = classTheme?.accent ?? ROLE_ACCENT[build.role] ?? '#3b82f6';
 
     const displayName = build.is_anonymous ? 'Anonymous' : build.author_name || '?';
 
     return (
       <Card
+        ref={cardRef}
         sx={{
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
           position: 'relative',
           background: isDark
-            ? `linear-gradient(160deg, ${accentColor}12 0%, rgba(152,131,227,0.07) 45%, rgba(11,18,32,0.6) 100%)`
-            : `linear-gradient(160deg, ${accentColor}0c 0%, rgba(152,131,227,0.05) 45%, rgba(255,255,255,0.8) 100%)`,
+            ? `linear-gradient(135deg, ${accentColor}14 0%, rgba(56, 189, 248, 0.10) 50%, rgba(0, 225, 255, 0.10) 100%)`
+            : `linear-gradient(135deg, ${accentColor}12 0%, rgba(219, 234, 254, 0.45) 50%, rgba(224, 242, 254, 0.45) 100%)`,
           backdropFilter: 'blur(12px)',
           border: isDark ? '1px solid rgba(255,255,255,0.09)' : '1px solid rgba(0,0,0,0.09)',
           borderRadius: 3,
@@ -125,7 +127,12 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
         />
 
         <CardActionArea
-          onClick={() => navigate(`/bv?b=${encodeURIComponent(build.build_data)}`)}
+          onClick={() =>
+            navigate(`/bv?b=${encodeURIComponent(build.build_data)}`, {
+              vtType: 'forward',
+              morph: { ref: cardRef, name: 'build-hero' },
+            })
+          }
           sx={{ flexGrow: 1, alignItems: 'flex-start' }}
           aria-label={`View ${build.title}`}
         >
@@ -146,6 +153,8 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                   component="span"
                   sx={{
                     display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
                     px: 1,
                     py: 0.5,
                     borderRadius: '6px',
@@ -154,14 +163,20 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                     boxShadow: `0 0 8px ${accentColor}25`,
                   }}
                 >
+                  <ClassIcon className={build.eso_class} size={13} />
                   <Typography
                     sx={{
                       fontSize: '0.7rem',
                       fontWeight: 800,
                       letterSpacing: '0.07em',
-                      color: accentColor,
                       lineHeight: 1,
                       textTransform: 'uppercase',
+                      background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc, ${accentColor})`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      textShadow: `0 0 12px ${accentColor}40`,
+                      filter: isDark ? 'brightness(1.2)' : 'none',
                     }}
                   >
                     {classShort}
@@ -184,9 +199,17 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                     fontSize: '0.65rem',
                     fontWeight: 700,
                     letterSpacing: '0.05em',
-                    color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
                     lineHeight: 1,
                     textTransform: 'uppercase',
+                    background: isDark
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45))'
+                      : 'linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.40))',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    textShadow: isDark
+                      ? '0 0 10px rgba(255,255,255,0.15)'
+                      : '0 0 10px rgba(0,0,0,0.08)',
                   }}
                 >
                   {roleLabel}
@@ -209,6 +232,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                 wordBreak: 'break-word',
                 fontSize: '1.05rem',
                 letterSpacing: '-0.01em',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
               }}
             >
               {build.title}
@@ -238,7 +262,6 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
             {build.tags.length > 0 && (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.75 }}>
                 {build.tags.map((tag) => {
-                  const tagColor = BUILD_TAG_COLORS[tag] ?? '#94a3b8';
                   return (
                     <Box
                       key={tag}
@@ -251,9 +274,11 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                         fontSize: '0.72rem',
                         fontWeight: 700,
                         backdropFilter: 'blur(8px)',
-                        background: isDark ? `${tagColor}25` : `${tagColor}18`,
-                        border: `1px solid ${tagColor}50`,
-                        color: tagColor,
+                        background: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                        border: isDark
+                          ? '1px solid rgba(255,255,255,0.12)'
+                          : '1px solid rgba(0,0,0,0.10)',
+                        color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)',
                         lineHeight: 1.4,
                         whiteSpace: 'nowrap',
                       }}

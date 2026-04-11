@@ -45,59 +45,11 @@ npm run test:smoke:e2e               # Quick E2E check
 
 ## CRITICAL: Git Workflow
 
-**ALWAYS USE WORKFLOW SKILL BEFORE STARTING ANY WORK**
+**ALWAYS use the Workflow Skill before starting any work** — it handles branch creation, main-branch protection, and twig dependencies automatically.
 
-**Before implementing ANY Jira ticket, use the Workflow Skill:**
-```
-@workspace Ensure I'm on a feature branch for ESO-XXX work
-```
-
-**The skill will automatically:**
-- Check if you're on master/main (and stop you)
-- Create feature branch `ESO-XXX/description` if needed
-- Switch to existing feature branch if it already exists
-- Set up branch parent dependencies (twig with plain git fallback)
-
-**Manual fallback (if skill unavailable):**
-```bash
-# Step 1: Check current branch (must NOT be main)
-git branch --show-current
-
-# Step 2: Create feature branch with Jira ticket format
-git checkout -b ESO-XXX/description-here
-
-# Step 3: Now you can start coding
-```
-
-**NEVER commit directly to main**
-**ALWAYS work on feature branches**
-**ALWAYS continue through to PR creation after implementation** (see below)
-
-### Branch Naming Convention
-
-All branches **must** match one of these patterns:
-
-| Pattern | When to use | Example |
-|---------|-------------|---------|
-| `ESO-<number>/<kebab-case>` | Any work tied to a Jira ticket (the default) | `ESO-569/fix-scribing-resource-events` |
-| `claude/<kebab-case>` | Exploratory or non-ticket work only | `claude/refactor-worker-pool` |
-
-Rules:
-- Lowercase letters, digits, and hyphens only after the slash.
-- No underscores, spaces, uppercase, or trailing random suffixes.
-- Prefer the `ESO-<ticket>` form whenever a Jira ticket exists — create one first if it doesn't.
-
-This convention is enforced automatically by a `PreToolUse` hook
-(`scripts/validate-branch-name.mjs`, wired up in `.claude/settings.json`) that
-blocks any `git checkout -b`, `git switch -c`, or `git branch <name>` command
-whose branch name does not match.
-
-Optional: [twig](https://github.com/gittwig/twig) for branch stacking (all commands have plain git fallbacks)
-
-**If you've already made changes on main:**
-```
-@workspace Recover from main commits
-```
+- **NEVER commit directly to main** — always work on feature branches (`ESO-XXX/description`)
+- **ALWAYS continue through to PR creation after implementation** (see below)
+- Recovery if on main: `@workspace Recover from main commits`
 
 ---
 
@@ -150,24 +102,7 @@ Self-contained feature areas with their own components, hooks, store slices, and
 
 **Full details**: [AGENTS_TECH_STACK.md](AGENTS_TECH_STACK.md)
 
-### Key Directories
-```
-src/           - Application source code
-tests/         - E2E tests (Playwright)
-documentation/ - Technical documentation
-scripts/       - Build and utility scripts
-data/          - Static data files
-.agents/       - Agent skills (cross-client, agentskills.io spec)
-```
-
-### Path Aliases
-- `@/` -> `src/`
-- `@components/` -> `src/components/`
-- `@features/` -> `src/features/`
-- `@graphql/` -> `src/graphql/`
-- `@store/` -> `src/store/`
-- `@types/` -> `src/types/`
-- `@utils/` -> `src/utils/`
+Path aliases (`@/` → `src/`, `@components/`, `@features/`, etc.) are defined in `tsconfig.json`.
 
 ---
 
@@ -237,217 +172,11 @@ Skills are `SKILL.md` files in `.agents/skills/`, following the [Agent Skills sp
 - **Post-Squash Rebase**: [.agents/skills/rebase/SKILL.md](.agents/skills/rebase/SKILL.md) - Recovery after squash-merge of stacked branches
 - **Rebase & Conflicts**: [.agents/skills/rebase-conflicts/SKILL.md](.agents/skills/rebase-conflicts/SKILL.md) - Rebase branches and resolve merge conflicts step-by-step
 
-### Skill Invocation Examples
-
-**Auth** (Browser Authentication):
-```
-@workspace Check if I have a valid auth token
-@workspace Generate a fresh OAuth token
-@workspace Get the auth injection script
-```
-See: [.agents/skills/auth/SKILL.md](.agents/skills/auth/SKILL.md)
-
-**Class Skill Refresh** (Class Skill Descriptions & Icons):
-```
-@workspace Refresh class skill descriptions from ESO-Hub
-@workspace Update Dragonknight Ardent Flame skill descriptions
-@workspace Apply class skill icon changes from ESO-Hub
-@workspace Dry-run class skill refresh for nightblade siphoning
-```
-See: [.agents/skills/class-skill-regen/SKILL.md](.agents/skills/class-skill-regen/SKILL.md)
-
-**Create PR**:
-```
-@workspace Create a PR for ESO-569
-@workspace Fix my mangled PR description
-```
-See: [.agents/skills/create-pr/SKILL.md](.agents/skills/create-pr/SKILL.md)
-
-**Deploy Preview** (Local Preview Deployments):
-```
-@workspace Deploy a preview of my current branch
-@workspace Deploy a preview with alias "my-feature"
-@workspace Remove the "my-feature" preview
-```
-See: [.agents/skills/deploy-preview/SKILL.md](.agents/skills/deploy-preview/SKILL.md)
-
-**Debug CI Failure**:
-```
-@workspace CI failed on my PR, help me debug
-@workspace What went wrong in the last CI run?
-@workspace Classify the CI failure type
-```
-See: [.agents/skills/debug-ci-failure/SKILL.md](.agents/skills/debug-ci-failure/SKILL.md)
-
-**Fix Lint Errors**:
-```
-@workspace Fix the ESLint errors in my code
-@workspace I have floating promise errors, how do I fix them?
-```
-See: [.agents/skills/fix-lint/SKILL.md](.agents/skills/fix-lint/SKILL.md)
-
-**Fix Type Errors**:
-```
-@workspace Fix TypeScript errors in my code
-@workspace I'm getting "cannot find module" errors
-```
-See: [.agents/skills/fix-types/SKILL.md](.agents/skills/fix-types/SKILL.md)
-
-**Gear Data Regeneration** (Gear Set Bonuses):
-```
-@workspace Update Turning Tide set bonuses from ESO-Hub
-@workspace Add the new set from https://eso-hub.com/en/sets/mothers-sorrow
-@workspace Refresh all Dungeon set bonuses
-```
-See: [.agents/skills/gear-data-regen/SKILL.md](.agents/skills/gear-data-regen/SKILL.md)
-
-**Git Workflow** (Branch Management):
-```
-@workspace Show branch tree
-@workspace Cascade branch changes with force push
-```
-Optional: twig (`npm install -g @gittwig/twig`) — all commands have plain git fallbacks
-See: [.agents/skills/git/SKILL.md](.agents/skills/git/SKILL.md)
-
-**GitHub Actions Logs**:
-```
-@workspace Show me the CI logs for this branch
-@workspace Find TypeScript errors in the failed CI run
-@workspace Save CI logs to a file for analysis
-```
-See: [.agents/skills/github-actions-logs/SKILL.md](.agents/skills/github-actions-logs/SKILL.md)
-
-**Jira** (Work Item Management):
-```
-@workspace View ESO-372
-@workspace Move ESO-569 to "In Progress"
-@workspace Create a new task for fixing the scribing bug
-```
-See: [.agents/skills/jira/SKILL.md](.agents/skills/jira/SKILL.md)
-
-**Playwright — Running Tests**:
-```
-@workspace Run smoke tests
-@workspace Run full tests in headed mode
-@workspace List all playwright test files
-@workspace Run the RosterBuilderPage test
-@workspace Show me the last test results
-```
-See: [.agents/skills/playwright/SKILL.md](.agents/skills/playwright/SKILL.md)
-
-**Playwright — Writing Tests**:
-```
-@workspace Write a Playwright visual regression test for the damage tab
-@workspace Add a strict validation test for the report list page
-@workspace Write a visual test with pre-loaded data for the players view
-```
-See: [.agents/skills/write-playwright-tests/SKILL.md](.agents/skills/write-playwright-tests/SKILL.md)
-
-**Post-Squash Rebase**:
-```
-@workspace Rebase branch tree after ESO-449 was squashed
-```
-See: [.agents/skills/rebase/SKILL.md](.agents/skills/rebase/SKILL.md)
-
-**Rebase & Conflicts**:
-```
-@workspace Rebase my branch onto main
-@workspace Resolve merge conflicts
-@workspace I'm stuck mid-rebase, help me recover
-```
-See: [.agents/skills/rebase-conflicts/SKILL.md](.agents/skills/rebase-conflicts/SKILL.md)
-
-**Report Debugging** (Production Issues):
-```
-@workspace Download report 3gjVGWB2dxCL8XAw
-@workspace Analyze structure of report 3gjVGWB2dxCL8XAw
-```
-See: [.agents/skills/reports/SKILL.md](.agents/skills/reports/SKILL.md)
-
-**Tooling Audit** (Comprehensive Gap Audit):
-```
-@workspace Audit MCP tool coverage, skills, and docs — file tickets for gaps
-@workspace Run a tooling audit and create Jira tickets for missing tools
-@workspace Check for Bash workarounds that should be MCP tools or skills
-@workspace Verify cross-client MCP config parity
-@workspace Audit the ticket-to-PR pipeline for broken handoffs
-```
-See: [.agents/skills/tooling-audit/SKILL.md](.agents/skills/tooling-audit/SKILL.md)
-
-**Rollbar** (Error Tracking):
-```
-@workspace Search for unresolved TypeErrors in Rollbar
-@workspace View Rollbar item 1234567890
-@workspace Resolve Rollbar item 1234567890
-```
-See: [.agents/skills/rollbar/SKILL.md](.agents/skills/rollbar/SKILL.md)
-
-**Skill Data Regeneration** (ESO Skill Lines):
-```
-@workspace List all ESO skill lines
-@workspace Look up ability "Runeblades" in abilities.json
-@workspace Get skill data regeneration instructions
-@workspace Generate validation report for all skill modules
-```
-See: [.agents/skills/skill-data-regen/SKILL.md](.agents/skills/skill-data-regen/SKILL.md)
-
-**Troubleshoot**:
-```
-@workspace Port 3000 is already in use
-@workspace My GraphQL types are stale
-@workspace Nothing works, do a full reset
-```
-See: [.agents/skills/troubleshoot/SKILL.md](.agents/skills/troubleshoot/SKILL.md)
-
-**UESP Data** (Item Icons):
-```
-@workspace Fetch latest item icons from UESP
-@workspace Check icon coverage for our gear data
-@workspace Look up item 147237
-```
-See: [.agents/skills/uesp-data/SKILL.md](.agents/skills/uesp-data/SKILL.md)
-
 ---
 
-## Platform Gotchas (Windows + Git Bash)
+## Platform Gotchas (Windows)
 
-- **Port flags**: Use `//PID` not `/PID` in taskkill — Git Bash converts single-slash flags to Windows paths, silently failing: `taskkill //PID <PID> //F`
-- **Port occupied**: `netstat -ano | findstr :<port>` to find PID, then kill with double-slash flags
-
-### PowerShell — Commit Messages and PR Bodies
-
-PowerShell treats `` ` `` as an escape character inside double-quoted strings, so passing markdown bodies via `-m "..."` or `--body "..."` silently strips backticks (`` `code` `` becomes `\code\`).
-
-**Always use a PowerShell here-string piped to `--file`/`--body-file -`** for any message containing backticks, bold, or multi-line content:
-
-```powershell
-# git commit (use single-quote heredoc to preserve backticks)
-$msg = @'
-feat: my subject line
-
-Body with `backticks` and **bold** works fine here.
-'@
-$msg | Set-Content "$env:TEMP\msg.txt"; git commit --file "$env:TEMP\msg.txt"
-
-# gh pr create
-$body = @'
-## Summary
-Uses `keep_files: true` to preserve existing content.
-'@
-$body | gh pr create --title "my title" --body-file -
-
-# gh pr edit
-$body = @'
-Updated body with `backticks`.
-'@
-$body | gh pr edit 123 --body-file -
-```
-
-**Never** pass markdown bodies as inline arguments on PowerShell:
-```powershell
-git commit -m "feat: fix `code`"          # backticks get eaten
-gh pr create --body "Uses `keep_files`"    # same problem
-```
+PowerShell strips backticks in quoted strings — always use `--body-file` for PR/commit bodies (see [create-pr skill](.agents/skills/create-pr/SKILL.md) and [git skill](.agents/skills/git/SKILL.md)).
 
 ---
 
@@ -460,53 +189,7 @@ gh pr create --body "Uses `keep_files`"    # same problem
 
 ### Documentation Placement
 
-Use this routing table when creating documentation files:
-
-| Filename pattern | Location |
-|-----------------|----------|
-| `AI_*_INSTRUCTIONS.md`, `AI_*_QUICK_REFERENCE.md` | `documentation/ai-agents/[feature]/` |
-| `*ARCHITECTURE*.md`, `DESIGN.md`, `*_PATTERNS.md` | `documentation/architecture/` |
-| `ESO-XXX*IMPLEMENTATION*.md`, `EPIC*.md` | `documentation/implementation/` |
-| Feature README / implementation guides | `documentation/features/[feature-name]/` |
-| `FIX*.md`, `*_FIX.md`, `RESOLUTION*.md` | `documentation/fixes/` |
-| `*TEST*.md`, `PLAYWRIGHT*.md`, `SMOKE*.md` | `documentation/testing/` |
-| `README-*.md` (script docs) | `scripts/` (next to the script) |
-| `SESSION*.md`, `HANDOFF*.md`, `YYYY-MM-DD*.md` | `documentation/sessions/` |
-| Top-level quickstarts / deployment / coverage | `documentation/` |
-
-Always check `documentation/INDEX.md` after creating a new file — add a row if the file belongs in the index. Full guidelines: [documentation/DOCUMENTATION_BEST_PRACTICES.md](documentation/DOCUMENTATION_BEST_PRACTICES.md)
-
-### Testing Tool Usage
-- Playwright E2E (running): use the `Run Playwright Tests` skill (`.agents/skills/playwright/SKILL.md`)
-- Playwright E2E (writing): use the `Write Playwright Tests` skill (`.agents/skills/write-playwright-tests/SKILL.md`)
-- Dev tools & unit tests: use the `Dev and Testing Tools` skill (`.agents/skills/testing/SKILL.md`)
-- Avoid: Ad-hoc CLI commands without structure
-
----
-
-## Testing Workflow
-
-```bash
-npm test                                       # Unit tests (changed files, watch mode)
-npm test -- --watchAll=false                   # All unit tests, non-interactive
-npm test -- --testPathPattern="MyComponent"    # Single test file
-npm run test:coverage                          # Coverage report
-npm run test:smoke:e2e                         # Quick E2E validation
-npm run test:full                              # Full E2E suite
-```
-
-**Testing documentation**: [documentation/testing/](documentation/testing/)
-
----
-
-## Quick Start
-
-1. Install Node.js 20+
-2. `npm ci` - Install dependencies
-3. `npm run codegen` - Generate GraphQL types
-4. `npm run dev` - Start development server
-5. `npm test` - Verify setup
-6. `npm run validate` - Before committing
+New docs go in `documentation/` subdirectories by type. Check `documentation/INDEX.md` after creating files. Full guidelines: [DOCUMENTATION_BEST_PRACTICES.md](documentation/DOCUMENTATION_BEST_PRACTICES.md)
 
 ---
 
@@ -515,13 +198,7 @@ npm run test:full                              # Full E2E suite
 | Issue | Solution |
 |-------|----------|
 | GraphQL errors | `npm run codegen` |
-| Type errors | `npm run typecheck` |
-| Port occupied | `netstat -ano \| findstr :<port>` -> `taskkill //PID <PID> //F` |
-| Build fails | Check `GENERATE_SOURCEMAP=true` for Sentry debugging |
 | Module errors | Delete `node_modules/`, run `npm ci` |
-| Test failures | `npm run test:coverage` |
-| Build issues | `make clean` or manual cleanup |
-| Port in use | Kill process or use next worktree slot — see [.claude-rules.md](.claude-rules.md) |
 | Memory issues | Increase NODE_OPTIONS in package.json |
 
 ---
@@ -538,11 +215,3 @@ npm run test:full                              # Full E2E suite
 
 ---
 
-## Context Loading Strategy
-
-**AI agents should use layered loading**:
-1. **Always**: This file (quick reference)
-2. **On demand**: Feature-specific guides when working on that feature
-3. **Explicit**: Deep architecture docs only when explicitly needed
-
-**Why**: Reduces token usage by 60-70% while maintaining functionality
