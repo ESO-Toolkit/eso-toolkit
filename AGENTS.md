@@ -23,6 +23,16 @@ npm run codegen                      # Generate GraphQL types (required after sc
 npm run test:smoke:e2e               # Quick E2E check
 ```
 
+**Worktree setup** (after `worktree_create` or creating a new worktree):
+```bash
+make wt-setup WT=D:/code/eso-log-aggregator-worktrees/ESO-XXX/description
+  # Junctions node_modules -> main repo (if package-lock.json matches) or runs npm ci
+  # Copies .env from main repo
+  # Junctions .twig from main repo (if present)
+make kill-stale                      # Kill stale Node.js processes holding port/file locks
+make refresh                         # Pull latest main + npm ci (run from main repo)
+```
+
 > **Before creating any PR**: run `npm run validate` AND `npm test -- --watchAll=false` — both must pass with zero errors/warnings. Do not open a PR or move a ticket to "In Review" until they do.
 
 **E2E Testing**: Use VS Code MCP Playwright tool (structured testing) or Agent Skills (exploratory)
