@@ -47,12 +47,59 @@ function iconNameToUrl(iconName: string): string {
  * Returns a CDN URL, or null if the item isn't in the local data.
  */
 function lookupLocal(itemId: number): string | null {
+  const iconName = lookupIconName(itemId);
+  return iconName ? iconNameToUrl(iconName) : null;
+}
+
+/** Look up the raw icon filename (without CDN prefix or extension) from local data. */
+function lookupIconName(itemId: number): string | null {
   const typedData = iconData as { icons: string[]; items: Record<string, number> };
   const index = typedData.items[String(itemId)];
   if (index === undefined) return null;
-  const iconName = typedData.icons[index];
+  return typedData.icons[index] ?? null;
+}
+
+/**
+ * UESP gear-icon tokens → ESO weapon type labels.
+ * Derived from icon filenames like `gear_argonian_1hsword_d`. The icon is the
+ * only per-item weapon-type signal available — itemIdMap only tags the slot
+ * (`weapon` / `offhand`), not the specific weapon. Staff icons don't
+ * distinguish fire/frost/lightning/resto, so they map to a generic "Staff".
+ */
+const WEAPON_ICON_TOKEN_LABELS: Record<string, string> = {
+  '1haxe': 'Axe',
+  '1hsword': 'Sword',
+  '1hhammer': 'Mace',
+  '1hmace': 'Mace',
+  '1hammer': 'Mace',
+  '1hhamer': 'Mace',
+  '1hdagger': 'Dagger',
+  '2haxe': 'Battle Axe',
+  '2hsword': 'Greatsword',
+  '2hhammer': 'Maul',
+  '2hmace': 'Maul',
+  dagger: 'Dagger',
+  bow: 'Bow',
+  staff: 'Staff',
+  shield: 'Shield',
+};
+
+const WEAPON_ICON_TOKEN_RE = new RegExp(
+  `_(${Object.keys(WEAPON_ICON_TOKEN_LABELS).join('|')})(?:_|$)`,
+);
+
+/**
+ * Derive the specific weapon-type label (e.g. "Sword", "Dagger", "Bow") from
+ * an item ID by parsing the token embedded in its UESP icon filename.
+ * Returns null when the item isn't in the local icon data or its icon
+ * doesn't match a known weapon token.
+ */
+export function getWeaponTypeLabel(itemId: number | null | undefined): string | null {
+  if (!itemId || itemId <= 0) return null;
+  const iconName = lookupIconName(itemId);
   if (!iconName) return null;
-  return iconNameToUrl(iconName);
+  const match = iconName.match(WEAPON_ICON_TOKEN_RE);
+  return match ? (WEAPON_ICON_TOKEN_LABELS[match[1]] ?? null) : null;
 }
 
 /**

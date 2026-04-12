@@ -53,6 +53,7 @@ import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import {
   getItemIconUrl,
   fetchItemIconUrl,
+  getWeaponTypeLabel,
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
@@ -468,7 +469,18 @@ const GearSlotDisplay: React.FC<{
     });
   }, [resolvedIconId, iconUrl]);
 
-  const displayName = itemInfo?.name ?? `Item #${itemId}`;
+  // itemIdMap only tags items with slot='weapon'/'offhand' — not the specific
+  // type. Derive Sword/Dagger/Bow/Staff/Shield/… from the UESP icon filename
+  // and swap the generic suffix (" Weapon", " Off-Hand", " Offhand") for it.
+  const rawName = itemInfo?.name ?? `Item #${itemId}`;
+  const weaponTypeLabel =
+    itemInfo?.slot === 'weapon' || itemInfo?.slot === 'offhand' ? getWeaponTypeLabel(itemId) : null;
+  const genericWeaponSuffix = weaponTypeLabel
+    ? [' Weapon', ' Off-Hand', ' Offhand'].find((s) => rawName.endsWith(s))
+    : undefined;
+  const displayName = genericWeaponSuffix
+    ? rawName.slice(0, -genericWeaponSuffix.length) + ' ' + weaponTypeLabel
+    : rawName;
   const setName = itemInfo?.setName;
   const traitLabel = trait ? getTraitName(trait) : null;
   const enchantLabel = enchant ? getEnchantName(enchant) : null;
