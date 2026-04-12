@@ -61,7 +61,26 @@ const slotLabelMap: Record<SlotType, SlotLabelConfig> = {
   offhand: { defaultLabel: 'Off-Hand' },
 };
 
-const nameSuffixes = [' Gear', ' Weapon', ' Jewelry'];
+const nameSuffixes = [
+  ' Gear',
+  ' Weapon',
+  ' Jewelry',
+  // Slot-specific labels that may need replacement when wardrobe/collection
+  // data corrects an item's slot (e.g. a ring-tagged item placed in a weapon slot).
+  ' Head',
+  ' Necklace',
+  ' Chest',
+  ' Shoulders',
+  ' Hands',
+  ' Gloves',
+  ' Bracers',
+  ' Gauntlets',
+  ' Waist',
+  ' Legs',
+  ' Feet',
+  ' Ring',
+  ' Off-Hand',
+];
 
 function resolveSlotLabel(slot?: SlotType, weight?: ArmorWeight): string | undefined {
   if (!slot) {
