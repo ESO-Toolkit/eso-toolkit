@@ -95,12 +95,28 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
  * Smoothly interpolates a wipe color based on boss health % remaining.
  * 100% health remaining (players died fast) → red
  * 0% health remaining (almost killed boss) → green
- * Uses HSL so the transition is continuous through orange → yellow → lime.
+ * Uses HSL so the transition is continuous through orange → yellow → lime,
+ * but returns a hex string so existing `${color}30`-style alpha concatenation
+ * (borders, shadows, hover tints) keeps producing valid CSS.
  */
 function getWipeHealthGradientColor(percentage: number): string {
   const clamped = Math.max(0, Math.min(100, percentage));
   const hue = ((100 - clamped) / 100) * 120; // 100% → 0 (red), 0% → 120 (green)
-  return `hsl(${hue}, 80%, 55%)`;
+  return hslToHex(hue, 80, 55);
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const sNorm = s / 100;
+  const lNorm = l / 100;
+  const a = sNorm * Math.min(lNorm, 1 - lNorm);
+  const channel = (n: number): string => {
+    const k = (n + h / 30) % 12;
+    const value = lNorm - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * value)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${channel(0)}${channel(8)}${channel(4)}`;
 }
 
 /**
