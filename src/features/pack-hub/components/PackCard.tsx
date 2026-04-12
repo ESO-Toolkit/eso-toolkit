@@ -52,7 +52,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
-      const deepLink = getAddonManagerDeepLink(pack.id, { preserveSettings: true });
+      const deepLink = getAddonManagerDeepLink(pack.id);
       void navigator.clipboard.writeText(deepLink).then(
         () => enqueueSnackbar('Deep link copied to clipboard!', { variant: 'success' }),
         () => enqueueSnackbar('Failed to copy link', { variant: 'error' }),
@@ -61,7 +61,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
 
     const handleInstall = (e: React.MouseEvent): void => {
       e.stopPropagation();
-      const deepLink = getAddonManagerDeepLink(pack.id, { preserveSettings: true });
+      const deepLink = getAddonManagerDeepLink(pack.id);
       cancelDeepLinkRef.current?.();
       cancelDeepLinkRef.current = tryLaunchDeepLink(deepLink, () => {
         void navigator.clipboard.writeText(deepLink).catch(() => {});

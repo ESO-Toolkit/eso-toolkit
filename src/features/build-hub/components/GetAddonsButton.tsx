@@ -25,7 +25,7 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
   iconOnly = false,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
-  const deepLink = getAddonManagerDeepLink(packId, { preserveSettings: true });
+  const deepLink = getAddonManagerDeepLink(packId);
   const cancelRef = React.useRef<(() => void) | undefined>(undefined);
 
   React.useEffect(() => () => cancelRef.current?.(), []);
