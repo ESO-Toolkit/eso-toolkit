@@ -200,6 +200,72 @@ export const ESO_ENCHANTS: ReadonlyArray<EnchantDef> = [
     slotTypes: ['jewelry'],
     stat: 'Reduces Block cost',
   },
+  {
+    id: 'potion-speed',
+    name: 'Glyph of Potion Speed',
+    slotTypes: ['jewelry'],
+    stat: 'Reduces Potion cooldown',
+  },
+  {
+    id: 'potion-boost',
+    name: 'Glyph of Potion Boost',
+    slotTypes: ['jewelry'],
+    stat: 'Increases Potion duration',
+  },
+  {
+    id: 'reduce-skill-cost',
+    name: 'Glyph of Reduce Skill Cost',
+    slotTypes: ['jewelry'],
+    stat: 'Reduces Health, Magicka & Stamina costs',
+  },
+  {
+    id: 'decrease-spell-harm',
+    name: 'Glyph of Decrease Spell Harm',
+    slotTypes: ['jewelry'],
+    stat: '+Spell Resistance',
+  },
+  {
+    id: 'decrease-physical-harm',
+    name: 'Glyph of Decrease Physical Harm',
+    slotTypes: ['jewelry'],
+    stat: '+Physical Resistance',
+  },
+  {
+    id: 'bracing',
+    name: 'Glyph of Bracing',
+    slotTypes: ['jewelry'],
+    stat: 'Reduces Block cost',
+  },
+  {
+    id: 'flame-resist',
+    name: 'Glyph of Flame Resist',
+    slotTypes: ['jewelry'],
+    stat: '+Fire Resistance',
+  },
+  {
+    id: 'frost-resist',
+    name: 'Glyph of Frost Resist',
+    slotTypes: ['jewelry'],
+    stat: '+Frost Resistance',
+  },
+  {
+    id: 'shock-resist',
+    name: 'Glyph of Shock Resist',
+    slotTypes: ['jewelry'],
+    stat: '+Shock Resistance',
+  },
+  {
+    id: 'poison-resist',
+    name: 'Glyph of Poison Resist',
+    slotTypes: ['jewelry'],
+    stat: '+Poison Resistance',
+  },
+  {
+    id: 'disease-resist',
+    name: 'Glyph of Disease Resist',
+    slotTypes: ['jewelry'],
+    stat: '+Disease Resistance',
+  },
 ] as const;
 
 /** Quick lookup by enchant ID. */
