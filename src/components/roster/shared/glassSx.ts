@@ -33,7 +33,7 @@ export const GLASS_SX_LIGHT: Record<string, unknown> = {
   },
 };
 
-/** @deprecated Use `isDark ? GLASS_SX_DARK : GLASS_SX_LIGHT` for stable object references. */
+/** @deprecated Use `isDark ? GLASS_SX_DARK : GLASS_SX_LIGHT` directly for a stable object reference. Kept for backward compatibility — callers that have not yet migrated will continue to work but will receive a new object reference on every call. */
 export const makeGlassSx = (isDark: boolean): Record<string, unknown> =>
   isDark ? GLASS_SX_DARK : GLASS_SX_LIGHT;
 
@@ -55,7 +55,7 @@ export const SECTION_BOX_SX_LIGHT: Record<string, unknown> = {
   border: '1px solid rgba(0,0,0,0.04)',
 };
 
-/** @deprecated Use `isDark ? SECTION_BOX_SX_DARK : SECTION_BOX_SX_LIGHT` for stable object references. */
+/** @deprecated Use `isDark ? SECTION_BOX_SX_DARK : SECTION_BOX_SX_LIGHT` directly for a stable object reference. Kept for backward compatibility — callers that have not yet migrated will continue to work but will receive a new object reference on every call. */
 export const makeSectionBoxSx = (isDark: boolean): Record<string, unknown> =>
   isDark ? SECTION_BOX_SX_DARK : SECTION_BOX_SX_LIGHT;
 
@@ -83,6 +83,6 @@ export const SECTION_HEADER_SX_LIGHT: Record<string, unknown> = {
   mb: 1,
 };
 
-/** @deprecated Use `isDark ? SECTION_HEADER_SX_DARK : SECTION_HEADER_SX_LIGHT` for stable object references. */
+/** @deprecated Use `isDark ? SECTION_HEADER_SX_DARK : SECTION_HEADER_SX_LIGHT` directly for a stable object reference. Kept for backward compatibility — callers that have not yet migrated will continue to work but will receive a new object reference on every call. */
 export const makeSectionHeaderSx = (isDark: boolean): Record<string, unknown> =>
   isDark ? SECTION_HEADER_SX_DARK : SECTION_HEADER_SX_LIGHT;
