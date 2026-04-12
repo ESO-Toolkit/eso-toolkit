@@ -270,6 +270,14 @@ jobs:
           path: playwright-report-nightly/
           retention-days: 30
 
+      - name: Upload Blob Report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nightly-blob-shard-${{ matrix.shard }}
+          path: blob-report-nightly/
+          retention-days: 1
+
       - name: Comment Test Results on PR
         uses: actions/github-script@v8
         if: always() && github.event_name == 'workflow_dispatch'
@@ -494,11 +502,76 @@ jobs:
               });
             }
 
+  # Merge per-shard blob reports into a single HTML report and deploy to GitHub Pages
+  deploy-report:
+    name: "Deploy Report"
+    runs-on: ubuntu-latest
+    needs: [nightly-tests]
+    if: always() && needs.nightly-tests.result != 'cancelled'
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      report-url: ${{ steps.url.outputs.report-url }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-node-with-cache
+
+      - name: Download Blob Reports
+        uses: actions/download-artifact@v8
+        with:
+          path: ./all-blob-reports
+          pattern: nightly-blob-shard-*
+          merge-multiple: true
+
+      - name: Merge Reports
+        run: |
+          if ls ./all-blob-reports/*.zip 1>/dev/null 2>&1; then
+            echo "📊 Merging blob reports from all shards..."
+            npx playwright merge-reports --reporter html ./all-blob-reports
+            echo "✅ Merged report generated in playwright-report/"
+          else
+            echo "⚠️ No blob reports found — skipping merge"
+            mkdir -p playwright-report
+            cat > playwright-report/index.html << 'FALLBACK'
+          <!DOCTYPE html>
+          <html><head><title>Nightly Report Unavailable</title></head>
+          <body><h1>No report data</h1><p>Blob reports were not generated. Check the workflow run for details.</p></body></html>
+          FALLBACK
+          fi
+
+      - name: Generate Deploy Token
+        id: generate-deploy-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: eso-log-aggregator-reports
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ steps.generate-deploy-token.outputs.token }}
+          external_repository: ESO-Toolkit/eso-log-aggregator-reports
+          publish_dir: ./playwright-report
+          destination_dir: nightly-tests/${{ github.run_number }}
+          keep_files: true
+
+      - name: Set Report URL
+        id: url
+        run: echo "report-url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/nightly-tests/${{ github.run_number }}/" >> "$GITHUB_OUTPUT"
+
   # Post nightly test results to Discord, replying in the thread opened by notify-nightly-start
   discord-notify:
     name: "Nightly Results"
     runs-on: ubuntu-latest
-    needs: [setup, nightly-tests, consolidate-results, notify-nightly-start]
+    needs: [setup, nightly-tests, consolidate-results, notify-nightly-start, deploy-report]
     if: always()
     timeout-minutes: 3
     permissions:
@@ -529,9 +602,16 @@ jobs:
           SHARDS="${{ needs.setup.outputs.total_shards }}"
           TRIGGER="${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          REPORT_URL="${{ needs.deploy-report.outputs.report-url }}"
+
+          # Build description with report link if available
           {
             echo 'description<<EOF_NOTIFY'
-            echo "**[View Run](${RUN_URL})**"
+            if [ -n "$REPORT_URL" ]; then
+              echo "**[View Report](${REPORT_URL})** · **[View Run](${RUN_URL})**"
+            else
+              echo "**[View Run](${RUN_URL})**"
+            fi
             echo ""
             echo "**Shards:** ${SHARDS} · **Trigger:** ${TRIGGER}"
             echo 'EOF_NOTIFY'
