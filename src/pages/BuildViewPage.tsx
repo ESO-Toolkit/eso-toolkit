@@ -449,11 +449,11 @@ const GearSlotDisplay: React.FC<{
   // For type 2, resolve the correct slot-specific ID via getSetItemsBySlot so we get the right icon.
   const resolvedIconId = (() => {
     if (!itemInfo) return itemId; // not in itemIdMap → treat as real UESP ID
-    if (itemInfo.slot) return itemId; // already slot-specific → icon lookup is correct
-    // Generic set ID: find the slot-specific item for this set + slot
-    const slotType = SLOT_INDEX_TO_TYPE[slotIndex];
-    if (!slotType) return null;
-    const slotItems = getSetItemsBySlot(itemInfo.setName, slotType);
+    const expectedSlot = SLOT_INDEX_TO_TYPE[slotIndex];
+    if (itemInfo.slot && itemInfo.slot === (expectedSlot ?? itemInfo.slot)) return itemId;
+    // Generic set ID or slot mismatch: find the slot-specific item for this set + slot
+    if (!expectedSlot) return null;
+    const slotItems = getSetItemsBySlot(itemInfo.setName, expectedSlot);
     return slotItems[0] ?? null; // use first match (all CP160 variants share the same icon)
   })();
 

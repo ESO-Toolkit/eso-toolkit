@@ -16,11 +16,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
-import {
-  TankSetup,
-  RosterDetailLevel,
-  validateCompatibility,
-} from '../../types/roster';
+import { TankSetup, RosterDetailLevel, validateCompatibility } from '../../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { tankSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';

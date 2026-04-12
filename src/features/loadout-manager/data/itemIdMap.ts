@@ -61,7 +61,28 @@ const slotLabelMap: Record<SlotType, SlotLabelConfig> = {
   offhand: { defaultLabel: 'Off-Hand' },
 };
 
-const nameSuffixes = [' Gear', ' Weapon', ' Jewelry'];
+const nameSuffixes = [
+  ' Gear',
+  ' Weapon',
+  ' Jewelry',
+  // Slot-specific labels that may need replacement when wardrobe/collection
+  // data corrects an item's slot (e.g. a ring-tagged item placed in a weapon slot).
+  ' Head',
+  ' Neck',
+  ' Necklace',
+  ' Chest',
+  ' Shoulders',
+  ' Hands',
+  ' Gloves',
+  ' Bracers',
+  ' Gauntlets',
+  ' Waist',
+  ' Legs',
+  ' Feet',
+  ' Ring',
+  ' Offhand',
+  ' Off-Hand',
+];
 
 function resolveSlotLabel(slot?: SlotType, weight?: ArmorWeight): string | undefined {
   if (!slot) {
@@ -84,7 +105,14 @@ function applySlotLabel(name: string, slotLabel?: string): string {
 
   for (const suffix of nameSuffixes) {
     if (name.endsWith(suffix)) {
-      return name.slice(0, -suffix.length) + ' ' + slotLabel;
+      const result = name.slice(0, -suffix.length) + ' ' + slotLabel;
+      // Guard against double suffixes when set name ends with a slot word
+      // (e.g. "Oakensoul Ring" set → "Oakensoul Ring Ring" → deduplicate)
+      const doubled = ' ' + slotLabel + ' ' + slotLabel;
+      if (result.endsWith(doubled)) {
+        return result.slice(0, -(slotLabel.length + 1));
+      }
+      return result;
     }
   }
 
@@ -155367,7 +155395,7 @@ export const itemIdMap: Record<number, ItemInfo> = {
     type: 'Gear',
     slot: 'neck',
   },
-  187658: { name: 'Oakensoul Ring Ring', setName: 'Oakensoul Ring', type: 'Gear', slot: 'ring' },
+  187658: { name: 'Oakensoul Ring', setName: 'Oakensoul Ring', type: 'Gear', slot: 'ring' },
   187752: {
     name: 'Perfected Whorl of the Depths Ring',
     setName: 'Perfected Whorl of the Depths',
@@ -203580,15 +203608,6 @@ export function getItemInfo(itemId: number): ItemInfo | undefined {
 
   itemIdMap[itemId] = updatedInfo;
   return updatedInfo;
-}
-
-/**
- * Get item name by ID
- * @param itemId The item ID from combat logs
- * @returns Item name or undefined if not found
- */
-export function getItemName(itemId: number): string | undefined {
-  return itemIdMap[itemId]?.name;
 }
 
 /**
