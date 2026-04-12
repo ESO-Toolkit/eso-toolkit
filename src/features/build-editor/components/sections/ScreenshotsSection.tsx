@@ -16,14 +16,15 @@ import { addScreenshot, removeScreenshot } from '../../store/buildEditorSlice';
 
 const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
 
-export const ScreenshotsSection: React.FC = () => {
+export const ScreenshotsSection: React.FC = React.memo(function ScreenshotsSection() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const { enqueueSnackbar } = useSnackbar();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const screenshots = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.screenshots,
+  );
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -59,7 +60,7 @@ export const ScreenshotsSection: React.FC = () => {
         Screenshots of character stats, gear, or skills.
       </Typography>
 
-      {setup.screenshots.length === 0 ? (
+      {!screenshots || screenshots.length === 0 ? (
         <Box
           sx={{
             textAlign: 'center',
@@ -104,7 +105,7 @@ export const ScreenshotsSection: React.FC = () => {
         <>
           <Grid container spacing={1}>
             <AnimatePresence>
-              {setup.screenshots.map((src, i) => (
+              {screenshots.map((src, i) => (
                 <Grid size={{ xs: 6, sm: 4 }} key={src.slice(0, 48) + i}>
                   <motion.div
                     layout={!prefersReduced}
@@ -211,4 +212,4 @@ export const ScreenshotsSection: React.FC = () => {
       />
     </Stack>
   );
-};
+});

@@ -25,7 +25,7 @@ import {
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { saveBuild } from '@/store/saved_builds';
@@ -57,27 +57,32 @@ export const BuildEditorLayout: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
-  const { isDirty, build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
+
+  // Use refs for save handler to avoid re-subscribing on every build change
+  const buildRef = useRef(useSelector((s: RootState) => s.buildEditor.build));
+  const setupIndexRef = useRef(useSelector((s: RootState) => s.buildEditor.activeSetupIndex));
+  // Keep refs in sync via selectors (stable subscription, ref update is cheap)
+  buildRef.current = useSelector((s: RootState) => s.buildEditor.build);
+  setupIndexRef.current = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
 
   // Warn user before leaving with unsaved changes
-  const handleBeforeUnload = useCallback(
-    (e: BeforeUnloadEvent) => {
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
       if (!isDirty) return;
       e.preventDefault();
-    },
-    [isDirty],
-  );
-
-  useEffect(() => {
+    };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [handleBeforeUnload]);
+  }, [isDirty]);
 
   // Ctrl+S / Cmd+S keyboard shortcut to save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
+        const build = buildRef.current;
+        const activeSetupIndex = setupIndexRef.current;
         if (!build.name.trim()) return;
         try {
           localStorage.setItem(
@@ -93,7 +98,7 @@ export const BuildEditorLayout: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [build, activeSetupIndex, dispatch]);
+  }, [dispatch]);
 
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>

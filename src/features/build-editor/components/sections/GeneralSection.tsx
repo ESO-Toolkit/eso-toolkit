@@ -53,16 +53,19 @@ const sectionLabelSx = {
   fontFamily: 'Space Grotesk, Inter, system-ui',
 };
 
-export const GeneralSection: React.FC = () => {
+export const GeneralSection: React.FC = React.memo(function GeneralSection() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build } = useSelector((s: RootState) => s.buildEditor);
+  const esoClass = useSelector((s: RootState) => s.buildEditor.build.esoClass);
+  const role = useSelector((s: RootState) => s.buildEditor.build.role);
+  const gameMode = useSelector((s: RootState) => s.buildEditor.build.gameMode);
+  const selectedRaces = useSelector((s: RootState) => s.buildEditor.build.races);
 
   const toggleRace = (raceId: string): void => {
-    const next = build.races.includes(raceId)
-      ? build.races.filter((r) => r !== raceId)
-      : [...build.races, raceId];
+    const next = selectedRaces.includes(raceId)
+      ? selectedRaces.filter((r) => r !== raceId)
+      : [...selectedRaces, raceId];
     dispatch(setBuildRaces(next));
   };
 
@@ -93,7 +96,7 @@ export const GeneralSection: React.FC = () => {
           label: c.label,
           color: c.color,
         }))}
-        value={build.esoClass}
+        value={esoClass}
         onChange={(id) => dispatch(setBuildClass(id as ESOClass))}
         columns={4}
       />
@@ -107,7 +110,7 @@ export const GeneralSection: React.FC = () => {
           color: r.color,
           description: r.label,
         }))}
-        value={build.role}
+        value={role}
         onChange={(id) => dispatch(setBuildRole(id as CombatRole))}
         columns={5}
       />
@@ -119,7 +122,7 @@ export const GeneralSection: React.FC = () => {
           id: m.id,
           label: m.label,
         }))}
-        value={build.gameMode}
+        value={gameMode}
         onChange={(id) => dispatch(setBuildGameMode(id as GameMode))}
         columns={2}
       />
@@ -185,7 +188,7 @@ export const GeneralSection: React.FC = () => {
                   }}
                 >
                   {races.map((race) => {
-                    const selected = build.races.includes(race.id);
+                    const selected = selectedRaces.includes(race.id);
                     return (
                       <Box key={race.id} sx={{ position: 'relative' }}>
                         <ButtonBase
@@ -291,7 +294,7 @@ export const GeneralSection: React.FC = () => {
           {(() => {
             const imperial = ESO_RACES.find((r) => r.alliance === 'any');
             if (!imperial) return null;
-            const selected = build.races.includes(imperial.id);
+            const selected = selectedRaces.includes(imperial.id);
             const color = '#94a3b8';
             return (
               <Box>
@@ -430,4 +433,4 @@ export const GeneralSection: React.FC = () => {
       </Box>
     </Stack>
   );
-};
+});

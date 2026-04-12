@@ -14,11 +14,14 @@ import type { SectionId } from '../theme/buildEditorTokens';
 export type SectionProgressMap = Record<SectionId, boolean>;
 
 export const useSectionProgress = (): SectionProgressMap => {
-  const build = useSelector((s: RootState) => s.buildEditor.build);
-  const activeSetupIndex = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
+  const setup = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex],
+  );
+  const buildName = useSelector((s: RootState) => s.buildEditor.build.name);
+  const classSkillLines = useSelector((s: RootState) => s.buildEditor.build.classSkillLines);
+  const guideContent = useSelector((s: RootState) => s.buildEditor.build.guide.content);
 
   return useMemo(() => {
-    const setup = build.setups[activeSetupIndex];
     if (!setup) {
       return Object.fromEntries(
         BE_TOKENS.sectionIds.map((id) => [id, false]),
@@ -26,8 +29,8 @@ export const useSectionProgress = (): SectionProgressMap => {
     }
 
     return {
-      general: build.name.trim().length > 0,
-      subclassing: build.classSkillLines.every((line) => line != null),
+      general: buildName.trim().length > 0,
+      subclassing: classSkillLines.every((line) => line != null),
       character:
         setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina > 0 ||
         setup.mundusStone !== '',
@@ -42,8 +45,8 @@ export const useSectionProgress = (): SectionProgressMap => {
       consumables: setup.consumables.potions.length > 0 || Boolean(setup.consumables.food.name),
       passives: setup.passives.length > 0,
       stats: true, // always complete — stats are derived, not user-entered
-      guide: build.guide.content.trim().length > 0 || setup.screenshots.length > 0,
+      guide: guideContent.trim().length > 0 || setup.screenshots.length > 0,
       settings: true, // always has defaults
     };
-  }, [build, activeSetupIndex]);
+  }, [setup, buildName, classSkillLines, guideContent]);
 };

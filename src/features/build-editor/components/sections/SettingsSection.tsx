@@ -20,11 +20,12 @@ const VISIBILITY_OPTIONS = [
   { id: 'private' as const, label: 'Private', description: 'Only you can view' },
 ];
 
-export const SettingsSection: React.FC = () => {
+export const SettingsSection: React.FC = React.memo(function SettingsSection() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build } = useSelector((s: RootState) => s.buildEditor);
+  const visibility = useSelector((s: RootState) => s.buildEditor.build.settings.visibility);
+  const setupCount = useSelector((s: RootState) => s.buildEditor.build.setups.length);
 
   return (
     <Stack spacing={2.5}>
@@ -32,7 +33,7 @@ export const SettingsSection: React.FC = () => {
       <IconPickerGrid
         label="Visibility"
         options={VISIBILITY_OPTIONS}
-        value={build.settings.visibility}
+        value={visibility}
         onChange={(id) => dispatch(setVisibility(id as BuildVisibility))}
         columns={3}
       />
@@ -43,8 +44,6 @@ export const SettingsSection: React.FC = () => {
           p: 1.5,
           borderRadius: 2.5,
           background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.015)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
           boxShadow: isDark
             ? 'inset 0 1px 0 rgba(255,255,255,0.03)'
@@ -71,10 +70,10 @@ export const SettingsSection: React.FC = () => {
           color="text.disabled"
           sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
         >
-          {build.setups.length} setup{build.setups.length !== 1 ? 's' : ''} configured. Manage
-          setups in the setup bar below. Double-click a tab to rename.
+          {setupCount} setup{setupCount !== 1 ? 's' : ''} configured. Manage setups in the setup bar
+          below. Double-click a tab to rename.
         </Typography>
       </Box>
     </Stack>
   );
-};
+});

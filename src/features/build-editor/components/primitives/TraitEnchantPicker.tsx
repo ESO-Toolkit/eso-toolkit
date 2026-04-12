@@ -74,8 +74,7 @@ export const TraitEnchantPicker: React.FC<TraitEnchantPickerProps> = ({
             maxWidth: 280,
             maxHeight: 340,
             overflow: 'hidden',
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
-            backdropFilter: 'blur(20px)',
+            background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(255, 255, 255, 0.97)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
             boxShadow: isDark
               ? '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)'

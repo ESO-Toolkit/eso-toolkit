@@ -23,12 +23,14 @@ import { setStatOverrides as setStatOverridesAction } from '../../store/buildEdi
 import { StatBreakdown } from '../primitives/StatBreakdown';
 import { StatGauge } from '../primitives/StatGauge';
 
-export const StatsSection: React.FC = () => {
+export const StatsSection: React.FC = React.memo(function StatsSection() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const build = useSelector((s: RootState) => s.buildEditor.build);
+  const setup = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex],
+  );
 
   const [buffsExpanded, setBuffsExpanded] = useState(false);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
@@ -244,4 +246,4 @@ export const StatsSection: React.FC = () => {
       </Box>
     </Stack>
   );
-};
+});

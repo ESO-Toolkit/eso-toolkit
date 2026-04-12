@@ -13,15 +13,13 @@ import type { RootState } from '@/store/storeWithHistory';
 import { setChampionPoints } from '../../store/buildEditorSlice';
 import { ChampionPointsPicker } from '../pickers/ChampionPointsPicker';
 
-export const ChampionSection: React.FC = () => {
+export const ChampionSection: React.FC = React.memo(function ChampionSection() {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const cp = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.cp,
+  );
 
   return (
-    <ChampionPointsPicker
-      cp={setup.cp}
-      onChange={(updated) => dispatch(setChampionPoints(updated))}
-    />
+    <ChampionPointsPicker cp={cp} onChange={(updated) => dispatch(setChampionPoints(updated))} />
   );
-};
+});

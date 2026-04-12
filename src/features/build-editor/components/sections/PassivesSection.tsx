@@ -13,15 +13,13 @@ import type { RootState } from '@/store/storeWithHistory';
 import { setPassives } from '../../store/buildEditorSlice';
 import { PassivesPicker } from '../pickers/PassivesPicker';
 
-export const PassivesSection: React.FC = () => {
+export const PassivesSection: React.FC = React.memo(function PassivesSection() {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const passives = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.passives,
+  );
 
   return (
-    <PassivesPicker
-      passives={setup.passives}
-      onChange={(updated) => dispatch(setPassives(updated))}
-    />
+    <PassivesPicker passives={passives} onChange={(updated) => dispatch(setPassives(updated))} />
   );
-};
+});

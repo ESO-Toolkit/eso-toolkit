@@ -12,11 +12,14 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/store/storeWithHistory';
 
 export const useBuildCompleteness = (): number => {
-  const build = useSelector((s: RootState) => s.buildEditor.build);
-  const activeSetupIndex = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
+  const setup = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex],
+  );
+  const buildName = useSelector((s: RootState) => s.buildEditor.build.name);
+  const races = useSelector((s: RootState) => s.buildEditor.build.races);
+  const guideContent = useSelector((s: RootState) => s.buildEditor.build.guide.content);
 
   return useMemo(() => {
-    const setup = build.setups[activeSetupIndex];
     if (!setup) return 0;
 
     let score = 0;
@@ -24,7 +27,7 @@ export const useBuildCompleteness = (): number => {
 
     // Build name (required, weight 10)
     maxScore += 10;
-    if (build.name.trim().length > 0) score += 10;
+    if (buildName.trim().length > 0) score += 10;
 
     // Class (always set, weight 5)
     maxScore += 5;
@@ -36,7 +39,7 @@ export const useBuildCompleteness = (): number => {
 
     // Races (weight 5)
     maxScore += 5;
-    if (build.races.length > 0) score += 5;
+    if (races.length > 0) score += 5;
 
     // Attributes (weight 10 — at least 1 point allocated)
     maxScore += 10;
@@ -68,8 +71,8 @@ export const useBuildCompleteness = (): number => {
 
     // Guide (weight 5 — has content)
     maxScore += 5;
-    if (build.guide.content.trim().length > 0) score += 5;
+    if (guideContent.trim().length > 0) score += 5;
 
     return Math.round((score / maxScore) * 100);
-  }, [build, activeSetupIndex]);
+  }, [setup, buildName, races, guideContent]);
 };
