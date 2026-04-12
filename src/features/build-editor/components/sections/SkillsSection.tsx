@@ -8,23 +8,24 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import { selectActiveSetup, selectBuildClassSkillLines } from '../../store/buildEditorSelectors';
 import { setSkills } from '../../store/buildEditorSlice';
 import { SkillBarPicker } from '../pickers/SkillBarPicker';
 
-export const SkillsSection: React.FC = React.memo(function SkillsSection() {
+const SkillsSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
-  const skills = useSelector(
-    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.skills,
-  );
-  const classSkillLines = useSelector((s: RootState) => s.buildEditor.build.classSkillLines);
+  const setup = useSelector(selectActiveSetup);
+  const classSkillLines = useSelector(selectBuildClassSkillLines);
+
+  if (!setup) return null;
 
   return (
     <SkillBarPicker
-      skills={skills}
+      skills={setup.skills}
       selectedClassLineIds={classSkillLines}
       onChange={(updated) => dispatch(setSkills(updated))}
     />
   );
-});
+};
+
+export const SkillsSection = React.memo(SkillsSectionComponent);

@@ -10,26 +10,24 @@ import { useSnackbar } from 'notistack';
 import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import { selectActiveSetup } from '../../store/buildEditorSelectors';
 import { addScreenshot, removeScreenshot } from '../../store/buildEditorSlice';
 
 const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
 
-export const ScreenshotsSection: React.FC = React.memo(function ScreenshotsSection() {
+const ScreenshotsSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const { enqueueSnackbar } = useSnackbar();
-  const screenshots = useSelector(
-    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.screenshots,
-  );
+  const setup = useSelector(selectActiveSetup);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
     if (!files) return;
+    if (!setup) return;
     Array.from(files).forEach((file) => {
       if (file.size > MAX_SCREENSHOT_SIZE) {
         enqueueSnackbar(`"${file.name}" exceeds 5 MB — please resize before uploading.`, {
@@ -50,6 +48,8 @@ export const ScreenshotsSection: React.FC = React.memo(function ScreenshotsSecti
     e.target.value = '';
   };
 
+  if (!setup) return null;
+
   return (
     <Stack spacing={1.5}>
       <Typography
@@ -60,7 +60,7 @@ export const ScreenshotsSection: React.FC = React.memo(function ScreenshotsSecti
         Screenshots of character stats, gear, or skills.
       </Typography>
 
-      {!screenshots || screenshots.length === 0 ? (
+      {setup.screenshots.length === 0 ? (
         <Box
           sx={{
             textAlign: 'center',
@@ -105,7 +105,7 @@ export const ScreenshotsSection: React.FC = React.memo(function ScreenshotsSecti
         <>
           <Grid container spacing={1}>
             <AnimatePresence>
-              {screenshots.map((src, i) => (
+              {setup.screenshots.map((src, i) => (
                 <Grid size={{ xs: 6, sm: 4 }} key={src.slice(0, 48) + i}>
                   <motion.div
                     layout={!prefersReduced}
@@ -212,4 +212,6 @@ export const ScreenshotsSection: React.FC = React.memo(function ScreenshotsSecti
       />
     </Stack>
   );
-});
+};
+
+export const ScreenshotsSection = React.memo(ScreenshotsSectionComponent);

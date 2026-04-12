@@ -82,7 +82,7 @@ interface BuildNavRailProps {
   progress: SectionProgressMap;
 }
 
-export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
+const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -340,3 +340,8 @@ export const BuildNavRail: React.FC<BuildNavRailProps> = ({ progress }) => {
     </nav>
   );
 };
+
+// Memoized — `progress` is a stable reference from useSectionProgress when
+// no section's completeness flipped, so the rail re-renders only when a
+// dot actually needs to change.
+export const BuildNavRail = React.memo(BuildNavRailComponent);

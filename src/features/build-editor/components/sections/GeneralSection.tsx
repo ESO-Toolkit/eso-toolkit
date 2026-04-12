@@ -8,9 +8,13 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
 import { ESO_CLASSES, ESO_GAME_MODES, ESO_RACES, ESO_ROLES } from '../../data/esoStaticData';
+import {
+  selectBuildEsoClass,
+  selectBuildGameMode,
+  selectBuildRaces,
+  selectBuildRole,
+} from '../../store/buildEditorSelectors';
 import {
   setBuildClass,
   setBuildGameMode,
@@ -19,6 +23,26 @@ import {
 } from '../../store/buildEditorSlice';
 import type { CombatRole, ESOClass, GameMode } from '../../types/build.types';
 import { IconPickerGrid } from '../primitives/IconPickerGrid';
+
+// Hoisted static option arrays — IconPickerGrid's `options` prop was
+// allocated fresh every render, defeating downstream memoization.
+const CLASS_OPTIONS = ESO_CLASSES.map((c) => ({
+  id: c.id,
+  label: c.label,
+  color: c.color,
+}));
+
+const ROLE_OPTIONS = ESO_ROLES.map((r) => ({
+  id: r.id,
+  label: r.shortLabel,
+  color: r.color,
+  description: r.label,
+}));
+
+const GAMEMODE_OPTIONS = ESO_GAME_MODES.map((m) => ({
+  id: m.id,
+  label: m.label,
+}));
 
 /** Alliance groups — canonical ESO faction colors */
 const ALLIANCE_GROUPS = [
@@ -53,19 +77,17 @@ const sectionLabelSx = {
   fontFamily: 'Space Grotesk, Inter, system-ui',
 };
 
-export const GeneralSection: React.FC = React.memo(function GeneralSection() {
+const GeneralSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const esoClass = useSelector((s: RootState) => s.buildEditor.build.esoClass);
-  const role = useSelector((s: RootState) => s.buildEditor.build.role);
-  const gameMode = useSelector((s: RootState) => s.buildEditor.build.gameMode);
-  const selectedRaces = useSelector((s: RootState) => s.buildEditor.build.races);
+  const esoClass = useSelector(selectBuildEsoClass);
+  const role = useSelector(selectBuildRole);
+  const gameMode = useSelector(selectBuildGameMode);
+  const races = useSelector(selectBuildRaces);
 
   const toggleRace = (raceId: string): void => {
-    const next = selectedRaces.includes(raceId)
-      ? selectedRaces.filter((r) => r !== raceId)
-      : [...selectedRaces, raceId];
+    const next = races.includes(raceId) ? races.filter((r) => r !== raceId) : [...races, raceId];
     dispatch(setBuildRaces(next));
   };
 
@@ -91,11 +113,7 @@ export const GeneralSection: React.FC = React.memo(function GeneralSection() {
       {/* Class — IconPickerGrid */}
       <IconPickerGrid
         label="Class"
-        options={ESO_CLASSES.map((c) => ({
-          id: c.id,
-          label: c.label,
-          color: c.color,
-        }))}
+        options={CLASS_OPTIONS}
         value={esoClass}
         onChange={(id) => dispatch(setBuildClass(id as ESOClass))}
         columns={4}
@@ -104,12 +122,7 @@ export const GeneralSection: React.FC = React.memo(function GeneralSection() {
       {/* Combat Role — IconPickerGrid */}
       <IconPickerGrid
         label="Combat Role"
-        options={ESO_ROLES.map((r) => ({
-          id: r.id,
-          label: r.shortLabel,
-          color: r.color,
-          description: r.label,
-        }))}
+        options={ROLE_OPTIONS}
         value={role}
         onChange={(id) => dispatch(setBuildRole(id as CombatRole))}
         columns={5}
@@ -118,10 +131,7 @@ export const GeneralSection: React.FC = React.memo(function GeneralSection() {
       {/* Game Mode — IconPickerGrid */}
       <IconPickerGrid
         label="Game Mode"
-        options={ESO_GAME_MODES.map((m) => ({
-          id: m.id,
-          label: m.label,
-        }))}
+        options={GAMEMODE_OPTIONS}
         value={gameMode}
         onChange={(id) => dispatch(setBuildGameMode(id as GameMode))}
         columns={2}
@@ -134,9 +144,9 @@ export const GeneralSection: React.FC = React.memo(function GeneralSection() {
         </Typography>
         <Stack spacing={1.5}>
           {ALLIANCE_GROUPS.map(({ id: allianceId, label: allianceLabel, color, raceIds }) => {
-            const races = ESO_RACES.filter((r) => raceIds.includes(r.id));
+            const allianceRaces = ESO_RACES.filter((r) => raceIds.includes(r.id));
             const headerId = `alliance-header-${allianceId}`;
-            const allRaceIds = races.map((r) => r.id);
+            const allRaceIds = allianceRaces.map((r) => r.id);
             return (
               <Box key={allianceId}>
                 {/* Alliance header */}
@@ -187,8 +197,8 @@ export const GeneralSection: React.FC = React.memo(function GeneralSection() {
                     gap: 0.75,
                   }}
                 >
-                  {races.map((race) => {
-                    const selected = selectedRaces.includes(race.id);
+                  {allianceRaces.map((race) => {
+                    const selected = races.includes(race.id);
                     return (
                       <Box key={race.id} sx={{ position: 'relative' }}>
                         <ButtonBase
@@ -294,7 +304,7 @@ export const GeneralSection: React.FC = React.memo(function GeneralSection() {
           {(() => {
             const imperial = ESO_RACES.find((r) => r.alliance === 'any');
             if (!imperial) return null;
-            const selected = selectedRaces.includes(imperial.id);
+            const selected = races.includes(imperial.id);
             const color = '#94a3b8';
             return (
               <Box>
@@ -433,4 +443,6 @@ export const GeneralSection: React.FC = React.memo(function GeneralSection() {
       </Box>
     </Stack>
   );
-});
+};
+
+export const GeneralSection = React.memo(GeneralSectionComponent);

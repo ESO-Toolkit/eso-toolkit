@@ -57,6 +57,7 @@ import { snapshotBuildToSlot } from '@/utils/rosterBuildBridge';
 
 import { ESO_CLASSES } from '../data/esoStaticData';
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
+import { selectActiveSetupIndex, selectBuild, selectIsDirty } from '../store/buildEditorSelectors';
 import {
   BUILD_EDITOR_STORAGE_KEY,
   loadBuild,
@@ -76,6 +77,17 @@ import {
 import { AddToRosterDialog } from './AddToRosterDialog';
 import { glassInputSx } from './primitives/glassInputSx';
 
+// ─── Module-scope sx factories ────────────────────────────────────────────
+// Shared between the 4 dialogs below. Blur reduced from 20px → 10px per
+// M9 in the perf audit. Only allocates when isDark flips.
+const dialogPaperSx = (isDark: boolean): Record<string, unknown> => ({
+  background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+  borderRadius: 3,
+});
+
 export const BuildCompletionHeader: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -85,9 +97,14 @@ export const BuildCompletionHeader: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { isLoggedIn, accessToken } = useAuth();
 
-  const build = useSelector((s: RootState) => s.buildEditor.build);
-  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
-  const activeSetupIndex = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
+  // Use the shared narrow selectors. This component still re-renders on
+  // every keystroke (it owns the controlled name/description inputs and
+  // passes `build` as a prop to AddToRosterDialog), but the re-render no
+  // longer cascades into the 11 section components because the parent
+  // (BuildEditorLayout) no longer subscribes to `build`.
+  const build = useSelector(selectBuild);
+  const isDirty = useSelector(selectIsDirty);
+  const activeSetupIndex = useSelector(selectActiveSetupIndex);
   const [searchParams] = useSearchParams();
 
   // Get the saved build ID from URL params (set when editing an existing saved build)
@@ -401,26 +418,49 @@ export const BuildCompletionHeader: React.FC = () => {
   };
 
   // ── Shared button styles ──────────────────────────────────────────────
-  const pillBase = {
-    borderRadius: '99px',
-    textTransform: 'none' as const,
-    fontWeight: 600,
-    letterSpacing: 0.2,
-    // Mobile: compact icon-only pills; desktop: full labels
-    fontSize: isMobile ? 12 : 13,
-    px: isMobile ? 1 : 1.75,
-    minWidth: isMobile ? 36 : undefined,
-  } as const;
+  // Memoized so the spread into 10+ call sites below produces stable
+  // object references across re-renders. Only re-allocates when isMobile
+  // or isDark flips (theme toggle / viewport resize).
+  const pillBase = React.useMemo(
+    () =>
+      ({
+        borderRadius: '99px',
+        textTransform: 'none' as const,
+        fontWeight: 600,
+        letterSpacing: 0.2,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        // Mobile: compact icon-only pills; desktop: full labels
+        fontSize: isMobile ? 12 : 13,
+        px: isMobile ? 1 : 1.75,
+        minWidth: isMobile ? 36 : undefined,
+      }) as const,
+    [isMobile],
+  );
 
-  const outlinedPill = {
-    ...pillBase,
-    borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
-    background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-    '&:hover': {
-      borderColor: 'var(--be-accent, #38bdf8)',
-      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-    },
-  } as const;
+  const outlinedPill = React.useMemo(
+    () =>
+      ({
+        ...pillBase,
+        borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+        '&:hover': {
+          borderColor: 'var(--be-accent, #38bdf8)',
+          background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+        },
+      }) as const,
+    [pillBase, isDark],
+  );
+
+  // Shared 1px vertical divider color — appears ~6 times in the action strip.
+  const dividerSx = React.useMemo(
+    () => ({ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }),
+    [isDark],
+  );
+
+  // Shared PaperProps for the 4 dialogs below. Stable reference means
+  // MUI doesn't re-hash the sx on every Build Name keystroke.
+  const dialogPaperProps = React.useMemo(() => ({ sx: dialogPaperSx(isDark) }), [isDark]);
 
   return (
     <Box
@@ -708,11 +748,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 <FileUploadOutlined sx={{ fontSize: 16 }} />
               </IconButton>
             </Tooltip>
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
-            />
+            <Divider orientation="vertical" flexItem sx={dividerSx} />
             <Tooltip title="Export build data">
               <IconButton
                 size="small"
@@ -776,11 +812,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 <ShareOutlined sx={{ fontSize: 16 }} />
               </IconButton>
             </Tooltip>
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
-            />
+            <Divider orientation="vertical" flexItem sx={dividerSx} />
             <Tooltip title="View build in read-only mode">
               <IconButton
                 size="small"
@@ -812,6 +844,8 @@ export const BuildCompletionHeader: React.FC = () => {
             borderRadius: '12px',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
             background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             overflow: 'hidden',
             boxShadow: isDark
               ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)'
@@ -864,11 +898,7 @@ export const BuildCompletionHeader: React.FC = () => {
             </Button>
           </Tooltip>
 
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
-          />
+          <Divider orientation="vertical" flexItem sx={dividerSx} />
 
           {/* Get Link (guest only) */}
           {!isLoggedIn && (
@@ -905,11 +935,7 @@ export const BuildCompletionHeader: React.FC = () => {
                   )}
                 </Button>
               </Tooltip>
-              <Divider
-                orientation="vertical"
-                flexItem
-                sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
-              />
+              <Divider orientation="vertical" flexItem sx={dividerSx} />
             </>
           )}
 
@@ -948,11 +974,7 @@ export const BuildCompletionHeader: React.FC = () => {
             </Box>
           </Tooltip>
 
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
-          />
+          <Divider orientation="vertical" flexItem sx={dividerSx} />
 
           {/* Publish — accent end-cap */}
           <Tooltip title={isLoggedIn ? 'Publish to Build Hub' : 'Log in to publish your build'}>
@@ -1009,6 +1031,8 @@ export const BuildCompletionHeader: React.FC = () => {
                 sx={{
                   border: `1px solid ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)'}`,
                   background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
                   borderRadius: '10px',
                   width: 36,
                   height: 36,
@@ -1030,7 +1054,9 @@ export const BuildCompletionHeader: React.FC = () => {
               slotProps={{
                 paper: {
                   sx: {
-                    background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(255, 255, 255, 0.98)',
+                    background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                     borderRadius: 2,
                     minWidth: 180,
@@ -1124,501 +1150,492 @@ export const BuildCompletionHeader: React.FC = () => {
         build={build}
       />
 
-      {/* CSPS Import dialog */}
-      <Dialog
-        open={importOpen}
-        onClose={handleImportClose}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontWeight: 700,
-            fontSize: 16,
-            pb: 0.5,
-          }}
+      {/* CSPS Import dialog — lazy-mounted so React doesn't build its
+          subtree on every Build Name keystroke */}
+      {importOpen && (
+        <Dialog
+          open
+          onClose={handleImportClose}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={dialogPaperProps}
         >
-          Import from Addon
-          <IconButton
-            onClick={handleImportClose}
-            size="small"
-            aria-label="Close import dialog"
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Typography
-            variant="caption"
-            color="text.secondary"
+          <DialogTitle
             sx={{
-              display: 'block',
-              mb: 2,
-              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
               fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 700,
+              fontSize: 16,
+              pb: 0.5,
             }}
           >
-            Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or SavedVariables
-            file content to import skills, attributes, champion points, and gear into your build.
-          </Typography>
-          <Stack spacing={1.5}>
-            <TextField
-              fullWidth
+            Import from Addon
+            <IconButton
+              onClick={handleImportClose}
               size="small"
-              placeholder="Paste CSPS export code or SavedVariables content here…"
-              value={build.addonImportString}
-              onChange={(e) => {
-                dispatch(setAddonImportString(e.target.value));
-                if (importParsed) {
-                  setImportParsed(false);
-                  setCspsCharacters([]);
-                  setImportError(null);
-                }
-              }}
-              multiline
-              minRows={3}
-              maxRows={8}
-              autoFocus
-              sx={glassInputSx(isDark)}
-            />
-
-            {importError && (
-              <Alert
-                severity="error"
-                sx={{
-                  py: 0.25,
-                  fontSize: 11,
-                  borderRadius: 2,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                }}
-              >
-                {importError}
-              </Alert>
-            )}
-
-            {importParsed && cspsCharacters.length > 0 && (
-              <Box>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: 'block',
-                    mb: 1,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    color: 'text.secondary',
-                  }}
-                >
-                  {cspsCharacters.length === 1
-                    ? 'Found 1 character:'
-                    : `Found ${cspsCharacters.length} characters — select one to import:`}
-                </Typography>
-                <Stack spacing={0.5}>
-                  {cspsCharacters.map((char, idx) => (
-                    <Button
-                      key={char.compositeKey}
-                      variant={idx === selectedCharIndex ? 'contained' : 'outlined'}
-                      size="small"
-                      onClick={() => setSelectedCharIndex(idx)}
-                      sx={{
-                        textTransform: 'none',
-                        justifyContent: 'flex-start',
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        fontSize: 12,
-                        borderRadius: 2,
-                        ...(idx === selectedCharIndex
-                          ? {
-                              background:
-                                'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
-                              color: isDark ? '#fff' : '#0b1220',
-                            }
-                          : {
-                              borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
-                            }),
-                      }}
-                    >
-                      <Box component="span" sx={{ fontWeight: 700, mr: 1 }}>
-                        {char.name}
-                      </Box>
-                      <Box component="span" sx={{ opacity: 0.7, fontSize: 10 }}>
-                        {char.accountName}
-                        {char.profileCount > 0 && ` · ${char.profileCount} profiles`}
-                      </Box>
-                    </Button>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-
-            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
-              <Button variant="outlined" size="small" onClick={handleImportClose} sx={outlinedPill}>
-                Cancel
-              </Button>
-              {!importParsed ? (
-                <Button
-                  variant="contained"
-                  size="small"
-                  disabled={build.addonImportString.length < 10}
-                  onClick={handleImportParse}
-                  sx={{
-                    ...pillBase,
-                    background:
-                      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
-                    '&.Mui-disabled': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-                    },
-                  }}
-                >
-                  Parse
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  size="small"
-                  disabled={cspsCharacters.length === 0}
-                  onClick={handleImportLoad}
-                  sx={{
-                    ...pillBase,
-                    background:
-                      'linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.75))',
-                    '&.Mui-disabled': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
-                    },
-                  }}
-                >
-                  Load Build
-                </Button>
-              )}
-            </Stack>
-          </Stack>
-        </DialogContent>
-      </Dialog>
-
-      {/* Export dialog */}
-      <Dialog
-        open={exportOpen}
-        onClose={() => setExportOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontWeight: 700,
-            fontSize: 16,
-            pb: 0.5,
-          }}
-        >
-          Export Build
-          <IconButton
-            onClick={() => setExportOpen(false)}
-            size="small"
-            aria-label="Close export dialog"
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              display: 'block',
-              mb: 2,
-              fontSize: 12,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-            }}
-          >
-            Copy the encoded build string below or download it as a file. This data includes your
-            full build configuration — class, gear, skills, champion points, and consumables.
-          </Typography>
-          <Stack spacing={1.5}>
-            <TextField
-              fullWidth
-              size="small"
-              value={exportString}
-              multiline
-              minRows={3}
-              maxRows={8}
-              slotProps={{ input: { readOnly: true } }}
-              onFocus={(e) => e.target.select()}
-              sx={glassInputSx(isDark)}
-            />
-            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<FileDownloadOutlined sx={{ fontSize: 14 }} />}
-                onClick={handleDownloadExport}
-                sx={outlinedPill}
-              >
-                Download .esobuild
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
-                onClick={handleCopyExport}
-                sx={{
-                  ...pillBase,
-                  background:
-                    'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
-                  border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
-                  boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
-                  color: isDark ? '#fff' : '#0b1220',
-                  '&:hover': {
-                    boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
-                  },
-                }}
-              >
-                Copy to Clipboard
-              </Button>
-            </Stack>
-          </Stack>
-        </DialogContent>
-      </Dialog>
-
-      {/* CSPS Export dialog */}
-      <Dialog
-        open={cspsExportOpen}
-        onClose={() => setCspsExportOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontWeight: 700,
-            fontSize: 16,
-            pb: 0.5,
-          }}
-        >
-          Export to CSPS
-          <IconButton
-            onClick={() => setCspsExportOpen(false)}
-            size="small"
-            aria-label="Close CSPS export dialog"
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              display: 'block',
-              mb: 2,
-              fontSize: 12,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-            }}
-          >
-            Your build as a <strong>Caro&apos;s Skill Point Saver</strong> SavedVariables file.
-          </Typography>
-          <Stack spacing={1.5}>
-            <TextField
-              fullWidth
-              size="small"
-              value={exportLua}
-              multiline
-              minRows={6}
-              maxRows={12}
-              slotProps={{ input: { readOnly: true } }}
+              aria-label="Close import dialog"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              variant="caption"
+              color="text.secondary"
               sx={{
-                ...glassInputSx(isDark),
-                '& textarea': { fontFamily: 'monospace', fontSize: 11 },
+                display: 'block',
+                mb: 2,
+                fontSize: 12,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
               }}
-            />
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
-              <Button
-                variant="outlined"
+            >
+              Paste a <strong>Caro&apos;s Skill Point Saver</strong> export code or SavedVariables
+              file content to import skills, attributes, champion points, and gear into your build.
+            </Typography>
+            <Stack spacing={1.5}>
+              <TextField
+                fullWidth
                 size="small"
-                onClick={() => setCspsExportOpen(false)}
-                sx={outlinedPill}
-              >
-                Close
-              </Button>
-              <Tooltip title="Copy to clipboard">
+                placeholder="Paste CSPS export code or SavedVariables content here…"
+                value={build.addonImportString}
+                onChange={(e) => {
+                  dispatch(setAddonImportString(e.target.value));
+                  if (importParsed) {
+                    setImportParsed(false);
+                    setCspsCharacters([]);
+                    setImportError(null);
+                  }
+                }}
+                multiline
+                minRows={3}
+                maxRows={8}
+                autoFocus
+                sx={glassInputSx(isDark)}
+              />
+
+              {importError && (
+                <Alert
+                  severity="error"
+                  sx={{
+                    py: 0.25,
+                    fontSize: 11,
+                    borderRadius: 2,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                  }}
+                >
+                  {importError}
+                </Alert>
+              )}
+
+              {importParsed && cspsCharacters.length > 0 && (
+                <Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      mb: 1,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: 'text.secondary',
+                    }}
+                  >
+                    {cspsCharacters.length === 1
+                      ? 'Found 1 character:'
+                      : `Found ${cspsCharacters.length} characters — select one to import:`}
+                  </Typography>
+                  <Stack spacing={0.5}>
+                    {cspsCharacters.map((char, idx) => (
+                      <Button
+                        key={char.compositeKey}
+                        variant={idx === selectedCharIndex ? 'contained' : 'outlined'}
+                        size="small"
+                        onClick={() => setSelectedCharIndex(idx)}
+                        sx={{
+                          textTransform: 'none',
+                          justifyContent: 'flex-start',
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          fontSize: 12,
+                          borderRadius: 2,
+                          ...(idx === selectedCharIndex
+                            ? {
+                                background:
+                                  'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                                color: isDark ? '#fff' : '#0b1220',
+                              }
+                            : {
+                                borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+                              }),
+                        }}
+                      >
+                        <Box component="span" sx={{ fontWeight: 700, mr: 1 }}>
+                          {char.name}
+                        </Box>
+                        <Box component="span" sx={{ opacity: 0.7, fontSize: 10 }}>
+                          {char.accountName}
+                          {char.profileCount > 0 && ` · ${char.profileCount} profiles`}
+                        </Box>
+                      </Button>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
+
+              <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleImportClose}
+                  sx={outlinedPill}
+                >
+                  Cancel
+                </Button>
+                {!importParsed ? (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={build.addonImportString.length < 10}
+                    onClick={handleImportParse}
+                    sx={{
+                      ...pillBase,
+                      background:
+                        'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.85), rgba(var(--be-accent-rgb, 56, 189, 248), 0.65))',
+                      '&.Mui-disabled': {
+                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                      },
+                    }}
+                  >
+                    Parse
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={cspsCharacters.length === 0}
+                    onClick={handleImportLoad}
+                    sx={{
+                      ...pillBase,
+                      background:
+                        'linear-gradient(135deg, rgba(34, 197, 94, 0.85), rgba(22, 163, 74, 0.75))',
+                      '&.Mui-disabled': {
+                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+                      },
+                    }}
+                  >
+                    Load Build
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Export dialog — lazy-mounted */}
+      {exportOpen && (
+        <Dialog
+          open
+          onClose={() => setExportOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={dialogPaperProps}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 700,
+              fontSize: 16,
+              pb: 0.5,
+            }}
+          >
+            Export Build
+            <IconButton
+              onClick={() => setExportOpen(false)}
+              size="small"
+              aria-label="Close export dialog"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: 'block',
+                mb: 2,
+                fontSize: 12,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
+            >
+              Copy the encoded build string below or download it as a file. This data includes your
+              full build configuration — class, gear, skills, champion points, and consumables.
+            </Typography>
+            <Stack spacing={1.5}>
+              <TextField
+                fullWidth
+                size="small"
+                value={exportString}
+                multiline
+                minRows={3}
+                maxRows={8}
+                slotProps={{ input: { readOnly: true } }}
+                onFocus={(e) => e.target.select()}
+                sx={glassInputSx(isDark)}
+              />
+              <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<FileDownloadOutlined sx={{ fontSize: 14 }} />}
+                  onClick={handleDownloadExport}
+                  sx={outlinedPill}
+                >
+                  Download .esobuild
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
+                  onClick={handleCopyExport}
+                  sx={{
+                    ...pillBase,
+                    background:
+                      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
+                    border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
+                    boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
+                    color: isDark ? '#fff' : '#0b1220',
+                    '&:hover': {
+                      boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
+                    },
+                  }}
+                >
+                  Copy to Clipboard
+                </Button>
+              </Stack>
+            </Stack>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* CSPS Export dialog — lazy-mounted */}
+      {cspsExportOpen && (
+        <Dialog
+          open
+          onClose={() => setCspsExportOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={dialogPaperProps}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 700,
+              fontSize: 16,
+              pb: 0.5,
+            }}
+          >
+            Export to CSPS
+            <IconButton
+              onClick={() => setCspsExportOpen(false)}
+              size="small"
+              aria-label="Close CSPS export dialog"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: 'block',
+                mb: 2,
+                fontSize: 12,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
+            >
+              Your build as a <strong>Caro&apos;s Skill Point Saver</strong> SavedVariables file.
+            </Typography>
+            <Stack spacing={1.5}>
+              <TextField
+                fullWidth
+                size="small"
+                value={exportLua}
+                multiline
+                minRows={6}
+                maxRows={12}
+                slotProps={{ input: { readOnly: true } }}
+                sx={{
+                  ...glassInputSx(isDark),
+                  '& textarea': { fontFamily: 'monospace', fontSize: 11 },
+                }}
+              />
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setCspsExportOpen(false)}
+                  sx={outlinedPill}
+                >
+                  Close
+                </Button>
+                <Tooltip title="Copy to clipboard">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
+                    onClick={() => {
+                      navigator.clipboard
+                        .writeText(exportLua)
+                        .then(() =>
+                          enqueueSnackbar('Copied CSPS Lua to clipboard!', { variant: 'info' }),
+                        )
+                        .catch(() => enqueueSnackbar('Could not copy.', { variant: 'error' }));
+                    }}
+                    sx={pillBase}
+                  >
+                    Copy
+                  </Button>
+                </Tooltip>
+                <Tooltip title="Download as .lua file">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<FileDownloadOutlined sx={{ fontSize: 14 }} />}
+                    onClick={() => {
+                      const fileName = `CSPSSavedVariables_${(build.name || 'build')
+                        .replace(/[^a-zA-Z0-9-_ ]/g, '')
+                        .replace(/\s+/g, '-')
+                        .toLowerCase()}.lua`;
+                      const blob = new Blob([exportLua], { type: 'text/plain;charset=utf-8' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = fileName;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      enqueueSnackbar(`Downloaded ${fileName}`, { variant: 'success' });
+                    }}
+                    sx={pillBase}
+                  >
+                    Download
+                  </Button>
+                </Tooltip>
+              </Stack>
+            </Stack>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Temp link dialog — shown after creating a guest build link.
+          Lazy-mounted. */}
+      {tempLinkDialogOpen && (
+        <Dialog
+          open
+          onClose={() => setTempLinkDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={dialogPaperProps}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 700,
+              fontSize: 16,
+              pb: 0.5,
+            }}
+          >
+            Build Link Created
+            <IconButton
+              onClick={() => setTempLinkDialogOpen(false)}
+              size="small"
+              aria-label="Close link dialog"
+              sx={{ color: 'text.secondary' }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: 'block',
+                mb: 2,
+                fontSize: 12,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
+            >
+              Share this link with anyone — no login required to view.
+              {tempLinkExpiry && (
+                <>
+                  {' '}
+                  This link expires on{' '}
+                  <strong>
+                    {new Date(tempLinkExpiry + 'Z').toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </strong>
+                  .
+                </>
+              )}
+            </Typography>
+            <Stack spacing={1.5}>
+              <TextField
+                fullWidth
+                size="small"
+                value={tempLink}
+                slotProps={{ input: { readOnly: true } }}
+                onFocus={(e) => e.target.select()}
+                sx={glassInputSx(isDark)}
+              />
+              <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
                 <Button
                   variant="contained"
                   size="small"
                   startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
                   onClick={() => {
                     navigator.clipboard
-                      .writeText(exportLua)
-                      .then(() =>
-                        enqueueSnackbar('Copied CSPS Lua to clipboard!', { variant: 'info' }),
-                      )
-                      .catch(() => enqueueSnackbar('Could not copy.', { variant: 'error' }));
+                      .writeText(tempLink)
+                      .then(() => enqueueSnackbar('Link copied to clipboard!', { variant: 'info' }))
+                      .catch(() => enqueueSnackbar('Could not copy link.', { variant: 'error' }));
                   }}
-                  sx={pillBase}
-                >
-                  Copy
-                </Button>
-              </Tooltip>
-              <Tooltip title="Download as .lua file">
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<FileDownloadOutlined sx={{ fontSize: 14 }} />}
-                  onClick={() => {
-                    const fileName = `CSPSSavedVariables_${(build.name || 'build')
-                      .replace(/[^a-zA-Z0-9-_ ]/g, '')
-                      .replace(/\s+/g, '-')
-                      .toLowerCase()}.lua`;
-                    const blob = new Blob([exportLua], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = fileName;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    enqueueSnackbar(`Downloaded ${fileName}`, { variant: 'success' });
+                  sx={{
+                    ...pillBase,
+                    background:
+                      'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
+                    border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
+                    boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
+                    color: isDark ? '#fff' : '#0b1220',
+                    '&:hover': {
+                      boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
+                    },
                   }}
-                  sx={pillBase}
                 >
-                  Download
+                  Copy Link
                 </Button>
-              </Tooltip>
+              </Stack>
             </Stack>
-          </Stack>
-        </DialogContent>
-      </Dialog>
-
-      {/* Temp link dialog — shown after creating a guest build link */}
-      <Dialog
-        open={tempLinkDialogOpen}
-        onClose={() => setTempLinkDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontWeight: 700,
-            fontSize: 16,
-            pb: 0.5,
-          }}
-        >
-          Build Link Created
-          <IconButton
-            onClick={() => setTempLinkDialogOpen(false)}
-            size="small"
-            aria-label="Close link dialog"
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              display: 'block',
-              mb: 2,
-              fontSize: 12,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-            }}
-          >
-            Share this link with anyone — no login required to view.
-            {tempLinkExpiry && (
-              <>
-                {' '}
-                This link expires on{' '}
-                <strong>
-                  {new Date(tempLinkExpiry + 'Z').toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </strong>
-                .
-              </>
-            )}
-          </Typography>
-          <Stack spacing={1.5}>
-            <TextField
-              fullWidth
-              size="small"
-              value={tempLink}
-              slotProps={{ input: { readOnly: true } }}
-              onFocus={(e) => e.target.select()}
-              sx={glassInputSx(isDark)}
-            />
-            <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<ContentCopyOutlined sx={{ fontSize: 14 }} />}
-                onClick={() => {
-                  navigator.clipboard
-                    .writeText(tempLink)
-                    .then(() => enqueueSnackbar('Link copied to clipboard!', { variant: 'info' }))
-                    .catch(() => enqueueSnackbar('Could not copy link.', { variant: 'error' }));
-                }}
-                sx={{
-                  ...pillBase,
-                  background:
-                    'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.9), rgba(var(--be-accent-rgb, 56, 189, 248), 0.7))',
-                  border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.5)',
-                  boxShadow: '0 0 12px rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
-                  color: isDark ? '#fff' : '#0b1220',
-                  '&:hover': {
-                    boxShadow: '0 0 18px rgba(var(--be-accent-rgb, 56, 189, 248), 0.35)',
-                  },
-                }}
-              >
-                Copy Link
-              </Button>
-            </Stack>
-          </Stack>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </Box>
   );
 };

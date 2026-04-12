@@ -8,7 +8,7 @@
 
 import { Box, ButtonBase, Divider, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 
 import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 
@@ -53,12 +53,24 @@ const TREES: TreeConfig[] = [
   },
 ];
 
-const getSlottableByTree = (
-  tree: ChampionPointTree,
-): NonNullable<(typeof CHAMPION_POINT_ABILITIES)[keyof typeof CHAMPION_POINT_ABILITIES]>[] =>
-  Object.values(CHAMPION_POINT_ABILITIES).filter(
-    (e) => e != null && e.tree === tree,
-  ) as NonNullable<(typeof CHAMPION_POINT_ABILITIES)[keyof typeof CHAMPION_POINT_ABILITIES]>[];
+type SlottableAbility = NonNullable<
+  (typeof CHAMPION_POINT_ABILITIES)[keyof typeof CHAMPION_POINT_ABILITIES]
+>;
+
+// Module-level cache so switching trees doesn't re-filter the ability table.
+// Each entry is a stable reference — consumers do not need useMemo.
+const slottableByTreeCache = new Map<ChampionPointTree, SlottableAbility[]>();
+
+const getSlottableByTree = (tree: ChampionPointTree): SlottableAbility[] => {
+  let cached = slottableByTreeCache.get(tree);
+  if (!cached) {
+    cached = Object.values(CHAMPION_POINT_ABILITIES).filter(
+      (e): e is SlottableAbility => e != null && e.tree === tree,
+    );
+    slottableByTreeCache.set(tree, cached);
+  }
+  return cached;
+};
 
 // ─── Champion Slot Card ─────────────────────────────────────────────────────
 
@@ -426,7 +438,8 @@ interface TreePanelProps {
 
 const TreePanel: React.FC<TreePanelProps> = ({ tree, cp, onSlotChange, onPassiveChange }) => {
   const cpTree: ChampionTree | undefined = cp[tree.key];
-  const slottable = useMemo(() => getSlottableByTree(tree.cpTree), [tree.cpTree]);
+  // Stable reference from the module cache — no useMemo needed.
+  const slottable = getSlottableByTree(tree.cpTree);
   const passives = CP_PASSIVES_BY_TREE[tree.key];
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';

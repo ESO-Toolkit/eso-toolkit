@@ -13,10 +13,14 @@
 
 import { Box, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { getItemInfo } from '../../../loadout-manager/data/itemIdMap';
-import type { ArmorWeight, GearConfig } from '../../../loadout-manager/types/loadout.types';
+import type {
+  ArmorWeight,
+  GearConfig,
+  GearPiece,
+} from '../../../loadout-manager/types/loadout.types';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
@@ -52,8 +56,8 @@ const slotDef = (idx: number): EquipSlotDef =>
 
 interface SlotRowProps {
   def: EquipSlotDef;
-  gear: GearConfig;
-  disabledSlots: Partial<Record<number, string>>;
+  piece: GearPiece | undefined;
+  disabledReason: string | undefined;
   onOpen: (def: EquipSlotDef) => void;
   onClear: (slot: number) => void;
   onWeightChange?: (slot: number, weight: ArmorWeight) => void;
@@ -61,20 +65,18 @@ interface SlotRowProps {
   onEnchantChange?: (slot: number, enchant: string | undefined) => void;
 }
 
-const SlotRow: React.FC<SlotRowProps> = ({
+const SlotRowComponent: React.FC<SlotRowProps> = ({
   def,
-  gear,
-  disabledSlots,
+  piece,
+  disabledReason,
   onOpen,
   onClear,
   onWeightChange,
   onTraitChange,
   onEnchantChange,
 }) => {
-  const piece = gear[def.slot];
   const itemId = piece?.id != null ? Number(piece.id) : null;
   const info = itemId ? getItemInfo(itemId) : null;
-  const disabledReason = disabledSlots[def.slot];
 
   return (
     <GearSlotCard
@@ -99,6 +101,13 @@ const SlotRow: React.FC<SlotRowProps> = ({
     />
   );
 };
+
+// Memoized so only the slot whose piece / disabledReason actually changed
+// re-renders. Immer's structural sharing keeps `piece` reference-stable when
+// unrelated gear slots mutate, so a single gear edit now triggers at most 2
+// SlotRow renders (the edited slot + its off-hand partner when 2H toggles)
+// instead of 14.
+const SlotRow = React.memo(SlotRowComponent);
 
 // ── Section header ──────────────────────────────────────────────────────────
 
@@ -159,18 +168,23 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
     return result;
   }, [gear]);
 
-  const handleOpen = useCallback(
-    (def: EquipSlotDef): void => {
-      if (!disabledSlots[def.slot]) setPickerSlot(def);
-    },
-    [disabledSlots],
-  );
+  // Refs so handleOpen/handleClear can have empty (or near-empty) dep arrays.
+  // Stable handler refs are required for the memoized SlotRow — otherwise
+  // every gear edit produces fresh closures and defeats React.memo.
+  const gearRef = useRef(gear);
+  gearRef.current = gear;
+  const disabledSlotsRef = useRef(disabledSlots);
+  disabledSlotsRef.current = disabledSlots;
+
+  const handleOpen = useCallback((def: EquipSlotDef): void => {
+    if (!disabledSlotsRef.current[def.slot]) setPickerSlot(def);
+  }, []);
   const handleClose = useCallback((): void => setPickerSlot(null), []);
 
   const handleSelect = useCallback(
     (itemId: number): void => {
       if (!pickerSlot) return;
-      const next: GearConfig = { ...gear, [pickerSlot.slot]: { id: itemId } };
+      const next: GearConfig = { ...gearRef.current, [pickerSlot.slot]: { id: itemId } };
       // Auto-clear off-hand when a 2H weapon is selected
       if (
         (pickerSlot.slot === FRONT_MAIN || pickerSlot.slot === BACK_MAIN) &&
@@ -182,14 +196,14 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
       onChange(next);
       setPickerSlot(null);
     },
-    [gear, onChange, pickerSlot],
+    [onChange, pickerSlot],
   );
 
   const handleClear = useCallback(
     (slot: number): void => {
-      onChange({ ...gear, [slot]: { id: undefined } });
+      onChange({ ...gearRef.current, [slot]: { id: undefined } });
     },
-    [gear, onChange],
+    [onChange],
   );
 
   const renderSlots = (slots: number[]): React.ReactNode =>
@@ -197,8 +211,8 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
       <SlotRow
         key={idx}
         def={slotDef(idx)}
-        gear={gear}
-        disabledSlots={disabledSlots}
+        piece={gear[idx]}
+        disabledReason={disabledSlots[idx]}
         onOpen={handleOpen}
         onClear={handleClear}
         onWeightChange={onWeightChange}

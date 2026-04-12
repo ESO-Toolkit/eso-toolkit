@@ -181,10 +181,13 @@ discord-notify-worker/node_modules/
 /prompts/
 /showcase-video/
 
-# Agent scratch dirs — large traces, screenshots, skill scaffolding.
-# Markdown notes are allowed (trackable if explicitly added).
+# Third-party AI/editor tool scratch directories
 /.continue/
 /.windsurf/
+
+# Agent scratch directory — keep markdown notes trackable, but ignore
+# large binary artefacts (Chrome perf traces can be >300 MB) and tool
+# scaffolding subdirs.
 /.factory/*.json
 /.factory/*.png
 /.factory/*.webm

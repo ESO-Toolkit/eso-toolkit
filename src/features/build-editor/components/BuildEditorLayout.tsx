@@ -1,12 +1,17 @@
 /**
  * Build Editor Layout — Bento Grid Orchestrator
  *
- * Replaces the old sidebar+content-panel router with a scrollable bento grid
- * that renders ALL sections simultaneously. The nav rail provides scroll-spy
- * icons; the setup tab bar sits at the bottom.
+ * Scrollable bento grid of build-editor sections. The nav rail on the left
+ * provides click-to-jump navigation; the setup tab bar sits at the bottom.
  *
- * Desktop (≥960px): CSS Grid bento layout with nav rail on left.
- * Mobile (<960px): Single column, sections collapsible, bottom nav bar.
+ * Desktop (≥960px): CSS Grid bento layout with nav rail on left. Below-the-fold
+ * sections are wrapped in `LazySection` — they render as cheap placeholder
+ * boxes until scrolled within ~1 viewport, then mount their real subtree and
+ * stay mounted for the rest of the session. This keeps the initial React render
+ * bounded to ~3 sections instead of all 11.
+ *
+ * Mobile (<960px): Single column, sections collapsible (SectionCard's
+ * <Collapse unmountOnExit> already handles lazy mounting), bottom nav bar.
  */
 
 import {
@@ -24,19 +29,19 @@ import {
 } from '@mui/icons-material';
 import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { motion, useReducedMotion } from 'framer-motion';
-import React, { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useCallback, useEffect } from 'react';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { saveBuild } from '@/store/saved_builds';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { useSectionProgress } from '../hooks/useSectionProgress';
+import { selectIsDirty } from '../store/buildEditorSelectors';
 import { BUILD_EDITOR_STORAGE_KEY, markSaved } from '../store/buildEditorSlice';
 
 import { BuildCompletionHeader } from './BuildCompletionHeader';
 import { BuildNavRail } from './BuildNavRail';
-import { staggerContainer } from './motion/variants';
+import { LazySection } from './primitives/LazySection';
 import { SectionCard } from './primitives/SectionCard';
 import { ChampionSection } from './sections/ChampionSection';
 import { CharacterSection } from './sections/CharacterSection';
@@ -55,34 +60,39 @@ export const BuildEditorLayout: React.FC = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
-  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
-
-  // Use refs for save handler to avoid re-subscribing on every build change
-  const buildRef = useRef(useSelector((s: RootState) => s.buildEditor.build));
-  const setupIndexRef = useRef(useSelector((s: RootState) => s.buildEditor.activeSetupIndex));
-  // Keep refs in sync via selectors (stable subscription, ref update is cheap)
-  buildRef.current = useSelector((s: RootState) => s.buildEditor.build);
-  setupIndexRef.current = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
+  const isDirty = useSelector(selectIsDirty);
+  // On mobile, SectionCard's <Collapse unmountOnExit> already lazy-mounts content,
+  // so LazySection would be redundant — pass eager=true there. On desktop, the
+  // first two rows (Identity, Character, Subclassing) sit above the fold and
+  // should render immediately without IntersectionObserver wait.
+  const lazyDesktop = !isMobile;
+  // Lazy read via the store — subscribing to `build` here would force the
+  // whole layout (and every SectionCard child) to re-render on every edit.
+  const store = useStore<RootState>();
 
   // Warn user before leaving with unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
+  const handleBeforeUnload = useCallback(
+    (e: BeforeUnloadEvent) => {
       if (!isDirty) return;
       e.preventDefault();
-    };
+    },
+    [isDirty],
+  );
+
+  useEffect(() => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty]);
+  }, [handleBeforeUnload]);
 
-  // Ctrl+S / Cmd+S keyboard shortcut to save
+  // Ctrl+S / Cmd+S keyboard shortcut to save.
+  // Reads state lazily via the store so this effect registers the listener
+  // exactly once — it never re-runs on build edits.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        const build = buildRef.current;
-        const activeSetupIndex = setupIndexRef.current;
+        const { build, activeSetupIndex } = store.getState().buildEditor;
         if (!build.name.trim()) return;
         try {
           localStorage.setItem(
@@ -98,7 +108,7 @@ export const BuildEditorLayout: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [dispatch]);
+  }, [dispatch, store]);
 
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
@@ -127,21 +137,17 @@ export const BuildEditorLayout: React.FC = () => {
             pb: isMobile ? 10 : 2.5, // Extra bottom padding for mobile nav bar
           }}
         >
-          <motion.div
-            variants={prefersReduced ? undefined : staggerContainer}
-            initial={prefersReduced ? undefined : 'hidden'}
-            animate={prefersReduced ? undefined : 'visible'}
+          <Box
+            sx={{
+              display: 'grid',
+              gap: { xs: 2, md: 2.5, lg: 3 },
+              // Desktop: 2-column bento grid with dense packing
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+              gridAutoFlow: isMobile ? undefined : 'dense',
+            }}
           >
-            <Box
-              sx={{
-                display: 'grid',
-                gap: { xs: 2, md: 2.5, lg: 3 },
-                // Desktop: 2-column bento grid with dense packing
-                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                gridAutoFlow: isMobile ? undefined : 'dense',
-              }}
-            >
-              {/* Row 1: Identity (primary) + Character */}
+            {/* Row 1: Identity (primary) + Character — above the fold, render eagerly */}
+            <LazySection eager>
               <SectionCard
                 id="general"
                 title="Identity"
@@ -152,7 +158,9 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <GeneralSection />
               </SectionCard>
+            </LazySection>
 
+            <LazySection eager>
               <SectionCard
                 id="character"
                 title="Character"
@@ -162,8 +170,10 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <CharacterSection />
               </SectionCard>
+            </LazySection>
 
-              {/* Row 2: Subclassing */}
+            {/* Row 2: Subclassing — typically just below fold, eager to avoid jump on load */}
+            <LazySection eager>
               <SectionCard
                 id="subclassing"
                 title="Subclassing"
@@ -173,8 +183,14 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <SubclassingSection />
               </SectionCard>
+            </LazySection>
 
-              {/* Row 3–4: Equipment spans 2 rows; Skills + Consumables stack on right */}
+            {/* Row 3–4: Equipment spans 2 rows; Skills + Consumables stack on right */}
+            <LazySection
+              eager={!lazyDesktop}
+              placeholderMinHeight={560}
+              gridRow={isMobile ? undefined : 'span 2'}
+            >
               <SectionCard
                 id="equipment"
                 title="Equipment"
@@ -186,7 +202,9 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <EquipmentSection />
               </SectionCard>
+            </LazySection>
 
+            <LazySection eager={!lazyDesktop} placeholderMinHeight={360}>
               <SectionCard
                 id="skills"
                 title="Skills"
@@ -197,7 +215,9 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <SkillsSection />
               </SectionCard>
+            </LazySection>
 
+            <LazySection eager={!lazyDesktop} placeholderMinHeight={280}>
               <SectionCard
                 id="consumables"
                 title="Consumables"
@@ -207,8 +227,14 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <ConsumablesSection />
               </SectionCard>
+            </LazySection>
 
-              {/* Champion Points — full width */}
+            {/* Champion Points — full width */}
+            <LazySection
+              eager={!lazyDesktop}
+              placeholderMinHeight={520}
+              gridColumn={isMobile ? undefined : 'span 2'}
+            >
               <SectionCard
                 id="champion"
                 title="Champion Points"
@@ -220,8 +246,10 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <ChampionSection />
               </SectionCard>
+            </LazySection>
 
-              {/* Passives — half width */}
+            {/* Passives — half width */}
+            <LazySection eager={!lazyDesktop} placeholderMinHeight={320}>
               <SectionCard
                 id="passives"
                 title="Passives"
@@ -231,8 +259,14 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <PassivesSection />
               </SectionCard>
+            </LazySection>
 
-              {/* Stats — full width */}
+            {/* Stats — full width */}
+            <LazySection
+              eager={!lazyDesktop}
+              placeholderMinHeight={520}
+              gridColumn={isMobile ? undefined : 'span 2'}
+            >
               <SectionCard
                 id="stats"
                 title="Stats"
@@ -244,8 +278,14 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <StatsSection />
               </SectionCard>
+            </LazySection>
 
-              {/* Guide & Media — full width */}
+            {/* Guide & Media — full width */}
+            <LazySection
+              eager={!lazyDesktop}
+              placeholderMinHeight={360}
+              gridColumn={isMobile ? undefined : 'span 2'}
+            >
               <SectionCard
                 id="guide"
                 title="Guide & Media"
@@ -256,8 +296,14 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <GuideSection />
               </SectionCard>
+            </LazySection>
 
-              {/* Settings — full width footer */}
+            {/* Settings — full width footer */}
+            <LazySection
+              eager={!lazyDesktop}
+              placeholderMinHeight={200}
+              gridColumn={isMobile ? undefined : 'span 2'}
+            >
               <SectionCard
                 id="settings"
                 title="Settings"
@@ -269,8 +315,8 @@ export const BuildEditorLayout: React.FC = () => {
               >
                 <SettingsSection />
               </SectionCard>
-            </Box>
-          </motion.div>
+            </LazySection>
+          </Box>
         </Box>
       </Box>
 

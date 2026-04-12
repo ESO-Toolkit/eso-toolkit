@@ -8,18 +8,22 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import { selectActiveSetup } from '../../store/buildEditorSelectors';
 import { setChampionPoints } from '../../store/buildEditorSlice';
 import { ChampionPointsPicker } from '../pickers/ChampionPointsPicker';
 
-export const ChampionSection: React.FC = React.memo(function ChampionSection() {
+const ChampionSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
-  const cp = useSelector(
-    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.cp,
-  );
+  const setup = useSelector(selectActiveSetup);
+
+  if (!setup) return null;
 
   return (
-    <ChampionPointsPicker cp={cp} onChange={(updated) => dispatch(setChampionPoints(updated))} />
+    <ChampionPointsPicker
+      cp={setup.cp}
+      onChange={(updated) => dispatch(setChampionPoints(updated))}
+    />
   );
-});
+};
+
+export const ChampionSection = React.memo(ChampionSectionComponent);

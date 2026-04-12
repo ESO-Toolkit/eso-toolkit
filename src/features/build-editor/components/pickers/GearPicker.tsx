@@ -55,11 +55,13 @@ import {
   SET_TYPE_ORDER,
   type GearSetType,
 } from '../../data/gearSetRegistry';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const MIN_SEARCH_LENGTH = 2;
 const MAX_SEARCH_RESULTS = 80;
+const SEARCH_DEBOUNCE_MS = 160;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -70,12 +72,32 @@ interface SetGroup {
   bonuses: string[];
 }
 
-// ─── Pre-computation helpers ────────────────────────────────────────────────
-
-function buildSetGroups(targetSlot: SlotType): {
+interface SetGroupResult {
   groups: SetGroup[];
   byType: Map<GearSetType, SetGroup[]>;
-} {
+}
+
+// ─── Pre-computation helpers ────────────────────────────────────────────────
+
+/**
+ * Module-level cache of `buildSetGroups` results keyed by slot.
+ *
+ * The grouping scans ~500 items per slot and sorts them — expensive enough to
+ * be noticeable when opening the picker dialog, especially on mobile. Results
+ * are deterministic per slot (underlying item data never changes at runtime),
+ * so caching once per slot is safe for the lifetime of the page.
+ */
+const SET_GROUPS_CACHE: Partial<Record<SlotType, SetGroupResult>> = {};
+
+function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
+  const cached = SET_GROUPS_CACHE[targetSlot];
+  if (cached) return cached;
+  const result = buildSetGroups(targetSlot);
+  SET_GROUPS_CACHE[targetSlot] = result;
+  return result;
+}
+
+function buildSetGroups(targetSlot: SlotType): SetGroupResult {
   const setSummaries = getAvailableSetsForSlot(targetSlot);
   const allItems = getItemsBySlot(targetSlot);
 
@@ -368,8 +390,9 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     }
   }, [open]);
 
-  // Build grouped data for this slot
-  const { groups, byType } = useMemo(() => buildSetGroups(targetSlot), [targetSlot]);
+  // Build grouped data for this slot (cached at module scope — per-slot work
+  // runs once per page, not once per picker open).
+  const { groups, byType } = useMemo(() => getSetGroupsForSlot(targetSlot), [targetSlot]);
 
   // Available type tabs (only show tabs that have sets)
   const availableTabs = useMemo(() => {
@@ -386,12 +409,15 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     return byType.get(activeTab as GearSetType) ?? [];
   }, [activeTab, groups, byType]);
 
-  // Search mode
-  const isSearching = search.trim().length >= MIN_SEARCH_LENGTH;
+  // Search mode — debounce the value used for filtering so the 500-item scan
+  // doesn't run on every keystroke. The input itself keeps `search` for
+  // instant-feedback rendering; only the derived result set lags by ~160ms.
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
+  const isSearching = debouncedSearch.trim().length >= MIN_SEARCH_LENGTH;
 
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
-    const q = search.toLowerCase().trim();
+    const q = debouncedSearch.toLowerCase().trim();
     const allItems = getItemsBySlot(targetSlot);
     return allItems
       .filter(
@@ -399,7 +425,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
           item.info.name.toLowerCase().includes(q) || item.info.setName.toLowerCase().includes(q),
       )
       .slice(0, MAX_SEARCH_RESULTS);
-  }, [search, isSearching, targetSlot]);
+  }, [debouncedSearch, isSearching, targetSlot]);
 
   const handleSelect = useCallback(
     (itemId: number) => {

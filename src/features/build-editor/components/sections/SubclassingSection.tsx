@@ -28,14 +28,13 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
 import {
   CLASS_SKILL_LINES,
   ESO_CLASSES,
   getSkillLineDef,
   type ClassSkillLineDef,
 } from '../../data/esoStaticData';
+import { selectBuildClassSkillLines } from '../../store/buildEditorSelectors';
 import { setClassSkillLine } from '../../store/buildEditorSlice';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
 import type { ClassSkillLineId } from '../../types/build.types';
@@ -474,11 +473,11 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
 
 // ─── Main Section ─────────────────────────────────────────────────────────────
 
-export const SubclassingSection: React.FC = React.memo(function SubclassingSection() {
+const SubclassingSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const classSkillLines = useSelector((s: RootState) => s.buildEditor.build.classSkillLines);
+  const classSkillLines = useSelector(selectBuildClassSkillLines);
 
   const handleChange = useCallback(
     (slot: 0 | 1 | 2, skillLineId: ClassSkillLineId | null) => {
@@ -536,4 +535,6 @@ export const SubclassingSection: React.FC = React.memo(function SubclassingSecti
       </Stack>
     </Stack>
   );
-});
+};
+
+export const SubclassingSection = React.memo(SubclassingSectionComponent);

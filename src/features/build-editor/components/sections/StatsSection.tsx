@@ -7,7 +7,7 @@ import { ExpandMore as ExpandIcon } from '@mui/icons-material';
 import { Box, Checkbox, Collapse, FormControlLabel, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import type { RootState } from '@/store/storeWithHistory';
 
@@ -19,32 +19,54 @@ import {
 } from '../../engine/stat-constants';
 import { calculateBuildStats } from '../../engine/stat-engine';
 import type { StatOverrides } from '../../engine/stat-types';
+import {
+  selectActiveSetup,
+  selectBuildClassSkillLines,
+  selectBuildGameMode,
+  selectBuildRaces,
+} from '../../store/buildEditorSelectors';
 import { setStatOverrides as setStatOverridesAction } from '../../store/buildEditorSlice';
 import { StatBreakdown } from '../primitives/StatBreakdown';
 import { StatGauge } from '../primitives/StatGauge';
 
-export const StatsSection: React.FC = React.memo(function StatsSection() {
+const StatsSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const build = useSelector((s: RootState) => s.buildEditor.build);
-  const setup = useSelector(
-    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex],
-  );
+  // Narrow subscriptions — only the fields the stat engine actually reads.
+  // Immer preserves references for unchanged subtrees, so typing in the
+  // build name (for example) does NOT invalidate any of these, and this
+  // component skips re-rendering entirely.
+  const setup = useSelector(selectActiveSetup);
+  const gameMode = useSelector(selectBuildGameMode);
+  const races = useSelector(selectBuildRaces);
+  const classSkillLines = useSelector(selectBuildClassSkillLines);
+  // Used lazily inside useMemo to pass the whole build to the engine — not
+  // subscribed to, so it doesn't drive re-renders.
+  const store = useStore<RootState>();
 
   const [buffsExpanded, setBuffsExpanded] = useState(false);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
 
   // Resolve overrides — use stored overrides or canonical defaults
   const overrides: StatOverrides = useMemo(
-    () => setup.statOverrides ?? DEFAULT_STAT_OVERRIDES,
-    [setup.statOverrides],
+    () => setup?.statOverrides ?? DEFAULT_STAT_OVERRIDES,
+    [setup?.statOverrides],
   );
 
-  // Compute stats
+  // Compute stats. Deps narrowed to the engine's actual inputs so unrelated
+  // edits (e.g. name, guide content, description) don't trigger a recompute.
   const stats = useMemo(
-    () => calculateBuildStats(setup, build, overrides),
-    [setup, build, overrides],
+    () => {
+      if (!setup) return null;
+      return calculateBuildStats(setup, store.getState().buildEditor.build, overrides);
+    },
+    // `store` is a stable ref. `gameMode/races/classSkillLines` cover every
+    // build-level field read by calculateBuildStats; including them in the
+    // deps ensures the memo invalidates when they change even though we
+    // read `build` lazily from the store.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setup, gameMode, races, classSkillLines, overrides, store],
   );
 
   // Update helpers
@@ -66,13 +88,12 @@ export const StatsSection: React.FC = React.memo(function StatsSection() {
 
   // All available buff toggles for current game mode
   const availableBuffs = useMemo(() => {
-    const mode = build.gameMode;
     return [
-      ...PEN_BUFFS.filter((b) => b.modes.includes(mode)),
-      ...CRIT_DMG_BUFFS.filter((b) => b.modes.includes(mode)),
-      ...CRIT_DMG_GEAR.filter((b) => b.modes.includes(mode)),
+      ...PEN_BUFFS.filter((b) => b.modes.includes(gameMode)),
+      ...CRIT_DMG_BUFFS.filter((b) => b.modes.includes(gameMode)),
+      ...CRIT_DMG_GEAR.filter((b) => b.modes.includes(gameMode)),
     ];
-  }, [build.gameMode]);
+  }, [gameMode]);
 
   const labelSx = {
     fontWeight: 700,
@@ -81,6 +102,8 @@ export const StatsSection: React.FC = React.memo(function StatsSection() {
     textTransform: 'uppercase' as const,
     fontFamily: 'Space Grotesk, Inter, system-ui',
   };
+
+  if (!setup || !stats) return null;
 
   return (
     <Stack spacing={2}>
@@ -246,4 +269,6 @@ export const StatsSection: React.FC = React.memo(function StatsSection() {
       </Box>
     </Stack>
   );
-});
+};
+
+export const StatsSection = React.memo(StatsSectionComponent);
