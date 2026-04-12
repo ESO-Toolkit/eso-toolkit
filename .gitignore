@@ -180,3 +180,17 @@ discord-notify-worker/node_modules/
 /*.a11y.md
 /prompts/
 /showcase-video/
+
+# Third-party AI/editor tool scratch directories
+/.continue/
+/.windsurf/
+
+# Agent scratch directory — keep markdown notes trackable, but ignore
+# large binary artefacts (Chrome perf traces can be >300 MB) and tool
+# scaffolding subdirs.
+/.factory/*.json
+/.factory/*.png
+/.factory/*.webm
+/.factory/*.har
+/.factory/*.trace
+/.factory/skills/
