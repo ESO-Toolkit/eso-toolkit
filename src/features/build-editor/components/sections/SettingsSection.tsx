@@ -46,8 +46,6 @@ const SettingsSectionComponent: React.FC = () => {
           p: 1.5,
           borderRadius: 2.5,
           background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.015)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
           boxShadow: isDark
             ? 'inset 0 1px 0 rgba(255,255,255,0.03)'

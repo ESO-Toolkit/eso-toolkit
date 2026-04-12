@@ -18,12 +18,12 @@ interface ProgressRingProps {
   showLabel?: boolean;
 }
 
-export const ProgressRing: React.FC<ProgressRingProps> = ({
+export const ProgressRing = React.memo<ProgressRingProps>(function ProgressRing({
   value,
   size = BE_TOKENS.ring.size,
   strokeWidth = BE_TOKENS.ring.strokeWidth,
   showLabel = true,
-}) => {
+}) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
@@ -138,4 +138,4 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
       )}
     </Box>
   );
-};
+});

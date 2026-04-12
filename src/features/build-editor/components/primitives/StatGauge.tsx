@@ -28,12 +28,12 @@ const STATUS_COLORS = {
   over: { stroke: '#ef4444', text: '#f87171', label: 'Over cap' },
 } as const;
 
-export const StatGauge: React.FC<StatGaugeProps> = ({
+export const StatGauge = React.memo<StatGaugeProps>(function StatGauge({
   label,
   result,
   isPercent = false,
   size = 80,
-}) => {
+}) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
@@ -186,4 +186,4 @@ export const StatGauge: React.FC<StatGaugeProps> = ({
       </Typography>
     </Box>
   );
-};
+});

@@ -453,7 +453,6 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
       PaperProps={{
         sx: {
           borderRadius: '20px',
-          backdropFilter: 'blur(20px)',
           background: isDark
             ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
             : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',

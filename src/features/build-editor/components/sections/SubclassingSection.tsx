@@ -268,8 +268,6 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
               minWidth: 240,
               maxHeight: 380,
               background: isDark ? 'rgba(10, 18, 30, 0.97)' : 'rgba(248, 250, 252, 0.98)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
               borderRadius: 2,
               boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',

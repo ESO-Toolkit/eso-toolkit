@@ -26,7 +26,7 @@ interface SectionCardProps {
   defaultExpanded?: boolean;
 }
 
-export const SectionCard: React.FC<SectionCardProps> = ({
+export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
   id,
   title,
   icon,
@@ -36,7 +36,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({
   gridRow,
   variant = 'default',
   defaultExpanded = true,
-}) => {
+}) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -184,4 +184,4 @@ export const SectionCard: React.FC<SectionCardProps> = ({
       )}
     </GlassPanel>
   );
-};
+});
