@@ -114,23 +114,15 @@ export const packsApi = {
 
 export const KALPA_DOWNLOAD_URL = 'https://github.com/ESO-Toolkit/kalpa';
 
-export interface DeepLinkOptions {
-  /** When true, tells the addon manager to skip addons already installed and preserve their settings. */
-  preserveSettings?: boolean;
-}
-
 /**
  * Generate a deep link URL that opens Kalpa (ESO Addon Manager)
- * and installs a specific pack.
+ * and navigates to a specific pack.
  *
- * Usage: `eso-addon-manager://pack/trial-essentials?preserve_settings=true`
+ * Kalpa registers the `kalpa://` protocol scheme via Tauri's deep-link plugin.
+ * Supported paths: `kalpa://pack/{id}`, `kalpa://install-pack/{id}`, `kalpa://share/{code}`
  */
-export function getAddonManagerDeepLink(packId: string, options: DeepLinkOptions = {}): string {
-  const { preserveSettings = true } = options;
-  const params = new URLSearchParams();
-  if (preserveSettings) params.set('preserve_settings', 'true');
-  const qs = params.toString();
-  return `eso-addon-manager://pack/${packId}${qs ? `?${qs}` : ''}`;
+export function getAddonManagerDeepLink(packId: string): string {
+  return `kalpa://pack/${packId}`;
 }
 
 /**
