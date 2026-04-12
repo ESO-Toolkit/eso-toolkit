@@ -1,7 +1,9 @@
 import { Close as CloseIcon } from '@mui/icons-material';
-import { Box, IconButton, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Box, IconButton, Typography, useMediaQuery } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
 import { useState } from 'react';
+
+const KALPA_URL = 'https://github.com/ESO-Toolkit/kalpa';
 
 const Banner = styled(Box)(({ theme }) => ({
   width: '100%',
@@ -52,15 +54,13 @@ const Banner = styled(Box)(({ theme }) => ({
     '100%': { transform: 'translateX(50%)' },
   },
   [theme.breakpoints.down('sm')]: {
-    padding: '0.5rem 0.75rem',
-    gap: '0.35rem',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingRight: '2.5rem',
+    padding: '0.45rem 0.75rem',
+    paddingRight: '2.25rem',
+    gap: '0.5rem',
   },
 }));
 
-const NewBadge = styled(Box)({
+const NewBadge = styled(Box)(({ theme }) => ({
   background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
   color: '#fff',
   padding: '0.15rem 0.6rem',
@@ -71,7 +71,11 @@ const NewBadge = styled(Box)({
   letterSpacing: '0.08em',
   flexShrink: 0,
   boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)',
-});
+  [theme.breakpoints.down('sm')]: {
+    padding: '0.1rem 0.5rem',
+    fontSize: '0.6rem',
+  },
+}));
 
 const BannerLink = styled('a')(({ theme }) => ({
   color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
@@ -86,56 +90,112 @@ const BannerLink = styled('a')(({ theme }) => ({
     color: theme.palette.mode === 'dark' ? '#ddd6fe' : '#6d28d9',
     textDecoration: 'underline',
   },
-  [theme.breakpoints.down('sm')]: {
-    fontSize: '0.78rem',
+}));
+
+const MobilePromoLink = styled('a')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  textDecoration: 'none',
+  color: 'inherit',
+  flex: 1,
+  minWidth: 0,
+  transition: 'opacity 0.2s ease',
+  '&:active': { opacity: 0.7 },
+  '& .kalpa-arrow': {
+    color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed',
+    fontWeight: 700,
+    fontSize: '0.95rem',
+    flexShrink: 0,
+    lineHeight: 1,
+    transition: 'transform 0.2s ease',
+  },
+  '&:active .kalpa-arrow': {
+    transform: 'translateX(2px)',
   },
 }));
 
 export const KalpaBanner: React.FC = () => {
   const [showBanner, setShowBanner] = useState(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   if (!showBanner) return null;
 
+  const accentColor = theme.palette.mode === 'dark' ? '#c4b5fd' : '#7c3aed';
+
   return (
     <Banner>
-      <NewBadge>New</NewBadge>
-      <Typography
-        sx={{
-          fontSize: { xs: '0.78rem', sm: '0.85rem' },
-          color: 'text.secondary',
-          fontWeight: 400,
-        }}
-      >
-        Introducing <strong>Kalpa</strong> — a fast, open-source addon manager for ESO.{' '}
-        <Box
-          component="span"
-          sx={{
-            opacity: 0.7,
-            fontStyle: 'italic',
-          }}
-        >
-          Currently in alpha.
-        </Box>
-      </Typography>
-      <BannerLink
-        href="https://github.com/ESO-Toolkit/kalpa"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Learn more →
-      </BannerLink>
+      {isMobile ? (
+        <MobilePromoLink href={KALPA_URL} target="_blank" rel="noopener noreferrer">
+          <NewBadge>New</NewBadge>
+          <Typography
+            component="span"
+            sx={{
+              fontSize: '0.78rem',
+              color: 'text.secondary',
+              fontWeight: 400,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              minWidth: 0,
+              flex: 1,
+              lineHeight: 1.3,
+            }}
+          >
+            <Box component="strong" sx={{ color: accentColor, fontWeight: 700 }}>
+              Kalpa
+            </Box>
+            {' — ESO addon manager '}
+            <Box component="span" sx={{ opacity: 0.65, fontStyle: 'italic' }}>
+              (alpha)
+            </Box>
+          </Typography>
+          <span className="kalpa-arrow" aria-hidden="true">
+            →
+          </span>
+        </MobilePromoLink>
+      ) : (
+        <>
+          <NewBadge>New</NewBadge>
+          <Typography
+            sx={{
+              fontSize: '0.85rem',
+              color: 'text.secondary',
+              fontWeight: 400,
+            }}
+          >
+            Introducing <strong>Kalpa</strong> — a fast, open-source addon manager for ESO.{' '}
+            <Box component="span" sx={{ opacity: 0.7, fontStyle: 'italic' }}>
+              Currently in alpha.
+            </Box>
+          </Typography>
+          <BannerLink href={KALPA_URL} target="_blank" rel="noopener noreferrer">
+            Learn more →
+          </BannerLink>
+        </>
+      )}
       <IconButton
         size="small"
-        onClick={() => setShowBanner(false)}
+        aria-label="Dismiss banner"
+        onClick={(e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowBanner(false);
+        }}
         sx={{
           position: 'absolute',
-          right: 8,
+          top: '50%',
+          right: { xs: 4, sm: 8 },
+          transform: 'translateY(-50%)',
           color: 'text.secondary',
           opacity: 0.6,
+          padding: { xs: '4px', sm: '5px' },
           '&:hover': { opacity: 1 },
+          zIndex: 1,
         }}
       >
-        <CloseIcon fontSize="small" />
+        <CloseIcon sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }} />
       </IconButton>
     </Banner>
   );

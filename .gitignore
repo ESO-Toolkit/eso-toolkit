@@ -180,3 +180,14 @@ discord-notify-worker/node_modules/
 /*.a11y.md
 /prompts/
 /showcase-video/
+
+# Agent scratch dirs — large traces, screenshots, skill scaffolding.
+# Markdown notes are allowed (trackable if explicitly added).
+/.continue/
+/.windsurf/
+/.factory/*.json
+/.factory/*.png
+/.factory/*.webm
+/.factory/*.har
+/.factory/*.trace
+/.factory/skills/
