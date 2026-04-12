@@ -565,8 +565,12 @@ export const SetupTabBar: React.FC = () => {
           py: 1.25,
           borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
           background: isDark ? 'rgba(8, 14, 26, 0.90)' : 'rgba(248, 250, 252, 0.92)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
+          // Phase 3 M9: blur reduced from 16px → 8px; willChange promotes
+          // this bar to its own compositing layer so the blur cost doesn't
+          // leak into neighboring elements' composite passes.
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          willChange: 'transform',
           overflowX: 'auto',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },

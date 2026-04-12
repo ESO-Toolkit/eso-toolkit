@@ -5,9 +5,46 @@
  */
 
 import { Box, Tooltip, Typography } from '@mui/material';
-import { alpha, useTheme } from '@mui/material/styles';
-import { motion, useReducedMotion } from 'framer-motion';
+import { alpha, styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import React, { useCallback, useRef } from 'react';
+
+// Tile button — uses CSS `:hover`/`:active` for feedback instead of
+// framer-motion's `whileHover`/`whileTap`. Hover lift is gated behind
+// `@media (hover: hover)` to avoid sticky-hover on touch devices.
+const TileButton = styled('button', {
+  shouldForwardProp: (prop) => prop !== 'reduceMotion',
+})<{ reduceMotion: boolean }>(({ reduceMotion }) => ({
+  border: 'none',
+  cursor: 'pointer',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+  padding: '12px 8px',
+  borderRadius: 14,
+  width: '100%',
+  position: 'relative',
+  transform: 'translateZ(0)',
+  transition: reduceMotion
+    ? 'background 0.2s, box-shadow 0.25s, outline 0.15s'
+    : 'background 0.2s, box-shadow 0.25s, outline 0.15s, transform 0.15s ease-out',
+  minHeight: 62,
+  fontFamily: 'inherit',
+  ...(reduceMotion
+    ? {}
+    : {
+        '@media (hover: hover)': {
+          '&:hover': {
+            transform: 'translate3d(0, -2px, 0) scale(1.05)',
+          },
+        },
+        '&:active': {
+          transform: 'scale(0.96)',
+        },
+      }),
+}));
 
 interface IconPickerOption<T extends string = string> {
   id: T;
@@ -33,7 +70,7 @@ export const IconPickerGrid = <T extends string = string>({
 }: IconPickerGridProps<T>): React.ReactElement => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const prefersReduced = useReducedMotion();
+  const prefersReduced = useMediaQuery('(prefers-reduced-motion: reduce)');
   const gridRef = useRef<HTMLDivElement>(null);
 
   const handleKeyDown = useCallback(
@@ -118,27 +155,15 @@ export const IconPickerGrid = <T extends string = string>({
           return (
             <Tooltip key={opt.id} title={opt.description ?? opt.label} enterDelay={400}>
               <Box sx={{ position: 'relative' }}>
-                <motion.button
+                <TileButton
+                  reduceMotion={Boolean(prefersReduced)}
                   role="radio"
                   aria-checked={selected}
                   aria-label={opt.label}
                   tabIndex={selected ? 0 : -1}
                   onClick={() => onChange(opt.id)}
-                  onKeyDown={(e) => handleKeyDown(e, idx)}
-                  whileHover={prefersReduced ? {} : { scale: 1.05, y: -2 }}
-                  whileTap={prefersReduced ? {} : { scale: 0.96 }}
+                  onKeyDown={(e: React.KeyboardEvent) => handleKeyDown(e, idx)}
                   style={{
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    padding: '12px 8px',
-                    borderRadius: 14,
-                    width: '100%',
-                    position: 'relative',
                     background: selected
                       ? selectedBg
                       : isDark
@@ -149,9 +174,6 @@ export const IconPickerGrid = <T extends string = string>({
                       : `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
                     outlineOffset: -1,
                     boxShadow: selected ? glowShadow : 'none',
-                    transition: 'background 0.2s, box-shadow 0.25s, outline 0.15s',
-                    minHeight: 62,
-                    fontFamily: 'inherit',
                   }}
                 >
                   {/* Color dot with glow halo */}
@@ -184,7 +206,7 @@ export const IconPickerGrid = <T extends string = string>({
                   >
                     {opt.label}
                   </Typography>
-                </motion.button>
+                </TileButton>
 
                 {/* Gradient border mask — only on selected */}
                 {selected && (

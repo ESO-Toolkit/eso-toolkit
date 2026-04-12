@@ -160,7 +160,7 @@ interface GearSlotCardProps {
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export const GearSlotCard: React.FC<GearSlotCardProps> = ({
+const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
   slotDef,
   itemId,
   itemName,
@@ -566,3 +566,8 @@ export const GearSlotCard: React.FC<GearSlotCardProps> = ({
     </>
   );
 };
+
+// Memoized as defense-in-depth. The parent `SlotRow` is also memoized on
+// `piece`/`disabledReason`, so the real render-skip happens there; this memo
+// still guards against future callers that pass stable props.
+export const GearSlotCard = React.memo(GearSlotCardComponent);

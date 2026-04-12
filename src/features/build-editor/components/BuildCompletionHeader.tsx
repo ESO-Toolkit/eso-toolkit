@@ -81,6 +81,17 @@ import {
 import { AddToRosterDialog } from './AddToRosterDialog';
 import { glassInputSx } from './primitives/glassInputSx';
 
+// ─── Module-scope sx factories ────────────────────────────────────────────
+// Shared between the 4 dialogs below. Blur reduced from 20px → 10px per
+// M9 in the perf audit. Only allocates when isDark flips.
+const dialogPaperSx = (isDark: boolean): Record<string, unknown> => ({
+  background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+  borderRadius: 3,
+});
+
 export const BuildCompletionHeader: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -411,28 +422,52 @@ export const BuildCompletionHeader: React.FC = () => {
   };
 
   // ── Shared button styles ──────────────────────────────────────────────
-  const pillBase = {
-    borderRadius: '99px',
-    textTransform: 'none' as const,
-    fontWeight: 600,
-    letterSpacing: 0.2,
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    // Mobile: compact icon-only pills; desktop: full labels
-    fontSize: isMobile ? 12 : 13,
-    px: isMobile ? 1 : 1.75,
-    minWidth: isMobile ? 36 : undefined,
-  } as const;
+  // Memoized so the spread into 10+ call sites below produces stable
+  // object references across re-renders. Only re-allocates when isMobile
+  // or isDark flips (theme toggle / viewport resize).
+  const pillBase = React.useMemo(
+    () =>
+      ({
+        borderRadius: '99px',
+        textTransform: 'none' as const,
+        fontWeight: 600,
+        letterSpacing: 0.2,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        // Mobile: compact icon-only pills; desktop: full labels
+        fontSize: isMobile ? 12 : 13,
+        px: isMobile ? 1 : 1.75,
+        minWidth: isMobile ? 36 : undefined,
+      }) as const,
+    [isMobile],
+  );
 
-  const outlinedPill = {
-    ...pillBase,
-    borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
-    background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-    '&:hover': {
-      borderColor: 'var(--be-accent, #38bdf8)',
-      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
-    },
-  } as const;
+  const outlinedPill = React.useMemo(
+    () =>
+      ({
+        ...pillBase,
+        borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+        '&:hover': {
+          borderColor: 'var(--be-accent, #38bdf8)',
+          background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
+        },
+      }) as const,
+    [pillBase, isDark],
+  );
+
+  // Shared 1px vertical divider color — appears ~6 times in the action strip.
+  const dividerSx = React.useMemo(
+    () => ({ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }),
+    [isDark],
+  );
+
+  // Shared PaperProps for the 4 dialogs below. Stable reference means
+  // MUI doesn't re-hash the sx on every Build Name keystroke.
+  const dialogPaperProps = React.useMemo(
+    () => ({ sx: dialogPaperSx(isDark) }),
+    [isDark],
+  );
 
   return (
     <Box
@@ -723,7 +758,7 @@ export const BuildCompletionHeader: React.FC = () => {
             <Divider
               orientation="vertical"
               flexItem
-              sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+              sx={dividerSx}
             />
             <Tooltip title="Export build data">
               <IconButton
@@ -791,7 +826,7 @@ export const BuildCompletionHeader: React.FC = () => {
             <Divider
               orientation="vertical"
               flexItem
-              sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+              sx={dividerSx}
             />
             <Tooltip title="View build in read-only mode">
               <IconButton
@@ -881,7 +916,7 @@ export const BuildCompletionHeader: React.FC = () => {
           <Divider
             orientation="vertical"
             flexItem
-            sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+            sx={dividerSx}
           />
 
           {/* Get Link (guest only) */}
@@ -922,7 +957,7 @@ export const BuildCompletionHeader: React.FC = () => {
               <Divider
                 orientation="vertical"
                 flexItem
-                sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+                sx={dividerSx}
               />
             </>
           )}
@@ -965,7 +1000,7 @@ export const BuildCompletionHeader: React.FC = () => {
           <Divider
             orientation="vertical"
             flexItem
-            sx={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+            sx={dividerSx}
           />
 
           {/* Publish — accent end-cap */}
@@ -1142,21 +1177,15 @@ export const BuildCompletionHeader: React.FC = () => {
         build={build}
       />
 
-      {/* CSPS Import dialog */}
+      {/* CSPS Import dialog — lazy-mounted so React doesn't build its
+          subtree on every Build Name keystroke */}
+      {importOpen && (
       <Dialog
-        open={importOpen}
+        open
         onClose={handleImportClose}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
+        PaperProps={dialogPaperProps}
       >
         <DialogTitle
           sx={{
@@ -1325,22 +1354,16 @@ export const BuildCompletionHeader: React.FC = () => {
           </Stack>
         </DialogContent>
       </Dialog>
+      )}
 
-      {/* Export dialog */}
+      {/* Export dialog — lazy-mounted */}
+      {exportOpen && (
       <Dialog
-        open={exportOpen}
+        open
         onClose={() => setExportOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
+        PaperProps={dialogPaperProps}
       >
         <DialogTitle
           sx={{
@@ -1422,22 +1445,16 @@ export const BuildCompletionHeader: React.FC = () => {
           </Stack>
         </DialogContent>
       </Dialog>
+      )}
 
-      {/* CSPS Export dialog */}
+      {/* CSPS Export dialog — lazy-mounted */}
+      {cspsExportOpen && (
       <Dialog
-        open={cspsExportOpen}
+        open
         onClose={() => setCspsExportOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
+        PaperProps={dialogPaperProps}
       >
         <DialogTitle
           sx={{
@@ -1542,22 +1559,17 @@ export const BuildCompletionHeader: React.FC = () => {
           </Stack>
         </DialogContent>
       </Dialog>
+      )}
 
-      {/* Temp link dialog — shown after creating a guest build link */}
+      {/* Temp link dialog — shown after creating a guest build link.
+          Lazy-mounted. */}
+      {tempLinkDialogOpen && (
       <Dialog
-        open={tempLinkDialogOpen}
+        open
         onClose={() => setTempLinkDialogOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
-          },
-        }}
+        PaperProps={dialogPaperProps}
       >
         <DialogTitle
           sx={{
@@ -1645,6 +1657,7 @@ export const BuildCompletionHeader: React.FC = () => {
           </Stack>
         </DialogContent>
       </Dialog>
+      )}
     </Box>
   );
 };
