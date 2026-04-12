@@ -34,7 +34,31 @@ const TIER_LABEL: Record<PerfTier, string> = {
   low: 'Low',
 };
 
-export const PerfTierToggle: React.FC<{ size?: 'small' | 'medium' }> = ({ size = 'medium' }) => {
+export type PerfTierTriggerProps = {
+  onClick: (e: React.MouseEvent<HTMLElement>) => void;
+  menuOpen: boolean;
+  override: PerfTierOverride;
+  detected: PerfTier;
+  isOverridden: boolean;
+  // Short user-facing label for the current effective setting, e.g.
+  // "Auto · High" when auto-detecting or "Low" when an override is pinned.
+  currentLabel: string;
+  detectedLabel: string;
+};
+
+type PerfTierToggleProps = {
+  size?: 'small' | 'medium';
+  // Lets consumers render their own trigger (mobile sheet row, settings card,
+  // etc). When omitted, the default IconButton renders. The provided element
+  // should wire the supplied onClick — the Menu anchors to the click's
+  // currentTarget.
+  renderTrigger?: (props: PerfTierTriggerProps) => React.ReactElement;
+};
+
+export const PerfTierToggle: React.FC<PerfTierToggleProps> = ({
+  size = 'medium',
+  renderTrigger,
+}) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const override = useSelector(selectPerfTierOverride);
@@ -55,30 +79,46 @@ export const PerfTierToggle: React.FC<{ size?: 'small' | 'medium' }> = ({ size =
 
   const isOverridden = override !== 'auto';
   const accent = isOverridden ? theme.palette.warning.main : theme.palette.text.secondary;
+  const detectedLabel = TIER_LABEL[detected];
+  const currentLabel = isOverridden ? TIER_LABEL[override as PerfTier] : `Auto · ${detectedLabel}`;
   const ariaLabel = isOverridden
     ? `Performance: ${override} (pinned) — change`
     : `Performance: Auto (detected ${detected}) — change`;
 
+  const trigger = renderTrigger ? (
+    renderTrigger({
+      onClick: handleOpen,
+      menuOpen: open,
+      override,
+      detected,
+      isOverridden,
+      currentLabel,
+      detectedLabel,
+    })
+  ) : (
+    <IconButton
+      onClick={handleOpen}
+      color="inherit"
+      size={size}
+      aria-label={ariaLabel}
+      aria-haspopup="menu"
+      aria-expanded={open ? 'true' : undefined}
+      sx={{
+        color: accent,
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          color: theme.palette.primary.main,
+          transform: 'scale(1.1)',
+        },
+      }}
+    >
+      <SpeedIcon fontSize={size === 'small' ? 'small' : 'medium'} />
+    </IconButton>
+  );
+
   return (
     <>
-      <IconButton
-        onClick={handleOpen}
-        color="inherit"
-        size={size}
-        aria-label={ariaLabel}
-        aria-haspopup="menu"
-        aria-expanded={open ? 'true' : undefined}
-        sx={{
-          color: accent,
-          transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            color: theme.palette.primary.main,
-            transform: 'scale(1.1)',
-          },
-        }}
-      >
-        <SpeedIcon fontSize={size === 'small' ? 'small' : 'medium'} />
-      </IconButton>
+      {trigger}
 
       <Menu
         anchorEl={anchorEl}
