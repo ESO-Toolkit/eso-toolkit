@@ -1,5 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+export type PerfTier = 'low' | 'medium' | 'high';
+export type PerfTierOverride = 'auto' | PerfTier;
+
 export interface UIState {
   darkMode: boolean;
   selectedPlayerId: number | null;
@@ -9,6 +12,8 @@ export interface UIState {
   showExperimentalTabs: boolean;
   sidebarOpen: boolean;
   myReportsPage: number; // Persisted page number for my-reports
+  perfTier: PerfTier;
+  perfTierOverride: PerfTierOverride;
 }
 
 const initialState: UIState = {
@@ -20,6 +25,11 @@ const initialState: UIState = {
   showExperimentalTabs: false,
   sidebarOpen: false,
   myReportsPage: 1, // Default to page 1
+  // Conservative default until detection resolves — avoids a flash of
+  // expensive blur layers on first paint for returning visitors with an
+  // empty persisted store.
+  perfTier: 'medium',
+  perfTierOverride: 'auto',
 };
 
 const uiSlice = createSlice({
@@ -64,6 +74,12 @@ const uiSlice = createSlice({
     setMyReportsPage: (state, action: PayloadAction<number>) => {
       state.myReportsPage = action.payload;
     },
+    setPerfTier: (state, action: PayloadAction<PerfTier>) => {
+      state.perfTier = action.payload;
+    },
+    setPerfTierOverride: (state, action: PayloadAction<PerfTierOverride>) => {
+      state.perfTierOverride = action.payload;
+    },
   },
 });
 
@@ -79,5 +95,7 @@ export const {
   setSidebarOpen,
   toggleSidebar,
   setMyReportsPage,
+  setPerfTier,
+  setPerfTierOverride,
 } = uiSlice.actions;
 export default uiSlice.reducer;

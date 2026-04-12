@@ -7,6 +7,7 @@ import {
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
   ChevronRight,
+  Speed as SpeedIcon,
 } from '@mui/icons-material';
 import {
   AppBar,
@@ -22,7 +23,6 @@ import {
   ListItemIcon,
   ListItemText,
   Fade,
-  Divider,
   ButtonBase,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
@@ -40,6 +40,7 @@ import {
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
 
+import { PerfTierToggle } from './PerfTierToggle';
 import { ThemeToggle } from './ThemeToggle';
 
 // Animated Hamburger Icon
@@ -1331,6 +1332,7 @@ export const HeaderBar: React.FC = () => {
           sx={{
             display: 'flex',
             alignItems: 'center',
+            gap: 0.75,
             px: 1.5,
             py: 1,
             position: 'relative',
@@ -1382,6 +1384,7 @@ export const HeaderBar: React.FC = () => {
             </Typography>
           </ButtonBase>
           <Box sx={{ flex: 1 }} />
+          <PerfTierToggle size="small" />
           <IconButton
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
@@ -1677,47 +1680,96 @@ export const HeaderBar: React.FC = () => {
           ))}
         </Box>
 
-        {/* Theme toggle + Auth */}
+        {/* Appearance — theme + performance tier */}
+        <MobileSectionLabel>Appearance</MobileSectionLabel>
         <Box
           sx={{
-            px: 2,
-            pt: 1.5,
-            pb: 0.5,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+            px: 1.5,
             position: 'relative',
             zIndex: 1,
             opacity: 0,
             animation: mobileOpen ? `sheetItemIn 0.3s ease-out 0.35s both` : 'none',
           }}
         >
-          <Divider
-            sx={{ flex: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
-          />
-          <IconButton
+          <MobileSheetItem
             onClick={toggleDarkMode}
-            size="small"
             aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '10px',
-              background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.1 : 0.06),
-              border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.12)}`,
-              transition: 'background 0.2s ease, border-color 0.2s ease',
-              '&:hover': {
-                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.18 : 0.12),
-              },
-              '&:active': { transform: 'scale(0.92)' },
-            }}
           >
-            {darkMode ? (
-              <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
-            ) : (
-              <DarkModeIcon sx={{ fontSize: 18, color: '#6366f1' }} />
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: alpha('#f59e0b', isDark ? 0.12 : 0.08),
+                border: `1px solid ${alpha('#f59e0b', 0.15)}`,
+                flexShrink: 0,
+              }}
+            >
+              {darkMode ? (
+                <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              ) : (
+                <DarkModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                Theme
+              </Typography>
+              <Typography sx={{ fontSize: '0.7rem', opacity: 0.55, lineHeight: 1.3, mt: 0.15 }}>
+                {darkMode ? 'Dark' : 'Light'} · tap to switch
+              </Typography>
+            </Box>
+          </MobileSheetItem>
+
+          <PerfTierToggle
+            renderTrigger={({ onClick, currentLabel, isOverridden }) => (
+              <MobileSheetItem
+                onClick={onClick}
+                aria-label={`Performance: ${currentLabel} — change`}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: alpha('#06b6d4', isDark ? 0.12 : 0.08),
+                    border: `1px solid ${alpha('#06b6d4', 0.15)}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <SpeedIcon
+                    sx={{
+                      fontSize: 18,
+                      color: isOverridden ? theme.palette.warning.main : '#06b6d4',
+                    }}
+                  />
+                </Box>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                    Performance
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.7rem', opacity: 0.55, lineHeight: 1.3, mt: 0.15 }}>
+                    {currentLabel}
+                    {isOverridden ? ' · pinned' : ''}
+                  </Typography>
+                </Box>
+                <ChevronRight
+                  sx={{
+                    fontSize: 18,
+                    opacity: 0.35,
+                    color: isDark ? '#94a3b8' : '#64748b',
+                    flexShrink: 0,
+                  }}
+                />
+              </MobileSheetItem>
             )}
-          </IconButton>
+          />
         </Box>
         <Box sx={{ px: 2, pt: 1, pb: 1, position: 'relative', zIndex: 1 }}>
           {isLoggedIn ? (

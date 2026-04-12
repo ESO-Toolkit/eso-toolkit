@@ -82,6 +82,10 @@ jest.mock('./components/HashRouteRedirect', () => ({
   HashRouteRedirect: () => null,
 }));
 
+jest.mock('./components/PerfTierProvider', () => ({
+  PerfTierProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 jest.mock('./components/ScrollRestoration', () => ({
   ScrollRestoration: () => null,
 }));

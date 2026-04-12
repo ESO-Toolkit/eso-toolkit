@@ -36,6 +36,8 @@ describe('uiSlice', () => {
         showExperimentalTabs: false,
         sidebarOpen: false,
         myReportsPage: 1,
+        perfTier: 'medium',
+        perfTierOverride: 'auto',
       });
     });
   });
@@ -295,6 +297,8 @@ describe('uiSlice', () => {
         showExperimentalTabs: true,
         sidebarOpen: true,
         myReportsPage: 1,
+        perfTier: 'medium',
+        perfTierOverride: 'auto',
       });
     });
 

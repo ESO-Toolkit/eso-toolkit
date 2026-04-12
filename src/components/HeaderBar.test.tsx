@@ -27,6 +27,10 @@ jest.mock('./ThemeToggle', () => ({
   ThemeToggle: () => null,
 }));
 
+jest.mock('./PerfTierToggle', () => ({
+  PerfTierToggle: () => null,
+}));
+
 jest.mock('../hooks/usePersistentDarkMode', () => ({
   usePersistentDarkMode: () => ({
     darkMode: false,
