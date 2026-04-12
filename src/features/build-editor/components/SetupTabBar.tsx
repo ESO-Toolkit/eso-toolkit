@@ -58,10 +58,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  selectActiveSetupIndex,
-  selectBuildSetups,
-} from '../store/buildEditorSelectors';
+import { selectActiveSetupIndex, selectBuildSetups } from '../store/buildEditorSelectors';
 import {
   addSetup,
   deleteSetup,

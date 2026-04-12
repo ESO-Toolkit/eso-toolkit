@@ -26,9 +26,8 @@ export const selectIsDirty = (s: RootState): boolean => s.buildEditor.isDirty;
 export const selectActiveSidebarTab = (
   s: RootState,
 ): RootState['buildEditor']['activeSidebarTab'] => s.buildEditor.activeSidebarTab;
-export const selectActiveSetupTab = (
-  s: RootState,
-): RootState['buildEditor']['activeSetupTab'] => s.buildEditor.activeSetupTab;
+export const selectActiveSetupTab = (s: RootState): RootState['buildEditor']['activeSetupTab'] =>
+  s.buildEditor.activeSetupTab;
 export const selectActiveSetupIndex = (s: RootState): number => s.buildEditor.activeSetupIndex;
 
 // ─── Build object ──────────────────────────────────────────────────────────
@@ -78,12 +77,7 @@ export interface StatInputs {
 }
 
 export const selectStatInputs = createSelector(
-  [
-    selectActiveSetup,
-    selectBuildGameMode,
-    selectBuildRaces,
-    selectBuildClassSkillLines,
-  ],
+  [selectActiveSetup, selectBuildGameMode, selectBuildRaces, selectBuildClassSkillLines],
   (setup, gameMode, races, classSkillLines): StatInputs => ({
     setup,
     gameMode,

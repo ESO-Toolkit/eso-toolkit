@@ -8,10 +8,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  selectActiveSetup,
-  selectBuildClassSkillLines,
-} from '../../store/buildEditorSelectors';
+import { selectActiveSetup, selectBuildClassSkillLines } from '../../store/buildEditorSelectors';
 import { setSkills } from '../../store/buildEditorSlice';
 import { SkillBarPicker } from '../pickers/SkillBarPicker';
 

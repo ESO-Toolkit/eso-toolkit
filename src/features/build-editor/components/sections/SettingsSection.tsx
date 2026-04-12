@@ -8,10 +8,7 @@ import { useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  selectBuildSettings,
-  selectBuildSetups,
-} from '../../store/buildEditorSelectors';
+import { selectBuildSettings, selectBuildSetups } from '../../store/buildEditorSelectors';
 import { setVisibility } from '../../store/buildEditorSlice';
 import type { BuildVisibility } from '../../types/build.types';
 import { IconPickerGrid } from '../primitives/IconPickerGrid';
@@ -72,8 +69,8 @@ const SettingsSectionComponent: React.FC = () => {
           color="text.disabled"
           sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
         >
-          {setups.length} setup{setups.length !== 1 ? 's' : ''} configured. Manage
-          setups in the setup bar below. Double-click a tab to rename.
+          {setups.length} setup{setups.length !== 1 ? 's' : ''} configured. Manage setups in the
+          setup bar below. Double-click a tab to rename.
         </Typography>
       </Box>
     </Stack>

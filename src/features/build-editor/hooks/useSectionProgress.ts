@@ -36,8 +36,7 @@ const shallowEqualProgress = (a: SectionProgressMap, b: SectionProgressMap): boo
 
 // ─── Boolean-only selectors (stable across unrelated edits) ───────────────
 
-const selectHasName = (s: RootState): boolean =>
-  s.buildEditor.build.name.trim().length > 0;
+const selectHasName = (s: RootState): boolean => s.buildEditor.build.name.trim().length > 0;
 
 const selectAllClassLinesSet = (s: RootState): boolean =>
   s.buildEditor.build.classSkillLines.every((line) => line != null);
@@ -45,8 +44,7 @@ const selectAllClassLinesSet = (s: RootState): boolean =>
 const selectHasCharacter = (s: RootState): boolean => {
   const setup = s.buildEditor.build.setups[s.buildEditor.activeSetupIndex];
   if (!setup) return false;
-  const attrTotal =
-    setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina;
+  const attrTotal = setup.attributes.magicka + setup.attributes.health + setup.attributes.stamina;
   return attrTotal > 0 || setup.mundusStone !== '';
 };
 
@@ -59,8 +57,7 @@ const selectHasSkills = (s: RootState): boolean => {
   const setup = s.buildEditor.build.setups[s.buildEditor.activeSetupIndex];
   if (!setup) return false;
   return (
-    Object.keys(setup.skills[0] ?? {}).length > 0 ||
-    Object.keys(setup.skills[1] ?? {}).length > 0
+    Object.keys(setup.skills[0] ?? {}).length > 0 || Object.keys(setup.skills[1] ?? {}).length > 0
   );
 };
 

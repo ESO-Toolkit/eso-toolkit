@@ -87,9 +87,7 @@ const GeneralSectionComponent: React.FC = () => {
   const races = useSelector(selectBuildRaces);
 
   const toggleRace = (raceId: string): void => {
-    const next = races.includes(raceId)
-      ? races.filter((r) => r !== raceId)
-      : [...races, raceId];
+    const next = races.includes(raceId) ? races.filter((r) => r !== raceId) : [...races, raceId];
     dispatch(setBuildRaces(next));
   };
 

@@ -18,8 +18,7 @@ import type { RootState } from '@/store/storeWithHistory';
 
 // ─── Narrow boolean / count selectors ────────────────────────────────────
 
-const selectHasName = (s: RootState): boolean =>
-  s.buildEditor.build.name.trim().length > 0;
+const selectHasName = (s: RootState): boolean => s.buildEditor.build.name.trim().length > 0;
 
 const selectHasRaces = (s: RootState): boolean => s.buildEditor.build.races.length > 0;
 
@@ -45,9 +44,7 @@ const selectGearCount = (s: RootState): number => {
 const selectSkillCount = (s: RootState): number => {
   const setup = s.buildEditor.build.setups[s.buildEditor.activeSetupIndex];
   if (!setup) return 0;
-  return (
-    Object.keys(setup.skills[0] ?? {}).length + Object.keys(setup.skills[1] ?? {}).length
-  );
+  return Object.keys(setup.skills[0] ?? {}).length + Object.keys(setup.skills[1] ?? {}).length;
 };
 
 const selectHasCP = (s: RootState): boolean => {
@@ -123,5 +120,15 @@ export const useBuildCompleteness = (): number => {
     if (hasGuideContent) score += 5;
 
     return Math.round((score / maxScore) * 100);
-  }, [setupExists, hasName, hasRaces, hasGuideContent, attrTotal, hasMundus, gearCount, skillCount, hasCP]);
+  }, [
+    setupExists,
+    hasName,
+    hasRaces,
+    hasGuideContent,
+    attrTotal,
+    hasMundus,
+    gearCount,
+    skillCount,
+    hasCP,
+  ]);
 };
