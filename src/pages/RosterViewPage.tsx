@@ -36,7 +36,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
-import { KALPA_DOWNLOAD_URL, getAddonManagerDeepLink } from '../features/build-hub/api/packs-api';
+import {
+  KALPA_DOWNLOAD_URL,
+  getAddonManagerDeepLink,
+  tryLaunchDeepLink,
+} from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import type {
@@ -1334,7 +1338,7 @@ export const RosterViewPage: React.FC = () => {
   }>({ open: false, message: '', severity: 'success' });
   const [recommendedAddons, setRecommendedAddons] = useState<RecommendedAddons | null>(null);
   const [addonsLoading, setAddonsLoading] = useState(false);
-  const deepLinkTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelDeepLinkRef = React.useRef<(() => void) | null>(null);
 
   // Default addons shown when no hub roster or no custom recommendations
   const DEFAULT_ADDONS: RecommendedAddonEntry[] = [
@@ -1356,13 +1360,8 @@ export const RosterViewPage: React.FC = () => {
     { esouiId: 3170, name: "Wizard's Wardrobe", note: 'Gear & skill setup management' },
   ];
 
-  // Clean up deep-link fallback timer on unmount
-  useEffect(
-    () => () => {
-      if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
-    },
-    [],
-  );
+  // Clean up deep-link fallback on unmount
+  useEffect(() => () => cancelDeepLinkRef.current?.(), []);
 
   // Decode roster from ?r= or fetch by ?id= on mount
   useEffect(() => {
@@ -1906,17 +1905,25 @@ export const RosterViewPage: React.FC = () => {
                       startIcon={<ExtensionIcon sx={{ fontSize: '0.85rem !important' }} />}
                       onClick={() => {
                         const deepLink = getAddonManagerDeepLink(packId);
-                        window.location.href = deepLink;
-                        // Fallback: if Kalpa is not installed, the browser silently fails.
-                        // After a delay, prompt the user to download Kalpa.
-                        if (deepLinkTimerRef.current) clearTimeout(deepLinkTimerRef.current);
-                        deepLinkTimerRef.current = setTimeout(() => {
+                        cancelDeepLinkRef.current?.();
+                        cancelDeepLinkRef.current = tryLaunchDeepLink(deepLink, () => {
                           void navigator.clipboard.writeText(deepLink).catch(() => {});
                           setSnackbar({
                             open: true,
                             message: (
                               <>
-                                Kalpa not detected.{' '}
+                                Kalpa didn&apos;t open.{' '}
+                                <a
+                                  href={deepLink}
+                                  style={{
+                                    color: 'inherit',
+                                    fontWeight: 700,
+                                    textDecoration: 'underline',
+                                  }}
+                                >
+                                  Launch manually
+                                </a>
+                                {' or '}
                                 <a
                                   href={KALPA_DOWNLOAD_URL}
                                   target="_blank"
@@ -1927,14 +1934,14 @@ export const RosterViewPage: React.FC = () => {
                                     textDecoration: 'underline',
                                   }}
                                 >
-                                  Download it here
+                                  download it
                                 </a>
                               </>
                             ),
                             severity: 'info',
-                            autoHideDuration: 6000,
+                            autoHideDuration: 8000,
                           });
-                        }, 1500);
+                        });
                       }}
                       sx={{
                         borderRadius: '8px',

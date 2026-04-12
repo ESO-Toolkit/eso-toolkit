@@ -132,3 +132,53 @@ export function getAddonManagerDeepLink(packId: string, options: DeepLinkOptions
   const qs = params.toString();
   return `eso-addon-manager://pack/${packId}${qs ? `?${qs}` : ''}`;
 }
+
+/**
+ * Attempt to launch a deep-link URI without triggering the OS "open with" dialog.
+ *
+ * Uses a hidden iframe to silently probe the protocol handler. If the handler
+ * is registered and the app opens (page loses visibility), the attempt is
+ * considered successful and the fallback is skipped. Otherwise `onFallback`
+ * fires after `timeoutMs` so the caller can show a download prompt.
+ *
+ * @returns A cancel function to abort the pending fallback (for unmount cleanup).
+ */
+export function tryLaunchDeepLink(
+  uri: string,
+  onFallback: () => void,
+  timeoutMs = 1500,
+): () => void {
+  let cancelled = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let iframe: HTMLIFrameElement | undefined;
+
+  const cleanup = (): void => {
+    cancelled = true;
+    if (timer != null) clearTimeout(timer);
+    if (iframe?.parentNode) iframe.parentNode.removeChild(iframe);
+    document.removeEventListener('visibilitychange', onVisChange);
+  };
+
+  const onVisChange = (): void => {
+    // The protocol handler stole focus — Kalpa opened successfully.
+    if (document.hidden && !cancelled) cleanup();
+  };
+
+  document.addEventListener('visibilitychange', onVisChange);
+
+  // Probe via hidden iframe — fails silently when the protocol is unregistered,
+  // avoiding the OS "how do you want to open this?" dialog.
+  iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = uri;
+  document.body.appendChild(iframe);
+
+  timer = setTimeout(() => {
+    if (!cancelled) {
+      cleanup();
+      onFallback();
+    }
+  }, timeoutMs);
+
+  return cleanup;
+}

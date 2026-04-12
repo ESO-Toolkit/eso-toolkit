@@ -1,6 +1,7 @@
 import { ContentCopy, DeleteOutline, EditOutlined, Extension, MoreVert } from '@mui/icons-material';
 import {
   Box,
+  Button,
   Card,
   CardActionArea,
   CardActions,
@@ -20,7 +21,11 @@ import React, { useRef } from 'react';
 
 import discordIcon from '../../../assets/discord-icon.svg';
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
-import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
+import {
+  KALPA_DOWNLOAD_URL,
+  getAddonManagerDeepLink,
+  tryLaunchDeepLink,
+} from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
 
 import { VoteButton } from './VoteButton';
@@ -117,19 +122,42 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
     const menuOpen = Boolean(menuAnchor);
 
+    const cancelDeepLinkRef = React.useRef<(() => void) | undefined>(undefined);
+    React.useEffect(() => () => cancelDeepLinkRef.current?.(), []);
+
     const handleGetAddons = (e: React.MouseEvent): void => {
       e.stopPropagation();
       const packId = roster.recommended_addons?.packId ?? 'trial-essentials';
       const deepLink = getAddonManagerDeepLink(packId);
-      window.location.href = deepLink;
-      setTimeout(() => {
-        void navigator.clipboard.writeText(deepLink).then(() => {
-          enqueueSnackbar('Deep link copied — install ESO Addon Manager to use it', {
-            variant: 'info',
-            autoHideDuration: 4000,
-          });
+      cancelDeepLinkRef.current?.();
+      cancelDeepLinkRef.current = tryLaunchDeepLink(deepLink, () => {
+        void navigator.clipboard.writeText(deepLink).catch(() => {});
+        enqueueSnackbar("Kalpa didn't open — launch it manually or download it", {
+          variant: 'info',
+          autoHideDuration: 8000,
+          action: () => (
+            <>
+              <Button
+                size="small"
+                component="a"
+                href={deepLink}
+                sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+              >
+                Launch
+              </Button>
+              <Button
+                size="small"
+                href={KALPA_DOWNLOAD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+              >
+                Download
+              </Button>
+            </>
+          ),
         });
-      }, 1500);
+      });
     };
 
     const handleMenuOpen = (e: React.MouseEvent<HTMLElement>): void => {
