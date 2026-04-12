@@ -872,7 +872,6 @@ export const HeaderBar: React.FC = () => {
               >
                 Tools
               </Button>
-              <PerfTierToggle />
               {!isLoggedIn && <ThemeToggle />}
               {isLoggedIn ? (
                 <Box
