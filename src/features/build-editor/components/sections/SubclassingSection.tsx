@@ -269,8 +269,6 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
               minWidth: 240,
               maxHeight: 380,
               background: isDark ? 'rgba(10, 18, 30, 0.97)' : 'rgba(248, 250, 252, 0.98)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
               borderRadius: 2,
               boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
@@ -476,11 +474,11 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
 
 // ─── Main Section ─────────────────────────────────────────────────────────────
 
-export const SubclassingSection: React.FC = () => {
+export const SubclassingSection: React.FC = React.memo(function SubclassingSection() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build } = useSelector((s: RootState) => s.buildEditor);
+  const classSkillLines = useSelector((s: RootState) => s.buildEditor.build.classSkillLines);
 
   const handleChange = useCallback(
     (slot: 0 | 1 | 2, skillLineId: ClassSkillLineId | null) => {
@@ -492,7 +490,7 @@ export const SubclassingSection: React.FC = () => {
   // Build disabled sets per slot: all currently selected IDs except this slot's own value
   const getDisabledIds = (slot: 0 | 1 | 2): Set<ClassSkillLineId> => {
     const disabled = new Set<ClassSkillLineId>();
-    build.classSkillLines.forEach((id, idx) => {
+    classSkillLines.forEach((id, idx) => {
       if (id && idx !== slot) disabled.add(id);
     });
     return disabled;
@@ -521,7 +519,7 @@ export const SubclassingSection: React.FC = () => {
         </Typography>
 
         {/* Status badge */}
-        <StatusBadge classSkillLines={build.classSkillLines} />
+        <StatusBadge classSkillLines={classSkillLines} />
       </Box>
 
       {/* Three slot pickers */}
@@ -530,7 +528,7 @@ export const SubclassingSection: React.FC = () => {
           <SlotPicker
             key={slot}
             slot={slot}
-            value={build.classSkillLines[slot]}
+            value={classSkillLines[slot]}
             disabledIds={getDisabledIds(slot)}
             onChange={handleChange}
           />
@@ -538,4 +536,4 @@ export const SubclassingSection: React.FC = () => {
       </Stack>
     </Stack>
   );
-};
+});

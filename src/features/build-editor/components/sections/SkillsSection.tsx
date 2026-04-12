@@ -13,16 +13,18 @@ import type { RootState } from '@/store/storeWithHistory';
 import { setSkills } from '../../store/buildEditorSlice';
 import { SkillBarPicker } from '../pickers/SkillBarPicker';
 
-export const SkillsSection: React.FC = () => {
+export const SkillsSection: React.FC = React.memo(function SkillsSection() {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const skills = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.skills,
+  );
+  const classSkillLines = useSelector((s: RootState) => s.buildEditor.build.classSkillLines);
 
   return (
     <SkillBarPicker
-      skills={setup.skills}
-      selectedClassLineIds={build.classSkillLines}
+      skills={skills}
+      selectedClassLineIds={classSkillLines}
       onChange={(updated) => dispatch(setSkills(updated))}
     />
   );
-};
+});

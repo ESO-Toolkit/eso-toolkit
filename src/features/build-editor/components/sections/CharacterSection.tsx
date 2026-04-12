@@ -20,10 +20,11 @@ import { IconPickerGrid } from '../primitives/IconPickerGrid';
 
 const ATTR_MAX = 64;
 
-export const CharacterSection: React.FC = () => {
+export const CharacterSection: React.FC = React.memo(function CharacterSection() {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const setup = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex],
+  );
 
   const handleAttr =
     (key: keyof BuildAttributes) =>
@@ -145,4 +146,4 @@ export const CharacterSection: React.FC = () => {
       />
     </Stack>
   );
-};
+});

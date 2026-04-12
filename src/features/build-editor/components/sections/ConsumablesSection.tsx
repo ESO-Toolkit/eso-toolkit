@@ -16,13 +16,14 @@ import { PotionPicker } from '../pickers/PotionPicker';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const ConsumablesSection: React.FC = () => {
+export const ConsumablesSection: React.FC = React.memo(function ConsumablesSection() {
   const dispatch = useDispatch();
   const [tab, setTab] = useState<'potions' | 'food'>('food');
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const setup = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex],
+  );
 
   return (
     <>
@@ -60,7 +61,6 @@ export const ConsumablesSection: React.FC = () => {
                   border: isActive
                     ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
                     : `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
-                  backdropFilter: isActive ? 'blur(6px)' : 'none',
                   boxShadow: isActive
                     ? '0 0 10px rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
                     : 'none',
@@ -108,4 +108,4 @@ export const ConsumablesSection: React.FC = () => {
       </Stack>
     </>
   );
-};
+});

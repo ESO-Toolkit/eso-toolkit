@@ -85,7 +85,9 @@ export const BuildCompletionHeader: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { isLoggedIn, accessToken } = useAuth();
 
-  const { build, isDirty, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const build = useSelector((s: RootState) => s.buildEditor.build);
+  const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
+  const activeSetupIndex = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
   const [searchParams] = useSearchParams();
 
   // Get the saved build ID from URL params (set when editing an existing saved build)
@@ -404,8 +406,6 @@ export const BuildCompletionHeader: React.FC = () => {
     textTransform: 'none' as const,
     fontWeight: 600,
     letterSpacing: 0.2,
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
     // Mobile: compact icon-only pills; desktop: full labels
     fontSize: isMobile ? 12 : 13,
     px: isMobile ? 1 : 1.75,
@@ -812,8 +812,6 @@ export const BuildCompletionHeader: React.FC = () => {
             borderRadius: '12px',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
             background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
             overflow: 'hidden',
             boxShadow: isDark
               ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)'
@@ -1011,8 +1009,6 @@ export const BuildCompletionHeader: React.FC = () => {
                 sx={{
                   border: `1px solid ${isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)'}`,
                   background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
                   borderRadius: '10px',
                   width: 36,
                   height: 36,
@@ -1034,9 +1030,7 @@ export const BuildCompletionHeader: React.FC = () => {
               slotProps={{
                 paper: {
                   sx: {
-                    background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.97)',
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
+                    background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(255, 255, 255, 0.98)',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                     borderRadius: 2,
                     minWidth: 180,
@@ -1139,8 +1133,6 @@ export const BuildCompletionHeader: React.FC = () => {
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
             borderRadius: 3,
           },
@@ -1323,8 +1315,6 @@ export const BuildCompletionHeader: React.FC = () => {
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
             borderRadius: 3,
           },
@@ -1420,8 +1410,6 @@ export const BuildCompletionHeader: React.FC = () => {
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
             borderRadius: 3,
           },
@@ -1540,8 +1528,6 @@ export const BuildCompletionHeader: React.FC = () => {
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
             borderRadius: 3,
           },

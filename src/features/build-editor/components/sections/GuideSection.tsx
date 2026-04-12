@@ -57,21 +57,22 @@ const sectionLabelSx = {
   fontFamily: 'Space Grotesk, Inter, system-ui',
 };
 
-export const GuideSection: React.FC = () => {
+export const GuideSection: React.FC = React.memo(function GuideSection() {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const { enqueueSnackbar } = useSnackbar();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
-  const { guide } = build;
+  const guide = useSelector((s: RootState) => s.buildEditor.build.guide);
+  const screenshots = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.screenshots,
+  );
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
     if (!files) return;
-    const remaining = MAX_SCREENSHOTS - setup.screenshots.length;
+    const remaining = MAX_SCREENSHOTS - screenshots.length;
     if (remaining <= 0) {
       enqueueSnackbar(`Screenshot limit reached (${MAX_SCREENSHOTS} max).`, { variant: 'warning' });
       e.target.value = '';
@@ -229,7 +230,7 @@ export const GuideSection: React.FC = () => {
           }}
         >
           Screenshots
-          {setup.screenshots.length > 0 ? ` (${setup.screenshots.length}/${MAX_SCREENSHOTS})` : ''}
+          {screenshots.length > 0 ? ` (${screenshots.length}/${MAX_SCREENSHOTS})` : ''}
         </Typography>
       </Divider>
 
@@ -242,7 +243,7 @@ export const GuideSection: React.FC = () => {
         Character stats, gear, or skills.
       </Typography>
 
-      {setup.screenshots.length === 0 ? (
+      {screenshots.length === 0 ? (
         <Box
           sx={{
             textAlign: 'center',
@@ -287,7 +288,7 @@ export const GuideSection: React.FC = () => {
         <>
           <Grid container spacing={1}>
             <AnimatePresence>
-              {setup.screenshots.map((src, i) => (
+              {screenshots.map((src, i) => (
                 <Grid size={{ xs: 6, sm: 4 }} key={src.slice(0, 48) + i}>
                   <motion.div
                     layout={!prefersReduced}
@@ -363,7 +364,7 @@ export const GuideSection: React.FC = () => {
             startIcon={<AddIcon sx={{ fontSize: 14 }} />}
             variant="outlined"
             size="small"
-            disabled={setup.screenshots.length >= MAX_SCREENSHOTS}
+            disabled={screenshots.length >= MAX_SCREENSHOTS}
             onClick={() => inputRef.current?.click()}
             sx={{
               alignSelf: 'flex-start',
@@ -380,7 +381,7 @@ export const GuideSection: React.FC = () => {
               },
             }}
           >
-            {setup.screenshots.length >= MAX_SCREENSHOTS ? 'Limit reached' : 'Add More'}
+            {screenshots.length >= MAX_SCREENSHOTS ? 'Limit reached' : 'Add More'}
           </Button>
         </>
       )}
@@ -395,4 +396,4 @@ export const GuideSection: React.FC = () => {
       />
     </Stack>
   );
-};
+});

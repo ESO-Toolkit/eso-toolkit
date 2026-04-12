@@ -12,7 +12,6 @@ export const glassAddBtnSx = (isDark: boolean): Record<string, unknown> => ({
   textTransform: 'none' as const,
   borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
   color: 'var(--be-accent, #38bdf8)',
-  backdropFilter: 'blur(6px)',
   '&:hover': {
     borderColor: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.40)',
     background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)',
@@ -25,8 +24,6 @@ export const glassAddBtnSx = (isDark: boolean): Record<string, unknown> => ({
 
 export const glassEmptySx = (isDark: boolean): Record<string, unknown> => ({
   background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-  backdropFilter: 'blur(6px)',
-  WebkitBackdropFilter: 'blur(6px)',
   border: `1px dashed ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
   borderRadius: 3,
   p: 3,

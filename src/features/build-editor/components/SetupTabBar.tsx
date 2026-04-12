@@ -194,8 +194,6 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               fontWeight: active ? 700 : 500,
               fontSize: 13,
-              backdropFilter: active ? 'blur(8px)' : 'none',
-              WebkitBackdropFilter: active ? 'blur(8px)' : 'none',
               '&:hover': {
                 background: active
                   ? undefined
@@ -420,8 +418,6 @@ const DragPreview: React.FC<{ setup: BuildSetup; isDark: boolean }> = ({ setup, 
       fontWeight: 700,
       fontSize: 13,
       cursor: 'grabbing',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
       pointerEvents: 'none',
     }}
   >
@@ -468,7 +464,8 @@ export const SetupTabBar: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
 
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const setups = useSelector((s: RootState) => s.buildEditor.build.setups);
+  const activeSetupIndex = useSelector((s: RootState) => s.buildEditor.activeSetupIndex);
 
   // ── Drag-and-drop ──────────────────────────────────────────────────────────
   const sensors = useSensors(
@@ -488,13 +485,13 @@ export const SetupTabBar: React.FC = () => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const fromIndex = build.setups.findIndex((s) => s.id === active.id);
-      const toIndex = build.setups.findIndex((s) => s.id === over.id);
+      const fromIndex = setups.findIndex((s) => s.id === active.id);
+      const toIndex = setups.findIndex((s) => s.id === over.id);
       if (fromIndex !== -1 && toIndex !== -1) {
         dispatch(reorderSetups({ fromIndex, toIndex }));
       }
     },
-    [build.setups, dispatch],
+    [setups, dispatch],
   );
 
   const handleDragCancel = useCallback(() => {
@@ -502,9 +499,9 @@ export const SetupTabBar: React.FC = () => {
   }, []);
 
   // Memoize the id array so SortableContext doesn't re-initialize each render
-  const setupIds = useMemo(() => build.setups.map((s) => s.id), [build.setups]);
+  const setupIds = useMemo(() => setups.map((s) => s.id), [setups]);
 
-  const draggedSetup = activeId ? build.setups.find((s) => s.id === activeId) : null;
+  const draggedSetup = activeId ? setups.find((s) => s.id === activeId) : null;
 
   // ── Delete confirmation state ────────────────────────────────────────────
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
@@ -524,10 +521,10 @@ export const SetupTabBar: React.FC = () => {
   const startRename = useCallback(
     (index: number): void => {
       setRenamingIndex(index);
-      setRenameValue(build.setups[index].name);
+      setRenameValue(setups[index].name);
       requestAnimationFrame(() => renameInputRef.current?.select());
     },
-    [build.setups],
+    [setups],
   );
 
   const commitRename = useCallback((): void => {
@@ -590,7 +587,7 @@ export const SetupTabBar: React.FC = () => {
         >
           <Box role="tablist" aria-label="Build setups" sx={{ display: 'contents' }}>
             <SortableContext items={setupIds} strategy={horizontalListSortingStrategy}>
-              {build.setups.map((setup, i) => (
+              {setups.map((setup, i) => (
                 <SortableSetupTab
                   key={setup.id}
                   setup={setup}
@@ -600,7 +597,7 @@ export const SetupTabBar: React.FC = () => {
                   isRenaming={renamingIndex === i}
                   renameValue={renameValue}
                   renameInputRef={renameInputRef}
-                  setupCount={build.setups.length}
+                  setupCount={setups.length}
                   prefersReduced={prefersReduced}
                   onSelect={handleSelect}
                   onStartRename={startRename}
@@ -623,12 +620,12 @@ export const SetupTabBar: React.FC = () => {
         </DndContext>
 
         {/* Add setup — glass circle with accent border */}
-        <Tooltip title={build.setups.length >= 5 ? 'Max 5 setups' : 'Add setup'}>
+        <Tooltip title={setups.length >= 5 ? 'Max 5 setups' : 'Add setup'}>
           <Box>
             <IconButton
               size="small"
               onClick={() => dispatch(addSetup())}
-              disabled={build.setups.length >= 5}
+              disabled={setups.length >= 5}
               aria-label="Add setup"
               sx={{
                 width: 32,
@@ -637,8 +634,6 @@ export const SetupTabBar: React.FC = () => {
                   ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
                   : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.05)',
                 border: '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.20)',
-                backdropFilter: 'blur(6px)',
-                WebkitBackdropFilter: 'blur(6px)',
                 color: 'var(--be-accent, #38bdf8)',
                 transition: 'all 0.2s',
                 '&:hover': {
@@ -669,8 +664,6 @@ export const SetupTabBar: React.FC = () => {
         PaperProps={{
           sx: {
             background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
             borderRadius: 3,
           },
@@ -693,7 +686,7 @@ export const SetupTabBar: React.FC = () => {
             sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}
           >
             <strong>
-              {deleteTarget !== null ? (build.setups[deleteTarget]?.name ?? 'this setup') : ''}
+              {deleteTarget !== null ? (setups[deleteTarget]?.name ?? 'this setup') : ''}
             </strong>{' '}
             and all its gear, skills, and champion points will be permanently removed.
           </Typography>

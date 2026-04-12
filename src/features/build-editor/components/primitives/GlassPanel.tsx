@@ -26,14 +26,14 @@ interface GlassPanelProps {
   variant?: GlassPanelVariant;
 }
 
-export const GlassPanel: React.FC<GlassPanelProps> = ({
+export const GlassPanel = React.memo<GlassPanelProps>(function GlassPanel({
   children,
   sx,
   glow = false,
   component = 'div',
   id,
   variant = 'default',
-}) => {
+}) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -87,26 +87,11 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
           boxShadow: shadow,
           transition: 'box-shadow 0.3s ease, border-color 0.25s ease',
 
-          // ── Primary tier: gradient border mask + inner glow slit ──────────
+          // ── Primary tier: gradient border via border-image ─────────────
           ...(isPrimary && {
-            // Gradient border via CSS mask technique:
-            // padding:1px creates a 1px "frame" inside the element bounds.
-            // The mask XOR reveals only that frame, letting the gradient show through.
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              inset: 0,
-              borderRadius: 'inherit',
-              padding: '1px',
-              background:
-                'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.55) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.10) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22) 100%)',
-              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              WebkitMaskComposite: 'xor',
-              mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              maskComposite: 'exclude',
-              pointerEvents: 'none',
-              zIndex: 1,
-            },
+            borderImage:
+              'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.55) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.10) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22) 100%) 1',
+            border: '1px solid',
             // Inner glow slit — a horizontal light streak at the top inside edge
             '&::after': {
               content: '""',
@@ -128,13 +113,6 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
               boxShadow: hoverShadow,
             },
           }),
-          ...(glow &&
-            isPrimary && {
-              '&:hover::before': {
-                background:
-                  'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.75) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.18) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.40) 100%)',
-              },
-            }),
 
           ...sx,
         } as SxProps<Theme>
@@ -143,4 +121,4 @@ export const GlassPanel: React.FC<GlassPanelProps> = ({
       {children}
     </Box>
   );
-};
+});

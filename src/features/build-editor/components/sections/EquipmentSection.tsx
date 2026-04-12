@@ -14,10 +14,11 @@ import type { ArmorWeight, GearConfig } from '../../../loadout-manager/types/loa
 import { setGear, setGearEnchant, setGearTrait, setGearWeight } from '../../store/buildEditorSlice';
 import { EquipmentPicker } from '../pickers/EquipmentPicker';
 
-export const EquipmentSection: React.FC = () => {
+export const EquipmentSection: React.FC = React.memo(function EquipmentSection() {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const gear = useSelector(
+    (s: RootState) => s.buildEditor.build.setups[s.buildEditor.activeSetupIndex]?.gear,
+  );
 
   const handleChange = useCallback(
     (gear: GearConfig) => {
@@ -49,11 +50,11 @@ export const EquipmentSection: React.FC = () => {
 
   return (
     <EquipmentPicker
-      gear={setup.gear}
+      gear={gear}
       onChange={handleChange}
       onWeightChange={handleWeightChange}
       onTraitChange={handleTraitChange}
       onEnchantChange={handleEnchantChange}
     />
   );
-};
+});
