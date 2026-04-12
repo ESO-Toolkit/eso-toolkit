@@ -10,25 +10,24 @@ import { useSnackbar } from 'notistack';
 import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import { selectActiveSetup } from '../../store/buildEditorSelectors';
 import { addScreenshot, removeScreenshot } from '../../store/buildEditorSlice';
 
 const MAX_SCREENSHOT_SIZE = 5 * 1024 * 1024; // 5 MB
 
-export const ScreenshotsSection: React.FC = () => {
+const ScreenshotsSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const { enqueueSnackbar } = useSnackbar();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const setup = useSelector(selectActiveSetup);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
     if (!files) return;
+    if (!setup) return;
     Array.from(files).forEach((file) => {
       if (file.size > MAX_SCREENSHOT_SIZE) {
         enqueueSnackbar(`"${file.name}" exceeds 5 MB — please resize before uploading.`, {
@@ -48,6 +47,8 @@ export const ScreenshotsSection: React.FC = () => {
     });
     e.target.value = '';
   };
+
+  if (!setup) return null;
 
   return (
     <Stack spacing={1.5}>
@@ -212,3 +213,5 @@ export const ScreenshotsSection: React.FC = () => {
     </Stack>
   );
 };
+
+export const ScreenshotsSection = React.memo(ScreenshotsSectionComponent);

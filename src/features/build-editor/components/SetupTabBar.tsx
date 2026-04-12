@@ -58,8 +58,10 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import {
+  selectActiveSetupIndex,
+  selectBuildSetups,
+} from '../store/buildEditorSelectors';
 import {
   addSetup,
   deleteSetup,
@@ -468,7 +470,12 @@ export const SetupTabBar: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
 
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  // Narrow: setups array is stable across unrelated build edits (name,
+  // description, guide, etc) because Immer preserves unchanged subtrees.
+  // Compose a minimal `build`-like object for existing code below.
+  const setups = useSelector(selectBuildSetups);
+  const activeSetupIndex = useSelector(selectActiveSetupIndex);
+  const build = useMemo(() => ({ setups }), [setups]);
 
   // ── Drag-and-drop ──────────────────────────────────────────────────────────
   const sensors = useSensors(

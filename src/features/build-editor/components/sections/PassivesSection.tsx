@@ -8,15 +8,15 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import { selectActiveSetup } from '../../store/buildEditorSelectors';
 import { setPassives } from '../../store/buildEditorSlice';
 import { PassivesPicker } from '../pickers/PassivesPicker';
 
-export const PassivesSection: React.FC = () => {
+const PassivesSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const setup = useSelector(selectActiveSetup);
+
+  if (!setup) return null;
 
   return (
     <PassivesPicker
@@ -25,3 +25,5 @@ export const PassivesSection: React.FC = () => {
     />
   );
 };
+
+export const PassivesSection = React.memo(PassivesSectionComponent);

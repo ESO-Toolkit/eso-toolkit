@@ -8,16 +8,14 @@
 import React, { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
 import type { ArmorWeight, GearConfig } from '../../../loadout-manager/types/loadout.types';
+import { selectActiveSetup } from '../../store/buildEditorSelectors';
 import { setGear, setGearEnchant, setGearTrait, setGearWeight } from '../../store/buildEditorSlice';
 import { EquipmentPicker } from '../pickers/EquipmentPicker';
 
-export const EquipmentSection: React.FC = () => {
+const EquipmentSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const setup = useSelector(selectActiveSetup);
 
   const handleChange = useCallback(
     (gear: GearConfig) => {
@@ -47,6 +45,8 @@ export const EquipmentSection: React.FC = () => {
     [dispatch],
   );
 
+  if (!setup) return null;
+
   return (
     <EquipmentPicker
       gear={setup.gear}
@@ -57,3 +57,5 @@ export const EquipmentSection: React.FC = () => {
     />
   );
 };
+
+export const EquipmentSection = React.memo(EquipmentSectionComponent);

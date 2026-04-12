@@ -58,6 +58,11 @@ import { snapshotBuildToSlot } from '@/utils/rosterBuildBridge';
 import { ESO_CLASSES } from '../data/esoStaticData';
 import { useBuildCompleteness } from '../hooks/useBuildCompleteness';
 import {
+  selectActiveSetupIndex,
+  selectBuild,
+  selectIsDirty,
+} from '../store/buildEditorSelectors';
+import {
   BUILD_EDITOR_STORAGE_KEY,
   loadBuild,
   markSaved,
@@ -85,7 +90,14 @@ export const BuildCompletionHeader: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { isLoggedIn, accessToken } = useAuth();
 
-  const { build, isDirty, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  // Use the shared narrow selectors. This component still re-renders on
+  // every keystroke (it owns the controlled name/description inputs and
+  // passes `build` as a prop to AddToRosterDialog), but the re-render no
+  // longer cascades into the 11 section components because the parent
+  // (BuildEditorLayout) no longer subscribes to `build`.
+  const build = useSelector(selectBuild);
+  const isDirty = useSelector(selectIsDirty);
+  const activeSetupIndex = useSelector(selectActiveSetupIndex);
   const [searchParams] = useSearchParams();
 
   // Get the saved build ID from URL params (set when editing an existing saved build)

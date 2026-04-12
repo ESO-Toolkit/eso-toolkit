@@ -8,8 +8,10 @@ import { useTheme } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import {
+  selectBuildSettings,
+  selectBuildSetups,
+} from '../../store/buildEditorSelectors';
 import { setVisibility } from '../../store/buildEditorSlice';
 import type { BuildVisibility } from '../../types/build.types';
 import { IconPickerGrid } from '../primitives/IconPickerGrid';
@@ -20,11 +22,12 @@ const VISIBILITY_OPTIONS = [
   { id: 'private' as const, label: 'Private', description: 'Only you can view' },
 ];
 
-export const SettingsSection: React.FC = () => {
+const SettingsSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build } = useSelector((s: RootState) => s.buildEditor);
+  const settings = useSelector(selectBuildSettings);
+  const setups = useSelector(selectBuildSetups);
 
   return (
     <Stack spacing={2.5}>
@@ -32,7 +35,7 @@ export const SettingsSection: React.FC = () => {
       <IconPickerGrid
         label="Visibility"
         options={VISIBILITY_OPTIONS}
-        value={build.settings.visibility}
+        value={settings.visibility}
         onChange={(id) => dispatch(setVisibility(id as BuildVisibility))}
         columns={3}
       />
@@ -71,10 +74,12 @@ export const SettingsSection: React.FC = () => {
           color="text.disabled"
           sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
         >
-          {build.setups.length} setup{build.setups.length !== 1 ? 's' : ''} configured. Manage
+          {setups.length} setup{setups.length !== 1 ? 's' : ''} configured. Manage
           setups in the setup bar below. Double-click a tab to rename.
         </Typography>
       </Box>
     </Stack>
   );
 };
+
+export const SettingsSection = React.memo(SettingsSectionComponent);

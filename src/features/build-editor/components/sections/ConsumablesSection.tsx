@@ -8,21 +8,21 @@ import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import { selectActiveSetup } from '../../store/buildEditorSelectors';
 import { setConsumables } from '../../store/buildEditorSlice';
 import { FoodPicker } from '../pickers/FoodPicker';
 import { PotionPicker } from '../pickers/PotionPicker';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const ConsumablesSection: React.FC = () => {
+const ConsumablesSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const [tab, setTab] = useState<'potions' | 'food'>('food');
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const setup = useSelector(selectActiveSetup);
+
+  if (!setup) return null;
 
   return (
     <>
@@ -109,3 +109,5 @@ export const ConsumablesSection: React.FC = () => {
     </>
   );
 };
+
+export const ConsumablesSection = React.memo(ConsumablesSectionComponent);

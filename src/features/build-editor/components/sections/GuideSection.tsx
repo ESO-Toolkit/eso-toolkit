@@ -22,8 +22,7 @@ import { useSnackbar } from 'notistack';
 import React, { useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
+import { selectActiveSetup, selectBuildGuide } from '../../store/buildEditorSelectors';
 import {
   addScreenshot,
   MAX_SCREENSHOTS,
@@ -57,20 +56,20 @@ const sectionLabelSx = {
   fontFamily: 'Space Grotesk, Inter, system-ui',
 };
 
-export const GuideSection: React.FC = () => {
+const GuideSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const { enqueueSnackbar } = useSnackbar();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
-  const { guide } = build;
+  const setup = useSelector(selectActiveSetup);
+  const guide = useSelector(selectBuildGuide);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const files = e.target.files;
     if (!files) return;
+    if (!setup) return;
     const remaining = MAX_SCREENSHOTS - setup.screenshots.length;
     if (remaining <= 0) {
       enqueueSnackbar(`Screenshot limit reached (${MAX_SCREENSHOTS} max).`, { variant: 'warning' });
@@ -104,6 +103,8 @@ export const GuideSection: React.FC = () => {
     }
     e.target.value = '';
   };
+
+  if (!setup) return null;
 
   return (
     <Stack spacing={2.5}>
@@ -396,3 +397,5 @@ export const GuideSection: React.FC = () => {
     </Stack>
   );
 };
+
+export const GuideSection = React.memo(GuideSectionComponent);

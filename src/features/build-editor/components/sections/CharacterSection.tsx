@@ -8,9 +8,8 @@ import { Box, Stack, Typography } from '@mui/material';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
 import { ESO_CURSES, ESO_MUNDUS_STONES } from '../../data/esoStaticData';
+import { selectActiveSetup } from '../../store/buildEditorSelectors';
 import { setAttributes, setCurse, setMundusStone } from '../../store/buildEditorSlice';
 import { BE_TOKENS } from '../../theme/buildEditorTokens';
 import type { BuildAttributes } from '../../types/build.types';
@@ -20,10 +19,10 @@ import { IconPickerGrid } from '../primitives/IconPickerGrid';
 
 const ATTR_MAX = 64;
 
-export const CharacterSection: React.FC = () => {
+const CharacterSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
-  const { build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
-  const setup = build.setups[activeSetupIndex];
+  const setup = useSelector(selectActiveSetup);
+  if (!setup) return null;
 
   const handleAttr =
     (key: keyof BuildAttributes) =>
@@ -146,3 +145,5 @@ export const CharacterSection: React.FC = () => {
     </Stack>
   );
 };
+
+export const CharacterSection = React.memo(CharacterSectionComponent);

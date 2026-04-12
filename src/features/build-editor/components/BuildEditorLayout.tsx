@@ -26,12 +26,13 @@ import { Box, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
 import React, { useCallback, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 
 import { saveBuild } from '@/store/saved_builds';
 import type { RootState } from '@/store/storeWithHistory';
 
 import { useSectionProgress } from '../hooks/useSectionProgress';
+import { selectIsDirty } from '../store/buildEditorSelectors';
 import { BUILD_EDITOR_STORAGE_KEY, markSaved } from '../store/buildEditorSlice';
 
 import { BuildCompletionHeader } from './BuildCompletionHeader';
@@ -57,7 +58,10 @@ export const BuildEditorLayout: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
   const progress = useSectionProgress();
-  const { isDirty, build, activeSetupIndex } = useSelector((s: RootState) => s.buildEditor);
+  const isDirty = useSelector(selectIsDirty);
+  // Lazy read via the store — subscribing to `build` here would force the
+  // whole layout (and every SectionCard child) to re-render on every edit.
+  const store = useStore<RootState>();
 
   // Warn user before leaving with unsaved changes
   const handleBeforeUnload = useCallback(
@@ -73,11 +77,14 @@ export const BuildEditorLayout: React.FC = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [handleBeforeUnload]);
 
-  // Ctrl+S / Cmd+S keyboard shortcut to save
+  // Ctrl+S / Cmd+S keyboard shortcut to save.
+  // Reads state lazily via the store so this effect registers the listener
+  // exactly once — it never re-runs on build edits.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
+        const { build, activeSetupIndex } = store.getState().buildEditor;
         if (!build.name.trim()) return;
         try {
           localStorage.setItem(
@@ -93,7 +100,7 @@ export const BuildEditorLayout: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [build, activeSetupIndex, dispatch]);
+  }, [dispatch, store]);
 
   return (
     <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>

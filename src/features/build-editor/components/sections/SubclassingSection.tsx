@@ -28,14 +28,13 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { RootState } from '@/store/storeWithHistory';
-
 import {
   CLASS_SKILL_LINES,
   ESO_CLASSES,
   getSkillLineDef,
   type ClassSkillLineDef,
 } from '../../data/esoStaticData';
+import { selectBuildClassSkillLines } from '../../store/buildEditorSelectors';
 import { setClassSkillLine } from '../../store/buildEditorSlice';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
 import type { ClassSkillLineId } from '../../types/build.types';
@@ -476,11 +475,11 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
 
 // ─── Main Section ─────────────────────────────────────────────────────────────
 
-export const SubclassingSection: React.FC = () => {
+const SubclassingSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { build } = useSelector((s: RootState) => s.buildEditor);
+  const classSkillLines = useSelector(selectBuildClassSkillLines);
 
   const handleChange = useCallback(
     (slot: 0 | 1 | 2, skillLineId: ClassSkillLineId | null) => {
@@ -492,7 +491,7 @@ export const SubclassingSection: React.FC = () => {
   // Build disabled sets per slot: all currently selected IDs except this slot's own value
   const getDisabledIds = (slot: 0 | 1 | 2): Set<ClassSkillLineId> => {
     const disabled = new Set<ClassSkillLineId>();
-    build.classSkillLines.forEach((id, idx) => {
+    classSkillLines.forEach((id, idx) => {
       if (id && idx !== slot) disabled.add(id);
     });
     return disabled;
@@ -521,7 +520,7 @@ export const SubclassingSection: React.FC = () => {
         </Typography>
 
         {/* Status badge */}
-        <StatusBadge classSkillLines={build.classSkillLines} />
+        <StatusBadge classSkillLines={classSkillLines} />
       </Box>
 
       {/* Three slot pickers */}
@@ -530,7 +529,7 @@ export const SubclassingSection: React.FC = () => {
           <SlotPicker
             key={slot}
             slot={slot}
-            value={build.classSkillLines[slot]}
+            value={classSkillLines[slot]}
             disabledIds={getDisabledIds(slot)}
             onChange={handleChange}
           />
@@ -539,3 +538,5 @@ export const SubclassingSection: React.FC = () => {
     </Stack>
   );
 };
+
+export const SubclassingSection = React.memo(SubclassingSectionComponent);
