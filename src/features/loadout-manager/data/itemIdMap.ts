@@ -203611,15 +203611,6 @@ export function getItemInfo(itemId: number): ItemInfo | undefined {
 }
 
 /**
- * Get item name by ID
- * @param itemId The item ID from combat logs
- * @returns Item name or undefined if not found
- */
-export function getItemName(itemId: number): string | undefined {
-  return itemIdMap[itemId]?.name;
-}
-
-/**
  * Check if item ID is mapped
  * @param itemId The item ID to check
  * @returns True if item is in the map

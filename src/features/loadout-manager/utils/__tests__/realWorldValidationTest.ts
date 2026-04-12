@@ -4,14 +4,9 @@
  * Tests edge cases and common scenarios
  */
 
-import { itemIdMap } from '../../data/itemIdMap';
+import { itemIdMap, getItemsBySlot } from '../../data/itemIdMap';
 import type { GearConfig } from '../../types/loadout.types';
-import {
-  validateGearConfig,
-  getSlotCoverageStats,
-  getItemsBySlot,
-  canExportLoadout,
-} from '../itemSlotValidator';
+import { validateGearConfig, getSlotCoverageStats, canExportLoadout } from '../itemSlotValidator';
 
 console.log('🎮 Real-World Validation Test\n');
 console.log('================================\n');

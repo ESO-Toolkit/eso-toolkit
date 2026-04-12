@@ -5,7 +5,7 @@
  * Prevents invalid Wizards Wardrobe files from being generated.
  */
 
-import { getItemInfo, itemIdMap, type ItemInfo, type SlotType } from '../data/itemIdMap';
+import { getItemInfo, itemIdMap, type SlotType } from '../data/itemIdMap';
 import type { GearConfig } from '../types/loadout.types';
 
 export interface ValidationResult {
@@ -27,10 +27,11 @@ export interface ItemSlotInfo {
 
 /**
  * Check if an item has known slot information
+ * Delegates to getItemInfo() so wardrobe/collection slot overrides are
+ * consulted alongside the raw itemIdMap entry.
  */
 export function hasKnownSlot(itemId: number): boolean {
-  const item = itemIdMap[itemId];
-  return item?.slot !== undefined;
+  return getItemInfo(itemId)?.slot !== undefined;
 }
 
 /**
@@ -172,19 +173,6 @@ export function getSlotCoverageStats(): {
     coveragePercent: (itemsWithSlots / totalItems) * 100,
     bySlot,
   };
-}
-
-/**
- * Filter items by slot for selector dropdowns
- */
-export function getItemsBySlot(targetSlot: SlotType): Array<{ itemId: number; item: ItemInfo }> {
-  return Object.entries(itemIdMap)
-    .filter(([_, item]) => item.slot === targetSlot)
-    .map(([itemId, item]) => ({
-      itemId: parseInt(itemId, 10),
-      item,
-    }))
-    .sort((a, b) => a.item.setName.localeCompare(b.item.setName));
 }
 
 /**

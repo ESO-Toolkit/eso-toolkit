@@ -30,17 +30,17 @@ if (info?.hasSlot) {
 ### Filter Items for UI
 
 ```typescript
-import { getItemsBySlot } from './itemSlotValidator';
+import { getItemsBySlot } from '../data/itemIdMap';
 
 // Get all valid head items
 const headItems = getItemsBySlot('head');
-// Returns: [{ itemId: 59380, item: {...} }, ...]
+// Returns: [{ itemId: 59380, info: {...} }, ...]
 
 // Use in selector
 <select>
-  {headItems.map(({ itemId, item }) => (
+  {headItems.map(({ itemId, info }) => (
     <option key={itemId} value={itemId}>
-      {item.setName} - {item.name}
+      {info.setName} - {info.name}
     </option>
   ))}
 </select>
@@ -128,9 +128,9 @@ function GearSlotSelector({ slotIndex, slot }: Props) {
   return (
     <select>
       <option value="">Select {slot}...</option>
-      {items.map(({ itemId, item }) => (
+      {items.map(({ itemId, info }) => (
         <option key={itemId} value={itemId}>
-          {item.setName}
+          {info.setName}
         </option>
       ))}
     </select>

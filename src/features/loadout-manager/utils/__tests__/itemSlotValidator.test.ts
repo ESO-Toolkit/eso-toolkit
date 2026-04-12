@@ -2,17 +2,17 @@
  * Tests for Item Slot Validator
  */
 
+import { getItemsBySlot } from '../../data/itemIdMap';
+import type { GearConfig, GearPiece } from '../../types/loadout.types';
 import {
   hasKnownSlot,
   getItemSlotInfo,
   validateGearConfig,
   getSlotCoverageStats,
-  getItemsBySlot,
   canExportLoadout,
   type ValidationResult,
   type ItemSlotInfo,
 } from '../itemSlotValidator';
-import type { GearConfig, GearPiece } from '../../types/loadout.types';
 
 const UNKNOWN_SLOT_ITEM_ID = 40259; // Shalidor's Curse gear piece lacking slot data
 const SECOND_UNKNOWN_SLOT_ITEM_ID = 43803; // Death's Wind gear piece without slot info
@@ -184,8 +184,8 @@ describe('itemSlotValidator', () => {
       const headItems = getItemsBySlot('head');
 
       expect(headItems.length).toBeGreaterThan(0);
-      headItems.forEach(({ item }) => {
-        expect(item.slot).toBe('head');
+      headItems.forEach(({ info }) => {
+        expect(info.slot).toBe('head');
       });
     });
 
@@ -194,8 +194,8 @@ describe('itemSlotValidator', () => {
 
       // Check if sorted alphabetically
       for (let i = 1; i < items.length; i++) {
-        const prev = items[i - 1].item.setName;
-        const curr = items[i].item.setName;
+        const prev = items[i - 1].info.setName;
+        const curr = items[i].info.setName;
         expect(prev.localeCompare(curr)).toBeLessThanOrEqual(0);
       }
     });
