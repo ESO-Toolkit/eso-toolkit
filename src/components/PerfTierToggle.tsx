@@ -9,6 +9,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -78,12 +79,25 @@ export const PerfTierToggle: React.FC<PerfTierToggleProps> = ({
   };
 
   const isOverridden = override !== 'auto';
-  const accent = isOverridden ? theme.palette.warning.main : theme.palette.text.secondary;
+  const isDark = theme.palette.mode === 'dark';
+  // Cyan for auto/neutral state; warning (amber) when an override is pinned
+  // so the button quietly signals "you've changed the default" — same visual
+  // grammar as the dark-mode pill next to it (amber/indigo per theme).
+  const pillColor = isOverridden ? theme.palette.warning.main : '#06b6d4';
   const detectedLabel = TIER_LABEL[detected];
   const currentLabel = isOverridden ? TIER_LABEL[override as PerfTier] : `Auto · ${detectedLabel}`;
   const ariaLabel = isOverridden
     ? `Performance: ${override} (pinned) — change`
     : `Performance: Auto (detected ${detected}) — change`;
+
+  const isSmall = size === 'small';
+  // Dimensions and hover scale mirror the adjacent dark-mode IconButton in
+  // the profile dropdown so the two buttons read as a matched pair. Sharing
+  // the scale factor also prevents hover-bleed where a larger scale would
+  // expand the perf pill into the dark-mode pill.
+  const pillSize = isSmall ? 32 : 36;
+  const iconSize = isSmall ? 16 : 18;
+  const pillRadius = isSmall ? '9px' : '10px';
 
   const trigger = renderTrigger ? (
     renderTrigger({
@@ -98,21 +112,26 @@ export const PerfTierToggle: React.FC<PerfTierToggleProps> = ({
   ) : (
     <IconButton
       onClick={handleOpen}
-      color="inherit"
       size={size}
       aria-label={ariaLabel}
       aria-haspopup="menu"
       aria-expanded={open ? 'true' : undefined}
       sx={{
-        color: accent,
-        transition: 'all 0.2s ease-in-out',
+        width: pillSize,
+        height: pillSize,
+        borderRadius: pillRadius,
+        background: alpha(pillColor, isDark ? 0.08 : 0.05),
+        border: `1px solid ${alpha(pillColor, 0.1)}`,
+        transition: 'background 0.2s ease, border-color 0.2s ease, transform 0.15s ease',
         '&:hover': {
-          color: theme.palette.primary.main,
-          transform: 'scale(1.1)',
+          background: alpha(pillColor, isDark ? 0.16 : 0.1),
+          borderColor: alpha(pillColor, 0.22),
+          transform: 'scale(1.06)',
         },
+        '&:active': { transform: 'scale(0.95)' },
       }}
     >
-      <SpeedIcon fontSize={size === 'small' ? 'small' : 'medium'} />
+      <SpeedIcon sx={{ fontSize: iconSize, color: pillColor }} />
     </IconButton>
   );
 

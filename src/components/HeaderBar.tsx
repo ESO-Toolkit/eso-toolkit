@@ -1332,6 +1332,7 @@ export const HeaderBar: React.FC = () => {
           sx={{
             display: 'flex',
             alignItems: 'center',
+            gap: 0.75,
             px: 1.5,
             py: 1,
             position: 'relative',
