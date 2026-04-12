@@ -20,7 +20,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CHAMPION_POINT_ABILITIES, ChampionPointTree } from '@/types/champion-points';
 import { Logger } from '@/utils/logger';
 
-import { getItemIdsBySet } from '../../loadout-manager/data/itemIdMap';
+import { getItemIdsBySet, getSetItemsBySlot } from '../../loadout-manager/data/itemIdMap';
 import {
   findCollectionItemBySetAndSlotType,
   getSetNameOrFallback,
@@ -415,9 +415,13 @@ function resolveSetIdToItemId(setId: number, esoSlot: number): number {
     if (collectionItem?.itemId) return collectionItem.itemId;
   }
 
-  // 2. Fall back to set name → item ID lookup
+  // 2. Fall back to set name → item ID lookup (prefer slot-specific match)
   const setName = getSetNameOrFallback(setId);
   if (setName && !setName.startsWith('Unknown Set')) {
+    if (slotType) {
+      const slotItems = getSetItemsBySlot(setName, slotType);
+      if (slotItems.length > 0) return slotItems[0];
+    }
     const itemIds = getItemIdsBySet(setName);
     if (itemIds.length > 0) return itemIds[0];
   }
