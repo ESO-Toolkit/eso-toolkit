@@ -25,16 +25,24 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback } from 'react';
 
-import { DPSSlot, JailDDType, RosterDetailLevel, SupportUltimate } from '../../types/roster';
+import { DPSSlot, JailDDType, RosterDetailLevel } from '../../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { dpsSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
-import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
+import {
+  GLASS_SX_DARK,
+  GLASS_SX_LIGHT,
+  SECTION_BOX_SX_DARK,
+  SECTION_BOX_SX_LIGHT,
+  SECTION_HEADER_SX_DARK,
+  SECTION_HEADER_SX_LIGHT,
+} from './shared/glassSx';
 import { LazyCardContent } from './shared/LazyCardContent';
 import {
   DPS_5PIECE_OPTIONS,
   DPS_MONSTER_OPTIONS,
+  AVAILABLE_ULTIMATES,
   getUltimateIcon,
   isDDSpecialSet,
 } from './shared/rosterCardHelpers';
@@ -121,8 +129,11 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
     const dpsTheme = useTheme();
     const dpsIsDark = dpsTheme.palette.mode === 'dark';
     const dpsRoleColors = dpsIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
-    const glassSx = makeGlassSx(dpsIsDark);
-    const availableUltimates = Object.values(SupportUltimate);
+    // Use precomputed stable object refs — prevents MUI sx from regenerating
+    // emotion CSS classes on every render.
+    const glassSx = dpsIsDark ? GLASS_SX_DARK : GLASS_SX_LIGHT;
+    const sectionBoxSx = dpsIsDark ? SECTION_BOX_SX_DARK : SECTION_BOX_SX_LIGHT;
+    const sectionHeaderSx = dpsIsDark ? SECTION_HEADER_SX_DARK : SECTION_HEADER_SX_LIGHT;
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: slot.slotNumber,
     });
@@ -483,7 +494,7 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={availableUltimates}
+                        options={AVAILABLE_ULTIMATES}
                         value={slot.ultimate || null}
                         onChange={(_event, newValue) =>
                           onChange({ ultimate: newValue as string | null })
@@ -643,8 +654,8 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                 <AccordionDetails sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
                   <Stack spacing={1.5}>
                     {/* ── Assignment ─────────────────────────── */}
-                    <Box sx={makeSectionBoxSx(dpsIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(dpsIsDark)}>Assignment</Typography>
+                    <Box sx={sectionBoxSx}>
+                      <Typography sx={sectionHeaderSx}>Assignment</Typography>
                       <Stack spacing={1.25}>
                         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                           <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
@@ -732,8 +743,8 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                     {/* Build Requirements (gear + skill lines) moved to SlotFullModePanel */}
 
                     {/* ── Notes ──────────────────────────────── */}
-                    <Box sx={makeSectionBoxSx(dpsIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(dpsIsDark)}>Notes</Typography>
+                    <Box sx={sectionBoxSx}>
+                      <Typography sx={sectionHeaderSx}>Notes</Typography>
                       <TextField
                         fullWidth
                         multiline

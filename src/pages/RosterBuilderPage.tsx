@@ -47,6 +47,7 @@ import discordIcon from '../assets/discord-icon.svg';
 import { PerFightBuilds } from '../components/PerFightBuilds';
 import { RoleCompositionPicker } from '../components/RoleCompositionPicker';
 import { RosterCardSections } from '../components/roster/RosterCardSections';
+import { GLASS_SX_DARK, GLASS_SX_LIGHT } from '../components/roster/shared/glassSx';
 import { SetAssignmentManager } from '../components/SetAssignmentManager';
 import { WorkInProgressDisclaimer } from '../components/WorkInProgressDisclaimer';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
@@ -847,18 +848,9 @@ export const RosterBuilderPage: React.FC = () => {
   // roleColors moved to RosterCardSections
   const navigate = useNavigate();
 
-  const glassTextField = {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '10px',
-      backgroundColor: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-      '& fieldset': {
-        borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
-      },
-      '&:hover fieldset': {
-        borderColor: isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.2)',
-      },
-    },
-  };
+  // Use the precomputed glass style constant — stable reference prevents MUI
+  // from regenerating emotion CSS classes on every render.
+  const glassTextField = isDarkMode ? GLASS_SX_DARK : GLASS_SX_LIGHT;
 
   const [roster, setRoster] = useState<RaidRoster>(createDefaultRoster());
   const [mode, setMode] = useState<RosterDetailLevel>('simple');
@@ -1032,7 +1024,7 @@ export const RosterBuilderPage: React.FC = () => {
   );
 
   // Handle drag end for DPS slots reordering
-  const handleDPSDragEnd = (event: DragEndEvent): void => {
+  const handleDPSDragEnd = useCallback((event: DragEndEvent): void => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -1047,7 +1039,7 @@ export const RosterBuilderPage: React.FC = () => {
         };
       });
     }
-  };
+  }, []);
 
   const handleMoveDPSSlot = useCallback((slotIndex: number, direction: 'up' | 'down') => {
     setRoster((prev) => {
@@ -1574,14 +1566,12 @@ export const RosterBuilderPage: React.FC = () => {
             : 'linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(124,58,237,0.05) 100%)',
           border: isDarkMode ? '1px solid rgba(96,165,250,0.2)' : '1px solid rgba(37,99,235,0.15)',
           cursor: 'pointer',
-          transition: 'all 0.2s ease',
+          transition: 'background 0.2s ease, border-color 0.2s ease',
           '&:hover': {
             background: isDarkMode
               ? 'linear-gradient(135deg, rgba(96,165,250,0.18) 0%, rgba(167,139,250,0.12) 100%)'
               : 'linear-gradient(135deg, rgba(37,99,235,0.12) 0%, rgba(124,58,237,0.08) 100%)',
-            border: isDarkMode
-              ? '1px solid rgba(96,165,250,0.3)'
-              : '1px solid rgba(37,99,235,0.25)',
+            borderColor: isDarkMode ? 'rgba(96,165,250,0.3)' : 'rgba(37,99,235,0.25)',
           },
         }}
       >
@@ -1766,7 +1756,7 @@ export const RosterBuilderPage: React.FC = () => {
                         ? '0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)'
                         : '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)'
                       : 'none',
-                  transition: 'all 0.15s ease',
+                  transition: 'background-color 0.15s ease, color 0.15s ease',
                   userSelect: 'none',
                   '&:hover': {
                     color:
@@ -1834,8 +1824,6 @@ export const RosterBuilderPage: React.FC = () => {
                 border: isDarkMode
                   ? '1px solid rgba(255,255,255,0.1)'
                   : '1px solid rgba(0,0,0,0.1)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
                 overflow: 'hidden',
                 boxShadow: isDarkMode
                   ? '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
@@ -1864,7 +1852,7 @@ export const RosterBuilderPage: React.FC = () => {
                     fontWeight: 600,
                     color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
                     background: 'transparent',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 0.15s ease, color 0.15s ease',
                     '&:hover': {
                       color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
                       background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
@@ -1906,7 +1894,7 @@ export const RosterBuilderPage: React.FC = () => {
                     fontWeight: 600,
                     color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
                     background: 'transparent',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 0.15s ease, color 0.15s ease',
                     '&:hover': {
                       color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
                       background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
@@ -1947,7 +1935,7 @@ export const RosterBuilderPage: React.FC = () => {
                     fontWeight: 700,
                     color: isDarkMode ? 'rgba(56,189,248,0.9)' : 'rgba(14,116,144,0.9)',
                     background: isDarkMode ? 'rgba(56,189,248,0.07)' : 'rgba(14,116,144,0.05)',
-                    transition: 'all 0.15s ease',
+                    transition: 'background-color 0.15s ease, color 0.15s ease',
                     '&:hover': {
                       color: isDarkMode ? 'rgba(56,189,248,1)' : 'rgba(14,116,144,1)',
                       background: isDarkMode ? 'rgba(56,189,248,0.14)' : 'rgba(14,116,144,0.09)',
@@ -1970,8 +1958,7 @@ export const RosterBuilderPage: React.FC = () => {
                   sx: {
                     borderRadius: '10px',
                     mt: 0.5,
-                    backgroundColor: isDarkMode ? 'rgba(30,30,40,0.95)' : 'rgba(255,255,255,0.97)',
-                    backdropFilter: 'blur(12px)',
+                    backgroundColor: isDarkMode ? 'rgba(30,30,40,0.98)' : 'rgba(255,255,255,0.98)',
                     border: isDarkMode
                       ? '1px solid rgba(255,255,255,0.08)'
                       : '1px solid rgba(0,0,0,0.08)',
@@ -2046,8 +2033,6 @@ export const RosterBuilderPage: React.FC = () => {
                   border: isDarkMode
                     ? '1px solid rgba(255,255,255,0.08)'
                     : '1px solid rgba(0,0,0,0.08)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
                   boxShadow: isDarkMode
                     ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
                     : '0 1px 4px rgba(0,0,0,0.06)',
@@ -2068,7 +2053,7 @@ export const RosterBuilderPage: React.FC = () => {
                       fontWeight: 600,
                       color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
                       background: 'transparent',
-                      transition: 'all 0.15s ease',
+                      transition: 'background-color 0.15s ease, color 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)',
                         background: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
@@ -2101,7 +2086,7 @@ export const RosterBuilderPage: React.FC = () => {
                       fontWeight: 500,
                       color: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
                       background: 'transparent',
-                      transition: 'all 0.15s ease',
+                      transition: 'background-color 0.15s ease, color 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
                         background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
@@ -2134,7 +2119,7 @@ export const RosterBuilderPage: React.FC = () => {
                       py: { xs: 1.375, md: 0.875 },
                       color: isDarkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.35)',
                       background: 'transparent',
-                      transition: 'all 0.15s ease',
+                      transition: 'background-color 0.15s ease, color 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
                         background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
@@ -2158,8 +2143,6 @@ export const RosterBuilderPage: React.FC = () => {
                   border: isDarkMode
                     ? '1px solid rgba(255,255,255,0.1)'
                     : '1px solid rgba(0,0,0,0.1)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
                   overflow: 'hidden',
                   boxShadow: isDarkMode
                     ? '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'
@@ -2197,7 +2180,7 @@ export const RosterBuilderPage: React.FC = () => {
                           fontWeight: 700,
                           color: isDarkMode ? 'rgba(147,197,253,0.95)' : 'rgba(29,78,216,0.9)',
                           background: isDarkMode ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.07)',
-                          transition: 'all 0.15s ease',
+                          transition: 'background-color 0.15s ease, color 0.15s ease',
                           '&:hover': {
                             color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
                             background: isDarkMode
@@ -2249,7 +2232,7 @@ export const RosterBuilderPage: React.FC = () => {
                       fontWeight: 700,
                       color: isDarkMode ? 'rgba(165,180,252,0.95)' : 'rgba(79,70,229,0.9)',
                       background: isDarkMode ? 'rgba(88,101,242,0.1)' : 'rgba(88,101,242,0.07)',
-                      transition: 'all 0.15s ease',
+                      transition: 'background-color 0.15s ease, color 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? '#c7d2fe' : '#4338ca',
                         background: isDarkMode ? 'rgba(88,101,242,0.18)' : 'rgba(88,101,242,0.14)',
@@ -2296,7 +2279,7 @@ export const RosterBuilderPage: React.FC = () => {
                       fontWeight: 700,
                       color: isDarkMode ? 'rgba(196,181,253,0.95)' : 'rgba(109,40,217,0.9)',
                       background: isDarkMode ? 'rgba(139,92,246,0.1)' : 'rgba(139,92,246,0.07)',
-                      transition: 'all 0.15s ease',
+                      transition: 'background-color 0.15s ease, color 0.15s ease',
                       '&:hover': {
                         color: isDarkMode ? '#ddd6fe' : '#7c3aed',
                         background: isDarkMode ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.12)',
@@ -2336,10 +2319,8 @@ export const RosterBuilderPage: React.FC = () => {
                 background: isDarkMode
                   ? 'linear-gradient(135deg, rgba(251,191,36,0.09) 0%, rgba(245,158,11,0.05) 55%, rgba(11,18,32,0.35) 100%)'
                   : 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.04) 55%, rgba(255,255,255,0.55) 100%)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
                 overflow: 'hidden',
-                transition: 'all 0.2s ease',
+                transition: 'background 0.2s ease, border-color 0.2s ease',
                 boxShadow: isDarkMode
                   ? '0 2px 10px rgba(0,0,0,0.35), inset 0 1px 0 rgba(251,191,36,0.06)'
                   : '0 1px 4px rgba(0,0,0,0.06)',
@@ -2841,7 +2822,7 @@ export const RosterBuilderPage: React.FC = () => {
               fontWeight: 500,
               color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
               background: 'transparent',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 0.15s ease, color 0.15s ease',
               '&:hover': {
                 color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
                 background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
@@ -2942,7 +2923,7 @@ export const RosterBuilderPage: React.FC = () => {
               fontWeight: 500,
               color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
               background: 'transparent',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 0.15s ease, color 0.15s ease',
               '&:hover': {
                 color: isDarkMode ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.75)',
                 background: isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
@@ -3055,7 +3036,7 @@ export const RosterBuilderPage: React.FC = () => {
               fontWeight: 500,
               color: isDarkMode ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)',
               background: 'transparent',
-              transition: 'all 0.15s ease',
+              transition: 'background-color 0.15s ease, color 0.15s ease',
               opacity: importLoading ? 0.5 : 1,
               pointerEvents: importLoading ? 'none' : 'auto',
               '&:hover': {

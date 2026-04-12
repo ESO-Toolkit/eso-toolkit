@@ -19,18 +19,25 @@ import React from 'react';
 import {
   TankSetup,
   RosterDetailLevel,
-  SupportUltimate,
   validateCompatibility,
 } from '../../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { tankSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
-import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
+import {
+  GLASS_SX_DARK,
+  GLASS_SX_LIGHT,
+  SECTION_BOX_SX_DARK,
+  SECTION_BOX_SX_LIGHT,
+  SECTION_HEADER_SX_DARK,
+  SECTION_HEADER_SX_LIGHT,
+} from './shared/glassSx';
 import { LazyCardContent } from './shared/LazyCardContent';
 import {
   TANK_5PIECE_OPTIONS,
   TANK_MONSTER_OPTIONS,
+  AVAILABLE_ULTIMATES,
   getUltimateIcon,
   isTank5PieceSet,
   isFlexible5PieceSet,
@@ -61,8 +68,11 @@ export const TankCard = React.memo<TankCardProps>(
     const tankTheme = useTheme();
     const tankIsDark = tankTheme.palette.mode === 'dark';
     const tankRoleColors = tankIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
-    const glassSx = makeGlassSx(tankIsDark);
-    const availableUltimates = Object.values(SupportUltimate);
+    // Use precomputed stable object refs — prevents MUI sx from regenerating
+    // emotion CSS classes on every render.
+    const glassSx = tankIsDark ? GLASS_SX_DARK : GLASS_SX_LIGHT;
+    const sectionBoxSx = tankIsDark ? SECTION_BOX_SX_DARK : SECTION_BOX_SX_LIGHT;
+    const sectionHeaderSx = tankIsDark ? SECTION_HEADER_SX_DARK : SECTION_HEADER_SX_LIGHT;
 
     return (
       <Card
@@ -306,7 +316,7 @@ export const TankCard = React.memo<TankCardProps>(
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={availableUltimates}
+                        options={AVAILABLE_ULTIMATES}
                         value={tank.ultimate || null}
                         onChange={(_event, newValue) =>
                           onChange({ ultimate: newValue as string | null })
@@ -415,8 +425,8 @@ export const TankCard = React.memo<TankCardProps>(
                 <AccordionDetails sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
                   <Stack spacing={1.5}>
                     {/* ── Assignment ─────────────────────────── */}
-                    <Box sx={makeSectionBoxSx(tankIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(tankIsDark)}>Assignment</Typography>
+                    <Box sx={sectionBoxSx}>
+                      <Typography sx={sectionHeaderSx}>Assignment</Typography>
                       <Stack spacing={1.25}>
                         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                           <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
@@ -504,8 +514,8 @@ export const TankCard = React.memo<TankCardProps>(
                     {/* Build Requirements (gear + skill lines) moved to SlotFullModePanel */}
 
                     {/* ── Notes ──────────────────────────────── */}
-                    <Box sx={makeSectionBoxSx(tankIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(tankIsDark)}>Notes</Typography>
+                    <Box sx={sectionBoxSx}>
+                      <Typography sx={sectionHeaderSx}>Notes</Typography>
                       <TextField
                         fullWidth
                         multiline
