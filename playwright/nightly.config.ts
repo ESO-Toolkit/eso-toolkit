@@ -78,6 +78,8 @@ export default defineConfig({
         open: 'never', // Never auto-open HTML report
       },
     ],
+    // Blob reporter enables proper cross-shard merging into a single HTML report
+    ['blob', { outputDir: '../blob-report-nightly' }],
   ],
 
   /* Base URL - use environment variable or default to production */
