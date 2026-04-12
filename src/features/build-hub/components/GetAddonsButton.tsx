@@ -3,7 +3,7 @@ import { Button, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React from 'react';
 
-import { KALPA_DOWNLOAD_URL, getAddonManagerDeepLink } from '../api/packs-api';
+import { KALPA_DOWNLOAD_URL, getAddonManagerDeepLink, tryLaunchDeepLink } from '../api/packs-api';
 
 interface GetAddonsButtonProps {
   /** The pack ID to link to (e.g. "trial-essentials"). */
@@ -25,34 +25,42 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
   iconOnly = false,
 }) => {
   const { enqueueSnackbar } = useSnackbar();
-  const deepLink = getAddonManagerDeepLink(packId, { preserveSettings: true });
+  const deepLink = getAddonManagerDeepLink(packId);
+  const cancelRef = React.useRef<(() => void) | undefined>(undefined);
+
+  React.useEffect(() => () => cancelRef.current?.(), []);
 
   const handleClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
-
-    // Try to open the deep link — this will launch the addon manager if installed.
-    // If not installed, the browser silently fails. We copy the link as a fallback.
-    window.location.href = deepLink;
-
-    // After a short delay, assume Kalpa isn't installed and prompt to download
-    setTimeout(() => {
+    cancelRef.current?.();
+    cancelRef.current = tryLaunchDeepLink(deepLink, () => {
       void navigator.clipboard.writeText(deepLink).catch(() => {});
-      enqueueSnackbar('Kalpa not detected — download it to install addon packs', {
+      enqueueSnackbar("Kalpa didn't open — launch it manually or download it", {
         variant: 'info',
-        autoHideDuration: 6000,
+        autoHideDuration: 8000,
         action: () => (
-          <Button
-            size="small"
-            href={KALPA_DOWNLOAD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
-          >
-            Download
-          </Button>
+          <>
+            <Button
+              size="small"
+              component="a"
+              href={deepLink}
+              sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+            >
+              Launch
+            </Button>
+            <Button
+              size="small"
+              href={KALPA_DOWNLOAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+            >
+              Download
+            </Button>
+          </>
         ),
       });
-    }, 1500);
+    });
   };
 
   if (iconOnly) {

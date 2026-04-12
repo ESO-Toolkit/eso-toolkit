@@ -114,21 +114,63 @@ export const packsApi = {
 
 export const KALPA_DOWNLOAD_URL = 'https://github.com/ESO-Toolkit/kalpa';
 
-export interface DeepLinkOptions {
-  /** When true, tells the addon manager to skip addons already installed and preserve their settings. */
-  preserveSettings?: boolean;
+/**
+ * Generate a deep link URL that opens Kalpa (ESO Addon Manager)
+ * and navigates to a specific pack.
+ *
+ * Kalpa registers the `kalpa://` protocol scheme via Tauri's deep-link plugin.
+ * Supported paths: `kalpa://pack/{id}`, `kalpa://install-pack/{id}`, `kalpa://share/{code}`
+ */
+export function getAddonManagerDeepLink(packId: string): string {
+  return `kalpa://pack/${packId}`;
 }
 
 /**
- * Generate a deep link URL that opens Kalpa (ESO Addon Manager)
- * and installs a specific pack.
+ * Attempt to launch a deep-link URI without triggering the OS "open with" dialog.
  *
- * Usage: `eso-addon-manager://pack/trial-essentials?preserve_settings=true`
+ * Uses a hidden iframe to silently probe the protocol handler. If the handler
+ * is registered and the app opens (page loses visibility), the attempt is
+ * considered successful and the fallback is skipped. Otherwise `onFallback`
+ * fires after `timeoutMs` so the caller can show a download prompt.
+ *
+ * @returns A cancel function to abort the pending fallback (for unmount cleanup).
  */
-export function getAddonManagerDeepLink(packId: string, options: DeepLinkOptions = {}): string {
-  const { preserveSettings = true } = options;
-  const params = new URLSearchParams();
-  if (preserveSettings) params.set('preserve_settings', 'true');
-  const qs = params.toString();
-  return `eso-addon-manager://pack/${packId}${qs ? `?${qs}` : ''}`;
+export function tryLaunchDeepLink(
+  uri: string,
+  onFallback: () => void,
+  timeoutMs = 1500,
+): () => void {
+  let cancelled = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let iframe: HTMLIFrameElement | undefined;
+
+  const cleanup = (): void => {
+    cancelled = true;
+    if (timer != null) clearTimeout(timer);
+    if (iframe?.parentNode) iframe.parentNode.removeChild(iframe);
+    document.removeEventListener('visibilitychange', onVisChange);
+  };
+
+  const onVisChange = (): void => {
+    // The protocol handler stole focus — Kalpa opened successfully.
+    if (document.hidden && !cancelled) cleanup();
+  };
+
+  document.addEventListener('visibilitychange', onVisChange);
+
+  // Probe via hidden iframe — fails silently when the protocol is unregistered,
+  // avoiding the OS "how do you want to open this?" dialog.
+  iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.src = uri;
+  document.body.appendChild(iframe);
+
+  timer = setTimeout(() => {
+    if (!cancelled) {
+      cleanup();
+      onFallback();
+    }
+  }, timeoutMs);
+
+  return cleanup;
 }
