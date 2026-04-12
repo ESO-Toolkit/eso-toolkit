@@ -15,7 +15,11 @@ import { useSnackbar } from 'notistack';
 import React from 'react';
 
 import { formatRelativeDate } from '../../../utils/formatRelativeDate';
-import { KALPA_DOWNLOAD_URL, getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
+import {
+  KALPA_DOWNLOAD_URL,
+  getAddonManagerDeepLink,
+  tryLaunchDeepLink,
+} from '../../build-hub/api/packs-api';
 import { VoteButton } from '../../roster-hub/components/VoteButton';
 import type { HubPack } from '../types/pack-hub.types';
 import { PACK_TAG_COLORS, PACK_TYPE_ACCENT, PACK_TYPE_LABELS } from '../types/pack-hub.types';
@@ -36,9 +40,9 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
-    const installTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+    const cancelDeepLinkRef = React.useRef<(() => void) | undefined>(undefined);
 
-    React.useEffect(() => () => clearTimeout(installTimerRef.current), []);
+    React.useEffect(() => () => cancelDeepLinkRef.current?.(), []);
 
     const tagAccent = pack.tags.map((t) => PACK_TAG_COLORS[t]).find((c): c is string => c != null);
     const accentColor = tagAccent ?? PACK_TYPE_ACCENT[pack.pack_type] ?? '#c4a44a';
@@ -58,25 +62,35 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
     const handleInstall = (e: React.MouseEvent): void => {
       e.stopPropagation();
       const deepLink = getAddonManagerDeepLink(pack.id, { preserveSettings: true });
-      window.location.href = deepLink;
-      installTimerRef.current = setTimeout(() => {
+      cancelDeepLinkRef.current?.();
+      cancelDeepLinkRef.current = tryLaunchDeepLink(deepLink, () => {
         void navigator.clipboard.writeText(deepLink).catch(() => {});
-        enqueueSnackbar('Kalpa not detected — download it to install addon packs', {
+        enqueueSnackbar("Kalpa didn't open — launch it manually or download it", {
           variant: 'info',
-          autoHideDuration: 6000,
+          autoHideDuration: 8000,
           action: () => (
-            <Button
-              size="small"
-              href={KALPA_DOWNLOAD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
-            >
-              Download
-            </Button>
+            <>
+              <Button
+                size="small"
+                component="a"
+                href={deepLink}
+                sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+              >
+                Launch
+              </Button>
+              <Button
+                size="small"
+                href={KALPA_DOWNLOAD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+              >
+                Download
+              </Button>
+            </>
           ),
         });
-      }, 1500);
+      });
     };
 
     return (
