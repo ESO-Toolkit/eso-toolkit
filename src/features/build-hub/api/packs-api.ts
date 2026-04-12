@@ -112,6 +112,8 @@ export const packsApi = {
     }),
 };
 
+export const KALPA_DOWNLOAD_URL = 'https://github.com/ESO-Toolkit/kalpa';
+
 export interface DeepLinkOptions {
   /** When true, tells the addon manager to skip addons already installed and preserve their settings. */
   preserveSettings?: boolean;

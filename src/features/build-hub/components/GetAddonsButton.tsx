@@ -3,7 +3,7 @@ import { Button, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React from 'react';
 
-import { getAddonManagerDeepLink } from '../api/packs-api';
+import { KALPA_DOWNLOAD_URL, getAddonManagerDeepLink } from '../api/packs-api';
 
 interface GetAddonsButtonProps {
   /** The pack ID to link to (e.g. "trial-essentials"). */
@@ -34,19 +34,24 @@ export const GetAddonsButton: React.FC<GetAddonsButtonProps> = ({
     // If not installed, the browser silently fails. We copy the link as a fallback.
     window.location.href = deepLink;
 
-    // After a short delay, copy link as fallback (if app didn't intercept)
+    // After a short delay, assume Kalpa isn't installed and prompt to download
     setTimeout(() => {
-      void navigator.clipboard.writeText(deepLink).then(
-        () => {
-          enqueueSnackbar('Deep link copied — install Kalpa to use it', {
-            variant: 'info',
-            autoHideDuration: 4000,
-          });
-        },
-        () => {
-          /* clipboard denied — silently ignore */
-        },
-      );
+      void navigator.clipboard.writeText(deepLink).catch(() => {});
+      enqueueSnackbar('Kalpa not detected — download it to install addon packs', {
+        variant: 'info',
+        autoHideDuration: 6000,
+        action: () => (
+          <Button
+            size="small"
+            href={KALPA_DOWNLOAD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ color: '#fff', fontWeight: 700, textTransform: 'none' }}
+          >
+            Download
+          </Button>
+        ),
+      });
     }, 1500);
   };
 
