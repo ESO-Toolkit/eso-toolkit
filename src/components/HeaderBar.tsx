@@ -40,6 +40,7 @@ import {
   type ViewTransitionType,
 } from '../hooks/useViewTransitionNavigate';
 
+import { PerfTierToggle } from './PerfTierToggle';
 import { ThemeToggle } from './ThemeToggle';
 
 // Animated Hamburger Icon
@@ -871,6 +872,7 @@ export const HeaderBar: React.FC = () => {
               >
                 Tools
               </Button>
+              <PerfTierToggle />
               {!isLoggedIn && <ThemeToggle />}
               {isLoggedIn ? (
                 <Box
@@ -1382,6 +1384,7 @@ export const HeaderBar: React.FC = () => {
             </Typography>
           </ButtonBase>
           <Box sx={{ flex: 1 }} />
+          <PerfTierToggle size="small" />
           <IconButton
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
@@ -1695,6 +1698,7 @@ export const HeaderBar: React.FC = () => {
           <Divider
             sx={{ flex: 1, borderColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
           />
+          <PerfTierToggle size="small" />
           <IconButton
             onClick={toggleDarkMode}
             size="small"
