@@ -1340,7 +1340,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <CPTreeDetail
                 label="Warfare"
-                color="#ef5350"
+                color="#42a5f5"
                 icon={<WarfareIcon sx={{ fontSize: 14 }} />}
                 slots={setup.cp.warfare.slots}
                 passives={setup.cp.warfare.passives}
@@ -1348,7 +1348,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
               />
               <CPTreeDetail
                 label="Fitness"
-                color="#66bb6a"
+                color="#ef5350"
                 icon={<FitnessIcon sx={{ fontSize: 14 }} />}
                 slots={setup.cp.fitness.slots}
                 passives={setup.cp.fitness.passives}
@@ -1356,7 +1356,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
               />
               <CPTreeDetail
                 label="Craft"
-                color="#42a5f5"
+                color="#66bb6a"
                 icon={null}
                 slots={setup.cp.craft.slots}
                 passives={setup.cp.craft.passives}
