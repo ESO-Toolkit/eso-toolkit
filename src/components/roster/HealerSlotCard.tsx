@@ -24,18 +24,25 @@ import {
   HealerSetup,
   HealerBuff,
   RosterDetailLevel,
-  SupportUltimate,
   validateCompatibility,
 } from '../../types/roster';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../../utils/roleColors';
 import { healerSlotToBuild } from '../../utils/rosterSlotToBuild';
 import { getSetDisplayName, findSetIdByName } from '../../utils/setNameUtils';
 
-import { makeGlassSx, makeSectionBoxSx, makeSectionHeaderSx } from './shared/glassSx';
+import {
+  GLASS_SX_DARK,
+  GLASS_SX_LIGHT,
+  SECTION_BOX_SX_DARK,
+  SECTION_BOX_SX_LIGHT,
+  SECTION_HEADER_SX_DARK,
+  SECTION_HEADER_SX_LIGHT,
+} from './shared/glassSx';
 import { LazyCardContent } from './shared/LazyCardContent';
 import {
   HEALER_5PIECE_OPTIONS,
   HEALER_MONSTER_OPTIONS,
+  AVAILABLE_ULTIMATES,
   getUltimateIcon,
   getHealerBuffIcon,
   isHealer5PieceSet,
@@ -68,11 +75,14 @@ export const HealerCard = React.memo<HealerCardProps>(
     const healerTheme = useTheme();
     const healerIsDark = healerTheme.palette.mode === 'dark';
     const healerRoleColors = healerIsDark ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
-    const glassSx = makeGlassSx(healerIsDark);
+    // Use precomputed stable object refs — prevents MUI sx from regenerating
+    // emotion CSS classes on every render.
+    const glassSx = healerIsDark ? GLASS_SX_DARK : GLASS_SX_LIGHT;
+    const sectionBoxSx = healerIsDark ? SECTION_BOX_SX_DARK : SECTION_BOX_SX_LIGHT;
+    const sectionHeaderSx = healerIsDark ? SECTION_HEADER_SX_DARK : SECTION_HEADER_SX_LIGHT;
     const availableBuffs = Object.values(HealerBuff).filter(
       (buff) => !usedBuffs.includes(buff) || healer.healerBuff === buff,
     );
-    const availableUltimates = Object.values(SupportUltimate);
 
     return (
       <Card
@@ -350,7 +360,7 @@ export const HealerCard = React.memo<HealerCardProps>(
                       <Autocomplete
                         freeSolo
                         size="small"
-                        options={availableUltimates}
+                        options={AVAILABLE_ULTIMATES}
                         value={healer.ultimate || null}
                         onChange={(_event, newValue) =>
                           onChange({ ultimate: newValue as string | null })
@@ -457,8 +467,8 @@ export const HealerCard = React.memo<HealerCardProps>(
                 <AccordionDetails sx={{ px: 1.5, pt: 1, pb: 1.5 }}>
                   <Stack spacing={1.5}>
                     {/* ── Assignment ─────────────────────────── */}
-                    <Box sx={makeSectionBoxSx(healerIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(healerIsDark)}>Assignment</Typography>
+                    <Box sx={sectionBoxSx}>
+                      <Typography sx={sectionHeaderSx}>Assignment</Typography>
                       <Stack spacing={1.25}>
                         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                           <Box sx={{ flex: '1 1 40%', minWidth: 140 }}>
@@ -546,8 +556,8 @@ export const HealerCard = React.memo<HealerCardProps>(
                     {/* Build Requirements (gear + skill lines) moved to SlotFullModePanel */}
 
                     {/* ── Notes ──────────────────────────────── */}
-                    <Box sx={makeSectionBoxSx(healerIsDark)}>
-                      <Typography sx={makeSectionHeaderSx(healerIsDark)}>Notes</Typography>
+                    <Box sx={sectionBoxSx}>
+                      <Typography sx={sectionHeaderSx}>Notes</Typography>
                       <TextField
                         fullWidth
                         multiline

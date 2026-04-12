@@ -121,8 +121,17 @@ export const getSkillLineIcon = (skillLine: string): React.ReactElement | null =
 };
 
 // ---------------------------------------------------------------------------
-// Pre-computed set option arrays (computed once at module load)
+// Pre-computed option arrays (computed once at module load)
 // ---------------------------------------------------------------------------
+
+/**
+ * All support ultimates as a stable array reference.
+ * Defined at module level so card components don't call Object.values() on
+ * every render and pass a new array reference to MUI Autocomplete.
+ */
+export const AVAILABLE_ULTIMATES: readonly string[] = Object.values(SupportUltimate);
+
+// Pre-computed set option arrays
 
 export const TANK_5PIECE_OPTIONS: readonly string[] = (() => {
   const tankSets = Array.from(TANK_5PIECE_SETS)
