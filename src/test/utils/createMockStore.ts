@@ -75,6 +75,8 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
         selectedFriendlyPlayerId: null,
         selectedTabId: null,
         myReportsPage: 1,
+        perfTier: 'medium' as const,
+        perfTierOverride: 'auto' as const,
         ...(initialState.ui || {}),
       },
       // Add other slice initial states here as needed
@@ -94,4 +96,6 @@ export const defaultMockUIState: UIState = {
   selectedFriendlyPlayerId: null,
   selectedTabId: null,
   myReportsPage: 1,
+  perfTier: 'medium',
+  perfTierOverride: 'auto',
 };

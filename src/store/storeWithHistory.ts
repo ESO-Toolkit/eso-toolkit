@@ -57,12 +57,21 @@ const rootReducer = combineReducers({
 const uiTransform = createTransform<UIState, Partial<UIState>>(
   // Transform state on its way to being serialized and persisted
   (inboundState) => {
-    const { darkMode, showExperimentalTabs, sidebarOpen, myReportsPage } = inboundState;
+    const {
+      darkMode,
+      showExperimentalTabs,
+      sidebarOpen,
+      myReportsPage,
+      perfTier,
+      perfTierOverride,
+    } = inboundState;
     return {
       darkMode,
       showExperimentalTabs,
       sidebarOpen,
       myReportsPage,
+      perfTier,
+      perfTierOverride,
     };
   },
   // Transform state being rehydrated
@@ -77,6 +86,8 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
       showExperimentalTabs: false,
       sidebarOpen: false,
       myReportsPage: 1,
+      perfTier: 'medium',
+      perfTierOverride: 'auto',
     };
 
     // Merge persisted preferences with initial report-specific state
