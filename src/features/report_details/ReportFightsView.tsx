@@ -91,6 +91,47 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   return false;
 }
 
+/**
+ * Smoothly interpolates a wipe color based on boss health % remaining.
+ * 100% health remaining (players died fast) → red
+ * 0% health remaining (almost killed boss) → green
+ * Uses HSL so the transition is continuous through orange → yellow → lime,
+ * but returns a hex string so existing `${color}30`-style alpha concatenation
+ * (borders, shadows, hover tints) keeps producing valid CSS.
+ */
+function getWipeHealthGradientColor(percentage: number): string {
+  const clamped = Math.max(0, Math.min(100, percentage));
+  const hue = ((100 - clamped) / 100) * 120; // 100% → 0 (red), 0% → 120 (green)
+  return hslToHex(hue, 80, 55);
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const sNorm = s / 100;
+  const lNorm = l / 100;
+  const a = sNorm * Math.min(lNorm, 1 - lNorm);
+  const channel = (n: number): string => {
+    const k = (n + h / 30) % 12;
+    const value = lNorm - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+    return Math.round(255 * value)
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${channel(0)}${channel(8)}${channel(4)}`;
+}
+
+/**
+ * Smoothly interpolates a wipe background gradient based on boss health % remaining.
+ * Returns a two-stop linear-gradient that matches the accent color tone.
+ */
+function getWipeHealthGradientBackground(percentage: number, darkMode: boolean): string {
+  const clamped = Math.max(0, Math.min(100, percentage));
+  const hue = ((100 - clamped) / 100) * 120;
+  if (darkMode) {
+    return `linear-gradient(135deg, hsla(${hue}, 80%, 55%, 0.7) 0%, hsla(${hue}, 75%, 38%, 0.55) 100%)`;
+  }
+  return `linear-gradient(135deg, hsla(${hue}, 85%, 93%, 0.8) 0%, hsla(${hue}, 85%, 88%, 0.6) 100%)`;
+}
+
 function getTrialNameFromBoss(
   bossName: string,
   reportData: ReportFragment | null | undefined,
@@ -409,16 +450,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         trashShadow: 'none',
         falsePositiveGradient:
           'linear-gradient(135deg, rgba(251, 191, 36, 0.6) 0%, rgba(245, 158, 11, 0.45) 100%)',
-        wipeRedGradient:
-          'linear-gradient(135deg, rgba(239, 68, 68, 0.75) 0%, rgba(185, 28, 28, 0.6) 100%)',
-        wipeOrangeGradient:
-          'linear-gradient(135deg, rgba(249, 115, 22, 0.7) 0%, rgba(234, 88, 12, 0.55) 100%)',
-        wipeYellowGradient:
-          'linear-gradient(135deg, rgba(245, 158, 11, 0.65) 0%, rgba(234, 179, 8, 0.5) 100%)',
-        wipeLowGradient:
-          'linear-gradient(135deg, rgba(234, 179, 8, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)',
-        wipeVeryLowGradient:
-          'linear-gradient(135deg, rgba(163, 230, 53, 0.5) 0%, rgba(74, 222, 128, 0.45) 100%)',
         wipeShadow: 'none',
         hoverBg: 'rgba(255,255,255,0.08)',
         badgeBorder: '1px solid rgba(255,255,255,0.18)',
@@ -446,16 +477,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         trashShadow: 'none',
         falsePositiveGradient:
           'linear-gradient(135deg, rgba(236, 239, 243, 0.6) 0%, rgba(241, 243, 245, 0.4) 100%)',
-        wipeRedGradient:
-          'linear-gradient(135deg, rgba(254, 236, 236, 0.8) 0%, rgba(254, 226, 226, 0.6) 100%)',
-        wipeOrangeGradient:
-          'linear-gradient(135deg, rgba(255, 243, 224, 0.8) 0%, rgba(255, 237, 213, 0.6) 100%)',
-        wipeYellowGradient:
-          'linear-gradient(135deg, rgba(254, 252, 232, 0.8) 0%, rgba(254, 249, 195, 0.6) 100%)',
-        wipeLowGradient:
-          'linear-gradient(135deg, rgba(254, 252, 232, 0.7) 0%, rgba(236, 252, 203, 0.5) 100%)',
-        wipeVeryLowGradient:
-          'linear-gradient(135deg, rgba(236, 252, 203, 0.7) 0%, rgba(220, 252, 231, 0.5) 100%)',
         wipeShadow: 'none',
         hoverBg: 'rgba(30, 41, 59, 0.04)',
         badgeBorder: '1px solid rgba(100, 116, 139, 0.4)',
@@ -780,17 +801,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
     }
 
-    // Accent bar color — shifts by fight outcome and boss health tier
+    // Accent bar color — smooth gradient by boss health % for wipes
     const accentBarColor = isWipe
-      ? bossHealthPercent >= 80
-        ? '#ef4444'
-        : bossHealthPercent >= 50
-          ? '#f97316'
-          : bossHealthPercent >= 20
-            ? '#eab308'
-            : bossHealthPercent >= 8
-              ? '#a3e635'
-              : '#4ade80'
+      ? getWipeHealthGradientColor(bossHealthPercent)
       : isFalsePositive
         ? darkMode
           ? '#64748b'
@@ -801,10 +814,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
     const accentGlow = accentBarColor + '66';
 
+    // Status color — for wipes, match the smooth accent gradient so the %
+    // text gradually shifts from red (high boss HP left) to green (almost killed)
     const statusColor = isWipe
-      ? darkMode
-        ? '#ff9800'
-        : '#dc2626'
+      ? getWipeHealthGradientColor(bossHealthPercent)
       : isFalsePositive
         ? darkMode
           ? '#64748b'
@@ -892,20 +905,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               bottom: 0,
               right: `${100 - backgroundFillPercent}%`,
               background: isWipe
-                ? (() => {
-                    const healthPercent = bossHealthPercent;
-                    if (healthPercent >= 80) {
-                      return getThemeColors.wipeRedGradient;
-                    } else if (healthPercent >= 50) {
-                      return getThemeColors.wipeOrangeGradient;
-                    } else if (healthPercent >= 20) {
-                      return getThemeColors.wipeYellowGradient;
-                    } else if (healthPercent >= 8) {
-                      return getThemeColors.wipeLowGradient;
-                    } else {
-                      return getThemeColors.wipeVeryLowGradient;
-                    }
-                  })()
+                ? getWipeHealthGradientBackground(bossHealthPercent, darkMode)
                 : fight.difficulty == null || isFalsePositive
                   ? getThemeColors.trashGradient
                   : getThemeColors.killGradient,
