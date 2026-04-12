@@ -68,6 +68,7 @@ const nameSuffixes = [
   // Slot-specific labels that may need replacement when wardrobe/collection
   // data corrects an item's slot (e.g. a ring-tagged item placed in a weapon slot).
   ' Head',
+  ' Neck',
   ' Necklace',
   ' Chest',
   ' Shoulders',
@@ -79,6 +80,7 @@ const nameSuffixes = [
   ' Legs',
   ' Feet',
   ' Ring',
+  ' Offhand',
   ' Off-Hand',
 ];
 
@@ -103,7 +105,14 @@ function applySlotLabel(name: string, slotLabel?: string): string {
 
   for (const suffix of nameSuffixes) {
     if (name.endsWith(suffix)) {
-      return name.slice(0, -suffix.length) + ' ' + slotLabel;
+      const result = name.slice(0, -suffix.length) + ' ' + slotLabel;
+      // Guard against double suffixes when set name ends with a slot word
+      // (e.g. "Oakensoul Ring" set → "Oakensoul Ring Ring" → deduplicate)
+      const doubled = ' ' + slotLabel + ' ' + slotLabel;
+      if (result.endsWith(doubled)) {
+        return result.slice(0, -(slotLabel.length + 1));
+      }
+      return result;
     }
   }
 
@@ -155386,7 +155395,7 @@ export const itemIdMap: Record<number, ItemInfo> = {
     type: 'Gear',
     slot: 'neck',
   },
-  187658: { name: 'Oakensoul Ring Ring', setName: 'Oakensoul Ring', type: 'Gear', slot: 'ring' },
+  187658: { name: 'Oakensoul Ring', setName: 'Oakensoul Ring', type: 'Gear', slot: 'ring' },
   187752: {
     name: 'Perfected Whorl of the Depths Ring',
     setName: 'Perfected Whorl of the Depths',
