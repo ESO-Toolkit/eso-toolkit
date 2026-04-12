@@ -19,25 +19,12 @@ export const PerfTierProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const override = useSelector(selectPerfTierOverride);
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    // When the user has pinned an override, skip detection — the persisted
-    // detected tier still updates in the background so toggling back to
-    // 'auto' gets a fresh value.
-    let cancelled = false;
-    void detectPerfTier().then((detected) => {
-      if (cancelled) return;
-      dispatch(setPerfTier(detected));
-    });
-    return () => {
-      cancelled = true;
-    };
-    // Intentionally runs once. Re-detecting on override change would waste
-    // work — override doesn't affect detection itself.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Also re-detect when the user switches back to 'auto' so an old
-  // persisted value doesn't shadow a newer hardware/OS state.
+  // Run detection only when the effective tier is auto-driven. Fires once on
+  // first mount with override='auto' (the default) and re-fires whenever the
+  // user toggles back to 'auto' so a stale persisted value can't shadow new
+  // hardware/OS state. When a manual override is pinned, detection is skipped
+  // entirely — the persisted detected tier is irrelevant until the user goes
+  // back to 'auto', at which point this effect re-runs.
   useEffect(() => {
     if (override !== 'auto') return;
     let cancelled = false;
