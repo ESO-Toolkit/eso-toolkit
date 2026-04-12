@@ -35,7 +35,7 @@ jobs:
           path-to-signatures: signatures/version1/cla.json
           path-to-document: https://github.com/${{ github.repository }}/blob/main/CLA.md
           branch: cla-signatures
-          allowlist: dependabot[bot],github-actions[bot],renovate[bot],claude
+          allowlist: dependabot[bot],github-actions[bot],renovate[bot],claude,copilot-swe-agent[bot]
           custom-notsigned-prcomment: >
             Thank you for your contribution. Please review and sign our CLA at
             https://github.com/${{ github.repository }}/blob/main/CLA.md by commenting exactly:
@@ -57,7 +57,7 @@ jobs:
 
           echo "Checking CLA for PR author: $PR_AUTHOR"
 
-          ALLOWLIST="dependabot[bot] github-actions[bot] renovate[bot] claude"
+          ALLOWLIST="dependabot[bot] github-actions[bot] renovate[bot] claude copilot-swe-agent[bot]"
           for entry in $ALLOWLIST; do
             if [ "$PR_AUTHOR" = "$entry" ]; then
               echo "$PR_AUTHOR is in the allowlist, skipping CLA check"
