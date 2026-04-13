@@ -283,9 +283,20 @@ const GearTile: React.FC<GearTileProps> = ({
   const rawPrimaryItemName = gearPiece?.name || itemData?.name || setName;
   // Swap generic "Weapon"/"Gear" suffixes for the specific type, following
   // the already-resolved iconUrl state (covers async UESP fallback too).
-  const primaryItemName = rawPrimaryItemName
-    ? applyWeaponTypeToName(rawPrimaryItemName, iconUrl, slotType)
-    : rawPrimaryItemName;
+  //
+  // Guard on the ORIGINAL gearPiece.id's slot, not `resolvedItemId`'s —
+  // collection lookup may have remapped a generic piece to a canonical
+  // slot-specific item whose icon is an arbitrary choice for the set.
+  // Only assert a weapon type when the stored id itself uniquely
+  // identifies one.
+  const originalItemId = gearPiece?.id != null ? Number(gearPiece.id) : null;
+  const originalInfo = originalItemId ? getItemInfo(originalItemId) : undefined;
+  const itemIsSlotSpecificWeapon =
+    originalInfo?.slot === 'weapon' || originalInfo?.slot === 'offhand';
+  const primaryItemName =
+    rawPrimaryItemName && itemIsSlotSpecificWeapon
+      ? applyWeaponTypeToName(rawPrimaryItemName, iconUrl, slotType)
+      : rawPrimaryItemName;
   const showItemIdFallback = resolvedItemId && !resolvedSetId && !setName ? resolvedItemId : null;
   const fallbackLabel = resolvedSetId
     ? `Set ID ${resolvedSetId}`

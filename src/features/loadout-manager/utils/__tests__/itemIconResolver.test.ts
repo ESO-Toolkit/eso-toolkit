@@ -206,3 +206,37 @@ describe('deriveItemNameForSlot (integration — real itemIds through local icon
     expect(deriveItemNameForSlot(0, 'weapon')).toBe('Item #?');
   });
 });
+
+describe('deriveItemNameForSlot (slot-specificity guard — regression for /bv false-assertion bug)', () => {
+  // Generic set IDs (no slot field in itemIdMap) must NOT be rewritten to a
+  // specific weapon type. In BuildViewPage, the icon for these comes from a
+  // getSetItemsBySlot(setName, slot)[0] fallback — an arbitrary choice among
+  // several weapon variants. Asserting the fallback's type as definitive
+  // would silently corrupt shared build displays.
+  //
+  // Item 2558 is "Mother's Sorrow Gear" — a LibSets set-level ID with no
+  // `slot` field. Mother's Sorrow has 12 slot='weapon' entries (axe, sword,
+  // dagger, bow, staff variants, etc.) so the first-match fallback is a
+  // coin flip.
+  it('keeps generic set IDs as "<Set> Gear" even when caller has a weapon-shaped icon URL', () => {
+    const bowIconOverride = `${CDN}/gear_argonian_bow_d.png`;
+    expect(deriveItemNameForSlot(2558, 'weapon', bowIconOverride)).toBe("Mother's Sorrow Gear");
+  });
+
+  it('keeps generic set IDs as "<Set> Gear" with no override (local icon lookup)', () => {
+    expect(deriveItemNameForSlot(2558, 'weapon')).toBe("Mother's Sorrow Gear");
+  });
+
+  it('still rewrites for slot-specific item IDs (positive control)', () => {
+    // Same call shape, but itemInfo.slot === 'weapon' — the derivation is
+    // safe because the itemId uniquely identifies the weapon type.
+    expect(deriveItemNameForSlot(97221, 'weapon')).toBe("Mother's Sorrow Sword");
+  });
+
+  it('keeps non-weapon-slot items unchanged even if caller forces a weapon icon URL', () => {
+    // Item 97232 = "Mother's Sorrow Chest" (slot='chest'). An adversarial
+    // caller passing a bow URL must not produce "Mother's Sorrow Bow".
+    const bowIconOverride = `${CDN}/gear_argonian_bow_d.png`;
+    expect(deriveItemNameForSlot(97232, 'chest', bowIconOverride)).toBe("Mother's Sorrow Chest");
+  });
+});
