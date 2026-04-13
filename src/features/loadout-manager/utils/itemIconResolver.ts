@@ -152,6 +152,40 @@ export function parseWeaponTypeFromIconUrl(url: string | null | undefined): stri
 }
 
 /**
+ * Two-handed weapon labels per ESO equip rules: these occupy BOTH main-hand
+ * AND off-hand slots, so a second weapon (or shield) can't coexist with them
+ * on the same bar. Staves collapse to "Staff" here because icons don't
+ * distinguish Inferno/Frost/Lightning/Restoration — all four are 2H anyway,
+ * so the distinction doesn't matter for slot gating.
+ *
+ * Source: UESP Online:Weapons — Two-handed weapons include Greatswords,
+ * Battle Axes, Mauls; Bows; all Staves.
+ */
+const TWO_HANDED_WEAPON_LABELS = new Set<string>([
+  'Battle Axe',
+  'Greatsword',
+  'Maul',
+  'Bow',
+  'Staff',
+]);
+
+/**
+ * True when `itemId` resolves (via its UESP icon) to a weapon that occupies
+ * both bar slots. Returns false when the item isn't a known weapon, when the
+ * icon isn't in local data, or when classification is ambiguous — callers
+ * should treat a `false` return as "don't gate" rather than "definitely 1H".
+ *
+ * Preferred over name-keyword checks (`name.includes('greatsword')`), which
+ * never match because itemIdMap stores generic names like "<Set> Weapon".
+ */
+export function isTwoHandedWeapon(itemId: number | null | undefined): boolean {
+  if (!itemId || itemId <= 0) return false;
+  const url = getItemIconUrl(itemId);
+  const label = parseWeaponTypeFromIconUrl(url);
+  return label !== null && TWO_HANDED_WEAPON_LABELS.has(label);
+}
+
+/**
  * Generic slot-name suffixes that itemIdMap uses when a specific weapon-type
  * name isn't available. Callers strip the trailing match and splice in a
  * specific type (Sword/Dagger/Bow/…) once the icon is resolved.

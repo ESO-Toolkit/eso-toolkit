@@ -16,7 +16,11 @@ import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdM
 import { getCollectionItem, findCollectionItemBySetAndSlotType } from '../data/itemSetCollections';
 import { updateGear } from '../store/loadoutSlice';
 import { GearConfig, GearPiece } from '../types/loadout.types';
-import { applyWeaponTypeToName, fetchItemIconUrl } from '../utils/itemIconResolver';
+import {
+  applyWeaponTypeToName,
+  fetchItemIconUrl,
+  isTwoHandedWeapon,
+} from '../utils/itemIconResolver';
 import { getItemData, getItemIdFromLink } from '../utils/itemLinkParser';
 import { registerManualSlot } from '../utils/wizardWardrobeSlotRegistry';
 
@@ -63,9 +67,10 @@ const FRONT_OFF_SLOT = 5;
 const BACK_MAIN_SLOT = 20;
 const BACK_OFF_SLOT = 21;
 
-const TWO_HANDED_KEYWORDS = ['greatsword', 'battle axe', 'battleaxe', 'maul', 'bow', 'staff'];
 // Slot mask values from LibSets/Wizard's Wardrobe exports that map to 2H weapons.
-// Staff labels verified against data/eso-globals-item-set-collections.json slotMasks table.
+// Kept as a secondary signal because WW exports expose the mask directly, so we
+// can classify even when the icon isn't available yet. The primary signal is
+// `isTwoHandedWeapon(itemId)` (icon-based) — see isTwoHandedGearPiece below.
 const TWO_HANDED_SLOT_MASKS = new Set<number>([
   134_217_728, // Two-handed sword
   268_435_456, // Maul
@@ -524,38 +529,31 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     return states;
   }, [gear]);
 
-  const isTwoHandedFromText = (text?: string | null): boolean => {
-    if (!text) {
-      return false;
-    }
-    const normalized = text.toLowerCase();
-    return TWO_HANDED_KEYWORDS.some((keyword) => normalized.includes(keyword));
-  };
-
   const isTwoHandedByItemId = (itemId: number | null): boolean => {
     if (!itemId) {
       return false;
     }
 
+    // Primary signal: UESP icon token (Greatsword/Battle Axe/Maul/Bow/Staff).
+    // Works for any item with local icon data, regardless of the stored name.
+    if (isTwoHandedWeapon(itemId)) {
+      return true;
+    }
+
+    // Secondary: Wizard's Wardrobe slotMask carries the 2H flag even for
+    // items whose icons aren't in the pre-fetched JSON yet.
     const collectionItem = getCollectionItem(itemId);
     if (collectionItem?.slotMask && TWO_HANDED_SLOT_MASKS.has(collectionItem.slotMask)) {
       return true;
     }
 
-    const itemInfo = getItemInfo(itemId);
-    return itemInfo ? isTwoHandedFromText(itemInfo.name) : false;
+    return false;
   };
 
   const isTwoHandedGearPiece = (gearPiece?: GearPiece): boolean => {
     if (!gearPiece) {
       return false;
     }
-
-    const extendedPiece = gearPiece as ExtendedGearPiece;
-    if (isTwoHandedFromText(extendedPiece?.name) || isTwoHandedFromText(extendedPiece?.setName)) {
-      return true;
-    }
-
     const itemId = resolveGearPieceItemId(gearPiece);
     return isTwoHandedByItemId(itemId);
   };
