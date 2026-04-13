@@ -150,6 +150,14 @@ export function applyWeaponTypeToName(
  * track an async-resolved icon URL (e.g. BuildViewPage's `iconUrl` state
  * from `fetchItemIconUrl`) should pass it via `iconUrlOverride` so the
  * label follows whatever icon they're rendering.
+ *
+ * SAFETY GUARD: only derives a specific weapon type when the STORED itemId
+ * uniquely identifies one (itemInfo.slot is 'weapon' or 'offhand'). For
+ * generic set IDs with no slot field, the caller's icon is commonly a
+ * `getSetItemsBySlot(...)[0]` fallback — an arbitrary variant of the set.
+ * Asserting a weapon type from that would silently lie about the user's
+ * actual chosen weapon in shared/read-only views. Generic items keep their
+ * generic label regardless of what icon is rendered.
  */
 export function deriveItemNameForSlot(
   itemId: number | null | undefined,
@@ -159,6 +167,8 @@ export function deriveItemNameForSlot(
   const id = itemId ?? 0;
   const info = id > 0 ? getItemInfo(id) : undefined;
   const rawName = info?.name ?? `Item #${id || '?'}`;
+  const itemIsSlotSpecificWeapon = info?.slot === 'weapon' || info?.slot === 'offhand';
+  if (!itemIsSlotSpecificWeapon) return rawName;
   const url = iconUrlOverride !== undefined ? iconUrlOverride : getItemIconUrl(id);
   return applyWeaponTypeToName(rawName, url, slotType);
 }

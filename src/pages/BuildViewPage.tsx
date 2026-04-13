@@ -53,7 +53,7 @@ import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import {
   getItemIconUrl,
   fetchItemIconUrl,
-  applyWeaponTypeToName,
+  deriveItemNameForSlot,
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
@@ -484,8 +484,12 @@ const GearSlotDisplay: React.FC<{
   // `iconUrl` state so the label stays in lockstep with whatever icon is
   // actually rendered — including the async UESP fallback, which updates
   // `iconUrl` after the fetch completes.
-  const rawName = itemInfo?.name ?? `Item #${itemId}`;
-  const displayName = applyWeaponTypeToName(rawName, iconUrl, expectedSlot);
+  //
+  // `deriveItemNameForSlot` guards on the STORED itemId's slot metadata,
+  // so generic set IDs (no slot field → arbitrary fallback icon from
+  // `getSetItemsBySlot(...)[0]`) keep their generic label rather than
+  // falsely asserting a weapon type the user may not have chosen.
+  const displayName = deriveItemNameForSlot(itemId, expectedSlot, iconUrl);
   const setName = itemInfo?.setName;
   const traitLabel = trait ? getTraitName(trait) : null;
   const enchantLabel = enchant ? getEnchantName(enchant) : null;
