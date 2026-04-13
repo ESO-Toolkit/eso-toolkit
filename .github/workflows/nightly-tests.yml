@@ -279,7 +279,7 @@ jobs:
           retention-days: 1
 
       - name: Comment Test Results on PR
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         if: always() && github.event_name == 'workflow_dispatch'
         with:
           script: |
@@ -451,7 +451,7 @@ jobs:
           retention-days: 30
 
       - name: Create Consolidated Summary
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         if: always() && github.event_name == 'workflow_dispatch'
         with:
           script: |
@@ -690,7 +690,7 @@ jobs:
 
       - name: Fallback GitHub Comment on Failure
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             // If error tracking issue creation fails, log the error but don't fail the workflow

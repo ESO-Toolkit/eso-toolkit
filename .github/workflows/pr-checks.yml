@@ -26,7 +26,7 @@ jobs:
         # Skip label check in merge_group (labels already verified on PR) — job must still run
         # so the required status check reports back to GitHub instead of timing out.
         if: github.event_name != 'merge_group'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(label => label.name.toLowerCase());
