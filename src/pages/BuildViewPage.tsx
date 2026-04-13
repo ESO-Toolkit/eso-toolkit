@@ -53,7 +53,7 @@ import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import {
   getItemIconUrl,
   fetchItemIconUrl,
-  getWeaponTypeLabel,
+  parseWeaponTypeFromIconUrl,
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
@@ -448,9 +448,9 @@ const GearSlotDisplay: React.FC<{
   //      whose numeric values collide with unrelated items in UESP's icon database.
   //
   // For type 2, resolve the correct slot-specific ID via getSetItemsBySlot so we get the right icon.
+  const expectedSlot = SLOT_INDEX_TO_TYPE[slotIndex];
   const resolvedIconId = (() => {
     if (!itemInfo) return itemId; // not in itemIdMap → treat as real UESP ID
-    const expectedSlot = SLOT_INDEX_TO_TYPE[slotIndex];
     if (itemInfo.slot && itemInfo.slot === (expectedSlot ?? itemInfo.slot)) return itemId;
     // Generic set ID or slot mismatch: find the slot-specific item for this set + slot
     if (!expectedSlot) return null;
@@ -469,14 +469,21 @@ const GearSlotDisplay: React.FC<{
     });
   }, [resolvedIconId, iconUrl]);
 
-  // itemIdMap only tags items with slot='weapon'/'offhand' — not the specific
-  // type. Derive Sword/Dagger/Bow/Staff/Shield/… from the UESP icon filename
-  // and swap the generic suffix (" Weapon", " Off-Hand", " Offhand") for it.
+  // itemIdMap stores generic names (" Weapon", " Off-Hand", " Gear") for
+  // weapon items because the specific type (Sword, Dagger, Bow, Staff, …)
+  // isn't in the data. Parse it out of the UESP icon filename instead.
+  //
+  // Key the trigger on `expectedSlot` (the position on the character), not
+  // `itemInfo.slot` — generic set IDs like 2558 have no slot field at all,
+  // and we still want a specific label for those once `resolvedIconId` has
+  // corrected to a concrete weapon. Read from `iconUrl` so the label stays
+  // in lockstep with the resolved icon (including the async UESP fallback,
+  // whose URL lands in `iconUrl` state after the fetch completes).
   const rawName = itemInfo?.name ?? `Item #${itemId}`;
-  const weaponTypeLabel =
-    itemInfo?.slot === 'weapon' || itemInfo?.slot === 'offhand' ? getWeaponTypeLabel(itemId) : null;
+  const isWeaponSlot = expectedSlot === 'weapon' || expectedSlot === 'offhand';
+  const weaponTypeLabel = isWeaponSlot ? parseWeaponTypeFromIconUrl(iconUrl) : null;
   const genericWeaponSuffix = weaponTypeLabel
-    ? [' Weapon', ' Off-Hand', ' Offhand'].find((s) => rawName.endsWith(s))
+    ? [' Weapon', ' Off-Hand', ' Offhand', ' Gear'].find((s) => rawName.endsWith(s))
     : undefined;
   const displayName = genericWeaponSuffix
     ? rawName.slice(0, -genericWeaponSuffix.length) + ' ' + weaponTypeLabel
