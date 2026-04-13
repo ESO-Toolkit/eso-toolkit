@@ -18,7 +18,9 @@ import { updateGear } from '../store/loadoutSlice';
 import { GearConfig, GearPiece } from '../types/loadout.types';
 import {
   applyWeaponTypeToName,
+  fetchIsTwoHandedWeapon,
   fetchItemIconUrl,
+  isTwoHandedFromName,
   isTwoHandedWeapon,
 } from '../utils/itemIconResolver';
 import { getItemData, getItemIdFromLink } from '../utils/itemLinkParser';
@@ -529,7 +531,7 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     return states;
   }, [gear]);
 
-  const isTwoHandedByItemId = (itemId: number | null): boolean => {
+  const isTwoHandedByItemIdSync = (itemId: number | null): boolean => {
     if (!itemId) {
       return false;
     }
@@ -550,16 +552,60 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     return false;
   };
 
-  const isTwoHandedGearPiece = (gearPiece?: GearPiece): boolean => {
+  const isTwoHandedGearPieceSync = (gearPiece?: GearPiece): boolean => {
     if (!gearPiece) {
       return false;
     }
     const itemId = resolveGearPieceItemId(gearPiece);
-    return isTwoHandedByItemId(itemId);
+    if (isTwoHandedByItemIdSync(itemId)) {
+      return true;
+    }
+    // Last-resort text fallback for degraded gear records (imports with only
+    // a stale name string, or gear referencing items that aren't in the
+    // current itemIdMap). Only consulted when item-ID classification fails,
+    // and only against the item's own name — not the set name, to avoid
+    // false-positives on sets like "Bow of the Wild Hunt".
+    if (itemId == null || !getItemInfo(itemId)) {
+      const extended = gearPiece as ExtendedGearPiece;
+      if (isTwoHandedFromName(extended?.name)) {
+        return true;
+      }
+    }
+    return false;
   };
 
-  const isFrontTwoHanded = isTwoHandedGearPiece(gear[FRONT_MAIN_SLOT]);
-  const isBackTwoHanded = isTwoHandedGearPiece(gear[BACK_MAIN_SLOT]);
+  // 2H status tracked in state so the async UESP fallback can update the
+  // gate after initial render — otherwise a loadout rehydrated from storage
+  // with an uncached 2H weapon would render an enabled off-hand until some
+  // unrelated re-render happened.
+  const frontMainPiece = gear[FRONT_MAIN_SLOT];
+  const backMainPiece = gear[BACK_MAIN_SLOT];
+  const frontMainId = frontMainPiece ? resolveGearPieceItemId(frontMainPiece) : null;
+  const backMainId = backMainPiece ? resolveGearPieceItemId(backMainPiece) : null;
+
+  const [asyncTwoHandedStatus, setAsyncTwoHandedStatus] = useState({
+    front: false,
+    back: false,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([
+      fetchIsTwoHandedWeapon(frontMainId),
+      fetchIsTwoHandedWeapon(backMainId),
+    ]).then(([front, back]) => {
+      if (cancelled) return;
+      setAsyncTwoHandedStatus({ front, back });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [frontMainId, backMainId]);
+
+  // Compose: sync signals (icon-local, slot-mask, text fallback) + async
+  // icon-fetch signal. Either firing means "gate the off-hand".
+  const isFrontTwoHanded = asyncTwoHandedStatus.front || isTwoHandedGearPieceSync(frontMainPiece);
+  const isBackTwoHanded = asyncTwoHandedStatus.back || isTwoHandedGearPieceSync(backMainPiece);
 
   const slotDisableReasons = useMemo<Partial<Record<number, string>>>(() => {
     const reasons: Partial<Record<number, string>> = {};
@@ -676,7 +722,7 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       [pickerSlot.index]: newGearPiece,
     };
 
-    if (isTwoHandedByItemId(resolvedItemId)) {
+    if (isTwoHandedByItemIdSync(resolvedItemId)) {
       const offhandSlot = getMatchingOffhandSlot(pickerSlot.index);
       if (offhandSlot !== null && updatedGear[offhandSlot]) {
         const adjustedGear = { ...updatedGear };
@@ -693,6 +739,28 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
         gear: updatedGear,
       }),
     );
+
+    // Async catch-up: if the sync path missed 2H classification (item not
+    // yet in local icon data), retroactively clear the off-hand once the
+    // UESP fetch resolves.
+    const offhandSlot = getMatchingOffhandSlot(pickerSlot.index);
+    if (offhandSlot !== null && !isTwoHandedByItemIdSync(resolvedItemId)) {
+      void fetchIsTwoHandedWeapon(resolvedItemId).then((is2H) => {
+        if (!is2H) return;
+        dispatch(
+          updateGear({
+            trialId,
+            pageIndex,
+            setupIndex,
+            gear: (() => {
+              const cleared = { ...updatedGear };
+              delete cleared[offhandSlot];
+              return cleared;
+            })(),
+          }),
+        );
+      });
+    }
   };
 
   const handleClosePicker = (): void => {

@@ -13,7 +13,7 @@
 
 import { Box, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getItemInfo } from '../../../loadout-manager/data/itemIdMap';
 import type {
@@ -23,6 +23,7 @@ import type {
 } from '../../../loadout-manager/types/loadout.types';
 import {
   deriveItemNameForSlot,
+  fetchIsTwoHandedWeapon,
   isTwoHandedWeapon,
 } from '../../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
@@ -161,20 +162,62 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
 }) => {
   const [pickerSlot, setPickerSlot] = useState<EquipSlotDef | null>(null);
 
-  const disabledSlots = useMemo<Partial<Record<number, string>>>(() => {
-    const result: Partial<Record<number, string>> = {};
-    const fId = gear[FRONT_MAIN]?.id != null ? Number(gear[FRONT_MAIN].id) : null;
-    const bId = gear[BACK_MAIN]?.id != null ? Number(gear[BACK_MAIN].id) : null;
-    if (isTwoHandedWeapon(fId)) result[FRONT_OFF] = 'Front bar weapon uses both hands';
-    if (isTwoHandedWeapon(bId)) result[BACK_OFF] = 'Back bar weapon uses both hands';
-    return result;
-  }, [gear]);
+  const frontMainId = gear[FRONT_MAIN]?.id != null ? Number(gear[FRONT_MAIN].id) : null;
+  const backMainId = gear[BACK_MAIN]?.id != null ? Number(gear[BACK_MAIN].id) : null;
+
+  // 2H status tracked in state so the async UESP fallback can update the
+  // gate after initial render — otherwise a build rehydrated from storage
+  // with an uncached 2H weapon would render an enabled off-hand until some
+  // unrelated re-render happened.
+  //
+  // Seed with the sync classifier so local-data hits (99%+ of items) are
+  // correct on first render and don't need to wait for a microtask.
+  const [twoHandedStatus, setTwoHandedStatus] = useState(() => ({
+    front: isTwoHandedWeapon(frontMainId),
+    back: isTwoHandedWeapon(backMainId),
+  }));
 
   // Refs so handleOpen/handleClear can have empty (or near-empty) dep arrays.
   // Stable handler refs are required for the memoized SlotRow — otherwise
   // every gear edit produces fresh closures and defeats React.memo.
   const gearRef = useRef(gear);
   gearRef.current = gear;
+
+  // Re-classify asynchronously whenever either main-hand changes, and
+  // auto-clear the off-hand retroactively if async classification reveals
+  // a 2H weapon the sync path missed (e.g. a newly-added weapon that
+  // required a UESP fetch). Single source of truth for both the lock
+  // state AND the auto-clear behavior.
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([
+      fetchIsTwoHandedWeapon(frontMainId),
+      fetchIsTwoHandedWeapon(backMainId),
+    ]).then(([front, back]) => {
+      if (cancelled) return;
+      setTwoHandedStatus({ front, back });
+      const currentGear = gearRef.current;
+      const frontOffOccupied = currentGear[FRONT_OFF]?.id != null;
+      const backOffOccupied = currentGear[BACK_OFF]?.id != null;
+      if ((front && frontOffOccupied) || (back && backOffOccupied)) {
+        const next: GearConfig = { ...currentGear };
+        if (front && frontOffOccupied) next[FRONT_OFF] = { id: undefined };
+        if (back && backOffOccupied) next[BACK_OFF] = { id: undefined };
+        onChange(next);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [frontMainId, backMainId, onChange]);
+
+  const disabledSlots = useMemo<Partial<Record<number, string>>>(() => {
+    const result: Partial<Record<number, string>> = {};
+    if (twoHandedStatus.front) result[FRONT_OFF] = 'Front bar weapon uses both hands';
+    if (twoHandedStatus.back) result[BACK_OFF] = 'Back bar weapon uses both hands';
+    return result;
+  }, [twoHandedStatus]);
+
   const disabledSlotsRef = useRef(disabledSlots);
   disabledSlotsRef.current = disabledSlots;
 
@@ -186,13 +229,12 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
   const handleSelect = useCallback(
     (itemId: number): void => {
       if (!pickerSlot) return;
-      const next: GearConfig = { ...gearRef.current, [pickerSlot.slot]: { id: itemId } };
-      // Auto-clear off-hand when a 2H weapon is selected
-      if (
-        (pickerSlot.slot === FRONT_MAIN || pickerSlot.slot === BACK_MAIN) &&
-        isTwoHandedWeapon(itemId)
-      ) {
-        const offSlot = pickerSlot.slot === FRONT_MAIN ? FRONT_OFF : BACK_OFF;
+      const slot = pickerSlot.slot;
+      const next: GearConfig = { ...gearRef.current, [slot]: { id: itemId } };
+      // Sync fast-path auto-clear (local-data items). The useEffect above
+      // handles the uncached case retroactively once the UESP fetch lands.
+      if ((slot === FRONT_MAIN || slot === BACK_MAIN) && isTwoHandedWeapon(itemId)) {
+        const offSlot = slot === FRONT_MAIN ? FRONT_OFF : BACK_OFF;
         next[offSlot] = { id: undefined };
       }
       onChange(next);

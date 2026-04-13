@@ -15,8 +15,10 @@
 import {
   applyWeaponTypeToName,
   deriveItemNameForSlot,
+  fetchIsTwoHandedWeapon,
   GENERIC_WEAPON_SUFFIXES,
   getItemIconUrl,
+  isTwoHandedFromName,
   isTwoHandedWeapon,
   parseWeaponTypeFromIconUrl,
 } from '../itemIconResolver';
@@ -314,5 +316,72 @@ describe('isTwoHandedWeapon', () => {
     // unreliable for classification. Must not gate the off-hand based on
     // an arbitrary fallback pick.
     expect(isTwoHandedWeapon(2558)).toBe(false);
+  });
+});
+
+describe('fetchIsTwoHandedWeapon (async classification path)', () => {
+  // These item IDs are in local icon data (itemIcons.json), so the async
+  // wrapper resolves synchronously from the same source the sync helper
+  // uses. We can't easily cover the UESP fallback branch without network
+  // mocking, but the code path is the same shape as the local hit — once
+  // fetchItemIconUrl resolves a URL, classification is identical.
+  it.each([
+    [97222, true, 'Battle Axe'],
+    [97223, true, 'Maul'],
+    [97224, true, 'Greatsword'],
+    [97226, true, 'Bow'],
+    [97230, true, 'Staff'],
+    [97219, false, 'Axe (1H)'],
+    [97221, false, 'Sword (1H)'],
+    [97225, false, 'Dagger (1H)'],
+    [97231, false, 'Shield'],
+    [97232, false, 'Chest armor'],
+  ])('classifies %i as %s (%s)', async (itemId, expected) => {
+    await expect(fetchIsTwoHandedWeapon(itemId)).resolves.toBe(expected);
+  });
+
+  it('returns false for null / undefined / 0 / negative', async () => {
+    await expect(fetchIsTwoHandedWeapon(null)).resolves.toBe(false);
+    await expect(fetchIsTwoHandedWeapon(undefined)).resolves.toBe(false);
+    await expect(fetchIsTwoHandedWeapon(0)).resolves.toBe(false);
+    await expect(fetchIsTwoHandedWeapon(-1)).resolves.toBe(false);
+  });
+});
+
+describe('isTwoHandedFromName (text fallback for stale/imported gear)', () => {
+  it.each([
+    "Mother's Sorrow Greatsword",
+    "Mother's Sorrow Battle Axe",
+    "Mother's Sorrow Battleaxe",
+    "Mother's Sorrow Maul",
+    "Mother's Sorrow Bow",
+    "Mother's Sorrow Staff",
+    "Mother's Sorrow Restoration Staff",
+    "Mother's Sorrow Inferno Staff",
+    'Greatsword of the Legion',
+  ])('returns true for "%s"', (name) => {
+    expect(isTwoHandedFromName(name)).toBe(true);
+  });
+
+  it.each([
+    "Mother's Sorrow Sword",
+    "Mother's Sorrow Dagger",
+    "Mother's Sorrow Mace",
+    "Mother's Sorrow Axe", // 1H axe — must not match "battle axe" token
+    "Mother's Sorrow Shield",
+    "Mother's Sorrow Weapon",
+    "Mother's Sorrow Gear",
+    "Mother's Sorrow Ring",
+    'Elbow Brace', // word-boundary guard: "bow" inside "elbow" must NOT match
+    'Staffa of the Magi', // fictional word containing "staff" prefix
+    'Swordbreaker Amulet', // fictional, no 2H token
+  ])('returns false for "%s"', (name) => {
+    expect(isTwoHandedFromName(name)).toBe(false);
+  });
+
+  it('returns false for null / undefined / empty', () => {
+    expect(isTwoHandedFromName(null)).toBe(false);
+    expect(isTwoHandedFromName(undefined)).toBe(false);
+    expect(isTwoHandedFromName('')).toBe(false);
   });
 });

@@ -171,9 +171,12 @@ const TWO_HANDED_WEAPON_LABELS = new Set<string>([
 
 /**
  * True when `itemId` resolves (via its UESP icon) to a weapon that occupies
- * both bar slots. Returns false when the item isn't a known weapon, when the
- * icon isn't in local data, or when classification is ambiguous — callers
- * should treat a `false` return as "don't gate" rather than "definitely 1H".
+ * both bar slots. Synchronous — reads only the pre-fetched local data + the
+ * already-warmed fallback cache. Returns `false` when the icon isn't
+ * resolvable yet; callers relying on this for equip-rule enforcement must
+ * pair it with an async recompute (see `fetchIsTwoHandedWeapon`) so
+ * newly-added items and rehydrated gear configs don't silently skip the
+ * gate on first render.
  *
  * Preferred over name-keyword checks (`name.includes('greatsword')`), which
  * never match because itemIdMap stores generic names like "<Set> Weapon".
@@ -183,6 +186,38 @@ export function isTwoHandedWeapon(itemId: number | null | undefined): boolean {
   const url = getItemIconUrl(itemId);
   const label = parseWeaponTypeFromIconUrl(url);
   return label !== null && TWO_HANDED_WEAPON_LABELS.has(label);
+}
+
+/**
+ * Async counterpart to `isTwoHandedWeapon` — triggers the UESP fallback
+ * fetch for items that aren't in local data yet, so equip-rule enforcement
+ * doesn't silently fail on newly-added weapons. Use this when gating the
+ * off-hand slot; sync `isTwoHandedWeapon` is fine for cosmetic indicators
+ * that can afford to re-render once the icon lands.
+ */
+export async function fetchIsTwoHandedWeapon(itemId: number | null | undefined): Promise<boolean> {
+  if (!itemId || itemId <= 0) return false;
+  const url = await fetchItemIconUrl(itemId);
+  const label = parseWeaponTypeFromIconUrl(url);
+  return label !== null && TWO_HANDED_WEAPON_LABELS.has(label);
+}
+
+/**
+ * Text-based 2H fallback for degraded gear records (imports with only a
+ * stale `name` string, rehydrated state where the itemId no longer maps
+ * to any known item). Uses whole-word regex so substrings like "elbow"
+ * don't false-match the `bow` token.
+ *
+ * Intentionally LAST-RESORT — callers should always prefer
+ * `isTwoHandedWeapon`/`fetchIsTwoHandedWeapon` on the canonical item ID
+ * first. Scope checks to the item's own display name, not the set name,
+ * because set names like "Bow of the Wild Hunt" would false-positive.
+ */
+const TWO_HANDED_NAME_RE = /\b(greatsword|battle\s?axe|maul|bow|staff)\b/i;
+
+export function isTwoHandedFromName(text: string | null | undefined): boolean {
+  if (!text) return false;
+  return TWO_HANDED_NAME_RE.test(text);
 }
 
 /**
