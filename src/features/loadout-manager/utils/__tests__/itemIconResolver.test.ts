@@ -317,6 +317,36 @@ describe('isTwoHandedWeapon', () => {
     // an arbitrary fallback pick.
     expect(isTwoHandedWeapon(2558)).toBe(false);
   });
+
+  describe('slot-specificity guard (regression: false-positive 2H lock on generic IDs)', () => {
+    // Generic LibSets set IDs have no `slot` field in itemIdMap, but they
+    // collide with unrelated items in UESP's icon database — so their
+    // icon can happen to match a 2H weapon token. Pre-guard, these falsely
+    // locked/cleared the off-hand for imported/legacy loadouts carrying
+    // generic IDs. Post-guard, the stored metadata's absence of a weapon
+    // slot is authoritative: don't classify.
+    it('ID 685 ("Bloodthorn\'s Touch Gear", no slot) has a staff icon but must NOT classify as 2H', () => {
+      // getItemIconUrl(685) returns gear_breton_staff_d — the "staff" token
+      // would false-positive if we didn't gate on itemInfo.slot first.
+      expect(getItemIconUrl(685)).toMatch(/_staff_/);
+      expect(isTwoHandedWeapon(685)).toBe(false);
+    });
+
+    it('ID 139 ("Dreugh King Slayer Gear", no slot, shield icon) stays false', () => {
+      expect(isTwoHandedWeapon(139)).toBe(false);
+    });
+
+    it('ID 1088 ("Hide of the Werewolf Gear", no slot, armor icon) stays false', () => {
+      expect(isTwoHandedWeapon(1088)).toBe(false);
+    });
+
+    it('slot-specific weapon items are unaffected by the guard (positive control)', () => {
+      // 97230 = "Mother's Sorrow Weapon" with slot='weapon' and staff icon.
+      // The stored slot field says weapon, so the guard lets icon-based
+      // classification proceed and correctly returns true.
+      expect(isTwoHandedWeapon(97230)).toBe(true);
+    });
+  });
 });
 
 describe('fetchIsTwoHandedWeapon (async classification path)', () => {
@@ -345,6 +375,14 @@ describe('fetchIsTwoHandedWeapon (async classification path)', () => {
     await expect(fetchIsTwoHandedWeapon(undefined)).resolves.toBe(false);
     await expect(fetchIsTwoHandedWeapon(0)).resolves.toBe(false);
     await expect(fetchIsTwoHandedWeapon(-1)).resolves.toBe(false);
+  });
+
+  it('applies the same slot-specificity guard as the sync variant (ID 685)', async () => {
+    // Symmetry check: the async path must reject generic IDs before
+    // classification too, otherwise the cold-cache useEffect in
+    // EquipmentPicker/GearSelector would re-introduce the false-positive
+    // lock on imported/legacy loadouts.
+    await expect(fetchIsTwoHandedWeapon(685)).resolves.toBe(false);
   });
 });
 

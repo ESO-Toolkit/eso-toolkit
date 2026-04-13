@@ -170,19 +170,31 @@ const TWO_HANDED_WEAPON_LABELS = new Set<string>([
 ]);
 
 /**
- * True when `itemId` resolves (via its UESP icon) to a weapon that occupies
- * both bar slots. Synchronous — reads only the pre-fetched local data + the
- * already-warmed fallback cache. Returns `false` when the icon isn't
- * resolvable yet; callers relying on this for equip-rule enforcement must
- * pair it with an async recompute (see `fetchIsTwoHandedWeapon`) so
- * newly-added items and rehydrated gear configs don't silently skip the
- * gate on first render.
+ * True when the itemId is a slot-specific weapon whose icon classifies as
+ * a two-handed type (Greatsword / Battle Axe / Maul / Bow / Staff).
  *
- * Preferred over name-keyword checks (`name.includes('greatsword')`), which
- * never match because itemIdMap stores generic names like "<Set> Weapon".
+ * IMPORTANT slot-specificity guard: generic LibSets IDs (e.g. 685 =
+ * "Bloodthorn's Touch Gear", no `slot` field) collide with unrelated
+ * entries in UESP's icon database — `getItemIconUrl(685)` returns
+ * `gear_breton_staff_d`. Treating that as a 2H match would false-positive
+ * lock and auto-clear the off-hand for imported/legacy loadouts that
+ * carry generic IDs. Only classify when the stored itemId's own metadata
+ * says it's a weapon/offhand slot item.
+ *
+ * Synchronous — reads only the pre-fetched local data + the already-warmed
+ * fallback cache. Returns `false` when the icon isn't resolvable yet;
+ * callers relying on this for equip-rule enforcement must pair it with an
+ * async recompute (see `fetchIsTwoHandedWeapon`) so newly-added items and
+ * rehydrated gear configs don't silently skip the gate on first render.
+ *
+ * Preferred over name-keyword checks (`name.includes('greatsword')`),
+ * which never match because itemIdMap stores generic names like
+ * "<Set> Weapon".
  */
 export function isTwoHandedWeapon(itemId: number | null | undefined): boolean {
   if (!itemId || itemId <= 0) return false;
+  const info = getItemInfo(itemId);
+  if (info?.slot !== 'weapon' && info?.slot !== 'offhand') return false;
   const url = getItemIconUrl(itemId);
   const label = parseWeaponTypeFromIconUrl(url);
   return label !== null && TWO_HANDED_WEAPON_LABELS.has(label);
@@ -194,9 +206,15 @@ export function isTwoHandedWeapon(itemId: number | null | undefined): boolean {
  * doesn't silently fail on newly-added weapons. Use this when gating the
  * off-hand slot; sync `isTwoHandedWeapon` is fine for cosmetic indicators
  * that can afford to re-render once the icon lands.
+ *
+ * Applies the same slot-specificity guard as the sync variant — see
+ * `isTwoHandedWeapon` for why generic set IDs must be rejected before
+ * icon classification.
  */
 export async function fetchIsTwoHandedWeapon(itemId: number | null | undefined): Promise<boolean> {
   if (!itemId || itemId <= 0) return false;
+  const info = getItemInfo(itemId);
+  if (info?.slot !== 'weapon' && info?.slot !== 'offhand') return false;
   const url = await fetchItemIconUrl(itemId);
   const label = parseWeaponTypeFromIconUrl(url);
   return label !== null && TWO_HANDED_WEAPON_LABELS.has(label);
