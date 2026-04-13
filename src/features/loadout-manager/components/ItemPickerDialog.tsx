@@ -31,6 +31,7 @@ import {
   type SlotType,
   validateItemForSlot,
 } from '../data/itemIdMap';
+import { deriveItemNameForSlot } from '../utils/itemIconResolver';
 import { getSlotCoverageStats } from '../utils/itemSlotValidator';
 
 interface ItemPickerDialogProps {
@@ -217,14 +218,16 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
             onInputChange={handleInputChange}
             onChange={handleOptionSelect}
             filterOptions={filterOptions}
-            getOptionLabel={(option) => option.info.name}
+            getOptionLabel={(option) => deriveItemNameForSlot(option.itemId, targetSlot)}
             isOptionEqualToValue={(option, value) => option.itemId === value.itemId}
             noOptionsText={noOptionsText}
             renderOption={(props, option) => (
               <li {...props} key={option.itemId}>
                 <Stack spacing={0.5} width="100%">
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography fontWeight={600}>{option.info.name}</Typography>
+                    <Typography fontWeight={600}>
+                      {deriveItemNameForSlot(option.itemId, targetSlot)}
+                    </Typography>
                     <Chip
                       label={option.info.setName}
                       size="small"
@@ -276,7 +279,9 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
               </Typography>
               <Stack spacing={0.5}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography fontWeight={600}>{currentItem.info.name}</Typography>
+                  <Typography fontWeight={600}>
+                    {deriveItemNameForSlot(currentItem.itemId, targetSlot)}
+                  </Typography>
                   <Chip
                     label={currentItem.info.setName}
                     size="small"

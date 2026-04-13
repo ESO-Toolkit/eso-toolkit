@@ -19,6 +19,8 @@ import { Logger } from '@/utils/logger';
 
 // Pre-fetched icon data: { icons: string[], items: Record<string, number> }
 import iconData from '../data/itemIcons.json';
+import { getItemInfo } from '../data/itemIdMap';
+import type { SlotType } from '../data/slotTypes';
 
 const logger = new Logger({ contextPrefix: 'ItemIconResolver' });
 
@@ -102,6 +104,63 @@ export function parseWeaponTypeFromIconUrl(url: string | null | undefined): stri
   if (!fileMatch) return null;
   const tokenMatch = fileMatch[1].match(WEAPON_ICON_TOKEN_RE);
   return tokenMatch ? (WEAPON_ICON_TOKEN_LABELS[tokenMatch[1]] ?? null) : null;
+}
+
+/**
+ * Generic slot-name suffixes that itemIdMap uses when a specific weapon-type
+ * name isn't available. Callers strip the trailing match and splice in a
+ * specific type (Sword/Dagger/Bow/…) once the icon is resolved.
+ *
+ * Order matters — longer/more-specific suffixes (" Off-Hand") must come
+ * before shorter overlaps (" Hand") would if we ever added them.
+ */
+export const GENERIC_WEAPON_SUFFIXES = [' Weapon', ' Off-Hand', ' Offhand', ' Gear'] as const;
+
+/**
+ * Replace a generic slot-name suffix on an item name with the specific weapon
+ * type parsed from its icon URL. No-ops when the slot isn't a weapon slot,
+ * when the icon URL doesn't expose a weapon token, or when the raw name
+ * doesn't end in a recognized generic suffix.
+ *
+ * The `slotType` gate intentionally uses the SLOT POSITION (weapon / offhand)
+ * rather than the item's own `slot` tag, so generic set IDs (e.g. 2558 =
+ * "Mother's Sorrow Gear") still get a specific label once the caller has
+ * corrected the icon to a concrete slot-specific item.
+ */
+export function applyWeaponTypeToName(
+  rawName: string,
+  iconUrl: string | null | undefined,
+  slotType: SlotType | undefined,
+): string {
+  const isWeaponSlot = slotType === 'weapon' || slotType === 'offhand';
+  if (!isWeaponSlot) return rawName;
+  const weaponType = parseWeaponTypeFromIconUrl(iconUrl);
+  if (!weaponType) return rawName;
+  const suffix = GENERIC_WEAPON_SUFFIXES.find((s) => rawName.endsWith(s));
+  if (!suffix) return rawName;
+  return rawName.slice(0, -suffix.length) + ' ' + weaponType;
+}
+
+/**
+ * Resolve an item's display name for a given slot — the single callable
+ * used by the /bv, /rv, build-editor, and loadout-manager UIs so they all
+ * agree on how to render weapon labels.
+ *
+ * Synchronous: reads `getItemInfo` + local icon data. Callers that already
+ * track an async-resolved icon URL (e.g. BuildViewPage's `iconUrl` state
+ * from `fetchItemIconUrl`) should pass it via `iconUrlOverride` so the
+ * label follows whatever icon they're rendering.
+ */
+export function deriveItemNameForSlot(
+  itemId: number | null | undefined,
+  slotType: SlotType | undefined,
+  iconUrlOverride?: string | null,
+): string {
+  const id = itemId ?? 0;
+  const info = id > 0 ? getItemInfo(id) : undefined;
+  const rawName = info?.name ?? `Item #${id || '?'}`;
+  const url = iconUrlOverride !== undefined ? iconUrlOverride : getItemIconUrl(id);
+  return applyWeaponTypeToName(rawName, url, slotType);
 }
 
 /**
