@@ -14,7 +14,9 @@ import type { BuildChampionPoints } from '../../features/build-editor/types/buil
 import { getChampionPointById } from '../../features/loadout-manager/data/championPointData';
 import { getItemInfo } from '../../features/loadout-manager/data/itemIdMap';
 import { getSkillById } from '../../features/loadout-manager/data/skillLineSkills';
+import type { SlotType } from '../../features/loadout-manager/data/slotTypes';
 import type { GearConfig, SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
+import { deriveItemNameForSlot } from '../../features/loadout-manager/utils/itemIconResolver';
 import { getChampionPointAbilityName } from '../../types/champion-points';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -47,6 +49,24 @@ const GEAR_SLOT_NAMES: Record<number, string> = {
   21: 'Back Off',
 };
 const GEAR_SLOT_ORDER = [0, 2, 3, 16, 6, 8, 9, 1, 11, 12, 4, 5, 20, 21];
+
+/** Maps ESO equipment slot indices to the SlotType used in itemIdMap. */
+const SLOT_INDEX_TO_TYPE: Record<number, SlotType> = {
+  0: 'head',
+  1: 'neck',
+  2: 'chest',
+  3: 'shoulders',
+  4: 'weapon',
+  5: 'offhand',
+  6: 'waist',
+  8: 'legs',
+  9: 'feet',
+  11: 'ring',
+  12: 'ring',
+  16: 'hand',
+  20: 'weapon',
+  21: 'offhand',
+};
 
 const WEIGHT_LABELS: Record<string, string> = {
   light: 'L',
@@ -290,9 +310,10 @@ const GearDisplay: React.FC<{
       {populatedSlots.map((slotIdx) => {
         const piece = gear[slotIdx];
         if (!piece) return null;
-        const itemInfo = getItemInfo(Number(piece.id));
+        const itemId = Number(piece.id);
+        const itemInfo = getItemInfo(itemId);
         const slotName = GEAR_SLOT_NAMES[slotIdx] ?? `Slot ${slotIdx}`;
-        const itemName = itemInfo?.name ?? `Item #${piece.id}`;
+        const itemName = deriveItemNameForSlot(itemId, SLOT_INDEX_TO_TYPE[slotIdx]);
         const setName = itemInfo?.setName;
         const weight = piece.weight ? WEIGHT_LABELS[piece.weight] : null;
 

@@ -16,7 +16,7 @@ import { validateItemForSlot, getItemInfo, type SlotType } from '../data/itemIdM
 import { getCollectionItem, findCollectionItemBySetAndSlotType } from '../data/itemSetCollections';
 import { updateGear } from '../store/loadoutSlice';
 import { GearConfig, GearPiece } from '../types/loadout.types';
-import { fetchItemIconUrl } from '../utils/itemIconResolver';
+import { applyWeaponTypeToName, fetchItemIconUrl } from '../utils/itemIconResolver';
 import { getItemData, getItemIdFromLink } from '../utils/itemLinkParser';
 import { registerManualSlot } from '../utils/wizardWardrobeSlotRegistry';
 
@@ -210,6 +210,7 @@ const SlotIcon: React.FC<{ name: string; size?: number; color?: string }> = ({
 // ---------------------------------------------------------------------------
 interface GearTileProps {
   slotName: string;
+  slotType: SlotType;
   gearPiece?: ExtendedGearPiece;
   onRemove: () => void;
   onAdd: () => void;
@@ -221,6 +222,7 @@ interface GearTileProps {
 
 const GearTile: React.FC<GearTileProps> = ({
   slotName,
+  slotType,
   gearPiece,
   onRemove,
   onAdd,
@@ -278,7 +280,12 @@ const GearTile: React.FC<GearTileProps> = ({
   }, [resolvedItemId]);
 
   const setName = gearPiece?.setName || itemData?.setName;
-  const primaryItemName = gearPiece?.name || itemData?.name || setName;
+  const rawPrimaryItemName = gearPiece?.name || itemData?.name || setName;
+  // Swap generic "Weapon"/"Gear" suffixes for the specific type, following
+  // the already-resolved iconUrl state (covers async UESP fallback too).
+  const primaryItemName = rawPrimaryItemName
+    ? applyWeaponTypeToName(rawPrimaryItemName, iconUrl, slotType)
+    : rawPrimaryItemName;
   const showItemIdFallback = resolvedItemId && !resolvedSetId && !setName ? resolvedItemId : null;
   const fallbackLabel = resolvedSetId
     ? `Set ID ${resolvedSetId}`
@@ -681,6 +688,7 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     <GearTile
       key={slot}
       slotName={name}
+      slotType={slotType}
       gearPiece={gear[slot] as ExtendedGearPiece}
       onRemove={() => handleRemoveGear(slot)}
       onAdd={() => handleAddGear(slot, name, slotType)}

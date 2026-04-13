@@ -12,7 +12,13 @@
  *     URLs of the same CDN shape.
  */
 
-import { parseWeaponTypeFromIconUrl } from '../itemIconResolver';
+import {
+  applyWeaponTypeToName,
+  deriveItemNameForSlot,
+  GENERIC_WEAPON_SUFFIXES,
+  getItemIconUrl,
+  parseWeaponTypeFromIconUrl,
+} from '../itemIconResolver';
 
 const CDN = 'https://esoicons.uesp.net/esoui/art/icons';
 
@@ -76,5 +82,127 @@ describe('parseWeaponTypeFromIconUrl', () => {
     expect(
       parseWeaponTypeFromIconUrl(`${CDN}/crafting_enchantment_baxe_bloodstone_r1.png`),
     ).toBeNull();
+  });
+});
+
+describe('applyWeaponTypeToName', () => {
+  it('replaces " Weapon" suffix with the specific type', () => {
+    expect(
+      applyWeaponTypeToName(
+        "Mother's Sorrow Weapon",
+        `${CDN}/gear_argonian_1hsword_d.png`,
+        'weapon',
+      ),
+    ).toBe("Mother's Sorrow Sword");
+  });
+
+  it('replaces " Off-Hand" suffix (shield in off-hand)', () => {
+    expect(
+      applyWeaponTypeToName(
+        "Mother's Sorrow Off-Hand",
+        `${CDN}/gear_argonian_shield_d.png`,
+        'offhand',
+      ),
+    ).toBe("Mother's Sorrow Shield");
+  });
+
+  it('replaces " Gear" suffix for generic set IDs once the icon is resolved', () => {
+    expect(
+      applyWeaponTypeToName("Mother's Sorrow Gear", `${CDN}/gear_argonian_1haxe_d.png`, 'weapon'),
+    ).toBe("Mother's Sorrow Axe");
+  });
+
+  it('no-ops when slot is not weapon/offhand', () => {
+    expect(
+      applyWeaponTypeToName(
+        "Mother's Sorrow Chest",
+        `${CDN}/gear_argonian_light_robe_d.png`,
+        'chest',
+      ),
+    ).toBe("Mother's Sorrow Chest");
+  });
+
+  it('no-ops when the icon URL has no weapon token', () => {
+    expect(
+      applyWeaponTypeToName(
+        "Mother's Sorrow Weapon",
+        `${CDN}/gear_argonian_light_hands_d.png`,
+        'weapon',
+      ),
+    ).toBe("Mother's Sorrow Weapon");
+  });
+
+  it('no-ops when the raw name has no recognized suffix', () => {
+    expect(
+      applyWeaponTypeToName('Totally Custom Name', `${CDN}/gear_argonian_1hsword_d.png`, 'weapon'),
+    ).toBe('Totally Custom Name');
+  });
+
+  it('no-ops on null/undefined icon URL (falls back to generic name)', () => {
+    expect(applyWeaponTypeToName("Mother's Sorrow Weapon", null, 'weapon')).toBe(
+      "Mother's Sorrow Weapon",
+    );
+    expect(applyWeaponTypeToName("Mother's Sorrow Weapon", undefined, 'weapon')).toBe(
+      "Mother's Sorrow Weapon",
+    );
+  });
+
+  it('does not double up if the suffix already matches the weapon type', () => {
+    // If a name already says "Sword" it won't match any generic suffix, so no-op.
+    expect(
+      applyWeaponTypeToName(
+        "Mother's Sorrow Sword",
+        `${CDN}/gear_argonian_1hsword_d.png`,
+        'weapon',
+      ),
+    ).toBe("Mother's Sorrow Sword");
+  });
+});
+
+describe('GENERIC_WEAPON_SUFFIXES', () => {
+  it('contains the four known generic slot-name endings', () => {
+    expect([...GENERIC_WEAPON_SUFFIXES]).toEqual([' Weapon', ' Off-Hand', ' Offhand', ' Gear']);
+  });
+});
+
+describe('deriveItemNameForSlot (integration — real itemIds through local icon data)', () => {
+  // These item IDs are real Mother's Sorrow weapons from itemIdMap, chosen
+  // because they exercise the full chain: getItemInfo → getItemIconUrl →
+  // parseWeaponTypeFromIconUrl → applyWeaponTypeToName.
+  it.each([
+    [97219, 'weapon' as const, "Mother's Sorrow Axe"],
+    [97221, 'weapon' as const, "Mother's Sorrow Sword"],
+    [97225, 'weapon' as const, "Mother's Sorrow Dagger"],
+    [97226, 'weapon' as const, "Mother's Sorrow Bow"],
+    [97230, 'weapon' as const, "Mother's Sorrow Staff"],
+    [97231, 'offhand' as const, "Mother's Sorrow Shield"],
+  ])('resolves item %i in slot %s → %s', (itemId, slotType, expected) => {
+    // Sanity-check the upstream link first — if the icon JSON changes shape,
+    // we want a specific failure here, not a silent regression elsewhere.
+    const iconUrl = getItemIconUrl(itemId);
+    expect(iconUrl).toMatch(/\/icons\/gear_/);
+    expect(deriveItemNameForSlot(itemId, slotType)).toBe(expected);
+  });
+
+  it('iconUrlOverride wins over local icon lookup (async UESP fallback path)', () => {
+    // Item 97221 locally resolves to a 1hsword icon → "Sword". Force-override
+    // to a bow icon; the helper must follow the override (so it stays in
+    // lockstep with whatever the component is rendering after an async fetch).
+    const bowUrl = `${CDN}/gear_argonian_bow_d.png`;
+    expect(deriveItemNameForSlot(97221, 'weapon', bowUrl)).toBe("Mother's Sorrow Bow");
+  });
+
+  it('returns raw name for non-weapon slots (no type derivation)', () => {
+    expect(deriveItemNameForSlot(97232, 'chest')).toMatch(/Chest$/);
+  });
+
+  it('returns "Item #X" placeholder for unknown itemIds', () => {
+    expect(deriveItemNameForSlot(99999999, 'weapon')).toBe('Item #99999999');
+  });
+
+  it('handles null/undefined itemId gracefully', () => {
+    expect(deriveItemNameForSlot(null, 'weapon')).toBe('Item #?');
+    expect(deriveItemNameForSlot(undefined, 'weapon')).toBe('Item #?');
+    expect(deriveItemNameForSlot(0, 'weapon')).toBe('Item #?');
   });
 });
