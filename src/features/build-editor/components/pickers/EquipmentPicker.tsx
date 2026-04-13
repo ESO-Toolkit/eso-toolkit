@@ -21,27 +21,27 @@ import type {
   GearConfig,
   GearPiece,
 } from '../../../loadout-manager/types/loadout.types';
-import { deriveItemNameForSlot } from '../../../loadout-manager/utils/itemIconResolver';
+import {
+  deriveItemNameForSlot,
+  isTwoHandedWeapon,
+} from '../../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
 import { GearPickerDialog } from './GearPicker';
 
 // ── 2H weapon logic ─────────────────────────────────────────────────────────
-
-const TWO_HANDED_KEYWORDS = ['greatsword', 'battle axe', 'battleaxe', 'maul', 'bow', 'staff'];
+//
+// Greatswords, Battle Axes, Mauls, Bows, and all Staves occupy BOTH bar
+// slots in ESO, so the off-hand is locked + auto-cleared when a 2H is in
+// the main-hand. Classification comes from the UESP icon token (via
+// `isTwoHandedWeapon`) — name-keyword matching doesn't work because
+// itemIdMap stores generic names like "<Set> Weapon".
 
 const FRONT_MAIN = 4;
 const FRONT_OFF = 5;
 const BACK_MAIN = 20;
 const BACK_OFF = 21;
-
-function isTwoHanded(itemId: number | null | undefined): boolean {
-  if (!itemId) return false;
-  const info = getItemInfo(itemId);
-  if (!info) return false;
-  return TWO_HANDED_KEYWORDS.some((kw) => info.name.toLowerCase().includes(kw));
-}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -165,8 +165,8 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
     const result: Partial<Record<number, string>> = {};
     const fId = gear[FRONT_MAIN]?.id != null ? Number(gear[FRONT_MAIN].id) : null;
     const bId = gear[BACK_MAIN]?.id != null ? Number(gear[BACK_MAIN].id) : null;
-    if (isTwoHanded(fId)) result[FRONT_OFF] = 'Front bar weapon uses both hands';
-    if (isTwoHanded(bId)) result[BACK_OFF] = 'Back bar weapon uses both hands';
+    if (isTwoHandedWeapon(fId)) result[FRONT_OFF] = 'Front bar weapon uses both hands';
+    if (isTwoHandedWeapon(bId)) result[BACK_OFF] = 'Back bar weapon uses both hands';
     return result;
   }, [gear]);
 
@@ -190,7 +190,7 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
       // Auto-clear off-hand when a 2H weapon is selected
       if (
         (pickerSlot.slot === FRONT_MAIN || pickerSlot.slot === BACK_MAIN) &&
-        isTwoHanded(itemId)
+        isTwoHandedWeapon(itemId)
       ) {
         const offSlot = pickerSlot.slot === FRONT_MAIN ? FRONT_OFF : BACK_OFF;
         next[offSlot] = { id: undefined };
