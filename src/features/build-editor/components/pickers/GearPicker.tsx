@@ -47,6 +47,7 @@ import {
   getItemsBySlot,
   validateItemForSlot,
 } from '@features/loadout-manager/data/itemIdMap';
+import { deriveItemNameForSlot } from '@features/loadout-manager/utils/itemIconResolver';
 
 import {
   getSetType,
@@ -197,12 +198,14 @@ interface SetCategorySectionProps {
   group: SetGroup;
   currentItemId: number | null;
   onSelect: (itemId: number) => void;
+  targetSlot: SlotType;
 }
 
 const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   group,
   currentItemId,
   onSelect,
+  targetSlot,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [expanded, setExpanded] = useState(false);
@@ -322,7 +325,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                       lineHeight: 1.3,
                     }}
                   >
-                    {item.info.name}
+                    {deriveItemNameForSlot(item.itemId, targetSlot)}
                   </Typography>
                   <Typography
                     sx={{
@@ -524,7 +527,9 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                       color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
                     }}
                   >
-                    {currentInfo.name}
+                    {currentItemId != null
+                      ? deriveItemNameForSlot(currentItemId, targetSlot)
+                      : currentInfo.name}
                   </Typography>
                   <Chip
                     label={currentInfo.setName}
@@ -648,7 +653,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                                 lineHeight: 1.3,
                               }}
                             >
-                              {item.info.name}
+                              {deriveItemNameForSlot(item.itemId, targetSlot)}
                             </Typography>
                             <Chip
                               label={item.info.setName}
@@ -771,6 +776,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                     group={group}
                     currentItemId={currentItemId}
                     onSelect={handleSelect}
+                    targetSlot={targetSlot}
                   />
                 ))
               )}

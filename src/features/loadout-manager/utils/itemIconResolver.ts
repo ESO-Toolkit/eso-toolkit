@@ -19,6 +19,8 @@ import { Logger } from '@/utils/logger';
 
 // Pre-fetched icon data: { icons: string[], items: Record<string, number> }
 import iconData from '../data/itemIcons.json';
+import { getItemInfo } from '../data/itemIdMap';
+import type { SlotType } from '../data/slotTypes';
 
 const logger = new Logger({ contextPrefix: 'ItemIconResolver' });
 
@@ -47,12 +49,128 @@ function iconNameToUrl(iconName: string): string {
  * Returns a CDN URL, or null if the item isn't in the local data.
  */
 function lookupLocal(itemId: number): string | null {
+  const iconName = lookupIconName(itemId);
+  return iconName ? iconNameToUrl(iconName) : null;
+}
+
+/** Look up the raw icon filename (without CDN prefix or extension) from local data. */
+function lookupIconName(itemId: number): string | null {
   const typedData = iconData as { icons: string[]; items: Record<string, number> };
   const index = typedData.items[String(itemId)];
   if (index === undefined) return null;
-  const iconName = typedData.icons[index];
-  if (!iconName) return null;
-  return iconNameToUrl(iconName);
+  return typedData.icons[index] ?? null;
+}
+
+/**
+ * UESP gear-icon tokens → ESO weapon type labels.
+ * Derived from icon filenames like `gear_argonian_1hsword_d`. The icon is the
+ * only per-item weapon-type signal available — itemIdMap only tags the slot
+ * (`weapon` / `offhand`), not the specific weapon. Staff icons don't
+ * distinguish fire/frost/lightning/resto, so they map to a generic "Staff".
+ */
+const WEAPON_ICON_TOKEN_LABELS: Record<string, string> = {
+  '1haxe': 'Axe',
+  '1hsword': 'Sword',
+  '1hhammer': 'Mace',
+  '1hmace': 'Mace',
+  '1hammer': 'Mace',
+  '1hhamer': 'Mace',
+  '1hdagger': 'Dagger',
+  '2haxe': 'Battle Axe',
+  '2hsword': 'Greatsword',
+  '2hhammer': 'Maul',
+  '2hmace': 'Maul',
+  dagger: 'Dagger',
+  bow: 'Bow',
+  staff: 'Staff',
+  shield: 'Shield',
+};
+
+const WEAPON_ICON_TOKEN_RE = new RegExp(
+  `_(${Object.keys(WEAPON_ICON_TOKEN_LABELS).join('|')})(?:_|$)`,
+);
+
+/**
+ * Derive the specific weapon-type label (e.g. "Sword", "Dagger", "Bow") from
+ * an already-resolved icon URL. Pure parser over the URL's filename so the
+ * label stays in lockstep with whatever icon the caller decided to render —
+ * including the async UESP fallback path and the page-level `resolvedIconId`
+ * correction for generic/slot-mismatched item IDs. Returns null when the URL
+ * doesn't match the UESP CDN shape or its icon token isn't a weapon.
+ */
+export function parseWeaponTypeFromIconUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const fileMatch = url.match(/\/icons\/([^/?#]+)\.png(?:[?#]|$)/i);
+  if (!fileMatch) return null;
+  const tokenMatch = fileMatch[1].match(WEAPON_ICON_TOKEN_RE);
+  return tokenMatch ? (WEAPON_ICON_TOKEN_LABELS[tokenMatch[1]] ?? null) : null;
+}
+
+/**
+ * Generic slot-name suffixes that itemIdMap uses when a specific weapon-type
+ * name isn't available. Callers strip the trailing match and splice in a
+ * specific type (Sword/Dagger/Bow/…) once the icon is resolved.
+ *
+ * Order matters — longer/more-specific suffixes (" Off-Hand") must come
+ * before shorter overlaps (" Hand") would if we ever added them.
+ */
+export const GENERIC_WEAPON_SUFFIXES = [' Weapon', ' Off-Hand', ' Offhand', ' Gear'] as const;
+
+/**
+ * Replace a generic slot-name suffix on an item name with the specific weapon
+ * type parsed from its icon URL. No-ops when the slot isn't a weapon slot,
+ * when the icon URL doesn't expose a weapon token, or when the raw name
+ * doesn't end in a recognized generic suffix.
+ *
+ * The `slotType` gate intentionally uses the SLOT POSITION (weapon / offhand)
+ * rather than the item's own `slot` tag, so generic set IDs (e.g. 2558 =
+ * "Mother's Sorrow Gear") still get a specific label once the caller has
+ * corrected the icon to a concrete slot-specific item.
+ */
+export function applyWeaponTypeToName(
+  rawName: string,
+  iconUrl: string | null | undefined,
+  slotType: SlotType | undefined,
+): string {
+  const isWeaponSlot = slotType === 'weapon' || slotType === 'offhand';
+  if (!isWeaponSlot) return rawName;
+  const weaponType = parseWeaponTypeFromIconUrl(iconUrl);
+  if (!weaponType) return rawName;
+  const suffix = GENERIC_WEAPON_SUFFIXES.find((s) => rawName.endsWith(s));
+  if (!suffix) return rawName;
+  return rawName.slice(0, -suffix.length) + ' ' + weaponType;
+}
+
+/**
+ * Resolve an item's display name for a given slot — the single callable
+ * used by the /bv, /rv, build-editor, and loadout-manager UIs so they all
+ * agree on how to render weapon labels.
+ *
+ * Synchronous: reads `getItemInfo` + local icon data. Callers that already
+ * track an async-resolved icon URL (e.g. BuildViewPage's `iconUrl` state
+ * from `fetchItemIconUrl`) should pass it via `iconUrlOverride` so the
+ * label follows whatever icon they're rendering.
+ *
+ * SAFETY GUARD: only derives a specific weapon type when the STORED itemId
+ * uniquely identifies one (itemInfo.slot is 'weapon' or 'offhand'). For
+ * generic set IDs with no slot field, the caller's icon is commonly a
+ * `getSetItemsBySlot(...)[0]` fallback — an arbitrary variant of the set.
+ * Asserting a weapon type from that would silently lie about the user's
+ * actual chosen weapon in shared/read-only views. Generic items keep their
+ * generic label regardless of what icon is rendered.
+ */
+export function deriveItemNameForSlot(
+  itemId: number | null | undefined,
+  slotType: SlotType | undefined,
+  iconUrlOverride?: string | null,
+): string {
+  const id = itemId ?? 0;
+  const info = id > 0 ? getItemInfo(id) : undefined;
+  const rawName = info?.name ?? `Item #${id || '?'}`;
+  const itemIsSlotSpecificWeapon = info?.slot === 'weapon' || info?.slot === 'offhand';
+  if (!itemIsSlotSpecificWeapon) return rawName;
+  const url = iconUrlOverride !== undefined ? iconUrlOverride : getItemIconUrl(id);
+  return applyWeaponTypeToName(rawName, url, slotType);
 }
 
 /**

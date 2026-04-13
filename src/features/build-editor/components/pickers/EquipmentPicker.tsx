@@ -21,6 +21,7 @@ import type {
   GearConfig,
   GearPiece,
 } from '../../../loadout-manager/types/loadout.types';
+import { deriveItemNameForSlot } from '../../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
@@ -77,12 +78,13 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
 }) => {
   const itemId = piece?.id != null ? Number(piece.id) : null;
   const info = itemId ? getItemInfo(itemId) : null;
+  const itemName = itemId ? deriveItemNameForSlot(itemId, def.slotType) : null;
 
   return (
     <GearSlotCard
       slotDef={def}
       itemId={itemId}
-      itemName={info?.name ?? null}
+      itemName={itemName}
       setName={info?.setName ?? null}
       isDisabled={Boolean(disabledReason)}
       disabledReason={disabledReason}

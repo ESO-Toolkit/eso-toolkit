@@ -53,6 +53,7 @@ import type { SlotType } from '../features/loadout-manager/data/slotTypes';
 import {
   getItemIconUrl,
   fetchItemIconUrl,
+  deriveItemNameForSlot,
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
@@ -447,11 +448,21 @@ const GearSlotDisplay: React.FC<{
   //      whose numeric values collide with unrelated items in UESP's icon database.
   //
   // For type 2, resolve the correct slot-specific ID via getSetItemsBySlot so we get the right icon.
+  const expectedSlot = SLOT_INDEX_TO_TYPE[slotIndex];
   const resolvedIconId = (() => {
     if (!itemInfo) return itemId; // not in itemIdMap → treat as real UESP ID
-    const expectedSlot = SLOT_INDEX_TO_TYPE[slotIndex];
-    if (itemInfo.slot && itemInfo.slot === (expectedSlot ?? itemInfo.slot)) return itemId;
-    // Generic set ID or slot mismatch: find the slot-specific item for this set + slot
+    if (itemInfo.slot) {
+      // Dual-wield: a weapon-slot item legitimately belongs in an off-hand
+      // slot (slot 5 / 21). ESO allows Sword/Dagger/Axe/Mace off-hands but
+      // not shields in the main hand, so the asymmetry is intentional.
+      const slotMatch =
+        itemInfo.slot === expectedSlot ||
+        !expectedSlot ||
+        (itemInfo.slot === 'weapon' && expectedSlot === 'offhand');
+      if (slotMatch) return itemId;
+    }
+    // Generic set ID or unsupported slot mismatch: find the slot-specific
+    // item for this set + slot so we render the right icon.
     if (!expectedSlot) return null;
     const slotItems = getSetItemsBySlot(itemInfo.setName, expectedSlot);
     return slotItems[0] ?? null; // use first match (all CP160 variants share the same icon)
@@ -468,7 +479,17 @@ const GearSlotDisplay: React.FC<{
     });
   }, [resolvedIconId, iconUrl]);
 
-  const displayName = itemInfo?.name ?? `Item #${itemId}`;
+  // Swap the generic " Weapon"/" Off-Hand"/" Gear" suffix for a specific
+  // type (Sword, Dagger, Bow, …) parsed from the resolved icon URL. Uses
+  // `iconUrl` state so the label stays in lockstep with whatever icon is
+  // actually rendered — including the async UESP fallback, which updates
+  // `iconUrl` after the fetch completes.
+  //
+  // `deriveItemNameForSlot` guards on the STORED itemId's slot metadata,
+  // so generic set IDs (no slot field → arbitrary fallback icon from
+  // `getSetItemsBySlot(...)[0]`) keep their generic label rather than
+  // falsely asserting a weapon type the user may not have chosen.
+  const displayName = deriveItemNameForSlot(itemId, expectedSlot, iconUrl);
   const setName = itemInfo?.setName;
   const traitLabel = trait ? getTraitName(trait) : null;
   const enchantLabel = enchant ? getEnchantName(enchant) : null;
@@ -541,6 +562,7 @@ const GearSlotDisplay: React.FC<{
       {/* Item name + set name + trait/enchant */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
+          title={displayName}
           sx={{
             fontSize: '0.72rem',
             fontWeight: 600,
