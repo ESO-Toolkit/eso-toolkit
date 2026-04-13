@@ -90,16 +90,18 @@ const WEAPON_ICON_TOKEN_RE = new RegExp(
 
 /**
  * Derive the specific weapon-type label (e.g. "Sword", "Dagger", "Bow") from
- * an item ID by parsing the token embedded in its UESP icon filename.
- * Returns null when the item isn't in the local icon data or its icon
- * doesn't match a known weapon token.
+ * an already-resolved icon URL. Pure parser over the URL's filename so the
+ * label stays in lockstep with whatever icon the caller decided to render —
+ * including the async UESP fallback path and the page-level `resolvedIconId`
+ * correction for generic/slot-mismatched item IDs. Returns null when the URL
+ * doesn't match the UESP CDN shape or its icon token isn't a weapon.
  */
-export function getWeaponTypeLabel(itemId: number | null | undefined): string | null {
-  if (!itemId || itemId <= 0) return null;
-  const iconName = lookupIconName(itemId);
-  if (!iconName) return null;
-  const match = iconName.match(WEAPON_ICON_TOKEN_RE);
-  return match ? (WEAPON_ICON_TOKEN_LABELS[match[1]] ?? null) : null;
+export function parseWeaponTypeFromIconUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const fileMatch = url.match(/\/icons\/([^/?#]+)\.png(?:[?#]|$)/i);
+  if (!fileMatch) return null;
+  const tokenMatch = fileMatch[1].match(WEAPON_ICON_TOKEN_RE);
+  return tokenMatch ? (WEAPON_ICON_TOKEN_LABELS[tokenMatch[1]] ?? null) : null;
 }
 
 /**
