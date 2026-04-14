@@ -182,14 +182,18 @@ describe('GENERIC_WEAPON_SUFFIXES', () => {
 
 describe('deriveItemNameForSlot (integration — real itemIds through local icon data)', () => {
   // These item IDs are real Mother's Sorrow weapons from itemIdMap, chosen
-  // because they exercise the full chain: getItemInfo → getItemIconUrl →
-  // parseWeaponTypeFromIconUrl → applyWeaponTypeToName.
+  // because they exercise the full chain: getItemInfo → getItemIconUrl / weaponTypes data
+  // → applyWeaponTypeToName. Staff items (97227-97230) are resolved via the
+  // weaponTypes data in itemIcons.json since all staff icons use the same generic token.
   it.each([
     [97219, 'weapon' as const, "Mother's Sorrow Axe"],
     [97221, 'weapon' as const, "Mother's Sorrow Sword"],
     [97225, 'weapon' as const, "Mother's Sorrow Dagger"],
     [97226, 'weapon' as const, "Mother's Sorrow Bow"],
-    [97230, 'weapon' as const, "Mother's Sorrow Staff"],
+    [97227, 'weapon' as const, "Mother's Sorrow Inferno Staff"],
+    [97228, 'weapon' as const, "Mother's Sorrow Ice Staff"],
+    [97229, 'weapon' as const, "Mother's Sorrow Lightning Staff"],
+    [97230, 'weapon' as const, "Mother's Sorrow Restoration Staff"],
     [97231, 'offhand' as const, "Mother's Sorrow Shield"],
   ])('resolves item %i in slot %s → %s', (itemId, slotType, expected) => {
     // Sanity-check the upstream link first — if the icon JSON changes shape,
