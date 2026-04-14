@@ -6,6 +6,7 @@
  * serve different data stores. This one is used by roster-hub and pack-hub features.
  */
 
+import { decodeHtmlEntities } from '../../../utils/decodeHtmlEntities';
 import type {
   HubPack,
   ListPacksResponse,
@@ -87,9 +88,18 @@ function hydrateAddons(raw: string | PackAddonEntry[]): PackAddonEntry[] {
 }
 
 function hydratePack(pack: HubPack): HubPack {
+  const addons = hydrateAddons(pack.addons as unknown as string | PackAddonEntry[]);
   return {
     ...pack,
-    addons: hydrateAddons(pack.addons as unknown as string | PackAddonEntry[]),
+    author_name: decodeHtmlEntities(pack.author_name),
+    title: decodeHtmlEntities(pack.title),
+    description: decodeHtmlEntities(pack.description),
+    tags: pack.tags.map(decodeHtmlEntities),
+    addons: addons.map((a) => ({
+      ...a,
+      name: decodeHtmlEntities(a.name),
+      note: a.note ? decodeHtmlEntities(a.note) : a.note,
+    })),
   };
 }
 
