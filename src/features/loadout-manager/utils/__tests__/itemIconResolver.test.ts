@@ -41,6 +41,21 @@ describe('parseWeaponTypeFromIconUrl', () => {
     expect(parseWeaponTypeFromIconUrl(`${CDN}/gear_argonian_${token}_d.png`)).toBe(label);
   });
 
+  it('maps companion equipment staff icons to specific types', () => {
+    expect(
+      parseWeaponTypeFromIconUrl(`${CDN}/companions_u30_equipment_infernostaff.png`),
+    ).toBe('Inferno Staff');
+    expect(
+      parseWeaponTypeFromIconUrl(`${CDN}/companions_u30_equipment_froststaff.png`),
+    ).toBe('Ice Staff');
+    expect(
+      parseWeaponTypeFromIconUrl(`${CDN}/companions_u30_equipment_lightningstaff.png`),
+    ).toBe('Lightning Staff');
+    expect(
+      parseWeaponTypeFromIconUrl(`${CDN}/companions_u30_equipment_restostaff.png`),
+    ).toBe('Restoration Staff');
+  });
+
   it('handles multi-segment style names like gear_ancient_elf_staff_a', () => {
     expect(parseWeaponTypeFromIconUrl(`${CDN}/gear_ancient_elf_staff_a.png`)).toBe('Staff');
   });

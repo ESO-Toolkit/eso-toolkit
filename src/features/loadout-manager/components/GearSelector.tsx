@@ -295,7 +295,7 @@ const GearTile: React.FC<GearTileProps> = ({
     originalInfo?.slot === 'weapon' || originalInfo?.slot === 'offhand';
   const primaryItemName =
     rawPrimaryItemName && itemIsSlotSpecificWeapon
-      ? applyWeaponTypeToName(rawPrimaryItemName, iconUrl, slotType)
+      ? applyWeaponTypeToName(rawPrimaryItemName, iconUrl, slotType, originalItemId)
       : rawPrimaryItemName;
   const showItemIdFallback = resolvedItemId && !resolvedSetId && !setName ? resolvedItemId : null;
   const fallbackLabel = resolvedSetId

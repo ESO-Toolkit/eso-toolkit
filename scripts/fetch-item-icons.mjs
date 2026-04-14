@@ -1,13 +1,23 @@
 #!/usr/bin/env node
 /**
- * Pre-fetch ESO item icons from UESP's minedItemSummary API.
+ * Pre-fetch ESO item icons and weapon types from UESP's minedItemSummary API.
  *
- * Downloads every item's icon path in a single bulk request and writes a
- * compact JSON file that the app can import at build time — zero runtime
- * API calls needed.
+ * Downloads every item's icon path and weapon type in a single bulk request
+ * and writes a compact JSON file that the app can import at build time —
+ * zero runtime API calls needed.
  *
  * Output format (indexed to de-duplicate shared icons):
- *   { "icons": ["gear_breton_ring_a", ...], "items": { "147237": 0, ... } }
+ *   {
+ *     "icons": ["gear_breton_ring_a", ...],
+ *     "items": { "147237": 0, ... },
+ *     "weaponTypes": { "97227": 12, "97230": 9, ... }  // only non-zero entries
+ *   }
+ *
+ * weaponTypes values match ESO's WEAPON_TYPE constants (and WeaponType enum in
+ * src/types/playerDetails.ts):
+ *   1=Axe, 2=Mace, 3=Sword, 4=2H Sword, 5=2H Axe, 6=Maul, 8=Bow,
+ *   9=Restoration Staff, 11=Dagger, 12=Inferno Staff, 13=Ice Staff,
+ *   14=Shield, 15=Lightning Staff
  *
  * Usage:
  *   node scripts/fetch-item-icons.mjs
@@ -36,7 +46,7 @@ async function main() {
   console.log('Fetching all items from UESP minedItemSummary...');
 
   const response = await fetch(
-    `${UESP_API}?table=minedItemSummary&limit=200000&fields=itemId,icon`,
+    `${UESP_API}?table=minedItemSummary&limit=200000&fields=itemId,icon,weaponType`,
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -46,6 +56,7 @@ async function main() {
 
   // ── Build item → icon mapping ──────────────────────────────────────
   const itemMap = {}; // itemId → iconName
+  const weaponTypeMap = {}; // itemId → weaponType (only non-zero)
   let skipped = 0;
 
   for (const item of items) {
@@ -55,9 +66,16 @@ async function main() {
     } else {
       skipped++;
     }
+
+    // Store non-zero weapon types (staves, swords, bows, etc.)
+    const wt = Number(item.weaponType);
+    if (wt > 0) {
+      weaponTypeMap[item.itemId] = wt;
+    }
   }
 
   console.log(`  ${Object.keys(itemMap).length} items with icons`);
+  console.log(`  ${Object.keys(weaponTypeMap).length} items with weapon types`);
   console.log(`  ${skipped} items without icons (skipped)`);
 
   // ── Build indexed/deduplicated output ──────────────────────────────
@@ -72,13 +90,14 @@ async function main() {
     indexedItems[id] = iconIndex[name];
   }
 
-  const output = { icons: uniqueIcons, items: indexedItems };
+  const output = { icons: uniqueIcons, items: indexedItems, weaponTypes: weaponTypeMap };
   const json = JSON.stringify(output);
 
   writeFileSync(OUTPUT_FILE, json);
   console.log(`\nWritten to ${OUTPUT_FILE}`);
   console.log(`  ${uniqueIcons.length} unique icon names`);
   console.log(`  ${Object.keys(indexedItems).length} item mappings`);
+  console.log(`  ${Object.keys(weaponTypeMap).length} weapon type entries`);
   console.log(`  ${(json.length / 1024 / 1024).toFixed(2)} MB`);
 }
 
