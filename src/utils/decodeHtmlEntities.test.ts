@@ -2,9 +2,7 @@ import { decodeHtmlEntities } from './decodeHtmlEntities';
 
 describe('decodeHtmlEntities', () => {
   it("decodes &#x27; to an apostrophe (Spike's Trial Necessities case)", () => {
-    expect(decodeHtmlEntities('Spike&#x27;s Trial Necessities')).toBe(
-      "Spike's Trial Necessities",
-    );
+    expect(decodeHtmlEntities('Spike&#x27;s Trial Necessities')).toBe("Spike's Trial Necessities");
   });
 
   it('decodes all entities produced by the server escapeHtml', () => {
