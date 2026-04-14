@@ -3,8 +3,10 @@
  * Glassmorphism container with backdrop-filter, border, and shadow.
  * Adapts to dark/light mode automatically.
  *
- * variant='primary'  — Gradient border mask (CSS mask technique) + inner top glow slit.
+ * variant='primary'  — Solid translucent border + inner top glow slit.
  *                      Used for Identity, Equipment, Skills, Champion sections.
+ *                      (Previously used a gradient borderImage; removed because
+ *                      the accent color bleed read as a debug outline.)
  * variant='default'  — Standard glass panel with solid translucent border.
  * variant='subtle'   — Quieter border + minimal shadow (Settings, Screenshots).
  */
@@ -40,19 +42,19 @@ export const GlassPanel = React.memo<GlassPanelProps>(function GlassPanel({
   const isPrimary = variant === 'primary';
   const isSubtle = variant === 'subtle';
 
-  // Primary uses border:none + gradient border via ::before mask technique.
-  // Default/subtle use a solid translucent border.
-  const solidBorder = isPrimary
-    ? 'none'
-    : `1px solid ${
-        isSubtle
-          ? isDark
-            ? 'rgba(255, 255, 255, 0.05)'
-            : 'rgba(15, 23, 42, 0.06)'
-          : isDark
-            ? BE_TOKENS.glass.border
-            : BE_TOKENS.glass.borderLight
-      }`;
+  // All variants use a solid translucent border. Primary used to carry a
+  // gradient `borderImage`, but the shorthand left `border-color` falling
+  // back to `currentColor` in some composite paths, producing a visible
+  // "debug" outline around every primary panel.
+  const solidBorder = `1px solid ${
+    isSubtle
+      ? isDark
+        ? 'rgba(255, 255, 255, 0.05)'
+        : 'rgba(15, 23, 42, 0.06)'
+      : isDark
+        ? BE_TOKENS.glass.border
+        : BE_TOKENS.glass.borderLight
+  }`;
 
   const shadow = isPrimary
     ? isDark
@@ -87,12 +89,10 @@ export const GlassPanel = React.memo<GlassPanelProps>(function GlassPanel({
           boxShadow: shadow,
           transition: 'box-shadow 0.3s ease, border-color 0.25s ease',
 
-          // ── Primary tier: gradient border via border-image ─────────────
+          // ── Primary tier: inner top glow slit ──────────────────────────
+          // Subtle horizontal light streak at the top inside edge — the only
+          // remaining visual accent that distinguishes primary panels.
           ...(isPrimary && {
-            borderImage:
-              'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.55) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.10) 50%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.22) 100%) 1',
-            border: '1px solid',
-            // Inner glow slit — a horizontal light streak at the top inside edge
             '&::after': {
               content: '""',
               position: 'absolute',
