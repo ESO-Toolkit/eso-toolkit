@@ -636,7 +636,14 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     let resolvedItemId = itemId;
     let collectionItem = getCollectionItem(itemId);
 
-    if (collectionItem?.setId) {
+    // Collapse armor/jewelry picks to the set's canonical collection item so
+    // every variant of a given slot shares an icon/name. Weapon slots are
+    // intentionally excluded: the canonical item is whichever weapon has the
+    // lowest itemId for the set (typically a 1H Axe/Mace), so replacing a
+    // user-picked Restoration Staff with the canonical id silently loses the
+    // element / weapon-type choice.
+    const isWeaponSlot = pickerSlot.type === 'weapon' || pickerSlot.type === 'offhand';
+    if (collectionItem?.setId && !isWeaponSlot) {
       const canonicalCollectionItem = findCollectionItemBySetAndSlotType(
         collectionItem.setId,
         pickerSlot.type,
