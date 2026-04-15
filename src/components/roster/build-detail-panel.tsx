@@ -18,6 +18,7 @@ import type { SlotType } from '../../features/loadout-manager/data/slotTypes';
 import type { GearConfig, SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
 import { deriveItemNameForSlot } from '../../features/loadout-manager/utils/itemIconResolver';
 import { getChampionPointAbilityName } from '../../types/champion-points';
+import { getEsoHubSetUrl } from '../../utils/esoHubLinks';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -358,8 +359,15 @@ const GearDisplay: React.FC<{
             </Typography>
             {setName && (
               <Chip
+                component="a"
+                href={getEsoHubSetUrl(setName)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                clickable
                 label={setName}
                 size="small"
+                aria-label={`${setName} on ESO-Hub`}
                 sx={{
                   height: 16,
                   fontSize: '0.5rem',
@@ -368,6 +376,7 @@ const GearDisplay: React.FC<{
                   color: isDarkMode ? 'rgba(168,85,247,0.85)' : 'rgba(126,34,206,0.85)',
                   border: `1px solid ${isDarkMode ? 'rgba(168,85,247,0.2)' : 'rgba(147,51,234,0.15)'}`,
                   '& .MuiChip-label': { px: 0.5 },
+                  textDecoration: 'none',
                 }}
               />
             )}

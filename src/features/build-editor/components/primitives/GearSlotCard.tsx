@@ -12,11 +12,13 @@ import {
   AutoFixHigh as TraitIcon,
   Close as CloseIcon,
   LocalFireDepartment as EnchantIcon,
+  OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import { Box, ButtonBase, IconButton, Stack, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { getEsoHubSetUrl } from '../../../../utils/esoHubLinks';
 import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import { fetchItemIconUrl, getItemIconUrl } from '../../../loadout-manager/utils/itemIconResolver';
 import type { EquipSlotDef } from '../../data/esoStaticData';
@@ -366,6 +368,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
             boxShadow: isDark ? '0 2px 12px rgba(0,0,0,0.25)' : '0 2px 8px rgba(0,0,0,0.06)',
           },
           '&:hover .gear-row-remove': { opacity: 1 },
+          '&:hover .gear-esohub-link': { opacity: 1 },
           '@media (hover: none)': {
             '& .gear-row-remove': { opacity: 1 },
           },
@@ -414,7 +417,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
         {/* Info column */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {/* Row 1: slot name + set name */}
-          <Stack direction="row" spacing={0.75} alignItems="baseline">
+          <Stack direction="row" spacing={0.75} alignItems="center">
             <Typography
               sx={{
                 fontSize: 9,
@@ -441,6 +444,32 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
             >
               {primaryLabel}
             </Typography>
+            {setName && (
+              <Box
+                component="a"
+                href={getEsoHubSetUrl(setName)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                aria-label={`${setName} on ESO-Hub`}
+                title="View on ESO-Hub"
+                className="gear-esohub-link"
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  color: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)',
+                  flexShrink: 0,
+                  lineHeight: 0,
+                  opacity: 0,
+                  transition: 'opacity 150ms, color 150ms',
+                  '&:hover': {
+                    color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                  },
+                }}
+              >
+                <OpenInNewIcon sx={{ fontSize: 10 }} />
+              </Box>
+            )}
           </Stack>
 
           {/* Row 2: weight + trait + enchant chips */}
