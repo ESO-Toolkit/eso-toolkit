@@ -64,7 +64,7 @@ export function getEsoHubSkillLineUrl(skillLineName: string): string | undefined
 export function getEsoHubSetUrl(setName: string): string {
   const slug = setName
     .toLowerCase()
-    .replace(/['''\u2019]/g, '') // remove straight and curly apostrophes
+    .replace(/[''']/g, '') // remove straight and curly apostrophes
     .replace(/\s+/g, '-') // spaces → hyphens
     .replace(/[^a-z0-9-]/g, ''); // strip remaining non-alphanumeric chars
   return `https://eso-hub.com/en/sets/${slug}`;
