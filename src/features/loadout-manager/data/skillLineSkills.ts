@@ -554,6 +554,11 @@ export function getSkillLineSourceUrlMap(): Map<string, string> {
   ]) {
     if (line.name && line.sourceUrl) {
       map.set(line.name, line.sourceUrl);
+      // lineText in tooltips is formatted as "ClassName — SkillLineName" for class skills.
+      // Add a composite key so callers don't need to strip the prefix themselves.
+      if (line.category === 'class' && line.class) {
+        map.set(`${line.class} \u2014 ${line.name}`, line.sourceUrl);
+      }
     }
   }
   return map;

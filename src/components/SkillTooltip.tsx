@@ -123,14 +123,9 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const resolvedIconUrl =
     iconUrl ??
     (iconSlug ? `https://assets.rpglogs.com/img/eso/abilities/${iconSlug}.png` : undefined);
-  // lineText is often "ClassName — SkillLineName"; try exact match first, then just the skill line part.
-  const skillLineUrl = (() => {
-    if (!lineText) return undefined;
-    const exact = getEsoHubSkillLineUrl(lineText);
-    if (exact) return exact;
-    const emDashIdx = lineText.indexOf(' \u2014 ');
-    return emDashIdx !== -1 ? getEsoHubSkillLineUrl(lineText.slice(emDashIdx + 3)) : undefined;
-  })();
+  // URL map includes both bare skill line names ("Ardent Flame") and composite class keys
+  // ("Dragonknight — Ardent Flame") so lineText can be passed directly in either format.
+  const skillLineUrl = lineText ? getEsoHubSkillLineUrl(lineText) : undefined;
   // Stats row layout control: prefer full text by default. If <=3 stats and they overflow, abbreviate.
   // If >3 stats, allow wrapping to second line first; abbreviate only if still overflowing.
   const statsCount = stats?.length ?? 0;
