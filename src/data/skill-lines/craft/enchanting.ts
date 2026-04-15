@@ -12,6 +12,7 @@ export const enchanting: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_enchanter_002b',
+  sourceUrl: 'https://eso-hub.com/en/skills/craft/enchanting',
   skills: [
     {
       id: AbilityId.ASPECT_IMPROVEMENT,

@@ -12,6 +12,7 @@ export const imperial: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_templar_027',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/imperial',
   skills: [
     {
       id: AbilityId.DIPLOMAT,

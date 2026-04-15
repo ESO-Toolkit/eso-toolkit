@@ -7,6 +7,7 @@ export const scrying: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'ability_world_scrying_001',
+  sourceUrl: 'https://eso-hub.com/en/skills/world/scrying',
   skills: [
     {
       id: AbilityId.SCRY,

@@ -12,6 +12,7 @@ export const clothing: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_tradecraft_002',
+  sourceUrl: 'https://eso-hub.com/en/skills/craft/clothing',
   skills: [
     {
       id: AbilityId.TAILORING,

@@ -12,6 +12,7 @@ export const orc: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_dragonknight_021',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/orc',
   skills: [
     {
       id: AbilityId.CRAFTSMAN,

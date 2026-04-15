@@ -12,6 +12,7 @@ export const bosmer: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'passive_weapon_025',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/wood-elf',
   skills: [
     {
       id: AbilityId.ACROBAT,

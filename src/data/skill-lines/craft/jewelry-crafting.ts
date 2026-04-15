@@ -12,6 +12,7 @@ export const jewelryCrafting: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'passive_jewelerengraver',
+  sourceUrl: 'https://eso-hub.com/en/skills/craft/jewelry-crafting',
   skills: [
     {
       id: AbilityId.ENGRAVER,
