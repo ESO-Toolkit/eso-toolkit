@@ -7,6 +7,7 @@
 import {
   Shield as ShieldIcon,
   Favorite as FavoriteIcon,
+  OpenInNew as OpenInNewIcon,
   SwapHoriz as SwapHorizIcon,
   Clear as ClearIcon,
 } from '@mui/icons-material';
@@ -56,6 +57,7 @@ import {
   canAssignToMonsterSlot,
   validateCompatibility,
 } from '../types/roster';
+import { getEsoHubSetUrl } from '../utils/esoHubLinks';
 import { Logger, LogLevel } from '../utils/logger';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
@@ -816,6 +818,27 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
                 >
                   {assignment.setName}
                 </Typography>
+                <Box
+                  component="a"
+                  href={getEsoHubSetUrl(assignment.setName)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  aria-label={`${assignment.setName} on ESO-Hub`}
+                  title="View on ESO-Hub"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    color: isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.2)',
+                    lineHeight: 0,
+                    flexShrink: 0,
+                    '&:hover': {
+                      color: isDarkMode ? 'rgba(255,255,255,0.7)' : 'rgba(15,23,42,0.7)',
+                    },
+                  }}
+                >
+                  <OpenInNewIcon sx={{ fontSize: 10 }} />
+                </Box>
               </Box>
             }
             color="default"
