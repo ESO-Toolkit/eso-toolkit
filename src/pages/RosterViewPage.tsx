@@ -61,6 +61,7 @@ import {
   encounterHasOverrides,
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
+import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
@@ -187,6 +188,48 @@ const formatSkillLines = (
   if (!sl) return '';
   if (sl.isFlex) return 'Flexible';
   return [sl.line1, sl.line2, sl.line3].filter(Boolean).join(' / ');
+};
+
+/** Renders skill line names as linked elements for attribution. */
+const renderSkillLines = (
+  sl?: {
+    line1?: string;
+    line2?: string;
+    line3?: string;
+    isFlex?: boolean;
+    notes?: string;
+  } | null,
+): React.ReactNode => {
+  if (!sl) return null;
+  if (sl.isFlex) return 'Flexible';
+  const lines = [sl.line1, sl.line2, sl.line3].filter(Boolean) as string[];
+  if (!lines.length) return null;
+  return lines.map((name, i) => {
+    const url = getEsoHubSkillLineUrl(name);
+    return (
+      <React.Fragment key={name}>
+        {i > 0 && ' / '}
+        {url ? (
+          <Box
+            component="a"
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              color: 'inherit',
+              textDecoration: 'underline',
+              textDecorationStyle: 'dotted',
+              textUnderlineOffset: '2px',
+            }}
+          >
+            {name}
+          </Box>
+        ) : (
+          name
+        )}
+      </React.Fragment>
+    );
+  });
 };
 
 // ============================================================
@@ -387,6 +430,12 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
               {gearSets.map((entry) => (
                 <Chip
                   key={entry.name}
+                  component="a"
+                  href={getEsoHubSetUrl(entry.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  clickable
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   label={entry.name}
                   size="small"
                   sx={getSetChipSx(entry, theme)}
@@ -411,7 +460,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
               Skill Lines
             </Typography>
             <Typography sx={{ fontSize: '0.78rem', color: 'text.primary', fontWeight: 500 }}>
-              {skillLines}
+              {renderSkillLines(tank.skillLines)}
             </Typography>
           </Box>
         )}
@@ -664,6 +713,12 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
               {gearSets.map((entry) => (
                 <Chip
                   key={entry.name}
+                  component="a"
+                  href={getEsoHubSetUrl(entry.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  clickable
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   label={entry.name}
                   size="small"
                   sx={getSetChipSx(entry, theme)}
@@ -731,7 +786,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
               Skill Lines
             </Typography>
             <Typography sx={{ fontSize: '0.78rem', color: 'text.primary', fontWeight: 500 }}>
-              {skillLines}
+              {renderSkillLines(healer.skillLines)}
             </Typography>
           </Box>
         )}
@@ -1008,7 +1063,7 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
           <Box sx={{ mt: 0.5, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
             {skillLines && (
               <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 500 }}>
-                {skillLines}
+                {renderSkillLines(slot.skillLines)}
               </Typography>
             )}
             {slot.ultimate && (
