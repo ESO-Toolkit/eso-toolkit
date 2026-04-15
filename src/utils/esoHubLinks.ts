@@ -5,34 +5,41 @@
  * back to its canonical ESO-Hub page for attribution and fair-use compliance.
  *
  * Gear set URLs:   https://eso-hub.com/en/sets/{slug}
- * Skill line URLs: sourced from SkillLineData.sourceUrl (already scraped from ESO-Hub)
+ * Skill line URLs: sourced from SkillLineData.sourceUrl (already scraped from ESO-Hub),
+ *                  built from all skill line categories via getSkillLineSourceUrlMap().
  */
 
-import * as classSkillLines from '@/data/skill-lines/class';
-import type { SkillLineData } from '@/data/types/skill-line-types';
+import { getSkillLineSourceUrlMap } from '@/features/loadout-manager/data/skillLineSkills';
 
 // ---------------------------------------------------------------------------
-// Skill line URL lookup (built once at module load from SkillLineData.sourceUrl)
+// Skill line URL lookup (built once at module load from all SkillLineData files)
 // ---------------------------------------------------------------------------
 
-const SKILL_LINE_URL_MAP = new Map<string, string>();
+// Populated on first call (lazy) to avoid forced initialisation at import time.
+let _skillLineUrlMap: Map<string, string> | null = null;
 
-(Object.values(classSkillLines) as SkillLineData[]).forEach((data) => {
-  if (data && typeof data === 'object' && data.name && data.sourceUrl) {
-    SKILL_LINE_URL_MAP.set(data.name, data.sourceUrl);
+function skillLineUrlMap(): Map<string, string> {
+  if (!_skillLineUrlMap) {
+    _skillLineUrlMap = getSkillLineSourceUrlMap();
   }
-});
+  return _skillLineUrlMap;
+}
 
 /**
  * Returns the canonical ESO-Hub URL for a skill line by its display name.
- * Returns undefined when the skill line is not found in the class skill line data.
+ * Covers class, weapon, armor, guild, alliance, world, racial, and craft lines.
+ * Returns undefined when the skill line has no recorded sourceUrl
+ * (e.g. scribing skills, or lines added before data was scraped).
  *
  * @example
  * getEsoHubSkillLineUrl('Ardent Flame')
  * // → 'https://eso-hub.com/en/skills/dragonknight/ardent-flame'
+ *
+ * getEsoHubSkillLineUrl('Destruction Staff')
+ * // → 'https://eso-hub.com/en/skills/weapon/destruction-staff'
  */
 export function getEsoHubSkillLineUrl(skillLineName: string): string | undefined {
-  return SKILL_LINE_URL_MAP.get(skillLineName);
+  return skillLineUrlMap().get(skillLineName);
 }
 
 // ---------------------------------------------------------------------------

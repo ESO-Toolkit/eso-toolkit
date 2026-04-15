@@ -5,7 +5,11 @@
  * and an "Any class" flex toggle. Stores plain string labels for encoding compatibility.
  */
 
-import { Close as ClearIcon, ExpandMore as ChevronIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
+import {
+  Close as ClearIcon,
+  ExpandMore as ChevronIcon,
+  OpenInNew as OpenInNewIcon,
+} from '@mui/icons-material';
 import {
   Box,
   ButtonBase,

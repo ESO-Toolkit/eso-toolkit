@@ -1,3 +1,4 @@
+import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -16,6 +17,7 @@ import { useLogger } from '@/hooks/useLogger';
 
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 import type { ScribedSkillAffixInfo } from '../features/scribing/types';
+import { getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
 
 export interface SkillStat {
   label: string;
@@ -266,34 +268,65 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               </Box>
             )}
             <Box sx={{ minWidth: 0, pt: 0.25, display: 'flex', flexDirection: 'column', gap: 0.6 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 800,
-                  letterSpacing: '-.01em',
-                  ...(theme.palette.mode === 'dark'
-                    ? {
-                        background:
-                          'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }
-                    : {
-                        background:
-                          'linear-gradient(135deg, #68acfb 0%, #2474c4 50%, #439cdc 70%, #5191ff 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        textShadow: '0 1px 2px rgba(36, 116, 196, 0.2)',
-                      }),
-                  lineHeight: 1.1,
-                  fontSize: { xs: '0.86rem', sm: '0.92rem' },
-                  mb: 0,
-                }}
-              >
-                {name}
-              </Typography>
+              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 800,
+                    letterSpacing: '-.01em',
+                    ...(theme.palette.mode === 'dark'
+                      ? {
+                          background:
+                            'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }
+                      : {
+                          background:
+                            'linear-gradient(135deg, #68acfb 0%, #2474c4 50%, #439cdc 70%, #5191ff 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                          textShadow: '0 1px 2px rgba(36, 116, 196, 0.2)',
+                        }),
+                    lineHeight: 1.1,
+                    fontSize: { xs: '0.86rem', sm: '0.92rem' },
+                    mb: 0,
+                  }}
+                >
+                  {name}
+                </Typography>
+                {lineText && getEsoHubSkillLineUrl(lineText) && (
+                  <Box
+                    component="a"
+                    href={getEsoHubSkillLineUrl(lineText)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    aria-label={`${name} on ESO-Hub`}
+                    title="View on ESO-Hub"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.35)'
+                          : 'rgba(0,0,0,0.35)',
+                      flexShrink: 0,
+                      lineHeight: 0,
+                      '&:hover': {
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.75)'
+                            : 'rgba(0,0,0,0.65)',
+                      },
+                    }}
+                  >
+                    <OpenInNewIcon sx={{ fontSize: 12 }} />
+                  </Box>
+                )}
+              </Box>
               {morphOf && (
                 <Typography
                   variant="caption"

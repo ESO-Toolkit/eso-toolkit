@@ -6,7 +6,12 @@
  * Stores KnownSetIDs (numbers).
  */
 
-import { Add as AddIcon, Close as CloseIcon, OpenInNew as OpenInNewIcon, Search as SearchIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Close as CloseIcon,
+  OpenInNew as OpenInNewIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
