@@ -1,5 +1,6 @@
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
@@ -34,6 +35,7 @@ import * as mediumSets from '../data/Gear Sets/medium';
 import * as mythicSets from '../data/Gear Sets/mythics';
 import * as sharedSets from '../data/Gear Sets/shared';
 import type { GearSetData } from '../types/gearSet';
+import { getEsoHubSetUrl } from '../utils/esoHubLinks';
 
 const ICON_BASE_URL = 'https://assets.rpglogs.com/img/eso/abilities/';
 
@@ -133,9 +135,29 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
           )}
         </TableCell>
         <TableCell>
-          <Typography variant="body2" fontWeight={500}>
-            {set.name}
-          </Typography>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+            <Typography variant="body2" fontWeight={500}>
+              {set.name}
+            </Typography>
+            <Box
+              component="a"
+              href={getEsoHubSetUrl(set.name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              aria-label={`${set.name} on ESO-Hub`}
+              title="View on ESO-Hub"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                color: 'rgba(148,163,184,0.35)',
+                lineHeight: 0,
+                '&:hover': { color: 'rgba(148,163,184,0.85)' },
+              }}
+            >
+              <OpenInNewIcon sx={{ fontSize: 12 }} />
+            </Box>
+          </Box>
         </TableCell>
         <TableCell sx={{ width: 160 }}>
           <Chip

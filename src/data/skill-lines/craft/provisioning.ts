@@ -12,6 +12,7 @@ export const provisioning: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_provisioner_006',
+  sourceUrl: 'https://eso-hub.com/en/skills/craft/provisioning',
   skills: [
     {
       id: AbilityId.RECIPE_QUALITY,

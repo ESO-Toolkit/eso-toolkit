@@ -12,6 +12,7 @@ export const khajiit: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_armor_010',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/khajiit',
   skills: [
     {
       id: AbilityId.CUTPURSE,

@@ -1301,7 +1301,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 placement="top-start"
                                 enterDelay={0}
                                 arrow
-                                disableInteractive
                                 PopperProps={{
                                   disablePortal: true,
                                   modifiers: [
@@ -1418,7 +1417,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   placement="top-start"
                                   enterDelay={0}
                                   arrow
-                                  disableInteractive
                                   PopperProps={{
                                     disablePortal: true,
                                     modifiers: [

@@ -7,6 +7,7 @@ export const destructionStaffSkillLine: SkillLineData = {
   class: 'Weapon',
   category: 'weapon',
   icon: '',
+  sourceUrl: 'https://eso-hub.com/en/skills/weapon/destruction-staff',
   skills: [
     // Ultimate abilities
     {

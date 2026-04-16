@@ -42,6 +42,7 @@ import {
   encounterHasOverrides,
   isOverrideEmpty,
 } from '../types/trial-encounters';
+import { getEsoHubSetUrl } from '../utils/esoHubLinks';
 import { getSetDisplayName, findSetIdByName } from '../utils/setNameUtils';
 import type { SlotKey } from '../utils/slotKey';
 import { makeSlotKey } from '../utils/slotKey';
@@ -308,13 +309,21 @@ const PlayerOverrideEditor: React.FC<PlayerOverrideEditorProps> = React.memo(
               .map((name, i) => (
                 <Chip
                   key={i}
+                  component="a"
+                  href={getEsoHubSetUrl(name!)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  clickable
                   label={name}
                   size="small"
                   variant="outlined"
+                  aria-label={`${name} on ESO-Hub`}
                   sx={{
                     height: 20,
                     fontSize: '0.55rem',
                     borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    textDecoration: 'none',
                   }}
                 />
               ))}

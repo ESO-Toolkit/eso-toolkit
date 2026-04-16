@@ -7,6 +7,7 @@ export const darkBrotherhood: SkillLineData = {
   class: 'guild',
   category: 'guild',
   icon: 'passive_guild_32.webp',
+  sourceUrl: 'https://eso-hub.com/en/skills/guild/dark-brotherhood',
   skills: [
     {
       id: AbilityId.BLADE_OF_WOE,

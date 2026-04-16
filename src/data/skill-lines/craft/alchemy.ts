@@ -12,6 +12,7 @@ export const alchemy: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_alchemy_001',
+  sourceUrl: 'https://eso-hub.com/en/skills/craft/alchemy',
   skills: [
     {
       id: AbilityId.SOLVENT_PROFICIENCY,

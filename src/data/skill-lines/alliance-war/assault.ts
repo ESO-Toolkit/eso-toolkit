@@ -7,6 +7,7 @@ export const assault: SkillLineData = {
   class: 'alliance-war',
   category: 'alliance',
   icon: 'ability_ava_003',
+  sourceUrl: 'https://eso-hub.com/en/skills/alliance-war/assault',
   skills: [
     // Ultimate abilities
     {

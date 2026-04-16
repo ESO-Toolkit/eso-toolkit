@@ -7,6 +7,7 @@ export const bowSkillLine: SkillLineData = {
   class: 'Weapon',
   category: 'weapon',
   icon: 'ability_bow_006',
+  sourceUrl: 'https://eso-hub.com/en/skills/weapon/bow',
   skills: [
     // Ultimate abilities
     {

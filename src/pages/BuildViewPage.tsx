@@ -57,6 +57,7 @@ import {
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
 
@@ -302,6 +303,7 @@ const SkillSlot: React.FC<{
   const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate ? ULT_SIZE : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
+  const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
 
   /** Gold accent for ultimate, class accent for regular abilities */
   const accentA = (a: number): string =>
@@ -328,78 +330,150 @@ const SkillSlot: React.FC<{
         arrow
         placement="top"
       >
-        <Box
-          sx={{
-            position: 'relative',
-            width: size,
-            height: size,
-            borderRadius: isUltimate ? '14px' : '12px',
-            overflow: 'hidden',
-            flexShrink: 0,
-            border: `${isUltimate ? 2 : 1.5}px solid ${
-              skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-            }`,
-            background: skill
-              ? isDark
-                ? accentA(0.08)
-                : accentA(0.04)
-              : isDark
-                ? 'rgba(255,255,255,0.025)'
-                : 'rgba(0,0,0,0.015)',
-            boxShadow: skill
-              ? isDark
-                ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
-                : 'inset 0 1px 0 rgba(255,255,255,0.5)'
-              : isDark
-                ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
-                : 'inset 0 1px 0 rgba(255,255,255,0.4)',
-            transition: 'all 180ms ease',
-            '&:hover': {
-              transform: 'scale(1.08)',
-              borderColor: accentA(0.7),
-              background: isDark ? accentA(0.14) : accentA(0.08),
-              boxShadow: isDark
-                ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
-                : '0 6px 16px rgba(0,0,0,0.08)',
-            },
-          }}
-        >
-          {/* Skill icon */}
-          {iconUrl ? (
-            <img
-              src={iconUrl}
-              alt={skill?.name ?? `Ability ${abilityId}`}
-              loading="lazy"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          ) : (
+        {esoHubUrl ? (
+          <Box
+            component="a"
+            href={esoHubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            aria-label={`${skill?.name ?? ''} on ESO-Hub`}
+            sx={{ display: 'inline-flex', lineHeight: 0 }}
+          >
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
+                position: 'relative',
+                width: size,
+                height: size,
+                borderRadius: isUltimate ? '14px' : '12px',
+                overflow: 'hidden',
+                flexShrink: 0,
+                border: `${isUltimate ? 2 : 1.5}px solid ${accentA(0.45)}`,
+                background: isDark ? accentA(0.08) : accentA(0.04),
+                boxShadow: isDark
+                  ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                  : 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                transition: 'all 180ms ease',
+                '&:hover': {
+                  transform: 'scale(1.08)',
+                  borderColor: accentA(0.7),
+                  background: isDark ? accentA(0.14) : accentA(0.08),
+                  boxShadow: isDark
+                    ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
+                    : '0 6px 16px rgba(0,0,0,0.08)',
+                },
               }}
             >
-              <Typography
+              {iconUrl ? (
+                <img
+                  src={iconUrl}
+                  alt={skill?.name ?? `Ability ${abilityId}`}
+                  loading="lazy"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: isUltimate ? 16 : 13,
+                      fontWeight: 800,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 0.4,
+                      color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                      lineHeight: 1,
+                      userSelect: 'none',
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              position: 'relative',
+              width: size,
+              height: size,
+              borderRadius: isUltimate ? '14px' : '12px',
+              overflow: 'hidden',
+              flexShrink: 0,
+              border: `${isUltimate ? 2 : 1.5}px solid ${
+                skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
+              }`,
+              background: skill
+                ? isDark
+                  ? accentA(0.08)
+                  : accentA(0.04)
+                : isDark
+                  ? 'rgba(255,255,255,0.025)'
+                  : 'rgba(0,0,0,0.015)',
+              boxShadow: skill
+                ? isDark
+                  ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                  : 'inset 0 1px 0 rgba(255,255,255,0.5)'
+                : isDark
+                  ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
+                  : 'inset 0 1px 0 rgba(255,255,255,0.4)',
+              transition: 'all 180ms ease',
+              '&:hover': {
+                transform: 'scale(1.08)',
+                borderColor: accentA(0.7),
+                background: isDark ? accentA(0.14) : accentA(0.08),
+                boxShadow: isDark
+                  ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
+                  : '0 6px 16px rgba(0,0,0,0.08)',
+              },
+            }}
+          >
+            {/* Skill icon */}
+            {iconUrl ? (
+              <img
+                src={iconUrl}
+                alt={skill?.name ?? `Ability ${abilityId}`}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <Box
                 sx={{
-                  fontSize: isUltimate ? 16 : 13,
-                  fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  letterSpacing: 0.4,
-                  color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
-                  lineHeight: 1,
-                  userSelect: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
                 }}
               >
-                {label}
-              </Typography>
-            </Box>
-          )}
-        </Box>
+                <Typography
+                  sx={{
+                    fontSize: isUltimate ? 16 : 13,
+                    fontWeight: 800,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    letterSpacing: 0.4,
+                    color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                    lineHeight: 1,
+                    userSelect: 'none',
+                  }}
+                >
+                  {label}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
       </Tooltip>
 
       {/* Skill name (only when resolved) */}

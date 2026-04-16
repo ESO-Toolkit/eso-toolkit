@@ -7,6 +7,7 @@ export const thievesGuild: SkillLineData = {
   class: 'guild',
   category: 'guild',
   icon: 'passive_guild_32.webp',
+  sourceUrl: 'https://eso-hub.com/en/skills/guild/thieves-guild',
   skills: [
     {
       id: AbilityId.FINDERS_KEEPERS,

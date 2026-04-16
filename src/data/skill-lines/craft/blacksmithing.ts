@@ -12,6 +12,7 @@ export const blacksmithing: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_smith_001',
+  sourceUrl: 'https://eso-hub.com/en/skills/craft/blacksmithing',
   skills: [
     {
       id: AbilityId.METALWORKING,
