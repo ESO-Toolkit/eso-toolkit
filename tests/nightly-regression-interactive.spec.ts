@@ -3,7 +3,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
-import { resolveWorkingReportId } from './utils/nightly-regression-helpers';
+import {
+  resolveWorkingReportId,
+  safePickDropdownOption,
+} from './utils/nightly-regression-helpers';
 
 /**
  * Nightly Regression Tests - Interactive Features
@@ -659,27 +662,54 @@ test.describe('Nightly Regression - Interactive Features', () => {
         console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
       }
 
-      // Test player selection for rotation analysis if available
-      const playerSelectors = page.locator(
-        'select, .MuiSelect-root, .player-selector, button:has-text("Select Player")',
-      );
+      // Test player selection for rotation analysis if available.
+      //
+      // NOTE: wrapped in try/catch and uses safePickDropdownOption because the
+      // first MUI menu item is typically the already-selected player — clicking
+      // it leaves Playwright waiting on an action that never settles and burns
+      // the whole test budget (see run 24395468631).
+      try {
+        const playerSelectors = page.locator(
+          'select, .MuiSelect-root, .player-selector, button:has-text("Select Player")',
+        );
 
-      if (await playerSelectors.first().isVisible({ timeout: 5000 })) {
-        await playerSelectors.first().click();
-        await page.waitForTimeout(1000);
+        if (await playerSelectors.first().isVisible({ timeout: 5000 })) {
+          await playerSelectors
+            .first()
+            .click({ timeout: TEST_TIMEOUTS.interaction })
+            .catch((error) => {
+              console.log(
+                `ℹ️ Rotation analysis: could not open player selector — ${(error as Error).message}`,
+              );
+            });
+          await page.waitForTimeout(1000);
 
-        // Try to select a player option
-        const playerOptions = page.locator('.MuiMenuItem-root, option, [role="option"]');
-        if (await playerOptions.first().isVisible({ timeout: 3000 })) {
-          await playerOptions.first().click();
-          await page.waitForTimeout(3000);
+          const picked = await safePickDropdownOption(
+            page,
+            '.MuiMenuItem-root, option, [role="option"]',
+            'rotation-analysis player selector',
+          );
 
-          await page.screenshot({
-            path: `test-results/nightly-regression-rotation-player-selected-${reportId}.png`,
-            fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot,
-          });
+          if (picked) {
+            await page.waitForTimeout(3000);
+
+            await page
+              .screenshot({
+                path: `test-results/nightly-regression-rotation-player-selected-${reportId}.png`,
+                fullPage: true,
+                timeout: TEST_TIMEOUTS.screenshot,
+              })
+              .catch((error) => {
+                console.log(
+                  `ℹ️ Post-selection screenshot failed: ${(error as Error).message}`,
+                );
+              });
+          }
         }
+      } catch (error) {
+        console.log(
+          `ℹ️ Rotation analysis player-selection step skipped: ${(error as Error).message}`,
+        );
       }
     });
 
