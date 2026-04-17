@@ -396,9 +396,9 @@ const CollapsibleSection: React.FC<{
 // ─── Skill slot display ───────────────────────────────────────────────────────
 
 const TILE_SIZE = 58;
-const TILE_SIZE_MOBILE = 44;
+const TILE_SIZE_MOBILE = 40;
 const ULT_SIZE = 66;
-const ULT_SIZE_MOBILE = 52;
+const ULT_SIZE_MOBILE = 48;
 const ULTIMATE_SLOT = 5;
 const SLOT_LABELS: Record<number, string> = { 0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: 'R' };
 
@@ -430,7 +430,7 @@ const SkillSlot: React.FC<{
         gap: 0.5,
         flex: isUltimate ? undefined : 1,
         maxWidth: {
-          xs: isUltimate ? ULT_SIZE_MOBILE : TILE_SIZE_MOBILE + 8,
+          xs: isUltimate ? ULT_SIZE_MOBILE : TILE_SIZE_MOBILE,
           sm: isUltimate ? ULT_SIZE : TILE_SIZE + 16,
         },
         minWidth: {
@@ -1366,9 +1366,9 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'center',
-                          gap: { xs: 0.5, sm: 1.25 },
+                          gap: { xs: 0.375, sm: 1.25 },
                           py: { xs: 1, sm: 1.5 },
-                          px: { xs: 0.75, sm: 1.5 },
+                          px: { xs: 0.5, sm: 1.5 },
                           borderRadius: 3,
                           background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.012)',
                           border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
