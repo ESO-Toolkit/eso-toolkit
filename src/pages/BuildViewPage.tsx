@@ -413,8 +413,12 @@ const SkillSlot: React.FC<{
   const skill = abilityId ? getSkillById(abilityId) : null;
   const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate
-    ? isMobile ? ULT_SIZE_MOBILE : ULT_SIZE
-    : isMobile ? TILE_SIZE_MOBILE : TILE_SIZE;
+    ? isMobile
+      ? ULT_SIZE_MOBILE
+      : ULT_SIZE
+    : isMobile
+      ? TILE_SIZE_MOBILE
+      : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
 
   /** Gold accent for ultimate, class accent for regular abilities */
@@ -1423,27 +1427,27 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
             count={gearEntries.length > 0 ? `${gearEntries.length} pieces` : undefined}
             defaultOpen
           >
-          {gearEntries.length > 0 ? (
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 0.5,
-              }}
-            >
-              {gearEntries.map(({ slot, id, trait, enchant }) => (
-                <GearSlotDisplay
-                  key={slot}
-                  slotIndex={slot}
-                  itemId={id}
-                  trait={trait}
-                  enchant={enchant}
-                />
-              ))}
-            </Box>
-          ) : (
-            <EmptyState message="No equipment configured" />
-          )}
+            {gearEntries.length > 0 ? (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: 0.5,
+                }}
+              >
+                {gearEntries.map(({ slot, id, trait, enchant }) => (
+                  <GearSlotDisplay
+                    key={slot}
+                    slotIndex={slot}
+                    itemId={id}
+                    trait={trait}
+                    enchant={enchant}
+                  />
+                ))}
+              </Box>
+            ) : (
+              <EmptyState message="No equipment configured" />
+            )}
           </CollapsibleSection>
         </GlassPanel>
       </motion.div>
@@ -1452,36 +1456,36 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="default" sx={{ p: 2, mb: 2 }}>
           <CollapsibleSection label="Champion Points">
-          {cpSlots.length > 0 || cpPassiveCount > 0 ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <CPTreeDetail
-                label="Warfare"
-                color="#42a5f5"
-                icon={<WarfareIcon sx={{ fontSize: 14 }} />}
-                slots={setup.cp.warfare.slots}
-                passives={setup.cp.warfare.passives}
-                passivesList={CP_PASSIVES_BY_TREE.warfare}
-              />
-              <CPTreeDetail
-                label="Fitness"
-                color="#ef5350"
-                icon={<FitnessIcon sx={{ fontSize: 14 }} />}
-                slots={setup.cp.fitness.slots}
-                passives={setup.cp.fitness.passives}
-                passivesList={CP_PASSIVES_BY_TREE.fitness}
-              />
-              <CPTreeDetail
-                label="Craft"
-                color="#66bb6a"
-                icon={null}
-                slots={setup.cp.craft.slots}
-                passives={setup.cp.craft.passives}
-                passivesList={CP_PASSIVES_BY_TREE.craft}
-              />
-            </Box>
-          ) : (
-            <EmptyState message="No champion points configured" />
-          )}
+            {cpSlots.length > 0 || cpPassiveCount > 0 ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <CPTreeDetail
+                  label="Warfare"
+                  color="#42a5f5"
+                  icon={<WarfareIcon sx={{ fontSize: 14 }} />}
+                  slots={setup.cp.warfare.slots}
+                  passives={setup.cp.warfare.passives}
+                  passivesList={CP_PASSIVES_BY_TREE.warfare}
+                />
+                <CPTreeDetail
+                  label="Fitness"
+                  color="#ef5350"
+                  icon={<FitnessIcon sx={{ fontSize: 14 }} />}
+                  slots={setup.cp.fitness.slots}
+                  passives={setup.cp.fitness.passives}
+                  passivesList={CP_PASSIVES_BY_TREE.fitness}
+                />
+                <CPTreeDetail
+                  label="Craft"
+                  color="#66bb6a"
+                  icon={null}
+                  slots={setup.cp.craft.slots}
+                  passives={setup.cp.craft.passives}
+                  passivesList={CP_PASSIVES_BY_TREE.craft}
+                />
+              </Box>
+            ) : (
+              <EmptyState message="No champion points configured" />
+            )}
           </CollapsibleSection>
         </GlassPanel>
       </motion.div>
@@ -1493,129 +1497,129 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
             label="Passives"
             count={setup.passives.length > 0 ? `${setup.passives.length} selected` : undefined}
           >
-          {setup.passives.length > 0 ? (
-            (() => {
-              const n = setup.passives.length;
-              const cols = getPassiveCols(n);
-              const remainder = n % cols;
-              const fullItems =
-                remainder > 0 ? setup.passives.slice(0, n - remainder) : setup.passives;
-              const lastRowItems = remainder > 0 ? setup.passives.slice(n - remainder) : [];
+            {setup.passives.length > 0 ? (
+              (() => {
+                const n = setup.passives.length;
+                const cols = getPassiveCols(n);
+                const remainder = n % cols;
+                const fullItems =
+                  remainder > 0 ? setup.passives.slice(0, n - remainder) : setup.passives;
+                const lastRowItems = remainder > 0 ? setup.passives.slice(n - remainder) : [];
 
-              const renderPassiveItem = (
-                passiveId: number,
-                key: string | number,
-              ): React.ReactNode => {
-                const skill = getSkillById(passiveId);
-                const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
-                return (
-                  <Box
-                    key={key}
-                    sx={{
-                      display: 'flex',
-                      flex: 1,
-                      alignItems: 'center',
-                      gap: 1,
-                      py: 0.6,
-                      px: 1,
-                      borderRadius: 2,
-                      background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
-                      transition: 'border-color 0.15s',
-                      '&:hover': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
-                      },
-                    }}
-                  >
+                const renderPassiveItem = (
+                  passiveId: number,
+                  key: string | number,
+                ): React.ReactNode => {
+                  const skill = getSkillById(passiveId);
+                  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
+                  return (
                     <Box
+                      key={key}
                       sx={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
                         display: 'flex',
+                        flex: 1,
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: 1,
+                        py: 0.6,
+                        px: 1,
+                        borderRadius: 2,
+                        background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                        transition: 'border-color 0.15s',
+                        '&:hover': {
+                          borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
+                        },
                       }}
                     >
-                      {iconUrl ? (
-                        <img
-                          src={iconUrl}
-                          alt={skill?.name ?? `Passive ${passiveId}`}
-                          loading="lazy"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: 5,
-                            height: 5,
-                            borderRadius: '50%',
-                            background: 'var(--be-accent, #38bdf8)',
-                            opacity: 0.4,
-                          }}
-                        />
-                      )}
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '6px',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {iconUrl ? (
+                          <img
+                            src={iconUrl}
+                            alt={skill?.name ?? `Passive ${passiveId}`}
+                            loading="lazy"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              display: 'block',
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: 5,
+                              height: 5,
+                              borderRadius: '50%',
+                              background: 'var(--be-accent, #38bdf8)',
+                              opacity: 0.4,
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: '0.7rem', sm: '0.62rem' },
+                          fontWeight: 600,
+                          color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.68)',
+                          lineHeight: 1.2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {skill?.name ?? `Passive #${passiveId}`}
+                      </Typography>
                     </Box>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '0.7rem', sm: '0.62rem' },
-                        fontWeight: 600,
-                        color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.68)',
-                        lineHeight: 1.2,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {skill?.name ?? `Passive #${passiveId}`}
-                    </Typography>
+                  );
+                };
+
+                return (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                    {/* Full rows — uniform grid */}
+                    {fullItems.length > 0 && (
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: {
+                            xs: '1fr 1fr',
+                            sm: `repeat(${Math.min(cols, 3)}, 1fr)`,
+                            md: `repeat(${cols}, 1fr)`,
+                          },
+                          gap: 0.75,
+                        }}
+                      >
+                        {fullItems.map((id) => renderPassiveItem(id, id))}
+                      </Box>
+                    )}
+                    {/* Partial last row — flex so items share width equally */}
+                    {lastRowItems.length > 0 && (
+                      <Box sx={{ display: 'flex', gap: 0.75 }}>
+                        {lastRowItems.map((id) => renderPassiveItem(id, `last-${id}`))}
+                      </Box>
+                    )}
                   </Box>
                 );
-              };
-
-              return (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                  {/* Full rows — uniform grid */}
-                  {fullItems.length > 0 && (
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                          xs: '1fr 1fr',
-                          sm: `repeat(${Math.min(cols, 3)}, 1fr)`,
-                          md: `repeat(${cols}, 1fr)`,
-                        },
-                        gap: 0.75,
-                      }}
-                    >
-                      {fullItems.map((id) => renderPassiveItem(id, id))}
-                    </Box>
-                  )}
-                  {/* Partial last row — flex so items share width equally */}
-                  {lastRowItems.length > 0 && (
-                    <Box sx={{ display: 'flex', gap: 0.75 }}>
-                      {lastRowItems.map((id) => renderPassiveItem(id, `last-${id}`))}
-                    </Box>
-                  )}
-                </Box>
-              );
-            })()
-          ) : (
-            <EmptyState message="No passives selected" />
-          )}
+              })()
+            ) : (
+              <EmptyState message="No passives selected" />
+            )}
           </CollapsibleSection>
         </GlassPanel>
       </motion.div>
@@ -1893,7 +1897,10 @@ export const BuildViewPage: React.FC = () => {
     .filter(Boolean) as typeof CLASS_SKILL_LINES;
 
   return (
-    <Container maxWidth="lg" sx={{ pt: 3, pb: { xs: build.setups.length > 1 ? 12 : 6, sm: 6 }, px: { xs: 2, sm: 3 } }}>
+    <Container
+      maxWidth="lg"
+      sx={{ pt: 3, pb: { xs: build.setups.length > 1 ? 12 : 6, sm: 6 }, px: { xs: 2, sm: 3 } }}
+    >
       <BuildViewShell esoClass={build.esoClass}>
         <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 1.5, sm: 3, md: 4 } }}>
           <motion.div
@@ -2388,13 +2395,9 @@ export const BuildViewPage: React.FC = () => {
             py: 1.5,
             pb: 'max(1.5rem, env(safe-area-inset-bottom))',
             backdropFilter: 'blur(20px)',
-            background: isDark
-              ? 'rgba(8, 14, 26, 0.88)'
-              : 'rgba(240, 245, 255, 0.88)',
+            background: isDark ? 'rgba(8, 14, 26, 0.88)' : 'rgba(240, 245, 255, 0.88)',
             borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-            boxShadow: isDark
-              ? '0 -4px 24px rgba(0,0,0,0.4)'
-              : '0 -4px 24px rgba(0,0,0,0.08)',
+            boxShadow: isDark ? '0 -4px 24px rgba(0,0,0,0.4)' : '0 -4px 24px rgba(0,0,0,0.08)',
           }}
         >
           {build.setups.map((setup, i) => {
@@ -2413,11 +2416,7 @@ export const BuildViewPage: React.FC = () => {
                   py: 0.85,
                   flex: 1,
                   maxWidth: 180,
-                  color: isActive
-                    ? '#fff'
-                    : isDark
-                      ? 'rgba(255,255,255,0.55)'
-                      : 'rgba(0,0,0,0.50)',
+                  color: isActive ? '#fff' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
                   background: isActive
                     ? `linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.7)} 100%)`
                     : isDark
@@ -2430,9 +2429,7 @@ export const BuildViewPage: React.FC = () => {
                         ? 'rgba(255,255,255,0.10)'
                         : 'rgba(0,0,0,0.08)'
                   }`,
-                  boxShadow: isActive
-                    ? `0 4px 16px ${alpha(classTheme.accent, 0.3)}`
-                    : 'none',
+                  boxShadow: isActive ? `0 4px 16px ${alpha(classTheme.accent, 0.3)}` : 'none',
                   transition: 'all 0.2s ease',
                 }}
               >
