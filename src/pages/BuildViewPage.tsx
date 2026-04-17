@@ -453,6 +453,8 @@ const SkillSlot: React.FC<{
         }
         arrow
         placement="top"
+        enterTouchDelay={0}
+        leaveTouchDelay={3000}
       >
         {esoHubUrl ? (
           <Box
