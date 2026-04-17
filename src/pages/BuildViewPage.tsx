@@ -7,12 +7,13 @@
  */
 
 import {
+  ArrowOutward as ArrowOutwardIcon,
+  Check as CheckIcon,
   ContentCopy as CopyIcon,
   Edit as EditIcon,
   ExpandMore as ExpandMoreIcon,
   FitnessCenter as FitnessIcon,
   LocalFireDepartment as WarfareIcon,
-  OpenInNew as OpenInNewIcon,
   YouTube as YouTubeIcon,
 } from '@mui/icons-material';
 import {
@@ -1878,6 +1879,7 @@ export const BuildViewPage: React.FC = () => {
   const [notFound, setNotFound] = useState(false);
   const [activeSetup, setActiveSetup] = useState(0);
   const [encodedParam, setEncodedParam] = useState('');
+  const [justCopied, setJustCopied] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -1914,7 +1916,11 @@ export const BuildViewPage: React.FC = () => {
     const url = `${window.location.origin}${window.location.pathname}?b=${encodedParam}`;
     navigator.clipboard
       .writeText(url)
-      .then(() => setSnackbar({ open: true, message: 'Link copied!', severity: 'success' }))
+      .then(() => {
+        setSnackbar({ open: true, message: 'Link copied!', severity: 'success' });
+        setJustCopied(true);
+        window.setTimeout(() => setJustCopied(false), 1800);
+      })
       .catch(() => setSnackbar({ open: true, message: 'Failed to copy', severity: 'error' }));
   };
 
@@ -2029,10 +2035,10 @@ export const BuildViewPage: React.FC = () => {
                 sx={{
                   viewTransitionName: 'build-hero',
                   display: 'flex',
-                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  alignItems: { xs: 'stretch', sm: 'center' },
                   justifyContent: 'space-between',
                   flexDirection: { xs: 'column', sm: 'row' },
-                  gap: 2,
+                  gap: { xs: 2.25, sm: 2 },
                   mb: 3,
                 }}
               >
@@ -2135,48 +2141,243 @@ export const BuildViewPage: React.FC = () => {
                   )}
                 </Box>
 
-                {/* Action buttons */}
-                <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                  <Button
-                    size="small"
-                    startIcon={<CopyIcon sx={{ fontSize: '0.85rem !important' }} />}
-                    onClick={handleCopyLink}
-                    sx={{
-                      borderRadius: '10px',
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
-                      backdropFilter: 'blur(8px)',
-                      '&:hover': {
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                        borderColor: 'var(--be-accent, #38bdf8)',
-                      },
-                    }}
+                {/* Action cluster — unified, tactile, mobile-first */}
+                <Box
+                  role="group"
+                  aria-label="Build actions"
+                  sx={{
+                    position: 'relative',
+                    display: { xs: 'grid', sm: 'inline-flex' },
+                    gridTemplateColumns: { xs: 'minmax(0, 1fr) minmax(0, 1.3fr)', sm: 'none' },
+                    alignItems: 'stretch',
+                    gap: { xs: 0.75, sm: 0.75 },
+                    width: { xs: '100%', sm: 'auto' },
+                    flexShrink: 0,
+                    p: 0.5,
+                    borderRadius: '16px',
+                    background: isDark
+                      ? `linear-gradient(180deg, ${alpha('#ffffff', 0.05)} 0%, ${alpha('#ffffff', 0.015)} 100%)`
+                      : `linear-gradient(180deg, ${alpha('#0f172a', 0.035)} 0%, ${alpha('#0f172a', 0.01)} 100%)`,
+                    border: `1px solid ${
+                      isDark ? 'rgba(255,255,255,0.09)' : 'rgba(15,23,42,0.08)'
+                    }`,
+                    backdropFilter: 'blur(14px) saturate(140%)',
+                    WebkitBackdropFilter: 'blur(14px) saturate(140%)',
+                    boxShadow: isDark
+                      ? `inset 0 1px 0 ${alpha('#ffffff', 0.05)}, 0 14px 34px -16px ${alpha('#000000', 0.6)}`
+                      : `inset 0 1px 0 ${alpha('#ffffff', 0.8)}, 0 14px 28px -18px ${alpha('#0f172a', 0.18)}`,
+                  }}
+                >
+                  {/* Secondary — Copy link (icon morphs to check on success) */}
+                  <Tooltip
+                    title={justCopied ? 'Copied to clipboard' : 'Copy shareable link'}
+                    placement="bottom"
+                    enterDelay={400}
                   >
-                    Copy Link
-                  </Button>
+                    <Button
+                      component={motion.button}
+                      whileTap={prefersReduced ? undefined : { scale: 0.965 }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 28 }}
+                      onClick={handleCopyLink}
+                      disableRipple
+                      aria-live="polite"
+                      aria-label={justCopied ? 'Link copied to clipboard' : 'Copy shareable link'}
+                      sx={{
+                        position: 'relative',
+                        minHeight: { xs: 48, sm: 40 },
+                        px: { xs: 1.25, sm: 1.75 },
+                        gap: 0.75,
+                        borderRadius: '11px',
+                        textTransform: 'none',
+                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontSize: { xs: '0.85rem', sm: '0.78rem' },
+                        fontWeight: 600,
+                        letterSpacing: '-0.005em',
+                        color: justCopied
+                          ? classTheme.accent
+                          : isDark
+                            ? 'rgba(255,255,255,0.82)'
+                            : 'rgba(15,23,42,0.74)',
+                        background: justCopied
+                          ? alpha(classTheme.accent, isDark ? 0.1 : 0.07)
+                          : 'transparent',
+                        border: `1px solid ${
+                          justCopied
+                            ? alpha(classTheme.accent, isDark ? 0.45 : 0.32)
+                            : 'transparent'
+                        }`,
+                        transition:
+                          'color 220ms ease, background-color 220ms ease, border-color 220ms ease',
+                        '&:hover': {
+                          background: justCopied
+                            ? alpha(classTheme.accent, isDark ? 0.14 : 0.09)
+                            : isDark
+                              ? 'rgba(255,255,255,0.05)'
+                              : 'rgba(15,23,42,0.04)',
+                          borderColor: justCopied
+                            ? alpha(classTheme.accent, 0.55)
+                            : isDark
+                              ? 'rgba(255,255,255,0.12)'
+                              : 'rgba(15,23,42,0.1)',
+                        },
+                        '&:focus-visible': {
+                          outline: `2px solid ${alpha(classTheme.accent, 0.7)}`,
+                          outlineOffset: 2,
+                        },
+                      }}
+                    >
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'relative',
+                          width: 16,
+                          height: 16,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <AnimatePresence mode="wait" initial={false}>
+                          {justCopied ? (
+                            <motion.span
+                              key="check"
+                              initial={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              animate={prefersReduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                              exit={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              transition={{ type: 'spring', stiffness: 600, damping: 24 }}
+                              style={{
+                                position: 'absolute',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <CheckIcon sx={{ fontSize: '1rem !important' }} />
+                            </motion.span>
+                          ) : (
+                            <motion.span
+                              key="copy"
+                              initial={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              animate={prefersReduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                              exit={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              transition={{ type: 'spring', stiffness: 600, damping: 24 }}
+                              style={{
+                                position: 'absolute',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <CopyIcon sx={{ fontSize: '0.95rem !important' }} />
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </Box>
+                      {justCopied ? 'Copied' : 'Copy link'}
+                    </Button>
+                  </Tooltip>
+
+                  {/* Divider between cluster items (desktop only, inside the group) */}
+                  <Box
+                    aria-hidden
+                    sx={{
+                      display: { xs: 'none', sm: 'block' },
+                      width: '1px',
+                      alignSelf: 'stretch',
+                      my: 0.75,
+                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
+                    }}
+                  />
+
+                  {/* Primary — Edit build (metallic glass, accent-charged) */}
                   <Button
-                    size="small"
-                    startIcon={<EditIcon sx={{ fontSize: '0.85rem !important' }} />}
-                    endIcon={<OpenInNewIcon sx={{ fontSize: '0.7rem !important' }} />}
+                    component={motion.button}
+                    whileTap={prefersReduced ? undefined : { scale: 0.975 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 26 }}
                     onClick={handleOpenInEditor}
+                    disableRipple
+                    aria-label="Open this build in the editor"
                     sx={{
-                      borderRadius: '10px',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      minHeight: { xs: 48, sm: 40 },
+                      px: { xs: 1.75, sm: 2 },
+                      gap: 0.75,
+                      borderRadius: '11px',
                       textTransform: 'none',
-                      fontSize: '0.75rem',
+                      fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                      fontSize: { xs: '0.9rem', sm: '0.82rem' },
                       fontWeight: 700,
-                      color: isDark ? '#fff' : '#fff',
-                      background: `linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.7)} 100%)`,
-                      border: 'none',
-                      boxShadow: `0 4px 16px ${alpha(classTheme.accent, 0.3)}`,
+                      letterSpacing: '-0.008em',
+                      color: '#ffffff',
+                      background: `
+                        radial-gradient(120% 160% at 0% 0%, ${alpha('#ffffff', isDark ? 0.28 : 0.38)} 0%, ${alpha('#ffffff', 0)} 50%),
+                        linear-gradient(180deg, ${alpha('#ffffff', 0.14)} 0%, ${alpha('#000000', 0.16)} 100%),
+                        linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.82)} 55%, ${alpha(classTheme.accent, 0.95)} 100%)
+                      `,
+                      border: `1px solid ${alpha(classTheme.accent, isDark ? 0.62 : 0.52)}`,
+                      boxShadow: `
+                        inset 0 1px 0 ${alpha('#ffffff', 0.32)},
+                        inset 0 -1px 0 ${alpha('#000000', 0.2)},
+                        0 1px 2px ${alpha('#000000', 0.12)},
+                        0 10px 26px -8px ${alpha(classTheme.accent, 0.55)}
+                      `,
+                      transition: 'box-shadow 240ms ease, transform 240ms ease, filter 240ms ease',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        inset: 0,
+                        background: `linear-gradient(115deg, transparent 30%, ${alpha('#ffffff', 0.26)} 46%, transparent 62%)`,
+                        transform: 'translateX(-130%)',
+                        transition: prefersReduced
+                          ? 'none'
+                          : 'transform 760ms cubic-bezier(0.22, 0.7, 0.25, 1)',
+                        pointerEvents: 'none',
+                      },
+                      '& .eb-arrow': {
+                        transition: prefersReduced
+                          ? 'none'
+                          : 'transform 260ms cubic-bezier(0.2, 0.7, 0.25, 1)',
+                      },
                       '&:hover': {
-                        boxShadow: `0 6px 24px ${alpha(classTheme.accent, 0.45)}`,
+                        filter: 'brightness(1.04)',
+                        boxShadow: `
+                          inset 0 1px 0 ${alpha('#ffffff', 0.36)},
+                          inset 0 -1px 0 ${alpha('#000000', 0.22)},
+                          0 2px 4px ${alpha('#000000', 0.14)},
+                          0 14px 32px -6px ${alpha(classTheme.accent, 0.7)}
+                        `,
+                      },
+                      '&:hover::before': prefersReduced
+                        ? undefined
+                        : { transform: 'translateX(130%)' },
+                      '&:hover .eb-arrow': prefersReduced
+                        ? undefined
+                        : { transform: 'translate(2px, -2px)' },
+                      '&:focus-visible': {
+                        outline: `2px solid ${alpha(classTheme.accent, 0.9)}`,
+                        outlineOffset: 3,
                       },
                     }}
                   >
-                    Edit Build
+                    <EditIcon
+                      aria-hidden
+                      sx={{ fontSize: '1rem !important', flexShrink: 0, opacity: 0.95 }}
+                    />
+                    <Box component="span" sx={{ lineHeight: 1 }}>
+                      Edit build
+                    </Box>
+                    <ArrowOutwardIcon
+                      aria-hidden
+                      className="eb-arrow"
+                      sx={{
+                        fontSize: '0.85rem !important',
+                        flexShrink: 0,
+                        opacity: 0.85,
+                        ml: 0.25,
+                      }}
+                    />
                   </Button>
                 </Box>
               </Box>
