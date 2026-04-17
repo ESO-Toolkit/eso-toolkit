@@ -9,6 +9,7 @@
 import {
   ContentCopy as CopyIcon,
   Edit as EditIcon,
+  ExpandMore as ExpandMoreIcon,
   FitnessCenter as FitnessIcon,
   LocalFireDepartment as WarfareIcon,
   OpenInNew as OpenInNewIcon,
@@ -19,12 +20,14 @@ import {
   Box,
   Button,
   Chip,
+  Collapse,
   Container,
   Divider,
   Skeleton,
   Snackbar,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -132,6 +135,15 @@ const GEAR_SLOT_NAMES: Record<number, string> = {
   21: 'Back Off Hand',
 };
 
+/** Abbreviated slot names for mobile viewports where horizontal space is tight. */
+const GEAR_SLOT_NAMES_SHORT: Record<number, string> = {
+  3: 'Shldrs',
+  4: 'Main',
+  5: 'Off',
+  20: 'Back MH',
+  21: 'Back OH',
+};
+
 const GEAR_SLOT_ORDER = [0, 2, 3, 16, 6, 8, 9, 1, 11, 12, 4, 5, 20, 21];
 
 /** Slot-type emoji fallback shown when no icon URL is available (e.g. LibSets IDs). */
@@ -225,7 +237,7 @@ const SectionLabel: React.FC<{
       )}
       <Typography
         sx={{
-          fontSize: '0.6rem',
+          fontSize: { xs: '0.7rem', sm: '0.6rem' },
           fontWeight: 700,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
@@ -238,7 +250,7 @@ const SectionLabel: React.FC<{
       {count && (
         <Typography
           sx={{
-            fontSize: '0.55rem',
+            fontSize: { xs: '0.6rem', sm: '0.55rem' },
             fontWeight: 600,
             color: 'var(--be-accent, #38bdf8)',
             opacity: 0.7,
@@ -285,10 +297,99 @@ const EmptyState: React.FC<{ message?: string }> = ({ message = 'Not configured'
   );
 };
 
+// ─── Collapsible section (mobile) ─────────────────────────────────────────────
+
+const CollapsibleSection: React.FC<{
+  label: string;
+  count?: string;
+  icon?: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}> = ({ label, count, icon, defaultOpen = false, children }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [open, setOpen] = useState(isMobile ? defaultOpen : true);
+  const isDark = theme.palette.mode === 'dark';
+
+  // Always open on desktop
+  const isOpen = isMobile ? open : true;
+
+  return (
+    <>
+      <Box
+        onClick={isMobile ? () => setOpen((o) => !o) : undefined}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          mb: isOpen ? 1.5 : 0,
+          cursor: isMobile ? 'pointer' : 'default',
+          userSelect: 'none',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        {icon && (
+          <Box
+            sx={{
+              color: 'var(--be-accent, #38bdf8)',
+              fontSize: 16,
+              display: 'flex',
+              opacity: 0.7,
+            }}
+          >
+            {icon}
+          </Box>
+        )}
+        <Typography
+          sx={{
+            fontSize: { xs: '0.7rem', sm: '0.6rem' },
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
+        >
+          {label}
+        </Typography>
+        {count && (
+          <Typography
+            sx={{
+              fontSize: { xs: '0.6rem', sm: '0.55rem' },
+              fontWeight: 600,
+              color: 'var(--be-accent, #38bdf8)',
+              opacity: 0.7,
+              ml: 'auto',
+            }}
+          >
+            {count}
+          </Typography>
+        )}
+        {isMobile && (
+          <ExpandMoreIcon
+            sx={{
+              fontSize: 18,
+              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+              transition: 'transform 0.25s ease',
+              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              ml: count ? 0 : 'auto',
+            }}
+          />
+        )}
+      </Box>
+      <Collapse in={isOpen} timeout={250} unmountOnExit={false}>
+        {children}
+      </Collapse>
+    </>
+  );
+};
+
 // ─── Skill slot display ───────────────────────────────────────────────────────
 
 const TILE_SIZE = 58;
+const TILE_SIZE_MOBILE = 44;
 const ULT_SIZE = 66;
+const ULT_SIZE_MOBILE = 52;
 const ULTIMATE_SLOT = 5;
 const SLOT_LABELS: Record<number, string> = { 0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: 'R' };
 
@@ -297,10 +398,14 @@ const SkillSlot: React.FC<{
   abilityId: number;
   isUltimate?: boolean;
 }> = ({ slotIndex, abilityId, isUltimate = false }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const skill = abilityId ? getSkillById(abilityId) : null;
   const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
-  const size = isUltimate ? ULT_SIZE : TILE_SIZE;
+  const size = isUltimate
+    ? isMobile ? ULT_SIZE_MOBILE : ULT_SIZE
+    : isMobile ? TILE_SIZE_MOBILE : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
 
   /** Gold accent for ultimate, class accent for regular abilities */
@@ -315,8 +420,14 @@ const SkillSlot: React.FC<{
         alignItems: 'center',
         gap: 0.5,
         flex: isUltimate ? undefined : 1,
-        maxWidth: isUltimate ? ULT_SIZE : TILE_SIZE + 16,
-        minWidth: isUltimate ? ULT_SIZE : TILE_SIZE,
+        maxWidth: {
+          xs: isUltimate ? ULT_SIZE_MOBILE : TILE_SIZE_MOBILE + 8,
+          sm: isUltimate ? ULT_SIZE : TILE_SIZE + 16,
+        },
+        minWidth: {
+          xs: isUltimate ? ULT_SIZE_MOBILE : TILE_SIZE_MOBILE,
+          sm: isUltimate ? ULT_SIZE : TILE_SIZE,
+        },
       }}
     >
       <Tooltip
@@ -402,11 +513,11 @@ const SkillSlot: React.FC<{
         </Box>
       </Tooltip>
 
-      {/* Skill name (only when resolved) */}
-      {skill && (
+      {/* Skill name (only when resolved — hidden on mobile, tooltip handles it) */}
+      {skill && !isMobile && (
         <Typography
           sx={{
-            fontSize: '0.58rem',
+            fontSize: '0.65rem',
             fontWeight: 600,
             fontFamily: 'Space Grotesk, Inter, system-ui',
             color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
@@ -439,7 +550,10 @@ const GearSlotDisplay: React.FC<{
 }> = ({ slotIndex, itemId, trait, enchant }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const slotName = GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`;
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const slotName = isMobile
+    ? (GEAR_SLOT_NAMES_SHORT[slotIndex] ?? GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`)
+    : (GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`);
   const itemInfo = getItemInfo(itemId);
 
   // itemIdMap contains two types of entries:
@@ -499,10 +613,11 @@ const GearSlotDisplay: React.FC<{
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 1.25,
+        gap: { xs: 0.75, sm: 1.25 },
         py: 0.5,
-        px: 1,
+        px: { xs: 0.75, sm: 1 },
         borderRadius: 2,
+        overflow: 'hidden',
         background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
         transition: 'border-color 0.2s',
@@ -546,13 +661,17 @@ const GearSlotDisplay: React.FC<{
       {/* Slot label */}
       <Typography
         sx={{
-          fontSize: '0.6rem',
+          fontSize: { xs: '0.6rem', sm: '0.6rem' },
           fontWeight: 700,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
           color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-          minWidth: 75,
+          width: { xs: 48, sm: 75 },
+          minWidth: { xs: 48, sm: 75 },
           flexShrink: 0,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
           fontFamily: 'Space Grotesk, Inter, system-ui',
         }}
       >
@@ -564,7 +683,7 @@ const GearSlotDisplay: React.FC<{
         <Typography
           title={displayName}
           sx={{
-            fontSize: '0.72rem',
+            fontSize: { xs: '0.75rem', sm: '0.72rem' },
             fontWeight: 600,
             color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
             whiteSpace: 'nowrap',
@@ -577,7 +696,7 @@ const GearSlotDisplay: React.FC<{
         {setName && setName !== displayName && (
           <Typography
             sx={{
-              fontSize: '0.6rem',
+              fontSize: { xs: '0.65rem', sm: '0.6rem' },
               fontWeight: 500,
               color: 'var(--be-accent, #38bdf8)',
               opacity: 0.7,
@@ -590,56 +709,21 @@ const GearSlotDisplay: React.FC<{
           </Typography>
         )}
         {(traitLabel || enchantLabel) && (
-          <Box sx={{ display: 'flex', gap: 0.5, mt: 0.25, flexWrap: 'wrap' }}>
-            {traitLabel && (
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: '0.55rem',
-                  fontWeight: 600,
-                  px: 0.5,
-                  py: 0.1,
-                  borderRadius: 0.75,
-                  background: isDark ? 'rgba(255,179,0,0.12)' : 'rgba(255,179,0,0.10)',
-                  border: '1px solid rgba(255,179,0,0.25)',
-                  color: isDark ? 'rgba(255,200,60,0.85)' : 'rgba(160,100,0,0.85)',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.6,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {traitLabel}
-              </Typography>
-            )}
-            {enchantLabel && (
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: '0.55rem',
-                  fontWeight: 600,
-                  px: 0.5,
-                  py: 0.1,
-                  borderRadius: 0.75,
-                  background: isDark
-                    ? 'rgba(var(--be-accent-rgb, 56,189,248),0.10)'
-                    : 'rgba(var(--be-accent-rgb, 56,189,248),0.08)',
-                  border: '1px solid rgba(var(--be-accent-rgb, 56,189,248),0.22)',
-                  color: isDark
-                    ? 'rgba(var(--be-accent-rgb, 56,189,248),0.90)'
-                    : 'rgba(var(--be-accent-rgb, 56,189,248),1.0)',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.6,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: 130,
-                  display: 'block',
-                }}
-              >
-                {enchantLabel}
-              </Typography>
-            )}
-          </Box>
+          <Typography
+            component="span"
+            sx={{
+              fontSize: { xs: '0.65rem', sm: '0.55rem' },
+              fontWeight: 500,
+              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: 'block',
+              mt: 0.15,
+            }}
+          >
+            {[traitLabel, enchantLabel].filter(Boolean).join(' \u00b7 ')}
+          </Typography>
         )}
       </Box>
     </Box>
@@ -753,7 +837,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
               <Box sx={{ pt: 1.5, mt: 'auto' }}>
                 <Typography
                   sx={{
-                    fontSize: '0.52rem',
+                    fontSize: { xs: '0.65rem', sm: '0.52rem' },
                     fontWeight: 700,
                     letterSpacing: '0.09em',
                     textTransform: 'uppercase',
@@ -857,7 +941,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                   <Box>
                     <Typography
                       sx={{
-                        fontSize: '0.55rem',
+                        fontSize: { xs: '0.65rem', sm: '0.55rem' },
                         fontWeight: 700,
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
@@ -937,7 +1021,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                         />
                         <Typography
                           sx={{
-                            fontSize: '0.52rem',
+                            fontSize: { xs: '0.65rem', sm: '0.52rem' },
                             fontWeight: 700,
                             letterSpacing: '0.09em',
                             textTransform: 'uppercase',
@@ -984,7 +1068,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.52rem',
+                    fontSize: { xs: '0.65rem', sm: '0.52rem' },
                     fontWeight: 700,
                     letterSpacing: '0.09em',
                     textTransform: 'uppercase',
@@ -1035,7 +1119,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                         />
                         <Typography
                           sx={{
-                            fontSize: '0.52rem',
+                            fontSize: { xs: '0.65rem', sm: '0.52rem' },
                             fontWeight: 700,
                             letterSpacing: '0.09em',
                             textTransform: 'uppercase',
@@ -1110,7 +1194,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             />
                             <Typography
                               sx={{
-                                fontSize: '0.52rem',
+                                fontSize: { xs: '0.65rem', sm: '0.52rem' },
                                 fontWeight: 700,
                                 letterSpacing: '0.09em',
                                 textTransform: 'uppercase',
@@ -1172,7 +1256,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             />
                             <Typography
                               sx={{
-                                fontSize: '0.52rem',
+                                fontSize: { xs: '0.65rem', sm: '0.52rem' },
                                 fontWeight: 700,
                                 letterSpacing: '0.09em',
                                 textTransform: 'uppercase',
@@ -1205,7 +1289,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
 
       {/* Row 2: Skills */}
       <motion.div variants={fadeInUp}>
-        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+        <GlassPanel variant="primary" sx={{ p: { xs: 1.5, sm: 2 }, mb: 2 }}>
           <SectionLabel label="Skills" />
           {frontBar.length > 0 || backBar.length > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -1273,14 +1357,13 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'center',
-                          gap: { xs: 0.75, sm: 1.25 },
-                          py: 1.5,
-                          px: 1.5,
+                          gap: { xs: 0.5, sm: 1.25 },
+                          py: { xs: 1, sm: 1.5 },
+                          px: { xs: 0.75, sm: 1.5 },
                           borderRadius: 3,
                           background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.012)',
                           border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
-                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                          rowGap: 1,
+                          flexWrap: 'nowrap',
                         }}
                       >
                         {/* Regular ability slots (0-4) */}
@@ -1325,11 +1408,12 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
 
       {/* Row 3: Gear */}
       <motion.div variants={fadeInUp}>
-        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel
+        <GlassPanel variant="primary" sx={{ p: { xs: 1.5, sm: 2 }, mb: 2 }}>
+          <CollapsibleSection
             label="Equipment"
             count={gearEntries.length > 0 ? `${gearEntries.length} pieces` : undefined}
-          />
+            defaultOpen
+          >
           {gearEntries.length > 0 ? (
             <Box
               sx={{
@@ -1351,13 +1435,14 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
           ) : (
             <EmptyState message="No equipment configured" />
           )}
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
 
       {/* Row 4: Champion Points (full width) */}
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="default" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel label="Champion Points" />
+          <CollapsibleSection label="Champion Points">
           {cpSlots.length > 0 || cpPassiveCount > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <CPTreeDetail
@@ -1388,16 +1473,17 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
           ) : (
             <EmptyState message="No champion points configured" />
           )}
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
 
       {/* Row 5: Passives (full width) */}
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel
+          <CollapsibleSection
             label="Passives"
             count={setup.passives.length > 0 ? `${setup.passives.length} selected` : undefined}
-          />
+          >
           {setup.passives.length > 0 ? (
             (() => {
               const n = setup.passives.length;
@@ -1474,7 +1560,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                     </Box>
                     <Typography
                       sx={{
-                        fontSize: '0.62rem',
+                        fontSize: { xs: '0.7rem', sm: '0.62rem' },
                         fontWeight: 600,
                         color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.68)',
                         lineHeight: 1.2,
@@ -1521,14 +1607,16 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
           ) : (
             <EmptyState message="No passives selected" />
           )}
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
 
       {/* Row 6: Stats (full width) */}
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel label="Stats" />
-          <ViewStats setup={setup} build={viewBuild} />
+          <CollapsibleSection label="Stats">
+            <ViewStats setup={setup} build={viewBuild} />
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
     </motion.div>
@@ -1796,9 +1884,9 @@ export const BuildViewPage: React.FC = () => {
     .filter(Boolean) as typeof CLASS_SKILL_LINES;
 
   return (
-    <Container maxWidth="lg" sx={{ pt: 3, pb: 6, px: { xs: 2, sm: 3 } }}>
+    <Container maxWidth="lg" sx={{ pt: 3, pb: { xs: build.setups.length > 1 ? 12 : 6, sm: 6 }, px: { xs: 2, sm: 3 } }}>
       <BuildViewShell esoClass={build.esoClass}>
-        <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 2, sm: 3, md: 4 } }}>
+        <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 1.5, sm: 3, md: 4 } }}>
           <motion.div
             variants={staggerContainer}
             initial={prefersReduced ? 'visible' : 'hidden'}
@@ -2020,7 +2108,7 @@ export const BuildViewPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: '0.55rem',
+                      fontSize: { xs: '0.65rem', sm: '0.55rem' },
                       fontWeight: 700,
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
@@ -2047,7 +2135,7 @@ export const BuildViewPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
                       sx={{
-                        fontSize: '0.55rem',
+                        fontSize: { xs: '0.65rem', sm: '0.55rem' },
                         fontWeight: 700,
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
@@ -2179,12 +2267,12 @@ export const BuildViewPage: React.FC = () => {
               </GlassPanel>
             </motion.div>
 
-            {/* ── Setup tabs ── */}
+            {/* ── Setup tabs (inline — desktop & mobile) ── */}
             {build.setups.length > 1 && (
               <motion.div variants={fadeInUp}>
                 <Box
                   sx={{
-                    display: 'flex',
+                    display: { xs: 'none', sm: 'flex' },
                     gap: 0.75,
                     mb: 2.5,
                     flexWrap: 'wrap',
@@ -2274,6 +2362,77 @@ export const BuildViewPage: React.FC = () => {
           </motion.div>
         </Box>
       </BuildViewShell>
+
+      {/* ── Floating setup tabs (mobile only) ── */}
+      {build.setups.length > 1 && (
+        <Box
+          sx={{
+            display: { xs: 'flex', sm: 'none' },
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1200,
+            justifyContent: 'center',
+            gap: 0.75,
+            px: 2,
+            py: 1.5,
+            pb: 'max(1.5rem, env(safe-area-inset-bottom))',
+            backdropFilter: 'blur(20px)',
+            background: isDark
+              ? 'rgba(8, 14, 26, 0.88)'
+              : 'rgba(240, 245, 255, 0.88)',
+            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+            boxShadow: isDark
+              ? '0 -4px 24px rgba(0,0,0,0.4)'
+              : '0 -4px 24px rgba(0,0,0,0.08)',
+          }}
+        >
+          {build.setups.map((setup, i) => {
+            const isActive = i === activeSetup;
+            return (
+              <Button
+                key={setup.id}
+                size="small"
+                onClick={() => setActiveSetup(i)}
+                sx={{
+                  borderRadius: '10px',
+                  textTransform: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: isActive ? 700 : 500,
+                  px: 2.5,
+                  py: 0.85,
+                  flex: 1,
+                  maxWidth: 180,
+                  color: isActive
+                    ? '#fff'
+                    : isDark
+                      ? 'rgba(255,255,255,0.55)'
+                      : 'rgba(0,0,0,0.50)',
+                  background: isActive
+                    ? `linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.7)} 100%)`
+                    : isDark
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(0,0,0,0.04)',
+                  border: `1px solid ${
+                    isActive
+                      ? alpha(classTheme.accent, 0.5)
+                      : isDark
+                        ? 'rgba(255,255,255,0.10)'
+                        : 'rgba(0,0,0,0.08)'
+                  }`,
+                  boxShadow: isActive
+                    ? `0 4px 16px ${alpha(classTheme.accent, 0.3)}`
+                    : 'none',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {setup.name || `Setup ${i + 1}`}
+              </Button>
+            );
+          })}
+        </Box>
+      )}
 
       {/* Snackbar */}
       <Snackbar
