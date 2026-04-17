@@ -183,32 +183,40 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 transition: 'all 0.3s ease',
                 // Exclude tooltip cards from global Card styling
                 '&.gear-set-tooltip': {
-                  background: darkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(249, 250, 251, 0.75)',
-                  backdropFilter: 'blur(12px) !important',
-                  WebkitBackdropFilter: 'blur(12px) !important',
+                  background: darkMode
+                    ? 'rgba(10, 16, 32, 0.78)'
+                    : 'rgba(255, 255, 255, 0.82)',
+                  backdropFilter: 'blur(16px) saturate(1.4) !important',
+                  WebkitBackdropFilter: 'blur(16px) saturate(1.4) !important',
                   border: darkMode
-                    ? '1px solid rgba(255, 255, 255, 0.1)'
-                    : '1px solid rgba(0, 0, 0, 0.08)',
-                  boxShadow: 'none',
-                  borderRadius: '10px',
+                    ? '1px solid rgba(148, 210, 255, 0.12)'
+                    : '1px solid rgba(0, 0, 0, 0.12)',
+                  boxShadow: darkMode
+                    ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+                    : '0 8px 32px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  borderRadius: '12px',
                 },
                 '&.skill-tooltip': {
-                  background: darkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                  background: darkMode
+                    ? 'rgba(10, 16, 32, 0.78)'
+                    : 'rgba(255, 255, 255, 0.82)',
+                  backdropFilter: 'blur(16px) saturate(1.4)',
+                  WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
                   border: darkMode
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(0, 0, 0, 0.15)',
+                    ? '1px solid rgba(148, 210, 255, 0.12)'
+                    : '1px solid rgba(0, 0, 0, 0.12)',
                   boxShadow: darkMode
-                    ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                    : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '10px',
+                    ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+                    : '0 8px 32px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  borderRadius: '12px',
                   '&:hover': {
                     transform: 'none',
                     boxShadow: darkMode
-                      ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                      : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                      ? '0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+                      : '0 8px 32px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                     borderColor: darkMode
-                      ? '1px solid rgba(255, 255, 255, 0.2)'
-                      : '1px solid rgba(0, 0, 0, 0.15)',
+                      ? 'rgba(148, 210, 255, 0.12)'
+                      : 'rgba(0, 0, 0, 0.12)',
                   },
                 },
                 '&:hover': {
@@ -725,6 +733,23 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       />
       <GlobalStyles
         styles={{
+          '@keyframes tooltipEnter': {
+            '0%': {
+              opacity: 0,
+              transform: 'translateY(6px) scale(0.96)',
+            },
+            '100%': {
+              opacity: 1,
+              transform: 'translateY(0) scale(1)',
+            },
+          },
+          '@keyframes tooltipShimmer': {
+            '0%': { backgroundPosition: '-200% 0' },
+            '100%': { backgroundPosition: '200% 0' },
+          },
+          '.u-fade-in': {
+            animation: 'tooltipEnter 220ms cubic-bezier(0.26, 0.53, 0.74, 1.48) both',
+          },
           '.u-hover-glow': {
             transition: 'box-shadow .2s ease',
             '&:hover': {
