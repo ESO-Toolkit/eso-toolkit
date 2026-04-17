@@ -5,6 +5,7 @@ import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { getEsoHubSetUrl } from '../utils/esoHubLinks';
+import { highlightMetrics } from '../utils/highlightMetrics';
 
 export interface GearSetBonus {
   pieces: string; // "(2 items)", "(5 items)", etc.
@@ -268,12 +269,13 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                     gap: 0.25,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <Box
                       component="span"
                       sx={(theme: Theme) => ({
                         display: 'inline-flex',
                         alignItems: 'center',
+                        mt: '2px',
                         px: 0.5,
                         py: 0.15,
                         borderRadius: '4px',
@@ -287,7 +289,8 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                           isDark ? 0.1 : 0.08,
                         ),
                         border: `1px solid ${alpha(theme.palette[getBonusColor(bonus)].main, isDark ? 0.2 : 0.15)}`,
-                        minWidth: 'fit-content',
+                        minWidth: 56,
+                        justifyContent: 'center',
                         flexShrink: 0,
                       })}
                     >
@@ -302,7 +305,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                         fontWeight: bonus.active ? 500 : 400,
                       }}
                     >
-                      {bonus.effect}
+                      {highlightMetrics(bonus.effect, isDark)}
                     </Typography>
                   </Box>
                   {bonus.requirement && (
@@ -341,7 +344,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                 '& p:last-child': { mb: 0 },
               }}
             >
-              {description}
+              {highlightMetrics(description, isDark)}
             </Typography>
           </>
         )}

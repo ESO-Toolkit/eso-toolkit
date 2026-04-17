@@ -52,7 +52,11 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
            that pierces through enemies, dealing
            
           <em>
-            Magic Damage
+            <span
+              style="color: rgb(2, 132, 199); font-weight: 600;"
+            >
+              Magic Damage
+            </span>
           </em>
           .
         </span>
@@ -348,7 +352,13 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
       <p
         class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
-        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+        Launch a magical blade that pierces through enemies, dealing 
+        <span
+          style="color: rgb(2, 132, 199); font-weight: 600;"
+        >
+          Magic Damage
+        </span>
+        . When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
       </p>
     </div>
   </div>
@@ -519,7 +529,13 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
       <p
         class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
-        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+        Launch a magical blade that pierces through enemies, dealing 
+        <span
+          style="color: rgb(2, 132, 199); font-weight: 600;"
+        >
+          Magic Damage
+        </span>
+        . When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
       </p>
     </div>
   </div>
@@ -648,7 +664,13 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
       <p
         class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
-        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+        Launch a magical blade that pierces through enemies, dealing 
+        <span
+          style="color: rgb(2, 132, 199); font-weight: 600;"
+        >
+          Magic Damage
+        </span>
+        . When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
       </p>
     </div>
   </div>

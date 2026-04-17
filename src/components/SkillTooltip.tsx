@@ -17,6 +17,7 @@ import { useLogger } from '@/hooks/useLogger';
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 import type { ScribedSkillAffixInfo } from '../features/scribing/types';
 import { getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
+import { highlightMetrics } from '../utils/highlightMetrics';
 
 export interface SkillStat {
   label: string;
@@ -842,7 +843,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
             '& li': { mb: '4px' },
           }}
         >
-          {description}
+          {highlightMetrics(description, isDark)}
         </Typography>
         {skillLineUrl && (
           <Box sx={{ mt: 0.75, display: 'flex', justifyContent: 'flex-end' }}>
