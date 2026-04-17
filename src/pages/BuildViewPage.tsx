@@ -137,7 +137,7 @@ const GEAR_SLOT_NAMES: Record<number, string> = {
 
 /** Abbreviated slot names for mobile viewports where horizontal space is tight. */
 const GEAR_SLOT_NAMES_SHORT: Record<number, string> = {
-  3: 'Shldrs',
+  3: 'Shldr',
   4: 'Main',
   5: 'Off',
   20: 'Back MH',
@@ -322,10 +322,19 @@ const CollapsibleSection: React.FC<{
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          mb: isOpen ? 1.5 : 0,
+          minHeight: { xs: 48, sm: 'auto' },
+          py: { xs: 1, sm: 0 },
+          mb: isOpen ? 1 : 0,
           cursor: isMobile ? 'pointer' : 'default',
           userSelect: 'none',
           WebkitTapHighlightColor: 'transparent',
+          borderRadius: 1.5,
+          transition: 'background 0.15s ease',
+          ...(isMobile && {
+            '&:active': {
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            },
+          }),
         }}
       >
         {icon && (
@@ -1378,7 +1387,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                           <Box
                             sx={{
                               width: 1.5,
-                              height: ULT_SIZE * 0.7,
+                              height: { xs: ULT_SIZE_MOBILE * 0.7, sm: ULT_SIZE * 0.7 },
                               borderRadius: 1,
                               flexShrink: 0,
                               alignSelf: 'center',
