@@ -243,7 +243,8 @@
     "*.sass",
     "*.less",
     "./src/index.tsx",
-    "./src/setupTests.ts"
+    "./src/setupTests.ts",
+    "./src/utils/chartRegistration.ts"
   ],
   "version": "0.1.0"
 }
