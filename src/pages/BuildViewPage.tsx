@@ -34,6 +34,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
@@ -61,6 +62,7 @@ import {
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
@@ -589,7 +591,8 @@ const GearSlotDisplay: React.FC<{
   itemId: number;
   trait?: string;
   enchant?: string;
-}> = ({ slotIndex, itemId, trait, enchant }) => {
+  setPieceCounts?: Map<string, number>;
+}> = ({ slotIndex, itemId, trait, enchant, setPieceCounts }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -650,7 +653,13 @@ const GearSlotDisplay: React.FC<{
   const traitLabel = trait ? getTraitName(trait) : null;
   const enchantLabel = enchant ? getEnchantName(enchant) : null;
 
-  return (
+  const gearTooltipProps = React.useMemo(
+    () =>
+      setName ? getGearSetTooltipPropsByName(setName, setPieceCounts?.get(setName) ?? 0) : null,
+    [setName, setPieceCounts],
+  );
+
+  const row = (
     <Box
       sx={{
         display: 'flex',
@@ -663,6 +672,7 @@ const GearSlotDisplay: React.FC<{
         background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
         transition: 'border-color 0.2s',
+        cursor: gearTooltipProps ? 'pointer' : undefined,
         '&:hover': {
           borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
         },
@@ -695,7 +705,7 @@ const GearSlotDisplay: React.FC<{
           />
         ) : (
           <Typography sx={{ fontSize: 16, lineHeight: 1, userSelect: 'none' }}>
-            {GEAR_SLOT_ICONS[slotIndex] ?? '📦'}
+            {GEAR_SLOT_ICONS[slotIndex] ?? '\u{1F4E6}'}
           </Typography>
         )}
       </Box>
@@ -770,6 +780,32 @@ const GearSlotDisplay: React.FC<{
       </Box>
     </Box>
   );
+
+  if (!gearTooltipProps) return row;
+
+  return (
+    <Tooltip
+      title={<GearSetTooltip {...gearTooltipProps} />}
+      placement="top"
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
+      arrow
+      slotProps={{
+        tooltip: {
+          sx: {
+            maxWidth: 320,
+            p: 0,
+            backgroundColor: 'transparent !important',
+            border: 'none !important',
+            boxShadow: 'none !important',
+          },
+        },
+        arrow: { sx: { display: 'none' } },
+      }}
+    >
+      {row}
+    </Tooltip>
+  );
 };
 
 // ─── Setup display ────────────────────────────────────────────────────────────
@@ -793,6 +829,17 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
       enchant: setup.gear[slot].enchant,
     }),
   );
+
+  const setPieceCounts = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entry of gearEntries) {
+      const info = getItemInfo(entry.id);
+      if (info?.setName) {
+        counts.set(info.setName, (counts.get(info.setName) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [gearEntries]);
 
   const frontBar = Object.entries(setup.skills[0] ?? {})
     .map(([slot, id]) => ({ slot: Number(slot), id }))
@@ -1471,6 +1518,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                     itemId={id}
                     trait={trait}
                     enchant={enchant}
+                    setPieceCounts={setPieceCounts}
                   />
                 ))}
               </Box>
