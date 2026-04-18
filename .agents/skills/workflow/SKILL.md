@@ -1,328 +1,249 @@
 ---
 name: workflow
 description: >-
-  Enforce git workflow by checking the current branch before starting Jira ticket work.
-  Creates properly-formatted ESO-XXX/description feature branches in a new worktree (preferred) or in-place,
-  prevents commits directly to main, and updates the Jira ticket status as work progresses.
-  IMPORTANT: After implementation is complete, this skill's Steps 5–8 (validate → commit → PR → Jira transition)
-  are MANDATORY — agents must continue through to PR creation without waiting for the user to ask.
+  Route agents to the correct worktree flow for Jira ticket work. Two flows exist:
+  (1) native ephemeral worktree via Claude Code launcher `worktree` checkbox (primary,
+  single-ticket, native branch detection); (2) subagent dispatch for multi-ticket
+  orchestrators via Agent(isolation: "worktree").
+  Load when starting any ticket work — routes to the right flow and covers the full
+  validate → commit → PR → Jira lifecycle.
   AUTO-INVOKED whenever the user's message is or contains a bare Jira ticket reference (e.g. ESO-670).
 ---
 
-You are enforcing the ESO Log Aggregator git workflow. Follow these steps precisely.
+# Skill: Workflow
 
-## Automatic Invocation (Self-Trigger)
+This skill is a **router**. It describes the two worktree flows, when to use each, and the full
+implementation lifecycle. Most agents should only need the native-flow section.
 
-This skill MUST be automatically invoked — without waiting for the user to explicitly request it — whenever:
+## Choose your flow
 
-- The user's message consists **solely** of a Jira ticket reference (e.g. `eso669`, `ESO-669`, `ESO-669`)
-- The user says "work on ESO-XXX", "implement ESO-XXX", "start ESO-XXX", or any similar phrasing that implies beginning implementation
+| Flow | When | Branch |
+|------|------|--------|
+| **Native ephemeral (primary)** | Single-ticket leaf work. Session spawned with Claude Code launcher `worktree` checkbox checked. | `claude/<random>` — do not rename |
+| **Subagent dispatch (multi-ticket)** | Multi-ticket orchestrators: sweep, batch workers, parent/epic iteration. | Each subagent gets `claude/<random>` via `Agent(isolation: "worktree")` |
 
-**Execute Steps 1–4 of this skill BEFORE:**
-- Reading any source files
-- Viewing the Jira ticket
-- Writing or proposing any code changes
+> **Both flows keep `D:\code\eso-log-aggregator` on `main`.** The `guard-main-repo.sh`
+> PreToolUse hook enforces this.
 
-The branch must be confirmed correct before any implementation begins. Skipping this step is the primary cause of commits landing on `main`.
+> **Branch naming**: all agent work uses `claude/<random>` — never rename the branch.
+> Jira linking works via PR title and commit messages containing `ESO-####`.
 
-## Step 1 — Check Current Branch and Working Tree State
+---
 
-Run both commands and capture the output:
+## Native Flow (primary)
 
-```powershell
-git rev-parse --abbrev-ref HEAD
-git status --short
+The Claude Code session was spawned with the launcher `worktree` checkbox checked. The session's
+primary working directory is already `.claude/worktrees/<name>/` on an auto-generated
+`claude/<random>` branch. Claude Code's header, `Create PR` button, and `gitStatus` all reflect
+the ticket branch natively.
+
+### Steps
+
+1. **Read AGENTS.md** — `Read("AGENTS.md")`. Required at session start before anything else.
+
+2. **Inspect ticket** — `getJiraIssue(issueKey: "ESO-####")`. For parent tickets, also list children.
+
+3. **Jira → In Progress** — `transitionJiraIssue(issueKey: "ESO-####", transition: "In Progress")`.
+
+4. **Do NOT rename the branch** — Claude Code caches the branch name at session start and never
+   refreshes it. Renaming permanently disables PR detection and the "Create PR" button
+   ([anthropics/claude-code#18690](https://github.com/anthropics/claude-code/issues/18690)).
+   Leave the branch as `claude/<random>`. Jira linking works via PR title and commit messages
+   containing `ESO-####` — branch name is not required.
+
+5. **Register the active worktree** — so MCP tools target the right tree:
+   ```
+   mcp__eso-logs-worktree__worktree_set(key: "<absolute .claude/worktrees/... path from pwd>")
+   ```
+
+6. **Verify `node_modules`** — the `SessionStart` hook (`setup-worktree-junction.sh`) runs
+   automatically and creates the symlink at session start. Confirm it is healthy, or repair it:
+   ```
+   mcp__eso-logs-worktree__worktree_setup_node_modules()
+   ```
+   This is idempotent — safe to call even if the symlink already exists.
+
+   > **Never** use `mklink /D`, `mklink /J`, `New-Item -ItemType SymbolicLink/Junction`, or any
+   > other manual symlink command. They bypass the hook's path-consistency checks.
+   > If `worktree_setup_node_modules` is unavailable (MCP not yet connected), run
+   > `npm ci` inside the worktree instead — this creates an independent `node_modules`.
+
+   > **Installing new packages**: while `node_modules` is symlinked, never run `npm install`
+   > or `npm ci` from the worktree. Break the symlink first:
+   > 1. `powershell -NoProfile -Command "Remove-Item -Path node_modules -Force"` — removes the symlink only
+   > 2. `npm install <package>` — add the package
+   > 3. `npm ci` — recreates `node_modules` independently in the worktree
+
+7. **Plan then implement** — for any task beyond a trivial single-file change, spawn a Plan
+   sub-agent before writing code. Give it the ticket description and relevant files; ask for:
+   approach, files to change, risks, and implementation order. Then write code + tests.
+
+8. **Validate** — both must pass with zero errors/warnings before pushing:
+   ```bash
+   npm run validate
+   npm test -- --watchAll=false
+   ```
+
+9. **Self-review (mandatory gate)** — review every changed file before committing. Run `/review`
+   if available.
+
+10. **Commit** — use MCP tool (enforces secret-file guards and worktree safety checks):
+    ```
+    mcp__eso-logs-worktree__worktree_commit(files: ["<file1>", "<file2>"], message: "type(scope): description")
+    ```
+    Never use `git add && git commit` directly — raw git bypasses the MCP guards.
+
+11. **Push** — use MCP tool:
+    ```
+    mcp__eso-logs-worktree__worktree_push(setUpstream: true)
+    ```
+
+    > **Pre-push hook fails** (`ERR_MODULE_NOT_FOUND`): `node_modules/.bin` is empty.
+    > Use `worktree_push({ skipLint: true })` as a last resort — but first manually run
+    > `npm run validate` and check for conflict markers.
+
+12. **Create PR** — use the [create-pr skill](.agents/skills/create-pr/SKILL.md), or directly:
+    ```
+    mcp__eso-logs-github__github_create_pr(
+      title: "feat(ESO-####): short description",
+      bodyFile: ".github/tmp-pr-body.md",
+      base: "main",
+      draft: false
+    )
+    ```
+    **Always write the body to a temp file first** — never inline multiline markdown in PowerShell
+    (backticks are stripped). PR title **must contain** `ESO-####` for Jira sync.
+    See [create-pr skill](.agents/skills/create-pr/SKILL.md) for the body template and screenshot
+    process for UI changes.
+
+13. **Jira → In Review** — `transitionJiraIssue(issueKey: "ESO-####", transition: "In Review")`.
+
+14. **Watch to merge** — monitor CI, fix failures, respond to review comments, rebase as needed.
+
+15. **After merge** — cleanup and mark any tracking tasks complete.
+
+### Native-flow specifics
+
+- **`make wt-setup` is NOT used** — the `SessionStart` hook handles symlinks automatically.
+- **`worktree_create` is NOT used** — Claude Code creates the worktree for you.
+- **On exit**, the `Stop` hook (`cleanup-worktree-junction.sh`) removes the node_modules symlink.
+- **MCP servers** connect at session start (`mcp.json` in `.claude/`). If a server times out,
+  first verify the `node_modules` symlink exists — all MCP servers depend on it. Run `npm ci`
+  inside the worktree to recover.
+
+---
+
+## Subagent Dispatch (multi-ticket orchestrators)
+
+Multi-ticket commands dispatch **`Agent(isolation: "worktree")` subagents** for each ticket.
+The orchestrator only makes API calls — it never modifies its own working tree.
+Each subagent gets its own `claude/<random>` branch — no custom branch naming.
+
+**Why subagents?**
+- Each subagent gets its own ephemeral worktree — no contamination between tickets
+- Automatic cleanup — ephemeral worktrees are discarded after the subagent returns
+- Works whether the orchestrator was launched with the worktree checkbox or not
+
+**Subagent dispatch pattern:**
+
+```
+for each ticket needing code work:
+  result = Agent(
+    isolation: "worktree",
+    prompt: """
+      Implement ESO-#### <description>.
+
+      Setup (REQUIRED before any npm/make command):
+      1. mcp__eso-logs-worktree__worktree_set(key: "<absolute worktree path from pwd>")
+      2. mcp__eso-logs-worktree__worktree_setup_node_modules()
+         (or `npm ci` if MCP unavailable — NEVER use mklink or New-Item symlink/junction)
+      3. Do NOT rename the branch — Jira links via PR title + commits containing ESO-####
+
+      Work:
+      4. <specific instructions>
+      5. npm run validate && npm test -- --watchAll=false
+      6. mcp__eso-logs-worktree__worktree_commit + mcp__eso-logs-worktree__worktree_push
+      7. mcp__eso-logs-github__github_create_pr (title must contain ESO-####)
+      8. transitionJiraIssue(issueKey: "ESO-####", transition: "In Review")
+
+      Tool preferences:
+      - Use worktree_commit/worktree_push for commits and pushes (MCP-first)
+      - Use worktree_diff, worktree_status for git inspection
+      - Use Glob (not find/ls) for file discovery
+      - Use Grep (not grep/rg) for content search
+      - Use Read (not cat/head/tail) for reading files
+      - Never use find, grep, cat, head, tail, cd
+
+      Return: { prUrl, status, issues }
+    """
+  )
 ```
 
-## Step 2 — Evaluate Branch State
-
-### 2a — Handle Uncommitted Changes First
-
-If `git status --short` produced any output, the working tree is dirty. Resolve this **before** any branch creation or `git pull`:
-
-```powershell
-$dirty = git status --short
-if ($dirty) {
-    Write-Warning "Uncommitted changes detected in the current worktree!"
-    $dirty  # show the list so the user can see what's affected
-}
+**Fallback — sequential branch switching** (if `Agent(isolation: "worktree")` is unavailable):
+```bash
+original_branch=$(git branch --show-current)
+for each target:
+  git fetch origin <branch>
+  git checkout <branch>
+  mcp__eso-logs-worktree__worktree_setup_node_modules()  # idempotent
+  # ... do work, commit, push ...
+git checkout $original_branch
 ```
 
-Ask the user what to do with the changes:
-- **Commit them** (preferred if the changes belong on the current branch)
-- **Stash them** (`git stash push -m "WIP: pre-worktree-creation stash"`) if they should be set aside
-- **Discard them** (`git checkout -- .`) only if the user explicitly confirms they are throwaway
+---
 
-Do **not** proceed to branch creation or `git pull` until the working tree is clean.
+## Key Rules
 
-### 2b — Evaluate Branch
+| Rule | Detail |
+|------|--------|
+| **Never commit to `main`** | All work is in `.claude/worktrees/<name>/` on a `claude/<random>` branch. |
+| **Never edit main repo with HEAD on main** | The `guard-main-repo.sh` PreToolUse hook enforces this. |
+| **MCP-first** | Prefer `worktree_commit`, `worktree_push`, `worktree_rebase` over raw `git`. |
+| **Never rename the branch** | Breaks Claude Code PR detection ([#18690](https://github.com/anthropics/claude-code/issues/18690)). |
+| **Never `npm install` in main repo** | Breaks the node_modules symlink for all worktrees. |
+| **PR title must contain `ESO-####`** | Required for Jira sync and PR-to-ticket association. |
+| **Validate before every push** | `npm run validate` AND `npm test -- --watchAll=false` — zero errors/warnings. |
 
-**If branch is `main` or `master`:**
-- Do NOT start or continue any implementation work
-- Tell the user they are on a protected branch
-- Ask for the Jira ticket number (e.g. `ESO-569`) and a short description
-- Proceed to Step 3
-- **Note:** Even on `main`, still evaluate Step 3b — if this is the _main_ worktree, prefer creating a new worktree for the feature branch so the main worktree stays on `main` and is available for parallel work. Only use in-place checkout (Step 3c) when the user explicitly confirms they want to use this worktree.
+---
 
-**If branch is already the _correct_ `ESO-XXX/...` feature branch for the requested ticket:**
-- Confirm the branch name to the user
-- Confirm it is safe to proceed with work
-- Stop — no branch creation needed
+## Automatic Invocation
 
-**If branch is a _different_ `ESO-XXX/...` feature branch (occupied worktree):**
-- Do **NOT** switch branches in-place — this displaces the existing work
-- Proceed to Step 3 and use the **worktree path** (Step 3b) to create the new branch in a separate worktree
+This skill **must be invoked** — without waiting for the user to ask — whenever:
+- The user's message consists solely of a Jira ticket reference (e.g. `eso670`, `ESO-670`)
+- The user says "work on ESO-XXX", "implement ESO-XXX", "start ESO-XXX", or similar phrasing
 
-**If branch is some other non-main branch:**
-- Show the user the current branch name
-- Ask if this is the intended working branch or if they need a new one
+Execute the flow setup steps **before** reading any source files, viewing the Jira ticket, or
+writing any code.
 
-## Step 3 — Create Feature Branch (if needed)
+---
 
-Branch naming convention: `ESO-XXX/short-description-in-kebab-case`
+## Recovery: Changes Made on Main
 
-Examples of valid names:
-- `ESO-569/remove-duplicate-roles`
-- `ESO-449/structure-redux-state`
-- `ESO-372/fix-aria-labels`
+If changes were accidentally made on `main`, recover by creating a branch from the current
+position and resetting main:
 
-> **Why this matters**: The `npm run sync-jira` script reads all remote branches and moves Jira tickets to *In Progress* or *Done* automatically. It only detects branches whose name **starts with the Jira ticket key** (`ESO-\d+`). A branch named `feature/remove-duplicate-roles` will be invisible to the sync and its ticket will never be updated.
-
-### 3a — Determine the parent branch
-
-**Ask the user before creating the branch:**
-> "Should this branch be based on `main`, or is it stacking on top of another feature branch (e.g. `ESO-449/structure-redux-state`)?"
-
-- Default is `main` unless the user says otherwise.
-- Set `$parentBranch` to the correct value now — it's needed for both the checkout and the twig dependency.
-
-### 3b — Always create a new worktree (default)
-
-**Always create a new worktree** unless the user explicitly requests in-place checkout. This keeps the main worktree on `main` and available for parallel work.
-
-```powershell
-$currentBranch = git rev-parse --abbrev-ref HEAD
-# Default: always use a worktree. Only skip if the user explicitly asked for in-place checkout.
-$useWorktree = $true
-# No worktree needed if we're already on the correct branch
-if ($currentBranch -eq $newBranch) { $useWorktree = $false }
-```
-
-**If `$useWorktree` is `$true`** (the default):
-
-```powershell
-$worktreeRoot = "..\eso-log-aggregator-worktrees"
-if (-not (Test-Path $worktreeRoot)) { New-Item -ItemType Directory -Path $worktreeRoot -Force | Out-Null }
-$worktreeName = ($newBranch -replace '/', '-')
-$worktreePath = "$worktreeRoot\$worktreeName"
-
-# Verify current worktree is clean before pulling (pull may fail on dirty trees)
-$dirty = git status --short
-if ($dirty) {
-    Write-Error "Working tree has uncommitted changes — resolve them before creating a worktree. Run: git status"
-    return
-}
-git pull origin $parentBranch  # ensure parent is up to date
-git worktree add $worktreePath -b $newBranch $parentBranch
-Set-Location $worktreePath
-
-# IMMEDIATELY register parent dependency (twig with fallback)
-twig branch depend $newBranch $parentBranch 2>$null
-if ($LASTEXITCODE -ne 0) {
-    git config "branch.$newBranch.parent" $parentBranch
-    Write-Host "Parent '$parentBranch' recorded via git config (twig unavailable)"
-} else {
-    Write-Host "Parent '$parentBranch' set via twig"
-}
-```
-
-- After creating the worktree, run `npm ci` in the new directory if `node_modules/` is missing
-- Use the next available port pair for the dev server (see CLAUDE.md — Worktree Port Allocation)
-- Proceed to Step 4
-
-**If the user explicitly requested in-place checkout** (and `$useWorktree` was set to `$false`):
-- Use the standard in-place checkout (Step 3c below)
-- This should be rare — only when the user says something like "just checkout here" or "use this worktree"
-
-### 3c — Create the branch in-place (only when user explicitly requests it)
-
-```powershell
-$parentBranch = "main"  # or the feature branch name if stacking
-$newBranch = "ESO-XXX/your-description"
-
-# Check out from the correct parent and pull if it's main
-git checkout $parentBranch
-if ($parentBranch -eq "main") { git pull origin main }
-
-# Create and switch to the feature branch
-git checkout -b $newBranch
-
-# IMMEDIATELY register parent dependency (twig with fallback)
-twig branch depend $newBranch $parentBranch 2>$null
-if ($LASTEXITCODE -ne 0) {
-    git config "branch.$newBranch.parent" $parentBranch
-    Write-Host "Parent '$parentBranch' recorded via git config (twig unavailable)"
-} else {
-    Write-Host "Parent '$parentBranch' set via twig"
-}
-```
-
-## Step 4 — Verify and Report
-
-**Verify** the twig tree shows the new branch correctly parented:
-
-```powershell
-twig tree 2>$null
-if ($LASTEXITCODE -ne 0) { git config --get-regexp 'branch\..*\.parent' }
-```
-
-Tell the user:
-- The new branch name
-- The parent branch that was used
-- That `twig tree` confirms the branch is correctly parented
-- That they are now safe to begin implementation
-- Whether twig or git config was used for the parent dependency
-
-## Step 5 — Pre-PR Quality Gate (MANDATORY)
-
-**Before creating a PR or marking a ticket as In Review**, run all quality checks and ensure they pass:
-
-```powershell
-# 1. Type-check, lint, and format — must all pass with zero errors/warnings
-npm run validate
-
-# 2. Unit tests — must all pass
-npm test -- --watchAll=false
-```
-
-**Do NOT create a PR if either command exits with a non-zero code.**
-
-- Fix any TypeScript errors before continuing.
-- Run `npm run lint:fix` and `npm run format` to auto-fix lint/format issues, then re-run `npm run validate`.
-- Fix any failing unit tests before continuing.
-
-## Step 6 — Commit and Push
-
-Once all quality checks pass, ensure all changes are committed and the branch is pushed:
-
-```powershell
-# Stage and commit any remaining changes (skip if already committed)
-git add -A
-git status --short  # verify what will be committed before proceeding
-
-# Commit (use PowerShell here-string + --file to preserve backticks in message)
-$msg = @'
-type(scope): description
-'@
-$msg | Set-Content "$env:TEMP\commit-msg.txt"
-git commit --file "$env:TEMP\commit-msg.txt"
-
-# Push (first push sets upstream; subsequent pushes just use 'git push')
-git push -u origin HEAD
-```
-
-**After pushing**, verify the branch is visible on the remote before creating a PR:
-
-```powershell
-git log --oneline origin/$(git branch --show-current)..HEAD  # should be empty if in sync
-```
-
-## Step 7 — Create Pull Request (AUTOMATIC — DO NOT SKIP)
-
-**⚠️ This step is MANDATORY.** After pushing, **always create a PR automatically** — do not wait for the user to ask and do not end your turn. The task is NOT complete until a PR is open. If you stop after Step 6, the workflow is broken.
-
-### 7a — Check for UI changes
-
-```powershell
-$baseBranch = (twig branch parent 2>$null) -replace '\s',''
-if (-not $baseBranch -or $baseBranch -eq '') {
-    $baseBranch = (git config "branch.$(git branch --show-current).parent") 2>$null
-}
-if (-not $baseBranch -or $baseBranch -eq '') { $baseBranch = 'main' }
-
-$changedFiles = git diff --name-only "$baseBranch...HEAD"
-$hasUIChanges = $changedFiles | Where-Object { $_ -match '\.tsx$' }
-```
-
-If `$hasUIChanges` is non-empty, follow the screenshot process in the **create-pr** skill before writing the PR body. Otherwise, skip screenshots entirely.
-
-### 7b — Write the PR body to a temp file (use create_file tool — never Set-Content with backticks)
-
-Use the PR body template from [.agents/skills/create-pr/SKILL.md](.agents/skills/create-pr/SKILL.md). Write it to `.github/tmp-pr-body.md`.
-
-For non-UI PRs omit the Screenshots section. A minimal body for data/logic PRs:
-
-```markdown
-## Summary
-Brief description of what changed.
-
-## Jira Ticket
-[ESO-XXX](https://bkrupa.atlassian.net/browse/ESO-XXX)
-
-## Changes Made
-- Change 1
-- Change 2
-
-## Testing Done
-- [x] TypeScript compiles (`npm run typecheck`)
-- [x] ESLint passes (`npm run lint`)
-- [x] Formatting passes (`npm run format:check`)
-- [x] Unit tests pass (`npm test -- --watchAll=false`)
-- [x] Pre-commit validation passes (`npm run validate`)
-```
-
-### 7c — Create the PR
-
-```powershell
-$baseBranch = (twig branch parent 2>$null) -replace '\s',''
-if (-not $baseBranch -or $baseBranch -eq '') {
-    $baseBranch = (git config "branch.$(git branch --show-current).parent") 2>$null
-}
-if (-not $baseBranch -or $baseBranch -eq '') { $baseBranch = 'main' }
-
-$ticket = if ((git branch --show-current) -match '(ESO-\d+)') { $Matches[1] } else { '' }
-
-gh pr create --title "feat($ticket): <short description>" --body-file ".github/tmp-pr-body.md" --base $baseBranch
-Remove-Item ".github/tmp-pr-body.md" -ErrorAction SilentlyContinue
-```
-
-**⚠️ CRITICAL**: Always use `--body-file`, never `--body`. PowerShell mangles markdown in inline strings (backticks stripped, special chars corrupted).
-
-## Step 8 — Update Ticket Status When Work Is Complete
-
-When implementation is finished, all quality checks pass, changes are committed, pushed, and a PR is open, update the Jira ticket status:
-
-```powershell
-acli jira workitem transition --key ESO-XXX --status "In Review"
-```
-
-Use the appropriate status based on state:
-- **Starting work**: Move ticket to `In Progress`
-- **Implementation done, PR open**: Move ticket to `In Review`
-- **Merged and deployed**: Move ticket to `Done`
-
-See the Jira skill for full transition commands: [.agents/skills/jira/SKILL.md](.agents/skills/jira/SKILL.md)
-
-## Recovery: If Changes Were Made on Main
-
-If the user has already made changes directly on `main`, guide them through this recovery:
-
-```powershell
-# 1. Create the feature branch from current position (preserves commits)
+```bash
+# 1. Create a branch from current position (preserves commits)
 git checkout -b ESO-XXX/your-description
 
 # 2. Reset main back to origin
 git checkout main
 git reset --hard origin/main
 
-# 3. Switch back to feature branch
+# 3. Switch back to your branch
 git checkout ESO-XXX/your-description
 ```
+
+> Note: the recovery branch `ESO-XXX/description` is created outside of Claude Code's native
+> worktree mechanism, so PR detection will not work automatically. Push normally and create the
+> PR manually via `gh pr create` or the [create-pr skill](.agents/skills/create-pr/SKILL.md).
+
+---
 
 ## Project Context
 
 - Jira project key: `ESO`
 - Jira board: https://bkrupa.atlassian.net
-- Branch format: `ESO-XXX/kebab-case-description`
+- Agent branch format: `claude/<random>` — always leave as-is
 - Protected branches: `main`, `master`
-- Twig is used for branch stacking/dependencies (optional — plain git fallback via `git config branch.<name>.parent` is supported)
+- Package manager: `npm` (never pnpm or yarn)
