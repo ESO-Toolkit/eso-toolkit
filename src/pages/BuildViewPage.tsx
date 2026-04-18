@@ -8,6 +8,7 @@
 
 import {
   ArrowOutward as ArrowOutwardIcon,
+  CallSplit as CallSplitIcon,
   Check as CheckIcon,
   ContentCopy as CopyIcon,
   Edit as EditIcon,
@@ -33,6 +34,7 @@ import {
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
@@ -59,6 +61,7 @@ import {
   fetchItemIconUrl,
   deriveItemNameForSlot,
 } from '../features/loadout-manager/utils/itemIconResolver';
+import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
@@ -1873,6 +1876,7 @@ export const BuildViewPage: React.FC = () => {
   const prefersReduced = useReducedMotion();
   const skillCacheReady = useSkillCacheReady();
   const navigate = useNavigate();
+  const savedBuilds = useSelector(selectSavedBuilds);
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1924,8 +1928,14 @@ export const BuildViewPage: React.FC = () => {
       .catch(() => setSnackbar({ open: true, message: 'Failed to copy', severity: 'error' }));
   };
 
+  const ownedSavedBuild = build
+    ? (savedBuilds.find((sb) => sb.build.id === build.id) ?? null)
+    : null;
+  const isOwned = Boolean(ownedSavedBuild);
+
   const handleOpenInEditor = (): void => {
-    navigate(`/build-editor?b=${encodeURIComponent(encodedParam)}`);
+    const base = `/build-editor?b=${encodeURIComponent(encodedParam)}`;
+    navigate(ownedSavedBuild ? `${base}&id=${ownedSavedBuild.id}` : base);
   };
 
   // ── Loading ──
@@ -2290,95 +2300,122 @@ export const BuildViewPage: React.FC = () => {
                     }}
                   />
 
-                  {/* Primary — Edit build (metallic glass, accent-charged) */}
-                  <Button
-                    component={motion.button}
-                    whileTap={prefersReduced ? undefined : { scale: 0.975 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 26 }}
-                    onClick={handleOpenInEditor}
-                    disableRipple
-                    aria-label="Open this build in the editor"
-                    sx={{
-                      position: 'relative',
-                      overflow: 'hidden',
-                      minHeight: { xs: 48, sm: 40 },
-                      px: { xs: 1.75, sm: 2 },
-                      gap: 0.75,
-                      borderRadius: '11px',
-                      textTransform: 'none',
-                      fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
-                      fontSize: { xs: '0.9rem', sm: '0.82rem' },
-                      fontWeight: 700,
-                      letterSpacing: '-0.008em',
-                      color: '#ffffff',
-                      background: `
+                  {/* Primary — Edit build (owned) or Remix (not owned). Metallic glass, accent-charged. */}
+                  <Tooltip
+                    title={
+                      isOwned
+                        ? 'Edit your saved build — changes update your local copy'
+                        : 'Open your own editable copy — the original build stays unchanged'
+                    }
+                    placement="bottom"
+                    enterDelay={400}
+                  >
+                    <Button
+                      component={motion.button}
+                      whileTap={prefersReduced ? undefined : { scale: 0.975 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 26 }}
+                      onClick={handleOpenInEditor}
+                      disableRipple
+                      aria-label={
+                        isOwned
+                          ? 'Edit your saved build in the editor'
+                          : 'Open your own editable copy of this build in the editor'
+                      }
+                      sx={{
+                        position: 'relative',
+                        overflow: 'hidden',
+                        minHeight: { xs: 48, sm: 40 },
+                        px: { xs: 1.75, sm: 2 },
+                        gap: 0.75,
+                        borderRadius: '11px',
+                        textTransform: 'none',
+                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontSize: { xs: '0.9rem', sm: '0.82rem' },
+                        fontWeight: 700,
+                        letterSpacing: '-0.008em',
+                        color: '#ffffff',
+                        background: `
                         radial-gradient(120% 160% at 0% 0%, ${alpha('#ffffff', isDark ? 0.28 : 0.38)} 0%, ${alpha('#ffffff', 0)} 50%),
                         linear-gradient(180deg, ${alpha('#ffffff', 0.14)} 0%, ${alpha('#000000', 0.16)} 100%),
                         linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.82)} 55%, ${alpha(classTheme.accent, 0.95)} 100%)
                       `,
-                      border: `1px solid ${alpha(classTheme.accent, isDark ? 0.62 : 0.52)}`,
-                      boxShadow: `
+                        border: `1px solid ${alpha(classTheme.accent, isDark ? 0.62 : 0.52)}`,
+                        boxShadow: `
                         inset 0 1px 0 ${alpha('#ffffff', 0.32)},
                         inset 0 -1px 0 ${alpha('#000000', 0.2)},
                         0 1px 2px ${alpha('#000000', 0.12)},
                         0 10px 26px -8px ${alpha(classTheme.accent, 0.55)}
                       `,
-                      transition: 'box-shadow 240ms ease, transform 240ms ease, filter 240ms ease',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 0,
-                        background: `linear-gradient(115deg, transparent 30%, ${alpha('#ffffff', 0.26)} 46%, transparent 62%)`,
-                        transform: 'translateX(-130%)',
-                        transition: prefersReduced
-                          ? 'none'
-                          : 'transform 760ms cubic-bezier(0.22, 0.7, 0.25, 1)',
-                        pointerEvents: 'none',
-                      },
-                      '& .eb-arrow': {
-                        transition: prefersReduced
-                          ? 'none'
-                          : 'transform 260ms cubic-bezier(0.2, 0.7, 0.25, 1)',
-                      },
-                      '&:hover': {
-                        filter: 'brightness(1.04)',
-                        boxShadow: `
+                        transition:
+                          'box-shadow 240ms ease, transform 240ms ease, filter 240ms ease',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          inset: 0,
+                          background: `linear-gradient(115deg, transparent 30%, ${alpha('#ffffff', 0.26)} 46%, transparent 62%)`,
+                          transform: 'translateX(-130%)',
+                          transition: prefersReduced
+                            ? 'none'
+                            : 'transform 760ms cubic-bezier(0.22, 0.7, 0.25, 1)',
+                          pointerEvents: 'none',
+                        },
+                        '& .eb-arrow': {
+                          transition: prefersReduced
+                            ? 'none'
+                            : 'transform 260ms cubic-bezier(0.2, 0.7, 0.25, 1)',
+                        },
+                        '&:hover': {
+                          filter: 'brightness(1.04)',
+                          boxShadow: `
                           inset 0 1px 0 ${alpha('#ffffff', 0.36)},
                           inset 0 -1px 0 ${alpha('#000000', 0.22)},
                           0 2px 4px ${alpha('#000000', 0.14)},
                           0 14px 32px -6px ${alpha(classTheme.accent, 0.7)}
                         `,
-                      },
-                      '&:hover::before': prefersReduced
-                        ? undefined
-                        : { transform: 'translateX(130%)' },
-                      '&:hover .eb-arrow': prefersReduced
-                        ? undefined
-                        : { transform: 'translate(2px, -2px)' },
-                      '&:focus-visible': {
-                        outline: `2px solid ${alpha(classTheme.accent, 0.9)}`,
-                        outlineOffset: 3,
-                      },
-                    }}
-                  >
-                    <EditIcon
-                      aria-hidden
-                      sx={{ fontSize: '1rem !important', flexShrink: 0, opacity: 0.95 }}
-                    />
-                    <Box component="span" sx={{ lineHeight: 1 }}>
-                      Edit build
-                    </Box>
-                    <ArrowOutwardIcon
-                      aria-hidden
-                      className="eb-arrow"
-                      sx={{
-                        fontSize: '0.85rem !important',
-                        flexShrink: 0,
-                        opacity: 0.85,
-                        ml: 0.25,
+                        },
+                        '&:hover::before': prefersReduced
+                          ? undefined
+                          : { transform: 'translateX(130%)' },
+                        '&:hover .eb-arrow': prefersReduced
+                          ? undefined
+                          : { transform: 'translate(2px, -2px)' },
+                        '&:focus-visible': {
+                          outline: `2px solid ${alpha(classTheme.accent, 0.9)}`,
+                          outlineOffset: 3,
+                        },
                       }}
-                    />
-                  </Button>
+                    >
+                      {isOwned ? (
+                        <EditIcon
+                          aria-hidden
+                          sx={{ fontSize: '1rem !important', flexShrink: 0, opacity: 0.95 }}
+                        />
+                      ) : (
+                        <CallSplitIcon
+                          aria-hidden
+                          sx={{
+                            fontSize: '1rem !important',
+                            flexShrink: 0,
+                            opacity: 0.95,
+                            transform: 'rotate(90deg)',
+                          }}
+                        />
+                      )}
+                      <Box component="span" sx={{ lineHeight: 1 }}>
+                        {isOwned ? 'Edit build' : 'Remix in editor'}
+                      </Box>
+                      <ArrowOutwardIcon
+                        aria-hidden
+                        className="eb-arrow"
+                        sx={{
+                          fontSize: '0.85rem !important',
+                          flexShrink: 0,
+                          opacity: 0.85,
+                          ml: 0.25,
+                        }}
+                      />
+                    </Button>
+                  </Tooltip>
                 </Box>
               </Box>
             </motion.div>
