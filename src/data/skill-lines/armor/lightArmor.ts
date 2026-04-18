@@ -7,6 +7,7 @@ export const lightArmor: SkillLineData = {
   class: 'armor',
   category: 'armor',
   icon: 'ability_armor_003',
+  sourceUrl: 'https://eso-hub.com/en/skills/armor/light-armor',
   skills: [
     // Active Abilities
     {

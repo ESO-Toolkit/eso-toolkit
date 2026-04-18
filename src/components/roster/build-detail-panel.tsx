@@ -18,6 +18,7 @@ import type { SlotType } from '../../features/loadout-manager/data/slotTypes';
 import type { GearConfig, SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
 import { deriveItemNameForSlot } from '../../features/loadout-manager/utils/itemIconResolver';
 import { getChampionPointAbilityName } from '../../types/champion-points';
+import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../../utils/esoHubLinks';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -85,52 +86,71 @@ const SkillTile: React.FC<{
   const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate ? ULT_TILE : TILE;
   const accent = isUltimate ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
+  const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
+
+  const tile = (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        borderRadius: isUltimate ? '10px' : '8px',
+        overflow: 'hidden',
+        flexShrink: 0,
+        border: `1.5px solid ${
+          skill ? `${accent}0.4)` : isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+        }`,
+        background: skill
+          ? isDarkMode
+            ? `${accent}0.06)`
+            : `${accent}0.04)`
+          : isDarkMode
+            ? 'rgba(255,255,255,0.02)'
+            : 'rgba(0,0,0,0.015)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'transform 0.15s ease, border-color 0.15s ease',
+        '&:hover': { transform: 'scale(1.06)', borderColor: `${accent}0.6)` },
+      }}
+    >
+      {iconUrl ? (
+        <img
+          src={iconUrl}
+          alt={skill?.name ?? ''}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <Typography
+          sx={{
+            fontSize: '0.5rem',
+            color: 'text.disabled',
+            fontWeight: 600,
+            fontFamily: 'monospace',
+          }}
+        >
+          #{abilityId}
+        </Typography>
+      )}
+    </Box>
+  );
 
   return (
     <Tooltip title={skill?.name ?? `Ability #${abilityId}`} arrow placement="top">
-      <Box
-        sx={{
-          width: size,
-          height: size,
-          borderRadius: isUltimate ? '10px' : '8px',
-          overflow: 'hidden',
-          flexShrink: 0,
-          border: `1.5px solid ${
-            skill ? `${accent}0.4)` : isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
-          }`,
-          background: skill
-            ? isDarkMode
-              ? `${accent}0.06)`
-              : `${accent}0.04)`
-            : isDarkMode
-              ? 'rgba(255,255,255,0.02)'
-              : 'rgba(0,0,0,0.015)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'transform 0.15s ease, border-color 0.15s ease',
-          '&:hover': { transform: 'scale(1.06)', borderColor: `${accent}0.6)` },
-        }}
-      >
-        {iconUrl ? (
-          <img
-            src={iconUrl}
-            alt={skill?.name ?? ''}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-        ) : (
-          <Typography
-            sx={{
-              fontSize: '0.5rem',
-              color: 'text.disabled',
-              fontWeight: 600,
-              fontFamily: 'monospace',
-            }}
-          >
-            #{abilityId}
-          </Typography>
-        )}
-      </Box>
+      {esoHubUrl ? (
+        <Box
+          component="a"
+          href={esoHubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${skill?.name ?? `Ability #${abilityId}`} on ESO-Hub`}
+          title="View on ESO-Hub"
+          sx={{ display: 'inline-flex', lineHeight: 0 }}
+        >
+          {tile}
+        </Box>
+      ) : (
+        tile
+      )}
     </Tooltip>
   );
 };
@@ -358,8 +378,15 @@ const GearDisplay: React.FC<{
             </Typography>
             {setName && (
               <Chip
+                component="a"
+                href={getEsoHubSetUrl(setName)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                clickable
                 label={setName}
                 size="small"
+                aria-label={`${setName} on ESO-Hub`}
                 sx={{
                   height: 16,
                   fontSize: '0.5rem',
@@ -368,6 +395,7 @@ const GearDisplay: React.FC<{
                   color: isDarkMode ? 'rgba(168,85,247,0.85)' : 'rgba(126,34,206,0.85)',
                   border: `1px solid ${isDarkMode ? 'rgba(168,85,247,0.2)' : 'rgba(147,51,234,0.15)'}`,
                   '& .MuiChip-label': { px: 0.5 },
+                  textDecoration: 'none',
                 }}
               />
             )}
@@ -404,9 +432,21 @@ const PassivesDisplay: React.FC<{
       {passives.map((id, i) => {
         const skill = getSkillById(id);
         const name = skill?.name ?? `#${id}`;
+        const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
         return (
           <Chip
             key={`${id}-${i}`}
+            {...(esoHubUrl
+              ? {
+                  component: 'a',
+                  href: esoHubUrl,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  clickable: true,
+                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                  'aria-label': `${name} on ESO-Hub`,
+                }
+              : {})}
             label={name}
             size="small"
             sx={{
@@ -417,6 +457,7 @@ const PassivesDisplay: React.FC<{
               color: 'text.secondary',
               border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
               '& .MuiChip-label': { px: 0.5 },
+              ...(esoHubUrl ? { textDecoration: 'none' } : {}),
             }}
           />
         );

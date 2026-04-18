@@ -12,6 +12,7 @@ export const altmer: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_templar_032',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/altmer',
   skills: [
     {
       id: AbilityId.HIGHBORN,

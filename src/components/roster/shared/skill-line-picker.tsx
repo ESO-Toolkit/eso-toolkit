@@ -5,7 +5,11 @@
  * and an "Any class" flex toggle. Stores plain string labels for encoding compatibility.
  */
 
-import { Close as ClearIcon, ExpandMore as ChevronIcon } from '@mui/icons-material';
+import {
+  Close as ClearIcon,
+  ExpandMore as ChevronIcon,
+  OpenInNew as OpenInNewIcon,
+} from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
@@ -28,6 +32,7 @@ import {
 } from '@/features/build-editor/data/esoStaticData';
 import { CLASS_COLOR_MAP } from '@/features/build-editor/theme/classColorMap';
 import type { SkillLineConfig } from '@/types/roster';
+import { getEsoHubSkillLineUrl } from '@/utils/esoHubLinks';
 
 export interface SkillLinePickerGroupProps {
   value?: SkillLineConfig;
@@ -209,6 +214,33 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
                 <ClearIcon sx={{ fontSize: 14 }} />
               </ButtonBase>
             </Tooltip>
+            {/* ESO-Hub attribution link */}
+            {getEsoHubSkillLineUrl(def.label) && (
+              <Tooltip title="View on ESO-Hub" enterDelay={600}>
+                <Box
+                  component="a"
+                  href={getEsoHubSkillLineUrl(def.label)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                  aria-label={`${def.label} on ESO-Hub`}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                    flexShrink: 0,
+                    borderRadius: 1,
+                    p: 0.25,
+                    lineHeight: 0,
+                    '&:hover': {
+                      color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
+                    },
+                  }}
+                >
+                  <OpenInNewIcon sx={{ fontSize: 12 }} />
+                </Box>
+              </Tooltip>
+            )}
           </>
         ) : (
           <>

@@ -7,6 +7,7 @@ export const emperor: SkillLineData = {
   class: 'alliance-war',
   category: 'alliance',
   icon: 'ability_mage_065',
+  sourceUrl: 'https://eso-hub.com/en/skills/alliance-war/emperor',
   skills: [
     {
       id: AbilityId.MONARCH,

@@ -12,6 +12,7 @@ export const woodworking: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_tradecraft_003',
+  sourceUrl: 'https://eso-hub.com/en/skills/craft/woodworking',
   skills: [
     {
       id: AbilityId.WOODWORKING,

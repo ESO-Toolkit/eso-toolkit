@@ -7,6 +7,7 @@ export const werewolf: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'ability_werewolf_werewolf_transformation',
+  sourceUrl: 'https://eso-hub.com/en/skills/world/werewolf',
   skills: [
     // Ultimate Abilities
     {

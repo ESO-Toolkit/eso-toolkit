@@ -12,6 +12,7 @@ export const redguard: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_templar_027',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/redguard',
   skills: [
     {
       id: AbilityId.WAYFARER,

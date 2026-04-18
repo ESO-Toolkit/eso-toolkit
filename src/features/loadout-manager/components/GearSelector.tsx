@@ -73,15 +73,16 @@ const BACK_OFF_SLOT = 21;
 // Kept as a secondary signal because WW exports expose the mask directly, so we
 // can classify even when the icon isn't available yet. The primary signal is
 // `isTwoHandedWeapon(itemId)` (icon-based) — see isTwoHandedGearPiece below.
+// Staff labels verified against data/eso-globals-item-set-collections.json slotMasks table.
 const TWO_HANDED_SLOT_MASKS = new Set<number>([
   134_217_728, // Two-handed sword
-  268_435_456, // Two-handed axe
-  536_870_912, // Maul (WW high-bit variant included)
+  268_435_456, // Maul
+  536_870_912, // Battle axe
   1_073_741_824, // Bow
-  2_147_483_648, // Inferno staff
-  4_294_967_296, // Lightning staff
+  2_147_483_648, // Restoration staff
+  4_294_967_296, // Inferno staff
   8_589_934_592, // Frost staff
-  17_179_869_184, // Restoration staff / other 2H magical variants
+  17_179_869_184, // Lightning staff
 ]);
 
 const isSlotCompatible = (expected: SlotType, actual: SlotType): boolean => {
@@ -303,7 +304,7 @@ const GearTile: React.FC<GearTileProps> = ({
     originalInfo?.slot === 'weapon' || originalInfo?.slot === 'offhand';
   const primaryItemName =
     rawPrimaryItemName && itemIsSlotSpecificWeapon
-      ? applyWeaponTypeToName(rawPrimaryItemName, iconUrl, slotType)
+      ? applyWeaponTypeToName(rawPrimaryItemName, iconUrl, slotType, originalItemId)
       : rawPrimaryItemName;
   const showItemIdFallback = resolvedItemId && !resolvedSetId && !setName ? resolvedItemId : null;
   const fallbackLabel = resolvedSetId
@@ -681,7 +682,14 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     let resolvedItemId = itemId;
     let collectionItem = getCollectionItem(itemId);
 
-    if (collectionItem?.setId) {
+    // Collapse armor/jewelry picks to the set's canonical collection item so
+    // every variant of a given slot shares an icon/name. Weapon slots are
+    // intentionally excluded: the canonical item is whichever weapon has the
+    // lowest itemId for the set (typically a 1H Axe/Mace), so replacing a
+    // user-picked Restoration Staff with the canonical id silently loses the
+    // element / weapon-type choice.
+    const isWeaponSlot = pickerSlot.type === 'weapon' || pickerSlot.type === 'offhand';
+    if (collectionItem?.setId && !isWeaponSlot) {
       const canonicalCollectionItem = findCollectionItemBySetAndSlotType(
         collectionItem.setId,
         pickerSlot.type,

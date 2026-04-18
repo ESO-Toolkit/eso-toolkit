@@ -12,6 +12,7 @@ export const dunmer: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_weapon_016',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/dark-elf',
   skills: [
     {
       id: AbilityId.ASHLANDER,

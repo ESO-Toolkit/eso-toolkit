@@ -533,3 +533,33 @@ export function getSkillLineIndex(): SkillLineMeta[] {
     className: l.class,
   }));
 }
+
+/**
+ * Returns a map of skill line display name → canonical ESO-Hub sourceUrl
+ * for every skill line across all categories. Used by the attribution link
+ * utility (src/utils/esoHubLinks.ts) to resolve ESO-Hub URLs from
+ * skill.category strings.
+ */
+export function getSkillLineSourceUrlMap(): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const line of [
+    ...CLASS_SKILL_LINES,
+    ...WEAPON_SKILL_LINES,
+    ...GUILD_SKILL_LINES,
+    ...ALLIANCE_SKILL_LINES,
+    ...WORLD_SKILL_LINES,
+    ...ARMOR_SKILL_LINES,
+    ...RACIAL_SKILL_LINES,
+    ...CRAFT_SKILL_LINES,
+  ]) {
+    if (line.name && line.sourceUrl) {
+      map.set(line.name, line.sourceUrl);
+      // lineText in tooltips is formatted as "ClassName — SkillLineName" for class skills.
+      // Add a composite key so callers don't need to strip the prefix themselves.
+      if (line.category === 'class' && line.class) {
+        map.set(`${line.class} \u2014 ${line.name}`, line.sourceUrl);
+      }
+    }
+  }
+  return map;
+}

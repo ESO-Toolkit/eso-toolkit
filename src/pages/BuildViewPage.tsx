@@ -7,11 +7,14 @@
  */
 
 import {
+  ArrowOutward as ArrowOutwardIcon,
+  CallSplit as CallSplitIcon,
+  Check as CheckIcon,
   ContentCopy as CopyIcon,
   Edit as EditIcon,
+  ExpandMore as ExpandMoreIcon,
   FitnessCenter as FitnessIcon,
   LocalFireDepartment as WarfareIcon,
-  OpenInNew as OpenInNewIcon,
   YouTube as YouTubeIcon,
 } from '@mui/icons-material';
 import {
@@ -19,16 +22,19 @@ import {
   Box,
   Button,
   Chip,
+  Collapse,
   Container,
   Divider,
   Skeleton,
   Snackbar,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
@@ -55,8 +61,10 @@ import {
   fetchItemIconUrl,
   deriveItemNameForSlot,
 } from '../features/loadout-manager/utils/itemIconResolver';
+import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
+import { getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
 
@@ -130,6 +138,15 @@ const GEAR_SLOT_NAMES: Record<number, string> = {
   16: 'Gloves',
   20: 'Back Main Hand',
   21: 'Back Off Hand',
+};
+
+/** Abbreviated slot names for mobile viewports where horizontal space is tight. */
+const GEAR_SLOT_NAMES_SHORT: Record<number, string> = {
+  3: 'Shldr',
+  4: 'Main',
+  5: 'Off',
+  20: 'Back MH',
+  21: 'Back OH',
 };
 
 const GEAR_SLOT_ORDER = [0, 2, 3, 16, 6, 8, 9, 1, 11, 12, 4, 5, 20, 21];
@@ -225,7 +242,7 @@ const SectionLabel: React.FC<{
       )}
       <Typography
         sx={{
-          fontSize: '0.6rem',
+          fontSize: { xs: '0.7rem', sm: '0.6rem' },
           fontWeight: 700,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
@@ -238,7 +255,7 @@ const SectionLabel: React.FC<{
       {count && (
         <Typography
           sx={{
-            fontSize: '0.55rem',
+            fontSize: { xs: '0.6rem', sm: '0.55rem' },
             fontWeight: 600,
             color: 'var(--be-accent, #38bdf8)',
             opacity: 0.7,
@@ -285,10 +302,108 @@ const EmptyState: React.FC<{ message?: string }> = ({ message = 'Not configured'
   );
 };
 
+// ─── Collapsible section (mobile) ─────────────────────────────────────────────
+
+const CollapsibleSection: React.FC<{
+  label: string;
+  count?: string;
+  icon?: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}> = ({ label, count, icon, defaultOpen = false, children }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [open, setOpen] = useState(isMobile ? defaultOpen : true);
+  const isDark = theme.palette.mode === 'dark';
+
+  // Always open on desktop
+  const isOpen = isMobile ? open : true;
+
+  return (
+    <>
+      <Box
+        onClick={isMobile ? () => setOpen((o) => !o) : undefined}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          minHeight: { xs: 48, sm: 'auto' },
+          py: { xs: 1, sm: 0 },
+          mb: isOpen ? 1 : 0,
+          cursor: isMobile ? 'pointer' : 'default',
+          userSelect: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          borderRadius: 1.5,
+          transition: 'background 0.15s ease',
+          ...(isMobile && {
+            '&:active': {
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            },
+          }),
+        }}
+      >
+        {icon && (
+          <Box
+            sx={{
+              color: 'var(--be-accent, #38bdf8)',
+              fontSize: 16,
+              display: 'flex',
+              opacity: 0.7,
+            }}
+          >
+            {icon}
+          </Box>
+        )}
+        <Typography
+          sx={{
+            fontSize: { xs: '0.7rem', sm: '0.6rem' },
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
+        >
+          {label}
+        </Typography>
+        {count && (
+          <Typography
+            sx={{
+              fontSize: { xs: '0.6rem', sm: '0.55rem' },
+              fontWeight: 600,
+              color: 'var(--be-accent, #38bdf8)',
+              opacity: 0.7,
+              ml: 'auto',
+            }}
+          >
+            {count}
+          </Typography>
+        )}
+        {isMobile && (
+          <ExpandMoreIcon
+            sx={{
+              fontSize: 18,
+              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+              transition: 'transform 0.25s ease',
+              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              ml: count ? 0 : 'auto',
+            }}
+          />
+        )}
+      </Box>
+      <Collapse in={isOpen} timeout={250} unmountOnExit={false}>
+        {children}
+      </Collapse>
+    </>
+  );
+};
+
 // ─── Skill slot display ───────────────────────────────────────────────────────
 
 const TILE_SIZE = 58;
+const TILE_SIZE_MOBILE = 40;
 const ULT_SIZE = 66;
+const ULT_SIZE_MOBILE = 48;
 const ULTIMATE_SLOT = 5;
 const SLOT_LABELS: Record<number, string> = { 0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: 'R' };
 
@@ -297,11 +412,20 @@ const SkillSlot: React.FC<{
   abilityId: number;
   isUltimate?: boolean;
 }> = ({ slotIndex, abilityId, isUltimate = false }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const skill = abilityId ? getSkillById(abilityId) : null;
   const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
-  const size = isUltimate ? ULT_SIZE : TILE_SIZE;
+  const size = isUltimate
+    ? isMobile
+      ? ULT_SIZE_MOBILE
+      : ULT_SIZE
+    : isMobile
+      ? TILE_SIZE_MOBILE
+      : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
+  const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
 
   /** Gold accent for ultimate, class accent for regular abilities */
   const accentA = (a: number): string =>
@@ -315,8 +439,14 @@ const SkillSlot: React.FC<{
         alignItems: 'center',
         gap: 0.5,
         flex: isUltimate ? undefined : 1,
-        maxWidth: isUltimate ? ULT_SIZE : TILE_SIZE + 16,
-        minWidth: isUltimate ? ULT_SIZE : TILE_SIZE,
+        maxWidth: {
+          xs: isUltimate ? ULT_SIZE_MOBILE : TILE_SIZE_MOBILE,
+          sm: isUltimate ? ULT_SIZE : TILE_SIZE + 16,
+        },
+        minWidth: {
+          xs: isUltimate ? ULT_SIZE_MOBILE : TILE_SIZE_MOBILE,
+          sm: isUltimate ? ULT_SIZE : TILE_SIZE,
+        },
       }}
     >
       <Tooltip
@@ -328,85 +458,157 @@ const SkillSlot: React.FC<{
         arrow
         placement="top"
       >
-        <Box
-          sx={{
-            position: 'relative',
-            width: size,
-            height: size,
-            borderRadius: isUltimate ? '14px' : '12px',
-            overflow: 'hidden',
-            flexShrink: 0,
-            border: `${isUltimate ? 2 : 1.5}px solid ${
-              skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-            }`,
-            background: skill
-              ? isDark
-                ? accentA(0.08)
-                : accentA(0.04)
-              : isDark
-                ? 'rgba(255,255,255,0.025)'
-                : 'rgba(0,0,0,0.015)',
-            boxShadow: skill
-              ? isDark
-                ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
-                : 'inset 0 1px 0 rgba(255,255,255,0.5)'
-              : isDark
-                ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
-                : 'inset 0 1px 0 rgba(255,255,255,0.4)',
-            transition: 'all 180ms ease',
-            '&:hover': {
-              transform: 'scale(1.08)',
-              borderColor: accentA(0.7),
-              background: isDark ? accentA(0.14) : accentA(0.08),
-              boxShadow: isDark
-                ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
-                : '0 6px 16px rgba(0,0,0,0.08)',
-            },
-          }}
-        >
-          {/* Skill icon */}
-          {iconUrl ? (
-            <img
-              src={iconUrl}
-              alt={skill?.name ?? `Ability ${abilityId}`}
-              loading="lazy"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          ) : (
+        {esoHubUrl ? (
+          <Box
+            component="a"
+            href={esoHubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            aria-label={`${skill?.name ?? ''} on ESO-Hub`}
+            sx={{ display: 'inline-flex', lineHeight: 0 }}
+          >
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
+                position: 'relative',
+                width: size,
+                height: size,
+                borderRadius: isUltimate ? '14px' : '12px',
+                overflow: 'hidden',
+                flexShrink: 0,
+                border: `${isUltimate ? 2 : 1.5}px solid ${accentA(0.45)}`,
+                background: isDark ? accentA(0.08) : accentA(0.04),
+                boxShadow: isDark
+                  ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                  : 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                transition: 'all 180ms ease',
+                '&:hover': {
+                  transform: 'scale(1.08)',
+                  borderColor: accentA(0.7),
+                  background: isDark ? accentA(0.14) : accentA(0.08),
+                  boxShadow: isDark
+                    ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
+                    : '0 6px 16px rgba(0,0,0,0.08)',
+                },
               }}
             >
-              <Typography
+              {iconUrl ? (
+                <img
+                  src={iconUrl}
+                  alt={skill?.name ?? `Ability ${abilityId}`}
+                  loading="lazy"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: isUltimate ? 16 : 13,
+                      fontWeight: 800,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 0.4,
+                      color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                      lineHeight: 1,
+                      userSelect: 'none',
+                    }}
+                  >
+                    {label}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              position: 'relative',
+              width: size,
+              height: size,
+              borderRadius: isUltimate ? '14px' : '12px',
+              overflow: 'hidden',
+              flexShrink: 0,
+              border: `${isUltimate ? 2 : 1.5}px solid ${
+                skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
+              }`,
+              background: skill
+                ? isDark
+                  ? accentA(0.08)
+                  : accentA(0.04)
+                : isDark
+                  ? 'rgba(255,255,255,0.025)'
+                  : 'rgba(0,0,0,0.015)',
+              boxShadow: skill
+                ? isDark
+                  ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                  : 'inset 0 1px 0 rgba(255,255,255,0.5)'
+                : isDark
+                  ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
+                  : 'inset 0 1px 0 rgba(255,255,255,0.4)',
+              transition: 'all 180ms ease',
+              '&:hover': {
+                transform: 'scale(1.08)',
+                borderColor: accentA(0.7),
+                background: isDark ? accentA(0.14) : accentA(0.08),
+                boxShadow: isDark
+                  ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
+                  : '0 6px 16px rgba(0,0,0,0.08)',
+              },
+            }}
+          >
+            {/* Skill icon */}
+            {iconUrl ? (
+              <img
+                src={iconUrl}
+                alt={skill?.name ?? `Ability ${abilityId}`}
+                loading="lazy"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <Box
                 sx={{
-                  fontSize: isUltimate ? 16 : 13,
-                  fontWeight: 800,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  letterSpacing: 0.4,
-                  color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
-                  lineHeight: 1,
-                  userSelect: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
                 }}
               >
-                {label}
-              </Typography>
-            </Box>
-          )}
-        </Box>
+                <Typography
+                  sx={{
+                    fontSize: isUltimate ? 16 : 13,
+                    fontWeight: 800,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    letterSpacing: 0.4,
+                    color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                    lineHeight: 1,
+                    userSelect: 'none',
+                  }}
+                >
+                  {label}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
       </Tooltip>
 
-      {/* Skill name (only when resolved) */}
-      {skill && (
+      {/* Skill name (only when resolved — hidden on mobile, tooltip handles it) */}
+      {skill && !isMobile && (
         <Typography
           sx={{
-            fontSize: '0.58rem',
+            fontSize: '0.65rem',
             fontWeight: 600,
             fontFamily: 'Space Grotesk, Inter, system-ui',
             color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
@@ -439,7 +641,10 @@ const GearSlotDisplay: React.FC<{
 }> = ({ slotIndex, itemId, trait, enchant }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const slotName = GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`;
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const slotName = isMobile
+    ? (GEAR_SLOT_NAMES_SHORT[slotIndex] ?? GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`)
+    : (GEAR_SLOT_NAMES[slotIndex] ?? `Slot ${slotIndex}`);
   const itemInfo = getItemInfo(itemId);
 
   // itemIdMap contains two types of entries:
@@ -499,10 +704,11 @@ const GearSlotDisplay: React.FC<{
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 1.25,
+        gap: { xs: 0.75, sm: 1.25 },
         py: 0.5,
-        px: 1,
+        px: { xs: 0.75, sm: 1 },
         borderRadius: 2,
+        overflow: 'hidden',
         background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
         transition: 'border-color 0.2s',
@@ -546,13 +752,17 @@ const GearSlotDisplay: React.FC<{
       {/* Slot label */}
       <Typography
         sx={{
-          fontSize: '0.6rem',
+          fontSize: { xs: '0.6rem', sm: '0.6rem' },
           fontWeight: 700,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
           color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-          minWidth: 75,
+          width: { xs: 48, sm: 75 },
+          minWidth: { xs: 48, sm: 75 },
           flexShrink: 0,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
           fontFamily: 'Space Grotesk, Inter, system-ui',
         }}
       >
@@ -564,7 +774,7 @@ const GearSlotDisplay: React.FC<{
         <Typography
           title={displayName}
           sx={{
-            fontSize: '0.72rem',
+            fontSize: { xs: '0.75rem', sm: '0.72rem' },
             fontWeight: 600,
             color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
             whiteSpace: 'nowrap',
@@ -577,7 +787,7 @@ const GearSlotDisplay: React.FC<{
         {setName && setName !== displayName && (
           <Typography
             sx={{
-              fontSize: '0.6rem',
+              fontSize: { xs: '0.65rem', sm: '0.6rem' },
               fontWeight: 500,
               color: 'var(--be-accent, #38bdf8)',
               opacity: 0.7,
@@ -590,56 +800,21 @@ const GearSlotDisplay: React.FC<{
           </Typography>
         )}
         {(traitLabel || enchantLabel) && (
-          <Box sx={{ display: 'flex', gap: 0.5, mt: 0.25, flexWrap: 'wrap' }}>
-            {traitLabel && (
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: '0.55rem',
-                  fontWeight: 600,
-                  px: 0.5,
-                  py: 0.1,
-                  borderRadius: 0.75,
-                  background: isDark ? 'rgba(255,179,0,0.12)' : 'rgba(255,179,0,0.10)',
-                  border: '1px solid rgba(255,179,0,0.25)',
-                  color: isDark ? 'rgba(255,200,60,0.85)' : 'rgba(160,100,0,0.85)',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.6,
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {traitLabel}
-              </Typography>
-            )}
-            {enchantLabel && (
-              <Typography
-                component="span"
-                sx={{
-                  fontSize: '0.55rem',
-                  fontWeight: 600,
-                  px: 0.5,
-                  py: 0.1,
-                  borderRadius: 0.75,
-                  background: isDark
-                    ? 'rgba(var(--be-accent-rgb, 56,189,248),0.10)'
-                    : 'rgba(var(--be-accent-rgb, 56,189,248),0.08)',
-                  border: '1px solid rgba(var(--be-accent-rgb, 56,189,248),0.22)',
-                  color: isDark
-                    ? 'rgba(var(--be-accent-rgb, 56,189,248),0.90)'
-                    : 'rgba(var(--be-accent-rgb, 56,189,248),1.0)',
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.6,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: 130,
-                  display: 'block',
-                }}
-              >
-                {enchantLabel}
-              </Typography>
-            )}
-          </Box>
+          <Typography
+            component="span"
+            sx={{
+              fontSize: { xs: '0.65rem', sm: '0.55rem' },
+              fontWeight: 500,
+              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: 'block',
+              mt: 0.15,
+            }}
+          >
+            {[traitLabel, enchantLabel].filter(Boolean).join(' \u00b7 ')}
+          </Typography>
         )}
       </Box>
     </Box>
@@ -753,7 +928,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
               <Box sx={{ pt: 1.5, mt: 'auto' }}>
                 <Typography
                   sx={{
-                    fontSize: '0.52rem',
+                    fontSize: { xs: '0.65rem', sm: '0.52rem' },
                     fontWeight: 700,
                     letterSpacing: '0.09em',
                     textTransform: 'uppercase',
@@ -857,7 +1032,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                   <Box>
                     <Typography
                       sx={{
-                        fontSize: '0.55rem',
+                        fontSize: { xs: '0.65rem', sm: '0.55rem' },
                         fontWeight: 700,
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
@@ -937,7 +1112,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                         />
                         <Typography
                           sx={{
-                            fontSize: '0.52rem',
+                            fontSize: { xs: '0.65rem', sm: '0.52rem' },
                             fontWeight: 700,
                             letterSpacing: '0.09em',
                             textTransform: 'uppercase',
@@ -984,7 +1159,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
               <Box>
                 <Typography
                   sx={{
-                    fontSize: '0.52rem',
+                    fontSize: { xs: '0.65rem', sm: '0.52rem' },
                     fontWeight: 700,
                     letterSpacing: '0.09em',
                     textTransform: 'uppercase',
@@ -1035,7 +1210,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                         />
                         <Typography
                           sx={{
-                            fontSize: '0.52rem',
+                            fontSize: { xs: '0.65rem', sm: '0.52rem' },
                             fontWeight: 700,
                             letterSpacing: '0.09em',
                             textTransform: 'uppercase',
@@ -1110,7 +1285,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             />
                             <Typography
                               sx={{
-                                fontSize: '0.52rem',
+                                fontSize: { xs: '0.65rem', sm: '0.52rem' },
                                 fontWeight: 700,
                                 letterSpacing: '0.09em',
                                 textTransform: 'uppercase',
@@ -1172,7 +1347,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                             />
                             <Typography
                               sx={{
-                                fontSize: '0.52rem',
+                                fontSize: { xs: '0.65rem', sm: '0.52rem' },
                                 fontWeight: 700,
                                 letterSpacing: '0.09em',
                                 textTransform: 'uppercase',
@@ -1205,7 +1380,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
 
       {/* Row 2: Skills */}
       <motion.div variants={fadeInUp}>
-        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
+        <GlassPanel variant="primary" sx={{ p: { xs: 1.5, sm: 2 }, mb: 2 }}>
           <SectionLabel label="Skills" />
           {frontBar.length > 0 || backBar.length > 0 ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -1273,14 +1448,13 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'center',
-                          gap: { xs: 0.75, sm: 1.25 },
-                          py: 1.5,
-                          px: 1.5,
+                          gap: { xs: 0.375, sm: 1.25 },
+                          py: { xs: 1, sm: 1.5 },
+                          px: { xs: 0.5, sm: 1.5 },
                           borderRadius: 3,
                           background: isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.012)',
                           border: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}`,
-                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                          rowGap: 1,
+                          flexWrap: 'nowrap',
                         }}
                       >
                         {/* Regular ability slots (0-4) */}
@@ -1295,7 +1469,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                           <Box
                             sx={{
                               width: 1.5,
-                              height: ULT_SIZE * 0.7,
+                              height: { xs: ULT_SIZE_MOBILE * 0.7, sm: ULT_SIZE * 0.7 },
                               borderRadius: 1,
                               flexShrink: 0,
                               alignSelf: 'center',
@@ -1325,210 +1499,215 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
 
       {/* Row 3: Gear */}
       <motion.div variants={fadeInUp}>
-        <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel
+        <GlassPanel variant="primary" sx={{ p: { xs: 1.5, sm: 2 }, mb: 2 }}>
+          <CollapsibleSection
             label="Equipment"
             count={gearEntries.length > 0 ? `${gearEntries.length} pieces` : undefined}
-          />
-          {gearEntries.length > 0 ? (
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                gap: 0.5,
-              }}
-            >
-              {gearEntries.map(({ slot, id, trait, enchant }) => (
-                <GearSlotDisplay
-                  key={slot}
-                  slotIndex={slot}
-                  itemId={id}
-                  trait={trait}
-                  enchant={enchant}
-                />
-              ))}
-            </Box>
-          ) : (
-            <EmptyState message="No equipment configured" />
-          )}
+            defaultOpen
+          >
+            {gearEntries.length > 0 ? (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: 0.5,
+                }}
+              >
+                {gearEntries.map(({ slot, id, trait, enchant }) => (
+                  <GearSlotDisplay
+                    key={slot}
+                    slotIndex={slot}
+                    itemId={id}
+                    trait={trait}
+                    enchant={enchant}
+                  />
+                ))}
+              </Box>
+            ) : (
+              <EmptyState message="No equipment configured" />
+            )}
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
 
       {/* Row 4: Champion Points (full width) */}
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="default" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel label="Champion Points" />
-          {cpSlots.length > 0 || cpPassiveCount > 0 ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <CPTreeDetail
-                label="Warfare"
-                color="#42a5f5"
-                icon={<WarfareIcon sx={{ fontSize: 14 }} />}
-                slots={setup.cp.warfare.slots}
-                passives={setup.cp.warfare.passives}
-                passivesList={CP_PASSIVES_BY_TREE.warfare}
-              />
-              <CPTreeDetail
-                label="Fitness"
-                color="#ef5350"
-                icon={<FitnessIcon sx={{ fontSize: 14 }} />}
-                slots={setup.cp.fitness.slots}
-                passives={setup.cp.fitness.passives}
-                passivesList={CP_PASSIVES_BY_TREE.fitness}
-              />
-              <CPTreeDetail
-                label="Craft"
-                color="#66bb6a"
-                icon={null}
-                slots={setup.cp.craft.slots}
-                passives={setup.cp.craft.passives}
-                passivesList={CP_PASSIVES_BY_TREE.craft}
-              />
-            </Box>
-          ) : (
-            <EmptyState message="No champion points configured" />
-          )}
+          <CollapsibleSection label="Champion Points">
+            {cpSlots.length > 0 || cpPassiveCount > 0 ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <CPTreeDetail
+                  label="Warfare"
+                  color="#42a5f5"
+                  icon={<WarfareIcon sx={{ fontSize: 14 }} />}
+                  slots={setup.cp.warfare.slots}
+                  passives={setup.cp.warfare.passives}
+                  passivesList={CP_PASSIVES_BY_TREE.warfare}
+                />
+                <CPTreeDetail
+                  label="Fitness"
+                  color="#ef5350"
+                  icon={<FitnessIcon sx={{ fontSize: 14 }} />}
+                  slots={setup.cp.fitness.slots}
+                  passives={setup.cp.fitness.passives}
+                  passivesList={CP_PASSIVES_BY_TREE.fitness}
+                />
+                <CPTreeDetail
+                  label="Craft"
+                  color="#66bb6a"
+                  icon={null}
+                  slots={setup.cp.craft.slots}
+                  passives={setup.cp.craft.passives}
+                  passivesList={CP_PASSIVES_BY_TREE.craft}
+                />
+              </Box>
+            ) : (
+              <EmptyState message="No champion points configured" />
+            )}
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
 
       {/* Row 5: Passives (full width) */}
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel
+          <CollapsibleSection
             label="Passives"
             count={setup.passives.length > 0 ? `${setup.passives.length} selected` : undefined}
-          />
-          {setup.passives.length > 0 ? (
-            (() => {
-              const n = setup.passives.length;
-              const cols = getPassiveCols(n);
-              const remainder = n % cols;
-              const fullItems =
-                remainder > 0 ? setup.passives.slice(0, n - remainder) : setup.passives;
-              const lastRowItems = remainder > 0 ? setup.passives.slice(n - remainder) : [];
+          >
+            {setup.passives.length > 0 ? (
+              (() => {
+                const n = setup.passives.length;
+                const cols = getPassiveCols(n);
+                const remainder = n % cols;
+                const fullItems =
+                  remainder > 0 ? setup.passives.slice(0, n - remainder) : setup.passives;
+                const lastRowItems = remainder > 0 ? setup.passives.slice(n - remainder) : [];
 
-              const renderPassiveItem = (
-                passiveId: number,
-                key: string | number,
-              ): React.ReactNode => {
-                const skill = getSkillById(passiveId);
-                const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
-                return (
-                  <Box
-                    key={key}
-                    sx={{
-                      display: 'flex',
-                      flex: 1,
-                      alignItems: 'center',
-                      gap: 1,
-                      py: 0.6,
-                      px: 1,
-                      borderRadius: 2,
-                      background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
-                      transition: 'border-color 0.15s',
-                      '&:hover': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
-                      },
-                    }}
-                  >
+                const renderPassiveItem = (
+                  passiveId: number,
+                  key: string | number,
+                ): React.ReactNode => {
+                  const skill = getSkillById(passiveId);
+                  const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
+                  return (
                     <Box
+                      key={key}
                       sx={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
                         display: 'flex',
+                        flex: 1,
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        gap: 1,
+                        py: 0.6,
+                        px: 1,
+                        borderRadius: 2,
+                        background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`,
+                        transition: 'border-color 0.15s',
+                        '&:hover': {
+                          borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)',
+                        },
                       }}
                     >
-                      {iconUrl ? (
-                        <img
-                          src={iconUrl}
-                          alt={skill?.name ?? `Passive ${passiveId}`}
-                          loading="lazy"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: 5,
-                            height: 5,
-                            borderRadius: '50%',
-                            background: 'var(--be-accent, #38bdf8)',
-                            opacity: 0.4,
-                          }}
-                        />
-                      )}
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '6px',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {iconUrl ? (
+                          <img
+                            src={iconUrl}
+                            alt={skill?.name ?? `Passive ${passiveId}`}
+                            loading="lazy"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              display: 'block',
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: 5,
+                              height: 5,
+                              borderRadius: '50%',
+                              background: 'var(--be-accent, #38bdf8)',
+                              opacity: 0.4,
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: '0.7rem', sm: '0.62rem' },
+                          fontWeight: 600,
+                          color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.68)',
+                          lineHeight: 1.2,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {skill?.name ?? `Passive #${passiveId}`}
+                      </Typography>
                     </Box>
-                    <Typography
-                      sx={{
-                        fontSize: '0.62rem',
-                        fontWeight: 600,
-                        color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.68)',
-                        lineHeight: 1.2,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                      }}
-                    >
-                      {skill?.name ?? `Passive #${passiveId}`}
-                    </Typography>
+                  );
+                };
+
+                return (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                    {/* Full rows — uniform grid */}
+                    {fullItems.length > 0 && (
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: {
+                            xs: '1fr 1fr',
+                            sm: `repeat(${Math.min(cols, 3)}, 1fr)`,
+                            md: `repeat(${cols}, 1fr)`,
+                          },
+                          gap: 0.75,
+                        }}
+                      >
+                        {fullItems.map((id) => renderPassiveItem(id, id))}
+                      </Box>
+                    )}
+                    {/* Partial last row — flex so items share width equally */}
+                    {lastRowItems.length > 0 && (
+                      <Box sx={{ display: 'flex', gap: 0.75 }}>
+                        {lastRowItems.map((id) => renderPassiveItem(id, `last-${id}`))}
+                      </Box>
+                    )}
                   </Box>
                 );
-              };
-
-              return (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                  {/* Full rows — uniform grid */}
-                  {fullItems.length > 0 && (
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                          xs: '1fr 1fr',
-                          sm: `repeat(${Math.min(cols, 3)}, 1fr)`,
-                          md: `repeat(${cols}, 1fr)`,
-                        },
-                        gap: 0.75,
-                      }}
-                    >
-                      {fullItems.map((id) => renderPassiveItem(id, id))}
-                    </Box>
-                  )}
-                  {/* Partial last row — flex so items share width equally */}
-                  {lastRowItems.length > 0 && (
-                    <Box sx={{ display: 'flex', gap: 0.75 }}>
-                      {lastRowItems.map((id) => renderPassiveItem(id, `last-${id}`))}
-                    </Box>
-                  )}
-                </Box>
-              );
-            })()
-          ) : (
-            <EmptyState message="No passives selected" />
-          )}
+              })()
+            ) : (
+              <EmptyState message="No passives selected" />
+            )}
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
 
       {/* Row 6: Stats (full width) */}
       <motion.div variants={fadeInUp}>
         <GlassPanel variant="primary" sx={{ p: 2, mb: 2 }}>
-          <SectionLabel label="Stats" />
-          <ViewStats setup={setup} build={viewBuild} />
+          <CollapsibleSection label="Stats">
+            <ViewStats setup={setup} build={viewBuild} />
+          </CollapsibleSection>
         </GlassPanel>
       </motion.div>
     </motion.div>
@@ -1697,12 +1876,14 @@ export const BuildViewPage: React.FC = () => {
   const prefersReduced = useReducedMotion();
   const skillCacheReady = useSkillCacheReady();
   const navigate = useNavigate();
+  const savedBuilds = useSelector(selectSavedBuilds);
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [activeSetup, setActiveSetup] = useState(0);
   const [encodedParam, setEncodedParam] = useState('');
+  const [justCopied, setJustCopied] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -1739,12 +1920,22 @@ export const BuildViewPage: React.FC = () => {
     const url = `${window.location.origin}${window.location.pathname}?b=${encodedParam}`;
     navigator.clipboard
       .writeText(url)
-      .then(() => setSnackbar({ open: true, message: 'Link copied!', severity: 'success' }))
+      .then(() => {
+        setSnackbar({ open: true, message: 'Link copied!', severity: 'success' });
+        setJustCopied(true);
+        window.setTimeout(() => setJustCopied(false), 1800);
+      })
       .catch(() => setSnackbar({ open: true, message: 'Failed to copy', severity: 'error' }));
   };
 
+  const ownedSavedBuild = build
+    ? (savedBuilds.find((sb) => sb.build.id === build.id) ?? null)
+    : null;
+  const isOwned = Boolean(ownedSavedBuild);
+
   const handleOpenInEditor = (): void => {
-    navigate(`/build-editor?b=${encodeURIComponent(encodedParam)}`);
+    const base = `/build-editor?b=${encodeURIComponent(encodedParam)}`;
+    navigate(ownedSavedBuild ? `${base}&id=${ownedSavedBuild.id}` : base);
   };
 
   // ── Loading ──
@@ -1796,9 +1987,12 @@ export const BuildViewPage: React.FC = () => {
     .filter(Boolean) as typeof CLASS_SKILL_LINES;
 
   return (
-    <Container maxWidth="lg" sx={{ pt: 3, pb: 6, px: { xs: 2, sm: 3 } }}>
+    <Container
+      maxWidth="lg"
+      sx={{ pt: 3, pb: { xs: build.setups.length > 1 ? 12 : 6, sm: 6 }, px: { xs: 2, sm: 3 } }}
+    >
       <BuildViewShell esoClass={build.esoClass}>
-        <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 2, sm: 3, md: 4 } }}>
+        <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 1.5, sm: 3, md: 4 } }}>
           <motion.div
             variants={staggerContainer}
             initial={prefersReduced ? 'visible' : 'hidden'}
@@ -1851,10 +2045,10 @@ export const BuildViewPage: React.FC = () => {
                 sx={{
                   viewTransitionName: 'build-hero',
                   display: 'flex',
-                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  alignItems: { xs: 'stretch', sm: 'center' },
                   justifyContent: 'space-between',
                   flexDirection: { xs: 'column', sm: 'row' },
-                  gap: 2,
+                  gap: { xs: 2.25, sm: 2 },
                   mb: 3,
                 }}
               >
@@ -1957,49 +2151,271 @@ export const BuildViewPage: React.FC = () => {
                   )}
                 </Box>
 
-                {/* Action buttons */}
-                <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                  <Button
-                    size="small"
-                    startIcon={<CopyIcon sx={{ fontSize: '0.85rem !important' }} />}
-                    onClick={handleCopyLink}
-                    sx={{
-                      borderRadius: '10px',
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.55)',
-                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
-                      backdropFilter: 'blur(8px)',
-                      '&:hover': {
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                        borderColor: 'var(--be-accent, #38bdf8)',
-                      },
-                    }}
+                {/* Action cluster — unified, tactile, mobile-first */}
+                <Box
+                  role="group"
+                  aria-label="Build actions"
+                  sx={{
+                    position: 'relative',
+                    display: { xs: 'grid', sm: 'inline-flex' },
+                    gridTemplateColumns: { xs: 'minmax(0, 1fr) minmax(0, 1.3fr)', sm: 'none' },
+                    alignItems: 'stretch',
+                    gap: { xs: 0.75, sm: 0.75 },
+                    width: { xs: '100%', sm: 'auto' },
+                    flexShrink: 0,
+                    p: 0.5,
+                    borderRadius: '16px',
+                    background: isDark
+                      ? `linear-gradient(180deg, ${alpha('#ffffff', 0.05)} 0%, ${alpha('#ffffff', 0.015)} 100%)`
+                      : `linear-gradient(180deg, ${alpha('#0f172a', 0.035)} 0%, ${alpha('#0f172a', 0.01)} 100%)`,
+                    border: `1px solid ${
+                      isDark ? 'rgba(255,255,255,0.09)' : 'rgba(15,23,42,0.08)'
+                    }`,
+                    backdropFilter: 'blur(14px) saturate(140%)',
+                    WebkitBackdropFilter: 'blur(14px) saturate(140%)',
+                    boxShadow: isDark
+                      ? `inset 0 1px 0 ${alpha('#ffffff', 0.05)}, 0 14px 34px -16px ${alpha('#000000', 0.6)}`
+                      : `inset 0 1px 0 ${alpha('#ffffff', 0.8)}, 0 14px 28px -18px ${alpha('#0f172a', 0.18)}`,
+                  }}
+                >
+                  {/* Secondary — Copy link (icon morphs to check on success) */}
+                  <Tooltip
+                    title={justCopied ? 'Copied to clipboard' : 'Copy shareable link'}
+                    placement="bottom"
+                    enterDelay={400}
                   >
-                    Copy Link
-                  </Button>
-                  <Button
-                    size="small"
-                    startIcon={<EditIcon sx={{ fontSize: '0.85rem !important' }} />}
-                    endIcon={<OpenInNewIcon sx={{ fontSize: '0.7rem !important' }} />}
-                    onClick={handleOpenInEditor}
+                    <Button
+                      component={motion.button}
+                      whileTap={prefersReduced ? undefined : { scale: 0.965 }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 28 }}
+                      onClick={handleCopyLink}
+                      disableRipple
+                      aria-live="polite"
+                      aria-label={justCopied ? 'Link copied to clipboard' : 'Copy shareable link'}
+                      sx={{
+                        position: 'relative',
+                        minHeight: { xs: 48, sm: 40 },
+                        px: { xs: 1.25, sm: 1.75 },
+                        gap: 0.75,
+                        borderRadius: '11px',
+                        textTransform: 'none',
+                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontSize: { xs: '0.85rem', sm: '0.78rem' },
+                        fontWeight: 600,
+                        letterSpacing: '-0.005em',
+                        color: justCopied
+                          ? classTheme.accent
+                          : isDark
+                            ? 'rgba(255,255,255,0.82)'
+                            : 'rgba(15,23,42,0.74)',
+                        background: justCopied
+                          ? alpha(classTheme.accent, isDark ? 0.1 : 0.07)
+                          : 'transparent',
+                        border: `1px solid ${
+                          justCopied
+                            ? alpha(classTheme.accent, isDark ? 0.45 : 0.32)
+                            : 'transparent'
+                        }`,
+                        transition:
+                          'color 220ms ease, background-color 220ms ease, border-color 220ms ease',
+                        '&:hover': {
+                          background: justCopied
+                            ? alpha(classTheme.accent, isDark ? 0.14 : 0.09)
+                            : isDark
+                              ? 'rgba(255,255,255,0.05)'
+                              : 'rgba(15,23,42,0.04)',
+                          borderColor: justCopied
+                            ? alpha(classTheme.accent, 0.55)
+                            : isDark
+                              ? 'rgba(255,255,255,0.12)'
+                              : 'rgba(15,23,42,0.1)',
+                        },
+                        '&:focus-visible': {
+                          outline: `2px solid ${alpha(classTheme.accent, 0.7)}`,
+                          outlineOffset: 2,
+                        },
+                      }}
+                    >
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'relative',
+                          width: 16,
+                          height: 16,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <AnimatePresence mode="wait" initial={false}>
+                          {justCopied ? (
+                            <motion.span
+                              key="check"
+                              initial={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              animate={prefersReduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                              exit={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              transition={{ type: 'spring', stiffness: 600, damping: 24 }}
+                              style={{
+                                position: 'absolute',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <CheckIcon sx={{ fontSize: '1rem !important' }} />
+                            </motion.span>
+                          ) : (
+                            <motion.span
+                              key="copy"
+                              initial={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              animate={prefersReduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                              exit={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              transition={{ type: 'spring', stiffness: 600, damping: 24 }}
+                              style={{
+                                position: 'absolute',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <CopyIcon sx={{ fontSize: '0.95rem !important' }} />
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </Box>
+                      {justCopied ? 'Copied' : 'Copy link'}
+                    </Button>
+                  </Tooltip>
+
+                  {/* Divider between cluster items (desktop only, inside the group) */}
+                  <Box
+                    aria-hidden
                     sx={{
-                      borderRadius: '10px',
-                      textTransform: 'none',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: isDark ? '#fff' : '#fff',
-                      background: `linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.7)} 100%)`,
-                      border: 'none',
-                      boxShadow: `0 4px 16px ${alpha(classTheme.accent, 0.3)}`,
-                      '&:hover': {
-                        boxShadow: `0 6px 24px ${alpha(classTheme.accent, 0.45)}`,
-                      },
+                      display: { xs: 'none', sm: 'block' },
+                      width: '1px',
+                      alignSelf: 'stretch',
+                      my: 0.75,
+                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
                     }}
+                  />
+
+                  {/* Primary — Edit build (owned) or Remix (not owned). Metallic glass, accent-charged. */}
+                  <Tooltip
+                    title={
+                      isOwned
+                        ? 'Edit your saved build — changes update your local copy'
+                        : 'Open your own editable copy — the original build stays unchanged'
+                    }
+                    placement="bottom"
+                    enterDelay={400}
                   >
-                    Edit Build
-                  </Button>
+                    <Button
+                      component={motion.button}
+                      whileTap={prefersReduced ? undefined : { scale: 0.975 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 26 }}
+                      onClick={handleOpenInEditor}
+                      disableRipple
+                      aria-label={
+                        isOwned
+                          ? 'Edit your saved build in the editor'
+                          : 'Open your own editable copy of this build in the editor'
+                      }
+                      sx={{
+                        position: 'relative',
+                        overflow: 'hidden',
+                        minHeight: { xs: 48, sm: 40 },
+                        px: { xs: 1.75, sm: 2 },
+                        gap: 0.75,
+                        borderRadius: '11px',
+                        textTransform: 'none',
+                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontSize: { xs: '0.9rem', sm: '0.82rem' },
+                        fontWeight: 700,
+                        letterSpacing: '-0.008em',
+                        color: '#ffffff',
+                        background: `
+                        radial-gradient(120% 160% at 0% 0%, ${alpha('#ffffff', isDark ? 0.28 : 0.38)} 0%, ${alpha('#ffffff', 0)} 50%),
+                        linear-gradient(180deg, ${alpha('#ffffff', 0.14)} 0%, ${alpha('#000000', 0.16)} 100%),
+                        linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.82)} 55%, ${alpha(classTheme.accent, 0.95)} 100%)
+                      `,
+                        border: `1px solid ${alpha(classTheme.accent, isDark ? 0.62 : 0.52)}`,
+                        boxShadow: `
+                        inset 0 1px 0 ${alpha('#ffffff', 0.32)},
+                        inset 0 -1px 0 ${alpha('#000000', 0.2)},
+                        0 1px 2px ${alpha('#000000', 0.12)},
+                        0 10px 26px -8px ${alpha(classTheme.accent, 0.55)}
+                      `,
+                        transition:
+                          'box-shadow 240ms ease, transform 240ms ease, filter 240ms ease',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          inset: 0,
+                          background: `linear-gradient(115deg, transparent 30%, ${alpha('#ffffff', 0.26)} 46%, transparent 62%)`,
+                          transform: 'translateX(-130%)',
+                          transition: prefersReduced
+                            ? 'none'
+                            : 'transform 760ms cubic-bezier(0.22, 0.7, 0.25, 1)',
+                          pointerEvents: 'none',
+                        },
+                        '& .eb-arrow': {
+                          transition: prefersReduced
+                            ? 'none'
+                            : 'transform 260ms cubic-bezier(0.2, 0.7, 0.25, 1)',
+                        },
+                        '&:hover': {
+                          filter: 'brightness(1.04)',
+                          boxShadow: `
+                          inset 0 1px 0 ${alpha('#ffffff', 0.36)},
+                          inset 0 -1px 0 ${alpha('#000000', 0.22)},
+                          0 2px 4px ${alpha('#000000', 0.14)},
+                          0 14px 32px -6px ${alpha(classTheme.accent, 0.7)}
+                        `,
+                        },
+                        '&:hover::before': prefersReduced
+                          ? undefined
+                          : { transform: 'translateX(130%)' },
+                        '&:hover .eb-arrow': prefersReduced
+                          ? undefined
+                          : { transform: 'translate(2px, -2px)' },
+                        '&:focus-visible': {
+                          outline: `2px solid ${alpha(classTheme.accent, 0.9)}`,
+                          outlineOffset: 3,
+                        },
+                      }}
+                    >
+                      {isOwned ? (
+                        <EditIcon
+                          aria-hidden
+                          sx={{ fontSize: '1rem !important', flexShrink: 0, opacity: 0.95 }}
+                        />
+                      ) : (
+                        <CallSplitIcon
+                          aria-hidden
+                          sx={{
+                            fontSize: '1rem !important',
+                            flexShrink: 0,
+                            opacity: 0.95,
+                            transform: 'rotate(90deg)',
+                          }}
+                        />
+                      )}
+                      <Box component="span" sx={{ lineHeight: 1 }}>
+                        {isOwned ? 'Edit build' : 'Remix in editor'}
+                      </Box>
+                      <ArrowOutwardIcon
+                        aria-hidden
+                        className="eb-arrow"
+                        sx={{
+                          fontSize: '0.85rem !important',
+                          flexShrink: 0,
+                          opacity: 0.85,
+                          ml: 0.25,
+                        }}
+                      />
+                    </Button>
+                  </Tooltip>
                 </Box>
               </Box>
             </motion.div>
@@ -2020,7 +2436,7 @@ export const BuildViewPage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography
                     sx={{
-                      fontSize: '0.55rem',
+                      fontSize: { xs: '0.65rem', sm: '0.55rem' },
                       fontWeight: 700,
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
@@ -2047,7 +2463,7 @@ export const BuildViewPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
                       sx={{
-                        fontSize: '0.55rem',
+                        fontSize: { xs: '0.65rem', sm: '0.55rem' },
                         fontWeight: 700,
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
@@ -2179,12 +2595,12 @@ export const BuildViewPage: React.FC = () => {
               </GlassPanel>
             </motion.div>
 
-            {/* ── Setup tabs ── */}
+            {/* ── Setup tabs (inline — desktop & mobile) ── */}
             {build.setups.length > 1 && (
               <motion.div variants={fadeInUp}>
                 <Box
                   sx={{
-                    display: 'flex',
+                    display: { xs: 'none', sm: 'flex' },
                     gap: 0.75,
                     mb: 2.5,
                     flexWrap: 'wrap',
@@ -2274,6 +2690,67 @@ export const BuildViewPage: React.FC = () => {
           </motion.div>
         </Box>
       </BuildViewShell>
+
+      {/* ── Floating setup tabs (mobile only) ── */}
+      {build.setups.length > 1 && (
+        <Box
+          sx={{
+            display: { xs: 'flex', sm: 'none' },
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1200,
+            justifyContent: 'center',
+            gap: 0.75,
+            px: 2,
+            py: 1.5,
+            pb: 'max(1.5rem, env(safe-area-inset-bottom))',
+            backdropFilter: 'blur(20px)',
+            background: isDark ? 'rgba(8, 14, 26, 0.88)' : 'rgba(240, 245, 255, 0.88)',
+            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+            boxShadow: isDark ? '0 -4px 24px rgba(0,0,0,0.4)' : '0 -4px 24px rgba(0,0,0,0.08)',
+          }}
+        >
+          {build.setups.map((setup, i) => {
+            const isActive = i === activeSetup;
+            return (
+              <Button
+                key={setup.id}
+                size="small"
+                onClick={() => setActiveSetup(i)}
+                sx={{
+                  borderRadius: '10px',
+                  textTransform: 'none',
+                  fontSize: '0.8rem',
+                  fontWeight: isActive ? 700 : 500,
+                  px: 2.5,
+                  py: 0.85,
+                  flex: 1,
+                  maxWidth: 180,
+                  color: isActive ? '#fff' : isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.50)',
+                  background: isActive
+                    ? `linear-gradient(135deg, ${classTheme.accent} 0%, ${alpha(classTheme.accent, 0.7)} 100%)`
+                    : isDark
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(0,0,0,0.04)',
+                  border: `1px solid ${
+                    isActive
+                      ? alpha(classTheme.accent, 0.5)
+                      : isDark
+                        ? 'rgba(255,255,255,0.10)'
+                        : 'rgba(0,0,0,0.08)'
+                  }`,
+                  boxShadow: isActive ? `0 4px 16px ${alpha(classTheme.accent, 0.3)}` : 'none',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {setup.name || `Setup ${i + 1}`}
+              </Button>
+            );
+          })}
+        </Box>
+      )}
 
       {/* Snackbar */}
       <Snackbar

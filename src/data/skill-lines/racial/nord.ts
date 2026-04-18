@@ -12,6 +12,7 @@ export const nord: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_dragonknight_032',
+  sourceUrl: 'https://eso-hub.com/en/skills/racial/nord',
   skills: [
     {
       id: AbilityId.REVELER,

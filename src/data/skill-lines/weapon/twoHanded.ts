@@ -19,6 +19,7 @@ export const twoHandedSkillLine: SkillLineData = {
   class: 'Weapon',
   category: 'weapon',
   icon: 'ability_2handed_006',
+  sourceUrl: 'https://eso-hub.com/en/skills/weapon/two-handed',
   skills: [
     // Ultimate Abilities
     {

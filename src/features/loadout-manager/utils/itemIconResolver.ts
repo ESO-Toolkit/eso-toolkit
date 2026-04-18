@@ -17,7 +17,8 @@
 
 import { Logger } from '@/utils/logger';
 
-// Pre-fetched icon data: { icons: string[], items: Record<string, number> }
+// Pre-fetched icon data: { icons: string[], items: Record<string, number>, weaponTypes?: Record<string, number> }
+// weaponTypes is populated when fetch-item-icons.mjs is run with the --weapon-types flag
 import iconData from '../data/itemIcons.json';
 import { getItemInfo } from '../data/itemIdMap';
 import type { SlotType } from '../data/slotTypes';
@@ -55,18 +56,56 @@ function lookupLocal(itemId: number): string | null {
 
 /** Look up the raw icon filename (without CDN prefix or extension) from local data. */
 function lookupIconName(itemId: number): string | null {
-  const typedData = iconData as { icons: string[]; items: Record<string, number> };
+  const typedData = iconData as {
+    icons: string[];
+    items: Record<string, number>;
+    weaponTypes?: Record<string, number>;
+  };
   const index = typedData.items[String(itemId)];
   if (index === undefined) return null;
   return typedData.icons[index] ?? null;
 }
 
 /**
+ * ESO weapon type IDs (from UESP minedItemSummary.weaponType) for staff variants.
+ * Non-staff weapons are identified reliably by icon URL token, but all staff icons
+ * use a generic `gear_xxx_staff_x` filename regardless of element — so we use the
+ * numeric weapon type to distinguish them. These values match the WeaponType enum
+ * in src/types/playerDetails.ts and ESO's game API constants.
+ *
+ * Populated after running: node scripts/fetch-item-icons.mjs
+ */
+const STAFF_WEAPON_TYPE_LABELS: Record<number, string> = {
+  9: 'Restoration Staff',
+  12: 'Inferno Staff',
+  13: 'Ice Staff',
+  15: 'Lightning Staff',
+};
+
+/**
+ * Look up a specific staff-type label from the pre-fetched weapon type data.
+ * Returns null if the item has no weapon type data or is not a staff.
+ */
+function lookupStaffTypeLabelFromData(itemId: number): string | null {
+  const typedData = iconData as {
+    icons: string[];
+    items: Record<string, number>;
+    weaponTypes?: Record<string, number>;
+  };
+  const weaponTypes = typedData.weaponTypes;
+  if (!weaponTypes) return null;
+  const weaponType = weaponTypes[String(itemId)];
+  if (!weaponType) return null;
+  return STAFF_WEAPON_TYPE_LABELS[weaponType] ?? null;
+}
+
+/**
  * UESP gear-icon tokens → ESO weapon type labels.
  * Derived from icon filenames like `gear_argonian_1hsword_d`. The icon is the
- * only per-item weapon-type signal available — itemIdMap only tags the slot
- * (`weapon` / `offhand`), not the specific weapon. Staff icons don't
- * distinguish fire/frost/lightning/resto, so they map to a generic "Staff".
+ * only per-item weapon-type signal available for most weapons. Regular gear staff
+ * icons use a generic token (`staff`) — use STAFF_WEAPON_TYPE_LABELS + the
+ * pre-fetched weaponTypes data instead for those. Companion equipment icons
+ * do encode the staff subtype (infernostaff, froststaff, etc.) and are handled here.
  */
 const WEAPON_ICON_TOKEN_LABELS: Record<string, string> = {
   '1haxe': 'Axe',
@@ -82,6 +121,12 @@ const WEAPON_ICON_TOKEN_LABELS: Record<string, string> = {
   '2hmace': 'Maul',
   dagger: 'Dagger',
   bow: 'Bow',
+  // Companion equipment icons encode the specific staff element:
+  infernostaff: 'Inferno Staff',
+  froststaff: 'Ice Staff',
+  lightningstaff: 'Lightning Staff',
+  restostaff: 'Restoration Staff',
+  // Generic fallback — regular gear staves all use this token regardless of element
   staff: 'Staff',
   shield: 'Shield',
 };
@@ -205,9 +250,12 @@ export const GENERIC_WEAPON_SUFFIXES = [' Weapon', ' Off-Hand', ' Offhand', ' Ge
 
 /**
  * Replace a generic slot-name suffix on an item name with the specific weapon
- * type parsed from its icon URL. No-ops when the slot isn't a weapon slot,
- * when the icon URL doesn't expose a weapon token, or when the raw name
- * doesn't end in a recognized generic suffix.
+ * type. Checks the pre-fetched weapon type data first (needed to distinguish
+ * staff variants — all share the same generic icon token). Falls back to icon
+ * URL parsing for all other weapon types.
+ *
+ * Pass `itemId` when available so the data-driven lookup can fire. Callers
+ * that only have an icon URL (e.g. async-resolved overrides) can omit it.
  *
  * The `slotType` gate intentionally uses the SLOT POSITION (weapon / offhand)
  * rather than the item's own `slot` tag, so generic set IDs (e.g. 2558 =
@@ -218,13 +266,22 @@ export function applyWeaponTypeToName(
   rawName: string,
   iconUrl: string | null | undefined,
   slotType: SlotType | undefined,
+  itemId?: number | null,
 ): string {
   const isWeaponSlot = slotType === 'weapon' || slotType === 'offhand';
   if (!isWeaponSlot) return rawName;
-  const weaponType = parseWeaponTypeFromIconUrl(iconUrl);
-  if (!weaponType) return rawName;
   const suffix = GENERIC_WEAPON_SUFFIXES.find((s) => rawName.endsWith(s));
   if (!suffix) return rawName;
+  // Prefer data-driven staff type (distinguishes inferno/frost/lightning/restoration
+  // which all share the same generic icon token in regular player gear)
+  if (itemId) {
+    const staffTypeLabel = lookupStaffTypeLabelFromData(itemId);
+    if (staffTypeLabel) return rawName.slice(0, -suffix.length) + ' ' + staffTypeLabel;
+  }
+  // Fall back to icon URL parsing (works for all weapon types including
+  // companion equipment which encodes staff element in the icon filename)
+  const weaponType = parseWeaponTypeFromIconUrl(iconUrl);
+  if (!weaponType) return rawName;
   return rawName.slice(0, -suffix.length) + ' ' + weaponType;
 }
 
@@ -257,7 +314,7 @@ export function deriveItemNameForSlot(
   const itemIsSlotSpecificWeapon = info?.slot === 'weapon' || info?.slot === 'offhand';
   if (!itemIsSlotSpecificWeapon) return rawName;
   const url = iconUrlOverride !== undefined ? iconUrlOverride : getItemIconUrl(id);
-  return applyWeaponTypeToName(rawName, url, slotType);
+  return applyWeaponTypeToName(rawName, url, slotType, id);
 }
 
 /**
