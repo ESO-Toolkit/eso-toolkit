@@ -1,14 +1,5 @@
 import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Stack,
-  Typography,
-  useTheme,
-  Theme,
-} from '@mui/material';
+import { Box, Card, CardContent, Chip, Stack, Typography, useTheme, Theme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
@@ -121,7 +112,7 @@ const ScribingSectionLabel: React.FC<{
 );
 
 /** Shared gradient text styles for the skill name */
-const nameGradientSx = (isDark: boolean) => ({
+const nameGradientSx = (isDark: boolean): Record<string, unknown> => ({
   fontFamily: 'Space Grotesk, Inter, system-ui',
   fontWeight: 800,
   letterSpacing: '-.02em',

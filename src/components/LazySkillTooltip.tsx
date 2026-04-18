@@ -118,8 +118,7 @@ const SkillTooltipLoadingFallback: React.FC<SkillTooltipLoadingFallbackProps> = 
     <Box
       sx={{
         height: '1px',
-        background:
-          'linear-gradient(90deg, transparent, rgba(148, 210, 255, 0.12), transparent)',
+        background: 'linear-gradient(90deg, transparent, rgba(148, 210, 255, 0.12), transparent)',
         my: 1.25,
       }}
     />

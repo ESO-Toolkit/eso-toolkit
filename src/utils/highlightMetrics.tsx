@@ -26,7 +26,7 @@ const RESOURCE_COLORS: Record<string, ColorPair> = {
 const STAT_ACCENT: ColorPair = { dark: '#b8e0f7', light: '#0369a1' };
 const BUFF_ACCENT: ColorPair = { dark: '#fcd34d', light: '#b45309' };
 
-const pick = (pair: ColorPair, isDark: boolean) => (isDark ? pair.dark : pair.light);
+const pick = (pair: ColorPair, isDark: boolean): string => (isDark ? pair.dark : pair.light);
 
 const numCss = (color: string): React.CSSProperties => ({
   color,
@@ -72,8 +72,7 @@ const RULES: Rule[] = [
       const c = pick(DAMAGE_COLORS[m[2]], isDark);
       return (
         <React.Fragment key={k}>
-          <span style={numCss(c)}>{m[1]}</span>{' '}
-          <span style={tagCss(c)}>{m[2]} Damage</span>
+          <span style={numCss(c)}>{m[1]}</span> <span style={tagCss(c)}>{m[2]} Damage</span>
         </React.Fragment>
       );
     },
@@ -89,13 +88,12 @@ const RULES: Rule[] = [
   },
   // 2 — "2295 Stamina"
   {
-    re: new RegExp(`(\\d[\\d,]*)\\s+(${RES})\\b`, 'g'),
+    re: new RegExp(`(\\d[\\d,]*)\\s+(${RES})\\b(?!\\s+Recovery)`, 'g'),
     render: (m, isDark, k) => {
       const c = pick(RESOURCE_COLORS[m[2]], isDark);
       return (
         <React.Fragment key={k}>
-          <span style={numCss(c)}>{m[1]}</span>{' '}
-          <span style={tagCss(c)}>{m[2]}</span>
+          <span style={numCss(c)}>{m[1]}</span> <span style={tagCss(c)}>{m[2]}</span>
         </React.Fragment>
       );
     },
@@ -107,8 +105,7 @@ const RULES: Rule[] = [
       const c = pick(RESOURCE_COLORS[m[2]], isDark);
       return (
         <React.Fragment key={k}>
-          <span style={numCss(c)}>{m[1]}</span>{' '}
-          <span style={tagCss(c)}>Maximum {m[2]}</span>
+          <span style={numCss(c)}>{m[1]}</span> <span style={tagCss(c)}>Maximum {m[2]}</span>
         </React.Fragment>
       );
     },
@@ -118,9 +115,7 @@ const RULES: Rule[] = [
     re: new RegExp(`(\\d[\\d,]*)\\s+(${STATS})`, 'g'),
     render: (m, isDark, k) => (
       <React.Fragment key={k}>
-        <span style={numCss(pick(STAT_ACCENT, isDark))}>{m[1]}</span>
-        {' '}
-        {m[2]}
+        <span style={numCss(pick(STAT_ACCENT, isDark))}>{m[1]}</span> {m[2]}
       </React.Fragment>
     ),
   },
@@ -147,9 +142,7 @@ const RULES: Rule[] = [
     re: /(\d[\d,]*\.?\d*)\s+(seconds?)/g,
     render: (m, isDark, k) => (
       <React.Fragment key={k}>
-        <span style={numCss(pick(STAT_ACCENT, isDark))}>{m[1]}</span>
-        {' '}
-        {m[2]}
+        <span style={numCss(pick(STAT_ACCENT, isDark))}>{m[1]}</span> {m[2]}
       </React.Fragment>
     ),
   },
@@ -158,9 +151,7 @@ const RULES: Rule[] = [
     re: /(\d[\d,]*\.?\d*)\s+(meters?)/g,
     render: (m, isDark, k) => (
       <React.Fragment key={k}>
-        <span style={numCss(pick(STAT_ACCENT, isDark))}>{m[1]}</span>
-        {' '}
-        {m[2]}
+        <span style={numCss(pick(STAT_ACCENT, isDark))}>{m[1]}</span> {m[2]}
       </React.Fragment>
     ),
   },
