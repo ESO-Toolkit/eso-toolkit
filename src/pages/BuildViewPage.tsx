@@ -37,6 +37,8 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { GearSetTooltip } from '../components/GearSetTooltip';
+import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
 import { ESO_CONSUMABLE_LOOKUP } from '../data/esoConsumables';
 import { getEnchantName } from '../data/esoEnchants';
 import { ESO_POTION_LOOKUP } from '../data/esoPotions';
@@ -64,7 +66,8 @@ import {
 import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
-import { getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
+import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
+import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
 
@@ -425,11 +428,25 @@ const SkillSlot: React.FC<{
       ? TILE_SIZE_MOBILE
       : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
-  const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
+
+  const richProps = React.useMemo(
+    () => (abilityId ? buildTooltipPropsFromAbilityId(abilityId) : null),
+    [abilityId],
+  );
 
   /** Gold accent for ultimate, class accent for regular abilities */
   const accentA = (a: number): string =>
     isUltimate ? `rgba(255,179,0,${a})` : `rgba(var(--be-accent-rgb, 56,189,248),${a})`;
+
+  const tooltipTitle = richProps ? (
+    <SkillTooltipCard
+      {...richProps}
+      iconUrl={richProps.iconUrl || iconUrl || undefined}
+      abilityId={abilityId}
+    />
+  ) : (
+    `Slot ${label}${isUltimate ? ' (Ultimate)' : ''}`
+  );
 
   return (
     <Box
@@ -450,158 +467,98 @@ const SkillSlot: React.FC<{
       }}
     >
       <Tooltip
-        title={
-          skill
-            ? `${skill.name}${skill.category ? ` \u00b7 ${skill.category}` : ''}`
-            : `Slot ${label}${isUltimate ? ' (Ultimate)' : ''}`
-        }
+        title={tooltipTitle}
         arrow
         placement="top"
+        enterTouchDelay={0}
+        leaveTouchDelay={3000}
+        slotProps={{
+          tooltip: {
+            sx: richProps
+              ? {
+                  maxWidth: 320,
+                  p: 0,
+                  backgroundColor: 'transparent !important',
+                  border: 'none !important',
+                  boxShadow: 'none !important',
+                }
+              : {},
+          },
+          arrow: richProps ? { sx: { display: 'none' } } : {},
+        }}
       >
-        {esoHubUrl ? (
-          <Box
-            component="a"
-            href={esoHubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            aria-label={`${skill?.name ?? ''} on ESO-Hub`}
-            sx={{ display: 'inline-flex', lineHeight: 0 }}
-          >
+        <Box
+          sx={{
+            position: 'relative',
+            width: size,
+            height: size,
+            borderRadius: isUltimate ? '14px' : '12px',
+            overflow: 'hidden',
+            flexShrink: 0,
+            border: `${isUltimate ? 2 : 1.5}px solid ${
+              skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
+            }`,
+            background: skill
+              ? isDark
+                ? accentA(0.08)
+                : accentA(0.04)
+              : isDark
+                ? 'rgba(255,255,255,0.025)'
+                : 'rgba(0,0,0,0.015)',
+            boxShadow: skill
+              ? isDark
+                ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
+                : 'inset 0 1px 0 rgba(255,255,255,0.5)'
+              : isDark
+                ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
+                : 'inset 0 1px 0 rgba(255,255,255,0.4)',
+            transition: 'all 180ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'scale(1.08)',
+              borderColor: accentA(0.7),
+              background: isDark ? accentA(0.14) : accentA(0.08),
+              boxShadow: isDark
+                ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
+                : '0 6px 16px rgba(0,0,0,0.08)',
+            },
+          }}
+        >
+          {iconUrl ? (
+            <img
+              src={iconUrl}
+              alt={skill?.name ?? `Ability ${abilityId}`}
+              loading="lazy"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
             <Box
               sx={{
-                position: 'relative',
-                width: size,
-                height: size,
-                borderRadius: isUltimate ? '14px' : '12px',
-                overflow: 'hidden',
-                flexShrink: 0,
-                border: `${isUltimate ? 2 : 1.5}px solid ${accentA(0.45)}`,
-                background: isDark ? accentA(0.08) : accentA(0.04),
-                boxShadow: isDark
-                  ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
-                  : 'inset 0 1px 0 rgba(255,255,255,0.5)',
-                transition: 'all 180ms ease',
-                '&:hover': {
-                  transform: 'scale(1.08)',
-                  borderColor: accentA(0.7),
-                  background: isDark ? accentA(0.14) : accentA(0.08),
-                  boxShadow: isDark
-                    ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
-                    : '0 6px 16px rgba(0,0,0,0.08)',
-                },
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
               }}
             >
-              {iconUrl ? (
-                <img
-                  src={iconUrl}
-                  alt={skill?.name ?? `Ability ${abilityId}`}
-                  loading="lazy"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontSize: isUltimate ? 16 : 13,
-                      fontWeight: 800,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
-                      letterSpacing: 0.4,
-                      color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
-                      lineHeight: 1,
-                      userSelect: 'none',
-                    }}
-                  >
-                    {label}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        ) : (
-          <Box
-            sx={{
-              position: 'relative',
-              width: size,
-              height: size,
-              borderRadius: isUltimate ? '14px' : '12px',
-              overflow: 'hidden',
-              flexShrink: 0,
-              border: `${isUltimate ? 2 : 1.5}px solid ${
-                skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-              }`,
-              background: skill
-                ? isDark
-                  ? accentA(0.08)
-                  : accentA(0.04)
-                : isDark
-                  ? 'rgba(255,255,255,0.025)'
-                  : 'rgba(0,0,0,0.015)',
-              boxShadow: skill
-                ? isDark
-                  ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
-                  : 'inset 0 1px 0 rgba(255,255,255,0.5)'
-                : isDark
-                  ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
-                  : 'inset 0 1px 0 rgba(255,255,255,0.4)',
-              transition: 'all 180ms ease',
-              '&:hover': {
-                transform: 'scale(1.08)',
-                borderColor: accentA(0.7),
-                background: isDark ? accentA(0.14) : accentA(0.08),
-                boxShadow: isDark
-                  ? `0 6px 20px rgba(0,0,0,0.30), 0 0 18px ${accentA(0.16)}`
-                  : '0 6px 16px rgba(0,0,0,0.08)',
-              },
-            }}
-          >
-            {/* Skill icon */}
-            {iconUrl ? (
-              <img
-                src={iconUrl}
-                alt={skill?.name ?? `Ability ${abilityId}`}
-                loading="lazy"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            ) : (
-              <Box
+              <Typography
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
+                  fontSize: isUltimate ? 16 : 13,
+                  fontWeight: 800,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: 0.4,
+                  color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                  lineHeight: 1,
+                  userSelect: 'none',
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: isUltimate ? 16 : 13,
-                    fontWeight: 800,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.4,
-                    color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
-                    lineHeight: 1,
-                    userSelect: 'none',
-                  }}
-                >
-                  {label}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        )}
+                {label}
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </Tooltip>
 
       {/* Skill name (only when resolved — hidden on mobile, tooltip handles it) */}
@@ -638,7 +595,8 @@ const GearSlotDisplay: React.FC<{
   itemId: number;
   trait?: string;
   enchant?: string;
-}> = ({ slotIndex, itemId, trait, enchant }) => {
+  setPieceCounts?: Map<string, number>;
+}> = ({ slotIndex, itemId, trait, enchant, setPieceCounts }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -699,7 +657,13 @@ const GearSlotDisplay: React.FC<{
   const traitLabel = trait ? getTraitName(trait) : null;
   const enchantLabel = enchant ? getEnchantName(enchant) : null;
 
-  return (
+  const gearTooltipProps = React.useMemo(
+    () =>
+      setName ? getGearSetTooltipPropsByName(setName, setPieceCounts?.get(setName) ?? 0) : null,
+    [setName, setPieceCounts],
+  );
+
+  const row = (
     <Box
       sx={{
         display: 'flex',
@@ -712,6 +676,7 @@ const GearSlotDisplay: React.FC<{
         background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
         transition: 'border-color 0.2s',
+        cursor: gearTooltipProps ? 'pointer' : undefined,
         '&:hover': {
           borderColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
         },
@@ -744,7 +709,7 @@ const GearSlotDisplay: React.FC<{
           />
         ) : (
           <Typography sx={{ fontSize: 16, lineHeight: 1, userSelect: 'none' }}>
-            {GEAR_SLOT_ICONS[slotIndex] ?? '📦'}
+            {GEAR_SLOT_ICONS[slotIndex] ?? '\u{1F4E6}'}
           </Typography>
         )}
       </Box>
@@ -819,6 +784,32 @@ const GearSlotDisplay: React.FC<{
       </Box>
     </Box>
   );
+
+  if (!gearTooltipProps) return row;
+
+  return (
+    <Tooltip
+      title={<GearSetTooltip {...gearTooltipProps} />}
+      placement="top"
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
+      arrow
+      slotProps={{
+        tooltip: {
+          sx: {
+            maxWidth: 320,
+            p: 0,
+            backgroundColor: 'transparent !important',
+            border: 'none !important',
+            boxShadow: 'none !important',
+          },
+        },
+        arrow: { sx: { display: 'none' } },
+      }}
+    >
+      {row}
+    </Tooltip>
+  );
 };
 
 // ─── Setup display ────────────────────────────────────────────────────────────
@@ -842,6 +833,17 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
       enchant: setup.gear[slot].enchant,
     }),
   );
+
+  const setPieceCounts = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const entry of gearEntries) {
+      const info = getItemInfo(entry.id);
+      if (info?.setName) {
+        counts.set(info.setName, (counts.get(info.setName) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [gearEntries]);
 
   const frontBar = Object.entries(setup.skills[0] ?? {})
     .map(([slot, id]) => ({ slot: Number(slot), id }))
@@ -1520,6 +1522,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
                     itemId={id}
                     trait={trait}
                     enchant={enchant}
+                    setPieceCounts={setPieceCounts}
                   />
                 ))}
               </Box>
