@@ -1272,7 +1272,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             >
                               <Tooltip
                                 enterTouchDelay={0}
-                                leaveTouchDelay={999999}
+                                leaveTouchDelay={3000}
                                 title={(() => {
                                   // Use memoized tooltip props lookup
                                   const rich = tooltipPropsLookup.get(talent.guid);
@@ -1340,6 +1340,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       boxShadow: 'none !important',
                                     },
                                   },
+                                  arrow: { sx: { display: 'none' } },
                                 }}
                               >
                                 <Avatar
@@ -1456,6 +1457,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         boxShadow: 'none !important',
                                       },
                                     },
+                                    arrow: { sx: { display: 'none' } },
                                   }}
                                 >
                                   <Avatar
