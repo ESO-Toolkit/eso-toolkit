@@ -11,6 +11,7 @@ import {
   CallSplit as CallSplitIcon,
   Check as CheckIcon,
   ContentCopy as CopyIcon,
+  DataObject as DataObjectIcon,
   Edit as EditIcon,
   ExpandMore as ExpandMoreIcon,
   FitnessCenter as FitnessIcon,
@@ -65,6 +66,7 @@ import {
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
+import { exportBuildToCSPSLua } from '../features/build-editor/utils/cspsExport';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
@@ -1887,6 +1889,7 @@ export const BuildViewPage: React.FC = () => {
   const [activeSetup, setActiveSetup] = useState(0);
   const [encodedParam, setEncodedParam] = useState('');
   const [justCopied, setJustCopied] = useState(false);
+  const [justExported, setJustExported] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -1929,6 +1932,23 @@ export const BuildViewPage: React.FC = () => {
         window.setTimeout(() => setJustCopied(false), 1800);
       })
       .catch(() => setSnackbar({ open: true, message: 'Failed to copy', severity: 'error' }));
+  };
+
+  const handleExportCSPS = (): void => {
+    if (!build) return;
+    try {
+      const lua = exportBuildToCSPSLua(build);
+      navigator.clipboard
+        .writeText(lua)
+        .then(() => {
+          setSnackbar({ open: true, message: 'CSPS data copied!', severity: 'success' });
+          setJustExported(true);
+          window.setTimeout(() => setJustExported(false), 1800);
+        })
+        .catch(() => setSnackbar({ open: true, message: 'Failed to copy', severity: 'error' }));
+    } catch {
+      setSnackbar({ open: true, message: 'Could not generate CSPS export', severity: 'error' });
+    }
   };
 
   const ownedSavedBuild = build
@@ -2161,7 +2181,7 @@ export const BuildViewPage: React.FC = () => {
                   sx={{
                     position: 'relative',
                     display: { xs: 'grid', sm: 'inline-flex' },
-                    gridTemplateColumns: { xs: 'minmax(0, 1fr) minmax(0, 1.3fr)', sm: 'none' },
+                    gridTemplateColumns: { xs: '1fr 1fr', sm: 'none' },
                     alignItems: 'stretch',
                     gap: { xs: 0.75, sm: 0.75 },
                     width: { xs: '100%', sm: 'auto' },
@@ -2291,6 +2311,116 @@ export const BuildViewPage: React.FC = () => {
                     </Button>
                   </Tooltip>
 
+                  {/* Export CSPS — copies Caro's Skill Point Saver data to clipboard */}
+                  <Tooltip
+                    title={justExported ? 'CSPS data copied' : "Export for Caro's Skill Point Saver"}
+                    placement="bottom"
+                    enterDelay={400}
+                  >
+                    <Button
+                      component={motion.button}
+                      whileTap={prefersReduced ? undefined : { scale: 0.965 }}
+                      transition={{ type: 'spring', stiffness: 520, damping: 28 }}
+                      onClick={handleExportCSPS}
+                      disableRipple
+                      aria-live="polite"
+                      aria-label={justExported ? 'CSPS data copied to clipboard' : 'Export CSPS build data'}
+                      sx={{
+                        position: 'relative',
+                        minHeight: { xs: 48, sm: 40 },
+                        px: { xs: 1.25, sm: 1.75 },
+                        gap: 0.75,
+                        borderRadius: '11px',
+                        textTransform: 'none',
+                        fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
+                        fontSize: { xs: '0.85rem', sm: '0.78rem' },
+                        fontWeight: 600,
+                        letterSpacing: '-0.005em',
+                        color: justExported
+                          ? classTheme.accent
+                          : isDark
+                            ? 'rgba(255,255,255,0.82)'
+                            : 'rgba(15,23,42,0.74)',
+                        background: justExported
+                          ? alpha(classTheme.accent, isDark ? 0.1 : 0.07)
+                          : 'transparent',
+                        border: `1px solid ${
+                          justExported
+                            ? alpha(classTheme.accent, isDark ? 0.45 : 0.32)
+                            : 'transparent'
+                        }`,
+                        transition:
+                          'color 220ms ease, background-color 220ms ease, border-color 220ms ease',
+                        '&:hover': {
+                          background: justExported
+                            ? alpha(classTheme.accent, isDark ? 0.14 : 0.09)
+                            : isDark
+                              ? 'rgba(255,255,255,0.05)'
+                              : 'rgba(15,23,42,0.04)',
+                          borderColor: justExported
+                            ? alpha(classTheme.accent, 0.55)
+                            : isDark
+                              ? 'rgba(255,255,255,0.12)'
+                              : 'rgba(15,23,42,0.1)',
+                        },
+                        '&:focus-visible': {
+                          outline: `2px solid ${alpha(classTheme.accent, 0.7)}`,
+                          outlineOffset: 2,
+                        },
+                      }}
+                    >
+                      <Box
+                        aria-hidden
+                        sx={{
+                          position: 'relative',
+                          width: 16,
+                          height: 16,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <AnimatePresence mode="wait" initial={false}>
+                          {justExported ? (
+                            <motion.span
+                              key="check"
+                              initial={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              animate={prefersReduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                              exit={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              transition={{ type: 'spring', stiffness: 600, damping: 24 }}
+                              style={{
+                                position: 'absolute',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <CheckIcon sx={{ fontSize: '1rem !important' }} />
+                            </motion.span>
+                          ) : (
+                            <motion.span
+                              key="export"
+                              initial={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              animate={prefersReduced ? { opacity: 1 } : { scale: 1, opacity: 1 }}
+                              exit={prefersReduced ? { opacity: 0 } : { scale: 0.4, opacity: 0 }}
+                              transition={{ type: 'spring', stiffness: 600, damping: 24 }}
+                              style={{
+                                position: 'absolute',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <DataObjectIcon sx={{ fontSize: '0.95rem !important' }} />
+                            </motion.span>
+                          )}
+                        </AnimatePresence>
+                      </Box>
+                      {justExported ? 'Copied' : 'Export CSPS'}
+                    </Button>
+                  </Tooltip>
+
                   {/* Divider between cluster items (desktop only, inside the group) */}
                   <Box
                     aria-hidden
@@ -2325,6 +2455,7 @@ export const BuildViewPage: React.FC = () => {
                           : 'Open your own editable copy of this build in the editor'
                       }
                       sx={{
+                        gridColumn: { xs: '1 / -1', sm: 'auto' },
                         position: 'relative',
                         overflow: 'hidden',
                         minHeight: { xs: 48, sm: 40 },
