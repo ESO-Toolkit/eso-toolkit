@@ -893,10 +893,11 @@ export const RosterBuilderPage: React.FC = () => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Get ESO Logs client context (safe to call - doesn't throw if not logged in)
-  const { client: esoLogsClient, isReady, isLoggedIn: clientLoggedIn } = useEsoLogsClientContext();
+  const { client: esoLogsClient, isReady } = useEsoLogsClientContext();
 
-  // Client is only available when ready and logged in
-  const client = isReady && clientLoggedIn ? esoLogsClient : null;
+  // Client is available when ready — public queries (e.g. getPlayersForReport) route
+  // through the Cloudflare proxy which injects server-side OAuth, so login is not required.
+  const client = isReady ? esoLogsClient : null;
 
   // Update tank setup by array index
   const handleTankChange = useCallback((index: number, updates: Partial<TankSetup>): void => {
@@ -1981,20 +1982,18 @@ export const RosterBuilderPage: React.FC = () => {
                 </ListItemIcon>
                 <ListItemText>From JSON File</ListItemText>
               </MenuItem>
-              {isLoggedIn && (
-                <MenuItem
-                  onClick={() => {
-                    setImportMenuAnchor(null);
-                    setImportUrlDialog(true);
-                  }}
-                  sx={{ fontSize: '0.8125rem', gap: 1 }}
-                >
-                  <ListItemIcon sx={{ minWidth: '28px !important' }}>
-                    <LinkIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>From Log URL</ListItemText>
-                </MenuItem>
-              )}
+              <MenuItem
+                onClick={() => {
+                  setImportMenuAnchor(null);
+                  setImportUrlDialog(true);
+                }}
+                sx={{ fontSize: '0.8125rem', gap: 1 }}
+              >
+                <ListItemIcon sx={{ minWidth: '28px !important' }}>
+                  <LinkIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>From Log URL</ListItemText>
+              </MenuItem>
             </Menu>
             <input
               ref={fileInputRef}
