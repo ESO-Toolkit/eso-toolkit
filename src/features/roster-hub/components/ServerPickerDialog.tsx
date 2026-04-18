@@ -13,11 +13,16 @@
 import { now as dateNow, toCalendarDateTime, type CalendarDateTime } from '@internationalized/date';
 import {
   Add as AddIcon,
+  AdminPanelSettings,
   ArrowBack,
+  Campaign,
+  Check as CheckIcon,
   CheckCircle,
+  ContentCopy,
   Launch as LaunchIcon,
   Refresh as RefreshIcon,
   Settings as SettingsIcon,
+  Shield,
   FiberNew as NewIcon,
 } from '@mui/icons-material';
 import {
@@ -272,8 +277,19 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
   // ── Bot invite tracking ────────────────────────────────────────────────
   const [inviteClicked, setInviteClicked] = React.useState(false);
+  const [inviteCopied, setInviteCopied] = React.useState(false);
   const [previousGuildIds, setPreviousGuildIds] = React.useState<Set<string>>(new Set());
   const [newGuildIds, setNewGuildIds] = React.useState<Set<string>>(new Set());
+
+  const copyInviteLink = React.useCallback(async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(getBotInviteUrl());
+      setInviteCopied(true);
+      window.setTimeout(() => setInviteCopied(false), 2200);
+    } catch {
+      /* clipboard denied — fail silently */
+    }
+  }, []);
 
   // ── Category & channel config (step 2) ──────────────────────────────────
   const [channels, setChannels] = React.useState<ChannelInfo[]>([]);
@@ -714,9 +730,34 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
         {/* ── Not Connected ───────────────────────────────────────────── */}
         {!isDiscordAuthed && (
-          <Box sx={{ textAlign: 'center', py: 3 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Connect your Discord account to see your servers.
+          <Box sx={{ textAlign: 'center', py: 2.5 }}>
+            <Box
+              sx={{
+                width: 52,
+                height: 52,
+                mx: 'auto',
+                mb: 1.5,
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background:
+                  'linear-gradient(135deg, rgba(88,101,242,0.18) 0%, rgba(88,101,242,0.06) 100%)',
+                border: '1px solid rgba(88,101,242,0.22)',
+              }}
+            >
+              <img src={discordIcon} alt="" style={{ width: 24, height: 24 }} />
+            </Box>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 0.5 }}>
+              Sign in with Discord
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 2, fontSize: '0.8rem', maxWidth: 340, mx: 'auto', lineHeight: 1.45 }}
+            >
+              We&apos;ll show which of your servers already have the ESO Toolkit bot so you can post
+              rosters directly from here.
             </Typography>
             <Button
               variant="contained"
@@ -737,6 +778,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 fontWeight: 600,
                 fontSize: '0.85rem',
                 px: 3,
+                textTransform: 'none',
                 background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
                 boxShadow: '0 4px 16px rgba(88,101,242,0.3)',
                 '&:hover': {
@@ -747,6 +789,13 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             >
               Connect Discord
             </Button>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', mt: 1.25, fontSize: '0.7rem', opacity: 0.7 }}
+            >
+              We only read your server list — never your messages.
+            </Typography>
           </Box>
         )}
 
@@ -763,16 +812,331 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         {isDiscordAuthed && !loading && guilds !== null && step === 'select' && (
           <>
             {guilds.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 3 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                  The ESO Toolkit bot isn&apos;t in any of your servers yet.
-                </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
+                {/* Hero */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    textAlign: 'center',
+                    borderRadius: '14px',
+                    px: 2.5,
+                    py: 2.5,
+                    background: isDark
+                      ? 'linear-gradient(135deg, rgba(88,101,242,0.16) 0%, rgba(87,242,135,0.06) 100%)'
+                      : 'linear-gradient(135deg, rgba(88,101,242,0.10) 0%, rgba(87,242,135,0.04) 100%)',
+                    border: isDark
+                      ? '1px solid rgba(88,101,242,0.22)'
+                      : '1px solid rgba(88,101,242,0.15)',
+                  }}
+                >
+                  <Box
+                    aria-hidden
+                    sx={{
+                      position: 'absolute',
+                      top: -50,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: 200,
+                      height: 200,
+                      borderRadius: '50%',
+                      background:
+                        'radial-gradient(circle, rgba(88,101,242,0.22) 0%, transparent 70%)',
+                      filter: 'blur(24px)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <Box sx={{ position: 'relative' }}>
+                    <Box
+                      sx={{
+                        width: 52,
+                        height: 52,
+                        mx: 'auto',
+                        mb: 1.25,
+                        borderRadius: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                        boxShadow: '0 8px 24px rgba(88,101,242,0.35)',
+                        animation: 'heroFloat 4s ease-in-out infinite',
+                        '@keyframes heroFloat': {
+                          '0%, 100%': { transform: 'translateY(0)' },
+                          '50%': { transform: 'translateY(-4px)' },
+                        },
+                      }}
+                    >
+                      <img
+                        src={discordIcon}
+                        alt=""
+                        style={{ width: 26, height: 26, filter: 'brightness(10)' }}
+                      />
+                    </Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 0.5 }}>
+                      Connect a Discord server
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        fontSize: '0.78rem',
+                        maxWidth: 360,
+                        mx: 'auto',
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      The ESO Toolkit bot posts your roster as a rich embed. A server admin adds the
+                      bot once — then your team can publish anytime.
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* How it works — 3 steps */}
+                <Box
+                  sx={{
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.06)'
+                      : '1px solid rgba(0,0,0,0.06)',
+                    background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+                  }}
+                >
+                  {(
+                    [
+                      {
+                        icon: <AdminPanelSettings sx={{ fontSize: 18 }} />,
+                        title: 'A server admin invites the bot',
+                        body: 'Requires "Manage Server" permission on Discord.',
+                      },
+                      {
+                        icon: <Shield sx={{ fontSize: 18 }} />,
+                        title: 'Admin grants role access',
+                        body: 'Pick which roles (e.g. @RaidLead) can publish rosters.',
+                      },
+                      {
+                        icon: <Campaign sx={{ fontSize: 18 }} />,
+                        title: 'Your team publishes from here',
+                        body: 'Anyone with an allowed role can post from this dialog.',
+                      },
+                    ] as const
+                  ).map((s, idx, arr) => (
+                    <Box
+                      key={s.title}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1.25,
+                        px: 1.25,
+                        py: 1.1,
+                        borderBottom:
+                          idx === arr.length - 1
+                            ? 'none'
+                            : isDark
+                              ? '1px solid rgba(255,255,255,0.04)'
+                              : '1px solid rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          flexShrink: 0,
+                          width: 32,
+                          height: 32,
+                          mt: 0.25,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '10px',
+                          background: isDark ? 'rgba(88,101,242,0.12)' : 'rgba(88,101,242,0.08)',
+                          color: '#5865F2',
+                        }}
+                      >
+                        {s.icon}
+                        <Box
+                          aria-hidden
+                          sx={{
+                            position: 'absolute',
+                            bottom: -4,
+                            right: -4,
+                            width: 16,
+                            height: 16,
+                            borderRadius: '50%',
+                            background: isDark ? '#101729' : '#ffffff',
+                            border: '1px solid rgba(88,101,242,0.35)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.58rem',
+                            fontWeight: 700,
+                            color: '#5865F2',
+                          }}
+                        >
+                          {idx + 1}
+                        </Box>
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.3 }}>
+                          {s.title}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: 'block',
+                            lineHeight: 1.4,
+                            mt: 0.125,
+                            fontSize: '0.72rem',
+                          }}
+                        >
+                          {s.body}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Actions */}
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 0.25 }}>
+                  <Button
+                    variant="contained"
+                    href={getBotInviteUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setInviteClicked(true)}
+                    startIcon={
+                      <img
+                        src={discordIcon}
+                        alt=""
+                        style={{ width: 15, height: 15, filter: 'brightness(10)' }}
+                      />
+                    }
+                    sx={{
+                      flex: 1,
+                      borderRadius: '10px',
+                      fontWeight: 600,
+                      fontSize: '0.82rem',
+                      py: 0.9,
+                      textTransform: 'none',
+                      background: 'linear-gradient(135deg, #5865F2 0%, #4752C4 100%)',
+                      boxShadow: '0 4px 16px rgba(88,101,242,0.28)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #6973F5 0%, #5865F2 100%)',
+                        boxShadow: '0 6px 20px rgba(88,101,242,0.36)',
+                      },
+                    }}
+                  >
+                    Add Bot to Server
+                  </Button>
+                  <Tooltip
+                    title={
+                      inviteCopied
+                        ? 'Link copied!'
+                        : 'Copy invite link to share with a server admin'
+                    }
+                    arrow
+                  >
+                    <Button
+                      variant="outlined"
+                      onClick={() => void copyInviteLink()}
+                      startIcon={
+                        inviteCopied ? (
+                          <CheckIcon sx={{ fontSize: '16px !important' }} />
+                        ) : (
+                          <ContentCopy sx={{ fontSize: '16px !important' }} />
+                        )
+                      }
+                      sx={{
+                        flex: 1,
+                        borderRadius: '10px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        py: 0.9,
+                        textTransform: 'none',
+                        borderColor: inviteCopied
+                          ? 'rgba(87,242,135,0.45)'
+                          : 'rgba(88,101,242,0.28)',
+                        color: inviteCopied ? '#57F287' : '#5865F2',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          borderColor: inviteCopied ? '#57F287' : '#5865F2',
+                          background: inviteCopied
+                            ? 'rgba(87,242,135,0.06)'
+                            : 'rgba(88,101,242,0.06)',
+                        },
+                      }}
+                    >
+                      {inviteCopied ? 'Link copied' : 'Copy link for admin'}
+                    </Button>
+                  </Tooltip>
+                </Stack>
+
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ display: 'block', mb: 2 }}
+                  sx={{
+                    textAlign: 'center',
+                    fontSize: '0.7rem',
+                    opacity: 0.75,
+                    mt: -0.5,
+                  }}
                 >
-                  Add the bot to your server, then refresh this list.
+                  Don&apos;t have admin? Share the link with someone who has{' '}
+                  <Box component="span" sx={{ fontWeight: 700 }}>
+                    Manage Server
+                  </Box>
+                  , then come back and refresh.
+                </Typography>
+
+                {/* Refresh CTA appears after invite */}
+                {inviteClicked && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<RefreshIcon sx={{ fontSize: '16px !important' }} />}
+                    onClick={() => void loadGuilds(true)}
+                    sx={{
+                      alignSelf: 'center',
+                      borderRadius: '10px',
+                      fontSize: '0.78rem',
+                      textTransform: 'none',
+                      borderColor: 'rgba(87,242,135,0.3)',
+                      color: '#57F287',
+                      '&:hover': {
+                        borderColor: '#57F287',
+                        background: 'rgba(87,242,135,0.06)',
+                      },
+                      animation: 'pulse 2s infinite',
+                      '@keyframes pulse': {
+                        '0%, 100%': { boxShadow: '0 0 0 0 rgba(87,242,135,0.3)' },
+                        '50%': { boxShadow: '0 0 0 6px rgba(87,242,135,0)' },
+                      },
+                    }}
+                  >
+                    I added the bot — refresh list
+                  </Button>
+                )}
+
+                {/* Disconnect link */}
+                <Typography
+                  variant="caption"
+                  onClick={() => {
+                    clearDiscordAuth();
+                  }}
+                  sx={{
+                    display: 'block',
+                    textAlign: 'center',
+                    mt: 0.5,
+                    color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    cursor: 'pointer',
+                    fontSize: '0.7rem',
+                    '&:hover': {
+                      color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Disconnect Discord
                 </Typography>
               </Box>
             ) : (
@@ -851,23 +1215,34 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                             />
                           )}
                         </Box>
-                        <Chip
-                          size="small"
-                          label={configured ? 'Ready' : 'Setup needed'}
-                          sx={{
-                            mt: 0.25,
-                            height: 18,
-                            fontSize: '0.6rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.02em',
-                            bgcolor: configured ? 'rgba(87,242,135,0.12)' : 'rgba(254,185,0,0.12)',
-                            color: configured ? '#57F287' : '#FEB900',
-                            border: configured
-                              ? '1px solid rgba(87,242,135,0.25)'
-                              : '1px solid rgba(254,185,0,0.25)',
-                            '& .MuiChip-label': { px: 0.75 },
-                          }}
-                        />
+                        <Tooltip
+                          title={
+                            configured
+                              ? 'Defaults configured — category, roles, and channel format are set'
+                              : 'Bot is installed. Admin hasn\u2019t set defaults yet (category, role access) — you can still publish'
+                          }
+                          arrow
+                        >
+                          <Chip
+                            size="small"
+                            label={configured ? 'Ready' : 'Setup needed'}
+                            sx={{
+                              mt: 0.25,
+                              height: 18,
+                              fontSize: '0.6rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.02em',
+                              bgcolor: configured
+                                ? 'rgba(87,242,135,0.12)'
+                                : 'rgba(254,185,0,0.12)',
+                              color: configured ? '#57F287' : '#FEB900',
+                              border: configured
+                                ? '1px solid rgba(87,242,135,0.25)'
+                                : '1px solid rgba(254,185,0,0.25)',
+                              '& .MuiChip-label': { px: 0.75 },
+                            }}
+                          />
+                        </Tooltip>
                       </Box>
 
                       <Tooltip title="Advanced settings">
@@ -892,93 +1267,101 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               </Box>
             )}
 
-            {/* ── Add Bot / Refresh ─────────────────────────────────────── */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1.5,
-                mt: 2,
-                flexWrap: 'wrap',
-              }}
-            >
-              <Button
-                variant="outlined"
-                size="small"
-                href={getBotInviteUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setInviteClicked(true)}
-                sx={{
-                  borderRadius: '10px',
-                  fontSize: '0.78rem',
-                  borderColor: 'rgba(88,101,242,0.25)',
-                  color: '#5865F2',
-                  '&:hover': { borderColor: '#5865F2', background: 'rgba(88,101,242,0.06)' },
-                }}
-              >
-                {guilds && guilds.length === 0 ? 'Add Bot to Server' : 'Add Bot to Another Server'}
-              </Button>
-
-              {inviteClicked && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<RefreshIcon sx={{ fontSize: '16px !important' }} />}
-                  onClick={() => void loadGuilds(true)}
+            {/* ── Add Bot / Refresh / Disconnect (only when we already have guilds) ── */}
+            {guilds.length > 0 && (
+              <>
+                <Box
                   sx={{
-                    borderRadius: '10px',
-                    fontSize: '0.78rem',
-                    borderColor: 'rgba(87,242,135,0.25)',
-                    color: '#57F287',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1.5,
+                    mt: 2,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    href={getBotInviteUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setInviteClicked(true)}
+                    sx={{
+                      borderRadius: '10px',
+                      fontSize: '0.78rem',
+                      textTransform: 'none',
+                      borderColor: 'rgba(88,101,242,0.25)',
+                      color: '#5865F2',
+                      '&:hover': {
+                        borderColor: '#5865F2',
+                        background: 'rgba(88,101,242,0.06)',
+                      },
+                    }}
+                  >
+                    Add Bot to Another Server
+                  </Button>
+
+                  {inviteClicked && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<RefreshIcon sx={{ fontSize: '16px !important' }} />}
+                      onClick={() => void loadGuilds(true)}
+                      sx={{
+                        borderRadius: '10px',
+                        fontSize: '0.78rem',
+                        textTransform: 'none',
+                        borderColor: 'rgba(87,242,135,0.25)',
+                        color: '#57F287',
+                        '&:hover': {
+                          borderColor: '#57F287',
+                          background: 'rgba(87,242,135,0.06)',
+                        },
+                        animation: 'pulse 2s infinite',
+                        '@keyframes pulse': {
+                          '0%, 100%': { boxShadow: '0 0 0 0 rgba(87,242,135,0.25)' },
+                          '50%': { boxShadow: '0 0 0 4px rgba(87,242,135,0)' },
+                        },
+                      }}
+                    >
+                      Refresh List
+                    </Button>
+                  )}
+                </Box>
+
+                {inviteClicked && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', textAlign: 'center', mt: 1 }}
+                  >
+                    Added the bot? Click refresh to see your new server.
+                  </Typography>
+                )}
+
+                <Typography
+                  variant="caption"
+                  onClick={() => {
+                    clearDiscordAuth();
+                  }}
+                  sx={{
+                    display: 'block',
+                    textAlign: 'center',
+                    mt: 2,
+                    color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                    cursor: 'pointer',
+                    fontSize: '0.7rem',
                     '&:hover': {
-                      borderColor: '#57F287',
-                      background: 'rgba(87,242,135,0.06)',
-                    },
-                    animation: 'pulse 2s infinite',
-                    '@keyframes pulse': {
-                      '0%, 100%': { boxShadow: '0 0 0 0 rgba(87,242,135,0.25)' },
-                      '50%': { boxShadow: '0 0 0 4px rgba(87,242,135,0)' },
+                      color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
+                      textDecoration: 'underline',
                     },
                   }}
                 >
-                  Refresh List
-                </Button>
-              )}
-            </Box>
-
-            {inviteClicked && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', textAlign: 'center', mt: 1 }}
-              >
-                Added the bot? Click refresh to see your new server.
-              </Typography>
+                  Disconnect Discord
+                </Typography>
+              </>
             )}
-
-            {/* Disconnect link */}
-            <Typography
-              variant="caption"
-              onClick={() => {
-                clearDiscordAuth();
-              }}
-              sx={{
-                display: 'block',
-                textAlign: 'center',
-                mt: 2,
-                color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                cursor: 'pointer',
-                fontSize: '0.7rem',
-                '&:hover': {
-                  color: isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)',
-                  textDecoration: 'underline',
-                },
-              }}
-            >
-              Disconnect Discord
-            </Typography>
           </>
         )}
 
@@ -993,23 +1376,27 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 sx={{
                   ...sectionSx,
                   mb: 2,
-                  borderColor: 'rgba(254,185,0,0.2)',
+                  borderColor: 'rgba(254,185,0,0.22)',
                   background: isDark ? 'rgba(254,185,0,0.04)' : 'rgba(254,185,0,0.03)',
                 }}
               >
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 600, color: '#FEB900', fontSize: '0.82rem' }}
-                >
-                  First time publishing here?
-                </Typography>
+                <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 0.5 }}>
+                  <Shield sx={{ fontSize: 16, color: '#FEB900' }} />
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 700, color: '#FEB900', fontSize: '0.82rem' }}
+                  >
+                    First time publishing here?
+                  </Typography>
+                </Stack>
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ display: 'block', mt: 0.5 }}
+                  sx={{ display: 'block', lineHeight: 1.5, mb: 0.75 }}
                 >
-                  Pick the category where roster channels should be created, or{' '}
-                  <span
+                  You can publish now — or a server admin can{' '}
+                  <Box
+                    component="span"
                     role="button"
                     tabIndex={0}
                     onClick={() => {
@@ -1022,16 +1409,50 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         navigate(`/discord-server-config?guild=${selectedGuild.id}&from=publish`);
                       }
                     }}
-                    style={{
+                    sx={{
                       color: '#5865F2',
                       cursor: 'pointer',
-                      fontWeight: 600,
+                      fontWeight: 700,
+                      textDecoration: 'underline',
+                      textDecorationThickness: '1px',
+                      textUnderlineOffset: '2px',
+                      '&:hover': { color: '#6973F5' },
                     }}
                   >
-                    set up defaults
-                  </span>{' '}
-                  for this server so you don&apos;t have to pick every time.
+                    open server settings
+                  </Box>{' '}
+                  to configure defaults:
                 </Typography>
+                <Box
+                  component="ul"
+                  sx={{
+                    m: 0,
+                    pl: 2.25,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 0.25,
+                    '& li': {
+                      fontSize: '0.72rem',
+                      lineHeight: 1.5,
+                      color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)',
+                      '&::marker': { color: '#FEB900' },
+                    },
+                    '& li strong': {
+                      color: isDark ? '#e5e7eb' : '#1e293b',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <li>
+                    <strong>Default category</strong> for new roster channels
+                  </li>
+                  <li>
+                    <strong>Role access</strong> — grant specific roles permission to publish
+                  </li>
+                  <li>
+                    <strong>Channel-name format</strong> (day, time, trial)
+                  </li>
+                </Box>
               </Box>
             )}
 
