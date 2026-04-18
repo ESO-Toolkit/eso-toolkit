@@ -64,16 +64,17 @@ const BACK_MAIN_SLOT = 20;
 const BACK_OFF_SLOT = 21;
 
 const TWO_HANDED_KEYWORDS = ['greatsword', 'battle axe', 'battleaxe', 'maul', 'bow', 'staff'];
-// Slot mask values from LibSets/Wizard's Wardrobe exports that map to 2H weapons
+// Slot mask values from LibSets/Wizard's Wardrobe exports that map to 2H weapons.
+// Staff labels verified against data/eso-globals-item-set-collections.json slotMasks table.
 const TWO_HANDED_SLOT_MASKS = new Set<number>([
   134_217_728, // Two-handed sword
-  268_435_456, // Two-handed axe
-  536_870_912, // Maul (WW high-bit variant included)
+  268_435_456, // Maul
+  536_870_912, // Battle axe
   1_073_741_824, // Bow
-  2_147_483_648, // Inferno staff
-  4_294_967_296, // Lightning staff
+  2_147_483_648, // Restoration staff
+  4_294_967_296, // Inferno staff
   8_589_934_592, // Frost staff
-  17_179_869_184, // Restoration staff / other 2H magical variants
+  17_179_869_184, // Lightning staff
 ]);
 
 const isSlotCompatible = (expected: SlotType, actual: SlotType): boolean => {
