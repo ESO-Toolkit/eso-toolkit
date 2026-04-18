@@ -45,7 +45,6 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { setIntendedDestination } from '@/features/auth/auth';
 import { useAuth } from '@/features/auth/AuthContext';
 import { tempBuildApi } from '@/features/build-editor/api/temp-build-api';
 import { PublishBuildDialog } from '@/features/build-hub/components/PublishBuildDialog';
@@ -307,14 +306,7 @@ export const BuildCompletionHeader: React.FC = () => {
   };
 
   const handleGuestPublishRedirect = (): void => {
-    void encodeBuildToURL(build).then((encoded) => {
-      if (encoded) {
-        setIntendedDestination(`/build-editor?b=${encodeURIComponent(encoded)}`);
-      } else {
-        setIntendedDestination('/build-editor');
-      }
-      navigate('/login');
-    });
+    enqueueSnackbar('Log in to publish your build to the Build Hub.', { variant: 'info' });
   };
 
   const handleExportClick = (): void => {
