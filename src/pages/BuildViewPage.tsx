@@ -54,6 +54,7 @@ import { calculateBuildStats } from '../features/build-editor/engine/stat-engine
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
+import { exportBuildToCSPSLua } from '../features/build-editor/utils/cspsExport';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
 import { ViewAttributeBar } from '../features/build-viewer/components/ViewAttributeBar';
 import { getItemInfo, getSetItemsBySlot } from '../features/loadout-manager/data/itemIdMap';
@@ -66,7 +67,6 @@ import {
 } from '../features/loadout-manager/utils/itemIconResolver';
 import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
-import { exportBuildToCSPSLua } from '../features/build-editor/utils/cspsExport';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
@@ -2313,7 +2313,9 @@ export const BuildViewPage: React.FC = () => {
 
                   {/* Export CSPS — copies Caro's Skill Point Saver data to clipboard */}
                   <Tooltip
-                    title={justExported ? 'CSPS data copied' : "Export for Caro's Skill Point Saver"}
+                    title={
+                      justExported ? 'CSPS data copied' : "Export for Caro's Skill Point Saver"
+                    }
                     placement="bottom"
                     enterDelay={400}
                   >
@@ -2324,7 +2326,9 @@ export const BuildViewPage: React.FC = () => {
                       onClick={handleExportCSPS}
                       disableRipple
                       aria-live="polite"
-                      aria-label={justExported ? 'CSPS data copied to clipboard' : 'Export CSPS build data'}
+                      aria-label={
+                        justExported ? 'CSPS data copied to clipboard' : 'Export CSPS build data'
+                      }
                       sx={{
                         position: 'relative',
                         minHeight: { xs: 48, sm: 40 },
