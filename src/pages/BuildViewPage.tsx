@@ -1,7 +1,7 @@
 /**
  * BuildViewPage — read-only, shareable view of a build.
  *
- * Accessible via direct link: /bv?b=<encoded>
+ * Accessible via direct link: /bv?b=<encoded> or /bv?id=<hubBuildId>
  * Uses the same glassmorphism design system as the build editor but in
  * read-only presentation mode.
  */
@@ -36,7 +36,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { GearSetTooltip } from '../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../components/LazySkillTooltip';
@@ -55,6 +55,7 @@ import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
 import { exportBuildToCSPSLua } from '../features/build-editor/utils/cspsExport';
+import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
 import { ViewAttributeBar } from '../features/build-viewer/components/ViewAttributeBar';
 import { getItemInfo, getSetItemsBySlot } from '../features/loadout-manager/data/itemIdMap';
@@ -1880,14 +1881,17 @@ export const BuildViewPage: React.FC = () => {
   const isDark = theme.palette.mode === 'dark';
   const prefersReduced = useReducedMotion();
   const skillCacheReady = useSkillCacheReady();
+  const location = useLocation();
   const navigate = useNavigate();
   const savedBuilds = useSelector(selectSavedBuilds);
 
   const [build, setBuild] = useState<Build | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [activeSetup, setActiveSetup] = useState(0);
   const [encodedParam, setEncodedParam] = useState('');
+  const [hubBuildId, setHubBuildId] = useState('');
   const [justCopied, setJustCopied] = useState(false);
   const [justExported, setJustExported] = useState(false);
   const [snackbar, setSnackbar] = useState<{
@@ -1896,34 +1900,84 @@ export const BuildViewPage: React.FC = () => {
     severity: 'success' | 'error';
   }>({ open: false, message: '', severity: 'success' });
 
-  useEffect(() => {
+  const loadBuild = React.useCallback(() => {
+    let cancelled = false;
+    setLoading(true);
+    setNotFound(false);
+    setFetchError(false);
+
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('b') ?? '';
-    setEncodedParam(encoded);
+    const idParam = params.get('id') ?? '';
+    const routerData = (location.state as { buildData?: string } | null)?.buildData;
 
-    if (!encoded) {
+    const onDecoded = (decoded: Build | null, buildData: string): void => {
+      if (cancelled) return;
+      if (decoded) {
+        setBuild(decoded);
+        setEncodedParam(buildData);
+      } else {
+        setNotFound(true);
+      }
+      setLoading(false);
+    };
+
+    const handleFetchError = (err: unknown): void => {
+      if (cancelled) return;
+      if ((err as { status?: number }).status === 404) {
+        setNotFound(true);
+      } else {
+        setFetchError(true);
+      }
+      setLoading(false);
+    };
+
+    if (encoded) {
+      setEncodedParam(encoded);
+      void decodeBuildFromURL(encoded)
+        .then((decoded) => onDecoded(decoded, encoded))
+        .catch(() => {
+          if (cancelled) return;
+          setNotFound(true);
+          setLoading(false);
+        });
+    } else if (idParam) {
+      setHubBuildId(idParam);
+      if (routerData) {
+        void decodeBuildFromURL(routerData)
+          .then((decoded) => onDecoded(decoded, routerData))
+          .catch(() => {
+            if (cancelled) return;
+            setNotFound(true);
+            setLoading(false);
+          });
+      } else {
+        void buildHubApi
+          .get(idParam)
+          .then(({ build: hubBuild }) =>
+            decodeBuildFromURL(hubBuild.build_data).then((decoded) =>
+              onDecoded(decoded, hubBuild.build_data),
+            ),
+          )
+          .catch(handleFetchError);
+      }
+    } else {
       setNotFound(true);
       setLoading(false);
-      return;
     }
 
-    void decodeBuildFromURL(encoded)
-      .then((decoded) => {
-        if (decoded) {
-          setBuild(decoded);
-        } else {
-          setNotFound(true);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        setNotFound(true);
-        setLoading(false);
-      });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [location.state]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => loadBuild(), []);
 
   const handleCopyLink = (): void => {
-    const url = `${window.location.origin}${window.location.pathname}?b=${encodedParam}`;
+    const url = hubBuildId
+      ? `${window.location.origin}${window.location.pathname}?id=${hubBuildId}`
+      : `${window.location.origin}${window.location.pathname}?b=${encodedParam}`;
     navigator.clipboard
       .writeText(url)
       .then(() => {
@@ -1974,13 +2028,33 @@ export const BuildViewPage: React.FC = () => {
     );
   }
 
+  // ── Fetch error (transient) ──
+  if (fetchError) {
+    return (
+      <Container maxWidth="sm" sx={{ pt: 8, pb: 6 }}>
+        <GlassPanel variant="default" sx={{ p: 3 }}>
+          <Alert severity="warning" sx={{ borderRadius: '12px', mb: 2 }}>
+            Could not load the build. The server may be temporarily unavailable.
+          </Alert>
+          <Button
+            variant="outlined"
+            onClick={loadBuild}
+            sx={{ borderRadius: '10px', textTransform: 'none' }}
+          >
+            Retry
+          </Button>
+        </GlassPanel>
+      </Container>
+    );
+  }
+
   // ── Not found ──
   if (notFound || !build) {
     return (
       <Container maxWidth="sm" sx={{ pt: 8, pb: 6 }}>
         <GlassPanel variant="default" sx={{ p: 3 }}>
           <Alert severity="error" sx={{ borderRadius: '12px', mb: 2 }}>
-            No build found in the URL. Please check the link and try again.
+            No build found. The link may be invalid or the build may have been removed.
           </Alert>
           <Button
             variant="outlined"
