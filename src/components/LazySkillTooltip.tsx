@@ -26,7 +26,7 @@ const SkillTooltipLoadingFallback: React.FC<SkillTooltipLoadingFallbackProps> = 
       minWidth: 280,
       maxWidth: { xs: 280, sm: 340, md: 380 },
       borderRadius: '12px',
-      background: 'rgba(10, 16, 32, 0.78)',
+      background: 'rgba(10, 16, 32, 0.92)',
       backdropFilter: 'blur(16px)',
       border: '1px solid rgba(148, 210, 255, 0.12)',
       boxShadow:

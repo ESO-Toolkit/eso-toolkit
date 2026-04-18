@@ -195,9 +195,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                   borderRadius: '12px',
                 },
                 '&.skill-tooltip': {
-                  background: darkMode ? 'rgba(10, 16, 32, 0.78)' : 'rgba(255, 255, 255, 0.82)',
-                  backdropFilter: 'blur(16px) saturate(1.4)',
-                  WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
+                  background: darkMode ? 'rgba(10, 16, 32, 0.92)' : 'rgba(255, 255, 255, 0.92)',
+                  backdropFilter: 'blur(16px) saturate(1.4) !important',
+                  WebkitBackdropFilter: 'blur(16px) saturate(1.4) !important',
                   border: darkMode
                     ? '1px solid rgba(148, 210, 255, 0.12)'
                     : '1px solid rgba(0, 0, 0, 0.12)',
