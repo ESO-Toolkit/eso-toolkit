@@ -1560,7 +1560,7 @@ export const RosterViewPage: React.FC = () => {
             addons: prev.addons.map((a) => {
               const fresh = packAddonMap.get(a.esouiId);
               if (!fresh) return a;
-              return { ...a, required: fresh.required, note: fresh.note ?? a.note };
+              return { ...a, required: fresh.required, note: fresh.note };
             }),
           };
         });
