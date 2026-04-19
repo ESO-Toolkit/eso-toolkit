@@ -13,7 +13,7 @@
 import { ArrowBack } from '@mui/icons-material';
 import { Box, Button, Container, Stack, Typography, useTheme } from '@mui/material';
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import { DiscordAdminGuideContent } from '../features/roster-hub/components/DiscordAdminGuideContent';
@@ -22,26 +22,35 @@ export const DiscordSetupPage: React.FC = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const guildId = searchParams.get('server') ?? undefined;
+
+  // React Router sets `location.key === 'default'` when this is the first SPA
+  // entry — i.e. the user landed here directly (shared link, DM, fresh tab).
+  // In that case navigate(-1) would either do nothing or leave the app, so
+  // hide the Back button instead of offering a dead control.
+  const canGoBack = location.key !== 'default';
 
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 3, sm: 5 } }}>
       <Stack spacing={2.5}>
-        <Button
-          onClick={() => navigate(-1)}
-          startIcon={<ArrowBack fontSize="small" />}
-          sx={{
-            alignSelf: 'flex-start',
-            textTransform: 'none',
-            color: 'text.secondary',
-            fontSize: '0.82rem',
-            px: 1,
-            '&:hover': { color: 'text.primary', background: 'transparent' },
-          }}
-        >
-          Back
-        </Button>
+        {canGoBack && (
+          <Button
+            onClick={() => navigate(-1)}
+            startIcon={<ArrowBack fontSize="small" />}
+            sx={{
+              alignSelf: 'flex-start',
+              textTransform: 'none',
+              color: 'text.secondary',
+              fontSize: '0.82rem',
+              px: 1,
+              '&:hover': { color: 'text.primary', background: 'transparent' },
+            }}
+          >
+            Back
+          </Button>
+        )}
 
         <Stack direction="row" alignItems="center" spacing={1.5}>
           <Box
