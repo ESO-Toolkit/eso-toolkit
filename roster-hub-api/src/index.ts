@@ -1597,6 +1597,8 @@ app.post('/admin/sync-leaderboard', async (c) => {
 // Worker export — fetch (Hono) + scheduled (cron: cleanup + leaderboard sync)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export { PackSyncService } from './pack-sync';
+
 export default {
   fetch: app.fetch,
 

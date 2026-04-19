@@ -57,6 +57,8 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
     const typeLabel = PACK_TYPE_LABELS[pack.pack_type] ?? pack.pack_type;
     const displayName = pack.is_anonymous ? 'Anonymous' : pack.author_name || '?';
     const addonCount = pack.addons.length;
+    const requiredCount = pack.addons.filter((a) => a.required).length;
+    const optionalCount = addonCount - requiredCount;
 
     const handleCopyLink = (e: React.MouseEvent): void => {
       e.stopPropagation();
@@ -306,11 +308,27 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
               </Box>
             )}
 
-            {/* Addon preview — first 3 addons */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.25 }}>
-              {pack.addons.slice(0, 3).map((addon) => (
+            {/* Addon preview — first 4 addons */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 0.75 }}>
+              {pack.addons.slice(0, 4).map((addon) => (
                 <Chip
                   key={addon.esouiId}
+                  icon={
+                    <Box
+                      component="span"
+                      sx={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: '50%',
+                        bgcolor: addon.required
+                          ? '#c4a44a'
+                          : isDark
+                            ? 'rgba(255,255,255,0.2)'
+                            : 'rgba(0,0,0,0.15)',
+                        ml: 0.75,
+                      }}
+                    />
+                  }
                   label={addon.name}
                   size="small"
                   sx={{
@@ -363,6 +381,18 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
                 →
               </Box>
             </Box>
+            {addonCount > 0 && (
+              <Typography
+                sx={{
+                  fontSize: '0.62rem',
+                  fontWeight: 600,
+                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  mb: 1,
+                }}
+              >
+                {requiredCount} required &middot; {optionalCount} optional
+              </Typography>
+            )}
 
             {/* Spacer */}
             <Box sx={{ flexGrow: 1, minHeight: 12 }} />
