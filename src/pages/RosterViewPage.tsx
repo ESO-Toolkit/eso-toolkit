@@ -33,6 +33,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
@@ -1375,6 +1376,7 @@ export const RosterViewPage: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
   const roleColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
+  const location = useLocation();
 
   // Preload skill cache so BuildDetailPanel can resolve ability names/icons
   useEffect(() => {
@@ -1384,7 +1386,9 @@ export const RosterViewPage: React.FC = () => {
   const [roster, setRoster] = useState<RaidRoster | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [encodedParam, setEncodedParam] = useState<string>('');
+  const [hubRosterId, setHubRosterId] = useState<string>('');
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: React.ReactNode;
@@ -1418,12 +1422,20 @@ export const RosterViewPage: React.FC = () => {
   // Clean up deep-link fallback on unmount
   useEffect(() => () => cancelDeepLinkRef.current?.(), []);
 
-  // Decode roster from ?r= or fetch by ?id= on mount
-  useEffect(() => {
+  const loadRoster = React.useCallback(() => {
     let cancelled = false;
+    setLoading(true);
+    setNotFound(false);
+    setFetchError(false);
+
     const params = new URLSearchParams(window.location.search);
     const encoded = params.get('r') ?? '';
     const hubId = params.get('id') ?? '';
+    const routerState = location.state as {
+      rosterData?: string;
+      recommendedAddons?: RecommendedAddons | null;
+    } | null;
+    const routerData = routerState?.rosterData;
 
     const onDecoded = (decoded: RaidRoster | null, rosterData: string): void => {
       if (cancelled) return;
@@ -1437,6 +1449,17 @@ export const RosterViewPage: React.FC = () => {
       if (window.parent !== window) {
         window.parent.postMessage({ type: 'roster-preview-ready' }, window.location.origin);
       }
+    };
+
+    const handleFetchError = (err: unknown): void => {
+      if (cancelled) return;
+      const status = (err as { status?: number }).status;
+      if (status === 404) {
+        setNotFound(true);
+      } else {
+        setFetchError(true);
+      }
+      setLoading(false);
     };
 
     // If navigated from hub, fetch recommended addons
@@ -1469,23 +1492,43 @@ export const RosterViewPage: React.FC = () => {
           setLoading(false);
         });
     } else if (hubId) {
-      // Direct-publish rosters (direct-* IDs) are stored in the bot's KV, not the hub API
-      const fetchRosterData = hubId.startsWith('direct-')
-        ? fetch(`${getDiscordBotApiUrl()}/discord/roster/${encodeURIComponent(hubId)}/data`)
-            .then((res) => {
-              if (!res.ok) throw new Error('Not found');
-              return res.json() as Promise<{ roster_data: string }>;
-            })
-            .then((json) => json.roster_data)
-        : rosterHubApi.get(hubId).then((res) => res.roster.roster_data);
+      setHubRosterId(hubId);
 
-      void fetchRosterData
-        .then((data) => decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)))
-        .catch(() => {
-          if (cancelled) return;
-          setNotFound(true);
-          setLoading(false);
-        });
+      if (routerData) {
+        if (routerState?.recommendedAddons) {
+          setRecommendedAddons(routerState.recommendedAddons);
+        }
+        void decodeRosterFromURL(routerData)
+          .then((decoded) => onDecoded(decoded, routerData))
+          .catch(() => {
+            if (cancelled) return;
+            setNotFound(true);
+            setLoading(false);
+          });
+      } else {
+        // Direct-publish rosters (direct-* IDs) are stored in the bot's KV, not the hub API
+        const fetchRosterData = hubId.startsWith('direct-')
+          ? fetch(`${getDiscordBotApiUrl()}/discord/roster/${encodeURIComponent(hubId)}/data`)
+              .then((res) => {
+                if (!res.ok) {
+                  const error = new Error('Not found');
+                  (error as Error & { status: number }).status = res.status;
+                  throw error;
+                }
+                return res.json() as Promise<{ roster_data: string }>;
+              })
+              .then((json) => json.roster_data)
+          : rosterHubApi.get(hubId).then((res) => {
+              if (!cancelled && res.roster.recommended_addons) {
+                setRecommendedAddons(res.roster.recommended_addons);
+              }
+              return res.roster.roster_data;
+            });
+
+        void fetchRosterData
+          .then((data) => decodeRosterFromURL(data).then((decoded) => onDecoded(decoded, data)))
+          .catch(handleFetchError);
+      }
     } else {
       setNotFound(true);
       setLoading(false);
@@ -1494,12 +1537,16 @@ export const RosterViewPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [location.state]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => loadRoster(), []);
 
   // Copy this shareable link to clipboard
   const handleCopyLink = (): void => {
-    // Use current pathname so the link works in subdirectory deployments
-    const url = `${window.location.origin}${window.location.pathname}?r=${encodedParam}`;
+    const url = hubRosterId
+      ? `${window.location.origin}${window.location.pathname}?id=${hubRosterId}`
+      : `${window.location.origin}${window.location.pathname}?r=${encodedParam}`;
     navigator.clipboard
       .writeText(url)
       .then(() => {
@@ -1559,6 +1606,24 @@ export const RosterViewPage: React.FC = () => {
     );
   }
 
+  // ---- Fetch error (transient) ----
+  if (fetchError) {
+    return (
+      <Container maxWidth="sm" sx={{ pt: 8, pb: 6 }}>
+        <Alert severity="warning" sx={{ borderRadius: '14px', mb: 2 }}>
+          Could not load the roster. The server may be temporarily unavailable.
+        </Alert>
+        <Button
+          variant="outlined"
+          onClick={loadRoster}
+          sx={{ borderRadius: '10px', textTransform: 'none' }}
+        >
+          Retry
+        </Button>
+      </Container>
+    );
+  }
+
   // ---- Not found state ----
   if (notFound || !roster) {
     return (
@@ -1570,7 +1635,7 @@ export const RosterViewPage: React.FC = () => {
             mb: 2,
           }}
         >
-          No roster found in the URL. Please check the link and try again.
+          No roster found. The link may be invalid or the roster may have been removed.
         </Alert>
         <Button
           variant="outlined"

@@ -81,7 +81,9 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
     } catch {
       // ignore parse failure
     }
-    throw new Error(message);
+    const error = new Error(message);
+    (error as Error & { status: number }).status = res.status;
+    throw error;
   }
 
   return res.json() as Promise<T>;

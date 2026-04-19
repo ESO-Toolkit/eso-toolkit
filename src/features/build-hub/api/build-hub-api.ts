@@ -25,7 +25,9 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, token?: stri
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((err as { error?: string }).error ?? res.statusText);
+    const error = new Error((err as { error?: string }).error ?? res.statusText);
+    (error as Error & { status: number }).status = res.status;
+    throw error;
   }
   return res.json() as Promise<T>;
 }

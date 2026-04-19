@@ -128,7 +128,8 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
 
         <CardActionArea
           onClick={() =>
-            navigate(`/bv?b=${encodeURIComponent(build.build_data)}`, {
+            navigate(`/bv?id=${build.id}`, {
+              state: { buildData: build.build_data },
               vtType: 'forward',
               morph: { ref: cardRef, name: 'build-hero' },
             })
