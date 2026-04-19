@@ -106,7 +106,10 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
         const playerName = player?.name || `Anonymous ${playerId}`;
         const playerClass = player?.type ?? '';
 
-        playerFightParticipation.set(playerName, (playerFightParticipation.get(playerName) ?? 0) + 1);
+        playerFightParticipation.set(
+          playerName,
+          (playerFightParticipation.get(playerName) ?? 0) + 1,
+        );
 
         const hasFood = Array.from(ALL_FOOD_BUFF_IDS).some((foodBuffId) =>
           isBuffActiveOnTarget(buffLookupData, foodBuffId, fightMidpoint, playerId),
@@ -172,7 +175,9 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: '10px', mb: '6px' }}>
               <WidgetPlayerAvatar className={player.playerClass} size={26} />
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                <Typography sx={{ fontWeight: 600, color: '#ffffff', fontSize: 13, lineHeight: 1.2 }}>
+                <Typography
+                  sx={{ fontWeight: 600, color: '#ffffff', fontSize: 13, lineHeight: 1.2 }}
+                >
                   {player.name}
                 </Typography>
                 <Typography
@@ -214,9 +219,7 @@ export const MissingFoodWidget: React.FC<MissingFoodWidgetProps> = ({
                     width: 14,
                     height: 6,
                     borderRadius: '2px',
-                    background: miss
-                      ? 'rgba(255,102,102,0.55)'
-                      : 'rgba(92,229,114,0.35)',
+                    background: miss ? 'rgba(255,102,102,0.55)' : 'rgba(92,229,114,0.35)',
                     boxShadow: miss ? '0 0 4px rgba(255,102,102,0.5)' : 'none',
                   }}
                 />

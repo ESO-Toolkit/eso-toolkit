@@ -83,8 +83,16 @@ export const LowBuffUptimesWidget: React.FC<LowBuffUptimesWidgetProps> = ({
   }, [
     scope,
     fights.length,
-    fight0, fight1, fight2, fight3, fight4,
-    buffs0, buffs1, buffs2, buffs3, buffs4,
+    fight0,
+    fight1,
+    fight2,
+    fight3,
+    fight4,
+    buffs0,
+    buffs1,
+    buffs2,
+    buffs3,
+    buffs4,
   ]);
 
   const lowUptimes = React.useMemo((): LowUptimeInfo[] => {

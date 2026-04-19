@@ -133,7 +133,7 @@ describe('RaidDashboardPage', () => {
   it('should render page title', () => {
     renderWithRouter();
 
-    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Report').length).toBeGreaterThan(0);
   });
 
   it('should render default widgets', () => {
@@ -210,7 +210,7 @@ describe('RaidDashboardPage', () => {
   it('should display report title when available', () => {
     renderWithRouter();
 
-    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Report').length).toBeGreaterThan(0);
   });
 
   it('should sort fights by most recent first', () => {
@@ -219,7 +219,7 @@ describe('RaidDashboardPage', () => {
     // Fights should be sorted by endTime descending
     // Fight 1 (endTime: 4000) should come before Fight 2 (endTime: 2000)
     // This is verified by checking that widgets receive fights in the correct order
-    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Report').length).toBeGreaterThan(0);
   });
 
   it('should handle empty report data gracefully', () => {

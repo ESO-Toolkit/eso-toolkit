@@ -120,7 +120,9 @@ export const AddWidgetDialog: React.FC<AddWidgetDialogProps> = ({ open, onClose,
           >
             Add Widget
           </Typography>
-          <Typography sx={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em', color: '#ffffff' }}>
+          <Typography
+            sx={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em', color: '#ffffff' }}
+          >
             Choose a widget to add to your dashboard
           </Typography>
         </Box>
@@ -226,7 +228,9 @@ export const AddWidgetDialog: React.FC<AddWidgetDialogProps> = ({ open, onClose,
                   >
                     {opt.title}
                   </Typography>
-                  <Typography sx={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>
+                  <Typography
+                    sx={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}
+                  >
                     {opt.desc}
                   </Typography>
                 </Box>

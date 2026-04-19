@@ -104,7 +104,12 @@ export const RaidDashboardPage: React.FC = () => {
       <Box sx={{ p: 3 }}>
         <DynamicMetaTags {...metaTags} />
         <Typography
-          sx={{ fontSize: 12, fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', p: '20px 16px' }}
+          sx={{
+            fontSize: 12,
+            fontFamily: 'monospace',
+            color: 'rgba(255,255,255,0.3)',
+            p: '20px 16px',
+          }}
         >
           Loading dashboard…
         </Typography>
@@ -127,7 +132,10 @@ export const RaidDashboardPage: React.FC = () => {
     <Box>
       <DynamicMetaTags {...metaTags} />
 
-      <WorkInProgressDisclaimer featureName="Raid Dashboard" sx={{ mx: { xs: 1, sm: 2, md: 4 }, mt: 2 }} />
+      <WorkInProgressDisclaimer
+        featureName="Raid Dashboard"
+        sx={{ mx: { xs: 1, sm: 2, md: 4 }, mt: 2 }}
+      />
 
       <ReportActionBar
         reportId={reportId || ''}
@@ -250,7 +258,9 @@ export const RaidDashboardPage: React.FC = () => {
 
         {/* Widget grid */}
         {sortedFights.length === 0 ? (
-          <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>
+          <Typography
+            sx={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}
+          >
             No fights found in this report. Waiting for data…
           </Typography>
         ) : (
@@ -294,10 +304,7 @@ export const RaidDashboardPage: React.FC = () => {
               }
 
               return (
-                <Box
-                  key={widget.id}
-                  sx={{ display: 'inline-block', width: '100%', mb: '16px' }}
-                >
+                <Box key={widget.id} sx={{ display: 'inline-block', width: '100%', mb: '16px' }}>
                   {widgetComponent}
                 </Box>
               );

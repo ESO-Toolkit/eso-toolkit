@@ -66,10 +66,7 @@ export interface WidgetPlayerAvatarProps {
   size?: number;
 }
 
-export const WidgetPlayerAvatar: React.FC<WidgetPlayerAvatarProps> = ({
-  className,
-  size = 30,
-}) => {
+export const WidgetPlayerAvatar: React.FC<WidgetPlayerAvatarProps> = ({ className, size = 30 }) => {
   const cls = className.trim().toLowerCase();
   const borderColor = CLASS_BORDER[cls] ?? 'rgba(255,255,255,0.08)';
   const iconSize = Math.round(size * 0.73);

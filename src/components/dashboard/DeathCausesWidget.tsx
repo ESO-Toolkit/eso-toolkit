@@ -87,9 +87,21 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
   }, [
     scope,
     fights.length,
-    fight0, fight1, fight2, fight3, fight4,
-    deaths0, deaths1, deaths2, deaths3, deaths4,
-    loading0, loading1, loading2, loading3, loading4,
+    fight0,
+    fight1,
+    fight2,
+    fight3,
+    fight4,
+    deaths0,
+    deaths1,
+    deaths2,
+    deaths3,
+    deaths4,
+    loading0,
+    loading1,
+    loading2,
+    loading3,
+    loading4,
   ]);
 
   const isLoading =
@@ -198,7 +210,14 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
       isEmpty={isEmpty}
     >
       {isLoading ? (
-        <Box sx={{ p: '20px 16px', fontSize: 12, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>
+        <Box
+          sx={{
+            p: '20px 16px',
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.3)',
+            fontFamily: 'monospace',
+          }}
+        >
           Loading…
         </Box>
       ) : (

@@ -84,8 +84,16 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
   }, [
     scope,
     fights.length,
-    fight0, fight1, fight2, fight3, fight4,
-    damage0, damage1, damage2, damage3, damage4,
+    fight0,
+    fight1,
+    fight2,
+    fight3,
+    fight4,
+    damage0,
+    damage1,
+    damage2,
+    damage3,
+    damage4,
   ]);
 
   const lowDpsPlayers = React.useMemo((): LowDpsPlayer[] => {
@@ -93,7 +101,13 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
 
     const playerDpsMap = new Map<
       number,
-      { name: string; playerClass: string; playerRole: string; totalDamage: number; totalDuration: number }
+      {
+        name: string;
+        playerClass: string;
+        playerRole: string;
+        totalDamage: number;
+        totalDuration: number;
+      }
     >();
 
     relevantFights.forEach(({ fight, damage }) => {
@@ -226,10 +240,14 @@ export const LowDpsWidget: React.FC<LowDpsWidgetProps> = ({
                 fontSize: 11,
               }}
             >
-              <Typography sx={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: '#ff6666' }}>
+              <Typography
+                sx={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: '#ff6666' }}
+              >
                 {fmt(player.dps)} DPS
               </Typography>
-              <Typography sx={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>
+              <Typography
+                sx={{ fontFamily: 'monospace', fontSize: 11, color: 'rgba(255,255,255,0.3)' }}
+              >
                 target {fmt(player.expected)}
               </Typography>
             </Box>

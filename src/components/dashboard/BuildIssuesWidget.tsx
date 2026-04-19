@@ -97,9 +97,21 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
   }, [
     scope,
     fights.length,
-    fight0, fight1, fight2, fight3, fight4,
-    buffs0, buffs1, buffs2, buffs3, buffs4,
-    damage0, damage1, damage2, damage3, damage4,
+    fight0,
+    fight1,
+    fight2,
+    fight3,
+    fight4,
+    buffs0,
+    buffs1,
+    buffs2,
+    buffs3,
+    buffs4,
+    damage0,
+    damage1,
+    damage2,
+    damage3,
+    damage4,
   ]);
 
   const playerBuildIssues = React.useMemo((): PlayerBuildIssues[] => {
@@ -163,9 +175,7 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
     return results.sort((a, b) => b.issues.length - a.issues.length);
   }, [playerData, relevantFights]);
 
-  const [openId, setOpenId] = React.useState<number | null>(
-    playerBuildIssues[0]?.playerId ?? null,
-  );
+  const [openId, setOpenId] = React.useState<number | null>(playerBuildIssues[0]?.playerId ?? null);
 
   React.useEffect(() => {
     if (playerBuildIssues.length > 0 && openId === null) {
@@ -192,7 +202,10 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
         return (
           <Box
             key={row.playerId}
-            sx={{ borderBottom: '1px solid rgba(148,163,184,0.06)', '&:last-child': { borderBottom: 'none' } }}
+            sx={{
+              borderBottom: '1px solid rgba(148,163,184,0.06)',
+              '&:last-child': { borderBottom: 'none' },
+            }}
           >
             {/* Accordion head */}
             <Box
@@ -269,7 +282,9 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
                       },
                     }}
                   >
-                    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>
+                    <Typography
+                      sx={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}
+                    >
                       {issue.message}
                     </Typography>
                   </Box>

@@ -92,7 +92,8 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
     }));
   }, [playerData, fightBuffData, fights]);
 
-  const isEmpty = missingBuffs.length === 0 || missingBuffs.every((b) => b.playerNames.length === 0);
+  const isEmpty =
+    missingBuffs.length === 0 || missingBuffs.every((b) => b.playerNames.length === 0);
 
   return (
     <BaseWidget
@@ -132,7 +133,9 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
                   flexShrink: 0,
                 }}
               />
-              <Typography sx={{ fontSize: 13, fontWeight: 600, letterSpacing: '-0.005em', color: '#ffffff' }}>
+              <Typography
+                sx={{ fontSize: 13, fontWeight: 600, letterSpacing: '-0.005em', color: '#ffffff' }}
+              >
                 {item.buffName}
               </Typography>
               <Typography

@@ -45,7 +45,13 @@ describe('DeathCausesWidget', () => {
   const mockPlayerData = {
     playersById: {
       1: { id: 1, name: 'Player1', role: 'dps' as const, type: 'Nightblade', combatantInfo: null },
-      2: { id: 2, name: 'Player2', role: 'tank' as const, type: 'DragonKnight', combatantInfo: null },
+      2: {
+        id: 2,
+        name: 'Player2',
+        role: 'tank' as const,
+        type: 'DragonKnight',
+        combatantInfo: null,
+      },
     },
     playersByName: {},
     sortedPlayerIds: [1, 2],
