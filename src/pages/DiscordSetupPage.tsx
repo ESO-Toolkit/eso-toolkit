@@ -85,8 +85,8 @@ export const DiscordSetupPage: React.FC = () => {
           }}
         >
           You&apos;re reading the admin setup guide. A teammate probably sent this so you can add
-          the bot to your server — it takes about 60 seconds and doesn&apos;t require an ESO
-          Toolkit account.
+          the bot to your server — it takes about 60 seconds and doesn&apos;t require an ESO Toolkit
+          account.
         </Typography>
 
         <DiscordAdminGuideContent guildId={guildId} standalone />

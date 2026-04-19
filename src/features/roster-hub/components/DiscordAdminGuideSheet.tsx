@@ -14,8 +14,10 @@ import {
   type DiscordAdminGuideContentProps,
 } from './DiscordAdminGuideContent';
 
-export interface DiscordAdminGuideSheetProps
-  extends Omit<DiscordAdminGuideContentProps, 'standalone'> {
+export interface DiscordAdminGuideSheetProps extends Omit<
+  DiscordAdminGuideContentProps,
+  'standalone'
+> {
   open: boolean;
   onClose: () => void;
 }

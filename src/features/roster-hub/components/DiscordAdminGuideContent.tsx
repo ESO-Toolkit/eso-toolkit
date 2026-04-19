@@ -171,9 +171,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
           background: isDark
             ? 'linear-gradient(135deg, rgba(88,101,242,0.18) 0%, rgba(87,242,135,0.06) 100%)'
             : 'linear-gradient(135deg, rgba(88,101,242,0.10) 0%, rgba(87,242,135,0.04) 100%)',
-          border: isDark
-            ? '1px solid rgba(88,101,242,0.22)'
-            : '1px solid rgba(88,101,242,0.15)',
+          border: isDark ? '1px solid rgba(88,101,242,0.22)' : '1px solid rgba(88,101,242,0.15)',
         }}
       >
         <Box
@@ -234,10 +232,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
           >
             Invite bot
           </Button>
-          <Tooltip
-            title={inviteCopied ? 'Link copied!' : 'Copy the raw invite URL'}
-            arrow
-          >
+          <Tooltip title={inviteCopied ? 'Link copied!' : 'Copy the raw invite URL'} arrow>
             <Button
               variant="outlined"
               onClick={() => void copyInvite()}
@@ -258,9 +253,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
                 color: inviteCopied ? '#57F287' : '#5865F2',
                 '&:hover': {
                   borderColor: inviteCopied ? '#57F287' : '#5865F2',
-                  background: inviteCopied
-                    ? 'rgba(87,242,135,0.06)'
-                    : 'rgba(88,101,242,0.06)',
+                  background: inviteCopied ? 'rgba(87,242,135,0.06)' : 'rgba(88,101,242,0.06)',
                 },
               }}
             >
@@ -568,9 +561,7 @@ interface TroubleshootRowProps {
 
 const TroubleshootRow: React.FC<TroubleshootRowProps> = ({ title, body, isDark }) => (
   <Box>
-    <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', lineHeight: 1.35 }}>
-      {title}
-    </Typography>
+    <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', lineHeight: 1.35 }}>{title}</Typography>
     <Typography
       variant="caption"
       color="text.secondary"
