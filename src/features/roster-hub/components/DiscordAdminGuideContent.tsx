@@ -140,7 +140,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
     {
       icon: <Shield sx={STEP_ICON_SX} />,
       title: 'Create a publisher role',
-      body: 'E.g. @RaidLead — admins who should be able to publish rosters.',
+      body: 'E.g. @RaidLead, for admins who should publish rosters.',
       status: stepStatus(configured),
     },
     {
@@ -334,7 +334,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
           >
             {BOT_PERMISSIONS.map((perm) => (
               <li key={perm.label}>
-                <strong>{perm.label}</strong> — {perm.why}
+                <strong>{perm.label}</strong>: {perm.why}
               </li>
             ))}
           </Box>
@@ -485,12 +485,12 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
             <Stack spacing={1.25}>
               <TroubleshootRow
                 title="Bot shows offline after invite"
-                body="Give it ~30 seconds, then refresh Discord. If it stays offline, remove and re-invite — a server-level integration block may be in place."
+                body="Give it ~30 seconds, then refresh Discord. If it stays offline, remove and re-invite. A server-level integration block may be in place."
                 isDark={isDark}
               />
               <TroubleshootRow
                 title="“Missing permissions” when publishing"
-                body="The bot needs View Channel + Send Messages + Embed Links on the target channel. Check channel-level overrides — role-level grants aren't enough if a channel denies the bot."
+                body="The bot needs View Channel + Send Messages + Embed Links on the target channel. Check channel-level overrides. Role-level grants aren't enough if a channel denies the bot."
                 isDark={isDark}
               />
               <TroubleshootRow
@@ -524,8 +524,8 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
           DM this page to whoever has{' '}
           <Box component="span" sx={{ fontWeight: 700 }}>
             Manage Server
-          </Box>{' '}
-          — they can install the bot without signing into ESO Toolkit.
+          </Box>
+          . They can install the bot without signing into ESO Toolkit.
         </Typography>
         <Tooltip title={shareCopied ? 'Link copied!' : 'Copy a link to this guide'} arrow>
           <Button

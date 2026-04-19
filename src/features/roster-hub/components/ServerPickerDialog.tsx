@@ -760,7 +760,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 sx={{ mb: 2, fontSize: '0.8rem', maxWidth: 360, mx: 'auto', lineHeight: 1.45 }}
               >
                 We&apos;ll show which of your servers already have the ESO Toolkit bot. Not
-                installed yet? A server admin needs to add it first — takes about 60 seconds.
+                installed yet? A server admin needs to add it first. Takes about 60 seconds.
               </Typography>
               <Button
                 variant="contained"
@@ -797,7 +797,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 color="text.secondary"
                 sx={{ display: 'block', mt: 1.25, fontSize: '0.7rem', opacity: 0.7 }}
               >
-                We only read your server list — never your messages.
+                We only read your server list, never your messages.
               </Typography>
 
               {/* Admin entry point — no OAuth required */}
@@ -945,7 +945,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         }}
                       >
                         The ESO Toolkit bot posts your roster as a rich embed. A server admin adds
-                        the bot once — then your team can publish anytime.
+                        the bot once, then your team can publish anytime.
                       </Typography>
                     </Box>
                   </Box>
@@ -1174,7 +1174,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         },
                       }}
                     >
-                      I added the bot — refresh list
+                      Refresh server list
                     </Button>
                   )}
 
@@ -1281,8 +1281,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                           <Tooltip
                             title={
                               configured
-                                ? 'Defaults configured — category, roles, and channel format are set'
-                                : 'Bot is installed. Admin hasn\u2019t set defaults yet (category, role access) — you can still publish'
+                                ? 'Defaults configured. Category, roles, and channel format are set.'
+                                : 'Bot is installed. Admin hasn\u2019t set defaults yet (category, role access), but you can still publish.'
                             }
                             arrow
                           >
@@ -1493,7 +1493,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     color="text.secondary"
                     sx={{ display: 'block', lineHeight: 1.5, mb: 0.75 }}
                   >
-                    You can publish now — or a server admin can{' '}
+                    You can publish now, or a server admin can{' '}
                     <Box
                       component="span"
                       role="button"
@@ -1546,7 +1546,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       <strong>Default category</strong> for new roster channels
                     </li>
                     <li>
-                      <strong>Role access</strong> — grant specific roles permission to publish
+                      <strong>Role access</strong>: grant specific roles permission to publish
                     </li>
                     <li>
                       <strong>Channel-name format</strong> (day, time, trial)
@@ -1639,7 +1639,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     fullWidth
                     size="small"
                     sx={{ mt: 1.25, ...inputSx }}
-                    helperText="Optional — overrides the server's name pattern for this roster"
+                    helperText="Optional. Overrides the server's name pattern for this roster."
                   />
                 </Box>
               )}
