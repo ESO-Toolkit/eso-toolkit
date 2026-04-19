@@ -11,6 +11,8 @@ export interface Env {
   DISCORD_BOT_URL?: string;
   /** Shared secret for authenticating webhook calls to the discord bot */
   DISCORD_WEBHOOK_SECRET?: string;
+  /** Internal API key for admin endpoints — set via `wrangler secret put INTERNAL_API_KEY` */
+  INTERNAL_API_KEY?: string;
 }
 
 // ─── Addon recommendation types (shared between rosters & packs) ─────────────

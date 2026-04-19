@@ -9,12 +9,10 @@
 export interface TrialMapping {
   /** Roster Hub trial_id (e.g., "RG") */
   trialId: string;
-  /** Human-readable name */
+  /** Human-readable name (must match ESO Logs zone name exactly) */
   displayName: string;
-  /** ESO Logs encounter IDs to rank on (primary = first; try in order) */
+  /** ESO Logs encounter IDs — fallback if zone isn't found via API */
   encounterIds: number[];
-  /** Veteran difficulty ID (usually 101 for vet) */
-  difficulty: number;
 }
 
 /**
@@ -25,23 +23,24 @@ export interface TrialMapping {
  * #1 rankings are most meaningful. The first encounterIds entry is preferred; subsequent
  * entries are fallbacks.
  *
- * Difficulty 101 = Veteran for all trials.
+ * ESO Logs leaderboard rankings are inherently veteran hard-mode (highest score bracket).
  */
 const TRIAL_MAPPINGS: TrialMapping[] = [
-  { trialId: 'AA', displayName: 'Aetherian Archive', encounterIds: [14], difficulty: 101 },
-  { trialId: 'HRC', displayName: 'Hel Ra Citadel', encounterIds: [15], difficulty: 101 },
-  { trialId: 'SO', displayName: 'Sanctum Ophidia', encounterIds: [16], difficulty: 101 },
-  { trialId: 'MOL', displayName: 'Maw of Lorkhaj', encounterIds: [17], difficulty: 101 },
-  { trialId: 'HOF', displayName: 'Halls of Fabrication', encounterIds: [18], difficulty: 101 },
-  { trialId: 'AS', displayName: 'Asylum Sanctorium', encounterIds: [19], difficulty: 101 },
-  { trialId: 'CR', displayName: 'Cloudrest', encounterIds: [20], difficulty: 101 },
-  { trialId: 'SS', displayName: 'Sunspire', encounterIds: [21], difficulty: 101 },
-  { trialId: 'KA', displayName: "Kyne's Aegis", encounterIds: [22], difficulty: 101 },
-  { trialId: 'RG', displayName: 'Rockgrove', encounterIds: [23], difficulty: 101 },
-  { trialId: 'DSR', displayName: 'Dreadsail Reef', encounterIds: [24], difficulty: 101 },
-  { trialId: 'SE', displayName: "Sanity's Edge", encounterIds: [25], difficulty: 101 },
-  { trialId: 'LC', displayName: 'Lucent Citadel', encounterIds: [26], difficulty: 101 },
-  { trialId: 'OAC', displayName: 'Oathsworn Citadel', encounterIds: [27], difficulty: 101 },
+  { trialId: 'AA', displayName: 'Aetherian Archive', encounterIds: [14] },
+  { trialId: 'HRC', displayName: 'Hel Ra Citadel', encounterIds: [15] },
+  { trialId: 'SO', displayName: 'Sanctum Ophidia', encounterIds: [16] },
+  { trialId: 'MOL', displayName: 'Maw of Lorkhaj', encounterIds: [17] },
+  { trialId: 'HOF', displayName: 'The Halls of Fabrication', encounterIds: [18] },
+  { trialId: 'AS', displayName: 'Asylum Sanctorium', encounterIds: [19] },
+  { trialId: 'CR', displayName: 'Cloudrest', encounterIds: [20] },
+  { trialId: 'SS', displayName: 'Sunspire', encounterIds: [21] },
+  { trialId: 'KA', displayName: "Kyne's Aegis", encounterIds: [22] },
+  { trialId: 'RG', displayName: 'Rockgrove', encounterIds: [23] },
+  { trialId: 'DSR', displayName: 'Dreadsail Reef', encounterIds: [24] },
+  { trialId: 'SE', displayName: "Sanity's Edge", encounterIds: [25] },
+  { trialId: 'LC', displayName: 'Lucent Citadel', encounterIds: [26] },
+  // OAC not yet in ESO Logs API — uncomment when available
+  // { trialId: 'OAC', displayName: 'Oathsworn Citadel', encounterIds: [] },
 ];
 
 /** All configured trials */
