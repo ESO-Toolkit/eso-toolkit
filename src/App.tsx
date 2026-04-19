@@ -145,6 +145,12 @@ const DiscordServerConfigPage = React.lazy(() =>
   })),
 );
 
+const DiscordSetupPage = React.lazy(() =>
+  import('./pages/DiscordSetupPage').then((module) => ({
+    default: module.DiscordSetupPage,
+  })),
+);
+
 const MyRostersPage = React.lazy(() =>
   import('./pages/MyRostersPage').then((module) => ({ default: module.MyRostersPage })),
 );
@@ -768,6 +774,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <DiscordServerConfigPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/discord-setup"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <DiscordSetupPage />
                   </Suspense>
                 </ErrorBoundary>
               }
