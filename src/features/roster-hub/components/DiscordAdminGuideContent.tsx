@@ -450,50 +450,58 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
       </Box>
 
       {/* Troubleshooting */}
-      <Accordion
-        disableGutters
-        elevation={0}
-        sx={{
-          borderRadius: '12px !important',
-          border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
-          background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
-          '&:before': { display: 'none' },
-          overflow: 'hidden',
-        }}
-      >
-        <AccordionSummary
-          expandIcon={<ExpandMore />}
+      {/*
+       * Wrapper Box absorbs the parent Stack's margin-top. The theme applies
+       * `&.Mui-expanded { margin: 0 }` to every MuiAccordion-root; without this
+       * wrapper, expanding the accordion wins on specificity over the Stack's
+       * child-margin rule and the accordion snaps up into the card above it.
+       */}
+      <Box>
+        <Accordion
+          disableGutters
+          elevation={0}
           sx={{
-            px: 1.5,
-            minHeight: 44,
-            '& .MuiAccordionSummary-content': { my: 1 },
+            borderRadius: '12px !important',
+            border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
+            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
+            '&:before': { display: 'none' },
+            overflow: 'hidden',
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <HelpOutline sx={{ fontSize: 18, color: '#FEB900' }} />
-            <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>Troubleshooting</Typography>
-          </Stack>
-        </AccordionSummary>
-        <AccordionDetails sx={{ px: 1.5, pt: 0, pb: 1.25 }}>
-          <Stack spacing={1.25}>
-            <TroubleshootRow
-              title="Bot shows offline after invite"
-              body="Give it ~30 seconds, then refresh Discord. If it stays offline, remove and re-invite — a server-level integration block may be in place."
-              isDark={isDark}
-            />
-            <TroubleshootRow
-              title="“Missing permissions” when publishing"
-              body="The bot needs View Channel + Send Messages + Embed Links on the target channel. Check channel-level overrides — role-level grants aren't enough if a channel denies the bot."
-              isDark={isDark}
-            />
-            <TroubleshootRow
-              title="2FA-required server"
-              body="If your server requires 2FA for moderation, the inviting admin must have 2FA enabled on their Discord account before adding the bot."
-              isDark={isDark}
-            />
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
+          <AccordionSummary
+            expandIcon={<ExpandMore />}
+            sx={{
+              px: 1.5,
+              minHeight: 44,
+              '& .MuiAccordionSummary-content': { my: 1 },
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <HelpOutline sx={{ fontSize: 18, color: '#FEB900' }} />
+              <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>Troubleshooting</Typography>
+            </Stack>
+          </AccordionSummary>
+          <AccordionDetails sx={{ px: 1.5, pt: 0, pb: 1.25 }}>
+            <Stack spacing={1.25}>
+              <TroubleshootRow
+                title="Bot shows offline after invite"
+                body="Give it ~30 seconds, then refresh Discord. If it stays offline, remove and re-invite — a server-level integration block may be in place."
+                isDark={isDark}
+              />
+              <TroubleshootRow
+                title="“Missing permissions” when publishing"
+                body="The bot needs View Channel + Send Messages + Embed Links on the target channel. Check channel-level overrides — role-level grants aren't enough if a channel denies the bot."
+                isDark={isDark}
+              />
+              <TroubleshootRow
+                title="2FA-required server"
+                body="If your server requires 2FA for moderation, the inviting admin must have 2FA enabled on their Discord account before adding the bot."
+                isDark={isDark}
+              />
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
+      </Box>
 
       {/* Share link */}
       <Box
