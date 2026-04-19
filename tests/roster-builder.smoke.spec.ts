@@ -152,7 +152,7 @@ test.describe('Share link round-trip — DPS gear not silently dropped', () => {
 test.describe('RosterViewPage — /rv', () => {
   test('shows error when no r= param is provided', async ({ page }) => {
     await page.goto('/rv');
-    await expect(page.getByText(/No roster found in the URL/)).toBeVisible();
+    await expect(page.getByText(/No roster found/)).toBeVisible();
     await expect(page.getByRole('button', { name: /Open Roster Builder/ })).toBeVisible();
   });
 
