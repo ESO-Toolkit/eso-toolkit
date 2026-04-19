@@ -29,7 +29,9 @@ import React from 'react';
 import type { HubRoster } from '../types/roster-hub.types';
 
 import { CommentSection } from './CommentSection';
-import { TRIAL_ACCENT, TRIAL_LABELS, TRIAL_SHORT } from './RosterCard';
+import { TAG_COLORS } from '../types/roster-hub.types';
+
+import { TRIAL_LABELS, TRIAL_SHORT } from './RosterCard';
 
 const IFRAME_TIMEOUT_MS = 12000;
 
@@ -137,7 +139,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
 
   const trialShort = TRIAL_SHORT[roster?.trial_id ?? ''] ?? roster?.trial_id ?? '';
   const trialFull = TRIAL_LABELS[roster?.trial_id ?? ''] ?? roster?.trial_id ?? '';
-  const accentColor = TRIAL_ACCENT[roster?.trial_id ?? ''] ?? '#3b82f6';
+  const accentColor =
+    roster?.tags.map((t) => TAG_COLORS[t]).find(Boolean) ?? '#3b82f6';
 
   const isDark = theme.palette.mode === 'dark';
 

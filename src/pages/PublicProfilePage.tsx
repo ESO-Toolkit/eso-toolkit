@@ -43,15 +43,12 @@ import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
+import { TRIAL_LABELS, TRIAL_SHORT } from '../features/roster-hub/components/RosterCard';
 import {
-  TRIAL_ACCENT,
-  TRIAL_LABELS,
-  TRIAL_SHORT,
-} from '../features/roster-hub/components/RosterCard';
-import type {
-  ProfileBuildSummary,
-  ProfileRosterSummary,
-  UserProfile,
+  TAG_COLORS,
+  type ProfileBuildSummary,
+  type ProfileRosterSummary,
+  type UserProfile,
 } from '../features/roster-hub/types/roster-hub.types';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
@@ -467,7 +464,7 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
   const navigate = useViewTransitionNavigate();
   const theme = useTheme();
   const cardRef = useRef<HTMLDivElement>(null);
-  const trialColor = TRIAL_ACCENT[roster.trial_id] ?? '#38bdf8';
+  const trialColor = roster.tags.map((t) => TAG_COLORS[t]).find(Boolean) ?? '#38bdf8';
   const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
   const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
   const cardSx = useCardSx(trialColor, isDarkMode);

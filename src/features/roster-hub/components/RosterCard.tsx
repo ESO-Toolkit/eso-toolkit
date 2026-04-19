@@ -22,6 +22,7 @@ import discordIcon from '../../../assets/discord-icon.svg';
 import { useViewTransitionNavigate } from '../../../hooks/useViewTransitionNavigate';
 import { getAddonManagerDeepLink } from '../../build-hub/api/packs-api';
 import type { HubRoster } from '../types/roster-hub.types';
+import { TAG_COLORS } from '../types/roster-hub.types';
 
 import { VoteButton } from './VoteButton';
 
@@ -73,24 +74,6 @@ export const TRIAL_SHORT: Record<string, string> = {
   SS: 'SS',
 };
 
-// Trial accent colors — gives each trial its visual identity
-export const TRIAL_ACCENT: Record<string, string> = {
-  AA: '#f59e0b', // amber
-  AS: '#6366f1', // indigo
-  BRP: '#ef4444', // red
-  CR: '#22c55e', // green
-  DSR: '#a855f7', // purple
-  HOF: '#f97316', // orange
-  HRC: '#eab308', // yellow
-  KA: '#06b6d4', // cyan
-  LC: '#8b5cf6', // violet
-  MOL: '#ec4899', // pink
-  OAC: '#f43f5e', // rose
-  RG: '#14b8a6', // teal
-  SE: '#ef4444', // red
-  SO: '#3b82f6', // blue
-  SS: '#0ea5e9', // sky
-};
 
 function formatDate(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -166,7 +149,8 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
-    const accentColor = TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
+    const accentColor =
+      roster.tags.map((t) => TAG_COLORS[t]).find(Boolean) ?? '#3b82f6';
 
     const displayName = roster.is_anonymous ? 'Anonymous' : roster.author_name || '?';
 
