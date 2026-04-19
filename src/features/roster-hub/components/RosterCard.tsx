@@ -246,7 +246,10 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
         <CardActionArea
           onClick={() =>
             navigate(`/rv?id=${roster.id}`, {
-              state: { rosterData: roster.roster_data, recommendedAddons: roster.recommended_addons },
+              state: {
+                rosterData: roster.roster_data,
+                recommendedAddons: roster.recommended_addons,
+              },
               vtType: 'forward',
               morph: { ref: cardRef, name: 'roster-hero' },
             })
