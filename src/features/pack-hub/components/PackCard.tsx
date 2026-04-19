@@ -1,8 +1,15 @@
-import { ContentCopy, DeleteOutline, EditOutlined, Extension } from '@mui/icons-material';
+import {
+  ContentCopy,
+  DeleteOutline,
+  EditOutlined,
+  Extension,
+  Visibility,
+} from '@mui/icons-material';
 import {
   Box,
   Button,
   Card,
+  CardActionArea,
   CardActions,
   CardContent,
   Chip,
@@ -31,12 +38,13 @@ interface PackCardProps {
   onVote: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (pack: HubPack) => void;
+  onPreview: (pack: HubPack) => void;
 }
 
 const formatDate = formatRelativeDate;
 
 export const PackCard: React.FC<PackCardProps> = React.memo(
-  ({ pack, isOwner, isLoggedIn, onVote, onDelete, onEdit }) => {
+  ({ pack, isOwner, isLoggedIn, onVote, onDelete, onEdit, onPreview }) => {
     const { enqueueSnackbar } = useSnackbar();
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
@@ -136,12 +144,36 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
           aria-hidden="true"
         />
 
-        <Box sx={{ flexGrow: 1, alignItems: 'flex-start' }}>
+        <CardActionArea
+          onClick={() => onPreview(pack)}
+          aria-label={`Preview pack ${pack.title}`}
+          sx={{
+            flexGrow: 1,
+            alignItems: 'flex-start',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            borderRadius: 0,
+            '& .MuiCardActionArea-focusHighlight': {
+              background: accentColor,
+              opacity: 0,
+            },
+            '&:hover .MuiCardActionArea-focusHighlight': {
+              opacity: 0.04,
+            },
+            '&:hover .pack-card-preview-cta': {
+              borderColor: `${accentColor}60`,
+              background: isDark ? `${accentColor}1c` : `${accentColor}14`,
+              color: accentColor,
+            },
+          }}
+        >
           <CardContent
             sx={{
               display: 'flex',
               flexDirection: 'column',
               height: '100%',
+              width: '100%',
               pt: 3,
               px: 2.5,
               pb: '20px !important',
@@ -274,9 +306,9 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
               </Box>
             )}
 
-            {/* Addon preview — first 4 addons */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
-              {pack.addons.slice(0, 4).map((addon) => (
+            {/* Addon preview — first 3 addons */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.25 }}>
+              {pack.addons.slice(0, 3).map((addon) => (
                 <Chip
                   key={addon.esouiId}
                   label={addon.name}
@@ -290,23 +322,46 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
                     border: isDark
                       ? '1px solid rgba(255,255,255,0.08)'
                       : '1px solid rgba(0,0,0,0.06)',
+                    maxWidth: '100%',
+                    '& .MuiChip-label': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    },
                   }}
                 />
               ))}
-              {pack.addons.length > 4 && (
-                <Chip
-                  label={`+${pack.addons.length - 4} more`}
-                  size="small"
-                  sx={{
-                    height: 22,
-                    fontSize: '0.68rem',
-                    fontWeight: 600,
-                    bgcolor: isDark ? `${accentColor}15` : `${accentColor}10`,
-                    color: accentColor,
-                    border: `1px solid ${accentColor}30`,
-                  }}
-                />
-              )}
+            </Box>
+
+            {/* View-all CTA — always visible, clearly indicates a preview is available */}
+            <Box
+              className="pack-card-preview-cta"
+              sx={{
+                display: 'inline-flex',
+                alignSelf: 'flex-start',
+                alignItems: 'center',
+                gap: 0.6,
+                px: 1.1,
+                py: 0.55,
+                mb: 1.5,
+                borderRadius: '7px',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                letterSpacing: '0.01em',
+                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
+                color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <Visibility sx={{ fontSize: 13 }} />
+              {addonCount > 3
+                ? `View all ${addonCount} addons`
+                : addonCount === 0
+                  ? 'View details'
+                  : `View ${addonCount === 1 ? 'addon' : 'addons'}`}
+              <Box component="span" aria-hidden="true" sx={{ ml: 0.25 }}>
+                →
+              </Box>
             </Box>
 
             {/* Spacer */}
@@ -361,7 +416,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
               </Box>
             </Box>
           </CardContent>
-        </Box>
+        </CardActionArea>
 
         {/* Actions */}
         <CardActions
