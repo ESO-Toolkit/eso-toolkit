@@ -92,17 +92,8 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [open]);
 
-  if (!pack) return null;
-
-  const tagAccent = pack.tags.map((t) => PACK_TAG_COLORS[t]).find((c): c is string => c != null);
-  const accentColor = tagAccent ?? PACK_TYPE_ACCENT[pack.pack_type] ?? '#c4a44a';
-  const typeLabel = PACK_TYPE_LABELS[pack.pack_type] ?? pack.pack_type;
-  const displayName = pack.is_anonymous ? 'Anonymous' : pack.author_name || '?';
-
-  const requiredCount = pack.addons.filter((a) => a.required).length;
-  const optionalCount = pack.addons.length - requiredCount;
-
   const filteredAddons = React.useMemo(() => {
+    if (!pack) return [];
     const q = query.trim().toLowerCase();
     return pack.addons.filter((addon) => {
       if (requiredOnly && !addon.required) return false;
@@ -113,7 +104,17 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         String(addon.esouiId).includes(q)
       );
     });
-  }, [pack.addons, query, requiredOnly]);
+  }, [pack, query, requiredOnly]);
+
+  if (!pack) return null;
+
+  const tagAccent = pack.tags.map((t) => PACK_TAG_COLORS[t]).find((c): c is string => c != null);
+  const accentColor = tagAccent ?? PACK_TYPE_ACCENT[pack.pack_type] ?? '#c4a44a';
+  const typeLabel = PACK_TYPE_LABELS[pack.pack_type] ?? pack.pack_type;
+  const displayName = pack.is_anonymous ? 'Anonymous' : pack.author_name || '?';
+
+  const requiredCount = pack.addons.filter((a) => a.required).length;
+  const optionalCount = pack.addons.length - requiredCount;
 
   const handleCopyLink = (): void => {
     const deepLink = getAddonManagerDeepLink(pack.id);
