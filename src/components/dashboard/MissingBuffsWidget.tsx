@@ -7,6 +7,7 @@ import { usePlayerData } from '../../hooks/usePlayerData';
 import { useMultiFightBuffLookup } from '../../hooks/workerTasks/useMultiFightBuffLookup';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
 import { isBuffActiveOnTarget } from '../../utils/BuffLookupUtils';
+import { ClassIcon } from '../ClassIcon';
 
 import { BaseWidget } from './BaseWidget';
 
@@ -28,7 +29,7 @@ const IMPORTANT_BUFFS = [
 interface BuffMissingInfo {
   buffName: string;
   sub: string;
-  playerNames: string[];
+  players: { name: string; playerClass: string }[];
 }
 
 export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
@@ -56,7 +57,7 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
     const analyzedFights = fights.filter((fight) => fightBuffData.has(fight.id));
     if (analyzedFights.length === 0) return [];
 
-    const buffToPlayersMap = new Map<string, Set<string>>();
+    const buffToPlayersMap = new Map<string, Map<string, string>>();
 
     analyzedFights.forEach((fight) => {
       const buffLookupData = fightBuffData.get(fight.id);
@@ -77,9 +78,9 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
 
           if (!hasBuffAtMidpoint) {
             if (!buffToPlayersMap.has(buff.name)) {
-              buffToPlayersMap.set(buff.name, new Set());
+              buffToPlayersMap.set(buff.name, new Map());
             }
-            buffToPlayersMap.get(buff.name)!.add(player.name);
+            buffToPlayersMap.get(buff.name)!.set(player.name, player.type);
           }
         });
       });
@@ -88,12 +89,13 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
     return IMPORTANT_BUFFS.map((buff) => ({
       buffName: buff.name,
       sub: buff.sub,
-      playerNames: Array.from(buffToPlayersMap.get(buff.name) ?? []).sort(),
+      players: Array.from(buffToPlayersMap.get(buff.name) ?? [])
+        .map(([name, playerClass]) => ({ name, playerClass }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     }));
   }, [playerData, fightBuffData, fights]);
 
-  const isEmpty =
-    missingBuffs.length === 0 || missingBuffs.every((b) => b.playerNames.length === 0);
+  const isEmpty = missingBuffs.length === 0 || missingBuffs.every((b) => b.players.length === 0);
 
   return (
     <BaseWidget
@@ -149,12 +151,12 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
                   whiteSpace: 'nowrap',
                 }}
               >
-                {item.playerNames.length > 0 ? `${item.playerNames.length} missing` : item.sub}
+                {item.players.length > 0 ? `${item.players.length} missing` : item.sub}
               </Typography>
             </Box>
 
             {/* Players */}
-            {item.playerNames.length === 0 ? (
+            {item.players.length === 0 ? (
               <Typography
                 sx={{ pl: '16px', fontSize: 11, color: '#5ce572', fontFamily: 'monospace' }}
               >
@@ -162,7 +164,7 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
               </Typography>
             ) : (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '4px', pl: '16px' }}>
-                {item.playerNames.map((name) => (
+                {item.players.map(({ name, playerClass }) => (
                   <Box
                     key={name}
                     component="span"
@@ -170,7 +172,8 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '5px',
-                      px: '8px',
+                      pl: '4px',
+                      pr: '8px',
                       py: '3px',
                       borderRadius: '9999px',
                       background: 'rgba(255,102,102,0.08)',
@@ -179,6 +182,20 @@ export const MissingBuffsWidget: React.FC<MissingBuffsWidgetProps> = ({
                       color: '#ffc5c5',
                     }}
                   >
+                    <Box
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '4px',
+                        background: '#0b1220',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ClassIcon className={playerClass.toLowerCase()} size={12} />
+                    </Box>
                     {name.split(' ')[0]}
                   </Box>
                 ))}

@@ -1,6 +1,5 @@
 import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import { Box, Button, FormControlLabel, Switch, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -143,36 +142,45 @@ export const RaidDashboardPage: React.FC = () => {
         activePage="dashboard"
         actions={
           <>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={autoRefreshEnabled}
-                  onChange={handleToggleAutoRefresh}
-                  size="small"
-                />
-              }
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
-                    Auto-refresh
-                  </Typography>
-                  {autoRefreshEnabled && (
-                    <RefreshIcon
-                      color="primary"
-                      sx={{
-                        fontSize: '0.9rem',
-                        animation: 'spin 2s linear infinite',
-                        '@keyframes spin': {
-                          '0%': { transform: 'rotate(0deg)' },
-                          '100%': { transform: 'rotate(360deg)' },
-                        },
-                      }}
-                    />
-                  )}
-                </Box>
-              }
-              sx={{ mr: 0 }}
-            />
+            <Box
+              component="button"
+              onClick={handleToggleAutoRefresh}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                px: '12px',
+                py: '7px',
+                background: autoRefreshEnabled ? 'rgba(92,229,114,0.08)' : 'rgba(148,163,184,0.06)',
+                border: autoRefreshEnabled
+                  ? '1px solid rgba(92,229,114,0.3)'
+                  : '1px solid rgba(148,163,184,0.18)',
+                borderRadius: '8px',
+                color: autoRefreshEnabled ? '#5ce572' : 'rgba(255,255,255,0.3)',
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: 'monospace',
+                letterSpacing: '0.06em',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  border: autoRefreshEnabled
+                    ? '1.5px solid rgba(92,229,114,0.3)'
+                    : '1.5px solid rgba(255,255,255,0.15)',
+                  borderTopColor: autoRefreshEnabled ? '#5ce572' : 'rgba(255,255,255,0.3)',
+                  borderRadius: '50%',
+                  animation: autoRefreshEnabled ? 'spin 1.2s linear infinite' : 'none',
+                  '@keyframes spin': { '100%': { transform: 'rotate(360deg)' } },
+                  flexShrink: 0,
+                }}
+              />
+              {autoRefreshEnabled ? 'AUTO · 5s' : 'PAUSED'}
+            </Box>
             <Button
               variant="contained"
               startIcon={<AddIcon />}

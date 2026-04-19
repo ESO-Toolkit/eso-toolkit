@@ -174,18 +174,24 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
         },
       }}
     >
-      {/* Header */}
+      {/* Header — 2-row grid: [icon title close] then [scope] */}
       <Box
         sx={{
-          p: '14px 16px 12px',
+          p: '12px 14px 10px',
           borderBottom: '1px solid rgba(148,163,184,0.1)',
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: 'auto 1fr auto',
+          gridTemplateRows: 'auto auto',
+          gridTemplateAreas: '"icon title close" "scope scope scope"',
+          columnGap: '10px',
+          rowGap: '8px',
           alignItems: 'center',
-          gap: '10px',
         }}
       >
+        {/* Icon */}
         <Box
           sx={{
+            gridArea: 'icon',
             width: 30,
             height: 30,
             borderRadius: '8px',
@@ -202,7 +208,8 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
           {icon}
         </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* Title + subtitle */}
+        <Box sx={{ gridArea: 'title', minWidth: 0 }}>
           <Typography
             sx={{
               fontSize: 14,
@@ -211,6 +218,9 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
               lineHeight: 1.2,
               mb: '2px',
               color: '#ffffff',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {title}
@@ -220,47 +230,26 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
               fontSize: 10,
               fontWeight: 500,
               fontFamily: 'monospace',
-              letterSpacing: '0.1em',
+              letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: 'rgba(255,255,255,0.3)',
               lineHeight: 1,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {subtitle}
           </Typography>
         </Box>
 
-        <Box
-          component="button"
-          onClick={(e: React.MouseEvent<HTMLElement>) => setScopeMenuAnchor(e.currentTarget)}
-          sx={{
-            background: 'rgba(11,18,32,0.66)',
-            border: '1px solid rgba(148,163,184,0.18)',
-            borderRadius: '6px',
-            color: 'rgba(255,255,255,0.72)',
-            px: '8px',
-            py: '4px',
-            fontSize: 11,
-            fontFamily: 'monospace',
-            letterSpacing: '0.04em',
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'border-color 0.15s',
-            whiteSpace: 'nowrap',
-            '&:hover': { borderColor: 'rgba(56,189,248,0.3)' },
-          }}
-        >
-          <SettingsIcon sx={{ width: 11, height: 11, opacity: 0.6 }} />
-          {SCOPE_LABELS[scope]}
-        </Box>
-
+        {/* Close */}
         <Box
           component="button"
           onClick={onRemove}
           aria-label="Remove widget"
           sx={{
+            gridArea: 'close',
             background: 'transparent',
             border: '1px solid transparent',
             borderRadius: '6px',
@@ -281,6 +270,36 @@ export const BaseWidget: React.FC<BaseWidgetProps> = ({
           }}
         >
           <CloseIcon />
+        </Box>
+
+        {/* Scope dropdown — second row, left-aligned */}
+        <Box
+          component="button"
+          onClick={(e: React.MouseEvent<HTMLElement>) => setScopeMenuAnchor(e.currentTarget)}
+          sx={{
+            gridArea: 'scope',
+            justifySelf: 'start',
+            background: 'rgba(11,18,32,0.66)',
+            border: '1px solid rgba(148,163,184,0.18)',
+            borderRadius: '6px',
+            color: 'rgba(255,255,255,0.72)',
+            px: '10px',
+            py: '4px',
+            fontSize: 11,
+            fontFamily: 'monospace',
+            letterSpacing: '0.04em',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'border-color 0.15s',
+            whiteSpace: 'nowrap',
+            maxWidth: '100%',
+            '&:hover': { borderColor: 'rgba(56,189,248,0.3)' },
+          }}
+        >
+          <SettingsIcon sx={{ width: 11, height: 11, opacity: 0.6 }} />
+          {SCOPE_LABELS[scope]}
         </Box>
       </Box>
 
