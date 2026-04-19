@@ -8,6 +8,7 @@
 
 import type { PlayerDetails, PlayerEntry, RankingEntry } from './esologs-client';
 import { categorizeGear } from './gear-categorizer';
+import { detectTalentInfo, type CompactSkills } from './talent-mapper';
 
 // ─── Compact Types ───────────────────────────────────────────────────────────
 // Mirrors the CompactRosterV3 types from src/utils/rosterEncoding.ts.
@@ -25,6 +26,8 @@ interface CompactTank {
   rl?: string;
   gs?: CompactGear;
   aw?: string;
+  sl?: CompactSkills;
+  ul?: number | string;
 }
 
 interface CompactHealer {
@@ -35,6 +38,8 @@ interface CompactHealer {
   ms?: number;
   aw?: string;
   a?: number[];
+  sl?: CompactSkills;
+  ul?: number | string;
 }
 
 interface CompactDPS {
@@ -45,6 +50,8 @@ interface CompactDPS {
   ms?: number;
   aw?: string;
   as?: number[];
+  sl?: CompactSkills;
+  ul?: number | string;
 }
 
 interface CompactRosterV3 {
@@ -72,6 +79,11 @@ function buildCompactTank(player: PlayerEntry, index: number): CompactTank {
   if (Object.keys(gs).length > 0) ct.gs = gs;
 
   if (gear.arenaWeapon) ct.aw = gear.arenaWeapon;
+
+  const talentInfo = detectTalentInfo(player.combatantInfo?.talents ?? []);
+  if (talentInfo.sl) ct.sl = talentInfo.sl;
+  if (talentInfo.ul) ct.ul = talentInfo.ul;
+
   return ct;
 }
 
@@ -88,6 +100,10 @@ function buildCompactHealer(player: PlayerEntry, index: number): CompactHealer {
   if (gear.arenaWeapon) ch.aw = gear.arenaWeapon;
   if (gear.additionalSets.length) ch.a = gear.additionalSets;
 
+  const talentInfo = detectTalentInfo(player.combatantInfo?.talents ?? []);
+  if (talentInfo.sl) ch.sl = talentInfo.sl;
+  if (talentInfo.ul) ch.ul = talentInfo.ul;
+
   return ch;
 }
 
@@ -102,6 +118,10 @@ function buildCompactDPS(player: PlayerEntry, index: number): CompactDPS {
   if (gear.monsterSet) cd.ms = gear.monsterSet;
   if (gear.arenaWeapon) cd.aw = gear.arenaWeapon;
   if (gear.additionalSets.length) cd.as = gear.additionalSets;
+
+  const talentInfo = detectTalentInfo(player.combatantInfo?.talents ?? []);
+  if (talentInfo.sl) cd.sl = talentInfo.sl;
+  if (talentInfo.ul) cd.ul = talentInfo.ul;
 
   return cd;
 }
@@ -183,7 +203,7 @@ export async function encodeRoster(roster: CompactRosterV3): Promise<string> {
  * Build a display title for a #1 roster.
  */
 export function buildRosterTitle(ranking: RankingEntry, trialName: string): string {
-  const teamName = ranking.guild?.name ?? ranking.name ?? 'Unknown';
+  const teamName = ranking.guild?.name ?? 'Unknown';
   return `${teamName} — ${trialName} #1`;
 }
 
@@ -191,8 +211,8 @@ export function buildRosterTitle(ranking: RankingEntry, trialName: string): stri
  * Build a description for a #1 roster.
  */
 export function buildRosterDescription(ranking: RankingEntry, trialName: string): string {
-  const teamName = ranking.guild?.name ?? ranking.name ?? 'Unknown';
-  const server = ranking.guild?.server?.region?.toUpperCase() ?? '';
+  const teamName = ranking.guild?.name ?? 'Unknown';
+  const server = ranking.server?.region?.toUpperCase() ?? '';
   const score = ranking.score ? ` • Score: ${ranking.score.toLocaleString()}` : '';
   return `Auto-imported #1 ${trialName} roster from ${teamName}${server ? ` (${server})` : ''}${score}`;
 }

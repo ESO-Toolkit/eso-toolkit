@@ -99,11 +99,10 @@ export async function fetchTrialZones(token: string): Promise<ZoneData[]> {
 // ─── Fight Ranking Query ─────────────────────────────────────────────────────
 
 export interface RankingEntry {
-  rank: number;
   score: number;
-  name: string; // team name
-  guild?: { name?: string; server?: { slug?: string; region?: string } };
-  report?: { code?: string; fightID?: number; startTime?: number };
+  guild?: { id?: number; name?: string; faction?: number };
+  server?: { id?: number; name?: string; region?: string };
+  report?: { code?: string; fightID?: number | null; startTime?: number | null };
   duration: number;
 }
 
@@ -112,56 +111,53 @@ interface FightRankingsResponse {
     encounter: {
       id: number;
       name: string;
-      fightRankings: string; // JSON-encoded
+      fightRankings: string | ParsedRankings;
     };
   };
 }
 
 interface ParsedRankings {
-  data: RankingEntry[];
+  rankings: RankingEntry[];
   page: number;
   hasMorePages: boolean;
+  count: number;
 }
 
 const GET_FIGHT_RANKINGS = `
-query ($encounterId: Int!, $difficulty: Int, $size: Int, $metric: FightRankingMetricType) {
+query ($encounterId: Int!) {
   worldData {
     encounter(id: $encounterId) {
       id
       name
-      fightRankings(difficulty: $difficulty, page: 1, size: $size, metric: $metric)
+      fightRankings(page: 1)
     }
   }
 }`;
 
 /**
  * Fetch the #1 ranked fight for an encounter.
- * Returns null if no rankings exist.
+ * Returns the highest-scored entry that has a valid report code.
  */
 export async function fetchTopRanking(
   token: string,
   encounterId: number,
-  difficulty: number,
 ): Promise<RankingEntry | null> {
   const data = await gql<FightRankingsResponse>(token, GET_FIGHT_RANKINGS, {
     encounterId,
-    difficulty,
-    size: 1,
-    metric: 'score',
   });
 
-  const rawJson = data.worldData?.encounter?.fightRankings;
-  if (!rawJson) return null;
+  const raw = data.worldData?.encounter?.fightRankings;
+  if (!raw) return null;
 
   let parsed: ParsedRankings;
   try {
-    parsed =
-      typeof rawJson === 'string' ? JSON.parse(rawJson) : (rawJson as unknown as ParsedRankings);
+    parsed = typeof raw === 'string' ? JSON.parse(raw) : (raw as ParsedRankings);
   } catch {
     return null;
   }
 
-  return parsed.data?.[0] ?? null;
+  // Find the first ranking with a valid report (some are private/unuploaded)
+  return parsed.rankings?.find((r) => r.report?.code && r.report.fightID != null) ?? null;
 }
 
 // ─── Player Details Query ────────────────────────────────────────────────────
@@ -176,7 +172,7 @@ export interface GearItem {
   type: number;
 }
 
-interface TalentItem {
+export interface TalentItem {
   guid: number;
   name?: string;
   type: number;
@@ -220,10 +216,6 @@ query ($code: String!, $fightIDs: [Int]) {
   }
 }`;
 
-/**
- * Fetch player details (gear, talents) for a specific fight in a report.
- * Returns null if the report or fight is unavailable.
- */
 export async function fetchPlayerDetails(
   token: string,
   reportCode: string,
@@ -238,15 +230,16 @@ export async function fetchPlayerDetails(
     const raw = data.reportData?.report?.playerDetails;
     if (!raw) return null;
 
-    let parsed: { data?: PlayerDetails };
+    let parsed: Record<string, unknown>;
     try {
-      parsed =
-        typeof raw === 'string' ? JSON.parse(raw) : (raw as unknown as { data?: PlayerDetails });
+      parsed = typeof raw === 'string' ? JSON.parse(raw) : (raw as Record<string, unknown>);
     } catch {
       return null;
     }
 
-    const details = parsed.data ?? (parsed as unknown as PlayerDetails);
+    // ESO Logs nests as { data: { playerDetails: { tanks, healers, dps } } }
+    const inner = parsed.data as Record<string, unknown> | undefined;
+    const details = (inner?.playerDetails ?? inner ?? parsed) as PlayerDetails;
     return {
       tanks: details.tanks ?? [],
       healers: details.healers ?? [],

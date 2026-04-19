@@ -72,7 +72,7 @@ async function syncTrial(
 
   for (const encId of encounterIds) {
     try {
-      ranking = await fetchTopRanking(token, encId, mapping.difficulty);
+      ranking = await fetchTopRanking(token, encId);
       if (ranking) {
         usedEncounterId = encId;
         break;
@@ -142,11 +142,11 @@ async function syncTrial(
  * Fetches #1 rankings for all configured trials and upserts rosters
  * into the Roster Hub database.
  */
-export async function syncLeaderboardRosters(env: Env): Promise<void> {
+export async function syncLeaderboardRosters(env: Env): Promise<SyncResult[]> {
   // Guard: skip if secrets are not configured
   if (!env.ESOLOGS_CLIENT_ID || !env.ESOLOGS_CLIENT_SECRET) {
     console.log('[leaderboard-sync] Skipping: ESOLOGS_CLIENT_ID/SECRET not configured');
-    return;
+    return [];
   }
 
   console.log('[leaderboard-sync] Starting sync...');
@@ -157,7 +157,7 @@ export async function syncLeaderboardRosters(env: Env): Promise<void> {
     token = await getClientToken(env);
   } catch (err) {
     console.error('[leaderboard-sync] OAuth failed:', err);
-    return;
+    return [{ trial: '*', status: 'error' as const, detail: `OAuth failed: ${err}` }];
   }
 
   // 2. Fetch zone/encounter data from ESO Logs
@@ -193,4 +193,6 @@ export async function syncLeaderboardRosters(env: Env): Promise<void> {
   console.log(
     `[leaderboard-sync] Done: ${synced} synced, ${skipped} skipped, ${errors} errors (${results.length} total)`,
   );
+
+  return results;
 }
