@@ -274,7 +274,7 @@ export const RaidDashboardPage: React.FC = () => {
         ) : (
           <Box
             sx={{
-              columnCount: { xs: 1, md: 2, xl: 3 },
+              columnCount: { xs: 1, md: 2 },
               columnGap: '16px',
             }}
           >
