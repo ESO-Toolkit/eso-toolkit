@@ -64,6 +64,7 @@ import { useDiscordAuth } from '../../auth/DiscordAuthContext';
 import { TAG_COLORS } from '../types/roster-hub.types';
 import type { HubRoster } from '../types/roster-hub.types';
 
+import { DiscordAdminGuideSheet } from './DiscordAdminGuideSheet';
 import { TRIAL_LABELS } from './RosterCard';
 
 const DEFAULT_NAME_PATTERN = '{day-short}-{time}-{trial}';
@@ -278,6 +279,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   // ── Bot invite tracking ────────────────────────────────────────────────
   const [inviteClicked, setInviteClicked] = React.useState(false);
   const [inviteCopied, setInviteCopied] = React.useState(false);
+  const [adminSheetOpen, setAdminSheetOpen] = React.useState(false);
   const [previousGuildIds, setPreviousGuildIds] = React.useState<Set<string>>(new Set());
   const [newGuildIds, setNewGuildIds] = React.useState<Set<string>>(new Set());
 
@@ -609,6 +611,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
+    <>
     <Dialog
       open={open}
       onClose={isCloseable ? onClose : undefined}
@@ -754,10 +757,10 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ mb: 2, fontSize: '0.8rem', maxWidth: 340, mx: 'auto', lineHeight: 1.45 }}
+              sx={{ mb: 2, fontSize: '0.8rem', maxWidth: 360, mx: 'auto', lineHeight: 1.45 }}
             >
-              We&apos;ll show which of your servers already have the ESO Toolkit bot so you can post
-              rosters directly from here.
+              We&apos;ll show which of your servers already have the ESO Toolkit bot. Not installed
+              yet? A server admin needs to add it first — takes about 60 seconds.
             </Typography>
             <Button
               variant="contained"
@@ -796,6 +799,62 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             >
               We only read your server list — never your messages.
             </Typography>
+
+            {/* Admin entry point — no OAuth required */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+                mt: 2,
+                mx: 'auto',
+                maxWidth: 340,
+              }}
+            >
+              <Box
+                sx={{
+                  flex: 1,
+                  height: '1px',
+                  background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{ fontSize: '0.68rem', color: 'text.disabled', letterSpacing: '0.04em' }}
+              >
+                OR
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  height: '1px',
+                  background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                }}
+              />
+            </Box>
+            <Box
+              component="button"
+              type="button"
+              onClick={() => setAdminSheetOpen(true)}
+              sx={{
+                mt: 1.25,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#5865F2',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                fontFamily: 'inherit',
+                padding: 0,
+                '&:hover': { color: '#6973F5', textDecoration: 'underline' },
+                '&:focus-visible': { outline: '2px solid #5865F2', outlineOffset: 2 },
+              }}
+            >
+              Running a Discord server? Install the bot →
+            </Box>
           </Box>
         )}
 
@@ -1340,6 +1399,42 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   </Typography>
                 )}
 
+                {/* Persistent admin link — re-installs, adding scopes elsewhere */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    mt: 1.75,
+                    pt: 1.5,
+                    borderTop: isDark
+                      ? '1px solid rgba(255,255,255,0.05)'
+                      : '1px solid rgba(0,0,0,0.05)',
+                  }}
+                >
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={() => setAdminSheetOpen(true)}
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#5865F2',
+                      fontSize: '0.74rem',
+                      fontWeight: 600,
+                      fontFamily: 'inherit',
+                      padding: 0,
+                      '&:hover': { color: '#6973F5', textDecoration: 'underline' },
+                      '&:focus-visible': { outline: '2px solid #5865F2', outlineOffset: 2 },
+                    }}
+                  >
+                    Need to install on another server? Open admin guide →
+                  </Box>
+                </Box>
+
                 <Typography
                   variant="caption"
                   onClick={() => {
@@ -1348,7 +1443,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   sx={{
                     display: 'block',
                     textAlign: 'center',
-                    mt: 2,
+                    mt: 1.5,
                     color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
                     cursor: 'pointer',
                     fontSize: '0.7rem',
@@ -2267,5 +2362,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         )}
       </DialogActions>
     </Dialog>
+    <DiscordAdminGuideSheet
+      open={adminSheetOpen}
+      onClose={() => setAdminSheetOpen(false)}
+      guildId={selectedGuild?.id}
+      guildName={selectedGuild?.name}
+      botPresent={selectedGuild ? true : undefined}
+      configured={selectedGuild ? isGuildConfigured(selectedGuild.id) : undefined}
+    />
+    </>
   );
 };
