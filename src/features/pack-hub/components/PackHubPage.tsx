@@ -24,6 +24,7 @@ import { CreatePackDialog } from './CreatePackDialog';
 import { PackCard } from './PackCard';
 import { PackCardSkeleton } from './PackCardSkeleton';
 import { PackFilterBar } from './PackFilterBar';
+import { PackPreviewDialog } from './PackPreviewDialog';
 
 const SKELETON_COUNT = 8;
 
@@ -40,6 +41,23 @@ export const PackHubPage: React.FC = () => {
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editPack, setEditPack] = React.useState<HubPack | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [previewPack, setPreviewPack] = React.useState<HubPack | null>(null);
+  const [previewOpen, setPreviewOpen] = React.useState(false);
+
+  const handlePreview = React.useCallback((pack: HubPack) => {
+    setPreviewPack(pack);
+    setPreviewOpen(true);
+  }, []);
+
+  const handleClosePreview = React.useCallback(() => {
+    setPreviewOpen(false);
+  }, []);
+
+  // Keep preview in sync with live list (votes, refreshes)
+  const livePreviewPack = React.useMemo(() => {
+    if (!previewPack) return null;
+    return filteredPacks.find((p) => p.id === previewPack.id) ?? previewPack;
+  }, [previewPack, filteredPacks]);
 
   const currentUserId = String(currentUser?.id ?? '');
 
@@ -281,6 +299,7 @@ export const PackHubPage: React.FC = () => {
                     onVote={handleVote}
                     onDelete={setDeleteTarget}
                     onEdit={setEditPack}
+                    onPreview={handlePreview}
                   />
                 </Grid>
               ))}
@@ -335,6 +354,15 @@ export const PackHubPage: React.FC = () => {
           }}
         />
       )}
+
+      {/* Pack preview dialog */}
+      <PackPreviewDialog
+        pack={livePreviewPack}
+        open={previewOpen && livePreviewPack !== null}
+        isLoggedIn={isLoggedIn}
+        onClose={handleClosePreview}
+        onVote={handleVote}
+      />
 
       {/* Delete confirmation */}
       <ConfirmDialog
