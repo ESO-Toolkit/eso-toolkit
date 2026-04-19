@@ -1,14 +1,6 @@
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Switch,
-  FormControlLabel,
-} from '@mui/material';
+import { Box, Button, FormControlLabel, Switch, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -39,7 +31,7 @@ import {
 import { fetchReportData } from '../store/report/reportSlice';
 import { RootState, AppDispatch } from '../store/storeWithHistory';
 
-const REFETCH_INTERVAL = 5000; // 5 seconds
+const REFETCH_INTERVAL = 5000;
 
 export const RaidDashboardPage: React.FC = () => {
   const { reportId } = useParams<{ reportId: string }>();
@@ -52,7 +44,6 @@ export const RaidDashboardPage: React.FC = () => {
   const widgets = useSelector((state: RootState) => state.dashboard.widgets);
   const autoRefreshEnabled = useSelector((state: RootState) => state.dashboard.autoRefreshEnabled);
 
-  // Auto-refresh report data
   const fetchLatestReport = React.useCallback(() => {
     if (reportId && client) {
       void dispatch(fetchReportData({ reportId, client }));
@@ -70,7 +61,6 @@ export const RaidDashboardPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [fetchLatestReport, autoRefreshEnabled]);
 
-  // Get fights sorted by most recent first
   const sortedFights = useMemo(() => {
     if (!reportData?.fights) return [];
 
@@ -107,17 +97,17 @@ export const RaidDashboardPage: React.FC = () => {
     };
   }, [reportId, reportData]);
 
+  const enabledWidgets = widgets.filter((w) => w.enabled);
+
   if (isReportLoading && !reportData) {
     return (
       <Box sx={{ p: 3 }}>
         <DynamicMetaTags {...metaTags} />
-        <Card>
-          <CardContent>
-            <Typography variant="h5" gutterBottom>
-              Loading Dashboard...
-            </Typography>
-          </CardContent>
-        </Card>
+        <Typography
+          sx={{ fontSize: 12, fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)', p: '20px 16px' }}
+        >
+          Loading dashboard…
+        </Typography>
       </Box>
     );
   }
@@ -126,25 +116,19 @@ export const RaidDashboardPage: React.FC = () => {
     return (
       <Box sx={{ p: 3 }}>
         <DynamicMetaTags {...metaTags} />
-        <Card>
-          <CardContent>
-            <Typography variant="h5" color="error">
-              Failed to load report
-            </Typography>
-          </CardContent>
-        </Card>
+        <Typography variant="h5" color="error">
+          Failed to load report
+        </Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+    <Box>
       <DynamicMetaTags {...metaTags} />
 
-      {/* Development Banner */}
-      <WorkInProgressDisclaimer featureName="Raid Dashboard" sx={{ mb: 3 }} />
+      <WorkInProgressDisclaimer featureName="Raid Dashboard" sx={{ mx: { xs: 1, sm: 2, md: 4 }, mt: 2 }} />
 
-      {/* Header */}
       <ReportActionBar
         reportId={reportId || ''}
         title={reportData.title || 'Raid Dashboard'}
@@ -186,7 +170,14 @@ export const RaidDashboardPage: React.FC = () => {
               startIcon={<AddIcon />}
               onClick={() => setAddWidgetDialogOpen(true)}
               size="small"
-              sx={{ fontSize: '0.8rem', textTransform: 'none' }}
+              sx={{
+                fontSize: '0.8rem',
+                textTransform: 'none',
+                background: 'linear-gradient(135deg, #38bdf8, #00e1ff)',
+                color: '#0b1220',
+                fontWeight: 700,
+                '&:hover': { filter: 'brightness(1.08)' },
+              }}
             >
               Add Widget
             </Button>
@@ -194,28 +185,82 @@ export const RaidDashboardPage: React.FC = () => {
         }
       />
 
-      {/* Widgets Grid */}
-      {sortedFights.length === 0 ? (
-        <Card>
-          <CardContent>
-            <Typography variant="body1" color="text.secondary" align="center">
-              No fights found in this report. Waiting for data...
-            </Typography>
-          </CardContent>
-        </Card>
-      ) : (
+      {/* Dashboard body */}
+      <Box sx={{ px: { xs: 2, sm: 3, md: 4 }, pb: 8 }}>
+        {/* Intro section */}
         <Box
           sx={{
-            columnCount: {
-              xs: 1,
-              lg: 2,
-            },
-            columnGap: 3,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            gap: 3,
+            my: 3,
           }}
         >
-          {widgets
-            .filter((w) => w.enabled)
-            .map((widget) => {
+          <Box>
+            <Typography
+              component="span"
+              sx={{
+                display: 'block',
+                fontSize: 11,
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: '#38bdf8',
+                mb: '6px',
+              }}
+            >
+              Raid Dashboard
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: { xs: 20, sm: 26 },
+                fontWeight: 800,
+                letterSpacing: '-0.015em',
+                color: '#ffffff',
+                mb: '6px',
+              }}
+            >
+              {reportData.title || 'Analysis Dashboard'}
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', maxWidth: '68ch' }}>
+              A widget-based analysis surface. Each widget is independently scoped — narrow it to
+              the most recent pull, the last few fights, or the whole log. Auto-refresh picks up new
+              data mid-raid.
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: 11,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.3)',
+              textAlign: 'right',
+              flexShrink: 0,
+            }}
+          >
+            <div>{enabledWidgets.length} widgets</div>
+            {autoRefreshEnabled && (
+              <div style={{ color: '#38bdf8', marginTop: 4 }}>Auto-refresh active</div>
+            )}
+          </Box>
+        </Box>
+
+        {/* Widget grid */}
+        {sortedFights.length === 0 ? (
+          <Typography sx={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>
+            No fights found in this report. Waiting for data…
+          </Typography>
+        ) : (
+          <Box
+            sx={{
+              columnCount: { xs: 1, md: 2, xl: 3 },
+              columnGap: '16px',
+            }}
+          >
+            {enabledWidgets.map((widget) => {
               const commonProps = {
                 id: widget.id,
                 scope: widget.scope,
@@ -249,15 +294,18 @@ export const RaidDashboardPage: React.FC = () => {
               }
 
               return (
-                <Box key={widget.id} sx={{ display: 'inline-block', width: '100%', mb: 3 }}>
+                <Box
+                  key={widget.id}
+                  sx={{ display: 'inline-block', width: '100%', mb: '16px' }}
+                >
                   {widgetComponent}
                 </Box>
               );
             })}
-        </Box>
-      )}
+          </Box>
+        )}
+      </Box>
 
-      {/* Add Widget Dialog */}
       <AddWidgetDialog
         open={addWidgetDialogOpen}
         onClose={() => setAddWidgetDialogOpen(false)}

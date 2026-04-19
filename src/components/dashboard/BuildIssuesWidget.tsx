@@ -1,16 +1,6 @@
 import BuildIcon from '@mui/icons-material/Build';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import WarningIcon from '@mui/icons-material/Warning';
-import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-} from '@mui/material';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { Box, Collapse, Typography } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../graphql/gql/graphql';
@@ -20,7 +10,7 @@ import { useBuffLookupTask } from '../../hooks/workerTasks/useBuffLookupTask';
 import { WidgetScope } from '../../store/dashboard/dashboardSlice';
 import { BuildIssue, detectBuildIssues } from '../../utils/detectBuildIssues';
 
-import { BaseWidget } from './BaseWidget';
+import { BaseWidget, WidgetPlayerAvatar, WidgetRolePill } from './BaseWidget';
 
 interface BuildIssuesWidgetProps {
   id: string;
@@ -32,7 +22,10 @@ interface BuildIssuesWidgetProps {
 }
 
 interface PlayerBuildIssues {
+  playerId: number;
   playerName: string;
+  playerClass: string;
+  playerRole: string;
   issues: BuildIssue[];
 }
 
@@ -44,7 +37,6 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
   onRemove,
   onScopeChange,
 }) => {
-  // Always fetch data for up to 5 fights
   const fight0 = fights[0];
   const fight1 = fights[1];
   const fight2 = fights[2];
@@ -87,7 +79,6 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
     context: { reportCode: reportId, fightId: fight4?.id ?? -1 },
   });
 
-  // Select fights based on scope
   const relevantFights = React.useMemo(() => {
     const allData = [
       { fight: fight0, buffs: buffs0, damage: damage0 },
@@ -106,27 +97,14 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
   }, [
     scope,
     fights.length,
-    fight0,
-    fight1,
-    fight2,
-    fight3,
-    fight4,
-    buffs0,
-    buffs1,
-    buffs2,
-    buffs3,
-    buffs4,
-    damage0,
-    damage1,
-    damage2,
-    damage3,
-    damage4,
+    fight0, fight1, fight2, fight3, fight4,
+    buffs0, buffs1, buffs2, buffs3, buffs4,
+    damage0, damage1, damage2, damage3, damage4,
   ]);
 
   const playerBuildIssues = React.useMemo((): PlayerBuildIssues[] => {
     if (!playerData?.playersById) return [];
 
-    // Aggregate issues across all fights per player, keeping full BuildIssue objects
     const playerIssuesMap = new Map<number, Map<string, BuildIssue>>();
 
     relevantFights.forEach(({ fight, buffs, damage }) => {
@@ -163,19 +141,20 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
             playerIssuesMap.set(player.id, new Map());
           }
           const playerIssues = playerIssuesMap.get(player.id)!;
-          // Deduplicate by message
           issues.forEach((issue) => playerIssues.set(issue.message, issue));
         }
       });
     });
 
-    // Convert to array format
     const results: PlayerBuildIssues[] = [];
     playerIssuesMap.forEach((issuesMap, playerId) => {
       const player = playerData.playersById[playerId];
       if (player) {
         results.push({
+          playerId,
           playerName: player.name,
+          playerClass: player.type,
+          playerRole: player.role,
           issues: Array.from(issuesMap.values()),
         });
       }
@@ -184,42 +163,122 @@ export const BuildIssuesWidget: React.FC<BuildIssuesWidgetProps> = ({
     return results.sort((a, b) => b.issues.length - a.issues.length);
   }, [playerData, relevantFights]);
 
+  const [openId, setOpenId] = React.useState<number | null>(
+    playerBuildIssues[0]?.playerId ?? null,
+  );
+
+  React.useEffect(() => {
+    if (playerBuildIssues.length > 0 && openId === null) {
+      setOpenId(playerBuildIssues[0].playerId);
+    }
+  }, [playerBuildIssues, openId]);
+
   const isEmpty = playerBuildIssues.length === 0;
 
   return (
     <BaseWidget
       id={id}
       title="Build Issues"
+      subtitle="Gear · CP · mundus · resources"
+      kind="build"
+      icon={<BuildIcon />}
       scope={scope}
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
     >
-      {playerBuildIssues.map((playerIssue, idx) => (
-        <Accordion key={idx} disableGutters elevation={0}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <BuildIcon color="warning" sx={{ mr: 1 }} />
-            <Typography>
-              {playerIssue.playerName} ({playerIssue.issues.length})
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ pt: 0 }}>
-            <List dense>
-              {playerIssue.issues.map((issue, issueIdx) => (
-                <ListItem key={issueIdx}>
-                  <ListItemIcon>
-                    <WarningIcon color="warning" fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={issue.message}
-                    primaryTypographyProps={{ variant: 'body2' }}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+      {playerBuildIssues.map((row) => {
+        const isOpen = openId === row.playerId;
+        return (
+          <Box
+            key={row.playerId}
+            sx={{ borderBottom: '1px solid rgba(148,163,184,0.06)', '&:last-child': { borderBottom: 'none' } }}
+          >
+            {/* Accordion head */}
+            <Box
+              onClick={() => setOpenId(isOpen ? null : row.playerId)}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                p: '10px 16px',
+                cursor: 'pointer',
+                '&:hover': { background: 'rgba(56,189,248,0.03)' },
+              }}
+            >
+              <ChevronRightIcon
+                sx={{
+                  width: 14,
+                  height: 14,
+                  color: 'rgba(255,255,255,0.3)',
+                  flexShrink: 0,
+                  transition: 'transform 0.2s',
+                  transform: isOpen ? 'rotate(90deg)' : 'none',
+                }}
+              />
+              <WidgetPlayerAvatar className={row.playerClass} size={26} />
+              <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Typography sx={{ fontWeight: 600, color: '#ffffff', fontSize: 13 }}>
+                  {row.playerName}
+                </Typography>
+                <WidgetRolePill role={row.playerRole} />
+              </Box>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: 22,
+                  height: 22,
+                  px: '6px',
+                  borderRadius: '9999px',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  fontFamily: 'monospace',
+                  background: 'rgba(255,213,79,0.15)',
+                  color: '#ffd54f',
+                  border: '1px solid rgba(255,213,79,0.3)',
+                }}
+              >
+                {row.issues.length}
+              </Box>
+            </Box>
+
+            {/* Accordion body */}
+            <Collapse in={isOpen}>
+              <Box sx={{ pb: '10px', pl: '44px', pr: '16px' }}>
+                {row.issues.map((issue, i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '8px',
+                      py: '6px',
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      color: 'rgba(255,255,255,0.72)',
+                      '&::before': {
+                        content: '""',
+                        width: 4,
+                        height: 4,
+                        borderRadius: '50%',
+                        background: '#ff9a4a',
+                        mt: '8px',
+                        flexShrink: 0,
+                      },
+                    }}
+                  >
+                    <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5 }}>
+                      {issue.message}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Collapse>
+          </Box>
+        );
+      })}
     </BaseWidget>
   );
 };
