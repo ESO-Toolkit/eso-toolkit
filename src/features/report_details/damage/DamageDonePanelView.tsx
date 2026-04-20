@@ -140,11 +140,32 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
 
   return (
     <Box data-testid="damage-done-panel">
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Typography variant="h6">
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          columnGap: 2,
+          rowGap: 0.5,
+          mb: 2,
+          minWidth: 0,
+        }}
+      >
+        <Typography variant="h6" sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>
           ⚔️ Damage Done By Player
           {selectedTargetNames && selectedTargetNames.length > 0 && (
-            <Typography component="span" variant="body2" sx={{ color: 'primary.main', ml: 1 }}>
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{
+                color: 'primary.main',
+                ml: 1,
+                ...(selectedTargetNames.length > 1 && {
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
+                }),
+              }}
+            >
               (vs{' '}
               {selectedTargetNames.length === 1
                 ? selectedTargetNames[0]
@@ -829,7 +850,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
+                    gap: '12px',
                     mb: '12px',
+                    minWidth: 0,
                   }}
                 >
                   {/* Player Info Section */}
@@ -889,7 +912,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   </Box>
 
                   {/* DPS Display - Simple and Clean */}
-                  <Box sx={{ textAlign: 'right' }}>
+                  <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
                     <Box
                       sx={{
                         display: 'flex',
