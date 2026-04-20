@@ -35,6 +35,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { GearSetTooltip } from '../components/GearSetTooltip';
 import { BuildDetailPanel } from '../components/roster/build-detail-panel';
 import { getDiscordBotApiUrl } from '../features/auth/discord-auth';
 import {
@@ -64,7 +65,9 @@ import {
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
+import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
+import { RICH_TOOLTIP_SLOT_PROPS } from '../utils/richTooltipSlotProps';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
@@ -176,6 +179,31 @@ const getSetChipSx = (
     return buildVariantSx(SLOT_HINT_VARIANT[entry.slotHint], theme);
   }
   return result.sx ?? {};
+};
+
+/**
+ * Wrap a gear-set chip in a rich GearSetTooltip (matching /bv) when we have
+ * tooltip data for the set. Falls back to the bare chip for unrecognised sets.
+ */
+const GearSetChipWithTooltip: React.FC<{
+  entry: GearSetEntry;
+  chip: React.ReactElement;
+}> = ({ entry, chip }) => {
+  const tooltipProps = getGearSetTooltipPropsByName(entry.name, entry.count);
+  if (!tooltipProps) return chip;
+
+  return (
+    <Tooltip
+      title={<GearSetTooltip {...tooltipProps} />}
+      placement="top"
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
+      arrow
+      slotProps={RICH_TOOLTIP_SLOT_PROPS}
+    >
+      {chip}
+    </Tooltip>
+  );
 };
 
 const formatSkillLines = (
@@ -430,17 +458,22 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
               {gearSets.map((entry) => (
-                <Chip
+                <GearSetChipWithTooltip
                   key={entry.name}
-                  component="a"
-                  href={getEsoHubSetUrl(entry.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  clickable
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  label={entry.name}
-                  size="small"
-                  sx={getSetChipSx(entry, theme)}
+                  entry={entry}
+                  chip={
+                    <Chip
+                      component="a"
+                      href={getEsoHubSetUrl(entry.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      clickable
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      label={entry.name}
+                      size="small"
+                      sx={getSetChipSx(entry, theme)}
+                    />
+                  }
                 />
               ))}
             </Box>
@@ -713,17 +746,22 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
               {gearSets.map((entry) => (
-                <Chip
+                <GearSetChipWithTooltip
                   key={entry.name}
-                  component="a"
-                  href={getEsoHubSetUrl(entry.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  clickable
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  label={entry.name}
-                  size="small"
-                  sx={getSetChipSx(entry, theme)}
+                  entry={entry}
+                  chip={
+                    <Chip
+                      component="a"
+                      href={getEsoHubSetUrl(entry.name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      clickable
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                      label={entry.name}
+                      size="small"
+                      sx={getSetChipSx(entry, theme)}
+                    />
+                  }
                 />
               ))}
               {healer.arenaWeapon && (
@@ -1047,11 +1085,10 @@ const DPSRow: React.FC<DPSRowProps> = ({ slot, color, isDarkMode }) => {
             sx={{ mt: 0.75, display: 'flex', flexWrap: 'wrap', gap: 0.75, alignItems: 'center' }}
           >
             {gearSets.map((entry) => (
-              <Chip
+              <GearSetChipWithTooltip
                 key={entry.name}
-                label={entry.name}
-                size="small"
-                sx={getSetChipSx(entry, theme)}
+                entry={entry}
+                chip={<Chip label={entry.name} size="small" sx={getSetChipSx(entry, theme)} />}
               />
             ))}
             {slot.arenaWeapon && (
