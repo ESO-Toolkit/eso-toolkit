@@ -92,10 +92,10 @@ const SkillTile: React.FC<{
   const accent = isUltimate ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
   const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
 
-  const richProps = React.useMemo(
-    () => (abilityId ? buildTooltipPropsFromAbilityId(abilityId) : null),
-    [abilityId],
-  );
+  // Recomputed every render: buildTooltipPropsFromAbilityId may return null
+  // until abilityIdMapper finishes its async load, and memoizing on abilityId
+  // alone would pin that null so the tooltip never upgrades from plain text.
+  const richProps = abilityId ? buildTooltipPropsFromAbilityId(abilityId) : null;
 
   const tooltipTitle = richProps ? (
     <SkillTooltipCard
