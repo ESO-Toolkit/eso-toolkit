@@ -43,6 +43,7 @@ import {
   tryLaunchDeepLink,
 } from '../features/build-hub/api/packs-api';
 import { preloadSkillData } from '../features/loadout-manager/data/skillLineSkills';
+import { packHubApi } from '../features/pack-hub/api/pack-hub-api';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import type {
   RecommendedAddonEntry,
@@ -1541,6 +1542,36 @@ export const RosterViewPage: React.FC = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => loadRoster(), []);
+
+  // When a roster references a pack, fetch the latest pack data and merge
+  // updated required/optional values so edits to the pack are reflected.
+  useEffect(() => {
+    if (!recommendedAddons?.packId) return;
+    let cancelled = false;
+    packHubApi
+      .get(recommendedAddons.packId)
+      .then(({ pack }) => {
+        if (cancelled) return;
+        const packAddonMap = new Map(pack.addons.map((a) => [a.esouiId, a]));
+        setRecommendedAddons((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            addons: prev.addons.map((a) => {
+              const fresh = packAddonMap.get(a.esouiId);
+              if (!fresh) return a;
+              return { ...a, required: fresh.required, note: fresh.note };
+            }),
+          };
+        });
+      })
+      .catch(() => {
+        // Pack may have been deleted — keep the snapshot as fallback
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [recommendedAddons?.packId]);
 
   // Copy this shareable link to clipboard
   const handleCopyLink = (): void => {
