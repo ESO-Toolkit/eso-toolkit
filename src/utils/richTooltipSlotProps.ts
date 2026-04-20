@@ -7,8 +7,10 @@ import type { TooltipProps } from '@mui/material';
  * Modern viewport-fit strategy:
  *  - Transparent wrapper so only the inner card is visible.
  *  - maxHeight uses `dvh` so it tracks the dynamic viewport (mobile URL bar).
- *  - overflowY: auto lets the card scroll inside the tooltip when its natural
- *    height exceeds the viewport, instead of being clipped offscreen.
+ *  - Content stays scrollable via wheel/touch, but the native scrollbar is
+ *    hidden (scrollbar-width: none + ::-webkit-scrollbar) so the browser
+ *    can't flash a thin gutter during Grow transitions when the user
+ *    hovers between rich tooltips in quick succession.
  *  - preventOverflow { altAxis: true } lets Popper slide the tooltip along
  *    the cross axis when flipping alone can't fit it.
  *  - flip fallbackPlacements cover all four sides so the tooltip will land
@@ -25,7 +27,8 @@ export const RICH_TOOLTIP_SLOT_PROPS: NonNullable<TooltipProps['slotProps']> = {
       maxHeight: 'min(520px, calc(100dvh - 24px))',
       overflowY: 'auto',
       overflowX: 'hidden',
-      scrollbarWidth: 'thin',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
     },
   },
   arrow: { sx: { display: 'none' } },
