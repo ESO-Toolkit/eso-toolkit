@@ -7,15 +7,14 @@ import type { TooltipProps } from '@mui/material';
  * Modern viewport-fit strategy:
  *  - Transparent wrapper so only the inner card is visible.
  *  - maxHeight uses `dvh` so it tracks the dynamic viewport (mobile URL bar).
- *  - Content stays scrollable via wheel/touch, but the native scrollbar is
- *    hidden (scrollbar-width: none + ::-webkit-scrollbar) so the tooltip
- *    card never shows a scroll gutter.
+ *  - overflow: hidden — most tooltips are well under the cap, and letting
+ *    the browser render any scrollbar on the popper caused a flash when
+ *    hovering between tooltips quickly. Overflow on a rare oversized card
+ *    clips the bottom; the user can click through to ESO-Hub for full
+ *    detail.
  *  - popperOptions.strategy = 'fixed' positions the popper via
- *    `position: fixed` instead of `absolute`. With absolute positioning the
- *    portal-rendered tooltip briefly extended the document during its
- *    first measure pass, causing the page scrollbar to flash when hovering
- *    between tooltips quickly; fixed strategy positions relative to the
- *    viewport and never contributes to page scroll height.
+ *    `position: fixed` instead of `absolute` so it never contributes to
+ *    document scroll height.
  *  - preventOverflow { altAxis: true } lets Popper slide the tooltip along
  *    the cross axis when flipping alone can't fit it.
  *  - flip fallbackPlacements cover all four sides so the tooltip will land
@@ -30,11 +29,7 @@ export const RICH_TOOLTIP_SLOT_PROPS: NonNullable<TooltipProps['slotProps']> = {
       border: 'none !important',
       boxShadow: 'none !important',
       maxHeight: 'min(520px, calc(100dvh - 24px))',
-      overflowY: 'auto',
-      overflowX: 'hidden',
-      overscrollBehavior: 'contain',
-      scrollbarWidth: 'none',
-      '&::-webkit-scrollbar': { display: 'none' },
+      overflow: 'hidden',
     },
   },
   arrow: { sx: { display: 'none' } },
