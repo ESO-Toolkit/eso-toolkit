@@ -19,6 +19,10 @@ import type { GearConfig, SkillsConfig } from '../../features/loadout-manager/ty
 import { deriveItemNameForSlot } from '../../features/loadout-manager/utils/itemIconResolver';
 import { getChampionPointAbilityName } from '../../types/champion-points';
 import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../../utils/esoHubLinks';
+import { getGearSetTooltipPropsByName } from '../../utils/gearSetTooltipMapper';
+import { buildTooltipPropsFromAbilityId } from '../../utils/skillTooltipMapper';
+import { GearSetTooltip } from '../GearSetTooltip';
+import { LazySkillTooltip as SkillTooltipCard } from '../LazySkillTooltip';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -88,6 +92,21 @@ const SkillTile: React.FC<{
   const accent = isUltimate ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
   const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
 
+  const richProps = React.useMemo(
+    () => (abilityId ? buildTooltipPropsFromAbilityId(abilityId) : null),
+    [abilityId],
+  );
+
+  const tooltipTitle = richProps ? (
+    <SkillTooltipCard
+      {...richProps}
+      iconUrl={richProps.iconUrl || iconUrl || undefined}
+      abilityId={abilityId}
+    />
+  ) : (
+    (skill?.name ?? `Ability #${abilityId}`)
+  );
+
   const tile = (
     <Box
       sx={{
@@ -135,7 +154,27 @@ const SkillTile: React.FC<{
   );
 
   return (
-    <Tooltip title={skill?.name ?? `Ability #${abilityId}`} arrow placement="top">
+    <Tooltip
+      title={tooltipTitle}
+      arrow
+      placement="top"
+      enterTouchDelay={0}
+      leaveTouchDelay={3000}
+      slotProps={{
+        tooltip: {
+          sx: richProps
+            ? {
+                maxWidth: 320,
+                p: 0,
+                backgroundColor: 'transparent !important',
+                border: 'none !important',
+                boxShadow: 'none !important',
+              }
+            : {},
+        },
+        arrow: richProps ? { sx: { display: 'none' } } : {},
+      }}
+    >
       {esoHubUrl ? (
         <Box
           component="a"
@@ -323,6 +362,17 @@ const GearDisplay: React.FC<{
 }> = ({ gear, isDarkMode }) => {
   const populatedSlots = GEAR_SLOT_ORDER.filter((slotIdx) => gear[slotIdx]);
 
+  const setPieceCounts = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const slotIdx of populatedSlots) {
+      const piece = gear[slotIdx];
+      if (!piece) continue;
+      const info = getItemInfo(Number(piece.id));
+      if (info?.setName) counts.set(info.setName, (counts.get(info.setName) ?? 0) + 1);
+    }
+    return counts;
+  }, [gear, populatedSlots]);
+
   if (populatedSlots.length === 0) return null;
 
   return (
@@ -336,10 +386,12 @@ const GearDisplay: React.FC<{
         const itemName = deriveItemNameForSlot(itemId, SLOT_INDEX_TO_TYPE[slotIdx]);
         const setName = itemInfo?.setName;
         const weight = piece.weight ? WEIGHT_LABELS[piece.weight] : null;
+        const gearTooltipProps = setName
+          ? getGearSetTooltipPropsByName(setName, setPieceCounts.get(setName) ?? 0)
+          : null;
 
-        return (
+        const row = (
           <Box
-            key={slotIdx}
             sx={{
               display: 'flex',
               alignItems: 'center',
@@ -415,6 +467,35 @@ const GearDisplay: React.FC<{
               />
             )}
           </Box>
+        );
+
+        if (!gearTooltipProps) {
+          return <React.Fragment key={slotIdx}>{row}</React.Fragment>;
+        }
+
+        return (
+          <Tooltip
+            key={slotIdx}
+            title={<GearSetTooltip {...gearTooltipProps} />}
+            placement="top"
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+            arrow
+            slotProps={{
+              tooltip: {
+                sx: {
+                  maxWidth: 320,
+                  p: 0,
+                  backgroundColor: 'transparent !important',
+                  border: 'none !important',
+                  boxShadow: 'none !important',
+                },
+              },
+              arrow: { sx: { display: 'none' } },
+            }}
+          >
+            {row}
+          </Tooltip>
         );
       })}
     </Box>
