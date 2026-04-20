@@ -67,6 +67,7 @@ import { encodeBuildToURL } from '../utils/buildEncoding';
 import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
+import { RICH_TOOLTIP_SLOT_PROPS } from '../utils/richTooltipSlotProps';
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 import { decodeRosterFromURL } from '../utils/rosterEncoding';
 import { dpsSlotToBuild, tankSlotToBuild, healerSlotToBuild } from '../utils/rosterSlotToBuild';
@@ -198,18 +199,7 @@ const GearSetChipWithTooltip: React.FC<{
       enterTouchDelay={0}
       leaveTouchDelay={3000}
       arrow
-      slotProps={{
-        tooltip: {
-          sx: {
-            maxWidth: 320,
-            p: 0,
-            backgroundColor: 'transparent !important',
-            border: 'none !important',
-            boxShadow: 'none !important',
-          },
-        },
-        arrow: { sx: { display: 'none' } },
-      }}
+      slotProps={RICH_TOOLTIP_SLOT_PROPS}
     >
       {chip}
     </Tooltip>

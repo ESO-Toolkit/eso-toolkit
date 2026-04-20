@@ -20,6 +20,7 @@ import { deriveItemNameForSlot } from '../../features/loadout-manager/utils/item
 import { getChampionPointAbilityName } from '../../types/champion-points';
 import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../../utils/esoHubLinks';
 import { getGearSetTooltipPropsByName } from '../../utils/gearSetTooltipMapper';
+import { RICH_TOOLTIP_SLOT_PROPS } from '../../utils/richTooltipSlotProps';
 import { buildTooltipPropsFromAbilityId } from '../../utils/skillTooltipMapper';
 import { GearSetTooltip } from '../GearSetTooltip';
 import { LazySkillTooltip as SkillTooltipCard } from '../LazySkillTooltip';
@@ -160,20 +161,7 @@ const SkillTile: React.FC<{
       placement="top"
       enterTouchDelay={0}
       leaveTouchDelay={3000}
-      slotProps={{
-        tooltip: {
-          sx: richProps
-            ? {
-                maxWidth: 320,
-                p: 0,
-                backgroundColor: 'transparent !important',
-                border: 'none !important',
-                boxShadow: 'none !important',
-              }
-            : {},
-        },
-        arrow: richProps ? { sx: { display: 'none' } } : {},
-      }}
+      slotProps={richProps ? RICH_TOOLTIP_SLOT_PROPS : undefined}
     >
       {esoHubUrl ? (
         <Box
@@ -481,18 +469,7 @@ const GearDisplay: React.FC<{
             enterTouchDelay={0}
             leaveTouchDelay={3000}
             arrow
-            slotProps={{
-              tooltip: {
-                sx: {
-                  maxWidth: 320,
-                  p: 0,
-                  backgroundColor: 'transparent !important',
-                  border: 'none !important',
-                  boxShadow: 'none !important',
-                },
-              },
-              arrow: { sx: { display: 'none' } },
-            }}
+            slotProps={RICH_TOOLTIP_SLOT_PROPS}
           >
             {row}
           </Tooltip>
