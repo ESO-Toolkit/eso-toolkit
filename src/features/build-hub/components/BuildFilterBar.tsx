@@ -56,8 +56,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
     };
 
     const selectSx = {
-      flexGrow: 1,
-      minWidth: 130,
+      minWidth: 0,
       ...glassField(isDark),
       borderRadius: '10px',
       fontSize: '0.85rem',
@@ -125,6 +124,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
             flexDirection: { xs: 'column', sm: 'row' },
             gap: 1.25,
             alignItems: { xs: 'stretch', sm: 'center' },
+            minWidth: 0,
           }}
         >
           <TextField
@@ -185,7 +185,18 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
             }}
           />
 
-          <Box sx={{ display: 'flex', gap: 1.25, alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 1.25,
+              alignItems: 'center',
+              minWidth: 0,
+              gridTemplateColumns: {
+                xs: 'repeat(2, minmax(0, 1fr))',
+                sm: 'repeat(2, minmax(0, 1fr)) auto',
+              },
+            }}
+          >
             <Select
               value={filters.esoClass}
               onChange={(e: SelectChangeEvent) => onFilterChange('esoClass', e.target.value)}
@@ -254,6 +265,8 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                 border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
                 backdropFilter: 'blur(8px)',
                 flexShrink: 0,
+                gridColumn: { xs: '1 / -1', sm: 'auto' },
+                width: { xs: '100%', sm: 'auto' },
               }}
             >
               {(['votes', 'recent'] as SortOrder[]).map((sort) => {
@@ -276,6 +289,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                       letterSpacing: '0.01em',
                       transition: 'all 0.2s ease',
                       whiteSpace: 'nowrap',
+                      flex: { xs: 1, sm: 'initial' },
                       ...(active
                         ? {
                             background: isDark
