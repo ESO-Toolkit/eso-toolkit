@@ -139,7 +139,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   const getPlayerColor = roleColors.getPlayerColor;
 
   return (
-    <Box data-testid="damage-done-panel">
+    <Box data-testid="damage-done-panel" sx={{ maxWidth: '100%', overflowX: 'hidden' }}>
       <Box
         sx={{
           display: 'flex',
@@ -193,11 +193,15 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           display: { xs: 'flex', sm: 'none' },
           mb: 2,
           justifyContent: 'center',
+          maxWidth: '100%',
+          overflowX: 'auto',
         }}
       >
         <Box
           sx={{
             display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
             backgroundColor: roleColors.isDarkMode
               ? 'rgba(255, 255, 255, 0.08)'
               : 'rgba(0, 0, 0, 0.06)',
