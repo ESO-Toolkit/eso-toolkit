@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar, LinearProgress, Tooltip } from '@mui/material';
+import { Box, Typography, Avatar, LinearProgress, Tooltip, Chip, Stack } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 
 import { useRoleColors } from '../../../hooks';
@@ -138,25 +138,53 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   // Get color based on player role using theme-aware colors
   const getPlayerColor = roleColors.getPlayerColor;
 
+  const targetLabel =
+    selectedTargetNames && selectedTargetNames.length > 0
+      ? selectedTargetNames.length === 1
+        ? `vs ${selectedTargetNames[0]}`
+        : `vs ${selectedTargetNames.length} targets`
+      : null;
+
   return (
     <Box data-testid="damage-done-panel">
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Typography variant="h6">
-          ⚔️ Damage Done By Player
-          {selectedTargetNames && selectedTargetNames.length > 0 && (
-            <Typography component="span" variant="body2" sx={{ color: 'primary.main', ml: 1 }}>
-              (vs{' '}
-              {selectedTargetNames.length === 1
-                ? selectedTargetNames[0]
-                : `${selectedTargetNames.length} targets`}
-              )
-            </Typography>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={{ xs: 1, sm: 2 }}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        sx={{ mb: 2, minWidth: 0 }}
+      >
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ minWidth: 0, flexWrap: 'wrap', rowGap: 0.75 }}
+        >
+          <Typography variant="h6" sx={{ minWidth: 0 }}>
+            ⚔️ Damage Done By Player
+          </Typography>
+          {targetLabel && (
+            <Chip
+              label={targetLabel}
+              size="small"
+              variant="outlined"
+              color="primary"
+              sx={{
+                maxWidth: '100%',
+                borderRadius: '999px',
+                fontWeight: 600,
+                letterSpacing: 0.2,
+                '& .MuiChip-label': {
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                },
+              }}
+            />
           )}
-        </Typography>
+        </Stack>
         <Typography
           variant="caption"
           sx={{
-            color: '#888',
+            color: 'text.secondary',
             fontSize: '0.75rem',
             fontStyle: 'italic',
             display: { xs: 'none', sm: 'block' },
@@ -164,28 +192,27 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         >
           Click column headers to sort
         </Typography>
-      </Box>
+      </Stack>
 
-      {/* Mobile Sort Controls - Simplified and Mobile-Friendly */}
-      <Box
-        sx={{
-          display: { xs: 'flex', sm: 'none' },
-          mb: 2,
-          justifyContent: 'center',
-        }}
-      >
+      {/* Mobile Sort Controls — horizontal scroll-snap pill bar */}
+      <Box sx={{ display: { xs: 'block', sm: 'none' }, mb: 2 }}>
         <Box
           sx={{
             display: 'flex',
+            gap: '2px',
+            padding: '4px',
+            overflowX: 'auto',
+            scrollSnapType: 'x proximity',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
             backgroundColor: roleColors.isDarkMode
               ? 'rgba(255, 255, 255, 0.08)'
               : 'rgba(0, 0, 0, 0.06)',
-            borderRadius: '12px',
-            padding: '4px',
             border: roleColors.isDarkMode
               ? '1px solid rgba(255, 255, 255, 0.12)'
               : '1px solid rgba(0, 0, 0, 0.1)',
-            gap: '2px',
+            borderRadius: '12px',
           }}
         >
           {[
@@ -213,6 +240,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
+                scrollSnapAlign: 'start',
                 transition: 'background-color 0.2s ease',
                 fontWeight: sortField === field ? 600 : 500,
                 fontSize: '0.75rem',
@@ -829,7 +858,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
+                    gap: '12px',
                     mb: '12px',
+                    minWidth: 0,
                   }}
                 >
                   {/* Player Info Section */}
@@ -889,7 +920,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   </Box>
 
                   {/* DPS Display - Simple and Clean */}
-                  <Box sx={{ textAlign: 'right' }}>
+                  <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
                     <Box
                       sx={{
                         display: 'flex',
