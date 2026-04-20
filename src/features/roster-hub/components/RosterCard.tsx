@@ -194,7 +194,8 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
-    const accentColor = TRIAL_ACCENT[roster.trial_id] ?? '#3b82f6';
+    // Gold/yellow accent — signals #1/champion treatment for all roster cards
+    const accentColor = '#eab308';
 
     const displayName = roster.is_anonymous ? 'Anonymous' : roster.author_name || '?';
 
@@ -207,8 +208,8 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
           width: '100%',
           position: 'relative',
           background: isDark
-            ? `linear-gradient(135deg, ${accentColor}14 0%, rgba(56, 189, 248, 0.10) 50%, rgba(0, 225, 255, 0.10) 100%)`
-            : `linear-gradient(135deg, ${accentColor}12 0%, rgba(219, 234, 254, 0.45) 50%, rgba(224, 242, 254, 0.45) 100%)`,
+            ? `linear-gradient(135deg, ${accentColor}18 0%, rgba(250, 204, 21, 0.10) 50%, rgba(245, 158, 11, 0.10) 100%)`
+            : `linear-gradient(135deg, ${accentColor}14 0%, rgba(254, 243, 199, 0.55) 50%, rgba(253, 230, 138, 0.45) 100%)`,
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           border: isDark ? `1px solid rgba(255,255,255,0.09)` : `1px solid rgba(0,0,0,0.09)`,
