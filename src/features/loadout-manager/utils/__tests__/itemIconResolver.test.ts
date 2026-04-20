@@ -15,8 +15,11 @@
 import {
   applyWeaponTypeToName,
   deriveItemNameForSlot,
+  fetchIsTwoHandedWeapon,
   GENERIC_WEAPON_SUFFIXES,
   getItemIconUrl,
+  isTwoHandedFromName,
+  isTwoHandedWeapon,
   parseWeaponTypeFromIconUrl,
 } from '../itemIconResolver';
 
@@ -257,5 +260,166 @@ describe('deriveItemNameForSlot (slot-specificity guard — regression for /bv f
     // caller passing a bow URL must not produce "Mother's Sorrow Bow".
     const bowIconOverride = `${CDN}/gear_argonian_bow_d.png`;
     expect(deriveItemNameForSlot(97232, 'chest', bowIconOverride)).toBe("Mother's Sorrow Chest");
+  });
+});
+
+describe('isTwoHandedWeapon', () => {
+  // Real Mother's Sorrow item IDs with their UESP icon classifications:
+  //   97219 1haxe,  97220 1hhammer,  97221 1hsword,
+  //   97222 2haxe,  97223 2hhammer,  97224 2hsword,
+  //   97225 dagger, 97226 bow,       97227-30 staff, 97231 shield.
+  describe('two-handed weapons (main + off occupied)', () => {
+    it.each([
+      [97222, 'Battle Axe'],
+      [97223, 'Maul'],
+      [97224, 'Greatsword'],
+      [97226, 'Bow'],
+      [97230, 'Staff'],
+    ])('returns true for %i (%s)', (itemId) => {
+      expect(isTwoHandedWeapon(itemId)).toBe(true);
+    });
+  });
+
+  describe('one-handed weapons (dual-wield / one-hand+shield eligible)', () => {
+    it.each([
+      [97219, 'Axe'],
+      [97220, 'Mace'],
+      [97221, 'Sword'],
+      [97225, 'Dagger'],
+    ])('returns false for %i (%s)', (itemId) => {
+      expect(isTwoHandedWeapon(itemId)).toBe(false);
+    });
+  });
+
+  it('returns false for shield (off-hand only, not 2H)', () => {
+    expect(isTwoHandedWeapon(97231)).toBe(false);
+  });
+
+  it('returns false for armor items', () => {
+    expect(isTwoHandedWeapon(97232)).toBe(false); // chest
+    expect(isTwoHandedWeapon(97235)).toBe(false); // head
+  });
+
+  it('returns false for null / undefined / 0 / negative', () => {
+    expect(isTwoHandedWeapon(null)).toBe(false);
+    expect(isTwoHandedWeapon(undefined)).toBe(false);
+    expect(isTwoHandedWeapon(0)).toBe(false);
+    expect(isTwoHandedWeapon(-1)).toBe(false);
+  });
+
+  it('returns false for unknown itemIds (no local icon data)', () => {
+    expect(isTwoHandedWeapon(99999999)).toBe(false);
+  });
+
+  it('returns false for generic set IDs (no definitive weapon type)', () => {
+    // Item 2558 = "Mother's Sorrow Gear" — no slot field, icon lookup is
+    // unreliable for classification. Must not gate the off-hand based on
+    // an arbitrary fallback pick.
+    expect(isTwoHandedWeapon(2558)).toBe(false);
+  });
+
+  describe('slot-specificity guard (regression: false-positive 2H lock on generic IDs)', () => {
+    // Generic LibSets set IDs have no `slot` field in itemIdMap, but they
+    // collide with unrelated items in UESP's icon database — so their
+    // icon can happen to match a 2H weapon token. Pre-guard, these falsely
+    // locked/cleared the off-hand for imported/legacy loadouts carrying
+    // generic IDs. Post-guard, the stored metadata's absence of a weapon
+    // slot is authoritative: don't classify.
+    it('ID 685 ("Bloodthorn\'s Touch Gear", no slot) has a staff icon but must NOT classify as 2H', () => {
+      // getItemIconUrl(685) returns gear_breton_staff_d — the "staff" token
+      // would false-positive if we didn't gate on itemInfo.slot first.
+      expect(getItemIconUrl(685)).toMatch(/_staff_/);
+      expect(isTwoHandedWeapon(685)).toBe(false);
+    });
+
+    it('ID 139 ("Dreugh King Slayer Gear", no slot, shield icon) stays false', () => {
+      expect(isTwoHandedWeapon(139)).toBe(false);
+    });
+
+    it('ID 1088 ("Hide of the Werewolf Gear", no slot, armor icon) stays false', () => {
+      expect(isTwoHandedWeapon(1088)).toBe(false);
+    });
+
+    it('slot-specific weapon items are unaffected by the guard (positive control)', () => {
+      // 97230 = "Mother's Sorrow Weapon" with slot='weapon' and staff icon.
+      // The stored slot field says weapon, so the guard lets icon-based
+      // classification proceed and correctly returns true.
+      expect(isTwoHandedWeapon(97230)).toBe(true);
+    });
+  });
+});
+
+describe('fetchIsTwoHandedWeapon (async classification path)', () => {
+  // These item IDs are in local icon data (itemIcons.json), so the async
+  // wrapper resolves synchronously from the same source the sync helper
+  // uses. We can't easily cover the UESP fallback branch without network
+  // mocking, but the code path is the same shape as the local hit — once
+  // fetchItemIconUrl resolves a URL, classification is identical.
+  it.each([
+    [97222, true, 'Battle Axe'],
+    [97223, true, 'Maul'],
+    [97224, true, 'Greatsword'],
+    [97226, true, 'Bow'],
+    [97230, true, 'Staff'],
+    [97219, false, 'Axe (1H)'],
+    [97221, false, 'Sword (1H)'],
+    [97225, false, 'Dagger (1H)'],
+    [97231, false, 'Shield'],
+    [97232, false, 'Chest armor'],
+  ])('classifies %i as %s (%s)', async (itemId, expected) => {
+    await expect(fetchIsTwoHandedWeapon(itemId)).resolves.toBe(expected);
+  });
+
+  it('returns false for null / undefined / 0 / negative', async () => {
+    await expect(fetchIsTwoHandedWeapon(null)).resolves.toBe(false);
+    await expect(fetchIsTwoHandedWeapon(undefined)).resolves.toBe(false);
+    await expect(fetchIsTwoHandedWeapon(0)).resolves.toBe(false);
+    await expect(fetchIsTwoHandedWeapon(-1)).resolves.toBe(false);
+  });
+
+  it('applies the same slot-specificity guard as the sync variant (ID 685)', async () => {
+    // Symmetry check: the async path must reject generic IDs before
+    // classification too, otherwise the cold-cache useEffect in
+    // EquipmentPicker/GearSelector would re-introduce the false-positive
+    // lock on imported/legacy loadouts.
+    await expect(fetchIsTwoHandedWeapon(685)).resolves.toBe(false);
+  });
+});
+
+describe('isTwoHandedFromName (text fallback for stale/imported gear)', () => {
+  it.each([
+    "Mother's Sorrow Greatsword",
+    "Mother's Sorrow Battle Axe",
+    "Mother's Sorrow Battleaxe",
+    "Mother's Sorrow Maul",
+    "Mother's Sorrow Bow",
+    "Mother's Sorrow Staff",
+    "Mother's Sorrow Restoration Staff",
+    "Mother's Sorrow Inferno Staff",
+    'Greatsword of the Legion',
+  ])('returns true for "%s"', (name) => {
+    expect(isTwoHandedFromName(name)).toBe(true);
+  });
+
+  it.each([
+    "Mother's Sorrow Sword",
+    "Mother's Sorrow Dagger",
+    "Mother's Sorrow Mace",
+    "Mother's Sorrow Axe", // 1H axe — must not match "battle axe" token
+    "Mother's Sorrow Shield",
+    "Mother's Sorrow Weapon",
+    "Mother's Sorrow Gear",
+    "Mother's Sorrow Ring",
+    'Elbow Brace', // word-boundary guard: "bow" inside "elbow" must NOT match
+    'Staffa of the Magi', // fictional word containing "staff" prefix
+    'Swordbreaker Amulet', // fictional, no 2H token
+  ])('returns false for "%s"', (name) => {
+    expect(isTwoHandedFromName(name)).toBe(false);
+  });
+
+  it('returns false for null / undefined / empty', () => {
+    expect(isTwoHandedFromName(null)).toBe(false);
+    expect(isTwoHandedFromName(undefined)).toBe(false);
+    expect(isTwoHandedFromName('')).toBe(false);
   });
 });
