@@ -36,5 +36,6 @@ export const getReportVisibilityColor = (visibility: string): ChipProps['color']
 export const isReportEmpty = (report: UserReportSummaryFragment): boolean => {
   if (report.segments === 0) return true;
   if (report.startTime === report.endTime) return true;
+  if (!report.zone?.name) return true;
   return false;
 };

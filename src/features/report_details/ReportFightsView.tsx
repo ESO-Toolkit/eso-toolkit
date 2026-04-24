@@ -1,8 +1,10 @@
 // Third-party imports
 import {
   Box,
+  Button,
   Card,
   CardContent,
+  Chip,
   Typography,
   List,
   ListItem,
@@ -753,7 +755,29 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         }}
       >
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Typography variant="body1">No fights available</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Typography variant="body1" fontWeight="medium">
+              No fights available
+            </Typography>
+            <Chip
+              label="Empty Log"
+              size="small"
+              color="warning"
+              variant="outlined"
+              sx={{ fontSize: '0.7rem', height: 20 }}
+            />
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            This log contains no fight data, likely due to an upload or parsing issue on ESO Logs.
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => navigate(-1)}
+            sx={{ textTransform: 'none' }}
+          >
+            Go back
+          </Button>
         </CardContent>
       </Card>
     );
