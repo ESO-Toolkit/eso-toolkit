@@ -33,9 +33,11 @@ export const getReportVisibilityColor = (visibility: string): ChipProps['color']
   }
 };
 
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
 export const isReportEmpty = (report: UserReportSummaryFragment): boolean => {
   if (report.segments === 0) return true;
   if (report.startTime === report.endTime) return true;
-  if (!report.zone?.name) return true;
+  if (!report.zone?.name && report.endTime - report.startTime < FIVE_MINUTES_MS) return true;
   return false;
 };
