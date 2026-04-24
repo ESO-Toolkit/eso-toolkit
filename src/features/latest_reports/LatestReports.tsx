@@ -17,6 +17,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -35,6 +36,7 @@ import {
   formatReportDateTime,
   formatReportDuration,
   getReportVisibilityColor,
+  isReportEmpty,
 } from '../reports/reportFormatting';
 import { useReportPageLayout } from '../reports/useReportPageLayout';
 
@@ -361,23 +363,36 @@ export const LatestReports: React.FC = () => {
                         >
                           <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
                             <Box>
-                              <Typography
-                                variant="body2"
-                                fontWeight="medium"
-                                color="primary.main"
-                                sx={{
-                                  overflowWrap: 'anywhere',
-                                  wordBreak: 'break-word',
-                                  lineHeight: 1.4,
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {report.title || 'Untitled Report'}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="medium"
+                                  color="primary.main"
+                                  sx={{
+                                    overflowWrap: 'anywhere',
+                                    wordBreak: 'break-word',
+                                    lineHeight: 1.4,
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    textOverflow: 'ellipsis',
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  {report.title || 'Untitled Report'}
+                                </Typography>
+                                {isReportEmpty(report) && (
+                                  <Tooltip title="This log may contain no fight data due to an upload or parsing issue on ESO Logs" arrow>
+                                    <Chip
+                                      label="Empty Log"
+                                      size="small"
+                                      color="warning"
+                                      variant="outlined"
+                                      sx={{ flexShrink: 0, fontSize: '0.7rem', height: 20 }}
+                                    />
+                                  </Tooltip>
+                                )}
+                              </Box>
                               <Typography
                                 variant="caption"
                                 color="text.secondary"

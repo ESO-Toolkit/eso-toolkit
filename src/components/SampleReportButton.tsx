@@ -226,7 +226,7 @@ export const SampleReportButton: React.FC = () => {
         });
 
         const rankings = parseFightRankings(rankingResponse, variables.page ?? 1).rankings.filter(
-          (row) => row.reportCode,
+          (row) => row.reportCode && row.durationMs && row.durationMs > 0,
         );
 
         if (rankings.length === 0) {

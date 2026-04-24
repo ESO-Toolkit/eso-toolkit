@@ -2943,6 +2943,7 @@ export type UserReportSummaryFragment = {
   endTime: number;
   title: string;
   visibility: string;
+  segments: number;
   zone?: { __typename?: 'Zone'; name: string } | null;
   owner?: { __typename?: 'User'; name: string } | null;
 };
@@ -3093,6 +3094,7 @@ export type GetUserReportsQuery = {
         endTime: number;
         title: string;
         visibility: string;
+        segments: number;
         zone?: { __typename?: 'Zone'; name: string } | null;
         owner?: { __typename?: 'User'; name: string } | null;
       } | null> | null;
@@ -3122,6 +3124,7 @@ export type GetLatestReportsQuery = {
         endTime: number;
         title: string;
         visibility: string;
+        segments: number;
         zone?: { __typename?: 'Zone'; name: string } | null;
         owner?: { __typename?: 'User'; name: string } | null;
       } | null> | null;
@@ -3808,6 +3811,7 @@ export const UserReportSummaryFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'segments' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'zone' },
@@ -6963,6 +6967,7 @@ export const GetUserReportsDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'segments' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'zone' },
@@ -7068,6 +7073,7 @@ export const GetLatestReportsDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'segments' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'zone' },
