@@ -178,6 +178,7 @@ discord-notify-worker/node_modules/
 /error-logs-*.txt
 /*.log
 /*-snapshot.md
+/snapshot.txt
 /*-failure.md
 /missing-*.txt
 
