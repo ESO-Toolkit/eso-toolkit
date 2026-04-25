@@ -61,6 +61,9 @@ import {
   togglePackVote,
   checkPackCreateRateLimit,
   checkPackVoteRateLimit,
+  checkGraphqlRateLimit,
+  recordGraphqlRateLimit,
+  cleanupGraphqlRateLimits,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
@@ -156,7 +159,15 @@ app.use('*', async (c, next) => {
 // Forwards POST /graphql to https://www.esologs.com/api/v2/client, injecting
 // a server-side OAuth token so unauthenticated users can query public data.
 
-app.post('/graphql', handleGraphqlProxy);
+app.post('/graphql', async (c) => {
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const allowed = await checkGraphqlRateLimit(c.env.DB, ip);
+  if (!allowed) {
+    return c.json({ error: 'Rate limit exceeded. Max 30 GraphQL requests per minute.' }, 429);
+  }
+  await recordGraphqlRateLimit(c.env.DB, ip);
+  return handleGraphqlProxy(c);
+});
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
@@ -822,7 +833,7 @@ app.post('/temp-builds', async (c) => {
     return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   // Rate limit by IP (10 per hour)
-  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
+  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
   if (!allowed)
     return c.json(
@@ -1602,6 +1613,7 @@ export default {
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     await cleanupExpiredTempBuilds(env.DB);
+    await cleanupGraphqlRateLimits(env.DB);
     await syncLeaderboardRosters(env);
   },
 };

@@ -1511,3 +1511,42 @@ export async function checkPackVoteRateLimit(db: D1Database, userId: string): Pr
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < 30;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GraphQL proxy — IP-based rate limiting
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const GRAPHQL_RATE_LIMIT_WINDOW_SEC = 60;
+const GRAPHQL_RATE_LIMIT_MAX = 30;
+
+export async function checkGraphqlRateLimit(db: D1Database, ip: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM graphql_rate_limits
+       WHERE ip = ? AND created_at > datetime('now', '-${GRAPHQL_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .bind(ip)
+    .first<{ cnt: number }>();
+  return (row?.cnt ?? 0) < GRAPHQL_RATE_LIMIT_MAX;
+}
+
+export async function recordGraphqlRateLimit(db: D1Database, ip: string): Promise<void> {
+  await db
+    .prepare("INSERT INTO graphql_rate_limits (ip, created_at) VALUES (?, datetime('now'))")
+    .bind(ip)
+    .run();
+  // Prune expired entries on every write to keep the table bounded
+  await db
+    .prepare(
+      `DELETE FROM graphql_rate_limits WHERE created_at < datetime('now', '-${GRAPHQL_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .run();
+}
+
+export async function cleanupGraphqlRateLimits(db: D1Database): Promise<void> {
+  await db
+    .prepare(
+      `DELETE FROM graphql_rate_limits WHERE created_at < datetime('now', '-${GRAPHQL_RATE_LIMIT_WINDOW_SEC} seconds')`,
+    )
+    .run();
+}
