@@ -133,6 +133,7 @@ app.use('*', async (c, next) => {
     origin: isAllowed ? origin : allowedOrigins[0],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
+    exposeHeaders: ['Retry-After', 'X-Rate-Limit-Source'],
     maxAge: 86400,
   });
   return corsMiddleware(c, next);

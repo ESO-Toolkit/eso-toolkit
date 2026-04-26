@@ -126,7 +126,7 @@ export async function handleGraphqlProxy(
     if (bucket.count >= rateLimit) {
       return c.json(
         { error: `Rate limit exceeded. Max ${rateLimit} GraphQL requests per minute.` },
-        { status: 429, headers: { 'Retry-After': '60' } },
+        { status: 429, headers: { 'Retry-After': '60', 'X-Rate-Limit-Source': 'proxy' } },
       );
     }
     bucket.count++;

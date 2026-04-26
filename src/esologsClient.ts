@@ -97,9 +97,9 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
-    // Retry link: retries transient network errors and upstream (ESO Logs)
-    // 429s. Does NOT retry proxy 429s — retries against our own rate limiter
-    // just compound the problem.
+    // Retry link: retries transient network errors and upstream 429s.
+    // Proxy 429s are identified by the X-Rate-Limit-Source header and
+    // skipped — retries against our own rate limiter compound the problem.
     const retryLink = new RetryLink({
       delay: {
         initial: 1000,
@@ -111,15 +111,14 @@ export class EsoLogsClient {
         retryIf: (error: unknown, operation: { operationName?: string }) => {
           const statusCode = (error as { statusCode?: number })?.statusCode;
           if (statusCode === 429) {
-            // Only retry 429s for direct ESO Logs /user requests — our
-            // proxy 429s just compound the rate limit problem
-            if (this.isUserSpecificOperation(operation.operationName)) {
-              logger.warn('Upstream rate limit (429) — retrying', {
-                operation: operation.operationName,
-              });
-              return true;
+            const resp = (error as { response?: Response })?.response;
+            if (resp?.headers?.get('X-Rate-Limit-Source') === 'proxy') {
+              return false;
             }
-            return false;
+            logger.warn('Upstream rate limit (429) — retrying', {
+              operation: operation.operationName,
+            });
+            return true;
           }
           if (error != null && statusCode === undefined) {
             logger.warn('Network error — retrying with backoff');
