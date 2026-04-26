@@ -1,3 +1,4 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -33,6 +34,7 @@ import { ReportFightDetails } from './features/report_details/ReportFightDetails
 import { UserReports } from './features/user_reports/UserReports';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
+import { queryClient } from './lib/query-client';
 import { Banned } from './pages/Banned';
 import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
@@ -335,22 +337,24 @@ const App: React.FC = () => {
             <ReduxThemeProvider>
               <EsoLogsClientProvider>
                 <AuthProvider>
-                  <DiscordAuthProvider>
-                    <SnackbarProvider
-                      maxSnack={3}
-                      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                      autoHideDuration={4000}
-                      preventDuplicate
-                    >
-                      {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
-                      {!window.location.search.includes('embed=1') && <SiteBackground />}
-                      <AppRoutes />
-                      {/* Update notification for new versions */}
-                      {!window.location.search.includes('embed=1') && <UpdateNotification />}
-                      {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
-                      {!window.location.search.includes('embed=1') && <CookieConsent />}
-                    </SnackbarProvider>
-                  </DiscordAuthProvider>
+                  <QueryClientProvider client={queryClient}>
+                    <DiscordAuthProvider>
+                      <SnackbarProvider
+                        maxSnack={3}
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                        autoHideDuration={4000}
+                        preventDuplicate
+                      >
+                        {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                        {!window.location.search.includes('embed=1') && <SiteBackground />}
+                        <AppRoutes />
+                        {/* Update notification for new versions */}
+                        {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                        {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                        {!window.location.search.includes('embed=1') && <CookieConsent />}
+                      </SnackbarProvider>
+                    </DiscordAuthProvider>
+                  </QueryClientProvider>
                 </AuthProvider>
               </EsoLogsClientProvider>
             </ReduxThemeProvider>
