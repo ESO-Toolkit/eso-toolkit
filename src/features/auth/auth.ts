@@ -19,6 +19,7 @@ export const getRedirectUri = (): string => {
 export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
 export const INTENDED_DESTINATION_KEY = 'eso_intended_destination';
+const INTENDED_DESTINATION_PROTECTED_KEY = 'eso_intended_destination_protected';
 
 export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
 export const LOCAL_STORAGE_REFRESH_TOKEN_KEY = 'refresh_token';
@@ -33,12 +34,14 @@ export function getPkceCodeVerifier(): string {
 
 export function setIntendedDestination(path: string): void {
   localStorage.setItem(INTENDED_DESTINATION_KEY, path);
+  localStorage.setItem(INTENDED_DESTINATION_PROTECTED_KEY, '1');
 }
 
-export function setIntendedDestinationIfEmpty(path: string): void {
-  if (!localStorage.getItem(INTENDED_DESTINATION_KEY)) {
-    localStorage.setItem(INTENDED_DESTINATION_KEY, path);
+export function setFallbackDestination(path: string): void {
+  if (localStorage.getItem(INTENDED_DESTINATION_PROTECTED_KEY)) {
+    return;
   }
+  localStorage.setItem(INTENDED_DESTINATION_KEY, path);
 }
 
 export function getIntendedDestination(): string {
@@ -47,6 +50,7 @@ export function getIntendedDestination(): string {
 
 export function clearIntendedDestination(): void {
   localStorage.removeItem(INTENDED_DESTINATION_KEY);
+  localStorage.removeItem(INTENDED_DESTINATION_PROTECTED_KEY);
 }
 
 const generateCodeVerifier = (): string => {

@@ -3,7 +3,7 @@ import { Box, Button, Typography, useTheme } from '@mui/material';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { setIntendedDestinationIfEmpty, startPKCEAuth } from '../features/auth/auth';
+import { setFallbackDestination, startPKCEAuth } from '../features/auth/auth';
 
 export const UnauthenticatedLandingSection: React.FC = () => {
   const location = useLocation();
@@ -11,7 +11,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
   const theme = useTheme();
 
   const handleLogin = (): void => {
-    setIntendedDestinationIfEmpty(location.pathname + location.search + location.hash);
+    setFallbackDestination(location.pathname + location.search + location.hash);
     startPKCEAuth();
   };
 

@@ -6,10 +6,12 @@ import {
   INTENDED_DESTINATION_KEY,
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
   setIntendedDestination,
-  setIntendedDestinationIfEmpty,
+  setFallbackDestination,
   getIntendedDestination,
   clearIntendedDestination,
 } from './auth';
+
+const PROTECTED_KEY = 'eso_intended_destination_protected';
 
 const mockLocalStorage = {
   getItem: jest.fn(),
@@ -49,15 +51,13 @@ describe('OAuth Basic Functions', () => {
   });
 
   describe('Intended Destination Management', () => {
-    it('should store and retrieve an intended destination', () => {
+    it('should store destination and mark it as protected', () => {
       setIntendedDestination('/report/123/fight/1');
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         INTENDED_DESTINATION_KEY,
         '/report/123/fight/1',
       );
-
-      mockLocalStorage.getItem.mockReturnValue('/report/123/fight/1');
-      expect(getIntendedDestination()).toBe('/report/123/fight/1');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(PROTECTED_KEY, '1');
     });
 
     it('should return "/" when no destination is stored', () => {
@@ -65,43 +65,88 @@ describe('OAuth Basic Functions', () => {
       expect(getIntendedDestination()).toBe('/');
     });
 
-    it('should clear the intended destination', () => {
+    it('should clear both destination and protected flag', () => {
       clearIntendedDestination();
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(INTENDED_DESTINATION_KEY);
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(PROTECTED_KEY);
     });
 
-    it('setIntendedDestinationIfEmpty should write when slot is empty', () => {
+    it('setFallbackDestination should write when no destination exists', () => {
       mockLocalStorage.getItem.mockReturnValue(null);
-      setIntendedDestinationIfEmpty('/calculator');
+      setFallbackDestination('/calculator');
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         INTENDED_DESTINATION_KEY,
         '/calculator',
       );
     });
 
-    it('setIntendedDestinationIfEmpty should NOT overwrite an existing destination', () => {
-      mockLocalStorage.getItem.mockReturnValue('/report/123/fight/1');
-      setIntendedDestinationIfEmpty('/');
+    it('setFallbackDestination should NOT overwrite a protected destination', () => {
+      mockLocalStorage.getItem.mockImplementation((key: string) => {
+        if (key === PROTECTED_KEY) return '1';
+        if (key === INTENDED_DESTINATION_KEY) return '/report/123/fight/1';
+        return null;
+      });
+      setFallbackDestination('/');
       expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
     });
 
+    it('setFallbackDestination should overwrite a non-protected destination (abandoned OAuth)', () => {
+      mockLocalStorage.getItem.mockImplementation((key: string) => {
+        if (key === PROTECTED_KEY) return null;
+        if (key === INTENDED_DESTINATION_KEY) return '/calculator';
+        return null;
+      });
+      setFallbackDestination('/leaderboards');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        INTENDED_DESTINATION_KEY,
+        '/leaderboards',
+      );
+    });
+
     it('protected deep-link survives a public-page login attempt', () => {
-      // Step 1: AuthenticatedRoute saves the deep link (unconditional write)
+      // Step 1: AuthenticatedRoute saves the deep link (sets protected flag)
       setIntendedDestination('/report/99/fight/5?tab=stats#damage');
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         INTENDED_DESTINATION_KEY,
         '/report/99/fight/5?tab=stats#damage',
       );
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(PROTECTED_KEY, '1');
 
       // Step 2: User navigates to a public page and clicks login there
-      // The public handler uses the non-clobbering variant
-      mockLocalStorage.getItem.mockReturnValue('/report/99/fight/5?tab=stats#damage');
+      mockLocalStorage.getItem.mockImplementation((key: string) => {
+        if (key === PROTECTED_KEY) return '1';
+        if (key === INTENDED_DESTINATION_KEY) return '/report/99/fight/5?tab=stats#damage';
+        return null;
+      });
       jest.clearAllMocks();
-      setIntendedDestinationIfEmpty('/');
+      setFallbackDestination('/');
       expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
 
       // Step 3: OAuthRedirect reads the original deep link
       expect(getIntendedDestination()).toBe('/report/99/fight/5?tab=stats#damage');
+    });
+
+    it('abandoned OAuth from page A then login from page B redirects to page B', () => {
+      // Step 1: User on /calculator clicks login (fallback, no protected flag)
+      mockLocalStorage.getItem.mockReturnValue(null);
+      setFallbackDestination('/calculator');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        INTENDED_DESTINATION_KEY,
+        '/calculator',
+      );
+
+      // Step 2: OAuth is abandoned. User navigates to /leaderboards and clicks login
+      mockLocalStorage.getItem.mockImplementation((key: string) => {
+        if (key === PROTECTED_KEY) return null;
+        if (key === INTENDED_DESTINATION_KEY) return '/calculator';
+        return null;
+      });
+      jest.clearAllMocks();
+      setFallbackDestination('/leaderboards');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        INTENDED_DESTINATION_KEY,
+        '/leaderboards',
+      );
     });
   });
 
