@@ -152,8 +152,6 @@ describe('Buff Lookup Selectors', () => {
         error: null,
         cacheMetadata: {
           lastFetchedTimestamp: null,
-          intervalCount: 0,
-          failedIntervals: 0,
         },
         currentRequest: null,
       };
@@ -179,8 +177,6 @@ describe('Buff Lookup Selectors', () => {
         error: null,
         cacheMetadata: {
           lastFetchedTimestamp: Date.now(),
-          intervalCount: 1,
-          failedIntervals: 0,
         },
         currentRequest: null,
       };
