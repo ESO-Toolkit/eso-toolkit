@@ -599,10 +599,7 @@ export async function toggleBuildVote(
     .first<{ cnt: number }>();
   const voteCount = countRow?.cnt ?? 0;
 
-  await db
-    .prepare('UPDATE builds SET vote_count = ? WHERE id = ?')
-    .bind(voteCount, buildId)
-    .run();
+  await db.prepare('UPDATE builds SET vote_count = ? WHERE id = ?').bind(voteCount, buildId).run();
 
   return { voted, voteCount };
 }
@@ -1094,10 +1091,7 @@ export async function deleteUserAvatar(
 }
 
 /** Retrieve the current avatar's ImgBB delete URL (used before overwriting). */
-export async function getAvatarDeleteUrl(
-  db: D1Database,
-  authorId: string,
-): Promise<string | null> {
+export async function getAvatarDeleteUrl(db: D1Database, authorId: string): Promise<string | null> {
   const row = await db
     .prepare('SELECT avatar_delete_url FROM user_profiles WHERE author_id = ?')
     .bind(authorId)
