@@ -63,6 +63,37 @@ const initialState: HostileBuffEventsState = {
   accessOrder: [],
 };
 
+const INTERVAL_SIZE = 30000;
+
+const fetchInterval = async (
+  client: EsoLogsClient,
+  reportCode: string,
+  fightId: number,
+  startTime: number,
+  endTime: number,
+): Promise<LogEvent[]> => {
+  let events: LogEvent[] = [];
+  let nextPage: number | null = null;
+  do {
+    const response: GetBuffEventsQuery = await client.query({
+      query: GetBuffEventsDocument,
+      fetchPolicy: 'no-cache',
+      variables: {
+        code: reportCode,
+        fightIds: [fightId],
+        startTime: nextPage ?? startTime,
+        endTime,
+        hostilityType: HostilityType.Enemies,
+        limit: EVENT_PAGE_LIMIT,
+      },
+    });
+    const page = response.reportData?.report?.events;
+    if (page?.data) events = events.concat(page.data);
+    nextPage = page?.nextPageTimestamp ?? null;
+  } while (nextPage && nextPage < endTime);
+  return events;
+};
+
 export const fetchHostileBuffEvents = createAsyncThunk<
   BuffEvent[],
   { reportCode: string; fight: FightFragment; client: EsoLogsClient },
@@ -70,29 +101,20 @@ export const fetchHostileBuffEvents = createAsyncThunk<
 >(
   'hostileBuffEvents/fetchHostileBuffEvents',
   async ({ reportCode, fight, client }) => {
+    const fightId = Number(fight.id);
     let allEvents: LogEvent[] = [];
-    let nextPageTimestamp: number | null = null;
 
-    do {
-      const response: GetBuffEventsQuery = await client.query({
-        query: GetBuffEventsDocument,
-        fetchPolicy: 'no-cache',
-        variables: {
-          code: reportCode,
-          fightIds: [Number(fight.id)],
-          startTime: nextPageTimestamp ?? fight.startTime,
-          endTime: fight.endTime,
-          hostilityType: HostilityType.Enemies,
-          limit: EVENT_PAGE_LIMIT,
-        },
-      });
-
-      const page = response.reportData?.report?.events;
-      if (page?.data) {
-        allEvents = allEvents.concat(page.data);
+    let windowStart = fight.startTime;
+    while (windowStart < fight.endTime) {
+      const windowEnd = Math.min(windowStart + INTERVAL_SIZE, fight.endTime);
+      try {
+        const events = await fetchInterval(client, reportCode, fightId, windowStart, windowEnd);
+        allEvents = allEvents.concat(events);
+      } catch {
+        // Continue fetching remaining intervals on failure
       }
-      nextPageTimestamp = page?.nextPageTimestamp ?? null;
-    } while (nextPageTimestamp);
+      windowStart = windowEnd;
+    }
 
     return (allEvents as BuffEvent[]).sort((a, b) => a.timestamp - b.timestamp);
   },
