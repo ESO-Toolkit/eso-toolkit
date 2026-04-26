@@ -1,10 +1,10 @@
 import { Link as LinkIcon, Assignment as AssignmentIcon } from '@mui/icons-material';
-import { Box, Button, TextField, Typography, CircularProgress, useTheme } from '@mui/material';
+import { Box, Button, TextField, Typography, Skeleton, useTheme } from '@mui/material';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { useLatestReport } from '../hooks/useLatestReport';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { clearAllEvents } from '../store/events_data/actions';
 import { clearMasterData } from '../store/master_data/masterDataSlice';
 import { clearReport } from '../store/report/reportSlice';
@@ -14,7 +14,7 @@ import { LogInputContainer } from './LandingPage';
 
 export const AuthenticatedLandingSection: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const { report: latestReport, loading: latestReportLoading } = useLatestReport();
@@ -56,9 +56,9 @@ export const AuthenticatedLandingSection: React.FC = () => {
       dispatch(clearReport());
 
       if (result.fightId) {
-        navigate(`/report/${result.reportId}/fight/${result.fightId}/insights`);
+        navigate(`/report/${result.reportId}/fight/${result.fightId}/insights`, { vtType: 'up' });
       } else {
-        navigate(`/report/${result.reportId}`);
+        navigate(`/report/${result.reportId}`, { vtType: 'up' });
       }
     } else {
       alert('Invalid ESOLogs report URL');
@@ -225,24 +225,10 @@ export const AuthenticatedLandingSection: React.FC = () => {
           }}
         >
           {latestReportLoading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={14} />
-              <Typography
-                variant="body2"
-                sx={{
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.7)'
-                      : 'rgba(51, 65, 85, 0.7)',
-                  fontSize: '0.875rem',
-                }}
-              >
-                ⚡ Loading...
-              </Typography>
-            </Box>
+            <Skeleton variant="text" width={190} height={22} sx={{ borderRadius: 1 }} />
           ) : latestReport ? (
             <Box
-              onClick={() => navigate(`/report/${latestReport.code}`)}
+              onClick={() => navigate(`/report/${latestReport.code}`, { vtType: 'up' })}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -318,7 +304,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
           <Button
             variant="text"
             size="small"
-            onClick={() => navigate('/my-reports')}
+            onClick={() => navigate('/my-reports', { vtType: 'up' })}
             startIcon={<AssignmentIcon sx={{ fontSize: 18 }} />}
             sx={{
               px: 0,
@@ -360,25 +346,11 @@ export const AuthenticatedLandingSection: React.FC = () => {
       >
         {/* Latest Report */}
         {latestReportLoading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CircularProgress size={14} />
-            <Typography
-              variant="body2"
-              sx={{
-                color:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.7)'
-                    : 'rgba(51, 65, 85, 0.7)',
-                fontSize: '0.875rem',
-              }}
-            >
-              ⚡ Loading...
-            </Typography>
-          </Box>
+          <Skeleton variant="text" width={190} height={22} sx={{ borderRadius: 1 }} />
         ) : latestReport ? (
           <Typography
             variant="body2"
-            onClick={() => navigate(`/report/${latestReport.code}`)}
+            onClick={() => navigate(`/report/${latestReport.code}`, { vtType: 'up' })}
             sx={{
               color:
                 theme.palette.mode === 'dark'
@@ -439,7 +411,7 @@ export const AuthenticatedLandingSection: React.FC = () => {
         <Button
           variant="text"
           size="small"
-          onClick={() => navigate('/my-reports')}
+          onClick={() => navigate('/my-reports', { vtType: 'up' })}
           startIcon={<AssignmentIcon sx={{ fontSize: 16 }} />}
           sx={{
             px: 1,

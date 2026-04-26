@@ -3,14 +3,14 @@ import { calculateStaggerStacks } from './CalculateStaggerStacks';
 import { KnownAbilities } from '../../types/abilities';
 
 describe('CalculateStaggerStacks', () => {
-  const STONE_GIANT_ID = KnownAbilities.STONE_GIANT;
+  const MAGMA_FIST_ID = KnownAbilities.MAGMA_FIST;
   const FIGHT_START = 10000;
   const FIGHT_END = 30000;
   const TARGET_ID = 123;
 
   const createMockDamageEvent = (
     timestamp: number,
-    abilityGameID: number = STONE_GIANT_ID,
+    abilityGameID: number = MAGMA_FIST_ID,
     sourceID: number = 100,
     targetID: number = TARGET_ID,
   ): DamageEvent => ({
@@ -57,7 +57,7 @@ describe('CalculateStaggerStacks', () => {
     expect(result.stackResults).toHaveLength(1);
     const stack1Result = result.stackResults[0];
     expect(stack1Result.stackLevel).toBe(1);
-    expect(stack1Result.abilityName).toBe('Stagger (1 Stack)');
+    expect(stack1Result.abilityName).toBe('Heat Shock (1 Stack)');
     expect(stack1Result.totalDuration).toBe(6000);
     expect(stack1Result.uptime).toBe(6);
     expect(stack1Result.applications).toBe(1);
@@ -149,9 +149,9 @@ describe('CalculateStaggerStacks', () => {
     const TARGET_B = 456;
 
     const damageEvents: DamageEvent[] = [
-      createMockDamageEvent(FIGHT_START + 1000, STONE_GIANT_ID, 100, TARGET_A),
-      createMockDamageEvent(FIGHT_START + 2000, STONE_GIANT_ID, 100, TARGET_B),
-      createMockDamageEvent(FIGHT_START + 3000, STONE_GIANT_ID, 100, TARGET_A),
+      createMockDamageEvent(FIGHT_START + 1000, MAGMA_FIST_ID, 100, TARGET_A),
+      createMockDamageEvent(FIGHT_START + 2000, MAGMA_FIST_ID, 100, TARGET_B),
+      createMockDamageEvent(FIGHT_START + 3000, MAGMA_FIST_ID, 100, TARGET_A),
     ];
 
     const result = calculateStaggerStacks({

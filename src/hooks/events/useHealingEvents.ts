@@ -3,44 +3,51 @@ import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '@/EsoLogsClientContext';
 import { FightFragment } from '@/graphql/gql/graphql';
-import { useSelectedReportAndFight } from '@/ReportFightContext';
+import type { ReportFightContextInput } from '@/store/contextTypes';
+import {
+  selectHealingEventsEntryForContext,
+  selectHealingEventsForContext,
+} from '@/store/events_data/healingEventsSelectors';
 import { fetchHealingEvents } from '@/store/events_data/healingEventsSlice';
-import { selectReportFights } from '@/store/report/reportSelectors';
-import { selectHealingEvents, selectHealingEventsLoading } from '@/store/selectors/eventsSelectors';
+import type { RootState } from '@/store/storeWithHistory';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { HealEvent } from '@/types/combatlogEvents';
 
-export function useHealingEvents(): {
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
+
+interface UseHealingEventsOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useHealingEvents(options?: UseHealingEventsOptions): {
   healingEvents: HealEvent[];
   isHealingEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
+  const healingEvents = useSelector((state: RootState) =>
+    selectHealingEventsForContext(state, context),
+  );
+  const healingEntry = useSelector((state: RootState) =>
+    selectHealingEventsEntryForContext(state, context),
+  );
+  const isHealingEventsLoading = healingEntry?.status === 'loading';
 
   React.useEffect(() => {
-    if (reportId && selectedFight) {
+    if (context.reportCode && selectedFight) {
       dispatch(
         fetchHealingEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
-
-  const healingEvents = useSelector(selectHealingEvents);
-  const isHealingEventsLoading = useSelector(selectHealingEventsLoading);
+  }, [dispatch, context.reportCode, context.fightId, selectedFight, client]);
 
   return React.useMemo(
     () => ({ healingEvents, isHealingEventsLoading, selectedFight }),

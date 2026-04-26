@@ -1,7 +1,5 @@
 import React from 'react';
 
-import { FightFragment } from '@/graphql/gql/graphql';
-
 import {
   useDeathEvents,
   useDamageEvents,
@@ -10,9 +8,11 @@ import {
   useCastEvents,
   useHealingEvents,
   useResourceEvents,
+  useResolvedReportFightContext,
+  useFightForContext,
 } from '../../../hooks';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
-import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { KnownAbilities } from '../../../types/abilities';
 import {
   DeathEvent,
@@ -24,10 +24,6 @@ import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
 import { calculateDeathDurations } from '../../../utils/deathDurationUtils';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
-
-interface DeathEventPanelProps {
-  fight: FightFragment;
-}
 
 interface AttackEvent {
   abilityName?: string | null;
@@ -116,19 +112,31 @@ interface DeathInfo {
   killerWasTaunted?: boolean | null;
 }
 
-export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
-  // Get reportId and fightId from params
-  const { reportId, fightId } = useSelectedReportAndFight();
+interface DeathEventPanelProps {
+  context?: ReportFightContextInput;
+}
 
-  // Use hooks to get data
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
-  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { playerData } = usePlayerData();
+export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => {
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
+  const reportId = resolvedContext.reportCode;
+  const resolvedFightId = resolvedContext.fightId;
+
+  // Use hooks to get data scoped to the resolved context
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
+    context: resolvedContext,
+  });
+  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask({
+    context: resolvedContext,
+  });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
+    context: resolvedContext,
+  });
+  const { playerData } = usePlayerData({ context: resolvedContext });
 
   const deathInfos: DeathInfo[] = React.useMemo(() => {
     if (!fight?.startTime || !fight?.endTime) return [];
@@ -460,13 +468,17 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     isDebuffLookupLoading ||
     isMasterDataLoading;
 
+  if (!fight) {
+    return null;
+  }
+
   if (isLoading) {
     return (
       <DeathEventPanelView
         deathInfos={[]}
         actorsById={reportMasterData.actorsById}
         reportId={reportId}
-        fightId={fightId ? Number(fightId) : undefined}
+        fightId={resolvedFightId ?? undefined}
         fight={fight}
         isLoading={true}
       />
@@ -488,7 +500,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
       actorsById={reportMasterData.actorsById}
       players={players}
       reportId={reportId}
-      fightId={fightId ? parseInt(fightId, 10) : undefined}
+      fightId={resolvedFightId ?? undefined}
       fight={fight}
       isLoading={isLoading}
     />

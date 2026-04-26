@@ -3,10 +3,11 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
     "skipLibCheck": true,
+    "module": "ESNext",
 
     /* Bundler mode - but keeping it compatible with TypeScript */
+    "ignoreDeprecations": "5.0",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -43,9 +44,7 @@
   },
   "include": [
     "src",
-    "playwright.config.ts",
-    "playwright.smoke.config.ts",
-    "playwright.*.config.ts"
+    "playwright/*.config.ts"
   ],
   "exclude": [
     "node_modules",

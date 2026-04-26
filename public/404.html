@@ -14,13 +14,24 @@
       const query = window.location.search;
       const hash = window.location.hash;
       
-      // Store the intended path in sessionStorage so the app can navigate to it
-      sessionStorage.setItem('redirectPath', '/' + path + query + hash);
+      // Construct the full redirect path (always starting with /)
+      const redirectPath = '/' + path + query + hash;
       
-      // Redirect to the base URL
-      window.location.replace(
-        window.location.origin + window.location.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/') + '/?redirect=' + encodeURIComponent('/' + path + query + hash)
-      );
+      // Safely store the intended path in sessionStorage
+      // Wrap in try-catch to handle SecurityError in insecure contexts
+      try {
+        sessionStorage.setItem('redirectPath', redirectPath);
+      } catch (e) {
+        // If sessionStorage is not available (SecurityError, disabled cookies, etc.),
+        // fall back to URL parameter method
+        console.warn('Unable to access sessionStorage, using URL parameter fallback');
+      }
+      
+      // Redirect to the base URL with proper construction to avoid protocol-relative URLs
+      // Always ensure we have the origin and a single leading slash
+      const basePath = window.location.origin + '/';
+      const redirectUrl = basePath + '?redirect=' + encodeURIComponent(redirectPath);
+      window.location.replace(redirectUrl);
     </script>
   </head>
   <body>

@@ -1,6 +1,11 @@
-import { Box, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } from '@mui/material';
+import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
+import { Box, Card, CardContent, Chip, Stack, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
+
+import { getEsoHubSetUrl } from '../utils/esoHubLinks';
+import { highlightMetrics } from '../utils/highlightMetrics';
 
 export interface GearSetBonus {
   pieces: string; // "(2 items)", "(5 items)", etc.
@@ -39,6 +44,23 @@ export interface GearSetTooltipProps {
   _gearPieces?: GearPieceInfo[];
 }
 
+/** Gradient fade divider */
+const GradientDivider: React.FC<{ sx?: object }> = ({ sx }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Box
+      sx={{
+        height: '1px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent 0%, rgba(148, 210, 255, 0.18) 30%, rgba(148, 210, 255, 0.18) 70%, transparent 100%)'
+          : 'linear-gradient(90deg, transparent 0%, rgba(15, 23, 42, 0.12) 30%, rgba(15, 23, 42, 0.12) 70%, transparent 100%)',
+        ...sx,
+      }}
+    />
+  );
+};
+
 /**
  * Gear set tooltip card similar to SkillTooltip. Designed to sit inside popovers/menus
  * but also works standalone. Uses the app's dark theme and styling consistent with skill tooltips.
@@ -56,6 +78,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
   } = props;
 
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   // Determine appropriate colors for bonuses based on active state
   const getBonusColor = (bonus: GearSetBonus): 'success' | 'primary' => {
@@ -67,27 +90,18 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
     <Card
       variant="outlined"
       className="u-fade-in gear-set-tooltip"
-      sx={(theme) => ({
+      sx={{
         maxWidth: { xs: 280, sm: 340, md: 380 },
-        backgroundColor:
-          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(249, 250, 251, 0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border:
-          theme.palette.mode === 'dark'
-            ? '1px solid rgba(255, 255, 255, 0.1)'
-            : '1px solid rgba(0, 0, 0, 0.1)',
-        boxShadow: 'none',
-        borderRadius: '10px',
-      })}
+      }}
     >
-      <CardContent sx={{ p: 1.25 }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        {/* ── Header: Badge + Location ── */}
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            mb: 1.5,
+            mb: 1.25,
           }}
         >
           {headerBadge ? (
@@ -97,9 +111,15 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
               variant="outlined"
               color="info"
               sx={{
-                fontWeight: 600,
-                letterSpacing: '.02em',
-                '& .MuiChip-label': { px: 0.5, fontSize: '0.7rem', lineHeight: 1.2 },
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontWeight: 700,
+                letterSpacing: '.04em',
+                fontSize: '0.62rem',
+                textTransform: 'uppercase',
+                borderRadius: '6px',
+                height: 22,
+                backgroundColor: alpha(theme.palette.info.main, isDark ? 0.1 : 0.08),
+                '& .MuiChip-label': { px: 0.75, fontSize: '0.62rem', lineHeight: 1 },
               }}
             />
           ) : (
@@ -110,9 +130,11 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
               variant="caption"
               sx={{
                 color: 'text.secondary',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
                 fontWeight: 600,
                 letterSpacing: '.02em',
-                fontSize: '0.72rem',
+                fontSize: '0.68rem',
+                opacity: 0.8,
               }}
             >
               {lineText}
@@ -120,88 +142,107 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
           )}
         </Box>
 
+        {/* ── Identity Block: Icon + Set Name + Item Count ── */}
         <Box
-          sx={(theme) => ({
-            p: 0.75,
-            pt: 0.5,
+          sx={{
+            p: 1,
             borderRadius: '10px',
-            backgroundColor:
-              theme.palette.mode === 'dark'
-                ? alpha(theme.palette.common.white, 0.02)
-                : alpha(theme.palette.common.black, 0.02),
-            border:
-              theme.palette.mode === 'dark'
-                ? `1px solid ${alpha(theme.palette.common.white, 0.06)}`
-                : `1px solid ${alpha(theme.palette.common.black, 0.06)}`,
-            mb: 1,
-          })}
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(148, 210, 255, 0.04) 0%, rgba(56, 189, 248, 0.02) 100%)'
+              : 'linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, rgba(56, 189, 248, 0.02) 100%)',
+            border: `1px solid ${isDark ? 'rgba(148, 210, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)'}`,
+            mb: 1.25,
+          }}
         >
-          <Stack direction="row" spacing={1.75} alignItems="flex-start">
+          <Stack direction="row" spacing={1.5} alignItems="center">
             {iconUrl && (
               <Box
-                sx={(theme) => ({
-                  width: { xs: 40, sm: 44 },
-                  height: { xs: 40, sm: 44 },
-                  borderRadius: '7px',
-                  border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor:
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.common.white, 0.04)
-                      : alpha(theme.palette.common.black, 0.04),
+                sx={{
+                  width: { xs: 44, sm: 48 },
+                  height: { xs: 44, sm: 48 },
+                  borderRadius: '10px',
+                  border: `1px solid ${isDark ? 'rgba(148, 210, 255, 0.15)' : 'rgba(15, 23, 42, 0.1)'}`,
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(148, 210, 255, 0.08) 0%, rgba(56, 189, 248, 0.04) 100%)'
+                    : 'linear-gradient(135deg, rgba(15, 23, 42, 0.04) 0%, rgba(56, 189, 248, 0.03) 100%)',
                   overflow: 'hidden',
-                  display: 'inline-block',
                   flex: '0 0 auto',
-                })}
+                  boxShadow: isDark
+                    ? '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+                    : '0 2px 6px rgba(15, 23, 42, 0.08)',
+                }}
               >
-                <Box
-                  component="img"
+                <img
                   src={iconUrl}
                   alt={setName}
-                  sx={{
+                  style={{
                     width: '100%',
                     height: '100%',
                     display: 'block',
                     objectFit: 'cover',
-                    borderRadius: 'inherit !important',
+                    borderRadius: 'inherit',
                   }}
                 />
               </Box>
             )}
-            <Box sx={{ minWidth: 0, pt: 0.25, display: 'flex', flexDirection: 'column', gap: 0.6 }}>
+            <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
               <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    fontWeight: 800,
-                    letterSpacing: '-.01em',
-                    ...(theme.palette.mode === 'dark'
-                      ? {
-                          background:
-                            'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                        }
-                      : {
-                          background:
-                            'linear-gradient(135deg, #68acfb 0%, #2474c4 50%, #439cdc 70%, #5191ff 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          backgroundClip: 'text',
-                          textShadow: '0 1px 2px rgba(36, 116, 196, 0.2)',
-                        }),
-                    lineHeight: 1.1,
-                    fontSize: { xs: '0.86rem', sm: '0.92rem' },
-                    mb: 0,
-                  }}
-                >
-                  {setName}
-                </Typography>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      fontWeight: 800,
+                      letterSpacing: '-.02em',
+                      ...(isDark
+                        ? {
+                            background:
+                              'linear-gradient(135deg, #ffffff 0%, #94d2ff 45%, #c8f0ff 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            filter: 'drop-shadow(0 1px 2px rgba(148, 210, 255, 0.15))',
+                          }
+                        : {
+                            background:
+                              'linear-gradient(135deg, #0c4a8a 0%, #1e6fd4 50%, #3b8fe8 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                          }),
+                      lineHeight: 1.15,
+                      fontSize: { xs: '0.92rem', sm: '1rem' },
+                    }}
+                  >
+                    {setName}
+                  </Typography>
+                  <Box
+                    component="a"
+                    href={getEsoHubSetUrl(setName)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    aria-label={`View ${setName} on ESO-Hub`}
+                    title="View on ESO-Hub"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                      flexShrink: 0,
+                      lineHeight: 0,
+                      '&:hover': {
+                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
+                      },
+                    }}
+                  >
+                    <OpenInNewIcon sx={{ fontSize: 12 }} />
+                  </Box>
+                </Box>
                 {itemCount && (
                   <Typography
                     variant="caption"
                     sx={{
-                      color: 'primary.main',
+                      color: isDark ? '#94d2ff' : 'primary.main',
                       fontWeight: 700,
                       fontSize: '0.75rem',
                       lineHeight: 1,
@@ -215,8 +256,9 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
           </Stack>
         </Box>
 
+        {/* ── Set Bonuses ── */}
         {setBonuses && setBonuses.length > 0 && (
-          <Box sx={{ mt: 0.5, mb: 1 }}>
+          <Box sx={{ mb: 1.25 }}>
             <Stack spacing={0.75}>
               {setBonuses.map((bonus, index) => (
                 <Box
@@ -227,21 +269,28 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                     gap: 0.25,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <Box
                       component="span"
-                      sx={(theme) => ({
-                        display: 'inline-block',
+                      sx={(theme: Theme) => ({
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        mt: '2px',
                         px: 0.5,
-                        py: 0.1,
-                        borderRadius: 0.75,
+                        py: 0.15,
+                        borderRadius: '4px',
                         fontSize: '0.65rem',
                         fontWeight: 700,
-                        lineHeight: 1.05,
+                        fontVariantNumeric: 'tabular-nums',
+                        lineHeight: 1.1,
                         color: theme.palette[getBonusColor(bonus)].main,
-                        backgroundColor: alpha(theme.palette[getBonusColor(bonus)].main, 0.1),
-                        border: `1px solid ${alpha(theme.palette[getBonusColor(bonus)].main, 0.18)}`,
-                        minWidth: 'fit-content',
+                        backgroundColor: alpha(
+                          theme.palette[getBonusColor(bonus)].main,
+                          isDark ? 0.1 : 0.08,
+                        ),
+                        border: `1px solid ${alpha(theme.palette[getBonusColor(bonus)].main, isDark ? 0.2 : 0.15)}`,
+                        minWidth: 56,
+                        justifyContent: 'center',
                         flexShrink: 0,
                       })}
                     >
@@ -252,11 +301,11 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                       sx={{
                         color: bonus.active ? 'text.primary' : 'text.secondary',
                         fontSize: '0.8rem',
-                        lineHeight: 1.3,
+                        lineHeight: 1.35,
                         fontWeight: bonus.active ? 500 : 400,
                       }}
                     >
-                      {bonus.effect}
+                      {highlightMetrics(bonus.effect, isDark)}
                     </Typography>
                   </Box>
                   {bonus.requirement && (
@@ -264,9 +313,10 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
                       variant="caption"
                       sx={{
                         color: 'text.secondary',
-                        fontSize: '0.7rem',
+                        fontSize: '0.68rem',
                         fontStyle: 'italic',
                         ml: 1,
+                        opacity: 0.75,
                       }}
                     >
                       Requires: {bonus.requirement}
@@ -278,29 +328,23 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
           </Box>
         )}
 
+        {/* ── Description ── */}
         {description && (
           <>
-            <Divider
-              sx={(theme) => ({
-                my: 1,
-                borderColor:
-                  theme.palette.mode === 'dark'
-                    ? alpha(theme.palette.common.white, 0.08)
-                    : alpha(theme.palette.common.black, 0.08),
-              })}
-            />
+            <GradientDivider sx={{ my: 1.25 }} />
             <Typography
               variant="body2"
               sx={{
                 color: 'text.primary',
-                lineHeight: 1.4,
+                lineHeight: 1.5,
                 fontSize: { xs: '0.78rem', sm: '0.82rem' },
                 wordBreak: 'break-word',
+                opacity: 0.92,
                 '& p': { m: 0, mb: '6px' },
                 '& p:last-child': { mb: 0 },
               }}
             >
-              {description}
+              {highlightMetrics(description, isDark)}
             </Typography>
           </>
         )}

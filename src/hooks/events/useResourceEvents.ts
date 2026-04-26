@@ -3,47 +3,51 @@ import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '@/EsoLogsClientContext';
 import { FightFragment } from '@/graphql/gql/graphql';
-import { useSelectedReportAndFight } from '@/ReportFightContext';
+import type { ReportFightContextInput } from '@/store/contextTypes';
 import { fetchResourceEvents } from '@/store/events_data/resourceEventsSlice';
-import { selectReportFights } from '@/store/report/reportSelectors';
 import {
-  selectResourceEvents,
-  selectResourceEventsLoading,
+  selectResourceEventsEntryForContext,
+  selectResourceEventsForContext,
 } from '@/store/selectors/eventsSelectors';
+import type { RootState } from '@/store/storeWithHistory';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { ResourceChangeEvent } from '@/types/combatlogEvents';
 
-export function useResourceEvents(): {
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
+
+interface UseResourceEventsOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useResourceEvents(options?: UseResourceEventsOptions): {
   resourceEvents: ResourceChangeEvent[];
   isResourceEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
+  const resourceEvents = useSelector((state: RootState) =>
+    selectResourceEventsForContext(state, context),
+  );
+  const resourceEntry = useSelector((state: RootState) =>
+    selectResourceEventsEntryForContext(state, context),
+  );
+  const isResourceEventsLoading = resourceEntry?.status === 'loading';
 
   React.useEffect(() => {
-    if (reportId && selectedFight) {
+    if (context.reportCode && selectedFight) {
       dispatch(
         fetchResourceEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
-
-  const resourceEvents = useSelector(selectResourceEvents);
-  const isResourceEventsLoading = useSelector(selectResourceEventsLoading);
+  }, [dispatch, context.reportCode, context.fightId, selectedFight, client]);
 
   return React.useMemo(
     () => ({ resourceEvents, isResourceEventsLoading, selectedFight }),

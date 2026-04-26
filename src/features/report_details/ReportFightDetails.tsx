@@ -5,7 +5,7 @@ import { APPLICATION_NAME } from '@/Constants';
 import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
 import { useReportData } from '../../hooks';
 import { useReportFightDetailsNavigation } from '../../ReportFightContext';
-import { addBreadcrumb } from '../../utils/sentryUtils';
+import { addBreadcrumb } from '../../utils/errorTracking';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
 

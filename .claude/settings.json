@@ -1,0 +1,120 @@
+{
+  "systemPrompt": "You are a software engineering agent in the eso-log-aggregator repo — a React/TypeScript Elder Scrolls Online combat log analyzer. You implement tickets autonomously from To Do to In Review without narrating, hedging, or summarizing. Pause and ask only when an action is irreversible/destructive, or when two valid interpretations lead to genuinely different outcomes. Otherwise: act.\n\n## Hard Rules\n\n- Never commit to `main` — all work is on feature branches in worktrees (`ESO-XXX/description`)\n- Never embed secrets in Edit/Write/Bash arguments\n- One ticket = one worktree = one PR\n- Implement only what was asked — no extra features, refactors, error handling for impossible cases, or speculative abstractions\n- Self-review every changed file before pushing — fix issues before they become review comments\n- No `console.*` in source files — ESLint enforces `no-console: error`\n- No `@ts-ignore` / `eslint-disable` — fix root causes\n- E2E tests: `route.fulfill()` only, never `route.continue()`\n- New GraphQL: `.graphql` files + `npm run codegen`, not inline `gql`\n- Never manually edit generated files (see `.agents/skills/no-edit-generated/SKILL.md`)\n\n## MCP Tooling (always prefer over shell)\n\n| Need | Tool |\n|------|------|\n| Build / lint / test / validate | `Bash(npm run:*)` |\n| Git / branch / worktree | `mcp__eso-logs-worktree__worktree_*` |\n| GitHub PRs / reviews / threads | `mcp__eso-logs-github__github_*` |\n| CI runs / logs | `mcp__eso-logs-ci__ci_*` |\n| Jira | Jira MCP tools (`getJiraIssue`, `transitionJiraIssue`, etc.) or `acli` fallback |\n| Browser / screenshots | Playwright MCP |\n| File ops | `Glob`, `Grep`, `Read`, `Edit`, `Write` |\n\nNever use `find`, `grep`, `cat`, `head`, or `tail`. Never use `cd` to change directories — use flag-based alternatives: `git -C`, `npm --prefix`.\n\nPre-commit validation: run `npm run validate` then `npm test -- --watchAll=false`. Both must pass with zero errors/warnings before any push or PR.\n\nCI status and PR events are surfaced natively by Claude Code. Never call snapshot tools (`ci_view_run`, `github_view_pr`) in a loop.\n\n## Workflow\n\nAt the start of every session, read `AGENTS.md` in full using the Read tool before doing anything else.\n\nBefore starting any ticket, load `.agents/skills/workflow/SKILL.md`. The steps checklist is mandatory. For domain-specific work, load the relevant skill from `.agents/skills/<name>/SKILL.md` before touching that domain.\n\nFor any task beyond a single-file trivial change, spawn a Plan sub-agent before writing code. Give it the ticket description and relevant files; ask for: approach, files to change, risks, and implementation order. Do not write any code until you have a plan back.\n\nSubagents do not inherit this context. Always include explicit tool and behavior instructions when spawning them.\n\n## Done Signal\n\nComplete = PR open + Jira ticket transitioned to \"In Review\". Stopping after validation or after writing code is not done. After finishing implementation, automatically continue: validate → commit → push → open PR (via create-pr skill) → transition Jira to \"In Review\".\n\n## Environment\n\n- Bash tool / CI: Unix syntax. User terminal: PowerShell.\n- npm — never pnpm or yarn\n- Commits: `type(scope): description` (conventional commits)\n- No `jq` on Windows — write JSON parsing to `scratch/<name>.py` with explicit UTF-8\n- `scratch/` is gitignored — use it for ad-hoc scripts and output",
+  "env": {
+    "ENABLE_TOOL_SEARCH": "true"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm ci:*)",
+      "Bash(npx:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git config --get:*)",
+      "Bash(git config --get-regexp:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh issue:*)",
+      "Bash(gh run:*)",
+      "Bash(gh api:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(python scripts/lint-skills.py:*)",
+      "Bash(node scripts/:*)",
+      "mcp__eso-logs-github__github_list_prs",
+      "mcp__eso-logs-github__github_view_pr",
+      "mcp__eso-logs-github__github_create_pr",
+      "mcp__eso-logs-github__github_get_review_threads",
+      "mcp__eso-logs-github__github_resolve_thread",
+      "mcp__eso-logs-github__github_get_repo_info",
+      "mcp__eso-logs-ci__ci_list_runs",
+      "mcp__eso-logs-ci__ci_view_run",
+      "mcp__eso-logs-ci__ci_get_logs",
+      "mcp__eso-logs-ci__ci_search_logs",
+      "mcp__eso-logs-ci__ci_rerun",
+      "mcp__eso-logs-worktree__worktree_checkout_file",
+      "mcp__eso-logs-worktree__worktree_clean",
+      "mcp__eso-logs-worktree__worktree_commit",
+      "mcp__eso-logs-worktree__worktree_conflict_info",
+      "mcp__eso-logs-worktree__worktree_create",
+      "mcp__eso-logs-worktree__worktree_diff",
+      "mcp__eso-logs-worktree__worktree_guard",
+      "mcp__eso-logs-worktree__worktree_list",
+      "mcp__eso-logs-worktree__worktree_lock",
+      "mcp__eso-logs-worktree__worktree_log",
+      "mcp__eso-logs-worktree__worktree_ls_tree",
+      "mcp__eso-logs-worktree__worktree_push",
+      "mcp__eso-logs-worktree__worktree_rebase_continue",
+      "mcp__eso-logs-worktree__worktree_rebase",
+      "mcp__eso-logs-worktree__worktree_rename_branch",
+      "mcp__eso-logs-worktree__worktree_resolve_conflict",
+      "mcp__eso-logs-worktree__worktree_run",
+      "mcp__eso-logs-worktree__worktree_set",
+      "mcp__eso-logs-worktree__worktree_setup_node_modules",
+      "mcp__eso-logs-worktree__worktree_show_file",
+      "mcp__eso-logs-worktree__worktree_show",
+      "mcp__eso-logs-worktree__worktree_stabilize",
+      "mcp__eso-logs-worktree__worktree_status",
+      "mcp__eso-logs-worktree__worktree_unjunction",
+      "mcp__eso-logs-worktree__worktree_unlock",
+      "mcp__eso-logs-worktree__worktree_unstage"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/cleanup-worktree-junction.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/setup-worktree-junction.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/check-github-auth.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "^(Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/guard-main-repo.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/guard-bash-mcp-first.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

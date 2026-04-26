@@ -1,14 +1,10 @@
 name: 'Setup Node.js with NPM Cache'
-description: 'Setup Node.js with npm caching for both package.json and package-lock.json'
+description: 'Setup Node.js with npm caching using setup-node built-in cache'
 inputs:
   node-version:
     description: 'Node.js version to use'
     required: false
     default: '20'
-outputs:
-  cache-hit:
-    description: 'Whether dependencies were restored from cache'
-    value: ${{ steps.npm-cache.outputs.cache-hit }}
 runs:
   using: 'composite'
   steps:
@@ -16,34 +12,8 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-
-    - name: Cache node_modules
-      id: npm-cache
-      uses: actions/cache@v4
-      with:
-        path: |
-          node_modules
-          ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
+        cache: 'npm'
 
     - name: Install dependencies
-      if: steps.npm-cache.outputs.cache-hit != 'true'
       shell: bash
-      run: |
-        echo "🔄 Cache miss - installing dependencies..."
-        npm ci --prefer-offline --no-audit --no-fund
-
-    - name: Verify dependencies (cache hit)
-      if: steps.npm-cache.outputs.cache-hit == 'true'
-      shell: bash
-      run: |
-        echo "⚡ Cache hit - dependencies restored from cache"
-        echo "Verifying node_modules exists..."
-        if [ -d "node_modules" ]; then
-          echo "✅ node_modules directory exists"
-        else
-          echo "❌ node_modules missing despite cache hit - running npm ci"
-          npm ci --prefer-offline --no-audit --no-fund
-        fi
+      run: npm ci --no-audit --no-fund

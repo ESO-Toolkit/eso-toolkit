@@ -1,8 +1,15 @@
+<!-- AI Context: Load only when working on replay system architecture or performance optimization -->
 # Replay System Architecture Evaluation
 
 **Date**: October 14, 2025  
 **Evaluator**: GitHub Copilot  
 **System**: ESO Log Aggregator - Fight Replay System
+
+**When to use this document**:
+- Working on replay system architecture or refactoring
+- Performance optimization for replay playback
+- Understanding worker threading model
+- NOT needed for general development or bug fixes
 
 ---
 

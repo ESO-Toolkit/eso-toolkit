@@ -18,6 +18,8 @@ export interface WorkerTask<T = unknown, R = unknown> {
   reject: (reason?: Error) => void;
   createdAt: number;
   onProgress?: OnProgressCallback;
+  /** Timeout ID for task timeout — must be cleared on task completion */
+  timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 export interface WorkerPoolConfig {
@@ -45,13 +47,4 @@ export interface WorkerInfo {
   lastUsed: number;
   tasksCompleted: number;
   currentTaskId?: string;
-}
-
-export type TaskHandler<T = unknown, R = unknown> = (
-  data: T,
-  onProgress?: (progress: unknown) => void,
-) => Promise<R> | R;
-
-export interface WorkerRegistry {
-  [taskType: string]: TaskHandler;
 }

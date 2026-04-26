@@ -4,7 +4,7 @@
  */
 
 import { ArmorType, WeaponType, GearSlot, GearTrait } from '../types/playerDetails';
-import { getArmorWeightCounts } from './armorUtils';
+import { getArmorWeightCounts, MythicArmorId, resolveArmorType } from './armorUtils';
 import { ItemQuality } from './gearUtilities';
 import type { PlayerGear } from '../types/playerDetails';
 
@@ -232,6 +232,76 @@ describe('armorUtils', () => {
       expect(typeof result.heavy).toBe('number');
       expect(typeof result.medium).toBe('number');
       expect(typeof result.light).toBe('number');
+    });
+  });
+
+  describe('resolveArmorType', () => {
+    // ESOLogs reports all mythic armor as type=1 (Light) regardless of actual weight.
+    // These tests verify each correction in ARMOR_TYPE_CORRECTIONS is applied.
+    const mythicCases: Array<{ itemId: MythicArmorId; name: string; expected: ArmorType }> = [
+      { itemId: MythicArmorId.SnowTreaders, name: 'Snow Treaders', expected: ArmorType.MEDIUM },
+      {
+        itemId: MythicArmorId.BloodlordsEmbrace,
+        name: "Bloodlord's Embrace",
+        expected: ArmorType.HEAVY,
+      },
+      {
+        itemId: MythicArmorId.Harpooners_WadingKilt,
+        name: "Harpooner's Wading Kilt",
+        expected: ArmorType.MEDIUM,
+      },
+      { itemId: MythicArmorId.GazeOfSithis, name: 'Gaze of Sithis', expected: ArmorType.HEAVY },
+      { itemId: MythicArmorId.DovRhaSabatons, name: 'Dov-Rha Sabatons', expected: ArmorType.HEAVY },
+      {
+        itemId: MythicArmorId.LefthandersAegisBelt,
+        name: "Lefthander's Aegis Belt",
+        expected: ArmorType.MEDIUM,
+      },
+      {
+        itemId: MythicArmorId.FaunsLarkCladding,
+        name: "Faun's Lark Cladding",
+        expected: ArmorType.MEDIUM,
+      },
+      { itemId: MythicArmorId.SyrabanesWard, name: "Syrabane's Ward", expected: ArmorType.HEAVY },
+      {
+        itemId: MythicArmorId.EsotericEnvironmentGreaves,
+        name: 'Esoteric Environment Greaves',
+        expected: ArmorType.HEAVY,
+      },
+      {
+        itemId: MythicArmorId.RourkenSteamguards,
+        name: 'Rourken Steamguards',
+        expected: ArmorType.HEAVY,
+      },
+      {
+        itemId: MythicArmorId.RakkhatsVoidmantle,
+        name: "Rakkhat's Voidmantle",
+        expected: ArmorType.MEDIUM,
+      },
+      {
+        itemId: MythicArmorId.HuntsmansWarmask,
+        name: "Huntsman's Warmask",
+        expected: ArmorType.MEDIUM,
+      },
+    ];
+
+    it.each(mythicCases)(
+      'corrects $name (id $itemId) from Light to $expected',
+      ({ itemId, expected }) => {
+        // ESOLogs reports it as Light (1); resolveArmorType should return the correct weight
+        const gear = createMockGear(ArmorType.LIGHT, itemId);
+        expect(resolveArmorType(gear)).toBe(expected);
+      },
+    );
+
+    it('returns item.type unchanged for normal (non-mythic) gear', () => {
+      const heavy = createMockGear(ArmorType.HEAVY, 99999);
+      const medium = createMockGear(ArmorType.MEDIUM, 99998);
+      const light = createMockGear(ArmorType.LIGHT, 99997);
+
+      expect(resolveArmorType(heavy)).toBe(ArmorType.HEAVY);
+      expect(resolveArmorType(medium)).toBe(ArmorType.MEDIUM);
+      expect(resolveArmorType(light)).toBe(ArmorType.LIGHT);
     });
   });
 });

@@ -5,7 +5,7 @@ import {
   PenetrationValues,
   PenetrationComputedSourceKey,
 } from '../types/abilities';
-import { CombatantInfoEvent, CombatantAura } from '../types/combatlogEvents';
+import { CombatantInfoEvent, CombatantAura, UnifiedCastEvent } from '../types/combatlogEvents';
 
 import { getArmorWeightCounts } from './armorUtils';
 import {
@@ -15,6 +15,7 @@ import {
 } from './BuffLookupUtils';
 import {
   getSetCount,
+  getSetCountForBar,
   countOneHandedSharpenedWeapons,
   hasTwoHandedSharpenedWeapon,
   hasTwoHandedMaulEquipped,
@@ -24,53 +25,42 @@ import {
 // Armor set configurations for penetration groups
 const ARMOR_SET_PENETRATION_CONFIG = Object.freeze({
   [PenetrationComputedSourceKey.ARMOR_SETS_7918]: [
-    { setId: KnownSetIDs.SHATTERED_FATE_SET, requiredPieces: 5 },
-    // Add other 7918 penetration sets here when identified
+    // NOTE: Shattered Fate removed - fabricated ID (711) doesn't match real API data
+    // Add back when verified set ID is obtained from combat logs
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_3460]: [
-    { setId: KnownSetIDs.SPRIGGANS_THORNS_SET, requiredPieces: 5 },
-    // Add other 3460 penetration sets here when identified
+    // NOTE: Spriggan's Thorns removed - fabricated ID (712) doesn't match real API data
+    // Add back when verified set ID is obtained from combat logs
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_1496]: [
-    { setId: KnownSetIDs.PERFECT_ARMS_OF_RELEQUEN_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.PERFECT_AURORAN_THUNDER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.PERFECT_ANSUULS_TORMENT_SET, requiredPieces: 4 },
+    { setId: KnownSetIDs.RELEQUEN_PERFECTED, requiredPieces: 4 },
+    // NOTE: Perfect Auroran's Thunder removed - fabricated ID (724) doesn't match real API data
+    { setId: KnownSetIDs.PERFECTED_ANSUULS_TORMENT, requiredPieces: 4 },
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_1487]: [
-    { setId: KnownSetIDs.ANSUULS_TORMENT_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.TIDEBORN_WILDSTALKER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.ARMS_OF_RELEQUEN_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.AERIES_CRY_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.AURORANS_THUNDER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.ARMS_OF_THE_ANCESTORS_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.ARCHDRUID_DEVYRIC_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.BLACK_GEM_MONSTROSITY_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.COLOVIAN_HIGHLANDS_GENERAL_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.CINDERS_OF_ANTHELMIR_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.DARK_CONVERGENCE_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.DRAUGRKINS_GRIP_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.DRO_ZAKARS_CLAWS_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.FLAME_BLOSSOM_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.GRISLY_GOURMET_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.GRYPHONS_REPRISAL_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.HROTHGARS_CHILL_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.ICY_CONJURER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.JERENSIS_BLADESTORM_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.KAZPIANS_CRUEL_SIGNET_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.KRAGH_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.LADY_MALYGDA_SET, requiredPieces: 1 },
-    { setId: KnownSetIDs.LANGUOR_OF_PERYITE_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.LEGACY_OF_KARTH_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.NEW_MOON_ACOLYTE_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.NOCTURNALS_PLOY_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.NOXIOUS_BOULDER_SET, requiredPieces: 4 },
-    { setId: KnownSetIDs.OBLIVIONS_FOE_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.PELINALS_WRATH_SET, requiredPieces: 3 },
-    { setId: KnownSetIDs.PERFECTED_KAZPIANS_CRUEL_SIGNET_SET, requiredPieces: 4 },
+    { setId: KnownSetIDs.PERFECTED_ANSUULS_TORMENT, requiredPieces: 4 },
+    { setId: KnownSetIDs.TIDEBORN_WILDSTALKER, requiredPieces: 4 },
+    { setId: KnownSetIDs.RELEQUEN, requiredPieces: 4 },
+    // NOTE: The following sets removed due to fabricated IDs (711-744 range):
+    // - Aerie's Cry, Auroran's Thunder, Arms of the Ancestors, Colovian Highlands General
+    // - Cinders of Anthelmir, Dark Convergence, Draugrkin's Grip, Dro'Zakar's Claws
+    // - Grisly Gourmet, Gryphon's Reprisal, Hrothgar's Chill, Icy Conjurer
+    // - Languor of Peryite, Legacy of Karth, Nocturnal's Ploy, Noxious Boulder, Oblivion's Foe
+    // Add back when verified set IDs are obtained from combat logs
+    { setId: KnownSetIDs.ARCHDRUID_DEVYRIC, requiredPieces: 1 },
+    { setId: KnownSetIDs.BLACK_GEM_MONSTROSITY, requiredPieces: 1 },
+    { setId: KnownSetIDs.FLAME_BLOSSOM, requiredPieces: 4 },
+    { setId: KnownSetIDs.JERENSI, requiredPieces: 3 },
+    { setId: KnownSetIDs.KAZPIAN, requiredPieces: 4 },
+    { setId: KnownSetIDs.KRAGH, requiredPieces: 1 },
+    { setId: KnownSetIDs.THE_BLIND, requiredPieces: 1 },
+    { setId: KnownSetIDs.NEW_MOON_ACOLYTE, requiredPieces: 4 },
+    { setId: KnownSetIDs.PELINALS_WRATH, requiredPieces: 3 },
+    { setId: KnownSetIDs.KAZPIAN_PERFECTED, requiredPieces: 4 },
   ],
   [PenetrationComputedSourceKey.ARMOR_SETS_1190]: [
-    { setId: KnownSetIDs.PERFECTED_CRUSHING_WALL_SET, requiredPieces: 2 },
-    { setId: KnownSetIDs.PERFECTED_MERCILESS_CHARGE_SET, requiredPieces: 2 },
+    { setId: KnownSetIDs.PERFECTED_CRUSHING_WALL, requiredPieces: 2 },
+    { setId: KnownSetIDs.PERFECTED_MERCILESS_CHARGE, requiredPieces: 2 },
   ],
 } as const);
 
@@ -123,6 +113,8 @@ export interface PenetrationDebuffSource extends BasePenetrationSource {
   value: PenetrationValues;
   ability: KnownAbilities;
   source: 'debuff';
+  /** If set, this debuff's penetration only applies when the player has this aura active (e.g. Force of Nature CP slotted). */
+  requiredPlayerAura?: KnownAbilities;
 }
 
 export interface PenetrationComputedSource extends BasePenetrationSource {
@@ -134,12 +126,22 @@ export interface PenetrationNotImplementedSource extends BasePenetrationSource {
   source: 'not_implemented';
 }
 
+export enum AlwaysOnPenetrationSources {
+  PIERCING,
+}
+
+export interface PenetrationAlwaysOnSource extends BasePenetrationSource {
+  key: AlwaysOnPenetrationSources;
+  source: 'always_on';
+}
+
 export type PenetrationSource =
   | PenetrationAuraSource
   | PenetrationGearSource
   | PenetrationBuffSource
   | PenetrationDebuffSource
   | PenetrationComputedSource
+  | PenetrationAlwaysOnSource
   | PenetrationNotImplementedSource;
 
 export interface PenetrationSourceWithActiveState {
@@ -219,11 +221,19 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     source: 'aura',
   },
   {
+    value: PenetrationValues.DISMEMBER_RANK_1,
+    ability: KnownAbilities.DISMEMBER_RANK_1,
+    name: 'Dismember I (Grave Lord Passive)',
+    description:
+      'Grave Lord passive rank I providing 1635 penetration when a Grave Lord ability is active',
+    source: 'aura',
+  },
+  {
     value: PenetrationValues.DISMEMBER,
     ability: KnownAbilities.DISMEMBER,
-    name: 'Dismember (Grave Lord Passive)',
+    name: 'Dismember II (Grave Lord Passive)',
     description:
-      'Grave Lord passive providing 3271 penetration when a grave lord ability is active',
+      'Grave Lord passive rank II providing 3271 penetration when a Grave Lord ability is active',
     source: 'aura',
   },
   // Computed sources (dynamic values based on gear or abilities)
@@ -239,15 +249,79 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     description: '620 penetration per stack per Herald of the Tome ability slotted',
     source: 'computed',
   },
+  // Status effect debuff sources (Force of Nature CP passive)
+  // Each unique active status effect on the target provides 660 penetration when the player has
+  // Force of Nature (CP 276) slotted. Detection: Force of Nature (ability 174250) appears as an
+  // aura in combatantInfo when slotted. If the aura is absent, these sources are not counted.
   {
-    name: 'Force of Nature',
-    description: '660 penetration per status effect',
-    source: 'not_implemented',
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.BURNING,
+    name: 'Force of Nature (Burning)',
+    description: '660 penetration when Burning is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
   },
   {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.CHILL,
+    name: 'Force of Nature (Chill)',
+    description: '660 penetration when Chill is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.CONCUSSION,
+    name: 'Force of Nature (Concussion)',
+    description: '660 penetration when Concussion is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.DISEASED,
+    name: 'Force of Nature (Diseased)',
+    description: '660 penetration when Diseased is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.HEMMORRHAGING,
+    name: 'Force of Nature (Hemorrhaging)',
+    description: '660 penetration when Hemorrhaging is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.OVERCHARGED,
+    name: 'Force of Nature (Overcharged)',
+    description: '660 penetration when Overcharged is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.POISONED,
+    name: 'Force of Nature (Poisoned)',
+    description: '660 penetration when Poisoned is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+  },
+  {
+    value: PenetrationValues.FORCE_OF_NATURE_PER_STATUS,
+    ability: KnownAbilities.SUNDERED,
+    name: 'Force of Nature (Sundered)',
+    description: '660 penetration when Sundered is active on target (Force of Nature CP)',
+    source: 'debuff',
+    requiredPlayerAura: KnownAbilities.FORCE_OF_NATURE_PASSIVE,
+  },
+  {
+    key: AlwaysOnPenetrationSources.PIERCING,
     name: 'Piercing',
     description: '700 penetration',
-    source: 'not_implemented',
+    source: 'always_on',
   },
   {
     key: PenetrationComputedSourceKey.HEAVY_WEAPONS,
@@ -401,12 +475,6 @@ function isComputedSourceActive(
       );
       return splinteredSecretsAuras.length > 0;
     }
-    case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // TODO: Implement proper status effect tracking - assume inactive until implemented
-      return false;
-    case PenetrationComputedSourceKey.PIERCING:
-      // TODO: Implement proper conditions - assume inactive until implemented
-      return false;
     case PenetrationComputedSourceKey.HEAVY_WEAPONS:
       if (!combatantInfo || !combatantInfo.gear) return false;
       return hasTwoHandedMaulEquipped(combatantInfo);
@@ -424,7 +492,7 @@ function isComputedSourceActive(
     case PenetrationComputedSourceKey.BALORGH:
       if (!combatantInfo || !combatantInfo.gear) return false;
       // Check if player has 2 pieces of Balorgh equipped
-      return getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH_SET) >= 2;
+      return getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH) >= 2;
     case PenetrationComputedSourceKey.SHARPENED_1H:
       if (!combatantInfo || !combatantInfo.gear) return false;
       return countOneHandedSharpenedWeapons(combatantInfo) > 0;
@@ -432,9 +500,9 @@ function isComputedSourceActive(
       if (!combatantInfo || !combatantInfo.gear) return false;
       return hasTwoHandedSharpenedWeapon(combatantInfo);
     case PenetrationComputedSourceKey.HEW_AND_SUNDER:
-      if (!combatantInfo || !combatantInfo.gear) return false;
-      // Check if player has 5 pieces of Hew and Sunder equipped
-      return getSetCount(combatantInfo.gear, KnownSetIDs.HEW_AND_SUNDER_SET) >= 5;
+      // NOTE: Hew and Sunder set removed - fabricated ID (732) doesn't match real API data
+      // Returns false until verified set ID is obtained from combat logs
+      return false;
     default:
       return false;
   }
@@ -507,16 +575,6 @@ function getPenetrationFromComputedSource(
       );
     }
 
-    case PenetrationComputedSourceKey.FORCE_OF_NATURE:
-      // TODO: Implement proper status effect counting
-      // For now, assume 1 status effect (660 penetration)
-      return PenetrationValues.FORCE_OF_NATURE_PER_STATUS * 1;
-
-    case PenetrationComputedSourceKey.PIERCING:
-      // TODO: Implement proper conditions
-      // For now, assume always provides 700 penetration
-      return PenetrationValues.PIERCING_PENETRATION;
-
     case PenetrationComputedSourceKey.HEAVY_WEAPONS: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const hasMaul = hasTwoHandedMaulEquipped(combatantInfo);
@@ -542,7 +600,7 @@ function getPenetrationFromComputedSource(
 
     case PenetrationComputedSourceKey.BALORGH: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
-      const hasBalorgh = getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH_SET) >= 2;
+      const hasBalorgh = getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH) >= 2;
       return hasBalorgh ? PenetrationValues.BALORGH_PENETRATION : 0;
     }
 
@@ -559,15 +617,20 @@ function getPenetrationFromComputedSource(
     }
 
     case PenetrationComputedSourceKey.HEW_AND_SUNDER: {
-      if (!combatantInfo || !combatantInfo.gear) return 0;
-      const hasHewAndSunder = getSetCount(combatantInfo.gear, KnownSetIDs.HEW_AND_SUNDER_SET) >= 5;
-      // TODO: Count enemies within 8 meters of target
-      // For now, assume 1 enemy when the set is equipped
-      return hasHewAndSunder ? PenetrationValues.HEW_AND_SUNDER_PER_ENEMY * 1 : 0;
+      // NOTE: Hew and Sunder set removed - fabricated ID (732) doesn't match real API data
+      // Returns 0 until verified set ID is obtained from combat logs
+      return 0;
     }
 
     default:
       return 0;
+  }
+}
+
+function getPenetrationFromAlwaysOnSource(source: PenetrationAlwaysOnSource): number {
+  switch (source.key) {
+    case AlwaysOnPenetrationSources.PIERCING:
+      return PenetrationValues.PIERCING_PENETRATION;
   }
 }
 
@@ -602,13 +665,16 @@ export function getAllPenetrationSourcesWithActiveState(
         break;
       case 'debuff':
         if (debuffLookup) {
-          if (targetIds && targetIds.length > 0) {
-            wasActive = targetIds.some((targetId) =>
-              isBuffActiveOnTarget(debuffLookup, source.ability, undefined, targetId),
-            );
-          } else {
-            wasActive = isBuffActiveAtTimestamp(debuffLookup, source.ability);
-          }
+          const debuffActive =
+            targetIds && targetIds.length > 0
+              ? targetIds.some((targetId) =>
+                  isBuffActiveOnTarget(debuffLookup, source.ability, undefined, targetId),
+                )
+              : isBuffActiveAtTimestamp(debuffLookup, source.ability);
+          const playerAuraActive = source.requiredPlayerAura
+            ? isAuraActive(combatantInfo, source.requiredPlayerAura)
+            : true;
+          wasActive = debuffActive && playerAuraActive;
         }
         value = source.value;
         break;
@@ -619,6 +685,10 @@ export function getAllPenetrationSourcesWithActiveState(
       case 'computed':
         wasActive = isComputedSourceActive(combatantInfo, source, playerData);
         value = wasActive ? getPenetrationFromComputedSource(source, combatantInfo, playerData) : 0;
+        break;
+      case 'always_on':
+        wasActive = true;
+        value = getPenetrationFromAlwaysOnSource(source);
         break;
     }
 
@@ -660,6 +730,9 @@ export function calculateStaticPenetration(
         }
         break;
       case 'computed':
+        // ARMOR_SETS_1190 (arena weapon sets) are bar-dependent; skip here and compute per
+        // timestamp in the worker using getArenaWeaponPenetrationForBar instead.
+        if (source.key === PenetrationComputedSourceKey.ARMOR_SETS_1190) break;
         isActive = isComputedSourceActive(combatantInfo, source, playerData);
         if (isActive) {
           computedPenetration += getPenetrationFromComputedSource(
@@ -668,6 +741,9 @@ export function calculateStaticPenetration(
             playerData,
           );
         }
+        break;
+      case 'always_on':
+        computedPenetration += getPenetrationFromAlwaysOnSource(source);
         break;
       // Skip dynamic sources (buff/debuff) - these are calculated per timestamp
     }
@@ -682,6 +758,7 @@ export function calculateDynamicPenetrationAtTimestamp(
   timestamp: number,
   playerId: number | null, // For checking buffs applied to the player
   targetId: number | null, // For checking debuffs applied to the target
+  combatantInfo?: CombatantInfoEvent | null, // For checking requiredPlayerAura on debuff sources
 ): number {
   let buffPenetration = 0;
   let debuffPenetration = 0;
@@ -707,12 +784,16 @@ export function calculateDynamicPenetrationAtTimestamp(
       case 'debuff':
         // Debuffs: Check if active on the selected target (enemy who has reduced resistances)
         if (debuffLookup) {
-          isActive = isBuffActiveOnTarget(
+          const debuffActive = isBuffActiveOnTarget(
             debuffLookup,
             source.ability,
             timestamp,
             targetId !== null ? targetId : undefined,
           );
+          const playerAuraActive = source.requiredPlayerAura
+            ? isAuraActive(combatantInfo ?? null, source.requiredPlayerAura)
+            : true;
+          isActive = debuffActive && playerAuraActive;
         }
         if (isActive) {
           debuffPenetration += source.value;
@@ -723,6 +804,46 @@ export function calculateDynamicPenetrationAtTimestamp(
   }
 
   return buffPenetration + debuffPenetration;
+}
+
+/**
+ * Returns the active weapon bar (1 or 2) at a given fight timestamp for a player.
+ * Assumes the player starts on bar 1. Each SWAP_WEAPONS cast event toggles the bar.
+ * `swapEvents` must be pre-filtered to SWAP_WEAPONS events for this specific player,
+ * sorted ascending by timestamp.
+ */
+export function getActiveWeaponBarAtTimestamp(
+  swapEvents: UnifiedCastEvent[],
+  timestamp: number,
+): 1 | 2 {
+  let swapCount = 0;
+  for (const event of swapEvents) {
+    if (event.timestamp <= timestamp) swapCount++;
+    else break; // events are sorted ascending
+  }
+  return swapCount % 2 === 0 ? 1 : 2;
+}
+
+/**
+ * Returns the penetration contribution from ARMOR_SETS_1190 (arena weapon sets)
+ * considering only the weapon slots that correspond to the player's active bar.
+ * Bar 1 = main hand / off hand slots; Bar 2 = backup main / backup off hand slots.
+ */
+export function getArenaWeaponPenetrationForBar(
+  combatantInfo: CombatantInfoEvent | null,
+  activeBar: 1 | 2,
+): number {
+  if (!combatantInfo?.gear) return 0;
+  const setsConfig = ARMOR_SET_PENETRATION_CONFIG[PenetrationComputedSourceKey.ARMOR_SETS_1190];
+  const penetrationValue =
+    ARMOR_SET_PENETRATION_VALUES[PenetrationComputedSourceKey.ARMOR_SETS_1190];
+  let activeSetCount = 0;
+  for (const { setId, requiredPieces } of setsConfig) {
+    if (getSetCountForBar(combatantInfo.gear, setId, activeBar) >= requiredPieces) {
+      activeSetCount++;
+    }
+  }
+  return activeSetCount * penetrationValue;
 }
 
 export function calculatePenetrationAtTimestamp(
@@ -741,6 +862,7 @@ export function calculatePenetrationAtTimestamp(
     timestamp,
     playerId,
     targetId,
+    combatantInfo,
   );
 
   return staticPenetration + dynamicPenetration;

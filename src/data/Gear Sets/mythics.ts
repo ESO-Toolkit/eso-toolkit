@@ -81,6 +81,15 @@ export const harpoonersWadingKilt: GearSetData = {
   ],
 };
 
+export const huntsmansWarmask: GearSetData = {
+  name: "Huntsman's Warmask",
+  icon: "Huntsman's Warmask",
+  setType: 'Mythic',
+  bonuses: [
+    '(1 item) Dealing damage with a Bash or fully-charged Heavy Attack places the Mark of Hircine on your target for 1 minute. While active, you gain Minor Berserk, increasing damage done by 5%, and deal 15% more damage to the target and 50% less damage to all other enemies. If the enemy dies while marked, you gain 2418 Stamina or Magicka, based off your highest maximum resource. This effect can trigger up to every 10 seconds.',
+  ],
+};
+
 export const lefthandersAegisBelt: GearSetData = {
   name: "Lefthander's Aegis Belt",
   icon: "Lefthander's Aegis Belt",
@@ -204,6 +213,15 @@ export const shapeshiftersChain: GearSetData = {
   setType: 'Mythic',
   bonuses: [
     '(1 item) Reduce the cost of your Transformation Ultimate and Werewolf abilities by 15%. While transformed, increase your Maximum Health, Stamina, and Magicka by 1707.',
+  ],
+};
+
+export const shatteredPathsSignet: GearSetData = {
+  name: 'Shattered Paths Signet',
+  icon: 'Shattered Paths Signet',
+  setType: 'Mythic',
+  bonuses: [
+    '(1 item) Increase your damage done with status effects by 1% for every 1 Ultimate you have, up to 170%. Both the current and maximum damage done is halved against Players. While you have 170 or more Ultimate, your Light and Heavy Attacks apply a random status effect, up to once every 4 seconds. Applies Minor Timidity to you, consuming 1 Ultimate every 1.5 seconds while in combat.',
   ],
 };
 

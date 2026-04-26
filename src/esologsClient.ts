@@ -15,9 +15,14 @@ import {
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { setContext } from '@apollo/client/link/context';
 import { onError, ErrorLink } from '@apollo/client/link/error';
+import { RetryLink } from '@apollo/client/link/retry';
 import { getOperationAST } from 'graphql';
 
-import { refreshAccessToken } from './features/auth/auth';
+import {
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
+  refreshAccessToken,
+} from './features/auth/auth';
 import { Logger, LogLevel } from './utils/logger';
 
 type ErrorWithGraphQLErrors = {
@@ -32,6 +37,9 @@ const logger = new Logger({
 });
 
 export class EsoLogsClient {
+  /** Guards against infinite token-refresh loops in the error link. */
+  private isRefreshingToken = false;
+
   private static readonly CACHE = new InMemoryCache({
     typePolicies: {
       Query: {
@@ -54,10 +62,12 @@ export class EsoLogsClient {
   });
 
   private accessToken: string;
+  private clientApiProxyUrl: string;
   private client: ApolloClient;
 
-  constructor(accessToken: string) {
+  constructor(accessToken: string, clientApiProxyUrl: string) {
     this.accessToken = accessToken;
+    this.clientApiProxyUrl = clientApiProxyUrl;
     this.client = this.createApolloClient(accessToken);
   }
 
@@ -87,6 +97,37 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
+    // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
+    // or transient network errors (status 0 / no statusCode — CORS block, DNS failure,
+    // dropped connection, etc.). Uses exponential backoff with jitter to avoid
+    // thundering-herd retries.
+    const retryLink = new RetryLink({
+      delay: {
+        initial: 1000, // wait 1 s before the first retry
+        max: 15000, // cap at 15 s
+        jitter: true, // randomise to spread concurrent retries
+      },
+      attempts: {
+        max: 3,
+        retryIf: (error: unknown) => {
+          const statusCode = (error as { statusCode?: number })?.statusCode;
+          if (statusCode === 429) {
+            logger.warn('API rate limit hit (429) — retrying with backoff', {
+              operation: 'pending',
+            });
+            return true;
+          }
+          // Also retry on network-level errors (no statusCode means the request
+          // never reached the server — transient connectivity failure).
+          if (error != null && statusCode === undefined) {
+            logger.warn('Network error — retrying with backoff');
+            return true;
+          }
+          return false;
+        },
+      },
+    });
+
     // Error handling link for 401 responses
     const errorLink: ErrorLink = onError(({ error, operation, forward }) => {
       // Check if this is a GraphQL error with authentication issues
@@ -103,7 +144,18 @@ export class EsoLogsClient {
       }
 
       if (hasAuthError) {
+        // Guard: if we already refreshed for a previous auth error and the
+        // retried request still fails with an auth error, stop retrying to
+        // avoid an infinite refresh→retry→401→refresh loop.
+        if (this.isRefreshingToken) {
+          logger.error('Token refresh already attempted — aborting to prevent infinite loop');
+          localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+          localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+          return;
+        }
+
         logger.warn('Authentication error detected - attempting to refresh token');
+        this.isRefreshingToken = true;
 
         // Create a new observable that will retry the request after refreshing the token
         return new Observable((observer) => {
@@ -124,27 +176,44 @@ export class EsoLogsClient {
                 // Retry the request
                 const subscriber = {
                   next: observer.next.bind(observer),
-                  error: observer.error.bind(observer),
-                  complete: observer.complete.bind(observer),
+                  error: (err: unknown) => {
+                    this.isRefreshingToken = false;
+                    observer.error(err);
+                  },
+                  complete: () => {
+                    this.isRefreshingToken = false;
+                    observer.complete();
+                  },
                 };
 
                 forward(operation).subscribe(subscriber);
               } else {
                 // Refresh failed, clear tokens and notify user
                 logger.error('Token refresh failed - user needs to re-authenticate');
-                localStorage.removeItem('access_token');
-                localStorage.removeItem('refresh_token');
+                localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
+                localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
+                this.isRefreshingToken = false;
                 observer.error(new Error('Authentication failed. Please log in again.'));
               }
             })
             .catch((err) => {
               logger.error('Error during token refresh', err);
+              this.isRefreshingToken = false;
               observer.error(err);
             });
         });
       }
 
-      // Log the error for debugging
+      // Log the error for debugging — skip noisy 429 logs since RetryLink already
+      // warned on each attempt and the query() catch block will surface a
+      // human-readable message to the UI.
+      const networkStatusCode = (error as { statusCode?: number })?.statusCode;
+      if (networkStatusCode === 429) {
+        logger.warn('API rate limit (429) — all retries exhausted', {
+          operation: operation.operationName,
+        });
+        return;
+      }
       logger.error('GraphQL operation error', error, {
         operation: operation.operationName,
       });
@@ -158,7 +227,7 @@ export class EsoLogsClient {
         const baseUrl =
           isUserOperation && accessToken
             ? 'https://www.esologs.com/api/v2/user'
-            : 'https://www.esologs.com/api/v2/client';
+            : this.clientApiProxyUrl;
 
         // Log which endpoint is being used for debugging
         logger.debug(`Operation ${operation.operationName} using endpoint: ${baseUrl}`);
@@ -172,16 +241,21 @@ export class EsoLogsClient {
     });
 
     const authLink = setContext((_, { headers }) => {
+      // Always read this.accessToken rather than the constructor closure so that
+      // token updates from the error-link refresh path (which sets this.accessToken
+      // without rebuilding the Apollo client) are immediately reflected in retries
+      // and subsequent requests on the same client instance.
       return {
         headers: {
           ...headers,
-          Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+          Authorization: this.accessToken ? `Bearer ${this.accessToken}` : undefined,
         },
       };
     });
 
     return new ApolloClient({
-      link: from([errorLink, authLink, customHttpLink]),
+      // retryLink must come first so it intercepts 429s before errorLink logs them
+      link: from([retryLink, errorLink, authLink, customHttpLink]),
       cache: EsoLogsClient.CACHE,
     });
   }
@@ -191,7 +265,17 @@ export class EsoLogsClient {
    */
   public updateAccessToken(newAccessToken: string): void {
     this.accessToken = newAccessToken;
+    // Reset refresh guard — a previous error link's Observable may have been
+    // abandoned mid-flight, leaving the flag stuck at true.
+    this.isRefreshingToken = false;
+    // Clear cached data from the previous session to avoid leaking stale
+    // query results across different user identities.
+    EsoLogsClient.CACHE.reset();
     this.client = this.createApolloClient(newAccessToken);
+  }
+
+  public getClientApiProxyUrl(): string {
+    return this.clientApiProxyUrl;
   }
 
   /**
@@ -212,7 +296,36 @@ export class EsoLogsClient {
   public async query<TData = unknown, TVariables extends OperationVariables = OperationVariables>(
     options: QueryOptions<TVariables, TData>,
   ): Promise<TData> {
-    const result = await this.client.query(options);
+    let result;
+    try {
+      result = await this.client.query(options);
+    } catch (networkError) {
+      // Convert well-known network failures to human-readable messages so that UI
+      // components can surface actionable feedback instead of an opaque stack trace.
+      //
+      // When ApolloClient.query() throws, it always wraps low-level errors inside
+      // an ApolloError.  The HTTP status code therefore lives at:
+      //   error.networkError.statusCode  (ApolloError → ServerError)
+      // NOT at the top-level error.statusCode (which is always undefined).
+      // We check both locations for robustness.
+      const innerNetworkError = (networkError as { networkError?: { statusCode?: number } })
+        ?.networkError;
+      const statusCode =
+        innerNetworkError?.statusCode ?? (networkError as { statusCode?: number })?.statusCode;
+      if (statusCode === 429) {
+        throw new Error(
+          'API rate limit exceeded. Too many requests were sent in a short period — please wait a moment and try again.',
+        );
+      }
+      // statusCode === undefined (or 0) means the request never got a response —
+      // this is the NetworkError case captured in sentry as ESO-LOGS-8J / ESO-589.
+      if (statusCode === undefined || statusCode === 0) {
+        throw new Error(
+          'Network error: Could not connect to the ESO Logs API. Please check your internet connection and try again.',
+        );
+      }
+      throw networkError;
+    }
 
     // Check for GraphQL errors and reject if they exist
     if (result.error) {
@@ -272,6 +385,6 @@ export class EsoLogsClient {
     this.client.stop();
   }
 } // Factory function for backward compatibility
-export function createEsoLogsClient(accessToken: string): EsoLogsClient {
-  return new EsoLogsClient(accessToken);
+export function createEsoLogsClient(accessToken: string, clientApiProxyUrl: string): EsoLogsClient {
+  return new EsoLogsClient(accessToken, clientApiProxyUrl);
 }

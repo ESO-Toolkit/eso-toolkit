@@ -3,16 +3,16 @@
 exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description 1`] = `
 <div>
   <div
-    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1w8r59u-MuiPaper-root-MuiCard-root"
   >
     <div
-      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+      class="MuiCardContent-root css-bbbe4z-MuiCardContent-root"
     >
       <div
-        class="MuiBox-root css-2q8ezs"
+        class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
         >
           <span
             class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -22,27 +22,27 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
         </div>
       </div>
       <div
-        class="MuiBox-root css-7c8hho"
+        class="MuiBox-root css-1eke605"
       >
         <div
-          class="MuiStack-root css-1bml2fr-MuiStack-root"
+          class="MuiStack-root css-1hyf038-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-lufoed"
+            class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
             >
               Shattering Knife
             </h6>
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <p
-        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
         <span>
           Launch a 
@@ -52,7 +52,11 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
            that pierces through enemies, dealing
            
           <em>
-            Magic Damage
+            <span
+              style="color: rgb(2, 132, 199); font-weight: 600;"
+            >
+              Magic Damage
+            </span>
           </em>
           .
         </span>
@@ -65,16 +69,16 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
 exports[`SkillTooltip Integration Tests Edge Cases should handle minimal props gracefully 1`] = `
 <div>
   <div
-    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1w8r59u-MuiPaper-root-MuiCard-root"
   >
     <div
-      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+      class="MuiCardContent-root css-bbbe4z-MuiCardContent-root"
     >
       <div
-        class="MuiBox-root css-2q8ezs"
+        class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
         >
           <span
             class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -84,27 +88,27 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle minimal props g
         </div>
       </div>
       <div
-        class="MuiBox-root css-7c8hho"
+        class="MuiBox-root css-1eke605"
       >
         <div
-          class="MuiStack-root css-1bml2fr-MuiStack-root"
+          class="MuiStack-root css-1hyf038-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-lufoed"
+            class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
             >
               Shattering Knife
             </h6>
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <p
-        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
         A magical blade attack.
       </p>
@@ -116,16 +120,16 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle minimal props g
 exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ability 1`] = `
 <div>
   <div
-    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1w8r59u-MuiPaper-root-MuiCard-root"
   >
     <div
-      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+      class="MuiCardContent-root css-bbbe4z-MuiCardContent-root"
     >
       <div
-        class="MuiBox-root css-2q8ezs"
+        class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
         >
           <span
             class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -134,42 +138,42 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ab
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
         >
           Weapon Skills
         </span>
       </div>
       <div
-        class="MuiBox-root css-7c8hho"
+        class="MuiBox-root css-1eke605"
       >
         <div
-          class="MuiStack-root css-1bml2fr-MuiStack-root"
+          class="MuiStack-root css-1hyf038-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-boc1p7"
+            class="MuiBox-root css-gz7dt1"
           >
             <img
               alt="Bash"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_warrior_031.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
-            class="MuiBox-root css-lufoed"
+            class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
             >
               Bash
             </h6>
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <p
-        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
         Strike an enemy with your weapon, dealing damage and interrupting.
       </p>
@@ -181,16 +185,16 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ab
 exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render Shattering Knife with different fight context 1`] = `
 <div>
   <div
-    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1w8r59u-MuiPaper-root-MuiCard-root"
   >
     <div
-      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+      class="MuiCardContent-root css-bbbe4z-MuiCardContent-root"
     >
       <div
-        class="MuiBox-root css-2q8ezs"
+        class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qphwag-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning MuiChip-outlinedWarning css-1vihd32-MuiChip-root"
         >
           <span
             class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -199,31 +203,31 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
         >
           Scribing - Affix
         </span>
       </div>
       <div
-        class="MuiBox-root css-7c8hho"
+        class="MuiBox-root css-1eke605"
       >
         <div
-          class="MuiStack-root css-1bml2fr-MuiStack-root"
+          class="MuiStack-root css-1hyf038-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-boc1p7"
+            class="MuiBox-root css-gz7dt1"
           >
             <img
               alt="Shattering Knife"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
-            class="MuiBox-root css-lufoed"
+            class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -231,95 +235,98 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         </div>
       </div>
       <div
-        class="MuiBox-root css-hljinv"
+        class="MuiBox-root css-1r2f04i"
       >
         <div
-          class="MuiBox-root css-1o3fvql"
+          class="MuiBox-root css-1vonvk7"
         >
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Cost
             </span>
             <span
-              class="MuiBox-root css-sck1gj"
+              class="MuiBox-root css-1558a2a"
             >
               175 Ultimate
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Range
             </span>
             <span
-              class="MuiBox-root css-bpa2de"
+              class="MuiBox-root css-o0zc9i"
             >
               28 meters
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Target
             </span>
             <span
-              class="MuiBox-root css-1ecqdv1"
+              class="MuiBox-root css-1hzmz3b"
             >
               Enemy
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Area
             </span>
             <span
-              class="MuiBox-root css-sknepn"
+              class="MuiBox-root css-eonbiz"
             >
               Line
             </span>
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <div
-        class="MuiBox-root css-1upilqn"
+        class="MuiBox-root css-1r2f04i"
       >
         <div
-          class="MuiStack-root css-14irx59-MuiStack-root"
+          class="MuiBox-root css-ygaf6y"
         >
+          <div
+            class="MuiBox-root css-1nvjkr"
+          />
           <span
-            class="MuiTypography-root MuiTypography-caption css-1fhgshp-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-1jlhynm-MuiTypography-root"
           >
             Grimoire: 
             Traveling Knife
           </span>
         </div>
         <div
-          class="MuiBox-root css-19idom"
+          class="MuiBox-root css-16f3xvq"
         >
           <span
-            class="MuiTypography-root MuiTypography-caption css-1p66mmu-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-h06i46-MuiTypography-root"
           >
             Script Analysis Unavailable
           </span>
           <span
-            class="MuiTypography-root MuiTypography-caption css-6mkcxp-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-lqyo0p-MuiTypography-root"
           >
             This scribing skill was not cast during this fight, so the complete recipe could not be detected.
           </span>
@@ -328,24 +335,30 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           class="MuiBox-root css-19idom"
         >
           <span
-            class="MuiTypography-root MuiTypography-caption css-eem20n-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-1dqqjzz-MuiTypography-root"
           >
             Affix Scripts
           </span>
           <span
-            class="MuiTypography-root MuiTypography-caption css-1twjnv6-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-11xta6z-MuiTypography-root"
           >
             Skill was never cast in this fight, so affix scripts could not be detected.
           </span>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <p
-        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
-        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+        Launch a magical blade that pierces through enemies, dealing 
+        <span
+          style="color: rgb(2, 132, 199); font-weight: 600;"
+        >
+          Magic Damage
+        </span>
+        . When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
       </p>
     </div>
   </div>
@@ -355,16 +368,16 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
 exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render Shattering Knife with real scribing detection 1`] = `
 <div>
   <div
-    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1w8r59u-MuiPaper-root-MuiCard-root"
   >
     <div
-      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+      class="MuiCardContent-root css-bbbe4z-MuiCardContent-root"
     >
       <div
-        class="MuiBox-root css-2q8ezs"
+        class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qphwag-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning MuiChip-outlinedWarning css-1vihd32-MuiChip-root"
         >
           <span
             class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -373,31 +386,31 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
         >
           Scribing - Affix
         </span>
       </div>
       <div
-        class="MuiBox-root css-7c8hho"
+        class="MuiBox-root css-1eke605"
       >
         <div
-          class="MuiStack-root css-1bml2fr-MuiStack-root"
+          class="MuiStack-root css-1hyf038-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-boc1p7"
+            class="MuiBox-root css-gz7dt1"
           >
             <img
               alt="Shattering Knife"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
-            class="MuiBox-root css-lufoed"
+            class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -405,80 +418,83 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         </div>
       </div>
       <div
-        class="MuiBox-root css-hljinv"
+        class="MuiBox-root css-1r2f04i"
       >
         <div
-          class="MuiBox-root css-1o3fvql"
+          class="MuiBox-root css-1vonvk7"
         >
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Cost
             </span>
             <span
-              class="MuiBox-root css-sck1gj"
+              class="MuiBox-root css-1558a2a"
             >
               175 Ultimate
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Range
             </span>
             <span
-              class="MuiBox-root css-bpa2de"
+              class="MuiBox-root css-o0zc9i"
             >
               28 meters
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Target
             </span>
             <span
-              class="MuiBox-root css-1ecqdv1"
+              class="MuiBox-root css-1hzmz3b"
             >
               Enemy
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Area
             </span>
             <span
-              class="MuiBox-root css-sknepn"
+              class="MuiBox-root css-eonbiz"
             >
               Line
             </span>
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <div
-        class="MuiBox-root css-1upilqn"
+        class="MuiBox-root css-1r2f04i"
       >
         <div
-          class="MuiStack-root css-14irx59-MuiStack-root"
+          class="MuiBox-root css-ygaf6y"
         >
+          <div
+            class="MuiBox-root css-1nvjkr"
+          />
           <span
-            class="MuiTypography-root MuiTypography-caption css-1fhgshp-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-1jlhynm-MuiTypography-root"
           >
             Grimoire: 
             Traveling Knife
@@ -488,7 +504,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           class="MuiBox-root css-0"
         >
           <span
-            class="MuiTypography-root MuiTypography-caption css-1su74eg-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-g4ss0z-MuiTypography-root"
           >
             Effects
           </span>
@@ -496,7 +512,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-yi3mkw"
           >
             <div
-              class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18z2x9l-MuiChip-root"
+              class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-19xsk7y-MuiChip-root"
             >
               <span
                 class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -507,13 +523,19 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <p
-        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
-        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+        Launch a magical blade that pierces through enemies, dealing 
+        <span
+          style="color: rgb(2, 132, 199); font-weight: 600;"
+        >
+          Magic Damage
+        </span>
+        . When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
       </p>
     </div>
   </div>
@@ -523,16 +545,16 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
 exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render Shattering Knife without fight context 1`] = `
 <div>
   <div
-    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1w8r59u-MuiPaper-root-MuiCard-root"
   >
     <div
-      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+      class="MuiCardContent-root css-bbbe4z-MuiCardContent-root"
     >
       <div
-        class="MuiBox-root css-2q8ezs"
+        class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qphwag-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning MuiChip-outlinedWarning css-1vihd32-MuiChip-root"
         >
           <span
             class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -541,31 +563,31 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
         >
           Scribing - Affix
         </span>
       </div>
       <div
-        class="MuiBox-root css-7c8hho"
+        class="MuiBox-root css-1eke605"
       >
         <div
-          class="MuiStack-root css-1bml2fr-MuiStack-root"
+          class="MuiStack-root css-1hyf038-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-boc1p7"
+            class="MuiBox-root css-gz7dt1"
           >
             <img
               alt="Shattering Knife"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
-            class="MuiBox-root css-lufoed"
+            class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
             >
               Shattering Knife
             </h6>
@@ -573,76 +595,82 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         </div>
       </div>
       <div
-        class="MuiBox-root css-hljinv"
+        class="MuiBox-root css-1r2f04i"
       >
         <div
-          class="MuiBox-root css-1o3fvql"
+          class="MuiBox-root css-1vonvk7"
         >
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Cost
             </span>
             <span
-              class="MuiBox-root css-sck1gj"
+              class="MuiBox-root css-1558a2a"
             >
               175 Ultimate
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Range
             </span>
             <span
-              class="MuiBox-root css-bpa2de"
+              class="MuiBox-root css-o0zc9i"
             >
               28 meters
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Target
             </span>
             <span
-              class="MuiBox-root css-1ecqdv1"
+              class="MuiBox-root css-1hzmz3b"
             >
               Enemy
             </span>
           </div>
           <div
-            class="MuiBox-root css-9wp72w"
+            class="MuiBox-root css-xyfvau"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-e0xifq-MuiTypography-root"
             >
               Area
             </span>
             <span
-              class="MuiBox-root css-sknepn"
+              class="MuiBox-root css-eonbiz"
             >
               Line
             </span>
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <p
-        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
-        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+        Launch a magical blade that pierces through enemies, dealing 
+        <span
+          style="color: rgb(2, 132, 199); font-weight: 600;"
+        >
+          Magic Damage
+        </span>
+        . When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
       </p>
     </div>
   </div>
@@ -652,16 +680,16 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
 exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render scribing ability with detected data 1`] = `
 <div>
   <div
-    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1w8r59u-MuiPaper-root-MuiCard-root"
   >
     <div
-      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+      class="MuiCardContent-root css-bbbe4z-MuiCardContent-root"
     >
       <div
-        class="MuiBox-root css-2q8ezs"
+        class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
         >
           <span
             class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
@@ -670,42 +698,42 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           </span>
         </div>
         <span
-          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-1bcwidj-MuiTypography-root"
         >
           Scribing - Focus
         </span>
       </div>
       <div
-        class="MuiBox-root css-7c8hho"
+        class="MuiBox-root css-1eke605"
       >
         <div
-          class="MuiStack-root css-1bml2fr-MuiStack-root"
+          class="MuiStack-root css-1hyf038-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-boc1p7"
+            class="MuiBox-root css-gz7dt1"
           >
             <img
               alt="Cephaliarch's Flail"
-              class="MuiBox-root css-ykomfw"
               src="https://assets.rpglogs.com/img/eso/abilities/ability_arcanist_003_a.png"
+              style="width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit;"
             />
           </div>
           <div
-            class="MuiBox-root css-lufoed"
+            class="MuiBox-root css-dj12vk"
           >
             <h6
-              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-subtitle1 css-1xpixvi-MuiTypography-root"
             >
               Cephaliarch's Flail
             </h6>
           </div>
         </div>
       </div>
-      <hr
-        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      <div
+        class="MuiBox-root css-1usdf5u"
       />
       <p
-        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+        class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >
         A magical tentacle attack that deals damage and applies effects.
       </p>

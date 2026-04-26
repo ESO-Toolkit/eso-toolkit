@@ -1,14 +1,5 @@
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Divider,
-  Stack,
-  Typography,
-  useTheme,
-  Theme,
-} from '@mui/material';
+import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
+import { Box, Card, CardContent, Chip, Stack, Typography, useTheme, Theme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
@@ -16,6 +7,8 @@ import { useLogger } from '@/hooks/useLogger';
 
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 import type { ScribedSkillAffixInfo } from '../features/scribing/types';
+import { getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
+import { highlightMetrics } from '../utils/highlightMetrics';
 
 export interface SkillStat {
   label: string;
@@ -79,6 +72,68 @@ function inferPaletteFromStat(label: string, value: string): PaletteKey {
   return 'primary';
 }
 
+/** Gradient fade divider — replaces plain MUI Divider for a more refined look */
+const GradientDivider: React.FC<{ sx?: object }> = ({ sx }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  return (
+    <Box
+      sx={{
+        height: '1px',
+        background: isDark
+          ? 'linear-gradient(90deg, transparent 0%, rgba(148, 210, 255, 0.18) 30%, rgba(148, 210, 255, 0.18) 70%, transparent 100%)'
+          : 'linear-gradient(90deg, transparent 0%, rgba(15, 23, 42, 0.12) 30%, rgba(15, 23, 42, 0.12) 70%, transparent 100%)',
+        ...sx,
+      }}
+    />
+  );
+};
+
+/** Small section label used in the scribing area */
+const ScribingSectionLabel: React.FC<{
+  children: React.ReactNode;
+  color: string;
+}> = ({ children, color }) => (
+  <Typography
+    variant="caption"
+    sx={{
+      color,
+      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontWeight: 700,
+      letterSpacing: '.04em',
+      fontSize: '0.68rem',
+      textTransform: 'uppercase',
+      display: 'block',
+      mb: 0.5,
+    }}
+  >
+    {children}
+  </Typography>
+);
+
+/** Shared gradient text styles for the skill name */
+const nameGradientSx = (isDark: boolean): Record<string, unknown> => ({
+  fontFamily: 'Space Grotesk, Inter, system-ui',
+  fontWeight: 800,
+  letterSpacing: '-.02em',
+  ...(isDark
+    ? {
+        background: 'linear-gradient(135deg, #ffffff 0%, #94d2ff 45%, #c8f0ff 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        filter: 'drop-shadow(0 1px 2px rgba(148, 210, 255, 0.15))',
+      }
+    : {
+        background: 'linear-gradient(135deg, #0c4a8a 0%, #1e6fd4 50%, #3b8fe8 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+      }),
+  lineHeight: 1.15,
+  fontSize: { xs: '0.92rem', sm: '1rem' },
+});
+
 /**
  * Minimal, reusable tooltip card for ESO skills. Designed to sit inside popovers/menus
  * but also works standalone in a column layout. Uses the app's dark theme and subtle
@@ -100,6 +155,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
 }) => {
   const theme = useTheme();
   const logger = useLogger();
+  const isDark = theme.palette.mode === 'dark';
 
   // Always use automatic scribing detection when fight and player context available
   const { scribedSkillData: detectedScribingData } = useSkillScribingData(
@@ -121,6 +177,9 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const resolvedIconUrl =
     iconUrl ??
     (iconSlug ? `https://assets.rpglogs.com/img/eso/abilities/${iconSlug}.png` : undefined);
+  // URL map includes both bare skill line names ("Ardent Flame") and composite class keys
+  // ("Dragonknight — Ardent Flame") so lineText can be passed directly in either format.
+  const skillLineUrl = lineText ? getEsoHubSkillLineUrl(lineText) : undefined;
   // Stats row layout control: prefer full text by default. If <=3 stats and they overflow, abbreviate.
   // If >3 stats, allow wrapping to second line first; abbreviate only if still overflowing.
   const statsCount = stats?.length ?? 0;
@@ -175,21 +234,32 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
     // One-time layout before first paint to minimize popper jitter
     requestAnimationFrame(runLayout);
   }, [runLayout]);
+
+  // Badge color logic
+  const badgeColor = /passive/i.test(headerBadge ?? '')
+    ? 'info'
+    : /ultimate/i.test(headerBadge ?? '')
+      ? 'warning'
+      : /active/i.test(headerBadge ?? '')
+        ? 'success'
+        : 'default';
+
   return (
     <Card
       variant="outlined"
       className="u-fade-in skill-tooltip"
       sx={{
-        maxWidth: { xs: 260, sm: 320, md: 360 },
+        maxWidth: { xs: 280, sm: 340, md: 380 },
       }}
     >
-      <CardContent sx={{ p: 1.25 }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+        {/* ── Header: Badge + Skill Line ── */}
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'flex-start',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            mb: 1.5,
+            mb: 1.25,
           }}
         >
           {headerBadge ? (
@@ -197,18 +267,23 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               size="small"
               label={headerBadge}
               variant="outlined"
-              color={
-                /passive/i.test(headerBadge)
-                  ? 'info'
-                  : /active/i.test(headerBadge)
-                    ? 'success'
-                    : 'default'
-              }
-              sx={{
-                fontWeight: 600,
-                letterSpacing: '.02em',
-                '& .MuiChip-label': { px: 0.5, fontSize: '0.7rem', lineHeight: 1.2 },
-              }}
+              color={badgeColor as 'info' | 'warning' | 'success' | 'default'}
+              sx={(theme: Theme) => ({
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontWeight: 700,
+                letterSpacing: '.04em',
+                fontSize: '0.62rem',
+                textTransform: 'uppercase',
+                borderRadius: '6px',
+                height: 22,
+                '& .MuiChip-label': { px: 0.75, fontSize: '0.62rem', lineHeight: 1 },
+                ...(badgeColor !== 'default' && {
+                  backgroundColor: alpha(
+                    theme.palette[badgeColor as PaletteKey].main,
+                    isDark ? 0.1 : 0.08,
+                  ),
+                }),
+              })}
             />
           ) : (
             <span />
@@ -218,9 +293,11 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               variant="caption"
               sx={{
                 color: 'text.secondary',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
                 fontWeight: 600,
                 letterSpacing: '.02em',
-                fontSize: '0.72rem',
+                fontSize: '0.68rem',
+                opacity: 0.8,
               }}
             >
               {lineText}
@@ -228,86 +305,101 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
           )}
         </Box>
 
+        {/* ── Identity Block: Icon + Name + Morph ── */}
         <Box
-          sx={(theme) => ({
-            p: 0.75,
-            pt: 0.5,
+          sx={{
+            p: 1,
             borderRadius: '10px',
-            backgroundColor: alpha(theme.palette.common.white, 0.02),
-            border: `1px solid ${alpha(theme.palette.common.white, 0.06)}`,
-            mb: 1,
-          })}
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(148, 210, 255, 0.04) 0%, rgba(56, 189, 248, 0.02) 100%)'
+              : 'linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, rgba(56, 189, 248, 0.02) 100%)',
+            border: `1px solid ${isDark ? 'rgba(148, 210, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)'}`,
+            mb: 1.25,
+          }}
         >
-          <Stack direction="row" spacing={1.75} alignItems="flex-start">
+          <Stack direction="row" spacing={1.5} alignItems="center">
             {resolvedIconUrl && (
               <Box
-                sx={(theme) => ({
-                  width: { xs: 40, sm: 44 },
-                  height: { xs: 40, sm: 44 },
-                  borderRadius: '7px',
-                  border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor: alpha(theme.palette.common.white, 0.04),
+                sx={{
+                  width: { xs: 44, sm: 48 },
+                  height: { xs: 44, sm: 48 },
+                  borderRadius: '10px',
+                  border: `1px solid ${isDark ? 'rgba(148, 210, 255, 0.15)' : 'rgba(15, 23, 42, 0.1)'}`,
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(148, 210, 255, 0.08) 0%, rgba(56, 189, 248, 0.04) 100%)'
+                    : 'linear-gradient(135deg, rgba(15, 23, 42, 0.04) 0%, rgba(56, 189, 248, 0.03) 100%)',
                   overflow: 'hidden',
-                  display: 'inline-block',
                   flex: '0 0 auto',
-                })}
+                  boxShadow: isDark
+                    ? '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+                    : '0 2px 6px rgba(15, 23, 42, 0.08)',
+                }}
               >
-                <Box
-                  component="img"
+                <img
                   src={resolvedIconUrl}
                   alt={name}
-                  sx={{
+                  style={{
                     width: '100%',
                     height: '100%',
                     display: 'block',
                     objectFit: 'cover',
-                    borderRadius: 'inherit !important',
+                    borderRadius: 'inherit',
                   }}
                 />
               </Box>
             )}
-            <Box sx={{ minWidth: 0, pt: 0.25, display: 'flex', flexDirection: 'column', gap: 0.6 }}>
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: 800,
-                  letterSpacing: '-.01em',
-                  ...(theme.palette.mode === 'dark'
-                    ? {
-                        background:
-                          'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }
-                    : {
-                        background:
-                          'linear-gradient(135deg, #68acfb 0%, #2474c4 50%, #439cdc 70%, #5191ff 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        textShadow: '0 1px 2px rgba(36, 116, 196, 0.2)',
-                      }),
-                  lineHeight: 1.1,
-                  fontSize: { xs: '0.86rem', sm: '0.92rem' },
-                  mb: 0,
-                }}
-              >
-                {name}
-              </Typography>
+            <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
+              {skillLineUrl ? (
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="subtitle1" sx={nameGradientSx(isDark)}>
+                    {name}
+                  </Typography>
+                  <Box
+                    component="a"
+                    href={skillLineUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    aria-label={`${name} on ESO-Hub`}
+                    title="View on ESO-Hub"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                      flexShrink: 0,
+                      lineHeight: 0,
+                      '&:hover': {
+                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
+                      },
+                    }}
+                  >
+                    <OpenInNewIcon sx={{ fontSize: 12 }} />
+                  </Box>
+                </Box>
+              ) : (
+                <Typography variant="subtitle1" sx={nameGradientSx(isDark)}>
+                  {name}
+                </Typography>
+              )}
               {morphOf && (
                 <Typography
                   variant="caption"
                   sx={{
                     color: 'text.secondary',
                     display: 'block',
-                    mt: 0,
                     lineHeight: 1.3,
                     fontSize: '0.7rem',
+                    opacity: 0.85,
                   }}
                 >
                   Morph of:{' '}
-                  <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      color: isDark ? '#94d2ff' : 'primary.main',
+                      fontWeight: 600,
+                    }}
+                  >
                     {morphOf}
                   </Box>
                 </Typography>
@@ -316,21 +408,22 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
           </Stack>
         </Box>
 
+        {/* ── Stats Grid ── */}
         {stats && stats.length > 0 && (
-          <Box sx={{ mt: 0.5, mb: 1 }}>
+          <Box sx={{ mb: 1.25 }}>
             <Box
               ref={statsRowRef}
-              sx={(_theme) => ({
+              sx={{
                 display: 'grid',
                 gridTemplateColumns: wrapStats
                   ? 'repeat(auto-fit, minmax(120px, 1fr))'
                   : 'repeat(auto-fit, minmax(160px, 1fr))',
                 columnGap: 0.8,
-                rowGap: 0.5,
+                rowGap: 0.6,
                 alignItems: 'center',
                 minWidth: 0,
                 visibility: statsReady ? 'visible' : 'hidden',
-              })}
+              }}
             >
               {stats.map((s) => {
                 const paletteKey =
@@ -369,7 +462,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       alignItems: 'center',
                       whiteSpace: 'nowrap',
                       minWidth: 0,
-                      gap: 0.4,
+                      gap: 0.5,
                       width: '100%',
                       justifyContent: 'space-between',
                     }}
@@ -381,26 +474,30 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                         color: 'text.secondary',
                         fontWeight: 600,
                         display: 'inline',
-                        fontSize: '0.58rem',
-                        letterSpacing: '.005em',
+                        fontSize: '0.6rem',
+                        letterSpacing: '.02em',
                         flexShrink: 0,
+                        textTransform: 'uppercase',
+                        opacity: 0.75,
                       }}
                     >
                       {displayLabel}
                     </Typography>
                     <Box
                       component="span"
-                      sx={(theme) => ({
-                        display: 'inline-block',
-                        px: 0.38,
-                        py: 0.1,
-                        borderRadius: 0.75,
+                      sx={(theme: Theme) => ({
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        px: 0.5,
+                        py: 0.15,
+                        borderRadius: '4px',
                         fontSize: '0.66rem',
-                        fontWeight: 600,
-                        lineHeight: 1.05,
+                        fontWeight: 700,
+                        fontVariantNumeric: 'tabular-nums',
+                        lineHeight: 1.1,
                         color: theme.palette[paletteKey].main,
-                        backgroundColor: alpha(theme.palette[paletteKey].main, 0.1),
-                        border: `1px solid ${alpha(theme.palette[paletteKey].main, 0.18)}`,
+                        backgroundColor: alpha(theme.palette[paletteKey].main, isDark ? 0.1 : 0.08),
+                        border: `1px solid ${alpha(theme.palette[paletteKey].main, isDark ? 0.2 : 0.15)}`,
                       })}
                     >
                       {displayValue}
@@ -412,51 +509,75 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
           </Box>
         )}
 
-        <Divider
-          sx={(theme) => ({
-            my: 1,
-            borderColor:
-              theme.palette.mode === 'dark'
-                ? alpha(theme.palette.common.white, 0.08)
-                : alpha(theme.palette.common.black, 0.08),
-          })}
-        />
+        <GradientDivider sx={{ my: 1.25 }} />
 
+        {/* ── Scribing Detection Section ── */}
         {finalScribedData && (
           <>
-            <Box sx={{ mb: 1.5 }}>
-              {/* Grimoire Header - always show */}
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="center"
-                sx={{ mb: 1 }}
+            <Box sx={{ mb: 1.25 }}>
+              {/* Grimoire Header */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  mb: 1,
+                  p: 0.75,
+                  borderRadius: '8px',
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(148, 210, 255, 0.06) 0%, rgba(0, 225, 255, 0.03) 100%)'
+                    : 'linear-gradient(135deg, rgba(15, 23, 42, 0.04) 0%, rgba(56, 189, 248, 0.03) 100%)',
+                  border: `1px solid ${isDark ? 'rgba(148, 210, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)'}`,
+                }}
               >
+                <Box
+                  sx={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    background: isDark
+                      ? 'linear-gradient(135deg, #94d2ff, #00e1ff)'
+                      : 'linear-gradient(135deg, #0369a1, #38bdf8)',
+                    flexShrink: 0,
+                  }}
+                />
                 <Typography
                   variant="caption"
                   sx={{
-                    color: 'text.primary',
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    color: isDark ? '#94d2ff' : 'primary.main',
                     fontWeight: 700,
-                    letterSpacing: '.02em',
-                    fontSize: '0.78rem',
+                    letterSpacing: '.03em',
+                    fontSize: '0.76rem',
                   }}
                 >
                   Grimoire: {finalScribedData.grimoireName}
                 </Typography>
-              </Stack>
+              </Box>
 
               {/* Show message when skill wasn't cast */}
               {finalScribedData.wasCastInFight === false ? (
-                <Box sx={{ mb: 1 }}>
+                <Box
+                  sx={{
+                    p: 0.75,
+                    borderRadius: '8px',
+                    background: isDark
+                      ? alpha(theme.palette.warning.main, 0.06)
+                      : alpha(theme.palette.warning.main, 0.05),
+                    border: `1px solid ${alpha(theme.palette.warning.main, isDark ? 0.15 : 0.12)}`,
+                    mb: 1,
+                  }}
+                >
                   <Typography
                     variant="caption"
                     sx={{
                       color: 'warning.main',
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
                       fontWeight: 700,
                       letterSpacing: '.02em',
-                      fontSize: '0.75rem',
-                      mb: 0.5,
+                      fontSize: '0.72rem',
                       display: 'block',
+                      mb: 0.25,
                     }}
                   >
                     Script Analysis Unavailable
@@ -465,9 +586,10 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                     variant="caption"
                     sx={{
                       color: 'text.secondary',
-                      fontSize: '0.7rem',
+                      fontSize: '0.68rem',
                       fontStyle: 'italic',
                       display: 'block',
+                      lineHeight: 1.4,
                     }}
                   >
                     This scribing skill was not cast during this fight, so the complete recipe could
@@ -479,26 +601,22 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                   {/* Focus Script Recipe */}
                   {finalScribedData.recipe && (
                     <Box sx={{ mb: 1 }}>
-                      <Typography
-                        variant="caption"
+                      <ScribingSectionLabel color={theme.palette.secondary.main}>
+                        Focus Script
+                      </ScribingSectionLabel>
+                      <Box
                         sx={{
-                          color: 'secondary.main',
-                          fontWeight: 700,
-                          letterSpacing: '.02em',
-                          fontSize: '0.75rem',
-                          mb: 0.5,
-                          display: 'block',
+                          pl: 1,
+                          borderLeft: `2px solid ${alpha(theme.palette.secondary.main, 0.3)}`,
                         }}
                       >
-                        Focus Script
-                      </Typography>
-                      <Stack spacing={0.3} sx={{ mb: 1 }}>
                         <Typography
                           variant="caption"
                           sx={{
                             color: 'text.primary',
-                            fontSize: '0.7rem',
+                            fontSize: '0.72rem',
                             fontWeight: 600,
+                            display: 'block',
                           }}
                         >
                           {finalScribedData.recipe.transformation} (
@@ -509,14 +627,15 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             variant="caption"
                             sx={{
                               color: 'text.secondary',
-                              fontSize: '0.65rem',
+                              fontSize: '0.64rem',
                               fontStyle: 'italic',
+                              opacity: 0.75,
                             }}
                           >
                             {Math.round(finalScribedData.recipe.confidence * 100)}% match confidence
                           </Typography>
                         )}
-                      </Stack>
+                      </Box>
                     </Box>
                   )}
                 </>
@@ -525,46 +644,41 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               {/* Signature Script Section */}
               {finalScribedData.signatureScript && (
                 <Box sx={{ mb: 1 }}>
-                  <Typography
-                    variant="caption"
+                  <ScribingSectionLabel color={theme.palette.primary.main}>
+                    Signature Script
+                  </ScribingSectionLabel>
+                  <Box
                     sx={{
-                      color: 'primary.main',
-                      fontWeight: 700,
-                      letterSpacing: '.02em',
-                      fontSize: '0.75rem',
-                      mb: 0.5,
-                      display: 'block',
+                      pl: 1,
+                      borderLeft: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                     }}
                   >
-                    Signature Script
-                  </Typography>
-                  <Stack spacing={0.3} sx={{ mb: 1 }}>
-                    <>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: 'text.primary',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {finalScribedData.signatureScript.name}
-                      </Typography>
-                      {finalScribedData.signatureScript.evidence &&
-                        finalScribedData.signatureScript.evidence.length > 0 && (
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'text.secondary',
-                              fontSize: '0.65rem',
-                              fontStyle: 'italic',
-                            }}
-                          >
-                            Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
-                          </Typography>
-                        )}
-                    </>
-                  </Stack>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.primary',
+                        fontSize: '0.72rem',
+                        fontWeight: 600,
+                        display: 'block',
+                      }}
+                    >
+                      {finalScribedData.signatureScript.name}
+                    </Typography>
+                    {finalScribedData.signatureScript.evidence &&
+                      finalScribedData.signatureScript.evidence.length > 0 && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            fontSize: '0.64rem',
+                            fontStyle: 'italic',
+                            opacity: 0.75,
+                          }}
+                        >
+                          Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
+                        </Typography>
+                      )}
+                  </Box>
                 </Box>
               )}
 
@@ -572,32 +686,29 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               {(finalScribedData.affixScripts && finalScribedData.affixScripts.length > 0) ||
               finalScribedData.wasCastInFight === false ? (
                 <Box sx={{ mb: 1 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'secondary.main',
-                      fontWeight: 700,
-                      letterSpacing: '.02em',
-                      fontSize: '0.75rem',
-                      mb: 0.5,
-                      display: 'block',
-                    }}
-                  >
+                  <ScribingSectionLabel color={theme.palette.secondary.main}>
                     Affix Scripts
-                  </Typography>
+                  </ScribingSectionLabel>
                   {finalScribedData.wasCastInFight === false ? (
                     <Typography
                       variant="caption"
                       sx={{
                         color: 'text.secondary',
-                        fontSize: '0.7rem',
+                        fontSize: '0.68rem',
                         fontStyle: 'italic',
+                        pl: 1,
                       }}
                     >
                       Skill was never cast in this fight, so affix scripts could not be detected.
                     </Typography>
                   ) : finalScribedData.affixScripts && finalScribedData.affixScripts.length > 0 ? (
-                    <Stack spacing={0.3} sx={{ mb: 1 }}>
+                    <Stack
+                      spacing={0.4}
+                      sx={{
+                        pl: 1,
+                        borderLeft: `2px solid ${alpha(theme.palette.secondary.main, 0.3)}`,
+                      }}
+                    >
                       {finalScribedData.affixScripts.map(
                         (affixScript: ScribedSkillAffixInfo, index: number) => (
                           <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -605,7 +716,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                               variant="caption"
                               sx={{
                                 color: 'text.primary',
-                                fontSize: '0.7rem',
+                                fontSize: '0.72rem',
                                 fontWeight: 600,
                               }}
                             >
@@ -618,6 +729,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                                   color: 'text.secondary',
                                   fontSize: '0.6rem',
                                   fontStyle: 'italic',
+                                  opacity: 0.7,
                                 }}
                               >
                                 ({Math.round(affixScript.confidence * 100)}%)
@@ -632,8 +744,9 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       variant="caption"
                       sx={{
                         color: 'text.secondary',
-                        fontSize: '0.7rem',
+                        fontSize: '0.68rem',
                         fontStyle: 'italic',
+                        pl: 1,
                       }}
                     >
                       No affix script detected
@@ -645,19 +758,9 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
               {/* Effects List - only show if skill was cast */}
               {finalScribedData.wasCastInFight !== false && (
                 <Box>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.primary',
-                      fontWeight: 600,
-                      letterSpacing: '.01em',
-                      fontSize: '0.7rem',
-                      mb: 0.5,
-                      display: 'block',
-                    }}
-                  >
+                  <ScribingSectionLabel color={theme.palette.text.primary}>
                     Effects
-                  </Typography>
+                  </ScribingSectionLabel>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {finalScribedData.effects.map(
                       (
@@ -676,13 +779,14 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             size="small"
                             label={`${effect.abilityName} (${effect.count})`}
                             variant="outlined"
-                            sx={(_theme) => ({
+                            sx={{
                               fontSize: '0.62rem',
-                              height: '20px',
+                              height: '22px',
                               color: indicator.color,
-                              borderColor: alpha(indicator.color, 0.4),
-                              backgroundColor: alpha(indicator.color, 0.08),
+                              borderColor: alpha(indicator.color, 0.3),
+                              backgroundColor: alpha(indicator.color, isDark ? 0.08 : 0.06),
                               fontWeight: 600,
+                              borderRadius: '6px',
                               '& .MuiChip-label': {
                                 px: 0.5,
                                 pl: 1.25,
@@ -692,16 +796,17 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                                 '&::before': {
                                   content: '""',
                                   position: 'absolute',
-                                  left: 0.25,
+                                  left: 2,
                                   top: '50%',
                                   transform: 'translateY(-50%)',
-                                  width: 4,
-                                  height: 4,
+                                  width: 5,
+                                  height: 5,
                                   borderRadius: '50%',
                                   backgroundColor: indicator.color,
+                                  boxShadow: `0 0 4px ${alpha(indicator.color, 0.5)}`,
                                 },
                               },
-                            })}
+                            }}
                           />
                         );
                       },
@@ -710,33 +815,54 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 </Box>
               )}
             </Box>
-            <Divider
-              sx={(theme) => ({
-                my: 1,
-                borderColor:
-                  theme.palette.mode === 'dark'
-                    ? alpha(theme.palette.common.white, 0.08)
-                    : alpha(theme.palette.common.black, 0.08),
-              })}
-            />
+            <GradientDivider sx={{ my: 1.25 }} />
           </>
         )}
 
+        {/* ── Description ── */}
         <Typography
           variant="body2"
           sx={{
             color: 'text.primary',
-            lineHeight: 1.4,
+            lineHeight: 1.5,
             fontSize: { xs: '0.78rem', sm: '0.82rem' },
             wordBreak: 'break-word',
+            opacity: 0.92,
             '& p': { m: 0, mb: '6px' },
             '& p:last-child': { mb: 0 },
             '& ul, & ol': { m: 0, mb: '6px', ml: '1.1rem', p: 0 },
             '& li': { mb: '4px' },
           }}
         >
-          {description}
+          {highlightMetrics(description, isDark)}
         </Typography>
+        {skillLineUrl && (
+          <Box sx={{ mt: 0.75, display: 'flex', justifyContent: 'flex-end' }}>
+            <Box
+              component="a"
+              href={skillLineUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              aria-label="View skill on ESO-Hub"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.3,
+                color: 'text.disabled',
+                fontSize: '0.62rem',
+                fontWeight: 500,
+                textDecoration: 'none',
+                letterSpacing: '.02em',
+                lineHeight: 1,
+                '&:hover': { color: 'text.secondary' },
+              }}
+            >
+              ESO-Hub
+              <OpenInNewIcon sx={{ fontSize: 9 }} />
+            </Box>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

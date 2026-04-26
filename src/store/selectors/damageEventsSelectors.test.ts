@@ -1,118 +1,41 @@
 import { DamageEvent } from '../../types/combatlogEvents';
 import { selectDamageEventsByPlayer } from '../events_data/damageEventsSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 import { RootState } from '../storeWithHistory';
+import { createMockState } from '../../test/utils/reduxMockFactories';
 
-// Mock state for testing
-const createMockState = (
-  damageEvents: DamageEvent[],
-): Pick<RootState, 'events' | 'masterData'> => ({
-  masterData: {
-    actorsById: {},
-    abilitiesById: {},
-    loading: false,
-    loaded: false,
-    error: null,
-    cacheMetadata: {
-      lastFetchedReportId: null,
-      lastFetchedTimestamp: null,
-      actorCount: 0,
-      abilityCount: 0,
-    },
-  },
-  events: {
-    damage: {
-      events: damageEvents,
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
+// Mock state for testing keyed damage events
+const createStateWithDamageEvents = (damageEvents: DamageEvent[]): RootState => {
+  const baseState = createMockState();
+  const { key } = resolveCacheKey({
+    reportCode: baseState.report.activeContext.reportId,
+    fightId: baseState.report.activeContext.fightId,
+  });
+
+  return {
+    ...baseState,
+    events: {
+      ...baseState.events,
+      damage: {
+        entries: damageEvents.length
+          ? {
+              [key]: {
+                events: damageEvents,
+                status: 'succeeded',
+                error: null,
+                cacheMetadata: {
+                  lastFetchedTimestamp: null,
+                  restrictToFightWindow: true,
+                },
+                currentRequest: null,
+              },
+            }
+          : {},
+        accessOrder: damageEvents.length ? [key] : [],
       },
     },
-    healing: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      },
-    },
-    deaths: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      },
-    },
-    combatantInfo: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-        eventCount: 0,
-      },
-    },
-    debuffs: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      },
-    },
-    casts: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      },
-    },
-    resources: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      },
-    },
-    friendlyBuffs: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      },
-    },
-    hostileBuffs: {
-      events: [],
-      loading: false,
-      error: null,
-      cacheMetadata: {
-        lastFetchedReportId: null,
-        lastFetchedFightId: null,
-        lastFetchedTimestamp: null,
-      },
-    },
-  },
-});
+  } as RootState;
+};
 
 // Helper function to create test damage events
 const createDamageEvent = (sourceID: number, targetID: number, amount: number): DamageEvent => ({
@@ -171,7 +94,7 @@ describe('selectDamageEventsByPlayer', () => {
       createDamageEvent(789, 456, 750),
     ];
 
-    const state = createMockState(events) as RootState;
+    const state = createStateWithDamageEvents(events);
     const result = selectDamageEventsByPlayer(state);
 
     expect(result).toEqual({
@@ -181,7 +104,7 @@ describe('selectDamageEventsByPlayer', () => {
   });
 
   it('should return empty object for empty damage events', () => {
-    const state = createMockState([]) as RootState;
+    const state = createStateWithDamageEvents([]);
     const result = selectDamageEventsByPlayer(state);
 
     expect(result).toEqual({});
@@ -190,7 +113,7 @@ describe('selectDamageEventsByPlayer', () => {
   it('should memoize results correctly', () => {
     const events = [createDamageEvent(123, 456, 1000), createDamageEvent(789, 456, 750)];
 
-    const state = createMockState(events) as RootState;
+    const state = createStateWithDamageEvents(events);
     const result1 = selectDamageEventsByPlayer(state);
     const result2 = selectDamageEventsByPlayer(state);
 

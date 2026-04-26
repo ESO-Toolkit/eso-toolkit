@@ -13,7 +13,7 @@ jest.mock('../../features/auth/AuthContext', () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock('../../utils/sentryUtils', () => ({
+jest.mock('../../utils/errorTracking', () => ({
   addBreadcrumb: jest.fn(),
 }));
 

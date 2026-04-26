@@ -1,217 +1,227 @@
-# ESO Log Aggregator - Agent Documentation (CSV Format)
+# AGENTS.md
 
-## Overview
-Project: ESO Log Aggregator - React-based web application for analyzing Elder Scrolls Online (ESO) combat logs
-Features: data visualization, real-time analytics, comprehensive testing infrastructure
+This file provides guidance to AI coding agents (Claude Code, GitHub Copilot, etc.) when working with code in this repository.
 
-## 📚 Documentation Navigation
+> **Note for contributors**: This file is an operational reference for **project maintainers** and **AI coding agents**. It references internal tools and private services that are not available to external contributors. For contributor guidance, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**NEW STRUCTURE**: Documentation has been reorganized! See [documentation/INDEX.md](documentation/INDEX.md) for complete navigation.
-
-**Quick Access**:
-- **AI Agent Guidelines**: [documentation/ai-agents/AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md) - **START HERE**
-- **AI Agent Guides**: [documentation/ai-agents/](documentation/ai-agents/)
-- **Feature Docs**: [documentation/features/](documentation/features/)
-- **Architecture**: [documentation/architecture/](documentation/architecture/)
-- **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
+**React-based ESO (Elder Scrolls Online) combat log analyzer** with 3D visualization, real-time analytics, and comprehensive testing.
 
 ---
 
-## ⚠️ AI Agent Guidelines
+## Essential Commands
 
-**READ THIS FIRST**: [AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md)
-
-**Key Points**:
-- ❌ Don't create summary docs for minor changes
-- ✅ Only document significant features/architecture changes
-- 💬 Be concise - ask before extensive work
-- 📝 Use code comments and clear commit messages for simple changes
-
----
-
-## � Jira Work Item Management (acli)
-
-**REQUIRED**: All AI agents must use `acli` (Atlassian CLI) for Jira work item management.
-
-📖 **Full Documentation**:
-- **[documentation/ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md](documentation/ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md)** - Comprehensive guide
-- **[documentation/ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md](documentation/ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md)** - Quick reference
-
-**Quick Start**:
-```powershell
-# View current story
-acli jira workitem view ESO-372
-
-# Find next task
-acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary,type
-
-# Start work
-acli jira workitem transition ESO-394 --to "In Progress"
-
-# Complete work
-acli jira workitem transition ESO-394 --to "Done"
+```bash
+npm run dev                          # Start dev server (port 3000, main worktree)
+$env:PORT = "3002" ; npm run dev     # Start dev server for worktree (PowerShell)
+npm test                             # Unit tests (changed files, watch mode)
+npm test -- --watchAll=false         # Unit tests (all, non-interactive — use for CI/validation)
+npm test -- --testPathPattern="WorkerPool"  # Run a single test file by name
+npm run validate                     # Pre-commit: typecheck + lint + format
+npm run typecheck                    # TypeScript compilation check
+npm run lint:fix                     # Auto-fix linting issues
+npm run codegen                      # Generate GraphQL types (required after schema changes)
+npm run test:smoke:e2e               # Quick E2E check
 ```
 
-**Epic**: ESO-368 - Replay System Architecture Improvements  
-**Project Board**: https://bkrupa.atlassian.net
+**Worktree setup** (after `worktree_create` or creating a new worktree):
+```bash
+make wt-setup WT=D:/code/eso-log-aggregator-worktrees/ESO-XXX/description
+  # Junctions node_modules -> main repo (if package-lock.json matches) or runs npm ci
+  # Copies .env from main repo
+  # Junctions .twig from main repo (if present)
+make kill-stale                      # Kill stale Node.js processes holding port/file locks
+make refresh                         # Pull latest main + npm ci (run from main repo)
+```
+
+> **Before creating any PR**: run `npm run validate` AND `npm test -- --watchAll=false` — both must pass with zero errors/warnings. Do not open a PR or move a ticket to "In Review" until they do.
+
+**E2E Testing**: Use VS Code MCP Playwright tool (structured testing) or Agent Skills (exploratory)
+**Full Command Reference**: See [AGENTS_COMMANDS.md](AGENTS_COMMANDS.md)
 
 ---
 
-## �🆕 Scribing Detection System (October 2025)
+## Universal Rules
 
-**CRITICAL DISCOVERY**: Signature scripts appear in different event types!
-
-📖 **Full Documentation**:
-- **[documentation/ai-agents/scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md](documentation/ai-agents/scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md)** - Complete guide
-- **[documentation/ai-agents/scribing/AI_SCRIBING_QUICK_REFERENCE.md](documentation/ai-agents/scribing/AI_SCRIBING_QUICK_REFERENCE.md)** - Quick reference
-- **[documentation/features/scribing/](documentation/features/scribing/)** - Feature documentation
-
-**Key Insight**: Always check **ALL event types** (cast, damage, healing, buff, debuff, **resource**) when searching for signature scripts. Example: Anchorite's Potency appears as resource events, not combat events!
-
-**Test Coverage**: 38 tests passing, fully validated against Fight 11 combat logs.
+| Rule | Details |
+|------|---------|
+| **Named exports only** | No default exports — use named exports throughout |
+| **Tests required** | New features must include tests |
+| **GraphQL codegen** | Run `npm run codegen` after any GraphQL schema changes |
+| **Code style** | Follow [eslint.config.mjs](eslint.config.mjs) and [.prettierrc](.prettierrc) — tools enforce style |
+| **Dev server ports** | Worktree port pairs 3000-3009 (even=HTTP, odd=HTTPS) — see [.claude-rules.md](.claude-rules.md) |
+| **Worktrees** | Ticket worktrees go in `D:\code\eso-log-aggregator-worktrees\` (persistent, for PRs). Claude Code's `.claude/worktrees/` is for ephemeral agent isolation only — never use it for ticket work. |
 
 ---
 
-Category,Item,Type,Description,Configuration_File,Command,Directory,Notes
-repository_info,project_name,string,ESO Log Aggregator,,,,"React-based web application for ESO combat log analysis"
-repository_info,primary_features,list,"data visualization, real-time analytics, testing infrastructure",,,,"Core application capabilities"
-tech_stack,frontend_framework,dependency,React 19+ with TypeScript,package.json,,,"Main UI framework"
-tech_stack,build_tool,dependency,Vite 6.3+ with SWC,vite.config.mjs,,,"Modern build tool with HMR"
-tech_stack,state_management,dependency,Redux Toolkit with Redux Persist,package.json,,src/store,"State management solution"
-tech_stack,routing,dependency,React Router DOM v7,package.json,,,"Client-side routing"
-tech_stack,graphql,dependency,Apollo Client with Code Generation,codegen.yml,,src/graphql,"GraphQL client and type generation"
-tech_stack,ui_library_1,dependency,Material-UI (MUI) v7,package.json,,,"Primary UI component library"
-tech_stack,ui_library_2,dependency,Emotion for styling,package.json,,,"CSS-in-JS styling solution"
-tech_stack,ui_library_3,dependency,React Three Fiber for 3D visualization,package.json,,,"3D graphics rendering"
-tech_stack,ui_library_4,dependency,Chart.js for data visualization,package.json,,,"Data visualization charts"
-tech_stack,testing_framework_1,dependency,Jest,jest.config.cjs,,tests,"Unit and integration testing"
-tech_stack,testing_framework_2,dependency,Playwright,playwright.nightly.config.ts,,tests,"End-to-end testing"
-tech_stack,testing_framework_3,dependency,Testing Library,package.json,,,"Component testing utilities"
-tech_stack,code_quality_1,dependency,ESLint 9,eslint.config.js,,,"Code linting"
-tech_stack,code_quality_2,dependency,Prettier,package.json,,,"Code formatting"
-tech_stack,code_quality_3,dependency,TypeScript,tsconfig.json,,,"Static type checking"
-tech_stack,documentation,dependency,Storybook,.storybook,,,"Component documentation"
-tech_stack,monitoring,dependency,Sentry,package.json,,,"Error tracking and monitoring"
-tech_stack,deployment,platform,GitHub Pages,package.json,,,"Production deployment platform"
-directory_structure,src,directory,Main application source code,,,,
-directory_structure,tests,directory,End-to-end tests (Playwright),,,,
-directory_structure,public,directory,Static assets and HTML template,,,,
-directory_structure,scripts,directory,Build and utility scripts,,,,
-directory_structure,documentation,directory,Technical documentation,,,,
-directory_structure,data,directory,Static data files (abilities.json),,,,
-directory_structure,.storybook,directory,Storybook configuration,,,,
-directory_structure,coverage,directory,Test coverage reports (generated),,,,
-directory_structure,build,directory,Production build output (generated),,,,
-directory_structure,playwright-report,directory,Playwright test reports (generated),,,,
-config_file,package.json,json,Dependencies and scripts,package.json,,,"Project configuration and dependencies"
-config_file,vite.config.mjs,javascript,Vite build configuration,vite.config.mjs,,,"Build tool configuration"
-config_file,jest.config.cjs,javascript,Jest testing configuration,jest.config.cjs,,,"Unit test configuration"
-config_file,playwright.nightly.config.ts,typescript,Playwright E2E test configurations,playwright.nightly.config.ts,,,"End-to-end test configuration"
-config_file,eslint.config.js,javascript,ESLint linting rules,eslint.config.js,,,"Code linting configuration"
-config_file,tsconfig.json,json,TypeScript configuration,tsconfig.json,,,"TypeScript compiler configuration"
-config_file,codegen.yml,yaml,GraphQL code generation,codegen.yml,,,"GraphQL type generation configuration"
-config_file,Makefile,makefile,Cross-platform build commands,Makefile,,,"Cross-platform build automation"
-tool,vite,build_tool,Modern build tool with HMR,vite.config.mjs,,,"React SWC, SVGR plugins, path aliases"
-tool,typescript,compiler,Static typing,tsconfig.json,,,"Main config and type checking"
-tool,eslint,linter,Code linting (Flat config format),eslint.config.js,,,"React, TypeScript, Import resolution plugins"
-tool,jest,test_framework,Unit & Integration Testing,jest.config.cjs,,,"Main, Coverage, Smoke, CRA compatibility configs"
-tool,playwright,test_framework,End-to-End Testing,playwright.nightly.config.ts,,,"Nightly, Smoke, Screen Size configs with sharding support"
-tool,testing_library,test_utility,Component testing utilities,package.json,,,"React component testing helpers"
-tool,prettier,formatter,Code formatting,package.json,,,"Automatic code formatting"
-tool,apollo_client,graphql_client,GraphQL client,package.json,,,"GraphQL queries and mutations"
-tool,graphql_codegen,generator,Auto-generates TypeScript types,codegen.yml,,,"Generates hooks and typed document nodes"
-command,install_deps,development,Install dependencies,,npm ci,,"Install project dependencies"
-command,start_dev,development,Start development server,,npm run dev,,"Start local development server"
-command,start_dev_alt,development,Start development server (alternative),,npm start,,"Alternative command to start dev server"
-command,generate_types,development,Generate GraphQL types,,npm run codegen,,"Required after schema changes"
-command,type_check,development,Type checking,,npm run typecheck,,"TypeScript compilation check"
-command,lint,development,Linting,,npm run lint,,"ESLint code analysis"
-command,lint_fix,development,Linting with auto-fix,,npm run lint:fix,,"ESLint with automatic fixes"
-command,format,development,Code formatting,,npm run format,,"Format code with Prettier"
-command,format_check,development,Check code formatting,,npm run format:check,,"Check if code is properly formatted"
-command,test_unit,testing,Unit tests (changed files only),,npm test,,"Run tests on changed files"
-command,test_all,testing,All tests,,npm run test:all,,"Run all unit tests"
-command,test_watch,testing,Watch mode,,npm run test:watch,,"Run tests in watch mode"
-command,test_changed,testing,Only changed files,,npm run test:changed,,"Run tests on changed files only"
-command,test_coverage,testing,Generate coverage report,,npm run test:coverage,,"Generate test coverage report"
-command,coverage_open,testing,Open coverage report,,npm run coverage:open,,"Open coverage report in browser"
-command,coverage_full,testing,Complete coverage workflow,,npm run coverage:full,,"Complete coverage workflow"
+## CRITICAL: Git Workflow
 
-command,test_nightly_all,testing,Nightly tests (all browsers),,npm run test:nightly:all,,"Comprehensive cross-browser testing"
-command,test_nightly_chromium,testing,Nightly tests (Chromium),,npm run test:nightly:chromium,,"Nightly tests in Chromium"
-command,test_nightly_firefox,testing,Nightly tests (Firefox),,npm run test:nightly:firefox,,"Nightly tests in Firefox"
-command,test_nightly_webkit,testing,Nightly tests (WebKit),,npm run test:nightly:webkit,,"Nightly tests in WebKit"
-command,test_smoke,testing,Smoke tests (unit and E2E),,npm run test:smoke,,"Quick validation tests"
-command,test_smoke_unit,testing,Smoke tests (unit only),,npm run test:smoke:unit,,"Quick unit test validation"
-command,test_smoke_e2e,testing,Smoke tests (E2E only),,npm run test:smoke:e2e,,"Quick E2E test validation"
-command,build,build,Production build,,npm run build,,"Create production build"
-command,preview,build,Preview production build,,npm run preview,,"Preview production build locally"
-command,analyze,build,Bundle analysis,,npm run analyze,,"Analyze bundle size"
-command,analyze_bundle,build,Bundle analysis (detailed),,npm run analyze-bundle,,"Detailed bundle analysis"
-command,make_help_ps,cross_platform,Show all available commands,,.\make.ps1 help,,"PowerShell make commands help"
-command,make_dev_ps,cross_platform,Start development server,,.\make.ps1 dev,,"PowerShell start dev server"
-command,make_test_ps,cross_platform,Run tests,,.\make.ps1 test,,"PowerShell run tests"
-command,make_build_ps,cross_platform,Production build,,.\make.ps1 build,,"PowerShell production build"
-command,make_clean_ps,cross_platform,Clean build artifacts,,.\make.ps1 clean,,"PowerShell clean artifacts"
-command,make_help,cross_platform,Show all available commands,,make help,,"Unix/Linux make commands help"
-command,make_dev,cross_platform,Start development server,,make dev,,"Unix/Linux start dev server"
-command,make_test,cross_platform,Run tests,,make test,,"Unix/Linux run tests"
-command,make_build,cross_platform,Production build,,make build,,"Unix/Linux production build"
-command,make_clean,cross_platform,Clean build artifacts,,make clean,,"Unix/Linux clean artifacts"
-command,coverage_analyze,utility,Coverage analysis,,npm run coverage:analyze,scripts,"Analyze test coverage"
-command,coverage_badges,utility,Coverage badges,,npm run coverage:badges,scripts,"Generate coverage badges"
-command,analyze_bundle_util,utility,Bundle analysis,,npm run analyze-bundle,scripts,"Bundle size analysis"
-command,fetch_abilities,utility,Data fetching,,npm run fetch-abilities,scripts,"Fetch ESO abilities data"
-command,download_report_data,utility,Download report data,,npm run download-report-data,scripts,"Download report data files"
-command,health_check,utility,Health checks,,npm run health-check,scripts,"System health validation"
-command,generate_version,utility,Version management,,node scripts/generate-version.cjs,scripts,"Generate version information"
-command,clean_version,utility,Version cleanup,,node scripts/clean-version.cjs,scripts,"Clean version files"
-command,test_nightly_shard1,sharding,Manual sharding (shard 1),,npm run test:nightly:shard1,,"Parallel execution shard 1"
-command,test_nightly_shard2,sharding,Manual sharding (shard 2),,npm run test:nightly:shard2,,"Parallel execution shard 2"
-command,test_nightly_shard3,sharding,Manual sharding (shard 3),,npm run test:nightly:shard3,,"Parallel execution shard 3"
-command,test_nightly_sharded,sharding,Automated sharding,,npm run test:nightly:sharded,,"Automated parallel execution"
-file_organization,components,directory,UI components,,,src/components,"React UI components"
-file_organization,features,directory,Feature-specific code,,,src/features,"Feature modules"
-file_organization,store,directory,Redux state management,,,src/store,"Redux store and slices"
-file_organization,types,directory,TypeScript type definitions,,,src/types,"TypeScript type definitions"
-file_organization,utils,directory,Utility functions,,,src/utils,"Utility and helper functions"
-file_organization,graphql,directory,GraphQL queries and mutations,,,src/graphql,"GraphQL queries, mutations, generated types"
-path_alias,@/,alias,Root source directory,tsconfig.json,,,"Maps to src/ directory"
-path_alias,@components/,alias,Components directory,tsconfig.json,,,"Maps to src/components/ directory"
-path_alias,@utils/,alias,Utils directory,tsconfig.json,,,"Maps to src/utils/ directory"
-path_alias,@store/,alias,Store directory,tsconfig.json,,,"Maps to src/store/ directory"
-testing_strategy,unit_tests,strategy,Jest for component and utility testing,jest.config.cjs,,,"Component and utility testing"
-testing_strategy,integration_tests,strategy,Testing Library for component integration,package.json,,,"Component integration testing"
-testing_strategy,e2e_tests,strategy,Playwright for full user workflows,playwright.nightly.config.ts,,,"End-to-end user workflow testing"
-testing_strategy,smoke_tests,strategy,Quick validation of critical paths,playwright.smoke.config.ts,,,"Quick critical path validation"
-testing_strategy,nightly_tests,strategy,Comprehensive cross-browser testing,playwright.nightly.config.ts,,,"Comprehensive cross-browser validation"
-code_quality_workflow,validate,workflow,TypeScript + ESLint + Prettier,,npm run validate,,"Complete validation workflow"
-code_quality_workflow,typecheck,workflow,TypeScript compilation check,,npm run typecheck,,"TypeScript compilation validation"
-code_quality_workflow,lint_check,workflow,ESLint analysis,,npm run lint,,"Code quality analysis"
-code_quality_workflow,format_validation,workflow,Prettier formatting check,,npm run format:check,,"Code formatting validation"
-ci_cd,pr_checks,workflow,Automated testing and validation,.github/workflows,,,"GitHub Actions PR validation"
-ci_cd,deploy,workflow,Production deployment to GitHub Pages,.github/workflows,,,"Automated deployment"
-ci_cd,coverage_reporting,workflow,Automated coverage reporting with badges,.github/workflows,,,"Coverage tracking and badges"
-ci_cd,nightly_testing,workflow,Comprehensive cross-browser testing,.github/workflows,,,"Nightly cross-browser validation"
-environment,nodejs_version,requirement,≥20.0.0 required,package.json,,,"Minimum Node.js version"
-environment,package_manager,requirement,npm (with package-lock.json),package-lock.json,,,"Package management"
-environment,browser_support,requirement,"Modern browsers (Chrome, Firefox, Safari, Edge)",,,,"Supported browsers"
-environment,memory_allocation,configuration,--max-old-space-size=8192,package.json,,,"Increased memory for large builds"
-environment,cross_platform,compatibility,"Windows, macOS, Linux",Makefile,,,"Cross-platform script support"
-quick_start,step_1,checklist,Install Node.js 20+,,,,"Environment setup"
-quick_start,step_2,checklist,Run npm ci to install dependencies,,npm ci,,"Dependency installation"
-quick_start,step_3,checklist,Run npm run codegen to generate GraphQL types,,npm run codegen,,"GraphQL type generation"
-quick_start,step_4,checklist,Run npm run dev to start development server,,npm run dev,,"Development server startup"
-quick_start,step_5,checklist,Run npm test to verify setup,,npm test,,"Setup verification"
-quick_start,step_6,checklist,Run npm run validate before committing changes,,npm run validate,,"Pre-commit validation"
-troubleshooting,graphql_errors,issue,Run npm run codegen after schema changes,,npm run codegen,,"GraphQL schema synchronization"
-troubleshooting,type_errors,issue,Run npm run typecheck to identify issues,,npm run typecheck,,"TypeScript error identification"
-troubleshooting,test_failures,issue,Check npm run test:coverage for detailed reports,,npm run test:coverage,,"Test failure analysis"
-troubleshooting,build_issues,issue,Clear cache with make clean or manual cleanup,,make clean,,"Build artifact cleanup"
-troubleshooting,memory_issues,issue,Increase NODE_OPTIONS memory limit,package.json,,,"Memory allocation adjustment"
-performance,bundle_analysis,optimization,Bundle analysis tools,package.json,,,"Bundle size monitoring"
-performance,code_splitting,optimization,Code splitting with Vite,vite.config.mjs,,,"Efficient code loading"
-performance,react_optimization,optimization,Optimized React components,src/components,,,"Component performance optimization"
-performance,redux_optimization,optimization,Efficient Redux state management,src/store,,,"State management efficiency"
-performance,coverage_monitoring,optimization,Coverage thresholds and monitoring,jest.config.cjs,,,"Test coverage tracking"
-documentation,technical_docs,reference,See documentation/ directory,,,documentation,"Detailed technical documentation"
+**ALWAYS use the Workflow Skill before starting any work** — it handles branch creation, main-branch protection, and twig dependencies automatically.
+
+- **NEVER commit directly to main** — always work on feature branches (`ESO-XXX/description`)
+- **ALWAYS continue through to PR creation after implementation** (see below)
+- Recovery if on main: `@workspace Recover from main commits`
+
+---
+
+## CRITICAL: Post-Implementation Workflow (MANDATORY)
+
+**After finishing implementation, agents MUST automatically continue through these steps without waiting for the user to ask:**
+
+1. **Validate** — `npm run validate` AND `npm test -- --watchAll=false` must both pass
+2. **Commit & Push** — stage all changes, commit with a descriptive message, push to origin
+3. **Create PR** — use the [create-pr skill](.agents/skills/create-pr/SKILL.md) to open a PR automatically
+4. **Update Jira** — transition the ticket to "In Review"
+
+This is **not optional**. The workflow skill (Steps 5-8) defines the full procedure. Do not stop after writing code — the task is not complete until the PR is open and the ticket is moved to "In Review".
+
+---
+
+## Architecture Overview
+
+### Data Flow: GraphQL -> Redux -> Components
+The app fetches combat log data via **Apollo Client** (GraphQL), stores processed results in **Redux Toolkit** slices, and renders through React components. GraphQL types and hooks are auto-generated from `public/schema.graphql` via `npm run codegen` into `src/graphql/generated/`.
+
+### Redux Store Structure (`src/store/`)
+The store uses domain-specific reducers combined with Redux Persist for hydration:
+- `report/` — current report metadata and navigation state
+- `master_data/` — ESO game data (abilities, sets, classes)
+- `player_data/` — per-player combat stats and breakdowns
+- `events_data/` — raw combat event timelines
+- `parse_analysis/` — computed parse metrics and rankings
+- `dashboard/` — UI state for dashboard views
+- Feature slices imported from `src/features/` (e.g., `loadout-manager/store/`)
+
+### Web Workers (`src/workers/`)
+Heavy computation (parse analysis, event processing) is offloaded to a **WorkerPool** using **Comlink** for transparent RPC. `WorkerPool` manages task queuing, concurrent worker lifecycle, and progress callbacks. `workerFactories.ts` creates typed worker instances.
+
+### Feature Modules (`src/features/`)
+Self-contained feature areas with their own components, hooks, store slices, and types. Key features:
+- `fight_replay/` — 3D combat visualization (React Three Fiber, 60fps, 50+ actors)
+- `scribing/` — ESO skill customization detection (signature scripts appear in ALL event types including resource)
+- `loadout-manager/` — character equipment/skill configuration
+- `role_detection/` — automatic player role classification from combat data
+- `roster-hub/` — team roster management
+
+### Tech Stack
+- **Framework**: React 19+ with TypeScript
+- **Build**: Vite 6.3+ with SWC
+- **State**: Redux Toolkit with Redux Persist
+- **GraphQL**: Apollo Client with Code Generation
+- **UI**: Material-UI (MUI) v7, Emotion, Chart.js
+- **Testing**: Jest, Playwright, Testing Library
+
+**Full details**: [AGENTS_TECH_STACK.md](AGENTS_TECH_STACK.md)
+
+Path aliases (`@/` → `src/`, `@components/`, `@features/`, etc.) are defined in `tsconfig.json`.
+
+---
+
+## Domain Terminology (ESO-Specific)
+
+| Term | Meaning |
+|------|---------|
+| **Scribing** | ESO's skill customization system — signature scripts appear in ALL event types (cast, damage, healing, buff, debuff, **resource**) |
+| **Fight replay** | 3D visualization of combat encounters at 60fps with 50+ actors |
+| **Report ID** | Unique identifier for combat logs (e.g., `3gjVGWB2dxCL8XAw`) |
+| **Loadout** | Character equipment and skill configuration |
+| **Ability** | Individual skills/powers from ESO game data |
+
+**Deep dive**: [AI_SCRIBING_DETECTION_INSTRUCTIONS.md](documentation/ai-agents/scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md)
+
+### Jira Project Info
+- **Board**: https://bkrupa.atlassian.net
+- **Use**: Jira Agent Skill (required for all work item operations)
+
+---
+
+## Agent Skills
+
+Skills are `SKILL.md` files in `.agents/skills/`, following the [Agent Skills specification](https://agentskills.io/specification) for cross-client interoperability.
+
+**Full Index**: [documentation/INDEX.md](documentation/INDEX.md)
+
+### Skills by Category
+
+**CI/CD & Debugging:**
+- **Debug CI Failure**: [.agents/skills/debug-ci-failure/SKILL.md](.agents/skills/debug-ci-failure/SKILL.md) - End-to-end CI failure debugging workflow
+- **Deploy Preview**: [.agents/skills/deploy-preview/SKILL.md](.agents/skills/deploy-preview/SKILL.md) - Deploy local builds to dev-previews with a custom alias
+- **GitHub Actions Logs**: [.agents/skills/github-actions-logs/SKILL.md](.agents/skills/github-actions-logs/SKILL.md) - Parse and analyze GH Actions logs
+- **Troubleshoot**: [.agents/skills/troubleshoot/SKILL.md](.agents/skills/troubleshoot/SKILL.md) - Quick-reference fixes for common dev issues
+
+**Data & Content:**
+- **Class Skill Regen**: [.agents/skills/class-skill-regen/SKILL.md](.agents/skills/class-skill-regen/SKILL.md) - Refresh class skill descriptions/icons from ESO-Hub API
+- **Gear Data Regen**: [.agents/skills/gear-data-regen/SKILL.md](.agents/skills/gear-data-regen/SKILL.md) - Gear set bonus/tooltip data from ESO-Hub
+- **Mythic Armor Corrections**: [.agents/skills/mythic-armor-corrections/SKILL.md](.agents/skills/mythic-armor-corrections/SKILL.md) - Add/update ARMOR_TYPE_CORRECTIONS for new mythic armor
+- **No-Edit Generated**: [.agents/skills/no-edit-generated/SKILL.md](.agents/skills/no-edit-generated/SKILL.md) - Never manually edit generated files
+- **Skill Data Regen**: [.agents/skills/skill-data-regen/SKILL.md](.agents/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
+- **UESP Data**: [.agents/skills/uesp-data/SKILL.md](.agents/skills/uesp-data/SKILL.md) - Item icon management
+
+**Integrations:**
+- **Auth / OAuth**: [.agents/skills/auth/SKILL.md](.agents/skills/auth/SKILL.md) - Browser session authentication
+- **Jira Integration**: [.agents/skills/jira/SKILL.md](.agents/skills/jira/SKILL.md)
+- **Report Debugging**: [.agents/skills/reports/SKILL.md](.agents/skills/reports/SKILL.md)
+- **Rollbar Integration**: [.agents/skills/rollbar/SKILL.md](.agents/skills/rollbar/SKILL.md)
+
+**Testing & Quality:**
+- **Fix Lint Errors**: [.agents/skills/fix-lint/SKILL.md](.agents/skills/fix-lint/SKILL.md) - Diagnose and fix ESLint errors after auto-fix
+- **Fix Type Errors**: [.agents/skills/fix-types/SKILL.md](.agents/skills/fix-types/SKILL.md) - Diagnose and fix TypeScript type errors
+- **Playwright Testing**: [.agents/skills/playwright/SKILL.md](.agents/skills/playwright/SKILL.md) - **E2E test execution**
+- **Testing & Dev**: [.agents/skills/testing/SKILL.md](.agents/skills/testing/SKILL.md)
+- **Write Playwright Tests**: [.agents/skills/write-playwright-tests/SKILL.md](.agents/skills/write-playwright-tests/SKILL.md) - Authoring visual/E2E tests (skeleton detection, pre-loading, mocking)
+
+**UI & Meta:**
+- **Create New Skill**: [.agents/skills/create-skill/SKILL.md](.agents/skills/create-skill/SKILL.md) - Add a new SKILL.md to the project
+- **Tooling Audit**: [.agents/skills/tooling-audit/SKILL.md](.agents/skills/tooling-audit/SKILL.md) - Comprehensive gap audit of MCP tools, skills, documentation, cross-client config parity, and the ticket-to-PR pipeline, with Jira ticket creation
+- **Scratch Directory**: [.agents/skills/scratch-dir/SKILL.md](.agents/skills/scratch-dir/SKILL.md) - Gitignored directory for ad-hoc output files
+- **UI Updates**: [.agents/skills/ui-updates/SKILL.md](.agents/skills/ui-updates/SKILL.md) - Theme-consistent UI changes (glassmorphism, colors, typography, patterns)
+
+**Workflow & Git:**
+- **Create PR**: [.agents/skills/create-pr/SKILL.md](.agents/skills/create-pr/SKILL.md) - PR creation with PowerShell-safe `--body-file` pattern and automatic UI screenshots
+- **Git Operations**: [.agents/skills/git/SKILL.md](.agents/skills/git/SKILL.md) - Branch management (twig with plain git fallbacks)
+- **Git Workflow Enforcement**: [.agents/skills/workflow/SKILL.md](.agents/skills/workflow/SKILL.md) — **Use this FIRST, before reading any files or writing any code. Always creates a new worktree; in-place checkout only when user explicitly requests it.**
+- **Post-Squash Rebase**: [.agents/skills/rebase/SKILL.md](.agents/skills/rebase/SKILL.md) - Recovery after squash-merge of stacked branches
+- **Rebase & Conflicts**: [.agents/skills/rebase-conflicts/SKILL.md](.agents/skills/rebase-conflicts/SKILL.md) - Rebase branches and resolve merge conflicts step-by-step
+
+---
+
+## Platform Gotchas (Windows)
+
+PowerShell strips backticks in quoted strings — always use `--body-file` for PR/commit bodies (see [create-pr skill](.agents/skills/create-pr/SKILL.md) and [git skill](.agents/skills/git/SKILL.md)).
+
+---
+
+## AI Agent Guidelines
+
+- **Don't** create summary docs for minor changes
+- **Only** document significant features/architecture changes
+- **Be concise** - ask before extensive work
+- **Use code comments** and clear commit messages for simple changes
+
+### Documentation Placement
+
+New docs go in `documentation/` subdirectories by type. Check `documentation/INDEX.md` after creating files. Full guidelines: [DOCUMENTATION_BEST_PRACTICES.md](documentation/DOCUMENTATION_BEST_PRACTICES.md)
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| GraphQL errors | `npm run codegen` |
+| Module errors | Delete `node_modules/`, run `npm ci` |
+| Memory issues | Increase NODE_OPTIONS in package.json |
+
+---
+
+## References
+
+| File | Purpose |
+|------|---------|
+| [AGENTS_TECH_STACK.md](AGENTS_TECH_STACK.md) | Complete tech stack and architecture |
+| [AGENTS_COMMANDS.md](AGENTS_COMMANDS.md) | Exhaustive command reference |
+| [documentation/INDEX.md](documentation/INDEX.md) | Full documentation index |
+| [documentation/features/](documentation/features/) | Feature documentation |
+| [documentation/architecture/](documentation/architecture/) | Architecture docs |
+
+---
+

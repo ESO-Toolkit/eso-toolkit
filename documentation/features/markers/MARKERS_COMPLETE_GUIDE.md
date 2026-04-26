@@ -380,7 +380,7 @@ npm run test:smoke:e2e -- markers
 
 - **[Architecture](../../architecture/system-architecture.md)** - Overall system design
 - **[3D Rendering](../../architecture/performance-patterns.md)** - Rendering optimization
-- **[Implementation Summary](../../implementation/ESO-374_IMPLEMENTATION_SUMMARY.md)** - Jira ticket ESO-374
+- **Jira**: ESO-374
 
 ---
 

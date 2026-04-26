@@ -3,18 +3,21 @@ import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/gql/graphql';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
-import { fetchCombatantInfoEvents } from '../../store/events_data/combatantInfoEventsSlice';
-import { selectReportFights } from '../../store/report/reportSelectors';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
-  selectCombatantInfoEvents,
-  selectCombatantInfoEventsLoading,
-} from '../../store/selectors/eventsSelectors';
+  selectCombatantInfoEventsEntryForContext,
+  selectCombatantInfoEventsForContext,
+} from '../../store/events_data/combatantInfoEventsSelectors';
+import { fetchCombatantInfoEvents } from '../../store/events_data/combatantInfoEventsSlice';
+import type { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 import { CombatantInfoEvent } from '../../types/combatlogEvents';
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
 
 interface UseCombatantInfoEventsOptions {
   restrictToFightWindow?: boolean;
+  context?: ReportFightContextInput;
 }
 
 export function useCombatantInfoEvents(options?: UseCombatantInfoEventsOptions): {
@@ -23,35 +26,32 @@ export function useCombatantInfoEvents(options?: UseCombatantInfoEventsOptions):
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
   const client = useEsoLogsClientInstance();
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
 
-  // Move selectors BEFORE the effects that use them
-  const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
-  const isCombatantInfoEventsLoading = useSelector(selectCombatantInfoEventsLoading);
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight?.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const combatantInfoEvents = useSelector((state: RootState) =>
+    selectCombatantInfoEventsForContext(state, context),
+  );
+  const combatantInfoEntry = useSelector((state: RootState) =>
+    selectCombatantInfoEventsEntryForContext(state, context),
+  );
+  const isCombatantInfoEventsLoading = combatantInfoEntry?.status === 'loading';
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
   React.useEffect(() => {
-    if (reportId && selectedFight) {
+    if (context.reportCode && selectedFight) {
       dispatch(
         fetchCombatantInfoEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
           restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client, restrictToFightWindow]);
+  }, [dispatch, context.reportCode, context.fightId, selectedFight, client, restrictToFightWindow]);
 
   return React.useMemo(
     () => ({

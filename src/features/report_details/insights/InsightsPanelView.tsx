@@ -14,10 +14,11 @@ import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
 interface InsightsPanelViewProps {
   fight: FightFragment;
-  durationSeconds: number;
+  durationMs: number;
   abilityEquipped: Partial<Record<KnownAbilities, string[]>>;
   buffActors: Partial<Record<KnownAbilities, Set<string>>>;
-  firstDamageDealer: string | null;
+  fightInitiator: string | null;
+  selectedPlayerId: number | null;
   isLoading: boolean;
 }
 
@@ -51,8 +52,9 @@ const CHAMPION_POINT_DATA = [
   { name: 'From the Brink', emoji: '🛡️', knownAbility: KnownAbilities.FROM_THE_BRINK },
 ];
 
-// Helper function to format duration into minutes and seconds
-const formatDuration = (totalSeconds: number): string => {
+// Helper function to format duration from milliseconds into minutes and seconds
+const formatDuration = (ms: number): string => {
+  const totalSeconds = ms / 1000;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = Math.floor(totalSeconds % 60);
   const decimals = Math.round((totalSeconds % 1) * 10);
@@ -66,10 +68,11 @@ const formatDuration = (totalSeconds: number): string => {
 
 export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   fight,
-  durationSeconds,
+  durationMs,
   abilityEquipped,
   buffActors,
-  firstDamageDealer,
+  fightInitiator,
+  selectedPlayerId,
   isLoading,
 }) => {
   const theme = useTheme();
@@ -137,11 +140,11 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 }}
               >
                 <strong>Duration: </strong>
-                <span>{formatDuration(durationSeconds)}</span>
+                <span>{formatDuration(durationMs)}</span>
               </Typography>
             </Box>
 
-            {firstDamageDealer && (
+            {fightInitiator && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
                 <Box
                   sx={{
@@ -168,8 +171,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                     fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
                   }}
                 >
-                  <strong>First Damage Dealer: </strong>
-                  <span>{firstDamageDealer}</span>
+                  <strong>Fight initiator: </strong>
+                  <span>{fightInitiator}</span>
                 </Typography>
               </Box>
             )}
@@ -190,6 +193,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   display: 'grid',
                   gridTemplateColumns: '1fr',
                   gap: 1,
+                  overflow: 'hidden',
                 }}
               >
                 {ABILITY_DATA.map((ability) => {
@@ -223,7 +227,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           theme.palette.mode === 'dark'
                             ? '1px solid rgba(255, 255, 255, 0.1)'
                             : '1px solid rgba(15, 23, 42, 0.1)',
-                        height: '100%',
+                        minHeight: 56,
                       }}
                     >
                       <Box
@@ -347,7 +351,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <StatusEffectUptimesPanel fight={fight} />
+            <StatusEffectUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
@@ -361,7 +365,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <BuffUptimesPanel fight={fight} />
+            <BuffUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
@@ -375,7 +379,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <DebuffUptimesPanel fight={fight} />
+            <DebuffUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
@@ -389,7 +393,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <DamageBreakdownPanel fight={fight} />
+            <DamageBreakdownPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
@@ -403,7 +407,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <DamageTypeBreakdownPanel fight={fight} />
+            <DamageTypeBreakdownPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
       </Box>

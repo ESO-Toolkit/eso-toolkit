@@ -1,0 +1,313 @@
+import { KnownSetIDs } from '../types/abilities';
+import * as errorTracking from './errorTracking';
+import {
+  getSetDisplayName,
+  findSetIdByName,
+  isUnsupportedSet,
+  getAllSetIds,
+  getSetIdsSortedByName,
+  getAllSetDisplayNames,
+  getSetDisplayNameWithUnsupportedIndicator,
+  rosterSetNameToId,
+  setIdToRosterName,
+  SET_DISPLAY_NAMES,
+  UNSUPPORTED_SET_NAMES,
+} from './setNameUtils';
+
+// Mock errorTracking
+jest.mock('./errorTracking', () => ({
+  reportError: jest.fn(),
+}));
+
+describe('setNameUtils', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('getSetDisplayName', () => {
+    it('should return empty string for undefined setId', () => {
+      const result = getSetDisplayName(undefined);
+      expect(result).toBe('');
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
+    });
+
+    it('should return empty string for null setId', () => {
+      const result = getSetDisplayName(null);
+      expect(result).toBe('');
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
+    });
+
+    it('should return correct display name for known set', () => {
+      const result = getSetDisplayName(KnownSetIDs.ROARING_OPPORTUNIST);
+      expect(result).toBe('Roaring Opportunist');
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
+    });
+
+    it('should return "Unknown Set" message for unknown set ID', () => {
+      const unknownSetId = 99999 as KnownSetIDs;
+      const result = getSetDisplayName(unknownSetId);
+      expect(result).toBe('Unknown Set (99999)');
+    });
+
+    it('should report error to error tracking when unknown set is detected', () => {
+      // Use a unique ID (88888) — 99999 was already added to the dedup Set by the previous test
+      const unknownSetId = 88888 as KnownSetIDs;
+      getSetDisplayName(unknownSetId);
+
+      expect(errorTracking.reportError).toHaveBeenCalledTimes(1);
+      expect(errorTracking.reportError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Unknown set ID detected: 88888',
+        }),
+        expect.objectContaining({
+          setId: 88888,
+          setIdType: 'number',
+          component: 'setNameUtils',
+          function: 'getSetDisplayName',
+          availableSetCount: expect.any(Number),
+        }),
+      );
+    });
+
+    it('should not report the same unknown set ID more than once (ESO-689)', () => {
+      const unknownSetId = 77777 as KnownSetIDs;
+      getSetDisplayName(unknownSetId);
+      getSetDisplayName(unknownSetId);
+      getSetDisplayName(unknownSetId);
+
+      expect(errorTracking.reportError).toHaveBeenCalledTimes(1);
+    });
+
+    it('should include context data in error tracking report', () => {
+      const unknownSetId = 12345 as KnownSetIDs;
+      getSetDisplayName(unknownSetId);
+
+      const errorCall = (errorTracking.reportError as jest.Mock).mock.calls[0];
+      const context = errorCall[1];
+
+      expect(context).toHaveProperty('setId', 12345);
+      expect(context).toHaveProperty('setIdType', 'number');
+      expect(context).toHaveProperty('component', 'setNameUtils');
+      expect(context).toHaveProperty('function', 'getSetDisplayName');
+      expect(context).toHaveProperty('availableSetCount');
+      expect(typeof context.availableSetCount).toBe('number');
+      expect(context.availableSetCount).toBeGreaterThan(0);
+    });
+
+    it('should not report error for known Unknown Set IDs', () => {
+      const result = getSetDisplayName(KnownSetIDs.HUNTSMANS_WARMASK);
+      expect(result).toBe("Huntsman's Warmask");
+      expect(errorTracking.reportError).not.toHaveBeenCalled();
+    });
+
+    it('should handle multiple calls to unknown sets independently', () => {
+      getSetDisplayName(11111 as KnownSetIDs);
+      getSetDisplayName(22222 as KnownSetIDs);
+      getSetDisplayName(33333 as KnownSetIDs);
+
+      expect(errorTracking.reportError).toHaveBeenCalledTimes(3);
+
+      const calls = (errorTracking.reportError as jest.Mock).mock.calls;
+      expect(calls[0][1].setId).toBe(11111);
+      expect(calls[1][1].setId).toBe(22222);
+      expect(calls[2][1].setId).toBe(33333);
+    });
+  });
+
+  describe('findSetIdByName', () => {
+    it('should return undefined for null or undefined names', () => {
+      expect(findSetIdByName(null)).toBeUndefined();
+      expect(findSetIdByName(undefined)).toBeUndefined();
+      expect(findSetIdByName('')).toBeUndefined();
+    });
+
+    it('should find set by exact name match', () => {
+      const result = findSetIdByName('Roaring Opportunist');
+      expect(result).toBe(KnownSetIDs.ROARING_OPPORTUNIST);
+    });
+
+    it('should find set by case-insensitive match', () => {
+      const result = findSetIdByName('roaring opportunist');
+      expect(result).toBe(KnownSetIDs.ROARING_OPPORTUNIST);
+    });
+
+    it('should find set by name without "Perfected" prefix', () => {
+      const result = findSetIdByName('Perfected Saxhleel Champion');
+      expect(result).toBeDefined();
+    });
+
+    it('should return undefined for unknown set names', () => {
+      const result = findSetIdByName('Nonexistent Set Name');
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('isUnsupportedSet', () => {
+    it('should return true for unsupported sets', () => {
+      expect(isUnsupportedSet('Shattered Fate')).toBe(true);
+      expect(isUnsupportedSet("Spriggan's Thorns")).toBe(true);
+    });
+
+    it('should return false for supported sets', () => {
+      expect(isUnsupportedSet('Roaring Opportunist')).toBe(false);
+      expect(isUnsupportedSet('Some Random Set')).toBe(false);
+    });
+  });
+
+  describe('KnownSetIDs coverage (ESO-684 regression)', () => {
+    /**
+     * Regression test for ESO-684 / ESO-686: ensures every value in the
+     * KnownSetIDs enum has a corresponding entry in SET_DISPLAY_NAMES.
+     *
+     * "Unknown set ID detected" Rollbar errors (counters 7, 12) were triggered
+     * when users opened roster share links whose gear sets had valid KnownSetIDs
+     * values (e.g. 641 Serpent's Disdain, 620 Gryphon's Reprisal, 701 Peace and
+     * Serenity) that were missing from SET_DISPLAY_NAMES at build time.
+     *
+     * Adding a new entry to KnownSetIDs without a matching SET_DISPLAY_NAMES
+     * entry will fail this test and prevent a repeat of the incident.
+     */
+    it('every KnownSetIDs value must have a SET_DISPLAY_NAMES entry', () => {
+      const missingIds: Array<{ name: string; id: number }> = [];
+
+      for (const [name, value] of Object.entries(KnownSetIDs)) {
+        // KnownSetIDs is a numeric enum — filter out the reverse-mapping strings
+        if (typeof value !== 'number') continue;
+
+        const displayName = getSetDisplayName(value as KnownSetIDs);
+        if (!displayName) {
+          missingIds.push({ name, id: value });
+        }
+      }
+
+      // Clear reportError calls generated above so they don't leak into other tests
+      jest.clearAllMocks();
+
+      if (missingIds.length > 0) {
+        const formatted = missingIds.map(({ name, id }) => `  ${name} = ${id}`).join('\n');
+        throw new Error(
+          `${missingIds.length} KnownSetIDs value(s) have no SET_DISPLAY_NAMES entry.\n` +
+            `Add them to SET_DISPLAY_NAMES in setNameUtils.ts:\n${formatted}`,
+        );
+      }
+    });
+  });
+});
+
+// ============================================================
+// O(1) index consistency and list utilities
+// (These do not depend on error tracking, no mock needed)
+// ============================================================
+
+describe('SET_DISPLAY_NAMES ↔ findSetIdByName bidirectional consistency', () => {
+  it('every display name in SET_DISPLAY_NAMES can be looked up by findSetIdByName', () => {
+    // Build a set of names that appear more than once (e.g. base and Perfected share a name).
+    // For duplicate names the O(1) index returns the last-registered ID — that is intentional.
+    const nameCounts = new Map<string, number>();
+    for (const name of Object.values(SET_DISPLAY_NAMES)) {
+      nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+    }
+
+    const failures: string[] = [];
+    for (const [idStr, name] of Object.entries(SET_DISPLAY_NAMES)) {
+      if (name === 'Unknown') continue; // Intentionally shared
+      if ((nameCounts.get(name) ?? 0) > 1) continue; // Duplicate names — index picks one; skip exact-ID check
+      const id = Number(idStr) as KnownSetIDs;
+      const found = findSetIdByName(name);
+      if (found !== id) {
+        failures.push(`ID ${id} ("${name}") → findSetIdByName returned ${String(found)}`);
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+
+  it('findSetIdByName followed by getSetDisplayName returns the original name', () => {
+    // Build a map of all names that appear exactly once (unique names only).
+    // Duplicate names are intentional (base set + Perfected share the same name)
+    // and the index maps a duplicate name to exactly one of the IDs — that is fine.
+    const nameCounts = new Map<string, number>();
+    for (const name of Object.values(SET_DISPLAY_NAMES)) {
+      nameCounts.set(name, (nameCounts.get(name) ?? 0) + 1);
+    }
+
+    const failures: string[] = [];
+    for (const name of Object.values(SET_DISPLAY_NAMES)) {
+      if (name === 'Unknown') continue;
+      if ((nameCounts.get(name) ?? 0) > 1) continue; // Duplicates — both map to the same display name, OK
+
+      const id = findSetIdByName(name);
+      if (id === undefined) {
+        failures.push(`"${name}" not found by findSetIdByName`);
+        continue;
+      }
+      const roundTripped = getSetDisplayName(id);
+      if (roundTripped !== name) {
+        failures.push(`"${name}" → ID ${id} → "${roundTripped}" (mismatch)`);
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+});
+
+describe('getAllSetIds', () => {
+  it('returns a non-empty array of numbers', () => {
+    const ids = getAllSetIds();
+    expect(ids.length).toBeGreaterThan(0);
+    ids.forEach((id) => expect(typeof id).toBe('number'));
+  });
+
+  it('includes key known set IDs', () => {
+    const ids = getAllSetIds();
+    expect(ids).toContain(KnownSetIDs.LUCENT_ECHOES);
+    expect(ids).toContain(KnownSetIDs.SYMPHONY_OF_BLADES);
+    expect(ids).toContain(KnownSetIDs.PEARLS_OF_EHLNOFEY);
+  });
+});
+
+describe('getSetIdsSortedByName', () => {
+  it('returns IDs in alphabetical display-name order', () => {
+    const sorted = getSetIdsSortedByName();
+    const names = sorted.map((id) => SET_DISPLAY_NAMES[id]);
+    const expected = [...names].sort((a, b) => a.localeCompare(b));
+    expect(names).toEqual(expected);
+  });
+});
+
+describe('getAllSetDisplayNames', () => {
+  it('returns sorted display name strings', () => {
+    const names = getAllSetDisplayNames();
+    const expected = [...names].sort((a, b) => a.localeCompare(b));
+    expect(names).toEqual(expected);
+  });
+
+  it('contains well-known set names', () => {
+    const names = getAllSetDisplayNames();
+    expect(names).toContain('Lucent Echoes');
+    expect(names).toContain("Jorvuld's Guidance");
+  });
+});
+
+describe('getSetDisplayNameWithUnsupportedIndicator', () => {
+  it('appends (unsupported) for sets in the unsupported list', () => {
+    const key = Object.keys(UNSUPPORTED_SET_NAMES)[0];
+    expect(getSetDisplayNameWithUnsupportedIndicator(key)).toBe(`${key} (unsupported)`);
+  });
+
+  it('returns the name unchanged for supported sets', () => {
+    expect(getSetDisplayNameWithUnsupportedIndicator('Lucent Echoes')).toBe('Lucent Echoes');
+  });
+});
+
+describe('rosterSetNameToId wrapper', () => {
+  it('delegates correctly to findSetIdByName', () => {
+    expect(rosterSetNameToId('Lucent Echoes')).toBe(KnownSetIDs.LUCENT_ECHOES);
+    expect(rosterSetNameToId(undefined)).toBeUndefined();
+  });
+});
+
+describe('setIdToRosterName wrapper', () => {
+  it('delegates correctly to getSetDisplayName', () => {
+    expect(setIdToRosterName(KnownSetIDs.LUCENT_ECHOES)).toBe('Lucent Echoes');
+    expect(setIdToRosterName(undefined)).toBe('');
+  });
+});

@@ -72,6 +72,181 @@ export const alessianOrder: GearSetData = {
   ],
 };
 
+export const armorOfTheCode: GearSetData = {
+  name: 'Armor of the Code',
+  icon: 'Armor of the Code',
+  setType: 'Unknown',
+  bonuses: [
+    '(1 item) Increase your Critical Chance against targets with a lower % of health than you by 2051.',
+    '(2 items) Adds 1096 Maximum Magicka',
+    '(3 items) Adds 129 Magicka Recovery',
+    '(4 items) Adds 1096 Maximum Magicka',
+  ],
+};
+
+export const armsOfInfernace: GearSetData = {
+  name: 'Arms of Infernace',
+  icon: 'Arms of Infernace',
+  setType: 'Unknown',
+  bonuses: ['(3 items) Adds 129 Weapon and Spell Damage'],
+};
+
+export const armsOfTheAncestors: GearSetData = {
+  name: 'Arms of the Ancestors',
+  icon: 'Arms of the Ancestors',
+  setType: 'Unknown',
+  bonuses: ['(3 items) Adds 1487 Offensive Penetration'],
+};
+
+export const brokenSoul: GearSetData = {
+  name: 'Broken Soul',
+  icon: 'Broken Soul',
+  setType: 'Unknown',
+  bonuses: ['(2 items) Adds 1206 Maximum Health'],
+};
+
+export const chaoticWhirlwind: GearSetData = {
+  name: 'Chaotic Whirlwind',
+  icon: 'Chaotic Whirlwind',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) When you cast Whirlwind while in combat, you gain a stack of Chaotic Whirlwind for 5 seconds, granting you 5% Movement Speed per stack, up to a maximum of 5 times. While Chaotic Whirlwind is active, you gain 6 Weapon and Spell Damage for every 1% bonus Movement Speed you have, up to a maximum of 450. At 5 stacks, the duration doubles but cannot be refreshed.',
+  ],
+};
+
+export const concentratedForce: GearSetData = {
+  name: 'Concentrated Force',
+  icon: 'Concentrated Force',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) Every second cast of Force Shock will always apply the Burning, Concussion, and Chilled status effects. The Force Shock casts must be made within 5 seconds of each other for this effect to occur.',
+  ],
+};
+
+export const defensivePosition: GearSetData = {
+  name: 'Defensive Position',
+  icon: 'Defensive Position',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) When you reflect or absorb a spell projectile with Defensive Posture, you restore 2200 Magicka. If Defensive Posture expires without reflecting or absorbing a spell projectile, you restore 6600 Magicka instead.',
+  ],
+};
+
+export const disciplinedSlash: GearSetData = {
+  name: 'Disciplined Slash',
+  icon: 'Disciplined Slash',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) When you deal damage with Reverse Slash, you generate up to 12 Ultimate based on how much execute bonus damage it dealt.',
+  ],
+};
+
+export const glitteringGoad: GearSetData = {
+  name: 'Glittering Goad',
+  icon: 'Glittering Goad',
+  setType: 'Monster Set',
+  bonuses: [
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    '(2 items) Dealing damage with a Bash or Heavy Attack deals 1024 Frost damage over 8 seconds to the enemy. This effect can occur once every 8 seconds. If the effect completes, the enemy applies Minor Brittle to up to of 6 enemies within 12 meters of itself for 10 seconds. If the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the enemy.',
+  ],
+};
+
+export const harvestersHopeRing: GearSetData = {
+  name: "Harvester's Hope-Ring",
+  icon: "Harvester's Hope-Ring",
+  setType: 'Unknown',
+  bonuses: [
+    '(1 item) Whenever you gather resources from a harvesting node, gain 1 stack of Harvester, up to 20 stacks max. Each stack of Harvester increases your chance of gathering bonus materials by 10%. Removing this ring removes all stacks of Harvester. Harvester does not affect resources gathered with Crafting Surveys or bonus resources received during holiday events.',
+  ],
+};
+
+export const perfectedChaoticWhirlwind: GearSetData = {
+  name: 'Perfected Chaotic Whirlwind',
+  icon: 'Perfected Chaotic Whirlwind',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) Adds 526 Critical Chance, When you cast Whirlwind while in combat, you gain a stack of Chaotic Whirlwind for 5 seconds, granting you 5% Movement Speed per stack, up to a maximum of 5 times. While Chaotic Whirlwind is active, you gain 6 Weapon and Spell Damage for every 1% bonus Movement Speed you have, up to a maximum of 450. At 5 stacks, the duration doubles but cannot be refreshed.',
+  ],
+};
+
+export const perfectedConcentratedForce: GearSetData = {
+  name: 'Perfected Concentrated Force',
+  icon: 'Perfected Concentrated Force',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) Adds 103 Weapon and Spell Damage, Every second cast of Force Shock will always apply the Burning, Concussion, and Chilled status effects. The Force Shock casts must be made within 5 seconds of each other for this effect to occur.',
+  ],
+};
+
+export const perfectedDefensivePosition: GearSetData = {
+  name: 'Perfected Defensive Position',
+  icon: 'Perfected Defensive Position',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) Adds 103 Stamina Recovery, When you reflect or absorb a spell projectile with Defensive Posture, you restore 2200 Magicka. If Defensive Posture expires without reflecting or absorbing a spell projectile, you restore 6600 Magicka instead.',
+  ],
+};
+
+export const perfectedDisciplinedSlash: GearSetData = {
+  name: 'Perfected Disciplined Slash',
+  icon: 'Perfected Disciplined Slash',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) Adds 877 Maximum Stamina, When you deal damage with Reverse Slash, you generate up to 12 Ultimate based on how much execute bonus damage it dealt.',
+  ],
+};
+
+export const perfectedPiercingSpray: GearSetData = {
+  name: 'Perfected Piercing Spray',
+  icon: 'Perfected Piercing Spray',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) Adds 1190 Offensive Penetration, When you deal damage with Arrow Spray, you cause enemies hit to have 6600 less Armor against Bow attacks for 10 seconds.',
+  ],
+};
+
+export const perfectedTimelessBlessing: GearSetData = {
+  name: 'Perfected Timeless Blessing',
+  icon: 'Perfected Timeless Blessing',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) Adds 877 Maximum Magicka, When you cast Blessing of Protection, the cost of your Magicka and Stamina healing abilities are reduced by 21% for 3 seconds.',
+  ],
+};
+
+export const piercingSpray: GearSetData = {
+  name: 'Piercing Spray',
+  icon: 'Piercing Spray',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) When you deal damage with Arrow Spray, you cause enemies hit to have 6600 less Armor against Bow attacks for 10 seconds.',
+  ],
+};
+
+export const prophets: GearSetData = {
+  name: "Prophet's",
+  icon: "Prophet's",
+  setType: 'Unknown',
+  bonuses: ['(1 item) Adds 1206 Maximum Health'],
+};
+
+export const relicsOfThePhysicianAnsur: GearSetData = {
+  name: 'Relics of the Physician, Ansur',
+  icon: 'Relics of the Physician, Ansur',
+  setType: 'Unknown',
+  bonuses: ['(2 items) Adds 1096 Maximum Magicka', '(3 items) Increases your healing done by 5%.'],
+};
+
+export const relicsOfTheRebellion: GearSetData = {
+  name: 'Relics of the Rebellion',
+  icon: 'Relics of the Rebellion',
+  setType: 'Unknown',
+  bonuses: [
+    '(2 items) Adds 1206 Maximum Health',
+    '(3 items) When you deal damage, you have a 5% chance to gain a damage shield that absorbs 3010 damage for 5 seconds',
+  ],
+};
+
 export const runecarversBlaze: GearSetData = {
   name: "Runecarver's Blaze",
   icon: "Runecarver's Blaze",
@@ -324,7 +499,7 @@ export const blackGemMonstrosity: GearSetData = {
 export const blessingOfHighIsle: GearSetData = {
   name: 'Blessing of High Isle',
   icon: 'Blessing of High Isle',
-  setType: 'Dungeon',
+  setType: 'Overland',
   bonuses: [
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Magicka Recovery',
@@ -452,10 +627,10 @@ export const cindersOfAnthelmir: GearSetData = {
   icon: 'Cinders of Anthelmir',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) Adds 1 Offensive Penetration',
-    '(3 items) Adds 1 Weapon and Spell Damage',
-    '(4 items) Adds 1 Weapon and Spell Damage',
-    '(5 items) On dealing damage, summon a Cindermoth that chases your target without mercy for 8 seconds. If your target dies before the moth reaches them, it seeks a new target within 8 meters. The first enemy that nears the Cindermoth causes it to stop and burst after 1 second, dealing 1283 Flame damage and Burning enemies within 8 meters. This can occur once every 8 seconds and scales off your Weapon or Spell Damage.',
+    '(2 items) Adds 1487 Offensive Penetration',
+    '(3 items) Adds 129 Weapon and Spell Damage',
+    '(4 items) Adds 129 Weapon and Spell Damage',
+    '(5 items) On dealing damage, summon a Cindermoth that chases your target without mercy for 8 seconds. If your target dies before the moth reaches them, it seeks a new target within 8 meters. The first enemy that nears the Cindermoth causes it to stop and burst after 1 second, dealing 1283 Flame Damage and Burning enemies within 8 meters. This can occur once every 8 seconds and scales off your Weapon or Spell Damage.',
   ],
 };
 
@@ -3071,6 +3246,23 @@ export const theBlind: GearSetData = {
   ],
 };
 
+export const theDestructionSuite: GearSetData = {
+  name: 'The Destruction Suite',
+  icon: 'The Destruction Suite',
+  setType: 'Unknown',
+  bonuses: ['(3 items) Adds 1487 Armor'],
+};
+
+export const theRuckus: GearSetData = {
+  name: 'The Ruckus',
+  icon: 'The Ruckus',
+  setType: 'Monster Set',
+  bonuses: [
+    '(1 item) Adds 1206 Maximum Health',
+    '(2 items) Taking or dealing direct damage grants you a stack of Skirmish for 10 seconds. You can gain Skirmish every 1 second, up to 10 stacks. Lose 1 stack every 5 seconds when not taking or dealing damage. At max stacks, you no longer gain or lose stacks of Skirmish and you gain Major Protection, Major Expedition, and Major Force for 10 seconds. When max Skirmish ends, your Stamina, Magicka, and Health Recovery are reduced by 422 for 10 seconds.',
+  ],
+};
+
 export const theTrollKing: GearSetData = {
   name: 'The Troll King',
   icon: 'The Troll King',
@@ -3101,6 +3293,16 @@ export const thewsOfTheHarbinger: GearSetData = {
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Stamina',
     '(5 items) When you Block, you deal 717 Physical Damage to the attacker. This effect scales off your Max Health.',
+  ],
+};
+
+export const thousandEyes: GearSetData = {
+  name: 'Thousand Eyes',
+  icon: 'Thousand Eyes',
+  setType: 'Monster Set',
+  bonuses: [
+    '(1 item) Adds 657 Critical Chance',
+    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1357 Bleed damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
   ],
 };
 
@@ -3161,6 +3363,15 @@ export const tideBornWildstalker: GearSetData = {
   ],
 };
 
+export const timelessBlessing: GearSetData = {
+  name: 'Timeless Blessing',
+  icon: 'Timeless Blessing',
+  setType: 'Trial',
+  bonuses: [
+    '(2 items) When you cast Blessing of Protection, the cost of your Magicka and Stamina healing abilities are reduced by 21% for 3 seconds.',
+  ],
+};
+
 export const torugSPact: GearSetData = {
   name: "Torug's Pact",
   icon: "Torug's Pact",
@@ -3207,6 +3418,13 @@ export const treasureHunter: GearSetData = {
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 171 Weapon and Spell Damage, Gain Major Savagery and Prophecy at all times, increasing your Weapon and Spell Critical rating by 2629.',
   ],
+};
+
+export const treasuresOfTheEarthforge: GearSetData = {
+  name: 'Treasures of the Earthforge',
+  icon: 'Treasures of the Earthforge',
+  setType: 'Unknown',
+  bonuses: ['(3 items) Adds 1487 Armor'],
 };
 
 export const tremorscale: GearSetData = {
@@ -3662,6 +3880,18 @@ export const wretchedVitality: GearSetData = {
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) While in combat, applying a Major Buff or Debuff with a duration to a target grants you 260 Magicka and Stamina Recovery for 15 seconds. While in combat, applying a Minor Buff or Debuff with a duration to a target grants you 130 Magicka and Stamina Recovery for 15 seconds.',
+  ],
+};
+
+export const xanmeerGenesis: GearSetData = {
+  name: 'Xanmeer Genesis',
+  icon: 'Xanmeer Genesis',
+  setType: 'Overland',
+  bonuses: [
+    '(2 items) Adds 1096 Maximum Stamina',
+    '(3 items) Adds 1206 Maximum Health',
+    '(4 items) Adds 1096 Maximum Magicka',
+    '(5 items) When an enemy you have recently damaged dies, after 0.5 seconds, you and allies within 8 meters of the dead enemy receive 322 Health, Magicka, and Stamina Recovery for 10 seconds. This effect can occur once every 6 seconds.',
   ],
 };
 

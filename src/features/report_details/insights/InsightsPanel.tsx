@@ -1,7 +1,15 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
-import { useDamageEvents, usePlayerData, useCombatantInfoEvents } from '../../../hooks';
+import {
+  useCombatantInfoEvents,
+  useDamageEvents,
+  usePlayerData,
+  useResolvedReportFightContext,
+} from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
+import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { PlayerTalent } from '../../../types/playerDetails';
 
@@ -9,6 +17,7 @@ import { InsightsPanelView } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
+  context?: ReportFightContextInput;
 }
 
 const ULTIMATE_ABILITY_MAPPINGS: Record<number, KnownAbilities> = {
@@ -26,12 +35,16 @@ const CHAMPION_POINT_MAPPINGS: Record<number, KnownAbilities> = {
   [KnownAbilities.FROM_THE_BRINK]: KnownAbilities.FROM_THE_BRINK,
 };
 
-export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
-  const durationSeconds = (fight.endTime - fight.startTime) / 1000;
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) => {
+  const durationMs = fight.endTime - fight.startTime;
+  const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+  const resolvedContext = useResolvedReportFightContext(context);
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
+    context: resolvedContext,
+  });
 
   const abilityEquipped = React.useMemo(() => {
     const result: Partial<Record<KnownAbilities, string[]>> = {};
@@ -105,8 +118,8 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
     return result;
   }, [combatantInfoEvents, playerData?.playersById]);
 
-  // Find the first damage dealer
-  const firstDamageDealer = React.useMemo(() => {
+  // Find the fight initiator (the first friendly player to deal damage)
+  const fightInitiator = React.useMemo(() => {
     if (!damageEvents || damageEvents.length === 0 || !playerData?.playersById) {
       return null;
     }
@@ -134,10 +147,11 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   return (
     <InsightsPanelView
       fight={fight}
-      durationSeconds={durationSeconds}
+      durationMs={durationMs}
       abilityEquipped={abilityEquipped}
       buffActors={buffActors}
-      firstDamageDealer={firstDamageDealer}
+      fightInitiator={fightInitiator}
+      selectedPlayerId={selectedFriendlyPlayerId ?? null}
       isLoading={isCombatantInfoEventsLoading || isDamageEventsLoading || isPlayerDataLoading}
     />
   );

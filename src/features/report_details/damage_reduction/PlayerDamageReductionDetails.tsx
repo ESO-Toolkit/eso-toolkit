@@ -11,42 +11,18 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
+import '../../../utils/chartRegistration';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { useRoleColors } from '../../../hooks';
+import { usePhaseAnnotations } from '../../../hooks/useChartAnnotations';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin,
-);
 
 export interface DamageReductionDataPoint {
   timestamp: number;
@@ -138,21 +114,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
     }));
   }, [shouldRenderChart, damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
 
-  const phaseAnnotations = React.useMemo(() => {
-    if (
-      !shouldRenderChart ||
-      !phaseTransitionInfo?.phaseTransitions ||
-      phaseTransitionInfo.phaseTransitions.length === 0
-    ) {
-      return null;
-    }
-
-    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
-      fightStartTime: phaseTransitionInfo.fightStartTime,
-      fightEndTime: phaseTransitionInfo.fightEndTime,
-      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
-    });
-  }, [phaseTransitionInfo, shouldRenderChart]);
+  const phaseAnnotations = usePhaseAnnotations(phaseTransitionInfo, shouldRenderChart);
 
   if (isLoading || !damageReductionData) {
     return (

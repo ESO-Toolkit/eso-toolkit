@@ -141,7 +141,12 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
           <Box>
             {onExportData && (
               <Tooltip title="Export Data">
-                <IconButton size="small" onClick={onExportData} sx={{ color: 'white', mr: 0.5 }}>
+                <IconButton
+                  size="small"
+                  onClick={onExportData}
+                  sx={{ color: 'white', mr: 0.5 }}
+                  aria-label="Export Data"
+                >
                   <DownloadIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
@@ -156,13 +161,19 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
                   transform: expanded ? 'rotate(180deg)' : 'rotate(0)',
                   transition: 'transform 0.3s',
                 }}
+                aria-label={expanded ? 'Collapse' : 'Expand'}
               >
                 <ExpandMoreIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             {onClose && (
               <Tooltip title="Close">
-                <IconButton size="small" onClick={onClose} sx={{ color: 'white' }}>
+                <IconButton
+                  size="small"
+                  onClick={onClose}
+                  sx={{ color: 'white' }}
+                  aria-label="Close"
+                >
                   <CloseIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
