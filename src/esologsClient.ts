@@ -97,28 +97,19 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
-    // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
-    // or transient network errors (status 0 / no statusCode — CORS block, DNS failure,
-    // dropped connection, etc.). Uses exponential backoff with jitter to avoid
-    // thundering-herd retries.
+    // Retry link: retries transient network errors (status 0 / no statusCode —
+    // CORS block, DNS failure, dropped connection). Does NOT retry 429s because
+    // retries against our own rate limiter just compound the problem.
     const retryLink = new RetryLink({
       delay: {
-        initial: 1000, // wait 1 s before the first retry
-        max: 15000, // cap at 15 s
-        jitter: true, // randomise to spread concurrent retries
+        initial: 1000,
+        max: 15000,
+        jitter: true,
       },
       attempts: {
         max: 3,
         retryIf: (error: unknown) => {
           const statusCode = (error as { statusCode?: number })?.statusCode;
-          if (statusCode === 429) {
-            logger.warn('API rate limit hit (429) — retrying with backoff', {
-              operation: 'pending',
-            });
-            return true;
-          }
-          // Also retry on network-level errors (no statusCode means the request
-          // never reached the server — transient connectivity failure).
           if (error != null && statusCode === undefined) {
             logger.warn('Network error — retrying with backoff');
             return true;
