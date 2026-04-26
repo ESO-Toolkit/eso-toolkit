@@ -35,6 +35,12 @@ export function setIntendedDestination(path: string): void {
   localStorage.setItem(INTENDED_DESTINATION_KEY, path);
 }
 
+export function setIntendedDestinationIfEmpty(path: string): void {
+  if (!localStorage.getItem(INTENDED_DESTINATION_KEY)) {
+    localStorage.setItem(INTENDED_DESTINATION_KEY, path);
+  }
+}
+
 export function getIntendedDestination(): string {
   return localStorage.getItem(INTENDED_DESTINATION_KEY) || '/';
 }

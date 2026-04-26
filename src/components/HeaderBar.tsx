@@ -30,7 +30,7 @@ import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import {
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-  setIntendedDestination,
+  setIntendedDestinationIfEmpty,
   startPKCEAuth,
 } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
@@ -493,7 +493,7 @@ export const HeaderBar: React.FC = () => {
   }, []);
 
   const handleLogin = React.useCallback((): void => {
-    setIntendedDestination(location.pathname + location.search + location.hash);
+    setIntendedDestinationIfEmpty(location.pathname + location.search + location.hash);
     startPKCEAuth();
     setMobileOpen(false);
   }, [location]);
