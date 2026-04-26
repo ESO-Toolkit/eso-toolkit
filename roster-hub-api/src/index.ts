@@ -61,7 +61,6 @@ import {
   togglePackVote,
   checkPackCreateRateLimit,
   checkPackVoteRateLimit,
-  cleanupGraphqlRateLimits,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
@@ -134,6 +133,7 @@ app.use('*', async (c, next) => {
     origin: isAllowed ? origin : allowedOrigins[0],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
+    exposeHeaders: ['Retry-After', 'X-Rate-Limit-Source'],
     maxAge: 86400,
   });
   return corsMiddleware(c, next);
@@ -161,27 +161,7 @@ const GRAPHQL_RATE_LIMIT = 300; // max requests per minute per IP
 const graphqlRateCounts = new Map<string, { count: number; expires: number }>();
 
 app.post('/graphql', async (c) => {
-  const ip =
-    c.req.header('CF-Connecting-IP') ??
-    c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() ??
-    'unknown';
-  const now = Date.now();
-
-  for (const [key, val] of graphqlRateCounts) {
-    if (val.expires <= now) graphqlRateCounts.delete(key);
-  }
-
-  const bucket = graphqlRateCounts.get(ip);
-  if (bucket && bucket.expires > now) {
-    if (bucket.count >= GRAPHQL_RATE_LIMIT) {
-      return c.json({ error: 'Rate limit exceeded. Max 300 GraphQL requests per minute.' }, 429);
-    }
-    bucket.count++;
-  } else {
-    graphqlRateCounts.set(ip, { count: 1, expires: now + 60_000 });
-  }
-
-  return handleGraphqlProxy(c);
+  return handleGraphqlProxy(c, graphqlRateCounts, GRAPHQL_RATE_LIMIT);
 });
 
 // ─── Health check ─────────────────────────────────────────────────────────────
@@ -1518,9 +1498,10 @@ app.get('/search-addons', async (c) => {
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const now = Date.now();
 
-  // Prune expired buckets to prevent unbounded map growth
-  for (const [key, val] of searchRateCounts) {
-    if (val.expires <= now) searchRateCounts.delete(key);
+  if (Math.random() < 0.02) {
+    for (const [key, val] of searchRateCounts) {
+      if (val.expires <= now) searchRateCounts.delete(key);
+    }
   }
 
   const bucket = searchRateCounts.get(ip);
@@ -1628,7 +1609,6 @@ export default {
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     await cleanupExpiredTempBuilds(env.DB);
-    await cleanupGraphqlRateLimits(env.DB);
     await syncLeaderboardRosters(env);
   },
 };

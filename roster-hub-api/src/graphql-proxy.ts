@@ -77,7 +77,11 @@ async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
 
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
-export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
+export async function handleGraphqlProxy(
+  c: Context<{ Bindings: Env }>,
+  rateCounts: Map<string, { count: number; expires: number }>,
+  rateLimit: number,
+): Promise<Response> {
   let body: unknown;
   let bodyStr: string;
   try {
@@ -87,11 +91,10 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  // Forward the ?query=<operationName> hint if present (used by ESO Logs for tracing)
   const operationHint = c.req.query('query');
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
 
-  // Check cache for immutable event data
+  // Check edge cache BEFORE rate limiting — cache hits are free
   const cache = caches.default;
   let cacheKey: Request | undefined;
   if (isCacheable) {
@@ -99,6 +102,36 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
     cacheKey = new Request(`https://cache.internal/${key}`, { method: 'GET' });
     const cached = await cache.match(cacheKey);
     if (cached) return cached;
+  }
+
+  // Cache miss — apply per-IP rate limiting
+  const ip =
+    c.req.header('CF-Connecting-IP') ??
+    c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() ??
+    'unknown';
+  const now = Date.now();
+
+  // Probabilistic cleanup (~1-in-50 requests) instead of sweeping
+  // every request. The per-IP bucket check below already handles
+  // expiry for the current caller; stale entries from other IPs only
+  // waste memory, so lazy cleanup is fine.
+  if (Math.random() < 0.02) {
+    for (const [k, val] of rateCounts) {
+      if (val.expires <= now) rateCounts.delete(k);
+    }
+  }
+
+  const bucket = rateCounts.get(ip);
+  if (bucket && bucket.expires > now) {
+    if (bucket.count >= rateLimit) {
+      return c.json(
+        { error: `Rate limit exceeded. Max ${rateLimit} GraphQL requests per minute.` },
+        { status: 429, headers: { 'Retry-After': '60', 'X-Rate-Limit-Source': 'proxy' } },
+      );
+    }
+    bucket.count++;
+  } else {
+    rateCounts.set(ip, { count: 1, expires: now + 60_000 });
   }
 
   let token: string;
