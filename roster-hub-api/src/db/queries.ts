@@ -1506,12 +1506,3 @@ export async function checkPackVoteRateLimit(db: D1Database, userId: string): Pr
   return (row?.cnt ?? 0) < 30;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// GraphQL proxy — legacy D1 rate-limit cleanup (table drain)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export async function cleanupGraphqlRateLimits(db: D1Database): Promise<void> {
-  await db
-    .prepare(`DELETE FROM graphql_rate_limits WHERE created_at < datetime('now', '-60 seconds')`)
-    .run();
-}

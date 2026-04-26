@@ -210,7 +210,10 @@ export class EsoLogsClient {
       // backoff, and proxy 429s are not retried. The query() catch
       // block surfaces a human-readable message to the UI.
       const networkStatusCode = (error as { statusCode?: number })?.statusCode;
-      if (networkStatusCode === 429) return;
+      if (networkStatusCode === 429) {
+        logger.debug('Rate limited (429)', { operation: operation.operationName });
+        return;
+      }
       logger.error('GraphQL operation error', error, {
         operation: operation.operationName,
       });

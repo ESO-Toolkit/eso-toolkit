@@ -61,7 +61,6 @@ import {
   togglePackVote,
   checkPackCreateRateLimit,
   checkPackVoteRateLimit,
-  cleanupGraphqlRateLimits,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
@@ -1498,9 +1497,10 @@ app.get('/search-addons', async (c) => {
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const now = Date.now();
 
-  // Prune expired buckets to prevent unbounded map growth
-  for (const [key, val] of searchRateCounts) {
-    if (val.expires <= now) searchRateCounts.delete(key);
+  if (Math.random() < 0.02) {
+    for (const [key, val] of searchRateCounts) {
+      if (val.expires <= now) searchRateCounts.delete(key);
+    }
   }
 
   const bucket = searchRateCounts.get(ip);
@@ -1608,7 +1608,6 @@ export default {
 
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     await cleanupExpiredTempBuilds(env.DB);
-    await cleanupGraphqlRateLimits(env.DB);
     await syncLeaderboardRosters(env);
   },
 };
