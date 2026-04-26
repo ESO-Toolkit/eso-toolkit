@@ -47,7 +47,6 @@ async function request<T>(
     res = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers,
-      cache: 'no-store',
       signal: controller.signal,
     });
   } catch (err) {

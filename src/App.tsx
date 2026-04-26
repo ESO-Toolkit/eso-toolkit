@@ -1,3 +1,4 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -37,6 +38,7 @@ import { Banned } from './pages/Banned';
 import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
+import { queryClient } from './lib/query-client';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
@@ -335,6 +337,7 @@ const App: React.FC = () => {
             <ReduxThemeProvider>
               <EsoLogsClientProvider>
                 <AuthProvider>
+                  <QueryClientProvider client={queryClient}>
                   <DiscordAuthProvider>
                     <SnackbarProvider
                       maxSnack={3}
@@ -351,6 +354,7 @@ const App: React.FC = () => {
                       {!window.location.search.includes('embed=1') && <CookieConsent />}
                     </SnackbarProvider>
                   </DiscordAuthProvider>
+                  </QueryClientProvider>
                 </AuthProvider>
               </EsoLogsClientProvider>
             </ReduxThemeProvider>

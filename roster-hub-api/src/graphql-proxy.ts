@@ -68,6 +68,10 @@ const CACHEABLE_OPERATIONS = new Set([
 
 const CACHE_TTL_SECONDS = 600; // 10 minutes
 
+// Singleflight: coalesce concurrent identical cacheable requests so only one
+// hits upstream. Each caller clones the shared response.
+const inflight = new Map<string, Promise<Response>>();
+
 async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
   const data = new TextEncoder().encode(bodyStr);
   const hash = await crypto.subtle.digest('SHA-256', data);
@@ -134,45 +138,68 @@ export async function handleGraphqlProxy(
     rateCounts.set(ip, { count: 1, expires: now + 60_000 });
   }
 
-  let token: string;
-  try {
-    token = await getCachedClientToken(c.env);
-  } catch {
-    return c.json({ error: 'Failed to obtain upstream API token' }, 502);
+  // Singleflight: if an identical cacheable request is already in-flight,
+  // piggyback on it instead of issuing a duplicate upstream fetch.
+  const flightKey = isCacheable ? await buildCacheKey(c.req.url, bodyStr) : null;
+  if (flightKey) {
+    const pending = inflight.get(flightKey);
+    if (pending) return (await pending).clone();
   }
 
-  const upstreamUrl = operationHint
-    ? `${ESOLOGS_CLIENT_API}?query=${encodeURIComponent(operationHint)}`
-    : ESOLOGS_CLIENT_API;
+  const doFetch = async (): Promise<Response> => {
+    let token: string;
+    try {
+      token = await getCachedClientToken(c.env);
+    } catch {
+      return c.json({ error: 'Failed to obtain upstream API token' }, 502);
+    }
 
-  const upstream = await fetch(upstreamUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
+    const upstreamUrl = operationHint
+      ? `${ESOLOGS_CLIENT_API}?query=${encodeURIComponent(operationHint)}`
+      : ESOLOGS_CLIENT_API;
 
-  // Invalidate cached token on 401 so the next request triggers a fresh fetch
-  if (upstream.status === 401) {
-    cachedToken = null;
-    tokenExpiresAt = 0;
+    const upstream = await fetch(upstreamUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    // Invalidate cached token on 401 so the next request triggers a fresh fetch
+    if (upstream.status === 401) {
+      cachedToken = null;
+      tokenExpiresAt = 0;
+    }
+
+    const responseBody = await upstream.text();
+    const response = new Response(responseBody, {
+      status: upstream.status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': isCacheable ? `public, max-age=${CACHE_TTL_SECONDS}` : 'no-store',
+      },
+    });
+
+    // Store successful cacheable responses
+    if (isCacheable && upstream.status === 200 && cacheKey) {
+      c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+    }
+
+    return response;
+  };
+
+  if (flightKey) {
+    const promise = doFetch();
+    inflight.set(flightKey, promise);
+    try {
+      const response = await promise;
+      return response.clone();
+    } finally {
+      inflight.delete(flightKey);
+    }
   }
 
-  const responseBody = await upstream.text();
-  const response = new Response(responseBody, {
-    status: upstream.status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': isCacheable ? `public, max-age=${CACHE_TTL_SECONDS}` : 'no-store',
-    },
-  });
-
-  // Store successful cacheable responses
-  if (isCacheable && upstream.status === 200 && cacheKey) {
-    c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
-  }
-
-  return response;
+  return doFetch();
 }

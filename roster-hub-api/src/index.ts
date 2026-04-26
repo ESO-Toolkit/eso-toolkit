@@ -139,18 +139,56 @@ app.use('*', async (c, next) => {
   return corsMiddleware(c, next);
 });
 
-// ─── Cache headers ─────────────────────────────────────────────────────────────
-// Public profile responses get a short edge-cache TTL; all other endpoints
-// are no-store so React UIs always get fresh data.
+// ─── Edge caching ──────────────────────────────────────────────────────────────
+// Cache unauthenticated GET responses at the edge via the Workers Cache API.
+// Authenticated requests always bypass the cache so user-specific fields
+// (user_voted, author identity) are never leaked to other users.
+
+interface CacheTier {
+  edgeTtl: number;
+  swr: number;
+}
+
+function getCacheTier(path: string): CacheTier | null {
+  if (/^\/(rosters|builds|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
+  if (/^\/(rosters|builds|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
+  if (/^\/(rosters|builds)\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
+  if (path.startsWith('/users/')) return { edgeTtl: 300, swr: 60 };
+  if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
+  return null;
+}
 
 app.use('*', async (c, next) => {
-  await next();
-  if (c.req.method === 'GET' && c.req.path.startsWith('/users/')) {
-    // Cache public profiles at the edge for 5 minutes
-    c.res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
-  } else {
-    c.res.headers.set('Cache-Control', 'no-store');
+  const isGet = c.req.method === 'GET';
+  const hasAuth = !!c.req.header('Authorization');
+  const tier = isGet ? getCacheTier(c.req.path) : null;
+
+  // Cacheable unauthenticated GET — check edge cache before running handler
+  if (tier && !hasAuth) {
+    const cache = caches.default;
+    const url = new URL(c.req.url);
+    const cacheKey = new Request(`https://cache.internal/rest${url.pathname}${url.search}`);
+    const cached = await cache.match(cacheKey);
+    if (cached) {
+      c.res = new Response(cached.body, cached);
+      return;
+    }
+
+    await next();
+
+    if (c.res.status >= 200 && c.res.status < 300) {
+      const cc = `public, s-maxage=${tier.edgeTtl}, stale-while-revalidate=${tier.swr}`;
+      c.res.headers.set('Cache-Control', cc);
+      c.res.headers.set('Vary', 'Authorization');
+      c.executionCtx.waitUntil(cache.put(cacheKey, c.res.clone()));
+    } else {
+      c.res.headers.set('Cache-Control', 'no-store');
+    }
+    return;
   }
+
+  await next();
+  c.res.headers.set('Cache-Control', 'no-store');
 });
 
 // ─── ESO Logs GQL proxy ────────────────────────────────────────────────────────
