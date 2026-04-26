@@ -1,8 +1,9 @@
 import { Link as LinkIcon, LockOpen as LockOpenIcon } from '@mui/icons-material';
 import { Box, Button, TextField, useTheme } from '@mui/material';
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { startPKCEAuth } from '../features/auth/auth';
+import { setFallbackDestination, startPKCEAuth } from '../features/auth/auth';
 import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 import { clearAllEvents } from '../store/events_data/actions';
 import { clearMasterData } from '../store/master_data/masterDataSlice';
@@ -13,6 +14,7 @@ import { LogInputContainer } from './LandingPage';
 
 export const UnauthenticatedLandingSection: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
+  const location = useLocation();
   const navigate = useViewTransitionNavigate();
   const dispatch = useAppDispatch();
   const theme = useTheme();
@@ -64,6 +66,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
   };
 
   const handleLogin = (): void => {
+    setFallbackDestination(location.pathname + location.search + location.hash);
     startPKCEAuth();
   };
 

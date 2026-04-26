@@ -31,7 +31,11 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
+import {
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  setFallbackDestination,
+  startPKCEAuth,
+} from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 import { useCurrentUserAvatar } from '../hooks/useCurrentUserAvatar';
 import { usePersistentDarkMode } from '../hooks/usePersistentDarkMode';
@@ -580,9 +584,10 @@ export const HeaderBar: React.FC = () => {
   }, [mobileOpen]);
 
   const handleLogin = React.useCallback((): void => {
+    setFallbackDestination(location.pathname + location.search + location.hash);
     startPKCEAuth();
     setMobileOpen(false);
-  }, []);
+  }, [location]);
 
   const handleLogout = React.useCallback((): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
