@@ -62,6 +62,12 @@ test-metadata.json
 /reports-temp/
 .last-run.json
 
+# Local capture/build output (screenshots, videos, demos)
+/out/
+
+# Recordings not yet wired into the app
+/public/recordings/
+
 # production
 /build
 
@@ -172,6 +178,7 @@ discord-notify-worker/node_modules/
 /error-logs-*.txt
 /*.log
 /*-snapshot.md
+/snapshot.txt
 /*-failure.md
 /missing-*.txt
 

@@ -35,6 +35,7 @@ export const GET_USER_REPORTS = gql`
     endTime
     title
     visibility
+    segments
     zone {
       name
     }

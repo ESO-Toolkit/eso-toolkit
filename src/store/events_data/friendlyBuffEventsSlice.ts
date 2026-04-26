@@ -24,14 +24,6 @@ import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
 const logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'FriendlyBuffEvents' });
 
-// Interface for tracking interval fetching state
-interface IntervalFetchResult {
-  startTime: number;
-  endTime: number;
-  events: BuffEvent[];
-  error?: string;
-}
-
 type FriendlyBuffEventsRequest = ReturnType<typeof createCurrentRequest> | null;
 
 export interface FriendlyBuffEventsEntry {
@@ -41,8 +33,6 @@ export interface FriendlyBuffEventsEntry {
   cacheMetadata: {
     lastFetchedTimestamp: number | null;
     restrictToFightWindow: boolean | null;
-    intervalCount: number;
-    failedIntervals: number;
   };
   currentRequest: FriendlyBuffEventsRequest;
 }
@@ -63,8 +53,6 @@ const createEmptyEntry = (): FriendlyBuffEventsEntry => ({
   cacheMetadata: {
     lastFetchedTimestamp: null,
     restrictToFightWindow: null,
-    intervalCount: 0,
-    failedIntervals: 0,
   },
   currentRequest: null,
 });
@@ -81,71 +69,45 @@ const initialState: FriendlyBuffEventsState = {
   accessOrder: [],
 };
 
-// Helper function to create time intervals
-const createTimeIntervals = (
-  startTime: number,
-  endTime: number,
-  intervalSize = 60000,
-): Array<{ startTime: number; endTime: number }> => {
-  const intervals: Array<{ startTime: number; endTime: number }> = [];
-  let currentStart = startTime;
+const INTERVAL_SIZE = 30000;
 
-  while (currentStart < endTime) {
-    const currentEnd = Math.min(currentStart + intervalSize, endTime);
-    intervals.push({ startTime: currentStart, endTime: currentEnd });
-    currentStart = currentEnd;
-  }
-
-  return intervals;
-};
-
-// Helper function to fetch events for a single interval with pagination
-const fetchEventsForInterval = async (
+// Fetch all pages within a single time window.
+const fetchInterval = async (
   client: EsoLogsClient,
   reportCode: string,
-  fight: FightFragment,
-  intervalStart: number,
-  intervalEnd: number,
+  fightId: number,
+  startTime: number,
+  endTime: number,
   hostilityType: HostilityType,
-  restrictToFightWindow: boolean,
-): Promise<BuffEvent[]> => {
-  let allEvents: LogEvent[] = [];
-  let nextPageTimestamp: number | null = null;
-
-  const initialStartTime = restrictToFightWindow ? intervalStart : undefined;
-  const finalEndTime = restrictToFightWindow ? intervalEnd : undefined;
-
+): Promise<LogEvent[]> => {
+  let events: LogEvent[] = [];
+  let nextPage: number | null = null;
   do {
     const response: GetBuffEventsQuery = await client.query({
       query: GetBuffEventsDocument,
       fetchPolicy: 'no-cache',
       variables: {
         code: reportCode,
-        fightIds: [Number(fight.id)],
-        startTime: nextPageTimestamp ?? initialStartTime,
-        endTime: finalEndTime,
-        hostilityType: hostilityType,
+        fightIds: [fightId],
+        startTime: nextPage ?? startTime,
+        endTime,
+        hostilityType,
         limit: EVENT_PAGE_LIMIT,
       },
     });
-
     const page = response.reportData?.report?.events;
-    if (page?.data) {
-      allEvents = allEvents.concat(page.data);
-    }
-    nextPageTimestamp = page?.nextPageTimestamp ?? null;
-  } while (nextPageTimestamp && (restrictToFightWindow ? nextPageTimestamp < intervalEnd : true));
-
-  return allEvents as BuffEvent[];
+    if (page?.data) events = events.concat(page.data);
+    nextPage = page?.nextPageTimestamp ?? null;
+  } while (nextPage && nextPage < endTime);
+  return events;
 };
 
 export const fetchFriendlyBuffEvents = createAsyncThunk<
-  { events: BuffEvent[]; intervalResults: IntervalFetchResult[] },
+  BuffEvent[],
   {
     reportCode: string;
     fight: FightFragment;
     client: EsoLogsClient;
-    intervalSize?: number;
     /**
      * Whether to restrict events to the fight time window.
      * - true (default): Only fetch events within the fight's start/end time (typical use case)
@@ -156,82 +118,72 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
   { state: LocalRootState; rejectValue: string }
 >(
   'friendlyBuffEvents/fetchFriendlyBuffEvents',
-  async ({ reportCode, fight, client, intervalSize = 30000, restrictToFightWindow = true }) => {
+  async ({ reportCode, fight, client, restrictToFightWindow = true }) => {
     logger.info('Fetching friendly buff events', {
       reportCode,
       fightId: fight.id,
-      intervalSize,
       restrictToFightWindow,
     });
 
-    const intervals = restrictToFightWindow
-      ? createTimeIntervals(fight.startTime, fight.endTime, intervalSize)
-      : [{ startTime: fight.startTime, endTime: fight.endTime }];
-    logger.info(`Created ${intervals.length} time intervals`, {
-      reportCode,
-      fightId: fight.id,
-      intervalCount: intervals.length,
-    });
+    const fightId = Number(fight.id);
+    let allEvents: LogEvent[] = [];
 
-    // Create promises for all interval combinations (only friendlies)
-    const fetchPromises = intervals.map(async (interval, index): Promise<IntervalFetchResult> => {
-      try {
-        const events = await fetchEventsForInterval(
-          client,
-          reportCode,
-          fight,
-          interval.startTime,
-          interval.endTime,
-          HostilityType.Friendlies,
-          restrictToFightWindow,
-        );
-
-        logger.info(`Fetched interval ${index + 1}/${intervals.length}`, {
-          reportCode,
-          fightId: fight.id,
-          intervalIndex: index + 1,
-          totalIntervals: intervals.length,
-          eventsInInterval: events.length,
+    if (!restrictToFightWindow) {
+      // Full-report fetch: single paginated request with no time bounds
+      let nextPage: number | null = null;
+      do {
+        const response: GetBuffEventsQuery = await client.query({
+          query: GetBuffEventsDocument,
+          fetchPolicy: 'no-cache',
+          variables: {
+            code: reportCode,
+            fightIds: [fightId],
+            startTime: nextPage ?? undefined,
+            endTime: undefined,
+            hostilityType: HostilityType.Friendlies,
+            limit: EVENT_PAGE_LIMIT,
+          },
         });
-
-        return {
-          startTime: interval.startTime,
-          endTime: interval.endTime,
-          events,
-        };
-      } catch (error) {
-        logger.error('Failed to fetch interval', error as Error, {
-          reportCode,
-          fightId: fight.id,
-          intervalIndex: index + 1,
-        });
-
-        return {
-          startTime: interval.startTime,
-          endTime: interval.endTime,
-          events: [],
-          error: error instanceof Error ? error.message : 'Unknown error',
-        };
+        const page = response.reportData?.report?.events;
+        if (page?.data) allEvents = allEvents.concat(page.data);
+        nextPage = page?.nextPageTimestamp ?? null;
+      } while (nextPage);
+    } else {
+      // Split into 30s intervals so a single failing window doesn't lose all data
+      let windowStart = fight.startTime;
+      while (windowStart < fight.endTime) {
+        const windowEnd = Math.min(windowStart + INTERVAL_SIZE, fight.endTime);
+        try {
+          const events = await fetchInterval(
+            client,
+            reportCode,
+            fightId,
+            windowStart,
+            windowEnd,
+            HostilityType.Friendlies,
+          );
+          allEvents = allEvents.concat(events);
+        } catch (error) {
+          logger.error('Failed to fetch buff interval, continuing', error as Error, {
+            reportCode,
+            fightId,
+            windowStart,
+            windowEnd,
+          });
+        }
+        windowStart = windowEnd;
       }
-    });
+    }
 
-    // Execute all promises in parallel
-    const intervalResults = await Promise.all(fetchPromises);
-
-    // Combine all events and sort by timestamp
-    const allEvents = intervalResults
-      .flatMap((result) => result.events)
-      .sort((a, b) => a.timestamp - b.timestamp);
+    const sortedEvents = (allEvents as BuffEvent[]).sort((a, b) => a.timestamp - b.timestamp);
 
     logger.info('Friendly buff events fetch completed', {
       reportCode,
       fightId: fight.id,
-      totalEvents: allEvents.length,
-      successfulIntervals: intervalResults.filter((r) => !r.error).length,
-      failedIntervals: intervalResults.filter((r) => r.error).length,
+      totalEvents: sortedEvents.length,
     });
 
-    return { events: allEvents, intervalResults };
+    return sortedEvents;
   },
   {
     condition: ({ reportCode, fight, restrictToFightWindow = true }, { getState }) => {
@@ -255,7 +207,7 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
           cacheAge: lastFetchedTimestamp ? Date.now() - lastFetchedTimestamp : 0,
           restrictToFightWindow,
         });
-        return false; // Prevent thunk execution
+        return false;
       }
 
       const inFlight = entry?.currentRequest;
@@ -273,10 +225,10 @@ export const fetchFriendlyBuffEvents = createAsyncThunk<
             restrictToFightWindow,
           },
         );
-        return false; // Prevent duplicate execution for same fight
+        return false;
       }
 
-      return true; // Allow thunk execution
+      return true;
     },
   },
 );
@@ -352,15 +304,11 @@ const friendlyBuffEventsSlice = createSlice({
           });
           return;
         }
-        entry.events = action.payload.events;
+        entry.events = action.payload;
         entry.status = 'succeeded';
         entry.error = null;
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
         entry.cacheMetadata.restrictToFightWindow = action.meta.arg.restrictToFightWindow ?? true;
-        entry.cacheMetadata.intervalCount = action.payload.intervalResults.length;
-        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter(
-          (r) => r.error,
-        ).length;
         entry.currentRequest = null;
         touchAccessOrder(state, key);
         trimCache(state, EVENT_CACHE_MAX_ENTRIES);

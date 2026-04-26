@@ -1,4 +1,4 @@
-import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
@@ -7,6 +7,7 @@ import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
 import {
   formatReportDateTime,
   formatReportDuration,
+  getReportBadge,
   getReportVisibilityColor,
 } from '../reportFormatting';
 
@@ -64,9 +65,26 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
         >
           <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
             <Box flex={1} minWidth={0}>
-              <Typography variant="subtitle1" fontWeight={600} noWrap>
-                {report.title || 'Untitled Report'}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Typography variant="subtitle1" fontWeight={600} noWrap>
+                  {report.title || 'Untitled Report'}
+                </Typography>
+                {(() => {
+                  const badge = getReportBadge(report);
+                  if (!badge) return null;
+                  return (
+                    <Tooltip title={badge.tooltip} arrow>
+                      <Chip
+                        label={badge.label}
+                        size="small"
+                        color={badge.color}
+                        variant="outlined"
+                        sx={{ flexShrink: 0, fontSize: '0.65rem', height: 18 }}
+                      />
+                    </Tooltip>
+                  );
+                })()}
+              </Box>
               <Typography variant="caption" color="text.secondary">
                 {report.code}
               </Typography>

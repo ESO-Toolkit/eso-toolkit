@@ -21,14 +21,6 @@ import {
 import { EVENT_CACHE_MAX_ENTRIES, EVENT_PAGE_LIMIT } from './constants';
 import { createCurrentRequest, isStaleResponse } from './utils/requestTracking';
 
-// Interface for tracking interval fetching state
-interface IntervalFetchResult {
-  startTime: number;
-  endTime: number;
-  events: BuffEvent[];
-  error?: string;
-}
-
 type HostileBuffEventsRequest = ReturnType<typeof createCurrentRequest> | null;
 
 export interface HostileBuffEventsEntry {
@@ -37,8 +29,6 @@ export interface HostileBuffEventsEntry {
   error: string | null;
   cacheMetadata: {
     lastFetchedTimestamp: number | null;
-    intervalCount: number;
-    failedIntervals: number;
   };
   currentRequest: HostileBuffEventsRequest;
 }
@@ -57,8 +47,6 @@ const createEmptyEntry = (): HostileBuffEventsEntry => ({
   error: null,
   cacheMetadata: {
     lastFetchedTimestamp: null,
-    intervalCount: 0,
-    failedIntervals: 0,
   },
   currentRequest: null,
 });
@@ -75,103 +63,60 @@ const initialState: HostileBuffEventsState = {
   accessOrder: [],
 };
 
-// Helper function to create time intervals
-const createTimeIntervals = (
-  startTime: number,
-  endTime: number,
-  intervalSize = 60000,
-): Array<{ startTime: number; endTime: number }> => {
-  const intervals: Array<{ startTime: number; endTime: number }> = [];
-  let currentStart = startTime;
+const INTERVAL_SIZE = 30000;
 
-  while (currentStart < endTime) {
-    const currentEnd = Math.min(currentStart + intervalSize, endTime);
-    intervals.push({ startTime: currentStart, endTime: currentEnd });
-    currentStart = currentEnd;
-  }
-
-  return intervals;
-};
-
-// Helper function to fetch events for a single interval with pagination
-const fetchEventsForInterval = async (
+const fetchInterval = async (
   client: EsoLogsClient,
   reportCode: string,
-  fight: FightFragment,
-  intervalStart: number,
-  intervalEnd: number,
-): Promise<BuffEvent[]> => {
-  let allEvents: LogEvent[] = [];
-  let nextPageTimestamp: number | null = null;
-
+  fightId: number,
+  startTime: number,
+  endTime: number,
+): Promise<LogEvent[]> => {
+  let events: LogEvent[] = [];
+  let nextPage: number | null = null;
   do {
     const response: GetBuffEventsQuery = await client.query({
       query: GetBuffEventsDocument,
       fetchPolicy: 'no-cache',
       variables: {
         code: reportCode,
-        fightIds: [Number(fight.id)],
-        startTime: nextPageTimestamp ?? intervalStart,
-        endTime: intervalEnd,
+        fightIds: [fightId],
+        startTime: nextPage ?? startTime,
+        endTime,
         hostilityType: HostilityType.Enemies,
         limit: EVENT_PAGE_LIMIT,
       },
     });
-
     const page = response.reportData?.report?.events;
-    if (page?.data) {
-      allEvents = allEvents.concat(page.data);
-    }
-    nextPageTimestamp = page?.nextPageTimestamp ?? null;
-  } while (nextPageTimestamp && nextPageTimestamp < intervalEnd);
-
-  return allEvents as BuffEvent[];
+    if (page?.data) events = events.concat(page.data);
+    nextPage = page?.nextPageTimestamp ?? null;
+  } while (nextPage && nextPage < endTime);
+  return events;
 };
 
 export const fetchHostileBuffEvents = createAsyncThunk<
-  { events: BuffEvent[]; intervalResults: IntervalFetchResult[] },
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient; intervalSize?: number },
+  BuffEvent[],
+  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
   { state: LocalRootState; rejectValue: string }
 >(
   'hostileBuffEvents/fetchHostileBuffEvents',
-  async ({ reportCode, fight, client, intervalSize = 30000 }) => {
-    const intervals = createTimeIntervals(fight.startTime, fight.endTime, intervalSize);
+  async ({ reportCode, fight, client }) => {
+    const fightId = Number(fight.id);
+    let allEvents: LogEvent[] = [];
 
-    // Create promises for all interval combinations (only enemies)
-    const fetchPromises = intervals.map(async (interval): Promise<IntervalFetchResult> => {
+    let windowStart = fight.startTime;
+    while (windowStart < fight.endTime) {
+      const windowEnd = Math.min(windowStart + INTERVAL_SIZE, fight.endTime);
       try {
-        const events = await fetchEventsForInterval(
-          client,
-          reportCode,
-          fight,
-          interval.startTime,
-          interval.endTime,
-        );
-
-        return {
-          startTime: interval.startTime,
-          endTime: interval.endTime,
-          events,
-        };
-      } catch (error) {
-        return {
-          startTime: interval.startTime,
-          endTime: interval.endTime,
-          events: [],
-          error: error instanceof Error ? error.message : 'Unknown error',
-        };
+        const events = await fetchInterval(client, reportCode, fightId, windowStart, windowEnd);
+        allEvents = allEvents.concat(events);
+      } catch {
+        // Continue fetching remaining intervals on failure
       }
-    });
+      windowStart = windowEnd;
+    }
 
-    // Execute all promises in parallel
-    const intervalResults = await Promise.all(fetchPromises);
-
-    // Combine all events and sort by timestamp
-    const allEvents = intervalResults
-      .flatMap((result) => result.events)
-      .sort((a, b) => a.timestamp - b.timestamp);
-
-    return { events: allEvents, intervalResults };
+    return (allEvents as BuffEvent[]).sort((a, b) => a.timestamp - b.timestamp);
   },
   {
     condition: ({ reportCode, fight }, { getState }) => {
@@ -186,15 +131,15 @@ export const fetchHostileBuffEvents = createAsyncThunk<
         Date.now() - lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
       if (isCached && isFresh) {
-        return false; // Prevent thunk execution
+        return false;
       }
 
       const inFlight = entry?.currentRequest;
       if (inFlight && inFlight.reportId === reportCode && inFlight.fightId === Number(fight.id)) {
-        return false; // Prevent duplicate execution
+        return false;
       }
 
-      return true; // Allow thunk execution
+      return true;
     },
   },
 );
@@ -265,14 +210,10 @@ const hostileBuffEventsSlice = createSlice({
         ) {
           return;
         }
-        entry.events = action.payload.events;
+        entry.events = action.payload;
         entry.status = 'succeeded';
         entry.error = null;
         entry.cacheMetadata.lastFetchedTimestamp = Date.now();
-        entry.cacheMetadata.intervalCount = action.payload.intervalResults.length;
-        entry.cacheMetadata.failedIntervals = action.payload.intervalResults.filter(
-          (r) => r.error,
-        ).length;
         entry.currentRequest = null;
         touchAccessOrder(state, key);
         trimCache(state, EVENT_CACHE_MAX_ENTRIES);

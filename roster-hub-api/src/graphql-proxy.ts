@@ -49,14 +49,56 @@ async function getCachedClientToken(env: Env): Promise<string> {
   return cachedToken;
 }
 
+// ─── Response caching ────────────────────────────────────────────────────────
+
+// Event data queries are immutable once a report is uploaded; safe to cache.
+const CACHEABLE_OPERATIONS = new Set([
+  'getBuffEvents',
+  'getDebuffEvents',
+  'getDamageEvents',
+  'getResourceEvents',
+  'getCombatantInfoEvents',
+  'getCastEvents',
+  'getHealingEvents',
+  'getDeathEvents',
+  'getPlayersForReport',
+  'getReportByCode',
+  'getReportMasterData',
+]);
+
+const CACHE_TTL_SECONDS = 600; // 10 minutes
+
+async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
+  const data = new TextEncoder().encode(bodyStr);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hex = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `${url}:${hex}`;
+}
+
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
 export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
   let body: unknown;
+  let bodyStr: string;
   try {
-    body = await c.req.json();
+    bodyStr = await c.req.text();
+    body = JSON.parse(bodyStr);
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  // Forward the ?query=<operationName> hint if present (used by ESO Logs for tracing)
+  const operationHint = c.req.query('query');
+  const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
+
+  // Check cache for immutable event data
+  const cache = caches.default;
+  let cacheKey: Request | undefined;
+  if (isCacheable) {
+    const key = await buildCacheKey(c.req.url, bodyStr);
+    cacheKey = new Request(`https://cache.internal/${key}`, { method: 'GET' });
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
   }
 
   let token: string;
@@ -66,8 +108,6 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
     return c.json({ error: 'Failed to obtain upstream API token' }, 502);
   }
 
-  // Forward the ?query=<operationName> hint if present (used by ESO Logs for tracing)
-  const operationHint = c.req.query('query');
   const upstreamUrl = operationHint
     ? `${ESOLOGS_CLIENT_API}?query=${encodeURIComponent(operationHint)}`
     : ESOLOGS_CLIENT_API;
@@ -88,8 +128,18 @@ export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise
   }
 
   const responseBody = await upstream.text();
-  return new Response(responseBody, {
+  const response = new Response(responseBody, {
     status: upstream.status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': isCacheable ? `public, max-age=${CACHE_TTL_SECONDS}` : 'no-store',
+    },
   });
+
+  // Store successful cacheable responses
+  if (isCacheable && upstream.status === 200 && cacheKey) {
+    c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+  }
+
+  return response;
 }

@@ -293,8 +293,6 @@ const createMockStore = () => {
                 cacheMetadata: {
                   lastFetchedTimestamp: mockTimestamp,
                   restrictToFightWindow: true,
-                  intervalCount: 1,
-                  failedIntervals: 0,
                 },
                 currentRequest: null,
               },

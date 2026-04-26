@@ -17,6 +17,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -34,6 +35,7 @@ import { ReportListMobile } from '../reports/components/ReportListMobile';
 import {
   formatReportDateTime,
   formatReportDuration,
+  getReportBadge,
   getReportVisibilityColor,
 } from '../reports/reportFormatting';
 import { useReportPageLayout } from '../reports/useReportPageLayout';
@@ -361,23 +363,40 @@ export const LatestReports: React.FC = () => {
                         >
                           <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
                             <Box>
-                              <Typography
-                                variant="body2"
-                                fontWeight="medium"
-                                color="primary.main"
-                                sx={{
-                                  overflowWrap: 'anywhere',
-                                  wordBreak: 'break-word',
-                                  lineHeight: 1.4,
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {report.title || 'Untitled Report'}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight="medium"
+                                  color="primary.main"
+                                  sx={{
+                                    overflowWrap: 'anywhere',
+                                    wordBreak: 'break-word',
+                                    lineHeight: 1.4,
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    textOverflow: 'ellipsis',
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  {report.title || 'Untitled Report'}
+                                </Typography>
+                                {(() => {
+                                  const badge = getReportBadge(report);
+                                  if (!badge) return null;
+                                  return (
+                                    <Tooltip title={badge.tooltip} arrow>
+                                      <Chip
+                                        label={badge.label}
+                                        size="small"
+                                        color={badge.color}
+                                        variant="outlined"
+                                        sx={{ flexShrink: 0, fontSize: '0.7rem', height: 20 }}
+                                      />
+                                    </Tooltip>
+                                  );
+                                })()}
+                              </Box>
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
