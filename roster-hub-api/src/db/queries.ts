@@ -1517,7 +1517,7 @@ export async function checkPackVoteRateLimit(db: D1Database, userId: string): Pr
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const GRAPHQL_RATE_LIMIT_WINDOW_SEC = 60;
-const GRAPHQL_RATE_LIMIT_MAX = 30;
+const GRAPHQL_RATE_LIMIT_MAX = 120;
 
 export async function checkGraphqlRateLimit(db: D1Database, ip: string): Promise<boolean> {
   const row = await db

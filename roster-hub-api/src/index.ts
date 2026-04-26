@@ -163,7 +163,7 @@ app.post('/graphql', async (c) => {
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const allowed = await checkGraphqlRateLimit(c.env.DB, ip);
   if (!allowed) {
-    return c.json({ error: 'Rate limit exceeded. Max 30 GraphQL requests per minute.' }, 429);
+    return c.json({ error: 'Rate limit exceeded. Max 120 GraphQL requests per minute.' }, 429);
   }
   await recordGraphqlRateLimit(c.env.DB, ip);
   return handleGraphqlProxy(c);
