@@ -42,11 +42,26 @@ export interface ReportBadge {
 }
 
 export const getReportBadge = (report: UserReportSummaryFragment): ReportBadge | null => {
-  if (report.segments === 0) return { label: 'Empty Log', color: 'warning', tooltip: 'This log contains no fight data, likely due to an upload or parsing issue on ESO Logs' };
-  if (report.startTime === report.endTime) return { label: 'Empty Log', color: 'warning', tooltip: 'This log contains no fight data, likely due to an upload or parsing issue on ESO Logs' };
+  if (report.segments === 0)
+    return {
+      label: 'Empty Log',
+      color: 'warning',
+      tooltip:
+        'This log contains no fight data, likely due to an upload or parsing issue on ESO Logs',
+    };
+  if (report.startTime === report.endTime)
+    return {
+      label: 'Empty Log',
+      color: 'warning',
+      tooltip:
+        'This log contains no fight data, likely due to an upload or parsing issue on ESO Logs',
+    };
   if (!report.zone?.name && report.endTime - report.startTime < FIVE_MINUTES_MS) {
-    return { label: 'No Bosses', color: 'default', tooltip: 'This log appears to contain no boss encounter data' };
+    return {
+      label: 'No Bosses',
+      color: 'default',
+      tooltip: 'This log appears to contain no boss encounter data',
+    };
   }
   return null;
 };
-

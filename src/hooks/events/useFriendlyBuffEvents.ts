@@ -50,14 +50,7 @@ export function useFriendlyBuffEvents(options?: UseFriendlyBuffEventsOptions): {
         }),
       );
     }
-  }, [
-    dispatch,
-    context.reportCode,
-    context.fightId,
-    selectedFight,
-    client,
-    restrictToFightWindow,
-  ]);
+  }, [dispatch, context.reportCode, context.fightId, selectedFight, client, restrictToFightWindow]);
 
   return React.useMemo(
     () => ({ friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight }),
