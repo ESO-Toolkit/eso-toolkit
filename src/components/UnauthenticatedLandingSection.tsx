@@ -1,15 +1,17 @@
 import { LockOpen as LockOpenIcon } from '@mui/icons-material';
 import { Box, Button, Typography, useTheme } from '@mui/material';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { startPKCEAuth } from '../features/auth/auth';
+import { setIntendedDestination, startPKCEAuth } from '../features/auth/auth';
 
 export const UnauthenticatedLandingSection: React.FC = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const theme = useTheme();
 
   const handleLogin = (): void => {
+    setIntendedDestination(location.pathname + location.search + location.hash);
     startPKCEAuth();
   };
 

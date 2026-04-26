@@ -28,7 +28,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
+import {
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  setIntendedDestination,
+  startPKCEAuth,
+} from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 
 import { ThemeToggle } from './ThemeToggle';
@@ -489,9 +493,10 @@ export const HeaderBar: React.FC = () => {
   }, []);
 
   const handleLogin = React.useCallback((): void => {
+    setIntendedDestination(location.pathname + location.search + location.hash);
     startPKCEAuth();
     setMobileOpen(false);
-  }, []);
+  }, [location]);
 
   const handleLogout = React.useCallback((): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
