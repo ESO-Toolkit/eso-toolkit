@@ -167,7 +167,10 @@ app.use('*', async (c, next) => {
   if (tier && !hasAuth) {
     const cache = caches.default;
     const url = new URL(c.req.url);
-    const cacheKey = new Request(`https://cache.internal/rest${url.pathname}${url.search}`);
+    const origin = c.req.header('Origin') ?? '_none';
+    const cacheKey = new Request(
+      `https://cache.internal/rest${url.pathname}${url.search}&_origin=${encodeURIComponent(origin)}`,
+    );
     const cached = await cache.match(cacheKey);
     if (cached) {
       c.res = new Response(cached.body, cached);
@@ -179,7 +182,7 @@ app.use('*', async (c, next) => {
     if (c.res.status >= 200 && c.res.status < 300) {
       const cc = `public, s-maxage=${tier.edgeTtl}, stale-while-revalidate=${tier.swr}`;
       c.res.headers.set('Cache-Control', cc);
-      c.res.headers.set('Vary', 'Authorization');
+      c.res.headers.set('Vary', 'Authorization, Origin');
       c.executionCtx.waitUntil(cache.put(cacheKey, c.res.clone()));
     } else {
       c.res.headers.set('Cache-Control', 'no-store');
