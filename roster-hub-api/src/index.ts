@@ -61,8 +61,6 @@ import {
   togglePackVote,
   checkPackCreateRateLimit,
   checkPackVoteRateLimit,
-  checkGraphqlRateLimit,
-  recordGraphqlRateLimit,
   cleanupGraphqlRateLimits,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
@@ -159,13 +157,30 @@ app.use('*', async (c, next) => {
 // Forwards POST /graphql to https://www.esologs.com/api/v2/client, injecting
 // a server-side OAuth token so unauthenticated users can query public data.
 
+const GRAPHQL_RATE_LIMIT = 300; // max requests per minute per IP
+const graphqlRateCounts = new Map<string, { count: number; expires: number }>();
+
 app.post('/graphql', async (c) => {
-  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
-  const allowed = await checkGraphqlRateLimit(c.env.DB, ip);
-  if (!allowed) {
-    return c.json({ error: 'Rate limit exceeded. Max 120 GraphQL requests per minute.' }, 429);
+  const ip =
+    c.req.header('CF-Connecting-IP') ??
+    c.req.header('X-Forwarded-For')?.split(',')[0]?.trim() ??
+    'unknown';
+  const now = Date.now();
+
+  for (const [key, val] of graphqlRateCounts) {
+    if (val.expires <= now) graphqlRateCounts.delete(key);
   }
-  await recordGraphqlRateLimit(c.env.DB, ip);
+
+  const bucket = graphqlRateCounts.get(ip);
+  if (bucket && bucket.expires > now) {
+    if (bucket.count >= GRAPHQL_RATE_LIMIT) {
+      return c.json({ error: 'Rate limit exceeded. Max 300 GraphQL requests per minute.' }, 429);
+    }
+    bucket.count++;
+  } else {
+    graphqlRateCounts.set(ip, { count: 1, expires: now + 60_000 });
+  }
+
   return handleGraphqlProxy(c);
 });
 
