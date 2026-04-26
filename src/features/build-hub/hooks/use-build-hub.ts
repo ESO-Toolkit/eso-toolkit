@@ -1,5 +1,5 @@
-import React from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 
 import { buildHubApi } from '../api/build-hub-api';
 import type { BuildHubFilters, HubBuild } from '../types/build-hub.types';
@@ -70,10 +70,7 @@ export function useBuildHub(token: string | undefined): UseBuildHubReturn {
       lastPage.builds.length === PAGE_SIZE ? allPages.length + 1 : undefined,
   });
 
-  const builds = React.useMemo(
-    () => data?.pages.flatMap((p) => p.builds) ?? [],
-    [data],
-  );
+  const builds = React.useMemo(() => data?.pages.flatMap((p) => p.builds) ?? [], [data]);
 
   const voteMutation = useMutation({
     mutationFn: ({ buildId, voteToken }: { buildId: string; voteToken: string }) =>
@@ -171,7 +168,11 @@ export function useBuildHub(token: string | undefined): UseBuildHubReturn {
     builds,
     filteredBuilds,
     loading: isLoading || isFetchingNextPage,
-    error: queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load builds') : null,
+    error: queryError
+      ? queryError instanceof Error
+        ? queryError.message
+        : 'Failed to load builds'
+      : null,
     filters,
     hasMore: hasNextPage ?? false,
     setFilter,

@@ -1,5 +1,5 @@
-import React from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 
 import { packHubApi } from '../api/pack-hub-api';
 import type { HubPack, PackHubFilters } from '../types/pack-hub.types';
@@ -61,10 +61,7 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
       lastPage.packs.length === PAGE_SIZE ? allPages.length + 1 : undefined,
   });
 
-  const packs = React.useMemo(
-    () => data?.pages.flatMap((p) => p.packs) ?? [],
-    [data],
-  );
+  const packs = React.useMemo(() => data?.pages.flatMap((p) => p.packs) ?? [], [data]);
 
   const voteMutation = useMutation({
     mutationFn: ({ packId, voteToken }: { packId: string; voteToken: string }) =>
@@ -162,7 +159,11 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
     packs,
     filteredPacks,
     loading: isLoading || isFetchingNextPage,
-    error: queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load packs') : null,
+    error: queryError
+      ? queryError instanceof Error
+        ? queryError.message
+        : 'Failed to load packs'
+      : null,
     filters,
     hasMore: hasNextPage ?? false,
     setFilter,

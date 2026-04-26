@@ -34,11 +34,11 @@ import { ReportFightDetails } from './features/report_details/ReportFightDetails
 import { UserReports } from './features/user_reports/UserReports';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
+import { queryClient } from './lib/query-client';
 import { Banned } from './pages/Banned';
 import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
-import { queryClient } from './lib/query-client';
 import { initializeAnalytics } from './utils/analytics';
 import { getBaseUrl } from './utils/envUtils';
 import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
@@ -338,22 +338,22 @@ const App: React.FC = () => {
               <EsoLogsClientProvider>
                 <AuthProvider>
                   <QueryClientProvider client={queryClient}>
-                  <DiscordAuthProvider>
-                    <SnackbarProvider
-                      maxSnack={3}
-                      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                      autoHideDuration={4000}
-                      preventDuplicate
-                    >
-                      {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
-                      {!window.location.search.includes('embed=1') && <SiteBackground />}
-                      <AppRoutes />
-                      {/* Update notification for new versions */}
-                      {!window.location.search.includes('embed=1') && <UpdateNotification />}
-                      {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
-                      {!window.location.search.includes('embed=1') && <CookieConsent />}
-                    </SnackbarProvider>
-                  </DiscordAuthProvider>
+                    <DiscordAuthProvider>
+                      <SnackbarProvider
+                        maxSnack={3}
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                        autoHideDuration={4000}
+                        preventDuplicate
+                      >
+                        {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                        {!window.location.search.includes('embed=1') && <SiteBackground />}
+                        <AppRoutes />
+                        {/* Update notification for new versions */}
+                        {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                        {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                        {!window.location.search.includes('embed=1') && <CookieConsent />}
+                      </SnackbarProvider>
+                    </DiscordAuthProvider>
                   </QueryClientProvider>
                 </AuthProvider>
               </EsoLogsClientProvider>

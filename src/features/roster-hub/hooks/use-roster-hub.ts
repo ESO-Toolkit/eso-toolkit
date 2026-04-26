@@ -1,5 +1,5 @@
-import React from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React from 'react';
 
 import { rosterHubApi } from '../api/roster-hub-api';
 import type { HubRoster, RosterHubFilters } from '../types/roster-hub.types';
@@ -61,10 +61,7 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
       lastPage.rosters.length === PAGE_SIZE ? allPages.length + 1 : undefined,
   });
 
-  const rosters = React.useMemo(
-    () => data?.pages.flatMap((p) => p.rosters) ?? [],
-    [data],
-  );
+  const rosters = React.useMemo(() => data?.pages.flatMap((p) => p.rosters) ?? [], [data]);
 
   const voteMutation = useMutation({
     mutationFn: ({ rosterId, voteToken }: { rosterId: string; voteToken: string }) =>
@@ -162,7 +159,11 @@ export function useRosterHub(token: string | undefined): UseRosterHubReturn {
     rosters,
     filteredRosters,
     loading: isLoading || isFetchingNextPage,
-    error: queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load rosters') : null,
+    error: queryError
+      ? queryError instanceof Error
+        ? queryError.message
+        : 'Failed to load rosters'
+      : null,
     filters,
     hasMore: hasNextPage ?? false,
     setFilter,
