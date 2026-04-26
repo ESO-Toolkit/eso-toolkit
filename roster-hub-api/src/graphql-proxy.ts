@@ -111,8 +111,14 @@ export async function handleGraphqlProxy(
     'unknown';
   const now = Date.now();
 
-  for (const [k, val] of rateCounts) {
-    if (val.expires <= now) rateCounts.delete(k);
+  // Probabilistic cleanup (~1-in-50 requests) instead of sweeping
+  // every request. The per-IP bucket check below already handles
+  // expiry for the current caller; stale entries from other IPs only
+  // waste memory, so lazy cleanup is fine.
+  if (Math.random() < 0.02) {
+    for (const [k, val] of rateCounts) {
+      if (val.expires <= now) rateCounts.delete(k);
+    }
   }
 
   const bucket = rateCounts.get(ip);
