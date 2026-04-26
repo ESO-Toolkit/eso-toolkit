@@ -114,8 +114,13 @@ export const LatestReports: React.FC = () => {
           loading: false,
           pagination: {
             currentPage: reportPagination.current_page || 1,
-            totalPages: reportPagination.last_page || 1,
-            totalReports: 0, // We don't care about total count
+            totalPages:
+              reportPagination.last_page > 0
+                ? reportPagination.last_page
+                : reportPagination.has_more_pages
+                  ? (reportPagination.current_page || 1) + 1
+                  : reportPagination.current_page || 1,
+            totalReports: 0,
             perPage: reportPagination.per_page || REPORTS_PER_PAGE,
             hasMorePages: reportPagination.has_more_pages || false,
           },
@@ -290,8 +295,8 @@ export const LatestReports: React.FC = () => {
                 mb={isDesktop ? 3 : 2}
               >
                 <Typography variant="body1" color="text.secondary">
-                  Showing page {state.pagination.currentPage} of {state.pagination.totalPages} -{' '}
-                  {state.pagination.totalReports} total reports
+                  Page {state.pagination.currentPage}
+                  {state.pagination.hasMorePages ? '+' : ` of ${state.pagination.totalPages}`}
                 </Typography>
 
                 <Chip
