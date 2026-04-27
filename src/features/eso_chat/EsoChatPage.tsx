@@ -31,7 +31,7 @@ const SUGGESTIONS = [
 ];
 
 export const EsoChatPage: React.FC = () => {
-  const { messages, isStreaming, error, statusText, sendMessage, stopStreaming, clearChat } =
+  const { messages, isStreaming, error, statusText, sendMessage, retryMessage, deleteMessage, stopStreaming, clearChat } =
     useEsoChat();
 
   const { scrollRef, contentRef, isAtBottom, scrollToBottom } = useStickToBottom({
@@ -101,6 +101,8 @@ export const EsoChatPage: React.FC = () => {
                         : null
                     }
                     onSuggestionClick={sendMessage}
+                    onRetry={msg.role === 'assistant' ? () => retryMessage(msg.id) : undefined}
+                    onDelete={() => deleteMessage(msg.id)}
                   />
                 </Box>
               ))

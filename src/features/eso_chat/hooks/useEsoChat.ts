@@ -8,14 +8,18 @@ import {
   selectChatError,
   selectChatMessages,
   selectIsStreaming,
+  selectStatusText,
 } from '../store/esoChatSelectors';
 import {
   addAssistantMessage,
   addUserMessage,
   appendToLastAssistant,
   clearChat,
+  deleteMessagePair,
+  removeAssistantResponse,
   setError,
   setLastAssistantSources,
+  setStatusText,
   setStreaming,
 } from '../store/esoChatSlice';
 import type { ChatMessage, SourcePayload } from '../types';
@@ -29,7 +33,10 @@ interface UseEsoChatReturn {
   messages: ChatMessage[];
   isStreaming: boolean;
   error: string | null;
+  statusText: string | null;
   sendMessage: (content: string) => Promise<void>;
+  retryMessage: (assistantId: string) => Promise<void>;
+  deleteMessage: (id: string) => void;
   stopStreaming: () => void;
   clearChat: () => void;
 }
@@ -39,22 +46,15 @@ export const useEsoChat = (): UseEsoChatReturn => {
   const messages = useSelector((state: RootState) => selectChatMessages(state));
   const isStreaming = useSelector((state: RootState) => selectIsStreaming(state));
   const error = useSelector((state: RootState) => selectChatError(state));
+  const statusText = useSelector((state: RootState) => selectStatusText(state));
   const abortRef = useRef<AbortController | null>(null);
 
-  const sendMessage = useCallback(
-    async (content: string) => {
-      if (!content.trim() || isStreaming) return;
-
+  const streamResponse = useCallback(
+    async (content: string, history: { role: 'user' | 'assistant'; content: string }[]) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
 
-      const history = messages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .filter((m) => m.content.trim().length > 0)
-        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
-
-      dispatch(addUserMessage({ id: nextId(), content: content.trim() }));
       const assistantId = nextId();
       dispatch(addAssistantMessage({ id: assistantId }));
       dispatch(setStreaming(true));
@@ -63,7 +63,7 @@ export const useEsoChat = (): UseEsoChatReturn => {
         const response = await fetch(`${API_URL}/api/eso-chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: content.trim(), history }),
+          body: JSON.stringify({ message: content, history }),
           signal: controller.signal,
         });
 
@@ -104,7 +104,10 @@ export const useEsoChat = (): UseEsoChatReturn => {
             if (!eventType || !data) continue;
 
             if (eventType === 'token') {
+              dispatch(setStatusText(null));
               dispatch(appendToLastAssistant(data));
+            } else if (eventType === 'status') {
+              dispatch(setStatusText(data));
             } else if (eventType === 'sources') {
               try {
                 const sources: SourcePayload = JSON.parse(data);
@@ -130,7 +133,55 @@ export const useEsoChat = (): UseEsoChatReturn => {
         dispatch(setStreaming(false));
       }
     },
-    [dispatch, isStreaming],
+    [dispatch],
+  );
+
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!content.trim() || isStreaming) return;
+
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .filter((m) => m.content.trim().length > 0)
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+      dispatch(addUserMessage({ id: nextId(), content: content.trim() }));
+      await streamResponse(content.trim(), history);
+    },
+    [dispatch, isStreaming, messages, streamResponse],
+  );
+
+  const retryMessage = useCallback(
+    async (assistantId: string) => {
+      if (isStreaming) return;
+
+      const idx = messages.findIndex((m) => m.id === assistantId && m.role === 'assistant');
+      if (idx === -1) return;
+
+      const userMsg = messages[idx - 1];
+      if (!userMsg || userMsg.role !== 'user') return;
+
+      const history = messages
+        .slice(0, idx - 1)
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .filter((m) => m.content.trim().length > 0)
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+      dispatch(removeAssistantResponse(assistantId));
+      await streamResponse(userMsg.content, history);
+    },
+    [dispatch, isStreaming, messages, streamResponse],
+  );
+
+  const deleteMessage = useCallback(
+    (id: string) => {
+      if (isStreaming) {
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg && lastMsg.id === id) return;
+      }
+      dispatch(deleteMessagePair(id));
+    },
+    [dispatch, isStreaming, messages],
   );
 
   const stopStreaming = useCallback(() => {
@@ -147,7 +198,10 @@ export const useEsoChat = (): UseEsoChatReturn => {
     messages,
     isStreaming,
     error,
+    statusText,
     sendMessage,
+    retryMessage,
+    deleteMessage,
     stopStreaming,
     clearChat: handleClearChat,
   };
