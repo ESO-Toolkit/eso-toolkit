@@ -3,10 +3,11 @@ import { streamSSE } from 'hono/streaming';
 import type { SSEMessage } from 'hono/streaming';
 
 import { CHAT_MODEL, CHAT_TEMPERATURE, EMBEDDING_MODEL, MAX_HISTORY_MESSAGES, MAX_MESSAGE_LENGTH, SSE_EVENTS, VECTORIZE_TOP_K } from '../config';
-import { queryBuildStats, queryKnowledgeDocsById } from '../lib/d1-queries';
+import { keywordSearchKnowledgeDocs, queryBuildStats, queryKnowledgeDocsById } from '../lib/d1-queries';
 import { extractIntent } from '../lib/intent-extraction';
 import { glmChat } from '../lib/glm-client';
 import { buildSystemPrompt } from '../lib/prompt-builder';
+import { rewriteQuery } from '../lib/query-rewriter';
 import type { BuildStatSource, ChatRequest, Env, KnowledgeDocSource, SourcePayload } from '../types';
 
 export const chatRoute = new Hono<{ Bindings: Env }>();
@@ -19,10 +20,37 @@ interface StreamWriter {
   writeSSE(message: SSEMessage): Promise<void>;
 }
 
+function createThinkingFilter(): (token: string) => string {
+  let inThinking = false;
+  return (token: string): string => {
+    let result = '';
+    let i = 0;
+    while (i < token.length) {
+      if (!inThinking) {
+        const openIdx = token.indexOf('<think>', i);
+        if (openIdx === -1) {
+          result += token.slice(i);
+          break;
+        }
+        result += token.slice(i, openIdx);
+        inThinking = true;
+        i = openIdx + 7;
+      } else {
+        const closeIdx = token.indexOf('</think>', i);
+        if (closeIdx === -1) break;
+        inThinking = false;
+        i = closeIdx + 8;
+      }
+    }
+    return result;
+  };
+}
+
 async function processSSEStream(
   body: ReadableStream<Uint8Array>,
   stream: StreamWriter,
   tokenIdRef: { value: number },
+  filterThinking: (token: string) => string,
 ): Promise<void> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
@@ -38,12 +66,12 @@ async function processSSEStream(
     buffer = parts.pop() ?? '';
 
     for (const part of parts) {
-      await processSSEPart(part, stream, tokenIdRef);
+      await processSSEPart(part, stream, tokenIdRef, filterThinking);
     }
   }
 
   if (buffer.trim()) {
-    await processSSEPart(buffer, stream, tokenIdRef);
+    await processSSEPart(buffer, stream, tokenIdRef, filterThinking);
   }
 }
 
@@ -51,6 +79,7 @@ async function processSSEPart(
   part: string,
   stream: StreamWriter,
   tokenIdRef: { value: number },
+  filterThinking: (token: string) => string,
 ): Promise<void> {
   for (const line of part.split('\n')) {
     if (!line.startsWith('data: ') && !line.startsWith('data:')) continue;
@@ -59,10 +88,11 @@ async function processSSEPart(
 
     try {
       const parsed = JSON.parse(data);
-      const token =
+      const raw =
         parsed.response ??
         parsed.choices?.[0]?.delta?.content ??
         '';
+      const token = filterThinking(raw);
       if (token) {
         await stream.writeSSE({
           event: SSE_EVENTS.TOKEN,
@@ -81,9 +111,10 @@ async function streamGlm(
   messages: ChatMessages,
   stream: StreamWriter,
   tokenIdRef: { value: number },
+  filterThinking: (token: string) => string,
 ): Promise<void> {
   const glmStream = await glmChat(apiKey, messages);
-  await processSSEStream(glmStream, stream, tokenIdRef);
+  await processSSEStream(glmStream, stream, tokenIdRef, filterThinking);
 }
 
 async function streamQwen(
@@ -91,6 +122,7 @@ async function streamQwen(
   messages: ChatMessages,
   stream: StreamWriter,
   tokenIdRef: { value: number },
+  filterThinking: (token: string) => string,
 ): Promise<void> {
   const aiResponse = await ai.run(CHAT_MODEL, {
     messages,
@@ -99,14 +131,17 @@ async function streamQwen(
   });
 
   if (aiResponse instanceof ReadableStream) {
-    await processSSEStream(aiResponse, stream, tokenIdRef);
+    await processSSEStream(aiResponse, stream, tokenIdRef, filterThinking);
   } else {
-    const textResponse = (aiResponse as { response?: string }).response ?? JSON.stringify(aiResponse);
-    await stream.writeSSE({
-      event: SSE_EVENTS.TOKEN,
-      data: textResponse,
-      id: String(tokenIdRef.value++),
-    });
+    const raw = (aiResponse as { response?: string }).response ?? JSON.stringify(aiResponse);
+    const text = filterThinking(raw);
+    if (text) {
+      await stream.writeSSE({
+        event: SSE_EVENTS.TOKEN,
+        data: text,
+        id: String(tokenIdRef.value++),
+      });
+    }
   }
 }
 
@@ -121,14 +156,20 @@ chatRoute.post('/eso-chat', async (c) => {
     return c.json({ error: `message exceeds ${MAX_MESSAGE_LENGTH} characters` }, 400);
   }
 
-  const intent = extractIntent(body.message);
+  const searchQuery = await rewriteQuery(
+    body.message,
+    body.history ?? [],
+    c.env.GLM_API_KEY,
+  );
+
+  const intent = extractIntent(searchQuery);
 
   const buildStats = await queryBuildStats(c.env.DB, intent);
   let knowledgeDocs: Awaited<ReturnType<typeof queryKnowledgeDocsById>> = [];
   let vectorMatches: { id: string; score: number; metadata?: Record<string, unknown> }[] = [];
 
   try {
-    const embeddingResult = await c.env.AI.run(EMBEDDING_MODEL, { text: [body.message] });
+    const embeddingResult = await c.env.AI.run(EMBEDDING_MODEL, { text: [searchQuery] });
     const embData = embeddingResult as { data?: number[][] };
     const vector = embData.data?.[0];
 
@@ -144,6 +185,26 @@ chatRoute.post('/eso-chat', async (c) => {
     }
   } catch {
     // Vectorize/embedding failure is non-fatal
+  }
+
+  const keywordTerms = [
+    ...intent.keywords,
+    ...intent.weapons,
+    ...intent.classes,
+  ].slice(0, 5);
+  if (keywordTerms.length > 0) {
+    try {
+      const keywordDocs = await keywordSearchKnowledgeDocs(c.env.DB, keywordTerms);
+      const existingIds = new Set(knowledgeDocs.map((d) => d.vectorize_id));
+      for (const doc of keywordDocs) {
+        if (!existingIds.has(doc.vectorize_id)) {
+          knowledgeDocs.push(doc);
+          existingIds.add(doc.vectorize_id);
+        }
+      }
+    } catch {
+      // Keyword search failure is non-fatal
+    }
   }
 
   const systemPrompt = buildSystemPrompt(buildStats, knowledgeDocs);
@@ -185,17 +246,18 @@ chatRoute.post('/eso-chat', async (c) => {
 
   return streamSSE(c, async (stream) => {
     const tokenIdRef = { value: 0 };
+    const filterThinking = createThinkingFilter();
 
     try {
       if (useGlm) {
         try {
-          await streamGlm(c.env.GLM_API_KEY!, messages, stream, tokenIdRef);
+          await streamGlm(c.env.GLM_API_KEY!, messages, stream, tokenIdRef, filterThinking);
         } catch {
           // GLM failed — fall back to Qwen3
-          await streamQwen(c.env.AI, messages, stream, tokenIdRef);
+          await streamQwen(c.env.AI, messages, stream, tokenIdRef, filterThinking);
         }
       } else {
-        await streamQwen(c.env.AI, messages, stream, tokenIdRef);
+        await streamQwen(c.env.AI, messages, stream, tokenIdRef, filterThinking);
       }
 
       await stream.writeSSE({

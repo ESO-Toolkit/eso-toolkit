@@ -56,6 +56,30 @@ export const queryKnowledgeDocsById = async (
   return result.results;
 };
 
+export const keywordSearchKnowledgeDocs = async (
+  db: D1Database,
+  keywords: string[],
+  limit = 5,
+): Promise<KnowledgeDocRow[]> => {
+  if (keywords.length === 0) return [];
+
+  const conditions = keywords.map(() => '(title LIKE ? OR content LIKE ?)');
+  const params = keywords.flatMap((k) => {
+    const term = `%${k}%`;
+    return [term, term];
+  });
+
+  const sql = `SELECT * FROM knowledge_docs WHERE ${conditions.join(' OR ')} LIMIT ?`;
+  params.push(String(limit));
+
+  const result = await db
+    .prepare(sql)
+    .bind(...params)
+    .all<KnowledgeDocRow>();
+
+  return result.results;
+};
+
 export const upsertBuildStats = async (
   db: D1Database,
   rows: BuildStatRow[],

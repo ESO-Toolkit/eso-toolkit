@@ -1,16 +1,36 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DoneIcon from '@mui/icons-material/Done';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PersonIcon from '@mui/icons-material/Person';
-import { Avatar, Box, Paper, Typography } from '@mui/material';
+import { Avatar, Box, Chip, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { alpha } from '@mui/material/styles';
-import React, { type ComponentPropsWithoutRef } from 'react';
+import React, { type ComponentPropsWithoutRef, useCallback, useMemo, useState } from 'react';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import type { ChatMessage } from '../types';
 
 import { SourcesPanel } from './SourcesPanel';
+
+const FOLLOW_UP_PATTERN = /(?:^|\n)(?:Want to |Ask me about |Would you like )[^\n?]*\?/g;
+const TRAILING_SUGGESTIONS_PATTERN = /(?:\n\s*(?:Want to |Ask me about |Would you like |Shall I )[^\n?]*\?[\s]*)+$/;
+
+function extractFollowUps(content: string): { cleanContent: string; suggestions: string[] } {
+  const suggestions: string[] = [];
+  const matches = content.match(FOLLOW_UP_PATTERN);
+  if (matches) {
+    for (const m of matches) {
+      const trimmed = m.trim().replace(/^[-*•]\s*/, '');
+      if (trimmed.length > 10 && trimmed.length < 200) {
+        suggestions.push(trimmed);
+      }
+    }
+  }
+  const cleanContent = content.replace(TRAILING_SUGGESTIONS_PATTERN, '').trimEnd();
+  return { cleanContent, suggestions };
+}
 
 const mdComponents: Components = {
   h3: ({ children, ...props }: ComponentPropsWithoutRef<'h3'>) => (
@@ -164,10 +184,25 @@ const mdComponents: Components = {
 interface MessageBubbleProps {
   message: ChatMessage;
   isStreaming?: boolean;
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreaming, onSuggestionClick }) => {
   const isUser = message.role === 'user';
+  const [copied, setCopied] = useState(false);
+
+  const { cleanContent, suggestions } = useMemo(() => {
+    if (isUser || isStreaming || !message.content) {
+      return { cleanContent: message.content, suggestions: [] };
+    }
+    return extractFollowUps(message.content);
+  }, [isUser, isStreaming, message.content]);
+
+  const handleCopy = useCallback(async () => {
+    await navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [message.content]);
 
   return (
     <Box
@@ -202,6 +237,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
           elevation={0}
           sx={{
             p: 2,
+            position: 'relative',
             bgcolor: isUser
               ? (t: Theme) => alpha(t.palette.primary.main, 0.08)
               : (t: Theme) => alpha(t.palette.background.paper, 0.6),
@@ -211,8 +247,29 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
               : (t: Theme) => alpha(t.palette.divider, 0.12),
             borderRadius: 2,
             backdropFilter: 'blur(8px)',
+            '&:hover .copy-btn': { opacity: 1 },
           }}
         >
+          {!isUser && message.content && !isStreaming && (
+            <Tooltip title={copied ? 'Copied!' : 'Copy'}>
+              <IconButton
+                className="copy-btn"
+                onClick={handleCopy}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  color: (t: Theme) => alpha(t.palette.text.primary, 0.4),
+                  '&:hover': { color: 'primary.main' },
+                }}
+              >
+                {copied ? <DoneIcon sx={{ fontSize: 14 }} /> : <ContentCopyIcon sx={{ fontSize: 14 }} />}
+              </IconButton>
+            </Tooltip>
+          )}
           {isUser ? (
             <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
               {message.content}
@@ -242,11 +299,36 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
               }}
             >
               <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                {message.content || (isStreaming ? '...' : '')}
+                {cleanContent || (isStreaming ? '...' : '')}
               </Markdown>
             </Box>
           )}
         </Paper>
+
+        {suggestions.length > 0 && onSuggestionClick && (
+          <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mt: 1, px: 0.5 }}>
+            {suggestions.map((s) => (
+              <Chip
+                key={s}
+                label={s}
+                size="small"
+                variant="outlined"
+                clickable
+                onClick={() => onSuggestionClick(s)}
+                sx={{
+                  fontSize: '0.75rem',
+                  height: 28,
+                  borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.25),
+                  color: (t: Theme) => alpha(t.palette.text.primary, 0.7),
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.08),
+                  },
+                }}
+              />
+            ))}
+          </Stack>
+        )}
 
         {message.sources &&
           (message.sources.buildStats.length > 0 ||
