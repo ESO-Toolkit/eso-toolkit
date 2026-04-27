@@ -2,7 +2,6 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DoneIcon from '@mui/icons-material/Done';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import PersonIcon from '@mui/icons-material/Person';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { Avatar, Box, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
@@ -34,6 +33,75 @@ function extractFollowUps(content: string): { cleanContent: string; suggestions:
   return { cleanContent, suggestions };
 }
 
+const CodeBlock = ({ children, className }: ComponentPropsWithoutRef<'code'>) => {
+  const [codeCopied, setCodeCopied] = useState(false);
+  const match = /language-(\w+)/.exec(className ?? '');
+  const lang = match?.[1];
+  const isBlock = typeof children === 'string' && children.includes('\n');
+
+  const handleCodeCopy = useCallback(async () => {
+    await navigator.clipboard.writeText(String(children).replace(/\n$/, ''));
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  }, [children]);
+
+  if (!isBlock && !lang) {
+    return (
+      <code className={className} style={{ padding: '2px 6px', borderRadius: 6, fontSize: '0.85em', fontFamily: 'monospace' }}>
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <Box sx={{ position: 'relative', my: 2, borderRadius: 2, overflow: 'hidden', border: 1, borderColor: (t: Theme) => alpha(t.palette.divider, 0.08) }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          px: 2,
+          py: 0.75,
+          bgcolor: (t: Theme) => alpha(t.palette.common.white, 0.04),
+          borderBottom: 1,
+          borderColor: (t: Theme) => alpha(t.palette.divider, 0.06),
+        }}
+      >
+        <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.5, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 600 }}>
+          {lang ?? 'code'}
+        </Typography>
+        <Tooltip title={codeCopied ? 'Copied!' : 'Copy code'}>
+          <IconButton
+            onClick={handleCodeCopy}
+            size="small"
+            sx={{
+              p: 0.5,
+              color: (t: Theme) => alpha(t.palette.text.primary, 0.4),
+              '&:hover': { color: 'text.primary' },
+            }}
+          >
+            {codeCopied ? <DoneIcon sx={{ fontSize: 14 }} /> : <ContentCopyIcon sx={{ fontSize: 14 }} />}
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Box
+        component="pre"
+        sx={{
+          m: 0,
+          p: 2,
+          bgcolor: (t: Theme) => alpha(t.palette.common.black, 0.3),
+          overflow: 'auto',
+          '& code': { bgcolor: 'transparent', p: 0, fontSize: '0.82rem', fontFamily: '"JetBrains Mono", "Fira Code", monospace', lineHeight: 1.6 },
+        }}
+      >
+        <code className={className}>
+          {children}
+        </code>
+      </Box>
+    </Box>
+  );
+};
+
 const mdComponents: Components = {
   h3: ({ children, ...props }: ComponentPropsWithoutRef<'h3'>) => (
     <Typography
@@ -42,8 +110,8 @@ const mdComponents: Components = {
       {...props}
       sx={{
         fontWeight: 700,
-        fontSize: '1.05rem',
-        mt: 2.5,
+        fontSize: '1.1rem',
+        mt: 3,
         mb: 1,
         pb: 0.5,
         borderBottom: 2,
@@ -61,9 +129,9 @@ const mdComponents: Components = {
       {...props}
       sx={{
         fontWeight: 600,
-        fontSize: '0.95rem',
-        mt: 2,
-        mb: 0.5,
+        fontSize: '1rem',
+        mt: 2.5,
+        mb: 0.75,
         pl: 1,
         borderLeft: 3,
         borderColor: (t: Theme) => alpha(t.palette.secondary.main, 0.4),
@@ -97,7 +165,7 @@ const mdComponents: Components = {
   ),
   table: ({ children, ...props }: ComponentPropsWithoutRef<'table'>) => (
     <Box sx={{ overflowX: 'auto', my: 2, borderRadius: 1.5, border: 1, borderColor: (t: Theme) => alpha(t.palette.divider, 0.12) }}>
-      <Box component="table" {...props} sx={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.85rem' }}>
+      <Box component="table" {...props} sx={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.88rem' }}>
         {children}
       </Box>
     </Box>
@@ -116,7 +184,7 @@ const mdComponents: Components = {
           borderBottom: 2,
           borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.15),
           whiteSpace: 'nowrap',
-          fontSize: '0.83rem',
+          fontSize: '0.85rem',
         },
       }}
     >
@@ -136,7 +204,7 @@ const mdComponents: Components = {
           py: 0.75,
           borderBottom: 1,
           borderColor: (t: Theme) => alpha(t.palette.divider, 0.06),
-          fontSize: '0.85rem',
+          fontSize: '0.88rem',
         },
       }}
     >
@@ -183,6 +251,8 @@ const mdComponents: Components = {
       {children}
     </Box>
   ),
+  code: CodeBlock,
+  pre: ({ children }: ComponentPropsWithoutRef<'pre'>) => <>{children}</>,
 };
 
 interface MessageBubbleProps {
@@ -209,14 +279,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
     setTimeout(() => setCopied(false), 2000);
   }, [message.content]);
 
+  const showStreamingCaret = isStreaming && !isUser && !!cleanContent;
+
   return (
-    <Box sx={{ mb: 1 }}>
+    <Box sx={{ mb: 3 }}>
       {isUser ? (
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'flex-end',
-            mb: 0.5,
           }}
         >
           <Box
@@ -234,7 +305,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
               variant="body1"
               sx={{
                 whiteSpace: 'pre-wrap',
-                fontSize: '0.938rem',
+                fontSize: '1rem',
                 lineHeight: 1.6,
               }}
             >
@@ -243,7 +314,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
           </Box>
         </Box>
       ) : (
-        <Box sx={{ py: 1.5 }}>
+        <Box sx={{ py: 1 }}>
           {/* Assistant header */}
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
             <Avatar
@@ -274,25 +345,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
             sx={{
               pl: 4.5,
               '& p': { mt: 0, mb: 1.25, '&:last-child': { mb: 0 } },
-              '& code': {
-                px: 0.75,
-                py: 0.25,
-                borderRadius: 0.75,
-                bgcolor: (t: Theme) => alpha(t.palette.common.white, 0.06),
-                fontSize: '0.85em',
-                fontFamily: 'monospace',
-              },
-              '& pre': {
-                p: 2,
-                borderRadius: 1.5,
-                bgcolor: (t: Theme) => alpha(t.palette.common.black, 0.3),
-                overflow: 'auto',
-                my: 1.5,
-                '& code': { bgcolor: 'transparent', p: 0 },
-              },
-              fontSize: '0.938rem',
+              fontSize: '1rem',
               lineHeight: 1.65,
               color: (t: Theme) => alpha(t.palette.text.primary, 0.9),
+              ...(showStreamingCaret && {
+                '& > :last-child::after, & > :last-child > :last-child::after, & > :last-child > :last-child > :last-child::after': {
+                  content: '"▋"',
+                  ml: 0.25,
+                  color: 'primary.main',
+                  animation: 'caretBlink 1s step-end infinite',
+                  '@keyframes caretBlink': {
+                    '0%, 100%': { opacity: 1 },
+                    '50%': { opacity: 0 },
+                  },
+                },
+              }),
             }}
           >
             {!cleanContent && isStreaming ? (
@@ -312,7 +379,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
               className="action-row"
               sx={{
                 pl: 4.5,
-                mt: 1,
+                mt: 1.5,
                 opacity: 0,
                 transition: 'opacity 0.2s',
                 '&:focus-within': { opacity: 1 },
@@ -360,7 +427,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
 
           {/* Follow-up suggestions */}
           {suggestions.length > 0 && onSuggestionClick && (
-            <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mt: 1.5, pl: 4.5 }}>
+            <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mt: 2, pl: 4.5 }}>
               {suggestions.map((s) => (
                 <Chip
                   key={s}
@@ -370,9 +437,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
                   clickable
                   onClick={() => onSuggestionClick(s)}
                   sx={{
-                    fontSize: '0.8rem',
-                    height: 32,
-                    borderRadius: '16px',
+                    fontSize: '0.82rem',
+                    height: 34,
+                    borderRadius: '17px',
                     borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.2),
                     color: (t: Theme) => alpha(t.palette.text.primary, 0.75),
                     '&:hover': {
@@ -389,7 +456,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
           {message.sources &&
             (message.sources.buildStats.length > 0 ||
               message.sources.knowledgeDocs.length > 0) && (
-              <Box sx={{ pl: 4.5, mt: 1 }}>
+              <Box sx={{ pl: 4.5, mt: 1.5 }}>
                 <SourcesPanel sources={message.sources} />
               </Box>
             )}

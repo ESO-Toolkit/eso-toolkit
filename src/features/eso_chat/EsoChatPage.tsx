@@ -80,7 +80,7 @@ export const EsoChatPage: React.FC = () => {
           sx={{
             height: '100%',
             overflow: 'auto',
-            px: 0.5,
+            px: 1,
             '&::-webkit-scrollbar': { width: 6 },
             '&::-webkit-scrollbar-thumb': {
               borderRadius: 3,
@@ -168,24 +168,22 @@ const EmptyState: React.FC<{ onSuggestionClick: (msg: string) => void }> = ({ on
       justifyContent: 'center',
       height: '100%',
       textAlign: 'center',
-      gap: 4,
+      gap: 2.5,
     }}
   >
     <Box>
-      <AutoAwesomeIcon sx={{ fontSize: 36, opacity: 0.2, mb: 1.5, color: 'secondary.main' }} />
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, opacity: 0.8, fontSize: '1.15rem' }}>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, opacity: 0.8, fontSize: '1.25rem' }}>
         What would you like to know?
       </Typography>
-      <Typography variant="body2" sx={{ opacity: 0.4, fontSize: '0.85rem', maxWidth: 360, mx: 'auto' }}>
-        I can help with weapon traits, enchants, gear optimization, and build strategy using real ESO
-        Logs data.
+      <Typography variant="body2" sx={{ opacity: 0.4, fontSize: '0.85rem', maxWidth: 340, mx: 'auto' }}>
+        Weapon traits, enchants, gear optimization, and build strategy powered by real ESO Logs data.
       </Typography>
     </Box>
     <Box
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-        gap: 1.5,
+        gap: 1.25,
         maxWidth: 520,
         width: '100%',
       }}
@@ -195,7 +193,7 @@ const EmptyState: React.FC<{ onSuggestionClick: (msg: string) => void }> = ({ on
           key={s.label}
           onClick={() => onSuggestionClick(s.label)}
           sx={{
-            p: 2,
+            p: 1.75,
             borderRadius: '14px',
             border: 1,
             borderColor: (t: Theme) => alpha(t.palette.divider, 0.1),
