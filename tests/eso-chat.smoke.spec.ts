@@ -5,7 +5,7 @@ test.describe('ESO AI Chat', () => {
     await page.goto('/chat');
 
     await expect(page.getByText('ESO AI Chat')).toBeVisible();
-    await expect(page.getByText('Ask me about ESO builds')).toBeVisible();
+    await expect(page.getByText('What would you like to know?')).toBeVisible();
 
     await expect(page.getByPlaceholder(/Ask about ESO builds/)).toBeVisible();
   });
@@ -14,10 +14,10 @@ test.describe('ESO AI Chat', () => {
     await page.goto('/chat');
 
     await expect(
-      page.getByRole('button', { name: /best weapon traits for a DPS build/i }),
+      page.getByRole('button', { name: /best DPS build for trials/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: /difference between Nirnhoned and Precise/i }),
+      page.getByRole('button', { name: /Power Lash.*off-balance/i }),
     ).toBeVisible();
   });
 
