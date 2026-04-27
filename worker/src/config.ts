@@ -12,7 +12,7 @@ export const EMBEDDING_MODEL = '@cf/baai/bge-m3' as const;
 
 export const EMBEDDING_DIMENSIONS = 1024;
 
-export const VECTORIZE_TOP_K = 8;
+export const VECTORIZE_TOP_K = 12;
 
 export const CHAT_TEMPERATURE = 0.2;
 

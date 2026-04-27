@@ -122,6 +122,7 @@ export const useEsoChat = (): UseEsoChatReturn => {
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
         dispatch(setError((err as Error).message));
+        dispatch(setStreaming(false));
       }
     },
     [dispatch, isStreaming],

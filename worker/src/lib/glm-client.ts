@@ -28,7 +28,7 @@ export async function glmChat(
       model: GLM_MODEL,
       messages,
       temperature: CHAT_TEMPERATURE,
-      max_tokens: 1024,
+      max_tokens: 2048,
       stream: true,
     }),
   });
@@ -55,7 +55,7 @@ export async function glmChatSync(
       model: GLM_MODEL,
       messages,
       temperature: CHAT_TEMPERATURE,
-      max_tokens: 1024,
+      max_tokens: 2048,
       stream: false,
     }),
   });

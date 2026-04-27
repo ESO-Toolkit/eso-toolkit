@@ -124,6 +124,23 @@ const extractKeywords = (text: string): string[] => {
     'set bonus',
     'monster set',
     'mythic',
+    'beginner',
+    'new player',
+    'starter',
+    'progression',
+    'entry level',
+    'first time',
+    'learning',
+    'addon',
+    'addons',
+    'beam',
+    'fatecarver',
+    'runeblades',
+    'subclass',
+    'trash',
+    'execute',
+    'ultimate',
+    'ult',
   ];
   return gameTerms.filter((term) => text.includes(term));
 };
