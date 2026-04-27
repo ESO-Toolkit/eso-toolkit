@@ -1,7 +1,6 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DoneIcon from '@mui/icons-material/Done';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import { Avatar, Box, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
@@ -18,6 +17,10 @@ import { SourcesPanel } from './SourcesPanel';
 const FOLLOW_UP_PATTERN = /(?:^|\n)(?:Want to |Ask me about |Would you like )[^\n?]*\?/g;
 const TRAILING_SUGGESTIONS_PATTERN = /(?:\n\s*(?:Want to |Ask me about |Would you like |Shall I )[^\n?]*\?[\s]*)+$/;
 
+function stripMarkdownFormatting(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/_(.+?)_/g, '$1').replace(/`(.+?)`/g, '$1');
+}
+
 function extractFollowUps(content: string): { cleanContent: string; suggestions: string[] } {
   const suggestions: string[] = [];
   const matches = content.match(FOLLOW_UP_PATTERN);
@@ -25,7 +28,7 @@ function extractFollowUps(content: string): { cleanContent: string; suggestions:
     for (const m of matches) {
       const trimmed = m.trim().replace(/^[-*•]\s*/, '');
       if (trimmed.length > 10 && trimmed.length < 200) {
-        suggestions.push(trimmed);
+        suggestions.push(stripMarkdownFormatting(trimmed));
       }
     }
   }
@@ -53,12 +56,10 @@ const CodeBlock = ({ children, className }: ComponentPropsWithoutRef<'code'>) =>
         sx={{
           px: 0.75,
           py: 0.25,
-          borderRadius: '6px',
+          borderRadius: '4px',
           fontSize: '0.85em',
           fontFamily: '"JetBrains Mono", "Fira Code", monospace',
-          bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(15, 23, 42, 0.06)',
-          border: 1,
-          borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(15, 23, 42, 0.10)',
+          bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
         }}
       >
         {children}
@@ -130,15 +131,10 @@ const mdComponents: Components = {
       {...props}
       sx={{
         fontWeight: 700,
-        fontSize: '1.1rem',
-        fontFamily: 'Space Grotesk, Inter, system-ui',
+        fontSize: '1.05rem',
+        letterSpacing: '0.02em',
         mt: 3,
         mb: 1,
-        pb: 0.5,
-        borderBottom: 2,
-        borderImage: (t: Theme) => t.palette.mode === 'dark'
-          ? 'linear-gradient(90deg, #38bdf8, #00e1ff) 1'
-          : 'linear-gradient(90deg, #0f172a, #1e293b) 1',
         '&:first-of-type': { mt: 0.5 },
       }}
     >
@@ -152,13 +148,11 @@ const mdComponents: Components = {
       {...props}
       sx={{
         fontWeight: 600,
-        fontSize: '1rem',
-        fontFamily: 'Space Grotesk, Inter, system-ui',
+        fontSize: '0.95rem',
+        letterSpacing: '0.01em',
         mt: 2.5,
         mb: 0.75,
-        pl: 1,
-        borderLeft: 3,
-        borderColor: 'text.secondary',
+        color: (t: Theme) => alpha(t.palette.text.primary, 0.85),
       }}
     >
       {children}
@@ -170,31 +164,20 @@ const mdComponents: Components = {
       {...props}
       sx={{
         m: 0,
-        my: 2,
-        p: 2,
-        pl: 2.5,
-        borderLeft: 3,
-        borderColor: 'warning.main',
-        bgcolor: (t: Theme) => alpha(t.palette.warning.main, 0.06),
-        borderRadius: '0 12px 12px 0',
-        display: 'flex',
-        gap: 1,
-        alignItems: 'flex-start',
+        my: 1.5,
+        pl: 2,
+        borderLeft: 2,
+        borderColor: (t: Theme) => alpha(t.palette.text.secondary, 0.3),
+        color: (t: Theme) => alpha(t.palette.text.primary, 0.75),
+        fontStyle: 'italic',
         '& p': { m: 0 },
       }}
     >
-      <InfoOutlinedIcon sx={{ fontSize: 16, mt: 0.3, color: 'warning.main', flexShrink: 0 }} />
-      <Box sx={{ flex: 1 }}>{children}</Box>
+      {children}
     </Box>
   ),
   table: ({ children, ...props }: ComponentPropsWithoutRef<'table'>) => (
-    <Box sx={{
-      overflowX: 'auto', my: 2, borderRadius: '12px', border: 1,
-      borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(15, 23, 42, 0.10)',
-      boxShadow: (t: Theme) => t.palette.mode === 'dark'
-        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'
-        : 'inset 0 1px 0 rgba(255, 255, 255, 0.5)',
-    }}>
+    <Box sx={{ overflowX: 'auto', my: 2 }}>
       <Box component="table" {...props} sx={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.88rem' }}>
         {children}
       </Box>
@@ -205,18 +188,18 @@ const mdComponents: Components = {
       component="thead"
       {...props}
       sx={{
-        bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
         '& th': {
-          px: 2,
-          py: 1,
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
+          px: 1.5,
+          py: 0.75,
+          fontWeight: 600,
           textAlign: 'left',
-          borderBottom: 2,
-          borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(15, 23, 42, 0.10)',
+          borderBottom: 1,
+          borderColor: (t: Theme) => alpha(t.palette.divider, 0.5),
           whiteSpace: 'nowrap',
-          fontSize: '0.85rem',
-          letterSpacing: 0.2,
+          fontSize: '0.78rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          color: 'text.secondary',
         },
       }}
     >
@@ -228,14 +211,11 @@ const mdComponents: Components = {
       component="tbody"
       {...props}
       sx={{
-        '& tr:nth-of-type(even)': {
-          bgcolor: (t: Theme) => alpha(t.palette.common.white, 0.02),
-        },
         '& td': {
-          px: 2,
+          px: 1.5,
           py: 0.75,
           borderBottom: 1,
-          borderColor: (t: Theme) => alpha(t.palette.divider, 0.06),
+          borderColor: (t: Theme) => alpha(t.palette.divider, 0.15),
           fontSize: '0.88rem',
         },
       }}
@@ -250,8 +230,8 @@ const mdComponents: Components = {
       sx={{
         pl: 2.5,
         my: 1,
-        '& li': { mb: 0.75, lineHeight: 1.65 },
-        '& li::marker': { color: 'primary.main', fontWeight: 700 },
+        '& li': { mb: 0.5, lineHeight: 1.65 },
+        '& li::marker': { color: 'text.secondary', fontWeight: 500, fontSize: '0.9em' },
       }}
     >
       {children}
@@ -262,9 +242,10 @@ const mdComponents: Components = {
       component="ul"
       {...props}
       sx={{
-        pl: 2.5,
+        pl: 2,
         my: 1,
-        '& li': { mb: 0.75, lineHeight: 1.65 },
+        listStyleType: '"–  "',
+        '& li': { mb: 0.5, lineHeight: 1.65, pl: 0.5 },
         '& li::marker': { color: 'text.secondary' },
       }}
     >
@@ -275,10 +256,53 @@ const mdComponents: Components = {
     <Box
       component="strong"
       {...props}
-      sx={{ fontWeight: 600, color: 'text.primary' }}
+      sx={{ fontWeight: 700 }}
     >
       {children}
     </Box>
+  ),
+  em: ({ children, ...props }: ComponentPropsWithoutRef<'em'>) => (
+    <Box
+      component="em"
+      {...props}
+      sx={{ color: (t: Theme) => alpha(t.palette.text.primary, 0.75) }}
+    >
+      {children}
+    </Box>
+  ),
+  a: ({ children, href, ...props }: ComponentPropsWithoutRef<'a'>) => (
+    <Box
+      component="a"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      {...props}
+      sx={{
+        color: 'primary.main',
+        textDecoration: 'none',
+        fontWeight: 500,
+        borderBottom: 1,
+        borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.3),
+        transition: 'border-color 0.15s ease',
+        '&:hover': {
+          borderColor: 'primary.main',
+        },
+      }}
+    >
+      {children}
+    </Box>
+  ),
+  hr: ({ ...props }: ComponentPropsWithoutRef<'hr'>) => (
+    <Box
+      component="hr"
+      {...props}
+      sx={{
+        border: 'none',
+        height: '1px',
+        bgcolor: (t: Theme) => alpha(t.palette.divider, 0.3),
+        my: 2.5,
+      }}
+    />
   ),
   code: CodeBlock,
   pre: ({ children }: ComponentPropsWithoutRef<'pre'>) => <>{children}</>,
