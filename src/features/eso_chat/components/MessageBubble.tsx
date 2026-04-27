@@ -47,9 +47,22 @@ const CodeBlock = ({ children, className }: ComponentPropsWithoutRef<'code'>) =>
 
   if (!isBlock && !lang) {
     return (
-      <code className={className} style={{ padding: '2px 6px', borderRadius: 6, fontSize: '0.85em', fontFamily: 'monospace' }}>
+      <Box
+        component="code"
+        className={className}
+        sx={{
+          px: 0.75,
+          py: 0.25,
+          borderRadius: '6px',
+          fontSize: '0.85em',
+          fontFamily: '"JetBrains Mono", "Fira Code", monospace',
+          bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(15, 23, 42, 0.06)',
+          border: 1,
+          borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(15, 23, 42, 0.10)',
+        }}
+      >
         {children}
-      </code>
+      </Box>
     );
   }
 
@@ -118,11 +131,14 @@ const mdComponents: Components = {
       sx={{
         fontWeight: 700,
         fontSize: '1.1rem',
+        fontFamily: 'Space Grotesk, Inter, system-ui',
         mt: 3,
         mb: 1,
         pb: 0.5,
         borderBottom: 2,
-        borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.2),
+        borderImage: (t: Theme) => t.palette.mode === 'dark'
+          ? 'linear-gradient(90deg, #38bdf8, #00e1ff) 1'
+          : 'linear-gradient(90deg, #0f172a, #1e293b) 1',
         '&:first-of-type': { mt: 0.5 },
       }}
     >
@@ -137,11 +153,12 @@ const mdComponents: Components = {
       sx={{
         fontWeight: 600,
         fontSize: '1rem',
+        fontFamily: 'Space Grotesk, Inter, system-ui',
         mt: 2.5,
         mb: 0.75,
         pl: 1,
         borderLeft: 3,
-        borderColor: (t: Theme) => alpha(t.palette.secondary.main, 0.4),
+        borderColor: 'text.secondary',
       }}
     >
       {children}
@@ -157,8 +174,8 @@ const mdComponents: Components = {
         p: 2,
         pl: 2.5,
         borderLeft: 3,
-        borderColor: 'primary.main',
-        bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.06),
+        borderColor: 'warning.main',
+        bgcolor: (t: Theme) => alpha(t.palette.warning.main, 0.06),
         borderRadius: '0 12px 12px 0',
         display: 'flex',
         gap: 1,
@@ -166,7 +183,7 @@ const mdComponents: Components = {
         '& p': { m: 0 },
       }}
     >
-      <InfoOutlinedIcon sx={{ fontSize: 16, mt: 0.3, color: 'primary.main', flexShrink: 0 }} />
+      <InfoOutlinedIcon sx={{ fontSize: 16, mt: 0.3, color: 'warning.main', flexShrink: 0 }} />
       <Box sx={{ flex: 1 }}>{children}</Box>
     </Box>
   ),
@@ -188,16 +205,18 @@ const mdComponents: Components = {
       component="thead"
       {...props}
       sx={{
-        bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.08),
+        bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
         '& th': {
           px: 2,
           py: 1,
           fontWeight: 700,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
           textAlign: 'left',
           borderBottom: 2,
-          borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.15),
+          borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(15, 23, 42, 0.10)',
           whiteSpace: 'nowrap',
           fontSize: '0.85rem',
+          letterSpacing: 0.2,
         },
       }}
     >
@@ -246,7 +265,7 @@ const mdComponents: Components = {
         pl: 2.5,
         my: 1,
         '& li': { mb: 0.75, lineHeight: 1.65 },
-        '& li::marker': { color: 'secondary.main' },
+        '& li::marker': { color: 'text.secondary' },
       }}
     >
       {children}
@@ -256,10 +275,7 @@ const mdComponents: Components = {
     <Box
       component="strong"
       {...props}
-      sx={{
-        fontWeight: 700,
-        color: (t: Theme) => t.palette.mode === 'dark' ? t.palette.primary.light : t.palette.primary.main,
-      }}
+      sx={{ fontWeight: 600, color: 'text.primary' }}
     >
       {children}
     </Box>
