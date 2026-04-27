@@ -54,7 +54,14 @@ const CodeBlock = ({ children, className }: ComponentPropsWithoutRef<'code'>) =>
   }
 
   return (
-    <Box sx={{ position: 'relative', my: 2, borderRadius: 2, overflow: 'hidden', border: 1, borderColor: (t: Theme) => alpha(t.palette.divider, 0.08) }}>
+    <Box sx={{
+      position: 'relative', my: 2, borderRadius: '12px', overflow: 'hidden',
+      border: 1,
+      borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(15, 23, 42, 0.10)',
+      boxShadow: (t: Theme) => t.palette.mode === 'dark'
+        ? '0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+        : '0 2px 8px rgba(15, 23, 42, 0.06)',
+    }}>
       <Box
         sx={{
           display: 'flex',
@@ -62,9 +69,9 @@ const CodeBlock = ({ children, className }: ComponentPropsWithoutRef<'code'>) =>
           alignItems: 'center',
           px: 2,
           py: 0.75,
-          bgcolor: (t: Theme) => alpha(t.palette.common.white, 0.04),
+          bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.02)',
           borderBottom: 1,
-          borderColor: (t: Theme) => alpha(t.palette.divider, 0.06),
+          borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
         }}
       >
         <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.5, textTransform: 'uppercase', letterSpacing: 0.5, fontWeight: 600 }}>
@@ -89,7 +96,7 @@ const CodeBlock = ({ children, className }: ComponentPropsWithoutRef<'code'>) =>
         sx={{
           m: 0,
           p: 2,
-          bgcolor: (t: Theme) => alpha(t.palette.common.black, 0.3),
+          bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.30)' : 'rgba(0, 0, 0, 0.03)',
           overflow: 'auto',
           '& code': { bgcolor: 'transparent', p: 0, fontSize: '0.82rem', fontFamily: '"JetBrains Mono", "Fira Code", monospace', lineHeight: 1.6 },
         }}
@@ -164,7 +171,13 @@ const mdComponents: Components = {
     </Box>
   ),
   table: ({ children, ...props }: ComponentPropsWithoutRef<'table'>) => (
-    <Box sx={{ overflowX: 'auto', my: 2, borderRadius: 1.5, border: 1, borderColor: (t: Theme) => alpha(t.palette.divider, 0.12) }}>
+    <Box sx={{
+      overflowX: 'auto', my: 2, borderRadius: '12px', border: 1,
+      borderColor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.09)' : 'rgba(15, 23, 42, 0.10)',
+      boxShadow: (t: Theme) => t.palette.mode === 'dark'
+        ? 'inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+        : 'inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+    }}>
       <Box component="table" {...props} sx={{ borderCollapse: 'collapse', width: '100%', fontSize: '0.88rem' }}>
         {children}
       </Box>
@@ -296,9 +309,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
               px: 2.5,
               py: 1.5,
               borderRadius: '20px',
-              bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.12),
+              background: (t: Theme) => t.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.14) 0%, rgba(0, 225, 255, 0.10) 100%)'
+                : 'linear-gradient(135deg, rgba(15, 23, 42, 0.08) 0%, rgba(30, 41, 59, 0.05) 100%)',
               border: 1,
-              borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.08),
+              borderColor: (t: Theme) => t.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.15)'
+                : 'rgba(15, 23, 42, 0.10)',
+              boxShadow: (t: Theme) => t.palette.mode === 'dark'
+                ? '0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04)'
+                : '0 1px 4px rgba(15, 23, 42, 0.06)',
             }}
           >
             <Typography
@@ -321,8 +341,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
               sx={{
                 width: 24,
                 height: 24,
-                bgcolor: (t: Theme) => alpha(t.palette.secondary.main, 0.15),
-                color: 'secondary.main',
+                background: (t: Theme) => t.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(0, 225, 255, 0.15))'
+                  : 'linear-gradient(135deg, rgba(15, 23, 42, 0.10), rgba(30, 41, 59, 0.08))',
+                color: (t: Theme) => t.palette.mode === 'dark' ? '#38bdf8' : '#0f172a',
+                border: 1,
+                borderColor: (t: Theme) => t.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.20)'
+                  : 'rgba(15, 23, 42, 0.10)',
               }}
             >
               <AutoAwesomeIcon sx={{ fontSize: 14 }} />
@@ -330,10 +356,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
             <Typography
               variant="caption"
               sx={{
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: '0.8rem',
                 opacity: 0.7,
-                letterSpacing: 0.3,
+                letterSpacing: 0.5,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                textTransform: 'uppercase',
               }}
             >
               ESO AI
@@ -431,11 +459,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
                     fontSize: '0.82rem',
                     height: 34,
                     borderRadius: '17px',
-                    borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.2),
+                    borderColor: (t: Theme) => t.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.20)'
+                      : 'rgba(15, 23, 42, 0.12)',
                     color: (t: Theme) => alpha(t.palette.text.primary, 0.75),
+                    backdropFilter: 'blur(8px)',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.06),
+                      borderColor: (t: Theme) => t.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.45)'
+                        : 'rgba(15, 23, 42, 0.25)',
+                      bgcolor: (t: Theme) => t.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.08)'
+                        : 'rgba(15, 23, 42, 0.04)',
+                      transform: 'translateY(-1px)',
                     },
                   }}
                 />
@@ -487,7 +524,7 @@ const TypingIndicator: React.FC<{ statusText?: string | null }> = ({ statusText 
             width: 6,
             height: 6,
             borderRadius: '50%',
-            bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.6),
+            bgcolor: (t: Theme) => t.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.6)' : 'rgba(15, 23, 42, 0.4)',
             animation: 'typingDot 1.4s ease-in-out infinite',
             animationDelay: `${i * 0.2}s`,
             '@keyframes typingDot': {

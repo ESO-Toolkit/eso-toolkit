@@ -45,21 +45,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, onStop, isStreamin
         p: 1.5,
         pl: 2.5,
         borderRadius: '24px',
-        bgcolor: (t: Theme) => alpha(t.palette.background.paper, 0.7),
+        bgcolor: (t: Theme) => t.palette.mode === 'dark'
+          ? 'rgba(15, 23, 42, 0.84)'
+          : 'rgba(255, 255, 255, 0.84)',
         border: 1,
-        borderColor: (t: Theme) => alpha(t.palette.divider, 0.15),
-        backdropFilter: 'blur(12px)',
+        borderColor: (t: Theme) => t.palette.mode === 'dark'
+          ? 'rgba(255, 255, 255, 0.09)'
+          : 'rgba(15, 23, 42, 0.13)',
+        backdropFilter: 'blur(16px)',
         boxShadow: (t: Theme) =>
           t.palette.mode === 'dark'
-            ? `0 2px 12px ${alpha(t.palette.common.black, 0.3)}, inset 0 1px 0 ${alpha(t.palette.common.white, 0.03)}`
-            : `0 2px 12px ${alpha(t.palette.common.black, 0.08)}, inset 0 1px 0 ${alpha(t.palette.common.white, 0.5)}`,
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+            ? '0 8px 32px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            : '0 4px 24px rgba(15, 23, 42, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.80)',
+        transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
         '&:focus-within': {
-          borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.35),
+          borderColor: (t: Theme) => t.palette.mode === 'dark'
+            ? 'rgba(56, 189, 248, 0.35)'
+            : 'rgba(15, 23, 42, 0.20)',
           boxShadow: (t: Theme) =>
             t.palette.mode === 'dark'
-              ? `0 2px 16px ${alpha(t.palette.primary.main, 0.12)}, inset 0 1px 0 ${alpha(t.palette.common.white, 0.03)}`
-              : `0 2px 16px ${alpha(t.palette.primary.main, 0.08)}, inset 0 1px 0 ${alpha(t.palette.common.white, 0.5)}`,
+              ? '0 8px 32px rgba(0, 0, 0, 0.32), 0 0 0 2px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+              : '0 4px 24px rgba(15, 23, 42, 0.10), 0 0 0 2px rgba(56, 189, 248, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.80)',
         },
       }}
     >

@@ -57,10 +57,10 @@ export const EsoChatPage: React.FC = () => {
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <AutoAwesomeIcon sx={{ fontSize: 20, color: 'secondary.main' }} />
-          <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: '1rem' }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: '1rem', fontFamily: 'Space Grotesk, Inter, system-ui' }}>
             ESO AI Chat
           </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.35, fontSize: '0.7rem' }}>
+          <Typography variant="caption" sx={{ opacity: 0.35, fontSize: '0.7rem', letterSpacing: 0.3 }}>
             Powered by ESO Logs data
           </Typography>
         </Stack>
@@ -81,11 +81,9 @@ export const EsoChatPage: React.FC = () => {
             height: '100%',
             overflow: 'auto',
             px: 1,
-            '&::-webkit-scrollbar': { width: 6 },
-            '&::-webkit-scrollbar-thumb': {
-              borderRadius: 3,
-              bgcolor: (t: Theme) => alpha(t.palette.common.white, 0.08),
-            },
+            '&::-webkit-scrollbar': { display: 'none !important' },
+            scrollbarWidth: 'none !important',
+            msOverflowStyle: 'none',
           }}
         >
           <Box ref={contentRef}>
@@ -121,10 +119,25 @@ export const EsoChatPage: React.FC = () => {
               transform: 'translateX(-50%)',
               width: 36,
               height: 36,
-              bgcolor: (t: Theme) => alpha(t.palette.background.paper, 0.9),
-              backdropFilter: 'blur(8px)',
-              boxShadow: 2,
-              '&:hover': { bgcolor: 'background.paper' },
+              bgcolor: (t: Theme) => t.palette.mode === 'dark'
+                ? 'rgba(15, 23, 42, 0.90)'
+                : 'rgba(255, 255, 255, 0.90)',
+              backdropFilter: 'blur(16px)',
+              border: 1,
+              borderColor: (t: Theme) => t.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.09)'
+                : 'rgba(15, 23, 42, 0.10)',
+              boxShadow: (t: Theme) => t.palette.mode === 'dark'
+                ? '0 4px 16px rgba(0, 0, 0, 0.3)'
+                : '0 2px 8px rgba(15, 23, 42, 0.08)',
+              '&:hover': {
+                bgcolor: (t: Theme) => t.palette.mode === 'dark'
+                  ? 'rgba(15, 23, 42, 0.95)'
+                  : 'rgba(255, 255, 255, 0.95)',
+                borderColor: (t: Theme) => t.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.25)'
+                  : 'rgba(15, 23, 42, 0.15)',
+              },
             }}
           >
             <KeyboardArrowDownIcon fontSize="small" />
@@ -172,10 +185,10 @@ const EmptyState: React.FC<{ onSuggestionClick: (msg: string) => void }> = ({ on
     }}
   >
     <Box>
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, opacity: 0.8, fontSize: '1.25rem' }}>
+      <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, opacity: 0.8, fontSize: '1.25rem', fontFamily: 'Space Grotesk, Inter, system-ui' }}>
         What would you like to know?
       </Typography>
-      <Typography variant="body2" sx={{ opacity: 0.4, fontSize: '0.85rem', maxWidth: 340, mx: 'auto' }}>
+      <Typography variant="body2" sx={{ opacity: 0.4, fontSize: '0.85rem', maxWidth: 340, mx: 'auto', letterSpacing: 0.1 }}>
         Weapon traits, enchants, gear optimization, and build strategy powered by real ESO Logs data.
       </Typography>
     </Box>
@@ -194,17 +207,29 @@ const EmptyState: React.FC<{ onSuggestionClick: (msg: string) => void }> = ({ on
           onClick={() => onSuggestionClick(s.label)}
           sx={{
             p: 1.75,
-            borderRadius: '14px',
+            borderRadius: '12px',
             border: 1,
-            borderColor: (t: Theme) => alpha(t.palette.divider, 0.1),
-            bgcolor: (t: Theme) => alpha(t.palette.background.paper, 0.3),
+            borderColor: (t: Theme) => t.palette.mode === 'dark'
+              ? 'rgba(255, 255, 255, 0.09)'
+              : 'rgba(15, 23, 42, 0.10)',
+            bgcolor: (t: Theme) => t.palette.mode === 'dark'
+              ? 'rgba(15, 23, 42, 0.84)'
+              : 'rgba(255, 255, 255, 0.84)',
+            backdropFilter: 'blur(16px)',
+            boxShadow: (t: Theme) => t.palette.mode === 'dark'
+              ? '0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+              : '0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
             textAlign: 'left',
             display: 'block',
-            transition: 'all 0.15s ease',
+            transition: 'all 0.25s ease',
             '&:hover': {
-              borderColor: (t: Theme) => alpha(t.palette.primary.main, 0.3),
-              bgcolor: (t: Theme) => alpha(t.palette.primary.main, 0.04),
-              transform: 'translateY(-1px)',
+              borderColor: (t: Theme) => t.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.3)'
+                : 'rgba(15, 23, 42, 0.15)',
+              transform: 'translateY(-3px)',
+              boxShadow: (t: Theme) => t.palette.mode === 'dark'
+                ? '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.08)'
+                : '0 6px 20px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04)',
             },
           }}
         >
