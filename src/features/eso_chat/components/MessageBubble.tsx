@@ -348,26 +348,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
               fontSize: '1rem',
               lineHeight: 1.65,
               color: (t: Theme) => alpha(t.palette.text.primary, 0.9),
-              ...(showStreamingCaret && {
-                '& > :last-child::after, & > :last-child > :last-child::after, & > :last-child > :last-child > :last-child::after': {
-                  content: '"▋"',
-                  ml: 0.25,
-                  color: 'primary.main',
-                  animation: 'caretBlink 1s step-end infinite',
-                  '@keyframes caretBlink': {
-                    '0%, 100%': { opacity: 1 },
-                    '50%': { opacity: 0 },
-                  },
-                },
-              }),
             }}
           >
             {!cleanContent && isStreaming ? (
               <TypingIndicator statusText={statusText} />
             ) : (
-              <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                {cleanContent || ''}
-              </Markdown>
+              <>
+                <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                  {cleanContent || ''}
+                </Markdown>
+                {showStreamingCaret && <StreamingCaret />}
+              </>
             )}
           </Box>
 
@@ -465,6 +456,26 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
     </Box>
   );
 };
+
+const StreamingCaret: React.FC = () => (
+  <Box
+    component="span"
+    sx={{
+      display: 'inline-block',
+      color: 'primary.main',
+      fontSize: '1rem',
+      lineHeight: 1,
+      ml: 0.25,
+      animation: 'caretBlink 1s step-end infinite',
+      '@keyframes caretBlink': {
+        '0%, 100%': { opacity: 1 },
+        '50%': { opacity: 0 },
+      },
+    }}
+  >
+    ▋
+  </Box>
+);
 
 const TypingIndicator: React.FC<{ statusText?: string | null }> = ({ statusText }) => (
   <Stack direction="row" spacing={1} alignItems="center" sx={{ py: 1 }}>
