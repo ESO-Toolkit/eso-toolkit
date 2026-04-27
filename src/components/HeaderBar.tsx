@@ -663,6 +663,13 @@ export const HeaderBar: React.FC = () => {
 
   const toolsItems = [
     {
+      text: 'AI Chat',
+      desc: 'Ask about builds & gear',
+      icon: '✨',
+      accent: '#8b5cf6',
+      path: '/chat',
+    },
+    {
       text: 'Text Editor',
       desc: 'Format guild announcements',
       icon: '📝',

@@ -78,6 +78,9 @@ const AppAuth = React.lazy(() =>
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
+const EsoChatPage = React.lazy(() =>
+  import('./features/eso_chat/EsoChatPage').then((module) => ({ default: module.EsoChatPage })),
+);
 const TextEditor = React.lazy(() =>
   import('./components/TextEditor').then((module) => ({ default: module.TextEditor })),
 );
@@ -839,6 +842,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <PublicProfilePage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <EsoChatPage />
                   </Suspense>
                 </ErrorBoundary>
               }

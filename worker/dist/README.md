@@ -1,0 +1,1 @@
+This folder contains the built output assets for the worker "eso-chat-worker" generated at 2026-04-27T01:56:04.709Z.

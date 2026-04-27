@@ -21,6 +21,7 @@ import storage from 'redux-persist/lib/storage';
 import type { EsoLogsClient } from '@/esologsClient';
 
 import buildEditorReducer from '../features/build-editor/store/buildEditorSlice';
+import { esoChatReducer } from '../features/eso_chat/store/esoChatSlice';
 import loadoutReducer from '../features/loadout-manager/store/loadoutSlice';
 
 import dashboardReducer from './dashboard/dashboardSlice';
@@ -39,6 +40,7 @@ import { workerResultsReducer } from './worker_results';
 const rootReducer = combineReducers({
   buildEditor: buildEditorReducer,
   dashboard: dashboardReducer,
+  esoChat: esoChatReducer,
   events: eventsReducer,
   loadout: loadoutReducer,
   masterData: masterDataReducer,

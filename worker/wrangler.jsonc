@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "eso-chat-worker",
+  "account_id": "75620f084ea25ade5ee57a71a830bba2",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-25",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Cloudflare Workers AI binding
+  "ai": {
+    "binding": "AI"
+  },
+
+  // D1 database binding
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "eso-chat-db",
+      "database_id": "a75d719c-f8b4-4b8f-9b3f-9e2f70cf28a0",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Vectorize index binding (BGE-M3: 1024 dimensions, cosine metric)
+  "vectorize": [
+    {
+      "binding": "VECTOR_INDEX",
+      "index_name": "eso-knowledge"
+    }
+  ]
+}

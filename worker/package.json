@@ -1,0 +1,21 @@
+{
+  "name": "eso-chat-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "migrate:local": "wrangler d1 migrations apply eso-chat-db --local",
+    "migrate:remote": "wrangler d1 migrations apply eso-chat-db --remote"
+  },
+  "dependencies": {
+    "hono": "^4.12.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260401.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.78.0"
+  }
+}
