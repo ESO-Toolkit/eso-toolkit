@@ -49,6 +49,11 @@ export const useEsoChat = (): UseEsoChatReturn => {
       const controller = new AbortController();
       abortRef.current = controller;
 
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .filter((m) => m.content.trim().length > 0)
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
       dispatch(addUserMessage({ id: nextId(), content: content.trim() }));
       const assistantId = nextId();
       dispatch(addAssistantMessage({ id: assistantId }));
@@ -58,7 +63,7 @@ export const useEsoChat = (): UseEsoChatReturn => {
         const response = await fetch(`${API_URL}/api/eso-chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: content.trim() }),
+          body: JSON.stringify({ message: content.trim(), history }),
           signal: controller.signal,
         });
 

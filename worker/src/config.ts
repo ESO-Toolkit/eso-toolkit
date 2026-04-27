@@ -20,6 +20,8 @@ export const D1_BUILD_STATS_LIMIT = 10;
 
 export const MAX_MESSAGE_LENGTH = 2000;
 
+export const MAX_HISTORY_MESSAGES = 10;
+
 export const SSE_EVENTS = {
   TOKEN: 'token',
   SOURCES: 'sources',

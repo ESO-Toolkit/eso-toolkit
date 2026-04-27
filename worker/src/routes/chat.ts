@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import type { SSEMessage } from 'hono/streaming';
 
-import { CHAT_MODEL, CHAT_TEMPERATURE, EMBEDDING_MODEL, MAX_MESSAGE_LENGTH, SSE_EVENTS, VECTORIZE_TOP_K } from '../config';
+import { CHAT_MODEL, CHAT_TEMPERATURE, EMBEDDING_MODEL, MAX_HISTORY_MESSAGES, MAX_MESSAGE_LENGTH, SSE_EVENTS, VECTORIZE_TOP_K } from '../config';
 import { queryBuildStats, queryKnowledgeDocsById } from '../lib/d1-queries';
 import { extractIntent } from '../lib/intent-extraction';
 import { glmChat } from '../lib/glm-client';
@@ -13,7 +13,7 @@ export const chatRoute = new Hono<{ Bindings: Env }>();
 
 const VECTORIZE_SCORE_THRESHOLD = 0.3;
 
-type ChatMessages = { role: 'system' | 'user'; content: string }[];
+type ChatMessages = { role: 'system' | 'user' | 'assistant'; content: string }[];
 
 interface StreamWriter {
   writeSSE(message: SSEMessage): Promise<void>;
@@ -167,8 +167,15 @@ chatRoute.post('/eso-chat', async (c) => {
     ),
   };
 
+  const history: ChatMessages = (body.history ?? [])
+    .filter((m) => m.role === 'user' || m.role === 'assistant')
+    .filter((m) => typeof m.content === 'string' && m.content.trim().length > 0)
+    .slice(-MAX_HISTORY_MESSAGES)
+    .map((m) => ({ role: m.role, content: m.content }));
+
   const messages: ChatMessages = [
     { role: 'system', content: systemPrompt },
+    ...history,
     { role: 'user', content: body.message },
   ];
 

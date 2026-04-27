@@ -6,8 +6,14 @@ export interface Env {
   GLM_API_KEY?: string;
 }
 
+export interface HistoryMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface ChatRequest {
   message: string;
+  history?: HistoryMessage[];
   context?: ChatContext;
 }
 
