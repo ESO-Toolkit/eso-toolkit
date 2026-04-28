@@ -63,11 +63,23 @@ function parseBarBody(body: string): SkillBarSlot[] {
  * in-progress (unclosed) blocks.
  */
 export function stripSkillBarBlocks(content: string): string {
-  return content
-    .replace(SKILLBAR_BLOCK_RE(), '')
-    .replace(/:::skillbar[^\n]*(?:\n(?!:::).*)*\n?$/s, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trimEnd();
+  const lines = content.split('\n');
+  const out: string[] = [];
+  let inBlock = false;
+
+  for (const line of lines) {
+    if (!inBlock && line.trimStart().startsWith(':::skillbar')) {
+      inBlock = true;
+      continue;
+    }
+    if (inBlock) {
+      if (line.trimStart() === ':::') inBlock = false;
+      continue;
+    }
+    out.push(line);
+  }
+
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd();
 }
 
 export function extractSkillBars(content: string): SkillBarParseResult {
