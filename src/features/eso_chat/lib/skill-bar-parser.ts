@@ -13,7 +13,7 @@ interface SkillBarParseResult {
   skillBars: ParsedSkillBar[];
 }
 
-const SKILLBAR_BLOCK_RE = /:::skillbar\s+(.+?)\n([\s\S]*?):::/g;
+const SKILLBAR_BLOCK_RE = () => /:::skillbar\s+(.+?)\n([\s\S]*?):::/g;
 const SLOT_LINE_RE = /^\s*(?:(\d|R))[.)]\s*(.+)$/i;
 
 function resolveSkillId(name: string): number {
@@ -57,6 +57,19 @@ function parseBarBody(body: string): SkillBarSlot[] {
   return slots;
 }
 
+/**
+ * Strip skillbar fenced blocks from streaming content so raw `:::skillbar`
+ * text doesn't flash while tokens arrive. Handles both complete and
+ * in-progress (unclosed) blocks.
+ */
+export function stripSkillBarBlocks(content: string): string {
+  return content
+    .replace(SKILLBAR_BLOCK_RE(), '')
+    .replace(/:::skillbar[^\n]*(?:\n(?!:::).*)*\n?$/s, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trimEnd();
+}
+
 export function extractSkillBars(content: string): SkillBarParseResult {
   const skillBars: ParsedSkillBar[] = [];
   const segments: (string | { barIndex: number })[] = [];
@@ -64,8 +77,8 @@ export function extractSkillBars(content: string): SkillBarParseResult {
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  SKILLBAR_BLOCK_RE.lastIndex = 0;
-  while ((match = SKILLBAR_BLOCK_RE.exec(content)) !== null) {
+  const re = SKILLBAR_BLOCK_RE();
+  while ((match = re.exec(content)) !== null) {
     const before = content.slice(lastIndex, match.index);
     if (before) segments.push(before);
 

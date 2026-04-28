@@ -14,7 +14,7 @@ import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { SkillBarDisplay } from '../../build-viewer/components/SkillBarDisplay';
-import { extractSkillBars, type ParsedSkillBar } from '../lib/skill-bar-parser';
+import { extractSkillBars, stripSkillBarBlocks, type ParsedSkillBar } from '../lib/skill-bar-parser';
 import type { ChatMessage } from '../types';
 
 import { SourcesPanel } from './SourcesPanel';
@@ -380,7 +380,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
   }, [isUser, isStreaming, message.content]);
 
   const cleanContent = useMemo(() => {
-    if (!segments) return message.content;
+    if (!segments) return isStreaming ? stripSkillBarBlocks(message.content) : message.content;
     return segments
       .filter((seg): seg is { cleanContent: string; suggestions: string[] } =>
         typeof seg !== 'string' && !('barIndex' in seg),
