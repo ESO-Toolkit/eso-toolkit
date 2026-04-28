@@ -14,8 +14,11 @@ import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { SkillBarDisplay } from '../../build-viewer/components/SkillBarDisplay';
-import { extractSkillBars, stripSkillBarBlocks, type ParsedSkillBar } from '../lib/skill-bar-parser';
+import { extractRichBlocks, stripRichBlocks, type RichBlock } from '../lib/rich-block-parser';
 import type { ChatMessage } from '../types';
+
+import { ChatChampionPoints } from './ChatChampionPoints';
+import { ChatGearTable } from './ChatGearTable';
 
 import { SourcesPanel } from './SourcesPanel';
 
@@ -364,26 +367,26 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
 
-  const { segments, skillBars, suggestions } = useMemo(() => {
+  const { segments, blocks, suggestions } = useMemo(() => {
     if (isUser || isStreaming || !message.content) {
-      return { segments: null, skillBars: [] as ParsedSkillBar[], suggestions: [] as string[] };
+      return { segments: null, blocks: [] as RichBlock[], suggestions: [] as string[] };
     }
-    const { segments: rawSegments, skillBars: bars } = extractSkillBars(message.content);
+    const { segments: rawSegments, blocks: richBlocks } = extractRichBlocks(message.content);
     const processedSegments = rawSegments.map((seg) => {
       if (typeof seg !== 'string') return seg;
       return extractFollowUps(seg);
     });
     const allSuggestions = processedSegments.flatMap((seg) =>
-      typeof seg === 'string' || 'barIndex' in seg ? [] : seg.suggestions,
+      typeof seg === 'string' || 'blockIndex' in seg ? [] : seg.suggestions,
     );
-    return { segments: processedSegments, skillBars: bars, suggestions: allSuggestions };
+    return { segments: processedSegments, blocks: richBlocks, suggestions: allSuggestions };
   }, [isUser, isStreaming, message.content]);
 
   const cleanContent = useMemo(() => {
-    if (!segments) return isStreaming ? stripSkillBarBlocks(message.content) : message.content;
+    if (!segments) return isStreaming ? stripRichBlocks(message.content) : message.content;
     return segments
       .filter((seg): seg is { cleanContent: string; suggestions: string[] } =>
-        typeof seg !== 'string' && !('barIndex' in seg),
+        typeof seg !== 'string' && !('blockIndex' in seg),
       )
       .map((seg) => seg.cleanContent)
       .join('')
@@ -533,21 +536,30 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
           >
             {!cleanContent && isStreaming ? (
               <TypingIndicator statusText={statusText} />
-            ) : segments && skillBars.length > 0 ? (
+            ) : segments && blocks.length > 0 ? (
               <>
                 {segments.map((seg, i) => {
-                  if (typeof seg !== 'string' && 'barIndex' in seg) {
-                    const bar = skillBars[seg.barIndex];
-                    return (
-                      <Box key={`bar-${i}`} sx={{ my: 2 }}>
-                        <SkillBarDisplay
-                          label={bar.label}
-                          weapon={bar.weapon}
-                          skills={bar.skills}
-                          compact
-                        />
-                      </Box>
-                    );
+                  if (typeof seg !== 'string' && 'blockIndex' in seg) {
+                    const block = blocks[seg.blockIndex];
+                    if (block.kind === 'skillbar') {
+                      return (
+                        <Box key={`block-${i}`} sx={{ my: 2 }}>
+                          <SkillBarDisplay
+                            label={block.label}
+                            weapon={block.weapon}
+                            skills={block.skills}
+                            compact
+                          />
+                        </Box>
+                      );
+                    }
+                    if (block.kind === 'gear') {
+                      return <ChatGearTable key={`block-${i}`} rows={block.rows} />;
+                    }
+                    if (block.kind === 'cp') {
+                      return <ChatChampionPoints key={`block-${i}`} entries={block.entries} />;
+                    }
+                    return null;
                   }
                   const text = typeof seg === 'string' ? seg : seg.cleanContent;
                   if (!text?.trim()) return null;
