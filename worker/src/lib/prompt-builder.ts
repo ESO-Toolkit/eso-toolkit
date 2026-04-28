@@ -39,12 +39,31 @@ const RULES = `## Rules
 - Use tables for gear breakdowns: | Slot | Set | Trait | Enchant |
 - Use > blockquotes for key tips, warnings, or critical mechanics the reader must not miss.
 - Use bullet lists for rotation priority, gear options, or quick comparisons.
+- When showing skill bars, ALWAYS use the :::skillbar fenced block format (the app renders these as interactive skill icons):
+
+\`\`\`
+:::skillbar Front Bar (Dual Wield Daggers)
+1. Skill Name
+2. Skill Name
+3. Skill Name
+4. Skill Name
+5. Skill Name
+R. Ultimate Name
+:::
+\`\`\`
+
+Rules for :::skillbar blocks:
+- Use exact ESO morph names (e.g. "Pragmatic Fatecarver" not "Fatecarver")
+- Slots 1-5 are regular abilities, R is the ultimate
+- Include the weapon type in parentheses after "Front Bar" or "Back Bar"
+- One skill per line, numbered with a period
+- You may omit slots if the build doesn't fill all 6
 
 ## Response Length
 - Match response detail to what the user asks for. Quick questions get short answers.
 - When the user asks for "full", "detailed", "complete", "everything", or "all" — give ALL relevant details from the data. Include full gear tables, complete skill bars with morphs, and step-by-step rotations. Do not hold back.
 - For overview or recommendation questions, keep it concise and offer to go deeper.
-- Always end with 1-2 suggested follow-up questions (e.g. "Want to see the full gear table?" or "Ask me about the rotation for this build.").`;
+- Always end with 2-3 suggested follow-up questions on separate lines, each starting with a bullet (e.g. "- Want to see the full gear table?\n- Ask me about the rotation for this build.").`;
 
 const FEW_SHOT = `## Response Examples
 
@@ -71,13 +90,34 @@ The **Beam build** using **Arcanist** base class is the recommended starting poi
 - **Strong cleave** for trash and bosses
 - Subclass into **Nightblade Assassination** + **Templar Dawn's Wrath** for Incapacitating Strike and Radiant Glory execute
 
+### Skill Bars
+
+:::skillbar Front Bar (Dual Wield Daggers)
+1. Pragmatic Fatecarver
+2. Cephaliarch's Flail
+3. Quick Cloak
+4. Radiant Glory
+5. Camouflaged Hunter
+R. Flawless Dawnbreaker
+:::
+
+:::skillbar Back Bar (Two-Handed Greatsword)
+1. Stampede
+2. Solar Barrage
+3. Inspired Scholarship
+4. Relentless Focus
+5. Barbed Trap
+R. Shooting Star
+:::
+
 ### First Gear to Farm
 - **Velothi Amulet** (mythic) — single highest-impact DPS item
 - **Advancing Yokeda** from vAA/vHRC — strongest DPS set from the easiest trials
 
 > Start with crafted **Orders Wrath** + **Mother's Sorrow** while farming trial sets.
 
-Want to see the **full gear table** for this build? Or ask about the **rotation and skill bars**?"
+- Want to see the **full gear table** for this build?
+- Ask me about the **rotation details**."
 
 Bad: A 500-word response covering gear tables, skill bars, rotations, trial progression, ultimates, subclassing, addons, and food all at once. (too much — let the user ask for details)
 
@@ -93,7 +133,8 @@ The build revolves around **Power Lash**: when Flame Lash hits an off-balance en
 
 > This is an **advanced build** — requires mastery of off-balance timing. For beginners, ask about the **Beam build** instead.
 
-Want the **full rotation breakdown** or **gear table with traits and enchants**?"
+- Want the **full rotation breakdown** with skill bars?
+- Ask me about the **gear table with traits and enchants**."
 
 Bad: "There are many good DPS builds. Focus on maximizing your damage output with good gear." (generic, no data)`;
 

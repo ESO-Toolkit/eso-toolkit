@@ -13,6 +13,8 @@ import React, { type ComponentPropsWithoutRef, useCallback, useMemo, useState } 
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { SkillBarDisplay } from '../../build-viewer/components/SkillBarDisplay';
+import { extractSkillBars, type ParsedSkillBar } from '../lib/skill-bar-parser';
 import type { ChatMessage } from '../types';
 
 import { SourcesPanel } from './SourcesPanel';
@@ -362,12 +364,31 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
 
-  const { cleanContent, suggestions } = useMemo(() => {
+  const { segments, skillBars, suggestions } = useMemo(() => {
     if (isUser || isStreaming || !message.content) {
-      return { cleanContent: message.content, suggestions: [] };
+      return { segments: null, skillBars: [] as ParsedSkillBar[], suggestions: [] as string[] };
     }
-    return extractFollowUps(message.content);
+    const { segments: rawSegments, skillBars: bars } = extractSkillBars(message.content);
+    const processedSegments = rawSegments.map((seg) => {
+      if (typeof seg !== 'string') return seg;
+      return extractFollowUps(seg);
+    });
+    const allSuggestions = processedSegments.flatMap((seg) =>
+      typeof seg === 'string' || 'barIndex' in seg ? [] : seg.suggestions,
+    );
+    return { segments: processedSegments, skillBars: bars, suggestions: allSuggestions };
   }, [isUser, isStreaming, message.content]);
+
+  const cleanContent = useMemo(() => {
+    if (!segments) return message.content;
+    return segments
+      .filter((seg): seg is { cleanContent: string; suggestions: string[] } =>
+        typeof seg !== 'string' && !('barIndex' in seg),
+      )
+      .map((seg) => seg.cleanContent)
+      .join('')
+      .trim();
+  }, [segments, message.content]);
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(message.content);
@@ -512,6 +533,32 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isStreami
           >
             {!cleanContent && isStreaming ? (
               <TypingIndicator statusText={statusText} />
+            ) : segments && skillBars.length > 0 ? (
+              <>
+                {segments.map((seg, i) => {
+                  if (typeof seg !== 'string' && 'barIndex' in seg) {
+                    const bar = skillBars[seg.barIndex];
+                    return (
+                      <Box key={`bar-${i}`} sx={{ my: 2 }}>
+                        <SkillBarDisplay
+                          label={bar.label}
+                          weapon={bar.weapon}
+                          skills={bar.skills}
+                          compact
+                        />
+                      </Box>
+                    );
+                  }
+                  const text = typeof seg === 'string' ? seg : seg.cleanContent;
+                  if (!text?.trim()) return null;
+                  return (
+                    <Markdown key={`md-${i}`} remarkPlugins={[remarkGfm]} components={mdComponents}>
+                      {text}
+                    </Markdown>
+                  );
+                })}
+                {showStreamingCaret && <StreamingCaret />}
+              </>
             ) : (
               <>
                 <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
