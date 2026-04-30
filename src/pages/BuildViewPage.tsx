@@ -851,7 +851,7 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
   // Normalize skill slot indices to display format (0-4 abilities, 5 ultimate).
   // CSPS/combat-log builds use ESO-native slots 3-8; roster bridge builds already use 0-5.
   // Detect format by checking for slot indices > 5 (only exists in 3-8 format).
-  const normalizeBar = (bar: Record<number, number>) => {
+  const normalizeBar = (bar: Record<number, number>): { slot: number; id: number }[] => {
     const entries = Object.entries(bar);
     const isEsoNative = entries.some(([k]) => Number(k) > 5);
     return entries
