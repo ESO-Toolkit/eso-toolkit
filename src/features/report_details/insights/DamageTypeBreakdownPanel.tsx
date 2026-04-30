@@ -66,7 +66,7 @@ const AOE_ABILITY_IDS = Object.freeze(
     118314, // Scorch
     143944, // Subterranean Assault
     143946, // Deep Fissure
-    118720, // Eruption
+    118720, // Hearth and Home
     23202, // Impulse / Liquid Lightning
     23667, // Elemental Ring 2
     29809, // Pulsar
@@ -84,7 +84,7 @@ const AOE_ABILITY_IDS = Object.freeze(
     26869, // Wall of Fire
     80172, // Blockade of Fire
     26794, // Unstable Wall of Fire
-    44432, // Engulfing Flames Skill
+    44432, // Engulfing Dragonfire
     26879, // Wall of Frost
     26871, // Unstable Wall of Frost
     108936, // Blockade of Frost

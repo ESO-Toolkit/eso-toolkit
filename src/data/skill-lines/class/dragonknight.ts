@@ -39,33 +39,35 @@ export const dragonknightData: SkillsetData = {
         },
       },
       activeAbilities: {
-        fieryBreath: {
-          name: 'Fiery Breath',
+        lavaWhip: {
+          name: 'Lava Whip',
           type: 'active',
-          cost: '2984 Magicka',
-          target: 'Cone',
-          duration: '20 seconds',
-          radius: '10 meters',
-          description: 'Exhale flame in a cone, dealing Flame Damage over time.',
-          initialDamage: '1742 Flame Damage',
-          damageOverTime: '2900 Flame Damage over 20 seconds',
+          cost: '2295 Magicka',
+          target: 'Enemy',
+          maxRange: '7 meters',
+          description: 'Lash an enemy with fire, dealing instant Flame Damage.',
+          damage: '2323 Flame Damage',
+          offBalance: 'Sets Off Balance if target is immobilized or stunned',
           morphs: {
-            noxiousBreath: {
-              name: 'Noxious Breath',
-              cost: '2984 Stamina',
-              initialDamage: '1799 Poison Damage',
-              damageOverTime: '2980 Poison Damage over 20 seconds',
-              description: 'Converts to Poison Damage, applies Major Breach.',
-              statusEffect: 'Poisoned',
-              debuff: 'Major Breach (-5948 Physical and Spell Resistance for duration)',
+            flameLash: {
+              name: 'Flame Lash',
+              damage: '2323 Flame Damage',
+              powerLashDamage: '2760 Flame Damage',
+              powerLashHealing: '2760 Health',
+              description:
+                'Can be reactivated for free when hitting Off Balance enemies, healing you.',
+              powerLashCost: 'Half cost',
+              powerLashCondition: 'Against Off Balance or immobilized enemies',
             },
-            engulfingFlames: {
-              name: 'Engulfing Flames',
-              initialDamage: '1799 Flame Damage',
-              damageOverTime: '2980 Flame Damage over 20 seconds',
-              description: 'Increases Flame Damage enemies take.',
-              flameVulnerability:
-                'Up to 6% more Flame Damage taken (scales with Weapon/Spell Damage and Max Magicka/Stamina)',
+            moltenWhip: {
+              name: 'Molten Whip',
+              cost: '1148 Magicka',
+              damage: '2323 Flame Damage',
+              description: 'Increases damage of next whip per Ardent Flame ability used.',
+              stackSystem: 'Seething Fury stacks',
+              maxStacks: 3,
+              stackBonus: '20% damage per stack and 100 Weapon/Spell Damage for 15 seconds',
+              stackTrigger: 'Using different Ardent Flame abilities while in combat',
             },
           },
         },
@@ -81,15 +83,6 @@ export const dragonknightData: SkillsetData = {
           damageOverTime: '3470 Flame Damage over 20 seconds',
           statusEffect: 'Burning',
           morphs: {
-            venomousClaw: {
-              name: 'Venomous Claw',
-              cost: '2295 Stamina',
-              initialDamage: '1161 Poison Damage',
-              damageOverTime: '3470 Poison Damage over 20 seconds',
-              description: 'Converts to Poison Damage, increasing in power over time.',
-              statusEffect: 'Poisoned',
-              damageEscalation: '12% more damage every 2 seconds',
-            },
             burningEmbers: {
               name: 'Burning Embers',
               initialDamage: '1161 Flame Damage',
@@ -97,68 +90,71 @@ export const dragonknightData: SkillsetData = {
               description: 'Deals strong DoT, heals you for the damage dealt when the effect ends.',
               healing: '100% of damage done with this ability',
             },
+            searingClaw: {
+              name: 'Searing Claw',
+              cost: '2295 Stamina',
+              initialDamage: '1161 Flame Damage',
+              damageOverTime: '3470 Flame Damage over 20 seconds',
+              description: 'Converts to Stamina cost, damage increases over time.',
+              statusEffect: 'Burning',
+              damageEscalation: '12% more damage every 2 seconds',
+            },
           },
         },
-        fieryGrip: {
-          name: 'Fiery Grip',
+        coreOfFlame: {
+          name: 'Core of Flame',
           type: 'active',
-          cost: '3780 Magicka',
-          target: 'Enemy',
+          cost: '3510 Magicka',
+          target: 'Area',
+          radius: '8 meters',
+          description:
+            'Draw in flame, damaging nearby enemies, then release for more damage after a delay.',
+          inhaleDamage: '870 Flame Damage',
+          inhaleHealing: '100% of damage caused',
+          exhaleDamage: '1742 Flame Damage after 2.5 seconds',
+          morphs: {
+            heartOfFlame: {
+              name: 'Heart of Flame',
+              inhaleHealing: '150% of damage caused',
+              exhaleDamage: '1742 Flame Damage',
+              description: 'Restores Magicka for each enemy hit on explosion.',
+              magickaRestore: '10% of ability cost per enemy hit as Magicka',
+            },
+            soulOfFlame: {
+              name: 'Soul of Flame',
+              inhaleHealing: '100% of damage caused',
+              exhaleDamage: '2249 Flame Damage',
+              description: 'Increases damage and interrupts casting enemies.',
+              interrupt: 'Enemies casting are interrupted, set Off Balance, stunned for 2 seconds',
+            },
+          },
+        },
+        hearthfire: {
+          name: 'Hearthfire',
+          type: 'active',
+          target: 'Ground',
+          duration: '15 seconds',
           maxRange: '22 meters',
-          description: 'Pull an enemy to you, dealing Flame Damage.',
-          damage: '1392 Flame Damage',
-          taunt: '15 seconds if not already taunted',
-          buff: 'Major Expedition (+30% Movement Speed for 4 seconds)',
-          cannotBeDodged: true,
-          cannotBeReflected: true,
+          radius: '5 meters',
+          description:
+            'Throw out a kindled flame, filling a large area with warmth for 15 seconds.',
+          healing: '434 Health every 1 second to you and allies',
+          buff: 'Minor Fortitude and Minor Heroism while inside',
           morphs: {
-            unrelentingGrip: {
-              name: 'Unrelenting Grip',
-              damage: '1438 Flame Damage',
-              description: 'If target cannot be pulled, the cost is refunded.',
-              costRefund: '100% Magicka refund if target cannot be pulled',
-            },
-            chainsOfDevastation: {
-              name: 'Chains of Devastation',
-              damage: '1438 Flame Damage',
-              description: 'Grants you Empower after pulling. Pull yourself to enemy instead.',
-              buffs: [
-                'Major Expedition (+30% Movement Speed for 4 seconds)',
-                'Major Berserk (+10% damage done for 4 seconds)',
-              ],
-              pullDirection: 'Pull yourself to enemy',
-            },
-          },
-        },
-        lavaWhip: {
-          name: 'Lava Whip',
-          type: 'active',
-          cost: '2295 Magicka',
-          target: 'Enemy',
-          maxRange: '7 meters',
-          description: 'Lash an enemy with fire, dealing instant Flame Damage.',
-          damage: '2323 Flame Damage',
-          offBalance: 'Sets Off Balance if target is immobilized or stunned',
-          morphs: {
-            moltenWhip: {
-              name: 'Molten Whip',
-              cost: '1148 Magicka',
-              damage: '2323 Flame Damage',
-              description: 'Increases damage of next whip per Ardent Flame ability used.',
-              stackSystem: 'Seething Fury stacks',
-              maxStacks: 3,
-              stackBonus: '20% damage per stack and 100 Weapon/Spell Damage for 15 seconds',
-              stackTrigger: 'Using different Ardent Flame abilities while in combat',
-            },
-            flameLash: {
-              name: 'Flame Lash',
-              damage: '2323 Flame Damage',
-              powerLashDamage: '2760 Flame Damage',
-              powerLashHealing: '2760 Health',
+            fireKeeper: {
+              name: 'Fire Keeper',
+              healing: '449 Health every 1 second to you and allies',
               description:
-                'Can be reactivated for free when hitting Off Balance enemies, healing you.',
-              powerLashCost: 'Half cost',
-              powerLashCondition: 'Against Off Balance or immobilized enemies',
+                'Healing increases by 50% if you stand in the area. Minor buffs persist after being healed.',
+              buff: 'Minor Fortitude and Minor Heroism for 15 seconds',
+            },
+            hearthAndHome: {
+              name: 'Hearth and Home',
+              healing: '619 Health every 1 second, scaling off Max Health',
+              description:
+                'You gain Major Protection while inside, reducing damage taken by 10%. Enemies inside have Movement Speed reduced by 70%. Healing scales off Max Health.',
+              buff: 'Minor Fortitude, Minor Heroism, Major Protection while inside',
+              snare: '70% Movement Speed reduction to enemies',
             },
           },
         },
@@ -174,12 +170,6 @@ export const dragonknightData: SkillsetData = {
           damage: '1742 Flame Damage every 5 seconds to nearest enemy',
           passive: 'Major Prophecy and Savagery (+2629 Spell/Weapon Critical rating) while slotted',
           morphs: {
-            flamesOfOblivion: {
-              name: 'Flames of Oblivion',
-              damage: '1799 Flame Damage per fireball',
-              fireballs: '3 fireballs every 5 seconds',
-              description: 'Now shoots fireballs automatically at enemies.',
-            },
             cauterize: {
               name: 'Cauterize',
               cost: '3240 Magicka',
@@ -187,6 +177,12 @@ export const dragonknightData: SkillsetData = {
               healing: '1199 Health every 3 seconds to up to 4 allies',
               description:
                 'Shoots healing fireballs that heal you or allies instead of dealing damage.',
+            },
+            incinerate: {
+              name: 'Incinerate',
+              damage: '1799 Flame Damage per fireball',
+              fireballs: '3 fireballs every 5 seconds',
+              description: 'Now shoots fireballs automatically at enemies.',
             },
           },
         },
@@ -197,19 +193,20 @@ export const dragonknightData: SkillsetData = {
           description:
             'Increases the damage of your Burning and Poisoned status effects by 33%. When you apply Burning or Poisoned to an enemy, you restore 423 Magicka and Stamina. This effect can occur once every 3 seconds.',
         },
-        searingHeat: {
-          name: 'Searing Heat',
-          description:
-            'Increases the damage over time of your Fiery Breath, Searing Strike, and Dragonknight Standard abilities by 25% and the duration by 4 seconds.',
-        },
-        warmth: {
-          name: 'Warmth',
+        traumaticBurns: {
+          name: 'Traumatic Burns',
           description:
             'When you deal direct damage with an Ardent Flame ability, your damage over time attacks deal 6% increased damage to the target, and reduce their Movement Speed by 30% for 3 seconds.',
         },
-        worldInRuin: {
-          name: 'World in Ruin',
-          description: 'Increases the damage of your Flame and Poison attacks by 5%.',
+        fanTheFlames: {
+          name: 'Fan the Flames',
+          description:
+            'Increases the damage over time of your Searing Strike, Dragonknight Standard, and Hearthfire abilities by 25% and the duration by 4 seconds.',
+        },
+        aSoulAblaze: {
+          name: 'A Soul Ablaze',
+          description:
+            'While an Ardent Flame ability is active, your healing received is increased by 9%.',
         },
       },
     },
@@ -247,27 +244,32 @@ export const dragonknightData: SkillsetData = {
         },
       },
       activeAbilities: {
-        spikedArmor: {
-          name: 'Spiked Armor',
+        dragonfireBreath: {
+          name: 'Dragonfire Breath',
           type: 'active',
-          cost: '2700 Magicka',
-          target: 'Self',
+          cost: '2984 Magicka',
+          target: 'Cone',
           duration: '20 seconds',
-          description:
-            'Increases your Physical and Spell Resistance. Returns damage to enemies who hit you.',
-          buff: 'Major Resolve (+5948 Physical and Spell Resistance)',
-          retaliation: '1 Flame Damage to melee attackers (scales with resistances)',
+          radius: '10 meters',
+          description: 'Exhale dragonfire in a cone, dealing Flame Damage over time.',
+          initialDamage: '1742 Flame Damage',
+          damageOverTime: '2900 Flame Damage over 20 seconds',
           morphs: {
-            volatileArmor: {
-              name: 'Volatile Armor',
-              radius: '10 meters',
-              description: 'Also applies Flame Damage over time to nearby enemies.',
-              damageOverTime: '11 Flame Damage over 20 seconds to enemies hit',
+            disintegratingDragonfire: {
+              name: 'Disintegrating Dragonfire',
+              cost: '2984 Stamina',
+              initialDamage: '1799 Flame Damage',
+              damageOverTime: '2980 Flame Damage over 20 seconds',
+              description: 'Converts to Stamina cost, applies Major Breach.',
+              debuff: 'Major Breach (-5948 Physical and Spell Resistance for duration)',
             },
-            hardenedArmor: {
-              name: 'Hardened Armor',
-              description: 'Grants a large damage shield when cast.',
-              shield: '5121 damage absorption for 6 seconds (scales with Max Health)',
+            engulfingDragonfire: {
+              name: 'Engulfing Dragonfire',
+              initialDamage: '1799 Flame Damage',
+              damageOverTime: '2980 Flame Damage over 20 seconds',
+              description: 'Increases Flame Damage enemies take.',
+              flameVulnerability:
+                'Up to 6% more Flame Damage taken (scales with Weapon/Spell Damage and Max Magicka/Stamina)',
             },
           },
         },
@@ -308,8 +310,13 @@ export const dragonknightData: SkillsetData = {
           healing: '33% of missing Health',
           buff: 'Major Fortitude (+30% Health Recovery for 20 seconds)',
           morphs: {
-            greenDragonBlood: {
-              name: 'Green Dragon Blood',
+            bloodOfTheElderDragon: {
+              name: 'Blood of the Elder Dragon',
+              healing: '2999 Health + up to 50% more based on missing Health',
+              description: 'Stronger burst heal scaling with Spell Damage/max Magicka.',
+            },
+            bloodOfTheGreenDragon: {
+              name: 'Blood of the Green Dragon',
               healing: '33% of missing Health + 511 Health every 1 second for 5 seconds',
               description: 'Increases healing received and stamina recovery.',
               buffs: [
@@ -318,83 +325,81 @@ export const dragonknightData: SkillsetData = {
                 'Minor Vitality (+6% healing received and damage shield strength)',
               ],
             },
-            coagulatingBlood: {
-              name: 'Coagulating Blood',
-              healing: '2999 Health + up to 50% more based on missing Health',
-              description: 'Stronger burst heal scaling with Spell Damage/max Magicka.',
-            },
           },
         },
-        protectiveScale: {
-          name: 'Protective Scale',
+        wingBuffet: {
+          name: 'Wing Buffet',
           type: 'active',
           cost: '3780 Magicka',
           target: 'Self',
           duration: '6 seconds',
-          description: 'Summon scales to reflect projectiles back at attackers.',
+          description: 'Summon draconic wings to deflect projectiles.',
           projectileReduction: '50% damage reduction from projectiles',
           morphs: {
-            dragonFireScale: {
-              name: 'Dragon Fire Scale',
+            protectTheBrood: {
+              name: 'Protect the Brood',
               description: 'Reflects projectiles as fiery orbs.',
               retaliation: '1799 Flame Damage fiery orb to attacker',
               retaliationInterval: 'Once every half second',
             },
-            protectivePlate: {
-              name: 'Protective Plate',
+            fleetstepWings: {
+              name: 'Fleetstep Wings',
               cost: '3510 Magicka',
               description: 'Grants immunity to snare/immobilizations briefly.',
               immunity: '4 seconds immunity to snares and immobilizations',
             },
           },
         },
-        inhale: {
-          name: 'Inhale',
+        chainsOfFlame: {
+          name: 'Chains of Flame',
           type: 'active',
-          cost: '3510 Magicka',
-          target: 'Area',
-          radius: '8 meters',
-          description:
-            'Suck in air, damaging nearby enemies, then exhale for more damage after a delay.',
-          inhaleDamage: '870 Flame Damage',
-          inhaleHealing: '100% of damage caused',
-          exhaleDamage: '1742 Flame Damage after 2.5 seconds',
+          cost: '3780 Magicka',
+          target: 'Enemy',
+          maxRange: '22 meters',
+          description: 'Pull an enemy to you with chains of flame, dealing Flame Damage.',
+          damage: '1392 Flame Damage',
+          taunt: '15 seconds if not already taunted',
+          buff: 'Major Expedition (+30% Movement Speed for 4 seconds)',
+          cannotBeDodged: true,
+          cannotBeReflected: true,
           morphs: {
-            deepBreath: {
-              name: 'Deep Breath',
-              inhaleHealing: '100% of damage caused',
-              exhaleDamage: '2249 Flame Damage',
-              description: 'Increases damage and interrupts casting enemies.',
-              interrupt: 'Enemies casting are interrupted, set Off Balance, stunned for 2 seconds',
+            chainsOfDevastation: {
+              name: 'Chains of Devastation',
+              damage: '1438 Flame Damage',
+              description: 'Grants you Empower after pulling. Pull yourself to enemy instead.',
+              buffs: [
+                'Major Expedition (+30% Movement Speed for 4 seconds)',
+                'Major Berserk (+10% damage done for 4 seconds)',
+              ],
+              pullDirection: 'Pull yourself to enemy',
             },
-            drawEssence: {
-              name: 'Draw Essence',
-              inhaleHealing: '150% of damage caused',
-              exhaleDamage: '1742 Flame Damage',
-              description: 'Restores Magicka for each enemy hit on explosion.',
-              magickaRestore: '10% of ability cost per enemy hit as Magicka',
+            chainsOfDominance: {
+              name: 'Chains of Dominance',
+              damage: '1438 Flame Damage',
+              description: 'If target cannot be pulled, the cost is refunded.',
+              costRefund: '100% Magicka refund if target cannot be pulled',
             },
           },
         },
       },
       passives: {
-        burningHeart: {
-          name: 'Burning Heart',
-          description:
-            'While a Draconic Power ability is active, your healing received is increased by 9%.',
+        burnishedScales: {
+          name: 'Burnished Scales',
+          description: 'Increases the amount of damage you block by 10%.',
+        },
+        worldInRuin: {
+          name: 'World in Ruin',
+          description: 'Increases the damage of your Flame attacks by 5%.',
         },
         elderDragon: {
           name: 'Elder Dragon',
           description:
             'Increases your Health Recovery by 323 for each Draconic Power ability slotted.',
         },
-        ironSkin: {
-          name: 'Iron Skin',
-          description: 'Increases the amount of damage you block by 10%.',
-        },
-        scaledArmor: {
-          name: 'Scaled Armor',
-          description: 'Increases your Physical and Spell Resistance by 2974.',
+        theStormVoice: {
+          name: 'The Storm Voice',
+          description:
+            'When you cast an Ultimate ability, you restore 37 Health, 37 Magicka, and 37 Stamina for each point of the Ultimate spent.',
         },
       },
     },
@@ -414,24 +419,24 @@ export const dragonknightData: SkillsetData = {
           damage: '336 Flame Damage every second to nearby enemies',
           ultimateRestriction: 'Cannot generate Ultimate while active',
           morphs: {
+            corrosiveArmor: {
+              name: 'Corrosive Armor',
+              damage: '347 Flame Damage every second to nearby enemies',
+              description: 'Enemies hit take increased damage from your attacks.',
+              effect: 'Ignores enemy Physical and Spell Resistance for you and your direct attacks',
+            },
             magmaShell: {
               name: 'Magma Shell',
               damage: '347 Flame Damage every second to nearby enemies',
               description: 'Nearby allies gain a powerful damage shield.',
               allyShield: '100% of their Max Health for 10 seconds',
             },
-            corrosiveArmor: {
-              name: 'Corrosive Armor',
-              damage: '347 Poison Damage every second to nearby enemies',
-              description: 'Enemies hit take increased damage from your attacks.',
-              effect: 'Ignores enemy Physical and Spell Resistance for you and your direct attacks',
-            },
           },
         },
       },
       activeAbilities: {
-        stonefist: {
-          name: 'Stonefist',
+        superheatedWard: {
+          name: 'Superheated Ward',
           type: 'active',
           cost: '2295 Stamina',
           castTime: '0.6 second',
@@ -439,19 +444,19 @@ export const dragonknightData: SkillsetData = {
           duration: '10 seconds',
           maxRange: '28 meters',
           radius: '6 meters',
-          description: 'Hurl a chunk of stone at an enemy, dealing Physical Damage.',
-          damage: '2323 Physical Damage to all enemies within 6m',
+          description: 'Hurl a superheated projectile at an enemy, dealing Flame Damage.',
+          damage: '2323 Flame Damage to all enemies within 6m',
           projectiles: 'Can launch debris 3 times at enemies',
-          projectileDamage: '2323 Physical Damage each',
+          projectileDamage: '2323 Flame Damage each',
           finalStun: '2.5 seconds on final cast',
           morphs: {
-            stoneGiant: {
-              name: 'Stone Giant',
+            magmaFist: {
+              name: 'Magma Fist',
               description: 'Applies stacks of Stagger, increasing enemy damage taken.',
               stagger: '65 damage taken increase per stack for 5 seconds per hit',
             },
-            obsidianShard: {
-              name: 'Obsidian Shard',
+            volcanicWard: {
+              name: 'Volcanic Ward',
               cost: '4050 Magicka',
               target: 'Enemy',
               radius: '28 meters',
@@ -538,51 +543,49 @@ export const dragonknightData: SkillsetData = {
             },
           },
         },
-        ashCloud: {
-          name: 'Ash Cloud',
+        earthspikeMantle: {
+          name: 'Earthspike Mantle',
           type: 'active',
-          target: 'Ground',
-          duration: '15 seconds',
-          maxRange: '22 meters',
-          radius: '5 meters',
-          description: 'Create a choking cloud, reducing enemy movement speed.',
-          snare: '70% Movement Speed reduction',
-          healing: '434 Health every 1 second to you and allies',
+          cost: '2700 Magicka',
+          target: 'Self',
+          duration: '20 seconds',
+          description:
+            'Encase yourself in earthen spikes, increasing Physical and Spell Resistance. Returns damage to enemies who hit you.',
+          buff: 'Major Resolve (+5948 Physical and Spell Resistance)',
+          retaliation: '1 Flame Damage to melee attackers (scales with resistances)',
           morphs: {
-            cinderStorm: {
-              name: 'Cinder Storm',
-              healing: '674 Health every 1 second to you and allies',
-              description: 'Increases healing and duration.',
+            earthshieldMantle: {
+              name: 'Earthshield Mantle',
+              description: 'Grants a large damage shield when cast.',
+              shield: '5121 damage absorption for 6 seconds (scales with Max Health)',
             },
-            eruption: {
-              name: 'Eruption',
-              initialDamage: '1799 Flame Damage immediately',
-              damageOverTime: '319 Flame Damage every 1 second',
-              description: 'Larger radius, initial burst of Flame Damage, then DoT.',
-              eruptiveInterval: 'Once every 10 seconds',
+            shatterspikeMantle: {
+              name: 'Shatterspike Mantle',
+              radius: '10 meters',
+              description: 'Also applies Flame Damage over time to nearby enemies.',
+              damageOverTime: '11 Flame Damage over 20 seconds to enemies hit',
             },
           },
         },
       },
       passives: {
-        battleRoar: {
-          name: 'Battle Roar',
-          description:
-            'When you cast an Ultimate ability, you restore 37 Health, 37 Magicka, and 37 Stamina for each point of the Ultimate spent.',
+        heartOfStone: {
+          name: 'Heart of Stone',
+          description: 'Increases your Physical and Spell Resistance by 2974.',
         },
-        eternalMountain: {
-          name: 'Eternal Mountain',
+        landslide: {
+          name: 'Landslide',
           description: 'Increases duration of your Earthen Heart abilities by 20%.',
         },
-        helpingHands: {
-          name: 'Helping Hands',
-          description:
-            'When you cast an Earthen Heart ability with a cost, you restore 1120 Stamina. This effect cannot activate when using a Stamina costing ability and must cost more than the restored value.',
-        },
-        mountainsBlessing: {
-          name: "Mountain's Blessing",
+        blessingAtThePeak: {
+          name: 'Blessing at the Peak',
           description:
             'When you cast an Earthen Heart ability, you and your group gain Minor Brutality for 20 seconds, increasing your Weapon Damage by 10%. If you are in combat, you also generate 3 Ultimate. This effect can occur once every 6 seconds.',
+        },
+        mountainGiant: {
+          name: 'Mountain Giant',
+          description:
+            'When you cast an Earthen Heart ability with a cost, you restore 1120 Stamina. This effect cannot activate when using a Stamina costing ability and must cost more than the restored value.',
         },
       },
     },
@@ -593,10 +596,6 @@ export const dragonknightData: SkillsetData = {
         name: 'Burning',
         description: 'Fire status effect enhanced by Combustion passive (+33% damage)',
       },
-      poisoned: {
-        name: 'Poisoned',
-        description: 'Poison status effect enhanced by Combustion passive (+33% damage)',
-      },
       offBalance: {
         name: 'Off Balance',
         description: 'Applied when striking immobilized/stunned enemies with certain abilities',
@@ -604,7 +603,7 @@ export const dragonknightData: SkillsetData = {
       stagger: {
         name: 'Stagger',
         description:
-          'Stacking debuff from Stone Giant - 65 damage taken increase per stack for 5 seconds',
+          'Stacking debuff from Magma Fist - 65 damage taken increase per stack for 5 seconds',
       },
     },
     synergies: {
@@ -645,13 +644,13 @@ export const dragonknightData: SkillsetData = {
       },
     },
     resourceManagement: {
-      battleRoar: {
-        name: 'Battle Roar',
+      theStormVoice: {
+        name: 'The Storm Voice',
         description: 'Restore resources based on Ultimate cost spent',
         rate: '37 Health/Magicka/Stamina per Ultimate point spent',
       },
-      helpingHands: {
-        name: 'Helping Hands',
+      mountainGiant: {
+        name: 'Mountain Giant',
         description: 'Earthen Heart abilities restore Stamina',
         restoration: '1120 Stamina per Magicka ability cast',
       },
