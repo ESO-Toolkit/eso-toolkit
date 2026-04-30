@@ -3518,10 +3518,14 @@ const CalculatorComponent: React.FC = () => {
     return (
       <Accordion
         defaultExpanded
+        disableGutters
         sx={{
-          mb: 3,
-          '&:last-child': {
+          mb: 2,
+          '&.Mui-expanded': {
             mb: 2,
+          },
+          '&:before': {
+            display: 'none',
           },
         }}
       >
