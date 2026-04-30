@@ -106,25 +106,24 @@ export const dragonknightData: SkillsetData = {
           type: 'active',
           cost: '3510 Magicka',
           target: 'Area',
-          radius: '8 meters',
+          duration: '4 seconds',
           description:
-            'Draw in flame, damaging nearby enemies, then release for more damage after a delay.',
-          inhaleDamage: '870 Flame Damage',
-          inhaleHealing: '100% of damage caused',
-          exhaleDamage: '1742 Flame Damage after 2.5 seconds',
+            'Let the fire within draw heat to your core, restoring 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds. When this ability completes, you release this heat as a blast of fire that deals Flame Damage to nearby enemies.',
+          resourceRestore: '15% of missing Magicka and Stamina every 2 seconds',
+          damage: '2002 Flame Damage on completion',
           morphs: {
             heartOfFlame: {
               name: 'Heart of Flame',
-              inhaleHealing: '150% of damage caused',
-              exhaleDamage: '1742 Flame Damage',
-              description: 'Restores Magicka for each enemy hit on explosion.',
-              magickaRestore: '10% of ability cost per enemy hit as Magicka',
+              description:
+                'Also restores 15% of your missing Health every 2 seconds. Adds a heal based on missing Health.',
+              resourceRestore: '15% of missing Health, Magicka, and Stamina every 2 seconds',
+              damage: '2004 Flame Damage on completion',
             },
             soulOfFlame: {
               name: 'Soul of Flame',
-              inhaleHealing: '100% of damage caused',
-              exhaleDamage: '2249 Flame Damage',
-              description: 'Increases damage and interrupts casting enemies.',
+              description:
+                'Increases explosion damage. Interrupts casting enemies, setting them Off Balance and stunning them.',
+              damage: '2760 Flame Damage on completion',
               interrupt: 'Enemies casting are interrupted, set Off Balance, stunned for 2 seconds',
             },
           },
@@ -201,7 +200,7 @@ export const dragonknightData: SkillsetData = {
         fanTheFlames: {
           name: 'Fan the Flames',
           description:
-            'Increases the damage over time of your Searing Strike, Dragonknight Standard, and Hearthfire abilities by 25% and the duration by 4 seconds.',
+            'Increases your chances of applying the Burning status effect by 50% and its damage done by 25%.',
         },
         aSoulAblaze: {
           name: 'A Soul Ablaze',
