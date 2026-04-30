@@ -97,29 +97,28 @@ export class EsoLogsClient {
   }
 
   private createApolloClient(accessToken: string): ApolloClient {
-    // Retry link: retries transient network errors and upstream 429s.
-    // Proxy 429s are identified by the X-Rate-Limit-Source header and
-    // skipped — retries against our own rate limiter compound the problem.
+    // Retry link: automatically retries requests that fail with HTTP 429 (rate limit)
+    // or transient network errors (status 0 / no statusCode — CORS block, DNS failure,
+    // dropped connection, etc.). Uses exponential backoff with jitter to avoid
+    // thundering-herd retries.
     const retryLink = new RetryLink({
       delay: {
-        initial: 1000,
-        max: 15000,
-        jitter: true,
+        initial: 1000, // wait 1 s before the first retry
+        max: 15000, // cap at 15 s
+        jitter: true, // randomise to spread concurrent retries
       },
       attempts: {
         max: 3,
-        retryIf: (error: unknown, operation: { operationName?: string }) => {
+        retryIf: (error: unknown) => {
           const statusCode = (error as { statusCode?: number })?.statusCode;
           if (statusCode === 429) {
-            const resp = (error as { response?: Response })?.response;
-            if (resp?.headers?.get('X-Rate-Limit-Source') === 'proxy') {
-              return false;
-            }
-            logger.warn('Upstream rate limit (429) — retrying', {
-              operation: operation.operationName,
+            logger.warn('API rate limit hit (429) — retrying with backoff', {
+              operation: 'pending',
             });
             return true;
           }
+          // Also retry on network-level errors (no statusCode means the request
+          // never reached the server — transient connectivity failure).
           if (error != null && statusCode === undefined) {
             logger.warn('Network error — retrying with backoff');
             return true;
@@ -205,12 +204,14 @@ export class EsoLogsClient {
         });
       }
 
-      // Skip noisy 429 logs — RetryLink handles upstream 429s with
-      // backoff, and proxy 429s are not retried. The query() catch
-      // block surfaces a human-readable message to the UI.
+      // Log the error for debugging — skip noisy 429 logs since RetryLink already
+      // warned on each attempt and the query() catch block will surface a
+      // human-readable message to the UI.
       const networkStatusCode = (error as { statusCode?: number })?.statusCode;
       if (networkStatusCode === 429) {
-        logger.debug('Rate limited (429)', { operation: operation.operationName });
+        logger.warn('API rate limit (429) — all retries exhausted', {
+          operation: operation.operationName,
+        });
         return;
       }
       logger.error('GraphQL operation error', error, {
@@ -253,7 +254,7 @@ export class EsoLogsClient {
     });
 
     return new ApolloClient({
-      // retryLink first: retries upstream 429s + network errors before errorLink
+      // retryLink must come first so it intercepts 429s before errorLink logs them
       link: from([retryLink, errorLink, authLink, customHttpLink]),
       cache: EsoLogsClient.CACHE,
     });

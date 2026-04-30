@@ -1,10 +1,7 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 
 import { packHubApi } from '../api/pack-hub-api';
 import type { HubPack, PackHubFilters } from '../types/pack-hub.types';
-
-const PAGE_SIZE = 20;
 
 interface UsePackHubReturn {
   packs: HubPack[];
@@ -20,130 +17,122 @@ interface UsePackHubReturn {
 }
 
 export function usePackHub(token: string | undefined): UsePackHubReturn {
-  const queryClient = useQueryClient();
-  const [filters, setFiltersState] = React.useState<PackHubFilters>({
+  const [packs, setPacks] = React.useState<HubPack[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [hasMore, setHasMore] = React.useState(true);
+  const [filters, setFilters] = React.useState<PackHubFilters>({
     packType: '',
     tag: '',
     sort: 'votes',
     page: 1,
     search: '',
   });
+  const fetchKeyRef = React.useRef(0);
+  const abortRef = React.useRef<AbortController | null>(null);
 
-  const serverFilters = React.useMemo(
-    () => ({ packType: filters.packType, tag: filters.tag, sort: filters.sort }),
-    [filters.packType, filters.tag, filters.sort],
-  );
+  const fetchPage = React.useCallback(
+    async (currentFilters: PackHubFilters, append: boolean) => {
+      const fetchKey = ++fetchKeyRef.current;
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-  const queryKey = ['packs', serverFilters, token] as const;
+      setLoading(true);
+      setError(null);
 
-  const {
-    data,
-    isLoading,
-    isFetchingNextPage,
-    error: queryError,
-    fetchNextPage,
-    hasNextPage,
-    refetch,
-  } = useInfiniteQuery({
-    queryKey,
-    queryFn: async ({ pageParam }) => {
-      const res = await packHubApi.list({
-        packType: serverFilters.packType || undefined,
-        tag: serverFilters.tag || undefined,
-        sort: serverFilters.sort,
-        page: pageParam,
-        token,
-      });
-      return res;
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.packs.length === PAGE_SIZE ? allPages.length + 1 : undefined,
-  });
-
-  const packs = React.useMemo(() => data?.pages.flatMap((p) => p.packs) ?? [], [data]);
-
-  const voteMutation = useMutation({
-    mutationFn: ({ packId, voteToken }: { packId: string; voteToken: string }) =>
-      packHubApi.vote(packId, voteToken),
-    onMutate: async ({ packId }) => {
-      await queryClient.cancelQueries({ queryKey });
-      const prev = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old: typeof data) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            packs: page.packs.map((p) => {
-              if (p.id !== packId) return p;
-              const wasVoted = p.user_voted ?? false;
-              return {
-                ...p,
-                user_voted: !wasVoted,
-                vote_count: wasVoted ? p.vote_count - 1 : p.vote_count + 1,
-              };
-            }),
-          })),
-        };
-      });
-      return { prev };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.prev) queryClient.setQueryData(queryKey, context.prev);
-    },
-    onSettled: (_data, _error, { packId }) => {
-      if (_data) {
-        queryClient.setQueryData(queryKey, (old: typeof data) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map((page) => ({
-              ...page,
-              packs: page.packs.map((p) =>
-                p.id === packId
-                  ? { ...p, user_voted: _data.voted, vote_count: _data.voteCount }
-                  : p,
-              ),
-            })),
-          };
+      try {
+        const res = await packHubApi.list({
+          packType: currentFilters.packType || undefined,
+          tag: currentFilters.tag || undefined,
+          sort: currentFilters.sort,
+          page: currentFilters.page,
+          token,
+          signal: controller.signal,
         });
+
+        if (fetchKey !== fetchKeyRef.current) return; // stale
+
+        setPacks((prev) => (append ? [...prev, ...res.packs] : res.packs));
+        setHasMore(res.packs.length === 20);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        if (fetchKey !== fetchKeyRef.current) return;
+        setError(err instanceof Error ? err.message : 'Failed to load packs');
+      } finally {
+        if (fetchKey === fetchKeyRef.current) setLoading(false);
       }
     },
-  });
+    [token],
+  );
+
+  // Refetch when server-side filters change
+  React.useEffect(() => {
+    const resetFilters = { ...filters, page: 1 };
+    setFilters(resetFilters);
+    void fetchPage(resetFilters, false);
+    return () => abortRef.current?.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.packType, filters.tag, filters.sort, fetchPage]);
 
   const setFilter = React.useCallback(
     <K extends keyof PackHubFilters>(key: K, value: PackHubFilters[K]) => {
-      setFiltersState((prev) => ({
-        ...prev,
-        [key]: value,
-        ...(key !== 'search' ? { page: 1 } : {}),
-      }));
+      setFilters((prev) => ({ ...prev, [key]: value, ...(key !== 'search' ? { page: 1 } : {}) }));
     },
     [],
   );
 
   const loadMore = React.useCallback(() => {
-    if (!isFetchingNextPage && hasNextPage) {
-      void fetchNextPage();
-    }
-  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
+    if (loading || !hasMore) return;
+    const next = { ...filters, page: filters.page + 1 };
+    setFilters(next);
+    void fetchPage(next, true);
+  }, [loading, hasMore, filters, fetchPage]);
 
   const refresh = React.useCallback(() => {
-    void refetch();
-  }, [refetch]);
+    const reset = { ...filters, page: 1 };
+    setFilters(reset);
+    void fetchPage(reset, false);
+  }, [filters, fetchPage]);
 
-  const vote = React.useCallback(
-    async (packId: string, voteToken: string) => {
-      try {
-        await voteMutation.mutateAsync({ packId, voteToken });
-      } catch {
-        // Optimistic revert handled by onError
-      }
-    },
-    [voteMutation],
-  );
+  const vote = React.useCallback(async (packId: string, voteToken: string) => {
+    // Optimistic update
+    setPacks((prev) =>
+      prev.map((p) => {
+        if (p.id !== packId) return p;
+        const wasVoted = p.user_voted ?? false;
+        return {
+          ...p,
+          user_voted: !wasVoted,
+          vote_count: wasVoted ? p.vote_count - 1 : p.vote_count + 1,
+        };
+      }),
+    );
 
+    try {
+      const res = await packHubApi.vote(packId, voteToken);
+      setPacks((prev) =>
+        prev.map((p) =>
+          p.id === packId ? { ...p, user_voted: res.voted, vote_count: res.voteCount } : p,
+        ),
+      );
+    } catch {
+      // Revert optimistic update
+      setPacks((prev) =>
+        prev.map((p) => {
+          if (p.id !== packId) return p;
+          const wasVoted = p.user_voted ?? false;
+          return {
+            ...p,
+            user_voted: !wasVoted,
+            vote_count: wasVoted ? p.vote_count - 1 : p.vote_count + 1,
+          };
+        }),
+      );
+    }
+  }, []);
+
+  // Client-side text search
   const filteredPacks = React.useMemo(() => {
     if (!filters.search.trim()) return packs;
     const q = filters.search.toLowerCase();
@@ -158,14 +147,10 @@ export function usePackHub(token: string | undefined): UsePackHubReturn {
   return {
     packs,
     filteredPacks,
-    loading: isLoading || isFetchingNextPage,
-    error: queryError
-      ? queryError instanceof Error
-        ? queryError.message
-        : 'Failed to load packs'
-      : null,
+    loading,
+    error,
     filters,
-    hasMore: hasNextPage ?? false,
+    hasMore,
     setFilter,
     loadMore,
     refresh,

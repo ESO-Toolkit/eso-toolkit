@@ -43,6 +43,8 @@ export function useHostileBuffEvents(options?: UseHostileBuffEventsOptions): {
           reportCode: context.reportCode,
           fight: selectedFight,
           client,
+          // Optional: you can customize the interval size
+          // intervalSize: 60000, // 60 seconds
         }),
       );
     }

@@ -133,7 +133,7 @@ app.use('*', async (c, next) => {
     origin: isAllowed ? origin : allowedOrigins[0],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
-    exposeHeaders: ['Retry-After', 'X-Rate-Limit-Source'],
+    exposeHeaders: ['Retry-After'],
     maxAge: 86400,
   });
   return corsMiddleware(c, next);
@@ -198,12 +198,7 @@ app.use('*', async (c, next) => {
 // Forwards POST /graphql to https://www.esologs.com/api/v2/client, injecting
 // a server-side OAuth token so unauthenticated users can query public data.
 
-const GRAPHQL_RATE_LIMIT = 300; // max requests per minute per IP
-const graphqlRateCounts = new Map<string, { count: number; expires: number }>();
-
-app.post('/graphql', async (c) => {
-  return handleGraphqlProxy(c, graphqlRateCounts, GRAPHQL_RATE_LIMIT);
-});
+app.post('/graphql', handleGraphqlProxy);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
