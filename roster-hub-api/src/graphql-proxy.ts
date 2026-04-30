@@ -49,47 +49,125 @@ async function getCachedClientToken(env: Env): Promise<string> {
   return cachedToken;
 }
 
+// ─── Response caching ────────────────────────────────────────────────────────
+
+// Event data queries are immutable once a report is uploaded; safe to cache.
+const CACHEABLE_OPERATIONS = new Set([
+  'getBuffEvents',
+  'getDebuffEvents',
+  'getDamageEvents',
+  'getResourceEvents',
+  'getCombatantInfoEvents',
+  'getCastEvents',
+  'getHealingEvents',
+  'getDeathEvents',
+  'getPlayersForReport',
+  'getReportByCode',
+  'getReportMasterData',
+]);
+
+const CACHE_TTL_SECONDS = 600; // 10 minutes
+
+// Singleflight: coalesce concurrent identical cacheable requests so only one
+// hits upstream. Each caller clones the shared response.
+const inflight = new Map<string, Promise<Response>>();
+
+async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
+  const data = new TextEncoder().encode(bodyStr);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hex = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `${url}:${hex}`;
+}
+
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
-export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
+export async function handleGraphqlProxy(
+  c: Context<{ Bindings: Env }>,
+): Promise<Response> {
   let body: unknown;
+  let bodyStr: string;
   try {
-    body = await c.req.json();
+    bodyStr = await c.req.text();
+    body = JSON.parse(bodyStr);
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
-  let token: string;
-  try {
-    token = await getCachedClientToken(c.env);
-  } catch {
-    return c.json({ error: 'Failed to obtain upstream API token' }, 502);
-  }
-
-  // Forward the ?query=<operationName> hint if present (used by ESO Logs for tracing)
   const operationHint = c.req.query('query');
-  const upstreamUrl = operationHint
-    ? `${ESOLOGS_CLIENT_API}?query=${encodeURIComponent(operationHint)}`
-    : ESOLOGS_CLIENT_API;
+  const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
 
-  const upstream = await fetch(upstreamUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
-  });
-
-  // Invalidate cached token on 401 so the next request triggers a fresh fetch
-  if (upstream.status === 401) {
-    cachedToken = null;
-    tokenExpiresAt = 0;
+  // Check edge cache first — cache hits avoid upstream entirely
+  const cache = caches.default;
+  let cacheKey: Request | undefined;
+  if (isCacheable) {
+    const key = await buildCacheKey(c.req.url, bodyStr);
+    cacheKey = new Request(`https://cache.internal/${key}`, { method: 'GET' });
+    const cached = await cache.match(cacheKey);
+    if (cached) return cached;
   }
 
-  const responseBody = await upstream.text();
-  return new Response(responseBody, {
-    status: upstream.status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  // Singleflight: if an identical cacheable request is already in-flight,
+  // piggyback on it instead of issuing a duplicate upstream fetch.
+  const flightKey = isCacheable ? await buildCacheKey(c.req.url, bodyStr) : null;
+  if (flightKey) {
+    const pending = inflight.get(flightKey);
+    if (pending) return (await pending).clone();
+  }
+
+  const doFetch = async (): Promise<Response> => {
+    let token: string;
+    try {
+      token = await getCachedClientToken(c.env);
+    } catch {
+      return c.json({ error: 'Failed to obtain upstream API token' }, 502);
+    }
+
+    const upstreamUrl = operationHint
+      ? `${ESOLOGS_CLIENT_API}?query=${encodeURIComponent(operationHint)}`
+      : ESOLOGS_CLIENT_API;
+
+    const upstream = await fetch(upstreamUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    // Invalidate cached token on 401 so the next request triggers a fresh fetch
+    if (upstream.status === 401) {
+      cachedToken = null;
+      tokenExpiresAt = 0;
+    }
+
+    const responseBody = await upstream.text();
+    const response = new Response(responseBody, {
+      status: upstream.status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': isCacheable ? `public, max-age=${CACHE_TTL_SECONDS}` : 'no-store',
+      },
+    });
+
+    // Store successful cacheable responses
+    if (isCacheable && upstream.status === 200 && cacheKey) {
+      c.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+    }
+
+    return response;
+  };
+
+  if (flightKey) {
+    const promise = doFetch();
+    inflight.set(flightKey, promise);
+    try {
+      const response = await promise;
+      return response.clone();
+    } finally {
+      inflight.delete(flightKey);
+    }
+  }
+
+  return doFetch();
 }
