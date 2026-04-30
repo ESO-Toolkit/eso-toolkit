@@ -216,6 +216,14 @@ export const CLASS_PASSIVES: ClassPassive[] = [
     value: 12,
     isPercent: true,
   },
+  // Dragonknight — Earthen Heart: Blessing at the Peak
+  {
+    skillLineId: 'class.earthen-heart',
+    stat: 'critDamage',
+    name: 'Blessing at the Peak',
+    value: 10,
+    isPercent: true,
+  },
   // Warden — Animal Companions: Advanced Species
   {
     skillLineId: 'class.animal-companions',

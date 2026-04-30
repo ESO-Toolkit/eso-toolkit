@@ -120,6 +120,8 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
   'Fated Fortune': 'Arcanist Herald of the Tome passive. Grants 12% Critical Damage (6% per rank).',
   Hemorrhage: 'Nightblade Assassination passive. Grants 10% Critical Damage (5% per rank).',
   'Piercing Spear': 'Templar Aedric Spear passive. Grants 12% Critical Damage (6% per rank).',
+  'Blessing at the Peak':
+    'Dragonknight Earthen Heart passive. Grants 10% Critical Damage.',
   'Advanced Species':
     'Warden Animal Companions passive. Grants 15% Critical Damage when an Animal Companions ability is slotted.',
 

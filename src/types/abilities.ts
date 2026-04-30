@@ -268,6 +268,9 @@ export enum KnownAbilities {
   // Feline Ambush - Aura that grants 12% critical damage
   FELINE_AMBUSH = 192901,
 
+  // Blessing at the Peak - Earthen Heart passive that grants 10% critical damage
+  BLESSING_AT_THE_PEAK = 29473,
+
   // Taunted Debuffs
   TAUNT = 38254,
 
@@ -924,6 +927,9 @@ export enum CriticalDamageValues {
 
   // Backstabber provides 10% critical damage
   BACKSTABBER = 10,
+
+  // Blessing at the Peak provides 10% critical damage
+  BLESSING_AT_THE_PEAK = 10,
 
   // Elemental Catalyst provides 5% critical damage per elemental weakness debuff
   ELEMENTAL_CATALYST_PER_WEAKNESS = 5,
