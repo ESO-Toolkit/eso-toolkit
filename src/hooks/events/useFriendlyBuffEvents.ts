@@ -17,6 +17,7 @@ import { useResolvedReportFightContext } from '../useResolvedReportFightContext'
 
 interface UseFriendlyBuffEventsOptions {
   restrictToFightWindow?: boolean;
+  intervalSize?: number;
   context?: ReportFightContextInput;
 }
 
@@ -31,6 +32,7 @@ export function useFriendlyBuffEvents(options?: UseFriendlyBuffEventsOptions): {
   const selectedFight = useFightForContext(context);
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
+  const intervalSize = options?.intervalSize;
   const friendlyBuffEvents = useSelector((state: RootState) =>
     selectFriendlyBuffEventsForContext(state, context),
   );
@@ -46,11 +48,20 @@ export function useFriendlyBuffEvents(options?: UseFriendlyBuffEventsOptions): {
           reportCode: context.reportCode,
           fight: selectedFight,
           client,
+          intervalSize,
           restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, context.reportCode, context.fightId, selectedFight, client, restrictToFightWindow]);
+  }, [
+    dispatch,
+    context.reportCode,
+    context.fightId,
+    selectedFight,
+    client,
+    intervalSize,
+    restrictToFightWindow,
+  ]);
 
   return React.useMemo(
     () => ({ friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight }),

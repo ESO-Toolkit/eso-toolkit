@@ -133,77 +133,30 @@ app.use('*', async (c, next) => {
     origin: isAllowed ? origin : allowedOrigins[0],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
-    exposeHeaders: ['Retry-After', 'X-Rate-Limit-Source'],
     maxAge: 86400,
   });
   return corsMiddleware(c, next);
 });
 
-// ─── Edge caching ──────────────────────────────────────────────────────────────
-// Cache unauthenticated GET responses at the edge via the Workers Cache API.
-// Authenticated requests always bypass the cache so user-specific fields
-// (user_voted, author identity) are never leaked to other users.
-
-interface CacheTier {
-  edgeTtl: number;
-  swr: number;
-}
-
-function getCacheTier(path: string): CacheTier | null {
-  if (/^\/(rosters|builds|packs)$/.test(path)) return { edgeTtl: 30, swr: 300 };
-  if (/^\/(rosters|builds|packs)\/[^/]+$/.test(path)) return { edgeTtl: 10, swr: 60 };
-  if (/^\/(rosters|builds)\/[^/]+\/comments$/.test(path)) return { edgeTtl: 15, swr: 60 };
-  if (path.startsWith('/users/')) return { edgeTtl: 300, swr: 60 };
-  if (path === '/search-addons') return { edgeTtl: 60, swr: 300 };
-  return null;
-}
+// ─── Cache headers ─────────────────────────────────────────────────────────────
+// Public profile responses get a short edge-cache TTL; all other endpoints
+// are no-store so React UIs always get fresh data.
 
 app.use('*', async (c, next) => {
-  const isGet = c.req.method === 'GET';
-  const hasAuth = !!c.req.header('Authorization');
-  const tier = isGet ? getCacheTier(c.req.path) : null;
-
-  // Cacheable unauthenticated GET — check edge cache before running handler
-  if (tier && !hasAuth) {
-    const cache = caches.default;
-    const url = new URL(c.req.url);
-    const origin = c.req.header('Origin') ?? '_none';
-    const cacheKey = new Request(
-      `https://cache.internal/rest${url.pathname}${url.search}&_origin=${encodeURIComponent(origin)}`,
-    );
-    const cached = await cache.match(cacheKey);
-    if (cached) {
-      c.res = new Response(cached.body, cached);
-      return;
-    }
-
-    await next();
-
-    if (c.res.status >= 200 && c.res.status < 300) {
-      const cc = `public, s-maxage=${tier.edgeTtl}, stale-while-revalidate=${tier.swr}`;
-      c.res.headers.set('Cache-Control', cc);
-      c.res.headers.set('Vary', 'Authorization, Origin');
-      c.executionCtx.waitUntil(cache.put(cacheKey, c.res.clone()));
-    } else {
-      c.res.headers.set('Cache-Control', 'no-store');
-    }
-    return;
-  }
-
   await next();
-  c.res.headers.set('Cache-Control', 'no-store');
+  if (c.req.method === 'GET' && c.req.path.startsWith('/users/')) {
+    // Cache public profiles at the edge for 5 minutes
+    c.res.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
+  } else {
+    c.res.headers.set('Cache-Control', 'no-store');
+  }
 });
 
 // ─── ESO Logs GQL proxy ────────────────────────────────────────────────────────
 // Forwards POST /graphql to https://www.esologs.com/api/v2/client, injecting
 // a server-side OAuth token so unauthenticated users can query public data.
 
-const GRAPHQL_RATE_LIMIT = 300; // max requests per minute per IP
-const graphqlRateCounts = new Map<string, { count: number; expires: number }>();
-
-app.post('/graphql', async (c) => {
-  return handleGraphqlProxy(c, graphqlRateCounts, GRAPHQL_RATE_LIMIT);
-});
+app.post('/graphql', handleGraphqlProxy);
 
 // ─── Health check ─────────────────────────────────────────────────────────────
 
@@ -869,7 +822,7 @@ app.post('/temp-builds', async (c) => {
     return c.json({ error: 'build_data must be valid base64url' }, 400);
 
   // Rate limit by IP (10 per hour)
-  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
+  const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
   const allowed = await checkTempBuildRateLimit(c.env.DB, ip);
   if (!allowed)
     return c.json(
@@ -1539,10 +1492,9 @@ app.get('/search-addons', async (c) => {
   const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
   const now = Date.now();
 
-  if (Math.random() < 0.02) {
-    for (const [key, val] of searchRateCounts) {
-      if (val.expires <= now) searchRateCounts.delete(key);
-    }
+  // Prune expired buckets to prevent unbounded map growth
+  for (const [key, val] of searchRateCounts) {
+    if (val.expires <= now) searchRateCounts.delete(key);
   }
 
   const bucket = searchRateCounts.get(ip);
