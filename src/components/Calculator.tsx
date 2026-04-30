@@ -203,6 +203,7 @@ const MODE_FILTER = {
       'Assassination: Hemorrhage',
       'Herald of the Tome: Fated Fortune',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
@@ -440,6 +441,7 @@ const MODE_FILTER = {
       'Assassination: Hemorrhage',
       'Herald of the Tome: Fated Fortune',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
@@ -3516,10 +3518,14 @@ const CalculatorComponent: React.FC = () => {
     return (
       <Accordion
         defaultExpanded
+        disableGutters
         sx={{
-          mb: 3,
-          '&:last-child': {
+          mb: 2,
+          '&.Mui-expanded': {
             mb: 2,
+          },
+          '&:before': {
+            display: 'none',
           },
         }}
       >

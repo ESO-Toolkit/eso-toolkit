@@ -210,6 +210,13 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
+    ability: KnownAbilities.BLESSING_AT_THE_PEAK,
+    value: CriticalDamageValues.BLESSING_AT_THE_PEAK,
+    name: 'Blessing at the Peak',
+    description: 'Critical damage from Blessing at the Peak passive (10%)',
+    source: 'aura',
+  },
+  {
     ability: KnownAbilities.HEMORRHAGE,
     value: CriticalDamageValues.HEMORRHAGE,
     name: 'Hemorrhage',

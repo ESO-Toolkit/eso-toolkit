@@ -79,6 +79,11 @@ const TOOLTIP_DICT = {
       <u>Rank 1</u>: Increases your Critical Damage by <strong>6%</strong>. Increases your damage done to blocking players by <strong>6%</strong>.<br>
       <u>Rank 2</u>: Increases your Critical Damage by <strong>12%</strong>. Increases your damage done to blocking players by <strong>12%</strong>.
     `,
+  'Earthen Heart: Blessing at the Peak': `
+      <em>Dragonknight — Earthen Heart</em><br>
+      <strong>Effect</strong><br>
+      Where earth meets sky is a wellspring of power you can tap at will. When you cast or deal damage with an Earthen Heart ability in combat you generate <strong>3</strong> Ultimate. This effect can occur once every <strong>6</strong> seconds. Increases your Critical Damage by <strong>10%</strong>.
+    `,
   'Medium Armor: Dexterity': `
       <em>Medium Armor</em><br>
       <strong>Effect</strong><br>
@@ -854,6 +859,15 @@ const critData = {
       enabled: false,
       quantity: 1,
       value: 12,
+      isFlat: true,
+      isPercent: true,
+      category: 'passive',
+    },
+    {
+      name: 'Earthen Heart: Blessing at the Peak',
+      enabled: false,
+      quantity: 1,
+      value: 10,
       isFlat: true,
       isPercent: true,
       category: 'passive',
@@ -1852,6 +1866,7 @@ const MODE_FILTER = {
       'Herald of the Tome: Fated Fortune',
       'Assassination: Hemorrhage',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
@@ -1890,6 +1905,7 @@ const MODE_FILTER = {
       'Herald of the Tome: Fated Fortune',
       'Assassination: Hemorrhage',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
