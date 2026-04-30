@@ -1,22 +1,32 @@
 name: PR Checks
 
+permissions:
+  contents: read
+  pull-requests: read
+
 on:
   pull_request:
     branches:
-      - master
+      - main
     types:
       - opened
       - synchronize
       - reopened
       - labeled
       - unlabeled
+  merge_group:
+    branches:
+      - main
 
 jobs:
   check-do-not-merge-label:
     runs-on: ubuntu-latest
     steps:
       - name: Check for Do Not Merge or Waiting on Parent labels
-        uses: actions/github-script@v8
+        # Skip label check in merge_group (labels already verified on PR) — job must still run
+        # so the required status check reports back to GitHub instead of timing out.
+        if: github.event_name != 'merge_group'
+        uses: actions/github-script@v9
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(label => label.name.toLowerCase());
@@ -37,32 +47,53 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build
         run: npm run build
 
   lint:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
 
   format:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Check formatting
         run: npm run format:check
 
+  lint-skills:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install skills-ref
+        run: pip install skills-ref==0.1.1
+      - name: Validate agent skills
+        run: python scripts/lint-skills.py
+
   test:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Block external network access
         run: |
@@ -71,7 +102,7 @@ jobs:
           echo "127.0.0.1 www.esologs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 rpglogs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 assets.rpglogs.com" | sudo tee -a /etc/hosts
-          echo "127.0.0.1 sentry.io" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 api.rollbar.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.googleapis.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.gstatic.com" | sudo tee -a /etc/hosts
           echo "Blocked external services in /etc/hosts:"
@@ -89,7 +120,7 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
 
       - name: Scribing E2E Tests
         run: npm run test:scribing
@@ -100,20 +131,24 @@ jobs:
           HTTPS_PROXY: 'http://127.0.0.1:9999'
           BLOCK_EXTERNAL_REQUESTS: 'true'
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
 
   typecheck:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Typecheck
         run: npm run typecheck
 
   build-storybook:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
       - name: Build Storybook
         run: npm run build-storybook
@@ -122,8 +157,10 @@ jobs:
 
   playwright-smoke:
     runs-on: ubuntu-latest
+    # Only run on code changes, not label changes (always run for merge_group)
+    if: github.event_name == 'merge_group' || github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-node-with-cache
 
       - name: Get Playwright version
@@ -139,7 +176,7 @@ jobs:
           echo "Playwright version: ${PLAYWRIGHT_VERSION}"
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: |
@@ -164,16 +201,20 @@ jobs:
           fi
 
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
-          echo "🔄 Cache miss - installing Playwright browsers and dependencies..."
-          npx playwright install --with-deps
-
-      - name: Install Playwright Dependencies Only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: |
-          echo "⚡ Cache hit - installing only system dependencies..."
-          npx playwright install-deps
+          echo "🔄 Installing Playwright browsers..."
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
+            npx playwright install-deps
+            # Verify browsers are available, install if missing
+            if ! npx playwright install --dry-run 2>/dev/null; then
+              echo "🔧 Some browsers missing despite cache hit - installing..."
+              npx playwright install
+            fi
+          else
+            echo "🔄 Cache miss - installing browsers and dependencies..."
+            npx playwright install --with-deps
+          fi
 
       - name: Verify Playwright Installation
         run: |
@@ -189,6 +230,14 @@ jobs:
             echo "❌ No browser cache found"
             exit 1
           fi
+
+          # Test browser launch capability
+          echo "🛠️ Testing browser launch capability..."
+          if ! timeout 30s npx playwright install --dry-run; then
+            echo "❌ Browser installation verification failed"
+            exit 1
+          fi
+          echo "✅ All browsers verified and ready"
       - name: Block external network access
         run: |
           # Block access to known external services during testing
@@ -196,7 +245,7 @@ jobs:
           echo "127.0.0.1 www.esologs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 rpglogs.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 assets.rpglogs.com" | sudo tee -a /etc/hosts
-          echo "127.0.0.1 sentry.io" | sudo tee -a /etc/hosts
+          echo "127.0.0.1 api.rollbar.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.googleapis.com" | sudo tee -a /etc/hosts
           echo "127.0.0.1 fonts.gstatic.com" | sudo tee -a /etc/hosts
           echo "Blocked external services in /etc/hosts:"
@@ -243,11 +292,11 @@ jobs:
           BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
-          SENTRY_DSN: ''
+          ERROR_TRACKING_TOKEN: ''
           # Playwright memory optimization
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-smoke-report

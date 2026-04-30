@@ -12,7 +12,7 @@ import hostileBuffEventsReducer from './hostileBuffEventsSlice';
 import resourceEventsReducer from './resourceEventsSlice';
 
 // This acts as the layer of indirection from the root state
-// Instead of having events.damageEvents, we'll have events.damage.events
+// Event slices can manage their own state shape (e.g., keyed caches for damage events)
 const combinedEventsReducer = combineReducers({
   casts: castEventsReducer,
   combatantInfo: combatantInfoEventsReducer,
@@ -41,3 +41,8 @@ export { eventsReducer };
 
 // Export damage events selectors
 export * from './damageEventsSelectors';
+export * from './friendlyBuffEventsSelectors';
+export * from './hostileBuffEventsSelectors';
+export * from './debuffEventsSelectors';
+export * from './deathEventsSelectors';
+export * from './combatantInfoEventsSelectors';

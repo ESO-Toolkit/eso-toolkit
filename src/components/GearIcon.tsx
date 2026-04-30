@@ -81,30 +81,23 @@ export const GearIcon: React.FC<GearIconProps> = ({
   const colors = useDesaturatedColors ? desaturatedQualityColors : qualityColors;
 
   const iconElement = (
-    <Box
-      component="img"
+    <img
       src={iconUrl}
       alt={alt}
       className={className}
       onClick={onClick}
-      sx={{
+      style={{
         width: size,
         height: size,
         display: 'inline-block',
         verticalAlign: 'middle',
         border: quality !== 'normal' ? `2px solid ${colors[quality]}` : 'none',
-        borderRadius: rounded ? 1 : 0,
+        borderRadius: rounded ? 4 : 0,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease-in-out',
-        '&:hover': onClick
-          ? {
-              transform: 'scale(1.05)',
-              boxShadow: `0 0 8px ${colors[quality]}50`,
-            }
-          : {},
         ...style,
       }}
-      onError={(e) => {
+      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
         // Fallback to a placeholder or hide on error
         const target = e.target as HTMLImageElement;
         target.style.display = 'none';

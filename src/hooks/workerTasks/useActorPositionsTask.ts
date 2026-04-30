@@ -80,7 +80,7 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
 
   React.useEffect(() => {
     if (fight && events && !isAnyDataLoading && debuffLookupData) {
-      dispatch(
+      const promise = dispatch(
         executeActorPositionsTask({
           fight,
           events,
@@ -89,6 +89,9 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
           debuffLookupData,
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [dispatch, fight, events, playersById, actorsById, debuffLookupData, isAnyDataLoading]);
 

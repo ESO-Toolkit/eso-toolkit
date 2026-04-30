@@ -258,6 +258,212 @@ Before taking ANY screenshot in a Playwright test:
 - [ ] ✅ **Take screenshot** with appropriate options
 - [ ] ✅ **Handle errors gracefully** with debug output
 
+## 🎭 **Testing Philosophy: Defensive vs. Strict Validation**
+
+### **Critical Insight from ESO-506 Implementation (November 2025)**
+
+**Question Raised:** *"What good is testing if we are being defensive? Shouldn't we lock content into place?"*
+
+**Answer:** Use BOTH approaches for comprehensive coverage!
+
+### **❌ Defensive-Only Testing Is Insufficient**
+
+Tests that only verify "page doesn't crash" can miss critical bugs:
+- GraphQL query name changes (`getLatestReports` → `listReports`)
+- Data mapping errors (`report.title` → `report.name`)
+- Pagination logic failures
+- Filter/sort bugs
+- Empty state never triggering
+- Mocked data not actually rendering
+
+**Example of Insufficient Test:**
+```typescript
+// ❌ DEFENSIVE ONLY - Misses data bugs
+test('report list page loads', async ({ page }) => {
+  await page.goto('/latest-reports');
+  
+  // Only checks structure exists, not actual data
+  const table = page.locator('table');
+  await expect(table).toBeVisible();
+  
+  // Page "passes" even if mocked data never renders!
+});
+```
+
+### **✅ The Dual Testing Approach**
+
+Implement BOTH defensive and strict validation tests:
+
+#### **1. Defensive Tests (Reliability)**
+- ✅ Verify pages load without crashing
+- ✅ Check structure exists (tables, cards, headers)
+- ✅ Ensure no authentication errors
+- ✅ Validate responsive behavior
+- ✅ Fast and reliable (don't depend on specific data)
+
+```typescript
+// ✅ DEFENSIVE - Catches crashes and structure issues
+test('report list page structure', async ({ page }) => {
+  await page.goto('/latest-reports');
+  
+  // Verify page loaded (URL correct)
+  expect(page.url()).toContain('/latest-reports');
+  
+  // Check structure exists
+  const table = page.locator('table, [class*="MuiCard"]');
+  const hasStructure = await table.count() > 0;
+  expect(hasStructure).toBeTruthy();
+  
+  // Verify no critical auth errors
+  const authError = page.locator('text=/authentication required|access denied/i');
+  await expect(authError).not.toBeVisible();
+});
+```
+
+#### **2. Strict Validation Tests (Bug Detection)**
+- ✅ Verify specific mocked data appears
+- ✅ Confirm expected text/values render
+- ✅ Check pagination shows correct pages
+- ✅ Validate badges/chips display properly
+- ✅ Ensure empty states trigger correctly
+
+```typescript
+// ✅ STRICT - Catches data rendering bugs
+test('report list displays mocked data correctly', async ({ page }) => {
+  // Mock specific data with GraphQL __typename fields
+  const mockReportData = {
+    data: [
+      {
+        __typename: 'Report',
+        code: 'TEST123',
+        title: 'Sunspire Hard Mode Clear',
+        visibility: 'public',
+        zone: { __typename: 'Zone', name: 'Sunspire' },
+        owner: { __typename: 'User', name: 'RaidLeader' },
+      }
+    ],
+    current_page: 1,
+    per_page: 25,
+    last_page: 1,
+    has_more_pages: false,
+    total: 1,
+  };
+  
+  // Mock GraphQL API with specific data
+  await page.route('**/api/v2/**', async (route) => {
+    const postData = route.request().postDataJSON();
+    if (postData?.query?.includes('getLatestReports')) {
+      await route.fulfill({
+        status: 200,
+        body: JSON.stringify({
+          data: { reportData: { reports: mockReportData } }
+        }),
+      });
+    } else {
+      await route.continue();
+    }
+  });
+  
+  await page.goto('/latest-reports');
+  await page.waitForLoadState('networkidle');
+  
+  // STRICT CHECK: Verify specific mocked data appears
+  await expect(page.locator('text="Sunspire Hard Mode Clear"')).toBeVisible();
+  await expect(page.locator('text="Sunspire"')).toBeVisible();
+  await expect(page.locator('text="public"')).toBeVisible();
+});
+```
+
+### **🔑 Key Implementation Lessons from ESO-506**
+
+#### **1. GraphQL Mocking Must Match API Structure**
+```typescript
+// ❌ WRONG - Missing __typename fields
+const mockData = {
+  code: 'TEST123',
+  title: 'Test Report',
+  zone: { name: 'Sunspire' }  // Apollo Client may reject this
+};
+
+// ✅ CORRECT - Includes __typename for Apollo Client
+const mockData = {
+  __typename: 'Report',
+  code: 'TEST123',
+  title: 'Test Report',
+  zone: { __typename: 'Zone', name: 'Sunspire' }
+};
+```
+
+#### **2. Mock Correct API Endpoint**
+```typescript
+// ❌ WRONG - Generic GraphQL endpoint
+await page.route('**/graphql', async (route) => { /* ... */ });
+
+// ✅ CORRECT - Actual ESO Logs API endpoints
+await page.route('**/api/v2/**', async (route) => { /* ... */ });
+```
+
+#### **3. Unified Mocking Helper Pattern**
+```typescript
+// ✅ BEST PRACTICE - Single helper mocks everything
+async function setupAuth(page: Page, reportMockData?: any) {
+  // 1. Set localStorage token
+  await page.evaluate(() => {
+    const token = createMockJWT({ sub: '999', exp: futureTime });
+    localStorage.setItem('access_token', token);
+  });
+  
+  // 2. Mock ALL GraphQL queries in one place
+  await page.route('**/api/v2/**', async (route) => {
+    const postData = route.request().postDataJSON();
+    
+    if (postData?.query?.includes('currentUser')) {
+      await route.fulfill({ /* mock auth */ });
+    } else if (postData?.query?.includes('getLatestReports')) {
+      await route.fulfill({ 
+        body: JSON.stringify({
+          data: { reportData: { reports: reportMockData } }
+        })
+      });
+    } else {
+      await route.continue();
+    }
+  });
+  
+  await page.reload(); // Trigger auth state update
+}
+
+// Usage for defensive tests (no data needed)
+await setupAuth(page);
+
+// Usage for strict tests (with specific data)
+await setupAuth(page, mockReportData);
+```
+
+### **📊 Recommended Test Distribution**
+
+For a typical feature with 25 tests:
+- **~20 Defensive Tests** (80%) - Fast, reliable structure checks
+- **~5 Strict Tests** (20%) - Focused data validation
+
+This ratio provides:
+- ✅ Reliable test suite that doesn't fail from mocking complexity
+- ✅ Critical data validation to catch real bugs
+- ✅ Fast feedback loop (defensive tests run quickly)
+- ✅ Confidence that features actually work (strict tests verify)
+
+### **🎯 When to Use Each Type**
+
+| Scenario | Test Type | Rationale |
+|----------|-----------|-----------|
+| Page loads without crashing | Defensive | Fast, reliable |
+| Responsive layout works | Defensive | Structure-focused |
+| Navigation doesn't break | Defensive | Interaction-focused |
+| Specific report title appears | Strict | Data validation |
+| Pagination shows correct pages | Strict | Logic validation |
+| Empty state triggers | Strict | Conditional rendering |
+| Error messages display | Strict | Error handling |
+
 ## 🚀 **Performance Optimization Notes**
 
 ### **Why Mocked Data Still Takes Time:**

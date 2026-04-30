@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import Container from '@mui/material/Container';
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
 
 import { Footer } from '../components/Footer';
 import { HeaderBar } from '../components/HeaderBar';
@@ -10,9 +10,34 @@ import { ReportFightProvider } from '../ReportFightContext';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   // Check if we're on the landing page (root path)
   const isLandingPage = location.pathname === '/' || location.pathname === '';
+  // Build editor needs a wider container and less vertical padding
+  const isBuildEditor = location.pathname.startsWith('/build-editor');
+
+  // Embed mode: strip chrome (header/footer) for iframe previews
+  const isEmbed = searchParams.get('embed') === '1';
+
+  if (isEmbed) {
+    return (
+      <ReduxThemeProvider>
+        <ReportFightProvider>
+          <Box
+            sx={{
+              bgcolor: 'background.default',
+              color: 'text.primary',
+              minHeight: '100vh',
+              overflow: 'auto',
+            }}
+          >
+            <Outlet />
+          </Box>
+        </ReportFightProvider>
+      </ReduxThemeProvider>
+    );
+  }
 
   return (
     <ReduxThemeProvider>
@@ -21,14 +46,15 @@ export const AppLayout: React.FC = () => {
           sx={{
             position: 'relative',
             minHeight: '100vh',
-            bgcolor: 'background.default',
+            bgcolor: 'transparent',
             display: 'flex',
             flexDirection: 'column',
+            zIndex: 10,
           }}
         >
           <HeaderBar />
           <Container
-            maxWidth="md"
+            maxWidth={isBuildEditor ? 'xl' : 'md'}
             sx={{
               px: { xs: isLandingPage ? 2 : 0, sm: 2 },
               flex: 1,
@@ -36,10 +62,9 @@ export const AppLayout: React.FC = () => {
           >
             <Box
               sx={{
-                pt: { xs: isLandingPage ? 2 : 0, sm: 8 },
-                pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
+                pt: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 8 },
+                pb: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 4 },
                 minHeight: 'calc(100vh - 200px)',
-                overflowY: 'auto',
               }}
             >
               <Outlet />

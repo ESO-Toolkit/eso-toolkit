@@ -25,15 +25,15 @@
   --muted: var(--mui-palette-text-secondary, rgba(0, 0, 0, 0.6));
 }
 
-/* Dark mode specific overrides */
+/* Dark mode specific overrides — nebula-harmonized palette */
 .text-editor-page.dark-mode {
   --text: var(--mui-palette-text-primary, #fff);
   --panel: var(
     --mui-palette-background-paper,
-    rgba(15, 23, 42, 0.709804)
-  ); /* #0f172ab5 = 70.98% opacity */
-  --panel2: var(--mui-palette-background-default, rgba(0, 0, 0, 0.9));
-  --border: var(--mui-palette-divider, rgba(255, 255, 255, 0.2));
+    rgba(14, 8, 40, 0.82)
+  ); /* Deep purple-tinted dark — harmonizes with nebula purple/cyan */
+  --panel2: var(--mui-palette-background-default, rgba(8, 4, 24, 0.92));
+  --border: var(--mui-palette-divider, rgba(120, 80, 255, 0.28)); /* Nebula purple border */
   --accent: var(--mui-palette-primary-main, #38bdf8);
   --accent2: var(--mui-palette-primary-dark, #0284c7);
   --muted: var(--mui-palette-text-secondary, rgba(255, 255, 255, 0.7));
@@ -95,18 +95,11 @@ input[type='color'] {
   visibility: hidden !important;
 }
 
-/* TEMPORARY DEBUG CSS - Force interactions */
+/* Ensure color picker stays on top and is interactive */
 .pcr-app,
 .pcr-app * {
   pointer-events: auto !important;
   z-index: 999999 !important;
-}
-
-/* Force textarea to be interactive */
-#eso-input {
-  pointer-events: auto !important;
-  z-index: 1 !important;
-  position: relative !important;
 }
 
 /* Remove any blocking overlays */

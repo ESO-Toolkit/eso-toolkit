@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <!-- Force browsers and intermediaries to revalidate index.html so hashed assets stay in sync -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
@@ -43,6 +43,64 @@
       rel="stylesheet"
     />
     <title>ESO Toolkit</title>
+    <script>
+      // SPA deep-link restoration — runs synchronously before React mounts so the
+      // router sees the correct URL on its very first render, preventing the
+      // landing-page flash that would otherwise occur when reloading a deep link.
+      //
+      // Flow: when a deep link is requested, GitHub Pages serves 404.html which
+      // stores the intended path in sessionStorage (with a ?redirect= URL param
+      // as fallback) and redirects to the root. Without this script, React would
+      // render the Landing Page for one frame before HashRouteRedirect's useEffect
+      // fires and navigates away. By patching window.location synchronously here
+      // we ensure BrowserRouter reads the correct URL from the very first render.
+      (function () {
+        function isValidPath(p) {
+          return (
+            typeof p === 'string' &&
+            p.length > 1 &&
+            p.charAt(0) === '/' &&
+            p.charAt(1) !== '/' &&
+            p.indexOf('://') === -1
+          );
+        }
+
+        // Method 1: sessionStorage set by 404.html
+        var redirectPath = null;
+        try {
+          redirectPath = sessionStorage.getItem('redirectPath');
+        } catch (_) {
+          // SecurityError – sessionStorage unavailable (e.g. restricted iframe)
+        }
+
+        if (redirectPath && isValidPath(redirectPath)) {
+          try {
+            history.replaceState(null, '', redirectPath);
+            // Remove only after a successful replaceState so that HashRouteRedirect
+            // can still act as a fallback if replaceState threw a SecurityError.
+            try {
+              sessionStorage.removeItem('redirectPath');
+            } catch (_) {}
+            return;
+          } catch (_) {
+            // SecurityError – history.replaceState not permitted; leave sessionStorage
+            // intact so HashRouteRedirect can handle it (with the flash fallback).
+          }
+        }
+
+        // Method 2: ?redirect= URL param (written by 404.html when sessionStorage
+        // is unavailable, e.g. cookies/storage blocked by the browser).
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var paramPath = params.get('redirect');
+          if (paramPath && isValidPath(paramPath)) {
+            history.replaceState(null, '', paramPath);
+          }
+        } catch (_) {
+          // URLSearchParams or replaceState unavailable – HashRouteRedirect will handle it.
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

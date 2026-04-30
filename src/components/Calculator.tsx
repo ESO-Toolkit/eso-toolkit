@@ -203,6 +203,7 @@ const MODE_FILTER = {
       'Assassination: Hemorrhage',
       'Herald of the Tome: Fated Fortune',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
@@ -440,6 +441,7 @@ const MODE_FILTER = {
       'Assassination: Hemorrhage',
       'Herald of the Tome: Fated Fortune',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
@@ -3102,7 +3104,7 @@ const CalculatorComponent: React.FC = () => {
             size="small"
             disableElevation
             disableRipple
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation();
               if (isMobile) {
                 // Get the latest item data to ensure we have the current selectedVariant
@@ -3246,15 +3248,15 @@ const CalculatorComponent: React.FC = () => {
                 max={ARMOR_QUALITY_LABELS.length}
                 precision={1}
                 size="small"
-                onChange={(event, newValue) => {
+                onChange={(event: React.SyntheticEvent, newValue: number | null) => {
                   event.stopPropagation();
                   if (typeof newValue === 'number') {
                     updateArmorResistanceQuality(resolvedIndex, newValue - 1);
                   }
                 }}
-                onClick={(event) => event.stopPropagation()}
-                onMouseDown={(event) => event.stopPropagation()}
-                onTouchStart={(event) => event.stopPropagation()}
+                onClick={(event: React.MouseEvent<HTMLSpanElement>) => event.stopPropagation()}
+                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>) => event.stopPropagation()}
+                onTouchStart={(event: React.TouchEvent<HTMLSpanElement>) => event.stopPropagation()}
                 getLabelText={(value: number) =>
                   `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
                 }
@@ -3440,7 +3442,7 @@ const CalculatorComponent: React.FC = () => {
                             color: 'primary.main',
                           },
                         }}
-                        onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => e.stopPropagation()} // Prevent ListItem click from also triggering
                       >
                         <InfoIcon sx={{ fontSize: liteMode ? 14 : isMobile ? 14 : 16 }} />
                       </IconButton>
@@ -3516,16 +3518,14 @@ const CalculatorComponent: React.FC = () => {
     return (
       <Accordion
         defaultExpanded
+        disableGutters
         sx={{
-          mb: 3,
-          '&:last-child': {
+          mb: 2,
+          '&.Mui-expanded': {
             mb: 2,
           },
-          '&.Mui-expanded': {
-            mb: 4,
-            '&:last-child': {
-              mb: 3,
-            },
+          '&:before': {
+            display: 'none',
           },
         }}
       >
@@ -4924,7 +4924,7 @@ const CalculatorComponent: React.FC = () => {
                             disableElevation
                             fullWidth={isMobile}
                             aria-label="Penetration bulk actions"
-                            sx={(muiTheme) => ({
+                            sx={(muiTheme: Theme) => ({
                               alignSelf: { xs: 'stretch', sm: 'flex-end' },
                               flexWrap: { xs: 'wrap', sm: 'nowrap' },
                               borderRadius: '10px',
@@ -4984,7 +4984,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllPen(true)}
                                   disabled={penAllSelected || penSelectableItems.length === 0}
                                   aria-label="Select All penetration buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.primary.light
@@ -5034,7 +5034,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllPen(false)}
                                   disabled={penNoneSelected || penSelectableItems.length === 0}
                                   aria-label="Clear all penetration buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.error.light
@@ -5078,7 +5078,7 @@ const CalculatorComponent: React.FC = () => {
                             disableElevation
                             fullWidth={isMobile}
                             aria-label="Critical bulk actions"
-                            sx={(muiTheme) => ({
+                            sx={(muiTheme: Theme) => ({
                               alignSelf: { xs: 'stretch', sm: 'flex-end' },
                               flexWrap: { xs: 'wrap', sm: 'nowrap' },
                               borderRadius: '10px',
@@ -5138,7 +5138,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllCrit(true)}
                                   disabled={critAllSelected || critSelectableItems.length === 0}
                                   aria-label="Select All critical buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.primary.light
@@ -5188,7 +5188,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllCrit(false)}
                                   disabled={critNoneSelected || critSelectableItems.length === 0}
                                   aria-label="Clear all critical buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.error.light
@@ -5232,7 +5232,7 @@ const CalculatorComponent: React.FC = () => {
                             disableElevation
                             fullWidth={isMobile}
                             aria-label="Armor resistance bulk actions"
-                            sx={(muiTheme) => ({
+                            sx={(muiTheme: Theme) => ({
                               alignSelf: { xs: 'stretch', sm: 'flex-end' },
                               flexWrap: { xs: 'wrap', sm: 'nowrap' },
                               borderRadius: '10px',
@@ -5298,7 +5298,7 @@ const CalculatorComponent: React.FC = () => {
                                     armorResistanceSelectableItems.length === 0
                                   }
                                   aria-label="Select All armor resistance buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.primary.light
@@ -5348,7 +5348,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllArmorResistance(false)}
                                   disabled={!armorResistanceAnySelected}
                                   aria-label="Clear all armor resistance buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.error.light
@@ -6205,15 +6205,24 @@ const CalculatorComponent: React.FC = () => {
                                 max={ARMOR_QUALITY_LABELS.length}
                                 precision={1}
                                 size="large"
-                                onChange={(event, newValue) => {
+                                onChange={(
+                                  event: React.SyntheticEvent,
+                                  newValue: number | null,
+                                ) => {
                                   event.stopPropagation();
                                   if (typeof newValue === 'number') {
                                     setTempQualityLevel(newValue - 1);
                                   }
                                 }}
-                                onClick={(event) => event.stopPropagation()}
-                                onMouseDown={(event) => event.stopPropagation()}
-                                onTouchStart={(event) => event.stopPropagation()}
+                                onClick={(event: React.MouseEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
+                                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
+                                onTouchStart={(event: React.TouchEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
                                 getLabelText={(value: number) =>
                                   `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
                                 }

@@ -12,36 +12,23 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import {
-  CategoryScale,
+import type {
   Chart as ChartJS,
-  Legend,
-  LineElement,
-  LinearScale,
-  PointElement,
-  TimeSeriesScale,
-  Title,
-  Tooltip as ChartTooltip,
+  ChartData,
+  ChartDataset,
+  ChartOptions,
+  LegendItem,
+  TooltipItem,
 } from 'chart.js';
-import type { ChartData, ChartDataset, ChartOptions, LegendItem, TooltipItem } from 'chart.js';
 import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
+import '../../../utils/chartRegistration';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 
 import type { BuffUptime } from './BuffUptimeProgressBar';
 import { buildUptimeTimelineSeries, type UptimeTimelineSeries } from './utils/buildUptimeTimeline';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  TimeSeriesScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-);
 
 const TIMELINE_COLORS = [
   '#7c3aed',
@@ -116,12 +103,12 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     });
   }, [prefetchedSeries, uptimes, lookup, fightStartTime, fightEndTime, targetFilter]);
 
-  const fightDurationSeconds = React.useMemo(() => {
+  const fightDurationMs = React.useMemo(() => {
     if (!fightStartTime || !fightEndTime || fightEndTime <= fightStartTime) {
       return 0;
     }
 
-    return (fightEndTime - fightStartTime) / 1000;
+    return fightEndTime - fightStartTime;
   }, [fightStartTime, fightEndTime]);
 
   const chartData = React.useMemo<ChartData<'line'>>(() => {
@@ -231,7 +218,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
         x: {
           type: 'linear',
           min: 0,
-          max: fightDurationSeconds || undefined,
+          max: msToSeconds(fightDurationMs) || undefined,
           ticks: {
             callback: (value) => {
               const numeric = typeof value === 'number' ? value : Number(value);
@@ -256,7 +243,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
         },
       },
     }),
-    [fightDurationSeconds, formatSeconds, handleLegendClick],
+    [fightDurationMs, formatSeconds, handleLegendClick],
   );
 
   const categoryBadge = React.useMemo(() => {
@@ -277,7 +264,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Stack direction="row" spacing={1} alignItems="center">
-            <TimelineIcon color="primary" />
+            <TimelineIcon sx={{ color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a' }} />
             <Typography variant="h6">{title}</Typography>
             <Chip label={categoryBadge.label} color={categoryBadge.color} size="small" />
           </Stack>
@@ -288,7 +275,15 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
           )}
         </Box>
         <Tooltip title="Close">
-          <IconButton onClick={onClose} size="small">
+          <IconButton
+            onClick={onClose}
+            size="small"
+            aria-label="Close"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.10)' },
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </Tooltip>
@@ -308,6 +303,9 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
               backgroundColor:
                 theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)',
               borderRadius: 2,
+              border: `1px solid ${
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.08)'
+              }`,
             }}
           >
             <Typography variant="body2" color="text.secondary">

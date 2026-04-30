@@ -10,41 +10,17 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-  TooltipItem,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
+import type { TooltipItem } from 'chart.js';
 import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
+import '../../../utils/chartRegistration';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import type {
   DamageOverTimeResult,
   PlayerDamageOverTimeData,
 } from '../../../workers/calculations/CalculateDamageOverTime';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin,
-);
 
 // Color palette for multiple player lines
 const PLAYER_COLORS = [

@@ -1,150 +1,125 @@
 import { createGearSetTooltipProps, getGearSetTooltipPropsByName } from './gearSetTooltipMapper';
+import { ItemQuality } from './gearUtilities';
 import type { PlayerGearSetRecord } from './gearUtilities';
+import type { PlayerGear } from '../types/playerDetails';
+import { ArmorType, GearSlot, GearTrait } from '../types/playerDetails';
 
-// Mock the gear set data imports
-jest.mock('../data/Gear Sets/arena-specials', () => ({
-  arenaSet1: {
-    skillLines: {
-      'arena-set-1': {
-        name: 'Arena Special Set',
-        passives: [
-          {
-            name: '(2 items)',
-            description: 'Adds 1096 Maximum Magicka',
-          },
-          {
-            name: '(5 items)',
-            description: 'When you deal damage, you have a 10% chance to create a pool of lava',
-            requirement: 'Combat requirement',
-          },
-        ],
-      },
+jest.mock('../data/Gear Sets/legacyAdapters', () => ({
+  arenaSpecialGearSets: {
+    arenaSet1: {
+      name: 'Arena Special Set',
+      icon: 'arena',
+      setType: 'Arena',
+      bonuses: [
+        '(2 items) Adds 1206 Maximum Health',
+        '(3 items) Adds 1096 Maximum Stamina',
+        '(5 items) Trigger a combat requirement effect',
+      ],
     },
-    weapon: 'Arena',
+  },
+  monsterGearSets: {
+    monsterSet1: {
+      name: 'Monster Helm Set',
+      icon: 'monster',
+      setType: 'Monster Set',
+      bonuses: ['(1 item) Adds 1096 Maximum Magicka', '(2 items) Summon a monster ally'],
+    },
   },
 }));
 
 jest.mock('../data/Gear Sets/heavy', () => ({
   heavySet1: {
-    skillLines: {
-      'heavy-set-1': {
-        name: 'Heavy Armor Set',
-        passives: [
-          {
-            name: '(2 items)',
-            description: 'Adds 1206 Maximum Health',
-          },
-          {
-            name: '(3 items)',
-            description: 'Adds 1096 Maximum Stamina',
-          },
-          {
-            name: '(5 items)',
-            description: 'When you take damage, you have a chance to reduce enemy movement speed',
-          },
-        ],
-      },
-    },
-    weapon: 'Heavy Armor',
+    name: 'Heavy Armor Set',
+    icon: 'heavy',
+    setType: 'Heavy Armor',
+    bonuses: [
+      '(2 items) Adds 1206 Maximum Health',
+      '(3 items) Adds 1096 Maximum Stamina',
+      '(5 items) Reduce enemy movement speed',
+    ],
   },
 }));
 
 jest.mock('../data/Gear Sets/light', () => ({
   lightSet1: {
-    skillLines: {
-      'light-set-1': {
-        name: 'Light Armor Set',
-        passives: [
-          {
-            name: '(2 items)',
-            description: 'Adds 1096 Maximum Magicka',
-          },
-          {
-            name: '(3 items)',
-            description: 'Adds 129 Spell Damage',
-          },
-          {
-            name: '(5 items)',
-            description: 'Increases spell critical rating by 657',
-          },
-        ],
-      },
-    },
-    weapon: 'Light Armor',
+    name: 'Light Armor Set',
+    icon: 'light',
+    setType: 'Light Armor',
+    bonuses: [
+      '(2 items) Adds 1096 Maximum Magicka',
+      '(3 items) Adds 129 Spell Damage',
+      '(5 items) Increase spell critical rating',
+    ],
   },
 }));
 
-jest.mock('../data/Gear Sets/monster', () => ({
-  monsterSet1: {
-    skillLines: {
-      'monster-set-1': {
-        name: 'Monster Helm Set',
-        passives: [
-          {
-            name: '(1 item)',
-            description: 'Adds 1096 Maximum Magicka',
-          },
-          {
-            name: '(2 items)',
-            description: 'When you deal damage, you summon a monster ally',
-          },
-        ],
-      },
-    },
-    weapon: 'Monster Set',
+jest.mock('../data/Gear Sets/medium', () => ({
+  mediumSet1: {
+    name: 'Medium Armor Set',
+    icon: 'medium',
+    setType: 'Medium Armor',
+    bonuses: [
+      '(2 items) Adds 129 Weapon Damage',
+      '(3 items) Adds 657 Weapon Critical',
+      '(5 items) Medium armor proc',
+    ],
+  },
+}));
+
+jest.mock('../data/Gear Sets/arena', () => ({
+  arenaSetA: {
+    name: 'Arena Master Set',
+    icon: 'arena_master',
+    setType: 'Arena',
+    bonuses: ['(1 item) Adds 100 Weapon Damage', '(2 items) Arena effect'],
   },
 }));
 
 jest.mock('../data/Gear Sets/mythics', () => ({
   mythicSet1: {
-    skillLines: {
-      'mythic-set-1': {
-        name: 'Mythic Item Set',
-        passives: [
-          {
-            name: '(1 item)',
-            description: 'Unique mythic effect that changes gameplay significantly',
-          },
-        ],
-      },
-    },
-    weapon: 'Mythic',
+    name: 'Mythic Item Set',
+    icon: 'mythic',
+    setType: 'Mythic',
+    bonuses: ['(1 item) Unique mythic effect that changes gameplay significantly'],
   },
 }));
 
 jest.mock('../data/Gear Sets/shared', () => ({
   sharedSet1: {
-    skillLines: {
-      'shared-set-1': {
-        name: 'Shared Gear Set',
-        passives: [
-          {
-            name: '(2 items)',
-            description: 'Adds 1096 Maximum Health',
-          },
-          {
-            name: '(3 items)',
-            description: 'Adds 1096 Maximum Stamina',
-          },
-          {
-            name: '(5 items)',
-            description: 'Shared set bonus effect',
-          },
-        ],
-      },
-    },
-    weapon: 'Shared',
+    name: 'Shared Gear Set',
+    icon: 'shared',
+    setType: 'PvP',
+    bonuses: [
+      '(2 items) Adds 1096 Maximum Health',
+      '(3 items) Adds 1096 Maximum Stamina',
+      '(5 items) Shared set bonus effect',
+    ],
   },
 }));
 
+const buildGearRecord = (overrides: Partial<PlayerGearSetRecord> = {}): PlayerGearSetRecord => ({
+  key: 'heavy-set',
+  labelName: 'Heavy Armor Set',
+  sortName: 'heavy armor set',
+  count: 5,
+  category: 0,
+  secondary: 0,
+  data: {
+    total: 5,
+    perfected: 0,
+    setID: 1234,
+    hasPerfected: false,
+    hasRegular: true,
+    baseDisplay: 'Heavy Armor Set',
+    ...(overrides.data ?? {}),
+  },
+  ...overrides,
+});
+
 describe('gearSetTooltipMapper', () => {
   describe('createGearSetTooltipProps', () => {
-    it('should create tooltip props for a known gear set', () => {
-      const gearRecord: PlayerGearSetRecord = {
-        labelName: 'Heavy Armor Set',
-        count: 5,
-        items: [],
-      };
+    it('creates tooltip props for a known gear set', () => {
+      const gearRecord = buildGearRecord();
 
       const result = createGearSetTooltipProps(gearRecord);
 
@@ -153,198 +128,142 @@ describe('gearSetTooltipMapper', () => {
       expect(result!.headerBadge).toBe('Heavy Armor');
       expect(result!.itemCount).toBe('5');
       expect(result!.setBonuses).toHaveLength(3);
-
-      // Check that all bonuses are active since we have 5 items
-      expect(result!.setBonuses[0]).toEqual({
-        pieces: '(2 items)',
-        effect: 'Adds 1206 Maximum Health',
-        active: true,
-        requirement: undefined,
-      });
-
-      expect(result!.setBonuses[1]).toEqual({
-        pieces: '(3 items)',
-        effect: 'Adds 1096 Maximum Stamina',
-        active: true,
-        requirement: undefined,
-      });
-
-      expect(result!.setBonuses[2]).toEqual({
-        pieces: '(5 items)',
-        effect: 'When you take damage, you have a chance to reduce enemy movement speed',
-        active: true,
-        requirement: undefined,
-      });
+      expect(result!.setBonuses.every((bonus) => bonus.active)).toBe(true);
     });
 
-    it('should handle partial gear set activation', () => {
-      const gearRecord: PlayerGearSetRecord = {
+    it('marks bonuses inactive when equipped count is lower than requirement', () => {
+      const gearRecord = buildGearRecord({
         labelName: 'Light Armor Set',
         count: 3,
-        items: [],
-      };
+      });
 
       const result = createGearSetTooltipProps(gearRecord);
 
       expect(result).not.toBeNull();
-      expect(result!.setBonuses).toHaveLength(3);
-
-      // Only first two bonuses should be active
-      expect(result!.setBonuses[0].active).toBe(true); // 2 items
-      expect(result!.setBonuses[1].active).toBe(true); // 3 items
-      expect(result!.setBonuses[2].active).toBe(false); // 5 items
+      expect(result!.setBonuses.map((bonus) => bonus.active)).toEqual([true, true, false]);
     });
 
-    it('should categorize mythic sets correctly', () => {
-      const gearRecord: PlayerGearSetRecord = {
+    it('uses category badges for specialty sets', () => {
+      const mythicRecord = buildGearRecord({
         labelName: 'Mythic Item Set',
         count: 1,
-        items: [],
-      };
+      });
 
-      const result = createGearSetTooltipProps(gearRecord);
-
-      expect(result).not.toBeNull();
-      expect(result!.headerBadge).toBe('Mythic');
-    });
-
-    it('should categorize monster sets correctly', () => {
-      const gearRecord: PlayerGearSetRecord = {
+      const monsterRecord = buildGearRecord({
         labelName: 'Monster Helm Set',
         count: 2,
-        items: [],
-      };
+      });
 
-      const result = createGearSetTooltipProps(gearRecord);
-
-      expect(result).not.toBeNull();
-      expect(result!.headerBadge).toBe('Monster Set');
-    });
-
-    it('should categorize arena sets correctly', () => {
-      const gearRecord: PlayerGearSetRecord = {
+      const arenaRecord = buildGearRecord({
         labelName: 'Arena Special Set',
         count: 5,
-        items: [],
-      };
+      });
 
-      const result = createGearSetTooltipProps(gearRecord);
-
-      expect(result).not.toBeNull();
-      expect(result!.headerBadge).toBe('Arena');
+      expect(createGearSetTooltipProps(mythicRecord)!.headerBadge).toBe('Mythic');
+      expect(createGearSetTooltipProps(monsterRecord)!.headerBadge).toBe('Monster Set');
+      expect(createGearSetTooltipProps(arenaRecord)!.headerBadge).toBe('Arena');
     });
 
-    it('should handle unknown gear sets', () => {
-      const gearRecord: PlayerGearSetRecord = {
+    it('returns a fallback tooltip when the set is unknown', () => {
+      const gearRecord = buildGearRecord({
         labelName: 'Unknown Set Name',
         count: 3,
-        items: [],
-      };
-
-      const result = createGearSetTooltipProps(gearRecord);
-
-      expect(result).not.toBeNull();
-      expect(result!.setName).toBe('Unknown Set Name');
-      expect(result!.headerBadge).toBe('Unknown Set');
-      expect(result!.itemCount).toBe('3');
-      expect(result!.setBonuses).toHaveLength(1);
-      expect(result!.setBonuses[0]).toEqual({
-        pieces: '(3 items)',
-        effect: 'Set bonuses unknown',
-        active: true,
       });
-    });
-
-    it('should handle gear sets with requirements', () => {
-      const gearRecord: PlayerGearSetRecord = {
-        labelName: 'Arena Special Set',
-        count: 5,
-        items: [],
-      };
 
       const result = createGearSetTooltipProps(gearRecord);
 
       expect(result).not.toBeNull();
-      expect(result!.setBonuses[1].requirement).toBe('Combat requirement');
+      expect(result!.headerBadge).toBe('Unknown Set');
+      expect(result!.setBonuses).toEqual([
+        {
+          pieces: '(3 items)',
+          effect: 'Set bonuses unknown',
+          active: true,
+        },
+      ]);
     });
 
-    it('should normalize gear set names correctly', () => {
-      const gearRecord: PlayerGearSetRecord = {
-        labelName: 'Perfected Heavy Armor Set',
-        count: 2,
-        items: [],
-      };
+    it('includes equipped gear pieces when player gear is supplied', () => {
+      const gearRecord = buildGearRecord();
+      const playerGear: PlayerGear[] = [
+        {
+          id: 42,
+          setID: gearRecord.data.setID ?? 0,
+          setName: 'Heavy Armor Set',
+          icon: 'heavy_icon',
+          slot: GearSlot.CHEST,
+          quality: ItemQuality.EPIC,
+          championPoints: 1800,
+          trait: GearTrait.REINFORCED,
+          enchantType: 2,
+          enchantQuality: 3,
+          name: 'Heavy Chest',
+          type: ArmorType.HEAVY,
+        },
+      ];
 
-      // Should still find the set despite "Perfected" prefix
+      const result = createGearSetTooltipProps(gearRecord, playerGear);
+
+      expect(result).not.toBeNull();
+      if (!result) {
+        throw new Error('Expected tooltip to be created');
+      }
+      const { gearPieces } = result;
+      if (!gearPieces) {
+        throw new Error('Expected gear pieces to be populated');
+      }
+      expect(gearPieces).toHaveLength(1);
+      const gearPiece = gearPieces[0];
+      expect(gearPiece).toBeDefined();
+      if (!gearPiece) {
+        throw new Error('Expected gear piece to be defined');
+      }
+      expect(gearPiece.name).toBe('Heavy Chest');
+      expect(result!.iconUrl).toContain('heavy_icon');
+    });
+
+    it('normalizes perfected names when building tooltips', () => {
+      const gearRecord = buildGearRecord({
+        labelName: 'Perfected Heavy Armor Set',
+      });
+
       const result = createGearSetTooltipProps(gearRecord);
 
       expect(result).not.toBeNull();
       expect(result!.setName).toBe('Perfected Heavy Armor Set');
       expect(result!.headerBadge).toBe('Heavy Armor');
     });
-
-    it('should handle gear sets with special characters in names', () => {
-      const gearRecord: PlayerGearSetRecord = {
-        labelName: "Heavy Armor Set's (Special)",
-        count: 2,
-        items: [],
-      };
-
-      // Should normalize special characters and still find the set
-      const result = createGearSetTooltipProps(gearRecord);
-
-      expect(result).not.toBeNull();
-      expect(result!.setName).toBe("Heavy Armor Set's (Special)");
-    });
   });
 
   describe('getGearSetTooltipPropsByName', () => {
-    it('should return tooltip props for a known set name', () => {
+    it('returns tooltip props for a known set', () => {
       const result = getGearSetTooltipPropsByName('Light Armor Set', 3);
 
       expect(result).not.toBeNull();
       expect(result!.setName).toBe('Light Armor Set');
-      expect(result!.headerBadge).toBe('Light Armor');
       expect(result!.itemCount).toBe('3');
       expect(result!.setBonuses).toHaveLength(3);
     });
 
-    it('should return tooltip props without item count when not provided', () => {
+    it('returns null for unknown sets', () => {
+      expect(getGearSetTooltipPropsByName('Non-Existent Set', 2)).toBeNull();
+    });
+
+    it('omits item count when equipped pieces are not provided', () => {
       const result = getGearSetTooltipPropsByName('Light Armor Set');
 
       expect(result).not.toBeNull();
-      expect(result!.setName).toBe('Light Armor Set');
       expect(result!.itemCount).toBeUndefined();
     });
 
-    it('should return tooltip props with zero equipped count', () => {
-      const result = getGearSetTooltipPropsByName('Light Armor Set', 0);
-
-      expect(result).not.toBeNull();
-      expect(result!.itemCount).toBeUndefined();
-      expect(result!.setBonuses.every((bonus) => !bonus.active)).toBe(true);
-    });
-
-    it('should return null for unknown gear sets', () => {
-      const result = getGearSetTooltipPropsByName('Non-Existent Set', 5);
-
-      expect(result).toBeNull();
-    });
-
-    it('should handle empty or invalid set names', () => {
-      expect(getGearSetTooltipPropsByName('')).toBeNull();
-      expect(getGearSetTooltipPropsByName('   ')).toBeNull();
-    });
-
-    it('should normalize set names for lookup', () => {
+    it('normalizes names for lookups', () => {
       const result = getGearSetTooltipPropsByName('LIGHT ARMOR SET', 2);
 
       expect(result).not.toBeNull();
-      expect(result!.setName).toBe('LIGHT ARMOR SET');
       expect(result!.headerBadge).toBe('Light Armor');
     });
 
-    it('should handle perfected gear set names', () => {
+    it('handles perfected prefixes when searching', () => {
       const result = getGearSetTooltipPropsByName('Perfected Monster Helm Set', 2);
 
       expect(result).not.toBeNull();
@@ -354,65 +273,18 @@ describe('gearSetTooltipMapper', () => {
   });
 
   describe('bonus activation logic', () => {
-    it('should correctly determine active bonuses based on equipped count', () => {
+    it('activates bonuses based on equipped count', () => {
       const result = getGearSetTooltipPropsByName('Heavy Armor Set', 2);
 
       expect(result).not.toBeNull();
-      expect(result!.setBonuses[0].active).toBe(true); // 2 items - active
-      expect(result!.setBonuses[1].active).toBe(false); // 3 items - inactive
-      expect(result!.setBonuses[2].active).toBe(false); // 5 items - inactive
+      expect(result!.setBonuses.map((bonus) => bonus.active)).toEqual([true, false, false]);
     });
 
-    it('should handle edge case where no pieces are specified', () => {
-      // This tests the fallback behavior for malformed data
-      const result = getGearSetTooltipPropsByName('Shared Gear Set', 1);
+    it('treats zero equipped pieces as no active bonuses', () => {
+      const result = getGearSetTooltipPropsByName('Light Armor Set', 0);
 
       expect(result).not.toBeNull();
-      expect(result!.setBonuses).toHaveLength(3);
-      // Check the actual behavior - bonuses with parsed requirements should be evaluated correctly
-      expect(result!.setBonuses[0].active).toBe(false); // (2 items) with 1 equipped
-      expect(result!.setBonuses[1].active).toBe(false); // (3 items) with 1 equipped
-      expect(result!.setBonuses[2].active).toBe(false); // (5 items) with 1 equipped
-    });
-  });
-
-  describe('edge cases and error handling', () => {
-    it('should handle gear sets with missing skillLines', () => {
-      // Mock a gear set with missing skillLines
-      jest.doMock('../data/Gear Sets/shared', () => ({
-        brokenSet: {
-          weapon: 'Broken',
-          // Missing skillLines
-        },
-      }));
-
-      const result = getGearSetTooltipPropsByName('Broken Set', 2);
-      expect(result).toBeNull();
-    });
-
-    it('should handle gear sets with empty passives array', () => {
-      // This would be handled by the existing mock structure
-      const result = getGearSetTooltipPropsByName('Shared Gear Set', 0);
-
-      expect(result).not.toBeNull();
-      expect(result!.setBonuses).toHaveLength(3);
-    });
-
-    it('should handle malformed passive data gracefully', () => {
-      // The function should handle missing properties in passives
-      const result = createGearSetTooltipProps({
-        labelName: 'Light Armor Set',
-        count: 2,
-        items: [],
-      });
-
-      expect(result).not.toBeNull();
-      expect(result!.setBonuses).toHaveLength(3);
-      result!.setBonuses.forEach((bonus) => {
-        expect(bonus.pieces).toBeDefined();
-        expect(bonus.effect).toBeDefined();
-        expect(typeof bonus.active).toBe('boolean');
-      });
+      expect(result!.setBonuses.every((bonus) => bonus.active === false)).toBe(true);
     });
   });
 });

@@ -23,13 +23,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
       
+      - name: Setup Node.js and Install Dependencies
+        uses: ./.github/actions/setup-node-with-cache
+      
+      - name: Generate What's New data
+        run: node scripts/generate-whats-new.cjs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and Deploy
         id: build-and-deploy
         uses: ./.github/actions/build-and-deploy
         with:
           enable_sourcemaps: 'false'
           vite_ga_measurement_id: ${{ secrets.VITE_GA_MEASUREMENT_ID }}
+          vite_discord_client_id: ${{ vars.VITE_DISCORD_CLIENT_ID }}

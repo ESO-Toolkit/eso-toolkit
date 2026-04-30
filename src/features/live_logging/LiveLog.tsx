@@ -3,13 +3,18 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 
 import { fetchReportMasterData, forceMasterDataRefresh } from '@/store/master_data/masterDataSlice';
-import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
+import {
+  setActiveReportContext,
+  setReportCacheMetadata,
+  setReportData,
+} from '@/store/report/reportSlice';
 import { setSelectedTargetIds } from '@/store/ui/uiSlice';
 import { useAppDispatch } from '@/store/useAppDispatch';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/gql/graphql';
 import { ReportFightContext } from '../../ReportFightContext';
+import { reportError } from '../../utils/errorTracking';
 import { TabId } from '../../utils/getSkeletonForTab';
 
 const REFETCH_INTERVAL = 30 * 1000; // 30 seconds
@@ -26,20 +31,40 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   const [selectedTabId, setSelectedTabId] = React.useState<TabId>(TabId.INSIGHTS);
   const [showExperimentalTabs, setShowExperimentalTabs] = React.useState<boolean>(false);
 
+  React.useEffect(() => {
+    dispatch(
+      setActiveReportContext({
+        reportCode: reportId ?? null,
+        fightId: latestFightId ?? null,
+      }),
+    );
+  }, [dispatch, reportId, latestFightId]);
+
   const fetchLatestFightId = React.useCallback(async (): Promise<void> => {
     if (!reportId) {
       return;
     }
 
-    dispatch(setReportId(reportId));
+    let response;
+    try {
+      response = await client.query({
+        query: GetReportByCodeDocument,
+        variables: {
+          code: reportId,
+        },
+        fetchPolicy: 'no-cache',
+      });
+    } catch (networkError) {
+      // Network errors during live-log polling (e.g. temporarily offline, CORS
+      // block, or API downtime) should not crash the page or produce an unhandled
+      // rejection. The interval will retry in 30 seconds automatically.
+      reportError(networkError instanceof Error ? networkError : new Error(String(networkError)), {
+        context: 'LiveLog.fetchLatestFightId',
+        reportId,
+      });
+      return;
+    }
 
-    const response = await client.query({
-      query: GetReportByCodeDocument,
-      variables: {
-        code: reportId,
-      },
-      fetchPolicy: 'no-cache',
-    });
     const lastFight =
       response.reportData?.report?.fights &&
       response.reportData?.report?.fights[response.reportData.report.fights.length - 1];
@@ -65,10 +90,10 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   }, [reportId, client, latestFightId, dispatch]);
 
   React.useEffect(() => {
-    fetchLatestFightId();
+    void fetchLatestFightId();
 
     const interval = setInterval(() => {
-      fetchLatestFightId();
+      void fetchLatestFightId();
     }, REFETCH_INTERVAL);
 
     return () => clearInterval(interval);

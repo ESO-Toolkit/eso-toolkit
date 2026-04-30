@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { TEST_DATA } from '../selectors';
 
 /**
  * Utility functions for nightly regression tests
@@ -251,6 +252,64 @@ export async function verifyTabActive(
 }
 
 /**
+ * Safely click an option in an open dropdown (MUI Select, native <select>, etc.).
+ *
+ * Historically, calling `.first().click()` on `.MuiMenuItem-root` caused the
+ * rotation-analysis nightly test to hang: the first menu item is often the
+ * already-selected value (`aria-selected="true"` / `.Mui-selected`), and
+ * clicking it leaves Playwright waiting for a state change that never
+ * happens — exhausting the default 30s action timeout and ultimately the
+ * 2-minute per-test budget.
+ *
+ * This helper:
+ *   1. Prefers the first *unselected* option so we exercise a real state
+ *      change instead of re-selecting the current value.
+ *   2. Falls back to the first option only when no unselected option exists.
+ *   3. Uses an explicit short timeout so a stuck dropdown fails fast.
+ *   4. Swallows errors and logs — dropdown interaction is a supplementary
+ *      smoke-test step, not a primary assertion.
+ *
+ * Returns `true` when a click completed, `false` otherwise.
+ */
+export async function safePickDropdownOption(
+  page: Page,
+  optionLocatorSelector = '.MuiMenuItem-root, [role="option"], option',
+  context = 'dropdown',
+  clickTimeoutMs = 5000,
+): Promise<boolean> {
+  try {
+    const allOptions = page.locator(optionLocatorSelector);
+    // Append :not() to *each* comma-separated selector (applying it to the
+    // whole string would only constrain the final selector in the list).
+    const unselectedSelector = optionLocatorSelector
+      .split(',')
+      .map(
+        (s) =>
+          `${s.trim()}:not([aria-selected="true"]):not(.Mui-selected):not([selected])`,
+      )
+      .join(', ');
+    const unselectedOptions = page.locator(unselectedSelector);
+
+    const unselectedCount = await unselectedOptions.count();
+    const target = unselectedCount > 0 ? unselectedOptions.first() : allOptions.first();
+
+    if (!(await target.isVisible({ timeout: 3000 }).catch(() => false))) {
+      console.log(`ℹ️ safePickDropdownOption (${context}): no visible option to click`);
+      return false;
+    }
+
+    await target.scrollIntoViewIfNeeded().catch(() => {});
+    await target.click({ timeout: clickTimeoutMs });
+    return true;
+  } catch (error) {
+    console.log(
+      `⚠️ safePickDropdownOption (${context}): ${(error as Error).message} — continuing test`,
+    );
+    return false;
+  }
+}
+
+/**
  * Test target selector functionality if present
  */
 export async function testTargetSelector(
@@ -258,24 +317,20 @@ export async function testTargetSelector(
   screenshotPrefix: string
 ): Promise<void> {
   const targetSelector = page.locator('[data-testid="target-selector"], .MuiFormControl-root').first();
-  
+
   if (!(await targetSelector.isVisible({ timeout: 5000 }))) {
     return;
   }
 
   await targetSelector.click();
   await page.waitForTimeout(1000);
-  
+
   await takeNamedScreenshot(page, `${screenshotPrefix}-target-selector`);
-  
-  // Try to select an option if dropdown opened
-  const options = page.locator('.MuiMenuItem-root, [role="option"]');
-  const optionCount = await options.count();
-  
-  if (optionCount > 0) {
-    await options.first().click();
+
+  // Try to select a (non-current) option if the dropdown opened.
+  // Uses safePickDropdownOption to avoid hanging on an already-selected item.
+  if (await safePickDropdownOption(page, '.MuiMenuItem-root, [role="option"]', 'target-selector')) {
     await page.waitForTimeout(2000);
-    
     await takeNamedScreenshot(page, `${screenshotPrefix}-target-selected`);
   }
 }
@@ -290,7 +345,7 @@ export async function monitorNetworkRequests(page: Page): Promise<{ failed: any[
   page.on('response', (response) => {
     const requestTime = Date.now();
     
-    if (response.status() >= 400 && response.url().includes('esologs.com')) {
+    if (response.status() >= 400 && /^https?:\/\/(?:[\w.-]+\.)?esologs\.com(?:\/|$)/.test(response.url())) {
       failedRequests.push({
         url: response.url(),
         status: response.status(),
@@ -340,6 +395,49 @@ export async function generateTestReport(
   };
 
   console.log(`Test Report for ${testName}:`, JSON.stringify(report, null, 2));
+}
+
+/**
+ * Resolve the first working report ID from the backup list.
+ *
+ * Navigates to each report in TEST_DATA.REAL_REPORT_IDS in order and returns
+ * the first one that loads real content. Falls back to the primary ID if all
+ * checks fail so the test runner still gets a value and can fail with a
+ * meaningful error rather than a TypeError.
+ */
+export async function resolveWorkingReportId(page: Page): Promise<string> {
+  for (const reportId of TEST_DATA.REAL_REPORT_IDS) {
+    try {
+      await page.goto(`/report/${reportId}`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 25000,
+      });
+
+      // A stale/deleted report typically shows an error banner or very little content.
+      const hasError = await page
+        .getByText(/not found|404|report.*not.*exist|invalid.*report/i)
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+
+      const hasContent = await page
+        .locator('.MuiAccordion-root, [data-testid="fight-list"], main, [role="main"]')
+        .first()
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
+
+      if (hasContent && !hasError) {
+        console.log(`✅ resolveWorkingReportId: using ${reportId}`);
+        return reportId;
+      }
+      console.log(`⚠️ resolveWorkingReportId: ${reportId} appears unavailable, trying next…`);
+    } catch {
+      console.log(`⚠️ resolveWorkingReportId: navigation to ${reportId} failed, trying next…`);
+    }
+  }
+
+  const fallback = TEST_DATA.REAL_REPORT_IDS[0];
+  console.warn(`⚠️ resolveWorkingReportId: all IDs failed validation; falling back to ${fallback}`);
+  return fallback;
 }
 
 /**

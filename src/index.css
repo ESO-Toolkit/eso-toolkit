@@ -39,6 +39,22 @@
     var(--scrollbar-track, rgba(255, 255, 255, 0.05));
 }
 
+/* Click / tap responsiveness — eliminates the 300ms double-tap detection
+   delay on touch devices and removes the default tap flash. */
+button,
+a,
+[role='button'],
+[role='tab'],
+[role='menuitem'],
+[role='option'],
+input,
+select,
+label,
+summary {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   font-family:
@@ -108,4 +124,17 @@ code {
   --site-border: #333333;
   --site-shadow: rgba(0, 0, 0, 0.8);
   --site-radius: 8px;
+}
+
+/* Performance-tier gate. `data-perf` is set on <html> from the Redux
+   store (see index.tsx's store.subscribe). On low-tier devices, strip
+   every backdrop-filter so the GPU doesn't spend most of its budget
+   compositing frosted-glass layers — this one rule drops the measured
+   27 active layers on landing to 0. The `filter` property (drop-shadow,
+   brightness, grayscale, …) is intentionally left alone since it isn't
+   the measured bottleneck and legitimate UI legibility uses exist. */
+html[data-perf='low'],
+html[data-perf='low'] * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }

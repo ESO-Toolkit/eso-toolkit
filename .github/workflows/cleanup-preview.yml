@@ -1,0 +1,63 @@
+name: Cleanup PR Preview
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pr-preview-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
+jobs:
+  cleanup-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DEV_PREVIEWS_APP_ID }}
+          private-key: ${{ secrets.DEV_PREVIEWS_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: dev-previews
+
+      - name: Remove preview from dev-previews repo
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          PREVIEW_DIR="pr-${PR_NUMBER}"
+
+          # Clone the dev-previews repo
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/ESO-Toolkit/dev-previews.git" /tmp/dev-previews
+          cd /tmp/dev-previews
+
+          # Check if preview directory exists
+          if [ ! -d "${PREVIEW_DIR}" ]; then
+            echo "No preview directory found for PR #${PR_NUMBER}, nothing to clean up."
+            exit 0
+          fi
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Remove preview directory
+          rm -rf "${PREVIEW_DIR}"
+
+          # Update previews.json
+          if [ -f previews.json ]; then
+            UPDATED=$(cat previews.json | jq --arg pr "${PR_NUMBER}" \
+              '[.[] | select(.pr != ($pr | tonumber))]')
+            echo "${UPDATED}" > previews.json
+          fi
+
+          # Commit and push
+          git add -A
+          git commit -m "Remove preview for PR #${PR_NUMBER}" --allow-empty
+          git push

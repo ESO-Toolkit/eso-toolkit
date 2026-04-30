@@ -18,7 +18,11 @@ export interface BuffUptimeResult {
   isDebuff: boolean;
   hostilityType: 0 | 1;
   uniqueKey: string;
+  groupAverageUptimePercentage?: number;
 }
+
+// Alias for backwards compatibility
+export type BuffUptime = BuffUptimeResult;
 
 export interface BuffUptimeCalculatorOptions {
   /** Set of ability IDs to include in calculations */
@@ -39,6 +43,11 @@ export interface BuffUptimeCalculatorOptions {
   isDebuff: boolean;
   /** Hostility type for the results */
   hostilityType: 0 | 1;
+  /**
+   * For inverted debuffs (where sourceID is the player who applied it),
+   * set this to true to filter by sourceID instead of targetID when a single player is selected
+   */
+  filterBySourceId?: boolean;
 }
 
 /**
@@ -149,4 +158,84 @@ export function computeBuffUptimes(
 
   // Sort by uptime percentage descending
   return uptimes.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
+}
+
+/**
+ * Utility function to compute buff uptimes for a single player/target with group average comparison
+ * This calculates the individual player's buff uptime and includes the group average for delta display
+ *
+ * IMPORTANT: Group average is calculated as the average of individual player uptimes,
+ * NOT the total uptime when all players' contributions are combined (which would be higher due to overlap)
+ */
+export function computeBuffUptimesWithGroupAverage(
+  buffLookup: BuffLookupData | null | undefined,
+  options: BuffUptimeCalculatorOptions,
+  singleTargetId: number,
+): BuffUptimeResult[] {
+  if (!buffLookup || !options.fightDuration) {
+    return [];
+  }
+
+  // Calculate group average as the AVERAGE of individual player uptimes
+  // This requires calculating uptime for each player separately, then averaging
+  // For inverted debuffs (filterBySourceId=true), we need to iterate over sourceIds (players)
+  // For normal buffs/debuffs, we iterate over targetIds (players)
+  const allTargetIds = options.filterBySourceId
+    ? options.sourceIds || new Set<number>()
+    : options.targetIds || new Set<number>();
+
+  if (allTargetIds.size === 0) {
+    // No targets to compare against, return empty
+    return [];
+  }
+
+  // Calculate uptime for each player individually
+  const playerUptimes = new Map<string, Map<number, number>>(); // abilityId -> Map<playerId -> uptimePercentage>
+
+  allTargetIds.forEach((targetId, _index) => {
+    const singlePlayerOptions = {
+      ...options,
+      // For inverted debuffs, set sourceIds to the single player
+      // For normal buffs/debuffs, set targetIds to the single player
+      ...(options.filterBySourceId
+        ? { sourceIds: new Set([targetId]) }
+        : { targetIds: new Set([targetId]) }),
+    };
+    const uptimes = computeBuffUptimes(buffLookup, singlePlayerOptions);
+
+    uptimes.forEach((uptime) => {
+      const abilityId = uptime.abilityGameID;
+      if (!playerUptimes.has(abilityId)) {
+        playerUptimes.set(abilityId, new Map());
+      }
+      playerUptimes.get(abilityId)!.set(targetId, uptime.uptimePercentage);
+    });
+  });
+
+  // Calculate the average uptime across all players for each ability
+  const groupAverageMap = new Map<string, number>();
+  playerUptimes.forEach((playerMap, abilityId) => {
+    const uptimes = Array.from(playerMap.values());
+    const average = uptimes.reduce((sum, val) => sum + val, 0) / Math.max(uptimes.length, 1);
+    groupAverageMap.set(abilityId, average);
+  });
+
+  // Now calculate uptimes for the single target
+  const singleTargetOptions = {
+    ...options,
+    // For inverted debuffs, the player is the source, not the target
+    ...(options.filterBySourceId
+      ? { sourceIds: new Set([singleTargetId]) }
+      : { targetIds: new Set([singleTargetId]) }),
+  };
+
+  const singleTargetUptimes = computeBuffUptimes(buffLookup, singleTargetOptions);
+
+  // Add group average to each result
+  const result = singleTargetUptimes.map((uptime) => ({
+    ...uptime,
+    groupAverageUptimePercentage: groupAverageMap.get(uptime.abilityGameID),
+  }));
+
+  return result;
 }

@@ -1,10 +1,16 @@
 import { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
-import { CombatantInfoEvent } from '@/types/combatlogEvents';
+import { CombatantInfoEvent, DamageEvent, UnifiedCastEvent } from '@/types/combatlogEvents';
+import {
+  calculateActiveCombatTime,
+  filterDataPointsByActiveCombat,
+} from '@/utils/activeCombatTimeUtils';
 import { BuffLookupData } from '@/utils/BuffLookupUtils';
 import {
   calculateDynamicPenetrationAtTimestamp,
   calculateStaticPenetration,
   getAllPenetrationSourcesWithActiveState,
+  getActiveWeaponBarAtTimestamp,
+  getArenaWeaponPenetrationForBar,
   PenetrationSourceWithActiveState,
 } from '@/utils/PenetrationUtils';
 
@@ -28,6 +34,8 @@ export interface PlayerPenetrationData {
   timeAtCapPercentage: number;
   penetrationSources: PenetrationSourceWithActiveState[];
   playerBasePenetration: number;
+  /** Inactive combat intervals (gaps in boss damage) in seconds relative to fight start */
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 export interface PenetrationCalculationTask {
@@ -40,6 +48,9 @@ export interface PenetrationCalculationTask {
   friendlyBuffsLookup: BuffLookupData;
   debuffsLookup: BuffLookupData;
   selectedTargetIds: number[];
+  damageEvents: DamageEvent[];
+  /** SWAP_WEAPONS cast events grouped by player ID, sorted by timestamp ascending */
+  swapEventsByPlayerId?: Record<number, UnifiedCastEvent[]>;
 }
 
 export function calculatePenetrationData(
@@ -53,11 +64,21 @@ export function calculatePenetrationData(
     friendlyBuffsLookup,
     debuffsLookup,
     selectedTargetIds,
+    damageEvents,
+    swapEventsByPlayerId = {},
   } = data;
 
   // BuffLookupData is now a POJO, no deserialization needed
   const deserializedFriendlyBuffsLookup = friendlyBuffsLookup;
   const deserializedDebuffsLookup = debuffsLookup;
+
+  // Calculate active combat time based on when bosses are taking damage
+  const activeCombatTimeResult = calculateActiveCombatTime(
+    damageEvents,
+    fight.startTime,
+    fight.endTime,
+    selectedTargetIds.length > 0 ? selectedTargetIds : undefined,
+  );
 
   onProgress?.(0);
 
@@ -90,6 +111,7 @@ export function calculatePenetrationData(
       );
 
       const playerBasePenetration = calculateStaticPenetration(playerCombatantInfo, player);
+      const swapEvents = swapEventsByPlayerId[player.id] ?? [];
 
       // Report progress for static calculations
       if (index % 5 === 0 || index === Object.keys(players).length - 1) {
@@ -103,6 +125,7 @@ export function calculatePenetrationData(
         playerCombatantInfo,
         allSources,
         playerBasePenetration,
+        swapEvents,
         dataPoints: [] as PenetrationDataPoint[],
         timeAtCapCount: 0,
       };
@@ -142,8 +165,16 @@ export function calculatePenetrationData(
         null, // No target needed for player buffs
       );
 
+      // Arena weapon sets (ARMOR_SETS_1190) are only active on the bar they are equipped on.
+      const activeBar = getActiveWeaponBarAtTimestamp(playerData.swapEvents, voxelTimestamp);
+      const arenaWeaponPenetration = getArenaWeaponPenetrationForBar(
+        playerData.playerCombatantInfo,
+        activeBar,
+      );
+
       const totalDynamicPenetration = playerBuffPenetration + targetDebuffPenetration;
-      const totalPenetration = playerData.playerBasePenetration + totalDynamicPenetration;
+      const totalPenetration =
+        playerData.playerBasePenetration + totalDynamicPenetration + arenaWeaponPenetration;
 
       playerData.dataPoints.push({
         timestamp: voxelTimestamp,
@@ -167,12 +198,72 @@ export function calculatePenetrationData(
   // Build the final result record
   const playerDataRecord: Record<string, PlayerPenetrationData> = {};
 
+  // Calculate inactive intervals (gaps between active periods) in seconds relative to fight start
+  const inactiveCombatIntervals: Array<{ start: number; end: number }> = [];
+  const activeIntervals = activeCombatTimeResult.activeCombatIntervals;
+
+  if (activeIntervals.length === 0) {
+    // If no active intervals, the entire fight is inactive
+    inactiveCombatIntervals.push({
+      start: 0,
+      end: fightDurationSeconds,
+    });
+  } else {
+    // Add inactive period before first active period
+    if (activeIntervals[0].start > fightStart) {
+      inactiveCombatIntervals.push({
+        start: 0,
+        end: (activeIntervals[0].start - fightStart) / 1000,
+      });
+    }
+
+    // Add inactive periods between active periods
+    for (let i = 0; i < activeIntervals.length - 1; i++) {
+      const gapStart = (activeIntervals[i].end - fightStart) / 1000;
+      const gapEnd = (activeIntervals[i + 1].start - fightStart) / 1000;
+      if (gapEnd > gapStart) {
+        inactiveCombatIntervals.push({
+          start: gapStart,
+          end: gapEnd,
+        });
+      }
+    }
+
+    // Add inactive period after last active period
+    const lastActiveEnd = activeIntervals[activeIntervals.length - 1].end;
+    if (lastActiveEnd < fightEnd) {
+      inactiveCombatIntervals.push({
+        start: (lastActiveEnd - fightStart) / 1000,
+        end: fightDurationSeconds,
+      });
+    }
+  }
+
   playersData.forEach((playerData) => {
-    const timeAtCapPercentage = numVoxels > 0 ? (playerData.timeAtCapCount / numVoxels) * 100 : 0;
+    // Filter data points to only include those during active combat
+    const activeDataPoints = filterDataPointsByActiveCombat(
+      playerData.dataPoints,
+      activeCombatTimeResult.activeCombatIntervals,
+    );
+
+    // Calculate time at cap based on active combat periods only
+    const timeAtCapCount = activeDataPoints.filter(
+      (point) => point.penetration >= PENETRATION_CAP,
+    ).length;
+    const timeAtCapPercentage =
+      activeDataPoints.length > 0 ? (timeAtCapCount / activeDataPoints.length) * 100 : 0;
+
     const maxPenetration = Math.max(...playerData.dataPoints.map((point) => point.penetration), 0);
+
+    // Calculate effective penetration based on active combat time only
     const effectivePenetration =
-      playerData.dataPoints.reduce((sum, point) => sum + point.penetration, 0) /
-      playerData.dataPoints.length;
+      activeDataPoints.length > 0
+        ? activeDataPoints.reduce((sum, point) => sum + point.penetration, 0) /
+          activeDataPoints.length
+        : playerData.dataPoints.length > 0
+          ? playerData.dataPoints.reduce((sum, point) => sum + point.penetration, 0) /
+            playerData.dataPoints.length
+          : 0;
 
     playerDataRecord[playerData.playerId] = {
       playerId: playerData.playerId,
@@ -183,6 +274,7 @@ export function calculatePenetrationData(
       timeAtCapPercentage,
       penetrationSources: playerData.allSources,
       playerBasePenetration: playerData.playerBasePenetration,
+      inactiveCombatIntervals,
     };
   });
 

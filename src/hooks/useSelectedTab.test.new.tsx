@@ -38,7 +38,11 @@ const createMockStore = (
       showExperimentalTabs: false,
       selectedTargetIds: [],
       selectedPlayerId: null,
+      selectedFriendlyPlayerId: null,
       selectedTabId: null,
+      myReportsPage: 1,
+      perfTier: 'medium',
+      perfTierOverride: 'auto',
       ...(initialState.ui || {}),
     },
   });

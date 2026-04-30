@@ -57,7 +57,7 @@ describe('CalculateStaggerStacks', () => {
     expect(result.stackResults).toHaveLength(1);
     const stack1Result = result.stackResults[0];
     expect(stack1Result.stackLevel).toBe(1);
-    expect(stack1Result.abilityName).toBe('Stagger (1 Stack)');
+    expect(stack1Result.abilityName).toBe('Heat Shock (1 Stack)');
     expect(stack1Result.totalDuration).toBe(6000);
     expect(stack1Result.uptime).toBe(6);
     expect(stack1Result.applications).toBe(1);

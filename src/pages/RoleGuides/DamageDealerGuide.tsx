@@ -1,6 +1,8 @@
 import { Container, Typography, Box } from '@mui/material';
 import React from 'react';
 
+import { WorkInProgressDisclaimer } from '../../components/WorkInProgressDisclaimer';
+
 export const DamageDealerGuide: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -13,14 +15,10 @@ export const DamageDealerGuide: React.FC = () => {
         </Typography>
       </Box>
 
-      <Box sx={{ textAlign: 'center', mt: 8 }}>
-        <Typography variant="h5" color="text.secondary">
-          Coming Soon
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
-          This guide is currently under development.
-        </Typography>
-      </Box>
+      <WorkInProgressDisclaimer
+        featureName="Damage Dealer Guide"
+        message="This comprehensive guide is coming soon. Check back later for DPS builds, rotation advice, and optimization tips!"
+      />
     </Container>
   );
 };

@@ -8,7 +8,7 @@ This project now uses a shared TypeScript runner powered by [`tsx`](https://gith
 npm run script -- scripts/print-leaderboard.ts
 ```
 
-The `script` npm command forwards the rest of the arguments to `tsx` with `tsconfig.scripts.json`. Any TypeScript file inside `scripts/` (and subfolders) can be executed this way.
+The `script` npm command forwards the rest of the arguments to `tsx` with `tsconfig/scripts.json`. Any TypeScript file inside `scripts/` (and subfolders) can be executed this way.
 
 ## Shared bootstrap helpers
 

@@ -1,6 +1,8 @@
 import type { ChipProps } from '@mui/material';
 import { format } from 'date-fns';
 
+import type { UserReportSummaryFragment } from '../../graphql/gql/graphql';
+
 export const formatReportDateTime = (timestamp: number): string => {
   return format(new Date(timestamp), 'MMM dd, yyyy HH:mm');
 };
@@ -29,4 +31,37 @@ export const getReportVisibilityColor = (visibility: string): ChipProps['color']
     default:
       return 'default';
   }
+};
+
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
+export interface ReportBadge {
+  label: string;
+  color: ChipProps['color'];
+  tooltip: string;
+}
+
+export const getReportBadge = (report: UserReportSummaryFragment): ReportBadge | null => {
+  if (report.segments === 0)
+    return {
+      label: 'Empty Log',
+      color: 'warning',
+      tooltip:
+        'This log contains no fight data, likely due to an upload or parsing issue on ESO Logs',
+    };
+  if (report.startTime === report.endTime)
+    return {
+      label: 'Empty Log',
+      color: 'warning',
+      tooltip:
+        'This log contains no fight data, likely due to an upload or parsing issue on ESO Logs',
+    };
+  if (!report.zone?.name && report.endTime - report.startTime < FIVE_MINUTES_MS) {
+    return {
+      label: 'No Bosses',
+      color: 'default',
+      tooltip: 'This log appears to contain no boss encounter data',
+    };
+  }
+  return null;
 };

@@ -1,0 +1,28 @@
+name: Deploy Cloudflare Worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      worker:
+        description: 'Worker to deploy'
+        required: true
+        type: choice
+        options:
+          - roster-hub-api
+          - discord-bot
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Deploy Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: ${{ inputs.worker }}

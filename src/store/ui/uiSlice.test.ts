@@ -32,8 +32,12 @@ describe('uiSlice', () => {
         selectedPlayerId: null,
         selectedTabId: null,
         selectedTargetIds: [],
+        selectedFriendlyPlayerId: null,
         showExperimentalTabs: false,
         sidebarOpen: false,
+        myReportsPage: 1,
+        perfTier: 'medium',
+        perfTierOverride: 'auto',
       });
     });
   });
@@ -289,8 +293,12 @@ describe('uiSlice', () => {
         selectedPlayerId: 123,
         selectedTabId: 2,
         selectedTargetIds: [],
+        selectedFriendlyPlayerId: null,
         showExperimentalTabs: true,
         sidebarOpen: true,
+        myReportsPage: 1,
+        perfTier: 'medium',
+        perfTierOverride: 'auto',
       });
     });
 

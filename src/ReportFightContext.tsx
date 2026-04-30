@@ -2,6 +2,7 @@ import React, { createContext, useContext, ReactNode, useEffect, useRef } from '
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { AbilityIdMapperProvider } from './contexts/AbilityIdMapperContext';
+import { setActiveReportContext } from './store/report/reportSlice';
 import { setSelectedTargetIds } from './store/ui/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
 import { trackEvent } from './utils/analytics';
@@ -36,6 +37,15 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
     previousFightId.current = fightId;
   }, [dispatch, fightId]);
+
+  useEffect(() => {
+    dispatch(
+      setActiveReportContext({
+        reportCode: reportId ?? null,
+        fightId: fightId ?? null,
+      }),
+    );
+  }, [dispatch, reportId, fightId]);
 
   // Convert URL param to valid tab ID
   const getValidTabId = (param: string | null | undefined, experimental: boolean): TabId => {

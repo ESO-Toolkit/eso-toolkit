@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useEsoLogsClientContext } from '@/EsoLogsClientContext';
-import { addBreadcrumb } from '@/utils/sentryUtils';
+import { addBreadcrumb } from '@/utils/errorTracking';
 
 import { setIntendedDestination } from './auth';
 import { useAuth } from './AuthContext';
@@ -13,7 +13,10 @@ interface AuthenticatedRouteProps {
 }
 
 /**
- * A wrapper component that protects routes by redirecting unauthenticated users to the login page.
+ * A wrapper component that protects routes requiring user identity by redirecting
+ * unauthenticated users to the login page. Only used for user-specific pages
+ * (My Reports, WhoAmI, etc.) — public pages use the Cloudflare Worker GQL
+ * proxy and do not need this guard.
  *
  * @param children - The component(s) to render if the user is authenticated
  * @param redirectTo - The path to redirect to if not authenticated (defaults to '/login')
@@ -29,7 +32,7 @@ export const AuthenticatedRoute: React.FC<AuthenticatedRouteProps> = ({
   // Show loading state while checking authentication or while client is not ready
   // Also ensure both auth states are in sync before rendering
   if (userLoading || !isReady || isLoggedIn !== clientLoggedIn) {
-    return null; // Or you could return a loading spinner here
+    return null;
   }
 
   // If not logged in, store the intended destination and redirect to login page

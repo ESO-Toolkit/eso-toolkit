@@ -1,4 +1,6 @@
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import BuildIcon from '@mui/icons-material/Construction';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
@@ -14,15 +16,26 @@ import {
   AccordionDetails,
   Tooltip,
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import { styled, useTheme } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
+import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { getArmorWeightCounts } from '@/utils/armorUtils';
+import { encodeBuildToURL } from '@/utils/buildEncoding';
 import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
 import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
+import { playerToBuild } from '@/utils/playerToBuild';
+import {
+  abbreviatePotion,
+  describePotionType,
+  describeResourceRestored,
+  detectPotionType,
+  getPotionColor,
+  type PotionStreamResult,
+} from '@/utils/potionDetectionUtils';
 
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
@@ -32,24 +45,31 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
-import { selectPlayerData } from '../../../store/player_data/playerDataSelectors';
+import type { PlayerRoleResult } from '../../../features/role_detection';
+import { useCastEvents } from '../../../hooks/events/useCastEvents';
+import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
+import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
+import { useFriendlyBuffEvents } from '../../../hooks/events/useFriendlyBuffEvents';
+import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
+import { useHostileBuffEvents } from '../../../hooks/events/useHostileBuffEvents';
+import { useResourceEvents } from '../../../hooks/events/useResourceEvents';
+import { getRoleEmoji, ROLE_LABELS, toBroadRole } from '../../../hooks/useRoleDetection';
+import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import {
-  selectFriendlyBuffEvents,
-  selectHostileBuffEvents,
-  selectCastEvents,
-  selectDamageEvents,
-  selectDebuffEvents,
-  selectHealingEvents,
-  selectResourceEvents,
-} from '../../../store/selectors/eventsSelectors';
+import { selectActiveReportContext } from '../../../store/report/reportSelectors';
+import type { RootState } from '../../../store/storeWithHistory';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
+import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
 import { ScribedSkillData } from '../../scribing/types';
+
+import type { StatChipId } from './statChipConfig';
+import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
+import { StatChipIcon } from './StatChipIcon';
 // TODO: Implement proper scribing detection services
 // Temporary stubs to prevent compilation errors
 interface CombatEventData {
@@ -79,6 +99,28 @@ const buildEnhancedScribingTooltipProps = (options: {
   isScribingSkill: false,
 });
 
+// Styled component for metrics scroll container with thin scrollbar
+const MetricsScrollContainer = styled(Box)(({ theme }) => ({
+  overflowX: 'auto',
+  overflowY: 'hidden',
+  // Firefox: thin scrollbar
+  scrollbarWidth: 'thin',
+  // WebKit: thin horizontal scrollbar (8px vs default ~17px)
+  '&::-webkit-scrollbar': {
+    height: '8px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: theme.palette.grey[200],
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: theme.palette.grey[500],
+    borderRadius: '4px',
+  },
+  '&::-webkit-scrollbar-thumb:hover': {
+    background: theme.palette.grey[700],
+  },
+}));
+
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
@@ -97,6 +139,33 @@ interface PlayerCardProps {
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
+  /** Whether this player is the top DPS in the fight */
+  isTopDps?: boolean;
+  /** The player's total DPS value (used in the badge label) */
+  totalDps?: number;
+  critDamageSummary?: { avg: number; max: number };
+  /** Bar swap analysis result, used to display bar setup pattern on DPS cards */
+  barSwapResult?: BarSwapAnalysisResult;
+  /** Per-player potion classification from the live fight event stream (Path B detection) */
+  potionStreamResult?: PotionStreamResult;
+  /** Player's DPS value */
+  dpsValue?: number;
+  /** Player's HPS value */
+  hpsValue?: number;
+  /** Player's total damage dealt */
+  totalDamage?: number;
+  /** Player's total critical hit damage */
+  totalCritDamage?: number;
+  /** Player's critical DPS (crit damage / duration) */
+  critDps?: number;
+  /** Player's critical hit chance percentage */
+  critChance?: number;
+  /** Ordered list of visible stat chip IDs (from customization preferences) */
+  visibleChips?: StatChipId[];
+  /** Detected role from the role detection algorithm */
+  detectedRole?: PlayerRoleResult;
+  /** Whether the metrics row wraps chips vertically or scrolls horizontally */
+  metricsLayout?: 'scroll' | 'wrap';
 }
 
 // Helper function to consolidate build issues
@@ -146,6 +215,48 @@ function consolidateBuildIssues(buildIssues: BuildIssue[]): {
   return grouped;
 }
 
+interface MundusChipProps {
+  mundusBuffs: Array<{ name: string; id: number }>;
+}
+
+const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
+  if (mundusBuffs.length === 0) return null;
+
+  // Since players can only have 1 mundus at a time, get the first/only one
+  const mundusBuff = mundusBuffs[0];
+  const mundusName = mundusBuff.name.replace(/^Boon:\s*/i, '').replace(/^The\s+/i, '');
+
+  return (
+    <Tooltip title={`Mundus: ${mundusName}`} enterTouchDelay={0} leaveTouchDelay={3000}>
+      <Box
+        component="span"
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          minWidth: { xs: 44, sm: 'auto', md: 'auto' },
+          minHeight: { xs: 28, sm: 'auto', md: 'auto' },
+        }}
+      >
+        <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
+        <Box component="span" sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}></Box>
+        <Box
+          component="span"
+          sx={{
+            display: 'inline',
+            fontWeight: 700,
+            fontSize: { xs: 8, sm: 9, md: 10 },
+            letterSpacing: '.01em',
+            color: 'primary.main',
+            textTransform: 'uppercase',
+          }}
+        >
+          {mundusName}
+        </Box>
+      </Box>
+    </Tooltip>
+  );
+};
+
 export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
   ({
     player,
@@ -165,6 +276,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     reportId,
     fightId,
     playerGear,
+    isTopDps,
+    totalDps,
+    critDamageSummary,
+    barSwapResult,
+    potionStreamResult,
+    dpsValue,
+    hpsValue,
+    totalDamage,
+    totalCritDamage,
+    critDps,
+    critChance,
+    visibleChips,
+    detectedRole,
+    metricsLayout = 'scroll',
   }) => {
     const theme = useTheme();
 
@@ -182,33 +307,57 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       () => player?.combatantInfo?.talents ?? [],
       [player?.combatantInfo?.talents],
     );
-    const gear = player?.combatantInfo?.gear ?? [];
+    const gear = React.useMemo(
+      () => player?.combatantInfo?.gear ?? [],
+      [player?.combatantInfo?.gear],
+    );
     const armorWeights = getArmorWeightCounts(gear);
 
     // State for gear details panel
     const [gearDetailsOpen, setGearDetailsOpen] = useState(false);
     const [currentGearPlayerId, setCurrentGearPlayerId] = useState<string | number>(player.id);
 
-    // Get all players from Redux store
-    const playerData = useSelector(selectPlayerData);
-    const allPlayers = React.useMemo(() => {
-      return Object.values(playerData?.playersById || {});
-    }, [playerData]);
+    // State for metrics auto-scroll and drag functionality
+
+    const activeReportContext = useSelector(selectActiveReportContext);
+
+    const selectorContext = React.useMemo(() => {
+      const normalizedReportId =
+        typeof reportId === 'string' && reportId.trim().length > 0
+          ? reportId.trim()
+          : (activeReportContext.reportId ?? null);
+
+      const normalizedFightId =
+        typeof fightId === 'string'
+          ? fightId.trim().length > 0
+            ? fightId.trim()
+            : (activeReportContext.fightId ?? null)
+          : (fightId ?? activeReportContext.fightId ?? null);
+
+      return {
+        reportCode: normalizedReportId,
+        fightId: normalizedFightId,
+      };
+    }, [reportId, fightId, activeReportContext.reportId, activeReportContext.fightId]);
+
+    // Get all players from Redux store scoped to context
+    const playersById = useSelector((state: RootState) =>
+      selectPlayersByIdForContext(state, selectorContext),
+    );
+    const allPlayers = React.useMemo(() => Object.values(playersById), [playersById]);
 
     // Get combat event data for affix script detection
-    const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
-    const hostileBuffEvents = useSelector(selectHostileBuffEvents);
-    const debuffEvents = useSelector(selectDebuffEvents);
-    const damageEvents = useSelector(selectDamageEvents);
-    const healingEvents = useSelector(selectHealingEvents);
-    const castEvents = useSelector(selectCastEvents);
-    const resourceEvents = useSelector(selectResourceEvents);
-
-    // Combine combat event data
-    const combatEventData: CombatEventData = React.useMemo(
+    const { friendlyBuffEvents } = useFriendlyBuffEvents({ context: selectorContext });
+    const { hostileBuffEvents } = useHostileBuffEvents({ context: selectorContext });
+    const { debuffEvents } = useDebuffEvents({ context: selectorContext });
+    const { damageEvents } = useDamageEvents({ context: selectorContext });
+    const { healingEvents } = useHealingEvents({ context: selectorContext });
+    const { castEvents } = useCastEvents({ context: selectorContext });
+    const { resourceEvents } = useResourceEvents({ context: selectorContext });
+    const combatEventData = React.useMemo(
       () => ({
-        castEvents: castEvents,
-        damageEvents: damageEvents,
+        castEvents,
+        damageEvents,
         allReportAbilities: [], // This would need to come from abilities data if available
         allDebuffEvents: debuffEvents,
         allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
@@ -307,14 +456,24 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         display: 'flex',
         flexDirection: 'column' as const,
         height: '100%',
+        position: 'relative' as const,
         background:
           'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-        border:
-          theme.palette.mode === 'dark'
+        border: isTopDps
+          ? theme.palette.mode === 'dark'
+            ? '1px solid rgba(245,158,11,0.55)'
+            : '1px solid rgba(180,83,9,0.5)'
+          : theme.palette.mode === 'dark'
             ? '1px solid rgba(255, 255, 255, 0.1)'
             : '1px solid rgba(59, 130, 246, 0.3)',
+        ...(isTopDps && {
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 0 16px rgba(245,158,11,0.18), 0 0 40px rgba(245,158,11,0.06), inset 0 1px 0 rgba(251,191,36,0.12)'
+              : '0 0 16px rgba(180,83,9,0.12), 0 0 40px rgba(245,158,11,0.08), inset 0 1px 0 rgba(251,191,36,0.18)',
+        }),
       }),
-      [theme.palette.mode],
+      [theme.palette.mode, isTopDps],
     );
 
     // Memoize expensive gear chip props - sorted by count descending
@@ -332,13 +491,19 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       [playerGear, theme],
     );
 
-    // Memoize role information
+    // Memoize role information — prefer detected role when available
     const roleInfo = React.useMemo(() => {
+      if (detectedRole) {
+        return {
+          roleType: ROLE_LABELS[detectedRole.role],
+          roleEmoji: getRoleEmoji(detectedRole.role),
+        };
+      }
       const roleType =
         player.role === 'tank' ? 'Tank' : player.role === 'healer' ? 'Healer' : 'DPS';
       const roleEmoji = player.role === 'tank' ? '🛡️' : player.role === 'healer' ? '❤️' : '⚔️';
       return { roleType, roleEmoji };
-    }, [player.role]);
+    }, [player.role, detectedRole]);
 
     // Memoize food information
     const foodInfo = React.useMemo(() => {
@@ -349,6 +514,79 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       };
     }, [foodAura]);
 
+    // Memoize potion information — prefer the live-stream result (Path B) when available.
+    const potionInfo = React.useMemo(() => {
+      if (potionStreamResult) {
+        const resourceDesc =
+          potionStreamResult.resourceRestored !== 'none'
+            ? ` — Restores: ${describeResourceRestored(potionStreamResult.resourceRestored)}`
+            : '';
+        return {
+          type: potionStreamResult.type,
+          count: potionStreamResult.count,
+          display: abbreviatePotion(potionStreamResult.type),
+          color: getPotionColor(potionStreamResult.type),
+          tooltip: `${describePotionType(potionStreamResult.type)}${resourceDesc}`,
+        };
+      }
+      const potionType = detectPotionType(auras, player.potionUse ?? 0);
+      return {
+        type: potionType,
+        count: player.potionUse ?? 0,
+        display: abbreviatePotion(potionType),
+        color: getPotionColor(potionType),
+        tooltip: describePotionType(potionType),
+      };
+    }, [auras, player.potionUse, potionStreamResult]);
+
+    // --- Extract Build handler ---
+    const [extractLoading, setExtractLoading] = useState(false);
+
+    const handleExtractBuild = useCallback(async () => {
+      setExtractLoading(true);
+      // Open the tab synchronously inside the click handler so popup blockers
+      // don't intercept — the async encodeBuildToURL would break the gesture chain.
+      const tab = window.open('', '_blank');
+      try {
+        const broadRole: string = detectedRole
+          ? toBroadRole(detectedRole.role)
+          : (player.role ?? 'dps');
+
+        const build = playerToBuild({
+          playerName: resolveActorName(player),
+          role: broadRole,
+          gear,
+          talents,
+          mundusBuffs,
+          championPoints,
+          classAnalysis,
+          food: foodAura ? { id: foodAura.id, name: foodAura.name } : undefined,
+          potionType: potionStreamResult?.type,
+        });
+
+        const encoded = await encodeBuildToURL(build);
+        if (tab && encoded) {
+          tab.location.href = `/build-editor?b=${encoded}&from=report`;
+        } else {
+          tab?.close();
+        }
+      } catch {
+        tab?.close();
+      } finally {
+        setExtractLoading(false);
+      }
+    }, [
+      player,
+      gear,
+      talents,
+      mundusBuffs,
+      championPoints,
+      classAnalysis,
+      detectedRole,
+      foodAura,
+      potionStreamResult,
+    ]);
+
     const resolvedPlayerName = resolveActorName(player);
     const normalizedDisplayName = resolvedPlayerName.trim();
     const trimmedCharacterName = player.name?.trim() ?? '';
@@ -358,6 +596,367 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         sensitivity: 'base',
       }) !== 0;
 
+    // --- Data-driven stat chip entries ---
+    // Build ordered array of chips, filtered by visibility prefs and role.
+    const statChipEntries = React.useMemo(() => {
+      // Collect candidate nodes into a map; order is determined afterwards.
+      const candidateMap = new Map<StatChipId, React.ReactNode>();
+      const r: 'dps' | 'healer' | 'tank' = detectedRole
+        ? toBroadRole(detectedRole.role)
+        : (player.role as 'dps' | 'healer' | 'tank');
+
+      const add = (id: StatChipId, node: React.ReactNode): void => {
+        const meta = STAT_CHIP_META[id];
+        if (meta.roleFilter && !meta.roleFilter.includes(r)) return;
+        candidateMap.set(id, node);
+      };
+
+      // --- New priority chips ---
+      if (dpsValue != null) {
+        add(
+          'dps',
+          <Tooltip title={STAT_CHIP_META.dps.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="dps" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+              >
+                {formatStatValue(dpsValue)} DPS
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (hpsValue != null) {
+        add(
+          'hps',
+          <Tooltip title={STAT_CHIP_META.hps.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="hps" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+              >
+                {formatStatValue(hpsValue)} HPS
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (critChance != null) {
+        add(
+          'critChance',
+          <Tooltip
+            title={STAT_CHIP_META.critChance.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="critChance" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+              >
+                {critChance.toFixed(1)}%
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (critDamageSummary) {
+        add(
+          'critDamage',
+          <Tooltip
+            title={STAT_CHIP_META.critDamage.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}>
+              <StatChipIcon chipId="critDamage" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 8, sm: 9, md: 10 },
+                  letterSpacing: '.01em',
+                  color:
+                    critDamageSummary.avg >= 125
+                      ? 'success.main'
+                      : critDamageSummary.avg >= 100
+                        ? 'warning.main'
+                        : 'error.main',
+                }}
+              >
+                {critDamageSummary.avg.toFixed(0)}% avg ({critDamageSummary.max.toFixed(0)}% max)
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (totalDamage != null) {
+        add(
+          'totalDamage',
+          <Tooltip
+            title={STAT_CHIP_META.totalDamage.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="totalDamage" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+              >
+                {formatStatValue(totalDamage)}
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (totalCritDamage != null) {
+        add(
+          'totalCritDamage',
+          <Tooltip
+            title={STAT_CHIP_META.totalCritDamage.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="totalCritDamage" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+              >
+                {formatStatValue(totalCritDamage)}
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (critDps != null) {
+        add(
+          'critDps',
+          <Tooltip
+            title={STAT_CHIP_META.critDps.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="critDps" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+              >
+                {formatStatValue(critDps)} CDPS
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      // --- Existing chips ---
+      if (mundusBuffs.length > 0) {
+        add('mundus', <MundusChip mundusBuffs={mundusBuffs} />);
+      }
+
+      add(
+        'food',
+        <Tooltip
+          title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
+          enterTouchDelay={0}
+          leaveTouchDelay={3000}
+        >
+          <span
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+            data-testid={`food-drink-${player.id}`}
+          >
+            <StatChipIcon chipId="food" />
+            <span style={{ margin: '0 1px' }} />
+            <Box
+              component="span"
+              sx={{
+                display: 'inline',
+                fontWeight: 700,
+                fontSize: { xs: 8, sm: 9, md: 10 },
+                letterSpacing: '.01em',
+                color: foodInfo.color,
+              }}
+            >
+              {foodInfo.display}
+            </Box>
+          </span>
+        </Tooltip>,
+      );
+
+      add(
+        'potion',
+        <Tooltip
+          title={`Potion (${potionInfo.count}x): ${potionInfo.tooltip}`}
+          enterTouchDelay={0}
+          leaveTouchDelay={3000}
+        >
+          <span
+            style={{ display: 'inline-flex', alignItems: 'center' }}
+            data-testid={`potion-${player.id}`}
+          >
+            <StatChipIcon chipId="potion" />
+            <span style={{ margin: '0 1px' }} />
+            <Box
+              component="span"
+              sx={{
+                display: 'inline',
+                fontWeight: 700,
+                fontSize: { xs: 8, sm: 9, md: 10 },
+                letterSpacing: '.01em',
+                color: potionInfo.color,
+              }}
+            >
+              {potionInfo.count}×{potionInfo.display}
+            </Box>
+          </span>
+        </Tooltip>,
+      );
+
+      add(
+        'deaths',
+        <Tooltip title={STAT_CHIP_META.deaths.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <StatChipIcon chipId="deaths" />
+            <span style={{ margin: '0 1px' }} />
+            {deaths}
+          </span>
+        </Tooltip>,
+      );
+
+      add(
+        'resurrects',
+        <Tooltip
+          title={STAT_CHIP_META.resurrects.tooltip}
+          enterTouchDelay={0}
+          leaveTouchDelay={3000}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <StatChipIcon chipId="resurrects" />
+            <span style={{ margin: '0 1px' }} />
+            {resurrects}
+          </span>
+        </Tooltip>,
+      );
+
+      add(
+        'cpm',
+        <Tooltip title={STAT_CHIP_META.cpm.tooltip} enterTouchDelay={0} leaveTouchDelay={3000}>
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <StatChipIcon chipId="cpm" />
+            <span style={{ margin: '0 1px' }} />
+            {reportId ? (
+              <a
+                href={castsUrl(reportId, fightId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: 'inherit', textDecoration: 'underline' }}
+              >
+                {cpm}
+              </a>
+            ) : (
+              <>{cpm}</>
+            )}
+          </span>
+        </Tooltip>,
+      );
+
+      if (distanceDisplay) {
+        add(
+          'distance',
+          <Tooltip
+            title={STAT_CHIP_META.distance.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="distance" />
+              <span style={{ margin: '0 1px' }} />
+              {distanceDisplay}
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      if (barSwapResult?.barSetupPattern) {
+        add(
+          'barPattern',
+          <Tooltip
+            title={STAT_CHIP_META.barPattern.tooltip}
+            enterTouchDelay={0}
+            leaveTouchDelay={3000}
+          >
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <StatChipIcon chipId="barPattern" />
+              <span style={{ margin: '0 1px' }} />
+              <Box
+                component="span"
+                sx={{
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                }}
+              >
+                {barSwapResult.barSetupPattern}
+              </Box>
+            </span>
+          </Tooltip>,
+        );
+      }
+
+      // Emit entries in the user-configured order (visibleChips), falling back
+      // to the canonical STAT_CHIP_IDS order when no preference is stored.
+      const orderedIds: readonly StatChipId[] = visibleChips ?? STAT_CHIP_IDS;
+      const entries: Array<{ id: StatChipId; node: React.ReactNode }> = [];
+      for (const id of orderedIds) {
+        const node = candidateMap.get(id);
+        if (node !== undefined) entries.push({ id, node });
+      }
+      return entries;
+    }, [
+      visibleChips,
+      player.role,
+      detectedRole,
+      player.id,
+      dpsValue,
+      hpsValue,
+      critChance,
+      critDamageSummary,
+      totalDamage,
+      totalCritDamage,
+      critDps,
+      mundusBuffs,
+      foodAura,
+      foodInfo,
+      potionInfo,
+      deaths,
+      resurrects,
+      cpm,
+      reportId,
+      fightId,
+      castsUrl,
+      distanceDisplay,
+      barSwapResult,
+    ]);
+
     return (
       <Box sx={{ minWidth: 0, display: 'flex', height: '100%' }}>
         <Card
@@ -366,6 +965,23 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           sx={cardStyles}
           data-testid={`player-card-${player.id}`}
         >
+          {isTopDps && (
+            <Box
+              aria-hidden="true"
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.5) 20%, rgba(251,191,36,1) 50%, rgba(245,158,11,0.5) 80%, transparent 100%)',
+                borderRadius: '4px 4px 0 0',
+                boxShadow: '0 0 8px rgba(251,191,36,0.7), 0 0 18px rgba(245,158,11,0.35)',
+                zIndex: 2,
+              }}
+            />
+          )}
           <CardContent
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
           >
@@ -388,47 +1004,39 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     minWidth={0}
                     gap={1}
                   >
-                    {/* Player Name and Character */}
+                    {/* Player Name with Character Name Hover */}
                     <Box
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         flex: '1 1 auto',
                         minWidth: 0,
-                        gap: shouldShowCharacterName ? 0.25 : 0,
                       }}
                     >
                       <OneLineAutoFit minScale={0.8}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{
-                            fontFamily: 'space grotesk',
-                            fontSize: '1.15rem',
-                            fontWeight: 100,
-                            lineHeight: 1.2,
-                            whiteSpace: 'nowrap',
+                        <Tooltip
+                          title={shouldShowCharacterName ? trimmedCharacterName : ''}
+                          placement="top"
+                          arrow
+                          PopperProps={{
+                            style: { zIndex: 9999 },
                           }}
                         >
-                          {normalizedDisplayName || resolvedPlayerName}
-                        </Typography>
-                      </OneLineAutoFit>
-                      {shouldShowCharacterName && (
-                        <OneLineAutoFit minScale={0.9}>
                           <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
+                            variant="subtitle1"
                             sx={{
                               fontFamily: 'space grotesk',
-                              fontSize: '0.85rem',
-                              fontWeight: 400,
-                              lineHeight: 1.1,
+                              fontSize: '1.15rem',
+                              fontWeight: 100,
+                              lineHeight: 1.2,
                               whiteSpace: 'nowrap',
+                              cursor: 'help', // Add cursor to indicate hoverable
                             }}
                           >
-                            {trimmedCharacterName}
+                            {normalizedDisplayName || resolvedPlayerName}
                           </Typography>
-                        </OneLineAutoFit>
-                      )}
+                        </Tooltip>
+                      </OneLineAutoFit>
                     </Box>
 
                     {/* Gear Weights */}
@@ -446,7 +1054,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme) =>
+                          color: (theme: Theme) =>
                             theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
                           fontSize: 11,
                           lineHeight: 1,
@@ -464,7 +1072,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <Typography
                         variant="caption"
                         sx={{
-                          color: (theme) =>
+                          color: (theme: Theme) =>
                             theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
                           fontSize: 11,
                           lineHeight: 1,
@@ -509,6 +1117,67 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     </Tooltip>
                   </Box>
                 </Box>
+
+                {/* Top DPS badge */}
+                {isTopDps && totalDps !== undefined && (
+                  <Box sx={{ mb: 0.75 }}>
+                    <Tooltip title={`Top DPS (Total): ${formatStatValue(totalDps)}`} arrow>
+                      <Box
+                        data-testid="top-dps-badge"
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1.25,
+                          py: 0.4,
+                          borderRadius: '6px',
+                          background: (theme: Theme) =>
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(90deg, rgba(245,158,11,0.15) 0%, rgba(251,191,36,0.08) 100%)'
+                              : 'linear-gradient(90deg, rgba(251,191,36,0.22) 0%, rgba(245,158,11,0.1) 100%)',
+                          border: '1px solid rgba(245,158,11,0.35)',
+                          boxShadow: '0 0 8px rgba(245,158,11,0.2)',
+                        }}
+                      >
+                        <EmojiEventsIcon sx={{ fontSize: '0.8rem', color: '#f59e0b' }} />
+                        <Typography
+                          sx={{
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            color: '#f59e0b',
+                            letterSpacing: '0.06em',
+                            lineHeight: 1,
+                          }}
+                        >
+                          TOP DPS
+                        </Typography>
+                        <Box
+                          sx={{
+                            width: '1px',
+                            height: '10px',
+                            background: 'rgba(245,158,11,0.4)',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            color: (theme: Theme) =>
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(251,191,36,0.85)'
+                                : 'rgba(180,83,9,0.9)',
+                            lineHeight: 1,
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {formatStatValue(totalDps)}
+                        </Typography>
+                      </Box>
+                    </Tooltip>
+                  </Box>
+                )}
+
                 <Box>
                   <Box
                     sx={{
@@ -603,7 +1272,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             >
                               <Tooltip
                                 enterTouchDelay={0}
-                                leaveTouchDelay={999999}
+                                leaveTouchDelay={3000}
                                 title={(() => {
                                   // Use memoized tooltip props lookup
                                   const rich = tooltipPropsLookup.get(talent.guid);
@@ -632,7 +1301,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 placement="top-start"
                                 enterDelay={0}
                                 arrow
-                                disableInteractive
                                 PopperProps={{
                                   disablePortal: true,
                                   modifiers: [
@@ -672,6 +1340,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       boxShadow: 'none !important',
                                     },
                                   },
+                                  arrow: { sx: { display: 'none' } },
                                 }}
                               >
                                 <Avatar
@@ -749,7 +1418,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   placement="top-start"
                                   enterDelay={0}
                                   arrow
-                                  disableInteractive
                                   PopperProps={{
                                     disablePortal: true,
                                     modifiers: [
@@ -789,6 +1457,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         boxShadow: 'none !important',
                                       },
                                     },
+                                    arrow: { sx: { display: 'none' } },
                                   }}
                                 >
                                   <Avatar
@@ -830,55 +1499,110 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           >
                             Gear
                           </Typography>
-                          <Box
-                            onClick={() => {
-                              setCurrentGearPlayerId(player.id);
-                              setGearDetailsOpen(true);
-                            }}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.25,
-                              px: 0.75,
-                              py: 0.25,
-                              borderRadius: 0.5,
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(255, 255, 255, 0.08)'
-                                  : 'rgb(255 255 255 / 15%)',
-                              border: '1px solid',
-                              borderColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(255, 255, 255, 0.12)'
-                                  : 'rgba(0, 0, 0, 0.12)',
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease',
-                              '&:hover': {
+                          <Box display="flex" alignItems="center" gap={0.75}>
+                            <Tooltip
+                              title="Open this player's gear, skills, and CP in the Build Editor"
+                              arrow
+                            >
+                              <Box
+                                onClick={handleExtractBuild}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.25,
+                                  px: 0.75,
+                                  py: 0.25,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(59, 130, 246, 0.12)'
+                                      : 'rgba(59, 130, 246, 0.08)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(59, 130, 246, 0.25)'
+                                      : 'rgba(59, 130, 246, 0.2)',
+                                  cursor: extractLoading ? 'wait' : 'pointer',
+                                  opacity: extractLoading ? 0.6 : 1,
+                                  transition: 'all 0.2s ease',
+                                  '&:hover': {
+                                    backgroundColor:
+                                      theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.2)'
+                                        : 'rgba(59, 130, 246, 0.14)',
+                                    borderColor:
+                                      theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.4)'
+                                        : 'rgba(59, 130, 246, 0.35)',
+                                  },
+                                }}
+                              >
+                                <BuildIcon sx={{ fontSize: 12, color: 'primary.main' }} />
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontSize: '0.65rem',
+                                    fontWeight: 500,
+                                    color: 'primary.main',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.3px',
+                                    lineHeight: 1,
+                                  }}
+                                >
+                                  {extractLoading ? 'LOADING…' : 'EXTRACT'}
+                                </Typography>
+                              </Box>
+                            </Tooltip>
+                            <Box
+                              onClick={() => {
+                                setCurrentGearPlayerId(player.id);
+                                setGearDetailsOpen(true);
+                              }}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.25,
+                                px: 0.75,
+                                py: 0.25,
+                                borderRadius: 0.5,
                                 backgroundColor:
                                   theme.palette.mode === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.12)'
-                                    : 'rgba(0, 0, 0, 0.1)',
+                                    ? 'rgba(255, 255, 255, 0.08)'
+                                    : 'rgb(255 255 255 / 15%)',
+                                border: '1px solid',
                                 borderColor:
                                   theme.palette.mode === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.2)'
-                                    : 'rgba(0, 0, 0, 0.2)',
-                              },
-                            }}
-                          >
-                            <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontSize: '0.65rem',
-                                fontWeight: 300,
-                                color: 'text.secondary',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.3px',
-                                lineHeight: 1,
+                                    ? 'rgba(255, 255, 255, 0.12)'
+                                    : 'rgba(0, 0, 0, 0.12)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.12)'
+                                      : 'rgba(0, 0, 0, 0.1)',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.2)'
+                                      : 'rgba(0, 0, 0, 0.2)',
+                                },
                               }}
                             >
-                              INFO
-                            </Typography>
+                              <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontSize: '0.65rem',
+                                  fontWeight: 300,
+                                  color: 'text.secondary',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.3px',
+                                  lineHeight: 1,
+                                }}
+                              >
+                                INFO
+                              </Typography>
+                            </Box>
                           </Box>
                         </Box>
                         <Box
@@ -977,186 +1701,53 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       alignItems: 'center',
                       justifyContent: 'flex-start',
                       minWidth: 0,
-                      minHeight: 28,
+                      minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 28, md: 28 },
                     }}
                   >
-                    <Box
+                    <MetricsScrollContainer
                       sx={{
                         display: 'flex',
-                        flexWrap: 'nowrap',
-                        gap: 0.5,
-                        minHeight: 24,
+                        flexWrap:
+                          metricsLayout === 'wrap'
+                            ? 'wrap'
+                            : { xs: 'wrap', sm: 'nowrap', md: 'nowrap' },
+                        overflowX:
+                          metricsLayout === 'wrap'
+                            ? 'hidden'
+                            : { xs: 'hidden', sm: 'auto', md: 'auto' },
+                        gap: { xs: 0.75, sm: 0.5, md: 0.5 },
+                        minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 24, md: 24 },
                         flex: '1 1 auto',
                         minWidth: 0,
-                        overflow: 'hidden',
                         mr: 0.5,
                       }}
                     >
-                      {mundusBuffs.length > 0 && (
-                        <div data-testid={`mundus-buffs-${player.id}`}>
-                          {mundusBuffs.map((buff, idx) => (
-                            <Box
-                              key={idx}
-                              component="span"
-                              title={`Ability ID: ${buff.id}`}
-                              sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                border: '1px solid',
-                                borderColor: 'var(--border)',
-                                borderRadius: 9999,
-                                pl: 0.5,
-                                pr: '14px',
-                                py: 0.25,
-                                gap: 0.5,
-                                fontSize: 10,
-                                lineHeight: 1,
-                                color: 'primary.main',
-                                whiteSpace: 'nowrap',
-                                verticalAlign: 'middle',
-                                textTransform: 'uppercase',
-                                fontWeight: 'bold',
-                              }}
-                            >
-                              <img
-                                src={mundusIcon}
-                                alt=""
-                                style={{
-                                  width: 12,
-                                  height: 12,
-                                  display: 'inline-block',
-                                }}
-                              />
-                              <Box
-                                component="span"
-                                sx={{
-                                  display: 'inline-block',
-                                  minWidth: 0,
-                                  maxWidth: '10ch',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {buff.name.replace(/^Boon:\s*/i, '').replace(/^The\s+/i, '')}
-                              </Box>
-                            </Box>
-                          ))}
-                        </div>
-                      )}
-                    </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        flex: '0 1 auto',
-                        flexShrink: 1,
-                        ml: 'auto',
-                        pr: 0.5,
-                        maxWidth: '100%',
-                        minWidth: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        fontSize: { xs: '0.7rem', sm: '0.75rem', md: 'body2.fontSize' },
-                      }}
-                    >
-                      <Tooltip
-                        title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
-                        enterTouchDelay={0}
-                        leaveTouchDelay={3000}
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
+                          gap:
+                            metricsLayout === 'wrap'
+                              ? { xs: 1, sm: 0.75, md: 0.5 }
+                              : { xs: 0.75, sm: 0.5, md: 0.25 },
+                          whiteSpace:
+                            metricsLayout === 'wrap'
+                              ? 'normal'
+                              : { xs: 'normal', sm: 'nowrap', md: 'nowrap' },
+                          fontSize: { xs: '0.85rem', sm: '0.8rem', md: 'body2.fontSize' },
+                        }}
                       >
-                        <span
-                          style={{ display: 'inline-flex', alignItems: 'center' }}
-                          data-testid={`food-drink-${player.id}`}
-                        >
-                          <span role="img" aria-label="food">
-                            🍲
-                          </span>
-                          <span style={{ margin: '0 1px' }}></span>
-                          <Box
-                            component="span"
-                            sx={{
-                              display: 'inline',
-                              fontWeight: 700,
-                              fontSize: { xs: 8, sm: 9, md: 10 },
-                              letterSpacing: '.01em',
-                              color: foodInfo.color,
-                            }}
-                          >
-                            {foodInfo.display}
-                          </Box>
-                        </span>
-                      </Tooltip>{' '}
-                      ·{' '}
-                      <Tooltip
-                        title="Deaths in this fight"
-                        enterTouchDelay={0}
-                        leaveTouchDelay={3000}
-                      >
-                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                          <span role="img" aria-label="deaths">
-                            💀
-                          </span>
-                          <span style={{ margin: '0 1px' }}></span>
-                          {deaths}
-                        </span>
-                      </Tooltip>{' '}
-                      ·{' '}
-                      <Tooltip
-                        title="Successful resurrects performed"
-                        enterTouchDelay={0}
-                        leaveTouchDelay={3000}
-                      >
-                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                          <span role="img" aria-label="resurrects">
-                            ❤️
-                          </span>
-                          <span style={{ margin: '0 1px' }}></span>
-                          {resurrects}
-                        </span>
-                      </Tooltip>{' '}
-                      ·{' '}
-                      <Tooltip title="Casts per Minute" enterTouchDelay={0} leaveTouchDelay={3000}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                          <span role="img" aria-label="cpm">
-                            🐭
-                          </span>
-                          <span style={{ margin: '0 1px' }}></span>
-                          {reportId ? (
-                            <a
-                              href={castsUrl(reportId, fightId)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ color: 'inherit', textDecoration: 'underline' }}
-                            >
-                              {cpm}
-                            </a>
-                          ) : (
-                            <>{cpm}</>
-                          )}
-                        </span>
-                      </Tooltip>
-                      {distanceDisplay && (
-                        <>
-                          {' '}
-                          ·{' '}
-                          <Tooltip
-                            title="Distance traveled during this fight"
-                            enterTouchDelay={0}
-                            leaveTouchDelay={3000}
-                          >
-                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                              <span role="img" aria-label="distance">
-                                🛤️
-                              </span>
-                              <span style={{ margin: '0 1px' }}></span>
-                              {distanceDisplay}
-                            </span>
-                          </Tooltip>
-                        </>
-                      )}
-                    </Typography>
+                        {statChipEntries.map((entry, i) => (
+                          <React.Fragment key={entry.id}>
+                            {i > 0 && metricsLayout !== 'wrap' && ' · '}
+                            {entry.node}
+                          </React.Fragment>
+                        ))}
+                      </Typography>
+                    </MetricsScrollContainer>
                   </Box>
 
                   {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (

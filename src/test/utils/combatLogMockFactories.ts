@@ -12,6 +12,7 @@ import {
   BeginCastEvent,
   CastEvent,
   HitType,
+  ResourceChangeEvent,
   Resources,
 } from '../../types/combatlogEvents';
 import { PlayerGear, GearTrait } from '../../types/playerDetails';
@@ -210,5 +211,27 @@ export const createMockCastEvent = (overrides?: Partial<CastEvent>): CastEvent =
   targetIsFriendly: false,
   abilityGameID: KnownAbilities.HURRICANE,
   fake: false,
+  ...overrides,
+});
+
+export const createMockResourceChangeEvent = (
+  overrides?: Partial<ResourceChangeEvent>,
+): ResourceChangeEvent => ({
+  timestamp: 1000000,
+  type: 'resourcechange',
+  fight: 1,
+  sourceID: 123,
+  sourceIsFriendly: true,
+  targetID: 123,
+  targetIsFriendly: true,
+  abilityGameID: KnownAbilities.HURRICANE,
+  resourceChange: 100,
+  resourceChangeType: 0,
+  otherResourceChange: 0,
+  maxResourceAmount: 1000,
+  waste: 0,
+  castTrackID: 1,
+  sourceResources: createMockResources(),
+  targetResources: createMockResources(),
   ...overrides,
 });

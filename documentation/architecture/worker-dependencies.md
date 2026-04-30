@@ -1,8 +1,15 @@
+<!-- AI Context: Load only when working with Web Workers or task orchestration -->
 # Worker Task Dependencies
 
 **Last Updated**: October 14, 2025  
 **Status**: Living Document  
 **Related**: [System Architecture](./system-architecture.md) | [Data Flow](./data-flow.md) | [Component Hierarchy](./component-hierarchy.md)
+
+**When to use this document**:
+- Working on Web Worker implementation or worker threading
+- Debugging task orchestration or dependencies
+- Optimizing worker communication or data flow
+- NOT needed for general development or UI work
 
 ---
 

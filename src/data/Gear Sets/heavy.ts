@@ -525,27 +525,6 @@ export const blackfeatherFlight: GearSetData = {
   ],
 };
 
-export const blessingOfHighIsle: GearSetData = {
-  name: 'Blessing of High Isle',
-  icon: 'Blessing of High Isle',
-  setType: 'Overland',
-  bonuses: [
-    '(2 items) Adds 1096 Maximum Magicka',
-    '(3 items) Adds 129 Magicka Recovery',
-    '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) When you are healed while in combat, increase your Weapon and Spell Damage by 369 for 5 seconds.',
-  ],
-};
-
-export const bloodlordsEmbrace: GearSetData = {
-  name: "Bloodlord's Embrace",
-  icon: "Bloodlord's Embrace",
-  setType: 'Mythic',
-  bonuses: [
-    '(1 item) Dealing damage with a Bash attack places a persistent, un-cleansable Blood Curse on an enemy. You can only have one Blood Cursed enemy at a time and dealing additional Bash damage moves the Blood Curse. When you Block a Blood Cursed enemy, restore 1605 Magicka to you. This effect can occur every 1 second.',
-  ],
-};
-
 export const bloodspawn: GearSetData = {
   name: 'Bloodspawn',
   icon: 'Bloodspawn',
@@ -1243,6 +1222,16 @@ export const glacialGuardian: GearSetData = {
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Health Recovery',
     '(5 items) When you Block, tether to the enemy if they are within 8 meters of you for 8 seconds. While tethered, you deal 256 Frost Damage every second to enemies touching the tether and cause them to have a 200% increased Status Effect Chance. The tether breaks if the target moves more than 12 meters away. This effect can occur once every 12 seconds and the damage scales off your Max Health.',
+  ],
+};
+
+export const glitteringGoad: GearSetData = {
+  name: 'Glittering Goad',
+  icon: 'Glittering Goad',
+  setType: 'Monster Set',
+  bonuses: [
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    '(2 items) Dealing damage with a Bash or Heavy Attack deals 1024 Frost damage over 8 seconds to the enemy. This effect can occur once every 8 seconds. If the effect completes, the enemy applies Minor Brittle to up to of 6 enemies within 12 meters of itself for 10 seconds. If the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the enemy.',
   ],
 };
 
@@ -3105,6 +3094,16 @@ export const theJuggernaut: GearSetData = {
   ],
 };
 
+export const theRuckus: GearSetData = {
+  name: 'The Ruckus',
+  icon: 'The Ruckus',
+  setType: 'Monster Set',
+  bonuses: [
+    '(1 item) Adds 1206 Maximum Health',
+    '(2 items) Taking or dealing direct damage grants you a stack of Skirmish for 10 seconds. You can gain Skirmish every 1 second, up to 10 stacks. Lose 1 stack every 5 seconds when not taking or dealing damage. At max stacks, you no longer gain or lose stacks of Skirmish and you gain Major Protection, Major Expedition, and Major Force for 10 seconds. When max Skirmish ends, your Stamina, Magicka, and Health Recovery are reduced by 422 for 10 seconds.',
+  ],
+};
+
 export const theTrollKing: GearSetData = {
   name: 'The Troll King',
   icon: 'The Troll King',
@@ -3123,6 +3122,16 @@ export const thewsOfTheHarbinger: GearSetData = {
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Stamina',
     '(5 items) When you Block, you deal 717 Physical Damage to the attacker. This effect scales off your Max Health.',
+  ],
+};
+
+export const thousandEyes: GearSetData = {
+  name: 'Thousand Eyes',
+  icon: 'Thousand Eyes',
+  setType: 'Monster Set',
+  bonuses: [
+    '(1 item) Adds 657 Critical Chance',
+    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1357 Bleed damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
   ],
 };
 

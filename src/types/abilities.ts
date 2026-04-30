@@ -92,16 +92,37 @@ export enum KnownAbilities {
   RESTORE_MAGICKA = 7916,
 
   // Champion Points
+  BITING_AURA = 141997,
+  BLOODY_RENEWAL = 141993,
+  BOUNDLESS_VITALITY = 142034,
   BULWARK = 64079,
+  DEADLY_AIM = 141999,
+  DUELISTS_REBUFF = 151749,
+  ELUSIVE_MIST = 38963,
   ENLIVENING_OVERFLOW = 156008,
   EXPERT_EVASION = 142092,
   EXPLOITER = 63880,
+  FIGHTING_FINESSE = 141899,
+  FORTUNES_FAVOR = 142207,
   FROM_THE_BRINK = 156017,
   GILDED_FINGERS = 142210,
+  HASTY_RETREAT = 30923,
+  HEROS_VIGOR = 147889,
+  IRONCLAD = 5857,
   JUGGERNAUT = 45546,
+  LIQUID_EFFICIENCY = 142231,
+  MASTER_AT_ARMS = 92134,
+  METICULOUS_DISASSEMBLY = 142224,
+  PLENTIFUL_HARVEST = 63663,
+  PROFESSIONAL_UPKEEP = 142121,
+  RATIONER = 142230,
   REAVING_BLOWS = 142007,
+  REJUVENATOR = 141942,
+  SIPHONING_SPELLS = 141991,
   SLIPPERY = 142094,
   SPRINTER = 142079,
+  SUSTAINED_BY_SUFFERING = 160057,
+  UNASSAILABLE = 151748,
 
   // Shared Passives
   CLAIRVOYANCE = 103811,
@@ -121,7 +142,8 @@ export enum KnownAbilities {
   WIND_WALKER = 45565,
 
   // Class Passives
-  ADVANCED_SPECIES = 86068, // Warden: Animal Companions passive (was incorrectly 184809 which is "Ritual")
+  ADVANCED_SPECIES = 86069, // Warden: Animal Companions passive, rank 2 aura
+  ADVANCED_SPECIES_RANK_1 = 86068, // Warden: Animal Companions passive, rank 1 aura
   AEGIS_OF_THE_UNSEEN = 184923,
   BATTLE_ROAR = 44984,
   CATALYST = 45135,
@@ -132,7 +154,8 @@ export enum KnownAbilities {
   FATED_FORTUNE_BUFF = 194875,
   FATED_FORTUNE_STAGE_ONE = 184847,
   FOLLOW_UP = 45446,
-  FROZEN_ARMOR = 86190,
+  FROZEN_ARMOR = 86190, // Warden: Winter's Embrace passive, rank 2 aura
+  FROZEN_ARMOR_RANK_1 = 86189, // Warden: Winter's Embrace passive, rank 1 aura
   HARNESSED_QUINTESSENCE = 184858,
   HEMORRHAGE = 45060,
   ICY_AURA = 86194,
@@ -157,7 +180,8 @@ export enum KnownAbilities {
   TOUGH = 50907,
 
   // Class Passives and Abilities
-  DISMEMBER = 116192, // Necromancer: Grave Lord passive providing 3271 penetration
+  DISMEMBER = 116194, // Necromancer: Grave Lord passive, rank 2 aura providing 3271 penetration
+  DISMEMBER_RANK_1 = 116192, // Necromancer: Grave Lord passive, rank 1 aura providing 1635 penetration
 
   // Computed penetration passives
   PIERCING_PASSIVE = 45233, // Provides 700 penetration
@@ -210,7 +234,8 @@ export enum KnownAbilities {
   TREMORSCALE = 80866,
 
   // Crimson Oath - Monster set that reduces target resistance
-  CRIMSON_OATH = 155150,
+  // Verified from combat log data: report DzbVRcg98F1rnYLy, fight 9
+  CRIMSON_OATH = 159288,
 
   // Roar of Alkosh - Monster set that reduces target resistance
   ROAR_OF_ALKOSH = 102094,
@@ -242,6 +267,9 @@ export enum KnownAbilities {
 
   // Feline Ambush - Aura that grants 12% critical damage
   FELINE_AMBUSH = 192901,
+
+  // Blessing at the Peak - Earthen Heart passive that grants 10% critical damage
+  BLESSING_AT_THE_PEAK = 29473,
 
   // Taunted Debuffs
   TAUNT = 38254,
@@ -283,7 +311,7 @@ export enum KnownAbilities {
   ELEMENTAL_SUSCEPTIBILITY = 172672,
   ENDLESS_HAIL = 32714,
   ENERGY_ORB = 63474,
-  HEARTH_AND_HOME = 118720,
+  ERUPTION = 118720,
   EYE_OF_THE_STORM = 88802,
   FETCHER_INFECTION = 118766,
   FLAME_REACH = 185407,
@@ -336,6 +364,9 @@ export enum KnownAbilities {
   ENGULFING_FLAMES_SKILL = 44432,
   WINTERS_REVENGE = 62912,
 
+  // Monster Set Debuffs
+  NAZARAY_DEBUFF = 167065, // Nazaray monster set debuff (reduces target damage done)
+
   // Specific Named Buffs and Debuffs
   // Note: CRUSHER_ENCHANT = 17906 is defined above
   EMPOWER = 61737,
@@ -343,10 +374,13 @@ export enum KnownAbilities {
   ENLIVENING_OVERFLOW_BUFF = 156011,
   GRAND_REJUVENATION = 99781,
   OFF_BALANCE = 62988,
+  OZEZANS_PLATING = 188471, // Ozezan the Inferno / Ozezan's Plating damage mitigation proc buff
   PEARLESCENT_WARD = 172621,
+  PILLAGERS_PROFIT_BUFF = 172055, // Pillager's Profit healing set proc buff
   POWERFUL_ASSAULT = 61771,
-  STAGGER = 134336,
-  MAGMA_FIST = 133027,
+  HEAT_SHOCK = 134340, // U49: renamed from Stagger, new debuff ID
+  STAGGER = 134336, // Pre-U49 legacy debuff ID (renamed to Heat Shock in U49)
+  MAGMA_FIST = 133027, // U49: Magma Fist damage ability (renamed from Stone Giant, ability ID unchanged)
   TOUCH_OF_ZEN = 126597, // Touch of Z'en set buff
 
   // Major Buffs and Debuffs
@@ -360,6 +394,9 @@ export enum KnownAbilities {
   MAJOR_FORCE = 61747,
   MAJOR_PROPHECY = 61689,
   MAJOR_PROPHECY_AND_SAVAGERY = 217672, // Combined Major Prophecy and Savagery buff
+  MAJOR_EVASION = 61716,
+  MAJOR_EXPEDITION = 61736,
+  MAJOR_HEROISM = 61709,
   MAJOR_RESOLVE = 61694,
   MAJOR_SAVAGERY = 61667, // Fixed: was incorrectly 61898 (which is Minor Savagery)
   MAJOR_SLAYER = 93109,
@@ -372,6 +409,8 @@ export enum KnownAbilities {
   MINOR_BRITTLE = 146697,
   MINOR_BRUTALITY = 61662,
   MINOR_COURAGE = 121878,
+  MINOR_EVASION = 61715,
+  MINOR_EXPEDITION = 61735,
   MINOR_FORCE = 61746,
   MINOR_HEROISM = 61708,
   MINOR_LIFESTEAL = 86304,
@@ -384,8 +423,306 @@ export enum KnownAbilities {
   GLACIAL_COLOSSUS = 122388,
   SUMMON_CHARGED_ATRONACH = 23495,
   AGGRESSIVE_HORN = 40223,
+  AGGRESSIVE_HORN_BUFF = 40224,
   REPLENISHING_BARRIER = 40239,
   REVIVING_BARRIER = 40237,
+
+  // Necromancer abilities used for filtering
+  UNNERVING_BONEYARD = 117815,
+
+  // ========================================
+  // LIGHT / HEAVY ATTACKS (by weapon type)
+  // ========================================
+
+  // Generic
+  HEAVY_ATTACK_GENERIC = 14096,
+
+  // One Handed
+  LIGHT_ATTACK_ONE_HANDED = 15435,
+  HEAVY_ATTACK_ONE_HANDED = 15279,
+  HEAVY_ATTACK_ONE_HANDED_2 = 15282,
+  HEAVY_ATTACK_ONE_HANDED_3 = 15829,
+  HEAVY_ATTACK_ONE_HANDED_RESOURCE = 60759,
+
+  // Two Handed
+  LIGHT_ATTACK_TWO_HANDED = 16037,
+  HEAVY_ATTACK_TWO_HANDED = 16041,
+  HEAVY_ATTACK_TWO_HANDED_2 = 17162,
+  HEAVY_ATTACK_TWO_HANDED_3 = 17163,
+  HEAVY_ATTACK_TWO_HANDED_RESOURCE = 60757,
+
+  // Dual Wield
+  LIGHT_ATTACK_DUAL_WIELD = 16499,
+  HEAVY_ATTACK_DUAL_WIELD = 16420,
+  HEAVY_ATTACK_DUAL_WIELD_2 = 17169,
+  HEAVY_ATTACK_DUAL_WIELD_3 = 17170,
+  HEAVY_ATTACK_DUAL_WIELD_4 = 18622,
+  HEAVY_ATTACK_DUAL_WIELD_RESOURCE = 60758,
+
+  // Bow
+  LIGHT_ATTACK_BOW = 16688,
+  HEAVY_ATTACK_BOW = 16691,
+  HEAVY_ATTACK_BOW_2 = 17173,
+  HEAVY_ATTACK_BOW_3 = 17174,
+  HEAVY_ATTACK_BOW_RESOURCE = 60761,
+
+  // Inferno Staff
+  LIGHT_ATTACK_INFERNO = 16165,
+  HEAVY_ATTACK_INFERNO = 15383,
+  HEAVY_ATTACK_INFERNO_2 = 15385,
+  HEAVY_ATTACK_INFERNO_3 = 16321,
+  HEAVY_ATTACK_INFERNO_RESOURCE = 60763,
+
+  // Ice Staff
+  LIGHT_ATTACK_ICE = 16277,
+  HEAVY_ATTACK_ICE = 16261,
+  HEAVY_ATTACK_ICE_2 = 18405,
+  HEAVY_ATTACK_ICE_3 = 18406,
+  HEAVY_ATTACK_ICE_RESOURCE = 60762,
+
+  // Lightning Staff
+  LIGHT_ATTACK_LIGHTNING = 18350,
+  HEAVY_ATTACK_LIGHTNING = 18396,
+  HEAVY_ATTACK_LIGHTNING_2 = 19277,
+  HEAVY_ATTACK_LIGHTNING_RESOURCE = 60764,
+
+  // Restoration Staff
+  LIGHT_ATTACK_RESTORATION = 16145,
+  HEAVY_ATTACK_RESTORATION = 16212,
+  HEAVY_ATTACK_RESTORATION_2 = 32760,
+  HEAVY_ATTACK_RESTORATION_3 = 67022,
+
+  // Unarmed
+  LIGHT_ATTACK_UNARMED = 23604,
+
+  // Heavy Attack Damage Bonus (resource restore component)
+  HEAVY_ATTACK_DAMAGE_BONUS = 17694,
+  HEAVY_ATTACK_DAMAGE_BONUS_2 = 17700,
+  HEAVY_ATTACK_DAMAGE_BONUS_3 = 17701,
+  HEAVY_ATTACK_DAMAGE_BONUS_4 = 18404,
+  HEAVY_ATTACK_DAMAGE_BONUS_5 = 23429,
+
+  // ========================================
+  // SCRIBED SKILL SUB-ABILITIES
+  // ========================================
+  // Sub-effect IDs for grimoire skills (damage ticks, buff applications, healing components).
+  // The base grimoire skill IDs are defined above (BANNER_BEARER, TRAMPLE, etc.).
+
+  // Vault (Bow grimoire)
+  SUNDERING_VAULT = 214960,
+  REMEDYING_VAULT = 214987,
+  VAULT_FATIGUE = 214997,
+  HEALING_VAULT = 217777,
+
+  // Wield Soul (Soul Magic 1 grimoire)
+  SUNDERING_SOUL = 215731,
+  HEALING_SOUL = 216813,
+  POTENT_SOUL = 216940,
+  REMEDYING_SOUL = 216941,
+  LEASHING_SOUL = 217784,
+  MAGICAL_SOUL = 219780,
+  DAZING_SOUL = 221930,
+
+  // Shield Throw (One Hand grimoire)
+  PARRYING_THROW = 217089,
+  SWIFT_THROW = 217091,
+  MAGICAL_THROW = 217808,
+  GOADING_THROW = 222966,
+
+  // Mender's Bond (Restoration Staff grimoire)
+  WARDING_BOND = 217279,
+  REMEDYING_BOND = 217298,
+  DEFENSIVE_BOND = 217300,
+  MENDERS_BOND_BUFF = 219951,
+  WARDING_BOND_HEAL = 243686,
+
+  // Traveling Knife (Dual Wield grimoire)
+  MISERY_KNIFE = 217353,
+  OPPORTUNISTIC_KNIFE = 217358,
+  SUNDERING_KNIFE = 217359,
+  TRAVELING_KNIFE_BUFF = 217372,
+  TRAVELING_KNIFE_2 = 217474,
+  TRAVELING_KNIFE_3 = 217481,
+  SUNDERING_KNIFE_DAMAGE = 217872,
+
+  // Soul Burst (Soul Magic 2 grimoire)
+  WARDING_BURST = 217460,
+  HEALING_BURST = 217462,
+  SUNDERING_BURST = 217465,
+  CRUEL_BURST = 217475,
+  SOUL_BURST_BUFFS = 217522,
+  LEASHING_BURST = 217979,
+
+  // Ulfsild's Contingency (Mage's Guild grimoire)
+  MAGICAL_CONTINGENCY = 217605,
+  WARDING_CONTINGENCY = 217608,
+  LINGERING_CONTINGENCY = 217621,
+  REMEDYING_CONTINGENCY = 217652,
+  TENACIOUS_CONTINGENCY = 217654,
+  ULFSILDS_CONTINGENCY_2 = 222285,
+  ULFSILDS_CONTINGENCY_3 = 240150,
+
+  // Torchbearer (Fighter's Guild grimoire)
+  HEALING_TORCH = 217607,
+  TENACIOUS_TORCH = 217649,
+  TORCHBEARER_BUFF = 219108,
+  HEROIC_TORCH = 220531,
+  HEROIC_TORCH_2 = 223292,
+
+  // Trample (Assault grimoire)
+  TRAMPLE_BUFF = 217674,
+  SUNDERING_TRAMPLE = 217679,
+  MAGICAL_TRAMPLE = 217682,
+  LINGERING_TRAMPLE = 217688,
+  SWIFT_TRAMPLE = 217696,
+  SNARING_TRAMPLE = 217697,
+  SUNDERING_TRAMPLE_2 = 220541,
+  MAGICAL_TRAMPLE_2 = 220542,
+  LINGERING_TRAMPLE_2 = 220739,
+
+  // Banner Bearer (Support grimoire)
+  SHATTERING_BANNER = 227004,
+  BANNERMAN = 227030,
+  REMEDYING_BANNER = 227066,
+  CHARGING_BANNER = 227082,
+  BANNER_BEARER_BUFF = 227085,
+  ARCANISTS_BANNER = 227116,
+  BANNERMAN_2 = 227120,
+  BANNER_BEARER_2 = 227600,
+  BANNER_BEARER_3 = 239692,
+  SHOCKING_BANNER_2 = 252143,
+
+  // Scribing buff application IDs
+  SCRIBING_MAJOR_PROPHECY = 217341,
+  SCRIBING_MAJOR_SAVAGERY = 217360,
+  SCRIBING_MINOR_MAIM = 217405,
+  SCRIBING_MINOR_RESOLVE = 217625,
+  SCRIBING_MINOR_INTELLECT = 217661,
+  SCRIBING_MINOR_ENDURANCE = 217662,
+  SCRIBING_MAJOR_PROPHECY_TRAMPLE = 217673,
+  SCRIBING_MAJOR_PROPHECY_BURST = 218001,
+  SCRIBING_MAJOR_SAVAGERY_BURST = 218004,
+  SCRIBING_MINOR_ENDURANCE_BANNER = 227123,
+
+  // ========================================
+  // GEAR SET PROC ABILITY IDs
+  // ========================================
+  // Ability IDs for gear set proc effects (distinct from KnownSetIDs which are set IDs).
+  // These IDs appear in combat log events when sets trigger.
+
+  // Roar of Alkosh (debuff 102094 and AOE 75752 already tracked above)
+  ROAR_OF_ALKOSH_TRIGGER = 75751,
+  ROAR_OF_ALKOSH_DAMAGE = 76667,
+  ROAR_OF_ALKOSH_MISS = 78835,
+  ROAR_OF_ALKOSH_ALT = 120018,
+
+  // Rage of Alkosh (separate set from Roar)
+  RAGE_OF_ALKOSH_DAMAGE = 116962,
+  RAGE_OF_ALKOSH_BUFF = 116965,
+  RAGE_OF_ALKOSH_DAMAGE_2 = 116971,
+
+  // Tremorscale (debuff 80866 already tracked above)
+  TREMORSCALE_TRIGGER = 80513,
+  TREMORSCALE_DAMAGE = 80865,
+
+  // Pillar of Nirn
+  PILLAR_OF_NIRN_DOT = 97712,
+  PILLAR_OF_NIRN_PROC = 97716,
+  PILLAR_OF_NIRN_DOT_2 = 97743,
+
+  // Zaan
+  ZAAN_BEAM = 102125,
+
+  // Tzogvin's Warband
+  TZOGVINS_WARBAND_STACKS = 116734,
+
+  // Azureblight Reaper (multiple IDs across patches)
+  AZUREBLIGHT_REAPER_PROC = 126629,
+  AZUREBLIGHT_REAPER_PROC_2 = 126634,
+  AZUREBLIGHT_REAPER_PROC_3 = 204981,
+  AZUREBLIGHT_REAPER_PROC_4 = 220750,
+  AZUREBLIGHT_REAPER_PROC_5 = 234185,
+
+  // Way of Martial Knowledge
+  WAY_OF_MARTIAL_KNOWLEDGE_BUFF = 52704,
+  WAY_OF_MARTIAL_KNOWLEDGE_BUFF_2 = 127070,
+
+  // Vicious Serpent
+  VICIOUS_SERPENT_PROC = 61440,
+
+  // War Machine
+  WAR_MACHINE_BUFF = 93441,
+
+  // Roaring Opportunist
+  ROARING_OPPORTUNIST_BUFF = 135920,
+  ROARING_OPPORTUNIST_COOLDOWN = 135924,
+
+  // Encratis's Behemoth
+  ENCRATIS_BEHEMOTH_AURA = 150975,
+
+  // Bahsei's Mania
+  BAHSEIS_MANIA_PASSIVE = 154691,
+
+  // Sul-Xan's Torment
+  SUL_XAN_TORMENT_PROC = 154716,
+  SUL_XAN_SOULBOUND = 154737,
+  SUL_XAN_TORMENT_PROC_2 = 157738,
+
+  // Harpooner's Wading Kilt
+  HARPOONERS_KILT_STACKS = 155149,
+
+  // Crimson Oath's Rive (debuff 159288 already tracked above)
+  CRIMSON_OATHS_RIVE_PROC = 159287,
+  CRIMSON_OATHS_RIVE_PROC_2 = 159291,
+
+  // Aegis Caller
+  AEGIS_CALLER_PROC = 133490,
+
+  // Coral Riptide / Coral Slam
+  CORAL_SLAM_DAMAGE = 163987,
+  CORAL_RIPTIDE_BUFF = 172646,
+
+  // Whorl of the Depths
+  WHORL_OF_THE_DEPTHS_BUFF = 172670,
+  WHORL_OF_THE_DEPTHS_TICK = 172671,
+
+  // Chakram of Destiny
+  CHAKRAM_OF_DESTINY_PROC = 186208,
+  CHAKRAM_OF_DESTINY_PROC_2 = 194237,
+
+  // Ansuul's Torment
+  ANSUULS_TORMENT_PROC = 194100,
+  ANSUULS_TORMENT_PROC_2 = 194105,
+
+  // Tide-Born Wildstalker
+  TIDEBORN_WILDSTALKER_PROC = 240281,
+
+  // ========================================
+  // WEAPON ENCHANT ABILITY IDs
+  // ========================================
+
+  // Weakening (reduces target weapon/spell damage)
+  WEAKENING_ENCHANT = 17945,
+
+  // Absorb (generic resource drain)
+  ABSORB_ENCHANT = 45522,
+
+  // Absorb Magicka
+  ABSORB_MAGICKA = 46743,
+  ABSORB_MAGICKA_2 = 46744,
+
+  // Absorb Stamina
+  ABSORB_STAMINA = 46746,
+  ABSORB_STAMINA_2 = 46747,
+
+  // Crusher (alternate ID — canonical CRUSHER = 17906 defined above)
+  CRUSHER_ALT = 120007,
+
+  // Absorbed (enchant debuff on target)
+  ABSORBED_DEBUFF = 140265,
+
+  // Soul Crusher (arena weapon enchant variant)
+  SOUL_CRUSHER = 153443,
 }
 
 /**
@@ -406,7 +743,6 @@ export enum PenetrationComputedSourceKey {
   // ========================================
   CONCENTRATION = 'concentration',
   SPLINTERED_SECRETS = 'splintered_secrets',
-  FORCE_OF_NATURE = 'force_of_nature',
   PIERCING = 'piercing',
   HEAVY_WEAPONS = 'heavy_weapons',
   TWIN_BLADE_AND_BLUNT = 'twin_blade_and_blunt',
@@ -504,8 +840,9 @@ export enum PenetrationValues {
   // SPECIAL/NON-ARMOR PENETRATION VALUES
   // ========================================
 
-  // Dismember passive provides 3271 penetration
-  DISMEMBER = 3271,
+  // Dismember passive
+  DISMEMBER = 3271, // Rank II: 3271 penetration while a Grave Lord ability is active
+  DISMEMBER_RANK_1 = 1635, // Rank I: 1635 penetration while a Grave Lord ability is active
 
   // Heavy Weapons passive provides 2974 penetration with two-handed maul
   HEAVY_WEAPONS_PENETRATION = 2974,
@@ -573,8 +910,11 @@ export enum CriticalDamageValues {
   // Harpooner's Wading Kilt provides 10% critical damage when equipped
   HARPOONER_WADING_KILT = 10,
 
-  // Animal Companions provides 5% critical damage per ability slotted
+  // Animal Companions rank II provides 5% critical damage per ability slotted
   ANIMAL_COMPANIONS_PER_ABILITY = 5,
+
+  // Animal Companions rank I provides 2% critical damage per ability slotted
+  ANIMAL_COMPANIONS_PER_ABILITY_RANK_1 = 2,
 
   // Dual Wield (Twin Blade and Blunt) provides 6% critical damage per axe equipped
   DUAL_WIELD_AXES = 6,
@@ -588,6 +928,9 @@ export enum CriticalDamageValues {
   // Backstabber provides 10% critical damage
   BACKSTABBER = 10,
 
+  // Blessing at the Peak provides 10% critical damage
+  BLESSING_AT_THE_PEAK = 10,
+
   // Elemental Catalyst provides 5% critical damage per elemental weakness debuff
   ELEMENTAL_CATALYST_PER_WEAKNESS = 5,
 
@@ -599,55 +942,321 @@ export enum CriticalDamageValues {
 }
 
 /**
- * Set IDs for gear sets that provide penetration
+ * Set IDs for gear sets
+ *
+ * IMPORTANT: These are ACTUAL set IDs from the ESO Logs API.
+ * Extracted from combat log data: report bTL2vHXGk3JaPcmx, fight 9
+ *
+ * To add more set IDs:
+ * 1. Download report data: npm run download-report-data <report-code> <fight-id>
+ * 2. Extract setID from player-details.json gear data
+ * 3. Add to this enum with the actual ID from the API
  */
 export enum KnownSetIDs {
-  VELOTHI_UR_MAGE = 694,
-  ANSUULS_TORMENT_SET = 707,
-  TIDEBORN_WILDSTALKER_SET = 809,
-  SUL_XAN_TORMENT_SET = 708, // Sul-Xan's Torment set
-  MORA_SCRIBE_THESIS_SET = 709, // Mora Scribe's Thesis set
-  HARPOONER_WADING_KILT_SET = 710, // Harpooner's Wading Kilt set
-  SHATTERED_FATE_SET = 711, // Shattered Fate set
-  SPRIGGANS_THORNS_SET = 712, // Spriggan's Thorns set
-  BALORGH_SET = 713, // Balorgh set
-  AERIES_CRY_SET = 714, // Aerie's Cry set
-  AURORANS_THUNDER_SET = 715, // Auroran's Thunder set
-  ARMS_OF_RELEQUEN_SET = 716, // Arms of Relequen set
-  ARMS_OF_THE_ANCESTORS_SET = 717, // Arms of the Ancestors set
-  ARCHDRUID_DEVYRIC_SET = 718, // Archdruid Devyric set
-  BLACK_GEM_MONSTROSITY_SET = 719, // Black Gem Monstrosity set
-  COLOVIAN_HIGHLANDS_GENERAL_SET = 720, // Colovian Highlands General set
-  CINDERS_OF_ANTHELMIR_SET = 721, // Cinders of Anthelmir set
-  CORPSEBURSTER_SET = 722, // Corpseburster set
-  PERFECT_ARMS_OF_RELEQUEN_SET = 723, // Perfect Arms of Relequen set
-  PERFECT_AURORAN_THUNDER_SET = 724, // Perfect Auroran's Thunder set
-  PERFECT_ANSUULS_TORMENT_SET = 725, // Perfect Ansuul's Torment set
-  DARK_CONVERGENCE_SET = 726, // Dark Convergence set
-  DRAUGRKINS_GRIP_SET = 727, // Draugrkin's Grip set
-  DRO_ZAKARS_CLAWS_SET = 728, // Dro'Zakar's Claws set
-  FLAME_BLOSSOM_SET = 729, // Flame Blossom set
-  GRISLY_GOURMET_SET = 730, // Grisly Gourmet set
-  GRYPHONS_REPRISAL_SET = 731, // Gryphon's Reprisal set
-  HEW_AND_SUNDER_SET = 732, // Hew and Sunder set
-  HROTHGARS_CHILL_SET = 733, // Hrothgar's Chill set
-  ICY_CONJURER_SET = 734, // Icy Conjurer set
-  JERENSIS_BLADESTORM_SET = 735, // Jerensi's Bladestorm set
-  KAZPIANS_CRUEL_SIGNET_SET = 736, // Kazpian's Cruel Signet set
-  KRAGH_SET = 737, // Kra'gh set
-  LADY_MALYGDA_SET = 738, // Lady Malygda set
-  LANGUOR_OF_PERYITE_SET = 739, // Languor of Peryite set
-  LEGACY_OF_KARTH_SET = 740, // Legacy of Karth set
-  NEW_MOON_ACOLYTE_SET = 741, // New Moon Acolyte set
-  NOCTURNALS_PLOY_SET = 742, // Nocturnal's Ploy set
-  NOXIOUS_BOULDER_SET = 743, // Noxious Boulder set
-  OBLIVIONS_FOE_SET = 744, // Oblivion's Foe set
-  PELINALS_WRATH_SET = 745, // Pelinal's Wrath set
-  PERFECTED_CRUSHING_WALL_SET = 746, // Perfected Crushing Wall set
-  PERFECTED_KAZPIANS_CRUEL_SIGNET_SET = 747, // Perfected Kazpian's Cruel Signet set
-  PERFECTED_MERCILESS_CHARGE_SET = 748, // Perfected Merciless Charge set
+  // ============================================================
+  // SUPPORT SETS - HEALER 5-PIECE
+  // ============================================================
+  WAY_OF_MARTIAL_KNOWLEDGE = 147, // Way of Martial Knowledge (aka Martial Knowledge)
+  POWERFUL_ASSAULT = 180, // Powerful Assault
+  SPELL_POWER_CURE = 185, // Spell Power Cure
+  COMBAT_PHYSICIAN = 194, // Combat Physician
+  MASTER_ARCHITECT = 332, // Master Architect
+  JORVULDS_GUIDANCE = 346, // Jorvuld's Guidance
+  VESTMENT_OF_OLORIME = 391, // Vestment of Olorime (Olorime)
+  PERFECTED_VESTMENT_OF_OLORIME = 395, // Perfected Vestment of Olorime
+  ZENS_REDRESS = 455, // Z'en's Redress
+  ROARING_OPPORTUNIST = 496, // Roaring Opportunist
+  PERFECTED_ROARING_OPPORTUNIST = 497, // Perfected Roaring Opportunist
 
-  // TODO: Add other set IDs as needed
+  // ============================================================
+  // SUPPORT SETS - TANK 5-PIECE
+  // ============================================================
+  ROAR_OF_ALKOSH = 232, // Roar of Alkosh
+  WAR_MACHINE = 331, // War Machine
+  CLAW_OF_YOLNAHKRIIN = 446, // Claw of Yolnahkriin
+  PERFECTED_CLAW_OF_YOLNAHKRIIN = 451, // Perfected Claw of Yolnahkriin
+  DRAKES_RUSH = 571, // Drake's Rush
+  PERFECTED_SAXHLEEL_CHAMPION = 589, // Perfected Saxhleel Champion
+  PEARLESCENT_WARD = 648, // Pearlescent Ward
+  PILLAGERS_PROFIT = 649, // Pillager's Profit
+  PERFECTED_PILLAGERS_PROFIT = 650, // Perfected Pillager's Profit
+  PERFECTED_PEARLESCENT_WARD = 651, // Perfected Pearlescent Ward
+  LUCENT_ECHOES = 768, // Lucent Echoes
+  PERFECTED_LUCENT_ECHOES = 771, // Perfected Lucent Echoes
+
+  // ============================================================
+  // SUPPORT SETS - MONSTER SETS (2-PIECE)
+  // ============================================================
+  ENGINE_GUARDIAN = 166, // Engine Guardian
+  VALKYN_SKORIA = 169, // Valkyn Skoria
+  SLIMECRAW = 270, // Slimecraw
+  EARTHGORE = 341, // Earthgore
+  SYMPHONY_OF_BLADES = 436, // Symphony of Blades
+  STONE_HUSK = 534, // Stone Husk
+  ENCRATIS_BEHEMOTH = 577, // Encratis's Behemoth (Encratis)
+  BARON_ZAUDRUS = 578, // Baron Zaudrus
+  GRYPHONS_REPRISAL = 620, // Gryphon's Reprisal
+  SPAULDER_OF_RUIN = 627, // Spaulder of Ruin
+  NAZARAY = 633, // Nazaray
+  NUNATAK = 634, // Nunatak
+  ARCHDRUID_DEVYRIC = 666, // Archdruid Devyric
+  OZEZAN = 687, // Ozezan the Great
+  THE_BLIND = 738, // The Blind
+
+  // ============================================================
+  // MYTHIC SETS
+  // ============================================================
+  GRAVE_GUARDIAN = 476, // Grave Guardian's Amulet
+  PALE_ORDER = 575, // Ring of the Pale Order
+  PEARLS_OF_EHLNOFEY = 576, // Pearls of Ehlnofey
+  GAZE_OF_SITHIS = 593, // Gaze of Sithis
+  HARPOONERS_KILT = 594, // Harpooner's Wading Kilt
+  MARKYN_RING = 625, // Markyn Ring of Majesty
+  SEA_SERPENTS_COIL = 657, // Sea-Serpent's Coil
+  OAKENSOUL = 658, // Oakensoul Ring
+  CRYPTCANON_VESTMENTS = 691, // Cryptcanon Vestments
+  VELOTHI_UR_MAGE = 694, // Velothi Ur-Mage's Amulet
+
+  // ============================================================
+  // DPS SETS - 5-PIECE
+  // ============================================================
+  DEADLY_STRIKE = 127, // Deadly Strike
+  MERCILESS_CHARGE = 369, // Merciless Charge
+  PERFECTED_MERCILESS_CHARGE = 522, // Perfected Merciless Charge
+  CRUSHING_WALL = 373, // Crushing Wall
+  PERFECTED_CRUSHING_WALL = 526, // Perfected Crushing Wall
+  PERFECTED_GRAND_REJUVENATION = 533, // Perfected Grand Rejuvenation
+  PEACE_AND_SERENITY = 701, // Peace and Serenity
+  ANSUULS_TORMENT = 702, // Ansuul's Torment (non-perfected)
+  PERFECTED_ANSUULS_TORMENT = 707, // Perfected Ansuul's Torment
+  SLIVERS_OF_THE_NULL_ARCA = 767, // Slivers of the Null Arca
+  PERFECTED_SLIVERS_OF_THE_NULL_ARCA = 772, // Perfected Slivers of the Null Arca
+  PERFECTED_XORYNS_MASTERPIECE = 770, // Perfected Xoryn's Masterpiece
+  TIDEBORN_WILDSTALKER = 809, // Tide-Born Wildstalker
+  RELEQUEN = 389, // Relequen (non-perfected)
+  RELEQUEN_PERFECTED = 393, // Relequen's Perfected
+  SIRORIA_PERFECTED = 394, // Siroria's Perfected
+  LOKKESTIIZ_PERFECTED = 450, // Lokkestiiz's Perfected
+  VROL_PERFECTED = 495, // Vrol's Perfected
+  SAXHLEEL_CHAMPION = 585, // Saxhleel Champion (non-perfected)
+  SUL_XAN_TORMENT = 586, // Sul-Xan's Torment (non-perfected)
+  PERFECTED_SUL_XAN_TORMENT = 590, // Perfected Sul-Xan's Torment
+  BAHSEI_MANIA_PERFECTED = 591, // Perfected Bahsei's Mania
+  CORAL_RIPTIDE = 647, // Coral Riptide (non-perfected)
+  CORAL_RIPTIDE_PERFECTED = 652, // Perfected Coral Riptide
+  MORA_SCRIBE = 766, // Mora Scribe (non-perfected)
+  MORA_SCRIBE_PERFECTED = 773, // Perfected Mora Scribe
+  XORYNS_MASTERPIECE = 769, // Xoryn's Masterpiece (non-perfected)
+  KAZPIAN = 815, // Kazpian's (non-perfected)
+  KAZPIAN_PERFECTED = 820, // Perfected Kazpian's
+  RAKKHAT_VOIDMANTLE = 812, // Rakkhat's Voidmantle
+  HUNDINGS_RAGE = 80, // Hunding's Rage
+  ELF_BANE = 83, // Elf Bane
+  NECROPOTENCE = 98, // Necropotence
+  ADVANCING_YOKEDA = 137, // Advancing Yokeda
+  ETERNAL_YOKEDA = 171, // Eternal Yokeda
+  UNDAUNTED_UNWEAVER = 157, // Undaunted Unweaver
+  BURNING_SPELLWEAVE = 160, // Burning Spellweave
+  INFALLIBLE_AETHER = 172, // Infallible Aether
+  LAW_OF_JULIANOS = 207, // Law of Julianos
+  BRIARHEART = 212, // Briarheart
+  MOTHERS_SORROW = 292, // Mother's Sorrow
+  MEDUSA = 304, // Medusa
+  WAR_MAIDEN = 320, // War Maiden
+  PILLAR_OF_NIRN = 336, // Pillar of Nirn
+  MECHANICAL_ACUITY = 353, // Mechanical Acuity
+  AZUREBLIGHT = 456, // Azureblight
+  NEW_MOON_ACOLYTE = 470, // New Moon Acolyte
+  TZOGVINS_WARBAND = 430, // Tzogvin's Warband
+  FALSE_GODS_DEVOTION = 444, // False God's Devotion
+  FALSE_GODS_PERFECTED = 449, // Perfected False God's Devotion
+  KINRAS_WRATH = 570, // Kinras's Wrath
+  DEATH_DEALERS_FETE = 596, // Death Dealer's Fete
+  ORDERS_WRATH = 640, // Order's Wrath
+  SERPENTS_DISDAIN = 641, // Serpent's Disdain
+  RUNECARVERS_BLAZE = 684, // Runecarver's Blaze
+  MACABRE_VINTAGE = 758, // Macabre Vintage
+  PYREBRAND = 776, // Pyrebrand
+  CORPSEBURSTER = 777, // Corpseburster
+  BEACON_OF_OBLIVION = 779, // Beacon of Oblivion
+  XANMEER_SPELLWEAVER = 825, // Xanmeer Spellweaver
+  COUP_DE_GRACE = 831, // Coup De Grâce
+  JERENSI = 795, // Jerensi
+  VANDORALLEN = 794, // Vandorallen
+  AEGIS_CALLER = 475, // Aegis Caller
+
+  // ============================================================
+  // DPS SETS - MONSTER SETS (2-PIECE)
+  // ============================================================
+  BLOODSPAWN = 163, // Bloodspawn
+  NERIENETH = 168, // Nerien'eth
+  MAW_OF_THE_INFERNAL = 170, // Maw of the Infernal
+  MOLAG_KENA = 183, // Molag Kena
+  VELIDRETH = 257, // Velidreth
+  KRAGH = 266, // Kra'gh
+  ICEHEART = 274, // Iceheart
+  TREMORSCALE = 276, // Tremorscale
+  GROTHDARR = 280, // Grothdarr
+  ZAAN = 350, // Zaan
+  BALORGH = 397, // Balorgh
+  STONEKEEPER = 432, // Stonekeeper
+  GRUNDWULF = 458, // Grundwulf
+  KJALNARS_NIGHTMARE = 479, // Kjalnar's Nightmare
+  YANDIRS_MIGHT = 498, // Yandir's Might
+  CRIMSON_OATH = 602, // Crimson Oath
+  BARON_THIRSK = 636, // Baron Thirsk
+  ROKSA_THE_WARPED = 683, // Roksa the Warped
+  BLACK_GEM_MONSTROSITY = 828, // Black Gem Monstrosity
+
+  // ============================================================
+  // ARENA WEAPONS - DRAGONSTAR ARENA
+  // ============================================================
+  THE_MASTERS_BOW = 316, // The Master's Bow
+  THE_MASTERS_MACE = 314, // The Master's Mace
+  THE_MASTERS_ICE_STAFF = 317, // The Master's Ice Staff
+  THE_MASTERS_RESTORATION_STAFF = 318, // The Master's Restoration Staff
+
+  // ============================================================
+  // ARENA WEAPONS - MAELSTROM ARENA
+  // ============================================================
+  MAELSTROMS_BOW = 372, // Maelstrom's Bow
+
+  // ============================================================
+  // ARENA WEAPONS - ASYLUM SANCTORIUM
+  // ============================================================
+  ASYLUM_PERFECTED_DAGGER = 358, // Asylum's Perfected Dagger
+  ASYLUM_PERFECTED_RESTO = 362, // Asylum's Perfected Restoration Staff
+  GALENWES_PERFECTED_RESTO = 392, // Galenwe's Perfected Restoration Staff
+
+  // ============================================================
+  // ARENA WEAPONS - BLACKROSE PRISON
+  // ============================================================
+  BLACKROSE_BOW = 414, // Blackrose Prison Bow
+  BLACKROSE_DAGGER = 413, // Blackrose Prison Dagger
+  BLACKROSE_ICE_STAFF = 415, // Blackrose Prison Ice Staff
+  BLACKROSE_RESTO = 416, // Blackrose Prison Restoration Staff
+  BLACKROSE_PERFECTED_BOW = 426, // Blackrose Prison Perfected Bow
+  BLACKROSE_PERFECTED_DAGGER = 425, // Blackrose Prison Perfected Dagger
+  BLACKROSE_PERFECTED_ICE_STAFF = 427, // Blackrose Prison Perfected Ice Staff
+  BLACKROSE_PERFECTED_RESTO = 428, // Blackrose Prison Perfected Restoration Staff
+
+  // ============================================================
+  // ARENA WEAPONS - VATESHRAN HOLLOWS
+  // ============================================================
+  VATESHRAN_GREATSWORD = 559, // Vateshran's Greatsword
+  VATESHRAN_PERFECTED_SWORD = 563, // Vateshran's Perfected Sword
+  VATESHRAN_PERFECTED_DAGGER = 564, // Vateshran's Perfected Dagger
+  VATESHRAN_PERFECTED_STAFF = 567, // Vateshran's Perfected Staff
+
+  // ============================================================
+  // SUPPORT SETS - ADDITIONAL 5-PIECE
+  // ============================================================
+  BLESSING_OF_THE_POTENTATES = 128, // Blessing of the Potentates
+  RESILIENT_YOKEDA = 138, // Resilient Yokeda
+  BRANDS_OF_IMPERIUM = 184, // Brands of Imperium
+  WRETCHED_VITALITY = 610, // Wretched Vitality
+  HEXOS_WARD = 614, // Hexos' Ward
+  TURNING_TIDE = 622, // Turning Tide
+  RALLYING_CRY = 629, // Rallying Cry
+  MORAS_WHISPERS = 654, // Mora's Whispers
+  HIGHLAND_SENTINEL = 764, // Highland Sentinel
+  ARKAYS_CHARITY = 802, // Arkay's Charity
+  RECOVERY_CONVERGENCE = 817, // Recovery Convergence (non-perfected)
+  RECOVERY_CONVERGENCE_PERFECTED = 818, // Perfected Recovery Convergence
+  STONEHULK_DOMINATION = 827, // Stonehulk Domination
+  LEECHING_PLATE = 196, // Leeching Plate
+
+  // ============================================================
+  // SUPPORT SETS - ADDITIONAL MONSTER SETS (2-PIECE)
+  // ============================================================
+  LORD_WARDEN = 164, // Lord Warden
+  MIGHTY_CHUDAN = 256, // Mighty Chudan
+  SWARM_MOTHER = 267, // Swarm Mother
+  CHOKETHORN = 269, // Chokethorn
+  ILAMBRIS = 273, // Ilambris
+  STORMFIST = 275, // Stormfist
+  THE_TROLL_KING = 278, // The Troll King
+  MAD_TINKERER = 354, // Mad Tinkerer
+  VYKOSA = 398, // Vykosa
+  LADY_MALYGDA = 635, // Lady Malygda
+
+  // ============================================================
+  // PVP / UTILITY SETS
+  // ============================================================
+  NIGHT_TERROR = 112, // Night Terror
+  TREASURE_HUNTER = 305, // Treasure Hunter
+  DEFILER = 321, // Defiler
+  UNFATHOMABLE_DARKNESS = 355, // Unfathomable Darkness
+  DRAGONGUARD_ELITE = 467, // Dragonguard Elite
+  VENOMOUS_SMITE = 488, // Venomous Smite
+  WILD_HUNT = 503, // Wild Hunt
+  FROSTBITE = 579, // Frostbite
+  HEARTLAND_CONQUEROR = 583, // Heartland Conqueror
+  MAGMA_INCARNATE = 609, // Magma Incarnate
+  PLAGUEBREAK = 617, // Plaguebreak
+  THUNDER_CALLER = 606, // Thunder Caller
+  STORM_CURSED = 623, // Storm-Cursed
+  GOURMAND = 671, // Gourmand
+  STORMWEAVER = 675, // Stormweaver
+  AKATOSHS_LAW = 690, // Akatosh's Law
+  OAKFATHERS_RETRIBUTION = 754, // Oakfather's Retribution
+  THE_WEALD = 757, // The Weald
+  THREE_QUEENS = 805, // Three Queens
+  DEATH_DANCER = 806, // Death-Dancer
+
+  // ============================================================
+  // CRAFTED SETS
+  // ============================================================
+  ARMOR_OF_THE_VEILED_HERITANCE = 36, // Armor of the Veiled Heritance
+  ARMOR_OF_THE_SEDUCER = 43, // Armor of the Seducer
+  ASHEN_GRIP = 54, // Ashen Grip
+  HATCHLINGS_SHELL = 62, // Hatchling's Shell
+  TORUGS_PACT = 75, // Torug's Pact
+  KAGRENACS_HOPE = 92, // Kagrenac's Hope
+  TWIN_SISTERS = 105, // Twin Sisters
+  ANCIENT_GRACE = 126, // Ancient Grace
+  OVERWHELMING = 193, // Overwhelming
+  THE_PARIAH = 210, // The Pariah
+  MORKULDIN = 219, // Morkuldin
+  PELINALS_WRATH = 242, // Pelinal's Wrath
+  ASSASSINS_GUILE = 323, // Assassin's Guile
+  VANGUARDS_CHALLENGE = 326, // Vanguard's Challenge
+  FLAME_BLOSSOM = 338, // Flame Blossom
+  BOG_RAIDER = 581, // Bog Raider
+  DRUIDS_BRAID = 642, // Druid's Braid
+
+  // ============================================================
+  // OTHER SETS
+  // ============================================================
+  THE_SERGEANT = 29, // The Sergeant (Jewelry)
+  THE_NOBLE_DUELIST = 46, // The Noble Duelist (Jewelry)
+  DREUGH_KING_SLAYER = 61, // Dreugh King Slayer (Jewelry)
+  THE_CRUSADER = 77, // The Crusader (Jewelry)
+  PRISMATIC_WEAPON = 84, // Prismatic Greatblade
+  AETHER_DESTRUCTION = 140, // Aether (Destruction)
+  VICIOUS_OPHIDIAN = 173, // Vicious Ophidian
+  SWAMP_RAIDER = 187, // Swamp Raider
+  STORM_MASTER = 188, // Storm Master
+  SCATHING_MAGE = 190, // Scathing Mage
+  ESSENCE_THIEF = 198, // Essence Thief
+  ENDURANCE = 204, // Endurance (Jewelry)
+  AGILITY = 206, // Agility (Jewelry)
+  PLAGUE_DOCTOR = 293, // Plague Doctor
+  PLAGUE_SLINGER = 347, // Plague Slinger
+  SCORIONS_FEAST = 603, // Scorion's Feast
+
+  // ============================================================
+  // TRAINING / LEVELING SETS
+  // ============================================================
+  ARMOR_OF_THE_TRAINEE = 281, // Armor of the Trainee
+
+  // ============================================================
+  // UNKNOWN SETS
+  // ============================================================
+  HUNTSMANS_WARMASK = 845, // Huntsman's Warmask
+  UNKNOWN_SET_846 = 846, // Unknown Set (ID 846)
+  UNKNOWN_SET_2268 = 2268, // Unknown Set (ID 2268) — newer ESO content
+  UNKNOWN_SET_2342 = 2342, // Unknown Set (ID 2342) — newer ESO content
 }
 
 /**
@@ -704,44 +1313,78 @@ export enum MundusStones {
 
 export const RED_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
+    // Fitness tree slottable nodes
+    KnownAbilities.BLOODY_RENEWAL,
+    KnownAbilities.BOUNDLESS_VITALITY,
     KnownAbilities.EXPERT_EVASION,
+    KnownAbilities.HASTY_RETREAT,
+    KnownAbilities.HEROS_VIGOR,
     KnownAbilities.JUGGERNAUT,
+    KnownAbilities.REJUVENATOR,
     KnownAbilities.SLIPPERY,
     KnownAbilities.SPRINTER,
   ]),
 );
 export const BLUE_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
-    KnownAbilities.EXPLOITER,
+    // Warfare tree slottable nodes
+    KnownAbilities.BITING_AURA,
     KnownAbilities.BULWARK,
-    KnownAbilities.REAVING_BLOWS,
+    KnownAbilities.DEADLY_AIM,
+    KnownAbilities.DUELISTS_REBUFF,
+    KnownAbilities.ELUSIVE_MIST,
     KnownAbilities.ENLIVENING_OVERFLOW,
+    KnownAbilities.EXPLOITER,
+    KnownAbilities.FIGHTING_FINESSE,
     KnownAbilities.FROM_THE_BRINK,
+    KnownAbilities.IRONCLAD,
+    KnownAbilities.MASTER_AT_ARMS,
+    KnownAbilities.REAVING_BLOWS,
+    KnownAbilities.SIPHONING_SPELLS,
+    KnownAbilities.SUSTAINED_BY_SUFFERING,
+    KnownAbilities.UNASSAILABLE,
   ]),
 );
 export const GREEN_CHAMPION_POINTS = Object.freeze(
-  new Set<KnownAbilities>([KnownAbilities.GILDED_FINGERS]),
+  new Set<KnownAbilities>([
+    // Craft tree slottable nodes
+    KnownAbilities.FORTUNES_FAVOR,
+    KnownAbilities.GILDED_FINGERS,
+    KnownAbilities.LIQUID_EFFICIENCY,
+    KnownAbilities.METICULOUS_DISASSEMBLY,
+    KnownAbilities.PLENTIFUL_HARVEST,
+    KnownAbilities.PROFESSIONAL_UPKEEP,
+    KnownAbilities.RATIONER,
+  ]),
 );
 
 // Food Buffs
-export const TRI_STAT_FOOD = Object.freeze(new Set([68411, 68411, 61218, 127596]));
+export const TRI_STAT_FOOD = Object.freeze(
+  new Set([68411, 61218, 84734, 100487, 107793, 127595, 127596]),
+);
 export const HEALTH_AND_REGEN_FOOD = Object.freeze(
-  new Set([89971, 72824, 61322, 66132, 66137, 66586, 66590, 66594, 89953, 89954, 89939]),
-); // Added: Jester foods with regen
+  new Set([89971, 72824, 61322, 66132, 66137, 66586, 66590, 66594, 89953, 89954, 89939, 73553]),
+); // Added: Jester foods with regen, Unique Food: H All Reg
 export const HEALTH_FOOD = Object.freeze(
   new Set([84732, 84733, 89973, 17407, 61259, 66125, 66551, 72957, 72960, 72962]),
 );
 export const MAGICKA_FOOD = Object.freeze(
-  new Set([89972, 84720, 61260, 66128, 66568, 84678, 85486, 89956, 61325, 61326, 89919]),
-); // Added: Jesters Food Max M
+  new Set([
+    89972, 84720, 61260, 66128, 66568, 84678, 85486, 89956, 61325, 61326, 89919, 84711, 84723,
+  ]),
+); // Added: Jesters Food Max M, Witchfest Food Max M variants
 export const STAMINA_FOOD = Object.freeze(
-  new Set([61255, 86673, 61261, 66130, 66576, 68412, 85485, 61328]),
+  new Set([61255, 86673, 61261, 66130, 66576, 68412, 85485, 61328, 61314, 86669]),
 );
-export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(new Set([89957, 107789, 61255]));
+export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(
+  new Set([89957, 107789, 61255, 61264, 61278]),
+);
 export const INCREASE_MAX_HEALTH_AND_MAGICKA = Object.freeze(
   new Set([84731, 61257, 100498, 100499]),
 );
-export const INCREASE_MAX_MAGICKA_AND_STAMINA = Object.freeze(new Set([17577, 61294, 93376]));
+export const INCREASE_MAX_MAGICKA_AND_STAMINA = Object.freeze(
+  new Set([17577, 61294, 93376, 61298]),
+);
 export const MAX_STAMINA_AND_MAGICKA_RECOVERY = Object.freeze(new Set([89955])); // Candied Jester's Coins
 export const WITCHES_BREW = Object.freeze(
   new Set([
@@ -751,12 +1394,146 @@ export const WITCHES_BREW = Object.freeze(
 ); // Witches' Brew event items
 export const EXPERIENCE_BOOST_FOOD = Object.freeze(new Set([91368, 91369])); // Jester's Experience Boost Pie
 
+// ── Potion Detection IDs ─────────────────────────────────────────────────────
+//
+// All IDs below were empirically validated from real ESO Logs report data:
+//   prV8jWb1NqFJc97Z fights 5 & 17, YArFDbq7BdhwL691 fight 72.
+//
+// ESO Logs does NOT expose a "Potion Cooldown Timer" buff.  Potion use is
+// detected instead via self-applied RESOURCE RESTORE events and co-occurring
+// buff clusters that fire at the same millisecond.
+//
+// Detection strategy:
+//   1. Anchor on a resource-change event whose abilityGameID is in
+//      POTION_RESOURCE_RESTORE_IDS (sourceID === targetID, large change).
+//   2. Classify by inspecting buff events within ±150 ms of the anchor and by
+//      checking whether both a stamina-restore and a magicka-restore fired for
+//      the same player at the same millisecond.
+
+/** Stamina resource-restore ability IDs emitted exclusively by potion use. */
+export const POTION_STAMINA_RESTORE_IDS = Object.freeze(
+  new Set([
+    45225, // Restore Stamina – Stamina / Minor-Heroism potion variants
+    17328, // Restore Stamina – lower-stat Stamina potion variant
+    68409, // Restore Stamina – Tri-Stat potion variant
+  ]),
+);
+
+/** Magicka resource-restore ability IDs emitted exclusively by potion use. */
+export const POTION_MAGICKA_RESTORE_IDS = Object.freeze(
+  new Set([
+    45223, // Restore Magicka – Heroism (Lorkhan's Tears) potion variant
+    68407, // Restore Magicka – Tri-Stat potion variant
+  ]),
+);
+
+/**
+ * Union of {@link POTION_STAMINA_RESTORE_IDS} and {@link POTION_MAGICKA_RESTORE_IDS}.
+ * Use this set to locate any potion-use anchor event in the resource stream.
+ */
+export const POTION_RESOURCE_RESTORE_IDS = Object.freeze(
+  new Set([45225, 17328, 68409, 45223, 68407]),
+);
+
+/**
+ * Buff IDs emitted by Tri-Stat potion Variant A (Major Fortitude / Intellect /
+ * Endurance cluster, IDs 68405–68408).  At least 2 of the 3 must co-occur at
+ * the same millisecond to classify as Tri-Stat.
+ */
+export const TRI_STAT_POTION_BUFF_GROUP_A = Object.freeze(new Set([68405, 68406, 68408]));
+
+/**
+ * Buff IDs emitted by Tri-Stat potion Variant B / Wellbeing (Major Fortitude /
+ * Intellect / Endurance cluster, IDs 45222–45226).  At least 2 of the 3 must
+ * co-occur at the same millisecond to classify as Tri-Stat.
+ */
+export const TRI_STAT_POTION_BUFF_GROUP_B = Object.freeze(new Set([45222, 45224, 45226]));
+
+/**
+ * Major Heroism buff IDs.  Presence alongside a resource restore event
+ * indicates a Heroism-type potion (Lorkhan's Tears or Essence of Heroism).
+ *
+ * Note: Minor Heroism (125027) was intentionally excluded — it co-occurs on
+ * plain stamina/combo potions and caused false "heroism" classifications.
+ * The primary heroism signal is the dual 45225+45223 resource restore.
+ */
+export const HEROISM_POTION_BUFF_IDS = Object.freeze(new Set([61708, 61709]));
+
+/**
+ * @deprecated These IDs were never observed in real ESO Logs event streams.
+ * The "Potion Cooldown Timer" concept does not map to any real ESO Logs ability
+ * ID.  Use {@link POTION_RESOURCE_RESTORE_IDS} instead.
+ */
+export const POTION_TIMER_IDS = Object.freeze(new Set<number>());
+
+/**
+ * @deprecated ID 6119 was not found in real ESO Logs data.
+ * Use {@link POTION_STAMINA_RESTORE_IDS} instead.
+ */
+export const STAMINA_POTION_RESTORE_EFFECT = Object.freeze(new Set<number>());
+
+/**
+ * @deprecated ID 6118 was not found in real ESO Logs data.
+ * Use {@link POTION_MAGICKA_RESTORE_IDS} instead.
+ */
+export const MAGICKA_POTION_RESTORE_EFFECT = Object.freeze(new Set<number>());
+
 // Synergies (abilities that should not count as player-initiated casts)
 export const SYNERGY_ABILITY_IDS = Object.freeze(
   new Set([
-    7916, // Restore Magicka (Necrotic Orb synergy)
-    17323, // Restore Magicka (variant)
-    26832, // Blessed Shards (Luminous Shards synergy)
-    45223, // Restore Magicka (another variant)
+    41963, // Blood Feast
+    41994, // Black Widow
+    41838, // Radiate
+    42194, // Spinal Surge
+    39301, // Combustion
+    63507, // Healing Combustion
+    32910, // Shackle
+    32974, // Ignite
+    48076, // Charged Lightning
+    23196, // Conduit
+    37729, // Hidden Refresh
+    26832, // Blessed Shards
+    95922, // Holy Shards
+    22269, // Purify
+    115548, // Grave Robber
+    85572, // Harvest
+    191078, // Runebreak
+  ]),
+);
+
+// Aura ability IDs that should be ignored for class detection to prevent false positives.
+// These are active skills whose lingering pre-buff zones/effects appear in CIE self-auras
+// even though the player never used that skill line during the actual fight.
+export const AURA_EXCLUDED_ABILITIES = Object.freeze(
+  new Set<number>([
+    KnownAbilities.UNNERVING_BONEYARD, // 117815 — Necro Grave Lord (Avid Boneyard morph)
+    117860, // Avid Boneyard zone (alternate ID for Necro Grave Lord pre-buff)
+    23206, // Lightning Flood puddle (Sorc Storm Calling pre-buff AoE)
+    23203, // Liquid Lightning variant (Sorc Storm Calling pre-buff AoE)
+    102329, // Summon Charged Atronach zone (Sorc ultimate pre-buff zone effect)
+    32950, // Standard of Might zone (DK ultimate pre-buff ground effect)
+    32956, // Standard of Might zone variant (DK ultimate pre-buff)
+  ]),
+);
+
+// Major Maim debuff ability IDs (mitigation debuff: -10% damage done by enemy)
+// Multiple IDs exist because each skill that applies Major Maim uses its own effect ID.
+// All entries in abilities.json are named "Major Maim" with icon "ability_debuff_major_maim".
+export const MAJOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    21754, 21760, 61725, 92041, 94277, 94285, 94293, 133214, 133292, 134444, 141927, 147746, 159664,
+    163064, 183389, 212073, 217105, 244075,
+  ]),
+);
+
+// Minor Maim debuff ability IDs (mitigation debuff: -5% damage done by enemy)
+// Multiple IDs exist because each skill that applies Minor Maim uses its own effect ID.
+// All entries in abilities.json are named "Minor Maim" with icon "ability_debuff_minor_maim".
+export const MINOR_MAIM_ABILITY_IDS = Object.freeze(
+  new Set<number>([
+    31899, 33228, 33512, 37472, 38068, 38072, 38076, 46204, 46246, 51558, 61723, 61854, 61855,
+    61856, 62492, 62493, 62494, 62500, 62501, 62503, 62507, 62509, 62511, 68368, 79083, 79085,
+    79280, 79282, 88469, 102097, 108939, 118313, 121517, 123946, 124808, 127162, 130815, 137311,
+    183431, 196187, 212397, 213304, 218990, 221722, 224389, 234094, 238229,
   ]),
 );

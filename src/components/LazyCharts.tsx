@@ -2,6 +2,9 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import React, { Suspense } from 'react';
 
+// Ensure Chart.js plugins are registered before any chart renders
+import '../utils/chartRegistration';
+
 // Lazy load Chart.js and react-chartjs-2 components
 const LazyLine = React.lazy(() =>
   import('react-chartjs-2').then((module) => ({ default: module.Line })),

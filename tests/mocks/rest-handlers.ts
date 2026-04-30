@@ -93,8 +93,8 @@ export const restHandlers = [
     });
   }),
 
-  // Mock Sentry
-  http.post('https://*.sentry.io/*', () => {
+  // Mock Rollbar
+  http.post('https://api.rollbar.com/*', () => {
     return HttpResponse.json({ success: true });
   }),
 

@@ -2,10 +2,10 @@ import { gql } from '@apollo/client';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import { Box, Button, CircularProgress, Typography, useTheme } from '@mui/material';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { useLogger } from '../contexts/LoggerContext';
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
+import { useViewTransitionNavigate } from '../hooks/useViewTransitionNavigate';
 
 const TRIAL_TEAM_SIZE = 12;
 const DEFAULT_METRIC = 'score' as const;
@@ -142,7 +142,7 @@ const createEmptyRankings = (page = 1): FightRankingsParsed => ({
 export const SampleReportButton: React.FC = () => {
   const { client, isReady } = useEsoLogsClientContext();
   const theme = useTheme();
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const logger = useLogger('SampleReportButton');
   const zonesCache = React.useRef<TrialZone[] | null>(null);
 
@@ -226,7 +226,7 @@ export const SampleReportButton: React.FC = () => {
         });
 
         const rankings = parseFightRankings(rankingResponse, variables.page ?? 1).rankings.filter(
-          (row) => row.reportCode,
+          (row) => row.reportCode && row.durationMs && row.durationMs > 0,
         );
 
         if (rankings.length === 0) {
@@ -269,7 +269,7 @@ export const SampleReportButton: React.FC = () => {
           ? `/report/${sampleRow.reportCode}/fight/${sampleRow.fightId}`
           : `/report/${sampleRow.reportCode}`;
 
-      navigate(targetPath);
+      navigate(targetPath, { vtType: 'up' });
     } catch (fetchError) {
       const err = toError(fetchError);
       logger.error('Failed to open sample leaderboard report', err);

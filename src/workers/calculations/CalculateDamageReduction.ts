@@ -211,7 +211,7 @@ export function calculateDamageReductionData(
 
     // Report progress for completed players
 
-    onProgress?.(playerIndex + 1 / Object.keys(players).length);
+    onProgress?.((playerIndex + 1) / Object.keys(players).length);
   }
 
   onProgress?.(1);

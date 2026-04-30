@@ -8,46 +8,26 @@ import {
   Paper,
 } from '@mui/material';
 import type { TooltipItem } from 'chart.js';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
-import { Line } from 'react-chartjs-2';
 
+import { LineChart } from '../../../components/LazyCharts';
 import { MetricPill } from '../../../components/MetricPill';
+import '../../../utils/chartRegistration';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
+import {
+  usePhaseAnnotations,
+  useInactiveIntervalAnnotations,
+} from '../../../hooks/useChartAnnotations';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import {
   CriticalDamageSource,
   CriticalDamageSourceWithActiveState,
 } from '../../../utils/CritDamageUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin,
-);
 
 // Chart callback functions - extracted to module level for performance
 const formatTooltipTitle = (context: TooltipItem<'line'>[]): string => {
@@ -93,6 +73,7 @@ export interface PlayerCriticalDamageData {
   maximumCriticalDamage: number;
   timeAtCapPercentage: number;
   criticalDamageAlerts: CriticalDamageAlert[];
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 interface CriticalMultiplierInfo {
@@ -119,7 +100,7 @@ interface PlayerCriticalDamageDetailsViewProps {
   toggleableSourceNames?: Set<string>;
   onSourceToggle?: (sourceId: string, nextValue: boolean) => void;
   criticalMultiplier: CriticalMultiplierInfo | null;
-  fightDurationSeconds: number;
+  fightDurationMs: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
@@ -134,7 +115,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   toggleableSourceNames,
   onSourceToggle,
   criticalMultiplier,
-  fightDurationSeconds,
+  fightDurationMs,
   player,
   onExpandChange,
   phaseTransitionInfo,
@@ -177,20 +158,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
     );
   }, [criticalDamageData?.dataPoints]);
 
-  const phaseAnnotations = React.useMemo(() => {
-    if (
-      !phaseTransitionInfo?.phaseTransitions ||
-      phaseTransitionInfo.phaseTransitions.length === 0
-    ) {
-      return null;
-    }
-
-    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
-      fightStartTime: phaseTransitionInfo.fightStartTime,
-      fightEndTime: phaseTransitionInfo.fightEndTime,
-      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
-    });
-  }, [phaseTransitionInfo]);
+  const phaseAnnotations = usePhaseAnnotations(phaseTransitionInfo);
+  const inactiveTimeAnnotations = useInactiveIntervalAnnotations(
+    criticalDamageData?.inactiveCombatIntervals,
+  );
 
   if (!criticalDamageData) {
     return (
@@ -311,7 +282,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 size="md"
               />
               <MetricPill
-                label="Effective"
+                label="Active"
                 value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
                 suffix="%"
                 intent={
@@ -363,7 +334,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   size="sm"
                 />
                 <MetricPill
-                  label="Effective"
+                  label="Active"
                   value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
                   suffix="%"
                   intent={
@@ -504,7 +475,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 Critical Damage vs Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>
-                <Line
+                <LineChart
                   data={{
                     labels: chartLabels,
                     datasets: [
@@ -541,6 +512,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                       },
                       annotation: {
                         annotations: {
+                          ...(inactiveTimeAnnotations ?? {}),
                           target: {
                             type: 'line',
                             yMin: 125,
@@ -569,7 +541,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                         type: 'linear',
                         display: true,
                         min: 0,
-                        max: fightDurationSeconds,
+                        max: msToSeconds(fightDurationMs),
                         title: {
                           display: true,
                           text: 'Time (seconds)',

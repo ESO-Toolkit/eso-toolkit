@@ -7,42 +7,22 @@ import {
   AccordionDetails,
   Paper,
 } from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
+import '../../../utils/chartRegistration';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
+import {
+  usePhaseAnnotations,
+  useInactiveIntervalAnnotations,
+} from '../../../hooks/useChartAnnotations';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin,
-);
 
 interface PenetrationDataPoint {
   timestamp: number;
@@ -57,6 +37,7 @@ export interface PlayerPenetrationData {
   max: number;
   effective: number;
   timeAtCapPercentage: number;
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 interface PenetrationSource {
@@ -80,7 +61,7 @@ interface PlayerPenetrationDetailsViewProps {
   penetrationData: PlayerPenetrationData | null;
   penetrationSources: PenetrationSourceWithActiveState[];
   playerBasePenetration: number;
-  fightDurationSeconds: number;
+  fightDurationMs: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
@@ -94,7 +75,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   penetrationSources,
   player,
   playerBasePenetration,
-  fightDurationSeconds,
+  fightDurationMs,
   onExpandChange,
   phaseTransitionInfo,
 }) => {
@@ -126,20 +107,10 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
     );
   }, [penetrationData?.dataPoints]);
 
-  const phaseAnnotations = React.useMemo(() => {
-    if (
-      !phaseTransitionInfo?.phaseTransitions ||
-      phaseTransitionInfo.phaseTransitions.length === 0
-    ) {
-      return null;
-    }
-
-    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
-      fightStartTime: phaseTransitionInfo.fightStartTime,
-      fightEndTime: phaseTransitionInfo.fightEndTime,
-      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
-    });
-  }, [phaseTransitionInfo]);
+  const phaseAnnotations = usePhaseAnnotations(phaseTransitionInfo);
+  const inactiveTimeAnnotations = useInactiveIntervalAnnotations(
+    penetrationData?.inactiveCombatIntervals,
+  );
 
   if (!penetrationData) {
     return (
@@ -254,7 +225,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                 size="md"
               />
               <MetricPill
-                label="Effective"
+                label="Active"
                 value={penetrationData.effective.toFixed(0)}
                 intent={penetrationData.effective > 18200 ? 'info' : 'warning'}
                 size="md"
@@ -298,7 +269,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                   size="sm"
                 />
                 <MetricPill
-                  label="Effective"
+                  label="Active"
                   value={penetrationData.effective.toFixed(0)}
                   intent={penetrationData.effective > 18200 ? 'info' : 'warning'}
                   size="sm"
@@ -388,6 +359,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                       },
                       annotation: {
                         annotations: {
+                          ...(inactiveTimeAnnotations ?? {}),
                           goalLine: {
                             type: 'line',
                             yMin: 18200,
@@ -435,7 +407,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                         type: 'linear',
                         display: true,
                         min: 0,
-                        max: fightDurationSeconds,
+                        max: msToSeconds(fightDurationMs),
                         title: {
                           display: true,
                           text: 'Time (seconds)',

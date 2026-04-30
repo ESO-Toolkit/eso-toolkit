@@ -5,8 +5,16 @@
 /.pnp
 .pnp.js
 
+# Agent skill dependencies (MCP servers)
+/.github/copilot-skills/*/node_modules/
+/.claude/*/node_modules/
+
 # Cache directories
 /cache/
+
+# Scratch directory for ad-hoc agent/debug output (keep .gitkeep)
+/scratch/*
+!/scratch/.gitkeep
 
 # testing
 /coverage
@@ -22,6 +30,7 @@
 /playwright/.cache/
 /tests/auth-state.json
 /tests/auth-metadata.json
+/.playwright-mcp/
 
 # Screen size test report directories and artifacts (keep baseline screenshots)
 /tests/screen-sizes/**/test-results/
@@ -52,6 +61,12 @@ test-metadata.json
 /gh-pages/
 /reports-temp/
 .last-run.json
+
+# Local capture/build output (screenshots, videos, demos)
+/out/
+
+# Recordings not yet wired into the app
+/public/recordings/
 
 # production
 /build
@@ -98,9 +113,16 @@ public/mockServiceWorker.js
 # Vite cache directory
 /.vite/
 
-# Claude AI assistant local settings
-/.claude/
+# Claude AI assistant local settings (keep skill but protect sensitive data)
+/.claude/node_modules/
+/.claude/mcp.json
+/.claude/mcp-config.json
+/.claude/screenshots/
 /.claude-rules.md
+/.claude/settings.local.json
+/.claude/worktrees/
+.claudeignore
+nul
 
 # Build cache and temporary directories
 /cache/
@@ -136,3 +158,46 @@ Icon?
 *.temp
 *.lock
 *.pid
+.playwright-mcp/
+tmp/
+.github/tmp-pr-body.md
+
+# Discord bot / worker dependencies & secrets
+discord-bot/node_modules/
+discord-bot/.dev.vars
+discord-notify-worker/node_modules/
+
+# Wrangler local secrets (never commit)
+.dev.vars
+
+# Debug and test files in root
+/debug-*.js
+/debug-*.json
+/test-*.js
+/test-*.txt
+/error-logs-*.txt
+/*.log
+/*-snapshot.md
+/snapshot.txt
+/*-failure.md
+/missing-*.txt
+
+# Claude session artifacts (screenshots, debug output, prompt drafts)
+/*.png
+/*.a11y.md
+/prompts/
+/showcase-video/
+
+# Third-party AI/editor tool scratch directories
+/.continue/
+/.windsurf/
+
+# Agent scratch directory — keep markdown notes trackable, but ignore
+# large binary artefacts (Chrome perf traces can be >300 MB) and tool
+# scaffolding subdirs.
+/.factory/*.json
+/.factory/*.png
+/.factory/*.webm
+/.factory/*.har
+/.factory/*.trace
+/.factory/skills/

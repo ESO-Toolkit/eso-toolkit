@@ -12,10 +12,10 @@ import { GetCurrentUserQuery, GetCurrentUserDocument } from '../../graphql/gql/g
 import { setAnalyticsUserId, setUserProperties } from '../../utils/analytics';
 import { checkUserBan, DEFAULT_BAN_REASON } from '../../utils/banlist';
 import { isDevelopment } from '../../utils/envUtils';
+import { addBreadcrumb, setUserContext } from '../../utils/errorTracking';
 import { Logger, LogLevel } from '../../utils/logger';
-import { addBreadcrumb, setUserContext } from '../../utils/sentryUtils';
 
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, refreshAccessToken } from './auth';
 import {
   getAccessTokenExpiry,
   getAccessTokenSubject,
@@ -31,7 +31,7 @@ const logger = new Logger({
 
 type CurrentUser = NonNullable<NonNullable<GetCurrentUserQuery['userData']>['currentUser']>;
 
-type AnalyticsUserProperties = Record<string, string | number | boolean>;
+type AnalyticsUserProperties = Record<string, string | number | boolean | undefined>;
 
 const deriveAccountRegion = (user: CurrentUser | null): string => {
   const hasNa = Boolean(user?.naDisplayName);
@@ -58,9 +58,8 @@ const buildUserPropertyPayload = (
     has_na_display_name: hasNa,
     has_eu_display_name: hasEu,
     display_name_count: displayNameCount,
-    profile_named: Boolean(user?.name),
-    user_profile_state: user ? 'resolved' : 'missing',
-    has_token_subject: options.hasSubject,
+    has_user_subject: options.hasSubject,
+    username: user?.name || undefined, // Add username for easier user tracking
   };
 };
 
@@ -86,7 +85,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isBanned, setIsBanned] = useState<boolean>(false);
   const [banReason, setBanReason] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [userLoading, setUserLoading] = useState<boolean>(false);
+  // Initialize userLoading to true when a valid token exists in localStorage.
+  // This prevents child components (e.g. HeaderBar) from prematurely calling
+  // refetchUser() before AuthProvider's effects have synced the token to the
+  // EsoLogsClient — child effects run before parent effects in React.
+  const [userLoading, setUserLoading] = useState<boolean>(() => {
+    const token = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+    return !!token && tokenHasUserSubject(token) && !isAccessTokenExpired(token);
+  });
   const [userError, setUserError] = useState<string | null>(null);
 
   const { client: esoLogsClient, setAuthToken, clearAuthToken } = useEsoLogsClientContext();
@@ -144,6 +150,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     },
     [setAuthToken],
   );
+
+  // Schedule proactive token refresh 60 s before expiry so the session never
+  // silently dies mid-use.  If the refresh fails, tokens are cleared by
+  // refreshAccessToken() itself and the user is logged out cleanly.
+  useEffect(() => {
+    if (!accessToken || !accessTokenExpiry || accessTokenExpired) return;
+
+    const msUntilRefresh = accessTokenExpiry - Date.now() - 60_000;
+    const doRefresh = (): void => {
+      void refreshAccessToken()
+        ?.then((newToken) => {
+          if (newToken) updateAccessToken(newToken);
+          else updateAccessToken('');
+        })
+        ?.catch(() => updateAccessToken(''));
+    };
+
+    if (msUntilRefresh <= 0) {
+      // Already within the refresh window — refresh immediately
+      doRefresh();
+      return;
+    }
+
+    const timer = setTimeout(doRefresh, msUntilRefresh);
+
+    return () => clearTimeout(timer);
+  }, [accessToken, accessTokenExpiry, accessTokenExpired, updateAccessToken]);
 
   // Fetch current user data
   const refetchUser = useCallback(async () => {
