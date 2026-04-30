@@ -269,7 +269,7 @@ export enum KnownAbilities {
   FELINE_AMBUSH = 192901,
 
   // Blessing at the Peak - Earthen Heart passive that grants 10% critical damage
-  BLESSING_AT_THE_PEAK = 29473,
+  BLESSING_AT_THE_PEAK = 45001,
 
   // Taunted Debuffs
   TAUNT = 38254,
