@@ -103,9 +103,8 @@ const buildEnhancedScribingTooltipProps = (options: {
 const MetricsScrollContainer = styled(Box)(({ theme }) => ({
   overflowX: 'auto',
   overflowY: 'hidden',
-  // Firefox: thin scrollbar
+  WebkitOverflowScrolling: 'touch',
   scrollbarWidth: 'thin',
-  // WebKit: thin horizontal scrollbar (8px vs default ~17px)
   '&::-webkit-scrollbar': {
     height: '8px',
   },
@@ -1707,14 +1706,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     <MetricsScrollContainer
                       sx={{
                         display: 'flex',
-                        flexWrap:
-                          metricsLayout === 'wrap'
-                            ? 'wrap'
-                            : { xs: 'wrap', sm: 'nowrap', md: 'nowrap' },
-                        overflowX:
-                          metricsLayout === 'wrap'
-                            ? 'hidden'
-                            : { xs: 'hidden', sm: 'auto', md: 'auto' },
+                        flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
+                        overflowX: metricsLayout === 'wrap' ? 'hidden' : 'auto',
                         gap: { xs: 0.75, sm: 0.5, md: 0.5 },
                         minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 24, md: 24 },
                         flex: '1 1 auto',
@@ -1733,10 +1726,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             metricsLayout === 'wrap'
                               ? { xs: 1, sm: 0.75, md: 0.5 }
                               : { xs: 0.75, sm: 0.5, md: 0.25 },
-                          whiteSpace:
-                            metricsLayout === 'wrap'
-                              ? 'normal'
-                              : { xs: 'normal', sm: 'nowrap', md: 'nowrap' },
+                          whiteSpace: metricsLayout === 'wrap' ? 'normal' : 'nowrap',
                           fontSize: { xs: '0.85rem', sm: '0.8rem', md: 'body2.fontSize' },
                         }}
                       >
