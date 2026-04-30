@@ -848,12 +848,22 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
     return counts;
   }, [gearEntries]);
 
-  const frontBar = Object.entries(setup.skills[0] ?? {})
-    .map(([slot, id]) => ({ slot: Number(slot), id }))
-    .sort((a, b) => a.slot - b.slot);
-  const backBar = Object.entries(setup.skills[1] ?? {})
-    .map(([slot, id]) => ({ slot: Number(slot), id }))
-    .sort((a, b) => a.slot - b.slot);
+  // Normalize skill slot indices to display format (0-4 abilities, 5 ultimate).
+  // CSPS/combat-log builds use ESO-native slots 3-8; roster bridge builds already use 0-5.
+  // Detect format by checking for slot indices > 5 (only exists in 3-8 format).
+  const normalizeBar = (bar: Record<number, number>): { slot: number; id: number }[] => {
+    const entries = Object.entries(bar);
+    const isEsoNative = entries.some(([k]) => Number(k) > 5);
+    return entries
+      .map(([k, id]) => {
+        const s = Number(k);
+        return { slot: isEsoNative ? (s === 8 ? 5 : s - 3) : s, id };
+      })
+      .sort((a, b) => a.slot - b.slot);
+  };
+
+  const frontBar = normalizeBar(setup.skills[0] ?? {});
+  const backBar = normalizeBar(setup.skills[1] ?? {});
 
   const cpSlots = [
     ...setup.cp.warfare.slots.filter((s): s is number => s !== null),
