@@ -29,7 +29,7 @@ const mismatchedAbilities = [
   { enumName: 'CRUSHING_SHOCK', id: 23214, actualName: 'Boundless Storm' },
   { enumName: 'BOUNDLESS_STORM', id: 62547, actualName: 'Deadly Cloak' },
   { enumName: 'HURRICANE', id: 62529, actualName: 'Quick Cloak' },
-  { enumName: 'ERUPTION', id: 118720, actualName: 'Pummeling Goliath Bash' },
+  { enumName: 'HEARTH_AND_HOME', id: 118720, actualName: 'Pummeling Goliath Bash' },
   { enumName: 'LIQUID_LIGHTNING', id: 38891, actualName: 'Whirling Blades' },
   { enumName: 'WALL_OF_ELEMENTS', id: 102136, actualName: 'Zaan' },
   { enumName: 'ELEMENTAL_BLOCKADE', id: 75752, actualName: 'Roar of Alkosh' },

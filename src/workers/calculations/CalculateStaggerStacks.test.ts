@@ -29,7 +29,7 @@ describe('CalculateStaggerStacks', () => {
     targetResources: { hitPoints: 100, maxHitPoints: 100 } as any,
   });
 
-  it('should return empty results when no Stone Giant damage events', () => {
+  it('should return empty results when no Magma Fist damage events', () => {
     const damageEvents: DamageEvent[] = [
       createMockDamageEvent(FIGHT_START + 1000, 99999), // Different ability
     ];
@@ -45,7 +45,7 @@ describe('CalculateStaggerStacks', () => {
 
   it('should calculate single stagger application correctly', () => {
     const damageEvents: DamageEvent[] = [
-      createMockDamageEvent(FIGHT_START + 5000), // Single Stone Giant hit
+      createMockDamageEvent(FIGHT_START + 5000), // Single Magma Fist hit
     ];
 
     const result = calculateStaggerStacks({
