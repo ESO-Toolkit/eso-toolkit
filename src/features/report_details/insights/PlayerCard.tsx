@@ -46,13 +46,6 @@ import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import type { PlayerRoleResult } from '../../../features/role_detection';
-import { useCastEvents } from '../../../hooks/events/useCastEvents';
-import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
-import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
-import { useFriendlyBuffEvents } from '../../../hooks/events/useFriendlyBuffEvents';
-import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
-import { useHostileBuffEvents } from '../../../hooks/events/useHostileBuffEvents';
-import { useResourceEvents } from '../../../hooks/events/useResourceEvents';
 import { getRoleEmoji, ROLE_LABELS, toBroadRole } from '../../../hooks/useRoleDetection';
 import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
@@ -70,35 +63,6 @@ import { ScribedSkillData } from '../../scribing/types';
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
 import { StatChipIcon } from './StatChipIcon';
-// TODO: Implement proper scribing detection services
-// Temporary stubs to prevent compilation errors
-interface CombatEventData {
-  castEvents: Array<{ sourceID: number; abilityGameID: number; timestamp: number }>;
-  damageEvents: Array<{
-    sourceID: number;
-    abilityGameID: number;
-    amount?: number;
-    timestamp: number;
-  }>;
-}
-const buildEnhancedScribingTooltipProps = (options: {
-  talent: { name?: string };
-  combatEventData: CombatEventData;
-  playerId?: number;
-}): {
-  name: string;
-  description: string;
-  scribedSkillData: null;
-  enhancedTooltip: null;
-  isScribingSkill: false;
-} => ({
-  name: options.talent.name || 'Unknown Skill',
-  description: '',
-  scribedSkillData: null,
-  enhancedTooltip: null,
-  isScribingSkill: false,
-});
-
 // Styled component for metrics scroll container with thin scrollbar
 const MetricsScrollContainer = styled(Box)(({ theme }) => ({
   overflowX: 'auto',
@@ -345,37 +309,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     );
     const allPlayers = React.useMemo(() => Object.values(playersById), [playersById]);
 
-    // Get combat event data for affix script detection
-    const { friendlyBuffEvents } = useFriendlyBuffEvents({ context: selectorContext });
-    const { hostileBuffEvents } = useHostileBuffEvents({ context: selectorContext });
-    const { debuffEvents } = useDebuffEvents({ context: selectorContext });
-    const { damageEvents } = useDamageEvents({ context: selectorContext });
-    const { healingEvents } = useHealingEvents({ context: selectorContext });
-    const { castEvents } = useCastEvents({ context: selectorContext });
-    const { resourceEvents } = useResourceEvents({ context: selectorContext });
-    const combatEventData = React.useMemo(
-      () => ({
-        castEvents,
-        damageEvents,
-        allReportAbilities: [], // This would need to come from abilities data if available
-        allDebuffEvents: debuffEvents,
-        allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
-        allResourceEvents: resourceEvents,
-        allDamageEvents: damageEvents,
-        allCastEvents: castEvents,
-        allHealingEvents: healingEvents,
-      }),
-      [
-        friendlyBuffEvents,
-        hostileBuffEvents,
-        debuffEvents,
-        damageEvents,
-        healingEvents,
-        castEvents,
-        resourceEvents,
-      ],
-    );
-
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
 
@@ -419,25 +352,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       talents.forEach((talent) => {
         const key = talent.guid;
         if (!lookup.has(key)) {
-          // Check if this talent is a scribed skill by looking for it in our scribed skills data
           const scribedSkillData = scribedSkillsLookup.get(talent.name);
 
-          // Use enhanced tooltip builder for scribed skills to include affix script detection
-          let tooltipProps;
-          if (scribedSkillData) {
-            tooltipProps = buildEnhancedScribingTooltipProps({
-              talent,
-              combatEventData,
-              playerId: player.id,
-            });
-          } else {
-            tooltipProps = buildTooltipProps({
-              abilityId: talent.guid,
-              abilityName: talent.name,
-              classKey: clsKey,
-              scribedSkillData,
-            });
-          }
+          const tooltipProps = buildTooltipProps({
+            abilityId: talent.guid,
+            abilityName: talent.name,
+            classKey: clsKey,
+            scribedSkillData,
+          });
 
           if (tooltipProps) {
             lookup.set(key, tooltipProps);
@@ -446,7 +368,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       });
 
       return lookup;
-    }, [talents, player.type, player.id, scribingSkills, combatEventData]);
+    }, [talents, player.type, scribingSkills]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
