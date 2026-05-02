@@ -9,6 +9,13 @@ import { psijicOrder } from '../data/skill-lines/guild/psijicOrder';
 import { thievesGuild } from '../data/skill-lines/guild/thievesGuild';
 import { undaunted } from '../data/skill-lines/guild/undaunted';
 import { bowSkillLine } from '../data/skill-lines/weapon/bow';
+import { excavation } from '../data/skill-lines/world/excavation';
+import { legerdemain } from '../data/skill-lines/world/legerdemain';
+import { mythicAbilities } from '../data/skill-lines/world/mythicAbilities';
+import { scrying } from '../data/skill-lines/world/scrying';
+import { soulMagic } from '../data/skill-lines/world/soul-magic';
+import { vampire } from '../data/skill-lines/world/vampire';
+import { werewolf } from '../data/skill-lines/world/werewolf';
 import { destructionStaffSkillLine } from '../data/skill-lines/weapon/destructionStaff';
 import { dualWieldSkillLine } from '../data/skill-lines/weapon/dualWield';
 import { oneHandAndShieldSkillLine } from '../data/skill-lines/weapon/oneHandAndShield';
@@ -17,7 +24,7 @@ import { twoHandedSkillLine } from '../data/skill-lines/weapon/twoHanded';
 import type { SkillData, SkillLineData } from '../data/types/skill-line-types';
 
 type SkillAbilityCollection = 'ultimates' | 'actives' | 'activeAbilities' | 'passives';
-type SkillCategoryKey = 'classes' | 'weapons' | 'alliance' | 'guild';
+type SkillCategoryKey = 'classes' | 'weapons' | 'alliance' | 'guild' | 'world';
 
 type RegistryCategoryValue = SkillLineData | SkillLineData[] | null | undefined;
 
@@ -60,6 +67,15 @@ export const SKILL_LINES_REGISTRY = {
     darkBrotherhood: darkBrotherhood,
     psijicOrder: psijicOrder,
   },
+  world: {
+    vampire,
+    werewolf,
+    soulMagic,
+    scrying,
+    excavation,
+    legerdemain,
+    mythicAbilities,
+  },
 } as const;
 
 function flattenCategory(category: RegistryCategory): SkillLineData[] {
@@ -80,6 +96,7 @@ export const ALL_SKILL_LINES: SkillLineData[] = [
   ...flattenCategory(SKILL_LINES_REGISTRY.weapons as RegistryCategory),
   ...flattenCategory(SKILL_LINES_REGISTRY.alliance as RegistryCategory),
   ...flattenCategory(SKILL_LINES_REGISTRY.guild as RegistryCategory),
+  ...flattenCategory(SKILL_LINES_REGISTRY.world as RegistryCategory),
 ];
 
 // Type for skill node (ability/morph)
@@ -207,7 +224,8 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
     searchClassSkillLines(normalizedTarget) ||
     searchCategorySkillLines('weapons', normalizedTarget) ||
     searchCategorySkillLines('alliance', normalizedTarget) ||
-    searchCategorySkillLines('guild', normalizedTarget)
+    searchCategorySkillLines('guild', normalizedTarget) ||
+    searchCategorySkillLines('world', normalizedTarget)
   );
 }
 
@@ -247,7 +265,7 @@ export function findSkillById(abilityId: number): SkillSearchResult | null {
       if (result) return result;
     }
   }
-  for (const category of ['weapons', 'alliance', 'guild'] as const) {
+  for (const category of ['weapons', 'alliance', 'guild', 'world'] as const) {
     const entries = SKILL_LINES_REGISTRY[category];
     for (const skillLineData of Object.values(entries)) {
       if (!skillLineData) continue;
