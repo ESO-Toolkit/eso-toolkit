@@ -7,8 +7,8 @@ import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
 import {
   formatReportDateTime,
   formatReportDuration,
-  getReportBadge,
   getReportVisibilityColor,
+  isReportEmpty,
 } from '../reportFormatting';
 
 interface ReportListMobileProps {
@@ -69,21 +69,20 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
                 <Typography variant="subtitle1" fontWeight={600} noWrap>
                   {report.title || 'Untitled Report'}
                 </Typography>
-                {(() => {
-                  const badge = getReportBadge(report);
-                  if (!badge) return null;
-                  return (
-                    <Tooltip title={badge.tooltip} arrow>
-                      <Chip
-                        label={badge.label}
-                        size="small"
-                        color={badge.color}
-                        variant="outlined"
-                        sx={{ flexShrink: 0, fontSize: '0.65rem', height: 18 }}
-                      />
-                    </Tooltip>
-                  );
-                })()}
+                {isReportEmpty(report) && (
+                  <Tooltip
+                    title="This log may contain no fight data due to an upload or parsing issue on ESO Logs"
+                    arrow
+                  >
+                    <Chip
+                      label="Empty Log"
+                      size="small"
+                      color="warning"
+                      variant="outlined"
+                      sx={{ flexShrink: 0, fontSize: '0.65rem', height: 18 }}
+                    />
+                  </Tooltip>
+                )}
               </Box>
               <Typography variant="caption" color="text.secondary">
                 {report.code}
