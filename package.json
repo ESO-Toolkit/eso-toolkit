@@ -21,7 +21,7 @@
     "@graphql-typed-document-node/core": "^3.2.0",
     "@internationalized/date": "^3.12.1",
     "@octokit/rest": "^21.0.2",
-    "@pmndrs/detect-gpu": "^6.0.0",
+    "@pmndrs/detect-gpu": "^6.0.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
     "@reduxjs/toolkit": "^2.11.2",
