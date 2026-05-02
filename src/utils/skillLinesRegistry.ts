@@ -1,6 +1,10 @@
 // Import all skill-lines data
 import { assault } from '../data/skill-lines/alliance-war/assault';
+import { emperor } from '../data/skill-lines/alliance-war/emperor';
 import { support } from '../data/skill-lines/alliance-war/support';
+import { heavyArmor } from '../data/skill-lines/armor/heavyArmor';
+import { lightArmor } from '../data/skill-lines/armor/lightArmor';
+import { mediumArmor } from '../data/skill-lines/armor/mediumArmor';
 import * as classSkillLines from '../data/skill-lines/class';
 import { darkBrotherhood } from '../data/skill-lines/guild/darkBrotherhood';
 import { fightersGuild } from '../data/skill-lines/guild/fightersGuild';
@@ -24,7 +28,7 @@ import { twoHandedSkillLine } from '../data/skill-lines/weapon/twoHanded';
 import type { SkillData, SkillLineData } from '../data/types/skill-line-types';
 
 type SkillAbilityCollection = 'ultimates' | 'actives' | 'activeAbilities' | 'passives';
-type SkillCategoryKey = 'classes' | 'weapons' | 'alliance' | 'guild' | 'world';
+type SkillCategoryKey = 'classes' | 'weapons' | 'alliance' | 'guild' | 'world' | 'armor';
 
 type RegistryCategoryValue = SkillLineData | SkillLineData[] | null | undefined;
 
@@ -58,6 +62,7 @@ export const SKILL_LINES_REGISTRY = {
   alliance: {
     assault,
     support,
+    emperor,
   },
   guild: {
     undaunted: undaunted,
@@ -75,6 +80,11 @@ export const SKILL_LINES_REGISTRY = {
     excavation,
     legerdemain,
     mythicAbilities,
+  },
+  armor: {
+    heavyArmor,
+    mediumArmor,
+    lightArmor,
   },
 } as const;
 
@@ -97,6 +107,7 @@ export const ALL_SKILL_LINES: SkillLineData[] = [
   ...flattenCategory(SKILL_LINES_REGISTRY.alliance as RegistryCategory),
   ...flattenCategory(SKILL_LINES_REGISTRY.guild as RegistryCategory),
   ...flattenCategory(SKILL_LINES_REGISTRY.world as RegistryCategory),
+  ...flattenCategory(SKILL_LINES_REGISTRY.armor as RegistryCategory),
 ];
 
 // Type for skill node (ability/morph)
@@ -225,7 +236,8 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
     searchCategorySkillLines('weapons', normalizedTarget) ||
     searchCategorySkillLines('alliance', normalizedTarget) ||
     searchCategorySkillLines('guild', normalizedTarget) ||
-    searchCategorySkillLines('world', normalizedTarget)
+    searchCategorySkillLines('world', normalizedTarget) ||
+    searchCategorySkillLines('armor', normalizedTarget)
   );
 }
 
@@ -265,7 +277,7 @@ export function findSkillById(abilityId: number): SkillSearchResult | null {
       if (result) return result;
     }
   }
-  for (const category of ['weapons', 'alliance', 'guild', 'world'] as const) {
+  for (const category of ['weapons', 'alliance', 'guild', 'world', 'armor'] as const) {
     const entries = SKILL_LINES_REGISTRY[category];
     for (const skillLineData of Object.values(entries)) {
       if (!skillLineData) continue;
