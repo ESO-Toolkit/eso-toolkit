@@ -34,6 +34,15 @@ module.exports = {
         },
       },
     ],
+    '^.+\\.m?js$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react-jsx',
+          allowJs: true,
+        },
+      },
+    ],
   },
 
   // Test file patterns
@@ -95,7 +104,7 @@ module.exports = {
 
   // Ignore patterns
   testPathIgnorePatterns: ['node_modules', 'build', 'scribing-e2e\\.(test|spec)\\.(ts|tsx)$'],
-  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three))'],
+  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three|uuid))'],
 
   // Watch plugins
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
