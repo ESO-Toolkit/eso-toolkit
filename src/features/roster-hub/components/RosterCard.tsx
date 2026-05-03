@@ -435,7 +435,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
                     letterSpacing: '0.01em',
                   }}
                 >
-                  {formatDate(roster.created_at)}
+                  {formatDate(roster.updated_at ?? roster.created_at)}
                 </Typography>
               </Box>
             </Box>
