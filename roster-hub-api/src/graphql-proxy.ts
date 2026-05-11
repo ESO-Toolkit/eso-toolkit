@@ -140,7 +140,7 @@ export async function handleGraphqlProxy(
   }
 
   const parsed = body as { operationName?: string };
-  if (parsed.operationName && parsed.operationName !== operationHint) {
+  if (!parsed.operationName || parsed.operationName !== operationHint) {
     return c.json({ error: 'operationName must match the query parameter' }, 400);
   }
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));

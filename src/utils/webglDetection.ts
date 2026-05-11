@@ -48,7 +48,7 @@ export interface WebGLCapabilities {
   /** Specific reason if capabilities are insufficient */
   insufficientReason: string | null;
   /** Whether hardware acceleration is likely disabled */
-  likelySwoftware: boolean;
+  likelySoftware: boolean;
 }
 
 /**
@@ -339,7 +339,7 @@ export function detectWebGLCapabilities(): WebGLCapabilities {
       vendor: null,
       isSufficient: false,
       insufficientReason: 'WebGL is not supported in this browser',
-      likelySwoftware: false,
+      likelySoftware: false,
     };
   }
 
@@ -414,7 +414,7 @@ export function detectWebGLCapabilities(): WebGLCapabilities {
     vendor,
     isSufficient,
     insufficientReason,
-    likelySwoftware: likelySoftware,
+    likelySoftware: likelySoftware,
   };
 }
 

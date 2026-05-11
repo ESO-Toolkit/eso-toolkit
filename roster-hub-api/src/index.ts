@@ -77,7 +77,8 @@ const app = new Hono<{ Bindings: Env }>();
 app.onError((err, c) => {
   console.error(`[${c.req.method} ${c.req.path}]`, err.message, err.stack);
   const status = 'status' in err && typeof err.status === 'number' ? err.status : 500;
-  return c.json({ error: err.message || 'Internal server error' }, status as 500);
+  const msg = status >= 500 ? 'Internal server error' : (err.message || 'Internal server error');
+  return c.json({ error: msg }, status as 500);
 });
 
 /** Best-effort delete of an ImgBB-hosted image via its delete URL (fire-and-forget). */
@@ -973,6 +974,17 @@ app.post('/images/upload', async (c) => {
     return c.json({ error: 'Image must be ≤ 10 MB' }, 400);
   }
 
+  // Validate image magic numbers (PNG, JPEG, WebP, GIF)
+  const isValidImage =
+    (imageBytes[0] === 0x89 && imageBytes[1] === 0x50 && imageBytes[2] === 0x4e && imageBytes[3] === 0x47) || // PNG
+    (imageBytes[0] === 0xff && imageBytes[1] === 0xd8 && imageBytes[2] === 0xff) || // JPEG
+    (imageBytes[0] === 0x52 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46 && imageBytes[3] === 0x46 &&
+      imageBytes[8] === 0x57 && imageBytes[9] === 0x45 && imageBytes[10] === 0x42 && imageBytes[11] === 0x50) || // WebP
+    (imageBytes[0] === 0x47 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46); // GIF
+  if (!isValidImage) {
+    return c.json({ error: 'Unsupported image format. Use PNG, JPEG, WebP, or GIF.' }, 400);
+  }
+
   // ── Workers AI moderation ────────────────────────────────────────────────
   try {
     const moderation = await moderateImage(c.env.AI, imageBytes);
@@ -1211,6 +1223,17 @@ app.put('/users/me/avatar', async (c) => {
 
   if (imageBytes.byteLength > MAX_AVATAR_BYTES) {
     return c.json({ error: 'Avatar image must be ≤ 2 MB' }, 400);
+  }
+
+  // Validate image magic numbers (PNG, JPEG, WebP, GIF)
+  const isValidAvatar =
+    (imageBytes[0] === 0x89 && imageBytes[1] === 0x50 && imageBytes[2] === 0x4e && imageBytes[3] === 0x47) || // PNG
+    (imageBytes[0] === 0xff && imageBytes[1] === 0xd8 && imageBytes[2] === 0xff) || // JPEG
+    (imageBytes[0] === 0x52 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46 && imageBytes[3] === 0x46 &&
+      imageBytes[8] === 0x57 && imageBytes[9] === 0x45 && imageBytes[10] === 0x42 && imageBytes[11] === 0x50) || // WebP
+    (imageBytes[0] === 0x47 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46); // GIF
+  if (!isValidAvatar) {
+    return c.json({ error: 'Unsupported image format. Use PNG, JPEG, WebP, or GIF.' }, 400);
   }
 
   // ── Workers AI moderation ────────────────────────────────────────────────
@@ -1654,7 +1677,15 @@ import { syncLeaderboardRosters } from './leaderboard-sync/sync';
 
 app.post('/admin/sync-leaderboard', async (c) => {
   const key = c.req.header('X-Internal-Key');
-  if (!key || key !== c.env.INTERNAL_API_KEY) {
+  if (!key || !c.env.INTERNAL_API_KEY) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+  const enc = new TextEncoder();
+  const a = enc.encode(key);
+  const b = enc.encode(c.env.INTERNAL_API_KEY);
+  if (a.byteLength !== b.byteLength ||
+    !(crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean })
+      .timingSafeEqual(a.buffer as ArrayBuffer, b.buffer as ArrayBuffer)) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const results = await syncLeaderboardRosters(c.env);

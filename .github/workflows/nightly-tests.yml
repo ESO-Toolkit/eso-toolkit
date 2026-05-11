@@ -555,7 +555,7 @@ jobs:
           repositories: eso-log-aggregator-reports
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@e9c66a37f080288a11235e32cbe2dc5fb3a679cc # v4
         with:
           personal_token: ${{ steps.generate-deploy-token.outputs.token }}
           external_repository: ESO-Toolkit/eso-log-aggregator-reports

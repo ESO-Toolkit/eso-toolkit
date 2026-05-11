@@ -73,7 +73,7 @@ describe('ReplayErrorBoundary', () => {
     vendor: 'Test Vendor',
     isSufficient: true,
     insufficientReason: null,
-    likelySwoftware: false,
+    likelySoftware: false,
     ...overrides,
   });
 
@@ -188,7 +188,7 @@ describe('ReplayErrorBoundary', () => {
           vendor: 'Google Inc.',
           isSufficient: false,
           insufficientReason: 'Missing required WebGL extensions',
-          likelySwoftware: true,
+          likelySoftware: true,
         }),
       );
 

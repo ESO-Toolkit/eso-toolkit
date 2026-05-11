@@ -272,11 +272,22 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
 
     const data = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
-      console.error(`[oauth-token] Discord error ${res.status}`);
-      return jsonResponse({ error: 'Token exchange failed', discord_status: res.status }, 400);
+      console.error('[oauth-token] Discord error:', JSON.stringify(data));
+      const discordError =
+        typeof data.error_description === 'string'
+          ? data.error_description
+          : typeof data.error === 'string'
+            ? data.error
+            : 'Token exchange failed';
+      return jsonResponse({ error: discordError }, 400);
     }
 
-    return jsonResponse(data);
+    return jsonResponse({
+      access_token: data.access_token,
+      token_type: data.token_type,
+      expires_in: data.expires_in,
+      scope: data.scope,
+    });
   } catch (err) {
     console.error('[oauth-token] error:', err);
     return jsonResponse({ error: 'Token exchange failed' }, 500);
