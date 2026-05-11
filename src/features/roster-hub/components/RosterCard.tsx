@@ -171,7 +171,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const handleCopyLink = (): void => {
       handleMenuClose();
-      const url = `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}`;
+      const url = `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${encodeURIComponent(roster.roster_data)}`;
       void navigator.clipboard.writeText(url).then(() => {
         enqueueSnackbar('Link copied to clipboard!', { variant: 'success' });
       });

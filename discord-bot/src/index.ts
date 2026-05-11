@@ -272,14 +272,8 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
 
     const data = (await res.json()) as Record<string, unknown>;
     if (!res.ok) {
-      console.error('[oauth-token] Discord error:', JSON.stringify(data));
-      const discordError =
-        typeof data.error_description === 'string'
-          ? data.error_description
-          : typeof data.error === 'string'
-            ? data.error
-            : 'Token exchange failed';
-      return jsonResponse({ error: discordError, discord_status: res.status }, 400);
+      console.error(`[oauth-token] Discord error ${res.status}`);
+      return jsonResponse({ error: 'Token exchange failed', discord_status: res.status }, 400);
     }
 
     return jsonResponse(data);
@@ -577,6 +571,8 @@ function withCors(request: Request, env: Env, response: Response): Response {
   if (!origin) return response;
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', origin);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

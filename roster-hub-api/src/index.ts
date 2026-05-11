@@ -61,6 +61,8 @@ import {
   togglePackVote,
   checkPackCreateRateLimit,
   checkPackVoteRateLimit,
+  recordRateLimitEvent,
+  pruneRateLimitEvents,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
@@ -120,6 +122,14 @@ const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
 /** Validate a tag: must be non-empty, ≤30 chars, alphanumeric/hyphens/underscores/spaces. */
 const isValidTag = (t: string): boolean =>
   typeof t === 'string' && t.length > 0 && t.length <= 30 && /^[\w\s-]+$/.test(t);
+
+// ─── Security headers ────────────────────────────────────────────────────────
+
+app.use('*', async (c, next) => {
+  await next();
+  c.res.headers.set('X-Content-Type-Options', 'nosniff');
+  c.res.headers.set('X-Frame-Options', 'DENY');
+});
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 
@@ -205,6 +215,9 @@ app.post('/graphql', handleGraphqlProxy);
 app.get('/health', async (c) => {
   const result = await c.env.DB.prepare('SELECT 1').run();
   const sizeBytes = result.meta?.size_after ?? null;
+  if (Math.random() < 0.05) {
+    c.executionCtx.waitUntil(pruneRateLimitEvents(c.env.DB));
+  }
   return c.json({
     ok: true,
     db_size_bytes: sizeBytes,
@@ -463,6 +476,7 @@ app.post('/rosters/:id/vote', async (c) => {
     .first();
   if (!exists) return c.json({ error: 'Not found' }, 404);
 
+  await recordRateLimitEvent(c.env.DB, user.id, 'roster_vote');
   const result = await toggleVote(c.env.DB, rosterId, user.id);
   return c.json(result);
 });
@@ -758,6 +772,7 @@ app.post('/builds/:id/vote', async (c) => {
   if (!allowed)
     return c.json({ error: 'Rate limit exceeded. Too many votes in the last hour.' }, 429);
 
+  await recordRateLimitEvent(c.env.DB, user.id, 'build_vote');
   const result = await toggleBuildVote(c.env.DB, buildId, user.id);
   return c.json(result);
 });
@@ -872,13 +887,14 @@ app.post('/temp-builds', async (c) => {
       429,
     );
 
+  await recordTempBuildRateLimit(c.env.DB, ip);
+
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
     .join('')
     .slice(0, 12);
 
   const row = await createTempBuild(c.env.DB, { id, buildData: body.build_data });
-  await recordTempBuildRateLimit(c.env.DB, ip);
 
   return c.json({ id: row.id, expires_at: row.expires_at }, 201);
 });
@@ -920,6 +936,8 @@ app.post('/images/upload', async (c) => {
   const allowed = await checkImageUploadRateLimit(c.env.DB, user.id);
   if (!allowed)
     return c.json({ error: 'Rate limit exceeded. You can upload up to 10 images per hour.' }, 429);
+
+  await recordRateLimitEvent(c.env.DB, user.id, 'image_upload');
 
   interface UploadBody {
     image: string; // base64 (raw or data-URL)
@@ -1041,6 +1059,12 @@ app.post('/images/:id/report', async (c) => {
 
   if (!body.reason?.trim()) return c.json({ error: 'reason is required' }, 400);
   if (body.reason.length > 500) return c.json({ error: 'reason must be ≤ 500 characters' }, 400);
+
+  const existing = await c.env.DB
+    .prepare('SELECT id FROM image_reports WHERE image_id = ? AND reporter_id = ?')
+    .bind(imageId, user.id)
+    .first();
+  if (existing) return c.json({ error: 'You have already reported this image' }, 409);
 
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
@@ -1484,6 +1508,7 @@ app.post('/packs/:id/vote', async (c) => {
   const voteAllowed = await checkPackVoteRateLimit(c.env.DB, user.id);
   if (!voteAllowed) return c.json({ error: 'Rate limit exceeded. Max 30 votes per hour.' }, 429);
 
+  await recordRateLimitEvent(c.env.DB, user.id, 'pack_vote');
   const result = await togglePackVote(c.env.DB, c.req.param('id'), user.id);
   return c.json(result);
 });
