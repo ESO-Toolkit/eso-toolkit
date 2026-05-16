@@ -23,7 +23,14 @@ const SYSTEM_PROMPT =
   'Do not include any text outside the JSON object.';
 
 function sanitizeInput(text: string, maxLen: number): string {
-  return text.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '').slice(0, maxLen);
+  return text
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '')
+    .slice(0, maxLen)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 function buildUserMessage(category: string, title: string, description: string): string {

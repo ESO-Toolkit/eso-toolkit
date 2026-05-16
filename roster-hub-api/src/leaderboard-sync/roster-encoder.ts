@@ -9,13 +9,6 @@
 import type { PlayerDetails, PlayerEntry, RankingEntry } from './esologs-client';
 import { categorizeGear } from './gear-categorizer';
 
-const escapeHtml = (s: string): string =>
-  s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
 import { detectTalentInfo, type CompactSkills } from './talent-mapper';
 
 // ─── Compact Types ───────────────────────────────────────────────────────────
@@ -211,7 +204,7 @@ export async function encodeRoster(roster: CompactRosterV3): Promise<string> {
  * Build a display title for a #1 roster.
  */
 export function buildRosterTitle(ranking: RankingEntry, trialName: string): string {
-  const teamName = escapeHtml(ranking.guild?.name ?? 'Unknown');
+  const teamName = ranking.guild?.name ?? 'Unknown';
   return `${teamName} — ${trialName} #1`;
 }
 
@@ -219,7 +212,7 @@ export function buildRosterTitle(ranking: RankingEntry, trialName: string): stri
  * Build a description for a #1 roster.
  */
 export function buildRosterDescription(ranking: RankingEntry, trialName: string): string {
-  const teamName = escapeHtml(ranking.guild?.name ?? 'Unknown');
+  const teamName = ranking.guild?.name ?? 'Unknown';
   const server = ranking.server?.region?.toUpperCase() ?? '';
   const score = ranking.score ? ` • Score: ${ranking.score.toLocaleString()}` : '';
   return `Auto-imported #1 ${trialName} roster from ${teamName}${server ? ` (${server})` : ''}${score}`;
