@@ -43,6 +43,7 @@ const createMockStore = (
       myReportsPage: 1,
       perfTier: 'medium',
       perfTierOverride: 'auto',
+      chartIntensity: 'subtle',
       ...(initialState.ui || {}),
     },
   });

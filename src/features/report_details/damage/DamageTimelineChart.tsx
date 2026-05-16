@@ -10,13 +10,13 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
-import type { TooltipItem } from 'chart.js';
 import React from 'react';
 
-import { LineChart } from '../../../components/LazyCharts';
-import '../../../utils/chartRegistration';
+import { EChart } from '../../../components/EChart';
+import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
-import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
+import { buildPhaseMarkLines } from '../../../utils/echartsAnnotationUtils';
+import { glowLineStyle, gradientAreaStyle } from '../../../utils/echartsTheme';
 import type {
   DamageOverTimeResult,
   PlayerDamageOverTimeData,
@@ -65,9 +65,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   height = 400,
   phaseTransitionInfo,
 }) => {
+  const { theme } = useEChartsTheme();
   const [viewMode, setViewMode] = React.useState<'all' | 'filtered'>('filtered');
 
-  // Determine which data to display
   const displayData = React.useMemo(() => {
     if (!damageOverTimeData) return null;
 
@@ -146,63 +146,105 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     }
   }, [damageOverTimeData, selectedTargetIds, viewMode]);
 
-  // Prepare chart data
-  const chartData = React.useMemo(() => {
+  const echartsOption = React.useMemo(() => {
     if (!displayData) return null;
 
     const players = Object.values(displayData);
     if (players.length === 0) return null;
 
-    // Use relative time for x-axis labels
-    const labels = players[0]?.dataPoints.map((point) => point.relativeTime.toFixed(1)) || [];
+    const bucketSizeSeconds = (damageOverTimeData?.bucketSizeMs || 1000) / 1000;
 
-    const datasets = players.map((playerData, index) => {
+    const series = players.map((playerData, index) => {
       const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+      const data = playerData.dataPoints.map((point) => [
+        point.relativeTime,
+        point.damage / bucketSizeSeconds,
+      ]);
 
-      // Convert damage to DPS for each data point
-      const dpsData = playerData.dataPoints.map((point) => {
-        const bucketSizeSeconds = (damageOverTimeData?.bucketSizeMs || 1000) / 1000;
-        return point.damage / bucketSizeSeconds;
-      });
+      const phaseMarkLines =
+        index === 0
+          ? buildPhaseMarkLines(
+              phaseTransitionInfo?.phaseTransitions,
+              damageOverTimeData?.fightStartTime,
+              damageOverTimeData?.fightEndTime,
+            )
+          : null;
 
       return {
-        label: `${playerData.playerName} (Avg: ${Math.round(playerData.averageDps)} DPS)`,
-        data: dpsData,
-        borderColor: color,
-        backgroundColor: `${color}20`, // 20% opacity
-        borderWidth: 2,
-        fill: false,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        tension: 0,
+        name: `${playerData.playerName} (Avg: ${Math.round(playerData.averageDps)} DPS)`,
+        type: 'line' as const,
+        data,
+        showSymbol: false,
+        emphasis: {
+          focus: 'series' as const,
+          lineStyle: { width: 3 },
+        },
+        lineStyle: {
+          color,
+          width: 2,
+          ...glowLineStyle(color, theme.intensity, theme.perfTier),
+        },
+        areaStyle: gradientAreaStyle(color, theme.intensity, theme.perfTier),
+        ...(phaseMarkLines ? { markLine: phaseMarkLines } : {}),
       };
     });
 
-    return { labels, datasets };
-  }, [displayData, damageOverTimeData?.bucketSizeMs]);
-
-  const phaseAnnotations = React.useMemo(() => {
-    if (!damageOverTimeData || !phaseTransitionInfo?.phaseTransitions) {
-      return {};
-    }
-
-    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
-      fightStartTime: damageOverTimeData.fightStartTime,
-      fightEndTime: damageOverTimeData.fightEndTime,
-      xValueFormatter: (seconds: number) => Number(seconds.toFixed(1)),
-    });
-  }, [damageOverTimeData, phaseTransitionInfo]);
-
-  const annotationPluginConfig = React.useMemo(() => {
-    const hasAnnotations = Object.keys(phaseAnnotations).length > 0;
-    if (!hasAnnotations) {
-      return undefined;
-    }
-
     return {
-      annotations: phaseAnnotations,
-    } as const;
-  }, [phaseAnnotations]);
+      xAxis: {
+        type: 'value',
+        name: 'Fight Time (seconds)',
+        nameLocation: 'middle',
+        nameGap: 28,
+        axisLabel: {
+          formatter: (v: number) => `${v.toFixed(1)}s`,
+        },
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        name: 'Damage Per Second (DPS)',
+        nameLocation: 'middle',
+        nameGap: 55,
+        axisLabel: {
+          formatter: (v: number) => v.toLocaleString(),
+        },
+      },
+      legend: {
+        show: true,
+        top: 0,
+        type: 'scroll',
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: Array<{ seriesName: string; value: number[]; color: string }>) => {
+          if (!params[0]) return '';
+          const time = Number(params[0].value[0]).toFixed(1);
+          const lines = params
+            .filter((p) => p.value[1] > 0)
+            .sort((a, b) => b.value[1] - a.value[1])
+            .map(
+              (p) =>
+                `<div style="display:flex;align-items:center;gap:6px">` +
+                `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
+                `${p.seriesName.split(' (')[0]}: <b>${Math.round(p.value[1]).toLocaleString()} DPS</b></div>`,
+            );
+          return `<div style="font-size:13px"><div style="color:${theme.mutedColor};margin-bottom:4px">Time: ${time}s</div>${lines.join('')}</div>`;
+        },
+      },
+      toolbox: {
+        show: true,
+        right: 12,
+        top: 0,
+        feature: {
+          saveAsImage: {
+            title: 'Save',
+            pixelRatio: 2,
+          },
+        },
+      },
+      series,
+    };
+  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme]);
 
   // Get target name helper
   const getTargetName = React.useCallback(
@@ -225,7 +267,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     );
   }
 
-  if (!damageOverTimeData || !chartData) {
+  if (!damageOverTimeData || !echartsOption) {
     return (
       <Card sx={{ height }}>
         <CardContent
@@ -280,51 +322,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
         {/* Chart */}
         <Box sx={{ flex: 1, minHeight: 0 }}>
-          <LineChart
-            data={chartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              interaction: {
-                intersect: false,
-                mode: 'index',
-              },
-              plugins: {
-                legend: {
-                  display: true,
-                  position: 'top',
-                },
-                tooltip: {
-                  callbacks: {
-                    title: (context: TooltipItem<'line'>[]) => `Time: ${Number(context[0].label)}s`,
-                    label: (context: TooltipItem<'line'>) => {
-                      const dps = Math.round(Number(context.parsed.y));
-                      return `${context.dataset.label?.split(' (')[0]}: ${dps.toLocaleString()} DPS`;
-                    },
-                  },
-                },
-                ...(annotationPluginConfig ? { annotation: annotationPluginConfig } : {}),
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: 'Fight Time (seconds)',
-                  },
-                  type: 'category',
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: 'Damage Per Second (DPS)',
-                  },
-                  min: 0,
-                  ticks: {
-                    callback: (value: string | number) => `${Number(value).toLocaleString()}`,
-                  },
-                },
-              },
-            }}
+          <EChart
+            option={echartsOption}
+            height="100%"
+            group="fightReport"
           />
         </Box>
       </CardContent>

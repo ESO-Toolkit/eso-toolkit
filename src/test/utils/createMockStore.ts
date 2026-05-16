@@ -77,6 +77,7 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
         myReportsPage: 1,
         perfTier: 'medium' as const,
         perfTierOverride: 'auto' as const,
+        chartIntensity: 'subtle' as const,
         ...(initialState.ui || {}),
       },
       // Add other slice initial states here as needed
@@ -98,4 +99,5 @@ export const defaultMockUIState: UIState = {
   myReportsPage: 1,
   perfTier: 'medium',
   perfTierOverride: 'auto',
+  chartIntensity: 'subtle',
 };
