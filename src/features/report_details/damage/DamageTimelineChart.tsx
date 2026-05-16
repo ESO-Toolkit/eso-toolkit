@@ -1,3 +1,4 @@
+import LayersIcon from '@mui/icons-material/Layers';
 import {
   Box,
   Typography,
@@ -9,6 +10,8 @@ import {
   MenuItem,
   Chip,
   Stack,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import React from 'react';
 
@@ -16,11 +19,12 @@ import { EChart } from '../../../components/EChart';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { buildPhaseMarkLines } from '../../../utils/echartsAnnotationUtils';
-import { glowLineStyle, gradientAreaStyle } from '../../../utils/echartsTheme';
+import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
 import type {
   DamageOverTimeResult,
   PlayerDamageOverTimeData,
 } from '../../../workers/calculations/CalculateDamageOverTime';
+import type { UptimeTimelineSeries } from '../insights/utils/buildUptimeTimeline';
 
 // Color palette for multiple player lines
 const PLAYER_COLORS = [
@@ -38,19 +42,20 @@ const PLAYER_COLORS = [
   '#009688', // Teal
 ] as const;
 
+const UPTIME_COLORS = [
+  '#7c3aed', '#2563eb', '#059669', '#dc2626', '#f97316',
+  '#14b8a6', '#a855f7', '#f59e0b', '#0ea5e9', '#f43f5e',
+  '#22c55e', '#e11d48',
+] as const;
+
 interface DamageTimelineChartProps {
-  /** Damage over time data */
   damageOverTimeData: DamageOverTimeResult | null;
-  /** Selected target IDs for filtering */
   selectedTargetIds: Set<number>;
-  /** Available target information */
   availableTargets?: Array<{ id: number; name: string }>;
-  /** Loading state */
   isLoading?: boolean;
-  /** Chart height in pixels */
   height?: number;
-  /** Phase transition timeline information */
   phaseTransitionInfo?: PhaseTransitionInfo;
+  uptimeSeries?: UptimeTimelineSeries[];
 }
 
 /**
@@ -64,9 +69,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   isLoading = false,
   height = 400,
   phaseTransitionInfo,
+  uptimeSeries,
 }) => {
   const { theme } = useEChartsTheme();
   const [viewMode, setViewMode] = React.useState<'all' | 'filtered'>('filtered');
+  const [stacked, setStacked] = React.useState(false);
 
   const displayData = React.useMemo(() => {
     if (!damageOverTimeData) return null;
@@ -153,8 +160,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     if (players.length === 0) return null;
 
     const bucketSizeSeconds = (damageOverTimeData?.bucketSizeMs || 1000) / 1000;
+    const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
 
-    const series = players.map((playerData, index) => {
+    const dpsSeries = players.map((playerData, index) => {
       const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
       const data = playerData.dataPoints.map((point) => [
         point.relativeTime,
@@ -175,6 +183,8 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         type: 'line' as const,
         data,
         showSymbol: false,
+        xAxisIndex: 0,
+        yAxisIndex: 0,
         emphasis: {
           focus: 'series' as const,
           lineStyle: { width: 3 },
@@ -189,26 +199,102 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       };
     });
 
+    const uptimeSeriesEcharts = showStacked
+      ? uptimeSeries!.map((dataset, index) => {
+          const color = UPTIME_COLORS[index % UPTIME_COLORS.length];
+          return {
+            name: dataset.label,
+            type: 'line' as const,
+            data: dataset.points.map((p: { x: number; y: number }) => [p.x, p.y]),
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            ...steppedLineDefaults(),
+            lineStyle: {
+              color,
+              width: 1.5,
+              ...glowLineStyle(color, theme.intensity, theme.perfTier),
+            },
+            areaStyle: gradientAreaStyle(color, theme.intensity, theme.perfTier),
+          };
+        })
+      : [];
+
+    const allSeries = [...dpsSeries, ...uptimeSeriesEcharts];
+
+    const grid = showStacked
+      ? [
+          { left: 12, right: 20, top: 40, bottom: '42%', containLabel: true },
+          { left: 12, right: 20, top: '64%', bottom: 60, containLabel: true },
+        ]
+      : { left: 12, right: 20, top: 40, bottom: 60, containLabel: true };
+
+    const xAxis = showStacked
+      ? [
+          {
+            type: 'value',
+            gridIndex: 0,
+            axisLabel: { show: false },
+            axisTick: { show: false },
+          },
+          {
+            type: 'value',
+            gridIndex: 1,
+            name: 'Fight Time (seconds)',
+            nameLocation: 'middle',
+            nameGap: 28,
+            axisLabel: { formatter: (v: number) => `${v.toFixed(1)}s` },
+          },
+        ]
+      : {
+          type: 'value',
+          name: 'Fight Time (seconds)',
+          nameLocation: 'middle',
+          nameGap: 28,
+          axisLabel: { formatter: (v: number) => `${v.toFixed(1)}s` },
+        };
+
+    const yAxis = showStacked
+      ? [
+          {
+            type: 'value',
+            gridIndex: 0,
+            min: 0,
+            name: 'DPS',
+            nameLocation: 'middle',
+            nameGap: 55,
+            axisLabel: { formatter: (v: number) => v.toLocaleString() },
+          },
+          {
+            type: 'value',
+            gridIndex: 1,
+            min: 0,
+            max: 1.1,
+            name: 'Buffs',
+            nameLocation: 'middle',
+            nameGap: 36,
+            axisLabel: { formatter: (v: number) => (v >= 1 ? 'Active' : '') },
+          },
+        ]
+      : {
+          type: 'value',
+          min: 0,
+          name: 'Damage Per Second (DPS)',
+          nameLocation: 'middle',
+          nameGap: 55,
+          axisLabel: { formatter: (v: number) => v.toLocaleString() },
+        };
+
+    const dataZoom = showStacked
+      ? [
+          { type: 'slider', xAxisIndex: [0, 1], bottom: 4, height: 20 },
+          { type: 'inside', xAxisIndex: [0, 1], zoomOnMouseWheel: 'shift' },
+        ]
+      : undefined;
+
     return {
-      xAxis: {
-        type: 'value',
-        name: 'Fight Time (seconds)',
-        nameLocation: 'middle',
-        nameGap: 28,
-        axisLabel: {
-          formatter: (v: number) => `${v.toFixed(1)}s`,
-        },
-      },
-      yAxis: {
-        type: 'value',
-        min: 0,
-        name: 'Damage Per Second (DPS)',
-        nameLocation: 'middle',
-        nameGap: 55,
-        axisLabel: {
-          formatter: (v: number) => v.toLocaleString(),
-        },
-      },
+      grid,
+      xAxis,
+      yAxis,
       legend: {
         show: true,
         top: 0,
@@ -216,11 +302,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       },
       tooltip: {
         trigger: 'axis',
-        formatter: (params: Array<{ seriesName: string; value: number[]; color: string }>) => {
+        formatter: (params: Array<{ seriesName: string; value: number[]; color: string; axisIndex: number }>) => {
           if (!params[0]) return '';
           const time = Number(params[0].value[0]).toFixed(1);
-          const lines = params
-            .filter((p) => p.value[1] > 0)
+          const dpsLines = params
+            .filter((p) => p.value[1] > 0 && !uptimeSeriesEcharts.some((s) => s.name === p.seriesName))
             .sort((a, b) => b.value[1] - a.value[1])
             .map(
               (p) =>
@@ -228,7 +314,18 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
                 `${p.seriesName.split(' (')[0]}: <b>${Math.round(p.value[1]).toLocaleString()} DPS</b></div>`,
             );
-          return `<div style="font-size:13px"><div style="color:${theme.mutedColor};margin-bottom:4px">Time: ${time}s</div>${lines.join('')}</div>`;
+          const uptimeLines = showStacked
+            ? params
+                .filter((p) => uptimeSeriesEcharts.some((s) => s.name === p.seriesName) && p.value[1] > 0)
+                .map(
+                  (p) =>
+                    `<div style="display:flex;align-items:center;gap:6px">` +
+                    `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
+                    `${p.seriesName}: <b>Active</b></div>`,
+                )
+            : [];
+          const allLines = [...dpsLines, ...(uptimeLines.length ? ['<div style="border-top:1px solid rgba(128,128,128,0.3);margin:4px 0"></div>', ...uptimeLines] : [])];
+          return `<div style="font-size:13px"><div style="color:${theme.mutedColor};margin-bottom:4px">Time: ${time}s</div>${allLines.join('')}</div>`;
         },
       },
       toolbox: {
@@ -242,9 +339,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           },
         },
       },
-      series,
+      ...(dataZoom ? { dataZoom } : {}),
+      series: allSeries,
     };
-  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme]);
+  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme, stacked, uptimeSeries]);
 
   // Get target name helper
   const getTargetName = React.useCallback(
@@ -281,8 +379,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
   const selectedTargetNames = Array.from(selectedTargetIds).map(getTargetName);
 
+  const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
+  const resolvedHeight = showStacked ? height + 220 : height;
+
   return (
-    <Card sx={{ height }}>
+    <Card sx={{ height: resolvedHeight, transition: 'height 0.3s ease' }}>
       <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -305,19 +406,37 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             )}
           </Box>
 
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>View</InputLabel>
-            <Select
-              value={viewMode}
-              label="View"
-              onChange={(e) => setViewMode(e.target.value as 'all' | 'filtered')}
-            >
-              <MenuItem value="all">All Targets</MenuItem>
-              <MenuItem value="filtered" disabled={selectedTargetIds.size === 0}>
-                Selected Targets
-              </MenuItem>
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {uptimeSeries && uptimeSeries.length > 0 && (
+              <Tooltip title={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}>
+                <IconButton
+                  size="small"
+                  onClick={() => setStacked((s) => !s)}
+                  sx={{
+                    color: stacked ? 'primary.main' : 'text.secondary',
+                    border: stacked ? '1px solid' : '1px solid transparent',
+                    borderColor: stacked ? 'primary.main' : 'transparent',
+                    borderRadius: 1,
+                  }}
+                >
+                  <LayersIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>View</InputLabel>
+              <Select
+                value={viewMode}
+                label="View"
+                onChange={(e) => setViewMode(e.target.value as 'all' | 'filtered')}
+              >
+                <MenuItem value="all">All Targets</MenuItem>
+                <MenuItem value="filtered" disabled={selectedTargetIds.size === 0}>
+                  Selected Targets
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </Box>
 
         {/* Chart */}

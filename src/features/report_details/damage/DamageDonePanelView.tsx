@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useRoleColors } from '../../../hooks';
 import { MUTED_ORANGE_PROGRESS_DARK, MUTED_ORANGE_PROGRESS_LIGHT } from '../../../utils/roleColors';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
+import type { UptimeTimelineSeries } from '../insights/utils/buildUptimeTimeline';
 
 import { DamageTimelineChart } from './DamageTimelineChart';
 
@@ -29,8 +30,8 @@ interface DamageDonePanelViewProps {
   isDamageOverTimeLoading?: boolean;
   selectedTargetIds?: Set<number>;
   availableTargets?: Array<{ id: number; name: string }>;
-  /** Called when a player name is clicked; receives the player ID */
   onPlayerClick?: (playerId: string) => void;
+  uptimeSeries?: UptimeTimelineSeries[];
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
@@ -47,6 +48,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   selectedTargetIds = new Set(),
   availableTargets = [],
   onPlayerClick,
+  uptimeSeries,
 }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
@@ -1270,6 +1272,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           availableTargets={availableTargets}
           isLoading={isDamageOverTimeLoading}
           height={400}
+          uptimeSeries={uptimeSeries}
         />
       </Box>
     </Box>

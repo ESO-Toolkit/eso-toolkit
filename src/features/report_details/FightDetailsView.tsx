@@ -36,6 +36,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { Suspense, useDeferredValue } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
+import { ChartIntensityToggle } from '../../components/ChartIntensityToggle';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 import { FightFragment } from '../../graphql/gql/graphql';
 import { useReportMasterData } from '../../hooks';
@@ -246,6 +247,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           >
             <BuffSourcePlayerSelector players={playerList} />
           </FormControl>
+
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+            <ChartIntensityToggle />
+          </Box>
         </Box>
 
         {/* Fight Navigation - aligned with target selector */}
