@@ -18,8 +18,11 @@ import React from 'react';
 import { EChart } from '../../../components/EChart';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import { useUptimeSeriesForStackedView } from '../../../hooks/useUptimeSeriesForStackedView';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { buildPhaseMarkLines } from '../../../utils/echartsAnnotationUtils';
 import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
+import type { FightFragment } from '../../../graphql/gql/graphql';
 import type {
   DamageOverTimeResult,
   PlayerDamageOverTimeData,
@@ -55,13 +58,22 @@ interface DamageTimelineChartProps {
   isLoading?: boolean;
   height?: number;
   phaseTransitionInfo?: PhaseTransitionInfo;
-  uptimeSeries?: UptimeTimelineSeries[];
+  context?: ReportFightContextInput;
+  fight?: FightFragment | null;
 }
 
-/**
- * Chart component for displaying damage over time with multiple player lines
- * Supports target filtering and shows DPS over time for each player
- */
+const StackedUptimeLoader: React.FC<{
+  fight?: FightFragment | null;
+  context?: ReportFightContextInput;
+  onData: (series: UptimeTimelineSeries[]) => void;
+}> = ({ fight, context, onData }) => {
+  const { uptimeSeries } = useUptimeSeriesForStackedView({ fight, context, enabled: true });
+  React.useEffect(() => {
+    onData(uptimeSeries);
+  }, [uptimeSeries, onData]);
+  return null;
+};
+
 export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   damageOverTimeData,
   selectedTargetIds,
@@ -69,11 +81,16 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   isLoading = false,
   height = 400,
   phaseTransitionInfo,
-  uptimeSeries,
+  context,
+  fight,
 }) => {
   const { theme } = useEChartsTheme();
   const [viewMode, setViewMode] = React.useState<'all' | 'filtered'>('filtered');
   const [stacked, setStacked] = React.useState(false);
+  const [uptimeSeries, setUptimeSeries] = React.useState<UptimeTimelineSeries[]>([]);
+  const handleUptimeData = React.useCallback((series: UptimeTimelineSeries[]) => {
+    setUptimeSeries(series);
+  }, []);
 
   const displayData = React.useMemo(() => {
     if (!damageOverTimeData) return null;
@@ -407,22 +424,20 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {uptimeSeries && uptimeSeries.length > 0 && (
-              <Tooltip title={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}>
-                <IconButton
-                  size="small"
-                  onClick={() => setStacked((s) => !s)}
-                  sx={{
-                    color: stacked ? 'primary.main' : 'text.secondary',
-                    border: stacked ? '1px solid' : '1px solid transparent',
-                    borderColor: stacked ? 'primary.main' : 'transparent',
-                    borderRadius: 1,
-                  }}
-                >
-                  <LayersIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
+            <Tooltip title={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}>
+              <IconButton
+                size="small"
+                onClick={() => setStacked((s) => !s)}
+                sx={{
+                  color: stacked ? 'primary.main' : 'text.secondary',
+                  border: stacked ? '1px solid' : '1px solid transparent',
+                  borderColor: stacked ? 'primary.main' : 'transparent',
+                  borderRadius: 1,
+                }}
+              >
+                <LayersIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>View</InputLabel>
               <Select
@@ -438,6 +453,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             </FormControl>
           </Box>
         </Box>
+
+        {/* Lazy loader — only mounts when stacked mode is activated */}
+        {stacked && (
+          <StackedUptimeLoader fight={fight} context={context} onData={handleUptimeData} />
+        )}
 
         {/* Chart */}
         <Box sx={{ flex: 1, minHeight: 0 }}>

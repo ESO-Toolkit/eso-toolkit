@@ -15,7 +15,6 @@ import {
   useFightForContext,
   useResolvedReportFightContext,
 } from '../../../hooks';
-import { useUptimeSeriesForStackedView } from '../../../hooks/useUptimeSeriesForStackedView';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
@@ -54,7 +53,6 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
   const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask({
     context: resolvedContext,
   });
-  const { uptimeSeries } = useUptimeSeriesForStackedView(fight);
 
   // Resolve selected target names for display
   const selectedTargetNames = useMemo(() => {
@@ -410,7 +408,8 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         selectedTargetIds={selectedTargetIds}
         availableTargets={availableTargets}
         onPlayerClick={handlePlayerClick}
-        uptimeSeries={uptimeSeries}
+        context={resolvedContext}
+        fight={fight}
       />
       {modalPlayerId !== null && (
         <PlayerCardModal

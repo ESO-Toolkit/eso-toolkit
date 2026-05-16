@@ -2,9 +2,10 @@ import { Box, Typography, Avatar, LinearProgress, Tooltip, Chip, Stack } from '@
 import React, { useState, useMemo } from 'react';
 
 import { useRoleColors } from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
+import type { FightFragment } from '../../../graphql/gql/graphql';
 import { MUTED_ORANGE_PROGRESS_DARK, MUTED_ORANGE_PROGRESS_LIGHT } from '../../../utils/roleColors';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
-import type { UptimeTimelineSeries } from '../insights/utils/buildUptimeTimeline';
 
 import { DamageTimelineChart } from './DamageTimelineChart';
 
@@ -31,7 +32,8 @@ interface DamageDonePanelViewProps {
   selectedTargetIds?: Set<number>;
   availableTargets?: Array<{ id: number; name: string }>;
   onPlayerClick?: (playerId: string) => void;
-  uptimeSeries?: UptimeTimelineSeries[];
+  context?: ReportFightContextInput;
+  fight?: FightFragment | null;
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
@@ -48,7 +50,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   selectedTargetIds = new Set(),
   availableTargets = [],
   onPlayerClick,
-  uptimeSeries,
+  context,
+  fight,
 }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
@@ -1272,7 +1275,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           availableTargets={availableTargets}
           isLoading={isDamageOverTimeLoading}
           height={400}
-          uptimeSeries={uptimeSeries}
+          context={context}
+          fight={fight}
         />
       </Box>
     </Box>

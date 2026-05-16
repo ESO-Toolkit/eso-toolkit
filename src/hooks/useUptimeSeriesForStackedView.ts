@@ -4,6 +4,7 @@ import {
   buildUptimeTimelineSeries,
   type UptimeTimelineSeries,
 } from '../features/report_details/insights/utils/buildUptimeTimeline';
+import type { ReportFightContextInput } from '../store/contextTypes';
 import { computeBuffUptimes } from '../utils/buffUptimeCalculator';
 import type { FightFragment } from '../graphql/gql/graphql';
 
@@ -17,11 +18,19 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
   145976, 145977, 46537, 46538, 46536,
 ]);
 
-export function useUptimeSeriesForStackedView(
-  fight: FightFragment | null | undefined,
-): { uptimeSeries: UptimeTimelineSeries[]; isLoading: boolean } {
-  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
-  const { reportMasterData } = useReportMasterData();
+interface UseUptimeSeriesOptions {
+  fight: FightFragment | null | undefined;
+  context?: ReportFightContextInput;
+  enabled?: boolean;
+}
+
+export function useUptimeSeriesForStackedView({
+  fight,
+  context,
+  enabled = true,
+}: UseUptimeSeriesOptions): { uptimeSeries: UptimeTimelineSeries[]; isLoading: boolean } {
+  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask({ context });
+  const { reportMasterData } = useReportMasterData({ context });
 
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
@@ -33,7 +42,7 @@ export function useUptimeSeriesForStackedView(
   }, [fight?.friendlyPlayers]);
 
   const uptimeSeries = React.useMemo(() => {
-    if (!buffLookupData || friendlyPlayerIds.size === 0 || !fightDuration || !fightStartTime || !fightEndTime) {
+    if (!enabled || !buffLookupData || friendlyPlayerIds.size === 0 || !fightDuration || !fightStartTime || !fightEndTime) {
       return [];
     }
 
@@ -81,6 +90,7 @@ export function useUptimeSeriesForStackedView(
       targetFilter: friendlyPlayerIds.size > 0 ? friendlyPlayerIds : null,
     });
   }, [
+    enabled,
     buffLookupData,
     reportMasterData?.abilitiesById,
     friendlyPlayerIds,
@@ -89,5 +99,5 @@ export function useUptimeSeriesForStackedView(
     fightDuration,
   ]);
 
-  return { uptimeSeries, isLoading: isBuffLookupLoading };
+  return { uptimeSeries, isLoading: enabled ? isBuffLookupLoading : false };
 }
