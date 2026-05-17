@@ -141,6 +141,7 @@ export function buildBaseOption(theme: EChartsThemeOptions): Record<string, unkn
     },
     tooltip: {
       trigger: 'axis',
+      appendToBody: true,
       backgroundColor: theme.tooltipBg,
       borderColor: theme.tooltipBorder,
       borderWidth: 1,
