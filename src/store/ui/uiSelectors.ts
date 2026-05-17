@@ -33,6 +33,8 @@ export const selectMyReportsPage = (state: RootState): RootState['ui']['myReport
   state.ui.myReportsPage;
 
 export const selectPerfTier = (state: RootState): RootState['ui']['perfTier'] => state.ui.perfTier;
+export const selectChartIntensity = (state: RootState): RootState['ui']['chartIntensity'] =>
+  state.ui.chartIntensity ?? 'subtle';
 export const selectPerfTierOverride = (state: RootState): RootState['ui']['perfTierOverride'] =>
   state.ui.perfTierOverride;
 // Tier the app should actually apply — override wins when set to anything

@@ -13,15 +13,17 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { LineChart } from '../../../components/LazyCharts';
-import '../../../utils/chartRegistration';
+import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { useRoleColors } from '../../../hooks';
-import { usePhaseAnnotations } from '../../../hooks/useChartAnnotations';
+import { usePhaseMarkLines } from '../../../hooks/useEChartsAnnotations';
+import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';
+import { buildGoalMarkLine } from '../../../utils/echartsAnnotationUtils';
+import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 export interface DamageReductionDataPoint {
@@ -75,46 +77,113 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
   const theme = useTheme();
   const roleColors = useRoleColors();
 
-  // Delay chart rendering to allow accordion animation to complete smoothly
-  const [shouldRenderChart, setShouldRenderChart] = React.useState(false);
+  const { theme: echartsTheme } = useEChartsTheme();
 
-  React.useEffect(() => {
-    if (expanded) {
-      // Small delay to let the accordion animation complete before rendering the chart
-      const timer = setTimeout(() => {
-        setShouldRenderChart(true);
-      }, 150); // 150ms delay matches typical MUI accordion animation duration
-      return () => clearTimeout(timer);
-    } else {
-      setShouldRenderChart(false);
-    }
-  }, [expanded]);
+  const chartData = React.useMemo(() => {
+    if (!damageReductionData?.dataPoints) return [];
+    return damageReductionData.dataPoints.map((point) => [
+      point.relativeTime,
+      point.damageReduction,
+    ]);
+  }, [damageReductionData?.dataPoints]);
 
-  // Memoize expensive chart data transformations to prevent recalculation on every render
-  // Only calculate chart data when we should render the chart to improve performance
-  const chartLabels = React.useMemo(() => {
-    if (!shouldRenderChart || !damageReductionData?.dataPoints) return [];
-    return damageReductionData.dataPoints.map((point) => point.relativeTime.toFixed(1));
-  }, [shouldRenderChart, damageReductionData?.dataPoints]);
-
-  const chartDataPoints = React.useMemo(() => {
-    if (!shouldRenderChart || !damageReductionData?.dataPoints) return [];
-    return damageReductionData.dataPoints.map((point) => ({
-      x: point.relativeTime,
-      y: point.damageReduction,
-    }));
-  }, [shouldRenderChart, damageReductionData?.dataPoints]);
-
-  const staticDataPoints = React.useMemo(() => {
-    if (!shouldRenderChart || !damageReductionData?.dataPoints) return [];
+  const staticChartData = React.useMemo(() => {
+    if (!damageReductionData?.dataPoints) return [];
     const staticDR = resistanceToDamageReduction(damageReductionData.staticResistance);
-    return damageReductionData.dataPoints.map((point) => ({
-      x: point.relativeTime,
-      y: staticDR,
-    }));
-  }, [shouldRenderChart, damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
+    return damageReductionData.dataPoints.map((point) => [point.relativeTime, staticDR]);
+  }, [damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
 
-  const phaseAnnotations = usePhaseAnnotations(phaseTransitionInfo, shouldRenderChart);
+  const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo, expanded);
+
+  const chartOption = React.useMemo(() => {
+    const lineColor = '#2196f3';
+    const staticColor = '#ff9800';
+    const staticDR = damageReductionData
+      ? resistanceToDamageReduction(damageReductionData.staticResistance)
+      : 0;
+
+    const targetLine = buildGoalMarkLine(50, 'Target: 50%', '#ff9800');
+    const staticLine = buildGoalMarkLine(staticDR, `Static: ${staticDR.toFixed(1)}%`, '#ff5722', {
+      position: 'insideStartTop',
+    });
+    const markLineData = [targetLine, staticLine];
+    if (phaseMarkLines?.data) {
+      markLineData.push(...phaseMarkLines.data);
+    }
+
+    return {
+      xAxis: {
+        type: 'value',
+        name: 'Fight Time (seconds)',
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: { color: echartsTheme.mutedColor },
+        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11 },
+        axisLine: { lineStyle: { color: echartsTheme.borderColor } },
+        splitLine: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 60,
+        name: 'Damage Reduction (%)',
+        nameLocation: 'middle',
+        nameGap: 36,
+        nameTextStyle: { color: echartsTheme.mutedColor },
+        axisLabel: {
+          color: echartsTheme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => `${v}%`,
+        },
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: echartsTheme.gridLineColor, type: 'dotted' } },
+      },
+      legend: { show: false },
+      tooltip: {
+        trigger: 'axis',
+        appendToBody: true,
+        formatter: (params: Array<{ seriesName: string; value: number[] }>) => {
+          if (!params[0]) return '';
+          const time = Number(params[0].value[0]).toFixed(1);
+          const lines = params.map(
+            (p) => `<div>${p.seriesName}: <b>${Number(p.value[1]).toFixed(1)}%</b></div>`,
+          );
+          return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor}">Time: ${time}s</div>${lines.join('')}</div>`;
+        },
+      },
+      series: [
+        {
+          name: 'Damage Reduction %',
+          type: 'line',
+          data: chartData,
+          ...steppedLineDefaults(),
+          lineStyle: {
+            color: lineColor,
+            width: 2,
+            ...glowLineStyle(lineColor, echartsTheme.intensity, echartsTheme.perfTier),
+          },
+          areaStyle: gradientAreaStyle(lineColor, echartsTheme.intensity, echartsTheme.perfTier),
+          markLine: {
+            silent: true,
+            symbol: ['none', 'none'],
+            data: markLineData,
+          },
+        },
+        {
+          name: 'Static Reduction',
+          type: 'line',
+          data: staticChartData,
+          showSymbol: false,
+          lineStyle: {
+            color: staticColor,
+            width: 1,
+            type: 'dashed',
+          },
+          emphasis: { disabled: true },
+        },
+      ],
+    };
+  }, [chartData, staticChartData, damageReductionData, phaseMarkLines, echartsTheme]);
 
   if (isLoading || !damageReductionData) {
     return (
@@ -158,8 +227,6 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
     staticResistance,
     averageDynamicResistance,
   } = damageReductionData;
-
-  const staticDamageReduction = resistanceToDamageReduction(staticResistance);
 
   return (
     <Accordion
@@ -528,140 +595,15 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               <CardContent>
                 <Typography
                   variant="h6"
-                  gutterBottom
                   sx={{
+                    mb: 1,
                     textShadow:
                       '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   Damage Reduction Over Time
                 </Typography>
-                <Box sx={{ width: '100%', height: 300 }}>
-                  {shouldRenderChart ? (
-                    <LineChart
-                      data={{
-                        labels: chartLabels,
-                        datasets: [
-                          {
-                            label: 'Damage Reduction %',
-                            data: chartDataPoints,
-                            borderColor: '#2196f3',
-                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                            borderWidth: 2,
-                            fill: false,
-                            stepped: 'after',
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
-                            tension: 0,
-                          },
-                          {
-                            label: 'Static Reduction',
-                            data: staticDataPoints,
-                            borderColor: '#ff9800',
-                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                            borderWidth: 1,
-                            fill: false,
-                            pointRadius: 0,
-                            pointHoverRadius: 0,
-                            tension: 0,
-                            borderDash: [2, 2],
-                          },
-                        ],
-                      }}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: {
-                          intersect: false,
-                          mode: 'index',
-                        },
-                        plugins: {
-                          legend: {
-                            display: true,
-                            position: 'top',
-                          },
-                          tooltip: {
-                            callbacks: {
-                              title: (context) =>
-                                `Time: ${Number(context[0].parsed.x).toFixed(1)}s`,
-                              label: (context) =>
-                                `${context.dataset.label}: ${Number(context.parsed.y).toFixed(1)}%`,
-                            },
-                          },
-                          annotation: {
-                            annotations: {
-                              targetLine: {
-                                type: 'line',
-                                yMin: 50,
-                                yMax: 50,
-                                borderColor: '#ff9800',
-                                borderWidth: 2,
-                                borderDash: [5, 5],
-                                label: {
-                                  display: true,
-                                  content: 'Target: 50%',
-                                  position: 'end',
-                                  backgroundColor: '#ff9800',
-                                  color: 'white',
-                                  padding: 4,
-                                },
-                              },
-                              staticLine: {
-                                type: 'line',
-                                yMin: staticDamageReduction,
-                                yMax: staticDamageReduction,
-                                borderColor: '#ff5722',
-                                borderWidth: 1,
-                                borderDash: [3, 3],
-                                label: {
-                                  display: true,
-                                  content: `Static: ${staticDamageReduction.toFixed(1)}%`,
-                                  position: 'start',
-                                  backgroundColor: '#ff5722',
-                                  color: 'white',
-                                  padding: 4,
-                                },
-                              },
-                              ...(phaseAnnotations ?? {}),
-                            },
-                          },
-                        },
-                        scales: {
-                          x: {
-                            title: {
-                              display: true,
-                              text: 'Fight Time (seconds)',
-                            },
-                            type: 'linear',
-                          },
-                          y: {
-                            title: {
-                              display: true,
-                              text: 'Damage Reduction (%)',
-                            },
-                            min: 0,
-                            max: 60,
-                            ticks: {
-                              callback: (value) => `${value}%`,
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '100%',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      <Typography variant="body2">Loading chart...</Typography>
-                    </Box>
-                  )}
-                </Box>
+                <EChart option={chartOption} height={300} group="fightReport" />
               </CardContent>
             </Card>
           ) : (
@@ -688,7 +630,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   }}
                 >
                   <Typography variant="body2">
-                    📊 Click to expand and view damage reduction timeline chart
+                    Click to expand and view damage reduction timeline chart
                   </Typography>
                 </Box>
               </CardContent>
