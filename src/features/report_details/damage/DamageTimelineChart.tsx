@@ -475,11 +475,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
   const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
   const hasActiveFilters = hiddenPlayerIds.size > 0 || localTargetIds !== null || hiddenBuffNames.size > 0;
-  const resolvedMinHeight = showStacked ? height + 220 : height;
+  const chartHeight = showStacked ? height + 220 : height;
 
   return (
-    <Card sx={{ minHeight: resolvedMinHeight, transition: 'min-height 0.3s ease' }}>
-      <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card>
+      <CardContent>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
           <Typography variant="h6">
@@ -889,7 +889,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         )}
 
         {/* Chart */}
-        <Box ref={chartWrapperRef} sx={{ flex: 1, minHeight: 0 }}>
+        <Box ref={chartWrapperRef} sx={{ height: chartHeight }}>
           <EChart
             option={echartsOption}
             height="100%"
