@@ -2,9 +2,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import LayersIcon from '@mui/icons-material/Layers';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import {
-  Autocomplete,
   Box,
-  TextField,
   Typography,
   Card,
   CardContent,
@@ -200,6 +198,40 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   const buffOptions = React.useMemo(() => {
     return uptimeSeries.map((s) => s.label);
   }, [uptimeSeries]);
+
+  const handlePlayerChipClick = React.useCallback((id: number) => {
+    setHiddenPlayerIds((prev) => {
+      const allIds = new Set(playerOptions.map((p) => p.id));
+      const visibleCount = playerOptions.filter((p) => !prev.has(p.id)).length;
+      if (visibleCount === 1 && !prev.has(id)) {
+        return new Set();
+      }
+      const next = new Set(allIds);
+      next.delete(id);
+      return next;
+    });
+  }, [playerOptions]);
+
+  const handleTargetChipClick = React.useCallback((id: number) => {
+    setLocalTargetIds((prev) => {
+      if (prev !== null && prev.length === 1 && prev[0] === id) {
+        return null;
+      }
+      return [id];
+    });
+  }, []);
+
+  const handleBuffChipClick = React.useCallback((name: string) => {
+    setHiddenBuffNames((prev) => {
+      const visibleCount = buffOptions.filter((b) => !prev.has(b)).length;
+      if (visibleCount === 1 && !prev.has(name)) {
+        return new Set();
+      }
+      const next = new Set(buffOptions);
+      next.delete(name);
+      return next;
+    });
+  }, [buffOptions]);
 
   const echartsOption = React.useMemo(() => {
     if (!displayData) return null;
@@ -445,7 +477,8 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
   const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
   const hasActiveFilters = hiddenPlayerIds.size > 0 || localTargetIds !== null || hiddenBuffNames.size > 0;
-  const filterHeight = showFilters ? (showStacked ? 100 : 70) : 0;
+  const filterRowCount = showFilters ? (showStacked && buffOptions.length > 0 ? 3 : 2) : 0;
+  const filterHeight = filterRowCount * 34;
   const resolvedHeight = (showStacked ? height + 220 : height) + filterHeight;
 
   return (
@@ -496,61 +529,87 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
         {/* Filter Row */}
         <Collapse in={showFilters}>
-          <Stack direction="row" spacing={1.5} sx={{ mb: 1, flexWrap: 'wrap', rowGap: 1 }}>
-            <Autocomplete
-              multiple
-              size="small"
-              limitTags={2}
-              disableCloseOnSelect
-              options={playerOptions}
-              getOptionLabel={(o) => o.name}
-              value={playerOptions.filter((p) => !hiddenPlayerIds.has(p.id))}
-              onChange={(_, selected) => {
-                const selectedIds = new Set(selected.map((s) => s.id));
-                setHiddenPlayerIds(new Set(playerOptions.filter((p) => !selectedIds.has(p.id)).map((p) => p.id)));
-              }}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
-              renderInput={(params) => <TextField {...params} label="Players" />}
-              sx={{ minWidth: 200, flex: 1 }}
-            />
-            <Autocomplete
-              multiple
-              size="small"
-              limitTags={2}
-              disableCloseOnSelect
-              options={availableTargets}
-              getOptionLabel={(o) => o.name}
-              value={localTargetIds !== null
-                ? availableTargets.filter((t) => localTargetIds.includes(t.id))
-                : availableTargets}
-              onChange={(_, selected) => {
-                if (selected.length === availableTargets.length || selected.length === 0) {
-                  setLocalTargetIds(null);
-                } else {
-                  setLocalTargetIds(selected.map((s) => s.id));
-                }
-              }}
-              isOptionEqualToValue={(o, v) => o.id === v.id}
-              renderInput={(params) => <TextField {...params} label="Targets" />}
-              sx={{ minWidth: 200, flex: 1 }}
-            />
-            {showStacked && (
-              <Autocomplete
-                multiple
+          <Box sx={{ mb: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+            {/* Player chips */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, fontWeight: 600, minWidth: 48 }}>
+                Players
+              </Typography>
+              <Chip
+                label="All"
                 size="small"
-                limitTags={2}
-                disableCloseOnSelect
-                options={buffOptions}
-                value={buffOptions.filter((b) => !hiddenBuffNames.has(b))}
-                onChange={(_, selected) => {
-                  const selectedSet = new Set(selected);
-                  setHiddenBuffNames(new Set(buffOptions.filter((b) => !selectedSet.has(b))));
-                }}
-                renderInput={(params) => <TextField {...params} label="Buffs" />}
-                sx={{ minWidth: 200, flex: 1 }}
+                variant={hiddenPlayerIds.size === 0 ? 'filled' : 'outlined'}
+                color={hiddenPlayerIds.size === 0 ? 'primary' : 'default'}
+                onClick={() => setHiddenPlayerIds(new Set())}
+                sx={{ height: 24, fontSize: '0.7rem' }}
               />
+              {playerOptions.map((p) => (
+                <Chip
+                  key={p.id}
+                  label={p.name}
+                  size="small"
+                  variant={hiddenPlayerIds.has(p.id) ? 'outlined' : 'filled'}
+                  color={hiddenPlayerIds.has(p.id) ? 'default' : 'primary'}
+                  onClick={() => handlePlayerChipClick(p.id)}
+                  sx={{ height: 24, fontSize: '0.7rem', opacity: hiddenPlayerIds.has(p.id) ? 0.5 : 1 }}
+                />
+              ))}
+            </Box>
+            {/* Target chips */}
+            {availableTargets.length > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, fontWeight: 600, minWidth: 48 }}>
+                  Targets
+                </Typography>
+                <Chip
+                  label="All"
+                  size="small"
+                  variant={localTargetIds === null ? 'filled' : 'outlined'}
+                  color={localTargetIds === null ? 'primary' : 'default'}
+                  onClick={() => setLocalTargetIds(null)}
+                  sx={{ height: 24, fontSize: '0.7rem' }}
+                />
+                {availableTargets.map((t) => (
+                  <Chip
+                    key={t.id}
+                    label={t.name}
+                    size="small"
+                    variant={localTargetIds !== null && !localTargetIds.includes(t.id) ? 'outlined' : 'filled'}
+                    color={localTargetIds !== null && !localTargetIds.includes(t.id) ? 'default' : 'primary'}
+                    onClick={() => handleTargetChipClick(t.id)}
+                    sx={{ height: 24, fontSize: '0.7rem', opacity: localTargetIds !== null && !localTargetIds.includes(t.id) ? 0.5 : 1 }}
+                  />
+                ))}
+              </Box>
             )}
-          </Stack>
+            {/* Buff chips */}
+            {showStacked && buffOptions.length > 0 && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+                <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, fontWeight: 600, minWidth: 48 }}>
+                  Buffs
+                </Typography>
+                <Chip
+                  label="All"
+                  size="small"
+                  variant={hiddenBuffNames.size === 0 ? 'filled' : 'outlined'}
+                  color={hiddenBuffNames.size === 0 ? 'primary' : 'default'}
+                  onClick={() => setHiddenBuffNames(new Set())}
+                  sx={{ height: 24, fontSize: '0.7rem' }}
+                />
+                {buffOptions.map((b) => (
+                  <Chip
+                    key={b}
+                    label={b}
+                    size="small"
+                    variant={hiddenBuffNames.has(b) ? 'outlined' : 'filled'}
+                    color={hiddenBuffNames.has(b) ? 'default' : 'primary'}
+                    onClick={() => handleBuffChipClick(b)}
+                    sx={{ height: 24, fontSize: '0.7rem', opacity: hiddenBuffNames.has(b) ? 0.5 : 1 }}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
         </Collapse>
 
         {/* Lazy loader — only mounts when stacked mode is activated */}
