@@ -231,6 +231,16 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     });
   }, [buffOptions]);
 
+  const visibleLegendEntries = React.useMemo(() => {
+    if (!displayData) return [];
+    return Object.values(displayData)
+      .filter((p) => !hiddenPlayerIds.has(p.playerId))
+      .map((p, index) => ({
+        name: resolvePlayerName ? resolvePlayerName(p.playerId, p.playerName) : p.playerName,
+        color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+      }));
+  }, [displayData, hiddenPlayerIds, resolvePlayerName]);
+
   const echartsOption = React.useMemo(() => {
     if (!displayData) return null;
 
@@ -303,10 +313,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
     const grid = showStacked
       ? [
-          { left: 12, right: 20, top: 40, bottom: '42%', containLabel: true },
+          { left: 12, right: 20, top: 12, bottom: '42%', containLabel: true },
           { left: 12, right: 20, top: '64%', bottom: 60, containLabel: true },
         ]
-      : { left: 12, right: 20, top: 40, bottom: 60, containLabel: true };
+      : { left: 12, right: 20, top: 12, bottom: 60, containLabel: true };
 
     const axisLabelStyle = { color: theme.mutedColor, fontSize: 11 };
     const xSplitLine = { show: false };
@@ -393,14 +403,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         ]
       : undefined;
 
-    const legend = {
-      show: true,
-      top: 4,
-      left: 12,
-      right: 12,
-      type: 'scroll' as const,
-      data: dpsSeries.map((s) => s.name),
-    };
+    const legend = { show: false };
 
     return {
       grid,
@@ -882,6 +885,62 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             )}
           </Box>
         </Collapse>
+
+        {/* Legend — hidden when filter panel is open (it already shows players) */}
+        {!showFilters && visibleLegendEntries.length > 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 0.5,
+              mb: 1,
+              px: 0.5,
+              py: 0.5,
+              borderRadius: '10px',
+              background: theme.darkMode
+                ? 'rgba(15, 23, 42, 0.4)'
+                : 'rgba(248, 250, 252, 0.6)',
+              border: theme.darkMode
+                ? '1px solid rgba(255, 255, 255, 0.06)'
+                : '1px solid rgba(148, 163, 184, 0.12)',
+            }}
+          >
+            {visibleLegendEntries.map((entry) => {
+              const rgb = hexToRgb(entry.color);
+              return (
+                <Box
+                  key={entry.name}
+                  sx={{
+                    height: 26,
+                    borderRadius: '13px',
+                    px: 1,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    color: theme.darkMode ? '#e2e8f0' : '#1e293b',
+                    background: `rgba(${rgb}, ${theme.darkMode ? 0.1 : 0.05})`,
+                    border: `1px solid rgba(${rgb}, ${theme.darkMode ? 0.3 : 0.2})`,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      backgroundColor: entry.color,
+                      flexShrink: 0,
+                      boxShadow: theme.darkMode ? `0 0 5px ${entry.color}` : 'none',
+                    }}
+                  />
+                  {entry.name}
+                </Box>
+              );
+            })}
+          </Box>
+        )}
 
         {/* Lazy loader — only mounts when stacked mode is activated */}
         {stacked && (
