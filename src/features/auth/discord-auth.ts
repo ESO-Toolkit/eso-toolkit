@@ -118,7 +118,10 @@ export async function exchangeDiscordCode(code: string): Promise<DiscordTokenRes
 export function getDiscordReturnPath(): string {
   const path = sessionStorage.getItem(DISCORD_SS_RETURN_PATH_KEY);
   sessionStorage.removeItem(DISCORD_SS_RETURN_PATH_KEY);
-  return path ?? '/';
+  if (path && path.startsWith('/') && !path.startsWith('//')) {
+    return path;
+  }
+  return '/';
 }
 
 // ── Discord API calls ───────────────────────────────────────────────────────

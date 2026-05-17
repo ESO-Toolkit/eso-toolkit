@@ -161,14 +161,20 @@ export interface SendMessageOptions {
   content?: string;
   embeds?: DiscordEmbed[];
   components?: DiscordComponent[];
+  allowed_mentions?: { parse?: string[]; users?: string[]; roles?: string[] };
 }
+
+const SAFE_MENTIONS: SendMessageOptions['allowed_mentions'] = { parse: [] };
 
 export function sendMessage(
   env: Env,
   channelId: string,
   options: SendMessageOptions,
 ): Promise<DiscordMessage> {
-  return discordFetch<DiscordMessage>(env, 'POST', `/channels/${channelId}/messages`, options);
+  return discordFetch<DiscordMessage>(env, 'POST', `/channels/${channelId}/messages`, {
+    allowed_mentions: SAFE_MENTIONS,
+    ...options,
+  });
 }
 
 export function editMessage(
@@ -181,7 +187,7 @@ export function editMessage(
     env,
     'PATCH',
     `/channels/${channelId}/messages/${messageId}`,
-    options,
+    { allowed_mentions: SAFE_MENTIONS, ...options },
   );
 }
 

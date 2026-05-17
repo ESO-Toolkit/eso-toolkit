@@ -8,6 +8,7 @@
 
 import type { PlayerDetails, PlayerEntry, RankingEntry } from './esologs-client';
 import { categorizeGear } from './gear-categorizer';
+
 import { detectTalentInfo, type CompactSkills } from './talent-mapper';
 
 // ─── Compact Types ───────────────────────────────────────────────────────────
