@@ -104,7 +104,12 @@ export function gradientAreaStyle(
   const topOpacity = intensity === 'bold' ? 0.4 : 0.15;
   return {
     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-      { offset: 0, color: `${color}${Math.round(topOpacity * 255).toString(16).padStart(2, '0')}` },
+      {
+        offset: 0,
+        color: `${color}${Math.round(topOpacity * 255)
+          .toString(16)
+          .padStart(2, '0')}`,
+      },
       { offset: 1, color: `${color}00` },
     ]),
   };
@@ -157,9 +162,10 @@ export function buildBaseOption(theme: EChartsThemeOptions): Record<string, unkn
         color: theme.textColor,
         fontSize: 13,
       },
-      extraCssText: theme.intensity === 'bold'
-        ? 'backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.3);'
-        : 'border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.15);',
+      extraCssText:
+        theme.intensity === 'bold'
+          ? 'backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 8px; box-shadow: 0 4px 24px rgba(0,0,0,0.3);'
+          : 'border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.15);',
       axisPointer: {
         type: 'cross',
         crossStyle: { color: theme.mutedColor },

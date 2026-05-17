@@ -14,10 +14,7 @@ import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
-import {
-  usePhaseMarkLines,
-  useInactiveMarkAreas,
-} from '../../../hooks/useEChartsAnnotations';
+import { usePhaseMarkLines, useInactiveMarkAreas } from '../../../hooks/useEChartsAnnotations';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
@@ -132,7 +129,11 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
         nameLocation: 'middle',
         nameGap: 28,
         nameTextStyle: { color: theme.mutedColor },
-        axisLabel: { color: theme.mutedColor, fontSize: 11, formatter: (v: number) => `${v.toFixed(1)}s` },
+        axisLabel: {
+          color: theme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => `${v.toFixed(1)}s`,
+        },
         axisLine: { lineStyle: { color: theme.borderColor } },
         splitLine: { show: false },
       },
@@ -144,7 +145,11 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
         nameLocation: 'middle',
         nameGap: 50,
         nameTextStyle: { color: theme.mutedColor },
-        axisLabel: { color: theme.mutedColor, fontSize: 11, formatter: (v: number) => v.toLocaleString() },
+        axisLabel: {
+          color: theme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => v.toLocaleString(),
+        },
         axisLine: { show: false },
         splitLine: { lineStyle: { color: theme.gridLineColor, type: 'dotted' } },
       },
@@ -395,11 +400,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               >
                 Penetration vs Time
               </Typography>
-              <EChart
-                option={chartOption}
-                height={300}
-                group="fightReport"
-              />
+              <EChart option={chartOption} height={300} group="fightReport" />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 Shows penetration changes over the duration of the fight. Data voxelized to 1-second
                 intervals (highest value per interval). Data points:{' '}

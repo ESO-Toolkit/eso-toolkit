@@ -14,18 +14,15 @@ import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
-import {
-  usePhaseMarkLines,
-  useInactiveMarkAreas,
-} from '../../../hooks/useEChartsAnnotations';
+import { usePhaseMarkLines, useInactiveMarkAreas } from '../../../hooks/useEChartsAnnotations';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { buildGoalMarkLine } from '../../../utils/echartsAnnotationUtils';
 import {
   CriticalDamageSource,
   CriticalDamageSourceWithActiveState,
 } from '../../../utils/CritDamageUtils';
+import { buildGoalMarkLine } from '../../../utils/echartsAnnotationUtils';
 import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
@@ -132,7 +129,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
   const chartData = React.useMemo(() => {
     return (
-      criticalDamageData?.dataPoints.map((point) => [point.relativeTime, point.criticalDamage]) || []
+      criticalDamageData?.dataPoints.map((point) => [point.relativeTime, point.criticalDamage]) ||
+      []
     );
   }, [criticalDamageData?.dataPoints]);
 
@@ -158,7 +156,11 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         nameLocation: 'middle',
         nameGap: 28,
         nameTextStyle: { color: theme.mutedColor },
-        axisLabel: { color: theme.mutedColor, fontSize: 11, formatter: (v: number) => `${v.toFixed(1)}s` },
+        axisLabel: {
+          color: theme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => `${v.toFixed(1)}s`,
+        },
         axisLine: { lineStyle: { color: theme.borderColor } },
         splitLine: { show: false },
       },
@@ -523,11 +525,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               >
                 Critical Damage vs Time
               </Typography>
-              <EChart
-                option={chartOption}
-                height={300}
-                group="fightReport"
-              />
+              <EChart option={chartOption} height={300} group="fightReport" />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 Shows critical damage changes over the duration of the fight. Data downsampled to
                 0.5-second intervals (highest value per interval). Data points:{' '}

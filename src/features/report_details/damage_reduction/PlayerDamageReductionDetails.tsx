@@ -21,9 +21,9 @@ import { usePhaseMarkLines } from '../../../hooks/useEChartsAnnotations';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';
 import { buildGoalMarkLine } from '../../../utils/echartsAnnotationUtils';
 import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
-import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 export interface DamageReductionDataPoint {
@@ -81,7 +81,10 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
 
   const chartData = React.useMemo(() => {
     if (!damageReductionData?.dataPoints) return [];
-    return damageReductionData.dataPoints.map((point) => [point.relativeTime, point.damageReduction]);
+    return damageReductionData.dataPoints.map((point) => [
+      point.relativeTime,
+      point.damageReduction,
+    ]);
   }, [damageReductionData?.dataPoints]);
 
   const staticChartData = React.useMemo(() => {
@@ -100,12 +103,9 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
       : 0;
 
     const targetLine = buildGoalMarkLine(50, 'Target: 50%', '#ff9800');
-    const staticLine = buildGoalMarkLine(
-      staticDR,
-      `Static: ${staticDR.toFixed(1)}%`,
-      '#ff5722',
-      { position: 'insideStartTop' },
-    );
+    const staticLine = buildGoalMarkLine(staticDR, `Static: ${staticDR.toFixed(1)}%`, '#ff5722', {
+      position: 'insideStartTop',
+    });
     const markLineData = [targetLine, staticLine];
     if (phaseMarkLines?.data) {
       markLineData.push(...phaseMarkLines.data);
@@ -130,7 +130,11 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         nameLocation: 'middle',
         nameGap: 36,
         nameTextStyle: { color: echartsTheme.mutedColor },
-        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11, formatter: (v: number) => `${v}%` },
+        axisLabel: {
+          color: echartsTheme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => `${v}%`,
+        },
         axisLine: { show: false },
         splitLine: { lineStyle: { color: echartsTheme.gridLineColor, type: 'dotted' } },
       },
@@ -599,11 +603,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 >
                   Damage Reduction Over Time
                 </Typography>
-                <EChart
-                  option={chartOption}
-                  height={300}
-                  group="fightReport"
-                />
+                <EChart option={chartOption} height={300} group="fightReport" />
               </CardContent>
             </Card>
           ) : (

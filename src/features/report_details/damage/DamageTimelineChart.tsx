@@ -1,26 +1,18 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import LayersIcon from '@mui/icons-material/Layers';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Collapse,
-  IconButton,
-  Tooltip,
-} from '@mui/material';
+import { Box, Typography, Card, CardContent, Collapse, IconButton, Tooltip } from '@mui/material';
 import { getInstanceByDom } from 'echarts/core';
 import React from 'react';
 
 import { EChart } from '../../../components/EChart';
+import type { FightFragment } from '../../../graphql/gql/graphql';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { useUptimeSeriesForStackedView } from '../../../hooks/useUptimeSeriesForStackedView';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { buildPhaseMarkLines } from '../../../utils/echartsAnnotationUtils';
-import { glowLineStyle, gradientAreaStyle, hexToRgb, steppedLineDefaults } from '../../../utils/echartsTheme';
-import type { FightFragment } from '../../../graphql/gql/graphql';
+import { glowLineStyle, gradientAreaStyle, hexToRgb } from '../../../utils/echartsTheme';
 import type {
   DamageOverTimeResult,
   PlayerDamageOverTimeData,
@@ -44,9 +36,18 @@ const PLAYER_COLORS = [
 ] as const;
 
 const UPTIME_COLORS = [
-  '#7c3aed', '#2563eb', '#059669', '#dc2626', '#f97316',
-  '#14b8a6', '#a855f7', '#f59e0b', '#0ea5e9', '#f43f5e',
-  '#22c55e', '#e11d48',
+  '#7c3aed',
+  '#2563eb',
+  '#059669',
+  '#dc2626',
+  '#f97316',
+  '#14b8a6',
+  '#a855f7',
+  '#f59e0b',
+  '#0ea5e9',
+  '#f43f5e',
+  '#22c55e',
+  '#e11d48',
 ] as const;
 
 interface DamageTimelineChartProps {
@@ -197,18 +198,21 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     return uptimeSeries.map((s) => s.label);
   }, [uptimeSeries]);
 
-  const handlePlayerChipClick = React.useCallback((id: number) => {
-    setHiddenPlayerIds((prev) => {
-      const allIds = new Set(playerOptions.map((p) => p.id));
-      const visibleCount = playerOptions.filter((p) => !prev.has(p.id)).length;
-      if (visibleCount === 1 && !prev.has(id)) {
-        return new Set();
-      }
-      const next = new Set(allIds);
-      next.delete(id);
-      return next;
-    });
-  }, [playerOptions]);
+  const handlePlayerChipClick = React.useCallback(
+    (id: number) => {
+      setHiddenPlayerIds((prev) => {
+        const allIds = new Set(playerOptions.map((p) => p.id));
+        const visibleCount = playerOptions.filter((p) => !prev.has(p.id)).length;
+        if (visibleCount === 1 && !prev.has(id)) {
+          return new Set();
+        }
+        const next = new Set(allIds);
+        next.delete(id);
+        return next;
+      });
+    },
+    [playerOptions],
+  );
 
   const handleTargetChipClick = React.useCallback((id: number) => {
     setLocalTargetIds((prev) => {
@@ -219,17 +223,20 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     });
   }, []);
 
-  const handleBuffChipClick = React.useCallback((name: string) => {
-    setHiddenBuffNames((prev) => {
-      const visibleCount = buffOptions.filter((b) => !prev.has(b)).length;
-      if (visibleCount === 1 && !prev.has(name)) {
-        return new Set();
-      }
-      const next = new Set(buffOptions);
-      next.delete(name);
-      return next;
-    });
-  }, [buffOptions]);
+  const handleBuffChipClick = React.useCallback(
+    (name: string) => {
+      setHiddenBuffNames((prev) => {
+        const visibleCount = buffOptions.filter((b) => !prev.has(b)).length;
+        if (visibleCount === 1 && !prev.has(name)) {
+          return new Set();
+        }
+        const next = new Set(buffOptions);
+        next.delete(name);
+        return next;
+      });
+    },
+    [buffOptions],
+  );
 
   const visibleBuffLegendEntries = React.useMemo(() => {
     if (!stacked || uptimeSeries.length === 0) return [];
@@ -432,11 +439,15 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       legend,
       tooltip: {
         trigger: 'axis',
-        formatter: (params: Array<{ seriesName: string; value: number[]; color: string; axisIndex: number }>) => {
+        formatter: (
+          params: Array<{ seriesName: string; value: number[]; color: string; axisIndex: number }>,
+        ) => {
           if (!params[0]) return '';
           const time = Number(params[0].value[0]).toFixed(1);
           const dpsLines = params
-            .filter((p) => p.value[1] > 0 && !uptimeSeriesEcharts.some((s) => s.name === p.seriesName))
+            .filter(
+              (p) => p.value[1] > 0 && !uptimeSeriesEcharts.some((s) => s.name === p.seriesName),
+            )
             .sort((a, b) => b.value[1] - a.value[1])
             .map(
               (p) =>
@@ -446,7 +457,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             );
           const uptimeLines = showStacked
             ? params
-                .filter((p) => uptimeSeriesEcharts.some((s) => s.name === p.seriesName) && p.value[1] > 0)
+                .filter(
+                  (p) => uptimeSeriesEcharts.some((s) => s.name === p.seriesName) && p.value[1] > 0,
+                )
                 .map(
                   (p) =>
                     `<div style="display:flex;align-items:center;gap:6px">` +
@@ -454,23 +467,32 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                     `${p.seriesName}: <b>Active</b></div>`,
                 )
             : [];
-          const allLines = [...dpsLines, ...(uptimeLines.length ? ['<div style="border-top:1px solid rgba(128,128,128,0.3);margin:4px 0"></div>', ...uptimeLines] : [])];
+          const allLines = [
+            ...dpsLines,
+            ...(uptimeLines.length
+              ? [
+                  '<div style="border-top:1px solid rgba(128,128,128,0.3);margin:4px 0"></div>',
+                  ...uptimeLines,
+                ]
+              : []),
+          ];
           return `<div style="font-size:13px"><div style="color:${theme.mutedColor};margin-bottom:4px">Time: ${time}s</div>${allLines.join('')}</div>`;
         },
       },
       ...(dataZoom ? { dataZoom } : {}),
       series: allSeries,
     };
-  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme, stacked, uptimeSeries, resolvePlayerName, hiddenPlayerIds, hiddenBuffNames]);
-
-  // Get target name helper
-  const getTargetName = React.useCallback(
-    (targetId: number): string => {
-      const target = availableTargets.find((t) => t.id === targetId);
-      return target?.name || `Target ${targetId}`;
-    },
-    [availableTargets],
-  );
+  }, [
+    displayData,
+    damageOverTimeData,
+    phaseTransitionInfo,
+    theme,
+    stacked,
+    uptimeSeries,
+    resolvePlayerName,
+    hiddenPlayerIds,
+    hiddenBuffNames,
+  ]);
 
   if (isLoading) {
     return (
@@ -497,7 +519,8 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   }
 
   const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
-  const hasActiveFilters = hiddenPlayerIds.size > 0 || localTargetIds !== null || hiddenBuffNames.size > 0;
+  const hasActiveFilters =
+    hiddenPlayerIds.size > 0 || localTargetIds !== null || hiddenBuffNames.size > 0;
   const chartHeight = showStacked ? height + 300 : height;
 
   return (
@@ -505,9 +528,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       <CardContent>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="h6">
-            Damage Over Time
-          </Typography>
+          <Typography variant="h6">Damage Over Time</Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Tooltip title="Filters">
@@ -553,9 +574,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               mb: 1.5,
               p: 1.5,
               borderRadius: '14px',
-              background: theme.darkMode
-                ? 'rgba(15, 23, 42, 0.6)'
-                : 'rgba(248, 250, 252, 0.8)',
+              background: theme.darkMode ? 'rgba(15, 23, 42, 0.6)' : 'rgba(248, 250, 252, 0.8)',
               backdropFilter: 'blur(12px) saturate(1.2)',
               WebkitBackdropFilter: 'blur(12px) saturate(1.2)',
               border: theme.darkMode
@@ -597,10 +616,16 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   fontWeight: 600,
                   letterSpacing: '0.03em',
                   color: hasActiveFilters
-                    ? (theme.darkMode ? '#38bdf8' : '#0ea5e9')
-                    : (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.4)'),
+                    ? theme.darkMode
+                      ? '#38bdf8'
+                      : '#0ea5e9'
+                    : theme.darkMode
+                      ? 'rgba(148, 163, 184, 0.5)'
+                      : 'rgba(100, 116, 139, 0.4)',
                   background: hasActiveFilters
-                    ? (theme.darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.06)')
+                    ? theme.darkMode
+                      ? 'rgba(56, 189, 248, 0.1)'
+                      : 'rgba(14, 165, 233, 0.06)'
                     : 'transparent',
                   border: hasActiveFilters
                     ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
@@ -608,7 +633,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
                     color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
-                    background: theme.darkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(14, 165, 233, 0.08)',
+                    background: theme.darkMode
+                      ? 'rgba(56, 189, 248, 0.15)'
+                      : 'rgba(14, 165, 233, 0.08)',
                   },
                 }}
               >
@@ -635,8 +662,12 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       fontWeight: isSoloed ? 700 : 600,
                       userSelect: 'none',
                       color: isHidden
-                        ? (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)')
-                        : (theme.darkMode ? '#e2e8f0' : '#1e293b'),
+                        ? theme.darkMode
+                          ? 'rgba(148, 163, 184, 0.5)'
+                          : 'rgba(100, 116, 139, 0.5)'
+                        : theme.darkMode
+                          ? '#e2e8f0'
+                          : '#1e293b',
                       background: isSoloed
                         ? `rgba(${rgb}, ${theme.darkMode ? 0.25 : 0.12})`
                         : isHidden
@@ -708,19 +739,30 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                     fontSize: '0.72rem',
                     fontWeight: 600,
                     letterSpacing: '0.03em',
-                    color: localTargetIds !== null
-                      ? (theme.darkMode ? '#38bdf8' : '#0ea5e9')
-                      : (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.4)'),
-                    background: localTargetIds !== null
-                      ? (theme.darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.06)')
-                      : 'transparent',
-                    border: localTargetIds !== null
-                      ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
-                      : '1.5px solid transparent',
+                    color:
+                      localTargetIds !== null
+                        ? theme.darkMode
+                          ? '#38bdf8'
+                          : '#0ea5e9'
+                        : theme.darkMode
+                          ? 'rgba(148, 163, 184, 0.5)'
+                          : 'rgba(100, 116, 139, 0.4)',
+                    background:
+                      localTargetIds !== null
+                        ? theme.darkMode
+                          ? 'rgba(56, 189, 248, 0.1)'
+                          : 'rgba(14, 165, 233, 0.06)'
+                        : 'transparent',
+                    border:
+                      localTargetIds !== null
+                        ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
+                        : '1.5px solid transparent',
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
-                      background: theme.darkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(14, 165, 233, 0.08)',
+                      background: theme.darkMode
+                        ? 'rgba(56, 189, 248, 0.15)'
+                        : 'rgba(14, 165, 233, 0.08)',
                     },
                   }}
                 >
@@ -728,7 +770,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 </Box>
                 {availableTargets.map((t) => {
                   const isActive = localTargetIds === null || localTargetIds.includes(t.id);
-                  const isSoloed = localTargetIds !== null && localTargetIds.length === 1 && localTargetIds[0] === t.id;
+                  const isSoloed =
+                    localTargetIds !== null &&
+                    localTargetIds.length === 1 &&
+                    localTargetIds[0] === t.id;
                   const targetColor = theme.darkMode ? '#f43f5e' : '#e11d48';
                   const rgb = hexToRgb(targetColor);
                   return (
@@ -747,8 +792,12 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                         fontWeight: isSoloed ? 700 : 600,
                         userSelect: 'none',
                         color: !isActive
-                          ? (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)')
-                          : (theme.darkMode ? '#e2e8f0' : '#1e293b'),
+                          ? theme.darkMode
+                            ? 'rgba(148, 163, 184, 0.5)'
+                            : 'rgba(100, 116, 139, 0.5)'
+                          : theme.darkMode
+                            ? '#e2e8f0'
+                            : '#1e293b',
                         background: isSoloed
                           ? `rgba(${rgb}, ${theme.darkMode ? 0.25 : 0.12})`
                           : !isActive
@@ -763,7 +812,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                           ? `0 0 14px rgba(${rgb}, ${theme.darkMode ? 0.4 : 0.25})`
                           : 'none',
                         opacity: !isActive ? 0.4 : 1,
-                        transform: isSoloed ? 'scale(1.05)' : !isActive ? 'scale(0.95)' : 'scale(1)',
+                        transform: isSoloed
+                          ? 'scale(1.05)'
+                          : !isActive
+                            ? 'scale(0.95)'
+                            : 'scale(1)',
                         filter: !isActive ? 'grayscale(0.7)' : 'none',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         '&:hover': {
@@ -820,19 +873,30 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                     fontSize: '0.72rem',
                     fontWeight: 600,
                     letterSpacing: '0.03em',
-                    color: hiddenBuffNames.size > 0
-                      ? (theme.darkMode ? '#38bdf8' : '#0ea5e9')
-                      : (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.4)'),
-                    background: hiddenBuffNames.size > 0
-                      ? (theme.darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.06)')
-                      : 'transparent',
-                    border: hiddenBuffNames.size > 0
-                      ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
-                      : '1.5px solid transparent',
+                    color:
+                      hiddenBuffNames.size > 0
+                        ? theme.darkMode
+                          ? '#38bdf8'
+                          : '#0ea5e9'
+                        : theme.darkMode
+                          ? 'rgba(148, 163, 184, 0.5)'
+                          : 'rgba(100, 116, 139, 0.4)',
+                    background:
+                      hiddenBuffNames.size > 0
+                        ? theme.darkMode
+                          ? 'rgba(56, 189, 248, 0.1)'
+                          : 'rgba(14, 165, 233, 0.06)'
+                        : 'transparent',
+                    border:
+                      hiddenBuffNames.size > 0
+                        ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
+                        : '1.5px solid transparent',
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
-                      background: theme.darkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(14, 165, 233, 0.08)',
+                      background: theme.darkMode
+                        ? 'rgba(56, 189, 248, 0.15)'
+                        : 'rgba(14, 165, 233, 0.08)',
                     },
                   }}
                 >
@@ -859,8 +923,12 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                         fontWeight: isSoloed ? 700 : 600,
                         userSelect: 'none',
                         color: isHidden
-                          ? (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)')
-                          : (theme.darkMode ? '#e2e8f0' : '#1e293b'),
+                          ? theme.darkMode
+                            ? 'rgba(148, 163, 184, 0.5)'
+                            : 'rgba(100, 116, 139, 0.5)'
+                          : theme.darkMode
+                            ? '#e2e8f0'
+                            : '#1e293b',
                         background: isSoloed
                           ? `rgba(${rgb}, ${theme.darkMode ? 0.25 : 0.12})`
                           : isHidden
@@ -918,9 +986,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               px: 0.5,
               py: 0.5,
               borderRadius: '10px',
-              background: theme.darkMode
-                ? 'rgba(15, 23, 42, 0.4)'
-                : 'rgba(248, 250, 252, 0.6)',
+              background: theme.darkMode ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.6)',
               border: theme.darkMode
                 ? '1px solid rgba(255, 255, 255, 0.06)'
                 : '1px solid rgba(148, 163, 184, 0.12)',
@@ -974,9 +1040,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               px: 0.5,
               py: 0.5,
               borderRadius: '10px',
-              background: theme.darkMode
-                ? 'rgba(15, 23, 42, 0.4)'
-                : 'rgba(248, 250, 252, 0.6)',
+              background: theme.darkMode ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.6)',
               border: theme.darkMode
                 ? '1px solid rgba(255, 255, 255, 0.06)'
                 : '1px solid rgba(148, 163, 184, 0.12)',
@@ -1038,11 +1102,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
         {/* Chart */}
         <Box ref={chartWrapperRef} sx={{ height: chartHeight }}>
-          <EChart
-            option={echartsOption}
-            height="100%"
-            group="fightReport"
-          />
+          <EChart option={echartsOption} height="100%" group="fightReport" />
         </Box>
       </CardContent>
     </Card>

@@ -141,7 +141,11 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
         nameLocation: 'middle',
         nameGap: 28,
         nameTextStyle: { color: echartsTheme.mutedColor },
-        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11, formatter: (v: number) => formatSeconds(v) },
+        axisLabel: {
+          color: echartsTheme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => formatSeconds(v),
+        },
         axisLine: { lineStyle: { color: echartsTheme.borderColor } },
         splitLine: { show: false },
       },
@@ -168,10 +172,11 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
           if (active.length === 0) {
             return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor}">Time: ${time}</div><div>No active effects</div></div>`;
           }
-          const lines = active.map((p) =>
-            `<div style="display:flex;align-items:center;gap:6px">` +
-            `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
-            `${p.seriesName}: <b>Active</b></div>`
+          const lines = active.map(
+            (p) =>
+              `<div style="display:flex;align-items:center;gap:6px">` +
+              `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
+              `${p.seriesName}: <b>Active</b></div>`,
           );
           return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor};margin-bottom:4px">Time: ${time}</div>${lines.join('')}</div>`;
         },
@@ -258,7 +263,9 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
                       gap: 0.5,
                       fontSize: '0.68rem',
                       fontWeight: 600,
-                      color: echartsTheme.darkMode ? 'rgba(226, 232, 240, 0.85)' : 'rgba(30, 41, 59, 0.85)',
+                      color: echartsTheme.darkMode
+                        ? 'rgba(226, 232, 240, 0.85)'
+                        : 'rgba(30, 41, 59, 0.85)',
                       background: `rgba(${rgb}, ${echartsTheme.darkMode ? 0.08 : 0.04})`,
                       border: `1px solid rgba(${rgb}, ${echartsTheme.darkMode ? 0.25 : 0.15})`,
                     }}
@@ -278,11 +285,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
                 );
               })}
             </Box>
-            <EChart
-              option={chartOption}
-              height={380}
-              group="fightReport"
-            />
+            <EChart option={chartOption} height={380} group="fightReport" />
           </>
         ) : (
           <Box
