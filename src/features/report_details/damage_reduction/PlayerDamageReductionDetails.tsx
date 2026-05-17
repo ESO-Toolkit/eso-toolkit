@@ -92,6 +92,92 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
 
   const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo, expanded);
 
+  const chartOption = React.useMemo(() => {
+    const lineColor = '#2196f3';
+    const staticColor = '#ff9800';
+    const staticDR = damageReductionData
+      ? resistanceToDamageReduction(damageReductionData.staticResistance)
+      : 0;
+
+    const targetLine = buildGoalMarkLine(50, 'Target: 50%', '#ff9800');
+    const staticLine = buildGoalMarkLine(
+      staticDR,
+      `Static: ${staticDR.toFixed(1)}%`,
+      '#ff5722',
+      { position: 'insideStartTop' },
+    );
+    const markLineData = [targetLine, staticLine];
+    if (phaseMarkLines?.data) {
+      markLineData.push(...phaseMarkLines.data);
+    }
+
+    return {
+      xAxis: {
+        type: 'value',
+        name: 'Fight Time (seconds)',
+        nameLocation: 'middle',
+        nameGap: 28,
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 60,
+        name: 'Damage Reduction (%)',
+        nameLocation: 'middle',
+        nameGap: 36,
+        axisLabel: {
+          formatter: (v: number) => `${v}%`,
+        },
+      },
+      legend: {
+        show: true,
+        top: 0,
+      },
+      tooltip: {
+        trigger: 'axis',
+        formatter: (params: Array<{ seriesName: string; value: number[] }>) => {
+          if (!params[0]) return '';
+          const time = Number(params[0].value[0]).toFixed(1);
+          const lines = params.map(
+            (p) => `<div>${p.seriesName}: <b>${Number(p.value[1]).toFixed(1)}%</b></div>`,
+          );
+          return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor}">Time: ${time}s</div>${lines.join('')}</div>`;
+        },
+      },
+      series: [
+        {
+          name: 'Damage Reduction %',
+          type: 'line',
+          data: chartData,
+          ...steppedLineDefaults(),
+          lineStyle: {
+            color: lineColor,
+            width: 2,
+            ...glowLineStyle(lineColor, echartsTheme.intensity, echartsTheme.perfTier),
+          },
+          areaStyle: gradientAreaStyle(lineColor, echartsTheme.intensity, echartsTheme.perfTier),
+          markLine: {
+            silent: true,
+            symbol: ['none', 'none'],
+            data: markLineData,
+          },
+        },
+        {
+          name: 'Static Reduction',
+          type: 'line',
+          data: staticChartData,
+          showSymbol: false,
+          lineStyle: {
+            color: staticColor,
+            width: 1,
+            type: 'dashed',
+          },
+          emphasis: { disabled: true },
+        },
+      ],
+    };
+  }, [chartData, staticChartData, damageReductionData, phaseMarkLines, echartsTheme]);
+
   if (isLoading || !damageReductionData) {
     return (
       <Accordion
@@ -134,8 +220,6 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
     staticResistance,
     averageDynamicResistance,
   } = damageReductionData;
-
-  const staticDamageReduction = resistanceToDamageReduction(staticResistance);
 
   return (
     <Accordion
@@ -513,88 +597,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   Damage Reduction Over Time
                 </Typography>
                 <EChart
-                  option={React.useMemo(() => {
-                    const lineColor = '#2196f3';
-                    const staticColor = '#ff9800';
-
-                    const targetLine = buildGoalMarkLine(50, 'Target: 50%', '#ff9800');
-                    const staticLine = buildGoalMarkLine(
-                      staticDamageReduction,
-                      `Static: ${staticDamageReduction.toFixed(1)}%`,
-                      '#ff5722',
-                      { position: 'insideStartTop' },
-                    );
-                    const markLineData = [targetLine, staticLine];
-                    if (phaseMarkLines?.data) {
-                      markLineData.push(...phaseMarkLines.data);
-                    }
-
-                    return {
-                      xAxis: {
-                        type: 'value',
-                        name: 'Fight Time (seconds)',
-                        nameLocation: 'middle',
-                        nameGap: 28,
-                      },
-                      yAxis: {
-                        type: 'value',
-                        min: 0,
-                        max: 60,
-                        name: 'Damage Reduction (%)',
-                        nameLocation: 'middle',
-                        nameGap: 36,
-                        axisLabel: {
-                          formatter: (v: number) => `${v}%`,
-                        },
-                      },
-                      legend: {
-                        show: true,
-                        top: 0,
-                      },
-                      tooltip: {
-                        trigger: 'axis',
-                        formatter: (params: Array<{ seriesName: string; value: number[] }>) => {
-                          if (!params[0]) return '';
-                          const time = Number(params[0].value[0]).toFixed(1);
-                          const lines = params.map(
-                            (p) => `<div>${p.seriesName}: <b>${Number(p.value[1]).toFixed(1)}%</b></div>`,
-                          );
-                          return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor}">Time: ${time}s</div>${lines.join('')}</div>`;
-                        },
-                      },
-                      series: [
-                        {
-                          name: 'Damage Reduction %',
-                          type: 'line',
-                          data: chartData,
-                          ...steppedLineDefaults(),
-                          lineStyle: {
-                            color: lineColor,
-                            width: 2,
-                            ...glowLineStyle(lineColor, echartsTheme.intensity, echartsTheme.perfTier),
-                          },
-                          areaStyle: gradientAreaStyle(lineColor, echartsTheme.intensity, echartsTheme.perfTier),
-                          markLine: {
-                            silent: true,
-                            symbol: ['none', 'none'],
-                            data: markLineData,
-                          },
-                        },
-                        {
-                          name: 'Static Reduction',
-                          type: 'line',
-                          data: staticChartData,
-                          showSymbol: false,
-                          lineStyle: {
-                            color: staticColor,
-                            width: 1,
-                            type: 'dashed',
-                          },
-                          emphasis: { disabled: true },
-                        },
-                      ],
-                    };
-                  }, [chartData, staticChartData, staticDamageReduction, phaseMarkLines, echartsTheme])}
+                  option={chartOption}
                   height={300}
                   group="fightReport"
                 />

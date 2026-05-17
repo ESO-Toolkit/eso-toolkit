@@ -39,7 +39,7 @@ export function useECharts(
       instance.setOption(optionRef.current, { notMerge: true });
     }
 
-    const ro = new ResizeObserver(() => {
+    const ro = new ResizeObserver((_entries, _observer) => {
       if (!instance.isDisposed()) {
         instance.resize({ animation: { duration: 200 } });
       }

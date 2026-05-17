@@ -22,9 +22,13 @@ const EChartInner: React.FC<EChartInnerProps> = ({
   style,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { theme, baseOption } = useEChartsTheme();
+  const { baseOption } = useEChartsTheme();
 
   const mergedOption = useMemo(() => {
+    const mergedGrid = option.grid !== undefined
+      ? option.grid
+      : baseOption.grid;
+
     return {
       ...baseOption,
       ...option,
@@ -39,10 +43,7 @@ const EChartInner: React.FC<EChartInnerProps> = ({
         ...(baseOption.tooltip as Record<string, unknown>),
         ...(option.tooltip as Record<string, unknown> | undefined),
       },
-      grid: {
-        ...(baseOption.grid as Record<string, unknown>),
-        ...(option.grid as Record<string, unknown> | undefined),
-      },
+      grid: mergedGrid,
       legend: option.legend !== undefined
         ? typeof option.legend === 'object' && option.legend !== null
           ? { ...(baseOption.legend as Record<string, unknown>), ...option.legend }
