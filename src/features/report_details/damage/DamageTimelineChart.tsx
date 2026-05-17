@@ -231,6 +231,16 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     });
   }, [buffOptions]);
 
+  const visibleBuffLegendEntries = React.useMemo(() => {
+    if (!stacked || uptimeSeries.length === 0) return [];
+    return uptimeSeries
+      .filter((s) => !hiddenBuffNames.has(s.label))
+      .map((s, index) => ({
+        name: s.label,
+        color: UPTIME_COLORS[index % UPTIME_COLORS.length],
+      }));
+  }, [stacked, uptimeSeries, hiddenBuffNames]);
+
   const visibleLegendEntries = React.useMemo(() => {
     if (!displayData) return [];
     return Object.values(displayData)
@@ -296,25 +306,38 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       return {
         name: dataset.label,
         type: 'line' as const,
-        data: dataset.points.map((p: { x: number; y: number }) => [p.x, p.y]),
+        data: dataset.points.map((p: { x: number; y: number }) => [
+          p.x,
+          p.y > 0 ? index + 0.85 : index,
+        ]),
         xAxisIndex: 1,
         yAxisIndex: 1,
-        ...steppedLineDefaults(),
+        step: 'end' as const,
+        showSymbol: false,
+        symbolSize: 0,
         lineStyle: {
           color,
-          width: 1.5,
-          ...glowLineStyle(color, theme.intensity, theme.perfTier),
+          width: 1,
+          opacity: 0.7,
         },
-        areaStyle: gradientAreaStyle(color, theme.intensity, theme.perfTier),
+        areaStyle: {
+          color: color + '30',
+          origin: index,
+        },
+        emphasis: {
+          areaStyle: { color: color + '55' },
+          lineStyle: { width: 1.5, opacity: 1 },
+        },
       };
     });
 
     const allSeries = [...dpsSeries, ...uptimeSeriesEcharts];
 
+    const buffCount = filteredUptimeSeries.length;
     const grid = showStacked
       ? [
-          { left: 12, right: 20, top: 12, bottom: '42%', containLabel: true },
-          { left: 12, right: 20, top: '64%', bottom: 60, containLabel: true },
+          { left: 12, right: 20, top: 12, bottom: '46%', containLabel: true },
+          { left: 12, right: 20, top: '58%', bottom: 60, containLabel: true },
         ]
       : { left: 12, right: 20, top: 12, bottom: 60, containLabel: true };
 
@@ -373,15 +396,12 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           {
             type: 'value',
             gridIndex: 1,
-            min: 0,
-            max: 1.1,
-            name: 'Buffs',
-            nameLocation: 'middle',
-            nameGap: 36,
-            nameTextStyle: { color: theme.mutedColor },
-            axisLabel: { ...axisLabelStyle, formatter: (v: number) => (v >= 1 ? 'Active' : '') },
+            min: -0.2,
+            max: Math.max(buffCount, 1),
+            axisLabel: { show: false },
             axisLine: { show: false },
-            splitLine: ySplitLine,
+            axisTick: { show: false },
+            splitLine: { show: false },
           },
         ]
       : {
@@ -478,7 +498,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
   const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
   const hasActiveFilters = hiddenPlayerIds.size > 0 || localTargetIds !== null || hiddenBuffNames.size > 0;
-  const chartHeight = showStacked ? height + 220 : height;
+  const chartHeight = showStacked ? height + 300 : height;
 
   return (
     <Card>
@@ -933,6 +953,75 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                       backgroundColor: entry.color,
                       flexShrink: 0,
                       boxShadow: theme.darkMode ? `0 0 5px ${entry.color}` : 'none',
+                    }}
+                  />
+                  {entry.name}
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+
+        {/* Buff legend — only when stacked and filters closed */}
+        {!showFilters && visibleBuffLegendEntries.length > 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 0.5,
+              mb: 1,
+              px: 0.5,
+              py: 0.5,
+              borderRadius: '10px',
+              background: theme.darkMode
+                ? 'rgba(15, 23, 42, 0.4)'
+                : 'rgba(248, 250, 252, 0.6)',
+              border: theme.darkMode
+                ? '1px solid rgba(255, 255, 255, 0.06)'
+                : '1px solid rgba(148, 163, 184, 0.12)',
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.6rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: theme.darkMode ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)',
+                px: 0.5,
+              }}
+            >
+              Buffs
+            </Typography>
+            {visibleBuffLegendEntries.map((entry) => {
+              const rgb = hexToRgb(entry.color);
+              return (
+                <Box
+                  key={entry.name}
+                  sx={{
+                    height: 22,
+                    borderRadius: '11px',
+                    px: 0.75,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    color: theme.darkMode ? 'rgba(226, 232, 240, 0.85)' : 'rgba(30, 41, 59, 0.85)',
+                    background: `rgba(${rgb}, ${theme.darkMode ? 0.08 : 0.04})`,
+                    border: `1px solid rgba(${rgb}, ${theme.darkMode ? 0.25 : 0.15})`,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: entry.color,
+                      flexShrink: 0,
+                      boxShadow: theme.darkMode ? `0 0 4px ${entry.color}` : 'none',
                     }}
                   />
                   {entry.name}
