@@ -1,23 +1,29 @@
 /**
  * Enhanced Nebula Background Component
  * Cosmic/nebula background with multi-layered blend mode composition,
- * floating particles with glow halos, star fields, and animated nebula clouds
- * Creates a fantasy RPG space atmosphere for the loadout manager
+ * floating particles with glow halos, and animated nebula clouds.
+ *
+ * Performance-aware: respects usePerfTier and prefers-reduced-motion.
+ * Particle count and blur filters are tuned to avoid iOS Safari GPU crashes.
  */
 
 import { Box } from '@mui/material';
 import React, { useMemo } from 'react';
 
-/**
- * Enhanced nebula background with:
- * - Multi-layered blend mode composition
- * - SVG turbulence for organic movement
- * - Improved particle system with glow halos
- */
+import { usePerfTier } from '../../../hooks/usePerfTier';
+
+const PARTICLE_COUNTS: Record<string, number> = {
+  low: 0,
+  medium: 20,
+  high: 25,
+};
+
 export const NebulaBackground: React.FC = () => {
-  // Generate particles with enhanced properties
+  const perfTier = usePerfTier();
+  const particleCount = PARTICLE_COUNTS[perfTier] ?? 20;
+
   const particles = useMemo(() => {
-    return Array.from({ length: 60 }, (_, i) => ({
+    return Array.from({ length: particleCount }, (_, i) => ({
       id: i,
       size: Math.random() * 4 + 1,
       left: Math.random() * 100,
@@ -25,9 +31,11 @@ export const NebulaBackground: React.FC = () => {
       duration: 8 + Math.random() * 15,
       delay: Math.random() * 8,
       opacity: 0.15 + Math.random() * 0.6,
-      hasGlow: Math.random() > 0.7, // 30% of particles have glow
+      hasGlow: Math.random() > 0.7,
     }));
-  }, []);
+  }, [particleCount]);
+
+  const animate = perfTier !== 'low';
 
   return (
     <>
@@ -59,9 +67,11 @@ export const NebulaBackground: React.FC = () => {
             0%, 100% { transform: scale(1) translate(0, 0) rotate(0deg); }
             50% { transform: scale(1.2) translate(25px, -10px) rotate(-2deg); }
           }
-          @keyframes starTwinkle {
-            0%, 100% { opacity: 0.2; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.3); }
+          @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+              animation-duration: 0.01ms !important;
+              animation-iteration-count: 1 !important;
+            }
           }
         `}
       </style>
@@ -81,7 +91,7 @@ export const NebulaBackground: React.FC = () => {
         }}
       />
 
-      {/* Layer 2: Animated nebula clouds with blur */}
+      {/* Layer 2: Nebula clouds — pre-diffused gradients, no filter:blur */}
       <Box
         sx={{
           position: 'fixed',
@@ -90,78 +100,72 @@ export const NebulaBackground: React.FC = () => {
           pointerEvents: 'none',
         }}
       >
-        {/* Purple nebula cloud */}
         <Box
           sx={{
             position: 'absolute',
-            width: '70%',
-            height: '70%',
-            top: '15%',
-            left: '5%',
-            background: 'radial-gradient(ellipse, rgba(120, 60, 230, 0.2), transparent 70%)',
-            filter: 'blur(80px)',
-            animation: 'nebulaDriftSlow 40s ease-in-out infinite',
+            width: '90%',
+            height: '90%',
+            top: '5%',
+            left: '-5%',
+            background: 'radial-gradient(ellipse, rgba(120, 60, 230, 0.12) 0%, transparent 55%)',
+            animation: animate ? 'nebulaDriftSlow 40s ease-in-out infinite' : 'none',
           }}
         />
-
-        {/* Cyan nebula cloud */}
         <Box
           sx={{
             position: 'absolute',
-            width: '55%',
-            height: '55%',
-            bottom: '15%',
-            right: '5%',
-            background: 'radial-gradient(ellipse, rgba(0, 217, 255, 0.15), transparent 70%)',
-            filter: 'blur(70px)',
-            animation: 'nebulaDriftMedium 30s ease-in-out infinite reverse',
+            width: '75%',
+            height: '75%',
+            bottom: '5%',
+            right: '-5%',
+            background: 'radial-gradient(ellipse, rgba(0, 217, 255, 0.09) 0%, transparent 55%)',
+            animation: animate ? 'nebulaDriftMedium 30s ease-in-out infinite reverse' : 'none',
           }}
         />
-
-        {/* Magenta accent nebula */}
         <Box
           sx={{
             position: 'absolute',
-            width: '45%',
-            height: '45%',
-            top: '35%',
-            right: '25%',
-            background: 'radial-gradient(ellipse, rgba(180, 60, 200, 0.12), transparent 70%)',
-            filter: 'blur(60px)',
-            animation: 'nebulaDriftSlow 50s ease-in-out infinite',
+            width: '65%',
+            height: '65%',
+            top: '25%',
+            right: '15%',
+            background: 'radial-gradient(ellipse, rgba(180, 60, 200, 0.07) 0%, transparent 55%)',
+            animation: animate ? 'nebulaDriftSlow 50s ease-in-out infinite' : 'none',
           }}
         />
       </Box>
 
       {/* Layer 3: Star particles */}
-      <Box
-        sx={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 2,
-          pointerEvents: 'none',
-        }}
-      >
-        {particles.map((p) => (
-          <Box
-            key={p.id}
-            sx={{
-              position: 'absolute',
-              width: p.size,
-              height: p.size,
-              background: `rgba(255, 255, 255, ${p.opacity})`,
-              borderRadius: '50%',
-              left: `${p.left}%`,
-              top: `${p.top}%`,
-              animation: `nebulaFloat ${p.duration}s ease-in-out infinite`,
-              animationDelay: `${p.delay}s`,
-              boxShadow: p.hasGlow
-                ? `0 0 ${p.size * 3}px rgba(255, 255, 255, ${p.opacity * 0.6})`
-                : 'none',
-            }}
-          />
-        ))}
-      </Box>
+      {particleCount > 0 && (
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+        >
+          {particles.map((p) => (
+            <Box
+              key={p.id}
+              sx={{
+                position: 'absolute',
+                width: p.size,
+                height: p.size,
+                background: `rgba(255, 255, 255, ${p.opacity})`,
+                borderRadius: '50%',
+                left: `${p.left}%`,
+                top: `${p.top}%`,
+                animation: `nebulaFloat ${p.duration}s ease-in-out infinite`,
+                animationDelay: `${p.delay}s`,
+                boxShadow: p.hasGlow
+                  ? `0 0 ${p.size * 3}px rgba(255, 255, 255, ${p.opacity * 0.6})`
+                  : 'none',
+              }}
+            />
+          ))}
+        </Box>
+      )}
 
       {/* Layer 4: Subtle grid overlay */}
       <Box
