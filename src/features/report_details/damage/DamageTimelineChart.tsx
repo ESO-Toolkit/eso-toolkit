@@ -1,11 +1,15 @@
+import FilterListIcon from '@mui/icons-material/FilterList';
 import LayersIcon from '@mui/icons-material/Layers';
 import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import {
+  Autocomplete,
   Box,
+  TextField,
   Typography,
   Card,
   CardContent,
   Chip,
+  Collapse,
   Stack,
   IconButton,
   Tooltip,
@@ -87,6 +91,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   const { theme } = useEChartsTheme();
   const [stacked, setStacked] = React.useState(false);
   const [uptimeSeries, setUptimeSeries] = React.useState<UptimeTimelineSeries[]>([]);
+  const [showFilters, setShowFilters] = React.useState(false);
+  const [hiddenPlayerIds, setHiddenPlayerIds] = React.useState<Set<number>>(new Set());
+  const [localTargetIds, setLocalTargetIds] = React.useState<number[] | null>(null);
+  const [hiddenBuffNames, setHiddenBuffNames] = React.useState<Set<string>>(new Set());
   const chartWrapperRef = React.useRef<HTMLDivElement>(null);
   const handleUptimeData = React.useCallback((series: UptimeTimelineSeries[]) => {
     setUptimeSeries(series);
@@ -104,10 +112,15 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     a.click();
   }, []);
 
+  const effectiveTargetIds = React.useMemo(() => {
+    if (localTargetIds !== null) return new Set(localTargetIds);
+    return selectedTargetIds;
+  }, [localTargetIds, selectedTargetIds]);
+
   const displayData = React.useMemo(() => {
     if (!damageOverTimeData) return null;
 
-    if (selectedTargetIds.size === 0) {
+    if (effectiveTargetIds.size === 0) {
       return damageOverTimeData.allTargets;
     }
 
@@ -116,7 +129,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     Object.values(damageOverTimeData.allTargets).forEach((playerData) => {
       const playerId = playerData.playerId;
       const playerTargetData: PlayerDamageOverTimeData[] = [];
-      for (const targetId of selectedTargetIds) {
+      for (const targetId of effectiveTargetIds) {
         const targetData = damageOverTimeData.byTarget[targetId]?.[playerId];
         if (targetData) {
           playerTargetData.push(targetData);
@@ -174,12 +187,24 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     });
 
     return combinedData;
-  }, [damageOverTimeData, selectedTargetIds]);
+  }, [damageOverTimeData, effectiveTargetIds]);
+
+  const playerOptions = React.useMemo(() => {
+    if (!displayData) return [];
+    return Object.values(displayData).map((p) => ({
+      id: p.playerId,
+      name: resolvePlayerName ? resolvePlayerName(p.playerId, p.playerName) : p.playerName,
+    }));
+  }, [displayData, resolvePlayerName]);
+
+  const buffOptions = React.useMemo(() => {
+    return uptimeSeries.map((s) => s.label);
+  }, [uptimeSeries]);
 
   const echartsOption = React.useMemo(() => {
     if (!displayData) return null;
 
-    const players = Object.values(displayData);
+    const players = Object.values(displayData).filter((p) => !hiddenPlayerIds.has(p.playerId));
     if (players.length === 0) return null;
 
     const bucketSizeSeconds = (damageOverTimeData?.bucketSizeMs || 1000) / 1000;
@@ -222,25 +247,27 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       };
     });
 
-    const uptimeSeriesEcharts = showStacked
-      ? uptimeSeries!.map((dataset, index) => {
-          const color = UPTIME_COLORS[index % UPTIME_COLORS.length];
-          return {
-            name: dataset.label,
-            type: 'line' as const,
-            data: dataset.points.map((p: { x: number; y: number }) => [p.x, p.y]),
-            xAxisIndex: 1,
-            yAxisIndex: 1,
-            ...steppedLineDefaults(),
-            lineStyle: {
-              color,
-              width: 1.5,
-              ...glowLineStyle(color, theme.intensity, theme.perfTier),
-            },
-            areaStyle: gradientAreaStyle(color, theme.intensity, theme.perfTier),
-          };
-        })
+    const filteredUptimeSeries = showStacked
+      ? uptimeSeries!.filter((s) => !hiddenBuffNames.has(s.label))
       : [];
+
+    const uptimeSeriesEcharts = filteredUptimeSeries.map((dataset, index) => {
+      const color = UPTIME_COLORS[index % UPTIME_COLORS.length];
+      return {
+        name: dataset.label,
+        type: 'line' as const,
+        data: dataset.points.map((p: { x: number; y: number }) => [p.x, p.y]),
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        ...steppedLineDefaults(),
+        lineStyle: {
+          color,
+          width: 1.5,
+          ...glowLineStyle(color, theme.intensity, theme.perfTier),
+        },
+        areaStyle: gradientAreaStyle(color, theme.intensity, theme.perfTier),
+      };
+    });
 
     const allSeries = [...dpsSeries, ...uptimeSeriesEcharts];
 
@@ -381,7 +408,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       ...(dataZoom ? { dataZoom } : {}),
       series: allSeries,
     };
-  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme, stacked, uptimeSeries, resolvePlayerName]);
+  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme, stacked, uptimeSeries, resolvePlayerName, hiddenPlayerIds, hiddenBuffNames]);
 
   // Get target name helper
   const getTargetName = React.useCallback(
@@ -416,33 +443,35 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     );
   }
 
-  const selectedTargetNames = Array.from(selectedTargetIds).map(getTargetName);
-
   const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
-  const resolvedHeight = showStacked ? height + 220 : height;
+  const hasActiveFilters = hiddenPlayerIds.size > 0 || localTargetIds !== null || hiddenBuffNames.size > 0;
+  const filterHeight = showFilters ? (showStacked ? 100 : 70) : 0;
+  const resolvedHeight = (showStacked ? height + 220 : height) + filterHeight;
 
   return (
     <Card sx={{ height: resolvedHeight, transition: 'height 0.3s ease' }}>
       <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-            <Typography variant="h6">
-              Damage Over Time
-            </Typography>
-            {selectedTargetIds.size > 0 && (
-              <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
-                {selectedTargetNames.slice(0, 3).map((name, index) => (
-                  <Chip key={index} label={name} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
-                ))}
-                {selectedTargetNames.length > 3 && (
-                  <Chip label={`+${selectedTargetNames.length - 3}`} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
-                )}
-              </Stack>
-            )}
-          </Box>
+          <Typography variant="h6">
+            Damage Over Time
+          </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Tooltip title="Filters">
+              <IconButton
+                size="small"
+                onClick={() => setShowFilters((s) => !s)}
+                sx={{
+                  color: hasActiveFilters || showFilters ? 'primary.main' : 'text.secondary',
+                  border: hasActiveFilters ? '1px solid' : '1px solid transparent',
+                  borderColor: hasActiveFilters ? 'primary.main' : 'transparent',
+                  borderRadius: 1,
+                }}
+              >
+                <FilterListIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Save as image">
               <IconButton size="small" onClick={handleSaveAsImage} sx={{ color: 'text.secondary' }}>
                 <SaveAltIcon fontSize="small" />
@@ -464,6 +493,65 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             </Tooltip>
           </Box>
         </Box>
+
+        {/* Filter Row */}
+        <Collapse in={showFilters}>
+          <Stack direction="row" spacing={1.5} sx={{ mb: 1, flexWrap: 'wrap', rowGap: 1 }}>
+            <Autocomplete
+              multiple
+              size="small"
+              limitTags={2}
+              disableCloseOnSelect
+              options={playerOptions}
+              getOptionLabel={(o) => o.name}
+              value={playerOptions.filter((p) => !hiddenPlayerIds.has(p.id))}
+              onChange={(_, selected) => {
+                const selectedIds = new Set(selected.map((s) => s.id));
+                setHiddenPlayerIds(new Set(playerOptions.filter((p) => !selectedIds.has(p.id)).map((p) => p.id)));
+              }}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
+              renderInput={(params) => <TextField {...params} label="Players" />}
+              sx={{ minWidth: 200, flex: 1 }}
+            />
+            <Autocomplete
+              multiple
+              size="small"
+              limitTags={2}
+              disableCloseOnSelect
+              options={availableTargets}
+              getOptionLabel={(o) => o.name}
+              value={localTargetIds !== null
+                ? availableTargets.filter((t) => localTargetIds.includes(t.id))
+                : availableTargets}
+              onChange={(_, selected) => {
+                if (selected.length === availableTargets.length || selected.length === 0) {
+                  setLocalTargetIds(null);
+                } else {
+                  setLocalTargetIds(selected.map((s) => s.id));
+                }
+              }}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
+              renderInput={(params) => <TextField {...params} label="Targets" />}
+              sx={{ minWidth: 200, flex: 1 }}
+            />
+            {showStacked && (
+              <Autocomplete
+                multiple
+                size="small"
+                limitTags={2}
+                disableCloseOnSelect
+                options={buffOptions}
+                value={buffOptions.filter((b) => !hiddenBuffNames.has(b))}
+                onChange={(_, selected) => {
+                  const selectedSet = new Set(selected);
+                  setHiddenBuffNames(new Set(buffOptions.filter((b) => !selectedSet.has(b))));
+                }}
+                renderInput={(params) => <TextField {...params} label="Buffs" />}
+                sx={{ minWidth: 200, flex: 1 }}
+              />
+            )}
+          </Stack>
+        </Collapse>
 
         {/* Lazy loader — only mounts when stacked mode is activated */}
         {stacked && (
