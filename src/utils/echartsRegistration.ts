@@ -1,7 +1,16 @@
-import { use, ComposeOption } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-import { LineChart as ELineChart } from 'echarts/charts';
 import type { LineSeriesOption } from 'echarts/charts';
+import { LineChart as ELineChart } from 'echarts/charts';
+import type {
+  GridComponentOption,
+  TooltipComponentOption,
+  LegendComponentOption,
+  MarkLineComponentOption,
+  MarkAreaComponentOption,
+  DataZoomComponentOption,
+  GraphicComponentOption,
+  ToolboxComponentOption,
+  TitleComponentOption,
+} from 'echarts/components';
 import {
   GridComponent,
   TooltipComponent,
@@ -15,19 +24,10 @@ import {
   ToolboxComponent,
   TitleComponent,
 } from 'echarts/components';
-import type {
-  GridComponentOption,
-  TooltipComponentOption,
-  LegendComponentOption,
-  MarkLineComponentOption,
-  MarkAreaComponentOption,
-  DataZoomComponentOption,
-  GraphicComponentOption,
-  ToolboxComponentOption,
-  TitleComponentOption,
-} from 'echarts/components';
+import { use as registerECharts, ComposeOption } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
 
-use([
+registerECharts([
   CanvasRenderer,
   ELineChart,
   GridComponent,

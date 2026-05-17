@@ -1,7 +1,11 @@
 import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
-import { buildEChartsTheme, buildBaseOption, type EChartsThemeOptions } from '../utils/echartsTheme';
+import {
+  buildEChartsTheme,
+  buildBaseOption,
+  type EChartsThemeOptions,
+} from '../utils/echartsTheme';
 
 import { usePerfTier } from './usePerfTier';
 

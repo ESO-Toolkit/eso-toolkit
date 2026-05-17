@@ -4,18 +4,18 @@ import {
   buildUptimeTimelineSeries,
   type UptimeTimelineSeries,
 } from '../features/report_details/insights/utils/buildUptimeTimeline';
+import type { FightFragment } from '../graphql/gql/graphql';
 import type { ReportFightContextInput } from '../store/contextTypes';
 import { computeBuffUptimes } from '../utils/buffUptimeCalculator';
-import type { FightFragment } from '../graphql/gql/graphql';
 
 import { useBuffLookupTask } from './workerTasks/useBuffLookupTask';
+
 import { useReportMasterData } from './index';
 
 const IMPORTANT_BUFF_ABILITIES = new Set([
-  61536, 61665, 61694, 61697, 61693, 61662, 40225, 92503, 62636, 44731,
-  76667, 92505, 36957, 76672, 148801, 46539, 147417, 46528, 62795, 147418,
-  148798, 148799, 148800, 61898, 61899, 45227, 45228, 45229, 145975,
-  145976, 145977, 46537, 46538, 46536,
+  61536, 61665, 61694, 61697, 61693, 61662, 40225, 92503, 62636, 44731, 76667, 92505, 36957, 76672,
+  148801, 46539, 147417, 46528, 62795, 147418, 148798, 148799, 148800, 61898, 61899, 45227, 45228,
+  45229, 145975, 145976, 145977, 46537, 46538, 46536,
 ]);
 
 interface UseUptimeSeriesOptions {
@@ -42,7 +42,14 @@ export function useUptimeSeriesForStackedView({
   }, [fight?.friendlyPlayers]);
 
   const uptimeSeries = React.useMemo(() => {
-    if (!enabled || !buffLookupData || friendlyPlayerIds.size === 0 || !fightDuration || !fightStartTime || !fightEndTime) {
+    if (
+      !enabled ||
+      !buffLookupData ||
+      friendlyPlayerIds.size === 0 ||
+      !fightDuration ||
+      !fightStartTime ||
+      !fightEndTime
+    ) {
       return [];
     }
 

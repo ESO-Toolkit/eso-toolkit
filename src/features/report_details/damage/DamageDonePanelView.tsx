@@ -1,9 +1,9 @@
 import { Box, Typography, Avatar, LinearProgress, Tooltip, Chip, Stack } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 
+import type { FightFragment } from '../../../graphql/gql/graphql';
 import { useRoleColors } from '../../../hooks';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
-import type { FightFragment } from '../../../graphql/gql/graphql';
 import { MUTED_ORANGE_PROGRESS_DARK, MUTED_ORANGE_PROGRESS_LIGHT } from '../../../utils/roleColors';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
 

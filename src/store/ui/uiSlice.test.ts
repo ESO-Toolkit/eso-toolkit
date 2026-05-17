@@ -28,6 +28,7 @@ describe('uiSlice', () => {
     it('should initialize with correct default values', () => {
       const state = store.getState() as { ui: UIState };
       expect(state.ui).toEqual({
+        chartIntensity: 'subtle',
         darkMode: true,
         selectedPlayerId: null,
         selectedTabId: null,

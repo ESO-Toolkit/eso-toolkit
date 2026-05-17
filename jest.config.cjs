@@ -104,7 +104,7 @@ module.exports = {
 
   // Ignore patterns
   testPathIgnorePatterns: ['node_modules', 'build', 'scribing-e2e\\.(test|spec)\\.(ts|tsx)$'],
-  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three|uuid))'],
+  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three|uuid|echarts|zrender))'],
 
   // Watch plugins
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
