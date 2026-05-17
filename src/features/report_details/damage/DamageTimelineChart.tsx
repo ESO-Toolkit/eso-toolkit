@@ -6,9 +6,7 @@ import {
   Typography,
   Card,
   CardContent,
-  Chip,
   Collapse,
-  Stack,
   IconButton,
   Tooltip,
 } from '@mui/material';
@@ -21,7 +19,7 @@ import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { useUptimeSeriesForStackedView } from '../../../hooks/useUptimeSeriesForStackedView';
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { buildPhaseMarkLines } from '../../../utils/echartsAnnotationUtils';
-import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
+import { glowLineStyle, gradientAreaStyle, hexToRgb, steppedLineDefaults } from '../../../utils/echartsTheme';
 import type { FightFragment } from '../../../graphql/gql/graphql';
 import type {
   DamageOverTimeResult,
@@ -477,12 +475,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
 
   const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
   const hasActiveFilters = hiddenPlayerIds.size > 0 || localTargetIds !== null || hiddenBuffNames.size > 0;
-  const filterRowCount = showFilters ? (showStacked && buffOptions.length > 0 ? 3 : 2) : 0;
-  const filterHeight = filterRowCount * 34;
-  const resolvedHeight = (showStacked ? height + 220 : height) + filterHeight;
+  const resolvedMinHeight = showStacked ? height + 220 : height;
 
   return (
-    <Card sx={{ height: resolvedHeight, transition: 'height 0.3s ease' }}>
+    <Card sx={{ minHeight: resolvedMinHeight, transition: 'min-height 0.3s ease' }}>
       <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
@@ -527,86 +523,361 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           </Box>
         </Box>
 
-        {/* Filter Row */}
-        <Collapse in={showFilters}>
-          <Box sx={{ mb: 1, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-            {/* Player chips */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-              <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, fontWeight: 600, minWidth: 48 }}>
+        {/* Filter Panel */}
+        <Collapse in={showFilters} timeout={250} easing="cubic-bezier(0.4, 0, 0.2, 1)">
+          <Box
+            sx={{
+              mb: 1.5,
+              p: 1.5,
+              borderRadius: '14px',
+              background: theme.darkMode
+                ? 'rgba(15, 23, 42, 0.6)'
+                : 'rgba(248, 250, 252, 0.8)',
+              backdropFilter: 'blur(12px) saturate(1.2)',
+              WebkitBackdropFilter: 'blur(12px) saturate(1.2)',
+              border: theme.darkMode
+                ? '1px solid rgba(56, 189, 248, 0.12)'
+                : '1px solid rgba(148, 163, 184, 0.2)',
+              boxShadow: theme.darkMode
+                ? '0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                : '0 2px 12px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+            }}
+          >
+            {/* Players row */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.65rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  color: theme.darkMode ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.7)',
+                  minWidth: 52,
+                }}
+              >
                 Players
               </Typography>
-              <Chip
-                label="All"
-                size="small"
-                variant={hiddenPlayerIds.size === 0 ? 'filled' : 'outlined'}
-                color={hiddenPlayerIds.size === 0 ? 'primary' : 'default'}
+              <Box
                 onClick={() => setHiddenPlayerIds(new Set())}
-                sx={{ height: 24, fontSize: '0.7rem' }}
-              />
-              {playerOptions.map((p) => (
-                <Chip
-                  key={p.id}
-                  label={p.name}
-                  size="small"
-                  variant={hiddenPlayerIds.has(p.id) ? 'outlined' : 'filled'}
-                  color={hiddenPlayerIds.has(p.id) ? 'default' : 'primary'}
-                  onClick={() => handlePlayerChipClick(p.id)}
-                  sx={{ height: 24, fontSize: '0.7rem', opacity: hiddenPlayerIds.has(p.id) ? 0.5 : 1 }}
-                />
-              ))}
+                sx={{
+                  height: 30,
+                  borderRadius: '15px',
+                  px: 1.25,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.03em',
+                  color: hasActiveFilters
+                    ? (theme.darkMode ? '#38bdf8' : '#0ea5e9')
+                    : (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.4)'),
+                  background: hasActiveFilters
+                    ? (theme.darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.06)')
+                    : 'transparent',
+                  border: hasActiveFilters
+                    ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
+                    : '1.5px solid transparent',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
+                    background: theme.darkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(14, 165, 233, 0.08)',
+                  },
+                }}
+              >
+                All
+              </Box>
+              {playerOptions.map((p, index) => {
+                const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+                const rgb = hexToRgb(color);
+                const isHidden = hiddenPlayerIds.has(p.id);
+                const isSoloed = hiddenPlayerIds.size === playerOptions.length - 1 && !isHidden;
+                return (
+                  <Box
+                    key={p.id}
+                    onClick={() => handlePlayerChipClick(p.id)}
+                    sx={{
+                      height: 30,
+                      borderRadius: '15px',
+                      px: 1.25,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.75,
+                      cursor: 'pointer',
+                      fontSize: '0.78rem',
+                      fontWeight: isSoloed ? 700 : 600,
+                      userSelect: 'none',
+                      color: isHidden
+                        ? (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)')
+                        : (theme.darkMode ? '#e2e8f0' : '#1e293b'),
+                      background: isSoloed
+                        ? `rgba(${rgb}, ${theme.darkMode ? 0.25 : 0.12})`
+                        : isHidden
+                          ? 'transparent'
+                          : `rgba(${rgb}, ${theme.darkMode ? 0.12 : 0.06})`,
+                      border: isSoloed
+                        ? `2px solid ${color}`
+                        : isHidden
+                          ? `1.5px solid rgba(${rgb}, 0.1)`
+                          : `1.5px solid rgba(${rgb}, ${theme.darkMode ? 0.4 : 0.3})`,
+                      boxShadow: isSoloed
+                        ? `0 0 14px rgba(${rgb}, ${theme.darkMode ? 0.4 : 0.25})`
+                        : 'none',
+                      opacity: isHidden ? 0.4 : 1,
+                      transform: isSoloed ? 'scale(1.05)' : isHidden ? 'scale(0.95)' : 'scale(1)',
+                      filter: isHidden ? 'grayscale(0.7)' : 'none',
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        background: `rgba(${rgb}, ${theme.darkMode ? 0.2 : 0.1})`,
+                        boxShadow: `0 0 12px rgba(${rgb}, 0.3)`,
+                        transform: 'translateY(-1px) scale(1.02)',
+                        opacity: 1,
+                        filter: 'none',
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: color,
+                        flexShrink: 0,
+                        boxShadow: theme.darkMode && !isHidden ? `0 0 6px ${color}` : 'none',
+                        transition: 'box-shadow 0.2s ease',
+                      }}
+                    />
+                    {p.name}
+                  </Box>
+                );
+              })}
             </Box>
-            {/* Target chips */}
+
+            {/* Targets row */}
             {availableTargets.length > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-                <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, fontWeight: 600, minWidth: 48 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '0.65rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: theme.darkMode ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.7)',
+                    minWidth: 52,
+                  }}
+                >
                   Targets
                 </Typography>
-                <Chip
-                  label="All"
-                  size="small"
-                  variant={localTargetIds === null ? 'filled' : 'outlined'}
-                  color={localTargetIds === null ? 'primary' : 'default'}
+                <Box
                   onClick={() => setLocalTargetIds(null)}
-                  sx={{ height: 24, fontSize: '0.7rem' }}
-                />
-                {availableTargets.map((t) => (
-                  <Chip
-                    key={t.id}
-                    label={t.name}
-                    size="small"
-                    variant={localTargetIds !== null && !localTargetIds.includes(t.id) ? 'outlined' : 'filled'}
-                    color={localTargetIds !== null && !localTargetIds.includes(t.id) ? 'default' : 'primary'}
-                    onClick={() => handleTargetChipClick(t.id)}
-                    sx={{ height: 24, fontSize: '0.7rem', opacity: localTargetIds !== null && !localTargetIds.includes(t.id) ? 0.5 : 1 }}
-                  />
-                ))}
+                  sx={{
+                    height: 30,
+                    borderRadius: '15px',
+                    px: 1.25,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.03em',
+                    color: localTargetIds !== null
+                      ? (theme.darkMode ? '#38bdf8' : '#0ea5e9')
+                      : (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.4)'),
+                    background: localTargetIds !== null
+                      ? (theme.darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.06)')
+                      : 'transparent',
+                    border: localTargetIds !== null
+                      ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
+                      : '1.5px solid transparent',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
+                      background: theme.darkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(14, 165, 233, 0.08)',
+                    },
+                  }}
+                >
+                  All
+                </Box>
+                {availableTargets.map((t) => {
+                  const isActive = localTargetIds === null || localTargetIds.includes(t.id);
+                  const isSoloed = localTargetIds !== null && localTargetIds.length === 1 && localTargetIds[0] === t.id;
+                  const targetColor = theme.darkMode ? '#f43f5e' : '#e11d48';
+                  const rgb = hexToRgb(targetColor);
+                  return (
+                    <Box
+                      key={t.id}
+                      onClick={() => handleTargetChipClick(t.id)}
+                      sx={{
+                        height: 30,
+                        borderRadius: '15px',
+                        px: 1.25,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        cursor: 'pointer',
+                        fontSize: '0.78rem',
+                        fontWeight: isSoloed ? 700 : 600,
+                        userSelect: 'none',
+                        color: !isActive
+                          ? (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)')
+                          : (theme.darkMode ? '#e2e8f0' : '#1e293b'),
+                        background: isSoloed
+                          ? `rgba(${rgb}, ${theme.darkMode ? 0.25 : 0.12})`
+                          : !isActive
+                            ? 'transparent'
+                            : `rgba(${rgb}, ${theme.darkMode ? 0.1 : 0.05})`,
+                        border: isSoloed
+                          ? `2px solid ${targetColor}`
+                          : !isActive
+                            ? `1.5px solid rgba(${rgb}, 0.1)`
+                            : `1.5px solid rgba(${rgb}, ${theme.darkMode ? 0.35 : 0.25})`,
+                        boxShadow: isSoloed
+                          ? `0 0 14px rgba(${rgb}, ${theme.darkMode ? 0.4 : 0.25})`
+                          : 'none',
+                        opacity: !isActive ? 0.4 : 1,
+                        transform: isSoloed ? 'scale(1.05)' : !isActive ? 'scale(0.95)' : 'scale(1)',
+                        filter: !isActive ? 'grayscale(0.7)' : 'none',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          background: `rgba(${rgb}, ${theme.darkMode ? 0.2 : 0.1})`,
+                          boxShadow: `0 0 12px rgba(${rgb}, 0.3)`,
+                          transform: 'translateY(-1px) scale(1.02)',
+                          opacity: 1,
+                          filter: 'none',
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: targetColor,
+                          flexShrink: 0,
+                          boxShadow: theme.darkMode && isActive ? `0 0 5px ${targetColor}` : 'none',
+                        }}
+                      />
+                      {t.name}
+                    </Box>
+                  );
+                })}
               </Box>
             )}
-            {/* Buff chips */}
+
+            {/* Buffs row */}
             {showStacked && buffOptions.length > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-                <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5, fontWeight: 600, minWidth: 48 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '0.65rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    color: theme.darkMode ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.7)',
+                    minWidth: 52,
+                  }}
+                >
                   Buffs
                 </Typography>
-                <Chip
-                  label="All"
-                  size="small"
-                  variant={hiddenBuffNames.size === 0 ? 'filled' : 'outlined'}
-                  color={hiddenBuffNames.size === 0 ? 'primary' : 'default'}
+                <Box
                   onClick={() => setHiddenBuffNames(new Set())}
-                  sx={{ height: 24, fontSize: '0.7rem' }}
-                />
-                {buffOptions.map((b) => (
-                  <Chip
-                    key={b}
-                    label={b}
-                    size="small"
-                    variant={hiddenBuffNames.has(b) ? 'outlined' : 'filled'}
-                    color={hiddenBuffNames.has(b) ? 'default' : 'primary'}
-                    onClick={() => handleBuffChipClick(b)}
-                    sx={{ height: 24, fontSize: '0.7rem', opacity: hiddenBuffNames.has(b) ? 0.5 : 1 }}
-                  />
-                ))}
+                  sx={{
+                    height: 30,
+                    borderRadius: '15px',
+                    px: 1.25,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.03em',
+                    color: hiddenBuffNames.size > 0
+                      ? (theme.darkMode ? '#38bdf8' : '#0ea5e9')
+                      : (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.4)'),
+                    background: hiddenBuffNames.size > 0
+                      ? (theme.darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(14, 165, 233, 0.06)')
+                      : 'transparent',
+                    border: hiddenBuffNames.size > 0
+                      ? `1.5px solid ${theme.darkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(14, 165, 233, 0.25)'}`
+                      : '1.5px solid transparent',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      color: theme.darkMode ? '#38bdf8' : '#0ea5e9',
+                      background: theme.darkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(14, 165, 233, 0.08)',
+                    },
+                  }}
+                >
+                  All
+                </Box>
+                {buffOptions.map((b, index) => {
+                  const color = UPTIME_COLORS[index % UPTIME_COLORS.length];
+                  const rgb = hexToRgb(color);
+                  const isHidden = hiddenBuffNames.has(b);
+                  const isSoloed = hiddenBuffNames.size === buffOptions.length - 1 && !isHidden;
+                  return (
+                    <Box
+                      key={b}
+                      onClick={() => handleBuffChipClick(b)}
+                      sx={{
+                        height: 30,
+                        borderRadius: '15px',
+                        px: 1.25,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        cursor: 'pointer',
+                        fontSize: '0.78rem',
+                        fontWeight: isSoloed ? 700 : 600,
+                        userSelect: 'none',
+                        color: isHidden
+                          ? (theme.darkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)')
+                          : (theme.darkMode ? '#e2e8f0' : '#1e293b'),
+                        background: isSoloed
+                          ? `rgba(${rgb}, ${theme.darkMode ? 0.25 : 0.12})`
+                          : isHidden
+                            ? 'transparent'
+                            : `rgba(${rgb}, ${theme.darkMode ? 0.1 : 0.05})`,
+                        border: isSoloed
+                          ? `2px solid ${color}`
+                          : isHidden
+                            ? `1.5px solid rgba(${rgb}, 0.1)`
+                            : `1.5px solid rgba(${rgb}, ${theme.darkMode ? 0.35 : 0.25})`,
+                        boxShadow: isSoloed
+                          ? `0 0 14px rgba(${rgb}, ${theme.darkMode ? 0.4 : 0.25})`
+                          : 'none',
+                        opacity: isHidden ? 0.4 : 1,
+                        transform: isSoloed ? 'scale(1.05)' : isHidden ? 'scale(0.95)' : 'scale(1)',
+                        filter: isHidden ? 'grayscale(0.7)' : 'none',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': {
+                          background: `rgba(${rgb}, ${theme.darkMode ? 0.2 : 0.1})`,
+                          boxShadow: `0 0 12px rgba(${rgb}, 0.3)`,
+                          transform: 'translateY(-1px) scale(1.02)',
+                          opacity: 1,
+                          filter: 'none',
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: '50%',
+                          backgroundColor: color,
+                          flexShrink: 0,
+                          boxShadow: theme.darkMode && !isHidden ? `0 0 5px ${color}` : 'none',
+                        }}
+                      />
+                      {b}
+                    </Box>
+                  );
+                })}
               </Box>
             )}
           </Box>
