@@ -290,6 +290,7 @@ describe('uiSlice', () => {
 
       const state = store.getState() as { ui: UIState };
       expect(state.ui).toEqual({
+        chartIntensity: 'subtle',
         darkMode: false,
         selectedPlayerId: 123,
         selectedTabId: 2,
