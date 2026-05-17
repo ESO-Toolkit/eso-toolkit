@@ -158,7 +158,7 @@ describe('RaidDashboardPage', () => {
   it('should render auto-refresh toggle', () => {
     renderWithRouter();
 
-    expect(screen.getByRole('switch', { name: /auto-refresh/i })).toBeInTheDocument();
+    expect(screen.getByText(/AUTO · 5s/)).toBeInTheDocument();
   });
 
   it('should render add widget button', () => {
@@ -199,12 +199,12 @@ describe('RaidDashboardPage', () => {
   it('should toggle auto-refresh', async () => {
     renderWithRouter();
 
-    const autoRefreshToggle = screen.getByRole('switch', { name: /auto-refresh/i });
+    const autoRefreshToggle = screen.getByText(/AUTO · 5s/);
 
     await userEvent.click(autoRefreshToggle);
 
-    // Should be disabled after click
-    expect(autoRefreshToggle).not.toBeChecked();
+    // Should show PAUSED after click
+    expect(screen.getByText(/PAUSED/)).toBeInTheDocument();
   });
 
   it('should display report title when available', () => {
@@ -262,8 +262,8 @@ describe('RaidDashboardPage', () => {
 
       renderWithRouter(store);
 
-      // Component should set up interval
-      expect(screen.getByRole('switch', { name: /auto-refresh/i })).toBeChecked();
+      // Component should show active auto-refresh state
+      expect(screen.getByText(/AUTO · 5s/)).toBeInTheDocument();
     });
   });
 
