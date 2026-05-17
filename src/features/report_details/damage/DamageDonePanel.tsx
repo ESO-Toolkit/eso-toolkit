@@ -382,6 +382,14 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
 
   const orderedPlayerIds = useMemo(() => damageRows.map((row) => row.id), [damageRows]);
 
+  const resolvePlayerName = useCallback(
+    (playerId: number, fallbackName: string): string => {
+      const actor = actorsById[playerId];
+      return resolveActorName(actor, playerId, fallbackName);
+    },
+    [actorsById],
+  );
+
   // Show table skeleton while data is being fetched
   if (isLoading) {
     return <DamageDoneTableSkeleton rowCount={10} />;
@@ -410,6 +418,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         onPlayerClick={handlePlayerClick}
         context={resolvedContext}
         fight={fight}
+        resolvePlayerName={resolvePlayerName}
       />
       {modalPlayerId !== null && (
         <PlayerCardModal

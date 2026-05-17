@@ -13,7 +13,6 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { ChartIntensityToggle } from '../../../components/ChartIntensityToggle';
 import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -592,18 +591,16 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               }}
             >
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      textShadow:
-                        '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
-                    }}
-                  >
-                    Damage Reduction Over Time
-                  </Typography>
-                  <ChartIntensityToggle />
-                </Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 1,
+                    textShadow:
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
+                  Damage Reduction Over Time
+                </Typography>
                 <EChart
                   option={chartOption}
                   height={300}

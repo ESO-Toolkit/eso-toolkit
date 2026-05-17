@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { ChartIntensityToggle } from '../../../components/ChartIntensityToggle';
 import { EChart } from '../../../components/EChart';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
@@ -61,6 +60,7 @@ interface DamageTimelineChartProps {
   phaseTransitionInfo?: PhaseTransitionInfo;
   context?: ReportFightContextInput;
   fight?: FightFragment | null;
+  resolvePlayerName?: (playerId: number, fallbackName: string) => string;
 }
 
 const StackedUptimeLoader: React.FC<{
@@ -84,6 +84,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   phaseTransitionInfo,
   context,
   fight,
+  resolvePlayerName,
 }) => {
   const { theme } = useEChartsTheme();
   const [viewMode, setViewMode] = React.useState<'all' | 'filtered'>('filtered');
@@ -197,7 +198,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           : null;
 
       return {
-        name: `${playerData.playerName} (Avg: ${Math.round(playerData.averageDps)} DPS)`,
+        name: `${resolvePlayerName ? resolvePlayerName(playerData.playerId, playerData.playerName) : playerData.playerName} (Avg: ${Math.round(playerData.averageDps).toLocaleString()} DPS)`,
         type: 'line' as const,
         data,
         showSymbol: false,
@@ -337,8 +338,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       yAxis,
       legend: {
         show: true,
-        top: 0,
-        right: 40,
+        top: 4,
+        left: 12,
+        right: 60,
         type: 'scroll',
       },
       tooltip: {
@@ -371,8 +373,9 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       },
       toolbox: {
         show: true,
-        right: 12,
-        top: 0,
+        right: 4,
+        top: 2,
+        itemSize: 14,
         feature: {
           saveAsImage: {
             title: 'Save',
@@ -383,7 +386,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       ...(dataZoom ? { dataZoom } : {}),
       series: allSeries,
     };
-  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme, stacked, uptimeSeries]);
+  }, [displayData, damageOverTimeData, phaseTransitionInfo, theme, stacked, uptimeSeries, resolvePlayerName]);
 
   // Get target name helper
   const getTargetName = React.useCallback(
@@ -447,8 +450,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             )}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ChartIntensityToggle />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Tooltip title={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}>
               <IconButton
                 size="small"
@@ -463,7 +465,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 <LayersIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ minWidth: 130 }}>
               <InputLabel>View</InputLabel>
               <Select
                 value={viewMode}

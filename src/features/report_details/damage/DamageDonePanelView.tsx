@@ -34,6 +34,7 @@ interface DamageDonePanelViewProps {
   onPlayerClick?: (playerId: string) => void;
   context?: ReportFightContextInput;
   fight?: FightFragment | null;
+  resolvePlayerName?: (playerId: number, fallbackName: string) => string;
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
@@ -52,6 +53,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   onPlayerClick,
   context,
   fight,
+  resolvePlayerName,
 }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
@@ -1277,6 +1279,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           height={400}
           context={context}
           fight={fight}
+          resolvePlayerName={resolvePlayerName}
         />
       </Box>
     </Box>
