@@ -279,10 +279,15 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
           : typeof data.error === 'string'
             ? data.error
             : 'Token exchange failed';
-      return jsonResponse({ error: discordError, discord_status: res.status }, 400);
+      return jsonResponse({ error: discordError }, 400);
     }
 
-    return jsonResponse(data);
+    return jsonResponse({
+      access_token: data.access_token,
+      token_type: data.token_type,
+      expires_in: data.expires_in,
+      scope: data.scope,
+    });
   } catch (err) {
     console.error('[oauth-token] error:', err);
     return jsonResponse({ error: 'Token exchange failed' }, 500);
@@ -577,6 +582,8 @@ function withCors(request: Request, env: Env, response: Response): Response {
   if (!origin) return response;
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', origin);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

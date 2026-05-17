@@ -9,6 +9,9 @@
 /.github/copilot-skills/*/node_modules/
 /.claude/*/node_modules/
 
+# DeepSec security scanner workspace
+/.deepsec/
+
 # Cache directories
 /cache/
 

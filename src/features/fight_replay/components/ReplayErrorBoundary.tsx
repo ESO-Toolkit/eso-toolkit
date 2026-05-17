@@ -122,7 +122,7 @@ const WebGLFallbackUI: React.FC<{
               <strong>Current Status:</strong>
             </Typography>
             <Typography variant="body2">{getWebGLDescription()}</Typography>
-            {capabilities.likelySwoftware && (
+            {capabilities.likelySoftware && (
               <Typography variant="body2" sx={{ mt: 1 }}>
                 ⚠️ Software rendering detected - Hardware acceleration may be disabled
               </Typography>

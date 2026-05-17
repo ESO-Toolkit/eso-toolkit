@@ -37,11 +37,11 @@ export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
 export const LOCAL_STORAGE_REFRESH_TOKEN_KEY = 'refresh_token';
 
 export function setPkceCodeVerifier(verifier: string): void {
-  localStorage.setItem(PKCE_CODE_VERIFIER_KEY, verifier);
+  sessionStorage.setItem(PKCE_CODE_VERIFIER_KEY, verifier);
 }
 
 export function getPkceCodeVerifier(): string {
-  return localStorage.getItem(PKCE_CODE_VERIFIER_KEY) || '';
+  return sessionStorage.getItem(PKCE_CODE_VERIFIER_KEY) || '';
 }
 
 export function setIntendedDestination(path: string): void {
@@ -57,7 +57,11 @@ export function setFallbackDestination(path: string): void {
 }
 
 export function getIntendedDestination(): string {
-  return localStorage.getItem(INTENDED_DESTINATION_KEY) || '/';
+  const dest = localStorage.getItem(INTENDED_DESTINATION_KEY) || '/';
+  if (dest.startsWith('/') && !dest.startsWith('//')) {
+    return dest;
+  }
+  return '/';
 }
 
 export function clearIntendedDestination(): void {
