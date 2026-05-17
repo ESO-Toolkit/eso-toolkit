@@ -1,18 +1,16 @@
 import LayersIcon from '@mui/icons-material/Layers';
+import SaveAltIcon from '@mui/icons-material/SaveAlt';
 import {
   Box,
   Typography,
   Card,
   CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Chip,
   Stack,
   IconButton,
   Tooltip,
 } from '@mui/material';
+import { getInstanceByDom } from 'echarts/core';
 import React from 'react';
 
 import { EChart } from '../../../components/EChart';
@@ -87,90 +85,96 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   resolvePlayerName,
 }) => {
   const { theme } = useEChartsTheme();
-  const [viewMode, setViewMode] = React.useState<'all' | 'filtered'>('filtered');
   const [stacked, setStacked] = React.useState(false);
   const [uptimeSeries, setUptimeSeries] = React.useState<UptimeTimelineSeries[]>([]);
+  const chartWrapperRef = React.useRef<HTMLDivElement>(null);
   const handleUptimeData = React.useCallback((series: UptimeTimelineSeries[]) => {
     setUptimeSeries(series);
+  }, []);
+
+  const handleSaveAsImage = React.useCallback(() => {
+    const container = chartWrapperRef.current?.firstElementChild as HTMLElement | null;
+    if (!container) return;
+    const instance = getInstanceByDom(container);
+    if (!instance) return;
+    const url = instance.getDataURL({ pixelRatio: 2, type: 'png' });
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'damage-over-time.png';
+    a.click();
   }, []);
 
   const displayData = React.useMemo(() => {
     if (!damageOverTimeData) return null;
 
-    if (viewMode === 'all' || selectedTargetIds.size === 0) {
-      // Show data for all targets combined
+    if (selectedTargetIds.size === 0) {
       return damageOverTimeData.allTargets;
-    } else {
-      // Show data for selected targets combined
-      const combinedData: Record<number, PlayerDamageOverTimeData> = {};
-
-      // Aggregate data across selected targets for each player
-      Object.values(damageOverTimeData.allTargets).forEach((playerData) => {
-        const playerId = playerData.playerId;
-
-        // Get this player's data for selected targets
-        const playerTargetData: PlayerDamageOverTimeData[] = [];
-        for (const targetId of selectedTargetIds) {
-          const targetData = damageOverTimeData.byTarget[targetId]?.[playerId];
-          if (targetData) {
-            playerTargetData.push(targetData);
-          }
-        }
-
-        if (playerTargetData.length === 0) return;
-
-        // Combine data points across targets
-        const bucketSize = damageOverTimeData.bucketSizeMs;
-        const numBuckets = Math.ceil(damageOverTimeData.fightDuration / bucketSize);
-        const combinedDataPoints = [];
-
-        let totalDamage = 0;
-        let totalEvents = 0;
-        let maxDps = 0;
-
-        for (let i = 0; i < numBuckets; i++) {
-          let bucketDamage = 0;
-          let bucketEvents = 0;
-
-          playerTargetData.forEach((targetData) => {
-            if (targetData.dataPoints[i]) {
-              bucketDamage += targetData.dataPoints[i].damage;
-              bucketEvents += targetData.dataPoints[i].eventCount;
-            }
-          });
-
-          const relativeTime = (i * bucketSize) / 1000;
-          const dps = bucketDamage / (bucketSize / 1000);
-
-          totalDamage += bucketDamage;
-          totalEvents += bucketEvents;
-          maxDps = Math.max(maxDps, dps);
-
-          combinedDataPoints.push({
-            timestamp: damageOverTimeData.fightStartTime + i * bucketSize,
-            relativeTime,
-            damage: bucketDamage,
-            eventCount: bucketEvents,
-          });
-        }
-
-        const averageDps = totalDamage / (damageOverTimeData.fightDuration / 1000);
-
-        combinedData[playerId] = {
-          playerId: playerData.playerId,
-          playerName: playerData.playerName,
-          targetId: null,
-          dataPoints: combinedDataPoints,
-          totalDamage,
-          totalEvents,
-          averageDps,
-          maxDps,
-        };
-      });
-
-      return combinedData;
     }
-  }, [damageOverTimeData, selectedTargetIds, viewMode]);
+
+    const combinedData: Record<number, PlayerDamageOverTimeData> = {};
+
+    Object.values(damageOverTimeData.allTargets).forEach((playerData) => {
+      const playerId = playerData.playerId;
+      const playerTargetData: PlayerDamageOverTimeData[] = [];
+      for (const targetId of selectedTargetIds) {
+        const targetData = damageOverTimeData.byTarget[targetId]?.[playerId];
+        if (targetData) {
+          playerTargetData.push(targetData);
+        }
+      }
+
+      if (playerTargetData.length === 0) return;
+
+      const bucketSize = damageOverTimeData.bucketSizeMs;
+      const numBuckets = Math.ceil(damageOverTimeData.fightDuration / bucketSize);
+      const combinedDataPoints = [];
+
+      let totalDamage = 0;
+      let totalEvents = 0;
+      let maxDps = 0;
+
+      for (let i = 0; i < numBuckets; i++) {
+        let bucketDamage = 0;
+        let bucketEvents = 0;
+
+        playerTargetData.forEach((targetData) => {
+          if (targetData.dataPoints[i]) {
+            bucketDamage += targetData.dataPoints[i].damage;
+            bucketEvents += targetData.dataPoints[i].eventCount;
+          }
+        });
+
+        const relativeTime = (i * bucketSize) / 1000;
+        const dps = bucketDamage / (bucketSize / 1000);
+
+        totalDamage += bucketDamage;
+        totalEvents += bucketEvents;
+        maxDps = Math.max(maxDps, dps);
+
+        combinedDataPoints.push({
+          timestamp: damageOverTimeData.fightStartTime + i * bucketSize,
+          relativeTime,
+          damage: bucketDamage,
+          eventCount: bucketEvents,
+        });
+      }
+
+      const averageDps = totalDamage / (damageOverTimeData.fightDuration / 1000);
+
+      combinedData[playerId] = {
+        playerId: playerData.playerId,
+        playerName: playerData.playerName,
+        targetId: null,
+        dataPoints: combinedDataPoints,
+        totalDamage,
+        totalEvents,
+        averageDps,
+        maxDps,
+      };
+    });
+
+    return combinedData;
+  }, [damageOverTimeData, selectedTargetIds]);
 
   const echartsOption = React.useMemo(() => {
     if (!displayData) return null;
@@ -332,17 +336,20 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         ]
       : undefined;
 
+    const legend = {
+      show: true,
+      top: 4,
+      left: 12,
+      right: 12,
+      type: 'scroll' as const,
+      data: dpsSeries.map((s) => s.name),
+    };
+
     return {
       grid,
       xAxis,
       yAxis,
-      legend: {
-        show: true,
-        top: 4,
-        left: 12,
-        right: 60,
-        type: 'scroll',
-      },
+      legend,
       tooltip: {
         trigger: 'axis',
         formatter: (params: Array<{ seriesName: string; value: number[]; color: string; axisIndex: number }>) => {
@@ -369,18 +376,6 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             : [];
           const allLines = [...dpsLines, ...(uptimeLines.length ? ['<div style="border-top:1px solid rgba(128,128,128,0.3);margin:4px 0"></div>', ...uptimeLines] : [])];
           return `<div style="font-size:13px"><div style="color:${theme.mutedColor};margin-bottom:4px">Time: ${time}s</div>${allLines.join('')}</div>`;
-        },
-      },
-      toolbox: {
-        show: true,
-        right: 4,
-        top: 2,
-        itemSize: 14,
-        feature: {
-          saveAsImage: {
-            title: 'Save',
-            pixelRatio: 2,
-          },
         },
       },
       ...(dataZoom ? { dataZoom } : {}),
@@ -430,27 +425,29 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     <Card sx={{ height: resolvedHeight, transition: 'height 0.3s ease' }}>
       <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box>
-            <Typography variant="h6" sx={{ mb: 0.5 }}>
-              ⚔️ Damage Over Time
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+            <Typography variant="h6">
+              Damage Over Time
             </Typography>
-            {selectedTargetIds.size > 0 && viewMode === 'filtered' && (
-              <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                <Typography variant="body2" color="text.secondary">
-                  Targets:
-                </Typography>
+            {selectedTargetIds.size > 0 && (
+              <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
                 {selectedTargetNames.slice(0, 3).map((name, index) => (
-                  <Chip key={index} label={name} size="small" />
+                  <Chip key={index} label={name} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
                 ))}
                 {selectedTargetNames.length > 3 && (
-                  <Chip label={`+${selectedTargetNames.length - 3} more`} size="small" />
+                  <Chip label={`+${selectedTargetNames.length - 3}`} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
                 )}
               </Stack>
             )}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Tooltip title="Save as image">
+              <IconButton size="small" onClick={handleSaveAsImage} sx={{ color: 'text.secondary' }}>
+                <SaveAltIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}>
               <IconButton
                 size="small"
@@ -465,19 +462,6 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                 <LayersIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-            <FormControl size="small" sx={{ minWidth: 130 }}>
-              <InputLabel>View</InputLabel>
-              <Select
-                value={viewMode}
-                label="View"
-                onChange={(e) => setViewMode(e.target.value as 'all' | 'filtered')}
-              >
-                <MenuItem value="all">All Targets</MenuItem>
-                <MenuItem value="filtered" disabled={selectedTargetIds.size === 0}>
-                  Selected Targets
-                </MenuItem>
-              </Select>
-            </FormControl>
           </Box>
         </Box>
 
@@ -487,7 +471,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         )}
 
         {/* Chart */}
-        <Box sx={{ flex: 1, minHeight: 0 }}>
+        <Box ref={chartWrapperRef} sx={{ flex: 1, minHeight: 0 }}>
           <EChart
             option={echartsOption}
             height="100%"
