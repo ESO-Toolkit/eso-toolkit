@@ -134,12 +134,10 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         axisLine: { show: false },
         splitLine: { lineStyle: { color: echartsTheme.gridLineColor, type: 'dotted' } },
       },
-      legend: {
-        show: true,
-        top: 0,
-      },
+      legend: { show: false },
       tooltip: {
         trigger: 'axis',
+        appendToBody: true,
         formatter: (params: Array<{ seriesName: string; value: number[] }>) => {
           if (!params[0]) return '';
           const time = Number(params[0].value[0]).toFixed(1);

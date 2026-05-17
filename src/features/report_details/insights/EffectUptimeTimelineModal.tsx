@@ -17,7 +17,7 @@ import React from 'react';
 import { EChart } from '../../../components/EChart';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
-import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
+import { hexToRgb } from '../../../utils/echartsTheme';
 import { msToSeconds } from '../../../utils/fightDuration';
 
 import type { BuffUptime } from './BuffUptimeProgressBar';
@@ -108,14 +108,26 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
       return {
         name: dataset.label,
         type: 'line' as const,
-        data: dataset.points.map((p: { x: number; y: number }) => [p.x, p.y]),
-        ...steppedLineDefaults(),
+        data: dataset.points.map((p: { x: number; y: number }) => [
+          p.x,
+          p.y > 0 ? index + 0.85 : index,
+        ]),
+        step: 'end' as const,
+        showSymbol: false,
+        symbolSize: 0,
         lineStyle: {
           color,
-          width: 2,
-          ...glowLineStyle(color, echartsTheme.intensity, echartsTheme.perfTier),
+          width: 1,
+          opacity: 0.7,
         },
-        areaStyle: gradientAreaStyle(color, echartsTheme.intensity, echartsTheme.perfTier),
+        areaStyle: {
+          color: color + '30',
+          origin: index,
+        },
+        emphasis: {
+          areaStyle: { color: color + '55' },
+          lineStyle: { width: 1.5, opacity: 1 },
+        },
       };
     });
 
@@ -135,33 +147,32 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
       },
       yAxis: {
         type: 'value',
-        min: 0,
-        max: 1.1,
-        name: 'Effect Activity',
-        nameLocation: 'middle',
-        nameGap: 36,
-        nameTextStyle: { color: echartsTheme.mutedColor },
-        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11, formatter: (v: number) => (v >= 1 ? 'Active' : '') },
+        min: -0.2,
+        max: Math.max(series.length, 1),
+        axisLabel: { show: false },
         axisLine: { show: false },
-        splitLine: { lineStyle: { color: echartsTheme.gridLineColor, type: 'dotted' } },
+        axisTick: { show: false },
+        splitLine: { show: false },
       },
-      legend: {
-        show: true,
-        top: 0,
-        type: 'scroll',
-      },
+      legend: { show: false },
       tooltip: {
         trigger: 'axis',
+        appendToBody: true,
         formatter: (params: Array<{ seriesName: string; value: number[]; color: string }>) => {
           if (!params[0]) return '';
           const time = formatSeconds(params[0].value[0]);
-          const lines = params
-            .map((p) => {
-              const status = p.value[1] > 0 ? 'Active' : 'Inactive';
-              return `<div style="display:flex;align-items:center;gap:6px">` +
-                `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
-                `${p.seriesName}: <b>${status}</b></div>`;
-            });
+          const active = params.filter((p) => {
+            const idx = series.findIndex((s) => s.label === p.seriesName);
+            return p.value[1] > idx + 0.4;
+          });
+          if (active.length === 0) {
+            return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor}">Time: ${time}</div><div>No active effects</div></div>`;
+          }
+          const lines = active.map((p) =>
+            `<div style="display:flex;align-items:center;gap:6px">` +
+            `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
+            `${p.seriesName}: <b>Active</b></div>`
+          );
           return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor};margin-bottom:4px">Time: ${time}</div>${lines.join('')}</div>`;
         },
       },
@@ -213,11 +224,66 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
       </DialogTitle>
       <DialogContent sx={{ minHeight: 420 }}>
         {hasData ? (
-          <EChart
-            option={chartOption}
-            height={380}
-            group="fightReport"
-          />
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 0.5,
+                mb: 1.5,
+                px: 0.5,
+                py: 0.5,
+                borderRadius: '10px',
+                background: echartsTheme.darkMode
+                  ? 'rgba(15, 23, 42, 0.4)'
+                  : 'rgba(248, 250, 252, 0.6)',
+                border: echartsTheme.darkMode
+                  ? '1px solid rgba(255, 255, 255, 0.06)'
+                  : '1px solid rgba(148, 163, 184, 0.12)',
+              }}
+            >
+              {series.map((s, index) => {
+                const color = TIMELINE_COLORS[index % TIMELINE_COLORS.length];
+                const rgb = hexToRgb(color);
+                return (
+                  <Box
+                    key={s.label}
+                    sx={{
+                      height: 24,
+                      borderRadius: '12px',
+                      px: 0.75,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      color: echartsTheme.darkMode ? 'rgba(226, 232, 240, 0.85)' : 'rgba(30, 41, 59, 0.85)',
+                      background: `rgba(${rgb}, ${echartsTheme.darkMode ? 0.08 : 0.04})`,
+                      border: `1px solid rgba(${rgb}, ${echartsTheme.darkMode ? 0.25 : 0.15})`,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: color,
+                        flexShrink: 0,
+                        boxShadow: echartsTheme.darkMode ? `0 0 4px ${color}` : 'none',
+                      }}
+                    />
+                    {s.label}
+                  </Box>
+                );
+              })}
+            </Box>
+            <EChart
+              option={chartOption}
+              height={380}
+              group="fightReport"
+            />
+          </>
         ) : (
           <Box
             sx={{

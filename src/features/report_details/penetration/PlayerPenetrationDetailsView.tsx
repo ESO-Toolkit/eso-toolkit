@@ -151,6 +151,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       legend: { show: false },
       tooltip: {
         trigger: 'axis',
+        appendToBody: true,
         formatter: (params: Array<{ value: number[] }>) => {
           const p = params[0];
           if (!p) return '';

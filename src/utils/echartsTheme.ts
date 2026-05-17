@@ -142,7 +142,7 @@ export function buildBaseOption(theme: EChartsThemeOptions): Record<string, unkn
     grid: {
       left: 12,
       right: 20,
-      top: 40,
+      top: 12,
       bottom: 60,
       containLabel: true,
     },
