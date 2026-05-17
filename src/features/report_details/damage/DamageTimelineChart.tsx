@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { ChartIntensityToggle } from '../../../components/ChartIntensityToggle';
 import { EChart } from '../../../components/EChart';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
@@ -245,6 +246,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         ]
       : { left: 12, right: 20, top: 40, bottom: 60, containLabel: true };
 
+    const axisLabelStyle = { color: theme.mutedColor, fontSize: 11 };
+    const xSplitLine = { show: false };
+    const ySplitLine = { lineStyle: { color: theme.gridLineColor, type: 'dotted' as const } };
+    const xAxisLine = { lineStyle: { color: theme.borderColor } };
+
     const xAxis = showStacked
       ? [
           {
@@ -252,6 +258,8 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             gridIndex: 0,
             axisLabel: { show: false },
             axisTick: { show: false },
+            axisLine: xAxisLine,
+            splitLine: xSplitLine,
           },
           {
             type: 'value',
@@ -259,7 +267,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             name: 'Fight Time (seconds)',
             nameLocation: 'middle',
             nameGap: 28,
-            axisLabel: { formatter: (v: number) => `${v.toFixed(1)}s` },
+            nameTextStyle: { color: theme.mutedColor },
+            axisLabel: { ...axisLabelStyle, formatter: (v: number) => `${v.toFixed(1)}s` },
+            axisLine: xAxisLine,
+            splitLine: xSplitLine,
           },
         ]
       : {
@@ -267,7 +278,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           name: 'Fight Time (seconds)',
           nameLocation: 'middle',
           nameGap: 28,
-          axisLabel: { formatter: (v: number) => `${v.toFixed(1)}s` },
+          nameTextStyle: { color: theme.mutedColor },
+          axisLabel: { ...axisLabelStyle, formatter: (v: number) => `${v.toFixed(1)}s` },
+          axisLine: xAxisLine,
+          splitLine: xSplitLine,
         };
 
     const yAxis = showStacked
@@ -279,7 +293,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             name: 'DPS',
             nameLocation: 'middle',
             nameGap: 55,
-            axisLabel: { formatter: (v: number) => v.toLocaleString() },
+            nameTextStyle: { color: theme.mutedColor },
+            axisLabel: { ...axisLabelStyle, formatter: (v: number) => v.toLocaleString() },
+            axisLine: { show: false },
+            splitLine: ySplitLine,
           },
           {
             type: 'value',
@@ -289,7 +306,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
             name: 'Buffs',
             nameLocation: 'middle',
             nameGap: 36,
-            axisLabel: { formatter: (v: number) => (v >= 1 ? 'Active' : '') },
+            nameTextStyle: { color: theme.mutedColor },
+            axisLabel: { ...axisLabelStyle, formatter: (v: number) => (v >= 1 ? 'Active' : '') },
+            axisLine: { show: false },
+            splitLine: ySplitLine,
           },
         ]
       : {
@@ -298,7 +318,10 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           name: 'Damage Per Second (DPS)',
           nameLocation: 'middle',
           nameGap: 55,
-          axisLabel: { formatter: (v: number) => v.toLocaleString() },
+          nameTextStyle: { color: theme.mutedColor },
+          axisLabel: { ...axisLabelStyle, formatter: (v: number) => v.toLocaleString() },
+          axisLine: { show: false },
+          splitLine: ySplitLine,
         };
 
     const dataZoom = showStacked
@@ -315,6 +338,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       legend: {
         show: true,
         top: 0,
+        right: 40,
         type: 'scroll',
       },
       tooltip: {
@@ -424,6 +448,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ChartIntensityToggle />
             <Tooltip title={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}>
               <IconButton
                 size="small"

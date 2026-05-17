@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { ChartIntensityToggle } from '../../../components/ChartIntensityToggle';
 import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -117,6 +118,10 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         name: 'Fight Time (seconds)',
         nameLocation: 'middle',
         nameGap: 28,
+        nameTextStyle: { color: echartsTheme.mutedColor },
+        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11 },
+        axisLine: { lineStyle: { color: echartsTheme.borderColor } },
+        splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
@@ -125,9 +130,10 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         name: 'Damage Reduction (%)',
         nameLocation: 'middle',
         nameGap: 36,
-        axisLabel: {
-          formatter: (v: number) => `${v}%`,
-        },
+        nameTextStyle: { color: echartsTheme.mutedColor },
+        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11, formatter: (v: number) => `${v}%` },
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: echartsTheme.gridLineColor, type: 'dotted' } },
       },
       legend: {
         show: true,
@@ -586,16 +592,18 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               }}
             >
               <CardContent>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    textShadow:
-                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
-                  }}
-                >
-                  Damage Reduction Over Time
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      textShadow:
+                        '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                    }}
+                  >
+                    Damage Reduction Over Time
+                  </Typography>
+                  <ChartIntensityToggle />
+                </Box>
                 <EChart
                   option={chartOption}
                   height={300}

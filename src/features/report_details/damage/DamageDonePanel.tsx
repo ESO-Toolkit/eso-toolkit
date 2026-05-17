@@ -85,14 +85,14 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
       });
     }
 
-    // Add NPCs
+    // Add NPCs (enemyNPCs are objects with an .id property, not bare numbers)
     if (fight.enemyNPCs) {
-      fight.enemyNPCs.forEach((npcId) => {
-        if (typeof npcId === 'number') {
-          const actor = actorsById[npcId];
+      fight.enemyNPCs.forEach((npc) => {
+        if (npc && typeof npc.id === 'number') {
+          const actor = actorsById[npc.id];
           targets.push({
-            id: npcId,
-            name: resolveActorName(actor, npcId),
+            id: npc.id,
+            name: resolveActorName(actor, npc.id),
           });
         }
       });

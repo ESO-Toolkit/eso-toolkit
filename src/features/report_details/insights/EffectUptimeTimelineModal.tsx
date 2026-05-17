@@ -128,9 +128,10 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
         name: 'Fight Time',
         nameLocation: 'middle',
         nameGap: 28,
-        axisLabel: {
-          formatter: (v: number) => formatSeconds(v),
-        },
+        nameTextStyle: { color: echartsTheme.mutedColor },
+        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11, formatter: (v: number) => formatSeconds(v) },
+        axisLine: { lineStyle: { color: echartsTheme.borderColor } },
+        splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
@@ -139,9 +140,10 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
         name: 'Effect Activity',
         nameLocation: 'middle',
         nameGap: 36,
-        axisLabel: {
-          formatter: (v: number) => (v >= 1 ? 'Active' : ''),
-        },
+        nameTextStyle: { color: echartsTheme.mutedColor },
+        axisLabel: { color: echartsTheme.mutedColor, fontSize: 11, formatter: (v: number) => (v >= 1 ? 'Active' : '') },
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: echartsTheme.gridLineColor, type: 'dotted' } },
       },
       legend: {
         show: true,

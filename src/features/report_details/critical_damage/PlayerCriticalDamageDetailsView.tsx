@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { ChartIntensityToggle } from '../../../components/ChartIntensityToggle';
 import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -157,9 +158,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         name: 'Time (seconds)',
         nameLocation: 'middle',
         nameGap: 28,
-        axisLabel: {
-          formatter: (v: number) => `${v.toFixed(1)}s`,
-        },
+        nameTextStyle: { color: theme.mutedColor },
+        axisLabel: { color: theme.mutedColor, fontSize: 11, formatter: (v: number) => `${v.toFixed(1)}s` },
+        axisLine: { lineStyle: { color: theme.borderColor } },
+        splitLine: { show: false },
       },
       yAxis: {
         type: 'value',
@@ -168,9 +170,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         name: 'Critical Damage (%)',
         nameLocation: 'middle',
         nameGap: 36,
-        axisLabel: {
-          formatter: (v: number) => `${v}%`,
-        },
+        nameTextStyle: { color: theme.mutedColor },
+        axisLabel: { color: theme.mutedColor, fontSize: 11, formatter: (v: number) => `${v}%` },
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: theme.gridLineColor, type: 'dotted' } },
       },
       legend: { show: false },
       tooltip: {
@@ -510,16 +513,18 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 WebkitBackdropFilter: 'blur(10px)',
               }}
             >
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 2,
-                  textShadow:
-                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
-                }}
-              >
-                Critical Damage vs Time
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    textShadow:
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+                  }}
+                >
+                  Critical Damage vs Time
+                </Typography>
+                <ChartIntensityToggle />
+              </Box>
               <EChart
                 option={chartOption}
                 height={300}
