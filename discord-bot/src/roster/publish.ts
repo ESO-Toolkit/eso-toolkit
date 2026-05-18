@@ -257,7 +257,11 @@ export interface RefreshResult {
  * Refresh all Discord channels linked to a roster across all guilds.
  * Called by the webhook from roster-hub-api and by /roster refresh.
  */
-export async function refreshRoster(env: Env, rosterId: string): Promise<RefreshResult> {
+export async function refreshRoster(
+  env: Env,
+  rosterId: string,
+  scopeGuildId?: string,
+): Promise<RefreshResult> {
   // Fetch the latest snapshot — hub API for normal IDs, KV for direct-publish
   const fetchResult = await fetchRosterSnapshot(env, rosterId);
   let snapshot = fetchResult.status === 'ok' ? fetchResult.snapshot : null;
@@ -302,7 +306,10 @@ export async function refreshRoster(env: Env, rosterId: string): Promise<Refresh
   // Find all guilds that have this roster mapped by scanning KV prefix.
   // For direct-publish rosters with a known guild, check that guild first.
   // For hub rosters, scan all roster-map entries matching this rosterId.
-  const mappings = await findMappingsForRoster(env, rosterId);
+  let mappings = await findMappingsForRoster(env, rosterId);
+  if (scopeGuildId) {
+    mappings = mappings.filter((m) => m.guildId === scopeGuildId);
+  }
   if (mappings.length === 0) {
     return { ok: true, refreshedCount: 0 };
   }
@@ -577,7 +584,11 @@ async function createNewRosterChannel(
   const channelOptions: Parameters<typeof createChannel>[2] = {
     name: channelName,
     type: ChannelType.GUILD_TEXT,
-    topic: `ESO Toolkit Roster: ${snapshot.title.replace(/<@[!&]?\d+>|<#\d+>|@everyone|@here/g, '')} (ID: ${snapshot.id})`.slice(0, 1024),
+    topic:
+      `ESO Toolkit Roster: ${snapshot.title.replace(/<@[!&]?\d+>|<#\d+>|@everyone|@here/g, '')} (ID: ${snapshot.id})`.slice(
+        0,
+        1024,
+      ),
   };
   if (categoryId) {
     channelOptions.parent_id = categoryId;

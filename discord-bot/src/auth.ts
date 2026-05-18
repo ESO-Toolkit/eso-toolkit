@@ -147,5 +147,5 @@ export async function verifyWebhookSecret(env: Env, authHeader: string | null): 
   // timingSafeEqual is available in Cloudflare Workers runtime
   return (
     crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean }
-  ).timingSafeEqual(a.buffer, b.buffer);
+  ).timingSafeEqual(a.buffer as ArrayBuffer, b.buffer as ArrayBuffer);
 }

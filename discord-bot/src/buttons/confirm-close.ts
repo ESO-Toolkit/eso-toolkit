@@ -7,9 +7,15 @@
  */
 
 import { deleteChannel, getMessages, isStaff, sendMessage } from '../discord.js';
-import { deleteTicket, getTicket } from '../kv.js';
+import { deleteTicket, getTicket, updateTicket } from '../kv.js';
 import { Colors, InteractionResponseType, MessageFlags } from '../types.js';
-import type { DiscordInteraction, DiscordMessage, Env, InteractionResponse, TicketState } from '../types.js';
+import type {
+  DiscordInteraction,
+  DiscordMessage,
+  Env,
+  InteractionResponse,
+  TicketState,
+} from '../types.js';
 import { ephemeral, formatDuration } from '../utils.js';
 
 export async function handleConfirmCloseButton(
@@ -35,10 +41,10 @@ export async function handleConfirmCloseButton(
     return ephemeral('This ticket is already closed.');
   }
 
-  // Immediately acknowledge so Discord doesn't time out
+  await updateTicket(env, channelId, { status: 'closed' });
+
   const closingUser = interaction.member?.user ?? interaction.user;
 
-  // Run the heavy async work after responding
   ctx.waitUntil(closeTicket(env, ticket, channelId, closingUser?.username ?? 'Unknown'));
 
   return {
@@ -91,15 +97,25 @@ async function closeTicket(
         { name: 'Category', value: ticket.aiRefinedCategory ?? ticket.category, inline: true },
         {
           name: 'Claimed by',
-          value: ticket.claimedBy ? `<@${ticket.claimedBy}> (${ticket.claimedByUsername})` : 'Unclaimed',
+          value: ticket.claimedBy
+            ? `<@${ticket.claimedBy}> (${ticket.claimedByUsername})`
+            : 'Unclaimed',
           inline: true,
         },
         { name: 'Closed by', value: closedByUsername, inline: true },
         { name: 'Duration', value: durationStr, inline: true },
         ...(ticket.githubIssueUrl
-          ? [{ name: 'GitHub Issue', value: `[#${ticket.githubIssueNumber}](${ticket.githubIssueUrl})`, inline: true }]
+          ? [
+              {
+                name: 'GitHub Issue',
+                value: `[#${ticket.githubIssueNumber}](${ticket.githubIssueUrl})`,
+                inline: true,
+              },
+            ]
           : []),
-        ...(ticket.aiSummary ? [{ name: 'AI Summary', value: ticket.aiSummary, inline: false }] : []),
+        ...(ticket.aiSummary
+          ? [{ name: 'AI Summary', value: ticket.aiSummary, inline: false }]
+          : []),
       ],
       footer: {
         text: `Ticket ID: ${ticket.id} • Total messages: ${messages.length}`,
@@ -126,4 +142,3 @@ async function closeTicket(
     console.error('[confirm-close] unexpected error during closeTicket:', err);
   }
 }
-
