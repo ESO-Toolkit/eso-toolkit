@@ -18,6 +18,7 @@ import { EChart } from '../../../components/EChart';
 import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import { hexToRgb } from '../../../utils/echartsTheme';
+import { escapeHtml } from '../../../utils/escape-html';
 import { msToSeconds } from '../../../utils/fightDuration';
 
 import type { BuffUptime } from './BuffUptimeProgressBar';
@@ -176,7 +177,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
             (p) =>
               `<div style="display:flex;align-items:center;gap:6px">` +
               `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
-              `${p.seriesName}: <b>Active</b></div>`,
+              `${escapeHtml(p.seriesName)}: <b>Active</b></div>`,
           );
           return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor};margin-bottom:4px">Time: ${time}</div>${lines.join('')}</div>`;
         },

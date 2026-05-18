@@ -77,7 +77,7 @@ const app = new Hono<{ Bindings: Env }>();
 app.onError((err, c) => {
   console.error(`[${c.req.method} ${c.req.path}]`, err.message, err.stack);
   const status = 'status' in err && typeof err.status === 'number' ? err.status : 500;
-  const msg = status >= 500 ? 'Internal server error' : (err.message || 'Internal server error');
+  const msg = status >= 500 ? 'Internal server error' : err.message || 'Internal server error';
   return c.json({ error: msg }, status as 500);
 });
 
@@ -93,17 +93,7 @@ function tryDeleteImgBBImage(deleteUrl: string | null): void {
 /** Verify that an encoded payload is valid base64url (no special chars that break URLs). */
 const isValidBase64Url = (s: string): boolean => /^[A-Za-z0-9_-]*=*$/.test(s);
 
-/** Escape HTML entities in user-generated text (defense-in-depth against stored XSS). */
-const escapeHtml = (s: string): string =>
-  s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-
-/** Sanitize and trim a user-provided text field. */
-const sanitize = (s: string): string => escapeHtml(s.trim());
+import { escapeHtml, sanitize } from './sanitize';
 
 /** Validate and sanitize an addon entry. Returns null if invalid. */
 const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
@@ -381,15 +371,10 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const {
-    title,
-    description = '',
-    trial_id,
-    roster_data,
-    tags = [],
-    is_anonymous = false,
-    recommended_addons = null,
-  } = body;
+  const { title, description = '', trial_id, roster_data, tags = [] } = body;
+  const is_anonymous = 'is_anonymous' in body ? (body.is_anonymous ?? false) : undefined;
+  const recommended_addons =
+    'recommended_addons' in body ? (body.recommended_addons ?? null) : undefined;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -429,14 +414,18 @@ app.put('/rosters/:id', async (c) => {
     }
   }
 
+  const existing = await getRosterById(c.env.DB, c.req.param('id'), user.id);
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
     description: sanitize(description),
     trialId: sanitize(trial_id),
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
-    isAnonymous: !!is_anonymous,
-    recommendedAddons: recommendedAddonsJson,
+    isAnonymous: is_anonymous !== undefined ? !!is_anonymous : !!existing?.is_anonymous,
+    recommendedAddons:
+      recommended_addons !== undefined
+        ? recommendedAddonsJson
+        : ((existing?.recommended_addons as string | null) ?? null),
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
@@ -552,7 +541,7 @@ app.post('/rosters/:id/comments', async (c) => {
     rosterId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: user.name,
+    authorName: escapeHtml(user.name),
     body: escapeHtml(body.body.trim()),
   });
 
@@ -837,7 +826,7 @@ app.post('/builds/:id/comments', async (c) => {
     buildId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: user.name,
+    authorName: escapeHtml(user.name),
     body: escapeHtml(body.body.trim()),
   });
 
@@ -976,10 +965,19 @@ app.post('/images/upload', async (c) => {
 
   // Validate image magic numbers (PNG, JPEG, WebP, GIF)
   const isValidImage =
-    (imageBytes[0] === 0x89 && imageBytes[1] === 0x50 && imageBytes[2] === 0x4e && imageBytes[3] === 0x47) || // PNG
+    (imageBytes[0] === 0x89 &&
+      imageBytes[1] === 0x50 &&
+      imageBytes[2] === 0x4e &&
+      imageBytes[3] === 0x47) || // PNG
     (imageBytes[0] === 0xff && imageBytes[1] === 0xd8 && imageBytes[2] === 0xff) || // JPEG
-    (imageBytes[0] === 0x52 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46 && imageBytes[3] === 0x46 &&
-      imageBytes[8] === 0x57 && imageBytes[9] === 0x45 && imageBytes[10] === 0x42 && imageBytes[11] === 0x50) || // WebP
+    (imageBytes[0] === 0x52 &&
+      imageBytes[1] === 0x49 &&
+      imageBytes[2] === 0x46 &&
+      imageBytes[3] === 0x46 &&
+      imageBytes[8] === 0x57 &&
+      imageBytes[9] === 0x45 &&
+      imageBytes[10] === 0x42 &&
+      imageBytes[11] === 0x50) || // WebP
     (imageBytes[0] === 0x47 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46); // GIF
   if (!isValidImage) {
     return c.json({ error: 'Unsupported image format. Use PNG, JPEG, WebP, or GIF.' }, 400);
@@ -1072,8 +1070,9 @@ app.post('/images/:id/report', async (c) => {
   if (!body.reason?.trim()) return c.json({ error: 'reason is required' }, 400);
   if (body.reason.length > 500) return c.json({ error: 'reason must be ≤ 500 characters' }, 400);
 
-  const existing = await c.env.DB
-    .prepare('SELECT id FROM image_reports WHERE image_id = ? AND reporter_id = ?')
+  const existing = await c.env.DB.prepare(
+    'SELECT id FROM image_reports WHERE image_id = ? AND reporter_id = ?',
+  )
     .bind(imageId, user.id)
     .first();
   if (existing) return c.json({ error: 'You have already reported this image' }, 409);
@@ -1227,10 +1226,19 @@ app.put('/users/me/avatar', async (c) => {
 
   // Validate image magic numbers (PNG, JPEG, WebP, GIF)
   const isValidAvatar =
-    (imageBytes[0] === 0x89 && imageBytes[1] === 0x50 && imageBytes[2] === 0x4e && imageBytes[3] === 0x47) || // PNG
+    (imageBytes[0] === 0x89 &&
+      imageBytes[1] === 0x50 &&
+      imageBytes[2] === 0x4e &&
+      imageBytes[3] === 0x47) || // PNG
     (imageBytes[0] === 0xff && imageBytes[1] === 0xd8 && imageBytes[2] === 0xff) || // JPEG
-    (imageBytes[0] === 0x52 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46 && imageBytes[3] === 0x46 &&
-      imageBytes[8] === 0x57 && imageBytes[9] === 0x45 && imageBytes[10] === 0x42 && imageBytes[11] === 0x50) || // WebP
+    (imageBytes[0] === 0x52 &&
+      imageBytes[1] === 0x49 &&
+      imageBytes[2] === 0x46 &&
+      imageBytes[3] === 0x46 &&
+      imageBytes[8] === 0x57 &&
+      imageBytes[9] === 0x45 &&
+      imageBytes[10] === 0x42 &&
+      imageBytes[11] === 0x50) || // WebP
     (imageBytes[0] === 0x47 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46); // GIF
   if (!isValidAvatar) {
     return c.json({ error: 'Unsupported image format. Use PNG, JPEG, WebP, or GIF.' }, 400);
@@ -1289,7 +1297,7 @@ app.put('/users/me/avatar', async (c) => {
   await upsertUserAvatar(
     c.env.DB,
     user.id,
-    user.name,
+    escapeHtml(user.name),
     imgbb.data.url,
     imgbb.data.thumb.url,
     imgbb.data.delete_url,
@@ -1323,7 +1331,7 @@ app.put('/users/me/display-names', async (c) => {
   const na = body.na_display_name?.trim() || null;
   const eu = body.eu_display_name?.trim() || null;
 
-  await updateDisplayNames(c.env.DB, user.id, user.name, na, eu);
+  await updateDisplayNames(c.env.DB, user.id, escapeHtml(user.name), na, eu);
   return c.json({ ok: true });
 });
 
@@ -1681,11 +1689,15 @@ app.post('/admin/sync-leaderboard', async (c) => {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const enc = new TextEncoder();
-  const a = enc.encode(key);
-  const b = enc.encode(c.env.INTERNAL_API_KEY);
-  if (a.byteLength !== b.byteLength ||
-    !(crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean })
-      .timingSafeEqual(a.buffer as ArrayBuffer, b.buffer as ArrayBuffer)) {
+  const [hashA, hashB] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(key)),
+    crypto.subtle.digest('SHA-256', enc.encode(c.env.INTERNAL_API_KEY)),
+  ]);
+  if (
+    !(
+      crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean }
+    ).timingSafeEqual(hashA, hashB)
+  ) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const results = await syncLeaderboardRosters(c.env);

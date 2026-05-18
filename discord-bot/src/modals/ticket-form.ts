@@ -224,7 +224,19 @@ export async function handleTicketFormModal(
     };
   }
 
-  // Immediately defer — channel creation + AI + GitHub all take >3s
+  const rlKey = `rl:ticket:${user.id}`;
+  const rlCount = parseInt((await env.TICKETS.get(rlKey)) ?? '0', 10);
+  if (rlCount >= 3) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ You are creating tickets too quickly. Please wait a few minutes.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+  await env.TICKETS.put(rlKey, String(rlCount + 1), { expirationTtl: 300 });
+
   ctx.waitUntil(processTicketCreation(env, interaction, user, category, title, description));
 
   return {
