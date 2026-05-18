@@ -20,7 +20,10 @@ export async function handleTicketSetup(
   interaction: DiscordInteraction,
   ctx: ExecutionContext,
 ): Promise<InteractionResponse> {
-  // Check admin permissions
+  if (interaction.guild_id !== env.GUILD_ID) {
+    return ephemeral('❌ This command can only be used in the ESO Toolkit server.');
+  }
+
   const permsStr = interaction.member?.permissions;
   if (!permsStr) {
     return ephemeral('❌ Could not verify your permissions.');
@@ -101,4 +104,3 @@ async function postPanel(env: Env, interaction: DiscordInteraction): Promise<voi
     } catch {}
   }
 }
-
