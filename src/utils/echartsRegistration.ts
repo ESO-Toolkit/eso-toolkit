@@ -1,5 +1,3 @@
-import { use, ComposeOption } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
 import { LineChart as ELineChart } from 'echarts/charts';
 import type { LineSeriesOption } from 'echarts/charts';
 import {
@@ -26,8 +24,10 @@ import type {
   ToolboxComponentOption,
   TitleComponentOption,
 } from 'echarts/components';
+import { use as echartsUse, ComposeOption } from 'echarts/core';
+import { CanvasRenderer } from 'echarts/renderers';
 
-use([
+echartsUse([
   CanvasRenderer,
   ELineChart,
   GridComponent,

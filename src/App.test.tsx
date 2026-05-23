@@ -98,6 +98,10 @@ jest.mock('./components/BugReportDialog', () => ({
   ModernFeedbackFab: () => null,
 }));
 
+jest.mock('./hooks/usePerfTier', () => ({
+  usePerfTier: () => 'medium',
+}));
+
 jest.mock('./layouts/AppLayout', () => {
   const React = require('react');
   const { Outlet } = require('react-router-dom');

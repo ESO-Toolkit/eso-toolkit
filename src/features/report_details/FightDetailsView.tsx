@@ -1,8 +1,8 @@
 // Import MUI icons
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HandshakeIcon from '@mui/icons-material/Handshake';
@@ -246,7 +246,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           >
             <BuffSourcePlayerSelector players={playerList} />
           </FormControl>
-
         </Box>
 
         {/* Fight Navigation - aligned with target selector */}

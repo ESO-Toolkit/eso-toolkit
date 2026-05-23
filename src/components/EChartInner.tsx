@@ -25,9 +25,7 @@ const EChartInner: React.FC<EChartInnerProps> = ({
   const { baseOption } = useEChartsTheme();
 
   const mergedOption = useMemo(() => {
-    const mergedGrid = option.grid !== undefined
-      ? option.grid
-      : baseOption.grid;
+    const mergedGrid = option.grid !== undefined ? option.grid : baseOption.grid;
 
     return {
       ...baseOption,
@@ -44,11 +42,12 @@ const EChartInner: React.FC<EChartInnerProps> = ({
         ...(option.tooltip as Record<string, unknown> | undefined),
       },
       grid: mergedGrid,
-      legend: option.legend !== undefined
-        ? typeof option.legend === 'object' && option.legend !== null
-          ? { ...(baseOption.legend as Record<string, unknown>), ...option.legend }
-          : option.legend
-        : baseOption.legend,
+      legend:
+        option.legend !== undefined
+          ? typeof option.legend === 'object' && option.legend !== null
+            ? { ...(baseOption.legend as Record<string, unknown>), ...option.legend }
+            : option.legend
+          : baseOption.legend,
       dataZoom: option.dataZoom ?? baseOption.dataZoom,
     } as EChartsOption;
   }, [baseOption, option]);
