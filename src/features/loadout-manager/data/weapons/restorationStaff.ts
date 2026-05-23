@@ -20,8 +20,8 @@ export const RESTORATION_STAFF_SKILLS: SkillData[] = [
 
   // Regeneration
   { id: 8205, name: 'Regeneration', category: CATEGORY },
-  { id: 40060, name: 'Radiating Regeneration', category: CATEGORY, baseSkillId: 8205 },
-  { id: 40079, name: 'Radiating Regeneration', category: CATEGORY, baseSkillId: 8205 }, // Duplicate?
+  { id: 40076, name: 'Rapid Regeneration', category: CATEGORY, baseSkillId: 8205 },
+  { id: 40079, name: 'Radiating Regeneration', category: CATEGORY, baseSkillId: 8205 },
   { id: 40081, name: 'Mutagen', category: CATEGORY, baseSkillId: 8205 },
 
   // Blessing of Protection

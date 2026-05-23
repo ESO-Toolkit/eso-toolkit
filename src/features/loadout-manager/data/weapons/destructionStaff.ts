@@ -10,7 +10,6 @@ const CATEGORY = 'Destruction Staff';
 export const DESTRUCTION_STAFF_SKILLS: SkillData[] = [
   // Ultimate: Elemental Storm
   { id: 83619, name: 'Elemental Storm', category: CATEGORY, isUltimate: true },
-  { id: 83625, name: 'Fire Storm', category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
   { id: 83630, name: 'Eye of the Storm', category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
   { id: 83625, name: 'Elemental Rage', category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
 
