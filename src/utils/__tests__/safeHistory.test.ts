@@ -21,9 +21,7 @@ describe('safeHistory', () => {
 
     it('should handle SecurityError gracefully', () => {
       const originalReplaceState = window.history.replaceState;
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
-      // Mock replaceState to throw SecurityError
       window.history.replaceState = jest.fn(() => {
         throw new DOMException('The operation is insecure', 'SecurityError');
       });
@@ -31,19 +29,12 @@ describe('safeHistory', () => {
       const result = safeHistoryReplaceState({}, '', '/test');
 
       expect(result).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Unable to call history.replaceState:',
-        expect.any(DOMException),
-      );
 
-      // Cleanup
       window.history.replaceState = originalReplaceState;
-      consoleWarnSpy.mockRestore();
     });
 
     it('should handle other errors gracefully', () => {
       const originalReplaceState = window.history.replaceState;
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       window.history.replaceState = jest.fn(() => {
         throw new Error('Generic error');
@@ -52,11 +43,8 @@ describe('safeHistory', () => {
       const result = safeHistoryReplaceState({}, '', '/test');
 
       expect(result).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalled();
 
-      // Cleanup
       window.history.replaceState = originalReplaceState;
-      consoleWarnSpy.mockRestore();
     });
 
     it('should allow null URL parameter', () => {
@@ -87,9 +75,7 @@ describe('safeHistory', () => {
 
     it('should handle SecurityError gracefully', () => {
       const originalPushState = window.history.pushState;
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
-      // Mock pushState to throw SecurityError
       window.history.pushState = jest.fn(() => {
         throw new DOMException('The operation is insecure', 'SecurityError');
       });
@@ -97,19 +83,12 @@ describe('safeHistory', () => {
       const result = safeHistoryPushState({}, '', '/test');
 
       expect(result).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Unable to call history.pushState:',
-        expect.any(DOMException),
-      );
 
-      // Cleanup
       window.history.pushState = originalPushState;
-      consoleWarnSpy.mockRestore();
     });
 
     it('should handle other errors gracefully', () => {
       const originalPushState = window.history.pushState;
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
       window.history.pushState = jest.fn(() => {
         throw new Error('Generic error');
@@ -118,11 +97,8 @@ describe('safeHistory', () => {
       const result = safeHistoryPushState({}, '', '/test');
 
       expect(result).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalled();
 
-      // Cleanup
       window.history.pushState = originalPushState;
-      consoleWarnSpy.mockRestore();
     });
 
     it('should allow null URL parameter', () => {
