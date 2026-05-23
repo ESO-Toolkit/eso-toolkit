@@ -765,6 +765,7 @@ export const DiscordServerConfigPage: React.FC = () => {
                         >
                           <Avatar
                             src={getGuildIconUrl(guild.id, guild.icon) ?? undefined}
+                            alt={guild.name}
                             sx={{
                               width: 48,
                               height: 48,
@@ -920,6 +921,7 @@ export const DiscordServerConfigPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
           <Avatar
             src={getGuildIconUrl(selectedGuild.id, selectedGuild.icon) ?? undefined}
+            alt={selectedGuild.name}
             sx={{
               width: 44,
               height: 44,

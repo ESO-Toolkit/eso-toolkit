@@ -823,7 +823,7 @@ export const HeaderBar: React.FC = () => {
                     backgroundClip: 'text',
                   }}
                 >
-                  <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
+                  <img src={esoLogo} alt="ESO Toolkit logo" style={{ width: 30, height: 30 }} />
                   ESO Toolkit
                 </Typography>
               </Button>
@@ -937,7 +937,7 @@ export const HeaderBar: React.FC = () => {
                     {avatarThumbUrl ? (
                       <img
                         src={avatarThumbUrl}
-                        alt=""
+                        alt={userDisplayName || 'User avatar'}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -1268,7 +1268,7 @@ export const HeaderBar: React.FC = () => {
             {avatarThumbUrl ? (
               <img
                 src={avatarThumbUrl}
-                alt=""
+                alt={userDisplayName || 'User avatar'}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -1510,7 +1510,7 @@ export const HeaderBar: React.FC = () => {
               {avatarThumbUrl ? (
                 <img
                   src={avatarThumbUrl}
-                  alt=""
+                  alt={userDisplayName || 'User avatar'}
                   style={{
                     width: '100%',
                     height: '100%',

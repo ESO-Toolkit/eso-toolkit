@@ -1248,6 +1248,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       >
                         <Avatar
                           src={getGuildIconUrl(guild.id, guild.icon) ?? undefined}
+                          alt={guild.name}
                           sx={{ width: 36, height: 36, fontSize: '0.85rem', bgcolor: '#5865F2' }}
                         >
                           {guild.name.charAt(0)}
