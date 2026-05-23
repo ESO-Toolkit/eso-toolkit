@@ -10,7 +10,13 @@ const CATEGORY = 'One Hand and Shield';
 export const ONE_HAND_AND_SHIELD_SKILLS: SkillData[] = [
   // Ultimate: Shield Wall
   { id: 83272, name: 'Shield Wall', category: CATEGORY, isUltimate: true },
-  { id: 83283, name: 'Shield Discipline', category: CATEGORY, isUltimate: true, baseSkillId: 83272 },
+  {
+    id: 83283,
+    name: 'Shield Discipline',
+    category: CATEGORY,
+    isUltimate: true,
+    baseSkillId: 83272,
+  },
   { id: 83295, name: 'Spell Wall', category: CATEGORY, isUltimate: true, baseSkillId: 83272 },
 
   // Puncture (taunt)
