@@ -242,7 +242,7 @@
     "*.less",
     "./src/index.tsx",
     "./src/setupTests.ts",
-    "./src/utils/chartRegistration.ts"
+    "./src/utils/echartsRegistration.ts"
   ],
   "version": "0.1.0"
 }

@@ -47,8 +47,8 @@ export function useUptimeSeriesForStackedView({
       !buffLookupData ||
       friendlyPlayerIds.size === 0 ||
       !fightDuration ||
-      !fightStartTime ||
-      !fightEndTime
+      fightStartTime == null ||
+      fightEndTime == null
     ) {
       return [];
     }

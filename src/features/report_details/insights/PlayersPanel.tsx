@@ -72,8 +72,7 @@ import {
   type BarSwapAnalysisResult,
 } from '../../parse_analysis/utils/parseAnalysisUtils';
 
-// TODO: Implement proper scribing detection services
-// Temporary stubs to prevent compilation errors
+// Scribing detection stub — full implementation pending unified detection service
 const analyzeAllPlayersScribingSkills = (..._args: unknown[]): Record<string, never> => ({});
 const findScribingRecipe = async (_skillId: unknown, _skillName?: string): Promise<null> => null;
 const formatScribingRecipeForDisplay = (

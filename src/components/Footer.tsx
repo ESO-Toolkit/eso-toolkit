@@ -837,7 +837,7 @@ export const Footer: React.FC = React.memo(() => {
                       : '0 16px 32px rgba(148, 163, 184, 0.3)',
                 }}
               >
-                <img src={esoLogo} alt="ESO Helpers" style={{ width: 28, height: 28 }} />
+                <img src={esoLogo} alt="ESO Toolkit logo" style={{ width: 28, height: 28 }} />
               </Box>
 
               <Box

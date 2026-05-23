@@ -213,6 +213,9 @@ export const UserReports: React.FC = () => {
   // Track initial loading state
   const [initialLoading, setInitialLoading] = React.useState(true);
 
+  // Track fetch error to prevent infinite re-fetch loop (ESO-595)
+  const [hasError, setHasError] = React.useState(false);
+
   // Fetch page data
   const fetchPage = useCallback(
     async (page: number) => {
@@ -244,6 +247,7 @@ export const UserReports: React.FC = () => {
   // Event handlers
   const handleRefresh = useCallback(() => {
     if (isLoggedIn && currentUser?.id) {
+      setHasError(false);
       dispatch(clearCache());
       dispatch(setCurrentPage(1));
       setSearchParams({ page: '1' });
@@ -337,7 +341,7 @@ export const UserReports: React.FC = () => {
     // Fetch all reports when user is logged in and we have currentUser data.
     // Guard with hasFetchedAll (not totalCachedReports) so we don't re-dispatch
     // after a failed fetch or when the user genuinely has zero reports (ESO-595).
-    if (currentUser?.id && !cacheInfo.hasFetchedAll && !isFetchingAll) {
+    if (currentUser?.id && !cacheInfo.hasFetchedAll && !isFetchingAll && !hasError) {
       dispatch(
         fetchAllUserReports({
           client,
@@ -347,6 +351,7 @@ export const UserReports: React.FC = () => {
       )
         .unwrap()
         .catch((err) => {
+          setHasError(true);
           logger.error(
             'Failed to fetch all reports',
             err instanceof Error ? err : new Error(String(err)),
@@ -367,6 +372,7 @@ export const UserReports: React.FC = () => {
     userLoading,
     cacheInfo.hasFetchedAll,
     isFetchingAll,
+    hasError,
     dispatch,
     client,
     logger,

@@ -1,3 +1,7 @@
+import { Logger } from './logger';
+
+const logger = new Logger({ contextPrefix: 'SafeHistory' });
+
 /**
  * Safe history utilities to handle SecurityError exceptions
  *
@@ -29,8 +33,7 @@ export const safeHistoryReplaceState = (
   } catch (error) {
     // SecurityError can occur in Firefox with tracking protection,
     // iframes, or other restricted contexts
-    // eslint-disable-next-line no-console
-    console.warn('Unable to call history.replaceState:', error);
+    logger.warn('Unable to call history.replaceState', { error });
     return false;
   }
 };
@@ -53,8 +56,7 @@ export const safeHistoryPushState = (
   } catch (error) {
     // SecurityError can occur in Firefox with tracking protection,
     // iframes, or other restricted contexts
-    // eslint-disable-next-line no-console
-    console.warn('Unable to call history.pushState:', error);
+    logger.warn('Unable to call history.pushState', { error });
     return false;
   }
 };

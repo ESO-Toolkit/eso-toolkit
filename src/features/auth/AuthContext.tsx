@@ -107,8 +107,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const lastUserPropertyPayload = React.useRef<string>('');
 
   if (isDevelopment()) {
-    // eslint-disable-next-line no-console
-    console.log('[AuthContext] render', {
+    logger.debug('render', {
       hasToken: !!accessToken,
       tokenHasUserSubject: accessTokenHasUser,
       tokenExpiresAt: accessTokenExpiry,
@@ -210,8 +209,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const fetchedUser = result?.userData?.currentUser ?? null;
 
       if (isDevelopment()) {
-        // eslint-disable-next-line no-console
-        console.log('[AuthContext] Fetched current user', {
+        logger.debug('Fetched current user', {
           hasUser: !!fetchedUser,
           result,
         });
@@ -322,8 +320,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     if (isDevelopment()) {
-      // eslint-disable-next-line no-console
-      console.log('[AuthContext] state changed', {
+      logger.debug('state changed', {
         hasToken: !!accessToken,
         tokenHasUserSubject: accessTokenHasUser,
         tokenExpiresAt: accessTokenExpiry,

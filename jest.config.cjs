@@ -103,6 +103,7 @@ module.exports = {
   },
 
   // Ignore patterns
+  modulePathIgnorePatterns: ['<rootDir>/.claude/worktrees/', '<rootDir>/.deepsec/'],
   testPathIgnorePatterns: ['node_modules', 'build', 'scribing-e2e\\.(test|spec)\\.(ts|tsx)$'],
   transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three|uuid|echarts|zrender))'],
 

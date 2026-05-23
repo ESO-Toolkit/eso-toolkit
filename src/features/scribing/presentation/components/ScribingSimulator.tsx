@@ -74,7 +74,6 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
     const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
     navigator.clipboard.writeText(shareUrl);
 
-    // TODO: Show toast notification
     logger.info('Configuration URL copied to clipboard', { shareUrl });
   };
 

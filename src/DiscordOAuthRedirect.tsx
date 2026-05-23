@@ -18,6 +18,9 @@ import {
   validateOAuthState,
 } from './features/auth/discord-auth';
 import { useDiscordAuth } from './features/auth/DiscordAuthContext';
+import { Logger } from './utils/logger';
+
+const logger = new Logger({ contextPrefix: 'DiscordOAuth' });
 
 export const DiscordOAuthRedirect: React.FC = () => {
   const navigate = useNavigate();
@@ -60,8 +63,7 @@ export const DiscordOAuthRedirect: React.FC = () => {
       })
       .catch((err) => {
         if (cancelled) return;
-        // eslint-disable-next-line no-console -- intentional debug logging for OAuth errors
-        console.error('[discord-oauth] token exchange failed:', err);
+        logger.error('token exchange failed', err instanceof Error ? err : undefined);
         setError(err instanceof Error ? err.message : 'Token exchange failed');
       });
 

@@ -10,14 +10,13 @@ const CATEGORY = 'Destruction Staff';
 export const DESTRUCTION_STAFF_SKILLS: SkillData[] = [
   // Ultimate: Elemental Storm
   { id: 83619, name: 'Elemental Storm', category: CATEGORY, isUltimate: true },
-  { id: 83625, name: 'Fire Storm', category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
-  // { id: XXXXX, name: "Eye of the Storm", category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
-  // { id: XXXXX, name: "Elemental Rage", category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
+  { id: 83630, name: 'Eye of the Storm', category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
+  { id: 83625, name: 'Elemental Rage', category: CATEGORY, isUltimate: true, baseSkillId: 83619 },
 
   // Force Shock
   { id: 46340, name: 'Force Shock', category: CATEGORY },
   { id: 46348, name: 'Crushing Shock', category: CATEGORY, baseSkillId: 46340 },
-  // { id: XXXXX, name: "Force Pulse", category: CATEGORY, baseSkillId: 46340 },
+  { id: 46356, name: 'Force Pulse', category: CATEGORY, baseSkillId: 46340 },
 
   // Wall of Elements
   { id: 28858, name: 'Wall of Elements', category: CATEGORY },
@@ -35,7 +34,7 @@ export const DESTRUCTION_STAFF_SKILLS: SkillData[] = [
   { id: 38984, name: 'Destructive Clench', category: CATEGORY, baseSkillId: 29091 },
   { id: 38989, name: 'Frost Clench', category: CATEGORY, baseSkillId: 29091 },
   { id: 38993, name: 'Shock Clench', category: CATEGORY, baseSkillId: 29091 },
-  // { id: XXXXX, name: "Destructive Reach", category: CATEGORY, baseSkillId: 29091 },
+  { id: 38937, name: 'Destructive Reach', category: CATEGORY, baseSkillId: 29091 },
 
   // Weakness to Elements
   { id: 29173, name: 'Weakness to Elements', category: CATEGORY },
@@ -45,8 +44,8 @@ export const DESTRUCTION_STAFF_SKILLS: SkillData[] = [
   // Impulse
   { id: 28800, name: 'Impulse', category: CATEGORY },
   { id: 39163, name: 'Frost Pulsar', category: CATEGORY, baseSkillId: 28800 },
-  // { id: XXXXX, name: "Elemental Ring", category: CATEGORY, baseSkillId: 28800 },
-  // { id: XXXXX, name: "Pulsar", category: CATEGORY, baseSkillId: 28800 },
+  { id: 39143, name: 'Elemental Ring', category: CATEGORY, baseSkillId: 28800 },
+  { id: 39161, name: 'Pulsar', category: CATEGORY, baseSkillId: 28800 },
 
   // Passives/Other
   { id: 39301, name: 'Combustion', category: CATEGORY },
