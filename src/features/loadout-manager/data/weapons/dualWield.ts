@@ -25,16 +25,16 @@ export const DUAL_WIELD_SKILLS: SkillData[] = [
 
   // Whirlwind
   { id: 28591, name: 'Whirlwind', category: CATEGORY },
-  { id: 38891, name: 'Whirling Blades', category: CATEGORY, baseSkillId: 28591 },
-  { id: 38914, name: 'Whirling Blades', category: CATEGORY, baseSkillId: 28591 }, // Possible duplicate ID
+  { id: 38891, name: 'Steel Tornado', category: CATEGORY, baseSkillId: 28591 },
+  { id: 38901, name: 'Whirling Blades', category: CATEGORY, baseSkillId: 28591 },
 
   // Blade Cloak
   { id: 28613, name: 'Blade Cloak', category: CATEGORY },
-  { id: 38901, name: 'Quick Cloak', category: CATEGORY, baseSkillId: 28613 },
-  { id: 38906, name: 'Deadly Cloak', category: CATEGORY, baseSkillId: 28613 },
+  { id: 38914, name: 'Quick Cloak', category: CATEGORY, baseSkillId: 28613 },
+  { id: 38910, name: 'Deadly Cloak', category: CATEGORY, baseSkillId: 28613 },
 
   // Hidden Blade
   { id: 21157, name: 'Hidden Blade', category: CATEGORY },
   { id: 38948, name: 'Shrouded Daggers', category: CATEGORY, baseSkillId: 21157 },
-  { id: 28311, name: 'Vibrant Shroud', category: CATEGORY, baseSkillId: 21157 },
+  { id: 38944, name: 'Flying Blade', category: CATEGORY, baseSkillId: 21157 },
 ];

@@ -36,7 +36,7 @@ export const RESTORATION_STAFF_SKILLS: SkillData[] = [
 
   // Force Siphon
   { id: 31531, name: 'Force Siphon', category: CATEGORY },
-  { id: 40169, name: 'Ring of Preservation', category: CATEGORY, baseSkillId: 31531 },
+  { id: 40109, name: 'Siphon Spirit', category: CATEGORY, baseSkillId: 31531 },
   { id: 40116, name: 'Quick Siphon', category: CATEGORY, baseSkillId: 31531 },
 
   // Passives/Other
