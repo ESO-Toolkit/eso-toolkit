@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { Logger } from '@/utils/logger';
 import { safeHistoryReplaceState } from '@/utils/safeHistory';
 import { safeSessionStorageGet, safeSessionStorageRemove } from '@/utils/safeStorage';
+
+const logger = new Logger({ contextPrefix: 'HashRouteRedirect' });
 
 /**
  * Validates that a redirect path is safe to use with React Router's history API.
@@ -73,8 +76,7 @@ export const HashRouteRedirect: React.FC = () => {
       // Validate that the normalized path starts with / to ensure it's a relative path
       if (!normalizedPath.startsWith('/')) {
         // Invalid redirect path - ignore it to prevent navigation errors
-        // eslint-disable-next-line no-console
-        console.warn('Invalid redirect path detected:', redirectParam);
+        logger.warn('Invalid redirect path detected', { redirectParam });
         return;
       }
 

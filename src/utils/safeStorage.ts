@@ -1,3 +1,7 @@
+import { Logger } from './logger';
+
+const logger = new Logger({ contextPrefix: 'SafeStorage' });
+
 /**
  * Safe storage utilities to handle SecurityError exceptions
  *
@@ -20,8 +24,7 @@ export const safeLocalStorageGet = (key: string): string | null => {
   try {
     return localStorage.getItem(key);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(`Unable to access localStorage for key "${key}":`, error);
+    logger.warn(`Unable to access localStorage for key "${key}"`, { key, error });
     return null;
   }
 };
@@ -37,8 +40,7 @@ export const safeLocalStorageSet = (key: string, value: string): boolean => {
     localStorage.setItem(key, value);
     return true;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(`Unable to set localStorage for key "${key}":`, error);
+    logger.warn(`Unable to set localStorage for key "${key}"`, { key, error });
     return false;
   }
 };
@@ -53,8 +55,7 @@ export const safeLocalStorageRemove = (key: string): boolean => {
     localStorage.removeItem(key);
     return true;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(`Unable to remove from localStorage for key "${key}":`, error);
+    logger.warn(`Unable to remove from localStorage for key "${key}"`, { key, error });
     return false;
   }
 };
@@ -68,8 +69,7 @@ export const safeSessionStorageGet = (key: string): string | null => {
   try {
     return sessionStorage.getItem(key);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(`Unable to access sessionStorage for key "${key}":`, error);
+    logger.warn(`Unable to access sessionStorage for key "${key}"`, { key, error });
     return null;
   }
 };
@@ -85,8 +85,7 @@ export const safeSessionStorageSet = (key: string, value: string): boolean => {
     sessionStorage.setItem(key, value);
     return true;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(`Unable to set sessionStorage for key "${key}":`, error);
+    logger.warn(`Unable to set sessionStorage for key "${key}"`, { key, error });
     return false;
   }
 };
@@ -101,8 +100,7 @@ export const safeSessionStorageRemove = (key: string): boolean => {
     sessionStorage.removeItem(key);
     return true;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.warn(`Unable to remove from sessionStorage for key "${key}":`, error);
+    logger.warn(`Unable to remove from sessionStorage for key "${key}"`, { key, error });
     return false;
   }
 };
