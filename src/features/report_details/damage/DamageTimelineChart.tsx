@@ -728,7 +728,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   Targets
                 </Typography>
                 <Box
-                  onClick={() => setLocalTargetIds(null)}
+                  onClick={() => setLocalTargetIds([])}
                   sx={{
                     height: 30,
                     borderRadius: '15px',
