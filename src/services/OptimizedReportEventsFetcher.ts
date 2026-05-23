@@ -143,7 +143,10 @@ export class OptimizedReportEventsFetcher {
         healingEvents: individualHealing,
       };
     } catch (error) {
-      logger.error('Individual parallel queries also failed', error instanceof Error ? error : undefined);
+      logger.error(
+        'Individual parallel queries also failed',
+        error instanceof Error ? error : undefined,
+      );
 
       // Return empty results rather than crash
       return {
@@ -228,9 +231,7 @@ export class OptimizedReportEventsFetcher {
     }
 
     // FALLBACK: Batch query failed, use proven individual fight approach
-    logger.warn(
-      'Batch query returned 0 events - falling back to individual fight queries',
-    );
+    logger.warn('Batch query returned 0 events - falling back to individual fight queries');
 
     try {
       // Use the exact same approach as deathEventsSlice that works
@@ -254,7 +255,10 @@ export class OptimizedReportEventsFetcher {
         healingEvents,
       };
     } catch (error) {
-      logger.error('Individual fight queries also failed', error instanceof Error ? error : undefined);
+      logger.error(
+        'Individual fight queries also failed',
+        error instanceof Error ? error : undefined,
+      );
 
       // Return empty results rather than crash
       return {
@@ -315,7 +319,10 @@ export class OptimizedReportEventsFetcher {
       );
       return damageEvents;
     } catch (error) {
-      logger.error('Error with individual damage approach', error instanceof Error ? error : undefined);
+      logger.error(
+        'Error with individual damage approach',
+        error instanceof Error ? error : undefined,
+      );
       return [];
     }
   }
@@ -367,7 +374,10 @@ export class OptimizedReportEventsFetcher {
       );
       return healingEvents;
     } catch (error) {
-      logger.error('Error with individual healing approach', error instanceof Error ? error : undefined);
+      logger.error(
+        'Error with individual healing approach',
+        error instanceof Error ? error : undefined,
+      );
       return [];
     }
   }
@@ -425,7 +435,10 @@ export class OptimizedReportEventsFetcher {
       );
       return deathEvents;
     } catch (error) {
-      logger.error('Error with working deathEventsSlice approach', error instanceof Error ? error : undefined);
+      logger.error(
+        'Error with working deathEventsSlice approach',
+        error instanceof Error ? error : undefined,
+      );
       return [];
     }
   }

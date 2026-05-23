@@ -121,9 +121,7 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
       setError(undefined);
 
       const overallStartTime = performance.now();
-      logger.info(
-        `Starting optimized report summary processing for ${cleanFights.length} fights`,
-      );
+      logger.info(`Starting optimized report summary processing for ${cleanFights.length} fights`);
 
       try {
         const totalTasks = 5; // Optimized: fetch events + process + analyze damage + analyze deaths + finalize

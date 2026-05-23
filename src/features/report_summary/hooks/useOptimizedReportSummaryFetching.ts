@@ -2,10 +2,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { Logger } from '../../../utils/logger';
-
-const logger = new Logger({ contextPrefix: 'ReportSummaryFetch' });
-
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks/useReportMasterData';
@@ -21,6 +17,9 @@ import {
   ReportInfo,
   AggregatedFightData,
 } from '../../../types/reportSummaryTypes';
+import { Logger } from '../../../utils/logger';
+
+const logger = new Logger({ contextPrefix: 'ReportSummaryFetch' });
 
 interface UseOptimizedFetchingReturn {
   reportSummaryData: ReportSummaryData | null;

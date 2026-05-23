@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ReportActorFragment, ReportAbilityFragment } from '../graphql/gql/graphql';
 import { DeathEvent } from '../types/combatlogEvents';
-import { Logger } from '../utils/logger';
 import {
   ReportDeathAnalysis,
   PlayerDeathAnalysis,
@@ -14,6 +13,7 @@ import {
   MechanicDeathCount,
   FightPlayerDeaths,
 } from '../types/reportSummaryTypes';
+import { Logger } from '../utils/logger';
 
 const logger = new Logger({ contextPrefix: 'DeathAnalysis' });
 
