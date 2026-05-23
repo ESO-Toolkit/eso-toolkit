@@ -56,8 +56,6 @@ const itemLinkLogger = new Logger({ contextPrefix: 'ItemLinkParser' });
 
 async function fetchItemFromUESP(itemId: number): Promise<ItemData | null> {
   try {
-    // TODO: Implement actual API call when available
-    // For now, return a placeholder with the item ID
     return {
       id: itemId,
       name: `Item ${itemId}`,

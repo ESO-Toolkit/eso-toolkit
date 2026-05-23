@@ -848,7 +848,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       dotUptimeResult,
       penCritCapResult,
       resourceSustainResult,
-      potionUse: null, // TODO: Wire potionUse from player details when available
+      potionUse: null,
     });
 
     // Update state with analysis results

@@ -190,8 +190,7 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
   useFrame(() => {
     if (!lookup || !groupRef.current) return;
 
-    // No throttling for now to ensure responsiveness during scrubbing
-    // TODO: Re-implement throttling with better scrubbing detection if needed for performance
+    // No throttling — responsiveness during scrubbing is more important
 
     const currentTime = timeRef ? timeRef.current : 0;
     const actor = getActorPositionAtClosestTimestamp(lookup, actorId, currentTime);

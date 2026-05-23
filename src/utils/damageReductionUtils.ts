@@ -566,8 +566,8 @@ function countHeavyArmorPieces(combatantInfo: CombatantInfoEvent | null): number
 }
 
 /**
- * Helper function to count Winter's Embrace abilities slotted
- * TODO: Implement proper detection of Winter's Embrace abilities from player data
+ * Helper function to count Winter's Embrace abilities slotted.
+ * Currently returns 0 — needs player skill data to detect slotted abilities.
  */
 function countWintersEmbraceAbilities(playerData: PlayerDetailsWithRole): number {
   if (!playerData) return 0;

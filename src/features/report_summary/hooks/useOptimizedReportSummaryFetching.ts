@@ -226,15 +226,19 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
           reportEvents.deathEvents.length +
           reportEvents.healingEvents.length;
 
+        const totalDamage = reportEvents.damageEvents.reduce(
+          (sum: number, event: any) => sum + (event.amount || 0),
+          0,
+        );
+        const totalDurationMs = cleanFights.reduce((sum, f) => sum + (f.endTime - f.startTime), 0);
+        const dps = totalDurationMs > 0 ? totalDamage / (totalDurationMs / 1000) : 0;
+
         const summaryData: ReportSummaryData = {
           reportInfo: mockReportInfo,
           fights: cleanFights,
           damageBreakdown: {
-            totalDamage: reportEvents.damageEvents.reduce(
-              (sum: number, event: any) => sum + (event.amount || 0),
-              0,
-            ),
-            dps: 0, // TODO: Calculate actual DPS
+            totalDamage,
+            dps,
             playerBreakdown: [],
             abilityTypeBreakdown: [],
             targetBreakdown: [],

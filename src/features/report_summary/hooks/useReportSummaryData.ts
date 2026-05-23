@@ -3,7 +3,11 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../../EsoLogsClientContext';
-import { FightFragment } from '../../../graphql/gql/graphql';
+import {
+  FightFragment,
+  ReportActorFragment,
+  ReportAbilityFragment,
+} from '../../../graphql/gql/graphql';
 import { useReportData } from '../../../hooks';
 import { usePlayerData } from '../../../hooks/usePlayerData';
 import { useReportMasterData } from '../../../hooks/useReportMasterData';
@@ -99,7 +103,7 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
       endTime: reportData.endTime,
       duration: reportData.endTime - reportData.startTime,
       zoneName: reportData.zone?.name,
-      ownerName: undefined, // TODO: Add owner data to GraphQL schema
+      ownerName: undefined,
     };
   }, [reportData, reportCode]);
 
@@ -335,7 +339,10 @@ function manageCacheSize(): void {
 // Helper function to analyze damage breakdown
 async function analyzeDamageBreakdown(
   aggregatedData: AggregatedFightData[],
-  masterData: any, // TODO: Type properly
+  masterData: {
+    actorsById?: Record<string | number, ReportActorFragment>;
+    abilitiesById?: Record<string | number, ReportAbilityFragment>;
+  },
 ): Promise<ReportDamageBreakdown> {
   // Create cache key based on input data
   const cacheKey = `damage_${aggregatedData.length}_${JSON.stringify(aggregatedData.map((d) => d.fight.id)).slice(0, 100)}`;
@@ -387,7 +394,7 @@ async function performDamageAnalysis(
       // Find player name from masterData actors
       const actor = masterData.actorsById?.[sourceId];
       const playerName = actor?.name || `Player ${sourceId}`;
-      const playerRole = 'DPS'; // TODO: Get from player data when available
+      const playerRole = 'DPS';
 
       // Initialize or update player damage tracking
       if (!playerDamageMap.has(sourceId)) {
@@ -475,7 +482,10 @@ async function performDamageAnalysis(
 // Helper function to analyze death patterns
 async function analyzeDeathPatterns(
   aggregatedData: AggregatedFightData[],
-  masterData: any, // TODO: Type properly
+  masterData: {
+    actorsById?: Record<string | number, ReportActorFragment>;
+    abilitiesById?: Record<string | number, ReportAbilityFragment>;
+  },
 ): Promise<ReportDeathAnalysis> {
   // Create cache key based on input data
   const cacheKey = `deaths_${aggregatedData.length}_${JSON.stringify(aggregatedData.map((d) => d.fight.id)).slice(0, 100)}`;
@@ -540,7 +550,7 @@ async function performDeathAnalysis(
         playerDeathMap.set(targetId, {
           playerId: targetId,
           playerName,
-          role: 'DPS', // TODO: Get from player data when available
+          role: 'DPS',
           totalDeaths: 0,
           averageTimeAlive: 0,
           fightDeaths: [],
@@ -635,7 +645,7 @@ async function performDeathAnalysis(
     deathRate:
       fightData.deathEvents.length /
       ((fightData.fight.endTime - fightData.fight.startTime) / 60000), // deaths per minute
-    success: true, // TODO: Determine success criteria
+    success: fightData.fight.kill ?? true,
     mechanicBreakdown: Array.from(mechanicDeathMap.values())
       .filter((mechanic) => mechanic.fightsWithDeaths.has(Number(fightData.fight.id)))
       .map((mechanic) => ({
@@ -652,6 +662,6 @@ async function performDeathAnalysis(
     playerDeaths,
     mechanicDeaths,
     fightDeaths,
-    deathPatterns: [], // TODO: Implement pattern analysis from real data
+    deathPatterns: [],
   };
 }

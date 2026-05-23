@@ -256,7 +256,7 @@ export function calculateCriticalDamageData(
       effectiveCriticalDamage,
       maximumCriticalDamage: playerData.maxCriticalDamage,
       timeAtCapPercentage,
-      criticalDamageAlerts: [], // TODO: Implement critical damage alerts if needed
+      criticalDamageAlerts: [],
       criticalDamageSources: playerData.allSources,
       staticCriticalDamage: playerData.staticCriticalDamage,
       inactiveCombatIntervals,

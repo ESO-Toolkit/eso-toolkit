@@ -86,9 +86,30 @@ export function useMultiFightBuffLookup({
   // Skip if we already have this fight's data cached
   const shouldLoadCurrentFight = currentFight && !buffDataCache.has(currentFight.id);
 
-  const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask({
+  const { buffLookupData, isBuffLookupLoading, buffLookupError } = useBuffLookupTask({
     context: shouldLoadCurrentFight ? { reportCode, fightId: currentFight.id } : undefined,
   });
+
+  const [hasError, setHasError] = React.useState(false);
+
+  React.useEffect(() => {
+    if (buffLookupError && requestedFightId != null) {
+      logger.warn('Buff lookup failed for fight', {
+        fightId: requestedFightId,
+        error: buffLookupError,
+      });
+      setHasError(true);
+      setLoadingFightIds((prev) => {
+        const updated = new Set(prev);
+        updated.delete(requestedFightId);
+        return updated;
+      });
+      setRequestedFightId(null);
+      if (currentLoadIndex < selectedFights.length - 1) {
+        setCurrentLoadIndex((prev) => prev + 1);
+      }
+    }
+  }, [buffLookupError, requestedFightId, currentLoadIndex, selectedFights.length]);
 
   // When buff data loads for current fight, save it and move to next
   React.useEffect(() => {
@@ -168,6 +189,7 @@ export function useMultiFightBuffLookup({
     setCurrentLoadIndex(0);
     setLoadingFightIds(new Set());
     setRequestedFightId(null);
+    setHasError(false);
   }, [selectedFightsKey]);
 
   // Determine overall loading state
@@ -181,8 +203,8 @@ export function useMultiFightBuffLookup({
     () => ({
       fightBuffData: buffDataCache,
       isLoading,
-      hasError: false, // TODO: Implement error handling
+      hasError,
     }),
-    [buffDataCache, isLoading],
+    [buffDataCache, isLoading, hasError],
   );
 }
