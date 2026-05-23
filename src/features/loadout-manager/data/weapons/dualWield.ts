@@ -10,18 +10,18 @@ const CATEGORY = 'Dual Wield';
 export const DUAL_WIELD_SKILLS: SkillData[] = [
   // Ultimate: Lacerate
   { id: 5452, name: 'Lacerate', category: CATEGORY, isUltimate: true },
-  // { id: XXXXX, name: "Thrive in Chaos", category: CATEGORY, isUltimate: true, baseSkillId: 5452 },
-  // { id: XXXXX, name: "Whirling Blades", category: CATEGORY, isUltimate: true, baseSkillId: 5452 },
+  { id: 83625, name: 'Thrive in Chaos', category: CATEGORY, isUltimate: true, baseSkillId: 5452 },
+  { id: 83600, name: 'Rend', category: CATEGORY, isUltimate: true, baseSkillId: 5452 },
 
   // Flurry
   { id: 3415, name: 'Flurry', category: CATEGORY },
-  // { id: XXXXX, name: "Rapid Strikes", category: CATEGORY, baseSkillId: 3415 },
-  // { id: XXXXX, name: "Bloodthirst", category: CATEGORY, baseSkillId: 3415 },
+  { id: 38857, name: 'Rapid Strikes', category: CATEGORY, baseSkillId: 3415 },
+  { id: 38846, name: 'Bloodthirst', category: CATEGORY, baseSkillId: 3415 },
 
   // Twin Slashes
   { id: 28379, name: 'Twin Slashes', category: CATEGORY },
-  // { id: XXXXX, name: "Rending Slashes", category: CATEGORY, baseSkillId: 28379 },
-  // { id: XXXXX, name: "Blood Craze", category: CATEGORY, baseSkillId: 28379 },
+  { id: 38842, name: 'Rending Slashes', category: CATEGORY, baseSkillId: 28379 },
+  { id: 38845, name: 'Blood Craze', category: CATEGORY, baseSkillId: 28379 },
 
   // Whirlwind
   { id: 28591, name: 'Whirlwind', category: CATEGORY },
@@ -35,6 +35,6 @@ export const DUAL_WIELD_SKILLS: SkillData[] = [
 
   // Hidden Blade
   { id: 21157, name: 'Hidden Blade', category: CATEGORY },
-  // { id: XXXXX, name: "Shrouded Daggers", category: CATEGORY, baseSkillId: 21157 },
+  { id: 38948, name: 'Shrouded Daggers', category: CATEGORY, baseSkillId: 21157 },
   { id: 28311, name: 'Vibrant Shroud', category: CATEGORY, baseSkillId: 21157 },
 ];
