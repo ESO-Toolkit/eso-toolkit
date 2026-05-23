@@ -87,7 +87,8 @@ export function useMultiFightBuffLookup({
 
   // Use buff lookup task for current fight only
   // Skip if we already have this fight's data cached
-  const shouldLoadCurrentFight = currentFight && !buffDataCache.has(currentFight.id);
+  const shouldLoadCurrentFight =
+    currentFight && !buffDataCache.has(currentFight.id) && !failedFightIds.has(currentFight.id);
 
   const { buffLookupData, isBuffLookupLoading, buffLookupError } = useBuffLookupTask({
     context: shouldLoadCurrentFight ? { reportCode, fightId: currentFight.id } : undefined,

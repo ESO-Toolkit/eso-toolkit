@@ -93,6 +93,14 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   const [localTargetIds, setLocalTargetIds] = React.useState<number[] | null>(null);
   const [hiddenBuffNames, setHiddenBuffNames] = React.useState<Set<string>>(new Set());
   const chartWrapperRef = React.useRef<HTMLDivElement>(null);
+
+  const fightId = fight?.id;
+  React.useEffect(() => {
+    setLocalTargetIds(null);
+    setHiddenPlayerIds(new Set());
+    setHiddenBuffNames(new Set());
+  }, [fightId]);
+
   const handleUptimeData = React.useCallback((series: UptimeTimelineSeries[]) => {
     setUptimeSeries(series);
   }, []);
