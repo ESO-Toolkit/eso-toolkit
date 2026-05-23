@@ -202,6 +202,14 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     }));
   }, [displayData, resolvePlayerName]);
 
+  const playerColorMap = React.useMemo(() => {
+    const map = new Map<number, string>();
+    playerOptions.forEach((p, i) => {
+      map.set(p.id, PLAYER_COLORS[i % PLAYER_COLORS.length]);
+    });
+    return map;
+  }, [playerOptions]);
+
   const buffOptions = React.useMemo(() => {
     return uptimeSeries.map((s) => s.label);
   }, [uptimeSeries]);
@@ -260,11 +268,11 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     if (!displayData) return [];
     return Object.values(displayData)
       .filter((p) => !hiddenPlayerIds.has(p.playerId))
-      .map((p, index) => ({
+      .map((p) => ({
         name: resolvePlayerName ? resolvePlayerName(p.playerId, p.playerName) : p.playerName,
-        color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+        color: playerColorMap.get(p.playerId) ?? PLAYER_COLORS[0],
       }));
-  }, [displayData, hiddenPlayerIds, resolvePlayerName]);
+  }, [displayData, hiddenPlayerIds, resolvePlayerName, playerColorMap]);
 
   const echartsOption = React.useMemo(() => {
     if (!displayData) return null;
@@ -275,15 +283,15 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     const bucketSizeSeconds = (damageOverTimeData?.bucketSizeMs || 1000) / 1000;
     const showStacked = stacked && uptimeSeries && uptimeSeries.length > 0;
 
-    const dpsSeries = players.map((playerData, index) => {
-      const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+    const dpsSeries = players.map((playerData, seriesIndex) => {
+      const color = playerColorMap.get(playerData.playerId) ?? PLAYER_COLORS[0];
       const data = playerData.dataPoints.map((point) => [
         point.relativeTime,
         point.damage / bucketSizeSeconds,
       ]);
 
       const phaseMarkLines =
-        index === 0
+        seriesIndex === 0
           ? buildPhaseMarkLines(
               phaseTransitionInfo?.phaseTransitions,
               damageOverTimeData?.fightStartTime,
@@ -500,6 +508,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     resolvePlayerName,
     hiddenPlayerIds,
     hiddenBuffNames,
+    playerColorMap,
   ]);
 
   if (isLoading) {
@@ -649,8 +658,8 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               >
                 All
               </Box>
-              {playerOptions.map((p, index) => {
-                const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+              {playerOptions.map((p) => {
+                const color = playerColorMap.get(p.id) ?? PLAYER_COLORS[0];
                 const rgb = hexToRgb(color);
                 const isHidden = hiddenPlayerIds.has(p.id);
                 const isSoloed = hiddenPlayerIds.size === playerOptions.length - 1 && !isHidden;
