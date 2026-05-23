@@ -1,6 +1,7 @@
-/* eslint-disable no-console, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ReportActorFragment, ReportAbilityFragment } from '../graphql/gql/graphql';
 import { DeathEvent } from '../types/combatlogEvents';
+import { Logger } from '../utils/logger';
 import {
   ReportDeathAnalysis,
   PlayerDeathAnalysis,
@@ -13,6 +14,8 @@ import {
   MechanicDeathCount,
   FightPlayerDeaths,
 } from '../types/reportSummaryTypes';
+
+const logger = new Logger({ contextPrefix: 'DeathAnalysis' });
 
 export interface DeathAnalysisInput {
   deathEvents: DeathEvent[];
@@ -48,7 +51,7 @@ export class DeathAnalysisService {
    * Analyze death events for a complete report summary
    */
   static analyzeReportDeaths(fightDeathData: DeathAnalysisInput[]): ReportDeathAnalysis {
-    console.log('🔍 Starting comprehensive death analysis...');
+    logger.info('Starting comprehensive death analysis');
 
     // Collect all death events across fights (filter to player deaths only)
     const allDeathEvents: DeathEvent[] = [];
@@ -90,11 +93,12 @@ export class DeathAnalysisService {
 
     const totalDeaths = allDeathEvents.length;
 
-    console.log(`📊 Death Analysis Complete:
-    - Total Deaths: ${totalDeaths}
-    - Players Analyzed: ${playerAnalyses.length}
-    - Mechanics Identified: ${mechanicAnalyses.length}
-    - Patterns Found: ${deathPatterns.length}`);
+    logger.info('Death analysis complete', {
+      totalDeaths,
+      playersAnalyzed: playerAnalyses.length,
+      mechanicsIdentified: mechanicAnalyses.length,
+      patternsFound: deathPatterns.length,
+    });
 
     return {
       totalDeaths,

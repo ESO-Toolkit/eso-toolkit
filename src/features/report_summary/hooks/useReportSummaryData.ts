@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-function-return-type, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-function-return-type, react-hooks/exhaustive-deps */
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -30,6 +30,9 @@ import {
 } from '../../../types/reportSummaryTypes';
 import { cleanArray } from '../../../utils/cleanArray';
 import { msToSeconds } from '../../../utils/fightDuration';
+import { Logger } from '../../../utils/logger';
+
+const logger = new Logger({ contextPrefix: 'ReportSummary' });
 
 interface UseReportSummaryDataReturn {
   summaryData?: ReportSummaryData;
@@ -118,8 +121,8 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
       setError(undefined);
 
       const overallStartTime = performance.now();
-      console.log(
-        `🚀 Starting optimized report summary processing for ${cleanFights.length} fights...`,
+      logger.info(
+        `Starting optimized report summary processing for ${cleanFights.length} fights`,
       );
 
       try {
@@ -146,7 +149,7 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
         let reportEvents: ReportEventsData;
 
         if (cachedEvents && cachedEvents.reportCode === reportCode) {
-          console.log('🎯 Using cached report events for', reportCode);
+          logger.info(`Using cached report events for ${reportCode}`);
           reportEvents = cachedEvents.events;
           setProgress({
             current: currentTask + 1,
@@ -171,8 +174,8 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
               total: totalTasks,
               currentTask: `Fetching all events in single query (${cleanFights.length} fights)...`,
             });
-            console.log(
-              `📈 Using single-query strategy for ${cleanFights.length} fights over ${(reportDuration / 60000).toFixed(1)} minutes`,
+            logger.info(
+              `Using single-query strategy for ${cleanFights.length} fights over ${(reportDuration / 60000).toFixed(1)} minutes`,
             );
             reportEvents = await fetcher.fetchAllEventsOptimized(reportCode, cleanFights);
           } else {
@@ -182,8 +185,8 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
               total: totalTasks,
               currentTask: `Fetching events in 3 parallel queries (${cleanFights.length} fights)...`,
             });
-            console.log(
-              `⚡ Using parallel strategy for ${cleanFights.length} fights over ${(reportDuration / 60000).toFixed(1)} minutes`,
+            logger.info(
+              `Using parallel strategy for ${cleanFights.length} fights over ${(reportDuration / 60000).toFixed(1)} minutes`,
             );
             reportEvents = await fetcher.fetchReportEventsParallel(
               reportCode,
@@ -206,18 +209,18 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
         // Filter events by fight on client side (much faster than multiple API calls)
         const fightEventsMap = fetcher.filterEventsByFights(reportEvents, cleanFights);
 
-        // Debug: Log death events info
-        console.log(`🔍 Death Events Debug for report:
-        - Total death events fetched: ${reportEvents.deathEvents.length}
-        - Fights to process: ${cleanFights.length}
-        - Fight events map size: ${fightEventsMap.size}`);
+        logger.info('Death events debug for report', {
+          totalDeathEventsFetched: reportEvents.deathEvents.length,
+          fightsToProcess: cleanFights.length,
+          fightEventsMapSize: fightEventsMap.size,
+        });
 
         const aggregatedData: AggregatedFightData[] = cleanFights.map((fight) => {
           const fightEvents = fightEventsMap.get(Number(fight.id));
           const deathCount = fightEvents?.deathEvents.length || 0;
 
           if (deathCount > 0) {
-            console.log(`💀 Fight ${fight.id} (${fight.name}): ${deathCount} deaths found`);
+            logger.info(`Fight ${fight.id} (${fight.name}): ${deathCount} deaths found`);
           }
 
           return {
@@ -235,7 +238,7 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
           (sum, fight) => sum + fight.deathEvents.length,
           0,
         );
-        console.log(`📊 Total deaths found across all fights: ${totalDeathsFound}`);
+        logger.info(`Total deaths found across all fights: ${totalDeathsFound}`);
 
         // Analyze damage breakdown
         setProgress({
@@ -281,15 +284,15 @@ export function useReportSummaryData(reportCode: string): UseReportSummaryDataRe
         const overallEndTime = performance.now();
         const totalTime = overallEndTime - overallStartTime;
 
-        console.log(`✅ Optimized report summary completed in ${totalTime.toFixed(2)}ms`);
-        console.log(
-          `📊 Performance: ${cleanFights.length} fights processed with ~${90 + (cleanFights.length - 1) * 5}% fewer API calls`,
+        logger.info(`Optimized report summary completed in ${totalTime.toFixed(2)}ms`);
+        logger.info(
+          `Performance: ${cleanFights.length} fights processed with ~${90 + (cleanFights.length - 1) * 5}% fewer API calls`,
         );
-        console.log(
-          `🎯 Traditional approach would need ${cleanFights.length * 3} API calls, optimized uses only 1-3 calls`,
+        logger.info(
+          `Traditional approach would need ${cleanFights.length * 3} API calls, optimized uses only 1-3 calls`,
         );
       } catch (err) {
-        console.error('Error processing report summary:', err);
+        logger.error('Error processing report summary', err instanceof Error ? err : undefined);
         setError(err instanceof Error ? err.message : 'Failed to process report summary');
       } finally {
         setIsProcessing(false);
@@ -356,7 +359,7 @@ async function performDamageAnalysis(
   aggregatedData: AggregatedFightData[],
   masterData: any,
 ): Promise<ReportDamageBreakdown> {
-  console.log('🔧 Processing real damage data from aggregated fights...');
+  logger.info('Processing real damage data from aggregated fights');
 
   // Process real damage data from aggregated fight events
   const playerDamageMap = new Map<
@@ -432,8 +435,8 @@ async function performDamageAnalysis(
     }))
     .sort((a, b) => b.totalDamage - a.totalDamage);
 
-  console.log(
-    `📊 Processed ${playerBreakdown.length} players with ${reportTotalDamage.toLocaleString()} total damage`,
+  logger.info(
+    `Processed ${playerBreakdown.length} players with ${reportTotalDamage.toLocaleString()} total damage`,
   );
 
   return {
@@ -496,7 +499,7 @@ async function performDeathAnalysis(
   aggregatedData: AggregatedFightData[],
   masterData: any,
 ): Promise<ReportDeathAnalysis> {
-  console.log('💀 Processing real death data from aggregated fights...');
+  logger.info('Processing real death data from aggregated fights');
 
   // Process real death data from aggregated fight events
   const playerDeathMap = new Map<string, PlayerDeathAnalysis>();
@@ -644,7 +647,7 @@ async function performDeathAnalysis(
       })),
   }));
 
-  console.log(`💀 Processed ${totalDeaths} total deaths across ${playerDeaths.length} players`);
+  logger.info(`Processed ${totalDeaths} total deaths across ${playerDeaths.length} players`);
 
   return {
     totalDeaths,

@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { EsoLogsClient } from '../esologsClient';
 import { FightFragment, HostilityType } from '../graphql/gql/graphql';
 import {
@@ -8,6 +8,9 @@ import {
   GET_REPORT_HEALING_EVENTS,
 } from '../graphql/optimizedSummaryQueries';
 import { DamageEvent, DeathEvent, HealEvent, LogEvent } from '../types/combatlogEvents';
+import { Logger } from '../utils/logger';
+
+const logger = new Logger({ contextPrefix: 'ReportEventsFetcher' });
 
 export interface ReportEventsData {
   damageEvents: DamageEvent[];
@@ -56,12 +59,12 @@ export class OptimizedReportEventsFetcher {
     reportStartTime: number,
     reportEndTime: number,
   ): Promise<ReportEventsData> {
-    console.log('🚀 Starting optimized parallel report event fetching...');
+    logger.info('Starting optimized parallel report event fetching');
 
     const startTime = performance.now();
 
     // TRY OPTIMIZED BATCH QUERIES FIRST
-    console.log('🧪 ATTEMPT 1: Trying optimized batch queries');
+    logger.info('Trying optimized batch queries');
     const [damageData, deathData, healingData] = await Promise.all([
       this.fetchWithPagination(
         GET_REPORT_DAMAGE_EVENTS,
@@ -102,9 +105,9 @@ export class OptimizedReportEventsFetcher {
 
     if (totalEvents > 0) {
       const endTime = performance.now();
-      console.log(`✅ Batch parallel fetching successful in ${(endTime - startTime).toFixed(2)}ms`);
-      console.log(
-        `📊 Fetched ${damageData.length} damage, ${deathData.length} death, ${healingData.length} healing events`,
+      logger.info(`Batch parallel fetching successful in ${(endTime - startTime).toFixed(2)}ms`);
+      logger.info(
+        `Fetched ${damageData.length} damage, ${deathData.length} death, ${healingData.length} healing events`,
       );
 
       return {
@@ -115,8 +118,8 @@ export class OptimizedReportEventsFetcher {
     }
 
     // FALLBACK: Use proven individual fight approach
-    console.warn(
-      '⚠️ Batch parallel queries returned 0 events - falling back to individual fight queries',
+    logger.warn(
+      'Batch parallel queries returned 0 events - falling back to individual fight queries',
     );
 
     try {
@@ -127,11 +130,11 @@ export class OptimizedReportEventsFetcher {
       ]);
 
       const endTime = performance.now();
-      console.log(
-        `✅ Individual parallel fetching completed in ${(endTime - startTime).toFixed(2)}ms`,
+      logger.info(
+        `Individual parallel fetching completed in ${(endTime - startTime).toFixed(2)}ms`,
       );
-      console.log(
-        `� Individual approach fetched ${individualDamage.length} damage, ${individualDeaths.length} death, ${individualHealing.length} healing events`,
+      logger.info(
+        `Individual approach fetched ${individualDamage.length} damage, ${individualDeaths.length} death, ${individualHealing.length} healing events`,
       );
 
       return {
@@ -140,7 +143,7 @@ export class OptimizedReportEventsFetcher {
         healingEvents: individualHealing,
       };
     } catch (error) {
-      console.error('❌ Individual parallel queries also failed:', error);
+      logger.error('Individual parallel queries also failed', error instanceof Error ? error : undefined);
 
       // Return empty results rather than crash
       return {
@@ -165,7 +168,7 @@ export class OptimizedReportEventsFetcher {
     reportCode: string,
     fights: FightFragment[],
   ): Promise<ReportEventsData> {
-    console.log('🎯 Starting single-query all events fetching...');
+    logger.info('Starting single-query all events fetching');
 
     const startTime = performance.now();
     const fightIds = fights.map((f) => Number(f.id));
@@ -174,7 +177,7 @@ export class OptimizedReportEventsFetcher {
     const reportStartTime = Math.min(...fights.map((f) => f.startTime));
     const reportEndTime = Math.max(...fights.map((f) => f.endTime));
 
-    console.log(`🔍 ALL_EVENTS Query Debug:`, {
+    logger.info('ALL_EVENTS Query Debug', {
       fightIdsCount: fightIds.length,
       firstFewFightIds: fightIds.slice(0, 5),
       timeRange: `${reportStartTime} to ${reportEndTime}`,
@@ -182,7 +185,7 @@ export class OptimizedReportEventsFetcher {
     });
 
     // FIRST ATTEMPT: Try optimized batch query
-    console.log(`🧪 ATTEMPT 1: Testing time-based batch query`);
+    logger.info('Testing time-based batch query');
 
     const allEvents = await this.fetchWithPagination(
       GET_ALL_EVENTS_TIME_BASED,
@@ -196,7 +199,7 @@ export class OptimizedReportEventsFetcher {
 
     // Check if batch query worked
     if (allEvents.length > 0) {
-      console.log(`✅ Batch query successful: ${allEvents.length} events found`);
+      logger.info(`Batch query successful: ${allEvents.length} events found`);
 
       // Filter events by type on client side
       const damageEvents = allEvents.filter(
@@ -212,9 +215,9 @@ export class OptimizedReportEventsFetcher {
       ) as HealEvent[];
 
       const endTime = performance.now();
-      console.log(`✅ All events fetching completed in ${(endTime - startTime).toFixed(2)}ms`);
-      console.log(
-        `📊 Filtered to ${damageEvents.length} damage, ${deathEvents.length} death, ${healingEvents.length} healing events`,
+      logger.info(`All events fetching completed in ${(endTime - startTime).toFixed(2)}ms`);
+      logger.info(
+        `Filtered to ${damageEvents.length} damage, ${deathEvents.length} death, ${healingEvents.length} healing events`,
       );
 
       return {
@@ -225,8 +228,8 @@ export class OptimizedReportEventsFetcher {
     }
 
     // FALLBACK: Batch query failed, use proven individual fight approach
-    console.warn(
-      '⚠️ Batch query returned 0 events - falling back to individual fight queries (PROVEN WORKING APPROACH)',
+    logger.warn(
+      'Batch query returned 0 events - falling back to individual fight queries',
     );
 
     try {
@@ -240,9 +243,9 @@ export class OptimizedReportEventsFetcher {
       const [damageEvents, deathEvents, healingEvents] = parallelResults;
 
       const endTime = performance.now();
-      console.log(`✅ Individual fight queries completed in ${(endTime - startTime).toFixed(2)}ms`);
-      console.log(
-        `📊 Individual approach fetched ${damageEvents.length} damage, ${deathEvents.length} death, ${healingEvents.length} healing events`,
+      logger.info(`Individual fight queries completed in ${(endTime - startTime).toFixed(2)}ms`);
+      logger.info(
+        `Individual approach fetched ${damageEvents.length} damage, ${deathEvents.length} death, ${healingEvents.length} healing events`,
       );
 
       return {
@@ -251,7 +254,7 @@ export class OptimizedReportEventsFetcher {
         healingEvents,
       };
     } catch (error) {
-      console.error('❌ Individual fight queries also failed:', error);
+      logger.error('Individual fight queries also failed', error instanceof Error ? error : undefined);
 
       // Return empty results rather than crash
       return {
@@ -269,7 +272,7 @@ export class OptimizedReportEventsFetcher {
     reportCode: string,
     fights: FightFragment[],
   ): Promise<DamageEvent[]> {
-    console.log('💥 Using individual fight approach for DAMAGE events...');
+    logger.info('Using individual fight approach for DAMAGE events');
 
     try {
       const { GetDamageEventsDocument } = await import('../graphql/gql/graphql');
@@ -307,12 +310,12 @@ export class OptimizedReportEventsFetcher {
       const damageEvents = allDamageEvents.filter(
         (event) => event.type === 'damage',
       ) as DamageEvent[];
-      console.log(
-        `✅ Individual damage approach found ${damageEvents.length} total damage events across ${fights.length} fights`,
+      logger.info(
+        `Individual damage approach found ${damageEvents.length} total damage events across ${fights.length} fights`,
       );
       return damageEvents;
     } catch (error) {
-      console.error('❌ Error with individual damage approach:', error);
+      logger.error('Error with individual damage approach', error instanceof Error ? error : undefined);
       return [];
     }
   }
@@ -321,7 +324,7 @@ export class OptimizedReportEventsFetcher {
     reportCode: string,
     fights: FightFragment[],
   ): Promise<HealEvent[]> {
-    console.log('💚 Using individual fight approach for HEALING events...');
+    logger.info('Using individual fight approach for HEALING events');
 
     try {
       const { GetHealingEventsDocument } = await import('../graphql/gql/graphql');
@@ -359,12 +362,12 @@ export class OptimizedReportEventsFetcher {
       const healingEvents = allHealingEvents.filter(
         (event) => event.type === 'heal',
       ) as HealEvent[];
-      console.log(
-        `✅ Individual healing approach found ${healingEvents.length} total healing events across ${fights.length} fights`,
+      logger.info(
+        `Individual healing approach found ${healingEvents.length} total healing events across ${fights.length} fights`,
       );
       return healingEvents;
     } catch (error) {
-      console.error('❌ Error with individual healing approach:', error);
+      logger.error('Error with individual healing approach', error instanceof Error ? error : undefined);
       return [];
     }
   }
@@ -376,7 +379,7 @@ export class OptimizedReportEventsFetcher {
     reportCode: string,
     fights: FightFragment[],
   ): Promise<DeathEvent[]> {
-    console.log('💀 Using EXACT deathEventsSlice approach (individual fight queries)...');
+    logger.info('Using deathEventsSlice approach (individual fight queries)');
 
     try {
       const { GetDeathEventsDocument } = await import('../graphql/gql/graphql');
@@ -384,7 +387,7 @@ export class OptimizedReportEventsFetcher {
       let allDeathEvents: DeathEvent[] = [];
 
       for (const fight of fights) {
-        console.log(`🔍 Processing Fight ${fight.id}: ${fight.name}`);
+        logger.info(`Processing Fight ${fight.id}: ${fight.name}`);
 
         for (const hostilityType of hostilityTypes) {
           let nextPageTimestamp: number | null = null;
@@ -407,7 +410,7 @@ export class OptimizedReportEventsFetcher {
             const page = response.reportData?.report?.events;
             if (page?.data) {
               allDeathEvents = allDeathEvents.concat(page.data);
-              console.log(`📊 Fight ${fight.id} ${hostilityType}: +${page.data.length} deaths`);
+              logger.info(`Fight ${fight.id} ${hostilityType}: +${page.data.length} deaths`);
             }
             nextPageTimestamp = page?.nextPageTimestamp ?? null;
           } while (nextPageTimestamp && pageCount < 50);
@@ -417,12 +420,12 @@ export class OptimizedReportEventsFetcher {
       // Filter to only death events (just like deathEventsSlice does)
       const deathEvents = allDeathEvents.filter((event) => event.type === 'death') as DeathEvent[];
 
-      console.log(
-        `✅ Working approach found ${deathEvents.length} total death events across ${fights.length} fights`,
+      logger.info(
+        `Working approach found ${deathEvents.length} total death events across ${fights.length} fights`,
       );
       return deathEvents;
     } catch (error) {
-      console.error('❌ Error with working deathEventsSlice approach:', error);
+      logger.error('Error with working deathEventsSlice approach', error instanceof Error ? error : undefined);
       return [];
     }
   }
@@ -434,7 +437,7 @@ export class OptimizedReportEventsFetcher {
     reportEvents: ReportEventsData,
     fights: FightFragment[],
   ): Map<number, FightEventsData> {
-    console.log('🔍 Filtering events by individual fights...');
+    logger.info('Filtering events by individual fights');
 
     const fightEventsMap = new Map<number, FightEventsData>();
 
@@ -463,7 +466,7 @@ export class OptimizedReportEventsFetcher {
       });
     }
 
-    console.log(`📈 Filtered events for ${fights.length} fights`);
+    logger.info(`Filtered events for ${fights.length} fights`);
     return fightEventsMap;
   }
 
@@ -481,7 +484,7 @@ export class OptimizedReportEventsFetcher {
 
     do {
       pageCount++;
-      console.log(`📄 Fetching ${eventType} events page ${pageCount}...`);
+      logger.info(`Fetching ${eventType} events page ${pageCount}`);
 
       const variables: any = {
         ...baseVariables,
@@ -513,8 +516,8 @@ export class OptimizedReportEventsFetcher {
         null;
     } while (nextPageTimestamp && pageCount < 50); // Safety limit
 
-    console.log(
-      `✅ Completed ${eventType} pagination: ${allEvents.length} total events in ${pageCount} pages`,
+    logger.info(
+      `Completed ${eventType} pagination: ${allEvents.length} total events in ${pageCount} pages`,
     );
     return allEvents;
   }
