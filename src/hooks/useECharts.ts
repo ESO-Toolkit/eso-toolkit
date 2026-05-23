@@ -9,16 +9,18 @@ export interface UseEChartsConfig {
   notMerge?: boolean;
 }
 
-export function useECharts(
-  containerRef: React.RefObject<HTMLDivElement | null>,
-  option: EChartsOption | null,
-  config?: UseEChartsConfig,
-): {
+export interface UseEChartsReturn {
   instanceRef: React.RefObject<echarts.ECharts | null>;
   showLoading: () => void;
   hideLoading: () => void;
   resize: () => void;
-} {
+}
+
+export function useECharts(
+  containerRef: React.RefObject<HTMLDivElement | null>,
+  option: EChartsOption | null,
+  config?: UseEChartsConfig,
+): UseEChartsReturn {
   const instanceRef = useRef<echarts.ECharts | null>(null);
   const optionRef = useRef(option);
   optionRef.current = option;

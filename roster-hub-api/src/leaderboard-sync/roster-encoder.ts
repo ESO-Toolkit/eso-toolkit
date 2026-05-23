@@ -6,8 +6,10 @@
  * is available natively in the Workers runtime.
  */
 
+import { escapeHtml } from '../sanitize';
 import type { PlayerDetails, PlayerEntry, RankingEntry } from './esologs-client';
 import { categorizeGear } from './gear-categorizer';
+
 import { detectTalentInfo, type CompactSkills } from './talent-mapper';
 
 // ─── Compact Types ───────────────────────────────────────────────────────────
@@ -68,7 +70,7 @@ function buildCompactTank(player: PlayerEntry, index: number): CompactTank {
   const gear = categorizeGear(player.combatantInfo?.gear ?? [], false);
   const ct: CompactTank = {};
 
-  if (player.name) ct.pn = player.name;
+  if (player.name) ct.pn = escapeHtml(player.name);
   ct.rl = `T${index + 1}`;
 
   const gs: CompactGear = {};
@@ -91,7 +93,7 @@ function buildCompactHealer(player: PlayerEntry, index: number): CompactHealer {
   const gear = categorizeGear(player.combatantInfo?.gear ?? [], false);
   const ch: CompactHealer = {};
 
-  if (player.name) ch.pn = player.name;
+  if (player.name) ch.pn = escapeHtml(player.name);
   ch.rl = `H${index + 1}`;
 
   if (gear.set1) ch.s1 = gear.set1;
@@ -111,7 +113,7 @@ function buildCompactDPS(player: PlayerEntry, index: number): CompactDPS {
   const gear = categorizeGear(player.combatantInfo?.gear ?? [], true);
   const cd: CompactDPS = { sn: index + 1 };
 
-  if (player.name) cd.pn = player.name;
+  if (player.name) cd.pn = escapeHtml(player.name);
 
   if (gear.set1) cd.s1 = gear.set1;
   if (gear.set2) cd.s2 = gear.set2;
@@ -203,7 +205,7 @@ export async function encodeRoster(roster: CompactRosterV3): Promise<string> {
  * Build a display title for a #1 roster.
  */
 export function buildRosterTitle(ranking: RankingEntry, trialName: string): string {
-  const teamName = ranking.guild?.name ?? 'Unknown';
+  const teamName = escapeHtml(ranking.guild?.name ?? 'Unknown');
   return `${teamName} — ${trialName} #1`;
 }
 
@@ -211,7 +213,7 @@ export function buildRosterTitle(ranking: RankingEntry, trialName: string): stri
  * Build a description for a #1 roster.
  */
 export function buildRosterDescription(ranking: RankingEntry, trialName: string): string {
-  const teamName = ranking.guild?.name ?? 'Unknown';
+  const teamName = escapeHtml(ranking.guild?.name ?? 'Unknown');
   const server = ranking.server?.region?.toUpperCase() ?? '';
   const score = ranking.score ? ` • Score: ${ranking.score.toLocaleString()}` : '';
   return `Auto-imported #1 ${trialName} roster from ${teamName}${server ? ` (${server})` : ''}${score}`;

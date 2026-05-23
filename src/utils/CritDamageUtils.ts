@@ -718,5 +718,7 @@ export function getCritDamageFromAlwaysOnSource(
       // Positional data is undetectable from log data; assume flanking
       return CriticalDamageValues.BACKSTABBER;
     }
+    default:
+      return 0;
   }
 }

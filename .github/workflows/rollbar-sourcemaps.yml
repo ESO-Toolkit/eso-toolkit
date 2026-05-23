@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   upload-sourcemaps:
@@ -104,4 +104,3 @@ jobs:
           echo "Use the 'post_server_item' token from your Rollbar project settings"
           exit 1
         if: failure()
-

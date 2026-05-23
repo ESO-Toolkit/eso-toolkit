@@ -13,6 +13,7 @@ import { useUptimeSeriesForStackedView } from '../../../hooks/useUptimeSeriesFor
 import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { buildPhaseMarkLines } from '../../../utils/echartsAnnotationUtils';
 import { glowLineStyle, gradientAreaStyle, hexToRgb } from '../../../utils/echartsTheme';
+import { escapeHtml } from '../../../utils/escape-html';
 import type {
   DamageOverTimeResult,
   PlayerDamageOverTimeData,
@@ -238,6 +239,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
       return [id];
     });
   }, []);
+
 
   const handleBuffChipClick = React.useCallback(
     (name: string) => {
@@ -469,7 +471,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               (p) =>
                 `<div style="display:flex;align-items:center;gap:6px">` +
                 `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
-                `${p.seriesName.split(' (')[0]}: <b>${Math.round(p.value[1]).toLocaleString()} DPS</b></div>`,
+                `${escapeHtml(p.seriesName.split(' (')[0])}: <b>${Math.round(p.value[1]).toLocaleString()} DPS</b></div>`,
             );
           const uptimeLines = showStacked
             ? params
@@ -480,7 +482,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                   (p) =>
                     `<div style="display:flex;align-items:center;gap:6px">` +
                     `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
-                    `${p.seriesName}: <b>Active</b></div>`,
+                    `${escapeHtml(p.seriesName)}: <b>Active</b></div>`,
                 )
             : [];
           const allLines = [

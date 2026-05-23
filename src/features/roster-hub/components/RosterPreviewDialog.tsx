@@ -107,12 +107,12 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   // Embed mode URL — strips header/footer from the iframe
   // BASE_URL includes the sub-path prefix in preview deployments (e.g. /dev-previews/pr-860/)
   const embedUrl = roster
-    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}&embed=1`
+    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${encodeURIComponent(roster.roster_data)}&embed=1`
     : '';
 
   // Full page URL (no embed — shows normal page with header/footer)
   const shareUrl = roster
-    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}`
+    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${encodeURIComponent(roster.roster_data)}`
     : '';
 
   const handleOpenFullPage = (): void => {
@@ -128,7 +128,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   const handleLoadIntoBuilder = (): void => {
     if (roster) {
       window.open(
-        `${import.meta.env.BASE_URL}roster-builder?r=${roster.roster_data}`,
+        `${import.meta.env.BASE_URL}roster-builder?r=${encodeURIComponent(roster.roster_data)}`,
         '_blank',
         'noopener,noreferrer',
       );

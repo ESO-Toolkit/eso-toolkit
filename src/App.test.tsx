@@ -90,6 +90,10 @@ jest.mock('./components/ScrollRestoration', () => ({
   ScrollRestoration: () => null,
 }));
 
+jest.mock('./components/shared', () => ({
+  SiteBackground: () => null,
+}));
+
 jest.mock('./components/UpdateNotification', () => ({
   UpdateNotification: () => null,
 }));

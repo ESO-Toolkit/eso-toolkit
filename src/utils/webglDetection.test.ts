@@ -159,7 +159,7 @@ describe('webglDetection', () => {
       expect(capabilities.maxViewportDims).toEqual([8192, 8192]);
       expect(capabilities.renderer).toBe('NVIDIA GeForce RTX 3080');
       expect(capabilities.vendor).toBe('NVIDIA Corporation');
-      expect(capabilities.likelySwoftware).toBe(false);
+      expect(capabilities.likelySoftware).toBe(false);
     });
 
     it('should detect WebGL 1.0 support with medium performance tier', () => {
@@ -270,7 +270,7 @@ describe('webglDetection', () => {
 
       const capabilities = detectWebGLCapabilities();
 
-      expect(capabilities.likelySwoftware).toBe(true);
+      expect(capabilities.likelySoftware).toBe(true);
       expect(capabilities.performanceTier).toBe(WebGLPerformanceTier.LOW);
     });
 
@@ -311,7 +311,7 @@ describe('webglDetection', () => {
 
       expect(capabilities.renderer).toBeNull();
       expect(capabilities.vendor).toBeNull();
-      expect(capabilities.likelySwoftware).toBe(false);
+      expect(capabilities.likelySoftware).toBe(false);
     });
 
     it('should mark insufficient when required context attributes cannot be created', () => {

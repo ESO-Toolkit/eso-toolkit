@@ -61,6 +61,8 @@ import {
   togglePackVote,
   checkPackCreateRateLimit,
   checkPackVoteRateLimit,
+  recordRateLimitEvent,
+  pruneRateLimitEvents,
 } from './db/queries';
 import { moderateImage, MAX_IMAGE_BYTES } from './image-moderation';
 import { handleGraphqlProxy } from './graphql-proxy';
@@ -75,7 +77,8 @@ const app = new Hono<{ Bindings: Env }>();
 app.onError((err, c) => {
   console.error(`[${c.req.method} ${c.req.path}]`, err.message, err.stack);
   const status = 'status' in err && typeof err.status === 'number' ? err.status : 500;
-  return c.json({ error: err.message || 'Internal server error' }, status as 500);
+  const msg = status >= 500 ? 'Internal server error' : err.message || 'Internal server error';
+  return c.json({ error: msg }, status as 500);
 });
 
 /** Best-effort delete of an ImgBB-hosted image via its delete URL (fire-and-forget). */
@@ -90,17 +93,7 @@ function tryDeleteImgBBImage(deleteUrl: string | null): void {
 /** Verify that an encoded payload is valid base64url (no special chars that break URLs). */
 const isValidBase64Url = (s: string): boolean => /^[A-Za-z0-9_-]*=*$/.test(s);
 
-/** Escape HTML entities in user-generated text (defense-in-depth against stored XSS). */
-const escapeHtml = (s: string): string =>
-  s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
-
-/** Sanitize and trim a user-provided text field. */
-const sanitize = (s: string): string => escapeHtml(s.trim());
+import { escapeHtml, sanitize } from './sanitize';
 
 /** Validate and sanitize an addon entry. Returns null if invalid. */
 const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
@@ -120,6 +113,14 @@ const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
 /** Validate a tag: must be non-empty, ≤30 chars, alphanumeric/hyphens/underscores/spaces. */
 const isValidTag = (t: string): boolean =>
   typeof t === 'string' && t.length > 0 && t.length <= 30 && /^[\w\s-]+$/.test(t);
+
+// ─── Security headers ────────────────────────────────────────────────────────
+
+app.use('*', async (c, next) => {
+  await next();
+  c.res.headers.set('X-Content-Type-Options', 'nosniff');
+  c.res.headers.set('X-Frame-Options', 'DENY');
+});
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
 
@@ -205,6 +206,9 @@ app.post('/graphql', handleGraphqlProxy);
 app.get('/health', async (c) => {
   const result = await c.env.DB.prepare('SELECT 1').run();
   const sizeBytes = result.meta?.size_after ?? null;
+  if (Math.random() < 0.05) {
+    c.executionCtx.waitUntil(pruneRateLimitEvents(c.env.DB));
+  }
   return c.json({
     ok: true,
     db_size_bytes: sizeBytes,
@@ -367,15 +371,10 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const {
-    title,
-    description = '',
-    trial_id,
-    roster_data,
-    tags = [],
-    is_anonymous = false,
-    recommended_addons = null,
-  } = body;
+  const { title, description = '', trial_id, roster_data, tags = [] } = body;
+  const is_anonymous = 'is_anonymous' in body ? (body.is_anonymous ?? false) : undefined;
+  const recommended_addons =
+    'recommended_addons' in body ? (body.recommended_addons ?? null) : undefined;
 
   if (!title?.trim()) return c.json({ error: 'title is required' }, 400);
   if (!trial_id?.trim()) return c.json({ error: 'trial_id is required' }, 400);
@@ -415,14 +414,18 @@ app.put('/rosters/:id', async (c) => {
     }
   }
 
+  const existing = await getRosterById(c.env.DB, c.req.param('id'), user.id);
   const updated = await updateRoster(c.env.DB, c.req.param('id'), user.id, {
     title: sanitize(title),
     description: sanitize(description),
     trialId: sanitize(trial_id),
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
-    isAnonymous: !!is_anonymous,
-    recommendedAddons: recommendedAddonsJson,
+    isAnonymous: is_anonymous !== undefined ? !!is_anonymous : !!existing?.is_anonymous,
+    recommendedAddons:
+      recommended_addons !== undefined
+        ? recommendedAddonsJson
+        : ((existing?.recommended_addons as string | null) ?? null),
   });
 
   if (!updated) return c.json({ error: 'Not found or forbidden' }, 404);
@@ -463,6 +466,7 @@ app.post('/rosters/:id/vote', async (c) => {
     .first();
   if (!exists) return c.json({ error: 'Not found' }, 404);
 
+  await recordRateLimitEvent(c.env.DB, user.id, 'roster_vote');
   const result = await toggleVote(c.env.DB, rosterId, user.id);
   return c.json(result);
 });
@@ -537,7 +541,7 @@ app.post('/rosters/:id/comments', async (c) => {
     rosterId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: user.name,
+    authorName: escapeHtml(user.name),
     body: escapeHtml(body.body.trim()),
   });
 
@@ -758,6 +762,7 @@ app.post('/builds/:id/vote', async (c) => {
   if (!allowed)
     return c.json({ error: 'Rate limit exceeded. Too many votes in the last hour.' }, 429);
 
+  await recordRateLimitEvent(c.env.DB, user.id, 'build_vote');
   const result = await toggleBuildVote(c.env.DB, buildId, user.id);
   return c.json(result);
 });
@@ -821,7 +826,7 @@ app.post('/builds/:id/comments', async (c) => {
     buildId,
     parentId: body.parent_id ?? null,
     authorId: user.id,
-    authorName: user.name,
+    authorName: escapeHtml(user.name),
     body: escapeHtml(body.body.trim()),
   });
 
@@ -872,13 +877,14 @@ app.post('/temp-builds', async (c) => {
       429,
     );
 
+  await recordTempBuildRateLimit(c.env.DB, ip);
+
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
     .join('')
     .slice(0, 12);
 
   const row = await createTempBuild(c.env.DB, { id, buildData: body.build_data });
-  await recordTempBuildRateLimit(c.env.DB, ip);
 
   return c.json({ id: row.id, expires_at: row.expires_at }, 201);
 });
@@ -921,6 +927,8 @@ app.post('/images/upload', async (c) => {
   if (!allowed)
     return c.json({ error: 'Rate limit exceeded. You can upload up to 10 images per hour.' }, 429);
 
+  await recordRateLimitEvent(c.env.DB, user.id, 'image_upload');
+
   interface UploadBody {
     image: string; // base64 (raw or data-URL)
     name?: string;
@@ -953,6 +961,26 @@ app.post('/images/upload', async (c) => {
 
   if (imageBytes.byteLength > MAX_IMAGE_BYTES) {
     return c.json({ error: 'Image must be ≤ 10 MB' }, 400);
+  }
+
+  // Validate image magic numbers (PNG, JPEG, WebP, GIF)
+  const isValidImage =
+    (imageBytes[0] === 0x89 &&
+      imageBytes[1] === 0x50 &&
+      imageBytes[2] === 0x4e &&
+      imageBytes[3] === 0x47) || // PNG
+    (imageBytes[0] === 0xff && imageBytes[1] === 0xd8 && imageBytes[2] === 0xff) || // JPEG
+    (imageBytes[0] === 0x52 &&
+      imageBytes[1] === 0x49 &&
+      imageBytes[2] === 0x46 &&
+      imageBytes[3] === 0x46 &&
+      imageBytes[8] === 0x57 &&
+      imageBytes[9] === 0x45 &&
+      imageBytes[10] === 0x42 &&
+      imageBytes[11] === 0x50) || // WebP
+    (imageBytes[0] === 0x47 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46); // GIF
+  if (!isValidImage) {
+    return c.json({ error: 'Unsupported image format. Use PNG, JPEG, WebP, or GIF.' }, 400);
   }
 
   // ── Workers AI moderation ────────────────────────────────────────────────
@@ -1041,6 +1069,13 @@ app.post('/images/:id/report', async (c) => {
 
   if (!body.reason?.trim()) return c.json({ error: 'reason is required' }, 400);
   if (body.reason.length > 500) return c.json({ error: 'reason must be ≤ 500 characters' }, 400);
+
+  const existing = await c.env.DB.prepare(
+    'SELECT id FROM image_reports WHERE image_id = ? AND reporter_id = ?',
+  )
+    .bind(imageId, user.id)
+    .first();
+  if (existing) return c.json({ error: 'You have already reported this image' }, 409);
 
   const id = Array.from(crypto.getRandomValues(new Uint8Array(10)))
     .map((b) => b.toString(36).padStart(2, '0'))
@@ -1189,6 +1224,26 @@ app.put('/users/me/avatar', async (c) => {
     return c.json({ error: 'Avatar image must be ≤ 2 MB' }, 400);
   }
 
+  // Validate image magic numbers (PNG, JPEG, WebP, GIF)
+  const isValidAvatar =
+    (imageBytes[0] === 0x89 &&
+      imageBytes[1] === 0x50 &&
+      imageBytes[2] === 0x4e &&
+      imageBytes[3] === 0x47) || // PNG
+    (imageBytes[0] === 0xff && imageBytes[1] === 0xd8 && imageBytes[2] === 0xff) || // JPEG
+    (imageBytes[0] === 0x52 &&
+      imageBytes[1] === 0x49 &&
+      imageBytes[2] === 0x46 &&
+      imageBytes[3] === 0x46 &&
+      imageBytes[8] === 0x57 &&
+      imageBytes[9] === 0x45 &&
+      imageBytes[10] === 0x42 &&
+      imageBytes[11] === 0x50) || // WebP
+    (imageBytes[0] === 0x47 && imageBytes[1] === 0x49 && imageBytes[2] === 0x46); // GIF
+  if (!isValidAvatar) {
+    return c.json({ error: 'Unsupported image format. Use PNG, JPEG, WebP, or GIF.' }, 400);
+  }
+
   // ── Workers AI moderation ────────────────────────────────────────────────
   try {
     const moderation = await moderateImage(c.env.AI, imageBytes);
@@ -1242,7 +1297,7 @@ app.put('/users/me/avatar', async (c) => {
   await upsertUserAvatar(
     c.env.DB,
     user.id,
-    user.name,
+    escapeHtml(user.name),
     imgbb.data.url,
     imgbb.data.thumb.url,
     imgbb.data.delete_url,
@@ -1276,7 +1331,7 @@ app.put('/users/me/display-names', async (c) => {
   const na = body.na_display_name?.trim() || null;
   const eu = body.eu_display_name?.trim() || null;
 
-  await updateDisplayNames(c.env.DB, user.id, user.name, na, eu);
+  await updateDisplayNames(c.env.DB, user.id, escapeHtml(user.name), na, eu);
   return c.json({ ok: true });
 });
 
@@ -1484,6 +1539,7 @@ app.post('/packs/:id/vote', async (c) => {
   const voteAllowed = await checkPackVoteRateLimit(c.env.DB, user.id);
   if (!voteAllowed) return c.json({ error: 'Rate limit exceeded. Max 30 votes per hour.' }, 429);
 
+  await recordRateLimitEvent(c.env.DB, user.id, 'pack_vote');
   const result = await togglePackVote(c.env.DB, c.req.param('id'), user.id);
   return c.json(result);
 });
@@ -1629,7 +1685,19 @@ import { syncLeaderboardRosters } from './leaderboard-sync/sync';
 
 app.post('/admin/sync-leaderboard', async (c) => {
   const key = c.req.header('X-Internal-Key');
-  if (!key || key !== c.env.INTERNAL_API_KEY) {
+  if (!key || !c.env.INTERNAL_API_KEY) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+  const enc = new TextEncoder();
+  const [hashA, hashB] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(key)),
+    crypto.subtle.digest('SHA-256', enc.encode(c.env.INTERNAL_API_KEY)),
+  ]);
+  if (
+    !(
+      crypto.subtle as unknown as { timingSafeEqual(a: ArrayBuffer, b: ArrayBuffer): boolean }
+    ).timingSafeEqual(hashA, hashB)
+  ) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
   const results = await syncLeaderboardRosters(c.env);

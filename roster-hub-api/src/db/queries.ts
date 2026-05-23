@@ -160,16 +160,6 @@ export async function createRoster(
       data.isAnonymous ? 1 : 0,
       data.recommendedAddons,
     )
-    .bind(
-      data.id,
-      data.authorId,
-      data.authorName,
-      data.title,
-      data.description,
-      data.trialId,
-      data.rosterData,
-      data.isAnonymous ? 1 : 0,
-    )
     .run();
 
   if (data.tags.length > 0) {
@@ -193,7 +183,7 @@ export async function updateRoster(
 ): Promise<boolean> {
   const result = await db
     .prepare(
-      "UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, is_anonymous = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
+      "UPDATE rosters SET title = ?, description = ?, trial_id = ?, roster_data = ?, is_anonymous = ?, recommended_addons = ?, updated_at = datetime('now') WHERE id = ? AND author_id = ?",
     )
     .bind(
       data.title,
@@ -201,6 +191,7 @@ export async function updateRoster(
       data.trialId,
       data.rosterData,
       data.isAnonymous ? 1 : 0,
+      data.recommendedAddons,
       id,
       authorId,
     )
@@ -694,8 +685,8 @@ const VOTE_RATE_LIMIT_MAX = 20;
 export async function checkRosterVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
-      `SELECT COUNT(*) AS cnt FROM roster_votes
-       WHERE user_id = ? AND created_at > datetime('now', '-${VOTE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+      `SELECT COUNT(*) AS cnt FROM rate_limit_events
+       WHERE user_id = ? AND action = 'roster_vote' AND created_at > datetime('now', '-${VOTE_RATE_LIMIT_WINDOW_SEC} seconds')`,
     )
     .bind(userId)
     .first<{ cnt: number }>();
@@ -705,12 +696,29 @@ export async function checkRosterVoteRateLimit(db: D1Database, userId: string): 
 export async function checkBuildVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
-      `SELECT COUNT(*) AS cnt FROM build_votes
-       WHERE user_id = ? AND created_at > datetime('now', '-${VOTE_RATE_LIMIT_WINDOW_SEC} seconds')`,
+      `SELECT COUNT(*) AS cnt FROM rate_limit_events
+       WHERE user_id = ? AND action = 'build_vote' AND created_at > datetime('now', '-${VOTE_RATE_LIMIT_WINDOW_SEC} seconds')`,
     )
     .bind(userId)
     .first<{ cnt: number }>();
   return (row?.cnt ?? 0) < VOTE_RATE_LIMIT_MAX;
+}
+
+export async function recordRateLimitEvent(
+  db: D1Database,
+  userId: string,
+  action: string,
+): Promise<void> {
+  await db
+    .prepare("INSERT INTO rate_limit_events (user_id, action, created_at) VALUES (?, ?, datetime('now'))")
+    .bind(userId, action)
+    .run();
+}
+
+export async function pruneRateLimitEvents(db: D1Database): Promise<void> {
+  await db
+    .prepare("DELETE FROM rate_limit_events WHERE created_at < datetime('now', '-2 hours')")
+    .run();
 }
 
 // Roster create rate limit: 5 creates per hour per user
@@ -912,8 +920,8 @@ export async function createImageReport(
 export async function checkImageUploadRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
-      `SELECT COUNT(*) AS cnt FROM image_uploads
-       WHERE uploader_id = ? AND created_at > datetime('now', '-${IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC} seconds')`,
+      `SELECT COUNT(*) AS cnt FROM rate_limit_events
+       WHERE user_id = ? AND action = 'image_upload' AND created_at > datetime('now', '-${IMAGE_UPLOAD_RATE_LIMIT_WINDOW_SEC} seconds')`,
     )
     .bind(userId)
     .first<{ cnt: number }>();
@@ -1505,7 +1513,7 @@ export async function checkPackCreateRateLimit(db: D1Database, userId: string): 
 export async function checkPackVoteRateLimit(db: D1Database, userId: string): Promise<boolean> {
   const row = await db
     .prepare(
-      "SELECT COUNT(*) AS cnt FROM pack_votes WHERE user_id = ? AND created_at > datetime('now', '-1 hour')",
+      "SELECT COUNT(*) AS cnt FROM rate_limit_events WHERE user_id = ? AND action = 'pack_vote' AND created_at > datetime('now', '-1 hour')",
     )
     .bind(userId)
     .first<{ cnt: number }>();

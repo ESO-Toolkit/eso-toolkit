@@ -1,5 +1,5 @@
-import SkullIcon from '@mui/icons-material/Dangerous';
-import { List, ListItem, ListItemIcon, ListItemText, Typography, Chip, Box } from '@mui/material';
+import DangerousIcon from '@mui/icons-material/Dangerous';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../graphql/gql/graphql';
@@ -9,7 +9,7 @@ import { WidgetScope } from '../../store/dashboard/dashboardSlice';
 import { DeathEvent } from '../../types/combatlogEvents';
 import { abilityIdMapper } from '../../utils/abilityIdMapper';
 
-import { BaseWidget } from './BaseWidget';
+import { BaseWidget, WidgetPlayerAvatar, WidgetRolePill } from './BaseWidget';
 
 interface DeathCausesWidgetProps {
   id: string;
@@ -23,6 +23,8 @@ interface DeathCausesWidgetProps {
 interface DeathSummary {
   playerName: string;
   playerId: number;
+  playerClass: string;
+  playerRole: string;
   deathCount: number;
   topCause?: {
     abilityId: number;
@@ -41,7 +43,6 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
   onRemove,
   onScopeChange,
 }) => {
-  // Always fetch data for up to 5 fights (to satisfy rules of hooks)
   const fight0 = fights[0];
   const fight1 = fights[1];
   const fight2 = fights[2];
@@ -68,7 +69,6 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
     context: { reportCode: reportId, fightId: fight0?.id ?? -1 },
   });
 
-  // Select which fights to use based on scope
   const relevantDeathEvents = React.useMemo(() => {
     const allFightData = [
       { fight: fight0, deaths: deaths0, loading: loading0 },
@@ -110,7 +110,6 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
   const deathSummaries = React.useMemo((): DeathSummary[] => {
     if (!playerData?.playersById) return [];
 
-    // Aggregate death events from all relevant fights
     const allDeathEvents = relevantDeathEvents.flatMap((data) =>
       data.fight && data.deaths ? data.deaths : [],
     );
@@ -186,6 +185,8 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
       summaries.push({
         playerName: player.name,
         playerId,
+        playerClass: player.type,
+        playerRole: player.role,
         deathCount: data.count,
         topCause,
       });
@@ -200,54 +201,107 @@ export const DeathCausesWidget: React.FC<DeathCausesWidgetProps> = ({
     <BaseWidget
       id={id}
       title="Death Causes"
+      subtitle="Sorted by deaths"
+      kind="deaths"
+      icon={<DangerousIcon />}
       scope={scope}
       onRemove={onRemove}
       onScopeChange={onScopeChange}
       isEmpty={isEmpty}
     >
       {isLoading ? (
-        <Typography variant="body2" color="text.secondary">
-          Loading...
-        </Typography>
+        <Box
+          sx={{
+            p: '20px 16px',
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.3)',
+            fontFamily: 'monospace',
+          }}
+        >
+          Loading…
+        </Box>
       ) : (
-        <List dense>
-          {deathSummaries.map((summary) => (
-            <ListItem key={summary.playerId}>
-              <ListItemIcon>
-                <SkullIcon color="error" />
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2">{summary.playerName}</Typography>
-                    <Chip label={`${summary.deathCount}x`} size="small" color="error" />
-                  </Box>
-                }
-                secondary={
-                  summary.topCause ? (
-                    <>
-                      <Typography component="span" variant="body2">
-                        {summary.topCause.abilityName || `Ability ${summary.topCause.abilityId}`} (
-                        {summary.topCause.count}x)
-                      </Typography>
-                      {summary.topCause.sourceName && (
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          sx={{ ml: 1, color: 'text.secondary' }}
-                        >
-                          from {summary.topCause.sourceName}
-                        </Typography>
-                      )}
-                    </>
-                  ) : (
-                    'No specific cause tracked'
-                  )
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
+        deathSummaries.map((summary) => (
+          <Box
+            key={summary.playerId}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              p: '10px 16px',
+              borderBottom: '1px solid rgba(148,163,184,0.06)',
+              fontSize: 13,
+              '&:last-child': { borderBottom: 'none' },
+              '&:hover': { background: 'rgba(56,189,248,0.03)' },
+            }}
+          >
+            <WidgetPlayerAvatar className={summary.playerClass} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#ffffff',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    fontSize: 13,
+                  }}
+                >
+                  {summary.playerName}
+                </Typography>
+                <WidgetRolePill role={summary.playerRole} />
+              </Box>
+              {summary.topCause && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    mt: '4px',
+                    fontSize: 11,
+                    color: 'rgba(255,255,255,0.5)',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  <Typography
+                    component="span"
+                    sx={{ color: '#ffc5c5', fontWeight: 600, fontFamily: 'inherit', fontSize: 12 }}
+                  >
+                    {summary.topCause.abilityName ?? `Ability ${summary.topCause.abilityId}`}
+                  </Typography>
+                  <span>× {summary.topCause.count}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.2)' }}>←</span>
+                  {summary.topCause.sourceName && (
+                    <span style={{ color: 'rgba(255,255,255,0.72)' }}>
+                      {summary.topCause.sourceName}
+                    </span>
+                  )}
+                </Box>
+              )}
+            </Box>
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: 22,
+                height: 22,
+                px: '6px',
+                borderRadius: '9999px',
+                fontSize: 11,
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                background: 'rgba(255,102,102,0.15)',
+                color: '#ff9a9a',
+                border: '1px solid rgba(255,102,102,0.3)',
+              }}
+            >
+              {summary.deathCount}
+            </Box>
+          </Box>
+        ))
       )}
     </BaseWidget>
   );

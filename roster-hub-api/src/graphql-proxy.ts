@@ -68,6 +68,55 @@ const CACHEABLE_OPERATIONS = new Set([
 
 const CACHE_TTL_SECONDS = 600; // 10 minutes
 
+const ALLOWED_OPERATIONS = new Set([
+  'getBuffEvents',
+  'getDebuffEvents',
+  'getDamageEvents',
+  'getResourceEvents',
+  'getCombatantInfoEvents',
+  'getCastEvents',
+  'getHealingEvents',
+  'getDeathEvents',
+  'getPlayersForReport',
+  'getReportByCode',
+  'getReportMasterData',
+  'getReportPlayersOnly',
+  'getAbilities',
+  'getAbility',
+  'getClass',
+  'getClasses',
+  'getTrialZones',
+  'getEncounterFightRankings',
+  'getEncounterInfo',
+  'getTrialZonesMetadata',
+  'getLatestReports',
+  'getGuildById',
+  'getGuilds',
+  'getGuildByName',
+  'getGuildAttendance',
+  'getGuildMembers',
+  'getBatchEventsForSummary',
+  'getAllEventsForSummary',
+  'getAllEventsTimeBased',
+  'getReportDamageEvents',
+  'getReportDeathEvents',
+  'getReportHealingEvents',
+]);
+
+const MAX_BODY_BYTES = 100_000; // 100 KB
+
+const OPERATION_NAME_RE = /\b(?:query|mutation|subscription)\s+([A-Za-z_]\w*)/g;
+
+function extractOperationNames(queryDoc: string): string[] {
+  const names: string[] = [];
+  let match;
+  while ((match = OPERATION_NAME_RE.exec(queryDoc)) !== null) {
+    names.push(match[1]);
+  }
+  OPERATION_NAME_RE.lastIndex = 0;
+  return names;
+}
+
 // Singleflight: coalesce concurrent identical cacheable requests so only one
 // hits upstream. Each caller clones the shared response.
 const inflight = new Map<string, Promise<Response>>();
@@ -81,19 +130,39 @@ async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
 
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
-export async function handleGraphqlProxy(
-  c: Context<{ Bindings: Env }>,
-): Promise<Response> {
+export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
   let body: unknown;
   let bodyStr: string;
   try {
     bodyStr = await c.req.text();
+    if (bodyStr.length > MAX_BODY_BYTES) {
+      return c.json({ error: 'Request body too large' }, 413);
+    }
     body = JSON.parse(bodyStr);
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
 
   const operationHint = c.req.query('query');
+
+  if (!operationHint || !ALLOWED_OPERATIONS.has(operationHint)) {
+    return c.json({ error: 'Unknown or missing operation' }, 400);
+  }
+
+  const parsed = body as { operationName?: string; query?: string };
+  if (!parsed.operationName || parsed.operationName !== operationHint) {
+    return c.json({ error: 'operationName must match the query parameter' }, 400);
+  }
+
+  if (typeof parsed.query !== 'string' || !parsed.query.trim()) {
+    return c.json({ error: 'Missing query document' }, 400);
+  }
+
+  const docOps = extractOperationNames(parsed.query);
+  if (docOps.length !== 1 || docOps[0] !== operationHint) {
+    return c.json({ error: 'Query document must contain exactly the declared operation' }, 400);
+  }
+
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
 
   // Check edge cache first — cache hits avoid upstream entirely
