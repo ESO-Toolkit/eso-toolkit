@@ -240,7 +240,6 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     });
   }, []);
 
-
   const handleBuffChipClick = React.useCallback(
     (name: string) => {
       setHiddenBuffNames((prev) => {
