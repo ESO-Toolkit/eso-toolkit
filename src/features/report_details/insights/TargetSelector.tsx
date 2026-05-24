@@ -279,313 +279,216 @@ const TargetSelectorComponent: React.FC = () => {
   }
 
   return (
-    <Box
+    <FormControl
+      fullWidth
+      size="small"
       sx={{
-        mb: 2,
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: '-4px',
-          left: '-4px',
-          right: '-4px',
-          bottom: '-4px',
+        '& .MuiOutlinedInput-root': {
           borderRadius: '10px',
           background: isDarkMode
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(147, 51, 234, 0.3) 50%, rgba(239, 68, 68, 0.2) 100%)'
-            : 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(147, 51, 234, 0.2) 50%, rgba(236, 72, 153, 0.15) 100%)',
-          padding: '2px',
-          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          maskComposite: 'xor',
-          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'xor',
-          opacity: 0.6,
-          transition: 'opacity 0.3s ease',
-          pointerEvents: 'none',
-          zIndex: 1,
+            ? 'rgba(15, 23, 42, 0.6)'
+            : 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(8px)',
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+          '& fieldset': {
+            borderColor: isDarkMode
+              ? 'rgba(148, 163, 184, 0.2)'
+              : 'rgba(148, 163, 184, 0.3)',
+          },
+          '&:hover fieldset': {
+            borderColor: isDarkMode
+              ? 'rgba(56, 189, 248, 0.4)'
+              : 'rgba(59, 130, 246, 0.4)',
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: isDarkMode ? '#38bdf8' : '#3b82f6',
+            borderWidth: '1.5px',
+          },
         },
-        '&:hover::before': {
-          opacity: 1,
+        '& .MuiInputLabel-root': {
+          color: isDarkMode ? 'rgba(148, 163, 184, 0.8)' : 'rgba(100, 116, 139, 0.8)',
+          background: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          padding: '0 6px',
+          borderRadius: '4px',
+          '&.Mui-focused': {
+            color: isDarkMode ? '#38bdf8' : '#3b82f6',
+          },
         },
       }}
     >
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: 2,
-          background: isDarkMode
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 50%, rgba(51, 65, 85, 0.7) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 50%, rgba(241, 245, 249, 0.85) 100%)',
-          borderRadius: 2,
-          border: isDarkMode
-            ? '1px solid rgba(56, 189, 248, 0.2)'
-            : '1px solid rgba(59, 130, 246, 0.15)',
-          boxShadow: isDarkMode
-            ? '0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(56, 189, 248, 0.1)'
-            : '0 2px 12px rgba(59, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-          overflow: 'visible',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: isDarkMode
-              ? '0 8px 30px rgba(0, 0, 0, 0.4), 0 0 40px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(56, 189, 248, 0.2)'
-              : '0 4px 20px rgba(59, 130, 246, 0.15), 0 0 30px rgba(147, 51, 234, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+      <InputLabel id="target-selector-label" shrink={true}>
+        Target
+      </InputLabel>
+      <Select
+        labelId="target-selector-label"
+        multiple
+        value={selectValue}
+        label="Target"
+        onChange={handleTargetChange}
+        renderValue={renderValue}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              mt: 1,
+              borderRadius: 2,
+              border: isDarkMode
+                ? '1px solid rgba(56, 189, 248, 0.2)'
+                : '1px solid rgba(59, 130, 246, 0.15)',
+              background: isDarkMode
+                ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%)',
+              backdropFilter: 'blur(12px)',
+              boxShadow: isDarkMode
+                ? '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(56, 189, 248, 0.1)'
+                : '0 8px 30px rgba(0, 0, 0, 0.08), 0 0 40px rgba(59, 130, 246, 0.06)',
+              '& .MuiMenuItem-root': {
+                fontFamily: 'Inter, system-ui',
+                fontWeight: 500,
+                color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                borderRadius: '6px',
+                margin: '2px 6px',
+                transition:
+                  'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(147, 51, 234, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%)',
+                  color: isDarkMode ? '#38bdf8' : '#3b82f6',
+                  transform: 'translateX(4px)',
+                },
+                '&.Mui-selected': {
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(147, 51, 234, 0.2) 100%)'
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.12) 100%)',
+                  color: isDarkMode ? '#38bdf8' : '#3b82f6',
+                  fontWeight: 600,
+                  '&:hover': {
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.3) 0%, rgba(147, 51, 234, 0.25) 100%)'
+                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.15) 100%)',
+                  },
+                },
+              },
+            },
+          },
+          anchorOrigin: {
+            vertical: 'bottom',
+            horizontal: 'left',
+          },
+          transformOrigin: {
+            vertical: 'top',
+            horizontal: 'left',
           },
         }}
       >
-        <FormControl
-          fullWidth
-          size="small"
-          sx={{
-            '& .MuiInputLabel-root': {
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              color: isDarkMode ? 'rgba(226, 232, 240, 0.8)' : 'rgba(51, 65, 85, 0.8)',
-              transform: 'translate(16px, -6px) scale(0.75)',
-              background: isDarkMode
-                ? 'linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%)'
-                : 'linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-              padding: '0 8px',
-              borderRadius: '6px',
-              zIndex: 1,
-              '&.Mui-focused': {
+        <MenuItem value={ALL_BOSSES_SENTINEL}>
+          <Checkbox
+            checked={selectValue.includes(ALL_BOSSES_SENTINEL)}
+            sx={{
+              color: isDarkMode ? 'rgba(56, 189, 248, 0.7)' : 'rgba(59, 130, 246, 0.7)',
+              transition:
+                'color 100ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+              '&.Mui-checked': {
                 color: isDarkMode ? '#38bdf8' : '#3b82f6',
-              },
-            },
-            '& .MuiOutlinedInput-root': {
-              background: 'transparent',
-              borderRadius: 2,
-              fontFamily: 'Inter, system-ui',
-              fontWeight: 500,
-              overflow: 'visible',
-              '& fieldset': {
-                border: 'none',
-              },
-              '&:hover fieldset': {
-                border: 'none',
-              },
-              '&.Mui-focused fieldset': {
-                border: 'none',
-              },
-              '&.Mui-focused': {
-                backgroundColor: 'transparent !important',
-                boxShadow: 'none !important',
-                overflow: 'visible',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: '-4px',
-                  left: '-4px',
-                  right: '-4px',
-                  bottom: '-4px',
-                  borderRadius: '10px',
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.6) 0%, rgba(147, 51, 234, 0.5) 50%, rgba(239, 68, 68, 0.4) 100%)'
-                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(147, 51, 234, 0.4) 50%, rgba(236, 72, 153, 0.3) 100%)',
-                  padding: '2px',
-                  mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  maskComposite: 'xor',
-                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  WebkitMaskComposite: 'xor',
-                  opacity: 1,
-                  pointerEvents: 'none',
-                  zIndex: 3,
-                },
-              },
-              '& .MuiSelect-select': {
-                padding: '14px 16px',
-                color: isDarkMode ? '#e2e8f0' : '#1e293b',
-                fontSize: '0.925rem',
-                fontWeight: 500,
-              },
-              '& .MuiSelect-icon': {
-                color: isDarkMode ? 'rgba(56, 189, 248, 0.7)' : 'rgba(59, 130, 246, 0.7)',
-                transition: 'transform 0.2s ease, color 0.2s ease',
-              },
-              '&:hover .MuiSelect-icon': {
-                color: isDarkMode ? '#38bdf8' : '#3b82f6',
-                transform: 'scale(1.1)',
-              },
-            },
-          }}
-        >
-          <InputLabel id="target-selector-label" shrink={true}>
-            Target
-          </InputLabel>
-          <Select
-            labelId="target-selector-label"
-            multiple
-            value={selectValue}
-            label="Target"
-            onChange={handleTargetChange}
-            renderValue={renderValue}
-            MenuProps={{
-              // Temporarily remove custom transition to fix menu attachment
-              PaperProps: {
-                sx: {
-                  mt: 1,
-                  borderRadius: 2,
-                  border: isDarkMode
-                    ? '1px solid rgba(56, 189, 248, 0.2)'
-                    : '1px solid rgba(59, 130, 246, 0.15)',
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.9) 100%)'
-                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%)',
-                  backdropFilter: 'blur(12px)',
-                  boxShadow: isDarkMode
-                    ? '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(56, 189, 248, 0.1)'
-                    : '0 8px 30px rgba(0, 0, 0, 0.08), 0 0 40px rgba(59, 130, 246, 0.06)',
-                  '& .MuiMenuItem-root': {
-                    fontFamily: 'Inter, system-ui',
-                    fontWeight: 500,
-                    color: isDarkMode ? '#e2e8f0' : '#1e293b',
-                    borderRadius: '6px',
-                    margin: '2px 6px',
-                    transition:
-                      'background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      background: isDarkMode
-                        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(147, 51, 234, 0.1) 100%)'
-                        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%)',
-                      color: isDarkMode ? '#38bdf8' : '#3b82f6',
-                      transform: 'translateX(4px)',
-                    },
-                    '&.Mui-selected': {
-                      background: isDarkMode
-                        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(147, 51, 234, 0.2) 100%)'
-                        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.12) 100%)',
-                      color: isDarkMode ? '#38bdf8' : '#3b82f6',
-                      fontWeight: 600,
-                      '&:hover': {
-                        background: isDarkMode
-                          ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.3) 0%, rgba(147, 51, 234, 0.25) 100%)'
-                          : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.15) 100%)',
-                      },
-                    },
-                  },
-                },
-              },
-              anchorOrigin: {
-                vertical: 'bottom',
-                horizontal: 'left',
-              },
-              transformOrigin: {
-                vertical: 'top',
-                horizontal: 'left',
               },
             }}
-          >
-            <MenuItem value={ALL_BOSSES_SENTINEL}>
-              <Checkbox
-                checked={selectValue.includes(ALL_BOSSES_SENTINEL)}
-                sx={{
-                  color: isDarkMode ? 'rgba(56, 189, 248, 0.7)' : 'rgba(59, 130, 246, 0.7)',
-                  transition:
-                    'color 100ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&.Mui-checked': {
-                    color: isDarkMode ? '#38bdf8' : '#3b82f6',
-                  },
-                }}
-              />
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: isDarkMode
-                          ? 'linear-gradient(135deg, #38bdf8 0%, #9333ea 100%)'
-                          : 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
-                        flexShrink: 0,
-                      }}
-                    />
-                    All Bosses
-                  </Box>
-                }
-              />
-            </MenuItem>
-            <MenuItem value={ALL_ENEMIES_SENTINEL_STR}>
-              <Checkbox
-                checked={selectValue.includes(ALL_ENEMIES_SENTINEL_STR)}
-                sx={{
-                  color: isDarkMode ? 'rgba(168, 85, 247, 0.7)' : 'rgba(139, 69, 255, 0.7)',
-                  transition:
-                    'color 100ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&.Mui-checked': {
-                    color: isDarkMode ? '#a855f7' : '#8b45ff',
-                  },
-                }}
-              />
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: isDarkMode
-                          ? 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
-                          : 'linear-gradient(135deg, #8b45ff 0%, #ec4899 100%)',
-                        flexShrink: 0,
-                      }}
-                    />
-                    All Enemies
-                  </Box>
-                }
-              />
-            </MenuItem>
-            {targetsList.map((target) => (
-              <MenuItem key={target.id} value={target.id?.toString() || ''}>
-                <Checkbox
-                  checked={selectValue.includes(target.id?.toString() || '')}
+          />
+          <ListItemText
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
                   sx={{
-                    color: isDarkMode ? 'rgba(34, 197, 94, 0.7)' : 'rgba(5, 150, 105, 0.7)',
-                    transition:
-                      'color 100ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&.Mui-checked': {
-                      color: isDarkMode ? '#22c55e' : '#059669',
-                    },
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #38bdf8 0%, #9333ea 100%)'
+                      : 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
+                    flexShrink: 0,
                   }}
                 />
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          background: isDarkMode
-                            ? 'linear-gradient(135deg, #22c55e 0%, #38bdf8 100%)'
-                            : 'linear-gradient(135deg, #059669 0%, #3b82f6 100%)',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Box>
-                        <Box sx={{ fontWeight: 600 }}>{target.name}</Box>
-                        <Box
-                          sx={{
-                            fontSize: '0.75rem',
-                            opacity: 0.7,
-                            fontFamily: 'ui-monospace, "SF Mono", Consolas, monospace',
-                          }}
-                        >
-                          ID: {target.id}
-                        </Box>
-                      </Box>
-                    </Box>
-                  }
+                All Bosses
+              </Box>
+            }
+          />
+        </MenuItem>
+        <MenuItem value={ALL_ENEMIES_SENTINEL_STR}>
+          <Checkbox
+            checked={selectValue.includes(ALL_ENEMIES_SENTINEL_STR)}
+            sx={{
+              color: isDarkMode ? 'rgba(168, 85, 247, 0.7)' : 'rgba(139, 69, 255, 0.7)',
+              transition:
+                'color 100ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+              '&.Mui-checked': {
+                color: isDarkMode ? '#a855f7' : '#8b45ff',
+              },
+            }}
+          />
+          <ListItemText
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)'
+                      : 'linear-gradient(135deg, #8b45ff 0%, #ec4899 100%)',
+                    flexShrink: 0,
+                  }}
                 />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-    </Box>
+                All Enemies
+              </Box>
+            }
+          />
+        </MenuItem>
+        {targetsList.map((target) => (
+          <MenuItem key={target.id} value={target.id?.toString() || ''}>
+            <Checkbox
+              checked={selectValue.includes(target.id?.toString() || '')}
+              sx={{
+                color: isDarkMode ? 'rgba(34, 197, 94, 0.7)' : 'rgba(5, 150, 105, 0.7)',
+                transition:
+                  'color 100ms cubic-bezier(0.4, 0, 0.2, 1), transform 100ms cubic-bezier(0.4, 0, 0.2, 1)',
+                '&.Mui-checked': {
+                  color: isDarkMode ? '#22c55e' : '#059669',
+                },
+              }}
+            />
+            <ListItemText
+              primary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: isDarkMode
+                        ? 'linear-gradient(135deg, #22c55e 0%, #38bdf8 100%)'
+                        : 'linear-gradient(135deg, #059669 0%, #3b82f6 100%)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Box>
+                    <Box sx={{ fontWeight: 600 }}>{target.name}</Box>
+                    <Box
+                      sx={{
+                        fontSize: '0.75rem',
+                        opacity: 0.7,
+                        fontFamily: 'ui-monospace, "SF Mono", Consolas, monospace',
+                      }}
+                    >
+                      ID: {target.id}
+                    </Box>
+                  </Box>
+                </Box>
+              }
+            />
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 };
 
