@@ -100,9 +100,10 @@ describe('WhoAmIPage', () => {
 
     renderWhoAmIPage();
 
+    const user = userEvent.setup();
     const refreshButton = screen.getByTestId('whoami-refresh-button');
     await act(async () => {
-      await userEvent.click(refreshButton);
+      await user.click(refreshButton);
     });
 
     await waitFor(() => {

@@ -50,6 +50,7 @@ describe('BaseWidget', () => {
   });
 
   it('should call onRemove when remove button is clicked', async () => {
+    const user = userEvent.setup();
     const onRemove = jest.fn();
 
     render(
@@ -59,7 +60,7 @@ describe('BaseWidget', () => {
     );
 
     const removeButton = screen.getByLabelText(/remove widget/i);
-    await userEvent.click(removeButton);
+    await user.click(removeButton);
 
     expect(onRemove).toHaveBeenCalledTimes(1);
   });
@@ -75,6 +76,7 @@ describe('BaseWidget', () => {
   });
 
   it('should open scope menu when scope button is clicked', async () => {
+    const user = userEvent.setup();
     render(
       <BaseWidget {...defaultProps}>
         <div>Widget Content</div>
@@ -82,7 +84,7 @@ describe('BaseWidget', () => {
     );
 
     const scopeButton = screen.getByText(/most recent/i);
-    await userEvent.click(scopeButton);
+    await user.click(scopeButton);
 
     // Menu should be open with all options
     expect(screen.getByRole('menu')).toBeInTheDocument();
@@ -94,6 +96,7 @@ describe('BaseWidget', () => {
   });
 
   it('should call onScopeChange when a new scope is selected', async () => {
+    const user = userEvent.setup();
     const onScopeChange = jest.fn();
 
     render(
@@ -103,15 +106,16 @@ describe('BaseWidget', () => {
     );
 
     const scopeButton = screen.getByText(/most recent/i);
-    await userEvent.click(scopeButton);
+    await user.click(scopeButton);
 
     const last5Option = screen.getByText('Last 5');
-    await userEvent.click(last5Option);
+    await user.click(last5Option);
 
     expect(onScopeChange).toHaveBeenCalledWith('last-5');
   });
 
   it('should display all scope options correctly', async () => {
+    const user = userEvent.setup();
     render(
       <BaseWidget {...defaultProps}>
         <div>Widget Content</div>
@@ -119,7 +123,7 @@ describe('BaseWidget', () => {
     );
 
     const scopeButton = screen.getByText(/most recent/i);
-    await userEvent.click(scopeButton);
+    await user.click(scopeButton);
 
     const menu = screen.getByRole('menu');
     expect(within(menu).getByText('Most Recent')).toBeInTheDocument();
@@ -129,6 +133,7 @@ describe('BaseWidget', () => {
   });
 
   it('should close menu after selecting a scope', async () => {
+    const user = userEvent.setup();
     render(
       <BaseWidget {...defaultProps}>
         <div>Widget Content</div>
@@ -136,12 +141,12 @@ describe('BaseWidget', () => {
     );
 
     const scopeButton = screen.getByText(/most recent/i);
-    await userEvent.click(scopeButton);
+    await user.click(scopeButton);
 
     expect(screen.getByRole('menu')).toBeInTheDocument();
 
     const last3Option = screen.getByText('Last 3');
-    await userEvent.click(last3Option);
+    await user.click(last3Option);
 
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
   });
@@ -170,6 +175,7 @@ describe('BaseWidget', () => {
   });
 
   it('should show checkmark on currently selected scope', async () => {
+    const user = userEvent.setup();
     render(
       <BaseWidget {...defaultProps} scope="last-3">
         <div>Widget Content</div>
@@ -177,7 +183,7 @@ describe('BaseWidget', () => {
     );
 
     const scopeButton = screen.getByText(/last 3/i);
-    await userEvent.click(scopeButton);
+    await user.click(scopeButton);
 
     const menu = screen.getByRole('menu');
     const menuItems = within(menu).getAllByRole('menuitem');

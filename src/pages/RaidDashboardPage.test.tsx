@@ -174,22 +174,24 @@ describe('RaidDashboardPage', () => {
   });
 
   it('should open add widget dialog when add button is clicked', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderWithRouter();
 
     const addButton = screen.getByRole('button', { name: /add widget/i });
-    await userEvent.click(addButton);
+    await user.click(addButton);
 
     expect(screen.getByTestId('add-widget-dialog')).toBeInTheDocument();
   });
 
   it('should add a new widget when selected from dialog', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderWithRouter();
 
     const addButton = screen.getByRole('button', { name: /add widget/i });
-    await userEvent.click(addButton);
+    await user.click(addButton);
 
     const addLowDpsButton = screen.getByText('Add Low DPS');
-    await userEvent.click(addLowDpsButton);
+    await user.click(addLowDpsButton);
 
     // New widget should be added (ID will be generated)
     const lowDpsWidgets = screen.getAllByText('Low DPS Widget');
@@ -197,11 +199,12 @@ describe('RaidDashboardPage', () => {
   });
 
   it('should toggle auto-refresh', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderWithRouter();
 
     const autoRefreshToggle = screen.getByText(/AUTO · 5s/);
 
-    await userEvent.click(autoRefreshToggle);
+    await user.click(autoRefreshToggle);
 
     // Should show PAUSED after click
     expect(screen.getByText(/PAUSED/)).toBeInTheDocument();
