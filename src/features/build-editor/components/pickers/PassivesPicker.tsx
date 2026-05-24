@@ -360,7 +360,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
         >
           {lineName}
         </Typography>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Typography
             sx={{
               fontSize: 10,
@@ -385,9 +385,9 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
         <Stack
           direction="row"
           spacing={0.75}
-          flexWrap="wrap"
+         
           useFlexGap
-          sx={{ pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}
+          sx={{ flexWrap: 'wrap', pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}
         >
           {passives.map((p) => (
             <PickerPassiveTile
@@ -463,16 +463,18 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
       maxWidth="sm"
       fullWidth
       className="glass-dialog"
-      PaperProps={{
-        sx: {
-          borderRadius: '20px',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: '90vh',
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '20px',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
         },
       }}
     >
@@ -776,7 +778,7 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
     <>
       <Stack spacing={1.5}>
         {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography
             variant="caption"
             sx={{
@@ -804,7 +806,7 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
         {/* Glass empty state */}
         {passives.length === 0 && (
           <Box
-            sx={{
+            sx={{ color: 'text.disabled',
               textAlign: 'center',
               py: 2,
               background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
@@ -814,7 +816,7 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
           >
             <Typography
               variant="caption"
-              color="text.disabled"
+             
               sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
             >
               Click + to browse and add passives

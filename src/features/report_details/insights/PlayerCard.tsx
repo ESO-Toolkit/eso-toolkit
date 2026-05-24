@@ -907,23 +907,23 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
           >
             <Box
-              display="flex"
+             
               flexDirection="column"
-              alignItems="stretch"
-              gap={2}
-              sx={{ flex: 1, minHeight: 0 }}
+             
+             
+              sx={{ gap: 2, alignItems: 'stretch', display: 'flex', flex: 1, minHeight: 0 }}
             >
               {/* Left column: identity, talents, gear, issues */}
-              <Box flex={0} minWidth={0}>
-                <Box display="flex" alignItems="center" mb={1.5} gap={1}>
+              <Box sx={{ flex: 0, minWidth: 0 }}>
+                <Box sx={{ gap: 1, alignItems: 'center', display: 'flex', mb: 1.5 }}>
                   <PlayerIcon player={player} />
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    flex={1}
-                    minWidth={0}
-                    gap={1}
+                  <Box sx={{ flex: 1, justifyContent: 'space-between', gap: 1, alignItems: 'center', minWidth: 0, display: 'flex' }}
+                   
+                   
+                   
+                   
+                   
+                   
                   >
                     {/* Player Name with Character Name Hover */}
                     <Box

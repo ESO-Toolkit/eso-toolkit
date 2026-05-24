@@ -336,10 +336,10 @@ export const PackDetailsStep: React.FC<PackDetailsStepProps> = ({
         >
           <VisibilityOff sx={{ fontSize: 18, color: 'text.disabled' }} />
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
               Publish anonymously
             </Typography>
-            <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.2 }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', lineHeight: 1.2 }}>
               Your name won&apos;t appear on this pack
             </Typography>
           </Box>

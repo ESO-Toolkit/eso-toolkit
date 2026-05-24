@@ -207,15 +207,15 @@ const SortableAddonRow: React.FC<SortableAddonProps> = ({
 
         {/* Name + note */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="body2" fontWeight={600} noWrap sx={{ lineHeight: 1.3 }}>
+          <Typography variant="body2" noWrap sx={{ fontWeight: 600, lineHeight: 1.3 }}>
             {addon.name}
           </Typography>
           {addon.note && (
             <Typography
               variant="caption"
-              color="text.secondary"
+             
               noWrap
-              sx={{ opacity: 0.7, lineHeight: 1.2 }}
+              sx={{ color: 'text.secondary', opacity: 0.7, lineHeight: 1.2 }}
             >
               {addon.note}
             </Typography>
@@ -264,6 +264,7 @@ const SortableAddonRow: React.FC<SortableAddonProps> = ({
           <IconButton
             size="small"
             onClick={() => onRemove(addon.esouiId)}
+            aria-label="Remove addon"
             sx={{
               p: 0.4,
               color: 'text.disabled',
@@ -720,10 +721,10 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
         >
           <VisibilityOff sx={{ fontSize: 18, color: 'text.disabled' }} />
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
               Publish anonymously
             </Typography>
-            <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.2 }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', lineHeight: 1.2 }}>
               Your name won&apos;t appear on this pack
             </Typography>
           </Box>
@@ -768,7 +769,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Extension sx={{ fontSize: 18, color: accentColor }} />
-            <Typography variant="body2" fontWeight={700}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
               Addons
             </Typography>
             {addons.length > 0 && (
@@ -787,7 +788,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
             )}
           </Box>
           {addons.length > 0 && (
-            <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.62rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.62rem' }}>
               {requiredCount} required · {optionalCount} optional
             </Typography>
           )}
@@ -828,10 +829,10 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
               >
                 <Extension sx={{ fontSize: 24, color: alpha(accentColor, 0.6) }} />
               </Box>
-              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
                 No addons yet
               </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.5 }}>
+              <Typography variant="caption" sx={{ color: 'text.disabled', lineHeight: 1.5 }}>
                 Use the form below to add addons to your pack.
                 <br />
                 You can drag to reorder them after adding.
@@ -929,10 +930,10 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                       }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={600} noWrap>
+                      <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
                         {option.title}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <Typography variant="caption" noWrap sx={{ color: 'text.secondary' }}>
                         by {option.author}
                         {option.category ? ` · ${option.category}` : ''}
                         {option.downloads ? ` · ${option.downloads} downloads` : ''}
@@ -1121,37 +1122,36 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      disableEscapeKeyDown={loading}
-      TransitionComponent={Fade}
       transitionDuration={{ enter: 250, exit: 200 }}
-      PaperProps={{
-        sx: {
-          background: panelBg,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: panelBorder,
-          borderRadius: isMobile ? 0 : '14px',
-          boxShadow: panelShadow,
-          overflow: 'hidden',
-          minHeight: isMobile ? '100dvh' : undefined,
-          maxHeight: isMobile ? '100dvh' : '85vh',
-          // Animated gold shimmer top edge
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: accentGradient,
-            zIndex: 1,
-            ...shimmer,
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 3s linear infinite',
+      slots={{ transition: Fade }}
+      slotProps={{
+        paper: {
+          sx: {
+            background: panelBg,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: panelBorder,
+            borderRadius: isMobile ? 0 : '14px',
+            boxShadow: panelShadow,
+            overflow: 'hidden',
+            minHeight: isMobile ? '100dvh' : undefined,
+            maxHeight: isMobile ? '100dvh' : '85vh',
+            // Animated gold shimmer top edge
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '2px',
+              background: accentGradient,
+              zIndex: 1,
+              ...shimmer,
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 3s linear infinite',
+            },
           },
         },
-      }}
-      slotProps={{
         backdrop: {
           sx: {
             backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(15, 23, 42, 0.35)',
@@ -1172,7 +1172,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
             : 'transparent',
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={2}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           {/* Icon badge */}
           <Box
             sx={{
@@ -1214,7 +1214,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
             >
               {isEditMode ? 'Edit Pack' : 'Create Addon Pack'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.6 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', opacity: 0.6 }}>
               {isEditMode
                 ? 'Update your pack details and addons'
                 : 'Share your curated addon collection'}

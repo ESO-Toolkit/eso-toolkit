@@ -90,12 +90,12 @@ export const WhoAmIPage: React.FC = () => {
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
       <Stack spacing={3}>
-        <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
+        <Box sx={{ justifyContent: 'space-between', gap: 2, alignItems: 'center', display: 'flex' }}>
           <Box>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }} gutterBottom>
               Who am I
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               View the ESO Logs account currently tied to your session.
             </Typography>
           </Box>
@@ -147,7 +147,7 @@ export const WhoAmIPage: React.FC = () => {
                     flexWrap: 'wrap',
                   }}
                 >
-                  <Typography variant="subtitle2" color="text.secondary">
+                  <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
                     {field.label}
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600 }}>
@@ -158,7 +158,7 @@ export const WhoAmIPage: React.FC = () => {
             </Stack>
 
             {lastRefreshed && (
-              <Box mt={3} display="flex" justifyContent="flex-end">
+              <Box sx={{ mt: 3, justifyContent: 'flex-end', display: 'flex' }}>
                 <Chip
                   size="small"
                   variant="outlined"
@@ -175,7 +175,7 @@ export const WhoAmIPage: React.FC = () => {
         {currentUser && (
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              <Typography variant="subtitle2" gutterBottom sx={{ color: 'text.secondary' }}>
                 Raw user payload
               </Typography>
               <Box

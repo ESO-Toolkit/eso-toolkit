@@ -39,30 +39,32 @@ export const DiscordAdminGuideSheet: React.FC<DiscordAdminGuideSheetProps> = ({
       // Stack above the ServerPickerDialog (MUI dialog is 1300; modal stack auto-bumps,
       // but we set explicitly so nested scroll inside the drawer behaves predictably).
       sx={{ zIndex: (t) => t.zIndex.modal + 2 }}
-      PaperProps={{
-        sx: {
-          width: fullscreen ? '100%' : { xs: '100%', sm: 460 },
-          maxWidth: '100vw',
-          height: fullscreen ? '85vh' : '100%',
-          borderTopLeftRadius: fullscreen ? 16 : 0,
-          borderTopRightRadius: fullscreen ? 16 : 0,
-          background: isDark ? 'rgba(16, 23, 41, 0.98)' : 'rgba(255,255,255,0.98)',
-          backgroundImage: 'none',
-          backdropFilter: 'blur(10px)',
-          borderLeft: fullscreen
-            ? 'none'
-            : isDark
-              ? '1px solid rgba(255,255,255,0.06)'
-              : '1px solid rgba(0,0,0,0.06)',
+      slotProps={{
+        paper: {
+          sx: {
+            width: fullscreen ? '100%' : { xs: '100%', sm: 460 },
+            maxWidth: '100vw',
+            height: fullscreen ? '85vh' : '100%',
+            borderTopLeftRadius: fullscreen ? 16 : 0,
+            borderTopRightRadius: fullscreen ? 16 : 0,
+            background: isDark ? 'rgba(16, 23, 41, 0.98)' : 'rgba(255,255,255,0.98)',
+            backgroundImage: 'none',
+            backdropFilter: 'blur(10px)',
+            borderLeft: fullscreen
+              ? 'none'
+              : isDark
+                ? '1px solid rgba(255,255,255,0.06)'
+                : '1px solid rgba(0,0,0,0.06)',
+          },
         },
       }}
     >
       <Stack sx={{ height: '100%' }}>
         <Stack
           direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{
+         
+         
+          sx={{ justifyContent: 'space-between', alignItems: 'center',
             px: 2,
             py: 1.5,
             borderBottom: isDark

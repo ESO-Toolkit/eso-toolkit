@@ -174,7 +174,7 @@ export const LatestReports: React.FC = () => {
               </Box>
             </Box>
             {/* Stats row skeleton */}
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+            <Box sx={{ justifyContent: 'space-between', alignItems: 'center', display: 'flex', mb: 3 }}>
               <Skeleton variant="text" width={240} height={18} />
               <Skeleton variant="rounded" width={100} height={28} sx={{ borderRadius: '16px' }} />
             </Box>
@@ -199,7 +199,7 @@ export const LatestReports: React.FC = () => {
               </Box>
             ))}
             {/* Pagination skeleton */}
-            <Box display="flex" justifyContent="center" mt={3}>
+            <Box sx={{ mt: 3, justifyContent: 'center', display: 'flex' }}>
               <Skeleton variant="rounded" width={200} height={32} sx={{ borderRadius: '16px' }} />
             </Box>
           </CardContent>
@@ -257,8 +257,8 @@ export const LatestReports: React.FC = () => {
               </Typography>
               <Typography
                 variant="body1"
-                color="text.secondary"
-                sx={{
+               
+                sx={{ color: 'text.secondary',
                   maxWidth: isDesktop ? 'none' : '26ch',
                   pr: isDesktop ? 0 : 1, // Add some right padding on mobile
                 }}
@@ -287,14 +287,14 @@ export const LatestReports: React.FC = () => {
           {state.reports.length > 0 ? (
             <>
               <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems={isDesktop ? 'center' : 'flex-start'}
-                flexDirection={isDesktop ? 'row' : 'column'}
-                gap={isDesktop ? 2 : 1.5}
-                mb={isDesktop ? 3 : 2}
+               
+               
+               
+                flexDirection={isDesktop ? 'row' : 'column'} sx={{ justifyContent: 'space-between', gap: isDesktop ? 2 : 1.5, alignItems: isDesktop ? 'center' : 'flex-start', display: 'flex', mb: isDesktop ? 3 : 2 }}
+               
+               
               >
-                <Typography variant="body1" color="text.secondary">
+                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                   Page {state.pagination.currentPage}
                   {state.pagination.hasMorePages ? '+' : ` of ${state.pagination.totalPages}`}
                 </Typography>
@@ -321,22 +321,22 @@ export const LatestReports: React.FC = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Title
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Zone
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Duration
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Visibility
                           </Typography>
                         </TableCell>
@@ -371,9 +371,9 @@ export const LatestReports: React.FC = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                                 <Typography
                                   variant="body2"
-                                  fontWeight="medium"
-                                  color="primary.main"
-                                  sx={{
+                                 
+                                 
+                                  sx={{ color: 'primary.main', fontWeight: 'medium',
                                     overflowWrap: 'anywhere',
                                     wordBreak: 'break-word',
                                     lineHeight: 1.4,
@@ -403,8 +403,8 @@ export const LatestReports: React.FC = () => {
                               </Box>
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
-                                sx={{
+                               
+                                sx={{ color: 'text.secondary',
                                   display: 'block',
                                   mt: 0.25,
                                   whiteSpace: 'nowrap',
@@ -416,8 +416,8 @@ export const LatestReports: React.FC = () => {
                               </Typography>
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
-                                sx={{
+                               
+                                sx={{ color: 'text.secondary',
                                   display: 'block',
                                   mt: 0.25,
                                   whiteSpace: 'nowrap',
@@ -464,7 +464,7 @@ export const LatestReports: React.FC = () => {
               )}
 
               {/* Pagination */}
-              <Box display="flex" justifyContent="center" mt={isDesktop ? 3 : 2}>
+              <Box sx={{ mt: isDesktop ? 3 : 2, justifyContent: 'center', display: 'flex' }}>
                 <Pagination
                   count={state.pagination.totalPages}
                   page={state.pagination.currentPage}
@@ -486,17 +486,17 @@ export const LatestReports: React.FC = () => {
 
           {/* Loading overlay */}
           {state.loading && state.reports.length > 0 && (
-            <Box
-              position="absolute"
-              top={0}
-              left={0}
-              right={0}
-              bottom={0}
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              bgcolor="rgba(255,255,255,0.7)"
-              zIndex={1}
+            <Box sx={{ bottom: 0, bgcolor: 'rgba(255,255,255,0.7)', justifyContent: 'center', alignItems: 'center', top: 0, zIndex: 1, display: 'flex', position: 'absolute', left: 0, right: 0 }}
+             
+             
+             
+             
+             
+             
+             
+             
+             
+             
             >
               <CircularProgress />
             </Box>

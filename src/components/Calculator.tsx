@@ -3036,7 +3036,7 @@ const CalculatorComponent: React.FC = () => {
                   color={theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145  200)'}
                 />
               ) : (
-                <Typography component="span" fontWeight={600} fontSize="0.7rem">
+                <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.7rem' }}>
                   {currentVariant.name}
                 </Typography>
               )}
@@ -3858,9 +3858,9 @@ const CalculatorComponent: React.FC = () => {
 
             <Stack
               spacing={{ xs: 1.1, sm: 1 }}
-              alignItems={{ xs: 'flex-end', sm: 'flex-end' }}
-              justifyContent={{ xs: 'flex-end', sm: 'flex-end' }}
-              sx={{
+             
+             
+              sx={{ justifyContent: { xs: 'flex-end', sm: 'flex-end' }, alignItems: { xs: 'flex-end', sm: 'flex-end' },
                 gridArea: 'status',
                 minWidth: { sm: 220 },
                 borderLeft: {
@@ -4422,8 +4422,7 @@ const CalculatorComponent: React.FC = () => {
                       variant={gameMode === 'pve' ? 'contained' : 'outlined'}
                       onClick={() => setGameMode('pve')}
                       startIcon={
-                        <Typography
-                          fontSize={
+                        <Typography sx={{ fontSize: 
                             isExtraSmall
                               ? '0.75rem'
                               : liteMode
@@ -4431,7 +4430,8 @@ const CalculatorComponent: React.FC = () => {
                                 : isMobile
                                   ? '0.9rem'
                                   : '1rem'
-                          }
+                           }}
+                         
                         >
                           🗡️
                         </Typography>
@@ -4462,8 +4462,7 @@ const CalculatorComponent: React.FC = () => {
                       variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
                       onClick={() => setGameMode('pvp')}
                       startIcon={
-                        <Typography
-                          fontSize={
+                        <Typography sx={{ fontSize: 
                             isExtraSmall
                               ? '0.75rem'
                               : liteMode
@@ -4471,7 +4470,8 @@ const CalculatorComponent: React.FC = () => {
                                 : isMobile
                                   ? '0.9rem'
                                   : '1rem'
-                          }
+                           }}
+                         
                         >
                           🛡️
                         </Typography>

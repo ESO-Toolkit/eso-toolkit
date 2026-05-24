@@ -275,7 +275,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
           const iconUrl = getCategoryIconUrl(option.category);
           return (
             <li {...props}>
-              <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
+              <Stack direction="row" spacing={1.5} sx={{ width: '100%', alignItems: 'center' }}>
                 {iconUrl && (
                   <img
                     src={iconUrl}
@@ -283,9 +283,9 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                     style={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
                   />
                 )}
-                <Stack spacing={0} flex={1} minWidth={0}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography fontWeight={600} noWrap>
+                <Stack spacing={0} sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <Typography noWrap sx={{ fontWeight: 600 }}>
                       {option.name}
                     </Typography>
                     <Chip
@@ -295,7 +295,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                       sx={{ height: 18, fontSize: '0.65rem' }}
                     />
                   </Stack>
-                  <Typography variant="caption" color="text.secondary" noWrap>
+                  <Typography variant="caption" noWrap sx={{ color: 'text.secondary' }}>
                     {[
                       option.category,
                       typeof option.quality === 'number' ? `Quality ${option.quality}` : null,
@@ -363,8 +363,8 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                 <img src={iconUrl} alt="" style={{ width: 36, height: 36, flexShrink: 0 }} />
               )}
               <Box flex={1} minWidth={0}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography fontWeight={600} noWrap>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <Typography noWrap sx={{ fontWeight: 600 }}>
                     {currentItem.name}
                   </Typography>
                   <Chip
@@ -382,7 +382,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                     />
                   )}
                 </Stack>
-                <Typography variant="caption" color="text.secondary" noWrap>
+                <Typography variant="caption" noWrap sx={{ color: 'text.secondary' }}>
                   {[
                     typeof currentItem.quality === 'number'
                       ? `Quality ${currentItem.quality}`

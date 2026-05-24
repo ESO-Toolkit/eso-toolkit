@@ -553,6 +553,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               <IconButton
                 size="small"
                 onClick={() => setShowFilters((s) => !s)}
+                aria-label="Toggle filters"
                 sx={{
                   color: hasActiveFilters || showFilters ? 'primary.main' : 'text.secondary',
                   border: hasActiveFilters ? '1px solid' : '1px solid transparent',
@@ -564,7 +565,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               </IconButton>
             </Tooltip>
             <Tooltip title="Save as image">
-              <IconButton size="small" onClick={handleSaveAsImage} sx={{ color: 'text.secondary' }}>
+              <IconButton size="small" onClick={handleSaveAsImage} aria-label="Save as image" sx={{ color: 'text.secondary' }}>
                 <SaveAltIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -572,6 +573,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               <IconButton
                 size="small"
                 onClick={() => setStacked((s) => !s)}
+                aria-label={stacked ? 'Hide buff timeline' : 'Stack buff timeline below'}
                 sx={{
                   color: stacked ? 'primary.main' : 'text.secondary',
                   border: stacked ? '1px solid' : '1px solid transparent',

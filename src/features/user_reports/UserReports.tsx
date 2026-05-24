@@ -489,19 +489,19 @@ export const UserReports: React.FC = () => {
                       opacity: 1 - i * 0.1,
                     }}
                   >
-                    <Box
-                      display="flex"
-                      alignItems="flex-start"
-                      justifyContent="space-between"
-                      gap={1}
+                    <Box sx={{ justifyContent: 'space-between', gap: 1, alignItems: 'flex-start', display: 'flex' }}
+                     
+                     
+                     
+                     
                     >
-                      <Box flex={1} minWidth={0}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Skeleton variant="text" width="72%" height={22} />
                         <Skeleton variant="text" width="40%" height={16} sx={{ mt: 0.25 }} />
                       </Box>
                       <Skeleton variant="rounded" width={62} height={22} sx={{ flexShrink: 0 }} />
                     </Box>
-                    <Box display="flex" gap={2}>
+                    <Box sx={{ gap: 2, display: 'flex' }}>
                       <Skeleton variant="text" width="48%" height={18} />
                       <Skeleton variant="text" width="28%" height={18} />
                     </Box>
@@ -608,8 +608,8 @@ export const UserReports: React.FC = () => {
               {currentUser && (
                 <Typography
                   variant="body1"
-                  color="text.secondary"
-                  sx={{
+                 
+                  sx={{ color: 'text.secondary',
                     maxWidth: isDesktop ? 'none' : '26ch',
                     pr: isDesktop ? 0 : 1, // Add some right padding on mobile
                   }}
@@ -703,7 +703,7 @@ export const UserReports: React.FC = () => {
                 gap: 1,
               }}
             >
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {filteredCount === totalCount
                   ? `Total: ${totalCount} reports`
                   : `Showing ${filteredCount} of ${totalCount} reports`}
@@ -780,13 +780,13 @@ export const UserReports: React.FC = () => {
                   ) : paginatedReports.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                        <Typography variant="body1" color="text.secondary">
+                        <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                           {totalCount === 0
                             ? 'No reports found'
                             : 'No reports found matching your filters'}
                         </Typography>
                         {totalCount > 0 && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                             Try adjusting your search or filter criteria
                           </Typography>
                         )}
@@ -830,7 +830,7 @@ export const UserReports: React.FC = () => {
                         <TableCell>
                           <Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                              <Typography variant="body1" fontWeight="medium">
+                              <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
                                 {report.title || 'Untitled Report'}
                               </Typography>
                               {isReportEmpty(report) && (
@@ -850,8 +850,8 @@ export const UserReports: React.FC = () => {
                             </Box>
                             <Typography
                               variant="caption"
-                              color="text.secondary"
-                              sx={{ mt: 0.25, display: 'block' }}
+                             
+                              sx={{ color: 'text.secondary', mt: 0.25, display: 'block' }}
                             >
                               {formatReportDateTime(report.startTime)}
                             </Typography>
@@ -885,13 +885,13 @@ export const UserReports: React.FC = () => {
             <>
               {paginatedReports.length === 0 ? (
                 <Box sx={{ py: 8, textAlign: 'center' }}>
-                  <Typography variant="body1" color="text.secondary">
+                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                     {totalCount === 0
                       ? 'No reports found'
                       : 'No reports found matching your filters'}
                   </Typography>
                   {totalCount > 0 && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                       Try adjusting your search or filter criteria
                     </Typography>
                   )}
@@ -985,10 +985,10 @@ export const UserReports: React.FC = () => {
       {/* Empty state */}
       {!loading && paginatedReports.length === 0 && !error && (
         <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
             No reports found
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             You haven&apos;t uploaded any reports yet, or they may not be visible with your current
             permissions.
           </Typography>

@@ -195,14 +195,14 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
         </Typography>
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ fontSize: '0.8rem', maxWidth: 380, mx: 'auto', lineHeight: 1.45, mb: 1.5 }}
+         
+          sx={{ color: 'text.secondary', fontSize: '0.8rem', maxWidth: 380, mx: 'auto', lineHeight: 1.45, mb: 1.5 }}
         >
           {guildName
             ? `Add the bot to ${guildName} so your team can publish rosters here. About 60 seconds.`
             : 'Add the bot to your Discord server so your team can publish rosters here. About 60 seconds.'}
         </Typography>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="center">
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ justifyContent: 'center' }}>
           <Button
             variant="contained"
             href={getBotInviteUrl()}
@@ -294,7 +294,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
             '&:hover': { background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' },
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <Shield sx={{ fontSize: 18, color: '#5865F2' }} />
             <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
               Why we ask for each permission
@@ -421,7 +421,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
                 </Box>
               </Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" alignItems="center" spacing={0.75}>
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                   <Typography sx={{ fontWeight: 600, fontSize: '0.82rem', lineHeight: 1.3 }}>
                     {step.title}
                   </Typography>
@@ -438,8 +438,8 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
                 </Stack>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ display: 'block', lineHeight: 1.4, mt: 0.125, fontSize: '0.72rem' }}
+                 
+                  sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.4, mt: 0.125, fontSize: '0.72rem' }}
                 >
                   {step.body}
                 </Typography>
@@ -476,7 +476,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
               '& .MuiAccordionSummary-content': { my: 1 },
             }}
           >
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <HelpOutlined sx={{ fontSize: 18, color: '#FEB900' }} />
               <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>Troubleshooting</Typography>
             </Stack>
@@ -518,8 +518,8 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
         </Typography>
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ display: 'block', lineHeight: 1.45, mb: 1, fontSize: '0.72rem' }}
+         
+          sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.45, mb: 1, fontSize: '0.72rem' }}
         >
           DM this page to whoever has{' '}
           <Box component="span" sx={{ fontWeight: 700 }}>
@@ -572,8 +572,8 @@ const TroubleshootRow: React.FC<TroubleshootRowProps> = ({ title, body, isDark }
     <Typography sx={{ fontWeight: 600, fontSize: '0.78rem', lineHeight: 1.35 }}>{title}</Typography>
     <Typography
       variant="caption"
-      color="text.secondary"
-      sx={{
+     
+      sx={{ color: 'text.secondary',
         display: 'block',
         lineHeight: 1.5,
         fontSize: '0.72rem',

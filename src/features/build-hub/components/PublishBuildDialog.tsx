@@ -124,19 +124,20 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
       onClose={loading ? undefined : onClose}
       maxWidth="sm"
       fullWidth
-      disableEscapeKeyDown={loading}
       className="glass-dialog"
-      PaperProps={{
-        sx: {
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: '90vh',
+      slotProps={{
+        paper: {
+          sx: {
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
         },
       }}
     >
@@ -170,13 +171,13 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
         <div>
           <Typography
             variant="caption"
-            color={atTagLimit ? 'warning.main' : 'text.secondary'}
-            gutterBottom
-            display="block"
+           
+            gutterBottom sx={{ color: atTagLimit ? 'warning.main' : 'text.secondary', display: 'block' }}
+           
           >
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ gap: 0.5, mt: 0.5 }}>
+          <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
             {PRESET_BUILD_TAGS.map((tag) => {
               const isSelected = selectedTags.includes(tag);
               const isDisabled = !isSelected && atTagLimit;
@@ -227,7 +228,7 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
             />
           }
           label={
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Publish anonymously
             </Typography>
           }

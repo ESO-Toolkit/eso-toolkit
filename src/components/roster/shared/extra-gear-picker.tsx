@@ -262,14 +262,16 @@ const PickerDialog: React.FC<PickerDialogProps> = ({ open, onClose, onSelect, se
       }}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          backdropFilter: 'blur(24px)',
-          background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
-          boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
-          maxHeight: '80vh',
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(24px)',
+            background: isDark ? 'rgba(12,12,22,0.96)' : 'rgba(255,255,255,0.97)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
+            boxShadow: isDark ? '0 24px 64px rgba(0,0,0,0.55)' : '0 24px 64px rgba(0,0,0,0.12)',
+            maxHeight: '80vh',
+          },
         },
       }}
     >

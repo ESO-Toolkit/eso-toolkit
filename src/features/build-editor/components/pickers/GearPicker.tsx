@@ -228,7 +228,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
           },
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, flex: 1 }}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
           <ShieldIcon
             sx={{
               fontSize: 16,
@@ -263,7 +263,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
             }}
           />
         </Stack>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Typography
             sx={{
               fontSize: 10,
@@ -453,16 +453,18 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
       maxWidth="sm"
       fullWidth
       className="glass-dialog"
-      PaperProps={{
-        sx: {
-          borderRadius: '20px',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: '90vh',
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '20px',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
         },
       }}
     >
@@ -490,7 +492,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
         >
           Select {slotName} Gear
         </Typography>
-        <IconButton size="small" onClick={onClose} sx={{ color: 'text.disabled' }}>
+        <IconButton size="small" onClick={onClose} aria-label="Close" sx={{ color: 'text.disabled' }}>
           <CloseIcon sx={{ fontSize: 18 }} />
         </IconButton>
       </DialogTitle>
@@ -508,7 +510,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
             }}
           >
-            <Stack direction="row" alignItems="center" spacing={0.75}>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
               <ShieldIcon
                 sx={{
                   fontSize: 16,
@@ -517,7 +519,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                 }}
               />
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" spacing={0.5} alignItems="center">
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                   <Typography
                     noWrap
                     sx={{
@@ -643,7 +645,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                           sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }}
                         />
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Stack direction="row" spacing={0.5} alignItems="center">
+                          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                             <Typography
                               noWrap
                               sx={{

@@ -153,8 +153,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
     <Grow in timeout={400}>
       <Stack
         spacing={3}
-        alignItems="center"
-        sx={{
+       
+        sx={{ alignItems: 'center',
           py: { xs: 4, sm: 5 },
           ...successPulse,
           animation: 'successPulse 0.5s ease-out',
@@ -293,8 +293,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
-          sx={{
+         
+          sx={{ alignItems: 'center',
             px: 0.5,
             opacity: 0.6,
             transition: 'opacity 0.2s ease',
@@ -329,36 +329,36 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      TransitionComponent={Fade}
       transitionDuration={{ enter: 250, exit: 200 }}
-      PaperProps={{
-        sx: {
-          background: panelBg,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: panelBorder,
-          borderRadius: isMobile ? 0 : '14px',
-          boxShadow: panelShadow,
-          overflow: 'hidden',
-          minHeight: isMobile ? '100dvh' : undefined,
-          maxHeight: isMobile ? '100dvh' : '85vh',
-          // Subtle animated top-edge accent (rounded to match Paper corners)
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: accentGradient,
-            zIndex: 1,
-            ...shimmer,
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 3s linear infinite',
+      slots={{ transition: Fade }}
+      slotProps={{
+        paper: {
+          sx: {
+            background: panelBg,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: panelBorder,
+            borderRadius: isMobile ? 0 : '14px',
+            boxShadow: panelShadow,
+            overflow: 'hidden',
+            minHeight: isMobile ? '100dvh' : undefined,
+            maxHeight: isMobile ? '100dvh' : '85vh',
+            // Subtle animated top-edge accent (rounded to match Paper corners)
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '2px',
+              background: accentGradient,
+              zIndex: 1,
+              ...shimmer,
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 3s linear infinite',
+            },
           },
         },
-      }}
-      slotProps={{
         backdrop: {
           sx: {
             backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(15, 23, 42, 0.35)',
@@ -379,7 +379,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             : 'transparent',
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={2}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           {/* Icon badge */}
           <Box
             sx={{

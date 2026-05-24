@@ -98,7 +98,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
   if (!hasGrimoires && !hasSkills) {
     return (
       <Box sx={sx}>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           No scribed skills detected
         </Typography>
       </Box>
@@ -111,8 +111,8 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
       <Box sx={sx}>
         <Typography
           variant="body2"
-          fontWeight="bold"
-          sx={{ mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
+         
+          sx={{ fontWeight: 'bold', mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
         >
           Scribed Skills (
           {(() => {
@@ -288,8 +288,8 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
       <Box sx={sx}>
         <Typography
           variant="body2"
-          fontWeight="bold"
-          sx={{ mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
+         
+          sx={{ fontWeight: 'bold', mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
         >
           Scribed Skills (
           {(() => {

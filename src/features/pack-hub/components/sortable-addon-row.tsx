@@ -101,15 +101,15 @@ export const SortableAddonRow: React.FC<SortableAddonProps> = ({
 
         {/* Name + note */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="body2" fontWeight={600} noWrap sx={{ lineHeight: 1.3 }}>
+          <Typography variant="body2" noWrap sx={{ fontWeight: 600, lineHeight: 1.3 }}>
             {addon.name}
           </Typography>
           {addon.note && (
             <Typography
               variant="caption"
-              color="text.secondary"
+             
               noWrap
-              sx={{ opacity: 0.7, lineHeight: 1.2 }}
+              sx={{ color: 'text.secondary', opacity: 0.7, lineHeight: 1.2 }}
             >
               {addon.note}
             </Typography>
@@ -158,6 +158,7 @@ export const SortableAddonRow: React.FC<SortableAddonProps> = ({
           <IconButton
             size="small"
             onClick={() => onRemove(addon.esouiId)}
+            aria-label="Remove addon"
             sx={{
               p: 0.4,
               color: 'text.disabled',

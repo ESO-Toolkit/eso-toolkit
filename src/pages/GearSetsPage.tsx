@@ -128,7 +128,7 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
                 justifyContent: 'center',
               }}
             >
-              <Typography variant="caption" color="text.disabled">
+              <Typography variant="caption" sx={{ color: 'text.disabled' }}>
                 ?
               </Typography>
             </Box>
@@ -136,7 +136,7 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
         </TableCell>
         <TableCell>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
-            <Typography variant="body2" fontWeight={500}>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
               {set.name}
             </Typography>
             <Box
@@ -275,10 +275,10 @@ export const GearSetsPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
       <Stack spacing={0.5} sx={{ mb: 3 }}>
-        <Typography variant="h4" fontWeight={600} component="h1">
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           Gear Sets
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           {ALL_GEAR_SETS.length} sets supported — search by name or bonus text, filter by type.
         </Typography>
       </Stack>
@@ -318,7 +318,7 @@ export const GearSetsPage: React.FC = () => {
 
       {/* Results summary */}
       {(search || typeFilter) && (
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
           {filtered.length === 0
             ? 'No sets match your filters.'
             : `Showing ${filtered.length} set${filtered.length !== 1 ? 's' : ''}`}
@@ -372,7 +372,7 @@ export const GearSetsPage: React.FC = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                       No sets found. Try adjusting your search or filters.
                     </Typography>
                   </TableCell>

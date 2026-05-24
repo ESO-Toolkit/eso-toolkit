@@ -35,8 +35,8 @@ export const DebuffChecklist: React.FC<DebuffChecklistProps> = ({ checklistData 
         )}
         <Typography
           variant="caption"
-          color={active ? 'text.primary' : 'text.secondary'}
-          sx={{ fontSize: '0.65rem' }}
+         
+          sx={{ color: active ? 'text.primary' : 'text.secondary', fontSize: '0.65rem' }}
         >
           {label}
         </Typography>
@@ -64,7 +64,7 @@ export const DebuffChecklist: React.FC<DebuffChecklistProps> = ({ checklistData 
           },
         }}
       >
-        <Typography variant="caption" fontWeight={500} sx={{ flex: 1 }}>
+        <Typography variant="caption" sx={{ fontWeight: 500, flex: 1 }}>
           {debuffName}
         </Typography>
 
@@ -85,7 +85,7 @@ export const DebuffChecklist: React.FC<DebuffChecklistProps> = ({ checklistData 
 
     return (
       <Box sx={{ mb: 2 }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
           <Chip
             label={title}
             color={color}
@@ -93,7 +93,7 @@ export const DebuffChecklist: React.FC<DebuffChecklistProps> = ({ checklistData 
             variant="outlined"
             sx={{ height: 20, fontSize: '0.65rem' }}
           />
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {debuffs.length}
           </Typography>
         </Stack>
@@ -110,7 +110,7 @@ export const DebuffChecklist: React.FC<DebuffChecklistProps> = ({ checklistData 
     return (
       <Box sx={{ textAlign: 'center', py: 3 }}>
         <InfoIcon color="action" sx={{ fontSize: 40, mb: 1, opacity: 0.5 }} />
-        <Typography variant="caption" color="text.secondary" display="block">
+        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
           No debuffs detected on the trial dummy.
         </Typography>
       </Box>
@@ -120,7 +120,7 @@ export const DebuffChecklist: React.FC<DebuffChecklistProps> = ({ checklistData 
   return (
     <Box>
       {/* Summary chips */}
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }} useFlexGap>
         <Chip
           label={`${summary.totalTrackedDebuffs} Total`}
           size="small"

@@ -168,7 +168,7 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
           String(tanks.length),
           roleColors.tank,
         )}
-        <Stack spacing={2} mb={3}>
+        <Stack spacing={2} sx={{ mb: 3 }}>
           {tanks.map((tank, i) => (
             <TankCard
               key={tank.slotNumber}
@@ -199,7 +199,7 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
           String(healers.length),
           roleColors.healer,
         )}
-        <Stack spacing={2} mb={3}>
+        <Stack spacing={2} sx={{ mb: 3 }}>
           {healers.map((healer, i) => (
             <HealerCard
               key={healer.slotNumber}
@@ -237,7 +237,7 @@ export const RosterCardSections = React.memo<RosterCardSectionsProps>(function R
           onDragEnd={handleDPSDragEnd}
         >
           <SortableContext items={dpsSlotIds} strategy={verticalListSortingStrategy}>
-            <Stack spacing={1.5} mb={3}>
+            <Stack spacing={1.5} sx={{ mb: 3 }}>
               {dpsSlots.map((slot, index) => (
                 <DPSSlotCard
                   key={slot.slotNumber}

@@ -480,7 +480,7 @@ export const LeaderboardLogsPage: React.FC = () => {
         >
           <CardContent>
             {/* Header skeleton */}
-            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 3 }}>
               <Skeleton variant="circular" width={24} height={24} />
               <Box sx={{ flex: 1 }}>
                 <Skeleton variant="text" width={180} height={32} />
@@ -499,7 +499,7 @@ export const LeaderboardLogsPage: React.FC = () => {
               ))}
             </Stack>
             {/* Section header + chips skeleton */}
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 3 }}>
               <Skeleton variant="text" width={200} height={24} />
               <Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: '16px' }} />
               <Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: '16px' }} />
@@ -567,14 +567,14 @@ export const LeaderboardLogsPage: React.FC = () => {
         }}
       >
         <CardContent>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
-            <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
+            <Box flexGrow={1} sx={{ gap: 1, alignItems: 'center', display: 'flex' }}>
               <EmojiEventsIcon color="primary" />
               <Box>
                 <Typography variant="h4" component="h1">
                   Leaderboard Logs
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Explore the highest scoring runs and jump straight into their reports.
                 </Typography>
               </Box>
@@ -592,8 +592,8 @@ export const LeaderboardLogsPage: React.FC = () => {
           <Stack
             spacing={2}
             direction={{ xs: 'column', md: 'row' }}
-            sx={{ mt: 3 }}
-            alignItems={{ md: 'center' }}
+            sx={{ alignItems: { md: 'center' }, mt: 3 }}
+           
           >
             <FormControl fullWidth size="small">
               <InputLabel id="leaderboard-zone-label">Trial</InputLabel>
@@ -658,8 +658,8 @@ export const LeaderboardLogsPage: React.FC = () => {
           <Box sx={{ mt: 3 }}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              spacing={1.5}
-              alignItems={{ sm: 'center' }}
+              spacing={1.5} sx={{ alignItems: { sm: 'center' } }}
+             
             >
               <Typography variant="h6" component="h2">
                 {currentEncounter ? currentEncounter.name : 'Select a boss to view rankings'}
@@ -690,7 +690,7 @@ export const LeaderboardLogsPage: React.FC = () => {
 
           <Box sx={{ mt: 3 }}>
             {rankingsLoading && rankingsState.rankings.length === 0 ? (
-              <Box py={2}>
+              <Box sx={{ py: 2 }}>
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Box
                     key={i}
@@ -747,8 +747,8 @@ export const LeaderboardLogsPage: React.FC = () => {
                         >
                           <TableCell>{row.rank}</TableCell>
                           <TableCell>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <Typography variant="body2" fontWeight={600}>
+                            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                 {scoreDisplay}
                               </Typography>
                               {typeof row.percentile === 'number' && (
@@ -761,10 +761,10 @@ export const LeaderboardLogsPage: React.FC = () => {
                             </Stack>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={500}>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
                               {teamDisplay}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                               {`${regionDisplay}${serverDisplay}`.trim() || '—'}
                             </Typography>
                           </TableCell>
@@ -792,9 +792,9 @@ export const LeaderboardLogsPage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mt: 3 }}
+           
+           
+            sx={{ justifyContent: 'space-between', alignItems: 'center', mt: 3 }}
           >
             <Button
               variant="outlined"
@@ -803,7 +803,7 @@ export const LeaderboardLogsPage: React.FC = () => {
             >
               Previous
             </Button>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Page {rankingsState.page}
             </Typography>
             <Button

@@ -107,11 +107,11 @@ export const FoodSelectorKnowledgeBasePage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
-      <Box display="flex" flexDirection="column" gap={2} mb={4}>
-        <Typography variant="h3" component="h1" fontWeight={800} gutterBottom>
+      <Box flexDirection="column" sx={{ gap: 2, display: 'flex', mb: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800 }}>
           Food Selector Knowledge Base
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
+        <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
           Understand how the generated consumable catalog powers the Loadout Manager and learn the
           regeneration workflow, data provenance, and troubleshooting steps.
         </Typography>

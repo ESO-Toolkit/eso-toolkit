@@ -252,8 +252,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               <PlayerIcon player={player} />
               <Typography
                 variant="subtitle1"
-                fontWeight="bold"
-                sx={{
+               
+                sx={{ fontWeight: 'bold',
                   fontSize: '1.75rem',
                   textShadow: roleColors.getAccordionTextShadow(),
                 }}
@@ -314,8 +314,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             <PlayerIcon player={player} />
             <Typography
               variant="subtitle1"
-              fontWeight="bold"
-              sx={{
+             
+              sx={{ fontWeight: 'bold',
                 fontSize: '1.75rem',
                 textShadow: roleColors.getAccordionTextShadow(),
               }}
@@ -489,8 +489,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 2, fontStyle: 'italic' }}
+                 
+                  sx={{ color: 'text.secondary', mt: 2, fontStyle: 'italic' }}
                 >
                   Critical damage bonuses are additive before being applied as a multiplier. For
                   example, if you have 75% critical damage total (50% base + 25% from sources), your
@@ -526,7 +526,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 Critical Damage vs Time
               </Typography>
               <EChart option={chartOption} height={300} group="fightReport" />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
                 Shows critical damage changes over the duration of the fight. Data downsampled to
                 0.5-second intervals (highest value per interval). Data points:{' '}
                 {criticalDamageData.dataPoints.length}

@@ -286,8 +286,8 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
             <PlayerIcon player={player} />
             <Typography
               variant="subtitle1"
-              fontWeight="bold"
-              sx={{
+             
+              sx={{ fontWeight: 'bold',
                 fontSize: '1.75rem',
                 textShadow: roleColors.getAccordionTextShadow(),
               }}
@@ -401,7 +401,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                 Penetration vs Time
               </Typography>
               <EChart option={chartOption} height={300} group="fightReport" />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
                 Shows penetration changes over the duration of the fight. Data voxelized to 1-second
                 intervals (highest value per interval). Data points:{' '}
                 {penetrationData.dataPoints.length}

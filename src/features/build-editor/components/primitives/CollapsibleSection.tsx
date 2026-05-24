@@ -54,7 +54,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
           },
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, flex: 1 }}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
           {icon}
           <Typography
             noWrap
@@ -68,7 +68,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
             {label}
           </Typography>
         </Stack>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           {count != null && (
             <Typography
               sx={{

@@ -87,12 +87,12 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
   >
     <Stack spacing={1.5}>
       {/* Header row */}
-      <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box sx={{ flex: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
             {entry.title}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.25 }}>
             #{entry.id} &middot; {formatDate(entry.mergedAt)} &middot; by {entry.author}
           </Typography>
         </Box>
@@ -103,6 +103,7 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
             target="_blank"
             rel="noopener noreferrer"
             size="small"
+            aria-label="View on GitHub"
             sx={{ mt: -0.5 }}
           >
             <OpenInNewIcon fontSize="small" />
@@ -112,7 +113,7 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
 
       {/* Labels */}
       {entry.labels.length > 0 && (
-        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+        <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap' }}>
           {entry.labels.map((label) => (
             <Chip
               key={label}
@@ -130,8 +131,8 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
       {(entry.summary || entry.description) && (
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{
+         
+          sx={{ color: 'text.secondary',
             whiteSpace: 'pre-line',
             '& a': { color: 'primary.main' },
             maxHeight: 200,
@@ -181,13 +182,13 @@ export const WhatsNewPage: React.FC = () => {
       <Stack spacing={3}>
         {/* Page header */}
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             <NewReleasesIcon color="primary" sx={{ fontSize: 32 }} />
             <Typography variant="h3" sx={{ fontWeight: 800 }}>
               What&apos;s New
             </Typography>
           </Stack>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="subtitle1" sx={{ color: 'text.secondary', mt: 1 }}>
             Recent updates and improvements to ESO Toolkit.
           </Typography>
         </Box>
@@ -208,14 +209,14 @@ export const WhatsNewPage: React.FC = () => {
               bgcolor: 'rgba(245,158,11,0.06)',
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Unable to load recent updates. Please try again later.
             </Typography>
           </Paper>
         )}
 
         {data && data.entries.length === 0 && (
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" sx={{ color: 'text.secondary' }}>
             No recent updates to display.
           </Typography>
         )}
@@ -230,7 +231,7 @@ export const WhatsNewPage: React.FC = () => {
 
         {/* Generation timestamp */}
         {data && (
-          <Typography variant="caption" color="text.disabled" sx={{ textAlign: 'center', pt: 2 }}>
+          <Typography variant="caption" sx={{ color: 'text.disabled', textAlign: 'center', pt: 2 }}>
             Last updated:{' '}
             {new Date(data.generatedAt).toLocaleDateString(undefined, {
               year: 'numeric',

@@ -115,9 +115,9 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
             {/* Bar label + filled slot count */}
             <Stack
               direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 1.25 }}
+             
+             
+              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}
             >
               <Typography
                 variant="caption"
@@ -136,7 +136,7 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
                 {label}
               </Typography>
               <Box
-                sx={{
+                sx={{ color: 'text.secondary',
                   px: 0.75,
                   py: 0.15,
                   borderRadius: '999px',
@@ -146,7 +146,7 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
               >
                 <Typography
                   variant="caption"
-                  color="text.secondary"
+                 
                   sx={{ fontSize: '0.65rem', fontWeight: 600 }}
                 >
                   {countFilledSlots(skills[barIndex] || {})} / 6
@@ -187,8 +187,8 @@ const SkillBarRow: React.FC<SkillBarRowProps> = ({
     <Stack
       direction="row"
       spacing={0.75}
-      alignItems="center"
-      sx={{
+     
+      sx={{ alignItems: 'center',
         flexWrap: { xs: 'wrap', md: 'nowrap' },
         rowGap: 0.75,
         justifyContent: { xs: 'center', md: 'flex-start' },
@@ -507,7 +507,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
                     {...optionProps}
                     sx={{ py: '7px !important', px: '10px !important' }}
                   >
-                    <Stack direction="row" spacing={1.25} alignItems="center">
+                    <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
                       {option.icon ? (
                         <img
                           src={`https://eso-hub.com/storage/icons/${option.icon}.png`}
@@ -544,8 +544,8 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
                         {option.category && (
                           <Typography
                             variant="caption"
-                            color="text.secondary"
-                            sx={{ lineHeight: 1.2 }}
+                           
+                            sx={{ color: 'text.secondary', lineHeight: 1.2 }}
                           >
                             {option.category}
                             {option.type ? ` · ${option.type}` : ''}

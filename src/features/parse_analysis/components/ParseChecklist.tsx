@@ -81,8 +81,8 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
   return (
     <Box sx={{ mb: 3 }}>
       {/* Summary bar */}
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1.5 }}>
-        <Typography variant="subtitle2" fontWeight={600}>
+      <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
           Checklist
         </Typography>
         <Stack direction="row" spacing={1}>
@@ -154,7 +154,7 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
           return (
             <Tooltip key={item.id} title={item.detail || ''} placement="top" arrow>
               <Box
-                sx={{
+                sx={{ fontWeight: 500,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
@@ -188,7 +188,7 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
                 }}
               >
                 {getStatusIcon(item.status)}
-                <Typography variant="caption" fontWeight={500} sx={{ flex: 1 }}>
+                <Typography variant="caption" sx={{ flex: 1 }}>
                   {item.title}
                 </Typography>
                 <Typography

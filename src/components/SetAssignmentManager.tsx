@@ -975,6 +975,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             <Tooltip title="Clear slot">
               <IconButton
                 size="small"
+                aria-label="Clear slot"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   onAssignSet('', slotKey, slotType);
@@ -1062,6 +1063,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             <Tooltip title="Clear slot">
               <IconButton
                 size="small"
+                aria-label="Clear slot"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   onAssignSet('', slotKey, slotType);
@@ -1965,7 +1967,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             <Typography variant="caption" fontWeight="bold" sx={{ display: 'block', mb: 0.5 }}>
               Legend:
             </Typography>
-            <Stack direction="row" spacing={2} flexWrap="wrap">
+            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <ShieldIcon sx={{ fontSize: 14, color: roleColors.tank }} />
                 <Typography variant="caption">Tank-specific set</Typography>
@@ -2038,7 +2040,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
           {/* Quick Stats */}
           <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
-            <Stack direction="row" spacing={3} justifyContent="center">
+            <Stack direction="row" spacing={3} sx={{ justifyContent: 'center' }}>
               <Typography variant="caption">
                 <strong>Total Sets Assigned:</strong> {setAssignments.size}
               </Typography>

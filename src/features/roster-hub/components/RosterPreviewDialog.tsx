@@ -1,5 +1,5 @@
 import {
-  ChatBubbleOutline,
+  ChatBubbleOutlined,
   ContentCopy,
   EditOutlined,
   Fullscreen,
@@ -548,7 +548,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                 },
               }}
             >
-              <ChatBubbleOutline
+              <ChatBubbleOutlined
                 sx={{
                   fontSize: 15,
                   color: commentsOpen ? accentColor : 'text.disabled',

@@ -203,20 +203,22 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
       fullWidth
       maxWidth="md"
       fullScreen={fullScreen}
-      TransitionComponent={SlideUpTransition}
-      PaperProps={{
-        sx: {
-          overflow: 'hidden',
-          borderRadius: fullScreen ? 0 : 4,
-          background: isDark
-            ? `linear-gradient(165deg, ${accentColor}18 0%, rgba(152,131,227,0.06) 35%, rgba(11,18,32,0.92) 75%)`
-            : `linear-gradient(165deg, ${accentColor}14 0%, rgba(152,131,227,0.05) 35%, rgba(255,255,255,0.97) 75%)`,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
-          boxShadow: isDark
-            ? `0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px ${accentColor}25, 0 0 60px ${accentColor}20`
-            : `0 24px 80px rgba(0,0,0,0.18), 0 0 0 1px ${accentColor}20`,
+      slots={{ transition: SlideUpTransition }}
+      slotProps={{
+        paper: {
+          sx: {
+            overflow: 'hidden',
+            borderRadius: fullScreen ? 0 : 4,
+            background: isDark
+              ? `linear-gradient(165deg, ${accentColor}18 0%, rgba(152,131,227,0.06) 35%, rgba(11,18,32,0.92) 75%)`
+              : `linear-gradient(165deg, ${accentColor}14 0%, rgba(152,131,227,0.05) 35%, rgba(255,255,255,0.97) 75%)`,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
+            boxShadow: isDark
+              ? `0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px ${accentColor}25, 0 0 60px ${accentColor}20`
+              : `0 24px 80px rgba(0,0,0,0.18), 0 0 0 1px ${accentColor}20`,
+          },
         },
       }}
       BackdropProps={{

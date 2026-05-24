@@ -267,8 +267,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
             {player && <PlayerIcon player={player} />}
             <Typography
               variant="subtitle1"
-              fontWeight="bold"
-              sx={{
+             
+              sx={{ fontWeight: 'bold',
                 fontSize: '1.75rem',
                 textShadow: roleColors.getAccordionTextShadow(),
               }}
@@ -393,52 +393,52 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ minWidth: 120 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Max Reduction
                   </Typography>
-                  <Typography variant="h5" color="secondary">
+                  <Typography variant="h5" sx={{ color: 'secondary' }}>
                     {resistanceToDamageReduction(staticResistance + maxDynamicResistance).toFixed(
                       1,
                     )}
                     %
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {staticResistance + maxDynamicResistance} resistance
                   </Typography>
                 </Box>
                 <Box sx={{ minWidth: 120 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Average Reduction
                   </Typography>
-                  <Typography variant="h5" color="info.main">
+                  <Typography variant="h5" sx={{ color: 'info.main' }}>
                     {resistanceToDamageReduction(
                       averageDynamicResistance + staticResistance,
                     ).toFixed(1)}
                     %
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {(averageDynamicResistance + staticResistance).toFixed(0)} resistance
                   </Typography>
                 </Box>
                 <Box sx={{ minWidth: 120 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Static Reduction
                   </Typography>
-                  <Typography variant="h5" color="warning.main">
+                  <Typography variant="h5" sx={{ color: 'warning.main' }}>
                     {resistanceToDamageReduction(staticResistance).toFixed(1)}%
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {staticResistance.toLocaleString()} resistance
                   </Typography>
                 </Box>
                 <Box sx={{ minWidth: 120 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Dynamic Reduction
                   </Typography>
-                  <Typography variant="h5" color="success.main">
+                  <Typography variant="h5" sx={{ color: 'success.main' }}>
                     {resistanceToDamageReduction(maxDynamicResistance).toFixed(1)}%
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {maxDynamicResistance.toLocaleString()} resistance
                   </Typography>
                 </Box>
@@ -550,8 +550,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                           >
                             <Typography
                               variant="body2"
-                              fontWeight="bold"
-                              sx={{
+                             
+                              sx={{ fontWeight: 'bold',
                                 color: source.isActive ? 'inherit' : 'text.secondary',
                               }}
                             >
@@ -559,8 +559,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                             </Typography>
                             <Typography
                               variant="caption"
-                              color="text.secondary"
-                              sx={{
+                             
+                              sx={{ color: 'text.secondary',
                                 opacity: source.isActive ? 1 : 0.6,
                               }}
                             >
@@ -571,7 +571,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                       );
                     })
                   ) : (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                       No active damage reduction sources found
                     </Typography>
                   )}

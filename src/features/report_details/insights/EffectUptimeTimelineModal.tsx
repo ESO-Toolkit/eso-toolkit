@@ -203,13 +203,13 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <TimelineIcon sx={{ color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a' }} />
             <Typography variant="h6">{title}</Typography>
             <Chip label={categoryBadge.label} color={categoryBadge.color} size="small" />
           </Stack>
           {subtitle && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {subtitle}
             </Typography>
           )}
@@ -303,7 +303,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
               }`,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               No uptime timeline data available for the current selection.
             </Typography>
           </Box>

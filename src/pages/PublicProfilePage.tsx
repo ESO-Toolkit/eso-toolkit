@@ -162,6 +162,7 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
           <IconButton
             className="delete-btn"
             size="small"
+            aria-label="Delete build"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               onDelete(build.id, build.title);
@@ -480,6 +481,7 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
           <IconButton
             className="delete-btn"
             size="small"
+            aria-label="Delete roster"
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               onDelete(roster.id, roster.title);
@@ -1175,7 +1177,7 @@ export const PublicProfilePage: React.FC = () => {
         <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mb: 4 }}>
           <strong>{username}</strong> hasn&apos;t published any public builds or rosters yet.
         </Typography>
-        <Stack direction="row" spacing={1.5} justifyContent="center">
+        <Stack direction="row" spacing={1.5} sx={{ justifyContent: 'center' }}>
           <Button
             size="small"
             startIcon={<ArrowBackIcon />}
@@ -1334,6 +1336,7 @@ export const PublicProfilePage: React.FC = () => {
                 <IconButton
                   size="small"
                   onClick={handleRemoveAvatar}
+                  aria-label="Remove avatar"
                   sx={{
                     position: 'absolute',
                     top: -4,

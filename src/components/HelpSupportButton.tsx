@@ -61,8 +61,8 @@ export const HelpSupportButton: React.FC = () => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        PaperProps={{
-          sx: { minWidth: 200 },
+        slotProps={{
+          paper: { sx: { minWidth: 200 } },
         }}
       >
         <MenuItem onClick={handleHelp}>

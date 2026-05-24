@@ -40,8 +40,8 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
         )}
         <Typography
           variant="caption"
-          color={active ? 'text.primary' : 'text.secondary'}
-          sx={{ fontSize: '0.65rem' }}
+         
+          sx={{ color: active ? 'text.primary' : 'text.secondary', fontSize: '0.65rem' }}
         >
           {label}
         </Typography>
@@ -79,8 +79,8 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
           },
         }}
       >
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
-          <Typography variant="caption" fontWeight={500}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flex: 1 }}>
+          <Typography variant="caption" sx={{ fontWeight: 500 }}>
             {buffName}
           </Typography>
           {isRedundant && (
@@ -114,7 +114,7 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
 
     return (
       <Box sx={{ mb: 2 }}>
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
           <Chip
             label={title}
             color={color}
@@ -122,7 +122,7 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
             variant="outlined"
             sx={{ height: 20, fontSize: '0.65rem' }}
           />
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {buffs.length}
           </Typography>
         </Stack>
@@ -143,7 +143,7 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
   return (
     <Box>
       {/* Summary chips */}
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }} flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', mb: 2 }} useFlexGap>
         <Chip
           label={`${summary.totalDummyBuffs} Dummy`}
           size="small"
@@ -183,12 +183,12 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
         >
           <Typography
             variant="caption"
-            fontWeight={600}
-            sx={{ color: isDark ? theme.palette.warning.light : theme.palette.warning.main }}
+           
+            sx={{ fontWeight: 600, color: isDark ? theme.palette.warning.light : theme.palette.warning.main }}
           >
             Redundant Buffs
           </Typography>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.25 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
             {redundantBuffs.join(', ')} — already provided by the trial dummy
           </Typography>
         </Box>
