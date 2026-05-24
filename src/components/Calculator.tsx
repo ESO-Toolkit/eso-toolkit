@@ -795,19 +795,20 @@ const QuantityInput: React.FC<{
       error={showError}
       disabled={!hasQuantity || item.locked}
       placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
-      inputProps={{
-        min: hasQuantity ? minValue : 0,
-        max: hasQuantity ? maxValue : 0,
-        step: hasQuantity ? item.step || 1 : 1,
-        readOnly: !hasQuantity,
-        style: {
-          fontSize: isMobile ? '18px' : '14px',
-          fontWeight: isMobile ? 500 : 400,
-          textAlign: 'center',
-          padding: isMobile ? '8px 4px' : '4px 2px',
+      slotProps={{
+        htmlInput: {
+          min: hasQuantity ? minValue : 0,
+          max: hasQuantity ? maxValue : 0,
+          step: hasQuantity ? item.step || 1 : 1,
+          readOnly: !hasQuantity,
+          style: {
+            fontSize: isMobile ? '18px' : '14px',
+            fontWeight: isMobile ? 500 : 400,
+            textAlign: 'center',
+            padding: isMobile ? '8px 4px' : '4px 2px',
+          },
         },
-      }}
-      InputProps={{
+        input: {
         startAdornment: hasQuantity ? (
           <InputAdornment position="start" sx={{ mr: 0.5, position: 'relative', zIndex: 1 }}>
             <IconButton
@@ -815,6 +816,7 @@ const QuantityInput: React.FC<{
               onClick={handleDecrement}
               disabled={isMinDisabled || item.locked}
               edge="start"
+              aria-label="Decrease quantity"
               sx={{
                 position: 'relative',
                 zIndex: 2,
@@ -882,6 +884,7 @@ const QuantityInput: React.FC<{
               onClick={handleIncrement}
               disabled={isMaxDisabled || item.locked}
               edge="end"
+              aria-label="Increase quantity"
               sx={{
                 position: 'relative',
                 zIndex: 2,
@@ -942,6 +945,7 @@ const QuantityInput: React.FC<{
             </IconButton>
           </InputAdornment>
         ) : undefined,
+        },
       }}
       sx={{
         width: '95px',
@@ -3270,6 +3274,7 @@ const CalculatorComponent: React.FC = () => {
                     >
                       <IconButton
                         size="small"
+                        aria-label="Item info"
                         sx={{
                           p: 0.125,
                           minWidth: 'auto',
@@ -3858,9 +3863,8 @@ const CalculatorComponent: React.FC = () => {
 
             <Stack
               spacing={{ xs: 1.1, sm: 1 }}
-             
-             
-              sx={{ justifyContent: { xs: 'flex-end', sm: 'flex-end' }, alignItems: { xs: 'flex-end', sm: 'flex-end' },
+              sx={{
+                alignItems: { xs: 'flex-end', sm: 'flex-end' },
                 gridArea: 'status',
                 minWidth: { sm: 220 },
                 borderLeft: {
@@ -3872,7 +3876,6 @@ const CalculatorComponent: React.FC = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: { xs: 1, sm: 1 },
                 alignSelf: { xs: 'stretch', sm: 'center' },
               }}
             >
@@ -4422,16 +4425,16 @@ const CalculatorComponent: React.FC = () => {
                       variant={gameMode === 'pve' ? 'contained' : 'outlined'}
                       onClick={() => setGameMode('pve')}
                       startIcon={
-                        <Typography sx={{ fontSize: 
-                            isExtraSmall
+                        <Typography
+                          sx={{
+                            fontSize: isExtraSmall
                               ? '0.75rem'
                               : liteMode
                                 ? '0.8rem'
                                 : isMobile
                                   ? '0.9rem'
-                                  : '1rem'
-                           }}
-                         
+                                  : '1rem',
+                          }}
                         >
                           🗡️
                         </Typography>
@@ -4462,16 +4465,16 @@ const CalculatorComponent: React.FC = () => {
                       variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
                       onClick={() => setGameMode('pvp')}
                       startIcon={
-                        <Typography sx={{ fontSize: 
-                            isExtraSmall
+                        <Typography
+                          sx={{
+                            fontSize: isExtraSmall
                               ? '0.75rem'
                               : liteMode
                                 ? '0.8rem'
                                 : isMobile
                                   ? '0.9rem'
-                                  : '1rem'
-                           }}
-                         
+                                  : '1rem',
+                          }}
                         >
                           🛡️
                         </Typography>
@@ -5898,24 +5901,26 @@ const CalculatorComponent: React.FC = () => {
               }}
               fullWidth
               maxWidth="xs"
-              PaperProps={{
-                sx: {
-                  borderRadius: '12px',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: `1px solid ${
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.3)'
-                      : 'rgba(40, 145, 200, 0.2)'
-                  }`,
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-                      : '0 8px 32px rgba(0, 0, 0, 0.1)',
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: '12px',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: `1px solid ${
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.3)'
+                        : 'rgba(40, 145, 200, 0.2)'
+                    }`,
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                        : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                  },
                 },
               }}
             >
