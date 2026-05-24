@@ -44,6 +44,7 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
+import DOMPurify from 'dompurify';
 import { motion } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
@@ -1604,7 +1605,7 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
               },
             },
           }}
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
         />
       </CardContent>
     </Card>

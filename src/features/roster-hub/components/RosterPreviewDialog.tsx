@@ -479,6 +479,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           <iframe
             src={embedUrl}
             title={`Preview: ${roster.title}`}
+            sandbox="allow-same-origin allow-scripts allow-popups"
             /* onLoad not used — loaded signal comes via postMessage from RosterViewPage */
             style={{
               position: 'absolute',
