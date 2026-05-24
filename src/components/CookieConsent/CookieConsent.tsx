@@ -181,7 +181,7 @@ export const CookieConsent: React.FC = () => {
             <IconButton
               size="small"
               onClick={handleDeclineAll}
-              aria-label="close"
+              aria-label="Close"
               sx={{
                 position: 'absolute',
                 top: 8,

@@ -815,6 +815,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
           <Tooltip title="Unlock camera from actor">
             <IconButton
               size="small"
+              aria-label="Unlock camera from actor"
               onClick={handleUnlockCamera}
               sx={{
                 color: 'white',

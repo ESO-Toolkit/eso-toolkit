@@ -234,7 +234,7 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
           <IconButton
             onClick={handleClose}
             size="small"
-            aria-label="close"
+            aria-label="Close"
             sx={{
               color: 'text.secondary',
               '&:hover': {

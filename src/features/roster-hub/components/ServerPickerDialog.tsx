@@ -649,6 +649,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               <IconButton
                 onClick={handleBack}
                 size="small"
+                aria-label="Back"
                 sx={{ color: 'text.secondary', mr: -0.5 }}
               >
                 <ArrowBack fontSize="small" />
@@ -1323,6 +1324,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         <Tooltip title="Advanced settings">
                           <IconButton
                             size="small"
+                            aria-label="Advanced settings"
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
                               onClose();
