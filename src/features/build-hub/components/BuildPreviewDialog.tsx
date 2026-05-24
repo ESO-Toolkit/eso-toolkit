@@ -333,6 +333,7 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
           <iframe
             src={embedUrl}
             title={`Preview: ${build.title}`}
+            sandbox="allow-same-origin allow-scripts allow-popups"
             style={{
               position: 'absolute',
               top: isMobile ? 6 : 8,

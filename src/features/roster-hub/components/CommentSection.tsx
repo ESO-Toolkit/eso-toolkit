@@ -435,7 +435,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({
                 maxRows={4}
                 fullWidth
                 aria-label="Comment text"
-                inputProps={{ maxLength: MAX_BODY_LENGTH }}
+                slotProps={{ input: { maxLength: MAX_BODY_LENGTH } }}
                 onKeyDown={(e) => {
                   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
