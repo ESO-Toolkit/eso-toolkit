@@ -11,10 +11,10 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1txov1d-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
       >
         <span
-          class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          class="MuiChip-label css-19m61dl-MuiChip-label"
         >
           Active
         </span>
@@ -110,10 +110,10 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1txov1d-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
       >
         <span
-          class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          class="MuiChip-label css-19m61dl-MuiChip-label"
         >
           Active
         </span>
@@ -227,7 +227,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-13jj6ny"
         />
         <span
-          class="MuiTypography-root MuiTypography-caption css-16qcumd-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-2kffpi-MuiTypography-root"
         >
           Grimoire: 
           Traveling Knife
@@ -319,19 +319,19 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-yi3mkw"
         >
           <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-1uh8cfg-MuiChip-root"
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault css-125rgdf-MuiChip-root"
           >
             <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+              class="MuiChip-label css-19m61dl-MuiChip-label"
             >
               Shattering Knife (15)
             </span>
           </div>
           <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-58x4p3-MuiChip-root"
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault css-2i2jnn-MuiChip-root"
           >
             <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+              class="MuiChip-label css-19m61dl-MuiChip-label"
             >
               Armor Reduction (8)
             </span>
@@ -362,10 +362,10 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1txov1d-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
       >
         <span
-          class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          class="MuiChip-label css-19m61dl-MuiChip-label"
         >
           Active
         </span>
@@ -451,7 +451,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiBox-root css-13jj6ny"
         />
         <span
-          class="MuiTypography-root MuiTypography-caption css-16qcumd-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-2kffpi-MuiTypography-root"
         >
           Grimoire: 
           Traveling Knife
@@ -532,10 +532,10 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1txov1d-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
       >
         <span
-          class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          class="MuiChip-label css-19m61dl-MuiChip-label"
         >
           Active
         </span>
@@ -631,10 +631,10 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
       class="MuiBox-root css-1so1mmd"
     >
       <div
-        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1txov1d-MuiChip-root"
+        class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-nvz7be-MuiChip-root"
       >
         <span
-          class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          class="MuiChip-label css-19m61dl-MuiChip-label"
         >
           Active
         </span>
@@ -748,7 +748,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           class="MuiBox-root css-13jj6ny"
         />
         <span
-          class="MuiTypography-root MuiTypography-caption css-16qcumd-MuiTypography-root"
+          class="MuiTypography-root MuiTypography-caption css-2kffpi-MuiTypography-root"
         >
           Grimoire: 
           Traveling Knife
@@ -817,37 +817,37 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           class="MuiBox-root css-yi3mkw"
         >
           <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-1uh8cfg-MuiChip-root"
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault css-125rgdf-MuiChip-root"
           >
             <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+              class="MuiChip-label css-19m61dl-MuiChip-label"
             >
               Shattering Strike (12)
             </span>
           </div>
           <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-58x4p3-MuiChip-root"
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault css-2i2jnn-MuiChip-root"
           >
             <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+              class="MuiChip-label css-19m61dl-MuiChip-label"
             >
               Armor Shatter (8)
             </span>
           </div>
           <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-1u245o6-MuiChip-root"
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault css-i44q4n-MuiChip-root"
           >
             <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+              class="MuiChip-label css-19m61dl-MuiChip-label"
             >
               Combat Stance (5)
             </span>
           </div>
           <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-frbrgp-MuiChip-root"
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault css-402yk4-MuiChip-root"
           >
             <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+              class="MuiChip-label css-19m61dl-MuiChip-label"
             >
               Life Steal (3)
             </span>
