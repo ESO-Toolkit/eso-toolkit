@@ -1,4 +1,4 @@
-﻿import { BugReport, Send, Feedback, CheckCircleOutline, Close } from '@mui/icons-material';
+﻿import { BugReport, Send, Feedback, CheckCircleOutlined, Close } from '@mui/icons-material';
 import {
   Alert,
   Dialog,
@@ -174,7 +174,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             WebkitBackdropFilter: 'blur(10px)',
           }}
         >
-          <CheckCircleOutline
+          <CheckCircleOutlined
             sx={{
               fontSize: 38,
               color: 'success.main',

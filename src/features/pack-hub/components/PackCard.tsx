@@ -1,6 +1,6 @@
 import {
   ContentCopy,
-  DeleteOutline,
+  DeleteOutlined,
   EditOutlined,
   Extension,
   Visibility,
@@ -522,7 +522,7 @@ export const PackCard: React.FC<PackCardProps> = React.memo(
                   aria-label="Delete pack"
                   sx={{ width: 36, height: 36 }}
                 >
-                  <DeleteOutline sx={{ fontSize: 17 }} />
+                  <DeleteOutlined sx={{ fontSize: 17 }} />
                 </IconButton>
               </Tooltip>
             )}

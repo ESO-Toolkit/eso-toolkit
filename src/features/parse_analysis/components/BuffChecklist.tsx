@@ -6,7 +6,7 @@
  * - Summary of buff coverage
  */
 
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import WarningIcon from '@mui/icons-material/Warning';
 import { Box, Chip, Stack, Tooltip, Typography, useTheme } from '@mui/material';

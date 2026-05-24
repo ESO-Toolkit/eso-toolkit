@@ -1,4 +1,4 @@
-import { DeleteOutline, Reply, Send } from '@mui/icons-material';
+import { DeleteOutlined, Reply, Send } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -219,7 +219,7 @@ const SingleComment: React.FC<{
                     },
                   }}
                 >
-                  <DeleteOutline sx={{ fontSize: 15 }} />
+                  <DeleteOutlined sx={{ fontSize: 15 }} />
                 </IconButton>
               </Tooltip>
             )}

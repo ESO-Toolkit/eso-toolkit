@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, EditOutlined, Extension, MoreVert } from '@mui/icons-material';
+import { ContentCopy, DeleteOutlined, EditOutlined, Extension, MoreVert } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -557,7 +557,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             {isOwner && (
               <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
                 <ListItemIcon sx={{ color: 'inherit' }}>
-                  <DeleteOutline sx={{ fontSize: 18 }} />
+                  <DeleteOutlined sx={{ fontSize: 18 }} />
                 </ListItemIcon>
                 <ListItemText>Delete</ListItemText>
               </MenuItem>

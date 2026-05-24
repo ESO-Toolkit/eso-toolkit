@@ -2,7 +2,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Info as InfoIcon,
-  HelpOutline as HelpOutlineIcon,
+  HelpOutlined as HelpOutlineIcon,
   ExpandMore as ExpandMoreIcon,
   SelectAll as SelectAllIcon,
   Clear as ClearIcon,

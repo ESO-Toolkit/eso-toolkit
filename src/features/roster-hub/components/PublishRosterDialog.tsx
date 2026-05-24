@@ -5,7 +5,7 @@ import {
   ExpandLess,
   ExpandMore,
   Extension,
-  RemoveCircleOutline,
+  RemoveCircleOutlined,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -1190,7 +1190,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                                 onClick={() => handleRemoveAddon(addon.esouiId)}
                                 sx={{ p: 0.5, color: 'text.disabled' }}
                               >
-                                <RemoveCircleOutline sx={{ fontSize: 16 }} />
+                                <RemoveCircleOutlined sx={{ fontSize: 16 }} />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -1403,7 +1403,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                             onClick={() => handleRemoveNewPackAddon(addon.esouiId)}
                             sx={{ p: 0.5, color: 'text.disabled' }}
                           >
-                            <RemoveCircleOutline sx={{ fontSize: 16 }} />
+                            <RemoveCircleOutlined sx={{ fontSize: 16 }} />
                           </IconButton>
                         </Tooltip>
                       </Box>

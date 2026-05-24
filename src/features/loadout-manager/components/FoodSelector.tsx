@@ -3,7 +3,7 @@
  * Allows selection of food/drink buffs for the loadout
  */
 
-import { HelpOutline, Restaurant } from '@mui/icons-material';
+import { HelpOutlined, Restaurant } from '@mui/icons-material';
 import { Alert, Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
 import type { Theme } from '@mui/material/styles';
@@ -327,7 +327,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                       sx={{ mr: 0.5 }}
                       onMouseDown={(event) => event.preventDefault()}
                     >
-                      <HelpOutline fontSize="small" />
+                      <HelpOutlined fontSize="small" />
                     </IconButton>
                   </Tooltip>
                   {params.InputProps.endAdornment}

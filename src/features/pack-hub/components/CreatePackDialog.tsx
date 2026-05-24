@@ -22,7 +22,7 @@ import {
   Close,
   DragIndicator,
   Extension,
-  RemoveCircleOutline,
+  RemoveCircleOutlined,
   VisibilityOff,
 } from '@mui/icons-material';
 import {
@@ -271,7 +271,7 @@ const SortableAddonRow: React.FC<SortableAddonProps> = ({
               '&:hover': { color: '#ef4444', bgcolor: alpha('#ef4444', 0.08) },
             }}
           >
-            <RemoveCircleOutline sx={{ fontSize: 15 }} />
+            <RemoveCircleOutlined sx={{ fontSize: 15 }} />
           </IconButton>
         </Tooltip>
       </Box>

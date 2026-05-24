@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { DragIndicator, RemoveCircleOutline } from '@mui/icons-material';
+import { DragIndicator, RemoveCircleOutlined } from '@mui/icons-material';
 import { alpha, Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import React from 'react';
@@ -165,7 +165,7 @@ export const SortableAddonRow: React.FC<SortableAddonProps> = ({
               '&:hover': { color: '#ef4444', bgcolor: alpha('#ef4444', 0.08) },
             }}
           >
-            <RemoveCircleOutline sx={{ fontSize: 15 }} />
+            <RemoveCircleOutlined sx={{ fontSize: 15 }} />
           </IconButton>
         </Tooltip>
       </Box>

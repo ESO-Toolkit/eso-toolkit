@@ -14,7 +14,7 @@ import {
   ContentCopy,
   ExpandMore,
   Group as GroupIcon,
-  HelpOutline,
+  HelpOutlined,
   RadioButtonUnchecked,
   Rocket,
   Shield,
@@ -477,7 +477,7 @@ export const DiscordAdminGuideContent: React.FC<DiscordAdminGuideContentProps> =
             }}
           >
             <Stack direction="row" alignItems="center" spacing={1}>
-              <HelpOutline sx={{ fontSize: 18, color: '#FEB900' }} />
+              <HelpOutlined sx={{ fontSize: 18, color: '#FEB900' }} />
               <Typography sx={{ fontWeight: 600, fontSize: '0.82rem' }}>Troubleshooting</Typography>
             </Stack>
           </AccordionSummary>
