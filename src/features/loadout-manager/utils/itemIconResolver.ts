@@ -17,10 +17,38 @@
 
 import { Logger } from '@/utils/logger';
 
-// Pre-fetched icon data: { icons: string[], items: Record<string, number>, weaponTypes?: Record<string, number> }
-// weaponTypes is populated when fetch-item-icons.mjs is run with the --weapon-types flag
-import iconData from '../data/itemIcons.json';
 import { getItemInfo } from '../data/itemIdMap';
+
+type IconData = {
+  icons: string[];
+  items: Record<string, number>;
+  weaponTypes?: Record<string, number>;
+};
+
+let iconData: IconData | null = null;
+let iconDataPromise: Promise<IconData> | null = null;
+
+function ensureIconData(): IconData | null {
+  if (iconData) return iconData;
+  if (!iconDataPromise) {
+    iconDataPromise = import('../data/itemIcons.json').then((m) => {
+      iconData = m.default as IconData;
+      return iconData;
+    });
+  }
+  return null;
+}
+
+export async function preloadIconData(): Promise<void> {
+  if (iconData) return;
+  if (!iconDataPromise) {
+    iconDataPromise = import('../data/itemIcons.json').then((m) => {
+      iconData = m.default as IconData;
+      return iconData;
+    });
+  }
+  await iconDataPromise;
+}
 import type { SlotType } from '../data/slotTypes';
 
 const logger = new Logger({ contextPrefix: 'ItemIconResolver' });
@@ -56,14 +84,11 @@ function lookupLocal(itemId: number): string | null {
 
 /** Look up the raw icon filename (without CDN prefix or extension) from local data. */
 function lookupIconName(itemId: number): string | null {
-  const typedData = iconData as {
-    icons: string[];
-    items: Record<string, number>;
-    weaponTypes?: Record<string, number>;
-  };
-  const index = typedData.items[String(itemId)];
+  const data = ensureIconData();
+  if (!data) return null;
+  const index = data.items[String(itemId)];
   if (index === undefined) return null;
-  return typedData.icons[index] ?? null;
+  return data.icons[index] ?? null;
 }
 
 /**
@@ -87,12 +112,9 @@ const STAFF_WEAPON_TYPE_LABELS: Record<number, string> = {
  * Returns null if the item has no weapon type data or is not a staff.
  */
 function lookupStaffTypeLabelFromData(itemId: number): string | null {
-  const typedData = iconData as {
-    icons: string[];
-    items: Record<string, number>;
-    weaponTypes?: Record<string, number>;
-  };
-  const weaponTypes = typedData.weaponTypes;
+  const data = ensureIconData();
+  if (!data) return null;
+  const weaponTypes = data.weaponTypes;
   if (!weaponTypes) return null;
   const weaponType = weaponTypes[String(itemId)];
   if (!weaponType) return null;
