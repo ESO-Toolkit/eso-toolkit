@@ -44,11 +44,7 @@ const config: StorybookConfig = {
     // Optimize build settings for memory usage
     if (config.build) {
       config.build.sourcemap = false; // Disable sourcemaps
-      config.build.minify = 'esbuild'; // Use esbuild for faster minification
-      config.build.rollupOptions = {
-        ...config.build.rollupOptions,
-        maxParallelFileOps: 2, // Limit parallel operations
-      };
+      config.build.minify = true;
     }
 
     // Add alias support similar to main vite config
