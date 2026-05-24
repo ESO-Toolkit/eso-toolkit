@@ -81,3 +81,21 @@ declare module '*.md?raw' {
   const content: string;
   export default content;
 }
+
+// Storybook type shim — @storybook/react uses package exports which
+// require moduleResolution "bundler" or "nodenext".  Until the project
+// upgrades tsconfig, this ambient declaration keeps tsc happy.
+declare module '@storybook/react' {
+  import type { ComponentType, ReactElement } from 'react';
+
+  export type StoryContext = {
+    args: Record<string, unknown>;
+    parameters: Record<string, unknown>;
+    [key: string]: unknown;
+  };
+
+  export type Decorator = (
+    Story: ComponentType,
+    context: StoryContext,
+  ) => ReactElement;
+}

@@ -158,7 +158,8 @@ export class EsoLogsClient {
         this.isRefreshingToken = true;
 
         // Create a new observable that will retry the request after refreshing the token
-        return new Observable((observer) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return new Observable((observer: any) => {
           refreshAccessToken()
             .then((newToken) => {
               if (newToken) {

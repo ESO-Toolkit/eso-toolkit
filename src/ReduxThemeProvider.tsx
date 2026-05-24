@@ -225,23 +225,27 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           },
           MuiButton: {
             styleOverrides: {
-              root: { textTransform: 'none', borderRadius: 8, fontWeight: 600 },
-              containedPrimary: {
-                background: `linear-gradient(135deg, ${tokens.accent}, ${tokens.accent2})`,
-                color: darkMode ? tokens.bg : '#ffffff',
-                boxShadow: darkMode
-                  ? '0 4px 15px rgba(56, 189, 248, 0.25)'
-                  : '0 4px 15px rgba(3, 105, 161, 0.25)',
-                '&:hover': {
-                  filter: 'brightness(1.05)',
+              root: {
+                textTransform: 'none',
+                borderRadius: 8,
+                fontWeight: 600,
+                '&.MuiButton-containedPrimary': {
+                  background: `linear-gradient(135deg, ${tokens.accent}, ${tokens.accent2})`,
+                  color: darkMode ? tokens.bg : '#ffffff',
                   boxShadow: darkMode
-                    ? '0 6px 25px rgba(56, 189, 248, 0.35)'
-                    : '0 6px 25px rgba(3, 105, 161, 0.35)',
-                },
-                '&.Mui-disabled': {
-                  background: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
-                  color: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.26)',
-                  boxShadow: 'none',
+                    ? '0 4px 15px rgba(56, 189, 248, 0.25)'
+                    : '0 4px 15px rgba(3, 105, 161, 0.25)',
+                  '&:hover': {
+                    filter: 'brightness(1.05)',
+                    boxShadow: darkMode
+                      ? '0 6px 25px rgba(56, 189, 248, 0.35)'
+                      : '0 6px 25px rgba(3, 105, 161, 0.35)',
+                  },
+                  '&.Mui-disabled': {
+                    background: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.12)',
+                    color: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.26)',
+                    boxShadow: 'none',
+                  },
                 },
               },
               outlined: {
@@ -403,22 +407,22 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 border: `1px solid ${tokens.border}`,
-              },
-              standardInfo: {
-                backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(56, 189, 248, 0.06)',
-                color: darkMode ? tokens.text : tokens.text,
-              },
-              standardWarning: {
-                backgroundColor: darkMode ? 'rgba(255, 152, 0, 0.08)' : 'rgba(249, 115, 22, 0.06)',
-                color: darkMode ? tokens.text : tokens.text,
-              },
-              standardError: {
-                backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.08)' : 'rgba(220, 38, 38, 0.06)',
-                color: darkMode ? tokens.text : tokens.text,
-              },
-              standardSuccess: {
-                backgroundColor: darkMode ? 'rgba(34, 197, 94, 0.08)' : 'rgba(5, 150, 105, 0.06)',
-                color: darkMode ? tokens.text : tokens.text,
+                '&.MuiAlert-standardInfo': {
+                  backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(56, 189, 248, 0.06)',
+                  color: darkMode ? tokens.text : tokens.text,
+                },
+                '&.MuiAlert-standardWarning': {
+                  backgroundColor: darkMode ? 'rgba(255, 152, 0, 0.08)' : 'rgba(249, 115, 22, 0.06)',
+                  color: darkMode ? tokens.text : tokens.text,
+                },
+                '&.MuiAlert-standardError': {
+                  backgroundColor: darkMode ? 'rgba(239, 68, 68, 0.08)' : 'rgba(220, 38, 38, 0.06)',
+                  color: darkMode ? tokens.text : tokens.text,
+                },
+                '&.MuiAlert-standardSuccess': {
+                  backgroundColor: darkMode ? 'rgba(34, 197, 94, 0.08)' : 'rgba(5, 150, 105, 0.06)',
+                  color: darkMode ? tokens.text : tokens.text,
+                },
               },
             },
           },

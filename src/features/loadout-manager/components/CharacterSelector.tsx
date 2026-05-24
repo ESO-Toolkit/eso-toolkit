@@ -135,7 +135,7 @@ export const CharacterSelector: React.FC = (): React.ReactElement => {
                       )}
                     </Stack>
                   }
-                  primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                  slotProps={{ primary: { variant: 'body2', sx: { fontWeight: 600 } } }}
                 />
               </MenuItem>
             );

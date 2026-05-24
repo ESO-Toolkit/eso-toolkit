@@ -321,27 +321,22 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                   onChange={(_, value) =>
                     onChange({ groups: value.length > 0 ? value : undefined })
                   }
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => (
-                      <Chip
-                        {...getTagProps({ index })}
-                        key={option}
-                        label={option}
-                        size="small"
-                        sx={{
-                          borderRadius: '6px',
-                          backgroundColor: dpsIsDark
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.05)',
-                          border: dpsIsDark
-                            ? '1px solid rgba(255,255,255,0.1)'
-                            : '1px solid rgba(0,0,0,0.1)',
-                          fontWeight: 500,
-                          fontSize: '0.75rem',
-                        }}
-                      />
-                    ))
-                  }
+                  slotProps={{
+                    chip: {
+                      size: 'small' as const,
+                      sx: {
+                        borderRadius: '6px',
+                        backgroundColor: dpsIsDark
+                          ? 'rgba(255,255,255,0.06)'
+                          : 'rgba(0,0,0,0.05)',
+                        border: dpsIsDark
+                          ? '1px solid rgba(255,255,255,0.1)'
+                          : '1px solid rgba(0,0,0,0.1)',
+                        fontWeight: 500,
+                        fontSize: '0.75rem',
+                      },
+                    },
+                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -402,9 +397,6 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                             label="Primary Set (Body)"
                             placeholder="e.g., Roar of Alkosh"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -431,9 +423,6 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                             label="Secondary Set (Jewelry)"
                             placeholder="e.g., Way of Martial Knowledge"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -460,9 +449,6 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                             label="Monster/Mythic Set"
                             placeholder="e.g., Zaan"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -692,27 +678,22 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                               options={[]}
                               value={slot.labels || []}
                               onChange={(_, value) => onChange({ labels: value })}
-                              renderTags={(value, getTagProps) =>
-                                value.map((option, index) => (
-                                  <Chip
-                                    {...getTagProps({ index })}
-                                    key={option}
-                                    label={option}
-                                    size="small"
-                                    sx={{
-                                      borderRadius: '6px',
-                                      backgroundColor: dpsIsDark
-                                        ? 'rgba(255,255,255,0.06)'
-                                        : 'rgba(0,0,0,0.05)',
-                                      border: dpsIsDark
-                                        ? '1px solid rgba(255,255,255,0.1)'
-                                        : '1px solid rgba(0,0,0,0.1)',
-                                      fontWeight: 500,
-                                      fontSize: '0.75rem',
-                                    }}
-                                  />
-                                ))
-                              }
+                              slotProps={{
+                                chip: {
+                                  size: 'small' as const,
+                                  sx: {
+                                    borderRadius: '6px',
+                                    backgroundColor: dpsIsDark
+                                      ? 'rgba(255,255,255,0.06)'
+                                      : 'rgba(0,0,0,0.05)',
+                                    border: dpsIsDark
+                                      ? '1px solid rgba(255,255,255,0.1)'
+                                      : '1px solid rgba(0,0,0,0.1)',
+                                    fontWeight: 500,
+                                    fontSize: '0.75rem',
+                                  },
+                                },
+                              }}
                               renderInput={(params) => (
                                 <TextField
                                   {...params}
