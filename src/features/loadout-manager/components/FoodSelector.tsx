@@ -348,8 +348,10 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
           const iconUrl = getCategoryIconUrl(currentItem.category);
           return (
             <Box
-             
-              sx={{ gap: 1.5, display: 'flex', alignItems: 'center',
+              sx={{
+                gap: 1.5,
+                display: 'flex',
+                alignItems: 'center',
                 px: 1.5,
                 py: 1,
                 borderRadius: 1,

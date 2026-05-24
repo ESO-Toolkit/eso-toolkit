@@ -35,7 +35,6 @@ export const DebuffChecklist: React.FC<DebuffChecklistProps> = ({ checklistData 
         )}
         <Typography
           variant="caption"
-         
           sx={{ color: active ? 'text.primary' : 'text.secondary', fontSize: '0.65rem' }}
         >
           {label}

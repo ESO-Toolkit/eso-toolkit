@@ -150,7 +150,6 @@ export const SetupList: React.FC<SetupListProps> = ({
         >
           <Typography
             variant="caption"
-           
             sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 600 }}
           >
             {filtered.length}/{setups.length}
@@ -290,7 +289,6 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
             {conditionSummary && (
               <Typography
                 variant="caption"
-               
                 sx={{ color: 'text.secondary', flexShrink: 0, whiteSpace: 'nowrap' }}
               >
                 · {conditionSummary}
@@ -308,7 +306,6 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
           <Stack
             direction="row"
             spacing={0.5}
-           
             sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.3 }}
           >
             {progressSections.length === 0 ? (
@@ -438,8 +435,8 @@ const SkillStrip: React.FC<{ bar?: SkillBar; label: string }> = ({ bar, label })
   <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', minWidth: 0 }}>
     <Typography
       variant="caption"
-     
-      sx={{ color: 'text.secondary',
+      sx={{
+        color: 'text.secondary',
         width: 14,
         flexShrink: 0,
         fontWeight: 700,

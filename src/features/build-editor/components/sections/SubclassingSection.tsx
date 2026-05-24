@@ -499,7 +499,7 @@ const SubclassingSectionComponent: React.FC = () => {
     <Stack spacing={2}>
       {/* Explainer */}
       <Box>
-        <Typography variant="caption" sx={{ ...(sectionLabelSx), color: 'text.secondary' }}>
+        <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
           Class Skill Lines
         </Typography>
         <Typography

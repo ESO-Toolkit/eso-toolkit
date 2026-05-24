@@ -318,7 +318,6 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
                           />
                           <Typography
                             variant="caption"
-                           
                             sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
                           >
                             {formatTimestamp(entry.timestamp)}
@@ -351,8 +350,8 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
                             <Typography
                               component="div"
                               variant="caption"
-                             
-                              sx={{ color: 'text.secondary',
+                              sx={{
+                                color: 'text.secondary',
                                 fontFamily: 'monospace',
                                 fontSize: '0.75rem',
                                 whiteSpace: 'pre-wrap',

@@ -311,9 +311,7 @@ export const HealerGuide: React.FC = () => {
                     {s.n}
                   </Box>
                   <Box>
-                    <Typography variant="subtitle1">
-                      {s.title}
-                    </Typography>
+                    <Typography variant="subtitle1">{s.title}</Typography>
                     <Typography variant="body2" sx={{ mt: 0.5 }}>
                       {s.desc}
                     </Typography>
@@ -475,7 +473,12 @@ export const HealerGuide: React.FC = () => {
                   </Typography>
                   <Stack component="ul" spacing={0.5} sx={{ mt: 1, pl: 2 }}>
                     {sl.items.slice(0, 6).map((it, idx) => (
-                      <Typography key={idx} component="li" variant="body2" sx={{ color: 'text.secondary' }}>
+                      <Typography
+                        key={idx}
+                        component="li"
+                        variant="body2"
+                        sx={{ color: 'text.secondary' }}
+                      >
                         {it.text}
                       </Typography>
                     ))}
@@ -503,8 +506,8 @@ export const HealerGuide: React.FC = () => {
           <Box>
             <Stack
               direction={{ xs: 'column', md: 'row' }}
-              spacing={2} sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
-             
+              spacing={2}
+              sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
             >
               <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-.01em' }}>
                 Gear Explorer
@@ -557,9 +560,8 @@ export const HealerGuide: React.FC = () => {
                   <Paper sx={frostCardSx(theme)}>
                     <Stack
                       direction="row"
-                     
-                      spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'center' }}
-                     
+                      spacing={1}
+                      sx={{ justifyContent: 'space-between', alignItems: 'center' }}
                     >
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         {set.abbreviation && (
@@ -632,7 +634,6 @@ export const HealerGuide: React.FC = () => {
                       </span>
                       <Typography
                         variant="subtitle2"
-                       
                         sx={{ fontWeight: 700, textTransform: 'capitalize' }}
                       >
                         {key.replace('_', ' ')}

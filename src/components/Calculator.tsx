@@ -809,142 +809,146 @@ const QuantityInput: React.FC<{
           },
         },
         input: {
-        startAdornment: hasQuantity ? (
-          <InputAdornment position="start" sx={{ mr: 0.5, position: 'relative', zIndex: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleDecrement}
-              disabled={isMinDisabled || item.locked}
-              edge="start"
-              aria-label="Decrease quantity"
-              sx={{
-                position: 'relative',
-                zIndex: 2,
-                width: isMobile ? '24px' : '20px',
-                height: isMobile ? '24px' : '20px',
-                minWidth: isMobile ? '24px' : '20px',
-                minHeight: isMobile ? '24px' : '20px',
-                borderRadius: '4px',
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 1)'
-                    : 'rgba(241, 245, 249, 0.8)',
-                border: `1px solid ${
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.3)'
-                    : 'rgba(40, 145, 200, 0.2)'
-                }`,
-                color:
-                  isMinDisabled || item.locked
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.4)'
-                      : 'rgba(100, 116, 139, 0.4)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.8)'
-                      : 'rgba(40, 145, 200, 0.8)',
-                '&:hover': !(isMinDisabled || item.locked)
-                  ? {
-                      backgroundColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.2)'
-                          : 'rgba(40, 145, 200, 0.15)',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.5)'
-                          : 'rgba(40, 145, 200, 0.4)',
-                      color:
-                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
-                    }
-                  : {},
-                '&:active': !(isMinDisabled || item.locked)
-                  ? {
-                      transform: 'scale(0.95)',
-                    }
-                  : {},
-                '&.Mui-disabled': {
+          startAdornment: hasQuantity ? (
+            <InputAdornment position="start" sx={{ mr: 0.5, position: 'relative', zIndex: 1 }}>
+              <IconButton
+                size="small"
+                onClick={handleDecrement}
+                disabled={isMinDisabled || item.locked}
+                edge="start"
+                aria-label="Decrease quantity"
+                sx={{
+                  position: 'relative',
+                  zIndex: 2,
+                  width: isMobile ? '24px' : '20px',
+                  height: isMobile ? '24px' : '20px',
+                  minWidth: isMobile ? '24px' : '20px',
+                  minHeight: isMobile ? '24px' : '20px',
+                  borderRadius: '4px',
                   backgroundColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(30, 41, 59, 0.4)'
-                      : 'rgba(241, 245, 249, 0.6)',
-                  borderColor:
+                      ? 'rgba(15, 23, 42, 1)'
+                      : 'rgba(241, 245, 249, 0.8)',
+                  border: `1px solid ${
                     theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.2)'
-                      : 'rgba(148, 163, 184, 0.3)',
-                },
-              }}
-            >
-              <RemoveIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
-            </IconButton>
-          </InputAdornment>
-        ) : undefined,
-        endAdornment: hasQuantity ? (
-          <InputAdornment position="end" sx={{ ml: 0.5, position: 'relative', zIndex: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleIncrement}
-              disabled={isMaxDisabled || item.locked}
-              edge="end"
-              aria-label="Increase quantity"
-              sx={{
-                position: 'relative',
-                zIndex: 2,
-                width: isMobile ? '24px' : '20px',
-                height: isMobile ? '24px' : '20px',
-                minWidth: isMobile ? '24px' : '20px',
-                minHeight: isMobile ? '24px' : '20px',
-                borderRadius: '4px',
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 1)'
-                    : 'rgba(241, 245, 249, 0.8)',
-                border: `1px solid ${
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.3)'
-                    : 'rgba(40, 145, 200, 0.2)'
-                }`,
-                color:
-                  isMaxDisabled || item.locked
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.4)'
-                      : 'rgba(100, 116, 139, 0.4)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.8)'
-                      : 'rgba(40, 145, 200, 0.8)',
-                '&:hover': !(isMaxDisabled || item.locked)
-                  ? {
-                      backgroundColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.2)'
-                          : 'rgba(40, 145, 200, 0.15)',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.5)'
-                          : 'rgba(40, 145, 200, 0.4)',
-                      color:
-                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
-                    }
-                  : {},
-                '&:active': !(isMaxDisabled || item.locked)
-                  ? {
-                      transform: 'scale(0.95)',
-                    }
-                  : {},
-                '&.Mui-disabled': {
+                      ? 'rgba(56, 189, 248, 0.3)'
+                      : 'rgba(40, 145, 200, 0.2)'
+                  }`,
+                  color:
+                    isMinDisabled || item.locked
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.4)'
+                        : 'rgba(100, 116, 139, 0.4)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.8)'
+                        : 'rgba(40, 145, 200, 0.8)',
+                  '&:hover': !(isMinDisabled || item.locked)
+                    ? {
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.2)'
+                            : 'rgba(40, 145, 200, 0.15)',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.5)'
+                            : 'rgba(40, 145, 200, 0.4)',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgb(199, 234, 255)'
+                            : 'rgb(40, 145, 200)',
+                      }
+                    : {},
+                  '&:active': !(isMinDisabled || item.locked)
+                    ? {
+                        transform: 'scale(0.95)',
+                      }
+                    : {},
+                  '&.Mui-disabled': {
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.4)'
+                        : 'rgba(241, 245, 249, 0.6)',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.2)'
+                        : 'rgba(148, 163, 184, 0.3)',
+                  },
+                }}
+              >
+                <RemoveIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+              </IconButton>
+            </InputAdornment>
+          ) : undefined,
+          endAdornment: hasQuantity ? (
+            <InputAdornment position="end" sx={{ ml: 0.5, position: 'relative', zIndex: 1 }}>
+              <IconButton
+                size="small"
+                onClick={handleIncrement}
+                disabled={isMaxDisabled || item.locked}
+                edge="end"
+                aria-label="Increase quantity"
+                sx={{
+                  position: 'relative',
+                  zIndex: 2,
+                  width: isMobile ? '24px' : '20px',
+                  height: isMobile ? '24px' : '20px',
+                  minWidth: isMobile ? '24px' : '20px',
+                  minHeight: isMobile ? '24px' : '20px',
+                  borderRadius: '4px',
                   backgroundColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(30, 41, 59, 0.4)'
-                      : 'rgba(241, 245, 249, 0.6)',
-                  borderColor:
+                      ? 'rgba(15, 23, 42, 1)'
+                      : 'rgba(241, 245, 249, 0.8)',
+                  border: `1px solid ${
                     theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.2)'
-                      : 'rgba(148, 163, 184, 0.3)',
-                },
-              }}
-            >
-              <AddIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
-            </IconButton>
-          </InputAdornment>
-        ) : undefined,
+                      ? 'rgba(56, 189, 248, 0.3)'
+                      : 'rgba(40, 145, 200, 0.2)'
+                  }`,
+                  color:
+                    isMaxDisabled || item.locked
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.4)'
+                        : 'rgba(100, 116, 139, 0.4)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.8)'
+                        : 'rgba(40, 145, 200, 0.8)',
+                  '&:hover': !(isMaxDisabled || item.locked)
+                    ? {
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.2)'
+                            : 'rgba(40, 145, 200, 0.15)',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.5)'
+                            : 'rgba(40, 145, 200, 0.4)',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgb(199, 234, 255)'
+                            : 'rgb(40, 145, 200)',
+                      }
+                    : {},
+                  '&:active': !(isMaxDisabled || item.locked)
+                    ? {
+                        transform: 'scale(0.95)',
+                      }
+                    : {},
+                  '&.Mui-disabled': {
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.4)'
+                        : 'rgba(241, 245, 249, 0.6)',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.2)'
+                        : 'rgba(148, 163, 184, 0.3)',
+                  },
+                }}
+              >
+                <AddIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+              </IconButton>
+            </InputAdornment>
+          ) : undefined,
         },
       }}
       sx={{

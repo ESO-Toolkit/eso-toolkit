@@ -56,7 +56,10 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
           <Typography variant="h6">Debuff Uptimes</Typography>
           <Stack direction="row" spacing={1}>
             <Skeleton variant="rounded" width={120} height={32} />

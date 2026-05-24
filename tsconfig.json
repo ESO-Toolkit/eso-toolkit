@@ -54,7 +54,6 @@
     "**/*.stories.tsx",
     "**/*.test.tsx",
     "**/*.test.ts",
-    "src/data/skill-lines/**/*",
-    "src/test/decorators/**/*"
+    "src/data/skill-lines/**/*"
   ]
 }

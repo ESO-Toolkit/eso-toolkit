@@ -1176,8 +1176,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1276,7 +1276,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 </Box>
               )}
 
-              <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
+              >
                 <Button
                   variant="outlined"
                   size="small"
@@ -1359,8 +1363,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1382,7 +1386,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 onFocus={(e) => e.target.select()}
                 sx={glassInputSx(isDark)}
               />
-              <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
+              >
                 <Button
                   variant="outlined"
                   size="small"
@@ -1450,8 +1458,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1565,8 +1573,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1598,7 +1606,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 onFocus={(e) => e.target.select()}
                 sx={glassInputSx(isDark)}
               />
-              <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
+              >
                 <Button
                   variant="contained"
                   size="small"

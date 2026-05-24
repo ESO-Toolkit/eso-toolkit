@@ -301,8 +301,8 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
           {build.description && (
             <Typography
               variant="body2"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 mb: 1.75,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -586,8 +586,8 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
           {roster.description && (
             <Typography
               variant="body2"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 mb: 1.75,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,

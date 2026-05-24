@@ -241,8 +241,9 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             />
             <Typography
               variant="caption"
-             
-              sx={{ color: 'inherit', fontWeight: 'inherit',
+              sx={{
+                color: 'inherit',
+                fontWeight: 'inherit',
                 fontSize: 13,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
                 letterSpacing: active ? 0.3 : 0,
@@ -698,8 +699,11 @@ export const SetupTabBar: React.FC = () => {
         <DialogContent>
           <Typography
             variant="body2"
-           
-            sx={{ color: 'text.secondary', fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}
+            sx={{
+              color: 'text.secondary',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontSize: 13,
+            }}
           >
             <strong>
               {deleteTarget !== null ? (build.setups[deleteTarget]?.name ?? 'this setup') : ''}

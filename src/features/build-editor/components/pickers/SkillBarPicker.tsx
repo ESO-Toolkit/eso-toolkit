@@ -931,7 +931,6 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
     <Box>
       <Stack
         direction="row"
-       
         sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5, px: 0.5 }}
       >
         <Typography
@@ -963,8 +962,12 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
         >
           <Typography
             variant="caption"
-           
-            sx={{ color: 'text.secondary', fontSize: '0.62rem', fontWeight: 600, fontFamily: 'Space Grotesk' }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.62rem',
+              fontWeight: 600,
+              fontFamily: 'Space Grotesk',
+            }}
           >
             {filled} / 6
           </Typography>

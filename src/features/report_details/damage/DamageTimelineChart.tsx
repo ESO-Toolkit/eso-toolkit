@@ -565,7 +565,12 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
               </IconButton>
             </Tooltip>
             <Tooltip title="Save as image">
-              <IconButton size="small" onClick={handleSaveAsImage} aria-label="Save as image" sx={{ color: 'text.secondary' }}>
+              <IconButton
+                size="small"
+                onClick={handleSaveAsImage}
+                aria-label="Save as image"
+                sx={{ color: 'text.secondary' }}
+              >
                 <SaveAltIcon fontSize="small" />
               </IconButton>
             </Tooltip>

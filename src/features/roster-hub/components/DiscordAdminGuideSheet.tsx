@@ -62,8 +62,9 @@ export const DiscordAdminGuideSheet: React.FC<DiscordAdminGuideSheetProps> = ({
       <Stack sx={{ height: '100%' }}>
         <Stack
           direction="row"
-         
-          sx={{ justifyContent: 'space-between', alignItems: 'center',
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
             px: 2,
             py: 1.5,
             borderBottom: isDark

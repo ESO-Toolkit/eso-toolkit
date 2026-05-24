@@ -567,7 +567,11 @@ export const LeaderboardLogsPage: React.FC = () => {
         }}
       >
         <CardContent>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            sx={{ alignItems: { sm: 'center' } }}
+          >
             <Box sx={{ flexGrow: 1, gap: 1, alignItems: 'center', display: 'flex' }}>
               <EmojiEventsIcon color="primary" />
               <Box>
@@ -593,7 +597,6 @@ export const LeaderboardLogsPage: React.FC = () => {
             spacing={2}
             direction={{ xs: 'column', md: 'row' }}
             sx={{ alignItems: { md: 'center' }, mt: 3 }}
-           
           >
             <FormControl fullWidth size="small">
               <InputLabel id="leaderboard-zone-label">Trial</InputLabel>
@@ -658,8 +661,8 @@ export const LeaderboardLogsPage: React.FC = () => {
           <Box sx={{ mt: 3 }}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              spacing={1.5} sx={{ alignItems: { sm: 'center' } }}
-             
+              spacing={1.5}
+              sx={{ alignItems: { sm: 'center' } }}
             >
               <Typography variant="h6" component="h2">
                 {currentEncounter ? currentEncounter.name : 'Select a boss to view rankings'}
@@ -792,7 +795,6 @@ export const LeaderboardLogsPage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-           
             sx={{ justifyContent: 'space-between', alignItems: 'center', mt: 3 }}
           >
             <Button

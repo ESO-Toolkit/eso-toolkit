@@ -484,8 +484,11 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
         <Box sx={glassEmptySx(isDark)}>
           <Typography
             variant="caption"
-           
-            sx={{ color: 'text.disabled', fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+            sx={{
+              color: 'text.disabled',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontStyle: 'italic',
+            }}
           >
             No potions selected
           </Typography>
@@ -511,9 +514,12 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                   <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                     <Typography
                       variant="caption"
-                     
                       noWrap
-                      sx={{ fontWeight: 700, fontSize: 12, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 12,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                      }}
                     >
                       {p.name}
                     </Typography>
@@ -535,8 +541,11 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                   </Stack>
                   <Typography
                     variant="caption"
-                   
-                    sx={{ color: 'text.disabled', fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                    sx={{
+                      color: 'text.disabled',
+                      fontSize: 10,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                    }}
                   >
                     {p.effects.join(' · ')}
                   </Typography>

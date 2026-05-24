@@ -489,8 +489,13 @@ export const UserReports: React.FC = () => {
                       opacity: 1 - i * 0.1,
                     }}
                   >
-                    <Box sx={{ justifyContent: 'space-between', gap: 1, alignItems: 'flex-start', display: 'flex' }}
-                     
+                    <Box
+                      sx={{
+                        justifyContent: 'space-between',
+                        gap: 1,
+                        alignItems: 'flex-start',
+                        display: 'flex',
+                      }}
                     >
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Skeleton variant="text" width="72%" height={22} />
@@ -605,8 +610,8 @@ export const UserReports: React.FC = () => {
               {currentUser && (
                 <Typography
                   variant="body1"
-                 
-                  sx={{ color: 'text.secondary',
+                  sx={{
+                    color: 'text.secondary',
                     maxWidth: isDesktop ? 'none' : '26ch',
                     pr: isDesktop ? 0 : 1, // Add some right padding on mobile
                   }}
@@ -849,7 +854,6 @@ export const UserReports: React.FC = () => {
                             </Box>
                             <Typography
                               variant="caption"
-                             
                               sx={{ color: 'text.secondary', mt: 0.25, display: 'block' }}
                             >
                               {formatReportDateTime(report.startTime)}

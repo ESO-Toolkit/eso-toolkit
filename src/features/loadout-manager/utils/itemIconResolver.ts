@@ -18,6 +18,7 @@
 import { Logger } from '@/utils/logger';
 
 import { getItemInfo } from '../data/itemIdMap';
+import type { SlotType } from '../data/slotTypes';
 
 type IconData = {
   icons: string[];
@@ -49,7 +50,6 @@ export async function preloadIconData(): Promise<void> {
   }
   await iconDataPromise;
 }
-import type { SlotType } from '../data/slotTypes';
 
 const logger = new Logger({ contextPrefix: 'ItemIconResolver' });
 

@@ -105,7 +105,11 @@ export const AboutPage: React.FC = () => {
           }}
         >
           <Stack spacing={2.5}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'center' }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{ alignItems: 'center' }}
+            >
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 Release information
               </Typography>

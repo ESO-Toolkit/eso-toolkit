@@ -476,7 +476,6 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
           <Stack
             direction="row"
             spacing={0.5}
-           
             sx={{ alignItems: 'center', mt: 0.4, flexWrap: 'wrap', rowGap: 0.35 }}
           >
             {/* Weight chip — apparel only */}

@@ -137,12 +137,12 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Overview
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             ESO Toolkit is a client-side web application for analyzing Elder Scrolls Online combat
             logs. We are committed to protecting your privacy and being transparent about how your
             data is used.
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Key points:</strong>
           </Typography>
           <Box component="ul" sx={{ pl: 3, '& li': { mb: 1 } }}>
@@ -180,11 +180,11 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Legal basis:</strong> Legitimate interest — necessary for the application to
                 function.
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>What we store (in your browser&apos;s localStorage):</strong>
               </Typography>
               <Box component="ul" sx={{ pl: 3, '& li': { mb: 0.5 } }}>
@@ -218,13 +218,13 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Legal basis:</strong> Consent (GDPR Article 6(1)(a)).
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Service:</strong> Google Analytics 4 (provided by Google LLC)
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>What is collected when enabled:</strong>
               </Typography>
               <Box component="ul" sx={{ pl: 3, '& li': { mb: 0.5 } }}>
@@ -268,13 +268,13 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Legal basis:</strong> Consent (GDPR Article 6(1)(a)).
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Service:</strong> Rollbar (provided by Rollbar, Inc.)
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>What is collected when enabled:</strong>
               </Typography>
               <Box component="ul" sx={{ pl: 3, '& li': { mb: 0.5 } }}>
@@ -321,13 +321,13 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>ESO Logs (esologs.com):</strong> When you authenticate, we use OAuth 2.0
                 PKCE flow to obtain access tokens. We query the ESO Logs API for your reports and
                 combat data. Your authentication tokens are stored locally and sent directly to
                 esologs.com — we do not proxy or store them on our servers.
               </Typography>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Google Fonts:</strong> We load Inter and Space Grotesk fonts from
                 Google&apos;s CDN. This results in requests to fonts.googleapis.com and
                 fonts.gstatic.com, which may log your IP address per Google&apos;s privacy policy.
@@ -343,7 +343,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Your Rights Under GDPR
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             Under the General Data Protection Regulation (GDPR), you have the following rights:
           </Typography>
           <Box component="ul" sx={{ pl: 3, '& li': { mb: 1 } }}>
@@ -591,16 +591,16 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Data Retention
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Local data:</strong> Stored until you clear your browser data or use the delete
             controls above. We do not set expiration on localStorage items.
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Google Analytics:</strong> Data retention is set by Google&apos;s default
             policies (typically 14 months). We do not control data retention on Google&apos;s
             servers.
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Rollbar:</strong> Error events are retained per Rollbar&apos;s data retention
             policy (configurable per plan).
           </Typography>
@@ -611,7 +611,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Children&apos;s Privacy
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             This application is not directed at children under 16 years of age. We do not knowingly
             collect personal data from children. If you believe a child has provided data through
             this application, please contact us.
@@ -623,7 +623,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Changes to This Policy
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             When we make material changes to this policy, we will update the consent version number,
             which will prompt you to review and re-confirm your preferences. The effective date at
             the top of this page indicates when the policy was last updated.
@@ -635,7 +635,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Contact
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             For privacy-related inquiries, you can reach us through the project&apos;s{' '}
             <Link
               href="https://github.com/ESO-Toolkit/eso-toolkit"

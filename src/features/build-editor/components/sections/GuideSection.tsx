@@ -110,13 +110,13 @@ const GuideSectionComponent: React.FC = () => {
     <Stack spacing={2.5}>
       {/* ── Guide text ───────────────────────────────────────────────── */}
       <Box>
-        <Typography variant="caption" sx={{ ...(sectionLabelSx), color: 'text.secondary' }}>
+        <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
           Build Guide
         </Typography>
         <Typography
           variant="caption"
-         
-          sx={{ color: 'text.disabled',
+          sx={{
+            color: 'text.disabled',
             display: 'block',
             mb: 1,
             fontSize: 10,
@@ -147,7 +147,7 @@ const GuideSectionComponent: React.FC = () => {
         }}
       >
         <Box>
-          <Typography variant="caption" sx={{ ...(sectionLabelSx), color: 'text.secondary' }}>
+          <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
             YouTube Video URL
           </Typography>
           <TextField
@@ -162,7 +162,7 @@ const GuideSectionComponent: React.FC = () => {
         </Box>
 
         <Box>
-          <Typography variant="caption" sx={{ ...(sectionLabelSx), color: 'text.secondary' }}>
+          <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
             Banner Image URL
           </Typography>
           <TextField
@@ -177,8 +177,12 @@ const GuideSectionComponent: React.FC = () => {
           {guide.bannerImageUrl && !sanitizeImageUrl(guide.bannerImageUrl) && (
             <Typography
               variant="caption"
-             
-              sx={{ color: 'error.main', mt: 0.5, display: 'block', fontFamily: 'Space Grotesk, Inter, system-ui' }}
+              sx={{
+                color: 'error.main',
+                mt: 0.5,
+                display: 'block',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
             >
               Invalid URL — must start with https://
             </Typography>
@@ -237,8 +241,12 @@ const GuideSectionComponent: React.FC = () => {
       {/* ── Screenshots ──────────────────────────────────────────────── */}
       <Typography
         variant="caption"
-       
-        sx={{ color: 'text.disabled', fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui', mt: -1 }}
+        sx={{
+          color: 'text.disabled',
+          fontSize: 10,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          mt: -1,
+        }}
       >
         Character stats, gear, or skills.
       </Typography>
@@ -255,8 +263,13 @@ const GuideSectionComponent: React.FC = () => {
         >
           <Typography
             variant="caption"
-           
-            sx={{ color: 'text.disabled', display: 'block', mb: 1.5, fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+            sx={{
+              color: 'text.disabled',
+              display: 'block',
+              mb: 1.5,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontStyle: 'italic',
+            }}
           >
             No screenshots yet
           </Typography>

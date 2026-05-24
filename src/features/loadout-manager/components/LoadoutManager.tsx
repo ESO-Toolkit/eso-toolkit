@@ -499,8 +499,8 @@ export const LoadoutManager: React.FC = () => {
           {/* ── Row 1: identity · selectors · actions ── */}
           <Stack
             direction={{ xs: 'column', md: 'row' }}
-            spacing={1.5} sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
-           
+            spacing={1.5}
+            sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
           >
             {/* Left: back + icon lockup */}
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
@@ -586,7 +586,6 @@ export const LoadoutManager: React.FC = () => {
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-             
               sx={{ alignItems: { sm: 'center' }, flexShrink: 0 }}
             >
               <FormControl sx={{ minWidth: 180, ...glassTextField }} size="small">
@@ -740,14 +739,13 @@ export const LoadoutManager: React.FC = () => {
           {/* ── Row 2: character · page · search · new ── */}
           <Stack
             direction={{ xs: 'column', md: 'row' }}
-            spacing={1} sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
-           
+            spacing={1}
+            sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
           >
             {/* Left cluster: character selectors + page controls */}
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-             
               sx={{ alignItems: { sm: 'center' }, minWidth: 0, flexShrink: 1 }}
             >
               <CharacterSelector />

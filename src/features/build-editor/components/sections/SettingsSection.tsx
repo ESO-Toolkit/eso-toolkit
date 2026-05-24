@@ -51,8 +51,11 @@ const SettingsSectionComponent: React.FC = () => {
       >
         <Typography
           variant="caption"
-         
-          sx={{ color: 'text.secondary', display: 'block', fontWeight: 700, mb: 0.25,
+          sx={{
+            color: 'text.secondary',
+            display: 'block',
+            fontWeight: 700,
+            mb: 0.25,
             fontSize: 11,
             letterSpacing: 0.8,
             textTransform: 'uppercase',
@@ -63,8 +66,11 @@ const SettingsSectionComponent: React.FC = () => {
         </Typography>
         <Typography
           variant="caption"
-         
-          sx={{ color: 'text.disabled', fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+          sx={{
+            color: 'text.disabled',
+            fontSize: 10,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+          }}
         >
           {setups.length} setup{setups.length !== 1 ? 's' : ''} configured. Manage setups in the
           setup bar below. Double-click a tab to rename.

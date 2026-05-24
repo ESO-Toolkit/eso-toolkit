@@ -557,8 +557,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               />
               <Typography
                 variant="body2"
-               
-                sx={{ fontWeight: 600,
+                sx={{
+                  fontWeight: 600,
                   fontSize: '0.8rem',
                   color: commentsOpen
                     ? isDark

@@ -262,7 +262,6 @@ export const PackHubPage: React.FC = () => {
             </Typography>
             <Typography
               variant="body2"
-             
               sx={{ color: 'text.disabled', mt: 0.75, maxWidth: 360, mx: 'auto' }}
             >
               {filters.packType || filters.tag || filters.search

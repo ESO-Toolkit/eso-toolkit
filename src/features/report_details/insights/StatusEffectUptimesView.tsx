@@ -51,7 +51,10 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
           <Typography variant="h6">Status Effect Uptimes</Typography>
           <Skeleton variant="circular" width={36} height={36} />
         </Stack>

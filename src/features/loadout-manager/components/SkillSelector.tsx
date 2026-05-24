@@ -115,7 +115,6 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
             {/* Bar label + filled slot count */}
             <Stack
               direction="row"
-             
               sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}
             >
               <Typography
@@ -135,7 +134,8 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
                 {label}
               </Typography>
               <Box
-                sx={{ color: 'text.secondary',
+                sx={{
+                  color: 'text.secondary',
                   px: 0.75,
                   py: 0.15,
                   borderRadius: '999px',
@@ -143,11 +143,7 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
                   border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                 }}
               >
-                <Typography
-                  variant="caption"
-                 
-                  sx={{ fontSize: '0.65rem', fontWeight: 600 }}
-                >
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 600 }}>
                   {countFilledSlots(skills[barIndex] || {})} / 6
                 </Typography>
               </Box>
@@ -186,8 +182,8 @@ const SkillBarRow: React.FC<SkillBarRowProps> = ({
     <Stack
       direction="row"
       spacing={0.75}
-     
-      sx={{ alignItems: 'center',
+      sx={{
+        alignItems: 'center',
         flexWrap: { xs: 'wrap', md: 'nowrap' },
         rowGap: 0.75,
         justifyContent: { xs: 'center', md: 'flex-start' },
@@ -545,7 +541,6 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
                         {option.category && (
                           <Typography
                             variant="caption"
-                           
                             sx={{ color: 'text.secondary', lineHeight: 1.2 }}
                           >
                             {option.category}

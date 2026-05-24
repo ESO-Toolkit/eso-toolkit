@@ -54,7 +54,6 @@ const ScreenshotsSectionComponent: React.FC = () => {
     <Stack spacing={1.5}>
       <Typography
         variant="caption"
-       
         sx={{ color: 'text.disabled', fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
       >
         Screenshots of character stats, gear, or skills.
@@ -72,8 +71,13 @@ const ScreenshotsSectionComponent: React.FC = () => {
         >
           <Typography
             variant="caption"
-           
-            sx={{ color: 'text.disabled', display: 'block', mb: 1.5, fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+            sx={{
+              color: 'text.disabled',
+              display: 'block',
+              mb: 1.5,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontStyle: 'italic',
+            }}
           >
             No screenshots yet
           </Typography>

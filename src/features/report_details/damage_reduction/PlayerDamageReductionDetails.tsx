@@ -267,8 +267,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
             {player && <PlayerIcon player={player} />}
             <Typography
               variant="subtitle1"
-             
-              sx={{ fontWeight: 'bold',
+              sx={{
+                fontWeight: 'bold',
                 fontSize: '1.75rem',
                 textShadow: roleColors.getAccordionTextShadow(),
               }}
@@ -550,8 +550,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                           >
                             <Typography
                               variant="body2"
-                             
-                              sx={{ fontWeight: 'bold',
+                              sx={{
+                                fontWeight: 'bold',
                                 color: source.isActive ? 'inherit' : 'text.secondary',
                               }}
                             >
@@ -559,10 +559,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                             </Typography>
                             <Typography
                               variant="caption"
-                             
-                              sx={{ color: 'text.secondary',
-                                opacity: source.isActive ? 1 : 0.6,
-                              }}
+                              sx={{ color: 'text.secondary', opacity: source.isActive ? 1 : 0.6 }}
                             >
                               {resistanceValue.toLocaleString()} resistance
                             </Typography>

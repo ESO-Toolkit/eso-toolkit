@@ -385,7 +385,6 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
         <Stack
           direction="row"
           spacing={0.75}
-         
           useFlexGap
           sx={{ flexWrap: 'wrap', pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}
         >
@@ -808,7 +807,8 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
         {/* Glass empty state */}
         {passives.length === 0 && (
           <Box
-            sx={{ color: 'text.disabled',
+            sx={{
+              color: 'text.disabled',
               textAlign: 'center',
               py: 2,
               background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)',
@@ -818,7 +818,6 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
           >
             <Typography
               variant="caption"
-             
               sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
             >
               Click + to browse and add passives

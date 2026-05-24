@@ -111,7 +111,6 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
       <Box sx={sx}>
         <Typography
           variant="body2"
-         
           sx={{ fontWeight: 'bold', mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
         >
           Scribed Skills (
@@ -288,7 +287,6 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
       <Box sx={sx}>
         <Typography
           variant="body2"
-         
           sx={{ fontWeight: 'bold', mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
         >
           Scribed Skills (

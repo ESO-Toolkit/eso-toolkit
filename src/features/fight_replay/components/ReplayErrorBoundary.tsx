@@ -207,23 +207,35 @@ const WebGLFallbackUI: React.FC<{
                     Performance Tier: {capabilities.performanceTier}
                   </Typography>
                   {capabilities.maxTextureSize && (
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Max Texture Size: {capabilities.maxTextureSize}px
                     </Typography>
                   )}
                   {capabilities.maxViewportDims && (
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Max Viewport: {capabilities.maxViewportDims[0]}x
                       {capabilities.maxViewportDims[1]}
                     </Typography>
                   )}
                   {capabilities.renderer && (
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Renderer: {capabilities.renderer}
                     </Typography>
                   )}
                   {capabilities.vendor && (
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Vendor: {capabilities.vendor}
                     </Typography>
                   )}
@@ -321,8 +333,8 @@ const ErrorFallbackUI: React.FC<{
               variant="h5"
               component="h2"
               gutterBottom
-             
-              data-testid="replay-error-boundary-title" sx={{ fontWeight: 'bold' }}
+              data-testid="replay-error-boundary-title"
+              sx={{ fontWeight: 'bold' }}
             >
               3D Replay Error
             </Typography>
@@ -387,8 +399,12 @@ const ErrorFallbackUI: React.FC<{
                       <Typography
                         variant="body2"
                         component="pre"
-                       
-                        sx={{ fontFamily: 'monospace', fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.7rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
                       >
                         {error.stack}
                       </Typography>
@@ -402,8 +418,12 @@ const ErrorFallbackUI: React.FC<{
                       <Typography
                         variant="body2"
                         component="pre"
-                       
-                        sx={{ fontFamily: 'monospace', fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.7rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
                       >
                         {errorInfo.componentStack}
                       </Typography>
@@ -417,7 +437,11 @@ const ErrorFallbackUI: React.FC<{
           <Divider />
 
           {/* Action Buttons */}
-          <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}
+          >
             <Button
               variant="contained"
               startIcon={<Refresh />}

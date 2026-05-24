@@ -83,8 +83,8 @@ export const DiscordSetupPage: React.FC = () => {
 
         <Typography
           variant="body2"
-         
-          sx={{ color: 'text.secondary',
+          sx={{
+            color: 'text.secondary',
             fontSize: '0.85rem',
             lineHeight: 1.55,
             pb: 0.5,

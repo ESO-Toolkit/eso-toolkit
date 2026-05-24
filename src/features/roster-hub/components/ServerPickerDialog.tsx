@@ -685,7 +685,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               {step === 'configure' && selectedGuild && (
                 <Typography
                   variant="caption"
-                 
                   noWrap
                   sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
                 >
@@ -724,7 +723,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               {displayDesc && (
                 <Typography
                   variant="body2"
-                 
                   sx={{ color: 'text.secondary', mt: 0.25, fontSize: '0.78rem', opacity: 0.7 }}
                 >
                   {displayDesc}
@@ -758,8 +756,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               </Typography>
               <Typography
                 variant="body2"
-               
-                sx={{ color: 'text.secondary', mb: 2, fontSize: '0.8rem', maxWidth: 360, mx: 'auto', lineHeight: 1.45 }}
+                sx={{
+                  color: 'text.secondary',
+                  mb: 2,
+                  fontSize: '0.8rem',
+                  maxWidth: 360,
+                  mx: 'auto',
+                  lineHeight: 1.45,
+                }}
               >
                 We&apos;ll show which of your servers already have the ESO Toolkit bot. Not
                 installed yet? A server admin needs to add it first. Takes about 60 seconds.
@@ -796,8 +800,13 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               </Button>
               <Typography
                 variant="caption"
-               
-                sx={{ color: 'text.secondary', display: 'block', mt: 1.25, fontSize: '0.7rem', opacity: 0.7 }}
+                sx={{
+                  color: 'text.secondary',
+                  display: 'block',
+                  mt: 1.25,
+                  fontSize: '0.7rem',
+                  opacity: 0.7,
+                }}
               >
                 We only read your server list, never your messages.
               </Typography>
@@ -938,8 +947,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       </Typography>
                       <Typography
                         variant="body2"
-                       
-                        sx={{ color: 'text.secondary',
+                        sx={{
+                          color: 'text.secondary',
                           fontSize: '0.78rem',
                           maxWidth: 360,
                           mx: 'auto',
@@ -1044,8 +1053,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                           </Typography>
                           <Typography
                             variant="caption"
-                           
-                            sx={{ color: 'text.secondary',
+                            sx={{
+                              color: 'text.secondary',
                               display: 'block',
                               lineHeight: 1.4,
                               mt: 0.125,
@@ -1136,8 +1145,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
                   <Typography
                     variant="caption"
-                   
-                    sx={{ color: 'text.secondary',
+                    sx={{
+                      color: 'text.secondary',
                       textAlign: 'center',
                       fontSize: '0.7rem',
                       opacity: 0.75,
@@ -1399,7 +1408,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   {inviteClicked && (
                     <Typography
                       variant="caption"
-                     
                       sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}
                     >
                       Added the bot? Click refresh to see your new server.
@@ -1493,7 +1501,6 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   </Stack>
                   <Typography
                     variant="caption"
-                   
                     sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.5, mb: 0.75 }}
                   >
                     You can publish now, or a server admin can{' '}

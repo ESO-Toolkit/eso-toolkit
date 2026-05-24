@@ -154,7 +154,8 @@ export const ParseChecklist: React.FC<ParseChecklistProps> = ({ items }) => {
           return (
             <Tooltip key={item.id} title={item.detail || ''} placement="top" arrow>
               <Box
-                sx={{ fontWeight: 500,
+                sx={{
+                  fontWeight: 500,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,

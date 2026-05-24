@@ -174,7 +174,9 @@ export const LatestReports: React.FC = () => {
               </Box>
             </Box>
             {/* Stats row skeleton */}
-            <Box sx={{ justifyContent: 'space-between', alignItems: 'center', display: 'flex', mb: 3 }}>
+            <Box
+              sx={{ justifyContent: 'space-between', alignItems: 'center', display: 'flex', mb: 3 }}
+            >
               <Skeleton variant="text" width={240} height={18} />
               <Skeleton variant="rounded" width={100} height={28} sx={{ borderRadius: '16px' }} />
             </Box>
@@ -257,8 +259,8 @@ export const LatestReports: React.FC = () => {
               </Typography>
               <Typography
                 variant="body1"
-               
-                sx={{ color: 'text.secondary',
+                sx={{
+                  color: 'text.secondary',
                   maxWidth: isDesktop ? 'none' : '26ch',
                   pr: isDesktop ? 0 : 1, // Add some right padding on mobile
                 }}
@@ -287,9 +289,14 @@ export const LatestReports: React.FC = () => {
           {state.reports.length > 0 ? (
             <>
               <Box
-               
-                sx={{ flexDirection: isDesktop ? 'row' : 'column', justifyContent: 'space-between', gap: isDesktop ? 2 : 1.5, alignItems: isDesktop ? 'center' : 'flex-start', display: 'flex', mb: isDesktop ? 3 : 2 }}
-               
+                sx={{
+                  flexDirection: isDesktop ? 'row' : 'column',
+                  justifyContent: 'space-between',
+                  gap: isDesktop ? 2 : 1.5,
+                  alignItems: isDesktop ? 'center' : 'flex-start',
+                  display: 'flex',
+                  mb: isDesktop ? 3 : 2,
+                }}
               >
                 <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                   Page {state.pagination.currentPage}
@@ -368,8 +375,9 @@ export const LatestReports: React.FC = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                                 <Typography
                                   variant="body2"
-                                 
-                                  sx={{ color: 'primary.main', fontWeight: 'medium',
+                                  sx={{
+                                    color: 'primary.main',
+                                    fontWeight: 'medium',
                                     overflowWrap: 'anywhere',
                                     wordBreak: 'break-word',
                                     lineHeight: 1.4,
@@ -399,8 +407,8 @@ export const LatestReports: React.FC = () => {
                               </Box>
                               <Typography
                                 variant="caption"
-                               
-                                sx={{ color: 'text.secondary',
+                                sx={{
+                                  color: 'text.secondary',
                                   display: 'block',
                                   mt: 0.25,
                                   whiteSpace: 'nowrap',
@@ -412,8 +420,8 @@ export const LatestReports: React.FC = () => {
                               </Typography>
                               <Typography
                                 variant="caption"
-                               
-                                sx={{ color: 'text.secondary',
+                                sx={{
+                                  color: 'text.secondary',
                                   display: 'block',
                                   mt: 0.25,
                                   whiteSpace: 'nowrap',
@@ -482,8 +490,19 @@ export const LatestReports: React.FC = () => {
 
           {/* Loading overlay */}
           {state.loading && state.reports.length > 0 && (
-            <Box sx={{ bottom: 0, bgcolor: 'rgba(255,255,255,0.7)', justifyContent: 'center', alignItems: 'center', top: 0, zIndex: 1, display: 'flex', position: 'absolute', left: 0, right: 0 }}
-             
+            <Box
+              sx={{
+                bottom: 0,
+                bgcolor: 'rgba(255,255,255,0.7)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                top: 0,
+                zIndex: 1,
+                display: 'flex',
+                position: 'absolute',
+                left: 0,
+                right: 0,
+              }}
             >
               <CircularProgress />
             </Box>

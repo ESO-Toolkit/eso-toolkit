@@ -90,7 +90,9 @@ export const WhoAmIPage: React.FC = () => {
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
       <Stack spacing={3}>
-        <Box sx={{ justifyContent: 'space-between', gap: 2, alignItems: 'center', display: 'flex' }}>
+        <Box
+          sx={{ justifyContent: 'space-between', gap: 2, alignItems: 'center', display: 'flex' }}
+        >
           <Box>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }} gutterBottom>
               Who am I

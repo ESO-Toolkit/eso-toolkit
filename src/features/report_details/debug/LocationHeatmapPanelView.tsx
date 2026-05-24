@@ -185,7 +185,6 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                         <MenuItem key={player.id} value={player.id}>
                           <Stack
                             direction="row"
-                           
                             spacing={1}
                             sx={{ alignItems: 'center', width: '100%' }}
                           >
@@ -215,7 +214,11 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                   </MenuItem>
                   {fightPhases.map((phase) => (
                     <MenuItem key={phase.id} value={String(phase.id)}>
-                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', width: '100%' }}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        sx={{ alignItems: 'center', width: '100%' }}
+                      >
                         <Box sx={{ flexGrow: 1 }}>{phase.label}</Box>
                         <Chip
                           label={`${Math.round((phase.endTime - phase.startTime) / 1000)}s`}
@@ -490,8 +493,8 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography
                   variant="h4"
-                 
-                  data-testid="tank-position-updates-count" sx={{ color: 'primary', fontWeight: 'bold' }}
+                  data-testid="tank-position-updates-count"
+                  sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
                   {locationData.length.toLocaleString()}
                 </Typography>
@@ -510,8 +513,8 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography
                   variant="h4"
-                 
-                  data-testid="movement-hotspots-count" sx={{ color: 'primary', fontWeight: 'bold' }}
+                  data-testid="movement-hotspots-count"
+                  sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
                   {heatmapVoxels.length}
                 </Typography>
@@ -527,8 +530,8 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography
                   variant="h4"
-                 
-                  data-testid="movement-markers-count" sx={{ color: 'primary', fontWeight: 'bold' }}
+                  data-testid="movement-markers-count"
+                  sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
                   {elmsMarkers.length}
                 </Typography>
@@ -586,8 +589,8 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography
                   variant="h4"
-                 
-                  data-testid="combat-phases-count" sx={{ color: 'primary', fontWeight: 'bold' }}
+                  data-testid="combat-phases-count"
+                  sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
                   {fightPhases.length}
                 </Typography>
@@ -611,8 +614,8 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Typography
                     variant="h4"
-                   
-                    data-testid="selected-phase-duration" sx={{ color: 'primary', fontWeight: 'bold' }}
+                    data-testid="selected-phase-duration"
+                    sx={{ color: 'primary', fontWeight: 'bold' }}
                   >
                     {(() => {
                       const phase = fightPhases.find((p) => p.id === selectedPhase);
@@ -663,8 +666,13 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                     <Card key={tank.id} variant="outlined" sx={{ p: 2 }}>
                       <Typography
                         variant="subtitle1"
-                       
-                        sx={{ fontWeight: 'bold', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+                        sx={{
+                          fontWeight: 'bold',
+                          mb: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                        }}
                       >
                         <Chip label={`${tankColorName} TANK`} size="small" color={tankColor} />
                         {tank.name}
@@ -784,7 +792,6 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                     return (
                       <Typography
                         variant="caption"
-                       
                         sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
                       >
                         {gapDuration}s gap until next phase begins

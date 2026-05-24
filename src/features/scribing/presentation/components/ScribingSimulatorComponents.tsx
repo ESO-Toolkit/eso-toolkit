@@ -134,7 +134,7 @@ export const SimulationResultDisplay: React.FC<SimulationResultDisplayProps> = (
           {result.calculatedSkill.name}
         </Typography>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} >
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           {result.calculatedSkill.description}
         </Typography>
 

@@ -408,11 +408,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 WebkitBackdropFilter: 'blur(8px)',
                 border: `1px solid ${tokens.border}`,
                 '&.MuiAlert-standardInfo': {
-                  backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(56, 189, 248, 0.06)',
+                  backgroundColor: darkMode
+                    ? 'rgba(56, 189, 248, 0.08)'
+                    : 'rgba(56, 189, 248, 0.06)',
                   color: darkMode ? tokens.text : tokens.text,
                 },
                 '&.MuiAlert-standardWarning': {
-                  backgroundColor: darkMode ? 'rgba(255, 152, 0, 0.08)' : 'rgba(249, 115, 22, 0.06)',
+                  backgroundColor: darkMode
+                    ? 'rgba(255, 152, 0, 0.08)'
+                    : 'rgba(249, 115, 22, 0.06)',
                   color: darkMode ? tokens.text : tokens.text,
                 },
                 '&.MuiAlert-standardError': {

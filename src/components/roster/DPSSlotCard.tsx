@@ -326,9 +326,7 @@ export const DPSSlotCard = React.memo<DPSSlotCardProps>(
                       size: 'small' as const,
                       sx: {
                         borderRadius: '6px',
-                        backgroundColor: dpsIsDark
-                          ? 'rgba(255,255,255,0.06)'
-                          : 'rgba(0,0,0,0.05)',
+                        backgroundColor: dpsIsDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
                         border: dpsIsDark
                           ? '1px solid rgba(255,255,255,0.1)'
                           : '1px solid rgba(0,0,0,0.1)',

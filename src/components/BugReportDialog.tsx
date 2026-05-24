@@ -153,8 +153,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
     <Grow in timeout={400}>
       <Stack
         spacing={3}
-       
-        sx={{ alignItems: 'center',
+        sx={{
+          alignItems: 'center',
           py: { xs: 4, sm: 5 },
           ...successPulse,
           animation: 'successPulse 0.5s ease-out',
@@ -200,7 +200,6 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           </Typography>
           <Typography
             variant="body2"
-           
             sx={{ color: 'text.secondary', maxWidth: 360, mx: 'auto', lineHeight: 1.7 }}
           >
             {isBugReport
@@ -293,8 +292,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         <Stack
           direction="row"
           spacing={1}
-         
-          sx={{ alignItems: 'center',
+          sx={{
+            alignItems: 'center',
             px: 0.5,
             opacity: 0.6,
             transition: 'opacity 0.2s ease',

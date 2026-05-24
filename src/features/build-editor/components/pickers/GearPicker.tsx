@@ -492,7 +492,12 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
         >
           Select {slotName} Gear
         </Typography>
-        <IconButton size="small" onClick={onClose} aria-label="Close" sx={{ color: 'text.disabled' }}>
+        <IconButton
+          size="small"
+          onClick={onClose}
+          aria-label="Close"
+          sx={{ color: 'text.disabled' }}
+        >
           <CloseIcon sx={{ fontSize: 18 }} />
         </IconButton>
       </DialogTitle>

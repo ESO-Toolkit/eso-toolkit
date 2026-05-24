@@ -117,7 +117,7 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
         <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
           ESO Scribing Simulator
         </Typography>
-        <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center', mb: 2 }} >
+        <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center', mb: 2 }}>
           Design and simulate custom scribing combinations for Elder Scrolls Online
         </Typography>
 

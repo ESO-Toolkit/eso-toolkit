@@ -907,15 +907,28 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
           >
             <Box
-             
-              sx={{ flexDirection: 'column', gap: 2, alignItems: 'stretch', display: 'flex', flex: 1, minHeight: 0 }}
+              sx={{
+                flexDirection: 'column',
+                gap: 2,
+                alignItems: 'stretch',
+                display: 'flex',
+                flex: 1,
+                minHeight: 0,
+              }}
             >
               {/* Left column: identity, talents, gear, issues */}
               <Box sx={{ flex: 0, minWidth: 0 }}>
                 <Box sx={{ gap: 1, alignItems: 'center', display: 'flex', mb: 1.5 }}>
                   <PlayerIcon player={player} />
-                  <Box sx={{ flex: 1, justifyContent: 'space-between', gap: 1, alignItems: 'center', minWidth: 0, display: 'flex' }}
-                   
+                  <Box
+                    sx={{
+                      flex: 1,
+                      justifyContent: 'space-between',
+                      gap: 1,
+                      alignItems: 'center',
+                      minWidth: 0,
+                      display: 'flex',
+                    }}
                   >
                     {/* Player Name with Character Name Hover */}
                     <Box
@@ -956,8 +969,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                     {/* Gear Weights */}
                     <Box
-                     
-                      sx={{ gap: 0.35, display: 'inline-flex', alignItems: 'center',
+                      sx={{
+                        gap: 0.35,
+                        display: 'inline-flex',
+                        alignItems: 'center',
                         flex: '0 0 auto', // Don't shrink gear weights
                         minWidth: 0, // Allow shrinking
                         overflow: 'hidden', // Prevent overflow
@@ -1145,9 +1160,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 />
                                 <Typography
                                   variant="caption"
-                                 
                                   noWrap
-                                  sx={{ color: 'text.secondary', lineHeight: 1.05, fontSize: '0.70rem' }}
+                                  sx={{
+                                    color: 'text.secondary',
+                                    lineHeight: 1.05,
+                                    fontSize: '0.70rem',
+                                  }}
                                 >
                                   {abbreviateSkillLine(skill.skillLine)}
                                 </Typography>
@@ -1399,13 +1417,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     )}
                     {gear.length > 0 && (
                       <Box sx={{ mt: 1.25, pt: 0.9, pb: 0 }}>
-                        <Box sx={{ mb: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                         
+                        <Box
+                          sx={{
+                            mb: 2.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
                         >
                           <Typography
                             variant="body2"
-                           
-                            sx={{ fontWeight: 'bold', fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem' }}
+                            sx={{
+                              fontWeight: 'bold',
+                              fontFamily: 'Space Grotesk, sans-serif',
+                              fontSize: '0.8rem',
+                            }}
                           >
                             Gear
                           </Typography>
@@ -1516,8 +1542,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           </Box>
                         </Box>
                         <Box
-                         
-                          data-testid={`gear-chips-${player.id}`} sx={{ flexWrap: 'wrap', gap: 1.25, minHeight: 32, display: 'flex' }}
+                          data-testid={`gear-chips-${player.id}`}
+                          sx={{ flexWrap: 'wrap', gap: 1.25, minHeight: 32, display: 'flex' }}
                         >
                           {gearChips.map((chipData, index) => {
                             // Find the corresponding gear record for tooltip
@@ -1625,8 +1651,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     >
                       <Typography
                         variant="body2"
-                       
-                        sx={{ color: 'text.secondary',
+                        sx={{
+                          color: 'text.secondary',
                           display: 'flex',
                           alignItems: 'center',
                           flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
@@ -1802,7 +1828,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     <Box sx={{ mt: 1 }}>
                       <Typography
                         variant="body2"
-                       
                         sx={{ fontWeight: 'bold', mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
                       >
                         Champion Points
@@ -1853,8 +1878,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <CheckCircleOutlineIcon sx={{ color: 'success.main' }} />
                       <Typography
                         variant="body2"
-                       
-                        sx={{ fontWeight: 'bold',
+                        sx={{
+                          fontWeight: 'bold',
                           color: 'success.main',
                           display: 'flex',
                           alignItems: 'center',
@@ -1890,8 +1915,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     >
                       <Typography
                         variant="body2"
-                       
-                        sx={{ fontWeight: 'bold',
+                        sx={{
+                          fontWeight: 'bold',
                           color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
                           display: 'flex',
                           alignItems: 'center',

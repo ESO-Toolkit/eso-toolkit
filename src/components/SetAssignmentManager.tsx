@@ -958,8 +958,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             </Typography>
             <Typography
               variant="caption"
-             
-              sx={{ fontWeight: slotValue ? 600 : 400,
+              sx={{
+                fontWeight: slotValue ? 600 : 400,
                 display: 'block',
                 color: slotValue ? 'text.primary' : 'text.disabled',
                 fontStyle: slotValue ? 'normal' : 'italic',
@@ -1046,8 +1046,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             </Typography>
             <Typography
               variant="caption"
-             
-              sx={{ fontWeight: slotValue ? 600 : 400,
+              sx={{
+                fontWeight: slotValue ? 600 : 400,
                 display: 'block',
                 color: slotValue ? 'text.primary' : 'text.disabled',
                 fontStyle: slotValue ? 'normal' : 'italic',
@@ -1123,8 +1123,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             />
             <Typography
               variant="caption"
-             
-              sx={{ fontWeight: isPrimary ? 700 : 600,
+              sx={{
+                fontWeight: isPrimary ? 700 : 600,
                 color: isPrimary ? color : `${color}80`,
                 fontSize: '0.675rem',
                 letterSpacing: '0.07em',
@@ -1195,8 +1195,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             />
             <Typography
               variant="caption"
-             
-              sx={{ fontWeight: isPrimary ? 700 : 600,
+              sx={{
+                fontWeight: isPrimary ? 700 : 600,
                 color: isPrimary ? color : `${color}80`,
                 fontSize: '0.675rem',
                 letterSpacing: '0.07em',

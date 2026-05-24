@@ -171,9 +171,8 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
         <div>
           <Typography
             variant="caption"
-           
-            gutterBottom sx={{ color: atTagLimit ? 'warning.main' : 'text.secondary', display: 'block' }}
-           
+            gutterBottom
+            sx={{ color: atTagLimit ? 'warning.main' : 'text.secondary', display: 'block' }}
           >
             Tags ({selectedTags.length}/{MAX_TAGS}){atTagLimit ? ' — limit reached' : ''}
           </Typography>

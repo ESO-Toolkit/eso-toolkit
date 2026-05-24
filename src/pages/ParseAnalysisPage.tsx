@@ -1236,8 +1236,14 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Typography
             variant="h3"
-           
-            sx={{ color: activityColor, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: activityColor,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {percentDisplay}%
           </Typography>
@@ -1284,8 +1290,8 @@ const ParseAnalysisPageContent: React.FC = () => {
               </Typography>
               <Typography
                 variant="caption"
-               
-                sx={{ fontWeight: 600,
+                sx={{
+                  fontWeight: 600,
                   color:
                     downtimeSeconds <= 5
                       ? theme.palette.mode === 'dark'
@@ -1304,8 +1310,8 @@ const ParseAnalysisPageContent: React.FC = () => {
           {!isGood && (
             <Typography
               variant="caption"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mt: 1.5,
                 p: 1,
@@ -1366,8 +1372,14 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Typography
             variant="h3"
-           
-            sx={{ color: cpmColor, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: cpmColor,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {cpm.toFixed(1)}
           </Typography>
@@ -1433,8 +1445,14 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Typography
             variant="h3"
-           
-            sx={{ color: 'primary.main', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: 'primary.main',
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {Math.round(dps).toLocaleString()}
           </Typography>
@@ -1546,7 +1564,6 @@ const ParseAnalysisPageContent: React.FC = () => {
                 </Box>
                 <Typography
                   variant="caption"
-                 
                   sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
                 >
                   Maintains optimal cast intervals for each skill
@@ -1663,7 +1680,6 @@ const ParseAnalysisPageContent: React.FC = () => {
                 </Stack>
                 <Typography
                   variant="caption"
-                 
                   sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
                 >
                   Average casts of other abilities between each use
@@ -1710,7 +1726,6 @@ const ParseAnalysisPageContent: React.FC = () => {
           <Stack
             direction="row"
             spacing={1}
-           
             sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}
           >
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
@@ -1751,8 +1766,14 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Typography
             variant="h3"
-           
-            sx={{ color: weaveColor, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: weaveColor,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {weaveAccuracy.toFixed(1)}%
           </Typography>
@@ -1809,8 +1830,8 @@ const ParseAnalysisPageContent: React.FC = () => {
           {!isGoodWeaving && (
             <Typography
               variant="caption"
-             
-              sx={{ color: 'text.secondary',
+              sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mt: 1.5,
                 p: 1,
@@ -2093,7 +2114,6 @@ const ParseAnalysisPageContent: React.FC = () => {
                     >
                       <Typography
                         variant="caption"
-                       
                         sx={{ color: 'primary.main', fontWeight: 700, lineHeight: 1 }}
                       >
                         {step}
@@ -2288,8 +2308,11 @@ const ParseAnalysisPageContent: React.FC = () => {
             <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
-                spacing={2} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' } }}
-               
+                spacing={2}
+                sx={{
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                }}
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>

@@ -40,7 +40,6 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
         )}
         <Typography
           variant="caption"
-         
           sx={{ color: active ? 'text.primary' : 'text.secondary', fontSize: '0.65rem' }}
         >
           {label}
@@ -183,12 +182,17 @@ export const BuffChecklist: React.FC<BuffChecklistProps> = ({ checklistData }) =
         >
           <Typography
             variant="caption"
-           
-            sx={{ fontWeight: 600, color: isDark ? theme.palette.warning.light : theme.palette.warning.main }}
+            sx={{
+              fontWeight: 600,
+              color: isDark ? theme.palette.warning.light : theme.palette.warning.main,
+            }}
           >
             Redundant Buffs
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
+          <Typography
+            variant="caption"
+            sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}
+          >
             {redundantBuffs.join(', ')} — already provided by the trial dummy
           </Typography>
         </Box>

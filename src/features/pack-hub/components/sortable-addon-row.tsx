@@ -107,7 +107,6 @@ export const SortableAddonRow: React.FC<SortableAddonProps> = ({
           {addon.note && (
             <Typography
               variant="caption"
-             
               noWrap
               sx={{ color: 'text.secondary', opacity: 0.7, lineHeight: 1.2 }}
             >

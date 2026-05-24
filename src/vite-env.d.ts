@@ -94,8 +94,5 @@ declare module '@storybook/react' {
     [key: string]: unknown;
   };
 
-  export type Decorator = (
-    Story: ComponentType,
-    context: StoryContext,
-  ) => ReactElement;
+  export type Decorator = (Story: ComponentType, context: StoryContext) => ReactElement;
 }

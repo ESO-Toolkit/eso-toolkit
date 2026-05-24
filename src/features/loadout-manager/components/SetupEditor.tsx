@@ -277,7 +277,11 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
       >
         <Stack spacing={1} sx={{ minWidth: 0 }}>
           {/* Row 1: name + action icons */}
-          <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <Stack spacing={0.15} sx={{ minWidth: 0, flex: 1 }}>
               <Typography
                 variant={isDrawer ? 'subtitle1' : 'h6'}

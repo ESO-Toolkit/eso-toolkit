@@ -63,7 +63,14 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             },
           }}
         >
-          <Box sx={{ justifyContent: 'space-between', gap: 1, alignItems: 'flex-start', display: 'flex' }}>
+          <Box
+            sx={{
+              justifyContent: 'space-between',
+              gap: 1,
+              alignItems: 'flex-start',
+              display: 'flex',
+            }}
+          >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>

@@ -172,7 +172,10 @@ export const ChampionPointSelector: React.FC<ChampionPointSelectorProps> = ({
 
   return (
     <Stack spacing={1.5}>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', px: 0.5 }}>
+      <Stack
+        direction="row"
+        sx={{ justifyContent: 'space-between', alignItems: 'center', px: 0.5 }}
+      >
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Champion Points
         </Typography>

@@ -143,8 +143,15 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       const { error, errorInfo, showDetails, eventId } = this.state;
 
       return (
-        <Box sx={{ bgcolor: 'background.default', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', display: 'flex', p: 3 }}
-         
+        <Box
+          sx={{
+            bgcolor: 'background.default',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            display: 'flex',
+            p: 3,
+          }}
         >
           <Paper elevation={3} sx={{ maxWidth: 600, width: '100%', p: 4 }}>
             <Stack spacing={3} sx={{ alignItems: 'center' }}>
@@ -153,8 +160,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               <Typography
                 variant="h4"
                 component="h1"
-               
-                data-testid="error-boundary-title" sx={{ color: 'error', textAlign: 'center' }}
+                data-testid="error-boundary-title"
+                sx={{ color: 'error', textAlign: 'center' }}
               >
                 Something went wrong
               </Typography>
@@ -217,8 +224,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                           <Typography
                             variant="body2"
                             component="pre"
-                           
-                            sx={{ fontFamily: 'monospace',
+                            sx={{
+                              fontFamily: 'monospace',
                               whiteSpace: 'pre-wrap',
                               wordBreak: 'break-word',
                               fontSize: '0.7rem',
@@ -236,8 +243,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                           <Typography
                             variant="body2"
                             component="pre"
-                           
-                            sx={{ fontFamily: 'monospace',
+                            sx={{
+                              fontFamily: 'monospace',
                               whiteSpace: 'pre-wrap',
                               wordBreak: 'break-word',
                               fontSize: '0.7rem',

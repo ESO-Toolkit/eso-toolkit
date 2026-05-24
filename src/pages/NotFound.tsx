@@ -21,9 +21,15 @@ export const NotFound: React.FC = () => {
   return (
     <Container maxWidth="md">
       <Box
-       
-        sx={{ flexDirection: 'column', justifyContent: 'center', gap: 3, textAlign: 'center', alignItems: 'center', minHeight: '60vh', display: 'flex' }}
-       
+        sx={{
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 3,
+          textAlign: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+          display: 'flex',
+        }}
       >
         <Typography
           variant="h1"
@@ -52,8 +58,8 @@ export const NotFound: React.FC = () => {
 
         <Typography
           variant="body1"
-         
-          sx={{ color: 'text.secondary',
+          sx={{
+            color: 'text.secondary',
             maxWidth: '500px',
             mb: 2,
             fontSize: { xs: '1rem', sm: '1.1rem' },

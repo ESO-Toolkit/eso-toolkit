@@ -1144,7 +1144,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
                               variant="body2"
-                             
                               noWrap
                               sx={{ fontWeight: 600, opacity: isEnabled ? 1 : 0.5 }}
                             >
@@ -1153,7 +1152,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                             {addon.note && (
                               <Typography
                                 variant="caption"
-                               
                                 noWrap
                                 sx={{ color: 'text.secondary', opacity: isEnabled ? 0.7 : 0.4 }}
                               >

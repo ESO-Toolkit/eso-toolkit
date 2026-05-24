@@ -157,13 +157,11 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={{ xs: 1, sm: 2 }}
-       
         sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, mb: 2, minWidth: 0 }}
       >
         <Stack
           direction="row"
           spacing={1}
-         
           sx={{ alignItems: 'center', minWidth: 0, flexWrap: 'wrap', rowGap: 0.75 }}
         >
           <Typography variant="h6" sx={{ minWidth: 0 }}>

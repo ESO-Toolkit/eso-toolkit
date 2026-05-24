@@ -87,7 +87,11 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
   >
     <Stack spacing={1.5}>
       {/* Header row */}
-      <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
+      >
         <Box sx={{ flex: 1 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
             {entry.title}
@@ -131,8 +135,8 @@ const EntryCard: React.FC<{ entry: WhatsNewEntry }> = ({ entry }) => (
       {(entry.summary || entry.description) && (
         <Typography
           variant="body2"
-         
-          sx={{ color: 'text.secondary',
+          sx={{
+            color: 'text.secondary',
             whiteSpace: 'pre-line',
             '& a': { color: 'primary.main' },
             maxHeight: 200,
