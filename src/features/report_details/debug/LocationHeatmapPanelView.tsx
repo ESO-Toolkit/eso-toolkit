@@ -491,7 +491,6 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 <Typography
                   variant="h4"
                  
-                 
                   data-testid="tank-position-updates-count" sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
                   {locationData.length.toLocaleString()}
@@ -512,7 +511,6 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 <Typography
                   variant="h4"
                  
-                 
                   data-testid="movement-hotspots-count" sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
                   {heatmapVoxels.length}
@@ -529,7 +527,6 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
               <CardContent sx={{ textAlign: 'center' }}>
                 <Typography
                   variant="h4"
-                 
                  
                   data-testid="movement-markers-count" sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
@@ -590,7 +587,6 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 <Typography
                   variant="h4"
                  
-                 
                   data-testid="combat-phases-count" sx={{ color: 'primary', fontWeight: 'bold' }}
                 >
                   {fightPhases.length}
@@ -615,7 +611,6 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 <CardContent sx={{ textAlign: 'center' }}>
                   <Typography
                     variant="h4"
-                   
                    
                     data-testid="selected-phase-duration" sx={{ color: 'primary', fontWeight: 'bold' }}
                   >

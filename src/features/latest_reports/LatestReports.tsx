@@ -288,10 +288,7 @@ export const LatestReports: React.FC = () => {
             <>
               <Box
                
-               
-               
-                flexDirection={isDesktop ? 'row' : 'column'} sx={{ justifyContent: 'space-between', gap: isDesktop ? 2 : 1.5, alignItems: isDesktop ? 'center' : 'flex-start', display: 'flex', mb: isDesktop ? 3 : 2 }}
-               
+                sx={{ flexDirection: isDesktop ? 'row' : 'column', justifyContent: 'space-between', gap: isDesktop ? 2 : 1.5, alignItems: isDesktop ? 'center' : 'flex-start', display: 'flex', mb: isDesktop ? 3 : 2 }}
                
               >
                 <Typography variant="body1" sx={{ color: 'text.secondary' }}>
@@ -371,7 +368,6 @@ export const LatestReports: React.FC = () => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                                 <Typography
                                   variant="body2"
-                                 
                                  
                                   sx={{ color: 'primary.main', fontWeight: 'medium',
                                     overflowWrap: 'anywhere',
@@ -487,15 +483,6 @@ export const LatestReports: React.FC = () => {
           {/* Loading overlay */}
           {state.loading && state.reports.length > 0 && (
             <Box sx={{ bottom: 0, bgcolor: 'rgba(255,255,255,0.7)', justifyContent: 'center', alignItems: 'center', top: 0, zIndex: 1, display: 'flex', position: 'absolute', left: 0, right: 0 }}
-             
-             
-             
-             
-             
-             
-             
-             
-             
              
             >
               <CircularProgress />

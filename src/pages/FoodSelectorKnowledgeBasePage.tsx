@@ -107,7 +107,7 @@ export const FoodSelectorKnowledgeBasePage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
-      <Box flexDirection="column" sx={{ gap: 2, display: 'flex', mb: 4 }}>
+      <Box sx={{ flexDirection: 'column', gap: 2, display: 'flex', mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800 }}>
           Food Selector Knowledge Base
         </Typography>

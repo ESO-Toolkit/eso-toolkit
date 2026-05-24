@@ -117,7 +117,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             />
           </Box>
 
-          <Box columnGap={2} rowGap={1} sx={{ flexWrap: 'wrap', display: 'flex' }}>
+          <Box sx={{ rowGap: 1, columnGap: 2, flexWrap: 'wrap', display: 'flex' }}>
             <Box>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Zone

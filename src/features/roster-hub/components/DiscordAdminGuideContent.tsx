@@ -573,7 +573,7 @@ const TroubleshootRow: React.FC<TroubleshootRowProps> = ({ title, body, isDark }
     <Typography
       variant="caption"
      
-      sx={{ color: 'text.secondary',
+      sx={{
         display: 'block',
         lineHeight: 1.5,
         fontSize: '0.72rem',

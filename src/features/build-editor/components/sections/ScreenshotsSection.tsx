@@ -73,8 +73,6 @@ const ScreenshotsSectionComponent: React.FC = () => {
           <Typography
             variant="caption"
            
-           
-           
             sx={{ color: 'text.disabled', display: 'block', mb: 1.5, fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
           >
             No screenshots yet

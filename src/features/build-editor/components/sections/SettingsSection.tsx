@@ -52,9 +52,6 @@ const SettingsSectionComponent: React.FC = () => {
         <Typography
           variant="caption"
          
-         
-         
-         
           sx={{ color: 'text.secondary', display: 'block', fontWeight: 700, mb: 0.25,
             fontSize: 11,
             letterSpacing: 0.8,

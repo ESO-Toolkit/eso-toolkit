@@ -491,9 +491,6 @@ export const UserReports: React.FC = () => {
                   >
                     <Box sx={{ justifyContent: 'space-between', gap: 1, alignItems: 'flex-start', display: 'flex' }}
                      
-                     
-                     
-                     
                     >
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Skeleton variant="text" width="72%" height={22} />
@@ -654,24 +651,26 @@ export const UserReports: React.FC = () => {
                 placeholder="Search by title or zone..."
                 value={filters.searchText}
                 onChange={handleSearchChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: filters.searchText && (
-                    <InputAdornment position="end">
-                      <IconButton
-                        size="small"
-                        onClick={handleClearSearch}
-                        edge="end"
-                        aria-label="clear search"
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: filters.searchText && (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={handleClearSearch}
+                          edge="end"
+                          aria-label="clear search"
+                        >
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
               />
               <FormControl size="small" sx={{ minWidth: isDesktop ? 200 : '100%' }}>

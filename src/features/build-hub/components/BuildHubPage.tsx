@@ -239,7 +239,6 @@ export const BuildHubPage: React.FC = () => {
             <Typography
               variant="body2"
              
-             
               sx={{ color: 'text.disabled', mt: 0.75, maxWidth: 360, mx: 'auto' }}
             >
               {filters.esoClass || filters.role || filters.tag || filters.search

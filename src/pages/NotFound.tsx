@@ -22,11 +22,7 @@ export const NotFound: React.FC = () => {
     <Container maxWidth="md">
       <Box
        
-        flexDirection="column" sx={{ justifyContent: 'center', gap: 3, textAlign: 'center', alignItems: 'center', minHeight: '60vh', display: 'flex' }}
-       
-       
-       
-       
+        sx={{ flexDirection: 'column', justifyContent: 'center', gap: 3, textAlign: 'center', alignItems: 'center', minHeight: '60vh', display: 'flex' }}
        
       >
         <Typography

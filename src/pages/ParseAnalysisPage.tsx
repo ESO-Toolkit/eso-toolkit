@@ -1237,7 +1237,6 @@ const ParseAnalysisPageContent: React.FC = () => {
           <Typography
             variant="h3"
            
-           
             sx={{ color: activityColor, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
           >
             {percentDisplay}%
@@ -1368,7 +1367,6 @@ const ParseAnalysisPageContent: React.FC = () => {
           <Typography
             variant="h3"
            
-           
             sx={{ color: cpmColor, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
           >
             {cpm.toFixed(1)}
@@ -1435,7 +1433,6 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Typography
             variant="h3"
-           
            
             sx={{ color: 'primary.main', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
           >
@@ -1714,7 +1711,6 @@ const ParseAnalysisPageContent: React.FC = () => {
             direction="row"
             spacing={1}
            
-           
             sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}
           >
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
@@ -1755,7 +1751,6 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Typography
             variant="h3"
-           
            
             sx={{ color: weaveColor, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
           >
@@ -2099,7 +2094,6 @@ const ParseAnalysisPageContent: React.FC = () => {
                       <Typography
                         variant="caption"
                        
-                       
                         sx={{ color: 'primary.main', fontWeight: 700, lineHeight: 1 }}
                       >
                         {step}
@@ -2295,7 +2289,6 @@ const ParseAnalysisPageContent: React.FC = () => {
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={2} sx={{ justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' } }}
-               
                
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>

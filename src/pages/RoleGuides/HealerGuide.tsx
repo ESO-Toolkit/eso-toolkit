@@ -290,7 +290,7 @@ export const HealerGuide: React.FC = () => {
               <Paper sx={frostCardSx(theme)}>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
                   <Box
-                    sx={{ color: 'text.secondary', fontWeight: 800,
+                    sx={{
                       width: 28,
                       height: 28,
                       borderRadius: '50%',
@@ -516,12 +516,14 @@ export const HealerGuide: React.FC = () => {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search sets, aliases, or slots..."
                 aria-label="Search healer gear sets"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
                 sx={{ minWidth: { xs: '100%', md: 320 } }}
               />

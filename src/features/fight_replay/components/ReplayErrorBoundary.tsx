@@ -388,7 +388,6 @@ const ErrorFallbackUI: React.FC<{
                         variant="body2"
                         component="pre"
                        
-                       
                         sx={{ fontFamily: 'monospace', fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                       >
                         {error.stack}
@@ -403,7 +402,6 @@ const ErrorFallbackUI: React.FC<{
                       <Typography
                         variant="body2"
                         component="pre"
-                       
                        
                         sx={{ fontFamily: 'monospace', fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                       >

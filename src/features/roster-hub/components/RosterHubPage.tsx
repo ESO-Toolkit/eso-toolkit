@@ -246,7 +246,6 @@ export const RosterHubPage: React.FC = () => {
             <Typography
               variant="body2"
              
-             
               sx={{ color: 'text.disabled', mt: 0.75, maxWidth: 360, mx: 'auto' }}
             >
               {filters.trial || filters.tag || filters.search

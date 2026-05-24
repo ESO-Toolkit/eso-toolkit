@@ -166,7 +166,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
                       >
                         <Chip
                           label={
-                            <Box display="flex" alignItems="center" gap={0.5}>
+                            <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
                               <span>🧪</span>
                               <span>{skill.recipe?.recipeSummary}</span>
                               {skill.recipe?.confidence && skill.recipe.confidence < 1.0 && (
@@ -199,7 +199,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
               )}
 
               {/* All effects for this grimoire, grouped by name */}
-              <Box display="flex" flexWrap="wrap" gap={0.5} sx={{ pl: 1 }}>
+              <Box sx={{ flexWrap: 'wrap', gap: 0.5, display: 'flex', pl: 1 }}>
                 {(() => {
                   // Group effects by name, combining different types of the same name
                   const groupedEffects = allEffects.reduce(
@@ -248,7 +248,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
                       >
                         <Chip
                           label={
-                            <Box display="flex" alignItems="center" gap={0.5}>
+                            <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
                               <span>{iconList}</span>
                               <span>{effectGroup.abilityName}</span>
                             </Box>
@@ -319,7 +319,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
               📜 {skill.skillName}
             </Typography>
 
-            <Box display="flex" flexWrap="wrap" gap={0.5}>
+            <Box sx={{ flexWrap: 'wrap', gap: 0.5, display: 'flex' }}>
               {(() => {
                 // Group effects by name, combining different types of the same name
                 const groupedEffects = skill.effects.reduce(
@@ -363,7 +363,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
                     >
                       <Chip
                         label={
-                          <Box display="flex" alignItems="center" gap={0.5}>
+                          <Box sx={{ gap: 0.5, display: 'flex', alignItems: 'center' }}>
                             <span>{iconList}</span>
                             <span>{effectGroup.abilityName}</span>
                           </Box>

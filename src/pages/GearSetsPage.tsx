@@ -291,12 +291,14 @@ export const GearSetsPage: React.FC = () => {
           onChange={handleSearchChange}
           size="small"
           fullWidth
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" color="action" />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+            },
           }}
         />
 

@@ -568,7 +568,7 @@ export const LeaderboardLogsPage: React.FC = () => {
       >
         <CardContent>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
-            <Box flexGrow={1} sx={{ gap: 1, alignItems: 'center', display: 'flex' }}>
+            <Box sx={{ flexGrow: 1, gap: 1, alignItems: 'center', display: 'flex' }}>
               <EmojiEventsIcon color="primary" />
               <Box>
                 <Typography variant="h4" component="h1">
@@ -792,7 +792,6 @@ export const LeaderboardLogsPage: React.FC = () => {
           <Stack
             direction="row"
             spacing={2}
-           
            
             sx={{ justifyContent: 'space-between', alignItems: 'center', mt: 3 }}
           >

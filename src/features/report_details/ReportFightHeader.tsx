@@ -466,7 +466,6 @@ export const ReportFightHeader: React.FC = () => {
       <Stack
         direction="row"
        
-       
         sx={{ justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, sm: 3, md: 4 } }}
       >
         <Typography
