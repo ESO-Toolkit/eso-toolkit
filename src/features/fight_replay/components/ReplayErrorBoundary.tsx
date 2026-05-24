@@ -11,7 +11,7 @@
  * @module ReplayErrorBoundary
  */
 
-import { ErrorOutline, Refresh, Info, Computer, BugReport } from '@mui/icons-material';
+import { ErrorOutlined, Refresh, Info, Computer, BugReport } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -316,7 +316,7 @@ const ErrorFallbackUI: React.FC<{
         <Stack spacing={3}>
           {/* Icon and Title */}
           <Box>
-            <ErrorOutline sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
+            <ErrorOutlined sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
             <Typography
               variant="h5"
               component="h2"

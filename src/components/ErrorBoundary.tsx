@@ -1,4 +1,4 @@
-import { ErrorOutline, Refresh, BugReport } from '@mui/icons-material';
+import { ErrorOutlined, Refresh, BugReport } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -153,7 +153,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         >
           <Paper elevation={3} sx={{ maxWidth: 600, width: '100%', p: 4 }}>
             <Stack spacing={3} alignItems="center">
-              <ErrorOutline color="error" sx={{ fontSize: 64 }} />
+              <ErrorOutlined color="error" sx={{ fontSize: 64 }} />
 
               <Typography
                 variant="h4"
