@@ -133,7 +133,7 @@ const GuideSectionComponent: React.FC = () => {
           placeholder="Write your guide here..."
           value={guide.content}
           onChange={(e) => dispatch(setGuideContent(e.target.value))}
-          inputProps={{ 'aria-label': 'Build guide content', maxLength: 50000 }}
+          slotProps={{ htmlInput: { 'aria-label': 'Build guide content', maxLength: 50000 } }}
           sx={glassInputSx(isDark)}
         />
       </Box>
@@ -156,7 +156,7 @@ const GuideSectionComponent: React.FC = () => {
             placeholder="https://youtube.com/watch?v=..."
             value={guide.youtubeUrl}
             onChange={(e) => dispatch(setGuideYoutubeUrl(e.target.value))}
-            inputProps={{ 'aria-label': 'YouTube video URL' }}
+            slotProps={{ htmlInput: { 'aria-label': 'YouTube video URL' } }}
             sx={glassInputSx(isDark)}
           />
         </Box>
@@ -171,7 +171,7 @@ const GuideSectionComponent: React.FC = () => {
             placeholder="https://... (banner image)"
             value={guide.bannerImageUrl}
             onChange={(e) => dispatch(setGuideBannerUrl(e.target.value))}
-            inputProps={{ 'aria-label': 'Banner image URL' }}
+            slotProps={{ htmlInput: { 'aria-label': 'Banner image URL' } }}
             sx={glassInputSx(isDark)}
           />
           {guide.bannerImageUrl && !sanitizeImageUrl(guide.bannerImageUrl) && (
@@ -255,8 +255,6 @@ const GuideSectionComponent: React.FC = () => {
         >
           <Typography
             variant="caption"
-           
-           
            
             sx={{ color: 'text.disabled', display: 'block', mb: 1.5, fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
           >

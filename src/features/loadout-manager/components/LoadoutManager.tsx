@@ -501,7 +501,6 @@ export const LoadoutManager: React.FC = () => {
             direction={{ xs: 'column', md: 'row' }}
             spacing={1.5} sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
            
-           
           >
             {/* Left: back + icon lockup */}
             <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
@@ -743,7 +742,6 @@ export const LoadoutManager: React.FC = () => {
             direction={{ xs: 'column', md: 'row' }}
             spacing={1} sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
            
-           
           >
             {/* Left cluster: character selectors + page controls */}
             <Stack
@@ -863,12 +861,14 @@ export const LoadoutManager: React.FC = () => {
                 onChange={handleSearchChange}
                 placeholder="Search setups..."
                 size="small"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
                 sx={{
                   width: { xs: '100%', sm: 180 },
@@ -980,13 +980,15 @@ export const LoadoutManager: React.FC = () => {
         anchor="right"
         open={drawerOpen && Boolean(selectedSetup)}
         onClose={() => setDrawerOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          sx: {
-            width: { xs: '100%', sm: 440 },
-            backdropFilter: 'blur(12px)',
-            backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
-            borderLeft: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        keepMounted
+        slotProps={{
+          paper: {
+            sx: {
+              width: { xs: '100%', sm: 440 },
+              backdropFilter: 'blur(12px)',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+              borderLeft: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >
@@ -1064,12 +1066,14 @@ export const LoadoutManager: React.FC = () => {
       <Dialog
         open={renameDialogOpen}
         onClose={() => setRenameDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            backdropFilter: 'blur(20px)',
-            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
-            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              backdropFilter: 'blur(20px)',
+              backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >
@@ -1096,12 +1100,14 @@ export const LoadoutManager: React.FC = () => {
       <Dialog
         open={clearDialogOpen}
         onClose={() => setClearDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            backdropFilter: 'blur(20px)',
-            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
-            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              backdropFilter: 'blur(20px)',
+              backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >

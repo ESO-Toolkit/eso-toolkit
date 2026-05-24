@@ -422,7 +422,7 @@ const TargetSelectorComponent: React.FC = () => {
             renderValue={renderValue}
             MenuProps={{
               // Temporarily remove custom transition to fix menu attachment
-              PaperProps: {
+              slotProps: { paper: {
                 sx: {
                   mt: 1,
                   borderRadius: 2,
@@ -465,7 +465,7 @@ const TargetSelectorComponent: React.FC = () => {
                     },
                   },
                 },
-              },
+              } },
               anchorOrigin: {
                 vertical: 'bottom',
                 horizontal: 'left',

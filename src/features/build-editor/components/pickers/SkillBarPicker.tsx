@@ -421,12 +421,14 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
             size="small"
             fullWidth
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+                  </InputAdornment>
+                ),
+              },
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -929,7 +931,6 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
     <Box>
       <Stack
         direction="row"
-       
        
         sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5, px: 0.5 }}
       >

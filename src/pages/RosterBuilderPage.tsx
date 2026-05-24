@@ -2577,10 +2577,10 @@ export const RosterBuilderPage: React.FC = () => {
                   popper: {
                     disablePortal: true,
                   },
-                }}
-                ChipProps={{
-                  onMouseDown: (event) => {
-                    event.stopPropagation();
+                  chip: {
+                    onMouseDown: (event: React.MouseEvent) => {
+                      event.stopPropagation();
+                    },
                   },
                 }}
                 renderInput={(params) => (
@@ -2596,9 +2596,9 @@ export const RosterBuilderPage: React.FC = () => {
                     sx={glassTextField}
                   />
                 )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => {
-                    const { key, ...chipProps } = getTagProps({ index });
+                renderValue={(value, getItemProps) =>
+                  (value as string[]).map((option, index) => {
+                    const { key, ...chipProps } = getItemProps({ index });
                     return (
                       <Chip
                         label={option}

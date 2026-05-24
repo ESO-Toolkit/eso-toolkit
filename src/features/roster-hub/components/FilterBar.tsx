@@ -193,7 +193,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                 '& .MuiSelect-select': { py: '7px' },
               }}
               MenuProps={{
-                PaperProps: {
+                slotProps: { paper: {
                   sx: {
                     mt: 0.5,
                     borderRadius: 2,
@@ -221,7 +221,7 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                       },
                     },
                   },
-                },
+                } },
               }}
             >
               <MenuItem value="">All Trials</MenuItem>

@@ -322,12 +322,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               fullWidth
               rows={12}
               value={getPreview()}
-              InputProps={{
-                readOnly: true,
-                sx: {
-                  fontFamily: 'monospace',
-                  fontSize: '0.75rem',
-                  bgcolor: 'background.paper',
+              slotProps={{
+                input: {
+                  readOnly: true,
+                  sx: {
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    bgcolor: 'background.paper',
+                  },
                 },
               }}
             />

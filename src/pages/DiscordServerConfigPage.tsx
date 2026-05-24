@@ -715,12 +715,14 @@ export const DiscordServerConfigPage: React.FC = () => {
                       placeholder="Search servers..."
                       value={guildSearch}
                       onChange={(e) => setGuildSearch(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-                          </InputAdornment>
-                        ),
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+                            </InputAdornment>
+                          ),
+                        },
                       }}
                       sx={{ mb: 2 }}
                     />
@@ -1230,10 +1232,10 @@ export const DiscordServerConfigPage: React.FC = () => {
                 onChange={(_e, value) => setAllowedRoleIds(value)}
                 getOptionLabel={(r) => r.name}
                 isOptionEqualToValue={(opt, val) => opt.id === val.id}
-                renderTags={(value, getTagProps) =>
-                  value.map((r, idx) => (
+                renderValue={(value, getItemProps) =>
+                  (value as typeof allowedRoleIds).map((r, idx) => (
                     <Chip
-                      {...getTagProps({ index: idx })}
+                      {...getItemProps({ index: idx })}
                       key={r.id}
                       label={r.name}
                       size="small"

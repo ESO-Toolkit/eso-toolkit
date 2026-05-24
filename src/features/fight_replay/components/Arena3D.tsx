@@ -642,11 +642,13 @@ export const Arena3D: React.FC<Arena3DProps> = ({
                     : undefined
                 }
                 disableScrollLock
-                MenuListProps={{
-                  dense: true,
-                  onContextMenu: (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
+                slotProps={{
+                  list: {
+                    dense: true,
+                    onContextMenu: (event: React.MouseEvent) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    },
                   },
                 }}
                 onContextMenu={(event) => {
@@ -700,20 +702,20 @@ export const Arena3D: React.FC<Arena3DProps> = ({
                 disableAutoFocus
                 disableEnforceFocus
                 disableRestoreFocus
-                MenuListProps={{
-                  dense: true,
-                  onContextMenu: (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  },
-                  onMouseLeave: handleGroupMouseLeave,
-                  sx: { pointerEvents: 'auto' },
-                }}
-                onContextMenu={(event) => {
+                onContextMenu={(event: React.MouseEvent) => {
                   event.preventDefault();
                   event.stopPropagation();
                 }}
                 slotProps={{
+                  list: {
+                    dense: true,
+                    onContextMenu: (event: React.MouseEvent) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    },
+                    onMouseLeave: handleGroupMouseLeave,
+                    sx: { pointerEvents: 'auto' },
+                  },
                   paper: {
                     onMouseLeave: handleGroupMouseLeave,
                     sx: { pointerEvents: 'auto' },

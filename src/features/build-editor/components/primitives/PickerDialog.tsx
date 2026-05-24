@@ -71,46 +71,48 @@ const Search: React.FC<SearchProps> = ({
         size="small"
         fullWidth
         autoFocus={autoFocus}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-            </InputAdornment>
-          ),
-          endAdornment: (
-            <InputAdornment position="end" sx={{ gap: 0.5 }}>
-              {resultCount != null && value.trim().length >= 2 && (
-                <Typography
-                  sx={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {resultCount} result{resultCount !== 1 ? 's' : ''}
-                </Typography>
-              )}
-              {value.length > 0 && (
-                <IconButton
-                  size="small"
-                  onClick={() => onChange('')}
-                  aria-label="Clear search"
-                  tabIndex={-1}
-                  sx={{
-                    p: 0.25,
-                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                    '&:hover': {
-                      color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
-                    },
-                  }}
-                >
-                  <CloseIcon sx={{ fontSize: 15 }} />
-                </IconButton>
-              )}
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end" sx={{ gap: 0.5 }}>
+                {resultCount != null && value.trim().length >= 2 && (
+                  <Typography
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {resultCount} result{resultCount !== 1 ? 's' : ''}
+                  </Typography>
+                )}
+                {value.length > 0 && (
+                  <IconButton
+                    size="small"
+                    onClick={() => onChange('')}
+                    aria-label="Clear search"
+                    tabIndex={-1}
+                    sx={{
+                      p: 0.25,
+                      color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                      '&:hover': {
+                        color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
+                      },
+                    }}
+                  >
+                    <CloseIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                )}
+              </InputAdornment>
+            ),
+          },
         }}
         sx={{
           '& .MuiOutlinedInput-root': {

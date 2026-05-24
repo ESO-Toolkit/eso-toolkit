@@ -301,8 +301,8 @@ const BuildCard: React.FC<BuildCardProps> = ({ build, isDarkMode, onDelete }) =>
           {build.description && (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{
+             
+              sx={{ color: 'text.secondary',
                 mb: 1.75,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -586,8 +586,8 @@ const RosterCard: React.FC<RosterCardProps> = ({ roster, isDarkMode, onDelete })
           {roster.description && (
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{
+             
+              sx={{ color: 'text.secondary',
                 mb: 1.75,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -786,7 +786,7 @@ const BioDialog: React.FC<BioDialogProps> = ({ open, current, saving, onSave, on
           maxRows={5}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          inputProps={{ maxLength: 200 }}
+          slotProps={{ htmlInput: { maxLength: 200 } }}
           helperText={`${value.length}/200`}
           placeholder="Tell the community a bit about yourself..."
           sx={{ mt: 1 }}

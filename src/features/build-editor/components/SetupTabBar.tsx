@@ -137,7 +137,7 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             if (e.key === 'Enter') onCommitRename();
             if (e.key === 'Escape') onCancelRename();
           }}
-          inputProps={{ maxLength: 32, 'aria-label': 'Rename setup' }}
+          slotProps={{ htmlInput: { maxLength: 32, 'aria-label': 'Rename setup' } }}
           sx={{
             width: 120,
             '& .MuiOutlinedInput-root': {
@@ -241,7 +241,6 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             />
             <Typography
               variant="caption"
-             
              
               sx={{ color: 'inherit', fontWeight: 'inherit',
                 fontSize: 13,

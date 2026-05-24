@@ -116,7 +116,6 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
             <Stack
               direction="row"
              
-             
               sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}
             >
               <Typography
@@ -448,12 +447,14 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
         }}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            backdropFilter: 'blur(20px)',
-            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.92)' : 'rgba(255,255,255,0.96)',
-            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              backdropFilter: 'blur(20px)',
+              backgroundColor: isDarkMode ? 'rgba(15,15,25,0.92)' : 'rgba(255,255,255,0.96)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >

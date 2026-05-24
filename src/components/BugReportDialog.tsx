@@ -183,7 +183,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           />
         </Box>
 
-        <Box textAlign="center">
+        <Box sx={{ textAlign: 'center' }}>
           <Typography
             variant="h5"
             sx={{
@@ -200,8 +200,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ maxWidth: 360, mx: 'auto', lineHeight: 1.7 }}
+           
+            sx={{ color: 'text.secondary', maxWidth: 360, mx: 'auto', lineHeight: 1.7 }}
           >
             {isBugReport
               ? 'Thank you for reporting this issue. Our team has been notified and will investigate.'
@@ -310,7 +310,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               flexShrink: 0,
             }}
           />
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             We&apos;ll automatically include your current page URL and browser info to help with
             diagnosis.
           </Typography>
@@ -423,7 +423,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             >
               {isBugReport ? 'Report a Bug' : 'Send Feedback'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.65 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', opacity: 0.65 }}>
               {isBugReport
                 ? 'Help us improve by reporting issues'
                 : 'Share your thoughts and suggestions'}

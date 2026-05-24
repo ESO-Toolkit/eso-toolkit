@@ -314,25 +314,28 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
             label="Search Food or Drink"
             placeholder={`Type at least ${MIN_SEARCH_LENGTH} characters`}
             variant="outlined"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  <Tooltip title="Open Food Selector knowledge base">
-                    <IconButton
-                      size="small"
-                      component={RouterLink}
-                      to={FOOD_SELECTOR_KB_URL}
-                      aria-label="Open Food Selector knowledge base"
-                      sx={{ mr: 0.5 }}
-                      onMouseDown={(event) => event.preventDefault()}
-                    >
-                      <HelpOutlined fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  {params.InputProps.endAdornment}
-                </>
-              ),
+            slotProps={{
+              ...params.slotProps,
+              input: {
+                ...params.slotProps.input,
+                endAdornment: (
+                  <>
+                    <Tooltip title="Open Food Selector knowledge base">
+                      <IconButton
+                        size="small"
+                        component={RouterLink}
+                        to={FOOD_SELECTOR_KB_URL}
+                        aria-label="Open Food Selector knowledge base"
+                        sx={{ mr: 0.5 }}
+                        onMouseDown={(event) => event.preventDefault()}
+                      >
+                        <HelpOutlined fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {params.slotProps.input.endAdornment}
+                  </>
+                ),
+              },
             }}
           />
         )}
@@ -345,10 +348,8 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
           const iconUrl = getCategoryIconUrl(currentItem.category);
           return (
             <Box
-              display="flex"
-              alignItems="center"
-              gap={1.5}
-              sx={{
+             
+              sx={{ gap: 1.5, display: 'flex', alignItems: 'center',
                 px: 1.5,
                 py: 1,
                 borderRadius: 1,
@@ -362,7 +363,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
               {iconUrl && (
                 <img src={iconUrl} alt="" style={{ width: 36, height: 36, flexShrink: 0 }} />
               )}
-              <Box flex={1} minWidth={0}>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                   <Typography noWrap sx={{ fontWeight: 600 }}>
                     {currentItem.name}

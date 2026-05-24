@@ -155,7 +155,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       fullScreen={isMobile}
       disableEnforceFocus
       className="glass-dialog"
-      TransitionComponent={SlideUpTransition}
+      slots={{ transition: SlideUpTransition }}
       slotProps={{
         paper: {
           sx: {
@@ -434,7 +434,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               zIndex: 1,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Preview unavailable
             </Typography>
             <Button size="small" onClick={handleOpenFullPage} startIcon={<OpenInNew />}>
@@ -557,8 +557,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               />
               <Typography
                 variant="body2"
-                fontWeight={600}
-                sx={{
+               
+                sx={{ fontWeight: 600,
                   fontSize: '0.8rem',
                   color: commentsOpen
                     ? isDark

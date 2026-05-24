@@ -971,8 +971,9 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                   {...params}
                   placeholder="Search ESOUI addons…"
                   slotProps={{
+                    ...params.slotProps,
                     input: {
-                      ...params.InputProps,
+                      ...params.slotProps.input,
                       startAdornment: (
                         <>
                           {searchLoading ? (
@@ -980,7 +981,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
                           ) : (
                             <Extension sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />
                           )}
-                          {params.InputProps.startAdornment}
+                          {params.slotProps.input.startAdornment}
                         </>
                       ),
                     },
