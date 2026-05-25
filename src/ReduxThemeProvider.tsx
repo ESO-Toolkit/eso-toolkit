@@ -276,16 +276,6 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               },
             },
           },
-          MuiIconButton: {
-            styleOverrides: {
-              root: {
-                '@media (pointer: coarse)': {
-                  minWidth: 44,
-                  minHeight: 44,
-                },
-              },
-            },
-          },
           MuiChip: {
             styleOverrides: {
               root: {
