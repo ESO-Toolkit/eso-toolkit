@@ -29,6 +29,15 @@ import {
 import { setSelectedFriendlyPlayerId, setSelectedTargetIds } from '../../../store/ui/uiSlice';
 import { useAppDispatch } from '../../../store/useAppDispatch';
 
+const SECTION_HEADER_SX = {
+  px: 2,
+  pt: 1.5,
+  pb: 0.5,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 0.75,
+} as const;
+
 interface CombinedFilterDropdownProps {
   players: Array<{ id: number; name: string }>;
 }
@@ -47,7 +56,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   const rawSelectedTargetIds = useSelector(selectSelectedTargetIds);
   const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
-  const selectedTargetIds = React.useMemo(() => rawSelectedTargetIds || [], [rawSelectedTargetIds]);
+  const selectedTargetIds = rawSelectedTargetIds || [];
 
   const targetsList = React.useMemo(() => {
     if (!fight?.enemyNPCs || !reportMasterData?.actorsById) return [];
@@ -111,7 +120,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
       const isCurrentlySelected = individualTargets.includes(targetId);
       if (isCurrentlySelected) {
         const newTargets = individualTargets.filter((id) => id !== targetId);
-        dispatch(setSelectedTargetIds(newTargets.length > 0 ? newTargets : []));
+        dispatch(setSelectedTargetIds(newTargets));
       } else {
         dispatch(setSelectedTargetIds([...individualTargets, targetId]));
       }
@@ -163,14 +172,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
     },
   }), [isDarkMode]);
 
-  const sectionHeaderSx = React.useMemo(() => ({
-    px: 2,
-    pt: 1.5,
-    pb: 0.5,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 0.75,
-  }), []);
+  const sectionHeaderSx = SECTION_HEADER_SX;
 
   const listItemSx = React.useMemo(() => ({
     borderRadius: '8px',
@@ -200,9 +202,9 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   return (
     <>
       <Button
-        aria-describedby={popoverId}
+        aria-controls={popoverId}
         aria-expanded={open}
-        aria-haspopup="true"
+        aria-haspopup="dialog"
         onClick={(e) => setAnchorEl(e.currentTarget)}
         endIcon={
           <KeyboardArrowDownIcon
@@ -489,8 +491,10 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           </Typography>
         </Box>
 
-        <Box role="group" aria-label="Player filter" sx={{ pb: 1 }}>
+        <Box role="listbox" aria-label="Player filter" sx={{ pb: 1 }}>
           <ListItemButton
+            role="option"
+            aria-selected={!selectedFriendlyPlayerId}
             onClick={() => handleSelectPlayer(null)}
             selected={!selectedFriendlyPlayerId}
             sx={{
@@ -531,6 +535,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
             return (
               <ListItemButton
                 key={player.id}
+                role="option"
+                aria-selected={isSelected}
                 onClick={() => handleSelectPlayer(player.id)}
                 selected={isSelected}
                 sx={{
