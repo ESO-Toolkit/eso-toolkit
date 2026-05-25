@@ -1146,8 +1146,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       // Use actual encountered count since minis can be skipped
                       expectedTotalBosses = encounteredBosses;
                     } else if (zoneName.includes('Ossein Cage')) {
-                      // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
-                      // Minis don't affect boss naming, use actual encountered count
+                      // Ossein Cage has 7 encounters (3 ranked + 4 additional bosses)
+                      // Some bosses are optional/route-dependent, use actual encountered count
                       expectedTotalBosses = encounteredBosses;
                     } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
                     else if (zoneName.includes('Rockgrove')) {

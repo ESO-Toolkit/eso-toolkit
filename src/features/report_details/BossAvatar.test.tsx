@@ -34,6 +34,10 @@ describe('BossAvatar', () => {
       const serpentFull = getBossAvatarSrc('The Serpent');
       const serpentShort = getBossAvatarSrc('Serpent');
       expect(serpentFull).toBe(serpentShort);
+
+      const manticoraC = getBossAvatarSrc('Possessed Manticora');
+      const mantikoraK = getBossAvatarSrc('Possessed Mantikora');
+      expect(manticoraC).toBe(mantikoraK);
     });
 
     it('should handle instance numbers', () => {
