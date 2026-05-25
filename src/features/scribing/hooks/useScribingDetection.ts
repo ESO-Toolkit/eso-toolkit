@@ -524,9 +524,9 @@ async function _detectAffixScripts(
       VALID_AFFIX_SCRIPT_IDS.forEach((id) => GRIMOIRE_COMPATIBLE_AFFIX_IDS.add(id));
     }
 
-    // Find casts of this ability
+    // Find casts of this ability (exclude begincast events for accurate counting)
     const casts = combatEvents.casts.filter(
-      (e) => e.sourceID === playerId && e.abilityGameID === abilityId,
+      (e) => e.type === 'cast' && e.sourceID === playerId && e.abilityGameID === abilityId,
     );
 
     if (casts.length === 0) {
@@ -568,8 +568,9 @@ async function _detectAffixScripts(
         }
       };
 
-      // Next cast that isn't the contingency itself is the ideal trigger signal.
-      recordNext(events.casts, (event) => event.abilityGameID !== ability);
+      // Next completed cast that isn't the contingency itself is the ideal trigger signal.
+      const completedCasts = events.casts.filter((e) => e.type === 'cast');
+      recordNext(completedCasts, (event) => event.abilityGameID !== ability);
 
       // Fallbacks: combat or healing events triggered by the follow-up skill.
       recordNext(events.damage);
@@ -588,7 +589,7 @@ async function _detectAffixScripts(
 
       if (candidates.length === 0) {
         // As a final fallback, allow a subsequent cast even if it's the same ability.
-        const nextCast = events.casts.find(
+        const nextCast = completedCasts.find(
           (event) => event.sourceID === player && event.timestamp > cast.timestamp,
         );
         if (nextCast) {

@@ -635,7 +635,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                               opacity: 0.75,
                             }}
                           >
-                            {Math.round(finalScribedData.recipe.confidence * 100)}% match confidence
+                            {Math.floor(finalScribedData.recipe.confidence * 100)}% match confidence
                           </Typography>
                         )}
                       </Box>
@@ -678,7 +678,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             opacity: 0.7,
                           }}
                         >
-                          ({Math.round(finalScribedData.signatureScript.confidence * 100)}%)
+                          ({Math.floor(finalScribedData.signatureScript.confidence * 100)}%)
                         </Typography>
                       )}
                     </Box>
@@ -761,7 +761,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                                     opacity: 0.7,
                                   }}
                                 >
-                                  ({Math.round(affixScript.confidence * 100)}%)
+                                  ({Math.floor(affixScript.confidence * 100)}%)
                                 </Typography>
                               )}
                             </Box>
