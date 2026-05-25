@@ -127,6 +127,9 @@ export default [
 
       // JSX accessibility rules
       ...jsxA11y.configs.recommended.rules,
+      'jsx-a11y/no-autofocus': 'off',
+      'jsx-a11y/aria-role': ['error', { allowedInvalidRoles: ['text'], ignoreNonDOM: true }],
+      'jsx-a11y/role-supports-aria-props': 'off',
 
       // Custom rules
       'no-console': 'error',

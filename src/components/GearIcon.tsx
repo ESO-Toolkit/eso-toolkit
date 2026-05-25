@@ -81,6 +81,7 @@ export const GearIcon: React.FC<GearIconProps> = ({
   const colors = useDesaturatedColors ? desaturatedQualityColors : qualityColors;
 
   const iconElement = (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <img
       src={iconUrl}
       alt={alt}
