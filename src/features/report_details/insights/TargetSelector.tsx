@@ -279,60 +279,6 @@ const TargetSelectorComponent: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        mb: 2,
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: '-4px',
-          left: '-4px',
-          right: '-4px',
-          bottom: '-4px',
-          borderRadius: '10px',
-          background: isDarkMode
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(147, 51, 234, 0.3) 50%, rgba(239, 68, 68, 0.2) 100%)'
-            : 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(147, 51, 234, 0.2) 50%, rgba(236, 72, 153, 0.15) 100%)',
-          padding: '2px',
-          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          maskComposite: 'xor',
-          WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'xor',
-          opacity: 0.6,
-          transition: 'opacity 0.3s ease',
-          pointerEvents: 'none',
-          zIndex: 1,
-        },
-        '&:hover::before': {
-          opacity: 1,
-        },
-      }}
-    >
-      <Box
-        sx={{
-          position: 'relative',
-          zIndex: 2,
-          background: isDarkMode
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 50%, rgba(51, 65, 85, 0.7) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 50%, rgba(241, 245, 249, 0.85) 100%)',
-          borderRadius: 2,
-          border: isDarkMode
-            ? '1px solid rgba(56, 189, 248, 0.2)'
-            : '1px solid rgba(59, 130, 246, 0.15)',
-          boxShadow: isDarkMode
-            ? '0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(56, 189, 248, 0.1)'
-            : '0 2px 12px rgba(59, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-          overflow: 'visible',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: isDarkMode
-              ? '0 8px 30px rgba(0, 0, 0, 0.4), 0 0 40px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(56, 189, 248, 0.2)'
-              : '0 4px 20px rgba(59, 130, 246, 0.15), 0 0 30px rgba(147, 51, 234, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-          },
-        }}
-      >
         <FormControl
           fullWidth
           size="small"
@@ -340,14 +286,14 @@ const TargetSelectorComponent: React.FC = () => {
             '& .MuiInputLabel-root': {
               fontFamily: 'Space Grotesk, Inter, system-ui',
               fontWeight: 600,
-              fontSize: '0.875rem',
+              fontSize: '0.8rem',
               color: isDarkMode ? 'rgba(226, 232, 240, 0.8)' : 'rgba(51, 65, 85, 0.8)',
-              transform: 'translate(16px, -6px) scale(0.75)',
+              transform: 'translate(12px, -6px) scale(0.75)',
               background: isDarkMode
                 ? 'linear-gradient(90deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%)'
                 : 'linear-gradient(90deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-              padding: '0 8px',
-              borderRadius: '6px',
+              padding: '0 6px',
+              borderRadius: '4px',
               zIndex: 1,
               '&.Mui-focused': {
                 color: isDarkMode ? '#38bdf8' : '#3b82f6',
@@ -372,31 +318,11 @@ const TargetSelectorComponent: React.FC = () => {
                 backgroundColor: 'transparent !important',
                 boxShadow: 'none !important',
                 overflow: 'visible',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: '-4px',
-                  left: '-4px',
-                  right: '-4px',
-                  bottom: '-4px',
-                  borderRadius: '10px',
-                  background: isDarkMode
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.6) 0%, rgba(147, 51, 234, 0.5) 50%, rgba(239, 68, 68, 0.4) 100%)'
-                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(147, 51, 234, 0.4) 50%, rgba(236, 72, 153, 0.3) 100%)',
-                  padding: '2px',
-                  mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  maskComposite: 'xor',
-                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                  WebkitMaskComposite: 'xor',
-                  opacity: 1,
-                  pointerEvents: 'none',
-                  zIndex: 3,
-                },
               },
               '& .MuiSelect-select': {
-                padding: '14px 16px',
+                padding: '8px 12px',
                 color: isDarkMode ? '#e2e8f0' : '#1e293b',
-                fontSize: '0.925rem',
+                fontSize: '0.825rem',
                 fontWeight: 500,
               },
               '& .MuiSelect-icon': {
@@ -586,8 +512,6 @@ const TargetSelectorComponent: React.FC = () => {
             ))}
           </Select>
         </FormControl>
-      </Box>
-    </Box>
   );
 };
 

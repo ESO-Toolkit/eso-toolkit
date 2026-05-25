@@ -22,7 +22,6 @@ import {
   Tabs,
   Tab,
   Tooltip,
-  FormControl,
   FormControlLabel,
   Switch,
   Icon,
@@ -42,8 +41,7 @@ import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
-import { BuffSourcePlayerSelector } from './insights/BuffSourcePlayerSelector';
-import { TargetSelector } from './insights/TargetSelector';
+import { CombinedFilterDropdown } from './insights/CombinedFilterDropdown';
 import { useFightNavigation } from './ReportFightHeader';
 
 // Lazy load heavy panel components for better initial page load performance
@@ -216,36 +214,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           gap: { xs: 2, md: 2 },
         }}
       >
-        {/* Selectors Group */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            flexWrap: { xs: 'wrap', md: 'nowrap' },
-            flex: { xs: '1 1 100%', md: '0 1 auto' },
-          }}
-        >
-          <FormControl
-            sx={{
-              minWidth: { xs: '100%', sm: 180, md: 200 },
-              maxWidth: { xs: '100%', md: 'none' },
-              overflow: 'visible',
-            }}
-          >
-            <TargetSelector />
-          </FormControl>
-
-          <FormControl
-            sx={{
-              minWidth: { xs: '100%', sm: 180, md: 200 },
-              maxWidth: { xs: '100%', md: 'none' },
-              overflow: 'visible',
-            }}
-          >
-            <BuffSourcePlayerSelector players={playerList} />
-          </FormControl>
-        </Box>
+        <CombinedFilterDropdown players={playerList} />
 
         {/* Fight Navigation - aligned with target selector */}
         <Box
