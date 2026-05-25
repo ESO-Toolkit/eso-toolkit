@@ -116,7 +116,7 @@ code {
   }
 }
 
-/* WCAG 2.2 touch target sizing — ensure 44px minimum on touch devices.
+/* WCAG 2.2 Target Size (Level AA) — 44px minimum on coarse-pointer devices.
    Scoped to navigation/standalone interactive elements only;
    inline prose links are excluded to preserve text flow. */
 @media (pointer: coarse) {
