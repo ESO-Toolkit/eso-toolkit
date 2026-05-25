@@ -23,6 +23,7 @@ import {
   Tabs,
   Tab,
   Tooltip,
+  FormControl,
   FormControlLabel,
   Switch,
   Icon,
@@ -226,23 +227,25 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             flex: { xs: '1 1 100%', md: '0 1 auto' },
           }}
         >
-          <Box
+          <FormControl
             sx={{
               minWidth: { xs: '100%', sm: 180, md: 200 },
               maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
             }}
           >
             <TargetSelector />
-          </Box>
+          </FormControl>
 
-          <Box
+          <FormControl
             sx={{
               minWidth: { xs: '100%', sm: 180, md: 200 },
               maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
             }}
           >
             <BuffSourcePlayerSelector players={playerList} />
-          </Box>
+          </FormControl>
         </Box>
 
         {/* Fight Navigation - aligned with target selector */}
