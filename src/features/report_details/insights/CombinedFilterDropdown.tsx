@@ -313,8 +313,10 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           </Typography>
         </Box>
 
-        <Box role="group" aria-label="Target filter" sx={{ pb: 0.5 }}>
+        <Box role="listbox" aria-label="Target filter" aria-multiselectable="true" sx={{ pb: 0.5 }}>
           <ListItemButton
+            role="option"
+            aria-selected={isAllBosses}
             onClick={handleToggleAllBosses}
             selected={isAllBosses}
             sx={{
@@ -354,6 +356,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           </ListItemButton>
 
           <ListItemButton
+            role="option"
+            aria-selected={isAllEnemies}
             onClick={handleToggleAllEnemies}
             selected={isAllEnemies}
             sx={{
@@ -408,6 +412,8 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
             return (
               <ListItemButton
                 key={target.id}
+                role="option"
+                aria-selected={isSelected}
                 onClick={() => handleToggleTarget(target.id)}
                 selected={isSelected}
                 sx={{

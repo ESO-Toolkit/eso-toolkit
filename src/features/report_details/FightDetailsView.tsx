@@ -121,7 +121,6 @@ const PanelLoadingFallback: React.FC<{ tabId: TabId }> = ({ tabId }) => (
 interface FightDetailsViewProps {
   fight: FightFragment;
   selectedTabId?: TabId;
-  isLoading: boolean;
   onTabChange: (tabId: TabId) => void;
   showExperimentalTabs: boolean;
   onToggleExperimentalTabs: (enabled: boolean) => void;
