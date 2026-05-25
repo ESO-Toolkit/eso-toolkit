@@ -600,7 +600,9 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 >
                   Damage Reduction Over Time
                 </Typography>
-                <EChart option={chartOption} height={300} group="fightReport" />
+                <Box role="img" aria-label="Damage reduction over time chart">
+                  <EChart option={chartOption} height={300} group="fightReport" />
+                </Box>
               </CardContent>
             </Card>
           ) : (

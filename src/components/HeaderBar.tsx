@@ -829,7 +829,11 @@ export const HeaderBar: React.FC = () => {
               </Button>
             </Box>
 
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+            <Box
+              component="nav"
+              aria-label="Main navigation"
+              sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}
+            >
               {navItems.map((item) => (
                 <Button
                   key={item.text}
@@ -862,6 +866,8 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleReportsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Assessment />}
+                aria-haspopup="true"
+                aria-expanded={Boolean(reportsAnchorEl)}
                 sx={navButtonSx(theme)}
               >
                 Reports
@@ -873,6 +879,8 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleToolsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Build />}
+                aria-haspopup="true"
+                aria-expanded={Boolean(toolsAnchorEl)}
                 sx={navButtonSx(theme)}
               >
                 Tools
@@ -1041,6 +1049,8 @@ export const HeaderBar: React.FC = () => {
                 open={mobileOpen}
                 onClick={handleDrawerToggle}
                 aria-label="toggle navigation"
+                aria-expanded={mobileOpen}
+                aria-controls="mobile-nav-menu"
               >
                 <HamburgerLines>
                   <Box className="hamburger-line" />
@@ -1423,7 +1433,14 @@ export const HeaderBar: React.FC = () => {
 
       {/* Mobile Bottom Sheet */}
       <MobileBackdrop open={mobileOpen} onClick={() => setMobileOpen(false)} />
-      <MobileBottomSheet open={mobileOpen} ref={sheetRef}>
+      <MobileBottomSheet
+        open={mobileOpen}
+        ref={sheetRef}
+        role="dialog"
+        aria-modal={mobileOpen}
+        aria-label="Navigation menu"
+        id="mobile-nav-menu"
+      >
         {/* Drag Handle */}
         <Box
           onTouchStart={handleSheetTouchStart}

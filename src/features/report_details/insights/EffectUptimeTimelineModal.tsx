@@ -286,7 +286,9 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
                 );
               })}
             </Box>
-            <EChart option={chartOption} height={380} group="fightReport" />
+            <Box role="img" aria-label="Effect uptime timeline chart">
+              <EChart option={chartOption} height={380} group="fightReport" />
+            </Box>
           </>
         ) : (
           <Box

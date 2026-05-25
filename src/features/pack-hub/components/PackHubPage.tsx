@@ -37,6 +37,10 @@ export const PackHubPage: React.FC = () => {
   const { filteredPacks, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     usePackHub(token);
 
+  React.useEffect(() => {
+    document.title = 'Pack Hub | ESO Toolkit';
+  }, []);
+
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editPack, setEditPack] = React.useState<HubPack | null>(null);

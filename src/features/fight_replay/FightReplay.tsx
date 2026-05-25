@@ -72,6 +72,10 @@ export const FightReplay: React.FC = () => {
   const { lookup, isActorPositionsLoading, actorPositionsError } = useActorPositionsTask();
   const { fight, isFightLoading } = useCurrentFight();
 
+  React.useEffect(() => {
+    document.title = 'Fight Replay | ESO Toolkit';
+  }, []);
+
   // Map Markers state (M0R or Elms format)
   const [markersState, setMarkersState] = useState<MapMarkersState | null>(null);
   const [markersModalOpen, setMarkersModalOpen] = useState(false);
@@ -244,7 +248,7 @@ export const FightReplay: React.FC = () => {
   // Loading state - only show if we're actually missing data
   if (isInitialLoading) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3 }} aria-live="polite">
         <Typography variant="h5" gutterBottom>
           Fight Replay - 3D View
         </Typography>
@@ -256,7 +260,7 @@ export const FightReplay: React.FC = () => {
   // Error state
   if (actorPositionsError) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3 }} aria-live="polite">
         <Typography variant="h5" gutterBottom>
           Fight Replay - 3D View
         </Typography>
@@ -268,7 +272,7 @@ export const FightReplay: React.FC = () => {
   // No fight selected
   if (!fight) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3 }} aria-live="polite">
         <Typography variant="h5" gutterBottom>
           Fight Replay - 3D View
         </Typography>
@@ -282,7 +286,7 @@ export const FightReplay: React.FC = () => {
   // No lookup data
   if (!lookup) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3 }} aria-live="polite">
         <Typography variant="h5" gutterBottom>
           Fight Replay - 3D View
         </Typography>

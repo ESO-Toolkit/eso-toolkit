@@ -46,6 +46,10 @@ export const AboutPage: React.FC = () => {
   >(undefined);
 
   React.useEffect(() => {
+    document.title = 'About | ESO Toolkit';
+  }, []);
+
+  React.useEffect(() => {
     let isMounted = true;
     const loadBuildInfo = async (): Promise<void> => {
       const info = await getBuildInfoAsync();

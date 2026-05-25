@@ -22,6 +22,10 @@ export const Login: React.FC = () => {
   const { isBanned, banReason, userError } = useAuth();
   const banMessage = banReason || userError;
 
+  React.useEffect(() => {
+    document.title = 'Log In | ESO Toolkit';
+  }, []);
+
   const handleLogin = (): boolean => {
     startPKCEAuth();
     return false;

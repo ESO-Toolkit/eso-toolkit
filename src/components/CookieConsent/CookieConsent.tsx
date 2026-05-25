@@ -556,7 +556,6 @@ export const CookieConsent: React.FC = () => {
             onClick={handleSavePreferences}
             variant="contained"
             size="small"
-            autoFocus
             sx={{
               textTransform: 'none',
               fontWeight: 600,

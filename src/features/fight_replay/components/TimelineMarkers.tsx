@@ -124,7 +124,16 @@ export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
         return (
           <Tooltip key={marker.id} title={getTooltipContent(marker)} placement="top" arrow>
             <Box
+              role="button"
+              tabIndex={0}
               onClick={() => handleMarkerClick(marker)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleMarkerClick(marker);
+                }
+              }}
+              aria-label={getTooltipContent(marker)}
               sx={{
                 position: 'absolute',
                 left: `${position}%`,

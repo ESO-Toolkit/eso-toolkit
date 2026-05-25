@@ -214,6 +214,10 @@ export const GearSetsPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
 
+  React.useEffect(() => {
+    document.title = 'Gear Sets | ESO Toolkit';
+  }, []);
+
   const allTypes = useMemo(() => [...new Set(ALL_GEAR_SETS.map((s) => s.setType))].sort(), []);
 
   const filtered = useMemo(() => {

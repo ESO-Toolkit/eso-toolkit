@@ -10,6 +10,10 @@ import { useNavigate } from 'react-router-dom';
 export const NotFound: React.FC = () => {
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    document.title = 'Page Not Found | ESO Toolkit';
+  }, []);
+
   const handleGoHome = (): void => {
     navigate('/');
   };
