@@ -957,7 +957,7 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       if (!player?.id) return;
 
       const playerId = String(player.id);
-      const gear = player?.combatantInfo?.gear ?? [];
+      const gear = (player?.combatantInfo?.gear ?? []).filter((g) => g.id !== 0);
       const resourceSnapshot = maxResourcesByPlayer[playerId];
       const playerResourceProfile = resourceSnapshot
         ? { stamina: resourceSnapshot.stamina, magicka: resourceSnapshot.magicka }
