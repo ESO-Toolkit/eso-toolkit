@@ -418,15 +418,16 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           </Box>
 
           {/* Sort */}
-          <FormControl
-            size="small"
-            sx={{ minWidth: { xs: '100%', sm: 150 } }}
-          >
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
             <Select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value as SortOption)}
               displayEmpty
-              startAdornment={<SortIcon sx={{ fontSize: '1rem', mr: 0.75, color: 'text.secondary', opacity: 0.6 }} />}
+              startAdornment={
+                <SortIcon
+                  sx={{ fontSize: '1rem', mr: 0.75, color: 'text.secondary', opacity: 0.6 }}
+                />
+              }
               sx={{
                 fontSize: '0.825rem',
                 fontWeight: 500,
@@ -468,15 +469,16 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           </FormControl>
 
           {/* Role filter */}
-          <FormControl
-            size="small"
-            sx={{ minWidth: { xs: '100%', sm: 140 } }}
-          >
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
             <Select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
               displayEmpty
-              startAdornment={<ViewStreamIcon sx={{ fontSize: '1rem', mr: 0.75, color: 'text.secondary', opacity: 0.6 }} />}
+              startAdornment={
+                <ViewStreamIcon
+                  sx={{ fontSize: '1rem', mr: 0.75, color: 'text.secondary', opacity: 0.6 }}
+                />
+              }
               sx={{
                 fontSize: '0.825rem',
                 fontWeight: 500,
@@ -549,7 +551,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                       background: isDarkMode
                         ? 'rgba(56, 189, 248, 0.1)'
                         : 'rgba(59, 130, 246, 0.08)',
-                      borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                      borderColor: isDarkMode
+                        ? 'rgba(56, 189, 248, 0.25)'
+                        : 'rgba(59, 130, 246, 0.2)',
                       color: isDarkMode ? '#93c5fd' : '#2563eb',
                     },
                   }}
@@ -574,20 +578,36 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                   borderRadius: '10px',
                   p: 0.875,
                   color: isDarkMode ? '#e2e8f0' : '#334155',
-                  background: metricsLayout === 'wrap'
-                    ? (isDarkMode ? alpha('#38bdf8', 0.15) : alpha('#3b82f6', 0.1))
-                    : (isDarkMode ? alpha(theme.palette.common.white, 0.04) : alpha(theme.palette.common.black, 0.03)),
+                  background:
+                    metricsLayout === 'wrap'
+                      ? isDarkMode
+                        ? alpha('#38bdf8', 0.15)
+                        : alpha('#3b82f6', 0.1)
+                      : isDarkMode
+                        ? alpha(theme.palette.common.white, 0.04)
+                        : alpha(theme.palette.common.black, 0.03),
                   border: `1px solid ${
                     metricsLayout === 'wrap'
-                      ? (isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)')
-                      : (isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.1)')
+                      ? isDarkMode
+                        ? 'rgba(56, 189, 248, 0.3)'
+                        : 'rgba(59, 130, 246, 0.25)'
+                      : isDarkMode
+                        ? 'rgba(56, 189, 248, 0.12)'
+                        : 'rgba(59, 130, 246, 0.1)'
                   }`,
                   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    background: metricsLayout === 'wrap'
-                      ? (isDarkMode ? alpha('#38bdf8', 0.22) : alpha('#3b82f6', 0.15))
-                      : (isDarkMode ? alpha(theme.palette.common.white, 0.08) : alpha(theme.palette.common.black, 0.06)),
-                    borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                    background:
+                      metricsLayout === 'wrap'
+                        ? isDarkMode
+                          ? alpha('#38bdf8', 0.22)
+                          : alpha('#3b82f6', 0.15)
+                        : isDarkMode
+                          ? alpha(theme.palette.common.white, 0.08)
+                          : alpha(theme.palette.common.black, 0.06),
+                    borderColor: isDarkMode
+                      ? 'rgba(56, 189, 248, 0.25)'
+                      : 'rgba(59, 130, 246, 0.2)',
                   },
                 }}
                 aria-label={
@@ -620,15 +640,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               sx={{ color: 'text.primary', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
             >
               {filteredAndSortedPlayerCards.length}
-            </Box>
-            {' '}of{' '}
-            <Box
-              component="span"
-              sx={{ fontVariantNumeric: 'tabular-nums' }}
-            >
+            </Box>{' '}
+            of{' '}
+            <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
               {playerCards.length}
-            </Box>
-            {' '}players
+            </Box>{' '}
+            players
           </Typography>
           {searchTerm && (
             <Chip
@@ -640,9 +657,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 fontSize: '0.75rem',
                 fontWeight: 500,
                 height: 24,
-                background: isDarkMode
-                  ? alpha('#38bdf8', 0.12)
-                  : alpha('#3b82f6', 0.08),
+                background: isDarkMode ? alpha('#38bdf8', 0.12) : alpha('#3b82f6', 0.08),
                 border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
                 color: isDarkMode ? '#93c5fd' : '#2563eb',
                 '& .MuiChip-deleteIcon': {
@@ -663,9 +678,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 fontSize: '0.75rem',
                 fontWeight: 500,
                 height: 24,
-                background: isDarkMode
-                  ? alpha('#38bdf8', 0.12)
-                  : alpha('#3b82f6', 0.08),
+                background: isDarkMode ? alpha('#38bdf8', 0.12) : alpha('#3b82f6', 0.08),
                 border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
                 color: isDarkMode ? '#93c5fd' : '#2563eb',
                 '& .MuiChip-deleteIcon': {

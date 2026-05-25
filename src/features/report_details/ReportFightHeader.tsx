@@ -458,136 +458,135 @@ export const ReportFightHeader: React.FC = () => {
             textRendering: 'optimizeSpeed',
           }}
         >
-          {fight
-            ? fight.name
-            : fightId
-              ? `Fight ${fightId}`
-              : 'Loading...'}
+          {fight ? fight.name : fightId ? `Fight ${fightId}` : 'Loading...'}
         </Typography>
 
-        {fight && (() => {
-          const isBossFight = fight.difficulty != null;
-          const bossWasKilled =
-            isBossFight &&
-            fight.bossPercentage !== null &&
-            fight.bossPercentage !== undefined &&
-            fight.bossPercentage <= 1.0;
-          const trashWasKilled =
-            !isBossFight && (fight.kill === true || fight.kill === null);
-          const isKill = bossWasKilled || trashWasKilled;
+        {fight &&
+          (() => {
+            const isBossFight = fight.difficulty != null;
+            const bossWasKilled =
+              isBossFight &&
+              fight.bossPercentage !== null &&
+              fight.bossPercentage !== undefined &&
+              fight.bossPercentage <= 1.0;
+            const trashWasKilled = !isBossFight && (fight.kill === true || fight.kill === null);
+            const isKill = bossWasKilled || trashWasKilled;
 
-          const ms = fight.endTime - fight.startTime;
-          const totalSec = Math.floor(ms / 1000);
-          const m = Math.floor(totalSec / 60);
-          const s = totalSec % 60;
-          const duration = m > 0
-            ? `${m}:${s.toString().padStart(2, '0')}`
-            : `${s}s`;
+            const ms = fight.endTime - fight.startTime;
+            const totalSec = Math.floor(ms / 1000);
+            const m = Math.floor(totalSec / 60);
+            const s = totalSec % 60;
+            const duration = m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${s}s`;
 
-          const badgeColor = isKill
-            ? (isDarkMode ? '#4ade80' : '#16a34a')
-            : getWipeColor(fight.bossPercentage ?? 100);
+            const badgeColor = isKill
+              ? isDarkMode
+                ? '#4ade80'
+                : '#16a34a'
+              : getWipeColor(fight.bossPercentage ?? 100);
 
-          const difficultyLabel =
-            fight.difficulty != null && fight.difficulty >= 122 ? 'Veteran HM'
-            : fight.difficulty != null && fight.difficulty >= 121 ? 'Veteran'
-            : null;
+            const difficultyLabel =
+              fight.difficulty != null && fight.difficulty >= 122
+                ? 'Veteran HM'
+                : fight.difficulty != null && fight.difficulty >= 121
+                  ? 'Veteran'
+                  : null;
 
-          const diffColor = fight.difficulty != null && fight.difficulty >= 122
-            ? (isDarkMode ? '#fbbf24' : '#d97706')
-            : (isDarkMode ? '#60a5fa' : '#2563eb');
+            const diffColor =
+              fight.difficulty != null && fight.difficulty >= 122
+                ? isDarkMode
+                  ? '#fbbf24'
+                  : '#d97706'
+                : isDarkMode
+                  ? '#60a5fa'
+                  : '#2563eb';
 
-          return (
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.75,
-                px: 1.5,
-                py: 0.5,
-                borderRadius: '10px',
-                flexShrink: 0,
-                background: isDarkMode
-                  ? 'rgba(255, 255, 255, 0.04)'
-                  : 'rgba(0, 0, 0, 0.03)',
-                border: isDarkMode
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(0, 0, 0, 0.06)',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              {/* Kill/wipe status */}
+            return (
               <Box
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 0.4,
-                  px: 0.75,
-                  py: 0.125,
-                  borderRadius: '6px',
-                  background: isKill
-                    ? (isDarkMode ? 'rgba(74, 222, 128, 0.15)' : 'rgba(22, 163, 74, 0.12)')
-                    : `${badgeColor}1a`,
+                  gap: 0.75,
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: '10px',
+                  flexShrink: 0,
+                  background: isDarkMode ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255, 255, 255, 0.08)'
+                    : '1px solid rgba(0, 0, 0, 0.06)',
+                  backdropFilter: 'blur(8px)',
                 }}
               >
-                {isKill && (
-                  <CheckCircleIcon sx={{ fontSize: '0.8rem', color: badgeColor }} />
-                )}
-                <Typography
+                {/* Kill/wipe status */}
+                <Box
                   sx={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    color: badgeColor,
-                    letterSpacing: '0.04em',
-                    fontVariantNumeric: 'tabular-nums',
-                    lineHeight: 1.4,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.4,
+                    px: 0.75,
+                    py: 0.125,
+                    borderRadius: '6px',
+                    background: isKill
+                      ? isDarkMode
+                        ? 'rgba(74, 222, 128, 0.15)'
+                        : 'rgba(22, 163, 74, 0.12)'
+                      : `${badgeColor}1a`,
                   }}
                 >
-                  {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
-                </Typography>
-              </Box>
+                  {isKill && <CheckCircleIcon sx={{ fontSize: '0.8rem', color: badgeColor }} />}
+                  <Typography
+                    sx={{
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      color: badgeColor,
+                      letterSpacing: '0.04em',
+                      fontVariantNumeric: 'tabular-nums',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
+                  </Typography>
+                </Box>
 
-              {/* Difficulty */}
-              {difficultyLabel && (
+                {/* Difficulty */}
+                {difficultyLabel && (
+                  <Typography
+                    sx={{
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: diffColor,
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    {difficultyLabel}
+                  </Typography>
+                )}
+
+                {/* Thin divider */}
+                <Box
+                  component="span"
+                  sx={{
+                    width: '1px',
+                    height: '12px',
+                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                  }}
+                />
+
+                {/* Duration */}
                 <Typography
                   sx={{
                     fontSize: '0.7rem',
                     fontWeight: 600,
-                    color: diffColor,
+                    color: isDarkMode ? '#64748b' : '#94a3b8',
+                    fontVariantNumeric: 'tabular-nums',
                     letterSpacing: '0.02em',
                   }}
                 >
-                  {difficultyLabel}
+                  {duration}
                 </Typography>
-              )}
-
-              {/* Thin divider */}
-              <Box
-                component="span"
-                sx={{
-                  width: '1px',
-                  height: '12px',
-                  backgroundColor: isDarkMode
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(0, 0, 0, 0.1)',
-                }}
-              />
-
-              {/* Duration */}
-              <Typography
-                sx={{
-                  fontSize: '0.7rem',
-                  fontWeight: 600,
-                  color: isDarkMode ? '#64748b' : '#94a3b8',
-                  fontVariantNumeric: 'tabular-nums',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                {duration}
-              </Typography>
-            </Box>
-          );
-        })()}
+              </Box>
+            );
+          })()}
       </Box>
     </React.Fragment>
   );
