@@ -271,7 +271,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       [player?.combatantInfo?.talents],
     );
     const gear = React.useMemo(
-      () => player?.combatantInfo?.gear ?? [],
+      () => (player?.combatantInfo?.gear ?? []).filter((g) => g.id !== 0),
       [player?.combatantInfo?.gear],
     );
     const armorWeights = getArmorWeightCounts(gear);
