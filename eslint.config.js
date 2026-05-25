@@ -6,6 +6,7 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
 import storybook from 'eslint-plugin-storybook';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 export default [
   // Global ignores (replaces .eslintignore)
@@ -92,6 +93,7 @@ export default [
       'react-hooks': reactHooks,
       import: importPlugin,
       storybook,
+      'jsx-a11y': jsxA11y,
     },
     settings: {
       react: {
@@ -123,6 +125,9 @@ export default [
       ...importPlugin.configs.recommended.rules,
       ...importPlugin.configs.typescript.rules,
       
+      // Accessibility rules
+      ...jsxA11y.configs.recommended.rules,
+
       // Custom rules
       'no-console': 'error',
       'import/no-default-export': 'error',

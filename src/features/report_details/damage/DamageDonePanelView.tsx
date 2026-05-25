@@ -504,7 +504,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {row.iconUrl && (
                       <Avatar
                         src={row.iconUrl}
-                        alt="icon"
+                        alt={row.name}
                         sx={{ width: 32, height: 32, flexShrink: 0 }}
                       />
                     )}
@@ -837,7 +837,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {row.iconUrl && (
                       <Avatar
                         src={row.iconUrl}
-                        alt="icon"
+                        alt={row.name}
                         sx={{
                           width: 40,
                           height: 40,

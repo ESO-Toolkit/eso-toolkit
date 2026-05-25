@@ -510,6 +510,18 @@ export const HeaderBar: React.FC = () => {
     }
   };
 
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape' && mobileOpen) {
+        setMobileOpen(false);
+      }
+    };
+    if (mobileOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [mobileOpen]);
+
   const handleMobileToolsToggle = (): void => {
     if (!mobileToolsOpen) {
       // Close account and reports submenus if they're open
@@ -740,7 +752,7 @@ export const HeaderBar: React.FC = () => {
               </Button>
             </Box>
 
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+            <Box component="nav" aria-label="Main navigation" sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
               {navItems.map((item) => (
                 <Button
                   key={item.text}
@@ -819,6 +831,8 @@ export const HeaderBar: React.FC = () => {
               <Button
                 color="inherit"
                 onClick={handleReportsClick}
+                aria-haspopup="true"
+                aria-expanded={Boolean(reportsAnchorEl)}
                 endIcon={<ExpandMore />}
                 startIcon={<Assessment />}
                 sx={{
@@ -877,6 +891,8 @@ export const HeaderBar: React.FC = () => {
               <Button
                 color="inherit"
                 onClick={handleToolsClick}
+                aria-haspopup="true"
+                aria-expanded={Boolean(toolsAnchorEl)}
                 endIcon={<ExpandMore />}
                 startIcon={<Build />}
                 sx={{
@@ -988,6 +1004,8 @@ export const HeaderBar: React.FC = () => {
                 open={mobileOpen}
                 onClick={handleDrawerToggle}
                 aria-label="toggle navigation"
+                aria-expanded={mobileOpen}
+                aria-controls="mobile-nav-menu"
               >
                 <HamburgerLines>
                   <Box className="hamburger-line" />
@@ -1231,7 +1249,13 @@ export const HeaderBar: React.FC = () => {
       </Menu>
 
       {/* Modern Mobile Menu Overlay */}
-      <MobileMenuOverlay open={mobileOpen}>
+      <MobileMenuOverlay
+        open={mobileOpen}
+        role="dialog"
+        aria-modal={mobileOpen ? "true" : undefined}
+        aria-label="Navigation menu"
+        id="mobile-nav-menu"
+      >
         <CloseButton onClick={handleDrawerToggle} aria-label="close menu">
           ✕
         </CloseButton>

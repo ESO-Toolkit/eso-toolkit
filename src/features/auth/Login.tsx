@@ -20,6 +20,10 @@ import { useAuth } from './AuthContext';
 export const Login: React.FC = () => {
   const theme = useTheme();
   const { isBanned, banReason, userError } = useAuth();
+
+  React.useEffect(() => {
+    document.title = 'Log In | ESO Toolkit';
+  }, []);
   const banMessage = banReason || userError;
 
   const handleLogin = (): boolean => {

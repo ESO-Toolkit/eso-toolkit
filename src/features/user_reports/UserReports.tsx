@@ -225,6 +225,10 @@ export const UserReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
+  useEffect(() => {
+    document.title = 'My Reports | ESO Toolkit';
+  }, []);
+
   const [state, setState] = useState<UserReportsState>({
     reports: [],
     loading: false, // Let useEffect handle initial loading
@@ -563,7 +567,14 @@ export const UserReports: React.FC = () => {
                         <TableRow
                           key={report.code}
                           hover
+                          tabIndex={0}
+                          role="link"
                           onClick={() => handleReportClick(report.code)}
+                          onKeyDown={(e: React.KeyboardEvent) => {
+                            if (e.key === 'Enter') {
+                              handleReportClick(report.code);
+                            }
+                          }}
                           sx={{
                             cursor: 'pointer',
                             animation: !state.loading ? 'fadeIn 0.3s ease-out both' : 'none',

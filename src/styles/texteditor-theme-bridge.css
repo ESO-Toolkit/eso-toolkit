@@ -167,6 +167,7 @@ input[type='color'] {
 /* Enhanced selection visibility */
 .text-editor-page textarea:focus {
   outline: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
 }
 
 /* Custom selection highlighting for better visibility */

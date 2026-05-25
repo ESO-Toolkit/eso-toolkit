@@ -98,8 +98,13 @@ export const StableLoading: React.FC<StableLoadingProps> = ({
   return (
     <Box
       data-testid={dataTestId}
+      aria-live="polite"
+      role="status"
       sx={{ width, minHeight: height, display: 'flex', flexDirection: 'column' }}
     >
+      <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        Loading content
+      </span>
       {getContent()}
     </Box>
   );

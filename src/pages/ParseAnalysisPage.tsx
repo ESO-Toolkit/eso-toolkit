@@ -207,6 +207,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   const { reportId: contextReportId, fightId: contextFightId } = useSelectedReportAndFight();
   const [logUrl, setLogUrl] = useState('');
   const abilityMapper = useAbilityIdMapper();
+
   const { castEvents, isCastEventsLoading } = useCastEvents({ restrictToFightWindow: false });
   const { damageEvents, isDamageEventsLoading } = useDamageEvents({ restrictToFightWindow: false });
   const { friendlyBuffEvents } = useFriendlyBuffEvents({ restrictToFightWindow: false });
@@ -1580,5 +1581,9 @@ const ParseAnalysisPageContent: React.FC = () => {
  * to ensure it's within the ReportFightProvider context
  */
 export const ParseAnalysisPage: React.FC = () => {
+  useEffect(() => {
+    document.title = 'Parse Analysis | ESO Toolkit';
+  }, []);
+
   return <ParseAnalysisPageContent />;
 };

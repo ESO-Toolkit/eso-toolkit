@@ -566,6 +566,8 @@ export const DataGrid = <T extends Record<string, unknown>>({
   if (loading) {
     return (
       <Paper
+        aria-live="polite"
+        role="status"
         sx={{
           height: autoHeight ? 'auto' : height,
           display: 'flex',
@@ -635,6 +637,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
         <Table
           stickyHeader
           size="small"
+          aria-label={title || 'Data table'}
           sx={{
             tableLayout: 'fixed',
             width: '100%',
@@ -653,6 +656,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
                   return (
                     <TableCell
                       key={header.id}
+                      aria-sort={sortDirection === 'asc' ? 'ascending' : sortDirection === 'desc' ? 'descending' : undefined}
                       sx={{
                         fontWeight: 600,
                         cursor: canSort ? 'pointer' : 'default',

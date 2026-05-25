@@ -1638,6 +1638,8 @@ const Gear = ({ size = '20', color = '#000000' }: GearProps): React.JSX.Element 
     height={size}
     viewBox="0 0 20 20"
     fill={color}
+    aria-hidden="true"
+    focusable="false"
   >
     <g fill={color} fillRule="evenodd" clipRule="evenodd">
       <path
@@ -1653,6 +1655,10 @@ const Gear = ({ size = '20', color = '#000000' }: GearProps): React.JSX.Element 
 const CalculatorComponent: React.FC = () => {
   const logger = useLogger('Calculator');
   const theme = useTheme();
+
+  useEffect(() => {
+    document.title = 'Calculator | ESO Toolkit';
+  }, []);
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isExtraSmall = useMediaQuery('(max-width:380px)');

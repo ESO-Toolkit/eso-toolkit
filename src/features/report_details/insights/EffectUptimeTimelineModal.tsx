@@ -295,7 +295,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
       </DialogTitle>
       <DialogContent sx={{ minHeight: 420 }}>
         {hasData ? (
-          <Box sx={{ height: 380 }}>
+          <Box sx={{ height: 380 }} role="img" aria-label="Effect uptime timeline chart">
             <LineChart data={chartData} options={chartOptions} />
           </Box>
         ) : (

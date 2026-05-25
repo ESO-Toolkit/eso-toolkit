@@ -29,6 +29,7 @@ export const CustomLoadingSpinner: React.FC<CustomLoadingSpinnerProps> = ({
 
   return (
     <Box
+      aria-live="polite"
       role="progressbar"
       aria-label="loading"
       sx={{
@@ -86,6 +87,9 @@ export const CustomLoadingSpinner: React.FC<CustomLoadingSpinnerProps> = ({
           willChange: 'transform',
         }}
       />
+      <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        Loading
+      </span>
     </Box>
   );
 };

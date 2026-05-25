@@ -4,7 +4,7 @@
  */
 
 import { Container, Box, Typography, Alert, CircularProgress } from '@mui/material';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { useLogger } from '../../../../contexts/LoggerContext';
 import { useScribingSimulation } from '../hooks/useScribingSimulation';
@@ -27,6 +27,10 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   autoSimulate = false,
 }) => {
   const logger = useLogger('ScribingSimulator');
+
+  useEffect(() => {
+    document.title = 'Scribing Simulator | ESO Toolkit';
+  }, []);
 
   const {
     // Data

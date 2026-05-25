@@ -155,6 +155,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       return (
         <Box
+          role="alert"
           display="flex"
           justifyContent="center"
           alignItems="center"

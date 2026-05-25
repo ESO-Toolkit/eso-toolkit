@@ -25,6 +25,12 @@ export const ScrollRestoration: React.FC = () => {
 
     // Scroll to top on route change
     window.scrollTo(0, 0);
+
+    // Move focus to main content for screen readers
+    const mainContent = document.getElementById('main-content');
+    if (mainContent) {
+      mainContent.focus({ preventScroll: true });
+    }
   }, [location.pathname, location.search]);
 
   return null;

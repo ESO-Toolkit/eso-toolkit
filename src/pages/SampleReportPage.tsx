@@ -334,6 +334,10 @@ export const SampleReportPage: React.FC = () => {
   const logger = useLogger('SampleReportPage');
   const navigate = useNavigate();
   const theme = useTheme();
+
+  React.useEffect(() => {
+    document.title = 'Sample Report | ESO Toolkit';
+  }, []);
   const zonesCache = React.useRef<TrialZone[] | null>(null);
   const loadingMessage = React.useMemo(() => pickRandom(loadingMessages) ?? loadingMessages[0], []);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);

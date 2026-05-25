@@ -57,6 +57,10 @@ export const LatestReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
+  useEffect(() => {
+    document.title = 'Latest Reports | ESO Toolkit';
+  }, []);
+
   const [state, setState] = useState<LatestReportsState>({
     reports: [],
     loading: true,
@@ -291,7 +295,14 @@ export const LatestReports: React.FC = () => {
                         <TableRow
                           key={report.code}
                           hover
+                          tabIndex={0}
+                          role="link"
                           onClick={() => handleReportClick(report.code)}
+                          onKeyDown={(e: React.KeyboardEvent) => {
+                            if (e.key === 'Enter') {
+                              handleReportClick(report.code);
+                            }
+                          }}
                           sx={{
                             cursor: 'pointer',
                             transition: 'all 0.2s ease-in-out',

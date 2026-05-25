@@ -350,7 +350,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               >
                 Penetration vs Time
               </Typography>
-              <Box sx={{ width: '100%', height: 300 }}>
+              <Box sx={{ width: '100%', height: 300 }} role="img" aria-label="Penetration values chart over time">
                 <LineChart
                   data={{
                     labels: chartLabels,

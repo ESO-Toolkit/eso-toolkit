@@ -473,6 +473,11 @@ const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#F
 // Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
+
+  useEffect(() => {
+    document.title = 'Text Editor | ESO Toolkit';
+  }, []);
+
   // Apply page-specific background and theme management
   usePageBackground('text-editor-page', theme.palette.mode === 'dark');
   const [text, setText] = useState('');

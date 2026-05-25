@@ -574,7 +574,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 >
                   Damage Reduction Over Time
                 </Typography>
-                <Box sx={{ width: '100%', height: 300 }}>
+                <Box sx={{ width: '100%', height: 300 }} role="img" aria-label="Damage reduction timeline chart">
                   {shouldRenderChart ? (
                     <LineChart
                       data={{

@@ -21,8 +21,8 @@ const LazyPie = React.lazy(() =>
 
 // Chart loading fallback
 const ChartLoadingFallback: React.FC = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-    <CircularProgress />
+  <Box display="flex" justifyContent="center" alignItems="center" height="300px" role="status" aria-live="polite">
+    <CircularProgress aria-label="Loading chart" />
   </Box>
 );
 

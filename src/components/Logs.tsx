@@ -1,7 +1,7 @@
 import { Construction } from '@mui/icons-material';
 import { Box, Typography, Container, Paper, Alert } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const LogsContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
@@ -26,6 +26,10 @@ const LogsCard = styled(Paper)(({ theme }) => ({
 }));
 
 export const Logs: React.FC = () => {
+  useEffect(() => {
+    document.title = 'Log Analyzer | ESO Toolkit';
+  }, []);
+
   return (
     <LogsContainer>
       <Container maxWidth="lg">

@@ -303,7 +303,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         </Box>
 
         {/* Chart */}
-        <Box sx={{ flex: 1, minHeight: 0 }}>
+        <Box sx={{ flex: 1, minHeight: 0 }} role="img" aria-label="Damage timeline chart showing DPS over time">
           <LineChart
             data={chartData}
             options={{

@@ -1,6 +1,6 @@
 import { InfoOutlined } from '@mui/icons-material';
 import { Alert, Box, Container, Divider, Link, Typography, useTheme } from '@mui/material';
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -104,6 +104,10 @@ const markdownComponents: Components = {
 
 export const CalculationKnowledgeBasePage: React.FC = () => {
   const theme = useTheme();
+
+  useEffect(() => {
+    document.title = 'Calculation Knowledge Base | ESO Toolkit';
+  }, []);
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>

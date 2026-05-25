@@ -133,6 +133,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
 
   return (
     <Box
+      role="link"
+      tabIndex={0}
+      aria-label={buff.abilityName}
       sx={{
         width: '100%',
         position: 'relative',
@@ -142,6 +145,12 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         },
       }}
       onClick={onMainClick}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onMainClick();
+        }
+      }}
     >
       {/* Background progress bar */}
       <LinearProgress

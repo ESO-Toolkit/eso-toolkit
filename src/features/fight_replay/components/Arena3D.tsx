@@ -561,6 +561,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   return (
     <div style={{ width: '100%', height: '400px', position: 'relative' }}>
       <ReplayErrorBoundary checkWebGL={true}>
+        <Box role="img" aria-label="3D fight replay showing player positions on arena map" sx={{ width: '100%', height: '100%' }}>
         <Canvas
           key={`canvas-${fight.id}`} // Stable key prevents unnecessary recreation
           camera={{
@@ -609,6 +610,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
             initialTarget={initialCameraTarget}
           />
         </Canvas>
+        </Box>
         {contextMenu && (
           <ClickAwayListener onClickAway={handleCloseContextMenu}>
             <div>
