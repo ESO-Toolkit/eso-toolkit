@@ -524,76 +524,91 @@ export const ReportFightHeader: React.FC = () => {
           return (
             <Box
               sx={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: 1,
+                gap: 0.75,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: '10px',
                 flexShrink: 0,
+                background: isDarkMode
+                  ? 'rgba(255, 255, 255, 0.04)'
+                  : 'rgba(0, 0, 0, 0.03)',
+                border: isDarkMode
+                  ? '1px solid rgba(255, 255, 255, 0.08)'
+                  : '1px solid rgba(0, 0, 0, 0.06)',
+                backdropFilter: 'blur(8px)',
               }}
             >
+              {/* Kill/wipe status */}
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.4,
+                  px: 0.75,
+                  py: 0.125,
+                  borderRadius: '6px',
+                  background: isKill
+                    ? (isDarkMode ? 'rgba(74, 222, 128, 0.15)' : 'rgba(22, 163, 74, 0.12)')
+                    : `${badgeColor}1a`,
+                }}
+              >
+                {isKill && (
+                  <CheckCircleIcon sx={{ fontSize: '0.8rem', color: badgeColor }} />
+                )}
+                <Typography
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    color: badgeColor,
+                    letterSpacing: '0.04em',
+                    fontVariantNumeric: 'tabular-nums',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
+                </Typography>
+              </Box>
+
+              {/* Difficulty */}
               {difficultyLabel && (
                 <Typography
                   sx={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.7rem',
                     fontWeight: 600,
                     color: diffColor,
+                    letterSpacing: '0.02em',
                   }}
                 >
                   {difficultyLabel}
                 </Typography>
               )}
 
+              {/* Thin divider */}
               <Box
                 component="span"
                 sx={{
                   width: '1px',
-                  height: '14px',
-                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
-                  display: { xs: 'none', sm: 'block' },
+                  height: '12px',
+                  backgroundColor: isDarkMode
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(0, 0, 0, 0.1)',
                 }}
               />
 
+              {/* Duration */}
               <Typography
                 sx={{
-                  fontSize: '0.8rem',
+                  fontSize: '0.7rem',
                   fontWeight: 600,
-                  color: isDarkMode ? '#94a3b8' : '#64748b',
+                  color: isDarkMode ? '#64748b' : '#94a3b8',
                   fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '0.02em',
                 }}
               >
                 {duration}
               </Typography>
-
-              <Box
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  px: 1.25,
-                  py: 0.375,
-                  borderRadius: '8px',
-                  background: isKill
-                    ? (isDarkMode ? 'rgba(74, 222, 128, 0.15)' : 'rgba(22, 163, 74, 0.1)')
-                    : `${badgeColor}1a`,
-                  border: `1px solid ${isKill
-                    ? (isDarkMode ? 'rgba(74, 222, 128, 0.3)' : 'rgba(22, 163, 74, 0.25)')
-                    : `${badgeColor}40`}`,
-                }}
-              >
-                {isKill && (
-                  <CheckCircleIcon sx={{ fontSize: '0.9rem', color: badgeColor }} />
-                )}
-                <Typography
-                  sx={{
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    color: badgeColor,
-                    letterSpacing: '0.03em',
-                    fontVariantNumeric: 'tabular-nums',
-                  }}
-                >
-                  {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
-                </Typography>
-              </Box>
             </Box>
           );
         })()}
