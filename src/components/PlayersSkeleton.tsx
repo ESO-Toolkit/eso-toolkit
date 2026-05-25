@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Skeleton, Stack } from '@mui/material';
+import { Box, Card, CardContent, Skeleton, useTheme } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
@@ -295,23 +295,77 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
 export const PlayersSkeleton: React.FC<PlayersSkeletonProps> = ({
   'data-testid': dataTestId = 'players-skeleton',
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   return (
     <Box data-testid={dataTestId} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {/* Controls: search · sort · role filter · Stats (Customize Chips) button */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
-        <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 200 } }} />
-        <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 180 } }} />
-        <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 120 } }} />
+      {/* Controls toolbar — glassmorphism container matching PlayersPanelView */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' },
+          gap: 1.5,
+          p: { xs: 1.5, sm: 2 },
+          borderRadius: '14px',
+          background: isDarkMode
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.7) 50%, rgba(51, 65, 85, 0.6) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: isDarkMode
+            ? '1px solid rgba(56, 189, 248, 0.15)'
+            : '1px solid rgba(59, 130, 246, 0.12)',
+          boxShadow: isDarkMode
+            ? '0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+            : '0 2px 12px rgba(15, 23, 42, 0.06)',
+          transition: 'all 0.3s ease',
+        }}
+      >
+        {/* Search */}
         <Skeleton
           variant="rounded"
-          height={40}
-          sx={{ minWidth: { sm: 40 }, maxWidth: { sm: 100 } }}
+          height={36}
+          sx={{
+            flex: { xs: 1, sm: '0 1 220px' },
+            borderRadius: '10px',
+          }}
         />
-      </Stack>
+
+        {/* Sort select */}
+        <Skeleton
+          variant="rounded"
+          height={36}
+          sx={{
+            minWidth: { xs: '100%', sm: 150 },
+            borderRadius: '10px',
+          }}
+        />
+
+        {/* Role filter select */}
+        <Skeleton
+          variant="rounded"
+          height={36}
+          sx={{
+            minWidth: { xs: '100%', sm: 140 },
+            borderRadius: '10px',
+          }}
+        />
+
+        {/* Spacer on desktop */}
+        <Box sx={{ flex: 1, display: { xs: 'none', sm: 'block' } }} />
+
+        {/* Action buttons: Stats + wrap toggle */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Skeleton variant="rounded" width={70} height={36} sx={{ borderRadius: '10px' }} />
+          <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '10px' }} />
+        </Box>
+      </Box>
 
       {/* Results summary line */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-        <Skeleton variant="text" width={150} height={20} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', px: 0.5 }}>
+        <Skeleton variant="text" width={180} height={18} />
       </Box>
 
       {/* Player cards grid — 2 columns at ≥772px matching the real layout */}

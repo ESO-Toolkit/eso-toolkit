@@ -28,20 +28,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
             gap: { xs: 2, md: 0 },
           }}
         >
-          {/* Target Selector */}
-          <Box
-            sx={{
-              minWidth: { xs: '100%', sm: 180, md: 200 },
-              maxWidth: { xs: '100%', md: 'none' },
-            }}
-          >
+          {/* Target Selector — matches CombinedFilterDropdown button */}
+          <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Skeleton
               variant="rounded"
-              width="100%"
-              height={56}
+              width={240}
+              height={38}
               sx={{
-                maxWidth: { xs: '100%', sm: 180, md: 200 },
-                minWidth: { xs: '100%', sm: 180, md: 200 },
+                borderRadius: '10px',
+                maxWidth: { xs: '100%', sm: 240 },
               }}
             />
           </Box>
