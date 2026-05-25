@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
+import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, waitForAppMount } from './selectors';
 
 /**
  * Nightly Regression Tests
@@ -71,7 +71,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
         // Additional wait for WebKit to ensure JavaScript has fully executed
         if (testInfo.project.name.includes('webkit')) {
-          await page.waitForTimeout(3000);
+          await waitForAppMount(page);
         }
 
         // Check what actually loaded - different browsers and viewports may show different content
@@ -236,7 +236,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           await fightButton.click({ force: true });
 
           // Give some time and check URL
-          await page.waitForTimeout(3000);
+          await waitForAppMount(page);
         } else {
           // Use direct navigation as fallback when no fight buttons are found
           console.log('ℹ️ Using direct navigation fallback to fight:', fightId);
@@ -562,11 +562,11 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           console.log('🔄 Browser closed during navigation, attempting to continue test...');
           return; // Exit the test gracefully
         }
-        // Wait a bit for content to load, then continue
+        // Wait for content to load
         try {
-          await page.waitForTimeout(3000);
+          await waitForAppMount(page);
         } catch (timeoutError) {
-          console.log('⚠️ Page closed during timeout wait, continuing...');
+          console.log('⚠️ Page closed during mount wait, continuing...');
         }
       }
 
@@ -782,9 +782,9 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           return;
         }
         try {
-          await page.waitForTimeout(3000); // Reduced timeout
+          await waitForAppMount(page);
         } catch (timeoutError) {
-          console.log('⚠️ Page closed during performance timeout wait, continuing...');
+          console.log('⚠️ Page closed during mount wait, continuing...');
         }
       }
       const insightsLoadTime = Date.now() - insightsStartTime;
@@ -816,7 +816,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
             waitUntil: 'domcontentloaded',
             timeout: 15000, // Shorter timeout for performance test
           });
-          await page.waitForTimeout(2000); // Brief wait
+          await waitForAppMount(page);
           console.log(`✅ ${tab} tab loaded successfully`);
         } catch (tabError) {
           console.log(`⚠️ ${tab} tab failed to load:`, (tabError as Error).message);
@@ -847,7 +847,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
       } catch (error) {
         console.log('⚠️ NetworkIdle timeout for visual regression test, checking for content instead...');
-        await page.waitForTimeout(3000);
+        await waitForAppMount(page);
       }
 
       // Check if the page loaded successfully
@@ -901,7 +901,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
             await page.waitForLoadState('networkidle', { timeout: 15000 });
           } catch (error) {
             console.log(`⚠️ NetworkIdle timeout for ${tab} tab, checking for content instead...`);
-            await page.waitForTimeout(2000);
+            await waitForAppMount(page);
           }
 
           // Check if we have any meaningful content

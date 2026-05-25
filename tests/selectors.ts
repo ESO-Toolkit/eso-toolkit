@@ -1,6 +1,8 @@
+import type { Page } from '@playwright/test';
+
 /**
  * Reusable Test Selectors
- * 
+ *
  * Centralized collection of data-testid selectors used across all test files.
  * This makes tests more maintainable and reduces duplication.
  */
@@ -94,13 +96,14 @@ export const SELECTOR_HELPERS = {
  * Test timeouts used across test files
  */
 export const TEST_TIMEOUTS = {
-  navigation: 45000, // Increased for production sites
-  dataLoad: 120000, // Increased for sites with ongoing API requests
+  navigation: 45000,
+  dataLoad: 120000,
   screenshot: 30000,
-  interaction: 20000, // Increased for complex interactions
+  interaction: 20000,
   shortWait: 5000,
-  longWait: 150000, // Increased for very slow operations
-  networkIdle: 90000, // Increased timeout for networkidle waits
+  longWait: 150000,
+  networkIdle: 90000,
+  appMount: 30000,
 } as const;
 
 /**
@@ -153,4 +156,18 @@ export function getBaseUrl(): string {
               process.env.BASE_URL ||
               'https://esotk.com/';
   return url.replace(/\/+$/, '');
+}
+
+/**
+ * Wait for the SPA to mount by checking for core layout elements.
+ * Replaces brittle `waitForTimeout` calls that fail under CI load.
+ */
+export async function waitForAppMount(page: Page): Promise<void> {
+  await page
+    .locator('header, nav, main, [role="banner"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: TEST_TIMEOUTS.appMount })
+    .catch(() => {
+      console.log('⚠️ App mount wait timed out — SPA may not have hydrated');
+    });
 }
