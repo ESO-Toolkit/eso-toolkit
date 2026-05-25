@@ -261,6 +261,10 @@ const ParseAnalysisPageContent: React.FC = () => {
   const roleColors = useRoleColors();
   const theme = useTheme();
 
+  React.useEffect(() => {
+    document.title = 'Parse Analysis | ESO Toolkit';
+  }, []);
+
   /**
    * Get theme-aware semantic color for text display.
    * Dark mode uses brighter tints than MUI's auto-generated .light variants

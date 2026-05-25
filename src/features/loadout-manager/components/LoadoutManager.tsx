@@ -104,6 +104,10 @@ export const LoadoutManager: React.FC = () => {
   const theme = useTheme();
   const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
 
+  React.useEffect(() => {
+    document.title = 'Loadout Manager | ESO Toolkit';
+  }, []);
+
   // Glass design tokens
   const isDarkMode = theme.palette.mode === 'dark';
   const glassTextField = {

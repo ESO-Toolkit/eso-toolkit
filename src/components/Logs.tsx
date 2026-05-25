@@ -26,6 +26,10 @@ const LogsCard = styled(Paper)(({ theme }) => ({
 }));
 
 export const Logs: React.FC = () => {
+  React.useEffect(() => {
+    document.title = 'Log Analyzer | ESO Toolkit';
+  }, []);
+
   return (
     <LogsContainer>
       <Container maxWidth="lg">

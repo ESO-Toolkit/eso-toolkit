@@ -217,6 +217,8 @@
     "test:screen-sizes:debug": "playwright test --config=playwright/screen-sizes.config.ts --headed --project=\"Desktop Standard\" --max-failures=1 --debug",
     "verify:screen-size-setup": "node scripts/verify-screen-size-setup.cjs",
     "test:nightly:webkit": "playwright test --config=playwright/nightly.config.ts --project=webkit-desktop",
+    "test:a11y": "playwright test --config=playwright.a11y.config.ts",
+    "test:a11y:headed": "playwright test --config=playwright.a11y.config.ts --headed",
     "test:smoke": "npm run test:smoke:unit && npm run test:smoke:e2e",
     "test:smoke:e2e": "playwright test --config=playwright/smoke.config.ts",
     "test:smoke:unit": "jest --config=jest/smoke.config.cjs --watchAll=false",

@@ -58,6 +58,10 @@ export const PrivacyPolicyPage: React.FC = () => {
   const [saveSuccess, setSaveSuccess] = React.useState(false);
 
   React.useEffect(() => {
+    document.title = 'Privacy Policy | ESO Toolkit';
+  }, []);
+
+  React.useEffect(() => {
     const prefs = getConsentPreferences();
     setAnalyticsEnabled(prefs.analytics);
     setErrorTrackingEnabled(prefs.errorTracking);

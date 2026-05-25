@@ -94,6 +94,14 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                   'background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out',
               },
               '*, *::before, *::after': { boxSizing: 'border-box' },
+              '@media (prefers-reduced-motion: reduce)': {
+                '*, *::before, *::after': {
+                  animationDuration: '0.01ms !important',
+                  animationIterationCount: '1 !important',
+                  transitionDuration: '0.01ms !important',
+                  scrollBehavior: 'auto !important',
+                },
+              },
             },
           },
           MuiAppBar: {

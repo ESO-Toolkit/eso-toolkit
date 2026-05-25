@@ -239,8 +239,8 @@ const PlayerCardModalContent: React.FC<{
 
   if (data.loadingStages.core || !data.player) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
-        <CircularProgress />
+      <Box role="status" aria-live="polite" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+        <CircularProgress aria-label="Loading player card" />
       </Box>
     );
   }
@@ -249,9 +249,11 @@ const PlayerCardModalContent: React.FC<{
     <Suspense
       fallback={
         <Box
+          role="status"
+          aria-live="polite"
           sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}
         >
-          <CircularProgress />
+          <CircularProgress aria-label="Loading player card" />
         </Box>
       }
     >

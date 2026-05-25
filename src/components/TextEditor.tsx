@@ -502,6 +502,10 @@ export const TextEditor: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
+  useEffect(() => {
+    document.title = 'Text Editor | ESO Toolkit';
+  }, []);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 

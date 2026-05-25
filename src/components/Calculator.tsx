@@ -1553,6 +1553,10 @@ const CalculatorComponent: React.FC = () => {
   const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
 
+  useEffect(() => {
+    document.title = 'Calculator | ESO Toolkit';
+  }, []);
+
   // Helper function to generate unique IDs for items
   const generateItemId = useCallback((category: string, name: string, index: number): string => {
     return `${category}-${name}-${index}`;

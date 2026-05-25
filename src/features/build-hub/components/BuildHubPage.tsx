@@ -37,6 +37,10 @@ export const BuildHubPage: React.FC = () => {
   const { filteredBuilds, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useBuildHub(token);
 
+  React.useEffect(() => {
+    document.title = 'Build Hub | ESO Toolkit';
+  }, []);
+
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editBuild, setEditBuild] = React.useState<HubBuild | null>(null);

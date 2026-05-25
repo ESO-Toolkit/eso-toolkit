@@ -28,6 +28,10 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
 }) => {
   const logger = useLogger('ScribingSimulator');
 
+  React.useEffect(() => {
+    document.title = 'Scribing Simulator | ESO Toolkit';
+  }, []);
+
   const {
     // Data
     grimoires,
@@ -80,8 +84,8 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   if (isLoading) {
     return (
       <Container maxWidth="xl" className={className}>
-        <Box sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 8 }}>
-          <CircularProgress />
+        <Box role="status" aria-live="polite" sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 8 }}>
+          <CircularProgress aria-label="Loading scribing data" />
           <Typography variant="h6" sx={{ ml: 2 }}>
             Loading scribing data...
           </Typography>

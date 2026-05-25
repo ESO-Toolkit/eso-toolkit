@@ -1126,7 +1126,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
         )}
 
         {/* Chart */}
-        <Box ref={chartWrapperRef} sx={{ height: chartHeight }}>
+        <Box ref={chartWrapperRef} sx={{ height: chartHeight }} role="img" aria-label="Damage timeline chart showing damage over fight duration">
           <EChart option={echartsOption} height="100%" group="fightReport" />
         </Box>
       </CardContent>

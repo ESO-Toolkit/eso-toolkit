@@ -17,8 +17,8 @@ const LazyLoggerDebugPanel = React.lazy(() =>
 
 // Dialog loading fallback
 const DialogLoadingFallback: React.FC = () => (
-  <Box sx={{ justifyContent: 'center', alignItems: 'center', height: '200px', display: 'flex' }}>
-    <CircularProgress size={24} />
+  <Box role="status" aria-live="polite" sx={{ justifyContent: 'center', alignItems: 'center', height: '200px', display: 'flex' }}>
+    <CircularProgress size={24} aria-label="Loading dialog" />
   </Box>
 );
 

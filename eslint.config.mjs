@@ -5,6 +5,7 @@ import tsParser from '@typescript-eslint/parser';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import storybook from 'eslint-plugin-storybook';
 
 export default [
@@ -90,6 +91,7 @@ export default [
       '@typescript-eslint': typescript,
       react,
       'react-hooks': reactHooks,
+      'jsx-a11y': jsxA11y,
       import: importPlugin,
       storybook,
     },
@@ -122,6 +124,9 @@ export default [
       // Import recommended rules
       ...importPlugin.configs.recommended.rules,
       ...importPlugin.configs.typescript.rules,
+
+      // JSX accessibility rules
+      ...jsxA11y.configs.recommended.rules,
 
       // Custom rules
       'no-console': 'error',

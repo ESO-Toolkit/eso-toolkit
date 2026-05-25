@@ -30,6 +30,7 @@ export const WhoAmIPage: React.FC = () => {
   );
 
   React.useEffect(() => {
+    document.title = 'Who Am I | ESO Toolkit';
     trackPageView('/whoami', 'Who Am I');
     addBreadcrumb('WhoAmI page viewed', 'navigation', {
       url: window.location.href,

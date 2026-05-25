@@ -105,6 +105,23 @@ export const GearIcon: React.FC<GearIconProps> = ({
     />
   );
 
+  const qualityLabel = quality !== 'normal' ? (
+    <Box
+      component="span"
+      sx={{
+        position: 'absolute',
+        width: '1px',
+        height: '1px',
+        overflow: 'hidden',
+        clip: 'rect(0 0 0 0)',
+        clipPath: 'inset(50%)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {quality} quality
+    </Box>
+  ) : null;
+
   if (showTooltip && tooltipContent) {
     return (
       <Tooltip
@@ -114,12 +131,18 @@ export const GearIcon: React.FC<GearIconProps> = ({
         leaveTouchDelay={3000}
         arrow
       >
-        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
           {iconElement}
+          {qualityLabel}
         </Box>
       </Tooltip>
     );
   }
 
-  return iconElement;
+  return (
+    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}>
+      {iconElement}
+      {qualityLabel}
+    </Box>
+  );
 };

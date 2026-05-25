@@ -174,6 +174,10 @@ const LoadingSkeleton: React.FC = () => (
 export const WhatsNewPage: React.FC = () => {
   const { data, loading, error, markSeen } = useWhatsNew();
 
+  React.useEffect(() => {
+    document.title = "What's New | ESO Toolkit";
+  }, []);
+
   // Mark as seen when the page is opened
   React.useEffect(() => {
     if (data && data.entries.length > 0) {
