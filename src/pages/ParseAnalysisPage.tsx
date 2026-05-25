@@ -1645,7 +1645,10 @@ const ParseAnalysisPageContent: React.FC = () => {
                         },
                       }}
                     >
-                      <Typography variant="caption" sx={{ minWidth: { xs: 80, sm: 160 }, fontWeight: 500 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ minWidth: { xs: 80, sm: 160 }, fontWeight: 500 }}
+                      >
                         {skill.abilityName}
                       </Typography>
                       <Chip

@@ -717,7 +717,11 @@ export const LeaderboardLogsPage: React.FC = () => {
             ) : rankingsState.rankings.length === 0 ? (
               <Alert severity="info">No leaderboard entries found for this selection.</Alert>
             ) : (
-              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflowX: 'auto' }}>
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{ borderRadius: 2, overflowX: 'auto' }}
+              >
                 <Table size="small">
                   <TableHead>
                     <TableRow>

@@ -399,7 +399,15 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         )}
 
         {/* Stats row */}
-        <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap', '& > *': { minWidth: { xs: 'auto', sm: 72 } } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            mt: 2.5,
+            flexWrap: 'wrap',
+            '& > *': { minWidth: { xs: 'auto', sm: 72 } },
+          }}
+        >
           {renderStat('Addons', pack.addons.length, accentColor)}
           {renderStat('Required', requiredCount, '#c4a44a')}
           {renderStat('Optional', optionalCount, '#94a3b8')}
