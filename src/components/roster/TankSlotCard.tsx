@@ -227,9 +227,6 @@ export const TankCard = React.memo<TankCardProps>(
                             label="Primary Set (Body)"
                             placeholder="e.g., Alkosh, Yolnahkriin"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -262,9 +259,6 @@ export const TankCard = React.memo<TankCardProps>(
                             label="Secondary Set (Jewelry)"
                             placeholder="e.g., Crimson Oath's Rive"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -300,9 +294,6 @@ export const TankCard = React.memo<TankCardProps>(
                             label="Monster/Mythic Set"
                             placeholder="e.g., Symphony of Blades"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -459,10 +450,10 @@ export const TankCard = React.memo<TankCardProps>(
                               options={[]}
                               value={tank.labels || []}
                               onChange={(_, value) => onChange({ labels: value })}
-                              renderTags={(value, getTagProps) =>
-                                value.map((option, index) => (
+                              renderValue={(value, getItemProps) =>
+                                (value as string[]).map((option, index) => (
                                   <Chip
-                                    {...getTagProps({ index })}
+                                    {...getItemProps({ index })}
                                     key={option}
                                     label={option}
                                     size="small"

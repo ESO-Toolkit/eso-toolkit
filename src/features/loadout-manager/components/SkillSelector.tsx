@@ -115,9 +115,7 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
             {/* Bar label + filled slot count */}
             <Stack
               direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 1.25 }}
+              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.25 }}
             >
               <Typography
                 variant="caption"
@@ -137,6 +135,7 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
               </Typography>
               <Box
                 sx={{
+                  color: 'text.secondary',
                   px: 0.75,
                   py: 0.15,
                   borderRadius: '999px',
@@ -144,11 +143,7 @@ export const SkillSelector: React.FC<SkillSelectorProps> = ({
                   border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
                 }}
               >
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontSize: '0.65rem', fontWeight: 600 }}
-                >
+                <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 600 }}>
                   {countFilledSlots(skills[barIndex] || {})} / 6
                 </Typography>
               </Box>
@@ -187,8 +182,8 @@ const SkillBarRow: React.FC<SkillBarRowProps> = ({
     <Stack
       direction="row"
       spacing={0.75}
-      alignItems="center"
       sx={{
+        alignItems: 'center',
         flexWrap: { xs: 'wrap', md: 'nowrap' },
         rowGap: 0.75,
         justifyContent: { xs: 'center', md: 'flex-start' },
@@ -448,12 +443,14 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
         }}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            backdropFilter: 'blur(20px)',
-            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.92)' : 'rgba(255,255,255,0.96)',
-            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              backdropFilter: 'blur(20px)',
+              backgroundColor: isDarkMode ? 'rgba(15,15,25,0.92)' : 'rgba(255,255,255,0.96)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >
@@ -507,7 +504,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
                     {...optionProps}
                     sx={{ py: '7px !important', px: '10px !important' }}
                   >
-                    <Stack direction="row" spacing={1.25} alignItems="center">
+                    <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
                       {option.icon ? (
                         <img
                           src={`https://eso-hub.com/storage/icons/${option.icon}.png`}
@@ -544,8 +541,7 @@ const SkillSlotIcon: React.FC<SkillSlotIconProps> = ({
                         {option.category && (
                           <Typography
                             variant="caption"
-                            color="text.secondary"
-                            sx={{ lineHeight: 1.2 }}
+                            sx={{ color: 'text.secondary', lineHeight: 1.2 }}
                           >
                             {option.category}
                             {option.type ? ` · ${option.type}` : ''}

@@ -12,10 +12,10 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
         >
           <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            class="MuiChip-label css-19m61dl-MuiChip-label"
           >
             Active
           </span>
@@ -78,10 +78,10 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle minimal props g
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
         >
           <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            class="MuiChip-label css-19m61dl-MuiChip-label"
           >
             Active
           </span>
@@ -129,10 +129,10 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ab
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
         >
           <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            class="MuiChip-label css-19m61dl-MuiChip-label"
           >
             Active
           </span>
@@ -194,10 +194,10 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning MuiChip-outlinedWarning css-1vihd32-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-zrdjvt-MuiChip-root"
         >
           <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            class="MuiChip-label css-19m61dl-MuiChip-label"
           >
             Ultimate
           </span>
@@ -311,7 +311,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-1nvjkr"
           />
           <span
-            class="MuiTypography-root MuiTypography-caption css-1jlhynm-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-g0sr8l-MuiTypography-root"
           >
             Grimoire: 
             Traveling Knife
@@ -377,10 +377,10 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning MuiChip-outlinedWarning css-1vihd32-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-zrdjvt-MuiChip-root"
         >
           <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            class="MuiChip-label css-19m61dl-MuiChip-label"
           >
             Ultimate
           </span>
@@ -494,7 +494,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-1nvjkr"
           />
           <span
-            class="MuiTypography-root MuiTypography-caption css-1jlhynm-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-g0sr8l-MuiTypography-root"
           >
             Grimoire: 
             Traveling Knife
@@ -512,10 +512,10 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiBox-root css-yi3mkw"
           >
             <div
-              class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-19xsk7y-MuiChip-root"
+              class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault css-1c6b0ur-MuiChip-root"
             >
               <span
-                class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+                class="MuiChip-label css-19m61dl-MuiChip-label"
               >
                 Assassin's Misery (3)
               </span>
@@ -554,10 +554,10 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning MuiChip-outlinedWarning css-1vihd32-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorWarning css-zrdjvt-MuiChip-root"
         >
           <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            class="MuiChip-label css-19m61dl-MuiChip-label"
           >
             Ultimate
           </span>
@@ -689,10 +689,10 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
         class="MuiBox-root css-1so1mmd"
       >
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-1dktzfr-MuiChip-root"
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess css-xbs52a-MuiChip-root"
         >
           <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            class="MuiChip-label css-19m61dl-MuiChip-label"
           >
             Active
           </span>

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { FightFragment } from '../graphql/gql/graphql';
-import type { PhaseTransitionSummary } from '../utils/chartPhaseAnnotationUtils';
+import type { PhaseTransitionSummary } from '../utils/echartsAnnotationUtils';
 import { createEnhancedPhaseTransitions } from '../utils/phaseDetectionUtils';
 
 import { useFriendlyBuffEvents } from './events/useFriendlyBuffEvents';

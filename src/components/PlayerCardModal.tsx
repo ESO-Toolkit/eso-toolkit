@@ -124,10 +124,12 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          maxHeight: '90vh',
-          overflow: 'hidden',
+      slotProps={{
+        paper: {
+          sx: {
+            maxHeight: '90vh',
+            overflow: 'hidden',
+          },
         },
       }}
     >
@@ -147,6 +149,7 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
           onClick={goToPreviousPlayer}
           disabled={!canNavigate || isTransitioning}
           size="small"
+          aria-label="Previous player"
           sx={{
             opacity: canNavigate ? 1 : 0.3,
             transition: 'all 0.2s ease',
@@ -180,6 +183,7 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
             onClick={goToNextPlayer}
             disabled={!canNavigate || isTransitioning}
             size="small"
+            aria-label="Next player"
             sx={{
               opacity: canNavigate ? 1 : 0.3,
               transition: 'all 0.2s ease',
@@ -194,6 +198,7 @@ export const PlayerCardModal: React.FC<PlayerCardModalProps> = ({
           <IconButton
             onClick={onClose}
             size="small"
+            aria-label="Close"
             sx={{
               transition: 'all 0.2s ease',
               '&:hover': {

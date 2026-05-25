@@ -42,8 +42,9 @@ jobs:
     steps:
       - name: Extract Jira ticket key from branch name
         id: jira-key
+        env:
+          BRANCH: ${{ github.head_ref }}
         run: |
-          BRANCH="${{ github.head_ref }}"
           # Match ESO-NNN at the start of the branch name
           if [[ "$BRANCH" =~ ^(ESO-[0-9]+) ]]; then
             TICKET="${BASH_REMATCH[1]}"

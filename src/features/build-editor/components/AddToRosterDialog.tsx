@@ -257,7 +257,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
         maxWidth="xs"
         fullWidth
         className="glass-dialog"
-        PaperProps={{ sx: paperSx }}
+        slotProps={{ paper: { sx: paperSx } }}
       >
         <DialogTitle sx={titleSx}>
           Add to Roster
@@ -302,7 +302,7 @@ export const AddToRosterDialog: React.FC<Props> = ({ open, onClose, build }) => 
       maxWidth="sm"
       fullWidth
       className="glass-dialog"
-      PaperProps={{ sx: paperSx }}
+      slotProps={{ paper: { sx: paperSx } }}
     >
       <DialogTitle sx={titleSx}>
         Add to Roster

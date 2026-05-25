@@ -59,6 +59,20 @@ function getAllowedOrigins(env: Env): Set<string> {
   return env.ENVIRONMENT === 'development' ? ALL_CORS_ORIGINS : PROD_CORS_ORIGINS;
 }
 
+async function checkKvRateLimit(
+  kv: KVNamespace,
+  key: string,
+  maxPerWindow: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  const rlKey = `rl:${key}`;
+  const raw = await kv.get(rlKey);
+  const count = raw ? parseInt(raw, 10) : 0;
+  if (count >= maxPerWindow) return false;
+  await kv.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
+  return true;
+}
+
 function isAllowedRedirectUri(uri: string, env: Env): boolean {
   const uris = env.ENVIRONMENT === 'development' ? ALL_REDIRECT_URIS : PROD_REDIRECT_URIS;
   if (uris.has(uri)) return true;
@@ -84,6 +98,11 @@ export default {
       return withCors(request, env, await handleBotGuilds(request, env));
     }
     if (url.pathname === '/discord/oauth/token') {
+      const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+      const allowed = await checkKvRateLimit(env.TICKETS, `oauth:${ip}`, 10, 60);
+      if (!allowed) {
+        return withCors(request, env, jsonResponse({ error: 'Rate limit exceeded' }, 429));
+      }
       return withCors(request, env, await handleOAuthTokenExchange(request, env));
     }
 
@@ -279,10 +298,15 @@ async function handleOAuthTokenExchange(request: Request, env: Env): Promise<Res
           : typeof data.error === 'string'
             ? data.error
             : 'Token exchange failed';
-      return jsonResponse({ error: discordError, discord_status: res.status }, 400);
+      return jsonResponse({ error: discordError }, 400);
     }
 
-    return jsonResponse(data);
+    return jsonResponse({
+      access_token: data.access_token,
+      token_type: data.token_type,
+      expires_in: data.expires_in,
+      scope: data.scope,
+    });
   } catch (err) {
     console.error('[oauth-token] error:', err);
     return jsonResponse({ error: 'Token exchange failed' }, 500);
@@ -342,6 +366,11 @@ async function handleRosterApi(request: Request, url: URL, env: Env): Promise<Re
     return handlePublish(body, env, auth.userId);
   }
   if (path === '/discord/roster/publish-direct') {
+    const userId = auth.userId ?? 'anon';
+    const allowed = await checkKvRateLimit(env.TICKETS, `pub:${userId}`, 5, 60);
+    if (!allowed) {
+      return jsonResponse({ error: 'Rate limit exceeded. Try again in a minute.' }, 429);
+    }
     return handlePublishDirect(body, env, auth.userId);
   }
 
@@ -396,8 +425,8 @@ async function handleRefresh(
   const authHeader = request.headers.get('Authorization');
   const isWebhook = await verifyWebhookSecret(env, authHeader);
 
+  let scopeGuildId: string | undefined;
   if (!isWebhook) {
-    // For user-initiated refresh, require an explicit guildId
     const guildId = body.guildId as string | undefined;
     if (!guildId) {
       return jsonResponse({ error: 'guildId is required for user-initiated refresh' }, 400);
@@ -406,9 +435,10 @@ async function handleRefresh(
     if (!auth.authorized) {
       return jsonResponse({ error: auth.error ?? 'Forbidden' }, 403);
     }
+    scopeGuildId = guildId;
   }
 
-  const result = await refreshRoster(env, rosterId);
+  const result = await refreshRoster(env, rosterId, scopeGuildId);
   if (!result.ok) {
     return jsonResponse({ error: result.error }, 400);
   }
@@ -433,7 +463,9 @@ async function handlePublishDirect(
     return jsonResponse({ error: 'roster_data exceeds maximum allowed size' }, 400);
   }
 
-  const rawTags = Array.isArray(body.tags) ? (body.tags as string[]).filter(Boolean) : undefined;
+  const rawTags = Array.isArray(body.tags)
+    ? (body.tags as unknown[]).filter((t): t is string => typeof t === 'string' && t.length > 0)
+    : undefined;
 
   const req: DirectPublishRequest = {
     guildId,
@@ -533,14 +565,29 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
       ...(typeof body.namePattern === 'string' &&
         body.namePattern.length <= 100 && { namePattern: body.namePattern }),
       ...(Array.isArray(body.allowedRoleIds) && {
-        allowedRoleIds: (body.allowedRoleIds as unknown[])
-          .filter((id): id is string => typeof id === 'string' && /^\d+$/.test(id)),
+        allowedRoleIds: (body.allowedRoleIds as unknown[]).filter(
+          (id): id is string => typeof id === 'string' && /^\d+$/.test(id),
+        ),
       }),
       ...(typeof body.rolePingIds === 'object' &&
-        body.rolePingIds !== null && {
-          rolePingIds: body.rolePingIds as GuildConfig['rolePingIds'],
+        body.rolePingIds !== null &&
+        !Array.isArray(body.rolePingIds) && {
+          rolePingIds: Object.fromEntries(
+            Object.entries(body.rolePingIds as Record<string, unknown>)
+              .filter(([, v]) => v === null || (typeof v === 'string' && /^\d{17,20}$/.test(v)))
+              .map(([k, v]) => [k, v as string | null]),
+          ) as GuildConfig['rolePingIds'],
         }),
-      ...(typeof body.timezone === 'string' && { timezone: body.timezone }),
+      ...(typeof body.timezone === 'string' &&
+        body.timezone.length <= 50 &&
+        (() => {
+          try {
+            Intl.DateTimeFormat(undefined, { timeZone: body.timezone as string });
+            return true;
+          } catch {
+            return false;
+          }
+        })() && { timezone: body.timezone }),
     };
 
     await upsertGuildConfig(env, updated);
@@ -577,6 +624,8 @@ function withCors(request: Request, env: Env, response: Response): Response {
   if (!origin) return response;
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', origin);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

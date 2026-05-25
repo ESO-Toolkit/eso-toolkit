@@ -5,7 +5,7 @@ import {
   ExpandLess,
   ExpandMore,
   Extension,
-  RemoveCircleOutline,
+  RemoveCircleOutlined,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -507,19 +507,20 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       onClose={loading ? undefined : onClose}
       maxWidth="sm"
       fullWidth
-      disableEscapeKeyDown={loading}
       className="glass-dialog"
-      PaperProps={{
-        sx: {
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '20px',
-          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: '90vh',
+      slotProps={{
+        paper: {
+          sx: {
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            backdropFilter: 'blur(20px)',
+            borderRadius: '20px',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
         },
       }}
     >
@@ -532,7 +533,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           color: isDark ? '#e5e7eb' : '#1e293b',
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <Box
             sx={{
               width: 36,
@@ -551,7 +552,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             <Typography sx={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1.3 }}>
               {isEditMode ? 'Edit Published Roster' : 'Publish to Roster Hub'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
               {isEditMode
                 ? 'Update your roster details below'
                 : 'Share your roster with the community'}
@@ -1001,7 +1002,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
             }}
           >
             <Extension sx={{ fontSize: 18, color: '#c4a44a' }} />
-            <Typography variant="body2" fontWeight={600} sx={{ flex: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, flex: 1 }}>
               Addon Recommendations
               {activeAddonCount > 0 && (
                 <Chip
@@ -1018,7 +1019,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 />
               )}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', mr: 0.5 }}>
               {addonSectionOpen ? '' : 'optional'}
             </Typography>
             {addonSectionOpen ? (
@@ -1055,7 +1056,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               <Box
                 sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}
               >
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Pick a curated pack or customize individual addons.
                 </Typography>
 
@@ -1069,10 +1070,10 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                   renderOption={(props, p) => (
                     <li {...props} key={p.id}>
                       <Box>
-                        <Typography variant="body2" fontWeight={600}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {p.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {p.addonCount} addons · {p.description.slice(0, 60)}
                           {p.description.length > 60 ? '…' : ''}
                         </Typography>
@@ -1143,18 +1144,16 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
                               variant="body2"
-                              fontWeight={600}
                               noWrap
-                              sx={{ opacity: isEnabled ? 1 : 0.5 }}
+                              sx={{ fontWeight: 600, opacity: isEnabled ? 1 : 0.5 }}
                             >
                               {addon.name}
                             </Typography>
                             {addon.note && (
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
                                 noWrap
-                                sx={{ opacity: isEnabled ? 0.7 : 0.4 }}
+                                sx={{ color: 'text.secondary', opacity: isEnabled ? 0.7 : 0.4 }}
                               >
                                 {addon.note}
                               </Typography>
@@ -1190,7 +1189,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                                 onClick={() => handleRemoveAddon(addon.esouiId)}
                                 sx={{ p: 0.5, color: 'text.disabled' }}
                               >
-                                <RemoveCircleOutline sx={{ fontSize: 16 }} />
+                                <RemoveCircleOutlined sx={{ fontSize: 16 }} />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -1241,7 +1240,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                 {activeAddonCount > 0 && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5 }}>
                     <CheckCircle sx={{ fontSize: 14, color: '#22c55e' }} />
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                       {activeAddonCount} addon{activeAddonCount !== 1 ? 's' : ''} will be
                       recommended to viewers
                     </Typography>
@@ -1255,7 +1254,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
               <Box
                 sx={{ px: 2, pb: 2, pt: 1.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}
               >
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Create a reusable addon pack that others can use too.
                 </Typography>
 
@@ -1304,7 +1303,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                         }}
                       >
                         <Box>
-                          <Typography variant="body2" fontWeight={600}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
                             {o.title}
                             {alreadyAdded && (
                               <Chip
@@ -1314,7 +1313,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                               />
                             )}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                             by {o.author} · {o.category} · {o.downloads} downloads
                           </Typography>
                         </Box>
@@ -1372,7 +1371,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                         }}
                       >
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="body2" fontWeight={600} noWrap>
+                          <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
                             {addon.name}
                           </Typography>
                         </Box>
@@ -1403,7 +1402,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
                             onClick={() => handleRemoveNewPackAddon(addon.esouiId)}
                             sx={{ p: 0.5, color: 'text.disabled' }}
                           >
-                            <RemoveCircleOutline sx={{ fontSize: 16 }} />
+                            <RemoveCircleOutlined sx={{ fontSize: 16 }} />
                           </IconButton>
                         </Tooltip>
                       </Box>

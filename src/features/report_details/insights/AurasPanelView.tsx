@@ -264,10 +264,12 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
         sx={{
           pointerEvents: 'none',
         }}
-        PaperProps={{
-          sx: {
-            maxWidth: 400,
-            pointerEvents: 'auto',
+        slotProps={{
+          paper: {
+            sx: {
+              maxWidth: 400,
+              pointerEvents: 'auto',
+            },
           },
         }}
       >

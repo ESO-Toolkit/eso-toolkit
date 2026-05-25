@@ -277,7 +277,11 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
       >
         <Stack spacing={1} sx={{ minWidth: 0 }}>
           {/* Row 1: name + action icons */}
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <Stack spacing={0.15} sx={{ minWidth: 0, flex: 1 }}>
               <Typography
                 variant={isDrawer ? 'subtitle1' : 'h6'}
@@ -298,7 +302,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                 {setup.name}
               </Typography>
               {conditionSummary && (
-                <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.2 }}>
                   {conditionSummary}
                 </Typography>
               )}
@@ -320,6 +324,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   size="small"
                   onClick={handleCopy}
                   color="primary"
+                  aria-label="Copy to clipboard"
                   sx={{
                     borderRadius: 0,
                     px: 0.75,
@@ -336,6 +341,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   size="small"
                   onClick={handlePaste}
                   color="secondary"
+                  aria-label="Paste from clipboard"
                   sx={{
                     borderRadius: 0,
                     px: 0.75,
@@ -359,6 +365,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                 <IconButton
                   size="small"
                   onClick={handleDuplicate}
+                  aria-label="Duplicate setup"
                   sx={{
                     borderRadius: 0,
                     px: 0.75,
@@ -383,6 +390,7 @@ export const SetupEditor: React.FC<SetupEditorProps> = ({
                   size="small"
                   onClick={handleDelete}
                   color="error"
+                  aria-label="Delete setup"
                   sx={{
                     borderRadius: 0,
                     px: 0.75,

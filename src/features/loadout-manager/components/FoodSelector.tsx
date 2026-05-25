@@ -3,7 +3,7 @@
  * Allows selection of food/drink buffs for the loadout
  */
 
-import { HelpOutline, Restaurant } from '@mui/icons-material';
+import { HelpOutlined, Restaurant } from '@mui/icons-material';
 import { Alert, Box, Chip, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import Autocomplete, { AutocompleteInputChangeReason } from '@mui/material/Autocomplete';
 import type { Theme } from '@mui/material/styles';
@@ -275,7 +275,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
           const iconUrl = getCategoryIconUrl(option.category);
           return (
             <li {...props}>
-              <Stack direction="row" spacing={1.5} alignItems="center" width="100%">
+              <Stack direction="row" spacing={1.5} sx={{ width: '100%', alignItems: 'center' }}>
                 {iconUrl && (
                   <img
                     src={iconUrl}
@@ -283,9 +283,9 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                     style={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
                   />
                 )}
-                <Stack spacing={0} flex={1} minWidth={0}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography fontWeight={600} noWrap>
+                <Stack spacing={0} sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <Typography noWrap sx={{ fontWeight: 600 }}>
                       {option.name}
                     </Typography>
                     <Chip
@@ -295,7 +295,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                       sx={{ height: 18, fontSize: '0.65rem' }}
                     />
                   </Stack>
-                  <Typography variant="caption" color="text.secondary" noWrap>
+                  <Typography variant="caption" noWrap sx={{ color: 'text.secondary' }}>
                     {[
                       option.category,
                       typeof option.quality === 'number' ? `Quality ${option.quality}` : null,
@@ -314,25 +314,28 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
             label="Search Food or Drink"
             placeholder={`Type at least ${MIN_SEARCH_LENGTH} characters`}
             variant="outlined"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  <Tooltip title="Open Food Selector knowledge base">
-                    <IconButton
-                      size="small"
-                      component={RouterLink}
-                      to={FOOD_SELECTOR_KB_URL}
-                      aria-label="Open Food Selector knowledge base"
-                      sx={{ mr: 0.5 }}
-                      onMouseDown={(event) => event.preventDefault()}
-                    >
-                      <HelpOutline fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  {params.InputProps.endAdornment}
-                </>
-              ),
+            slotProps={{
+              ...params.slotProps,
+              input: {
+                ...params.slotProps.input,
+                endAdornment: (
+                  <>
+                    <Tooltip title="Open Food Selector knowledge base">
+                      <IconButton
+                        size="small"
+                        component={RouterLink}
+                        to={FOOD_SELECTOR_KB_URL}
+                        aria-label="Open Food Selector knowledge base"
+                        sx={{ mr: 0.5 }}
+                        onMouseDown={(event) => event.preventDefault()}
+                      >
+                        <HelpOutlined fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {params.slotProps.input.endAdornment}
+                  </>
+                ),
+              },
             }}
           />
         )}
@@ -345,10 +348,10 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
           const iconUrl = getCategoryIconUrl(currentItem.category);
           return (
             <Box
-              display="flex"
-              alignItems="center"
-              gap={1.5}
               sx={{
+                gap: 1.5,
+                display: 'flex',
+                alignItems: 'center',
                 px: 1.5,
                 py: 1,
                 borderRadius: 1,
@@ -362,9 +365,9 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
               {iconUrl && (
                 <img src={iconUrl} alt="" style={{ width: 36, height: 36, flexShrink: 0 }} />
               )}
-              <Box flex={1} minWidth={0}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography fontWeight={600} noWrap>
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <Typography noWrap sx={{ fontWeight: 600 }}>
                     {currentItem.name}
                   </Typography>
                   <Chip
@@ -382,7 +385,7 @@ export const FoodSelector: React.FC<FoodSelectorProps> = ({
                     />
                   )}
                 </Stack>
-                <Typography variant="caption" color="text.secondary" noWrap>
+                <Typography variant="caption" noWrap sx={{ color: 'text.secondary' }}>
                   {[
                     typeof currentItem.quality === 'number'
                       ? `Quality ${currentItem.quality}`

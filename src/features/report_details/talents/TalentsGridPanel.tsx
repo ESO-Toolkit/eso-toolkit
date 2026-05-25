@@ -82,6 +82,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         cell: (info) => (
           <Avatar
             src={info.row.original.abilityIcon}
+            alt=""
             sx={{ width: 32, height: 32 }}
             variant="rounded"
           />

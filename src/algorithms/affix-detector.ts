@@ -9,8 +9,7 @@
  * by the scribing skill.
  */
 
-// TODO: Implement proper scribing detection services
-// Temporary stubs to prevent compilation errors
+// Scribing detection stubs — full implementation pending unified detection service
 
 interface AffixPattern {}
 

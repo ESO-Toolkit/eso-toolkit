@@ -135,7 +135,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
           }}
         >
-          <Typography variant="subtitle2" fontWeight="bold">
+          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
             Performance Monitor
           </Typography>
           <Box>
@@ -189,7 +189,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
               <SpeedIcon fontSize="small" />
               <Typography variant="body2">FPS</Typography>
             </Box>
-            <Typography variant="h6" fontWeight="bold" sx={{ color: getFPSColor(fps) }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: getFPSColor(fps) }}>
               {fps}
             </Typography>
           </Box>
@@ -226,7 +226,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
                 <WarningIcon fontSize="small" sx={{ color: 'warning.main' }} />
                 <Typography variant="body2">Slow Frames</Typography>
               </Box>
-              <Typography variant="body2" color="warning.main">
+              <Typography variant="body2" sx={{ color: 'warning.main' }}>
                 {slowFrameData.slowFrameCount}
               </Typography>
             </Box>
@@ -239,13 +239,13 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
           <Stack spacing={1.5} sx={{ px: 2, py: 1.5 }}>
             {/* FPS Details */}
             <Box>
-              <Typography variant="caption" color="grey.400" gutterBottom>
+              <Typography variant="caption" gutterBottom sx={{ color: 'grey.400' }}>
                 FPS Statistics
               </Typography>
               <Stack spacing={0.5}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2">Current:</Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                     {fps}
                   </Typography>
                 </Box>
@@ -269,7 +269,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
             {/* Memory Details */}
             {memoryData && (
               <Box>
-                <Typography variant="caption" color="grey.400" gutterBottom>
+                <Typography variant="caption" gutterBottom sx={{ color: 'grey.400' }}>
                   Memory Usage
                 </Typography>
                 <Stack spacing={0.5}>
@@ -325,7 +325,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
             {/* Slow Frame Details */}
             {slowFrameData.slowFrameCount > 0 && (
               <Box>
-                <Typography variant="caption" color="grey.400" gutterBottom>
+                <Typography variant="caption" gutterBottom sx={{ color: 'grey.400' }}>
                   Slow Frame Analysis
                 </Typography>
                 <Stack spacing={0.5}>
@@ -343,7 +343,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
                   </Box>
                   {slowFrameData.recentSlowFrames.length > 0 && (
                     <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" color="grey.500">
+                      <Typography variant="caption" sx={{ color: 'grey.500' }}>
                         Recent slow frames:
                       </Typography>
                       <Box
@@ -380,7 +380,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
             backgroundColor: 'rgba(0, 0, 0, 0.3)',
           }}
         >
-          <Typography variant="caption" color="grey.500" fontSize="0.65rem">
+          <Typography variant="caption" sx={{ color: 'grey.500', fontSize: '0.65rem' }}>
             Development Mode Only
           </Typography>
         </Box>

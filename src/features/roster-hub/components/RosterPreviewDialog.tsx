@@ -1,5 +1,5 @@
 import {
-  ChatBubbleOutline,
+  ChatBubbleOutlined,
   ContentCopy,
   EditOutlined,
   Fullscreen,
@@ -107,12 +107,12 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   // Embed mode URL — strips header/footer from the iframe
   // BASE_URL includes the sub-path prefix in preview deployments (e.g. /dev-previews/pr-860/)
   const embedUrl = roster
-    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}&embed=1`
+    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${encodeURIComponent(roster.roster_data)}&embed=1`
     : '';
 
   // Full page URL (no embed — shows normal page with header/footer)
   const shareUrl = roster
-    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}`
+    ? `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${encodeURIComponent(roster.roster_data)}`
     : '';
 
   const handleOpenFullPage = (): void => {
@@ -128,7 +128,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
   const handleLoadIntoBuilder = (): void => {
     if (roster) {
       window.open(
-        `${import.meta.env.BASE_URL}roster-builder?r=${roster.roster_data}`,
+        `${import.meta.env.BASE_URL}roster-builder?r=${encodeURIComponent(roster.roster_data)}`,
         '_blank',
         'noopener,noreferrer',
       );
@@ -155,7 +155,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       fullScreen={isMobile}
       disableEnforceFocus
       className="glass-dialog"
-      TransitionComponent={SlideUpTransition}
+      slots={{ transition: SlideUpTransition }}
       slotProps={{
         paper: {
           sx: {
@@ -434,7 +434,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               zIndex: 1,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Preview unavailable
             </Typography>
             <Button size="small" onClick={handleOpenFullPage} startIcon={<OpenInNew />}>
@@ -479,6 +479,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           <iframe
             src={embedUrl}
             title={`Preview: ${roster.title}`}
+            sandbox="allow-same-origin allow-scripts allow-popups"
             /* onLoad not used — loaded signal comes via postMessage from RosterViewPage */
             style={{
               position: 'absolute',
@@ -547,7 +548,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                 },
               }}
             >
-              <ChatBubbleOutline
+              <ChatBubbleOutlined
                 sx={{
                   fontSize: 15,
                   color: commentsOpen ? accentColor : 'text.disabled',
@@ -556,8 +557,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               />
               <Typography
                 variant="body2"
-                fontWeight={600}
                 sx={{
+                  fontWeight: 600,
                   fontSize: '0.8rem',
                   color: commentsOpen
                     ? isDark

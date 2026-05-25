@@ -91,7 +91,7 @@ export const AbilitiesDebugPanelView: React.FC<AbilitiesDebugPanelViewProps> = (
 
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+      <Box sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 200, display: 'flex' }}>
         <CircularProgress />
         <Typography variant="body2" sx={{ ml: 2 }}>
           Loading abilities data...
@@ -106,7 +106,7 @@ export const AbilitiesDebugPanelView: React.FC<AbilitiesDebugPanelViewProps> = (
         <Typography variant="h6" gutterBottom>
           Abilities Debug Panel
         </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
+        <Typography variant="body2" gutterBottom sx={{ color: 'text.secondary' }}>
           Displaying abilities from masterData.abilitiesById ({totalCount} total)
         </Typography>
       </Box>

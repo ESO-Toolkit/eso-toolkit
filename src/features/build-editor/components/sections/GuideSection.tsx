@@ -110,13 +110,13 @@ const GuideSectionComponent: React.FC = () => {
     <Stack spacing={2.5}>
       {/* ── Guide text ───────────────────────────────────────────────── */}
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={sectionLabelSx}>
+        <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
           Build Guide
         </Typography>
         <Typography
           variant="caption"
-          color="text.disabled"
           sx={{
+            color: 'text.disabled',
             display: 'block',
             mb: 1,
             fontSize: 10,
@@ -133,7 +133,7 @@ const GuideSectionComponent: React.FC = () => {
           placeholder="Write your guide here..."
           value={guide.content}
           onChange={(e) => dispatch(setGuideContent(e.target.value))}
-          inputProps={{ 'aria-label': 'Build guide content', maxLength: 50000 }}
+          slotProps={{ htmlInput: { 'aria-label': 'Build guide content', maxLength: 50000 } }}
           sx={glassInputSx(isDark)}
         />
       </Box>
@@ -147,7 +147,7 @@ const GuideSectionComponent: React.FC = () => {
         }}
       >
         <Box>
-          <Typography variant="caption" color="text.secondary" sx={sectionLabelSx}>
+          <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
             YouTube Video URL
           </Typography>
           <TextField
@@ -156,13 +156,13 @@ const GuideSectionComponent: React.FC = () => {
             placeholder="https://youtube.com/watch?v=..."
             value={guide.youtubeUrl}
             onChange={(e) => dispatch(setGuideYoutubeUrl(e.target.value))}
-            inputProps={{ 'aria-label': 'YouTube video URL' }}
+            slotProps={{ htmlInput: { 'aria-label': 'YouTube video URL' } }}
             sx={glassInputSx(isDark)}
           />
         </Box>
 
         <Box>
-          <Typography variant="caption" color="text.secondary" sx={sectionLabelSx}>
+          <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
             Banner Image URL
           </Typography>
           <TextField
@@ -171,14 +171,18 @@ const GuideSectionComponent: React.FC = () => {
             placeholder="https://... (banner image)"
             value={guide.bannerImageUrl}
             onChange={(e) => dispatch(setGuideBannerUrl(e.target.value))}
-            inputProps={{ 'aria-label': 'Banner image URL' }}
+            slotProps={{ htmlInput: { 'aria-label': 'Banner image URL' } }}
             sx={glassInputSx(isDark)}
           />
           {guide.bannerImageUrl && !sanitizeImageUrl(guide.bannerImageUrl) && (
             <Typography
               variant="caption"
-              color="error.main"
-              sx={{ mt: 0.5, display: 'block', fontFamily: 'Space Grotesk, Inter, system-ui' }}
+              sx={{
+                color: 'error.main',
+                mt: 0.5,
+                display: 'block',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+              }}
             >
               Invalid URL — must start with https://
             </Typography>
@@ -237,8 +241,12 @@ const GuideSectionComponent: React.FC = () => {
       {/* ── Screenshots ──────────────────────────────────────────────── */}
       <Typography
         variant="caption"
-        color="text.disabled"
-        sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui', mt: -1 }}
+        sx={{
+          color: 'text.disabled',
+          fontSize: 10,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          mt: -1,
+        }}
       >
         Character stats, gear, or skills.
       </Typography>
@@ -255,10 +263,13 @@ const GuideSectionComponent: React.FC = () => {
         >
           <Typography
             variant="caption"
-            color="text.disabled"
-            mb={1.5}
-            display="block"
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+            sx={{
+              color: 'text.disabled',
+              display: 'block',
+              mb: 1.5,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontStyle: 'italic',
+            }}
           >
             No screenshots yet
           </Typography>
@@ -332,6 +343,7 @@ const GuideSectionComponent: React.FC = () => {
                         <IconButton
                           className="remove-btn"
                           size="small"
+                          aria-label="Remove screenshot"
                           onClick={() => dispatch(removeScreenshot(i))}
                           sx={{
                             position: 'absolute',

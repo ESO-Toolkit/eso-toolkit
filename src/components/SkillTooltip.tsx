@@ -317,7 +317,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
             mb: 1.25,
           }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             {resolvedIconUrl && (
               <Box
                 sx={{

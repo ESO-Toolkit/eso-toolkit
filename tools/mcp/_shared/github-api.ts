@@ -23,7 +23,7 @@ let cachedSlug: string | undefined;
 
 function runShell(cmd: string, args: string[], cwd: string): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile(cmd, args, { cwd, timeout: COMMAND_TIMEOUT, shell: true }, (err, stdout, stderr) => {
+    execFile(cmd, args, { cwd, timeout: COMMAND_TIMEOUT }, (err, stdout, stderr) => {
       if (err) {
         reject(new Error(stderr?.trim() || stdout?.trim() || err.message));
         return;

@@ -110,7 +110,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             <ShieldIcon sx={{ fontSize: 40 }} color="primary" />
             Privacy Policy
           </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="subtitle1" sx={{ color: 'text.secondary', mt: 1 }}>
             How ESO Toolkit handles your data. Effective {effectiveDate}.
           </Typography>
         </Box>
@@ -137,27 +137,27 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Overview
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             ESO Toolkit is a client-side web application for analyzing Elder Scrolls Online combat
             logs. We are committed to protecting your privacy and being transparent about how your
             data is used.
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Key points:</strong>
           </Typography>
           <Box component="ul" sx={{ pl: 3, '& li': { mb: 1 } }}>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               All combat log data is processed <strong>entirely in your browser</strong> — we never
               upload or store it on our servers.
             </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               We use third-party services (Google Analytics, Rollbar){' '}
               <strong>only with your explicit consent</strong>.
             </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               You can export or delete all your data at any time from this page.
             </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               We do not sell, rent, or share your personal data with third parties for marketing
               purposes.
             </Typography>
@@ -180,31 +180,31 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Legal basis:</strong> Legitimate interest — necessary for the application to
                 function.
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>What we store (in your browser&apos;s localStorage):</strong>
               </Typography>
               <Box component="ul" sx={{ pl: 3, '& li': { mb: 0.5 } }}>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   <strong>UI preferences:</strong> Theme (dark/light mode), sidebar state, layout
                   settings
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   <strong>Authentication tokens:</strong> OAuth access and refresh tokens for ESO
                   Logs (esologs.com)
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   <strong>Loadout &amp; dashboard data:</strong> Your saved builds and dashboard
                   configuration
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   <strong>Consent preferences:</strong> Your privacy choices
                 </Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                 This data is stored locally in your browser and is never transmitted to our servers.
                 You can clear it by clearing your browser data or using the controls below.
               </Typography>
@@ -218,30 +218,30 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Legal basis:</strong> Consent (GDPR Article 6(1)(a)).
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Service:</strong> Google Analytics 4 (provided by Google LLC)
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>What is collected when enabled:</strong>
               </Typography>
               <Box component="ul" sx={{ pl: 3, '& li': { mb: 0.5 } }}>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   Page views with anonymized paths (report codes replaced with placeholders)
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   Feature usage events (which tools you use, button clicks)
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   Application metadata (version, build ID)
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   Your numeric ESO Logs user ID (if logged in) — no name or email
                 </Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                 Google may set cookies (_ga, _gid) when analytics is enabled. See{' '}
                 <Link
                   href="https://policies.google.com/privacy"
@@ -268,33 +268,33 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Legal basis:</strong> Consent (GDPR Article 6(1)(a)).
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Service:</strong> Rollbar (provided by Rollbar, Inc.)
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>What is collected when enabled:</strong>
               </Typography>
               <Box component="ul" sx={{ pl: 3, '& li': { mb: 0.5 } }}>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   JavaScript error stack traces and error messages
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   Browser type, screen resolution, viewport size
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   Performance metrics (page load time, memory usage)
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   UI state snapshots (theme, loading states — no personal data)
                 </Typography>
-                <Typography component="li" variant="body2" color="text.secondary">
+                <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
                   Your numeric user ID and username (if logged in) — email is never sent
                 </Typography>
               </Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                 See{' '}
                 <Link
                   href="https://rollbar.com/privacy/"
@@ -321,13 +321,13 @@ export const PrivacyPolicyPage: React.FC = () => {
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>ESO Logs (esologs.com):</strong> When you authenticate, we use OAuth 2.0
                 PKCE flow to obtain access tokens. We query the ESO Logs API for your reports and
                 combat data. Your authentication tokens are stored locally and sent directly to
                 esologs.com — we do not proxy or store them on our servers.
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                 <strong>Google Fonts:</strong> We load Inter and Space Grotesk fonts from
                 Google&apos;s CDN. This results in requests to fonts.googleapis.com and
                 fonts.gstatic.com, which may log your IP address per Google&apos;s privacy policy.
@@ -343,27 +343,27 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Your Rights Under GDPR
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             Under the General Data Protection Regulation (GDPR), you have the following rights:
           </Typography>
           <Box component="ul" sx={{ pl: 3, '& li': { mb: 1 } }}>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               <strong>Right of access (Article 15):</strong> You can view all data stored by this
               application using the Export button below.
             </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               <strong>Right to rectification (Article 16):</strong> Since all data is stored
               locally, you can modify it directly through your browser&apos;s developer tools.
             </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               <strong>Right to erasure (Article 17):</strong> Use the &quot;Delete All Data&quot;
               button below to remove all application data from your browser.
             </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               <strong>Right to data portability (Article 20):</strong> Use the &quot;Export
               Data&quot; button to download all your data in JSON format.
             </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
+            <Typography component="li" variant="body2" sx={{ color: 'text.secondary' }}>
               <strong>Right to withdraw consent (Article 7):</strong> You can change your consent
               preferences at any time using the controls below.
             </Typography>
@@ -397,7 +397,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           >
             <SettingsIcon /> Consent Preferences
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
             Change which optional data processing categories you consent to. Changes take effect
             immediately.
           </Typography>
@@ -422,7 +422,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                   Essential
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   App preferences, authentication, consent
                 </Typography>
               </Box>
@@ -448,7 +448,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                   Analytics (Google Analytics 4)
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Page views, feature usage, build metadata
                 </Typography>
               </Box>
@@ -483,7 +483,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                   Error Tracking (Rollbar)
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Crash reports, performance metrics, bug reports
                 </Typography>
               </Box>
@@ -545,7 +545,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Your Data
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
             Exercise your data rights. All data is stored locally in your browser — exporting gives
             you a snapshot, and deleting removes everything permanently.
           </Typography>
@@ -591,16 +591,16 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Data Retention
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Local data:</strong> Stored until you clear your browser data or use the delete
             controls above. We do not set expiration on localStorage items.
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Google Analytics:</strong> Data retention is set by Google&apos;s default
             policies (typically 14 months). We do not control data retention on Google&apos;s
             servers.
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             <strong>Rollbar:</strong> Error events are retained per Rollbar&apos;s data retention
             policy (configurable per plan).
           </Typography>
@@ -611,7 +611,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Children&apos;s Privacy
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             This application is not directed at children under 16 years of age. We do not knowingly
             collect personal data from children. If you believe a child has provided data through
             this application, please contact us.
@@ -623,7 +623,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Changes to This Policy
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             When we make material changes to this policy, we will update the consent version number,
             which will prompt you to review and re-confirm your preferences. The effective date at
             the top of this page indicates when the policy was last updated.
@@ -635,7 +635,7 @@ export const PrivacyPolicyPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
             Contact
           </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             For privacy-related inquiries, you can reach us through the project&apos;s{' '}
             <Link
               href="https://github.com/ESO-Toolkit/eso-toolkit"

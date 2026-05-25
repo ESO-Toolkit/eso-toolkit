@@ -823,7 +823,7 @@ export const HeaderBar: React.FC = () => {
                     backgroundClip: 'text',
                   }}
                 >
-                  <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
+                  <img src={esoLogo} alt="ESO Toolkit logo" style={{ width: 30, height: 30 }} />
                   ESO Toolkit
                 </Typography>
               </Button>
@@ -937,7 +937,7 @@ export const HeaderBar: React.FC = () => {
                     {avatarThumbUrl ? (
                       <img
                         src={avatarThumbUrl}
-                        alt=""
+                        alt={userDisplayName || 'User avatar'}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -1058,11 +1058,11 @@ export const HeaderBar: React.FC = () => {
         anchorEl={toolsAnchorEl}
         open={Boolean(toolsAnchorEl)}
         onClose={handleToolsClose}
-        TransitionComponent={Fade}
-        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1122,11 +1122,11 @@ export const HeaderBar: React.FC = () => {
         anchorEl={reportsAnchorEl}
         open={Boolean(reportsAnchorEl)}
         onClose={handleReportsClose}
-        TransitionComponent={Fade}
-        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1192,11 +1192,11 @@ export const HeaderBar: React.FC = () => {
         anchorEl={profileAnchorEl}
         open={Boolean(profileAnchorEl)}
         onClose={handleProfileMenuClose}
-        TransitionComponent={Fade}
-        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
             sx: {
@@ -1268,7 +1268,7 @@ export const HeaderBar: React.FC = () => {
             {avatarThumbUrl ? (
               <img
                 src={avatarThumbUrl}
-                alt=""
+                alt={userDisplayName || 'User avatar'}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -1510,7 +1510,7 @@ export const HeaderBar: React.FC = () => {
               {avatarThumbUrl ? (
                 <img
                   src={avatarThumbUrl}
-                  alt=""
+                  alt={userDisplayName || 'User avatar'}
                   style={{
                     width: '100%',
                     height: '100%',

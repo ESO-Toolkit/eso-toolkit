@@ -479,9 +479,7 @@ describe('UserReports Component', () => {
       });
     });
 
-    // TODO: Fix infinite loop when fetchAllUserReports fails
-    // The component needs to track error state to prevent re-fetching
-    it.skip('should display error message when fetching reports fails', async () => {
+    it('should display error message when fetching reports fails', async () => {
       // Set up mock to reject on first call
       mockClient.query.mockImplementation((params) => {
         if (params.query === mockGetCurrentUserDocument) {
@@ -534,9 +532,7 @@ describe('UserReports Component', () => {
   });
 
   describe('Pagination', () => {
-    // TODO: Fix mock setup for fetchAllUserReports in tests
-    // The manual render setup doesn't properly trigger the mocked API responses
-    it.skip('should display pagination when there are multiple pages', async () => {
+    it('should display pagination when there are multiple pages', async () => {
       // Create mock data for 3 pages (25 reports total)
       const createPageData = (pageNum: number, count: number) =>
         Array.from({ length: count }, (_, i) => ({
@@ -556,7 +552,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(1, 10),
               current_page: 1,
-              per_page: 100,
+              per_page: 10,
               last_page: 3,
               has_more_pages: true,
               total: 25,
@@ -568,7 +564,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(2, 10),
               current_page: 2,
-              per_page: 100,
+              per_page: 10,
               last_page: 3,
               has_more_pages: true,
               total: 25,
@@ -580,7 +576,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(3, 5),
               current_page: 3,
-              per_page: 100,
+              per_page: 10,
               last_page: 3,
               has_more_pages: false,
               total: 25,
@@ -645,8 +641,7 @@ describe('UserReports Component', () => {
   });
 
   describe('Pagination persistence (ESO-544)', () => {
-    // TODO: Fix mock setup for fetchAllUserReports in tests
-    it.skip('should use page number from URL query parameter on mount', async () => {
+    it('should use page number from URL query parameter on mount', async () => {
       // Mock all 5 pages of data for fetchAllUserReports
       const createPageData = (pageNum: number) =>
         Array.from({ length: 10 }, (_, i) => ({
@@ -666,7 +661,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(1),
               current_page: 1,
-              per_page: 100,
+              per_page: 10,
               last_page: 5,
               has_more_pages: true,
               total: 50,
@@ -678,7 +673,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(2),
               current_page: 2,
-              per_page: 100,
+              per_page: 10,
               last_page: 5,
               has_more_pages: true,
               total: 50,
@@ -690,7 +685,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(3),
               current_page: 3,
-              per_page: 100,
+              per_page: 10,
               last_page: 5,
               has_more_pages: true,
               total: 50,
@@ -702,7 +697,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(4),
               current_page: 4,
-              per_page: 100,
+              per_page: 10,
               last_page: 5,
               has_more_pages: true,
               total: 50,
@@ -714,7 +709,7 @@ describe('UserReports Component', () => {
             reports: {
               data: createPageData(5),
               current_page: 5,
-              per_page: 100,
+              per_page: 10,
               last_page: 5,
               has_more_pages: false,
               total: 50,
@@ -769,8 +764,7 @@ describe('UserReports Component', () => {
       expect(screen.getByText('Page 3 Report 1')).toBeInTheDocument();
     });
 
-    // TODO: Fix mock setup for fetchAllUserReports in tests
-    it.skip('should update URL when page changes', async () => {
+    it('should update URL when page changes', async () => {
       // Mock sequential responses for fetchAllUserReports
       const page1Data = Array.from({ length: 10 }, (_, i) => ({
         code: `REPORT${i + 1}`,
@@ -809,7 +803,7 @@ describe('UserReports Component', () => {
             reports: {
               data: page1Data,
               current_page: 1,
-              per_page: 100,
+              per_page: 10,
               last_page: 3,
               has_more_pages: true,
               total: 30,
@@ -821,7 +815,7 @@ describe('UserReports Component', () => {
             reports: {
               data: page2Data,
               current_page: 2,
-              per_page: 100,
+              per_page: 10,
               last_page: 3,
               has_more_pages: true,
               total: 30,
@@ -833,7 +827,7 @@ describe('UserReports Component', () => {
             reports: {
               data: page3Data,
               current_page: 3,
-              per_page: 100,
+              per_page: 10,
               last_page: 3,
               has_more_pages: false,
               total: 30,

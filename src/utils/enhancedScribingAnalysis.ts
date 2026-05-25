@@ -16,9 +16,7 @@ import {
 } from '@/types/combatlogEvents';
 import { PlayerTalent } from '@/types/playerDetails';
 
-// Removed databaseSignatureScriptDetection - using unified detection instead
-// TODO: Implement proper scribing detection services
-// Temporary stubs to prevent compilation errors
+// Scribing detection stubs — full implementation pending unified detection service
 const getScribingSkillByAbilityId = (
   abilityId: number,
 ): { grimoire: string; transformation: string; transformationType: string } | null => {
@@ -224,7 +222,7 @@ export function analyzeScribingSkillWithSignature(
         (event as ExtendedResourceEvent).extraAbilityGameID === talent.guid),
   );
 
-  // TODO: Replace with unified scribing detection
+  // Stub — pending unified scribing detection
   const _allEventAbilityIds: number[] = [];
   const databaseSignatureDetection = {
     matchingAbilities: [],
@@ -268,7 +266,7 @@ export function analyzeScribingSkillWithSignature(
   };
 
   // Add signature script information using database detection
-  // TODO: Replace with unified scribing detection
+  // Stub — pending unified scribing detection
   const signatureScriptInfo = null;
   if (signatureScriptInfo) {
     result.signatureScript = signatureScriptInfo;

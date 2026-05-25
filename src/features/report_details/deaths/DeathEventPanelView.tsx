@@ -215,7 +215,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 
   if (deathInfos.length === 0) {
     return (
-      <Box mt={2}>
+      <Box sx={{ mt: 2 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 800, letterSpacing: '-0.02em' }}>
           Deaths
         </Typography>
@@ -270,7 +270,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   const uniquePlayers = Object.keys(deathSummary).length;
 
   return (
-    <Box mt={2}>
+    <Box sx={{ mt: 2 }}>
       {/* ─── Header ─── */}
       <Box
         sx={{

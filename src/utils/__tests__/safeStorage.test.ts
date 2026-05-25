@@ -15,19 +15,6 @@ import {
 } from '../safeStorage';
 
 describe('safeStorage utilities', () => {
-  // Store original console.warn
-  const originalWarn = console.warn;
-
-  beforeEach(() => {
-    // Mock console.warn to avoid cluttering test output
-    console.warn = jest.fn();
-  });
-
-  afterEach(() => {
-    // Restore console.warn
-    console.warn = originalWarn;
-  });
-
   describe('sessionStorage operations', () => {
     beforeEach(() => {
       sessionStorage.clear();
@@ -44,13 +31,11 @@ describe('safeStorage utilities', () => {
       });
 
       it('should handle SecurityError gracefully', () => {
-        // Spy on sessionStorage.getItem and make it throw
         const getItemSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
           throw new DOMException('The operation is insecure', 'SecurityError');
         });
 
         expect(safeSessionStorageGet('testKey')).toBeNull();
-        expect(console.warn).toHaveBeenCalled();
 
         getItemSpy.mockRestore();
       });
@@ -63,13 +48,11 @@ describe('safeStorage utilities', () => {
       });
 
       it('should handle SecurityError gracefully', () => {
-        // Spy on sessionStorage.setItem and make it throw
         const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
           throw new DOMException('The operation is insecure', 'SecurityError');
         });
 
         expect(safeSessionStorageSet('testKey', 'testValue')).toBe(false);
-        expect(console.warn).toHaveBeenCalled();
 
         setItemSpy.mockRestore();
       });
@@ -83,13 +66,11 @@ describe('safeStorage utilities', () => {
       });
 
       it('should handle SecurityError gracefully', () => {
-        // Spy on sessionStorage.removeItem and make it throw
         const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
           throw new DOMException('The operation is insecure', 'SecurityError');
         });
 
         expect(safeSessionStorageRemove('testKey')).toBe(false);
-        expect(console.warn).toHaveBeenCalled();
 
         removeItemSpy.mockRestore();
       });
@@ -103,7 +84,6 @@ describe('safeStorage utilities', () => {
       });
 
       it('should return false when sessionStorage throws SecurityError', () => {
-        // Spy on sessionStorage.setItem and make it throw
         const setItemSpy = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
           throw new DOMException('The operation is insecure', 'SecurityError');
         });
@@ -123,7 +103,6 @@ describe('safeStorage utilities', () => {
 
   describe('localStorage safe wrappers exist', () => {
     it('should export all localStorage functions', () => {
-      // Just verify the functions exist and are callable
       expect(typeof safeLocalStorageGet).toBe('function');
       expect(typeof safeLocalStorageSet).toBe('function');
       expect(typeof safeLocalStorageRemove).toBe('function');

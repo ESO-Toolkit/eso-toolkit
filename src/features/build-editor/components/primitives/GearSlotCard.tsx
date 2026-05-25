@@ -417,7 +417,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
         {/* Info column */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {/* Row 1: slot name + set name */}
-          <Stack direction="row" spacing={0.75} alignItems="center">
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
             <Typography
               sx={{
                 fontSize: 9,
@@ -476,8 +476,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
           <Stack
             direction="row"
             spacing={0.5}
-            alignItems="center"
-            sx={{ mt: 0.4, flexWrap: 'wrap', rowGap: 0.35 }}
+            sx={{ alignItems: 'center', mt: 0.4, flexWrap: 'wrap', rowGap: 0.35 }}
           >
             {/* Weight chip — apparel only */}
             {showWeight && (

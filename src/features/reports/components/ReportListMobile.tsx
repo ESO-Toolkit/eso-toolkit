@@ -29,7 +29,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
   }
 
   return (
-    <Stack spacing={2} mt={2}>
+    <Stack spacing={2} sx={{ mt: 2 }}>
       {reports.map((report) => (
         <Paper
           key={report.code}
@@ -63,10 +63,17 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             },
           }}
         >
-          <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
-            <Box flex={1} minWidth={0}>
+          <Box
+            sx={{
+              justifyContent: 'space-between',
+              gap: 1,
+              alignItems: 'flex-start',
+              display: 'flex',
+            }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Typography variant="subtitle1" fontWeight={600} noWrap>
+                <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>
                   {report.title || 'Untitled Report'}
                 </Typography>
                 {isReportEmpty(report) && (
@@ -84,7 +91,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
                   </Tooltip>
                 )}
               </Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {report.code}
               </Typography>
             </Box>
@@ -117,9 +124,9 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             />
           </Box>
 
-          <Box display="flex" flexWrap="wrap" columnGap={2} rowGap={1}>
+          <Box sx={{ rowGap: 1, columnGap: 2, flexWrap: 'wrap', display: 'flex' }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Zone
               </Typography>
               <Typography variant="body2">{report.zone?.name || 'Unknown Zone'}</Typography>
@@ -127,7 +134,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
 
             {showOwner && (
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Owner
                 </Typography>
                 <Typography variant="body2">{report.owner?.name || 'Unknown'}</Typography>
@@ -135,14 +142,14 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             )}
 
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Start Time
               </Typography>
               <Typography variant="body2">{formatReportDateTime(report.startTime)}</Typography>
             </Box>
 
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Duration
               </Typography>
               <Typography variant="body2">

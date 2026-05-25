@@ -1,8 +1,7 @@
-// Import MUI icons
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HandshakeIcon from '@mui/icons-material/Handshake';
@@ -274,24 +273,24 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             size="small"
             aria-label="Previous fight"
             sx={{
-              width: { xs: 32, md: 28 },
-              height: { xs: 32, md: 28 },
-              borderRadius: { xs: '6px', md: '8px' },
-              backgroundColor: 'transparent',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
-                transform: 'scale(1.05)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+                transform: 'scale(1.08)',
               },
               '&:disabled': {
-                opacity: 0.3,
-                cursor: 'not-allowed',
+                opacity: 0.25,
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
               },
             }}
           >
-            <ArrowBackIcon fontSize="small" />
+            <ChevronLeftIcon />
           </IconButton>
 
           {/* Mode Toggle */}
@@ -393,24 +392,24 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             size="small"
             aria-label="Next fight"
             sx={{
-              width: { xs: 32, md: 28 },
-              height: { xs: 32, md: 28 },
-              borderRadius: { xs: '6px', md: '8px' },
-              backgroundColor: 'transparent',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
-                transform: 'scale(1.05)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+                transform: 'scale(1.08)',
               },
               '&:disabled': {
-                opacity: 0.3,
-                cursor: 'not-allowed',
+                opacity: 0.25,
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
               },
             }}
           >
-            <ArrowForwardIcon fontSize="small" />
+            <ChevronRightIcon />
           </IconButton>
         </Box>
       </Box>

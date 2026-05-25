@@ -345,7 +345,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
       >
         {/* Controls */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
           <TextField
             label="Search players"
             variant="outlined"
@@ -448,7 +448,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
         {/* Results summary */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Showing {filteredAndSortedPlayerCards.length} of {playerCards.length} players
           </Typography>
           {searchTerm && (

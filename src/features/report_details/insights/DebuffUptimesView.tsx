@@ -56,14 +56,17 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
           <Typography variant="h6">Debuff Uptimes</Typography>
           <Stack direction="row" spacing={1}>
             <Skeleton variant="rounded" width={120} height={32} />
             <Skeleton variant="circular" width={36} height={36} />
           </Stack>
         </Stack>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           Shows average debuff uptimes against hostile targets
         </Typography>
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
@@ -126,7 +129,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6">Debuff Uptimes</Typography>
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" size="small" onClick={() => onToggleShowAll(!showAllDebuffs)}>
@@ -149,7 +152,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
         </Stack>
       </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} id={descriptionId}>
         {selectedTargetId
           ? 'Shows debuffs applied by friendly players to the selected target'
           : 'Shows debuffs applied by friendly players to all targets'}
@@ -217,7 +220,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
           </List>
         </Box>
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           {nameFilter
             ? `No debuffs matching "${nameFilter}" found.`
             : showAllDebuffs

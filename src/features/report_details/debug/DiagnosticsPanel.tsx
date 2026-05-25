@@ -79,17 +79,17 @@ export const DiagnosticsPanel: React.FC = () => {
   }, [eventCounts]);
 
   return (
-    <Box mt={2}>
+    <Box sx={{ mt: 2 }}>
       <Typography variant="h6" gutterBottom>
         Diagnostics
       </Typography>
-      <Box mb={2}>
+      <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
           Total Events: {totalEventsCount.toLocaleString()}
         </Typography>
       </Box>
 
-      <Box mt={2}>
+      <Box sx={{ mt: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
           Events by Category:
         </Typography>
@@ -105,7 +105,7 @@ export const DiagnosticsPanel: React.FC = () => {
                       <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
                         {category}:
                       </Typography>
-                      <Typography component="span" color="text.secondary">
+                      <Typography component="span" sx={{ color: 'text.secondary' }}>
                         {count.toLocaleString()}
                       </Typography>
                     </Typography>
@@ -116,7 +116,7 @@ export const DiagnosticsPanel: React.FC = () => {
         </List>
       </Box>
 
-      <Box mt={2}>
+      <Box sx={{ mt: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
           Events by Type:
         </Typography>
@@ -142,7 +142,7 @@ export const DiagnosticsPanel: React.FC = () => {
                       <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
                         {type}:
                       </Typography>
-                      <Typography component="span" color="text.secondary">
+                      <Typography component="span" sx={{ color: 'text.secondary' }}>
                         {count.toLocaleString()}
                       </Typography>
                     </Typography>

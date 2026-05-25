@@ -100,16 +100,10 @@ export const OAuthRedirect: React.FC = () => {
               throw new Error(`Desktop app responded with ${callbackResp.status}`);
             }
           } catch {
-            // CORS not supported or connection refused — fall back to GET redirect
-            // so older Kalpa versions still receive tokens.
-            const tokenPayload = btoa(
-              JSON.stringify({
-                access_token: data.access_token,
-                refresh_token: data.refresh_token || null,
-                expires_in: data.expires_in || 3600,
-              }),
+            setError(
+              'Could not connect to the desktop application. ' +
+                'Please make sure it is running and try again.',
             );
-            window.location.href = `http://localhost:${appPort}/callback?tokens=${encodeURIComponent(tokenPayload)}`;
             return;
           }
           setKalpaSuccess(true);

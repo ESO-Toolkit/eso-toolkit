@@ -1,4 +1,10 @@
-import { ContentCopy, DeleteOutline, EditOutlined, Extension, MoreVert } from '@mui/icons-material';
+import {
+  ContentCopy,
+  DeleteOutlined,
+  EditOutlined,
+  Extension,
+  MoreVert,
+} from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -171,7 +177,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const handleCopyLink = (): void => {
       handleMenuClose();
-      const url = `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${roster.roster_data}`;
+      const url = `${window.location.origin}${import.meta.env.BASE_URL}rv?r=${encodeURIComponent(roster.roster_data)}`;
       void navigator.clipboard.writeText(url).then(() => {
         enqueueSnackbar('Link copied to clipboard!', { variant: 'success' });
       });
@@ -557,7 +563,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             {isOwner && (
               <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
                 <ListItemIcon sx={{ color: 'inherit' }}>
-                  <DeleteOutline sx={{ fontSize: 18 }} />
+                  <DeleteOutlined sx={{ fontSize: 18 }} />
                 </ListItemIcon>
                 <ListItemText>Delete</ListItemText>
               </MenuItem>

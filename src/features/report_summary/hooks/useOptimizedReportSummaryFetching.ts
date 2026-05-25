@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -17,6 +17,9 @@ import {
   ReportInfo,
   AggregatedFightData,
 } from '../../../types/reportSummaryTypes';
+import { Logger } from '../../../utils/logger';
+
+const logger = new Logger({ contextPrefix: 'ReportSummaryFetch' });
 
 interface UseOptimizedFetchingReturn {
   reportSummaryData: ReportSummaryData | null;
@@ -108,7 +111,7 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
 
         if (totalFights >= 10) {
           // For large reports: Use parallel report-wide fetching
-          console.log(`📊 Large report detected (${totalFights} fights) - using parallel strategy`);
+          logger.info(`Large report detected (${totalFights} fights) - using parallel strategy`);
           setProgress({
             current: 2,
             total: 5,
@@ -124,8 +127,8 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
           apiCallCount = 3; // damage + death + healing queries
         } else {
           // For smaller reports: Use all-events single query
-          console.log(
-            `📊 Small report detected (${totalFights} fights) - using single query strategy`,
+          logger.info(
+            `Small report detected (${totalFights} fights) - using single query strategy`,
           );
           setProgress({
             current: 2,
@@ -189,13 +192,14 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
           // Analyze deaths using the enhanced service
           deathAnalysis = DeathAnalysisService.analyzeReportDeaths(fightDeathData);
 
-          console.log(`💀 Death Analysis Results:
-        - Total Deaths: ${deathAnalysis.totalDeaths}
-        - Top Mechanic: ${deathAnalysis.mechanicDeaths[0]?.mechanicName || 'None'}
-        - Players Affected: ${deathAnalysis.playerDeaths.length}
-        - Patterns Found: ${deathAnalysis.deathPatterns.length}`);
+          logger.info('Death analysis results', {
+            totalDeaths: deathAnalysis.totalDeaths,
+            topMechanic: deathAnalysis.mechanicDeaths[0]?.mechanicName || 'None',
+            playersAffected: deathAnalysis.playerDeaths.length,
+            patternsFound: deathAnalysis.deathPatterns.length,
+          });
         } catch (error) {
-          console.error('❌ Death analysis failed:', error);
+          logger.error('Death analysis failed', error instanceof Error ? error : undefined);
 
           // Fallback to basic death count
           deathAnalysis = {
@@ -222,15 +226,19 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
           reportEvents.deathEvents.length +
           reportEvents.healingEvents.length;
 
+        const totalDamage = reportEvents.damageEvents.reduce(
+          (sum: number, event: any) => sum + (event.amount || 0),
+          0,
+        );
+        const totalDurationMs = cleanFights.reduce((sum, f) => sum + (f.endTime - f.startTime), 0);
+        const dps = totalDurationMs > 0 ? totalDamage / (totalDurationMs / 1000) : 0;
+
         const summaryData: ReportSummaryData = {
           reportInfo: mockReportInfo,
           fights: cleanFights,
           damageBreakdown: {
-            totalDamage: reportEvents.damageEvents.reduce(
-              (sum: number, event: any) => sum + (event.amount || 0),
-              0,
-            ),
-            dps: 0, // TODO: Calculate actual DPS
+            totalDamage,
+            dps,
             playerBreakdown: [],
             abilityTypeBreakdown: [],
             targetBreakdown: [],
@@ -261,11 +269,12 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
           eventsPerSecond,
         });
 
-        console.log(`🚀 OPTIMIZATION RESULTS:`);
-        console.log(`   API Calls: ${apiCallCount} (vs ${totalFights * 3} in old approach)`);
-        console.log(`   Total Time: ${totalFetchTime.toFixed(2)}ms`);
-        console.log(`   Events/sec: ${eventsPerSecond.toFixed(0)}`);
-        console.log(`   Total Events: ${totalEvents.toLocaleString()}`);
+        logger.info('Optimization results', {
+          apiCalls: `${apiCallCount} (vs ${totalFights * 3} in old approach)`,
+          totalTime: `${totalFetchTime.toFixed(2)}ms`,
+          eventsPerSec: eventsPerSecond.toFixed(0),
+          totalEvents: totalEvents.toLocaleString(),
+        });
 
         setReportSummaryData(summaryData);
         setProgress({
@@ -277,7 +286,7 @@ export function useOptimizedReportSummaryFetching(reportCode: string): UseOptimi
         const errorMessage =
           err instanceof Error ? err.message : 'An error occurred during optimized fetching';
         setError(errorMessage);
-        console.error('🚨 Optimized fetching error:', err);
+        logger.error('Optimized fetching error', err instanceof Error ? err : undefined);
       } finally {
         setIsLoading(false);
       }

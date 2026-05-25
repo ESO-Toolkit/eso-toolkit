@@ -1,4 +1,4 @@
-import { ErrorOutline, Refresh } from '@mui/icons-material';
+import { ErrorOutlined, Refresh } from '@mui/icons-material';
 import { Alert, Box, Button, Stack, Typography } from '@mui/material';
 import React, { ReactNode } from 'react';
 
@@ -13,7 +13,7 @@ const PanelErrorFallback: React.FC<PanelErrorFallbackProps> = ({ panelName, onRe
   <Box sx={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
     <Alert
       severity="error"
-      icon={<ErrorOutline />}
+      icon={<ErrorOutlined />}
       sx={{ width: '100%', maxWidth: 500 }}
       action={
         <Button color="inherit" size="small" startIcon={<Refresh />} onClick={onRetry}>

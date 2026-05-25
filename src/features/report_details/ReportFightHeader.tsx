@@ -231,7 +231,13 @@ export const ReportFightHeader: React.FC = () => {
           statusIndicator = wasKilled ? '✓' : 'Wipe';
         }
 
-        titleElement.innerHTML = `${fight.name} (<span style="font-weight: 300;">${statusIndicator}</span>)`;
+        titleElement.textContent = '';
+        titleElement.appendChild(document.createTextNode(`${fight.name} (`));
+        const span = document.createElement('span');
+        span.style.fontWeight = '300';
+        span.textContent = statusIndicator;
+        titleElement.appendChild(span);
+        titleElement.appendChild(document.createTextNode(')'));
       }
     }
   }, [fight, isFightLoading, fightId]);
@@ -459,9 +465,7 @@ export const ReportFightHeader: React.FC = () => {
       {/* ── Fight title ────────────────────────────────────────── */}
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: { xs: 2, sm: 3, md: 4 } }}
+        sx={{ justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, sm: 3, md: 4 } }}
       >
         <Typography
           ref={titleRef}

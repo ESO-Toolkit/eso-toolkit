@@ -137,7 +137,7 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             if (e.key === 'Enter') onCommitRename();
             if (e.key === 'Escape') onCancelRename();
           }}
-          inputProps={{ maxLength: 32, 'aria-label': 'Rename setup' }}
+          slotProps={{ htmlInput: { maxLength: 32, 'aria-label': 'Rename setup' } }}
           sx={{
             width: 120,
             '& .MuiOutlinedInput-root': {
@@ -241,9 +241,9 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             />
             <Typography
               variant="caption"
-              fontWeight="inherit"
-              color="inherit"
               sx={{
+                color: 'inherit',
+                fontWeight: 'inherit',
                 fontSize: 13,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
                 letterSpacing: active ? 0.3 : 0,
@@ -674,13 +674,15 @@ export const SetupTabBar: React.FC = () => {
         onClose={() => setDeleteTarget(null)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{
-          sx: {
-            background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(248, 250, 252, 0.98)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-            borderRadius: 3,
+        slotProps={{
+          paper: {
+            sx: {
+              background: isDark ? 'rgba(15, 23, 42, 0.97)' : 'rgba(248, 250, 252, 0.98)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+              borderRadius: 3,
+            },
           },
         }}
       >
@@ -697,8 +699,11 @@ export const SetupTabBar: React.FC = () => {
         <DialogContent>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontSize: 13 }}
+            sx={{
+              color: 'text.secondary',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontSize: 13,
+            }}
           >
             <strong>
               {deleteTarget !== null ? (build.setups[deleteTarget]?.name ?? 'this setup') : ''}

@@ -36,6 +36,7 @@ export const GearInfoIcon: React.FC<GearInfoIconProps> = ({
       <IconButton
         onClick={onClick}
         size="small"
+        aria-label="Gear set info"
         sx={{
           ml: 0.5,
           p: 0.25,

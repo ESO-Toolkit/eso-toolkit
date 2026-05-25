@@ -450,9 +450,9 @@ export const BuildCompletionHeader: React.FC = () => {
     [isDark],
   );
 
-  // Shared PaperProps for the 4 dialogs below. Stable reference means
+  // Shared slotProps.paper for the 4 dialogs below. Stable reference means
   // MUI doesn't re-hash the sx on every Build Name keystroke.
-  const dialogPaperProps = React.useMemo(() => ({ sx: dialogPaperSx(isDark) }), [isDark]);
+  const dialogSlotProps = React.useMemo(() => ({ paper: { sx: dialogPaperSx(isDark) } }), [isDark]);
 
   return (
     <Box
@@ -1150,7 +1150,7 @@ export const BuildCompletionHeader: React.FC = () => {
           onClose={handleImportClose}
           maxWidth="sm"
           fullWidth
-          PaperProps={dialogPaperProps}
+          slotProps={dialogSlotProps}
         >
           <DialogTitle
             sx={{
@@ -1176,8 +1176,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1276,7 +1276,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 </Box>
               )}
 
-              <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
+              >
                 <Button
                   variant="outlined"
                   size="small"
@@ -1333,7 +1337,7 @@ export const BuildCompletionHeader: React.FC = () => {
           onClose={() => setExportOpen(false)}
           maxWidth="sm"
           fullWidth
-          PaperProps={dialogPaperProps}
+          slotProps={dialogSlotProps}
         >
           <DialogTitle
             sx={{
@@ -1359,8 +1363,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1382,7 +1386,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 onFocus={(e) => e.target.select()}
                 sx={glassInputSx(isDark)}
               />
-              <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
+              >
                 <Button
                   variant="outlined"
                   size="small"
@@ -1424,7 +1432,7 @@ export const BuildCompletionHeader: React.FC = () => {
           onClose={() => setCspsExportOpen(false)}
           maxWidth="sm"
           fullWidth
-          PaperProps={dialogPaperProps}
+          slotProps={dialogSlotProps}
         >
           <DialogTitle
             sx={{
@@ -1450,8 +1458,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1474,7 +1482,7 @@ export const BuildCompletionHeader: React.FC = () => {
                   '& textarea': { fontFamily: 'monospace', fontSize: 11 },
                 }}
               />
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
+              <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
                 <Button
                   variant="outlined"
                   size="small"
@@ -1539,7 +1547,7 @@ export const BuildCompletionHeader: React.FC = () => {
           onClose={() => setTempLinkDialogOpen(false)}
           maxWidth="sm"
           fullWidth
-          PaperProps={dialogPaperProps}
+          slotProps={dialogSlotProps}
         >
           <DialogTitle
             sx={{
@@ -1565,8 +1573,8 @@ export const BuildCompletionHeader: React.FC = () => {
           <DialogContent>
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mb: 2,
                 fontSize: 12,
@@ -1598,7 +1606,11 @@ export const BuildCompletionHeader: React.FC = () => {
                 onFocus={(e) => e.target.select()}
                 sx={glassInputSx(isDark)}
               />
-              <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{ justifyContent: 'flex-end', alignItems: 'center' }}
+              >
                 <Button
                   variant="contained"
                   size="small"

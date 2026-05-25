@@ -205,11 +205,13 @@ export const AttributeBar: React.FC<AttributeBarProps> = ({
                 if (e.key === 'Enter') commitEdit();
                 if (e.key === 'Escape') cancelEdit();
               }}
-              inputProps={{
-                type: 'number',
-                min: 0,
-                max: max,
-                'aria-label': `${label} value`,
+              slotProps={{
+                input: {
+                  type: 'number',
+                  min: 0,
+                  max: max,
+                  'aria-label': `${label} value`,
+                },
               }}
               sx={{
                 width: 36,

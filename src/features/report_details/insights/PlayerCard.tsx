@@ -1,4 +1,4 @@
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import BuildIcon from '@mui/icons-material/Construction';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -907,23 +907,28 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
           >
             <Box
-              display="flex"
-              flexDirection="column"
-              alignItems="stretch"
-              gap={2}
-              sx={{ flex: 1, minHeight: 0 }}
+              sx={{
+                flexDirection: 'column',
+                gap: 2,
+                alignItems: 'stretch',
+                display: 'flex',
+                flex: 1,
+                minHeight: 0,
+              }}
             >
               {/* Left column: identity, talents, gear, issues */}
-              <Box flex={0} minWidth={0}>
-                <Box display="flex" alignItems="center" mb={1.5} gap={1}>
+              <Box sx={{ flex: 0, minWidth: 0 }}>
+                <Box sx={{ gap: 1, alignItems: 'center', display: 'flex', mb: 1.5 }}>
                   <PlayerIcon player={player} />
                   <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    flex={1}
-                    minWidth={0}
-                    gap={1}
+                    sx={{
+                      flex: 1,
+                      justifyContent: 'space-between',
+                      gap: 1,
+                      alignItems: 'center',
+                      minWidth: 0,
+                      display: 'flex',
+                    }}
                   >
                     {/* Player Name with Character Name Hover */}
                     <Box
@@ -939,8 +944,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           title={shouldShowCharacterName ? trimmedCharacterName : ''}
                           placement="top"
                           arrow
-                          PopperProps={{
-                            style: { zIndex: 9999 },
+                          slotProps={{
+                            popper: {
+                              style: { zIndex: 9999 },
+                            },
                           }}
                         >
                           <Typography
@@ -962,10 +969,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                     {/* Gear Weights */}
                     <Box
-                      display="inline-flex"
-                      alignItems="center"
-                      gap={0.35}
                       sx={{
+                        gap: 0.35,
+                        display: 'inline-flex',
+                        alignItems: 'center',
                         flex: '0 0 auto', // Don't shrink gear weights
                         minWidth: 0, // Allow shrinking
                         overflow: 'hidden', // Prevent overflow
@@ -1153,9 +1160,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 />
                                 <Typography
                                   variant="caption"
-                                  color="text.secondary"
                                   noWrap
-                                  sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
+                                  sx={{
+                                    color: 'text.secondary',
+                                    lineHeight: 1.05,
+                                    fontSize: '0.70rem',
+                                  }}
                                 >
                                   {abbreviateSkillLine(skill.skillLine)}
                                 </Typography>
@@ -1170,8 +1180,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                 {/* Talents */}
                 {talents.length > 0 && (
-                  <Box mb={1.5}>
-                    <Box display="flex" flexWrap="wrap" gap={1.25} mb={1.25}>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Box sx={{ mb: 1.25, flexWrap: 'wrap', gap: 1.25, display: 'flex' }}>
                       {talents.slice(0, 6).map((talent, idx) => {
                         const isUltimate = idx === 5;
                         return (
@@ -1222,36 +1232,36 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 placement="top-start"
                                 enterDelay={0}
                                 arrow
-                                PopperProps={{
-                                  disablePortal: true,
-                                  modifiers: [
-                                    {
-                                      name: 'preventOverflow',
-                                      options: {
-                                        altAxis: true,
-                                        altBoundary: true,
-                                        tether: false,
-                                        rootBoundary: 'document',
-                                        padding: 16,
-                                      },
-                                    },
-                                    {
-                                      name: 'flip',
-                                      enabled: true,
-                                      options: {
-                                        altBoundary: true,
-                                        rootBoundary: 'document',
-                                        padding: 16,
-                                        fallbackPlacements: ['bottom'],
-                                      },
-                                    },
-                                    {
-                                      name: 'arrow',
-                                      enabled: true,
-                                    },
-                                  ],
-                                }}
                                 slotProps={{
+                                  popper: {
+                                    disablePortal: true,
+                                    modifiers: [
+                                      {
+                                        name: 'preventOverflow',
+                                        options: {
+                                          altAxis: true,
+                                          altBoundary: true,
+                                          tether: false,
+                                          rootBoundary: 'document',
+                                          padding: 16,
+                                        },
+                                      },
+                                      {
+                                        name: 'flip',
+                                        enabled: true,
+                                        options: {
+                                          altBoundary: true,
+                                          rootBoundary: 'document',
+                                          padding: 16,
+                                          fallbackPlacements: ['bottom'],
+                                        },
+                                      },
+                                      {
+                                        name: 'arrow',
+                                        enabled: true,
+                                      },
+                                    ],
+                                  },
                                   tooltip: {
                                     sx: {
                                       maxWidth: 320,
@@ -1288,7 +1298,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       })}
                     </Box>
                     {talents.length > 6 && (
-                      <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
+                      <Box sx={{ flexWrap: 'wrap', gap: 1.25, mt: 0.25, display: 'flex' }}>
                         {talents.slice(6).map((talent, idx) => {
                           const isUltimate = idx === 5;
                           return (
@@ -1339,36 +1349,36 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   placement="top-start"
                                   enterDelay={0}
                                   arrow
-                                  PopperProps={{
-                                    disablePortal: true,
-                                    modifiers: [
-                                      {
-                                        name: 'preventOverflow',
-                                        options: {
-                                          altAxis: true,
-                                          altBoundary: true,
-                                          tether: false,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                        },
-                                      },
-                                      {
-                                        name: 'flip',
-                                        enabled: true,
-                                        options: {
-                                          altBoundary: true,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                          fallbackPlacements: ['bottom'],
-                                        },
-                                      },
-                                      {
-                                        name: 'arrow',
-                                        enabled: true,
-                                      },
-                                    ],
-                                  }}
                                   slotProps={{
+                                    popper: {
+                                      disablePortal: true,
+                                      modifiers: [
+                                        {
+                                          name: 'preventOverflow',
+                                          options: {
+                                            altAxis: true,
+                                            altBoundary: true,
+                                            tether: false,
+                                            rootBoundary: 'document',
+                                            padding: 16,
+                                          },
+                                        },
+                                        {
+                                          name: 'flip',
+                                          enabled: true,
+                                          options: {
+                                            altBoundary: true,
+                                            rootBoundary: 'document',
+                                            padding: 16,
+                                            fallbackPlacements: ['bottom'],
+                                          },
+                                        },
+                                        {
+                                          name: 'arrow',
+                                          enabled: true,
+                                        },
+                                      ],
+                                    },
                                     tooltip: {
                                       sx: {
                                         maxWidth: 320,
@@ -1406,21 +1416,26 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       </Box>
                     )}
                     {gear.length > 0 && (
-                      <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
+                      <Box sx={{ mt: 1.25, pt: 0.9, pb: 0 }}>
                         <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="space-between"
-                          mb={2.5}
+                          sx={{
+                            mb: 2.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
                         >
                           <Typography
                             variant="body2"
-                            fontWeight="bold"
-                            sx={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem' }}
+                            sx={{
+                              fontWeight: 'bold',
+                              fontFamily: 'Space Grotesk, sans-serif',
+                              fontSize: '0.8rem',
+                            }}
                           >
                             Gear
                           </Typography>
-                          <Box display="flex" alignItems="center" gap={0.75}>
+                          <Box sx={{ gap: 0.75, display: 'flex', alignItems: 'center' }}>
                             <Tooltip
                               title="Open this player's gear, skills, and CP in the Build Editor"
                               arrow
@@ -1527,11 +1542,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           </Box>
                         </Box>
                         <Box
-                          display="flex"
-                          flexWrap="wrap"
-                          gap={1.25}
-                          minHeight={32}
                           data-testid={`gear-chips-${player.id}`}
+                          sx={{ flexWrap: 'wrap', gap: 1.25, minHeight: 32, display: 'flex' }}
                         >
                           {gearChips.map((chipData, index) => {
                             // Find the corresponding gear record for tooltip
@@ -1639,8 +1651,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     >
                       <Typography
                         variant="body2"
-                        color="text.secondary"
                         sx={{
+                          color: 'text.secondary',
                           display: 'flex',
                           alignItems: 'center',
                           flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
@@ -1816,12 +1828,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     <Box sx={{ mt: 1 }}>
                       <Typography
                         variant="body2"
-                        fontWeight="bold"
-                        sx={{ mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
+                        sx={{ fontWeight: 'bold', mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
                       >
                         Champion Points
                       </Typography>
-                      <Box display="flex" flexWrap="wrap" gap={1} sx={{ minHeight: 40 }}>
+                      <Box sx={{ flexWrap: 'wrap', gap: 1, display: 'flex', minHeight: 40 }}>
                         {championPoints.map((cp, idx) => (
                           <Chip
                             key={`cp-${idx}`}
@@ -1867,8 +1878,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       <CheckCircleOutlineIcon sx={{ color: 'success.main' }} />
                       <Typography
                         variant="body2"
-                        fontWeight="bold"
                         sx={{
+                          fontWeight: 'bold',
                           color: 'success.main',
                           display: 'flex',
                           alignItems: 'center',
@@ -1904,8 +1915,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     >
                       <Typography
                         variant="body2"
-                        fontWeight="bold"
                         sx={{
+                          fontWeight: 'bold',
                           color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
                           display: 'flex',
                           alignItems: 'center',

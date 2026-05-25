@@ -200,12 +200,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
       onClose={onClose}
       maxWidth="md"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          backdropFilter: 'blur(20px)',
-          backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
-          border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '16px',
+            backdropFilter: 'blur(20px)',
+            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
         },
       }}
     >
@@ -320,12 +322,14 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({ open, onClose }) => 
               fullWidth
               rows={12}
               value={getPreview()}
-              InputProps={{
-                readOnly: true,
-                sx: {
-                  fontFamily: 'monospace',
-                  fontSize: '0.75rem',
-                  bgcolor: 'background.paper',
+              slotProps={{
+                input: {
+                  readOnly: true,
+                  sx: {
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    bgcolor: 'background.paper',
+                  },
                 },
               }}
             />
