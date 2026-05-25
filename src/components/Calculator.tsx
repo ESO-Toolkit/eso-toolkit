@@ -1553,6 +1553,10 @@ const CalculatorComponent: React.FC = () => {
   const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
 
+  useEffect(() => {
+    document.title = 'Calculator | ESO Toolkit';
+  }, []);
+
   // Helper function to generate unique IDs for items
   const generateItemId = useCallback((category: string, name: string, index: number): string => {
     return `${category}-${name}-${index}`;
@@ -4173,6 +4177,7 @@ const CalculatorComponent: React.FC = () => {
                         minWidth: 'auto',
                         px: 1,
                         py: 0.4,
+                        minHeight: 44,
                         borderColor: 'rgba(56, 189, 248, 0.4)',
                         color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                         backgroundColor:
@@ -4213,6 +4218,7 @@ const CalculatorComponent: React.FC = () => {
                         minWidth: 'auto',
                         px: 1,
                         py: 0.4,
+                        minHeight: 44,
                         borderColor: 'rgba(239, 68, 68, 0.4)',
                         color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                         backgroundColor:
@@ -4245,6 +4251,7 @@ const CalculatorComponent: React.FC = () => {
                         minWidth: 'auto',
                         px: 1,
                         py: 0.4,
+                        minHeight: 44,
                         borderColor: 'rgba(56, 189, 248, 0.4)',
                         color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                         backgroundColor:
@@ -4313,6 +4320,7 @@ const CalculatorComponent: React.FC = () => {
                         minWidth: 'auto',
                         px: 1,
                         py: 0.4,
+                        minHeight: 44,
                         borderColor: 'rgba(56, 189, 248, 0.4)',
                         color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                         backgroundColor:
@@ -4341,6 +4349,7 @@ const CalculatorComponent: React.FC = () => {
                         minWidth: 'auto',
                         px: 1,
                         py: 0.4,
+                        minHeight: 44,
                         borderColor: 'rgba(239, 68, 68, 0.4)',
                         color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                         backgroundColor:
@@ -4398,7 +4407,7 @@ const CalculatorComponent: React.FC = () => {
                             ? '1px solid rgb(128 211 255 / 30%)'
                             : '1px solid rgb(40 145 200 / 25%)',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
+                        minHeight: '44px',
                         minWidth: 0,
                         fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
                         px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
@@ -4572,6 +4581,7 @@ const CalculatorComponent: React.FC = () => {
                         : 'rgba(248, 250, 252, 0.8)',
                     borderRadius: '10px',
                     border: '1px solid rgba(148, 163, 184, 0.2)',
+                    '& .MuiButton-root': { minHeight: 44 },
                   }}
                 >
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
@@ -5248,6 +5258,7 @@ const CalculatorComponent: React.FC = () => {
                         : 'rgba(248, 250, 252, 0.8)',
                     borderRadius: '10px',
                     border: '1px solid rgba(148, 163, 184, 0.2)',
+                    '& .MuiButton-root': { minHeight: 44 },
                   }}
                 >
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>

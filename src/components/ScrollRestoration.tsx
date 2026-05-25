@@ -18,6 +18,13 @@ export const ScrollRestoration: React.FC = () => {
 
     const scrollToTop = (): void => window.scrollTo(0, 0);
 
+    const focusMainContent = (): void => {
+      const mainContent = document.getElementById('main-content');
+      if (mainContent) {
+        mainContent.focus({ preventScroll: true });
+      }
+    };
+
     // If a view transition is running, wait until it finishes
     // before scrolling — otherwise the scroll happens while the
     // old-state snapshot is still visible, causing a flash.
@@ -25,11 +32,20 @@ export const ScrollRestoration: React.FC = () => {
       .activeViewTransition;
 
     if (activeVT?.finished) {
-      activeVT.finished.then(scrollToTop).catch(scrollToTop);
+      activeVT.finished
+        .then(() => {
+          scrollToTop();
+          focusMainContent();
+        })
+        .catch(() => {
+          scrollToTop();
+          focusMainContent();
+        });
     } else {
       scrollToTop();
+      focusMainContent();
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   return null;
 };

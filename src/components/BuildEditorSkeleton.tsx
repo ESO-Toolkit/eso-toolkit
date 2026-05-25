@@ -1188,7 +1188,7 @@ export const BuildEditorSkeleton: React.FC = () => {
         },
       }}
     >
-      <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
         <HeaderSkeleton />
 
         <Box

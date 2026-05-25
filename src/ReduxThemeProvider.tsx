@@ -94,6 +94,14 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                   'background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out',
               },
               '*, *::before, *::after': { boxSizing: 'border-box' },
+              '@media (prefers-reduced-motion: reduce)': {
+                '*, *::before, *::after': {
+                  animationDuration: '0.01ms !important',
+                  animationIterationCount: '1 !important',
+                  transitionDuration: '0.01ms !important',
+                  scrollBehavior: 'auto !important',
+                },
+              },
             },
           },
           MuiAppBar: {
@@ -229,6 +237,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 textTransform: 'none',
                 borderRadius: 8,
                 fontWeight: 600,
+                '@media (pointer: coarse)': {
+                  minHeight: 44,
+                },
                 '&.MuiButton-containedPrimary': {
                   background: `linear-gradient(135deg, ${tokens.accent}, ${tokens.accent2})`,
                   color: darkMode ? tokens.bg : '#ffffff',
@@ -261,6 +272,16 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 '&:hover': {
                   color: tokens.accent,
                   background: darkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(3, 105, 161, 0.08)',
+                },
+              },
+            },
+          },
+          MuiIconButton: {
+            styleOverrides: {
+              root: {
+                '@media (pointer: coarse)': {
+                  minWidth: 44,
+                  minHeight: 44,
                 },
               },
             },

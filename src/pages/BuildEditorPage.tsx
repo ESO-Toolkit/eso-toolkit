@@ -24,6 +24,10 @@ const BuildEditorPageInner: React.FC = () => {
   const isDirty = useSelector((s: RootState) => s.buildEditor.isDirty);
   const loadedRef = React.useRef(false);
 
+  useEffect(() => {
+    document.title = 'Build Editor | ESO Toolkit';
+  }, []);
+
   // Load build from ?b= URL param on mount
   useEffect(() => {
     if (loadedRef.current) return;

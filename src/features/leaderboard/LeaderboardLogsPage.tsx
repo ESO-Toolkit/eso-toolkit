@@ -106,6 +106,10 @@ export const LeaderboardLogsPage: React.FC = () => {
   const logger = useLogger('LeaderboardLogsPage');
   const { client } = useEsoLogsClientContext();
 
+  React.useEffect(() => {
+    document.title = 'Leaderboards | ESO Toolkit';
+  }, []);
+
   const [zones, setZones] = React.useState<TrialZone[]>([]);
   const [zonesLoading, setZonesLoading] = React.useState<boolean>(true);
   const [zonesError, setZonesError] = React.useState<string | null>(null);
@@ -717,7 +721,11 @@ export const LeaderboardLogsPage: React.FC = () => {
             ) : rankingsState.rankings.length === 0 ? (
               <Alert severity="info">No leaderboard entries found for this selection.</Alert>
             ) : (
-              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{ borderRadius: 2, overflowX: 'auto' }}
+              >
                 <Table size="small">
                   <TableHead>
                     <TableRow>

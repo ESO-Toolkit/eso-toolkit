@@ -261,6 +261,10 @@ const ParseAnalysisPageContent: React.FC = () => {
   const roleColors = useRoleColors();
   const theme = useTheme();
 
+  React.useEffect(() => {
+    document.title = 'Parse Analysis | ESO Toolkit';
+  }, []);
+
   /**
    * Get theme-aware semantic color for text display.
    * Dark mode uses brighter tints than MUI's auto-generated .light variants
@@ -1645,7 +1649,10 @@ const ParseAnalysisPageContent: React.FC = () => {
                         },
                       }}
                     >
-                      <Typography variant="caption" sx={{ minWidth: 160, fontWeight: 500 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ minWidth: { xs: 80, sm: 160 }, fontWeight: 500 }}
+                      >
                         {skill.abilityName}
                       </Typography>
                       <Chip

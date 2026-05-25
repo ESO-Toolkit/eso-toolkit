@@ -105,6 +105,10 @@ const markdownComponents: Components = {
 export const CalculationKnowledgeBasePage: React.FC = () => {
   const theme = useTheme();
 
+  React.useEffect(() => {
+    document.title = 'Calculation Knowledge Base | ESO Toolkit';
+  }, []);
+
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
       <Box sx={{ flexDirection: 'column', gap: 2, display: 'flex', mb: 4 }}>

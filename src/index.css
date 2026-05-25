@@ -1,4 +1,4 @@
-/* Modern Scrollbar Theme for Light and Dark Modes */
+/* Modern scrollbar theme for light and dark modes */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
@@ -113,6 +113,21 @@ code {
 @media (min-width: 769px) and (max-width: 1024px) {
   body {
     font-size: 15px;
+  }
+}
+
+/* WCAG 2.2 Target Size (Level AA) — 44px minimum on coarse-pointer devices.
+   Scoped to navigation/standalone interactive elements only;
+   inline prose links are excluded to preserve text flow. */
+@media (pointer: coarse) {
+  nav a,
+  footer a,
+  [role='navigation'] a,
+  button,
+  [role='button'],
+  [role='tab'],
+  [role='menuitem'] {
+    min-height: 44px;
   }
 }
 

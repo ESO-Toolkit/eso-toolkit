@@ -387,7 +387,7 @@ const DamageBreakdownSection: React.FC<DamageBreakdownSectionProps> = ({
                     <TableCell align="right">{formatDamage(player.totalDamage)}</TableCell>
                     <TableCell align="right">{formatNumber(player.dps)}</TableCell>
                     <TableCell align="right">{player.damagePercentage.toFixed(1)}%</TableCell>
-                    <TableCell align="right" sx={{ width: 120 }}>
+                    <TableCell align="right" sx={{ width: { xs: 80, sm: 120 } }}>
                       <LinearProgress
                         variant="determinate"
                         value={(player.totalDamage / highestDamage) * 100}

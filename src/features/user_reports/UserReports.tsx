@@ -192,6 +192,10 @@ export const UserReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
+  useEffect(() => {
+    document.title = 'My Reports | ESO Toolkit';
+  }, []);
+
   // Redux selectors
   const paginatedReports = useSelector(selectPaginatedReports);
   const filteredCount = useSelector(selectFilteredCount);
@@ -801,9 +805,21 @@ export const UserReports: React.FC = () => {
                       <TableRow
                         key={report.code}
                         hover
+                        tabIndex={0}
+                        role="link"
+                        aria-label={`View report ${report.title || report.code}`}
                         onClick={(e: React.MouseEvent<HTMLTableRowElement>) =>
                           handleReportClick(report.code, e)
                         }
+                        onKeyDown={(e: React.KeyboardEvent<HTMLTableRowElement>) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleReportClick(
+                              report.code,
+                              e as unknown as React.MouseEvent<HTMLTableRowElement>,
+                            );
+                          }
+                        }}
                         onMouseDown={(e: React.MouseEvent<HTMLTableRowElement>) => {
                           // Handle middle-click
                           if (e.button === 1) {

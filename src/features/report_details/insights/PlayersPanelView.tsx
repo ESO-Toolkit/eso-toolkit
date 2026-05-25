@@ -400,7 +400,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           >
             <SearchIcon sx={{ fontSize: '1.1rem', color: 'text.secondary', opacity: 0.6 }} />
             <InputBase
-              placeholder="Search players…"
+              placeholder="Search players..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               sx={{
