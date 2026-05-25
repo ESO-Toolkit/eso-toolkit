@@ -669,18 +669,18 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       </Typography>
                       {finalScribedData.signatureScript.confidence != null &&
                         finalScribedData.signatureScript.confidence < 1.0 && (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'text.secondary',
-                            fontSize: '0.6rem',
-                            fontStyle: 'italic',
-                            opacity: 0.7,
-                          }}
-                        >
-                          ({Math.floor(finalScribedData.signatureScript.confidence * 100)}%)
-                        </Typography>
-                      )}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: '0.6rem',
+                              fontStyle: 'italic',
+                              opacity: 0.7,
+                            }}
+                          >
+                            ({Math.floor(finalScribedData.signatureScript.confidence * 100)}%)
+                          </Typography>
+                        )}
                     </Box>
                     {(finalScribedData.signatureScript.detectionMethod ||
                       (finalScribedData.signatureScript.evidence &&
@@ -736,65 +736,61 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                         borderLeft: `2px solid ${alpha(theme.palette.secondary.main, 0.3)}`,
                       }}
                     >
-                      {finalScribedData.affixScripts.map(
-                        (affixScript: ScribedSkillAffixInfo) => (
-                          <Box key={affixScript.id}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: 'text.primary',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 600,
-                                }}
-                              >
-                                {affixScript.name}
-                              </Typography>
-                              {affixScript.confidence != null &&
-                                affixScript.confidence < 1.0 && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: 'text.secondary',
-                                    fontSize: '0.6rem',
-                                    fontStyle: 'italic',
-                                    opacity: 0.7,
-                                  }}
-                                >
-                                  ({Math.floor(affixScript.confidence * 100)}%)
-                                </Typography>
-                              )}
-                            </Box>
-                            {(affixScript.detectionMethod ||
-                              (affixScript.evidence?.abilityNames &&
-                                affixScript.evidence.abilityNames.length > 0)) && (
+                      {finalScribedData.affixScripts.map((affixScript: ScribedSkillAffixInfo) => (
+                        <Box key={affixScript.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.primary',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                              }}
+                            >
+                              {affixScript.name}
+                            </Typography>
+                            {affixScript.confidence != null && affixScript.confidence < 1.0 && (
                               <Typography
                                 variant="caption"
                                 sx={{
                                   color: 'text.secondary',
-                                  fontSize: '0.64rem',
+                                  fontSize: '0.6rem',
                                   fontStyle: 'italic',
-                                  opacity: 0.75,
-                                  display: 'block',
+                                  opacity: 0.7,
                                 }}
                               >
-                                {[
-                                  affixScript.detectionMethod &&
-                                    `via ${affixScript.detectionMethod}`,
-                                  affixScript.evidence?.abilityNames &&
-                                    affixScript.evidence.abilityNames.length > 0 &&
-                                    `Sources: ${affixScript.evidence.abilityNames.join(', ')}`,
-                                  affixScript.evidence?.occurrenceCount != null &&
-                                    affixScript.evidence.occurrenceCount > 0 &&
-                                    `(${affixScript.evidence.occurrenceCount} occurrences)`,
-                                ]
-                                  .filter(Boolean)
-                                  .join(' · ')}
+                                ({Math.floor(affixScript.confidence * 100)}%)
                               </Typography>
                             )}
                           </Box>
-                        ),
-                      )}
+                          {(affixScript.detectionMethod ||
+                            (affixScript.evidence?.abilityNames &&
+                              affixScript.evidence.abilityNames.length > 0)) && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.64rem',
+                                fontStyle: 'italic',
+                                opacity: 0.75,
+                                display: 'block',
+                              }}
+                            >
+                              {[
+                                affixScript.detectionMethod && `via ${affixScript.detectionMethod}`,
+                                affixScript.evidence?.abilityNames &&
+                                  affixScript.evidence.abilityNames.length > 0 &&
+                                  `Sources: ${affixScript.evidence.abilityNames.join(', ')}`,
+                                affixScript.evidence?.occurrenceCount != null &&
+                                  affixScript.evidence.occurrenceCount > 0 &&
+                                  `(${affixScript.evidence.occurrenceCount} occurrences)`,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </Typography>
+                          )}
+                        </Box>
+                      ))}
                     </Stack>
                   ) : (
                     <Typography

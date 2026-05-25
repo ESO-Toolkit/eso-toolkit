@@ -334,11 +334,7 @@ function detectSignatureScript(
     { name: string; castIndices: Set<number>; type: string }
   >();
 
-  const recordSignatureHit = (
-    effectId: number,
-    eventType: string,
-    castIndex: number,
-  ): void => {
+  const recordSignatureHit = (effectId: number, eventType: string, castIndex: number): void => {
     if (!signatureEffects.has(effectId)) {
       signatureEffects.set(effectId, {
         name: `${eventType} ${effectId}`,
@@ -447,7 +443,10 @@ function detectSignatureScript(
         `Top effect: ${topEffect.type} ID ${topEffectId} (${castCount}/${abilityCasts.length} casts)`,
         ...consistentEffects
           .slice(0, 3)
-          .map(([id, eff]) => `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`),
+          .map(
+            ([id, eff]) =>
+              `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`,
+          ),
       ],
     };
   }
@@ -462,7 +461,9 @@ function detectSignatureScript(
   if (highlyCorrelated.length > 0) {
     const correlatedIds = highlyCorrelated
       .slice(0, 5)
-      .map(([id, eff]) => `${eff.type} ${id} (${eff.castIndices.size}/${abilityCasts.length} casts)`);
+      .map(
+        ([id, eff]) => `${eff.type} ${id} (${eff.castIndices.size}/${abilityCasts.length} casts)`,
+      );
 
     return {
       name: 'Correlated Abilities Detected',

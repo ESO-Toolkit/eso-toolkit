@@ -332,11 +332,7 @@ async function _detectSignatureScript(
       { name: string; castIndices: Set<number>; type: string }
     >();
 
-    const recordSignatureHit = (
-      effectId: number,
-      eventType: string,
-      castIndex: number,
-    ): void => {
+    const recordSignatureHit = (effectId: number, eventType: string, castIndex: number): void => {
       if (!signatureEffects.has(effectId)) {
         signatureEffects.set(effectId, {
           name: `${eventType} ${effectId}`,
@@ -370,33 +366,50 @@ async function _detectSignatureScript(
     abilityCasts.forEach((cast, castIndex) => {
       const windowEnd = cast.timestamp + SIGNATURE_WINDOW_MS;
 
-      combatEvents.buffs.filter(
-        (b) => b.sourceID === playerId && b.timestamp > cast.timestamp && b.timestamp <= windowEnd,
-      ).forEach((b) => checkAndCountSignature(b, 'buff', castIndex));
+      combatEvents.buffs
+        .filter(
+          (b) =>
+            b.sourceID === playerId && b.timestamp > cast.timestamp && b.timestamp <= windowEnd,
+        )
+        .forEach((b) => checkAndCountSignature(b, 'buff', castIndex));
 
-      combatEvents.debuffs.filter(
-        (d) => d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
-      ).forEach((d) => checkAndCountSignature(d, 'debuff', castIndex));
+      combatEvents.debuffs
+        .filter(
+          (d) =>
+            d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
+        )
+        .forEach((d) => checkAndCountSignature(d, 'debuff', castIndex));
 
-      combatEvents.damage.filter(
-        (d) => d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
-      ).forEach((d) => checkAndCountSignature(d, 'damage', castIndex));
+      combatEvents.damage
+        .filter(
+          (d) =>
+            d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
+        )
+        .forEach((d) => checkAndCountSignature(d, 'damage', castIndex));
 
-      combatEvents.heals.filter(
-        (h) => h.sourceID === playerId && h.timestamp > cast.timestamp && h.timestamp <= windowEnd,
-      ).forEach((h) => checkAndCountSignature(h, 'healing', castIndex));
+      combatEvents.heals
+        .filter(
+          (h) =>
+            h.sourceID === playerId && h.timestamp > cast.timestamp && h.timestamp <= windowEnd,
+        )
+        .forEach((h) => checkAndCountSignature(h, 'healing', castIndex));
 
-      combatEvents.resources.filter(
-        (r) => r.sourceID === playerId && r.timestamp > cast.timestamp && r.timestamp <= windowEnd,
-      ).forEach((r) => checkAndCountSignature(r, 'resource', castIndex));
+      combatEvents.resources
+        .filter(
+          (r) =>
+            r.sourceID === playerId && r.timestamp > cast.timestamp && r.timestamp <= windowEnd,
+        )
+        .forEach((r) => checkAndCountSignature(r, 'resource', castIndex));
 
-      combatEvents.casts.filter(
-        (c) =>
-          c.sourceID === playerId &&
-          c.abilityGameID !== abilityId &&
-          c.timestamp > cast.timestamp &&
-          c.timestamp <= windowEnd,
-      ).forEach((c) => checkAndCountSignature(c, 'cast', castIndex));
+      combatEvents.casts
+        .filter(
+          (c) =>
+            c.sourceID === playerId &&
+            c.abilityGameID !== abilityId &&
+            c.timestamp > cast.timestamp &&
+            c.timestamp <= windowEnd,
+        )
+        .forEach((c) => checkAndCountSignature(c, 'cast', castIndex));
     });
 
     const MIN_CONSISTENCY = 0.5;
@@ -421,7 +434,10 @@ async function _detectSignatureScript(
           `Top effect: ${topEffect.type} ID ${topEffectId} (${castCount}/${abilityCasts.length} casts)`,
           ...consistentEffects
             .slice(0, 3)
-            .map(([id, eff]) => `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`),
+            .map(
+              ([id, eff]) =>
+                `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`,
+            ),
         ],
       };
     }
@@ -436,7 +452,9 @@ async function _detectSignatureScript(
     if (highlyCorrelated.length > 0) {
       const correlatedIds = highlyCorrelated
         .slice(0, 5)
-        .map(([id, eff]) => `${eff.type} ${id} (${eff.castIndices.size}/${abilityCasts.length} casts)`);
+        .map(
+          ([id, eff]) => `${eff.type} ${id} (${eff.castIndices.size}/${abilityCasts.length} casts)`,
+        );
 
       return {
         name: 'Correlated Abilities Detected',

@@ -1226,7 +1226,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                       }
                                       abilityId={talent.guid}
-                                      scribedSkillData={rich?.scribedSkillData ?? scribedSkillsLookup.get(talent.name)}
+                                      scribedSkillData={
+                                        rich?.scribedSkillData ??
+                                        scribedSkillsLookup.get(talent.name)
+                                      }
                                       fightId={fightId || undefined}
                                       playerId={player.id}
                                     />
