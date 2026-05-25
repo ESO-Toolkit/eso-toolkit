@@ -39,7 +39,7 @@ const SECTION_HEADER_SX = {
 } as const;
 
 interface CombinedFilterDropdownProps {
-  players: Array<{ id: number; name: string }>;
+  players: Array<{ id: number; name: string; displayName?: string | null }>;
 }
 
 const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = ({ players }) => {
@@ -148,7 +148,9 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   const playerLabel = React.useMemo(() => {
     if (!selectedFriendlyPlayerId) return 'All Players';
     const player = players.find((p) => p.id === selectedFriendlyPlayerId);
-    return player?.name || `Player ${selectedFriendlyPlayerId}`;
+    if (!player) return `Player ${selectedFriendlyPlayerId}`;
+    if (player.displayName) return `${player.name} (${player.displayName})`;
+    return player.name;
   }, [selectedFriendlyPlayerId, players]);
 
   const popoverSx = React.useMemo(() => ({
@@ -212,50 +214,52 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               transition: 'transform 0.2s ease',
               transform: open ? 'rotate(180deg)' : 'none',
               fontSize: '1.1rem !important',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
             }}
           />
         }
         sx={{
           textTransform: 'none',
-          fontFamily: 'Inter, system-ui',
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
           fontWeight: 500,
-          fontSize: '0.825rem',
+          fontSize: { xs: '0.8rem', md: '0.825rem' },
+          letterSpacing: '0.015em',
           color: isDarkMode ? '#e2e8f0' : '#1e293b',
-          borderRadius: '10px',
-          px: 2,
-          py: 0.875,
+          borderRadius: { xs: '10px', md: '12px' },
+          px: { xs: 1.5, md: 2 },
+          py: { xs: 0.875, md: 1 },
+          minHeight: { xs: 36, md: 40 },
           position: 'relative',
-          background: isDarkMode
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 50%, rgba(51, 65, 85, 0.7) 100%)'
-            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 50%, rgba(241, 245, 249, 0.85) 100%)',
+          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)',
           border: isDarkMode
-            ? '1px solid rgba(56, 189, 248, 0.2)'
-            : '1px solid rgba(59, 130, 246, 0.15)',
-          boxShadow: isDarkMode
-            ? '0 2px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(56, 189, 248, 0.1)'
-            : '0 1px 8px rgba(59, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+            ? '1px solid rgba(255, 255, 255, 0.08)'
+            : '1px solid rgba(0, 0, 0, 0.08)',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            background: isDarkMode
-              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 50%, rgba(51, 65, 85, 0.8) 100%)'
-              : 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 0.98) 100%)',
-            boxShadow: isDarkMode
-              ? '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(56, 189, 248, 0.15)'
-              : '0 3px 16px rgba(59, 130, 246, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06)',
             borderColor: isDarkMode
-              ? 'rgba(56, 189, 248, 0.35)'
-              : 'rgba(59, 130, 246, 0.25)',
+              ? 'rgba(255, 255, 255, 0.14)'
+              : 'rgba(0, 0, 0, 0.12)',
           },
           ...(open && {
-            borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
-            boxShadow: isDarkMode
-              ? '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(56, 189, 248, 0.15)'
-              : '0 3px 16px rgba(59, 130, 246, 0.15)',
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+            borderColor: isDarkMode
+              ? 'rgba(255, 255, 255, 0.14)'
+              : 'rgba(0, 0, 0, 0.12)',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06)',
           }),
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FilterListIcon sx={{ fontSize: '1rem', opacity: 0.6 }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <FilterListIcon
+            sx={{
+              fontSize: '1rem',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+            }}
+          />
           <Box
             component="span"
             sx={{
@@ -268,14 +272,20 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           <Box
             component="span"
             sx={{
-              opacity: 0.3,
+              width: '1px',
+              height: '14px',
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
               mx: 0.25,
-              fontSize: '0.7rem',
+              flexShrink: 0,
+            }}
+          />
+          <Box
+            component="span"
+            sx={{
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+              fontWeight: 500,
             }}
           >
-            ·
-          </Box>
-          <Box component="span" sx={{ opacity: 0.8 }}>
             {playerLabel}
           </Box>
         </Box>
@@ -561,6 +571,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               >
                 <ListItemText
                   primary={player.name}
+                  secondary={player.displayName || undefined}
                   slotProps={{
                     primary: {
                       sx: {
@@ -574,6 +585,16 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                           : isDarkMode
                             ? '#e2e8f0'
                             : '#1e293b',
+                      },
+                    },
+                    secondary: {
+                      sx: {
+                        fontSize: '0.7rem',
+                        fontFamily: 'Inter, system-ui',
+                        color: isDarkMode
+                          ? 'rgba(148, 163, 184, 0.6)'
+                          : 'rgba(100, 116, 139, 0.6)',
+                        lineHeight: 1.3,
                       },
                     },
                   }}
