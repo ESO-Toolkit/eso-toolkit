@@ -16,14 +16,16 @@ import {
   useTheme,
 } from '@mui/material';
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 import type { ReportActorFragment } from '../../../graphql/gql/graphql';
 import { useReportMasterData } from '../../../hooks';
 import { useSelectedFight } from '../../../hooks/useSelectedFight';
 import { ALL_TARGETS_SENTINEL, ALL_ENEMIES_SENTINEL } from '../../../hooks/useSelectedTargetIds';
-import { selectSelectedFriendlyPlayerId } from '../../../store/ui/uiSelectors';
-import { selectSelectedTargetIds } from '../../../store/ui/uiSelectors';
+import {
+  selectSelectedFriendlyPlayerId,
+  selectSelectedTargetIds,
+} from '../../../store/ui/uiSelectors';
 import { setSelectedFriendlyPlayerId, setSelectedTargetIds } from '../../../store/ui/uiSlice';
 import { useAppDispatch } from '../../../store/useAppDispatch';
 
@@ -33,12 +35,12 @@ interface CombinedFilterDropdownProps {
 
 const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = ({ players }) => {
   const dispatch = useAppDispatch();
-  const playerDispatch = useDispatch();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
   const open = Boolean(anchorEl);
+  const popoverId = open ? 'combined-filter-popover' : undefined;
 
   const fight = useSelectedFight();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -76,11 +78,20 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
       .map((enemy) => ({ id: enemy.id, name: enemy.actor.name }));
   }, [reportMasterData?.actorsById, fight?.enemyNPCs]);
 
-  const isAllBosses =
-    selectedTargetIds.includes(ALL_TARGETS_SENTINEL) || selectedTargetIds.length === 0;
-  const isAllEnemies = selectedTargetIds.includes(ALL_ENEMIES_SENTINEL);
-  const individualTargets = selectedTargetIds.filter(
-    (id) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
+  const isAllBosses = React.useMemo(
+    () => selectedTargetIds.includes(ALL_TARGETS_SENTINEL) || selectedTargetIds.length === 0,
+    [selectedTargetIds],
+  );
+  const isAllEnemies = React.useMemo(
+    () => selectedTargetIds.includes(ALL_ENEMIES_SENTINEL),
+    [selectedTargetIds],
+  );
+  const individualTargets = React.useMemo(
+    () =>
+      selectedTargetIds.filter(
+        (id) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
+      ),
+    [selectedTargetIds],
   );
 
   const handleToggleAllBosses = React.useCallback(() => {
@@ -110,9 +121,9 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
 
   const handleSelectPlayer = React.useCallback(
     (playerId: number | null) => {
-      playerDispatch(setSelectedFriendlyPlayerId(playerId));
+      dispatch(setSelectedFriendlyPlayerId(playerId));
     },
-    [playerDispatch],
+    [dispatch],
   );
 
   const targetLabel = React.useMemo(() => {
@@ -131,13 +142,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
     return player?.name || `Player ${selectedFriendlyPlayerId}`;
   }, [selectedFriendlyPlayerId, players]);
 
-  if (isMasterDataLoading) {
-    return <Skeleton variant="rounded" width={200} height={36} />;
-  }
-
-  if (!fight?.enemyNPCs?.length) return null;
-
-  const popoverSx = {
+  const popoverSx = React.useMemo(() => ({
     '& .MuiPaper-root': {
       mt: 1,
       borderRadius: '12px',
@@ -156,18 +161,18 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
       maxHeight: '70vh',
       overflowY: 'auto',
     },
-  };
+  }), [isDarkMode]);
 
-  const sectionHeaderSx = {
+  const sectionHeaderSx = React.useMemo(() => ({
     px: 2,
     pt: 1.5,
     pb: 0.5,
     display: 'flex',
     alignItems: 'center',
     gap: 0.75,
-  };
+  }), []);
 
-  const listItemSx = {
+  const listItemSx = React.useMemo(() => ({
     borderRadius: '8px',
     mx: 0.75,
     py: 0.5,
@@ -176,19 +181,28 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
     '&:hover': {
       background: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.06)',
     },
-  };
+  }), [isDarkMode]);
 
-  const checkboxSx = {
+  const checkboxSx = React.useMemo(() => ({
     p: 0.5,
     color: isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)',
     '&.Mui-checked': {
       color: isDarkMode ? '#38bdf8' : '#3b82f6',
     },
-  };
+  }), [isDarkMode]);
+
+  if (isMasterDataLoading) {
+    return <Skeleton variant="rounded" width={200} height={36} />;
+  }
+
+  if (!fight?.enemyNPCs?.length) return null;
 
   return (
     <>
       <Button
+        aria-describedby={popoverId}
+        aria-expanded={open}
+        aria-haspopup="true"
         onClick={(e) => setAnchorEl(e.currentTarget)}
         endIcon={
           <KeyboardArrowDownIcon
@@ -266,6 +280,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
       </Button>
 
       <Popover
+        id={popoverId}
         open={open}
         anchorEl={anchorEl}
         onClose={() => setAnchorEl(null)}
