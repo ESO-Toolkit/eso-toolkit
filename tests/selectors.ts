@@ -149,7 +149,8 @@ export const TEST_DATA = {
  * Priority: NIGHTLY_BASE_URL > BASE_URL > default GitHub Pages URL
  */
 export function getBaseUrl(): string {
-  return process.env.NIGHTLY_BASE_URL || 
-         process.env.BASE_URL || 
-         'https://esotk.com/';
+  const url = process.env.NIGHTLY_BASE_URL ||
+              process.env.BASE_URL ||
+              'https://esotk.com/';
+  return url.replace(/\/+$/, '');
 }

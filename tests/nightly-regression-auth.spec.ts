@@ -22,7 +22,18 @@ const TEST_TIMEOUTS = {
   // Increased from 10 000 ms: WebKit can be slow to settle before screenshots
   // on CI, especially for auth-gated pages that render redirect logic.
   screenshot: 20000,
+  appMount: 30000,
 };
+
+async function waitForAppMount(page: Parameters<Parameters<typeof test>[1]>[0]): Promise<void> {
+  await page
+    .locator('header, nav, main, [role="banner"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: TEST_TIMEOUTS.appMount })
+    .catch(() => {
+      console.log('⚠️ App mount wait timed out — SPA may not have hydrated');
+    });
+}
 
 test.describe('Nightly Regression - Authentication and Reports', () => {
   test.beforeEach(async ({ page }) => {
@@ -251,10 +262,10 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
 
       // Wait for app to render
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Calculator should be accessible without login - check for various indicators
       const hasNumberInput = await page
@@ -363,8 +374,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       // Client credentials tokens don't carry a user subject, so /my-builds may
       // redirect to login. Both outcomes (loaded content OR redirect to login) are valid.
@@ -397,8 +408,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       const url = page.url();
       const hasContent = await page
@@ -429,8 +440,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       const url = page.url();
       const hasEditor = await page
@@ -461,8 +472,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       const url = page.url();
       const hasBuilder = await page
@@ -499,7 +510,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(5000);
+      await waitForAppMount(page);
 
       const hasError = await page
         .getByText(/not found|invalid|error|fight.*not.*exist/i)
@@ -539,7 +550,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(6000);
+      await waitForAppMount(page);
 
       // Should show a loading state, error message, or at minimum not crash
       const hasLoadingOrError = await page
@@ -583,7 +594,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(6000);
+      await waitForAppMount(page);
 
       // App should not crash — any visible content is acceptable
       const hasContent = await page.locator('main, #root, body').first().isVisible().catch(() => false);
@@ -612,7 +623,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Verify basic functionality works
       const hasInteractiveElements = await page

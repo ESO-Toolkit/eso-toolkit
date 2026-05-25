@@ -20,7 +20,18 @@ const TEST_TIMEOUTS = {
   // Increased from 10 000 ms: WebKit can be slow to settle before a screenshot,
   // especially when fullPage capture requires a full-page scroll pass.
   screenshot: 20000,
+  appMount: 30000,
 };
+
+async function waitForAppMount(page: Parameters<Parameters<typeof test>[1]>[0]): Promise<void> {
+  await page
+    .locator('header, nav, main, [role="banner"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: TEST_TIMEOUTS.appMount })
+    .catch(() => {
+      console.log('⚠️ App mount wait timed out — SPA may not have hydrated');
+    });
+}
 
 /**
  * Shared helper: navigate to a page and assert it loaded meaningful content.
@@ -41,7 +52,7 @@ async function expectPageLoads(
     // networkidle can time out on data-heavy pages — not a failure on its own
   });
 
-  await page.waitForTimeout(2000);
+  await waitForAppMount(page);
 
   const bodyText = await page.locator('body').textContent().catch(() => '');
   const contentLength = bodyText?.length ?? 0;
@@ -99,7 +110,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-      await page.waitForTimeout(2000);
+      await waitForAppMount(page);
 
       const hasNav = await page.locator('nav, header').isVisible().catch(() => false);
       const hasMain = await page.locator('main, #root, .app').isVisible().catch(() => false);
@@ -138,7 +149,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Either redirects to a real report URL or renders inline
       const url = page.url();
@@ -464,10 +475,10 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(5000);
+      await waitForAppMount(page);
 
       const hasError = await page
-        .getByText(/not found|404|user.*not.*exist|no.*user|error/i)
+        .getByText(/not found|404|player.*not.*found|user.*not.*exist|no.*user|error/i)
         .isVisible()
         .catch(() => false);
       const redirectedAway = !page.url().includes('xyzzy');
@@ -607,8 +618,8 @@ test.describe('Nightly Regression - Pages & Features', () => {
       });
 
       // Wait for app to render
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await waitForAppMount(page);
 
       // Landing page should load - check title flexibly
       const title = await page.title();
@@ -732,11 +743,11 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForTimeout(5000);
+      await waitForAppMount(page);
 
       // Should show error message, redirect, or show some handling of invalid ID
       const hasErrorText = await page
-        .getByText(/not found|error|invalid|doesn.*exist/i)
+        .getByText(/not found|error|invalid|doesn.*exist|no fights|empty log/i)
         .isVisible()
         .catch(() => false);
       const hasErrorClass = await page

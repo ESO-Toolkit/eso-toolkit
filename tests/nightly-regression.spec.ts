@@ -263,7 +263,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           const directNavigationUrl = `/report/${reportId}/fight/${fightId}/insights`;
 
           console.log('Navigating directly to:', directNavigationUrl);
-          await page.goto(`${getBaseUrl()}${directNavigationUrl}`, {
+          await page.goto(directNavigationUrl, {
             waitUntil: 'domcontentloaded',
             timeout: TEST_TIMEOUTS.navigation,
           });
