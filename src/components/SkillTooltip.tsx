@@ -1,8 +1,9 @@
 import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import { Box, Card, CardContent, Chip, Stack, Typography, useTheme, Theme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React from 'react';
+import React, { useContext } from 'react';
 
+import { AbilityIdMapperContext } from '@/contexts/AbilityIdMapperContext';
 import { useLogger } from '@/hooks/useLogger';
 
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
@@ -157,11 +158,20 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const logger = useLogger();
   const isDark = theme.palette.mode === 'dark';
 
+  // Resolve the game ability ID from the report-local ability ID via the mapper context.
+  // ESO Logs talent.guid is a report-local index; the scribing database uses game ability IDs.
+  const abilityMapper = useContext(AbilityIdMapperContext);
+  const resolvedAbilityId = React.useMemo(() => {
+    if (!abilityId) return abilityId;
+    const mapped = abilityMapper?.getAbilityById(abilityId);
+    return mapped?.gameID ?? abilityId;
+  }, [abilityId, abilityMapper]);
+
   // Always use automatic scribing detection when fight and player context available
   const { scribedSkillData: detectedScribingData } = useSkillScribingData(
     fightId,
     playerId,
-    abilityId,
+    resolvedAbilityId,
   );
 
   // Use detected scribing data

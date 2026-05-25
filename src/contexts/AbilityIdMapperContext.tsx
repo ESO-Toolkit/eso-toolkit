@@ -23,7 +23,7 @@ interface AbilityIdMapperContextType {
   isDataLoaded: () => boolean;
 }
 
-const AbilityIdMapperContext = createContext<AbilityIdMapperContextType | null>(null);
+export const AbilityIdMapperContext = createContext<AbilityIdMapperContextType | null>(null);
 
 /**
  * Provider component that manages ability ID mapping
