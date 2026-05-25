@@ -547,9 +547,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                     transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       background: isDarkMode
-                        ? alpha(theme.palette.common.white, 0.08)
-                        : alpha(theme.palette.common.black, 0.06),
+                        ? 'rgba(56, 189, 248, 0.1)'
+                        : 'rgba(59, 130, 246, 0.08)',
                       borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                      color: isDarkMode ? '#93c5fd' : '#2563eb',
                     },
                   }}
                 >
