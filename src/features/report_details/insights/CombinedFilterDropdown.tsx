@@ -56,7 +56,10 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   const rawSelectedTargetIds = useSelector(selectSelectedTargetIds);
   const selectedFriendlyPlayerId = useSelector(selectSelectedFriendlyPlayerId);
 
-  const selectedTargetIds = rawSelectedTargetIds || [];
+  const selectedTargetIds = React.useMemo(
+    () => rawSelectedTargetIds || [],
+    [rawSelectedTargetIds],
+  );
 
   const targetsList = React.useMemo(() => {
     if (!fight?.enemyNPCs || !reportMasterData?.actorsById) return [];

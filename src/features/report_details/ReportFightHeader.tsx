@@ -37,7 +37,7 @@ function getWipeColor(percentage: number): string {
   const sN = s / 100,
     lN = l / 100;
   const a = sN * Math.min(lN, 1 - lN);
-  const ch = (n: number) => {
+  const ch = (n: number): string => {
     const k = (n + hue / 30) % 12;
     return Math.round(255 * (lN - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))))
       .toString(16)
@@ -208,7 +208,7 @@ export const ReportFightHeader: React.FC = () => {
   const { reportId, fightId } = useSelectedReportAndFight();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const { fight, isFightLoading } = useCurrentFight();
+  const { fight } = useCurrentFight();
 
   // Ref for immediate title rendering
   const titleRef = React.useRef<HTMLElement>(null);
