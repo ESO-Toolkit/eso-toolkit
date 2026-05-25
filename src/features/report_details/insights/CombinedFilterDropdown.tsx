@@ -97,9 +97,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   );
   const individualTargets = React.useMemo(
     () =>
-      selectedTargetIds.filter(
-        (id) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
-      ),
+      selectedTargetIds.filter((id) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL),
     [selectedTargetIds],
   );
 
@@ -153,47 +151,56 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
     return player.name;
   }, [selectedFriendlyPlayerId, players]);
 
-  const popoverSx = React.useMemo(() => ({
-    '& .MuiPaper-root': {
-      mt: 1,
-      borderRadius: '12px',
-      border: isDarkMode
-        ? '1px solid rgba(56, 189, 248, 0.2)'
-        : '1px solid rgba(59, 130, 246, 0.15)',
-      background: isDarkMode
-        ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(51, 65, 85, 0.93) 100%)'
-        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
-      backdropFilter: 'blur(16px)',
-      boxShadow: isDarkMode
-        ? '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 80px rgba(56, 189, 248, 0.08)'
-        : '0 12px 40px rgba(0, 0, 0, 0.1), 0 0 60px rgba(59, 130, 246, 0.05)',
-      minWidth: 260,
-      maxWidth: 320,
-      maxHeight: '70vh',
-      overflowY: 'auto',
-    },
-  }), [isDarkMode]);
+  const popoverSx = React.useMemo(
+    () => ({
+      '& .MuiPaper-root': {
+        mt: 1,
+        borderRadius: '12px',
+        border: isDarkMode
+          ? '1px solid rgba(56, 189, 248, 0.2)'
+          : '1px solid rgba(59, 130, 246, 0.15)',
+        background: isDarkMode
+          ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(51, 65, 85, 0.93) 100%)'
+          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
+        backdropFilter: 'blur(16px)',
+        boxShadow: isDarkMode
+          ? '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 80px rgba(56, 189, 248, 0.08)'
+          : '0 12px 40px rgba(0, 0, 0, 0.1), 0 0 60px rgba(59, 130, 246, 0.05)',
+        minWidth: 260,
+        maxWidth: 320,
+        maxHeight: '70vh',
+        overflowY: 'auto',
+      },
+    }),
+    [isDarkMode],
+  );
 
   const sectionHeaderSx = SECTION_HEADER_SX;
 
-  const listItemSx = React.useMemo(() => ({
-    borderRadius: '8px',
-    mx: 0.75,
-    py: 0.5,
-    px: 1,
-    transition: 'background-color 150ms ease',
-    '&:hover': {
-      background: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.06)',
-    },
-  }), [isDarkMode]);
+  const listItemSx = React.useMemo(
+    () => ({
+      borderRadius: '8px',
+      mx: 0.75,
+      py: 0.5,
+      px: 1,
+      transition: 'background-color 150ms ease',
+      '&:hover': {
+        background: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.06)',
+      },
+    }),
+    [isDarkMode],
+  );
 
-  const checkboxSx = React.useMemo(() => ({
-    p: 0.5,
-    color: isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)',
-    '&.Mui-checked': {
-      color: isDarkMode ? '#38bdf8' : '#3b82f6',
-    },
-  }), [isDarkMode]);
+  const checkboxSx = React.useMemo(
+    () => ({
+      p: 0.5,
+      color: isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)',
+      '&.Mui-checked': {
+        color: isDarkMode ? '#38bdf8' : '#3b82f6',
+      },
+    }),
+    [isDarkMode],
+  );
 
   if (isMasterDataLoading) {
     return <Skeleton variant="rounded" width={200} height={36} />;
@@ -244,9 +251,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
             boxShadow: isDarkMode
               ? '0 4px 20px rgba(0, 0, 0, 0.4), 0 0 30px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(56, 189, 248, 0.15)'
               : '0 3px 16px rgba(59, 130, 246, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-            borderColor: isDarkMode
-              ? 'rgba(56, 189, 248, 0.35)'
-              : 'rgba(59, 130, 246, 0.25)',
+            borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.35)' : 'rgba(59, 130, 246, 0.25)',
           },
           ...(open && {
             borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
@@ -326,9 +331,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               '&.Mui-selected': {
                 background: isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.08)',
                 '&:hover': {
-                  background: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.18)'
-                    : 'rgba(59, 130, 246, 0.12)',
+                  background: isDarkMode ? 'rgba(56, 189, 248, 0.18)' : 'rgba(59, 130, 246, 0.12)',
                 },
               },
             }}
@@ -367,9 +370,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               '&.Mui-selected': {
                 background: isDarkMode ? 'rgba(168, 85, 247, 0.12)' : 'rgba(139, 69, 255, 0.08)',
                 '&:hover': {
-                  background: isDarkMode
-                    ? 'rgba(168, 85, 247, 0.18)'
-                    : 'rgba(139, 69, 255, 0.12)',
+                  background: isDarkMode ? 'rgba(168, 85, 247, 0.18)' : 'rgba(139, 69, 255, 0.12)',
                 },
               },
             }}
@@ -421,9 +422,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                 sx={{
                   ...listItemSx,
                   '&.Mui-selected': {
-                    background: isDarkMode
-                      ? 'rgba(34, 197, 94, 0.12)'
-                      : 'rgba(5, 150, 105, 0.08)',
+                    background: isDarkMode ? 'rgba(34, 197, 94, 0.12)' : 'rgba(5, 150, 105, 0.08)',
                     '&:hover': {
                       background: isDarkMode
                         ? 'rgba(34, 197, 94, 0.18)'
@@ -510,9 +509,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               '&.Mui-selected': {
                 background: isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.08)',
                 '&:hover': {
-                  background: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.18)'
-                    : 'rgba(59, 130, 246, 0.12)',
+                  background: isDarkMode ? 'rgba(56, 189, 248, 0.18)' : 'rgba(59, 130, 246, 0.12)',
                 },
               },
             }}
@@ -583,9 +580,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                       sx: {
                         fontSize: '0.7rem',
                         fontFamily: 'Inter, system-ui',
-                        color: isDarkMode
-                          ? 'rgba(148, 163, 184, 0.6)'
-                          : 'rgba(100, 116, 139, 0.6)',
+                        color: isDarkMode ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)',
                         lineHeight: 1.3,
                       },
                     },

@@ -139,11 +139,7 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
           variant="body2"
           sx={{
             fontWeight: checked ? 600 : 500,
-            color: checked
-              ? accent
-              : isDarkMode
-                ? '#e2e8f0'
-                : '#1e293b',
+            color: checked ? accent : isDarkMode ? '#e2e8f0' : '#1e293b',
           }}
         >
           {meta.label}
@@ -323,16 +319,10 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
                 border: isDarkMode
                   ? '1px solid rgba(56, 189, 248, 0.25)'
                   : '1px solid rgba(59, 130, 246, 0.2)',
-                background: isDarkMode
-                  ? 'rgba(56, 189, 248, 0.08)'
-                  : 'rgba(59, 130, 246, 0.05)',
+                background: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(59, 130, 246, 0.05)',
                 '&:hover': {
-                  background: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.18)'
-                    : 'rgba(59, 130, 246, 0.12)',
-                  borderColor: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.4)'
-                    : 'rgba(59, 130, 246, 0.3)',
+                  background: isDarkMode ? 'rgba(56, 189, 248, 0.18)' : 'rgba(59, 130, 246, 0.12)',
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.3)',
                 },
               }}
             >
@@ -352,16 +342,10 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
                 border: isDarkMode
                   ? '1px solid rgba(56, 189, 248, 0.25)'
                   : '1px solid rgba(59, 130, 246, 0.2)',
-                background: isDarkMode
-                  ? 'rgba(56, 189, 248, 0.08)'
-                  : 'rgba(59, 130, 246, 0.05)',
+                background: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(59, 130, 246, 0.05)',
                 '&:hover': {
-                  background: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.18)'
-                    : 'rgba(59, 130, 246, 0.12)',
-                  borderColor: isDarkMode
-                    ? 'rgba(56, 189, 248, 0.4)'
-                    : 'rgba(59, 130, 246, 0.3)',
+                  background: isDarkMode ? 'rgba(56, 189, 248, 0.18)' : 'rgba(59, 130, 246, 0.12)',
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.3)',
                 },
               }}
             >
@@ -412,12 +396,8 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
                 ? '1px solid rgba(148, 163, 184, 0.2)'
                 : '1px solid rgba(100, 116, 139, 0.15)',
               '&:hover': {
-                background: isDarkMode
-                  ? 'rgba(148, 163, 184, 0.1)'
-                  : 'rgba(100, 116, 139, 0.06)',
-                borderColor: isDarkMode
-                  ? 'rgba(148, 163, 184, 0.35)'
-                  : 'rgba(100, 116, 139, 0.25)',
+                background: isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'rgba(100, 116, 139, 0.06)',
+                borderColor: isDarkMode ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.25)',
               },
             }}
           >
@@ -437,9 +417,7 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
                 ? `0 2px 12px ${alpha(accent, 0.4)}`
                 : `0 2px 8px ${alpha(accent, 0.3)}`,
               '&:hover': {
-                background: isDarkMode
-                  ? alpha('#38bdf8', 0.85)
-                  : alpha('#3b82f6', 0.85),
+                background: isDarkMode ? alpha('#38bdf8', 0.85) : alpha('#3b82f6', 0.85),
                 boxShadow: isDarkMode
                   ? `0 4px 20px ${alpha(accent, 0.5)}`
                   : `0 4px 16px ${alpha(accent, 0.4)}`,
