@@ -110,12 +110,7 @@ export const AppLayout: React.FC = () => {
             Skip to main content
           </Box>
           <HeaderBar />
-          <Box
-            component="main"
-            id="main-content"
-            tabIndex={-1}
-            sx={{ outline: 'none', flex: 1 }}
-          >
+          <Box component="main" id="main-content" tabIndex={-1} sx={{ outline: 'none', flex: 1 }}>
             <Container
               maxWidth={isBuildEditor ? 'xl' : 'md'}
               sx={{

@@ -32,13 +32,15 @@ export const ScrollRestoration: React.FC = () => {
       .activeViewTransition;
 
     if (activeVT?.finished) {
-      activeVT.finished.then(() => {
-        scrollToTop();
-        focusMainContent();
-      }).catch(() => {
-        scrollToTop();
-        focusMainContent();
-      });
+      activeVT.finished
+        .then(() => {
+          scrollToTop();
+          focusMainContent();
+        })
+        .catch(() => {
+          scrollToTop();
+          focusMainContent();
+        });
     } else {
       scrollToTop();
       focusMainContent();

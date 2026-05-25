@@ -829,7 +829,11 @@ export const HeaderBar: React.FC = () => {
               </Button>
             </Box>
 
-            <Box component="nav" aria-label="Main navigation" sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+            <Box
+              component="nav"
+              aria-label="Main navigation"
+              sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}
+            >
               {navItems.map((item) => (
                 <Button
                   key={item.text}

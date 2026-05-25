@@ -160,7 +160,14 @@ const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
 );
 
 const CvIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    focusable="false"
+  >
     <g fill="none">
       <path
         fill="currentColor"
@@ -198,7 +205,14 @@ const CvIcon = ({ size }: { size: string }): JSX.Element => (
 );
 
 const FileLoopIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    focusable="false"
+  >
     <g fill="currentColor">
       <g opacity=".2">
         <path d="M12.143 4h-3.55a1 1 0 0 0-1 1v2l.448 8.056a1 1 0 0 0 .998.944h7.554a1 1 0 0 0 1-1V8.21a.5.5 0 0 0-.15-.357l-3.804-3.71a.5.5 0 0 0-.35-.143h-1.146Z" />
@@ -229,7 +243,14 @@ const FileLoopIcon = ({ size }: { size: string }): JSX.Element => (
 );
 
 const PeopleIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    focusable="false"
+  >
     <g fill="currentColor">
       <g opacity=".2">
         <path d="M9.75 7.75a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z" />
@@ -2239,7 +2260,7 @@ export const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <LandingContainer id="main-content" role="main">
+    <LandingContainer id="main-content">
       {showcaseGlobalStyles}
       <HeroSection id="home" showAnimations={showAnimations}>
         <ParticleContainer>
@@ -2281,7 +2302,11 @@ export const LandingPage: React.FC = () => {
           {isLoggedIn && isReady && clientIsLoggedIn ? (
             <AuthenticatedLandingSection />
           ) : isLoggedIn && (!isReady || !clientIsLoggedIn) ? (
-            <Box role="status" aria-live="polite" sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}>
+            <Box
+              role="status"
+              aria-live="polite"
+              sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}
+            >
               <CircularProgress size={24} sx={{ mr: 2 }} aria-label="Initializing" />
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                 Initializing...
@@ -2323,7 +2348,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <CvIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h3" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h3"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Text-Editor
               </Typography>
               <Typography
@@ -2347,7 +2376,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <CalculatorIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h3" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h3"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Build Calculator
               </Typography>
               <Typography
@@ -2375,7 +2408,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <FileLoopIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h3" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h3"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Log Analyzer
               </Typography>
               <Typography
@@ -2399,7 +2436,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <PeopleIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h3" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h3"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Roster Builder
               </Typography>
               <Typography

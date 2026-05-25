@@ -814,7 +814,10 @@ export const UserReports: React.FC = () => {
                         onKeyDown={(e: React.KeyboardEvent<HTMLTableRowElement>) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            handleReportClick(report.code, e as unknown as React.MouseEvent<HTMLTableRowElement>);
+                            handleReportClick(
+                              report.code,
+                              e as unknown as React.MouseEvent<HTMLTableRowElement>,
+                            );
                           }
                         }}
                         onMouseDown={(e: React.MouseEvent<HTMLTableRowElement>) => {

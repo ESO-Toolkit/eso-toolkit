@@ -239,7 +239,11 @@ const PlayerCardModalContent: React.FC<{
 
   if (data.loadingStages.core || !data.player) {
     return (
-      <Box role="status" aria-live="polite" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+      <Box
+        role="status"
+        aria-live="polite"
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}
+      >
         <CircularProgress aria-label="Loading player card" />
       </Box>
     );

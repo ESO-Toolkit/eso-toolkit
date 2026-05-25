@@ -1550,7 +1550,7 @@ export const RosterBuilderPage: React.FC = () => {
   }, [roster]);
 
   return (
-    <Container component="main" maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Development Banner */}
       <WorkInProgressDisclaimer featureName="Roster Builder" sx={{ mb: 3 }} />
 

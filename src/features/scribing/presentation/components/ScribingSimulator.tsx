@@ -84,7 +84,11 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   if (isLoading) {
     return (
       <Container maxWidth="xl" className={className}>
-        <Box role="status" aria-live="polite" sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 8 }}>
+        <Box
+          role="status"
+          aria-live="polite"
+          sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 8 }}
+        >
           <CircularProgress aria-label="Loading scribing data" />
           <Typography variant="h6" sx={{ ml: 2 }}>
             Loading scribing data...

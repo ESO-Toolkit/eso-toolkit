@@ -45,35 +45,19 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
 }) => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-      <IconButton
-        onClick={onSkipToStart}
-        size="small"
-        aria-label="Skip to start"
-      >
+      <IconButton onClick={onSkipToStart} size="small" aria-label="Skip to start">
         <SkipPrevious />
       </IconButton>
 
-      <IconButton
-        onClick={onSkipBackward10}
-        size="small"
-        aria-label="Skip backward 10 seconds"
-      >
+      <IconButton onClick={onSkipBackward10} size="small" aria-label="Skip backward 10 seconds">
         <Replay10 />
       </IconButton>
 
-      <IconButton
-        onClick={onPlayPause}
-        size="large"
-        aria-label={isPlaying ? 'Pause' : 'Play'}
-      >
+      <IconButton onClick={onPlayPause} size="large" aria-label={isPlaying ? 'Pause' : 'Play'}>
         {isPlaying ? <Pause /> : <PlayArrow />}
       </IconButton>
 
-      <IconButton
-        onClick={onSkipForward10}
-        size="small"
-        aria-label="Skip forward 10 seconds"
-      >
+      <IconButton onClick={onSkipForward10} size="small" aria-label="Skip forward 10 seconds">
         <Forward10 />
       </IconButton>
 

@@ -571,7 +571,11 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   }
 
   return (
-    <div style={{ width: '100%', height: '400px', position: 'relative' }} role="img" aria-label="3D fight replay arena showing player positions over time">
+    <div
+      style={{ width: '100%', height: '400px', position: 'relative' }}
+      role="img"
+      aria-label="3D fight replay arena showing player positions over time"
+    >
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
           key={`canvas-${fight.id}`} // Stable key prevents unnecessary recreation
