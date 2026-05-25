@@ -15,7 +15,7 @@ import type {
 } from '../types';
 import { getScribingSkillByAbilityId, type ScribingSkillInfo } from '../utils/Scribing';
 
-export const SCRIBING_DETECTION_SCHEMA_VERSION = 2;
+export const SCRIBING_DETECTION_SCHEMA_VERSION = 3;
 
 export interface CombatEventData {
   buffs: BuffEvent[];
@@ -329,20 +329,33 @@ function detectSignatureScript(
   }
 
   const SIGNATURE_WINDOW_MS = 1500;
-  const signatureEffects = new Map<number, { name: string; count: number; type: string }>();
+  const signatureEffects = new Map<
+    number,
+    { name: string; castIndices: Set<number>; type: string }
+  >();
+
+  const recordSignatureHit = (
+    effectId: number,
+    eventType: string,
+    castIndex: number,
+  ): void => {
+    if (!signatureEffects.has(effectId)) {
+      signatureEffects.set(effectId, {
+        name: `${eventType} ${effectId}`,
+        castIndices: new Set(),
+        type: eventType,
+      });
+    }
+    signatureEffects.get(effectId)!.castIndices.add(castIndex);
+  };
 
   const checkAndCountSignature = (
     event: { abilityGameID: number; extraAbilityGameID?: number | null },
     eventType: string,
+    castIndex: number,
   ): void => {
     if (event.abilityGameID !== abilityId && VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)) {
-      const existing =
-        signatureEffects.get(event.abilityGameID) ||
-        ({ name: `${eventType} ${event.abilityGameID}`, count: 0, type: eventType } as const);
-      signatureEffects.set(event.abilityGameID, {
-        ...existing,
-        count: existing.count + 1,
-      });
+      recordSignatureHit(event.abilityGameID, eventType, castIndex);
     }
 
     if (
@@ -350,21 +363,11 @@ function detectSignatureScript(
       event.extraAbilityGameID !== abilityId &&
       VALID_SIGNATURE_SCRIPT_IDS.has(event.extraAbilityGameID)
     ) {
-      const existing =
-        signatureEffects.get(event.extraAbilityGameID) ||
-        ({
-          name: `${eventType} ${event.extraAbilityGameID}`,
-          count: 0,
-          type: eventType,
-        } as const);
-      signatureEffects.set(event.extraAbilityGameID, {
-        ...existing,
-        count: existing.count + 1,
-      });
+      recordSignatureHit(event.extraAbilityGameID, eventType, castIndex);
     }
   };
 
-  for (const cast of abilityCasts) {
+  abilityCasts.forEach((cast, castIndex) => {
     const windowEnd = cast.timestamp + SIGNATURE_WINDOW_MS;
 
     combatEvents.buffs
@@ -374,7 +377,7 @@ function detectSignatureScript(
           buff.timestamp > cast.timestamp &&
           buff.timestamp <= windowEnd,
       )
-      .forEach((buff) => checkAndCountSignature(buff, 'buff'));
+      .forEach((buff) => checkAndCountSignature(buff, 'buff', castIndex));
 
     combatEvents.debuffs
       .filter(
@@ -383,7 +386,7 @@ function detectSignatureScript(
           debuff.timestamp > cast.timestamp &&
           debuff.timestamp <= windowEnd,
       )
-      .forEach((debuff) => checkAndCountSignature(debuff, 'debuff'));
+      .forEach((debuff) => checkAndCountSignature(debuff, 'debuff', castIndex));
 
     combatEvents.damage
       .filter(
@@ -392,7 +395,7 @@ function detectSignatureScript(
           damage.timestamp > cast.timestamp &&
           damage.timestamp <= windowEnd,
       )
-      .forEach((damage) => checkAndCountSignature(damage, 'damage'));
+      .forEach((damage) => checkAndCountSignature(damage, 'damage', castIndex));
 
     combatEvents.heals
       .filter(
@@ -401,7 +404,7 @@ function detectSignatureScript(
           heal.timestamp > cast.timestamp &&
           heal.timestamp <= windowEnd,
       )
-      .forEach((heal) => checkAndCountSignature(heal, 'healing'));
+      .forEach((heal) => checkAndCountSignature(heal, 'healing', castIndex));
 
     combatEvents.resources
       .filter(
@@ -410,7 +413,7 @@ function detectSignatureScript(
           resource.timestamp > cast.timestamp &&
           resource.timestamp <= windowEnd,
       )
-      .forEach((resource) => checkAndCountSignature(resource, 'resource'));
+      .forEach((resource) => checkAndCountSignature(resource, 'resource', castIndex));
 
     combatEvents.casts
       .filter(
@@ -420,20 +423,21 @@ function detectSignatureScript(
           castEvent.timestamp > cast.timestamp &&
           castEvent.timestamp <= windowEnd,
       )
-      .forEach((castEvent) => checkAndCountSignature(castEvent, 'cast'));
-  }
+      .forEach((castEvent) => checkAndCountSignature(castEvent, 'cast', castIndex));
+  });
 
   const MIN_CONSISTENCY = 0.5;
   const consistentEffects = Array.from(signatureEffects.entries())
-    .filter(([, effect]) => effect.count >= abilityCasts.length * MIN_CONSISTENCY)
-    .sort((a, b) => b[1].count - a[1].count);
+    .filter(([, effect]) => effect.castIndices.size >= abilityCasts.length * MIN_CONSISTENCY)
+    .sort((a, b) => b[1].castIndices.size - a[1].castIndices.size);
 
   if (consistentEffects.length === 0) {
     return null;
   }
 
   const [topEffectId, topEffect] = consistentEffects[0];
-  const confidence = Math.min(0.95, topEffect.count / abilityCasts.length);
+  const castCount = topEffect.castIndices.size;
+  const confidence = Math.min(0.95, castCount / abilityCasts.length);
   const scriptName = SIGNATURE_SCRIPT_ID_TO_NAME.get(topEffectId);
 
   return {
@@ -443,10 +447,10 @@ function detectSignatureScript(
     evidence: [
       `Analyzed ${abilityCasts.length} casts`,
       `Found ${consistentEffects.length} consistent effects`,
-      `Top effect: ${topEffect.type} ID ${topEffectId} (${topEffect.count}/${abilityCasts.length} casts)`,
+      `Top effect: ${topEffect.type} ID ${topEffectId} (${castCount}/${abilityCasts.length} casts)`,
       ...consistentEffects
         .slice(0, 3)
-        .map(([id, eff]) => `${eff.type} ${id}: ${eff.count} occurrences`),
+        .map(([id, eff]) => `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`),
     ],
   };
 }
