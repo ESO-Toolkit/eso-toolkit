@@ -116,9 +116,13 @@ code {
   }
 }
 
-/* WCAG 2.2 touch target sizing — ensure 44px minimum on touch devices */
+/* WCAG 2.2 touch target sizing — ensure 44px minimum on touch devices.
+   Scoped to navigation/standalone interactive elements only;
+   inline prose links are excluded to preserve text flow. */
 @media (pointer: coarse) {
-  a,
+  nav a,
+  footer a,
+  [role='navigation'] a,
   button,
   [role='button'],
   [role='tab'],
