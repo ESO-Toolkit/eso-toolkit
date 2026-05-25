@@ -1744,7 +1744,7 @@ const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(auto-fit, minmax(96px, 1fr))' },
           gap: 2,
           justifyItems: 'center',
           py: 1,

@@ -198,7 +198,7 @@ export const Footer: React.FC = React.memo(() => {
 
       gap: { xs: 0.65, md: 0.85 },
 
-      whiteSpace: 'nowrap',
+      whiteSpace: { xs: 'normal', lg: 'nowrap' },
 
       color: theme.palette.text.secondary,
 
@@ -211,6 +211,8 @@ export const Footer: React.FC = React.memo(() => {
       letterSpacing: '0.01em',
 
       position: 'relative',
+
+      minHeight: 44,
 
       transition: 'color 0.2s ease, transform 0.2s ease',
 
@@ -1102,6 +1104,10 @@ export const Footer: React.FC = React.memo(() => {
                 color: 'inherit',
                 textDecoration: 'none',
                 transition: 'opacity 0.2s ease',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+                px: 1,
                 '&:hover': { opacity: 1, color: accentColor },
               }}
             >
@@ -1119,8 +1125,9 @@ export const Footer: React.FC = React.memo(() => {
                 opacity: 0.6,
                 color: 'inherit',
                 textTransform: 'none',
-                padding: '2px 8px',
+                padding: '8px 12px',
                 minWidth: 0,
+                minHeight: 44,
                 border: 'none',
                 background: 'none',
                 transition: 'opacity 0.2s ease',

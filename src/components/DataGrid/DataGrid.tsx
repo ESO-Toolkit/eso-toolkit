@@ -635,7 +635,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
       <TableContainer
         sx={{
           flex: autoHeight ? 'unset' : 1,
-          overflowX: 'hidden',
+          overflowX: { xs: 'auto', md: 'hidden' },
           overflowY: autoHeight ? 'visible' : 'auto',
           scrollbarGutter: 'stable both-edges',
         }}

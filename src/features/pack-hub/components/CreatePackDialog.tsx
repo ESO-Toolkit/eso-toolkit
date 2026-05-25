@@ -841,7 +841,7 @@ export const CreatePackDialog: React.FC<CreatePackDialogProps> = ({
             /* ─── Sortable addon list ─── */
             <Box
               sx={{
-                maxHeight: 240,
+                maxHeight: { xs: 300, sm: 240 },
                 overflowY: 'auto',
                 p: 0.5,
                 '&::-webkit-scrollbar': { width: 5 },
