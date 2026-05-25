@@ -251,7 +251,6 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               ? 'What went wrong? What were you doing when it happened?'
               : 'Share your thoughts or suggestions…'
           }
-          autoFocus
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,

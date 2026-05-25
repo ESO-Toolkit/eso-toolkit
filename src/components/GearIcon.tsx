@@ -86,6 +86,18 @@ export const GearIcon: React.FC<GearIconProps> = ({
       alt={alt}
       className={className}
       onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e: React.KeyboardEvent<HTMLImageElement>): void => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(e as unknown as React.MouseEvent<HTMLElement>);
+              }
+            }
+          : undefined
+      }
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
       style={{
         width: size,
         height: size,
@@ -98,7 +110,6 @@ export const GearIcon: React.FC<GearIconProps> = ({
         ...style,
       }}
       onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-        // Fallback to a placeholder or hide on error
         const target = e.target as HTMLImageElement;
         target.style.display = 'none';
       }}

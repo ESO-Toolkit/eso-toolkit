@@ -456,8 +456,11 @@ export const RosterBuilderSkeleton: React.FC = () => {
             mb: 2,
           }}
         >
+          {/* eslint-disable-next-line jsx-a11y/aria-role */}
           <RoleColumn role="tank" badgeWidth={48} chipCount={5} />
+          {/* eslint-disable-next-line jsx-a11y/aria-role */}
           <RoleColumn role="flex" badgeWidth={62} chipCount={3} />
+          {/* eslint-disable-next-line jsx-a11y/aria-role */}
           <RoleColumn role="healer" badgeWidth={55} chipCount={3} />
         </Box>
 
