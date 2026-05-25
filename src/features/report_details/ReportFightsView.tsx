@@ -255,9 +255,15 @@ function getTrialNameFromBoss(
   }
 
   if (
-    ['possessed manticora', 'possessed mantikora', 'stonebreaker', 'ozara', 'serpent', 'mantikora', 'manticora'].some(
-      (name) => cleanBossName.includes(name),
-    )
+    [
+      'possessed manticora',
+      'possessed mantikora',
+      'stonebreaker',
+      'ozara',
+      'serpent',
+      'mantikora',
+      'manticora',
+    ].some((name) => cleanBossName.includes(name))
   ) {
     return 'Sanctum Ophidia';
   }
