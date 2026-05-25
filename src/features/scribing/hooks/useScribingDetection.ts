@@ -343,11 +343,29 @@ async function _detectSignatureScript(
       signatureEffects.get(effectId)!.castIndices.add(castIndex);
     };
 
+    // Assign each event to the nearest preceding cast whose window contains it
+    const findOwningCastIndex = (eventTimestamp: number): number | null => {
+      let bestIndex: number | null = null;
+      for (let i = abilityCasts.length - 1; i >= 0; i--) {
+        const castTs = abilityCasts[i].timestamp;
+        if (eventTimestamp > castTs && eventTimestamp <= castTs + SIGNATURE_WINDOW_MS) {
+          bestIndex = i;
+          break;
+        }
+        if (castTs < eventTimestamp - SIGNATURE_WINDOW_MS) {
+          break;
+        }
+      }
+      return bestIndex;
+    };
+
     const checkAndCountSignature = (
-      event: { abilityGameID: number; extraAbilityGameID?: number | null },
+      event: { abilityGameID: number; extraAbilityGameID?: number | null; timestamp: number },
       eventType: string,
-      castIndex: number,
     ): void => {
+      const castIndex = findOwningCastIndex(event.timestamp);
+      if (castIndex === null) return;
+
       if (
         event.abilityGameID !== abilityId &&
         VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)
@@ -363,54 +381,30 @@ async function _detectSignatureScript(
       }
     };
 
-    abilityCasts.forEach((cast, castIndex) => {
-      const windowEnd = cast.timestamp + SIGNATURE_WINDOW_MS;
+    // Process all events once, assigning each to its nearest preceding cast
+    combatEvents.buffs
+      .filter((b) => b.sourceID === playerId)
+      .forEach((b) => checkAndCountSignature(b, 'buff'));
 
-      combatEvents.buffs
-        .filter(
-          (b) =>
-            b.sourceID === playerId && b.timestamp > cast.timestamp && b.timestamp <= windowEnd,
-        )
-        .forEach((b) => checkAndCountSignature(b, 'buff', castIndex));
+    combatEvents.debuffs
+      .filter((d) => d.sourceID === playerId)
+      .forEach((d) => checkAndCountSignature(d, 'debuff'));
 
-      combatEvents.debuffs
-        .filter(
-          (d) =>
-            d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
-        )
-        .forEach((d) => checkAndCountSignature(d, 'debuff', castIndex));
+    combatEvents.damage
+      .filter((d) => d.sourceID === playerId)
+      .forEach((d) => checkAndCountSignature(d, 'damage'));
 
-      combatEvents.damage
-        .filter(
-          (d) =>
-            d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
-        )
-        .forEach((d) => checkAndCountSignature(d, 'damage', castIndex));
+    combatEvents.heals
+      .filter((h) => h.sourceID === playerId)
+      .forEach((h) => checkAndCountSignature(h, 'healing'));
 
-      combatEvents.heals
-        .filter(
-          (h) =>
-            h.sourceID === playerId && h.timestamp > cast.timestamp && h.timestamp <= windowEnd,
-        )
-        .forEach((h) => checkAndCountSignature(h, 'healing', castIndex));
+    combatEvents.resources
+      .filter((r) => r.sourceID === playerId)
+      .forEach((r) => checkAndCountSignature(r, 'resource'));
 
-      combatEvents.resources
-        .filter(
-          (r) =>
-            r.sourceID === playerId && r.timestamp > cast.timestamp && r.timestamp <= windowEnd,
-        )
-        .forEach((r) => checkAndCountSignature(r, 'resource', castIndex));
-
-      combatEvents.casts
-        .filter(
-          (c) =>
-            c.sourceID === playerId &&
-            c.abilityGameID !== abilityId &&
-            c.timestamp > cast.timestamp &&
-            c.timestamp <= windowEnd,
-        )
-        .forEach((c) => checkAndCountSignature(c, 'cast', castIndex));
-    });
+    combatEvents.casts
+      .filter((c) => c.sourceID === playerId && c.abilityGameID !== abilityId)
+      .forEach((c) => checkAndCountSignature(c, 'cast'));
 
     const MIN_CONSISTENCY = 0.5;
     const consistentEffects = Array.from(signatureEffects.entries())
