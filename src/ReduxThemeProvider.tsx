@@ -229,6 +229,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 textTransform: 'none',
                 borderRadius: 8,
                 fontWeight: 600,
+                '@media (pointer: coarse)': {
+                  minHeight: 44,
+                },
                 '&.MuiButton-containedPrimary': {
                   background: `linear-gradient(135deg, ${tokens.accent}, ${tokens.accent2})`,
                   color: darkMode ? tokens.bg : '#ffffff',
@@ -261,6 +264,16 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 '&:hover': {
                   color: tokens.accent,
                   background: darkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(3, 105, 161, 0.08)',
+                },
+              },
+            },
+          },
+          MuiIconButton: {
+            styleOverrides: {
+              root: {
+                '@media (pointer: coarse)': {
+                  minWidth: 44,
+                  minHeight: 44,
                 },
               },
             },
