@@ -476,7 +476,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         const build = playerToBuild({
           playerName: resolveActorName(player),
           role: broadRole,
-          gear,
+          gear: player?.combatantInfo?.gear ?? [],
           talents,
           mundusBuffs,
           championPoints,
@@ -498,7 +498,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       }
     }, [
       player,
-      gear,
       talents,
       mundusBuffs,
       championPoints,
