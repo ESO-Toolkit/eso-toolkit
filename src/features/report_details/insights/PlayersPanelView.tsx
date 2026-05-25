@@ -451,12 +451,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 },
                 '& .MuiSelect-select': {
                   py: 0.875,
-                  pl: 0,
+                  pl: 0.5,
                 },
               }}
               aria-label="Sort by"
             >
-              <MenuItem value="role">Role</MenuItem>
+              <MenuItem value="role">Sort by Role</MenuItem>
               <MenuItem value="alphabetical">Alphabetical</MenuItem>
               <MenuItem value="stamina-high">Stamina (High → Low)</MenuItem>
               <MenuItem value="stamina-low">Stamina (Low → High)</MenuItem>
@@ -501,7 +501,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
                 },
                 '& .MuiSelect-select': {
                   py: 0.875,
-                  pl: 0,
+                  pl: 0.5,
                 },
               }}
               aria-label="Filter by role"
