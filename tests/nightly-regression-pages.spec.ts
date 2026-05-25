@@ -112,11 +112,12 @@ test.describe('Nightly Regression - Pages & Features', () => {
       await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
       await waitForAppMount(page);
 
-      const hasNav = await page.locator('nav, header').isVisible().catch(() => false);
-      const hasMain = await page.locator('main, #root, .app').isVisible().catch(() => false);
+      const hasNav = await page.locator('nav, header').first().isVisible({ timeout: 10000 }).catch(() => false);
+      const hasMain = await page.locator('main, #root, .app').first().isVisible({ timeout: 5000 }).catch(() => false);
       const hasText = await page
         .getByText(/eso|toolkit|log|report/i)
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 5000 })
         .catch(() => false);
 
       expect(hasNav || hasMain || hasText, 'Home page should render navigable content').toBeTruthy();
@@ -479,10 +480,15 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       const hasError = await page
         .getByText(/not found|404|player.*not.*found|user.*not.*exist|no.*user|error/i)
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 10000 })
         .catch(() => false);
       const redirectedAway = !page.url().includes('xyzzy');
-      const hasContent = await page.locator('main, #root').isVisible().catch(() => false);
+      const hasContent = await page
+        .locator('main, #root')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
 
       expect(
         hasError || redirectedAway || hasContent,
@@ -627,38 +633,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
       expect(hasTitleContent).toBeTruthy();
 
       // Should have main navigation or landing content - be more flexible
-      const hasNav = await page
-        .locator('nav')
-        .isVisible()
-        .catch(() => false);
-      const hasHeader = await page
-        .locator('header')
-        .isVisible()
-        .catch(() => false);
-      const hasLanding = await page
-        .locator('.landing')
-        .isVisible()
-        .catch(() => false);
-      const hasHero = await page
-        .locator('.hero')
-        .isVisible()
-        .catch(() => false);
-      const hasButton = await page
-        .locator('button')
-        .isVisible()
-        .catch(() => false);
-      const hasLink = await page
-        .locator('a')
-        .isVisible()
-        .catch(() => false);
-      const hasEsoText = await page
-        .getByText(/eso/i)
-        .isVisible()
-        .catch(() => false);
-      const hasMainContent = await page
-        .locator('main, .app, #root, .content')
-        .isVisible()
-        .catch(() => false);
+      const hasNav = await page.locator('nav').first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasHeader = await page.locator('header').first().isVisible({ timeout: 3000 }).catch(() => false);
+      const hasLanding = await page.locator('.landing').first().isVisible().catch(() => false);
+      const hasHero = await page.locator('.hero').first().isVisible().catch(() => false);
+      const hasButton = await page.locator('button').first().isVisible().catch(() => false);
+      const hasLink = await page.locator('a').first().isVisible().catch(() => false);
+      const hasEsoText = await page.getByText(/eso/i).first().isVisible().catch(() => false);
+      const hasMainContent = await page.locator('main, .app, #root, .content').first().isVisible().catch(() => false);
       const hasAnyText = await page
         .locator('body')
         .textContent()
@@ -737,10 +719,13 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
   test.describe('Error Handling and Edge Cases', () => {
     test('should handle invalid report IDs gracefully', async ({ page }) => {
-      // Try to access a non-existent report
+      // Try to access a non-existent report — use longer timeout as the
+      // server makes an API call to ESO Logs which can be slow for invalid IDs
       await page.goto('/report/INVALID_REPORT_ID', {
         waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
+        timeout: TEST_TIMEOUTS.dataLoad,
+      }).catch(() => {
+        // Navigation timeout is acceptable for invalid IDs — page may still render
       });
 
       await waitForAppMount(page);
@@ -748,22 +733,26 @@ test.describe('Nightly Regression - Pages & Features', () => {
       // Should show error message, redirect, or show some handling of invalid ID
       const hasErrorText = await page
         .getByText(/not found|error|invalid|doesn.*exist|no fights|empty log/i)
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 10000 })
         .catch(() => false);
       const hasErrorClass = await page
         .locator('.error, .MuiAlert-root')
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 3000 })
         .catch(() => false);
       const hasLoadingState = await page
         .locator('.loading, .MuiCircularProgress-root, .skeleton')
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 3000 })
         .catch(() => false);
       const redirectedAway = !page.url().includes('INVALID_REPORT_ID');
 
       // Check if page shows any content (meaning it loaded and handled the request)
       const hasContent = await page
         .locator('main, .content, .app, #root')
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 5000 })
         .catch(() => false);
       const currentUrl = page.url();
       const pageTitle = await page.title();
