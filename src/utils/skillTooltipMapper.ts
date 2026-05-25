@@ -104,7 +104,7 @@ export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps
     iconUrl,
     headerBadge,
     morphOfName,
-    scribedSkillData: _scribedSkillData,
+    scribedSkillData,
   } = opts;
 
   // Resolve fields, letting the node override parent inheritFrom
@@ -169,6 +169,7 @@ export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps
     morphOf: morphOfName,
     stats,
     description: descriptionNode,
+    scribedSkillData,
   };
 }
 
