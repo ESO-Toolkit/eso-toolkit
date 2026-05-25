@@ -456,7 +456,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               }}
               aria-label="Sort by"
             >
-              <MenuItem value="role">Role Priority</MenuItem>
+              <MenuItem value="role">Default</MenuItem>
               <MenuItem value="alphabetical">Alphabetical</MenuItem>
               <MenuItem value="stamina-high">Stamina (High → Low)</MenuItem>
               <MenuItem value="stamina-low">Stamina (Low → High)</MenuItem>
