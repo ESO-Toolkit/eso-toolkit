@@ -12,5 +12,9 @@ export interface ScribingSimulatorPageProps {
 }
 
 export const ScribingSimulatorPage: React.FC<ScribingSimulatorPageProps> = ({ className }) => {
+  React.useEffect(() => {
+    document.title = 'Scribing Simulator | ESO Toolkit';
+  }, []);
+
   return <ScribingSimulator className={className} autoSimulate={false} />;
 };

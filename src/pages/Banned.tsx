@@ -14,6 +14,10 @@ export const Banned: React.FC = () => {
   const { banReason, setAccessToken } = useAuth();
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    document.title = 'Access Denied | ESO Toolkit';
+  }, []);
+
   const handleLogout = (): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
     setAccessToken('');
@@ -21,7 +25,7 @@ export const Banned: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
+    <Container component="main" maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
       <Paper
         elevation={3}
         sx={{

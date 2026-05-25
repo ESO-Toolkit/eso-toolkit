@@ -12,6 +12,7 @@ interface EChartInnerProps {
   group?: string;
   loading?: boolean;
   style?: React.CSSProperties;
+  'aria-label'?: string;
 }
 
 const EChartInner: React.FC<EChartInnerProps> = ({
@@ -20,6 +21,7 @@ const EChartInner: React.FC<EChartInnerProps> = ({
   group,
   loading = false,
   style,
+  'aria-label': ariaLabel,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { baseOption } = useEChartsTheme();
@@ -67,6 +69,8 @@ const EChartInner: React.FC<EChartInnerProps> = ({
   return (
     <div
       ref={containerRef}
+      role={ariaLabel ? 'img' : undefined}
+      aria-label={ariaLabel}
       style={{
         width: '100%',
         height: resolvedHeight,

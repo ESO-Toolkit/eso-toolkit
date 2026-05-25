@@ -572,6 +572,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
   if (loading) {
     return (
       <Paper
+        aria-live="polite"
         sx={{
           height: autoHeight ? 'auto' : height,
           display: 'flex',

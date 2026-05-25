@@ -192,6 +192,10 @@ export const UserReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
+  useEffect(() => {
+    document.title = 'My Reports | ESO Toolkit';
+  }, []);
+
   // Redux selectors
   const paginatedReports = useSelector(selectPaginatedReports);
   const filteredCount = useSelector(selectFilteredCount);

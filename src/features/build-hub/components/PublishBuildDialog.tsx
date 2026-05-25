@@ -190,7 +190,6 @@ export const PublishBuildDialog: React.FC<PublishBuildDialogProps> = ({
                       onClick={isDisabled ? undefined : () => handleTagToggle(tag)}
                       variant={isSelected ? 'filled' : 'outlined'}
                       aria-pressed={isSelected}
-                      role="checkbox"
                       sx={{
                         cursor: isDisabled ? 'not-allowed' : 'pointer',
                         opacity: isDisabled ? 0.5 : 1,

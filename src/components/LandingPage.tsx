@@ -2313,7 +2313,7 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <CvIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
                 Text-Editor
               </Typography>
               <Typography
@@ -2337,7 +2337,7 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <CalculatorIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
                 Build Calculator
               </Typography>
               <Typography
@@ -2365,7 +2365,7 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <FileLoopIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
                 Log Analyzer
               </Typography>
               <Typography
@@ -2389,7 +2389,7 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <PeopleIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
                 Roster Builder
               </Typography>
               <Typography
@@ -3191,6 +3191,7 @@ export const LandingPage: React.FC = () => {
                 <CommunityIcon accent="blue">🎮</CommunityIcon>
                 <Typography
                   variant="h5"
+                  component="h3"
                   sx={(t: Theme) => ({
                     mb: 0.5,
                     color: 'text.primary',
@@ -3259,6 +3260,7 @@ export const LandingPage: React.FC = () => {
                 <CommunityIcon accent="purple">🔄</CommunityIcon>
                 <Typography
                   variant="h5"
+                  component="h3"
                   sx={(t: Theme) => ({
                     mb: 0.5,
                     color: 'text.primary',
@@ -3339,6 +3341,7 @@ export const LandingPage: React.FC = () => {
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography
                     variant="h5"
+                    component="h3"
                     sx={(t: Theme) => ({
                       mb: 0.25,
                       color: 'text.primary',

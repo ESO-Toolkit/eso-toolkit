@@ -80,12 +80,11 @@ export const GearIcon: React.FC<GearIconProps> = ({
   // Choose color set based on whether we want desaturated colors
   const colors = useDesaturatedColors ? desaturatedQualityColors : qualityColors;
 
-  const iconElement = (
+  const imgEl = (
     <img
       src={iconUrl}
       alt={alt}
       className={className}
-      onClick={onClick}
       style={{
         width: size,
         height: size,
@@ -104,6 +103,23 @@ export const GearIcon: React.FC<GearIconProps> = ({
       }}
     />
   );
+
+  const iconElement = onClick ? (
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e: React.KeyboardEvent<HTMLSpanElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick(e as unknown as React.MouseEvent<HTMLElement>);
+        }
+      }}
+      style={{ display: 'inline-flex', alignItems: 'center' }}
+    >
+      {imgEl}
+    </span>
+  ) : imgEl;
 
   if (showTooltip && tooltipContent) {
     return (

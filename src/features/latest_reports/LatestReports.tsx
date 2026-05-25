@@ -61,6 +61,10 @@ export const LatestReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
+  useEffect(() => {
+    document.title = 'Latest Reports | ESO Toolkit';
+  }, []);
+
   const [state, setState] = useState<LatestReportsState>({
     reports: [],
     loading: true,

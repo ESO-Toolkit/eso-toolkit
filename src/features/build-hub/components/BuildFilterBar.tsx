@@ -344,7 +344,6 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                   key={tag}
                   component="button"
                   onClick={() => onFilterChange('tag', filters.tag === tag ? '' : tag)}
-                  role="checkbox"
                   aria-pressed={active}
                   aria-label={tag}
                   sx={{

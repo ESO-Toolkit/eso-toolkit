@@ -331,7 +331,6 @@ export const FilterBar: React.FC<FilterBarProps> = React.memo(
                   key={tag}
                   component="button"
                   onClick={() => handleTagToggle(tag)}
-                  role="checkbox"
                   aria-pressed={active}
                   aria-label={tag}
                   sx={{

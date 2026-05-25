@@ -22,13 +22,17 @@ export const Login: React.FC = () => {
   const { isBanned, banReason, userError } = useAuth();
   const banMessage = banReason || userError;
 
+  React.useEffect(() => {
+    document.title = 'Sign In | ESO Toolkit';
+  }, []);
+
   const handleLogin = (): boolean => {
     startPKCEAuth();
     return false;
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
+    <Container component="main" maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
       <Box
         sx={{
           display: 'flex',

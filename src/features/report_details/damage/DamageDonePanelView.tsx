@@ -233,7 +233,17 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           ].map(({ field, label, icon, accent }) => (
             <Box
               key={field}
+              role="button"
+              tabIndex={0}
               onClick={() => handleSort(field)}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSort(field);
+                }
+              }}
+              aria-label={`Sort by ${label}`}
+              aria-pressed={sortField === field}
               sx={{
                 px: 2,
                 py: 1,
@@ -417,41 +427,53 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             }}
           >
             <Box
+              role="button"
+              tabIndex={0}
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': {
+                '&:hover, &:focus-visible': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
               }}
               onClick={() => handleSort('name')}
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('name'); } }}
+              aria-label="Sort by name"
             >
               Name{getSortIcon('name')}
             </Box>
             <Box
+              role="button"
+              tabIndex={0}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': {
+                '&:hover, &:focus-visible': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
               }}
               onClick={() => handleSort('dps')}
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('dps'); } }}
+              aria-label="Sort by DPS"
             >
               DPS{getSortIcon('dps')}
             </Box>
             <Box
+              role="button"
+              tabIndex={0}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': {
+                '&:hover, &:focus-visible': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
                 position: 'relative',
               }}
               onClick={() => handleSort('activeDps')}
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('activeDps'); } }}
+              aria-label="Sort by active DPS"
             >
               <Box
                 sx={{
@@ -465,15 +487,19 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               </Box>
             </Box>
             <Box
+              role="button"
+              tabIndex={0}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': {
+                '&:hover, &:focus-visible': {
                   color: roleColors.isDarkMode ? '#fbbf24' : '#f59e0b',
                 },
               }}
               onClick={() => handleSort('criticalDamage')}
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('criticalDamage'); } }}
+              aria-label="Sort by critical damage"
             >
               Crit %{getSortIcon('criticalDamage')}
             </Box>
@@ -541,7 +567,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {row.iconUrl && (
                       <Avatar
                         src={row.iconUrl}
-                        alt=""
+                        alt={row.name || ''}
                         sx={{ width: 32, height: 32, flexShrink: 0 }}
                       />
                     )}
@@ -881,7 +907,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {row.iconUrl && (
                       <Avatar
                         src={row.iconUrl}
-                        alt=""
+                        alt={row.name || ''}
                         sx={{
                           width: 40,
                           height: 40,

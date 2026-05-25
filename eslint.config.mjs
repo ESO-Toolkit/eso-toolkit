@@ -2,6 +2,7 @@
 import js from '@eslint/js';
 import typescript from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
@@ -88,6 +89,7 @@ export default [
     },
     plugins: {
       '@typescript-eslint': typescript,
+      'jsx-a11y': jsxA11y,
       react,
       'react-hooks': reactHooks,
       import: importPlugin,
@@ -114,6 +116,13 @@ export default [
 
       // React Hooks recommended rules
       ...reactHooks.configs.recommended.rules,
+
+      // JSX Accessibility recommended rules
+      ...jsxA11y.configs.recommended.rules,
+      // Allow autoFocus in dialogs/pickers (intentional UX pattern)
+      'jsx-a11y/no-autofocus': 'off',
+      // Warn on invalid ARIA roles (skeleton components use custom roles)
+      'jsx-a11y/aria-role': 'warn',
 
       // React Hooks exhaustive deps (what Strict Mode helps find)
       'react-hooks/exhaustive-deps': 'error', // Ensure all dependencies are listed
@@ -254,6 +263,15 @@ export default [
       parserOptions: {
         project: null,
       },
+    },
+  },
+
+  // Skeleton components use "role" as a component prop (e.g., role="tank")
+  // which triggers false positives from jsx-a11y/aria-role
+  {
+    files: ['src/components/RosterBuilderSkeleton.tsx'],
+    rules: {
+      'jsx-a11y/aria-role': 'off',
     },
   },
 ];
