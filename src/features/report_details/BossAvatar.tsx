@@ -65,10 +65,15 @@ const bossAvatars: Record<string, string> = {
   // Ossein Cage
   'Blood Drinker Thisa': bloodDrinkerThisaAvatar,
   'Hall of Fleshcraft': hallOfFleshcraftAvatar,
+  'Shaper of Flesh': hallOfFleshcraftAvatar,
+  'Shapers of Flesh': hallOfFleshcraftAvatar,
   'Jynorah and Skorkhif': jynorahAndSkorkhifAvatar,
   'Overfiend Kazpian': overfiendKazpianAvatar,
   'Red Witch Gedna Relvel': redWitchGednaRelvelAvatar,
   'Tortured Ranyu': torturedRanyuAvatar,
+  'Tortured Kathutet': torturedRanyuAvatar,
+  'Tortured Amkaos': torturedRanyuAvatar,
+  'Tortured Trio': torturedRanyuAvatar,
 
   // Dreadsail Reef
   'Bow Breaker': bowBreakerAvatar,

@@ -170,5 +170,21 @@ describe('BossAvatar', () => {
       expect(getBossAvatarSrc('Baron Rize')).toBe(getBossAvatarSrc('Xoryn'));
       expect(getBossAvatarSrc('Zilyesset')).toBe(getBossAvatarSrc('Zilyseet'));
     });
+
+    it('should handle all Ossein Cage bosses including aliases', () => {
+      expect(getBossAvatarSrc('Blood Drinker Thisa')).toBeTruthy();
+      expect(getBossAvatarSrc('Hall of Fleshcraft')).toBeTruthy();
+      expect(getBossAvatarSrc('Jynorah and Skorkhif')).toBeTruthy();
+      expect(getBossAvatarSrc('Overfiend Kazpian')).toBeTruthy();
+      expect(getBossAvatarSrc('Red Witch Gedna Relvel')).toBeTruthy();
+      expect(getBossAvatarSrc('Tortured Ranyu')).toBeTruthy();
+
+      // Aliases share avatars with related bosses
+      expect(getBossAvatarSrc('Shaper of Flesh')).toBe(getBossAvatarSrc('Hall of Fleshcraft'));
+      expect(getBossAvatarSrc('Shapers of Flesh')).toBe(getBossAvatarSrc('Hall of Fleshcraft'));
+      expect(getBossAvatarSrc('Tortured Kathutet')).toBe(getBossAvatarSrc('Tortured Ranyu'));
+      expect(getBossAvatarSrc('Tortured Amkaos')).toBe(getBossAvatarSrc('Tortured Ranyu'));
+      expect(getBossAvatarSrc('Tortured Trio')).toBe(getBossAvatarSrc('Tortured Ranyu'));
+    });
   });
 });
