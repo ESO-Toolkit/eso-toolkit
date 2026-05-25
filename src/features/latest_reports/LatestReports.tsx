@@ -318,7 +318,7 @@ export const LatestReports: React.FC = () => {
                   sx={{
                     borderRadius: 2,
                     mb: 3,
-                    overflowX: 'hidden',
+                    overflowX: 'auto',
                   }}
                 >
                   <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
