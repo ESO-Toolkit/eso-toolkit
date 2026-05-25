@@ -16,7 +16,13 @@ const PanelErrorFallback: React.FC<PanelErrorFallbackProps> = ({ panelName, onRe
       icon={<ErrorOutlined />}
       sx={{ width: '100%', maxWidth: 500 }}
       action={
-        <Button color="inherit" size="small" startIcon={<Refresh />} onClick={onRetry} sx={{ minHeight: 44, minWidth: 44 }}>
+        <Button
+          color="inherit"
+          size="small"
+          startIcon={<Refresh />}
+          onClick={onRetry}
+          sx={{ minHeight: 44, minWidth: 44 }}
+        >
           Retry
         </Button>
       }
