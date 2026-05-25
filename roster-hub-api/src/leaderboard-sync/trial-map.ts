@@ -39,8 +39,10 @@ const TRIAL_MAPPINGS: TrialMapping[] = [
   { trialId: 'DSR', displayName: 'Dreadsail Reef', encounterIds: [24] },
   { trialId: 'SE', displayName: "Sanity's Edge", encounterIds: [25] },
   { trialId: 'LC', displayName: 'Lucent Citadel', encounterIds: [26] },
-  // OAC not yet in ESO Logs API — uncomment when available
-  // { trialId: 'OAC', displayName: 'Oathsworn Citadel', encounterIds: [] },
+  // Ossein Cage not yet in ESO Logs API — uncomment when available
+  // { trialId: 'OSC', displayName: 'Ossein Cage', encounterIds: [] },
+  // Opulent Ordeal not yet in ESO Logs API — uncomment when available
+  // { trialId: 'OO', displayName: 'Opulent Ordeal', encounterIds: [] },
 ];
 
 /** All configured trials */

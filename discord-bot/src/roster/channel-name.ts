@@ -30,7 +30,8 @@ export const TRIAL_ABBREVS: Record<string, string> = {
   DSR: 'dsr',
   SE: 'se',
   LC: 'lc',
-  OAC: 'oac',
+  OO: 'oo',
+  OSC: 'osc',
 };
 
 /** Reverse lookup: abbreviation → trial ID (e.g. "lc" → "LC"). */

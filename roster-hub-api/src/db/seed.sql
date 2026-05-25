@@ -12,7 +12,7 @@ INSERT OR IGNORE INTO rosters (id, author_id, author_name, title, description, t
   ('seed-ka-01', 'user-seed-7', 'Eclipsë', 'KA #1 — Eclipsë', 'Rank 1 Kyne''s Aegis (vHM). Solo tank/healer setup with Lucent Echoes + Powerful Assault. Aegis Caller stacking on DPS.', 'KA', 'placeholder', 39, datetime('now', '-7 days')),
   ('seed-rg-01', 'user-seed-8', 'Clown Consortium', 'RG #1 — Clown Consortium', 'Rank 1 Rockgrove (vHM). Lucent Echoes + Pearlescent Ward main tank. DPS heavy on Berserking Warrior and Slivers.', 'RG', 'placeholder', 45, datetime('now', '-8 days')),
   ('seed-dsr-01', 'user-seed-9', 'Alles wird Gut', 'DSR #1 — Alles wird Gut', 'Rank 1 Dreadsail Reef (vHM). Pearlescent + Xoryn''s and Yolnahkriin + Lucent Echoes tanks. Spectral Cloak on all DPS.', 'DSR', 'placeholder', 58, datetime('now', '-9 days')),
-  ('seed-oc-01', 'user-seed-10', 'MuLtiCoLOrEd PoNiEs', 'OAC #1 — MuLtiCoLOrEd PoNiEs', 'Rank 1 Oathsworn Citadel (vHM). Pillager''s Profit on main tank. Master Architect + Archdruid Devyric healer.', 'OAC', 'placeholder', 51, datetime('now', '-10 days'));
+  ('seed-oc-01', 'user-seed-10', 'MuLtiCoLOrEd PoNiEs', 'OSC #1 — MuLtiCoLOrEd PoNiEs', 'Rank 1 Ossein Cage (vHM). Pillager''s Profit on main tank. Master Architect + Archdruid Devyric healer.', 'OSC', 'placeholder', 51, datetime('now', '-10 days'));
 
 INSERT OR IGNORE INTO roster_tags (roster_id, tag) VALUES
   ('seed-aa-01', '#1'),
