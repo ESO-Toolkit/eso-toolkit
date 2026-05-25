@@ -454,9 +454,10 @@ export const ReportFightHeader: React.FC = () => {
       </Box>
 
       {/* ── Fight title ────────────────────────────────────────── */}
+      <Box sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
       <Stack
         direction="row"
-        sx={{ justifyContent: 'space-between', alignItems: 'center', mb: { xs: 2, sm: 3, md: 4 } }}
+        sx={{ alignItems: 'center', gap: { xs: 1.5, md: 2 }, flexWrap: 'wrap' }}
       >
         <Typography
           ref={titleRef}
@@ -576,6 +577,64 @@ export const ReportFightHeader: React.FC = () => {
             );
           })()}
       </Stack>
+
+      {/* Subtitle: duration + difficulty */}
+      {fight && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            mt: 0.75,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              color: isDarkMode ? '#94a3b8' : '#64748b',
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {(() => {
+              const ms = fight.endTime - fight.startTime;
+              const totalSec = Math.floor(ms / 1000);
+              const m = Math.floor(totalSec / 60);
+              const s = totalSec % 60;
+              return m > 0
+                ? `${m}m ${s.toString().padStart(2, '0')}s`
+                : `${s}s`;
+            })()}
+          </Typography>
+          {fight.difficulty != null && fight.difficulty >= 121 && (
+            <Box
+              sx={{
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+                px: 1,
+                py: 0.25,
+                borderRadius: '6px',
+                color: fight.difficulty >= 122
+                  ? (isDarkMode ? '#fbbf24' : '#d97706')
+                  : (isDarkMode ? '#60a5fa' : '#2563eb'),
+                background: fight.difficulty >= 122
+                  ? (isDarkMode ? 'rgba(251, 191, 36, 0.1)' : 'rgba(217, 119, 6, 0.08)')
+                  : (isDarkMode ? 'rgba(96, 165, 250, 0.1)' : 'rgba(37, 99, 235, 0.08)'),
+                border: `1px solid ${
+                  fight.difficulty >= 122
+                    ? (isDarkMode ? 'rgba(251, 191, 36, 0.2)' : 'rgba(217, 119, 6, 0.15)')
+                    : (isDarkMode ? 'rgba(96, 165, 250, 0.2)' : 'rgba(37, 99, 235, 0.15)')
+                }`,
+              }}
+            >
+              {fight.difficulty >= 122 ? 'Veteran HM' : 'Veteran'}
+            </Box>
+          )}
+        </Box>
+      )}
+      </Box>
     </React.Fragment>
   );
 };
