@@ -214,34 +214,10 @@ export const ReportFightHeader: React.FC = () => {
   // Ref for immediate title rendering
   const titleRef = React.useRef<HTMLElement>(null);
 
-  // AGGRESSIVE LCP OPTIMIZATION: Paint content before React hydration
   React.useLayoutEffect(() => {
-    if (titleRef.current && fightId) {
-      // Bypass React and directly manipulate DOM for immediate paint
-      const titleElement = titleRef.current;
-
-      // Set immediate static content
-      titleElement.textContent = `Fight ${fightId}`;
-
-      // Force immediate browser paint
-      titleElement.style.transform = 'translateZ(0)'; // Force layer creation
-      titleElement.getBoundingClientRect(); // Force layout
-
-      if (fight) {
-        titleElement.textContent = fight.name;
-      }
-    }
-  }, [fight, isFightLoading, fightId]);
-
-  // Force immediate render on mount
-  React.useLayoutEffect(() => {
-    if (titleRef.current && fightId && !fight) {
-      // Ensure content is visible immediately, even before fight data loads
-      titleRef.current.textContent = `Fight ${fightId}`;
-      titleRef.current.style.visibility = 'visible';
-      titleRef.current.style.opacity = '1';
-    }
-  }, [fightId, fight, isFightLoading]);
+    if (!titleRef.current || !fightId) return;
+    titleRef.current.textContent = fight ? fight.name : `Fight ${fightId}`;
+  }, [fight, fightId]);
 
   // ── Create Roster from fight players ──────────────────────────────────────
   const playersById = useSelector((state: RootState) => selectActivePlayersById(state));

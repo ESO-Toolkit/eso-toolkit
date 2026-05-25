@@ -113,7 +113,6 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
           },
         }}
         aria-label={`Drag to reorder ${meta.label}`}
-        tabIndex={-1}
       >
         <DragIndicatorIcon fontSize="small" />
       </IconButton>
@@ -123,6 +122,7 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
         size="small"
         checked={checked}
         onChange={() => onToggle(chipId)}
+        slotProps={{ input: { 'aria-label': `Toggle ${meta.label}` } }}
         sx={{
           p: 0.25,
           color: isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)',
