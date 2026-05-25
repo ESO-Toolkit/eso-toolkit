@@ -332,22 +332,25 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     }, [distanceTraveled]);
 
     // Memoize tooltip props lookup to avoid repeated function calls
-    const tooltipPropsLookup = React.useMemo(() => {
-      const lookup = new Map<number, ReturnType<typeof buildTooltipProps>>();
-      const clsKey = toClassKey(player.type);
-
-      // Create a lookup map for scribed skills data by talent name
-      const scribedSkillsLookup = new Map<string, ScribedSkillData>();
+    // Lookup map for scribed skills data by talent name — used both by
+    // tooltipPropsLookup and as a direct fallback for the SkillTooltip prop
+    const scribedSkillsLookup = React.useMemo(() => {
+      const lookup = new Map<string, ScribedSkillData>();
       scribingSkills.forEach((grimoire) => {
         grimoire.skills.forEach((skill) => {
-          // Use the actual talent name as the key for mapping
-          scribedSkillsLookup.set(skill.skillName, {
+          lookup.set(skill.skillName, {
             grimoireName: grimoire.grimoireName,
             effects: skill.effects,
-            recipe: skill.recipe, // Include the enhanced recipe information
+            recipe: skill.recipe,
           });
         });
       });
+      return lookup;
+    }, [scribingSkills]);
+
+    const tooltipPropsLookup = React.useMemo(() => {
+      const lookup = new Map<number, ReturnType<typeof buildTooltipProps>>();
+      const clsKey = toClassKey(player.type);
 
       talents.forEach((talent) => {
         const key = talent.guid;
@@ -368,7 +371,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       });
 
       return lookup;
-    }, [talents, player.type, scribingSkills]);
+    }, [talents, player.type, scribedSkillsLookup]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
@@ -1223,6 +1226,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                       }
                                       abilityId={talent.guid}
+                                      scribedSkillData={rich?.scribedSkillData ?? scribedSkillsLookup.get(talent.name)}
                                       fightId={fightId || undefined}
                                       playerId={player.id}
                                     />
