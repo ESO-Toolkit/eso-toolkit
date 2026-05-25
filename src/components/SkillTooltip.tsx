@@ -653,31 +653,54 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       borderLeft: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: 'text.primary',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        display: 'block',
-                      }}
-                    >
-                      {finalScribedData.signatureScript.name}
-                    </Typography>
-                    {finalScribedData.signatureScript.evidence &&
-                      finalScribedData.signatureScript.evidence.length > 0 && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {finalScribedData.signatureScript.name}
+                      </Typography>
+                      {finalScribedData.signatureScript.confidence != null && (
                         <Typography
                           variant="caption"
                           sx={{
                             color: 'text.secondary',
-                            fontSize: '0.64rem',
+                            fontSize: '0.6rem',
                             fontStyle: 'italic',
-                            opacity: 0.75,
+                            opacity: 0.7,
                           }}
                         >
-                          Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
+                          ({Math.round(finalScribedData.signatureScript.confidence * 100)}%)
                         </Typography>
                       )}
+                    </Box>
+                    {(finalScribedData.signatureScript.detectionMethod ||
+                      (finalScribedData.signatureScript.evidence &&
+                        finalScribedData.signatureScript.evidence.length > 0)) && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: '0.64rem',
+                          fontStyle: 'italic',
+                          opacity: 0.75,
+                        }}
+                      >
+                        {[
+                          finalScribedData.signatureScript.detectionMethod &&
+                            `via ${finalScribedData.signatureScript.detectionMethod}`,
+                          finalScribedData.signatureScript.evidence &&
+                            finalScribedData.signatureScript.evidence.length > 0 &&
+                            `Sources: ${finalScribedData.signatureScript.evidence.join(', ')}`,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
               )}
@@ -711,28 +734,57 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                     >
                       {finalScribedData.affixScripts.map(
                         (affixScript: ScribedSkillAffixInfo, index: number) => (
-                          <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'text.primary',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                              }}
-                            >
-                              {affixScript.name}
-                            </Typography>
-                            {affixScript.confidence && affixScript.confidence < 1.0 && (
+                          <Box key={index}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'text.primary',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {affixScript.name}
+                              </Typography>
+                              {affixScript.confidence != null && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: 'text.secondary',
+                                    fontSize: '0.6rem',
+                                    fontStyle: 'italic',
+                                    opacity: 0.7,
+                                  }}
+                                >
+                                  ({Math.round(affixScript.confidence * 100)}%)
+                                </Typography>
+                              )}
+                            </Box>
+                            {(affixScript.detectionMethod ||
+                              (affixScript.evidence?.abilityNames &&
+                                affixScript.evidence.abilityNames.length > 0)) && (
                               <Typography
                                 variant="caption"
                                 sx={{
                                   color: 'text.secondary',
-                                  fontSize: '0.6rem',
+                                  fontSize: '0.64rem',
                                   fontStyle: 'italic',
-                                  opacity: 0.7,
+                                  opacity: 0.75,
+                                  display: 'block',
                                 }}
                               >
-                                ({Math.round(affixScript.confidence * 100)}%)
+                                {[
+                                  affixScript.detectionMethod &&
+                                    `via ${affixScript.detectionMethod}`,
+                                  affixScript.evidence?.abilityNames &&
+                                    affixScript.evidence.abilityNames.length > 0 &&
+                                    `Sources: ${affixScript.evidence.abilityNames.join(', ')}`,
+                                  affixScript.evidence?.occurrenceCount != null &&
+                                    affixScript.evidence.occurrenceCount > 0 &&
+                                    `(${affixScript.evidence.occurrenceCount} occurrences)`,
+                                ]
+                                  .filter(Boolean)
+                                  .join(' · ')}
                               </Typography>
                             )}
                           </Box>
