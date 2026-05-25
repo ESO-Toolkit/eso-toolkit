@@ -13,6 +13,13 @@ inputs:
     description: 'Google Analytics measurement identifier for the build'
     required: false
     default: ''
+  vite_discord_client_id:
+    description: 'Discord OAuth client ID for the build'
+    required: true
+  vite_roster_hub_api_url:
+    description: 'Roster Hub API URL for the build'
+    required: false
+    default: 'https://roster-hub-api.eso-toolkit.workers.dev'
 outputs:
   deployment-url:
     description: 'URL where the site was deployed'
@@ -40,14 +47,16 @@ runs:
         export NODE_ENV=production
         npm run build
       env:
-        VITE_BASE_URL: '${{steps.setup.outputs.base_url}}'
+        VITE_BASE_URL: '${{steps.setup.outputs.base_path}}'
         VITE_GA_MEASUREMENT_ID: ${{ inputs.vite_ga_measurement_id }}
+        VITE_DISCORD_CLIENT_ID: ${{ inputs.vite_discord_client_id }}
+        VITE_ROSTER_HUB_API_URL: ${{ inputs.vite_roster_hub_api_url }}
 
     - name: Build Storybook
       shell: bash
       run: |
         export DISABLE_ESLINT_PLUGIN=true
-        export STORYBOOK_BASE_PATH="${{steps.setup.outputs.base_url}}storybook/"
+        export STORYBOOK_BASE_PATH="${{steps.setup.outputs.base_path}}storybook/"
         npm run build-storybook
 
     - name: Move Storybook to build directory

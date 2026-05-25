@@ -2,7 +2,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Info as InfoIcon,
-  HelpOutline as HelpOutlineIcon,
+  HelpOutlined as HelpOutlineIcon,
   ExpandMore as ExpandMoreIcon,
   SelectAll as SelectAllIcon,
   Clear as ClearIcon,
@@ -44,6 +44,7 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
+import DOMPurify from 'dompurify';
 import { motion } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
@@ -203,6 +204,7 @@ const MODE_FILTER = {
       'Assassination: Hemorrhage',
       'Herald of the Tome: Fated Fortune',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
@@ -440,6 +442,7 @@ const MODE_FILTER = {
       'Assassination: Hemorrhage',
       'Herald of the Tome: Fated Fortune',
       'Aedric Spear: Piercing Spear',
+      'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
       'Dual Wield: Twin Blade and Blunt (Axe)',
@@ -792,153 +795,161 @@ const QuantityInput: React.FC<{
       error={showError}
       disabled={!hasQuantity || item.locked}
       placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
-      inputProps={{
-        min: hasQuantity ? minValue : 0,
-        max: hasQuantity ? maxValue : 0,
-        step: hasQuantity ? item.step || 1 : 1,
-        readOnly: !hasQuantity,
-        style: {
-          fontSize: isMobile ? '18px' : '14px',
-          fontWeight: isMobile ? 500 : 400,
-          textAlign: 'center',
-          padding: isMobile ? '8px 4px' : '4px 2px',
+      slotProps={{
+        htmlInput: {
+          min: hasQuantity ? minValue : 0,
+          max: hasQuantity ? maxValue : 0,
+          step: hasQuantity ? item.step || 1 : 1,
+          readOnly: !hasQuantity,
+          style: {
+            fontSize: isMobile ? '18px' : '14px',
+            fontWeight: isMobile ? 500 : 400,
+            textAlign: 'center',
+            padding: isMobile ? '8px 4px' : '4px 2px',
+          },
         },
-      }}
-      InputProps={{
-        startAdornment: hasQuantity ? (
-          <InputAdornment position="start" sx={{ mr: 0.5, position: 'relative', zIndex: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleDecrement}
-              disabled={isMinDisabled || item.locked}
-              edge="start"
-              sx={{
-                position: 'relative',
-                zIndex: 2,
-                width: isMobile ? '24px' : '20px',
-                height: isMobile ? '24px' : '20px',
-                minWidth: isMobile ? '24px' : '20px',
-                minHeight: isMobile ? '24px' : '20px',
-                borderRadius: '4px',
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 1)'
-                    : 'rgba(241, 245, 249, 0.8)',
-                border: `1px solid ${
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.3)'
-                    : 'rgba(40, 145, 200, 0.2)'
-                }`,
-                color:
-                  isMinDisabled || item.locked
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.4)'
-                      : 'rgba(100, 116, 139, 0.4)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.8)'
-                      : 'rgba(40, 145, 200, 0.8)',
-                '&:hover': !(isMinDisabled || item.locked)
-                  ? {
-                      backgroundColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.2)'
-                          : 'rgba(40, 145, 200, 0.15)',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.5)'
-                          : 'rgba(40, 145, 200, 0.4)',
-                      color:
-                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
-                    }
-                  : {},
-                '&:active': !(isMinDisabled || item.locked)
-                  ? {
-                      transform: 'scale(0.95)',
-                    }
-                  : {},
-                '&.Mui-disabled': {
+        input: {
+          startAdornment: hasQuantity ? (
+            <InputAdornment position="start" sx={{ mr: 0.5, position: 'relative', zIndex: 1 }}>
+              <IconButton
+                size="small"
+                onClick={handleDecrement}
+                disabled={isMinDisabled || item.locked}
+                edge="start"
+                aria-label="Decrease quantity"
+                sx={{
+                  position: 'relative',
+                  zIndex: 2,
+                  width: isMobile ? '24px' : '20px',
+                  height: isMobile ? '24px' : '20px',
+                  minWidth: isMobile ? '24px' : '20px',
+                  minHeight: isMobile ? '24px' : '20px',
+                  borderRadius: '4px',
                   backgroundColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(30, 41, 59, 0.4)'
-                      : 'rgba(241, 245, 249, 0.6)',
-                  borderColor:
+                      ? 'rgba(15, 23, 42, 1)'
+                      : 'rgba(241, 245, 249, 0.8)',
+                  border: `1px solid ${
                     theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.2)'
-                      : 'rgba(148, 163, 184, 0.3)',
-                },
-              }}
-            >
-              <RemoveIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
-            </IconButton>
-          </InputAdornment>
-        ) : undefined,
-        endAdornment: hasQuantity ? (
-          <InputAdornment position="end" sx={{ ml: 0.5, position: 'relative', zIndex: 1 }}>
-            <IconButton
-              size="small"
-              onClick={handleIncrement}
-              disabled={isMaxDisabled || item.locked}
-              edge="end"
-              sx={{
-                position: 'relative',
-                zIndex: 2,
-                width: isMobile ? '24px' : '20px',
-                height: isMobile ? '24px' : '20px',
-                minWidth: isMobile ? '24px' : '20px',
-                minHeight: isMobile ? '24px' : '20px',
-                borderRadius: '4px',
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 1)'
-                    : 'rgba(241, 245, 249, 0.8)',
-                border: `1px solid ${
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.3)'
-                    : 'rgba(40, 145, 200, 0.2)'
-                }`,
-                color:
-                  isMaxDisabled || item.locked
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.4)'
-                      : 'rgba(100, 116, 139, 0.4)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.8)'
-                      : 'rgba(40, 145, 200, 0.8)',
-                '&:hover': !(isMaxDisabled || item.locked)
-                  ? {
-                      backgroundColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.2)'
-                          : 'rgba(40, 145, 200, 0.15)',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.5)'
-                          : 'rgba(40, 145, 200, 0.4)',
-                      color:
-                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
-                    }
-                  : {},
-                '&:active': !(isMaxDisabled || item.locked)
-                  ? {
-                      transform: 'scale(0.95)',
-                    }
-                  : {},
-                '&.Mui-disabled': {
+                      ? 'rgba(56, 189, 248, 0.3)'
+                      : 'rgba(40, 145, 200, 0.2)'
+                  }`,
+                  color:
+                    isMinDisabled || item.locked
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.4)'
+                        : 'rgba(100, 116, 139, 0.4)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.8)'
+                        : 'rgba(40, 145, 200, 0.8)',
+                  '&:hover': !(isMinDisabled || item.locked)
+                    ? {
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.2)'
+                            : 'rgba(40, 145, 200, 0.15)',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.5)'
+                            : 'rgba(40, 145, 200, 0.4)',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgb(199, 234, 255)'
+                            : 'rgb(40, 145, 200)',
+                      }
+                    : {},
+                  '&:active': !(isMinDisabled || item.locked)
+                    ? {
+                        transform: 'scale(0.95)',
+                      }
+                    : {},
+                  '&.Mui-disabled': {
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.4)'
+                        : 'rgba(241, 245, 249, 0.6)',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.2)'
+                        : 'rgba(148, 163, 184, 0.3)',
+                  },
+                }}
+              >
+                <RemoveIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+              </IconButton>
+            </InputAdornment>
+          ) : undefined,
+          endAdornment: hasQuantity ? (
+            <InputAdornment position="end" sx={{ ml: 0.5, position: 'relative', zIndex: 1 }}>
+              <IconButton
+                size="small"
+                onClick={handleIncrement}
+                disabled={isMaxDisabled || item.locked}
+                edge="end"
+                aria-label="Increase quantity"
+                sx={{
+                  position: 'relative',
+                  zIndex: 2,
+                  width: isMobile ? '24px' : '20px',
+                  height: isMobile ? '24px' : '20px',
+                  minWidth: isMobile ? '24px' : '20px',
+                  minHeight: isMobile ? '24px' : '20px',
+                  borderRadius: '4px',
                   backgroundColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(30, 41, 59, 0.4)'
-                      : 'rgba(241, 245, 249, 0.6)',
-                  borderColor:
+                      ? 'rgba(15, 23, 42, 1)'
+                      : 'rgba(241, 245, 249, 0.8)',
+                  border: `1px solid ${
                     theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.2)'
-                      : 'rgba(148, 163, 184, 0.3)',
-                },
-              }}
-            >
-              <AddIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
-            </IconButton>
-          </InputAdornment>
-        ) : undefined,
+                      ? 'rgba(56, 189, 248, 0.3)'
+                      : 'rgba(40, 145, 200, 0.2)'
+                  }`,
+                  color:
+                    isMaxDisabled || item.locked
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.4)'
+                        : 'rgba(100, 116, 139, 0.4)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.8)'
+                        : 'rgba(40, 145, 200, 0.8)',
+                  '&:hover': !(isMaxDisabled || item.locked)
+                    ? {
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.2)'
+                            : 'rgba(40, 145, 200, 0.15)',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.5)'
+                            : 'rgba(40, 145, 200, 0.4)',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgb(199, 234, 255)'
+                            : 'rgb(40, 145, 200)',
+                      }
+                    : {},
+                  '&:active': !(isMaxDisabled || item.locked)
+                    ? {
+                        transform: 'scale(0.95)',
+                      }
+                    : {},
+                  '&.Mui-disabled': {
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.4)'
+                        : 'rgba(241, 245, 249, 0.6)',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.2)'
+                        : 'rgba(148, 163, 184, 0.3)',
+                  },
+                }}
+              >
+                <AddIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+              </IconButton>
+            </InputAdornment>
+          ) : undefined,
+        },
       }}
       sx={{
         width: '95px',
@@ -1032,122 +1043,6 @@ const QuantityInput: React.FC<{
       }}
     />
   );
-};
-
-// Helper function to validate calculator data integrity
-const _validateCalculatorData = (data: CalculatorData): boolean => {
-  let isValid = true;
-  const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
-
-  // Check for duplicate items in each category and track all items
-  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-    const items = data[category];
-    const nameMap = new Map<string, number[]>();
-
-    items.forEach((item, index) => {
-      // Track all items for cross-category validation
-      if (!itemTracker.has(item.name)) {
-        itemTracker.set(item.name, []);
-      }
-      itemTracker.get(item.name)!.push({ category, index, id: (item as CalculatorItemWithId).id });
-
-      // Check within category duplicates
-      if (!nameMap.has(item.name)) {
-        nameMap.set(item.name, []);
-      }
-      nameMap.get(item.name)!.push(index);
-    });
-
-    // Check for duplicates within category
-    for (const [name, indices] of nameMap.entries()) {
-      if (indices.length > 1) {
-        // eslint-disable-next-line no-console
-        console.error(
-          `❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`,
-        );
-        isValid = false;
-      }
-    }
-  }
-
-  // Check for cross-category duplicates (should only exist for specific items like armor passives)
-  for (const [itemName, locations] of itemTracker.entries()) {
-    if (locations.length > 1 && !itemName.includes('Armor Passive')) {
-      // eslint-disable-next-line no-console
-      console.error(
-        `❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
-        locations.map((loc) => `${loc.category}[${loc.index}]`).join(', '),
-      );
-      isValid = false;
-    }
-  }
-
-  // TEMPORARILY DISABLED: Validate armor passive items specifically
-  // This validation is preventing normal operation when duplicates occur
-  // TODO: Fix the root cause of duplication instead of just detecting it
-  /*
-  const lightArmorPassives = data.gear.filter(item => item.name === 'Light Armor Passive');
-  const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
-
-  if (lightArmorPassives.length > 1) {
-    console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
-    isValid = false;
-  }
-
-  if (heavyArmorPassives.length > 1) {
-    console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
-    isValid = false;
-  }
-  */
-
-  // Validate gear category structure
-  const expectedGearItems = [
-    'Light Helm',
-    'Light Chest',
-    'Light Shoulders',
-    'Light Gloves',
-    'Light Boots',
-    'Light Belt',
-    'Medium Helm',
-    'Medium Chest',
-    'Medium Shoulders',
-    'Medium Gloves',
-    'Medium Boots',
-    'Medium Belt',
-    'Heavy Helm',
-    'Heavy Chest',
-    'Heavy Shoulders',
-    'Heavy Gloves',
-    'Heavy Boots',
-    'Heavy Belt',
-  ];
-
-  expectedGearItems.forEach((expectedName, expectedIndex) => {
-    const actualItem = data.gear[expectedIndex];
-    if (!actualItem || actualItem.name !== expectedName) {
-      // eslint-disable-next-line no-console
-      console.error(
-        `❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`,
-        actualItem?.name || 'undefined',
-      );
-      isValid = false;
-    }
-  });
-
-  // Check for missing or invalid resistance values
-  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-    data[category].forEach((item, index) => {
-      if (!item.resistanceValue || item.resistanceValue === '-') {
-        // eslint-disable-next-line no-console
-        console.error(
-          `❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`,
-        );
-        isValid = false;
-      }
-    });
-  }
-
-  return isValid;
 };
 
 // Mode type
@@ -1618,7 +1513,7 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
               },
             },
           }}
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }}
         />
       </CardContent>
     </Card>
@@ -1731,56 +1626,7 @@ const CalculatorComponent: React.FC = () => {
         }
       }
 
-      // TEMPORARILY DISABLED: Validate armor passive items specifically
-      // This validation is preventing normal operation when duplicates occur
-      // TODO: Fix the root cause of duplication instead of just detecting it
-      /*
-    const lightArmorPassives = data.gear.filter(item => item.name === 'Light Armor Passive');
-    const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
-
-    if (lightArmorPassives.length > 1) {
-    console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
-      isValid = false;
-    }
-
-    if (heavyArmorPassives.length > 1) {
-    console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
-      isValid = false;
-    }
-    */
-
-      // TEMPORARILY DISABLED: Validate gear category structure
-      // The actual gear array structure doesn't match the expected order
-      // TODO: Revisit this validation when data structure is stabilized
-      /*
-    const expectedGearItems = [
-      'Light Helm', 'Light Chest', 'Light Shoulders', 'Light Gloves', 'Light Boots', 'Light Belt',
-      'Medium Helm', 'Medium Chest', 'Medium Shoulders', 'Medium Gloves', 'Medium Boots', 'Medium Belt',
-      'Heavy Helm', 'Heavy Chest', 'Heavy Shoulders', 'Heavy Gloves', 'Heavy Boots', 'Heavy Belt'
-    ];
-
-    expectedGearItems.forEach((expectedName, expectedIndex) => {
-      const actualItem = data.gear[expectedIndex];
-      if (!actualItem || actualItem.name !== expectedName) {
-    console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
-        isValid = false;
-      }
-    });
-    */
-
-      // TEMPORARILY DISABLED: Check for missing or invalid resistance values
-      // This is preventing armor items from being clicked/enabled
-      // TODO: Fix resistance calculation logic
-      /*
-    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-      data[category].forEach((item, index) => {
-        if (!item.resistanceValue || item.resistanceValue === "-") {
-    console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
-          isValid = false;
-        }
-      });
-    }
-    */
+      // Armor passive, gear structure, and resistance validators omitted (data model not stable enough)
 
       return isValid;
     },
@@ -3102,7 +2948,7 @@ const CalculatorComponent: React.FC = () => {
             size="small"
             disableElevation
             disableRipple
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation();
               if (isMobile) {
                 // Get the latest item data to ensure we have the current selectedVariant
@@ -3198,7 +3044,7 @@ const CalculatorComponent: React.FC = () => {
                   color={theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145  200)'}
                 />
               ) : (
-                <Typography component="span" fontWeight={600} fontSize="0.7rem">
+                <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.7rem' }}>
                   {currentVariant.name}
                 </Typography>
               )}
@@ -3246,15 +3092,15 @@ const CalculatorComponent: React.FC = () => {
                 max={ARMOR_QUALITY_LABELS.length}
                 precision={1}
                 size="small"
-                onChange={(event, newValue) => {
+                onChange={(event: React.SyntheticEvent, newValue: number | null) => {
                   event.stopPropagation();
                   if (typeof newValue === 'number') {
                     updateArmorResistanceQuality(resolvedIndex, newValue - 1);
                   }
                 }}
-                onClick={(event) => event.stopPropagation()}
-                onMouseDown={(event) => event.stopPropagation()}
-                onTouchStart={(event) => event.stopPropagation()}
+                onClick={(event: React.MouseEvent<HTMLSpanElement>) => event.stopPropagation()}
+                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>) => event.stopPropagation()}
+                onTouchStart={(event: React.TouchEvent<HTMLSpanElement>) => event.stopPropagation()}
                 getLabelText={(value: number) =>
                   `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
                 }
@@ -3432,6 +3278,7 @@ const CalculatorComponent: React.FC = () => {
                     >
                       <IconButton
                         size="small"
+                        aria-label="Item info"
                         sx={{
                           p: 0.125,
                           minWidth: 'auto',
@@ -3440,7 +3287,7 @@ const CalculatorComponent: React.FC = () => {
                             color: 'primary.main',
                           },
                         }}
-                        onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
+                        onClick={(e: React.MouseEvent<HTMLButtonElement>) => e.stopPropagation()} // Prevent ListItem click from also triggering
                       >
                         <InfoIcon sx={{ fontSize: liteMode ? 14 : isMobile ? 14 : 16 }} />
                       </IconButton>
@@ -3516,16 +3363,14 @@ const CalculatorComponent: React.FC = () => {
     return (
       <Accordion
         defaultExpanded
+        disableGutters
         sx={{
-          mb: 3,
-          '&:last-child': {
+          mb: 2,
+          '&.Mui-expanded': {
             mb: 2,
           },
-          '&.Mui-expanded': {
-            mb: 4,
-            '&:last-child': {
-              mb: 3,
-            },
+          '&:before': {
+            display: 'none',
           },
         }}
       >
@@ -4022,9 +3867,8 @@ const CalculatorComponent: React.FC = () => {
 
             <Stack
               spacing={{ xs: 1.1, sm: 1 }}
-              alignItems={{ xs: 'flex-end', sm: 'flex-end' }}
-              justifyContent={{ xs: 'flex-end', sm: 'flex-end' }}
               sx={{
+                alignItems: { xs: 'flex-end', sm: 'flex-end' },
                 gridArea: 'status',
                 minWidth: { sm: 220 },
                 borderLeft: {
@@ -4036,7 +3880,6 @@ const CalculatorComponent: React.FC = () => {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                gap: { xs: 1, sm: 1 },
                 alignSelf: { xs: 'stretch', sm: 'center' },
               }}
             >
@@ -4587,15 +4430,15 @@ const CalculatorComponent: React.FC = () => {
                       onClick={() => setGameMode('pve')}
                       startIcon={
                         <Typography
-                          fontSize={
-                            isExtraSmall
+                          sx={{
+                            fontSize: isExtraSmall
                               ? '0.75rem'
                               : liteMode
                                 ? '0.8rem'
                                 : isMobile
                                   ? '0.9rem'
-                                  : '1rem'
-                          }
+                                  : '1rem',
+                          }}
                         >
                           🗡️
                         </Typography>
@@ -4627,15 +4470,15 @@ const CalculatorComponent: React.FC = () => {
                       onClick={() => setGameMode('pvp')}
                       startIcon={
                         <Typography
-                          fontSize={
-                            isExtraSmall
+                          sx={{
+                            fontSize: isExtraSmall
                               ? '0.75rem'
                               : liteMode
                                 ? '0.8rem'
                                 : isMobile
                                   ? '0.9rem'
-                                  : '1rem'
-                          }
+                                  : '1rem',
+                          }}
                         >
                           🛡️
                         </Typography>
@@ -4924,7 +4767,7 @@ const CalculatorComponent: React.FC = () => {
                             disableElevation
                             fullWidth={isMobile}
                             aria-label="Penetration bulk actions"
-                            sx={(muiTheme) => ({
+                            sx={(muiTheme: Theme) => ({
                               alignSelf: { xs: 'stretch', sm: 'flex-end' },
                               flexWrap: { xs: 'wrap', sm: 'nowrap' },
                               borderRadius: '10px',
@@ -4984,7 +4827,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllPen(true)}
                                   disabled={penAllSelected || penSelectableItems.length === 0}
                                   aria-label="Select All penetration buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.primary.light
@@ -5034,7 +4877,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllPen(false)}
                                   disabled={penNoneSelected || penSelectableItems.length === 0}
                                   aria-label="Clear all penetration buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.error.light
@@ -5078,7 +4921,7 @@ const CalculatorComponent: React.FC = () => {
                             disableElevation
                             fullWidth={isMobile}
                             aria-label="Critical bulk actions"
-                            sx={(muiTheme) => ({
+                            sx={(muiTheme: Theme) => ({
                               alignSelf: { xs: 'stretch', sm: 'flex-end' },
                               flexWrap: { xs: 'wrap', sm: 'nowrap' },
                               borderRadius: '10px',
@@ -5138,7 +4981,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllCrit(true)}
                                   disabled={critAllSelected || critSelectableItems.length === 0}
                                   aria-label="Select All critical buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.primary.light
@@ -5188,7 +5031,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllCrit(false)}
                                   disabled={critNoneSelected || critSelectableItems.length === 0}
                                   aria-label="Clear all critical buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.error.light
@@ -5232,7 +5075,7 @@ const CalculatorComponent: React.FC = () => {
                             disableElevation
                             fullWidth={isMobile}
                             aria-label="Armor resistance bulk actions"
-                            sx={(muiTheme) => ({
+                            sx={(muiTheme: Theme) => ({
                               alignSelf: { xs: 'stretch', sm: 'flex-end' },
                               flexWrap: { xs: 'wrap', sm: 'nowrap' },
                               borderRadius: '10px',
@@ -5298,7 +5141,7 @@ const CalculatorComponent: React.FC = () => {
                                     armorResistanceSelectableItems.length === 0
                                   }
                                   aria-label="Select All armor resistance buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.primary.light
@@ -5348,7 +5191,7 @@ const CalculatorComponent: React.FC = () => {
                                   onClick={() => toggleAllArmorResistance(false)}
                                   disabled={!armorResistanceAnySelected}
                                   aria-label="Clear all armor resistance buffs"
-                                  sx={(muiTheme) => ({
+                                  sx={(muiTheme: Theme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
                                         ? muiTheme.palette.error.light
@@ -6062,24 +5905,26 @@ const CalculatorComponent: React.FC = () => {
               }}
               fullWidth
               maxWidth="xs"
-              PaperProps={{
-                sx: {
-                  borderRadius: '12px',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: `1px solid ${
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.3)'
-                      : 'rgba(40, 145, 200, 0.2)'
-                  }`,
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-                      : '0 8px 32px rgba(0, 0, 0, 0.1)',
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: '12px',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: `1px solid ${
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.3)'
+                        : 'rgba(40, 145, 200, 0.2)'
+                    }`,
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                        : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                  },
                 },
               }}
             >
@@ -6205,15 +6050,24 @@ const CalculatorComponent: React.FC = () => {
                                 max={ARMOR_QUALITY_LABELS.length}
                                 precision={1}
                                 size="large"
-                                onChange={(event, newValue) => {
+                                onChange={(
+                                  event: React.SyntheticEvent,
+                                  newValue: number | null,
+                                ) => {
                                   event.stopPropagation();
                                   if (typeof newValue === 'number') {
                                     setTempQualityLevel(newValue - 1);
                                   }
                                 }}
-                                onClick={(event) => event.stopPropagation()}
-                                onMouseDown={(event) => event.stopPropagation()}
-                                onTouchStart={(event) => event.stopPropagation()}
+                                onClick={(event: React.MouseEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
+                                onMouseDown={(event: React.MouseEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
+                                onTouchStart={(event: React.TouchEvent<HTMLSpanElement>) =>
+                                  event.stopPropagation()
+                                }
                                 getLabelText={(value: number) =>
                                   `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
                                 }

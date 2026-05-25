@@ -1,12 +1,21 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+export type PerfTier = 'low' | 'medium' | 'high';
+export type PerfTierOverride = 'auto' | PerfTier;
+export type ChartIntensity = 'subtle' | 'bold';
+
 export interface UIState {
   darkMode: boolean;
   selectedPlayerId: number | null;
   selectedTabId: number | null;
   selectedTargetIds: number[]; // Changed from single ID to array of IDs
+  selectedFriendlyPlayerId: number | null | undefined; // Selected friendly player for uptime filtering
   showExperimentalTabs: boolean;
   sidebarOpen: boolean;
+  myReportsPage: number; // Persisted page number for my-reports
+  perfTier: PerfTier;
+  perfTierOverride: PerfTierOverride;
+  chartIntensity: ChartIntensity;
 }
 
 const initialState: UIState = {
@@ -14,8 +23,16 @@ const initialState: UIState = {
   selectedPlayerId: null,
   selectedTabId: null,
   selectedTargetIds: [], // Initialize as empty array
+  selectedFriendlyPlayerId: null, // Default to no filtering (show all players)
   showExperimentalTabs: false,
   sidebarOpen: false,
+  myReportsPage: 1, // Default to page 1
+  // Conservative default until detection resolves — avoids a flash of
+  // expensive blur layers on first paint for returning visitors with an
+  // empty persisted store.
+  perfTier: 'medium',
+  perfTierOverride: 'auto',
+  chartIntensity: 'subtle',
 };
 
 const uiSlice = createSlice({
@@ -39,19 +56,14 @@ const uiSlice = createSlice({
     setSelectedPlayerId: (state, action: PayloadAction<number | null>) => {
       state.selectedPlayerId = action.payload;
     },
+    setSelectedFriendlyPlayerId: (state, action: PayloadAction<number | null | undefined>) => {
+      state.selectedFriendlyPlayerId = action.payload;
+    },
     setSelectedTabId: (state, action: PayloadAction<number | null>) => {
       state.selectedTabId = action.payload;
     },
     setSelectedTargetIds: (state, action: PayloadAction<number[]>) => {
       state.selectedTargetIds = action.payload;
-    },
-    // Compatibility action for components that set a single target ID
-    setSelectedTargetId: (state, action: PayloadAction<number | null>) => {
-      if (action.payload === null) {
-        state.selectedTargetIds = [];
-      } else {
-        state.selectedTargetIds = [action.payload];
-      }
     },
     setShowExperimentalTabs: (state, action: PayloadAction<boolean>) => {
       state.showExperimentalTabs = action.payload;
@@ -62,6 +74,18 @@ const uiSlice = createSlice({
     toggleSidebar: (state) => {
       state.sidebarOpen = !state.sidebarOpen;
     },
+    setMyReportsPage: (state, action: PayloadAction<number>) => {
+      state.myReportsPage = action.payload;
+    },
+    setPerfTier: (state, action: PayloadAction<PerfTier>) => {
+      state.perfTier = action.payload;
+    },
+    setPerfTierOverride: (state, action: PayloadAction<PerfTierOverride>) => {
+      state.perfTierOverride = action.payload;
+    },
+    setChartIntensity: (state, action: PayloadAction<ChartIntensity>) => {
+      state.chartIntensity = action.payload;
+    },
   },
 });
 
@@ -70,10 +94,15 @@ export const {
   toggleDarkMode,
   syncWithSystemTheme,
   setSelectedPlayerId,
+  setSelectedFriendlyPlayerId,
   setSelectedTabId,
   setSelectedTargetIds,
   setShowExperimentalTabs,
   setSidebarOpen,
   toggleSidebar,
+  setMyReportsPage,
+  setPerfTier,
+  setPerfTierOverride,
+  setChartIntensity,
 } = uiSlice.actions;
 export default uiSlice.reducer;

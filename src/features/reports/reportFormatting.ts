@@ -1,6 +1,8 @@
 import type { ChipProps } from '@mui/material';
 import { format } from 'date-fns';
 
+import type { UserReportSummaryFragment } from '../../graphql/gql/graphql';
+
 export const formatReportDateTime = (timestamp: number): string => {
   return format(new Date(timestamp), 'MMM dd, yyyy HH:mm');
 };
@@ -29,4 +31,10 @@ export const getReportVisibilityColor = (visibility: string): ChipProps['color']
     default:
       return 'default';
   }
+};
+
+export const isReportEmpty = (report: UserReportSummaryFragment): boolean => {
+  if (report.segments === 0) return true;
+  if (report.startTime === report.endTime) return true;
+  return false;
 };

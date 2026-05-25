@@ -1,8 +1,18 @@
 /**
  * Marker shape geometries based on M0RMarkers texture types
  */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
+
+// THREE.Shape is missing from @types/three 0.183.x (packaging bug — the class exists at runtime).
+// This local interface provides the minimum surface needed by the shape factory functions below.
+/* eslint-disable no-redeclare, @typescript-eslint/no-explicit-any */
+interface ThreeShape {
+  moveTo(x: number, y: number): void;
+  lineTo(x: number, y: number): void;
+}
+const ThreeShape = (THREE as any).Shape as new () => ThreeShape;
+/* eslint-enable no-redeclare, @typescript-eslint/no-explicit-any */
 
 interface MarkerShapeProps {
   /** Texture path from M0RMarkers (e.g., "M0RMarkers/textures/circle.dds") */
@@ -33,48 +43,40 @@ function getShapeFromTexture(texturePath: string): string {
 /**
  * Creates a hexagon shape
  */
-function createHexagonShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createHexagonShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   const sides = 6;
   const angleStep = (Math.PI * 2) / sides;
 
-  // Start at the top point
   shape.moveTo(0, radius);
-
-  // Draw the hexagon
   for (let i = 1; i <= sides; i++) {
-    const angle = angleStep * i - Math.PI / 2; // Offset to start at top
+    const angle = angleStep * i - Math.PI / 2;
     shape.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
   }
-
   return shape;
 }
 
 /**
  * Creates an octagon shape
  */
-function createOctagonShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createOctagonShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   const sides = 8;
   const angleStep = (Math.PI * 2) / sides;
 
-  // Start at the top point
   shape.moveTo(0, radius);
-
-  // Draw the octagon
   for (let i = 1; i <= sides; i++) {
-    const angle = angleStep * i - Math.PI / 2; // Offset to start at top
+    const angle = angleStep * i - Math.PI / 2;
     shape.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
   }
-
   return shape;
 }
 
 /**
  * Creates a diamond (45-degree rotated square) shape
  */
-function createDiamondShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createDiamondShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   // const _halfSize = radius * 0.707; // Adjust for diagonal (unused, kept for reference)
 
   // Diamond points (top, right, bottom, left)
@@ -83,32 +85,29 @@ function createDiamondShape(radius: number): THREE.Shape {
   shape.lineTo(0, -radius);
   shape.lineTo(-radius, 0);
   shape.lineTo(0, radius);
-
   return shape;
 }
 
 /**
  * Creates a square shape
  */
-function createSquareShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createSquareShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   const halfSize = radius * 0.85; // Slightly smaller to match visual size
 
-  // Square corners
   shape.moveTo(-halfSize, halfSize);
   shape.lineTo(halfSize, halfSize);
   shape.lineTo(halfSize, -halfSize);
   shape.lineTo(-halfSize, -halfSize);
   shape.lineTo(-halfSize, halfSize);
-
   return shape;
 }
 
 /**
  * Creates a chevron (arrow/V shape) pointing up
  */
-function createChevronShape(radius: number): THREE.Shape {
-  const shape = new THREE.Shape();
+function createChevronShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
   // const _thickness = radius * 0.25; // Thickness of the chevron arms (unused, kept for reference)
 
   // Outer V shape
@@ -131,30 +130,38 @@ export const MarkerShape: React.FC<MarkerShapeProps> = ({ texturePath, size, col
   const shapeType = getShapeFromTexture(texturePath);
 
   const geometry = useMemo(() => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     switch (shapeType) {
       case 'hexagon':
-        return new THREE.ShapeGeometry(createHexagonShape(radius));
+        return new THREE.ShapeGeometry(createHexagonShape(radius) as any);
 
       case 'octagon':
-        return new THREE.ShapeGeometry(createOctagonShape(radius));
+        return new THREE.ShapeGeometry(createOctagonShape(radius) as any);
 
       case 'diamond':
-        return new THREE.ShapeGeometry(createDiamondShape(radius));
+        return new THREE.ShapeGeometry(createDiamondShape(radius) as any);
 
       case 'square':
-        return new THREE.ShapeGeometry(createSquareShape(radius));
+        return new THREE.ShapeGeometry(createSquareShape(radius) as any);
 
       case 'chevron':
-        return new THREE.ShapeGeometry(createChevronShape(radius));
+        return new THREE.ShapeGeometry(createChevronShape(radius) as any);
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
       case 'circle':
-      case 'blank': // Blank uses circle as base (text will show on top)
-      case 'sharkpog': // For now, render as circle (could add custom SVG later)
+      case 'blank':
+      case 'sharkpog':
       default:
-        // Use circle geometry for circle, blank, and any unknown types
         return new THREE.CircleGeometry(radius, 32);
     }
   }, [shapeType, radius]);
+
+  // Dispose geometry on unmount or when shape/radius changes
+  useEffect(() => {
+    return () => {
+      geometry.dispose();
+    };
+  }, [geometry]);
 
   return (
     <mesh geometry={geometry}>

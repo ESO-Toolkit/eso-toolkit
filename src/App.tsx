@@ -1,25 +1,33 @@
-import { Box } from '@mui/material';
-import React, { Suspense } from 'react';
+import { SnackbarProvider } from 'notistack';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnalyticsListener } from './components/AnalyticsListener';
-import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
+import { BuildEditorSkeleton } from './components/BuildEditorSkeleton';
+import { CookieConsent } from './components/CookieConsent';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HashRouteRedirect } from './components/HashRouteRedirect';
 import { HeaderBar } from './components/HeaderBar';
+import { KalpaBanner } from './components/KalpaBanner';
 import { LandingPage } from './components/LandingPage';
+import { PerfTierProvider } from './components/PerfTierProvider';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { RosterBuilderSkeleton } from './components/RosterBuilderSkeleton';
+import { RosterHubSkeleton } from './components/RosterHubSkeleton';
 import { ScrollRestoration } from './components/ScrollRestoration';
+import { SiteBackground } from './components/shared';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
+import { DiscordOAuthRedirect } from './DiscordOAuthRedirect';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
 import { BanRedirect } from './features/auth/BanRedirect';
+import { DiscordAuthProvider } from './features/auth/DiscordAuthContext';
 import { Login } from './features/auth/Login';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
@@ -30,10 +38,10 @@ import { NotFound } from './pages/NotFound';
 import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeAnalytics } from './utils/analytics';
-import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
-
-// Initialize Sentry before the app starts
-initializeSentry();
+import { getBaseUrl } from './utils/envUtils';
+import { initializeErrorTracking, addBreadcrumb } from './utils/errorTracking';
+// Initialize error tracking before the app starts
+initializeErrorTracking();
 
 // Initialize Google Analytics
 initializeAnalytics();
@@ -62,6 +70,9 @@ const LatestReports = React.lazy(() =>
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
+const AppAuth = React.lazy(() =>
+  import('./AppAuth').then((module) => ({ default: module.AppAuth })),
+);
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
@@ -89,42 +100,181 @@ const ParseAnalysisPage = React.lazy(() =>
     default: module.ParseAnalysisPage,
   })),
 );
+const PrivacyPolicyPage = React.lazy(() =>
+  import('./pages/PrivacyPolicyPage').then((module) => ({
+    default: module.PrivacyPolicyPage,
+  })),
+);
+const PrivacySettingsPage = React.lazy(() =>
+  import('./pages/PrivacySettingsPage').then((module) => ({
+    default: module.PrivacySettingsPage,
+  })),
+);
 const CalculationKnowledgeBasePage = React.lazy(() =>
   import('./pages/CalculationKnowledgeBasePage').then((module) => ({
     default: module.CalculationKnowledgeBasePage,
   })),
 );
+const FoodSelectorKnowledgeBasePage = React.lazy(() =>
+  import('./pages/FoodSelectorKnowledgeBasePage').then((module) => ({
+    default: module.FoodSelectorKnowledgeBasePage,
+  })),
+);
 const WhoAmIPage = React.lazy(() =>
   import('./pages/WhoAmIPage').then((module) => ({ default: module.WhoAmIPage })),
+);
+const LoadoutManager = React.lazy(() =>
+  import('./features/loadout-manager').then((module) => ({ default: module.LoadoutManager })),
 );
 const SampleReportPage = React.lazy(() =>
   import('./pages/SampleReportPage').then((module) => ({ default: module.SampleReportPage })),
 );
-
-// Lazy load the feedback FAB to improve initial page load performance
-const LazyModernFeedbackFab = React.lazy(() =>
-  import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
+const RosterBuilderPage = React.lazy(() =>
+  import('./pages/RosterBuilderPage').then((module) => ({ default: module.RosterBuilderPage })),
+);
+const RosterViewPage = React.lazy(() =>
+  import('./pages/RosterViewPage').then((module) => ({ default: module.RosterViewPage })),
+);
+const AboutPage = React.lazy(() =>
+  import('./pages/AboutPage').then((module) => ({ default: module.AboutPage })),
 );
 
-// Loading fallback component - use custom spinner to prevent theme flashing
-const LoadingFallback: React.FC = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-    <MemoizedLoadingSpinner size={40} />
-  </Box>
+const DiscordServerConfigPage = React.lazy(() =>
+  import('./pages/DiscordServerConfigPage').then((module) => ({
+    default: module.DiscordServerConfigPage,
+  })),
 );
+
+const DiscordSetupPage = React.lazy(() =>
+  import('./pages/DiscordSetupPage').then((module) => ({
+    default: module.DiscordSetupPage,
+  })),
+);
+
+const MyRostersPage = React.lazy(() =>
+  import('./pages/MyRostersPage').then((module) => ({ default: module.MyRostersPage })),
+);
+
+const ReportSummaryPage = React.lazy(() =>
+  import('./features/report_summary/ReportSummaryPage').then((module) => ({
+    default: module.ReportSummaryPage,
+  })),
+);
+
+const RaidDashboardPage = React.lazy(() =>
+  import('./pages/RaidDashboardPage').then((module) => ({ default: module.RaidDashboardPage })),
+);
+
+const WhatsNewPage = React.lazy(() =>
+  import('./pages/WhatsNewPage').then((module) => ({ default: module.WhatsNewPage })),
+);
+
+const GearSetsPage = React.lazy(() =>
+  import('./pages/GearSetsPage').then((module) => ({ default: module.GearSetsPage })),
+);
+
+const RosterHubPage = React.lazy(() =>
+  import('./features/roster-hub/components/RosterHubPage').then((module) => ({
+    default: module.RosterHubPage,
+  })),
+);
+
+const BuildEditorPage = React.lazy(() =>
+  import('./pages/BuildEditorPage').then((module) => ({ default: module.BuildEditorPage })),
+);
+
+const BuildViewPage = React.lazy(() =>
+  import('./pages/BuildViewPage').then((module) => ({ default: module.BuildViewPage })),
+);
+
+const MyBuildsPage = React.lazy(() =>
+  import('./pages/MyBuildsPage').then((module) => ({ default: module.MyBuildsPage })),
+);
+
+const TempBuildViewPage = React.lazy(() =>
+  import('./pages/TempBuildViewPage').then((module) => ({ default: module.TempBuildViewPage })),
+);
+
+const BuildHubPage = React.lazy(() =>
+  import('./features/build-hub/components/BuildHubPage').then((module) => ({
+    default: module.BuildHubPage,
+  })),
+);
+
+const PackHubPage = React.lazy(() =>
+  import('./features/pack-hub/components/PackHubPage').then((module) => ({
+    default: module.PackHubPage,
+  })),
+);
+
+const PublicProfilePage = React.lazy(() =>
+  import('./pages/PublicProfilePage').then((module) => ({ default: module.PublicProfilePage })),
+);
+
+// Null fallback for lazy-loaded routes — view transitions provide visual
+// feedback during navigation, so a skeleton loader is unnecessary and jarring.
+const LoadingFallback: React.FC = () => null;
+
+// Delays rendering of skeleton fallbacks so fast page loads never flash them.
+// If the real content arrives within the delay window, the user sees nothing.
+const DelayedFallback: React.FC<{ delay?: number; children: React.ReactNode }> = ({
+  delay = 200,
+  children,
+}) => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(id);
+  }, [delay]);
+  return show ? <>{children}</> : null;
+};
 
 // Text Editor specific loading fallback
-const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
+const TextEditorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <TextEditorSkeleton />
+  </DelayedFallback>
+);
 
 // Report fights specific loading fallback
-const ReportFightsLoadingFallback: React.FC = () => <ReportFightsSkeleton />;
+const ReportFightsLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <ReportFightsSkeleton />
+  </DelayedFallback>
+);
 
 // Calculator specific loading fallback
-const CalculatorLoadingFallback: React.FC = () => <SmartCalculatorSkeleton />;
+const CalculatorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <SmartCalculatorSkeleton />
+  </DelayedFallback>
+);
+
+// Roster Builder specific loading fallback
+const RosterBuilderLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <RosterBuilderSkeleton />
+  </DelayedFallback>
+);
+
+// Roster Hub specific loading fallback
+const RosterHubLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <RosterHubSkeleton />
+  </DelayedFallback>
+);
+
+// Build Editor specific loading fallback
+const BuildEditorLoadingFallback: React.FC = () => (
+  <DelayedFallback>
+    <BuildEditorSkeleton />
+  </DelayedFallback>
+);
 
 const MainApp: React.FC = () => {
   return (
     <ReduxThemeProvider>
+      <KalpaBanner />
       <HeaderBar />
       <LandingPage />
     </ReduxThemeProvider>
@@ -141,34 +291,70 @@ const App: React.FC = () => {
     });
   }, []);
 
-  // Check if we're on the landing page to conditionally load components
-  const isLandingPage = window.location.pathname === '/' || window.location.pathname === '';
+  // Listen for consent changes and reinitialize services
+  React.useEffect(() => {
+    const handleConsentChanged = (): void => {
+      // Re-evaluate consent and reinitialize services accordingly
+      initializeAnalytics();
+      initializeErrorTracking();
+    };
+
+    // Listen for custom consent-changed event from CookieConsent component
+    window.addEventListener('consent-changed', handleConsentChanged);
+
+    // Also listen for cross-tab storage changes (legacy support)
+    const handleStorageChange = (e: StorageEvent): void => {
+      if (e.key === 'eso-log-aggregator-cookie-consent') {
+        handleConsentChanged();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('consent-changed', handleConsentChanged);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  const loggerConfig = React.useMemo(
+    () => ({
+      level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR,
+      enableConsole: true,
+      enableStorage: true,
+      maxStorageEntries: 1000,
+      contextPrefix: 'ESO-Logger',
+    }),
+    [],
+  );
 
   return (
-    <LoggerProvider
-      config={{
-        level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR, // DEBUG in dev, WARN in prod
-        enableConsole: true,
-        enableStorage: true,
-        maxStorageEntries: 1000,
-        contextPrefix: 'ESO-Logger',
-      }}
-    >
+    <LoggerProvider config={loggerConfig}>
       <ReduxProvider store={store}>
         <PersistGate loading={<LoadingFallback />} persistor={persistor}>
-          <EsoLogsClientProvider>
-            <AuthProvider>
-              <AppRoutes />
-              {/* Add floating bug report button - lazy loaded for non-landing pages */}
-              {!isLandingPage && (
-                <Suspense fallback={null}>
-                  <LazyModernFeedbackFab />
-                </Suspense>
-              )}
-              {/* Update notification for new versions */}
-              <UpdateNotification />
-            </AuthProvider>
-          </EsoLogsClientProvider>
+          <PerfTierProvider>
+            <ReduxThemeProvider>
+              <EsoLogsClientProvider>
+                <AuthProvider>
+                  <DiscordAuthProvider>
+                    <SnackbarProvider
+                      maxSnack={3}
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                      autoHideDuration={4000}
+                      preventDuplicate
+                    >
+                      {/* Global cosmic/nebula background — suppressed in embed/iframe mode */}
+                      {!window.location.search.includes('embed=1') && <SiteBackground />}
+                      <AppRoutes />
+                      {/* Update notification for new versions */}
+                      {!window.location.search.includes('embed=1') && <UpdateNotification />}
+                      {/* Cookie consent banner — suppressed in embed/iframe mode to prevent double-banner */}
+                      {!window.location.search.includes('embed=1') && <CookieConsent />}
+                    </SnackbarProvider>
+                  </DiscordAuthProvider>
+                </AuthProvider>
+              </EsoLogsClientProvider>
+            </ReduxThemeProvider>
+          </PerfTierProvider>
         </PersistGate>
       </ReduxProvider>
     </LoggerProvider>
@@ -188,8 +374,23 @@ const AppRoutes: React.FC = () => {
     });
   }, []);
 
+  // Derive basename from Vite's base config so the app works when deployed to a
+  // subdirectory (e.g. /dev-previews/pr-790/). Strip trailing slash because
+  // BrowserRouter expects no trailing slash in basename.
+  // Uses getBaseUrl() from envUtils which is properly mocked in tests.
+  const baseUrl = getBaseUrl();
+  const basename = React.useMemo(() => {
+    try {
+      // getBaseUrl() may return a full URL or just a path
+      const url = new URL(baseUrl, window.location.origin);
+      return url.pathname.replace(/\/+$/, '') || '/';
+    } catch {
+      return '/';
+    }
+  }, [baseUrl]);
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <HashRouteRedirect />
       <AnalyticsListener />
       <ScrollRestoration />
@@ -202,6 +403,24 @@ const AppRoutes: React.FC = () => {
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
                   <OAuthRedirect />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/discord-oauth-redirect"
+            element={
+              <ErrorBoundary>
+                <DiscordOAuthRedirect />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/app-auth"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <AppAuth />
                 </Suspense>
               </ErrorBoundary>
             }
@@ -235,63 +454,73 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/report/:reportId/fight/:fightId/:tabId"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <ReportFightDetails />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ReportFightDetails />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/report/:reportId/fight/:fightId"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <ReportFightDetails />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ReportFightDetails />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/report/:reportId/fight/:fightId/replay"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <FightReplay />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <FightReplay />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/report/:reportId/live"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LiveLog>
-                        <ReportFightDetails />
-                      </LiveLog>
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LiveLog>
+                      <ReportFightDetails />
+                    </LiveLog>
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/report/:reportId/summary"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ReportSummaryPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/report/:reportId/dashboard"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RaidDashboardPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/report/:reportId"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<ReportFightsLoadingFallback />}>
-                      <ReportFights />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<ReportFightsLoadingFallback />}>
+                    <ReportFights />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
@@ -347,13 +576,11 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/latest-reports"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LatestReports />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LatestReports />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
@@ -391,13 +618,41 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/parse-analysis/:reportId?/:fightId?"
               element={
-                <AuthenticatedRoute>
-                  <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <ParseAnalysisPage />
-                    </Suspense>
-                  </ErrorBoundary>
-                </AuthenticatedRoute>
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ParseAnalysisPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/loadout-manager"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LoadoutManager />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/build-editor"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<BuildEditorLoadingFallback />}>
+                    <BuildEditorPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/docs/loadout/food-selector"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <FoodSelectorKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
@@ -406,6 +661,180 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <CalculationKnowledgeBasePage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/roster-builder"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<RosterBuilderLoadingFallback />}>
+                    <RosterBuilderPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/roster-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<RosterHubLoadingFallback />}>
+                    <RosterHubPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/my-rosters"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <MyRostersPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Read-only roster share view — accessible via direct link only */}
+            <Route
+              path="/rv"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <RosterViewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Read-only build share view — accessible via direct link only */}
+            <Route
+              path="/bv"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildViewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Temporary build short link — resolves slug and redirects to /bv */}
+            <Route
+              path="/b/:slug"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <TempBuildViewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/my-builds"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <MyBuildsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/build-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BuildHubPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/pack-hub"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PackHubPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AboutPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/discord-server-config"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <DiscordServerConfigPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/discord-setup"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <DiscordSetupPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PrivacyPolicyPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/privacy-settings"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PrivacySettingsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/whats-new"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <WhatsNewPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/gear-sets"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <GearSetsPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            {/* Public player profile — no auth required */}
+            <Route
+              path="/u/:username"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <PublicProfilePage />
                   </Suspense>
                 </ErrorBoundary>
               }

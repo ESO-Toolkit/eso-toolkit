@@ -10,6 +10,7 @@ import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
 
 interface DamageTypeBreakdownPanelProps {
   fight: FightFragment;
+  selectedPlayerId?: number | null;
 }
 
 interface DamageTypeBreakdown {
@@ -66,7 +67,7 @@ const AOE_ABILITY_IDS = Object.freeze(
     118314, // Scorch
     143944, // Subterranean Assault
     143946, // Deep Fissure
-    118720, // Eruption
+    118720, // Hearth and Home
     23202, // Impulse / Liquid Lightning
     23667, // Elemental Ring 2
     29809, // Pulsar
@@ -84,7 +85,7 @@ const AOE_ABILITY_IDS = Object.freeze(
     26869, // Wall of Fire
     80172, // Blockade of Fire
     26794, // Unstable Wall of Fire
-    44432, // Engulfing Flames Skill
+    44432, // Engulfing Dragonfire
     26879, // Wall of Frost
     26871, // Unstable Wall of Frost
     108936, // Blockade of Frost
@@ -144,6 +145,7 @@ const MARTIAL_DAMAGE_TYPES = Object.freeze(
 
 export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({
   fight: _fight,
+  selectedPlayerId,
 }) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -222,6 +224,11 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
 
       // Only include events where the target is in selectedTargets
       if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
+        return;
+      }
+
+      // Only include events from the selected player when one is chosen
+      if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) {
         return;
       }
 
@@ -471,7 +478,7 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
     breakdown.sort((a, b) => b.totalDamage - a.totalDamage);
 
     return { damageTypeBreakdown: breakdown, totalDamage };
-  }, [damageEvents, reportMasterData?.abilitiesById, selectedTargetIds]);
+  }, [damageEvents, reportMasterData?.abilitiesById, selectedTargetIds, selectedPlayerId]);
 
   if (isMasterDataLoading || isDamageEventsLoading) {
     return <DamageTypeBreakdownView damageTypeBreakdown={[]} totalDamage={0} isLoading={true} />;

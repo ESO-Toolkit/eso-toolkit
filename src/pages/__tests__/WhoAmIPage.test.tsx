@@ -13,7 +13,7 @@ jest.mock('../../features/auth/AuthContext', () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock('../../utils/sentryUtils', () => ({
+jest.mock('../../utils/errorTracking', () => ({
   addBreadcrumb: jest.fn(),
 }));
 
@@ -100,9 +100,10 @@ describe('WhoAmIPage', () => {
 
     renderWhoAmIPage();
 
+    const user = userEvent.setup();
     const refreshButton = screen.getByTestId('whoami-refresh-button');
     await act(async () => {
-      await userEvent.click(refreshButton);
+      await user.click(refreshButton);
     });
 
     await waitFor(() => {

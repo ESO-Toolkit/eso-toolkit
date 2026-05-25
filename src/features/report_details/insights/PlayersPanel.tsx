@@ -16,23 +16,27 @@ import {
 } from '@/store/worker_results';
 
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import { PlayerAvatarsProvider } from '../../../contexts/PlayerAvatarsContext';
 import {
   useCastEvents,
   useCombatantInfoEvents,
-  useCurrentFight,
+  useCriticalDamageTask,
   useDamageEvents,
   useDeathEvents,
+  useFightForContext,
   useFriendlyBuffEvents,
   useHostileBuffEvents,
   useHealingEvents,
   usePlayerData,
   useReportMasterData,
+  useResolvedReportFightContext,
   useResourceEvents,
+  useRoleDetection,
 } from '../../../hooks';
 import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { usePlayerTravelDistanceTask } from '../../../hooks/workerTasks/usePlayerTravelDistanceTask';
-import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import {
   KnownAbilities,
   MundusStones,
@@ -59,8 +63,16 @@ import {
   PlayerGearItemData,
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
-// TODO: Implement proper scribing detection services
-// Temporary stubs to prevent compilation errors
+import {
+  classifyPotionEventsFromBuffStream,
+  type PotionStreamResult,
+} from '../../../utils/potionDetectionUtils';
+import {
+  analyzeBarSwaps,
+  type BarSwapAnalysisResult,
+} from '../../parse_analysis/utils/parseAnalysisUtils';
+
+// Scribing detection stub — full implementation pending unified detection service
 const analyzeAllPlayersScribingSkills = (..._args: unknown[]): Record<string, never> => ({});
 const findScribingRecipe = async (_skillId: unknown, _skillName?: string): Promise<null> => null;
 const formatScribingRecipeForDisplay = (
@@ -87,11 +99,19 @@ import { PlayersPanelView } from './PlayersPanelView';
 
 // This panel now uses report actors from masterData
 
-export const PlayersPanel: React.FC = () => {
+interface PlayersPanelProps {
+  context?: ReportFightContextInput;
+}
+
+export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOverride }) => {
   const logger = useLogger('PlayersPanel');
   const dispatch = useAppDispatch();
   const scribingTaskState = useSelector(selectScribingDetectionsTask);
   const scribingResult = useSelector(selectScribingDetectionsResult);
+  const resolvedContext = useResolvedReportFightContext(contextOverride);
+  const fight = useFightForContext(resolvedContext);
+  const reportId = resolvedContext.reportCode;
+  const fightId = resolvedContext.fightId !== null ? String(resolvedContext.fightId) : null;
 
   // State for storing scribing recipe information
   const [scribingRecipes, setScribingRecipes] = React.useState<
@@ -112,30 +132,42 @@ export const PlayersPanel: React.FC = () => {
     >
   >({});
 
-  // Get report/fight context for CPM and deeplink
-  const { reportId, fightId } = useSelectedReportAndFight();
-
   // Use hooks to get data
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
-  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents();
-  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
-  const { fight, isFightLoading } = useCurrentFight();
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents({
+    context: resolvedContext,
+  });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents({
+    context: resolvedContext,
+  });
+  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents({
+    context: resolvedContext,
+  });
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents({ context: resolvedContext });
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: resolvedContext });
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
+    context: resolvedContext,
+  });
+  const isFightLoading = resolvedContext.fightId !== null && !fight;
 
-  const fightIdNumber = React.useMemo(() => {
-    if (!fightId) {
-      return null;
-    }
-    const parsed = Number(fightId);
-    return Number.isFinite(parsed) ? parsed : null;
-  }, [fightId]);
+  // --- Role detection ---
+  const { rolesByPlayerId } = useRoleDetection({
+    fight,
+    actorsById: reportMasterData.actorsById,
+    damageEvents,
+    healingEvents,
+    castEvents,
+    debuffEvents,
+    friendlyBuffEvents,
+    hostileBuffEvents,
+    combatantInfoEvents,
+  });
+
+  const fightIdNumber = resolvedContext.fightId;
 
   const allBuffEvents = React.useMemo(
     () => [...friendlyBuffEvents, ...hostileBuffEvents],
@@ -219,8 +251,12 @@ export const PlayersPanel: React.FC = () => {
   }, [scribingPlayerAbilities, existingScribingAbilities]);
 
   // Get friendly buff lookup data for build issues detection
-  const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask();
-  const { playerTravelDistances, isPlayerTravelDistancesLoading } = usePlayerTravelDistanceTask();
+  const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask({
+    context: resolvedContext,
+  });
+  const { playerTravelDistances, isPlayerTravelDistancesLoading } = usePlayerTravelDistanceTask({
+    context: resolvedContext,
+  });
   const distanceByPlayer = React.useMemo(() => {
     if (!playerTravelDistances?.distancesByPlayerId) {
       return {} as Record<string, number>;
@@ -234,7 +270,130 @@ export const PlayersPanel: React.FC = () => {
     return byPlayer;
   }, [playerTravelDistances]);
 
+  // Compute DPS per player (total outgoing damage to enemies / fight duration in seconds)
+  // Also computes totalDamage, totalCritDamage, critDps, and critChance per player
+  const damageStatsByPlayer = React.useMemo(() => {
+    if (!fight || !damageEvents || damageEvents.length === 0)
+      return {
+        dpsValueByPlayer: {} as Record<string, number>,
+        totalDamageByPlayer: {} as Record<string, number>,
+        totalCritDamageByPlayer: {} as Record<string, number>,
+        critDpsByPlayer: {} as Record<string, number>,
+        critChanceByPlayer: {} as Record<string, number>,
+      };
+    const durationSecs = (fight.endTime - fight.startTime) / 1000;
+    if (durationSecs <= 0)
+      return {
+        dpsValueByPlayer: {} as Record<string, number>,
+        totalDamageByPlayer: {} as Record<string, number>,
+        totalCritDamageByPlayer: {} as Record<string, number>,
+        critDpsByPlayer: {} as Record<string, number>,
+        critChanceByPlayer: {} as Record<string, number>,
+      };
+
+    const damageByPlayer: Record<string, number> = {};
+    const critDamageByPlayer: Record<string, number> = {};
+    const hitCountByPlayer: Record<string, number> = {};
+    const critHitCountByPlayer: Record<string, number> = {};
+    for (const event of damageEvents) {
+      if (event.sourceIsFriendly && !event.targetIsFriendly) {
+        const id = String(event.sourceID);
+        const amount = event.amount ?? 0;
+        damageByPlayer[id] = (damageByPlayer[id] ?? 0) + amount;
+        hitCountByPlayer[id] = (hitCountByPlayer[id] ?? 0) + 1;
+        if (event.hitType === 2) {
+          critDamageByPlayer[id] = (critDamageByPlayer[id] ?? 0) + amount;
+          critHitCountByPlayer[id] = (critHitCountByPlayer[id] ?? 0) + 1;
+        }
+      }
+    }
+
+    const dpsResult: Record<string, number> = {};
+    const totalDmgResult: Record<string, number> = {};
+    const totalCritDmgResult: Record<string, number> = {};
+    const critDpsResult: Record<string, number> = {};
+    const critChanceResult: Record<string, number> = {};
+    for (const [id, totalDamage] of Object.entries(damageByPlayer)) {
+      dpsResult[id] = totalDamage / durationSecs;
+      totalDmgResult[id] = totalDamage;
+      const critDmg = critDamageByPlayer[id] ?? 0;
+      totalCritDmgResult[id] = critDmg;
+      critDpsResult[id] = critDmg / durationSecs;
+      const hits = hitCountByPlayer[id] ?? 0;
+      const critHits = critHitCountByPlayer[id] ?? 0;
+      critChanceResult[id] = hits > 0 ? (critHits / hits) * 100 : 0;
+    }
+    return {
+      dpsValueByPlayer: dpsResult,
+      totalDamageByPlayer: totalDmgResult,
+      totalCritDamageByPlayer: totalCritDmgResult,
+      critDpsByPlayer: critDpsResult,
+      critChanceByPlayer: critChanceResult,
+    };
+  }, [fight, damageEvents]);
+
+  const {
+    dpsValueByPlayer,
+    totalDamageByPlayer,
+    totalCritDamageByPlayer,
+    critDpsByPlayer,
+    critChanceByPlayer,
+  } = damageStatsByPlayer;
+
+  // Compute HPS per player (total outgoing healing to friendlies / fight duration in seconds)
+  const hpsValueByPlayer = React.useMemo(() => {
+    if (!fight || !healingEvents || healingEvents.length === 0) return {};
+    const durationSecs = (fight.endTime - fight.startTime) / 1000;
+    if (durationSecs <= 0) return {};
+
+    const healingByPlayer: Record<string, number> = {};
+    for (const event of healingEvents) {
+      if (event.sourceIsFriendly) {
+        const id = String(event.sourceID);
+        healingByPlayer[id] = (healingByPlayer[id] ?? 0) + (event.amount ?? 0);
+      }
+    }
+
+    const result: Record<string, number> = {};
+    for (const [id, totalHealing] of Object.entries(healingByPlayer)) {
+      result[id] = totalHealing / durationSecs;
+    }
+    return result;
+  }, [fight, healingEvents]);
+
+  // Compute bar swap analysis (including bar setup pattern) per player
+  const barSwapByPlayer = React.useMemo(() => {
+    const result: Record<string, BarSwapAnalysisResult> = {};
+    if (!fight || !castEvents || !playerData?.playersById) return result;
+    const { startTime, endTime } = fight;
+    for (const player of Object.values(playerData.playersById)) {
+      if (!player?.id) continue;
+      result[String(player.id)] = analyzeBarSwaps(
+        castEvents,
+        Number(player.id),
+        startTime,
+        endTime,
+      );
+    }
+    return result;
+  }, [fight, castEvents, playerData?.playersById]);
+
   const { abilitiesById } = reportMasterData;
+
+  // Fetch critical damage data for the inline crit summary on DPS player cards
+  const { criticalDamageData } = useCriticalDamageTask({ context: resolvedContext });
+
+  const criticalDamageByPlayer = React.useMemo(() => {
+    if (!criticalDamageData?.playerDataMap) return undefined;
+    const result: Record<string, { avg: number; max: number }> = {};
+    Object.entries(criticalDamageData.playerDataMap).forEach(([playerId, data]) => {
+      result[String(playerId)] = {
+        avg: data.effectiveCriticalDamage,
+        max: data.maximumCriticalDamage,
+      };
+    });
+    return result;
+  }, [criticalDamageData?.playerDataMap]);
 
   // Calculate loading state - include ALL data dependencies this panel needs
   const isLoading =
@@ -362,6 +521,16 @@ export const PlayersPanel: React.FC = () => {
 
     return result;
   }, [combatantInfoEvents, abilitiesById, playerData, friendlyBuffEvents]);
+
+  // Classify each player's potion usage from the live fight event stream (Path B detection).
+  const potionResultsByPlayer = React.useMemo((): Record<string, PotionStreamResult> => {
+    if (!friendlyBuffEvents || !abilitiesById) return {};
+    return classifyPotionEventsFromBuffStream(
+      friendlyBuffEvents,
+      resourceEvents ?? [],
+      abilitiesById,
+    );
+  }, [friendlyBuffEvents, resourceEvents, abilitiesById]);
 
   // Calculate champion points per player using champion point constants from combatantinfo auras
   const championPointsByPlayer = React.useMemo(() => {
@@ -788,7 +957,7 @@ export const PlayersPanel: React.FC = () => {
       if (!player?.id) return;
 
       const playerId = String(player.id);
-      const gear = player?.combatantInfo?.gear ?? [];
+      const gear = (player?.combatantInfo?.gear ?? []).filter((g) => g.id !== 0);
       const resourceSnapshot = maxResourcesByPlayer[playerId];
       const playerResourceProfile = resourceSnapshot
         ? { stamina: resourceSnapshot.stamina, magicka: resourceSnapshot.magicka }
@@ -1157,29 +1326,41 @@ export const PlayersPanel: React.FC = () => {
   }, [scribingSkillsByPlayer, scribingRecipes]);
 
   return (
-    <div data-testid="players-panel-loaded">
-      <PlayersPanelView
-        playerActors={playerData?.playersById}
-        mundusBuffsByPlayer={mundusBuffsByPlayer}
-        championPointsByPlayer={championPointsByPlayer}
-        scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
-        buildIssuesByPlayer={buildIssuesByPlayer}
-        classAnalysisByPlayer={classAnalysisByPlayer}
-        deathsByPlayer={deathsByPlayer}
-        resurrectsByPlayer={resurrectsByPlayer}
-        cpmByPlayer={cpmByPlayer}
-        aurasByPlayer={aurasByPlayer}
-        maxHealthByPlayer={maxHealthByPlayer}
-        maxStaminaByPlayer={maxStaminaByPlayer}
-        maxMagickaByPlayer={maxMagickaByPlayer}
-        distanceByPlayer={distanceByPlayer}
-        reportId={reportId}
-        fightId={fightId}
-        isLoading={isLoading}
-        playerGear={playerGear}
-        fightStartTime={fight?.startTime}
-        fightEndTime={fight?.endTime}
-      />
-    </div>
+    <PlayerAvatarsProvider players={playerData?.playersById}>
+      <div data-testid="players-panel-loaded">
+        <PlayersPanelView
+          playerActors={playerData?.playersById}
+          mundusBuffsByPlayer={mundusBuffsByPlayer}
+          championPointsByPlayer={championPointsByPlayer}
+          scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
+          buildIssuesByPlayer={buildIssuesByPlayer}
+          classAnalysisByPlayer={classAnalysisByPlayer}
+          deathsByPlayer={deathsByPlayer}
+          resurrectsByPlayer={resurrectsByPlayer}
+          cpmByPlayer={cpmByPlayer}
+          aurasByPlayer={aurasByPlayer}
+          maxHealthByPlayer={maxHealthByPlayer}
+          maxStaminaByPlayer={maxStaminaByPlayer}
+          maxMagickaByPlayer={maxMagickaByPlayer}
+          distanceByPlayer={distanceByPlayer}
+          reportId={reportId}
+          fightId={fightId}
+          isLoading={isLoading}
+          playerGear={playerGear}
+          fightStartTime={fight?.startTime}
+          fightEndTime={fight?.endTime}
+          dpsValueByPlayer={dpsValueByPlayer}
+          hpsValueByPlayer={hpsValueByPlayer}
+          totalDamageByPlayer={totalDamageByPlayer}
+          totalCritDamageByPlayer={totalCritDamageByPlayer}
+          critDpsByPlayer={critDpsByPlayer}
+          critChanceByPlayer={critChanceByPlayer}
+          criticalDamageByPlayer={criticalDamageByPlayer}
+          barSwapByPlayer={barSwapByPlayer}
+          potionResultsByPlayer={potionResultsByPlayer}
+          rolesByPlayerId={rolesByPlayerId}
+        />
+      </div>
+    </PlayerAvatarsProvider>
   );
 };

@@ -1,9 +1,9 @@
-import { BugReport, Feedback, HelpOutline } from '@mui/icons-material';
+import { BugReport, Feedback, HelpOutlined } from '@mui/icons-material';
 import { Button, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import React from 'react';
 
 import { useBugReport } from '../components/BugReportDialog';
-import { useSentryTracking } from '../hooks/useSentryTracking';
+import { useTracking } from '../hooks/useErrorTracking';
 
 /**
  * Help & Support button with bug reporting functionality
@@ -12,7 +12,7 @@ import { useSentryTracking } from '../hooks/useSentryTracking';
 export const HelpSupportButton: React.FC = () => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const { openBugReport, BugReportDialog } = useBugReport();
-  const { trackClick, trackFeatureUsage } = useSentryTracking();
+  const { trackClick, trackFeatureUsage } = useTracking();
 
   const handleClick = (event: React.MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget);
@@ -54,20 +54,20 @@ export const HelpSupportButton: React.FC = () => {
         aria-label="Help and support"
         title="Help & Support"
       >
-        <HelpOutline />
+        <HelpOutlined />
       </IconButton>
 
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        PaperProps={{
-          sx: { minWidth: 200 },
+        slotProps={{
+          paper: { sx: { minWidth: 200 } },
         }}
       >
         <MenuItem onClick={handleHelp}>
           <ListItemIcon>
-            <HelpOutline fontSize="small" />
+            <HelpOutlined fontSize="small" />
           </ListItemIcon>
           <ListItemText>Help & Documentation</ListItemText>
         </MenuItem>
@@ -98,7 +98,7 @@ export const HelpSupportButton: React.FC = () => {
  */
 export const QuickBugReportButton: React.FC = () => {
   const { openBugReport, BugReportDialog } = useBugReport();
-  const { trackClick } = useSentryTracking();
+  const { trackClick } = useTracking();
 
   const handleClick = (): void => {
     trackClick('quick-bug-report');

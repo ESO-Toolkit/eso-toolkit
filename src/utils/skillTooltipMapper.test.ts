@@ -20,6 +20,7 @@ jest.mock('./abilityIdMapper', () => ({
 
 jest.mock('./skillLinesRegistry', () => ({
   findSkillByName: jest.fn(),
+  findSkillById: jest.fn(),
   getClassKey: jest.fn(),
 }));
 

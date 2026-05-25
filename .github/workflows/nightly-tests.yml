@@ -52,8 +52,6 @@ on:
 # Note: The following secrets should be configured in repository settings:
 # - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
 # - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret
-# - ESO_LOGS_TEST_EMAIL: Test user email (optional)
-# - ESO_LOGS_TEST_PASSWORD: Test user password (optional)
 
 jobs:
   # Job to determine matrix configuration
@@ -102,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -121,7 +119,7 @@ jobs:
           echo "Playwright version: ${PLAYWRIGHT_VERSION}"
 
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: |
@@ -133,16 +131,20 @@ jobs:
             playwright-nightly-${{ runner.os }}-
 
       - name: Install Playwright Browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: |
-          echo "🔄 Cache miss - installing Playwright browsers and dependencies..."
-          npx playwright install --with-deps
-
-      - name: Install Playwright Dependencies Only
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: |
-          echo "⚡ Cache hit - installing only system dependencies..."
-          npx playwright install-deps
+          echo "🔄 Installing Playwright browsers..."
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "⚡ Cache hit - installing system dependencies and verifying browsers..."
+            npx playwright install-deps
+            # Verify browsers are available, install if missing
+            if ! npx playwright install --dry-run 2>/dev/null; then
+              echo "🔧 Some browsers missing despite cache hit - installing..."
+              npx playwright install
+            fi
+          else
+            echo "🔄 Cache miss - installing browsers and dependencies..."
+            npx playwright install --with-deps
+          fi
 
       - name: Verify Playwright Installation
         run: |
@@ -158,6 +160,14 @@ jobs:
             echo "❌ No browser cache found"
             exit 1
           fi
+
+          # Test browser launch capability
+          echo "🛠️ Testing browser launch capability..."
+          if ! timeout 30s npx playwright install --dry-run; then
+            echo "❌ Browser installation verification failed"
+            exit 1
+          fi
+          echo "✅ All browsers verified and ready"
 
       # No build step needed - testing against production website
 
@@ -239,14 +249,11 @@ jobs:
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
-          # Optional test user credentials for browser flow testing
-          ESO_LOGS_TEST_EMAIL: ${{ secrets.ESO_LOGS_TEST_EMAIL }}
-          ESO_LOGS_TEST_PASSWORD: ${{ secrets.ESO_LOGS_TEST_PASSWORD }}
           # Playwright optimizations
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly-test-results-shard-${{ matrix.shard }}-${{ github.run_id }}
@@ -256,15 +263,23 @@ jobs:
           retention-days: 30
 
       - name: Upload Test Report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly-playwright-report-shard-${{ matrix.shard }}-${{ github.run_id }}
           path: playwright-report-nightly/
           retention-days: 30
 
+      - name: Upload Blob Report
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nightly-blob-shard-${{ matrix.shard }}
+          path: blob-report-nightly/
+          retention-days: 1
+
       - name: Comment Test Results on PR
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         if: always() && github.event_name == 'workflow_dispatch'
         with:
           script: |
@@ -306,15 +321,66 @@ jobs:
               });
             }
 
+  # Post a "starting" Discord notification and open a forum thread before tests run.
+  # Runs in parallel with nightly-tests (both depend only on setup).
+  notify-nightly-start:
+    name: "Nightly Start"
+    runs-on: ubuntu-latest
+    needs: [setup]
+    if: always()
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    outputs:
+      thread-id: ${{ steps.notify.outputs.thread-id }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Compute notification params
+        id: params
+        shell: bash
+        run: |
+          SHARDS="${{ needs.setup.outputs.total_shards }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "title=Nightly Playwright Suite" >> "$GITHUB_OUTPUT"
+            {
+              echo 'description<<EOF_NOTIFY'
+              echo "**Shards:** ${SHARDS} · **Suite:** all · **Browsers:** chromium, firefox, webkit, mobile"
+              echo 'EOF_NOTIFY'
+            } >> "$GITHUB_OUTPUT"
+            echo "thread_name=Nightly Playwright — ${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+          else
+            SUITE="${{ github.event.inputs.test_suite || 'all' }}"
+            echo "title=Manual Playwright Suite" >> "$GITHUB_OUTPUT"
+            {
+              echo 'description<<EOF_NOTIFY'
+              echo "**Suite:** ${SUITE} · **Shards:** ${SHARDS}"
+              echo 'EOF_NOTIFY'
+            } >> "$GITHUB_OUTPUT"
+            echo "thread_name=Manual Playwright — ${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Discord Playwright Starting
+        id: notify
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_NIGHTLY_TESTS }}
+          status: running
+          title: ${{ steps.params.outputs.title }}
+          description: ${{ steps.params.outputs.description }}
+          thread-name: ${{ steps.params.outputs.thread_name }}
+
   # Job to consolidate results from all shards
   consolidate-results:
     runs-on: ubuntu-latest
     needs: [setup, nightly-tests]
     if: always()
+    permissions: {}
 
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: ./artifacts
           pattern: nightly-*-shard-*-${{ github.run_id }}
@@ -377,7 +443,7 @@ jobs:
           echo "✅ Consolidation complete"
 
       - name: Upload Consolidated Results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: nightly-consolidated-results-${{ github.run_id }}
@@ -385,7 +451,7 @@ jobs:
           retention-days: 30
 
       - name: Create Consolidated Summary
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         if: always() && github.event_name == 'workflow_dispatch'
         with:
           script: |
@@ -436,18 +502,145 @@ jobs:
               });
             }
 
+  # Merge per-shard blob reports into a single HTML report and deploy to GitHub Pages
+  deploy-report:
+    name: "Deploy Report"
+    runs-on: ubuntu-latest
+    needs: [nightly-tests]
+    if: always() && needs.nightly-tests.result != 'cancelled'
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      report-url: ${{ steps.url.outputs.report-url }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-node-with-cache
+
+      - name: Download Blob Reports
+        uses: actions/download-artifact@v8
+        with:
+          path: ./all-blob-reports
+          pattern: nightly-blob-shard-*
+          merge-multiple: true
+
+      - name: Merge Reports
+        run: |
+          if ls ./all-blob-reports/*.zip 1>/dev/null 2>&1; then
+            echo "📊 Merging blob reports from all shards..."
+            npx playwright merge-reports --reporter html ./all-blob-reports
+            echo "✅ Merged report generated in playwright-report/"
+          else
+            echo "⚠️ No blob reports found — skipping merge"
+            mkdir -p playwright-report
+            cat > playwright-report/index.html << 'FALLBACK'
+          <!DOCTYPE html>
+          <html><head><title>Nightly Report Unavailable</title></head>
+          <body><h1>No report data</h1><p>Blob reports were not generated. Check the workflow run for details.</p></body></html>
+          FALLBACK
+          fi
+
+      - name: Generate Deploy Token
+        id: generate-deploy-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: ESO-Toolkit
+          repositories: eso-log-aggregator-reports
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4
+        with:
+          personal_token: ${{ steps.generate-deploy-token.outputs.token }}
+          external_repository: ESO-Toolkit/eso-log-aggregator-reports
+          publish_dir: ./playwright-report
+          destination_dir: nightly-tests/${{ github.run_number }}
+          keep_files: true
+
+      - name: Set Report URL
+        id: url
+        run: echo "report-url=https://ESO-Toolkit.github.io/eso-log-aggregator-reports/nightly-tests/${{ github.run_number }}/" >> "$GITHUB_OUTPUT"
+
+  # Post nightly test results to Discord, replying in the thread opened by notify-nightly-start
+  discord-notify:
+    name: "Nightly Results"
+    runs-on: ubuntu-latest
+    needs: [setup, nightly-tests, consolidate-results, notify-nightly-start, deploy-report]
+    if: always()
+    timeout-minutes: 3
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Resolve Status
+        id: status
+        shell: bash
+        run: |
+          TESTS_RESULT="${{ needs.nightly-tests.result }}"
+          case "$TESTS_RESULT" in
+            success) STATUS="success" ;;
+            failure) STATUS="failure" ;;
+            *) STATUS="failure" ;;
+          esac
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+
+          if [ "$STATUS" != "success" ]; then
+            echo "content=<@205483185893670912> <@266089059028434944>" >> "$GITHUB_OUTPUT"
+          else
+            echo "content=" >> "$GITHUB_OUTPUT"
+          fi
+
+          SHARDS="${{ needs.setup.outputs.total_shards }}"
+          TRIGGER="${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          REPORT_URL="${{ needs.deploy-report.outputs.report-url }}"
+
+          # Build description with report link if available
+          {
+            echo 'description<<EOF_NOTIFY'
+            if [ -n "$REPORT_URL" ]; then
+              echo "**[View Report](${REPORT_URL})** · **[View Run](${RUN_URL})**"
+            else
+              echo "**[View Run](${RUN_URL})**"
+            fi
+            echo ""
+            echo "**Shards:** ${SHARDS} · **Trigger:** ${TRIGGER}"
+            echo 'EOF_NOTIFY'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Discord Playwright Results
+        uses: ./.github/actions/discord-notify
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK_NIGHTLY_TESTS }}
+          status: ${{ steps.status.outputs.status }}
+          title: "${{ github.event_name == 'schedule' && 'Nightly Playwright Suite — Results' || 'Manual Playwright Suite — Results' }}"
+          description: ${{ steps.status.outputs.description }}
+          content: ${{ steps.status.outputs.content }}
+          thread-id: ${{ needs.notify-nightly-start.outputs.thread-id }}
+
   notify-on-failure:
     runs-on: ubuntu-latest
     needs: [setup, nightly-tests, consolidate-results]
     if: failure() && github.event_name == 'schedule'
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
-      - name: Create Sentry Issue for Test Failure
+      - name: Create Error Tracking Issue for Test Failure
         run: |
           # Prepare issue details
           TITLE="🚨 Nightly Tests Failed - $(date -u +%Y-%m-%d)"
@@ -472,39 +665,42 @@ jobs:
           WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           ARTIFACTS_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
 
-          # Create the Sentry issue using DSN-based reporting
-          node scripts/create-sentry-issue-dsn.cjs \
+          # Create the error tracking issue (skip gracefully if the script is absent)
+          if [ ! -f "scripts/create-error-tracking-issue.cjs" ]; then
+            echo "⚠️ scripts/create-error-tracking-issue.cjs not found — skipping error tracking"
+            exit 0
+          fi
+          node scripts/create-error-tracking-issue.cjs \
             --title "$TITLE" \
             --description "$DESCRIPTION" \
             --workflow-url "$WORKFLOW_URL" \
             --artifacts-url "$ARTIFACTS_URL" \
             --run-id "${{ github.run_id }}"
         env:
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          SENTRY_ENVIRONMENT: 'nightly-tests'
-          SENTRY_RELEASE: ${{ github.ref_name }}-${{ github.run_number }}
+          ERROR_TRACKING_TOKEN: ${{ secrets.ERROR_TRACKING_TOKEN }}
+          ERROR_TRACKING_ENVIRONMENT: 'nightly-tests'
+          ERROR_TRACKING_RELEASE: ${{ github.ref_name }}-${{ github.run_number }}
 
-      - name: Log Sentry Issue Creation
+      - name: Log Error Tracking Issue Creation
         if: success()
         run: |
-          echo "✅ Sentry issue created successfully via DSN"
-          echo "🔗 Check Sentry dashboard for the new issue"
+          echo "✅ Error tracking issue created successfully"
+          echo "🔗 Check the error tracking dashboard for the new issue"
           echo "📊 Run details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Fallback GitHub Comment on Failure
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
-            // If Sentry issue creation fails, log the error but don't fail the workflow
-            console.log('⚠️ Failed to create Sentry issue via DSN - this may indicate:');
-            console.log('- Missing SENTRY_DSN secret');
-            console.log('- Invalid Sentry DSN configuration');
+            // If error tracking issue creation fails, log the error but don't fail the workflow
+            console.log('⚠️ Failed to create error tracking issue - this may indicate:');
+            console.log('- Missing ERROR_TRACKING_TOKEN secret');
+            console.log('- Invalid error tracking token configuration');
             console.log('- Network connectivity issues');
             console.log('');
             console.log('🔧 To fix this, ensure the following is configured:');
-            console.log('- SENTRY_DSN: Valid Sentry Data Source Name from your project settings');
-            console.log('  Example: https://your-key@o123456.ingest.sentry.io/123456');
+            console.log('- ERROR_TRACKING_TOKEN: Valid access token from your error tracking project settings');
             console.log('');
             console.log('💡 DSN-based reporting is simpler and more reliable than API tokens');
             console.log('📋 Test failure details logged above for manual review');

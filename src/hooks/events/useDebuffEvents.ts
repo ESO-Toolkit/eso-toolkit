@@ -2,21 +2,24 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { FightFragment } from '../../graphql/gql/graphql';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
-import { fetchDebuffEvents } from '../../store/events_data/debuffEventsSlice';
-import { selectReportFights } from '../../store/report/reportSelectors';
+import type { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
-  selectDebuffEvents,
-  selectDebuffEventsLoading,
-} from '../../store/selectors/eventsSelectors';
+  selectDebuffEventsEntryForContext,
+  selectDebuffEventsForContext,
+} from '../../store/events_data/debuffEventsSelectors';
+import { fetchDebuffEvents } from '../../store/events_data/debuffEventsSlice';
+import type { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 import { DebuffEvent } from '../../types/combatlogEvents';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
+import { useFightForContext } from '../useFightForContext';
+import { useResolvedReportFightContext } from '../useResolvedReportFightContext';
 import { useDebuffLookupTask } from '../workerTasks/useDebuffLookupTask';
 
 interface UseDebuffEventsOptions {
   restrictToFightWindow?: boolean;
+  context?: ReportFightContextInput;
 }
 
 export function useDebuffEvents(options?: UseDebuffEventsOptions): {
@@ -26,33 +29,30 @@ export function useDebuffEvents(options?: UseDebuffEventsOptions): {
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
-  const fights = useSelector(selectReportFights);
-
-  // Get the specific fight from the report data
-  const selectedFight = React.useMemo(() => {
-    if (!fightId || !fights) return null;
-    const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
-  }, [fightId, fights]);
+  const context = useResolvedReportFightContext(options?.context);
+  const selectedFight = useFightForContext(context);
+  const debuffEvents = useSelector((state: RootState) =>
+    selectDebuffEventsForContext(state, context),
+  );
+  const debuffEntry = useSelector((state: RootState) =>
+    selectDebuffEventsEntryForContext(state, context),
+  );
+  const isDebuffEventsLoading = debuffEntry?.status === 'loading';
 
   const restrictToFightWindow = options?.restrictToFightWindow ?? true;
 
   React.useEffect(() => {
-    if (reportId && selectedFight) {
+    if (context.reportCode && selectedFight) {
       dispatch(
         fetchDebuffEvents({
-          reportCode: reportId,
+          reportCode: context.reportCode,
           fight: selectedFight,
           client,
           restrictToFightWindow,
         }),
       );
     }
-  }, [dispatch, reportId, selectedFight, client, restrictToFightWindow]);
-
-  const debuffEvents = useSelector(selectDebuffEvents);
-  const isDebuffEventsLoading = useSelector(selectDebuffEventsLoading);
+  }, [dispatch, context.reportCode, context.fightId, selectedFight, client, restrictToFightWindow]);
 
   return React.useMemo(
     () => ({ debuffEvents, isDebuffEventsLoading, selectedFight }),

@@ -3,7 +3,9 @@ import React, { createContext, useContext, useMemo, ReactNode, useState, useCall
 
 import { useLogger } from './contexts/LoggerContext';
 import { EsoLogsClient } from './esologsClient';
-import { addBreadcrumb } from './utils/sentryUtils';
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './features/auth/auth';
+import { getEnvVar } from './utils/envUtils';
+import { addBreadcrumb } from './utils/errorTracking';
 
 interface EsoLogsClientContextType {
   client: EsoLogsClient | null;
@@ -15,15 +17,27 @@ interface EsoLogsClientContextType {
 
 export const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
 
+// Read the initial token once at module level so the first render is already
+// synchronised with AuthContext (which also reads from localStorage).  This
+// eliminates the one-frame lag where AuthContext.isLoggedIn=true but
+// EsoLogsClientContext.isLoggedIn=false, which caused visible layout shifts.
+const initialToken = localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '';
+
+// Proxy URL for public /api/v2/client queries — routes through the Cloudflare
+// Worker so the server-side OAuth secret is never exposed to the browser.
+const workerBaseUrl =
+  getEnvVar('VITE_ROSTER_HUB_API_URL') ?? 'https://roster-hub-api.eso-toolkit.workers.dev';
+const CLIENT_API_PROXY_URL = `${workerBaseUrl}/graphql`;
+
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!initialToken);
   const logger = useLogger('EsoLogsClient');
 
   // We want a singleton here - create client once and update token via methods
 
   const client = useMemo(() => {
     logger.info('Creating new EsoLogsClient instance');
-    return new EsoLogsClient(''); // Start with empty token
+    return new EsoLogsClient(initialToken, CLIENT_API_PROXY_URL);
   }, [logger]);
 
   // Method to set auth token from AuthContext
@@ -96,13 +110,18 @@ export const useEsoLogsClientContext = (): EsoLogsClientContextType => {
 
 /**
  * Hook to get the EsoLogsClient instance directly.
- * Throws an error if called when not authenticated or client is not ready.
+ * Throws an error if the client is not ready.
+ *
+ * Note: Authentication is no longer required — the Cloudflare Worker GQL proxy
+ * (ESO-765) injects tokens for public /api/v2/client queries. User-specific
+ * hooks should check `isLoggedIn` from AuthContext before making user-scoped
+ * requests.
  */
 export const useEsoLogsClientInstance = (): EsoLogsClient => {
-  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
+  const { client, isReady } = useEsoLogsClientContext();
 
-  if (!isReady || !client || !isLoggedIn) {
-    throw new Error('EsoLogsClient is not ready. User must be authenticated.');
+  if (!isReady || !client) {
+    throw new Error('EsoLogsClient is not ready.');
   }
 
   return client;

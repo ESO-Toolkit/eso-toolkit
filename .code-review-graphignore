@@ -1,0 +1,16 @@
+node_modules/**
+build/**
+coverage/**
+cache/**
+storybook-static/**
+test-results/**
+test-results-full/**
+test-results-screen-sizes/**
+playwright-report/**
+screen-size-report/**
+showcase-video/**
+*.generated.ts
+*.generated.tsx
+dist/**
+.next/**
+public/mockServiceWorker.js

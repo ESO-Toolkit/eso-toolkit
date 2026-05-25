@@ -3,8 +3,7 @@ import React from 'react';
 import type { ScribedSkillData } from '@/features/scribing/types';
 
 import { SkillStat, SkillTooltipProps } from '../components/SkillTooltip';
-// TODO: Implement proper scribing detection services
-// Temporary stubs to prevent compilation errors
+// Scribing detection stubs — full implementation pending unified detection service
 const analyzeScribingSkillWithSignature = (..._args: unknown[]): null => null;
 const getScribingSkillByAbilityId = (
   abilityId: number,
@@ -52,7 +51,7 @@ import {
 import { PlayerTalent } from '../types/playerDetails';
 
 import { abilityIdMapper } from './abilityIdMapper';
-import { findSkillByName, SkillNode, getClassKey } from './skillLinesRegistry';
+import { findSkillByName, findSkillById, SkillNode, getClassKey } from './skillLinesRegistry';
 
 // SkillNode type is now imported from skillLinesRegistry
 
@@ -261,10 +260,9 @@ export function buildTooltipPropsFromAbilityId(
   abilityId: number,
   scribedSkillData?: ScribedSkillData,
 ): SkillTooltipProps | null {
+  // abilityIdMapper may not be loaded yet (async). Don't bail out — fall through
+  // to the static skill lines registry which is always available.
   const abilityData = abilityIdMapper.getAbilityById(abilityId);
-  if (!abilityData) {
-    return null;
-  }
 
   // Check if this is a scribed skill using ability ID lookup from scribing database
   const scribingInfo = getScribingSkillByAbilityId(abilityId);
@@ -286,14 +284,16 @@ export function buildTooltipPropsFromAbilityId(
         }
       : undefined);
 
-  // Try to find detailed skill data by name
-  const found = abilityData.name ? findSkillByName(abilityData.name) : null;
+  // Try to find detailed skill data — by name from abilityIdMapper, or by ID from static registry
+  const found =
+    (abilityData?.name ? findSkillByName(abilityData.name) : null) ?? findSkillById(abilityId);
   if (found) {
     const { node, skillLineName, skillLineData, parent } = found;
     const className = getClassKey(skillLineData);
+    const labelSource = skillLineData as { class?: string; weapon?: string };
 
     return mapSkillToTooltipProps({
-      className: skillLineData.class || skillLineData.weapon || capitalCase(className),
+      className: labelSource.class || labelSource.weapon || capitalCase(className),
       skillLineName,
       node,
       inheritFrom: parent,
@@ -304,15 +304,19 @@ export function buildTooltipPropsFromAbilityId(
     });
   }
 
-  // Fallback to basic tooltip with just ability data
-  return {
-    name: abilityData.name || 'Unknown Ability',
-    description: `${abilityData.name || 'Unknown Ability'} (ID: ${abilityId})`,
-    abilityId,
-    iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
-    lineText: scribingInfo ? 'Scribing' : 'Unknown Skill Line',
-    stats: [],
-  };
+  // Fallback to basic tooltip with just ability data (only if mapper has loaded)
+  if (abilityData) {
+    return {
+      name: abilityData.name || 'Unknown Ability',
+      description: `${abilityData.name || 'Unknown Ability'} (ID: ${abilityId})`,
+      abilityId,
+      iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
+      lineText: scribingInfo ? 'Scribing' : 'Unknown Skill Line',
+      stats: [],
+    };
+  }
+
+  return null;
 }
 
 // Public helper: build rich SkillTooltipProps from class key and ability name
@@ -363,11 +367,12 @@ export function buildTooltipPropsFromClassAndName(
   if (found) {
     const { node, skillLineName, skillLineData, parent } = found;
     const className = getClassKey(skillLineData);
+    const labelSource = skillLineData as { class?: string; weapon?: string };
 
     // abilityData is already defined above, use it for ability ID and icon
 
     return mapSkillToTooltipProps({
-      className: skillLineData.class || skillLineData.weapon || capitalCase(className),
+      className: labelSource.class || labelSource.weapon || capitalCase(className),
       skillLineName,
       node,
       inheritFrom: parent,
@@ -461,9 +466,6 @@ export function enrichScribedSkillData(
     }
   }
 
-  // TODO: Add signature script detection here when we have access to combat log data
-  // For now, we can only enhance with basic ability ID lookup
-
   return enhanced;
 }
 
@@ -478,10 +480,12 @@ export function buildTooltipProps(options: {
 
   // Prefer ID-based lookup if available
   if (abilityId) {
-    return buildTooltipPropsFromAbilityId(abilityId, scribedSkillData);
+    const result = buildTooltipPropsFromAbilityId(abilityId, scribedSkillData);
+    if (result) return result;
   }
 
-  // Fall back to name-based lookup
+  // Fall back to name-based lookup (also covers cases where ID lookup returns null
+  // because abilityIdMapper hasn't finished loading)
   if (abilityName) {
     return buildTooltipPropsFromClassAndName(classKey || '', abilityName, scribedSkillData);
   }

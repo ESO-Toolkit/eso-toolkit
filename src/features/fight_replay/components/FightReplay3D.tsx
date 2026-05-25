@@ -1,5 +1,5 @@
 import { Paper } from '@mui/material';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
 import { useAnimationTimeRef } from '@/hooks/useAnimationTimeRef';
@@ -21,6 +21,10 @@ interface FightReplay3DProps {
   markersState?: MapMarkersState | null;
   onAddMarker?: (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => void;
   onRemoveMarker?: (markerId: string) => void;
+  /** Whether to show player paths toolkit */
+  showPlayerPaths?: boolean;
+  /** Initial selected player IDs for path visualization */
+  initialSelectedPlayerIds?: number[];
 }
 
 export const FightReplay3D: React.FC<FightReplay3DProps> = ({
@@ -30,6 +34,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   markersState,
   onAddMarker,
   onRemoveMarker,
+  showPlayerPaths = false,
+  initialSelectedPlayerIds = [],
 }) => {
   // Parse URL parameters for actor initialization
   const [searchParams] = useSearchParams();
@@ -47,6 +53,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Actor selection and camera following state
   // null = no actor selected/following, number = following that actor ID
   const followingActorIdRef = useRef<number | null>(initialSelectedActorId);
+
+  // Player path visualization state
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(
+    new Set(initialSelectedPlayerIds),
+  );
+  const [showPlayerPathsHUD, setShowPlayerPathsHUD] = useState(showPlayerPaths);
+  const [showPlayerTrails, setShowPlayerTrails] = useState(showPlayerPaths);
 
   // Map timeline for debug information and phase-aware map changes
   const { mapTimeline } = usePhaseBasedMap({
@@ -161,6 +174,30 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     followingActorIdRef.current = null;
   }, []);
 
+  // Keyboard shortcuts for player path features
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent): void => {
+      // Don't interfere with text input
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (event.key.toLowerCase()) {
+        case 'p': // Toggle player paths HUD
+          setShowPlayerPathsHUD((prev) => !prev);
+          event.preventDefault();
+          break;
+        case 't': // Toggle player trails
+          setShowPlayerTrails((prev) => !prev);
+          event.preventDefault();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
   return (
     <React.Fragment>
       <Paper elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
@@ -176,6 +213,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onAddMarker={onAddMarker}
           onRemoveMarker={onRemoveMarker}
           fight={selectedFight}
+          selectedPlayerIds={selectedPlayerIds}
+          onPlayerSelectionChange={setSelectedPlayerIds}
+          showPlayerPathsHUD={showPlayerPathsHUD}
+          showPlayerTrails={showPlayerTrails}
         />
       </Paper>
       {/* Playback Controls */}

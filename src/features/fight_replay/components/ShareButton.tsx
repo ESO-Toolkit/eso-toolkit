@@ -104,11 +104,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         textArea.select();
 
         try {
-          // Try the modern approach first
-          await navigator.clipboard.writeText(shareUrl);
+          // Use deprecated execCommand as fallback for non-secure contexts
+          document.execCommand('copy');
           setShowShareSnackbar(true);
         } catch {
-          // Last resort - let user manually copy
+          // Last resort - show the textarea for manual copy
           textArea.style.position = 'static';
           textArea.style.left = 'auto';
           textArea.style.top = 'auto';
@@ -132,7 +132,12 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   return (
     <>
       <Tooltip title="Share current replay time">
-        <IconButton onClick={handleShareUrl} size="small" color="secondary">
+        <IconButton
+          onClick={handleShareUrl}
+          size="small"
+          color="secondary"
+          aria-label="Share current replay time"
+        >
           <Share />
         </IconButton>
       </Tooltip>

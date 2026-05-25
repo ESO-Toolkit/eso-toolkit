@@ -17,7 +17,7 @@ const LazyLoggerDebugPanel = React.lazy(() =>
 
 // Dialog loading fallback
 const DialogLoadingFallback: React.FC = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="200px">
+  <Box sx={{ justifyContent: 'center', alignItems: 'center', height: '200px', display: 'flex' }}>
     <CircularProgress size={24} />
   </Box>
 );

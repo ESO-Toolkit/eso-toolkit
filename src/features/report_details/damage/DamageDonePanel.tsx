@@ -1,10 +1,9 @@
 import { Box, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { useSelectedFight } from '@/hooks/useSelectedFight';
-
 import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
+import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useDamageEventsLookup,
   useReportMasterData,
@@ -13,35 +12,47 @@ import {
   useDeathEvents,
   useCastEvents,
   useDamageOverTimeTask,
+  useFightForContext,
+  useResolvedReportFightContext,
 } from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
 
 import { DamageDonePanelView } from './DamageDonePanelView';
 
 interface DamageDonePanelProps {
+  context?: ReportFightContextInput;
   children?: React.ReactNode;
 }
 
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
-export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
+export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => {
   // Use hooks to get data
-  const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup();
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const fight = useSelectedFight();
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
+
+  const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup({
+    context: resolvedContext,
+  });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
+    context: resolvedContext,
+  });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
   const selectedTargetIds = useSelectedTargetIds();
   const actorsById = useSelector(selectActorsById);
 
-  // Get damage over time data
-  const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask();
+  const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask({
+    context: resolvedContext,
+  });
 
   // Resolve selected target names for display
   const selectedTargetNames = useMemo(() => {
@@ -74,14 +85,14 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
       });
     }
 
-    // Add NPCs
+    // Add NPCs (enemyNPCs are objects with an .id property, not bare numbers)
     if (fight.enemyNPCs) {
-      fight.enemyNPCs.forEach((npcId) => {
-        if (typeof npcId === 'number') {
-          const actor = actorsById[npcId];
+      fight.enemyNPCs.forEach((npc) => {
+        if (npc && typeof npc.id === 'number') {
+          const actor = actorsById[npc.id];
           targets.push({
-            id: npcId,
-            name: resolveActorName(actor, npcId),
+            id: npc.id,
+            name: resolveActorName(actor, npc.id),
           });
         }
       });
@@ -192,9 +203,9 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
     return calculateActivePercentages(fight, filteredDamageEventsByPlayer);
   }, [fight, damageEventsByPlayer, selectedTargetIds]);
 
-  const fightDuration = useMemo(() => {
+  const fightDurationMs = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
-      return (Number(fight.endTime) - Number(fight.startTime)) / 1000;
+      return Number(fight.endTime) - Number(fight.startTime);
     }
     return 1;
   }, [fight]);
@@ -329,7 +340,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
           id,
           name,
           total: totalDamage,
-          dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
+          dps: fightDurationMs > 0 ? totalDamage / msToSeconds(fightDurationMs) : 0,
           activePercentage,
           criticalDamagePercent,
           criticalDamageTotal,
@@ -346,13 +357,38 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
     damageStatistics.criticalDamageByPlayer,
     isPlayerActor,
     masterData.actorsById,
-    fightDuration,
+    fightDurationMs,
     getPlayerRole,
     activePercentages,
     deathsByPlayer,
     resByPlayer,
     cpmByPlayer,
   ]);
+
+  // --- PlayerCardModal state ---
+  const [modalPlayerId, setModalPlayerId] = useState<string | null>(null);
+
+  const handlePlayerClick = useCallback((playerId: string) => {
+    setModalPlayerId(playerId);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setModalPlayerId(null);
+  }, []);
+
+  const handleModalPlayerChange = useCallback((playerId: string | number) => {
+    setModalPlayerId(String(playerId));
+  }, []);
+
+  const orderedPlayerIds = useMemo(() => damageRows.map((row) => row.id), [damageRows]);
+
+  const resolvePlayerName = useCallback(
+    (playerId: number, fallbackName: string): string => {
+      const actor = actorsById[playerId];
+      return resolveActorName(actor, playerId, fallbackName);
+    },
+    [actorsById],
+  );
 
   // Show table skeleton while data is being fetched
   if (isLoading) {
@@ -379,7 +415,21 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = () => {
         isDamageOverTimeLoading={isDamageOverTimeLoading}
         selectedTargetIds={selectedTargetIds}
         availableTargets={availableTargets}
+        onPlayerClick={handlePlayerClick}
+        context={resolvedContext}
+        fight={fight}
+        resolvePlayerName={resolvePlayerName}
       />
+      {modalPlayerId !== null && (
+        <PlayerCardModal
+          open
+          onClose={handleModalClose}
+          currentPlayerId={modalPlayerId}
+          orderedPlayerIds={orderedPlayerIds}
+          onPlayerChange={handleModalPlayerChange}
+          context={resolvedContext}
+        />
+      )}
     </Box>
   );
 };

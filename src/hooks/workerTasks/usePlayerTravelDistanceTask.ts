@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectWorkerTaskLoading,
   selectWorkerTaskError,
@@ -14,10 +15,13 @@ import { useDamageEvents } from '../events/useDamageEvents';
 import { useDeathEvents } from '../events/useDeathEvents';
 import { useHealingEvents } from '../events/useHealingEvents';
 import { useResourceEvents } from '../events/useResourceEvents';
-import { useCurrentFight } from '../useCurrentFight';
 import { usePlayerData } from '../usePlayerData';
 
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
+
+interface UsePlayerTravelDistanceTaskOptions {
+  context?: ReportFightContextInput;
+}
 
 interface UsePlayerTravelDistanceTaskResult {
   playerTravelDistances: PlayerTravelDistanceResult | null;
@@ -26,16 +30,21 @@ interface UsePlayerTravelDistanceTaskResult {
   playerTravelDistancesProgress: number | null;
 }
 
-export function usePlayerTravelDistanceTask(): UsePlayerTravelDistanceTaskResult {
-  const { dispatch } = useWorkerTaskDependencies();
+export function usePlayerTravelDistanceTask(
+  options?: UsePlayerTravelDistanceTaskOptions,
+): UsePlayerTravelDistanceTaskResult {
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
 
-  const { fight, isFightLoading } = useCurrentFight();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
+  const fight = selectedFight;
+  const isFightLoading = !fight;
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: options?.context });
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: options?.context });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: options?.context });
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents({
+    context: options?.context,
+  });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: options?.context });
 
   const playerIds = React.useMemo(() => {
     if (!playerData?.playersById) {
@@ -77,7 +86,7 @@ export function usePlayerTravelDistanceTask(): UsePlayerTravelDistanceTaskResult
       return;
     }
 
-    dispatch(
+    const promise = dispatch(
       executePlayerTravelDistancesTask({
         fight: {
           id: fight.id,
@@ -88,6 +97,9 @@ export function usePlayerTravelDistanceTask(): UsePlayerTravelDistanceTaskResult
         playerIds,
       }),
     );
+    return () => {
+      promise.abort();
+    };
   }, [dispatch, fight, events, playerIds, isAnyDependencyLoading]);
 
   const taskResult = useSelector(

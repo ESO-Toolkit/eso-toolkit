@@ -72,6 +72,30 @@ export function calculateTouchOfZenStacks(
 
   onProgress?.(0.4);
 
+  // Step 2.5: Pre-build a lookup of DOT tick events indexed by "sourceId:targetId",
+  // sorted by timestamp, to avoid scanning all damage events for every timestamp.
+  const dotTickLookup = new Map<string, DamageEvent[]>();
+  for (const event of damageEvents) {
+    if (
+      event.tick === true &&
+      dotAbilities.has(event.abilityGameID) &&
+      event.sourceID !== null &&
+      event.sourceID !== undefined
+    ) {
+      const key = `${event.sourceID}:${event.targetID}`;
+      let bucket = dotTickLookup.get(key);
+      if (!bucket) {
+        bucket = [];
+        dotTickLookup.set(key, bucket);
+      }
+      bucket.push(event);
+    }
+  }
+  // Sort each bucket by timestamp for efficient windowed lookups
+  for (const bucket of dotTickLookup.values()) {
+    bucket.sort((a, b) => a.timestamp - b.timestamp);
+  }
+
   // Step 3: For each Touch of Z'en interval, calculate stacks over time
   const stackTimelines = new Map<
     number,
@@ -87,18 +111,14 @@ export function calculateTouchOfZenStacks(
 
     if (sourceId === null) return;
 
+    const dotTickEvents = dotTickLookup.get(`${sourceId}:${targetId}`) ?? [];
+
     // Calculate stacks at regular intervals (every 1 second)
     const timeline: Array<{ timestamp: number; stacks: number; sourceId: number }> = [];
 
     for (let timestamp = interval.start; timestamp <= interval.end; timestamp += 1000) {
-      // Count active DOT abilities from this source at this timestamp
-      const stacks = countActiveDotAbilities(
-        timestamp,
-        sourceId,
-        targetId,
-        dotAbilities,
-        damageEvents,
-      );
+      // Count active DOT abilities from this source at this timestamp using pre-filtered events
+      const stacks = countActiveDotAbilitiesFromBucket(timestamp, dotTickEvents);
 
       timeline.push({
         timestamp,
@@ -215,34 +235,31 @@ function findTouchOfZenSource(
 }
 
 /**
- * Count how many DOT abilities from a specific source are active on a target at a given timestamp
+ * Optimized version: count active DOT abilities from a pre-filtered, timestamp-sorted bucket.
+ * Uses binary search to find the relevant window instead of scanning all events.
  */
-function countActiveDotAbilities(
-  timestamp: number,
-  sourceId: number,
-  targetId: number,
-  dotAbilities: Set<number>,
-  damageEvents: DamageEvent[],
-): number {
-  // Look for DOT ticks within a recent window (3 seconds)
+function countActiveDotAbilitiesFromBucket(timestamp: number, sortedEvents: DamageEvent[]): number {
   const recentWindow = 3000; // 3 seconds
   const windowStart = timestamp - recentWindow;
-  const windowEnd = timestamp;
+
+  // Binary search for the first event at or after windowStart
+  let lo = 0;
+  let hi = sortedEvents.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (sortedEvents[mid].timestamp < windowStart) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
 
   const activeDotAbilities = new Set<number>();
-
-  damageEvents.forEach((event) => {
-    if (
-      event.sourceID === sourceId &&
-      event.targetID === targetId &&
-      event.tick === true &&
-      event.timestamp >= windowStart &&
-      event.timestamp <= windowEnd &&
-      dotAbilities.has(event.abilityGameID)
-    ) {
-      activeDotAbilities.add(event.abilityGameID);
-    }
-  });
+  for (let i = lo; i < sortedEvents.length; i++) {
+    const event = sortedEvents[i];
+    if (event.timestamp > timestamp) break;
+    activeDotAbilities.add(event.abilityGameID);
+  }
 
   return activeDotAbilities.size;
 }

@@ -8,7 +8,7 @@ import { useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import { Logger, LogLevel } from '@/contexts/LoggerContext';
-import { selectPlayerData } from '@/store/player_data/playerDataSelectors';
+import { selectActivePlayersById } from '@/store/player_data/playerDataSelectors';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import {
   executeScribingDetectionsTask,
@@ -927,7 +927,7 @@ export function useScribingDetection(
   const { fightId, playerId, abilityId, enabled = true } = options;
   const dispatch = useAppDispatch();
 
-  const playerData = useSelector(selectPlayerData);
+  const playersById = useSelector(selectActivePlayersById);
   const workerTaskState = useSelector(selectScribingDetectionsTask);
   const workerResult = useSelector(selectScribingDetectionsResult);
 
@@ -978,15 +978,19 @@ export function useScribingDetection(
     isScribingAbility(abilityId);
 
   const basePlayerAbilities = useMemo<PlayerAbilityList[]>(() => {
-    if (!playerData?.playersById) {
-      return [];
-    }
+    const players = Object.values(playersById);
 
-    return Object.values(playerData.playersById)
+    return players
       .map((player) => {
         const talents = player.combatantInfo?.talents ?? [];
         const abilityIds = Array.from(
-          new Set(talents.map((talent) => talent.guid).filter((guid) => isScribingAbility(guid))),
+          new Set(
+            talents
+              .map((talent) => talent?.guid)
+              .filter(
+                (guid): guid is number => typeof guid === 'number' && isScribingAbility(guid),
+              ),
+          ),
         );
 
         return {
@@ -995,7 +999,7 @@ export function useScribingDetection(
         };
       })
       .filter((entry) => entry.abilityIds.length > 0);
-  }, [playerData]);
+  }, [playersById]);
 
   const requestedPlayerAbilities = useMemo<PlayerAbilityList[]>(() => {
     if (!shouldAttemptDetection || typeof playerId !== 'number' || typeof abilityId !== 'number') {

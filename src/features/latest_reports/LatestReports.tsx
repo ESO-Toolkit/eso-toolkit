@@ -10,15 +10,18 @@ import {
   IconButton,
   Pagination,
   Paper,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,6 +36,7 @@ import {
   formatReportDateTime,
   formatReportDuration,
   getReportVisibilityColor,
+  isReportEmpty,
 } from '../reports/reportFormatting';
 import { useReportPageLayout } from '../reports/useReportPageLayout';
 
@@ -110,8 +114,13 @@ export const LatestReports: React.FC = () => {
           loading: false,
           pagination: {
             currentPage: reportPagination.current_page || 1,
-            totalPages: reportPagination.last_page || 1,
-            totalReports: 0, // We don't care about total count
+            totalPages:
+              reportPagination.last_page > 0
+                ? reportPagination.last_page
+                : reportPagination.has_more_pages
+                  ? (reportPagination.current_page || 1) + 1
+                  : reportPagination.current_page || 1,
+            totalReports: 0,
             perPage: reportPagination.per_page || REPORTS_PER_PAGE,
             hasMorePages: reportPagination.has_more_pages || false,
           },
@@ -139,17 +148,64 @@ export const LatestReports: React.FC = () => {
     fetchLatestReports(page);
   };
 
-  const handleReportClick = (reportCode: string): void => {
-    navigate(`/report/${reportCode}`);
+  const handleReportClick = (reportCode: string, event?: React.MouseEvent): void => {
+    const url = `/report/${reportCode}`;
+
+    // Check if middle-click, Ctrl+Click, or Cmd+Click (Mac)
+    if (event && (event.button === 1 || event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(url);
+    }
   };
 
-  // Loading state
+  // Loading state — skeleton matching the Card + table layout
   if (state.loading && state.reports.length === 0) {
     return (
       <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-          <CircularProgress />
-        </Box>
+        <Card elevation={isDesktop ? 4 : 1} sx={cardSx}>
+          <CardContent sx={cardContentSx}>
+            {/* Header skeleton */}
+            <Box sx={{ ...headerStackSx, mb: 3 }}>
+              <Box>
+                <Skeleton variant="text" width={200} height={isDesktop ? 36 : 30} />
+                <Skeleton variant="text" width={320} height={18} sx={{ mt: 0.5 }} />
+              </Box>
+            </Box>
+            {/* Stats row skeleton */}
+            <Box
+              sx={{ justifyContent: 'space-between', alignItems: 'center', display: 'flex', mb: 3 }}
+            >
+              <Skeleton variant="text" width={240} height={18} />
+              <Skeleton variant="rounded" width={100} height={28} sx={{ borderRadius: '16px' }} />
+            </Box>
+            {/* Table rows skeleton */}
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  py: 1.5,
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                }}
+              >
+                <Skeleton variant="text" width={`${28 + ((i * 11) % 20)}%`} height={18} />
+                <Skeleton variant="text" width={80} height={18} />
+                <Box sx={{ flex: 1 }} />
+                <Skeleton variant="text" width={60} height={18} />
+                <Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '4px' }} />
+              </Box>
+            ))}
+            {/* Pagination skeleton */}
+            <Box sx={{ mt: 3, justifyContent: 'center', display: 'flex' }}>
+              <Skeleton variant="rounded" width={200} height={32} sx={{ borderRadius: '16px' }} />
+            </Box>
+          </CardContent>
+        </Card>
       </Container>
     );
   }
@@ -160,7 +216,7 @@ export const LatestReports: React.FC = () => {
         elevation={isDesktop ? 4 : 1}
         sx={{
           ...cardSx,
-          background: (theme) =>
+          background: (theme: Theme) =>
             theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
               : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
@@ -172,6 +228,7 @@ export const LatestReports: React.FC = () => {
             <IconButton
               onClick={handleRefresh}
               disabled={state.loading}
+              aria-label="Refresh reports"
               color="primary"
               sx={{
                 position: 'absolute',
@@ -202,8 +259,8 @@ export const LatestReports: React.FC = () => {
               </Typography>
               <Typography
                 variant="body1"
-                color="text.secondary"
                 sx={{
+                  color: 'text.secondary',
                   maxWidth: isDesktop ? 'none' : '26ch',
                   pr: isDesktop ? 0 : 1, // Add some right padding on mobile
                 }}
@@ -217,6 +274,7 @@ export const LatestReports: React.FC = () => {
                 <IconButton
                   onClick={handleRefresh}
                   disabled={state.loading}
+                  aria-label="Refresh reports"
                   color="primary"
                   sx={{
                     width: 'auto',
@@ -231,16 +289,18 @@ export const LatestReports: React.FC = () => {
           {state.reports.length > 0 ? (
             <>
               <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems={isDesktop ? 'center' : 'flex-start'}
-                flexDirection={isDesktop ? 'row' : 'column'}
-                gap={isDesktop ? 2 : 1.5}
-                mb={isDesktop ? 3 : 2}
+                sx={{
+                  flexDirection: isDesktop ? 'row' : 'column',
+                  justifyContent: 'space-between',
+                  gap: isDesktop ? 2 : 1.5,
+                  alignItems: isDesktop ? 'center' : 'flex-start',
+                  display: 'flex',
+                  mb: isDesktop ? 3 : 2,
+                }}
               >
-                <Typography variant="body1" color="text.secondary">
-                  Showing page {state.pagination.currentPage} of {state.pagination.totalPages} -{' '}
-                  {state.pagination.totalReports} total reports
+                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                  Page {state.pagination.currentPage}
+                  {state.pagination.hasMorePages ? '+' : ` of ${state.pagination.totalPages}`}
                 </Typography>
 
                 <Chip
@@ -265,22 +325,22 @@ export const LatestReports: React.FC = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Title
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Zone
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Duration
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                             Visibility
                           </Typography>
                         </TableCell>
@@ -291,7 +351,16 @@ export const LatestReports: React.FC = () => {
                         <TableRow
                           key={report.code}
                           hover
-                          onClick={() => handleReportClick(report.code)}
+                          onClick={(e: React.MouseEvent<HTMLTableRowElement>) =>
+                            handleReportClick(report.code, e)
+                          }
+                          onMouseDown={(e: React.MouseEvent<HTMLTableRowElement>) => {
+                            // Handle middle-click
+                            if (e.button === 1) {
+                              e.preventDefault();
+                              handleReportClick(report.code, e);
+                            }
+                          }}
                           sx={{
                             cursor: 'pointer',
                             transition: 'all 0.2s ease-in-out',
@@ -303,27 +372,43 @@ export const LatestReports: React.FC = () => {
                         >
                           <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
                             <Box>
-                              <Typography
-                                variant="body2"
-                                fontWeight="medium"
-                                color="primary.main"
-                                sx={{
-                                  overflowWrap: 'anywhere',
-                                  wordBreak: 'break-word',
-                                  lineHeight: 1.4,
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {report.title || 'Untitled Report'}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: 'primary.main',
+                                    fontWeight: 'medium',
+                                    overflowWrap: 'anywhere',
+                                    wordBreak: 'break-word',
+                                    lineHeight: 1.4,
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    textOverflow: 'ellipsis',
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  {report.title || 'Untitled Report'}
+                                </Typography>
+                                {isReportEmpty(report) && (
+                                  <Tooltip
+                                    title="This log may contain no fight data due to an upload or parsing issue on ESO Logs"
+                                    arrow
+                                  >
+                                    <Chip
+                                      label="Empty Log"
+                                      size="small"
+                                      color="warning"
+                                      variant="outlined"
+                                      sx={{ flexShrink: 0, fontSize: '0.7rem', height: 20 }}
+                                    />
+                                  </Tooltip>
+                                )}
+                              </Box>
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
                                 sx={{
+                                  color: 'text.secondary',
                                   display: 'block',
                                   mt: 0.25,
                                   whiteSpace: 'nowrap',
@@ -335,8 +420,8 @@ export const LatestReports: React.FC = () => {
                               </Typography>
                               <Typography
                                 variant="caption"
-                                color="text.secondary"
                                 sx={{
+                                  color: 'text.secondary',
                                   display: 'block',
                                   mt: 0.25,
                                   whiteSpace: 'nowrap',
@@ -383,7 +468,7 @@ export const LatestReports: React.FC = () => {
               )}
 
               {/* Pagination */}
-              <Box display="flex" justifyContent="center" mt={isDesktop ? 3 : 2}>
+              <Box sx={{ mt: isDesktop ? 3 : 2, justifyContent: 'center', display: 'flex' }}>
                 <Pagination
                   count={state.pagination.totalPages}
                   page={state.pagination.currentPage}
@@ -406,16 +491,18 @@ export const LatestReports: React.FC = () => {
           {/* Loading overlay */}
           {state.loading && state.reports.length > 0 && (
             <Box
-              position="absolute"
-              top={0}
-              left={0}
-              right={0}
-              bottom={0}
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              bgcolor="rgba(255,255,255,0.7)"
-              zIndex={1}
+              sx={{
+                bottom: 0,
+                bgcolor: 'rgba(255,255,255,0.7)',
+                justifyContent: 'center',
+                alignItems: 'center',
+                top: 0,
+                zIndex: 1,
+                display: 'flex',
+                position: 'absolute',
+                left: 0,
+                right: 0,
+              }}
             >
               <CircularProgress />
             </Box>

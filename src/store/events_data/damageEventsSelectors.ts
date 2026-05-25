@@ -2,17 +2,77 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { DamageEvent } from '../../types/combatlogEvents';
 import { getDamageEventsByPlayer } from '../../utils/damageEventUtils';
-import { selectActorsById } from '../master_data/masterDataSelectors';
-import { RootState } from '../storeWithHistory';
+import type { ReportFightContextInput } from '../contextTypes';
+import { selectActorsByIdForContext } from '../master_data/masterDataSelectors';
+import { selectActiveReportContext } from '../report/reportSelectors';
+import type { RootState } from '../storeWithHistory';
+import { createReportFightContextSelector } from '../utils/contextSelectors';
+import { resolveCacheKey } from '../utils/keyedCacheState';
 
-import { DamageEventsState } from './damageEventsSlice';
+import { DamageEventsEntry, DamageEventsState } from './damageEventsSlice';
 
 // Basic damage events selectors
 export const selectDamageEventsState = (state: RootState): DamageEventsState => state.events.damage;
-export const selectDamageEvents = (state: RootState): DamageEvent[] => state.events.damage.events;
-export const selectDamageEventsLoading = (state: RootState): boolean => state.events.damage.loading;
-export const selectDamageEventsError = (state: RootState): string | null =>
-  state.events.damage.error;
+
+export const selectDamageEventsEntryForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectDamageEventsState],
+  DamageEventsEntry | null
+>([selectDamageEventsState], (damageState, context) => {
+  if (!context.reportCode) {
+    return null;
+  }
+  const { key } = resolveCacheKey(context);
+  return damageState.entries[key] ?? null;
+});
+
+export const selectDamageEventsForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectDamageEventsState],
+  DamageEvent[]
+>([selectDamageEventsState], (damageState, context) => {
+  if (!context.reportCode) {
+    return [];
+  }
+  const { key } = resolveCacheKey(context);
+  return damageState.entries[key]?.events ?? [];
+});
+
+const createActiveContextInput = (
+  state: RootState,
+  fightId: number | string | null,
+): ReportFightContextInput => ({
+  reportCode: state.report.activeContext.reportId ?? state.report.reportId,
+  fightId,
+});
+
+export const selectDamageEvents = createSelector(
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) =>
+    selectDamageEventsForContext(state, createActiveContextInput(state, activeContext.fightId)),
+);
+
+export const selectDamageEventsLoading = createSelector(
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) => {
+    const entry = selectDamageEventsEntryForContext(
+      state,
+      createActiveContextInput(state, activeContext.fightId),
+    );
+    return entry?.status === 'loading';
+  },
+);
+
+export const selectDamageEventsError = createSelector(
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) => {
+    const entry = selectDamageEventsEntryForContext(
+      state,
+      createActiveContextInput(state, activeContext.fightId),
+    );
+    return entry?.error ?? null;
+  },
+);
 
 /**
  * Selector for damage events grouped by player ID.
@@ -25,11 +85,21 @@ export const selectDamageEventsError = (state: RootState): string | null =>
  * // Result: { "123": [damageEvent1, damageEvent2], "456": [damageEvent3] }
  * ```
  */
+export const selectDamageEventsByPlayerForContext = createReportFightContextSelector<
+  RootState,
+  [typeof selectDamageEventsForContext, typeof selectActorsByIdForContext],
+  Record<string, DamageEvent[]>
+>([selectDamageEventsForContext, selectActorsByIdForContext], (damageEvents, actorsById) =>
+  getDamageEventsByPlayer(damageEvents, actorsById),
+);
+
 export const selectDamageEventsByPlayer = createSelector(
-  [selectDamageEvents, selectActorsById],
-  (damageEvents, actorsById): Record<string, DamageEvent[]> => {
-    return getDamageEventsByPlayer(damageEvents, actorsById);
-  },
+  [(state: RootState) => state, selectActiveReportContext],
+  (state, activeContext) =>
+    selectDamageEventsByPlayerForContext(state, {
+      reportCode: activeContext.reportId ?? state.report.reportId ?? null,
+      fightId: activeContext.fightId,
+    }),
 );
 
 /**

@@ -1,5 +1,3 @@
-const { pathsToModuleNameMapper } = require('ts-jest');
-
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: 'jsdom',
@@ -14,6 +12,8 @@ module.exports = {
     // Worker mocks - Mock web workers that use import.meta.url
     '^.*/workers$': '<rootDir>/src/test/__mocks__/workersMock.ts',
     '^.*/workers/(.*)$': '<rootDir>/src/test/__mocks__/workerFactoriesMock.ts',
+    // Discord auth uses import.meta.env which Jest/ts-jest cannot parse
+    '^.*/discord-auth$': '<rootDir>/src/test/__mocks__/discordAuthMock.ts',
     // Path mappings - After asset mocks
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
@@ -31,6 +31,15 @@ module.exports = {
       {
         tsconfig: {
           jsx: 'react-jsx',
+        },
+      },
+    ],
+    '^.+\\.m?js$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react-jsx',
+          allowJs: true,
         },
       },
     ],
@@ -94,14 +103,9 @@ module.exports = {
   },
 
   // Ignore patterns
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/build/',
-    'scribing-e2e\\.(test|spec)\\.(ts|tsx)$',
-  ],
-  transformIgnorePatterns: [
-    'node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three))',
-  ],
+  modulePathIgnorePatterns: ['<rootDir>/.claude/worktrees/', '<rootDir>/.deepsec/'],
+  testPathIgnorePatterns: ['node_modules', 'build', 'scribing-e2e\\.(test|spec)\\.(ts|tsx)$'],
+  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three|uuid|echarts|zrender))'],
 
   // Watch plugins
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
@@ -113,7 +117,7 @@ module.exports = {
 
   // Timeout configuration
   testTimeout: process.env.CI ? 30000 : 10000, // 30s in CI, 10s locally
-  
+
   // Handle async operations better
   detectOpenHandles: true,
 };

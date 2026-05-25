@@ -1,3 +1,5 @@
+import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import {
   Box,
@@ -9,7 +11,10 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { BuffUptimeProgressBar, BuffUptime } from './BuffUptimeProgressBar';
@@ -38,18 +43,28 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
   canOpenTimeline = false,
 }) => {
   const descriptionId = React.useId();
+  const [nameFilter, setNameFilter] = React.useState('');
+
+  const filteredBuffUptimes = React.useMemo(() => {
+    if (!nameFilter.trim()) return buffUptimes;
+    const normalizedFilter = nameFilter.trim().toLowerCase();
+    return buffUptimes.filter((buff) => buff.abilityName.toLowerCase().includes(normalizedFilter));
+  }, [buffUptimes, nameFilter]);
 
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
           <Typography variant="h6">Buff Uptimes</Typography>
           <Stack direction="row" spacing={1}>
             <Skeleton variant="rounded" width={120} height={32} />
             <Skeleton variant="circular" width={36} height={36} />
           </Stack>
         </Stack>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           Shows average buff uptimes across friendly players
         </Typography>
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
@@ -69,13 +84,13 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
                     position: 'relative',
                     height: 48,
                     borderRadius: 2,
-                    bgcolor: (theme) =>
+                    bgcolor: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'rgba(255,255,255,0.08)'
                         : 'rgba(203, 213, 225, 0.3)',
-                    border: (theme) =>
+                    border: (theme: Theme) =>
                       theme.palette.mode === 'dark' ? 'none' : '1px solid rgba(15, 23, 42, 0.08)',
-                    boxShadow: (theme) =>
+                    boxShadow: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
                         : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
@@ -112,7 +127,7 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6">Buff Uptimes</Typography>
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" size="small" onClick={() => onToggleShowAll(!showAllBuffs)}>
@@ -135,16 +150,50 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
         </Stack>
       </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
-        Shows average buff uptimes across friendly players
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} id={descriptionId}>
+        {selectedTargetId
+          ? 'Shows buff uptimes for the selected player with delta from group average'
+          : 'Shows average buff uptimes across friendly players'}
         {!showAllBuffs && ' (filtered to important buffs only)'}. Click on a buff to view in ESO
         Logs.
       </Typography>
 
-      {buffUptimes.length > 0 ? (
+      {buffUptimes.length > 0 && (
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Filter by name..."
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          sx={{ mb: 1 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: nameFilter && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setNameFilter('')}
+                    edge="end"
+                    aria-label="clear filter"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      )}
+
+      {filteredBuffUptimes.length > 0 ? (
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
-            {buffUptimes.map((buff) => {
+            {filteredBuffUptimes.map((buff) => {
               return (
                 <ListItem
                   key={buff.abilityGameID}
@@ -169,10 +218,12 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
           </List>
         </Box>
       ) : (
-        <Typography variant="body2" color="text.secondary">
-          {showAllBuffs
-            ? 'No friendly buff events found.'
-            : 'No important buff events found. Try showing all buffs.'}
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {nameFilter
+            ? `No buffs matching "${nameFilter}" found.`
+            : showAllBuffs
+              ? 'No friendly buff events found.'
+              : 'No important buff events found. Try showing all buffs.'}
         </Typography>
       )}
     </Box>

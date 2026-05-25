@@ -25,15 +25,16 @@ export interface StaggerStacksResult {
   stackResults: StaggerStackResult[];
 }
 
-// Stone Giant ability ID that applies stagger
-const STONE_GIANT_ABILITY_ID = KnownAbilities.STONE_GIANT;
+// Magma Fist ability ID that applies stagger (U49 rename of Stone Giant; ability ID 133027 unchanged)
+const MAGMA_FIST_ABILITY_ID = KnownAbilities.MAGMA_FIST;
 
 // Each stack lasts 6 seconds
 const STACK_DURATION = 6000;
 
 /**
  * Calculate Stagger stacks debuff uptimes
- * Each damage event from Stone Giant (134340) applies/refreshes stagger stacks:
+ * Each damage event from Magma Fist (ability ID 133027, renamed from Stone Giant in U49)
+ * applies/refreshes stagger stacks:
  * - Builds up to 3 stacks (1st hit = 1 stack, 2nd = 2 stacks, 3rd = 3 stacks)
  * - Once at 3 stacks, subsequent hits refresh the 6-second duration
  * - If 6 seconds pass with no hits, all stacks drop off at once
@@ -54,15 +55,15 @@ export function calculateStaggerStacks(
 
   onProgress?.(0.1);
 
-  // Step 1: Filter Stone Giant damage events within fight bounds
-  const stoneGiantDamageEvents = damageEvents.filter(
+  // Step 1: Filter Magma Fist damage events within fight bounds
+  const magmaFistDamageEvents = damageEvents.filter(
     (event) =>
-      event.abilityGameID === STONE_GIANT_ABILITY_ID &&
+      event.abilityGameID === MAGMA_FIST_ABILITY_ID &&
       event.timestamp >= fightStartTime &&
       event.timestamp < fightEndTime, // Don't include events exactly at fight end
   );
 
-  if (stoneGiantDamageEvents.length === 0) {
+  if (magmaFistDamageEvents.length === 0) {
     return {
       stackResults: [],
     };
@@ -73,9 +74,9 @@ export function calculateStaggerStacks(
   // Step 2: Group events by target and calculate stacks over time for each target
   const targetTimelines = new Map<number, Array<{ timestamp: number; stacks: number }>>();
 
-  // Group Stone Giant events by target
+  // Group Magma Fist events by target
   const eventsByTarget = new Map<number, DamageEvent[]>();
-  stoneGiantDamageEvents.forEach((event) => {
+  magmaFistDamageEvents.forEach((event) => {
     if (!eventsByTarget.has(event.targetID)) {
       eventsByTarget.set(event.targetID, []);
     }
@@ -171,8 +172,8 @@ export function calculateStaggerStacks(
 
     if (totalUptime > 0) {
       results.push({
-        abilityGameID: KnownAbilities.STAGGER.toString(),
-        abilityName: `Stagger (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
+        abilityGameID: KnownAbilities.HEAT_SHOCK.toString(),
+        abilityName: `Heat Shock (${stackLevel} Stack${stackLevel > 1 ? 's' : ''})`,
         totalDuration: totalUptime,
         uptime: totalUptime / 1000, // Convert to seconds
         uptimePercentage: (totalUptime / fightDuration) * 100,

@@ -11,7 +11,7 @@
  * @module ReplayErrorBoundary
  */
 
-import { ErrorOutline, Refresh, Info, Computer, BugReport } from '@mui/icons-material';
+import { ErrorOutlined, Refresh, Info, Computer, BugReport } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -24,11 +24,10 @@ import {
   Divider,
   Chip,
 } from '@mui/material';
-import * as Sentry from '@sentry/react';
 import React, { Component, ReactNode } from 'react';
 
+import { addBreadcrumb, reportError } from '../../../utils/errorTracking';
 import { Logger, LogLevel } from '../../../utils/logger';
-import { addBreadcrumb, reportError } from '../../../utils/sentryUtils';
 import {
   detectWebGLCapabilities,
   getWebGLDescription,
@@ -109,10 +108,10 @@ const WebGLFallbackUI: React.FC<{
           {/* Icon and Title */}
           <Box>
             <Computer sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
-            <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
               3D Replay Not Available
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
               {capabilities.insufficientReason || 'WebGL is required to view 3D fight replays'}
             </Typography>
           </Box>
@@ -123,7 +122,7 @@ const WebGLFallbackUI: React.FC<{
               <strong>Current Status:</strong>
             </Typography>
             <Typography variant="body2">{getWebGLDescription()}</Typography>
-            {capabilities.likelySwoftware && (
+            {capabilities.likelySoftware && (
               <Typography variant="body2" sx={{ mt: 1 }}>
                 ⚠️ Software rendering detected - Hardware acceleration may be disabled
               </Typography>
@@ -132,7 +131,7 @@ const WebGLFallbackUI: React.FC<{
 
           {/* System Requirements */}
           <Box sx={{ textAlign: 'left' }}>
-            <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
               <Info sx={{ fontSize: 20, verticalAlign: 'middle', mr: 1 }} />
               System Requirements
             </Typography>
@@ -156,7 +155,7 @@ const WebGLFallbackUI: React.FC<{
 
           {/* Troubleshooting Steps */}
           <Box sx={{ textAlign: 'left' }}>
-            <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
               Troubleshooting Steps
             </Typography>
             <Stack spacing={1} sx={{ ml: 2 }}>
@@ -198,37 +197,49 @@ const WebGLFallbackUI: React.FC<{
                   WebGL Capabilities:
                 </Typography>
                 <Stack spacing={0.5}>
-                  <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
                     WebGL 1.0: {capabilities.hasWebGL1 ? '✓ Supported' : '✗ Not Supported'}
                   </Typography>
-                  <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
                     WebGL 2.0: {capabilities.hasWebGL2 ? '✓ Supported' : '✗ Not Supported'}
                   </Typography>
-                  <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
                     Performance Tier: {capabilities.performanceTier}
                   </Typography>
                   {capabilities.maxTextureSize && (
-                    <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Max Texture Size: {capabilities.maxTextureSize}px
                     </Typography>
                   )}
                   {capabilities.maxViewportDims && (
-                    <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Max Viewport: {capabilities.maxViewportDims[0]}x
                       {capabilities.maxViewportDims[1]}
                     </Typography>
                   )}
                   {capabilities.renderer && (
-                    <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Renderer: {capabilities.renderer}
                     </Typography>
                   )}
                   {capabilities.vendor && (
-                    <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                    >
                       Vendor: {capabilities.vendor}
                     </Typography>
                   )}
-                  <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
                     Extensions: {capabilities.extensions.length} available
                   </Typography>
                 </Stack>
@@ -237,13 +248,12 @@ const WebGLFallbackUI: React.FC<{
           </Box>
 
           {/* Action Buttons */}
-          <Stack direction="row" spacing={2} justifyContent="center">
+          <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
             <Button variant="contained" startIcon={<Refresh />} onClick={onRetry} size="large">
               Check Again
             </Button>
             <Button
               variant="outlined"
-              component="a"
               href="https://get.webgl.org/"
               target="_blank"
               rel="noopener"
@@ -254,10 +264,10 @@ const WebGLFallbackUI: React.FC<{
           </Stack>
 
           {/* Help Link */}
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Need help?{' '}
             <Link
-              href="https://github.com/bkrupa/eso-log-aggregator/wiki/WebGL-Troubleshooting"
+              href="https://github.com/ESO-Toolkit/eso-toolkit/wiki/WebGL-Troubleshooting"
               target="_blank"
               rel="noopener"
             >
@@ -318,17 +328,17 @@ const ErrorFallbackUI: React.FC<{
         <Stack spacing={3}>
           {/* Icon and Title */}
           <Box>
-            <ErrorOutline sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
+            <ErrorOutlined sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
             <Typography
               variant="h5"
               component="h2"
               gutterBottom
-              fontWeight="bold"
               data-testid="replay-error-boundary-title"
+              sx={{ fontWeight: 'bold' }}
             >
               3D Replay Error
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
               An error occurred while rendering the 3D fight replay. You can try reloading the
               replay or report this issue.
             </Typography>
@@ -340,7 +350,7 @@ const ErrorFallbackUI: React.FC<{
               <Typography variant="subtitle2" gutterBottom>
                 <strong>Error:</strong>
               </Typography>
-              <Typography variant="body2" fontFamily="monospace" fontSize="0.85rem">
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
                 {error.message}
               </Typography>
             </Alert>
@@ -389,9 +399,12 @@ const ErrorFallbackUI: React.FC<{
                       <Typography
                         variant="body2"
                         component="pre"
-                        fontFamily="monospace"
-                        fontSize="0.7rem"
-                        sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.7rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
                       >
                         {error.stack}
                       </Typography>
@@ -405,9 +418,12 @@ const ErrorFallbackUI: React.FC<{
                       <Typography
                         variant="body2"
                         component="pre"
-                        fontFamily="monospace"
-                        fontSize="0.7rem"
-                        sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+                        sx={{
+                          fontFamily: 'monospace',
+                          fontSize: '0.7rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                        }}
                       >
                         {errorInfo.componentStack}
                       </Typography>
@@ -421,7 +437,11 @@ const ErrorFallbackUI: React.FC<{
           <Divider />
 
           {/* Action Buttons */}
-          <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" gap={1}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}
+          >
             <Button
               variant="contained"
               startIcon={<Refresh />}
@@ -434,7 +454,7 @@ const ErrorFallbackUI: React.FC<{
             <Button variant="outlined" onClick={onReload} size="large">
               Reload Page
             </Button>
-            {process.env.NODE_ENV === 'production' && eventId && (
+            {process.env.NODE_ENV === 'production' && (
               <Button
                 variant="outlined"
                 startIcon={<BugReport />}
@@ -448,10 +468,10 @@ const ErrorFallbackUI: React.FC<{
           </Stack>
 
           {/* Help Text */}
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             If this problem persists, please{' '}
             <Link
-              href="https://github.com/bkrupa/eso-log-aggregator/issues"
+              href="https://github.com/ESO-Toolkit/eso-toolkit/issues"
               target="_blank"
               rel="noopener"
             >
@@ -534,40 +554,21 @@ export class ReplayErrorBoundary extends Component<
       });
     }
 
-    // Report to Sentry in production
+    // Report to error tracking in production
     if (process.env.NODE_ENV === 'production') {
-      Sentry.withScope((scope) => {
-        scope.setTag('errorBoundary', 'replay');
-        scope.setTag('feature', '3d_replay');
-        scope.setLevel('error');
-        scope.setContext('replayErrorBoundary', {
-          componentStack: errorInfo.componentStack,
-          errorBoundaryName: 'ReplayErrorBoundary',
-        });
-
-        // Add WebGL capabilities if available
-        if (this.state.webglCapabilities) {
-          scope.setContext('webgl', {
+      reportError(error, {
+        componentStack: errorInfo.componentStack,
+        errorBoundary: 'replay',
+        feature: '3d_replay',
+        ...(this.state.webglCapabilities && {
+          webgl: {
             hasWebGL1: this.state.webglCapabilities.hasWebGL1,
             hasWebGL2: this.state.webglCapabilities.hasWebGL2,
             performanceTier: this.state.webglCapabilities.performanceTier,
             isSufficient: this.state.webglCapabilities.isSufficient,
             insufficientReason: this.state.webglCapabilities.insufficientReason,
-          });
-        }
-
-        scope.setExtra('errorMessage', error.message);
-        scope.setExtra('errorStack', error.stack);
-        scope.setExtra('componentStack', errorInfo.componentStack);
-
-        const eventId = Sentry.captureException(error);
-        this.setState({ eventId });
-      });
-
-      reportError(error, {
-        componentStack: errorInfo.componentStack,
-        errorBoundary: 'replay',
-        feature: '3d_replay',
+          },
+        }),
       });
     }
   }
@@ -613,9 +614,8 @@ export class ReplayErrorBoundary extends Component<
       eventId: this.state.eventId,
     });
 
-    if (process.env.NODE_ENV === 'production' && this.state.eventId) {
-      Sentry.showReportDialog({ eventId: this.state.eventId });
-    }
+    // Open issue tracker for bug reports
+    window.open('https://github.com/ESO-Toolkit/eso-toolkit/issues', '_blank', 'noopener');
   };
 
   render(): ReactNode {

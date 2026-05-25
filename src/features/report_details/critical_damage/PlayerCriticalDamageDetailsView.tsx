@@ -7,64 +7,25 @@ import {
   AccordionDetails,
   Paper,
 } from '@mui/material';
-import type { TooltipItem } from 'chart.js';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
-import { Line } from 'react-chartjs-2';
 
+import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
+import { usePhaseMarkLines, useInactiveMarkAreas } from '../../../hooks/useEChartsAnnotations';
+import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import {
   CriticalDamageSource,
   CriticalDamageSourceWithActiveState,
 } from '../../../utils/CritDamageUtils';
+import { buildGoalMarkLine } from '../../../utils/echartsAnnotationUtils';
+import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin,
-);
-
-// Chart callback functions - extracted to module level for performance
-const formatTooltipTitle = (context: TooltipItem<'line'>[]): string => {
-  return `Time: ${Number(context[0].parsed.x).toFixed(1)}s`;
-};
-
-const formatTooltipLabel = (context: TooltipItem<'line'>): string => {
-  return `${context.parsed.y}% critical damage`;
-};
-
-const formatXAxisTick = (value: number | string): string => {
-  return `${Number(value).toFixed(1)}s`;
-};
-
-const formatYAxisTick = (value: number | string): string => {
-  return `${value}%`;
-};
 
 interface CriticalDamageDataPoint {
   timestamp: number;
@@ -93,6 +54,7 @@ export interface PlayerCriticalDamageData {
   maximumCriticalDamage: number;
   timeAtCapPercentage: number;
   criticalDamageAlerts: CriticalDamageAlert[];
+  inactiveCombatIntervals: Array<{ start: number; end: number }>;
 }
 
 interface CriticalMultiplierInfo {
@@ -119,7 +81,7 @@ interface PlayerCriticalDamageDetailsViewProps {
   toggleableSourceNames?: Set<string>;
   onSourceToggle?: (sourceId: string, nextValue: boolean) => void;
   criticalMultiplier: CriticalMultiplierInfo | null;
-  fightDurationSeconds: number;
+  fightDurationMs: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   phaseTransitionInfo?: PhaseTransitionInfo;
 }
@@ -134,7 +96,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   toggleableSourceNames,
   onSourceToggle,
   criticalMultiplier,
-  fightDurationSeconds,
+  fightDurationMs,
   player,
   onExpandChange,
   phaseTransitionInfo,
@@ -163,34 +125,94 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
     });
   }, [criticalDamageSources, toggleableSourceNames]);
 
-  // Memoize expensive chart data transformations to prevent recalculation on every render
-  const chartLabels = React.useMemo(() => {
-    return criticalDamageData?.dataPoints.map((point) => point.relativeTime.toFixed(1)) || [];
-  }, [criticalDamageData?.dataPoints]);
+  const { theme } = useEChartsTheme();
 
-  const chartDataPoints = React.useMemo(() => {
+  const chartData = React.useMemo(() => {
     return (
-      criticalDamageData?.dataPoints.map((point) => ({
-        x: point.relativeTime,
-        y: point.criticalDamage,
-      })) || []
+      criticalDamageData?.dataPoints.map((point) => [point.relativeTime, point.criticalDamage]) ||
+      []
     );
   }, [criticalDamageData?.dataPoints]);
 
-  const phaseAnnotations = React.useMemo(() => {
-    if (
-      !phaseTransitionInfo?.phaseTransitions ||
-      phaseTransitionInfo.phaseTransitions.length === 0
-    ) {
-      return null;
+  const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo);
+  const inactiveMarkAreas = useInactiveMarkAreas(criticalDamageData?.inactiveCombatIntervals);
+
+  const chartOption = React.useMemo(() => {
+    const lineColor = '#d32f2f';
+    const fightDuration = msToSeconds(fightDurationMs);
+
+    const targetLine = buildGoalMarkLine(125, 'Target: 125%', '#2e7d32');
+    const markLineData = [targetLine];
+    if (phaseMarkLines?.data) {
+      markLineData.push(...phaseMarkLines.data);
     }
 
-    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
-      fightStartTime: phaseTransitionInfo.fightStartTime,
-      fightEndTime: phaseTransitionInfo.fightEndTime,
-      xValueFormatter: (relativeSeconds: number) => Number(relativeSeconds.toFixed(1)),
-    });
-  }, [phaseTransitionInfo]);
+    return {
+      xAxis: {
+        type: 'value',
+        min: 0,
+        max: fightDuration,
+        name: 'Time (seconds)',
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: { color: theme.mutedColor },
+        axisLabel: {
+          color: theme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => `${v.toFixed(1)}s`,
+        },
+        axisLine: { lineStyle: { color: theme.borderColor } },
+        splitLine: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        min: 50,
+        max: 150,
+        name: 'Critical Damage (%)',
+        nameLocation: 'middle',
+        nameGap: 36,
+        nameTextStyle: { color: theme.mutedColor },
+        axisLabel: { color: theme.mutedColor, fontSize: 11, formatter: (v: number) => `${v}%` },
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: theme.gridLineColor, type: 'dotted' } },
+      },
+      legend: { show: false },
+      tooltip: {
+        trigger: 'axis',
+        appendToBody: true,
+        formatter: (params: Array<{ value: number[] }>) => {
+          const p = params[0];
+          if (!p) return '';
+          const time = Number(p.value[0]).toFixed(1);
+          const crit = Number(p.value[1]);
+          const color = crit >= 125 ? '#22c55e' : '#ef4444';
+          return `<div style="font-size:13px">
+            <div style="color:${theme.mutedColor}">Time: ${time}s</div>
+            <div style="font-weight:600;color:${color}">${crit}% critical damage</div>
+          </div>`;
+        },
+      },
+      series: [
+        {
+          type: 'line',
+          data: chartData,
+          ...steppedLineDefaults(),
+          lineStyle: {
+            color: lineColor,
+            width: 2,
+            ...glowLineStyle(lineColor, theme.intensity, theme.perfTier),
+          },
+          areaStyle: gradientAreaStyle(lineColor, theme.intensity, theme.perfTier),
+          markLine: {
+            silent: true,
+            symbol: ['none', 'none'],
+            data: markLineData,
+          },
+          ...(inactiveMarkAreas ? { markArea: inactiveMarkAreas } : {}),
+        },
+      ],
+    };
+  }, [chartData, fightDurationMs, phaseMarkLines, inactiveMarkAreas, theme]);
 
   if (!criticalDamageData) {
     return (
@@ -230,8 +252,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               <PlayerIcon player={player} />
               <Typography
                 variant="subtitle1"
-                fontWeight="bold"
                 sx={{
+                  fontWeight: 'bold',
                   fontSize: '1.75rem',
                   textShadow: roleColors.getAccordionTextShadow(),
                 }}
@@ -292,8 +314,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             <PlayerIcon player={player} />
             <Typography
               variant="subtitle1"
-              fontWeight="bold"
               sx={{
+                fontWeight: 'bold',
                 fontSize: '1.75rem',
                 textShadow: roleColors.getAccordionTextShadow(),
               }}
@@ -311,7 +333,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 size="md"
               />
               <MetricPill
-                label="Effective"
+                label="Active"
                 value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
                 suffix="%"
                 intent={
@@ -363,7 +385,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   size="sm"
                 />
                 <MetricPill
-                  label="Effective"
+                  label="Active"
                   value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
                   suffix="%"
                   intent={
@@ -467,8 +489,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 2, fontStyle: 'italic' }}
+                  sx={{ color: 'text.secondary', mt: 2, fontStyle: 'italic' }}
                 >
                   Critical damage bonuses are additive before being applied as a multiplier. For
                   example, if you have 75% critical damage total (50% base + 25% from sources), your
@@ -503,106 +524,11 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               >
                 Critical Damage vs Time
               </Typography>
-              <Box sx={{ width: '100%', height: 300 }}>
-                <Line
-                  data={{
-                    labels: chartLabels,
-                    datasets: [
-                      {
-                        label: 'Critical Damage %',
-                        data: chartDataPoints,
-                        borderColor: '#d32f2f',
-                        backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                        borderWidth: 2,
-                        fill: false,
-                        stepped: 'after',
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        tension: 0,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                      intersect: false,
-                      mode: 'index',
-                    },
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                      tooltip: {
-                        callbacks: {
-                          title: formatTooltipTitle,
-                          label: formatTooltipLabel,
-                        },
-                      },
-                      annotation: {
-                        annotations: {
-                          target: {
-                            type: 'line',
-                            yMin: 125,
-                            yMax: 125,
-                            borderColor: '#2e7d32',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            label: {
-                              content: 'Target: 125%',
-                              display: true,
-                              position: 'end',
-                              backgroundColor: 'rgba(46, 125, 50, 0.8)',
-                              color: 'white',
-                              font: {
-                                size: 12,
-                              },
-                              padding: 4,
-                            },
-                          },
-                          ...(phaseAnnotations ?? {}),
-                        },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        type: 'linear',
-                        display: true,
-                        min: 0,
-                        max: fightDurationSeconds,
-                        title: {
-                          display: true,
-                          text: 'Time (seconds)',
-                        },
-                        ticks: {
-                          callback: formatXAxisTick,
-                        },
-                      },
-                      y: {
-                        display: true,
-                        title: {
-                          display: true,
-                          text: 'Critical Damage (%)',
-                        },
-                        min: 50,
-                        max: 150,
-                        ticks: {
-                          callback: formatYAxisTick,
-                        },
-                      },
-                    },
-                    elements: {
-                      point: {
-                        hoverRadius: 6,
-                      },
-                    },
-                    animation: {
-                      duration: 0, // Disable animations for better performance
-                    },
-                  }}
-                />
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              <EChart option={chartOption} height={300} group="fightReport" />
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
+              >
                 Shows critical damage changes over the duration of the fight. Data downsampled to
                 0.5-second intervals (highest value per interval). Data points:{' '}
                 {criticalDamageData.dataPoints.length}

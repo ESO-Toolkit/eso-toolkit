@@ -1,3 +1,5 @@
+import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import {
   Box,
@@ -9,7 +11,10 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { BuffUptimeProgressBar, BuffUptime } from './BuffUptimeProgressBar';
@@ -38,18 +43,30 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   canOpenTimeline = false,
 }) => {
   const descriptionId = React.useId();
+  const [nameFilter, setNameFilter] = React.useState('');
+
+  const filteredDebuffUptimes = React.useMemo(() => {
+    if (!nameFilter.trim()) return debuffUptimes;
+    const normalizedFilter = nameFilter.trim().toLowerCase();
+    return debuffUptimes.filter((debuff) =>
+      debuff.abilityName.toLowerCase().includes(normalizedFilter),
+    );
+  }, [debuffUptimes, nameFilter]);
 
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
           <Typography variant="h6">Debuff Uptimes</Typography>
           <Stack direction="row" spacing={1}>
             <Skeleton variant="rounded" width={120} height={32} />
             <Skeleton variant="circular" width={36} height={36} />
           </Stack>
         </Stack>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           Shows average debuff uptimes against hostile targets
         </Typography>
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
@@ -69,13 +86,13 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
                     position: 'relative',
                     height: 48,
                     borderRadius: 2,
-                    bgcolor: (theme) =>
+                    bgcolor: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'rgba(255,255,255,0.08)'
                         : 'rgba(203, 213, 225, 0.3)',
-                    border: (theme) =>
+                    border: (theme: Theme) =>
                       theme.palette.mode === 'dark' ? 'none' : '1px solid rgba(15, 23, 42, 0.08)',
-                    boxShadow: (theme) =>
+                    boxShadow: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
                         : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
@@ -112,7 +129,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6">Debuff Uptimes</Typography>
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" size="small" onClick={() => onToggleShowAll(!showAllDebuffs)}>
@@ -135,7 +152,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
         </Stack>
       </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} id={descriptionId}>
         {selectedTargetId
           ? 'Shows debuffs applied by friendly players to the selected target'
           : 'Shows debuffs applied by friendly players to all targets'}
@@ -143,10 +160,42 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
         {reportId && fightId && ' Click on a debuff to view in ESO Logs.'}
       </Typography>
 
-      {debuffUptimes.length > 0 ? (
+      {debuffUptimes.length > 0 && (
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Filter by name..."
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          sx={{ mb: 1 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: nameFilter && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setNameFilter('')}
+                    edge="end"
+                    aria-label="clear filter"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      )}
+
+      {filteredDebuffUptimes.length > 0 ? (
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
-            {debuffUptimes.map((debuff, idx) => {
+            {filteredDebuffUptimes.map((debuff, idx) => {
               return (
                 <ListItem
                   key={idx}
@@ -171,14 +220,16 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
           </List>
         </Box>
       ) : (
-        <Typography variant="body2" color="text.secondary">
-          {showAllDebuffs
-            ? selectedTargetId
-              ? 'No friendly debuff events found for the selected target.'
-              : 'No friendly debuff events found.'
-            : selectedTargetId
-              ? 'No important debuff events found for the selected target. Try showing all debuffs.'
-              : 'No important debuff events found. Try showing all debuffs.'}
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {nameFilter
+            ? `No debuffs matching "${nameFilter}" found.`
+            : showAllDebuffs
+              ? selectedTargetId
+                ? 'No friendly debuff events found for the selected target.'
+                : 'No friendly debuff events found.'
+              : selectedTargetId
+                ? 'No important debuff events found for the selected target. Try showing all debuffs.'
+                : 'No important debuff events found. Try showing all debuffs.'}
         </Typography>
       )}
     </Box>

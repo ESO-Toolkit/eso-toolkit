@@ -18,7 +18,7 @@ const mismatchedAbilities = [
   { enumName: 'TWIN_BLADE_AND_BLUNT_PASSIVE', id: 45477, actualName: 'Dual Wield Expert' },
   { enumName: 'CRYSTAL_WEAPON_BUFF', id: 126045, actualName: 'Heavy Attack' },
   { enumName: 'TREMORSCALE', id: 142023, actualName: 'Elemental Wave' },
-  { enumName: 'CRIMSON_OATH', id: 155150, actualName: 'Hunter\'s Focus' },
+  // CRIMSON_OATH was fixed: 155150 (Hunter's Focus) → 159288 (Crimson Oath's Rive)
   { enumName: 'ROAR_OF_ALKOSH', id: 102094, actualName: 'Thurvokun' },
   { enumName: 'VELOTHI_UR_MAGE_BUFF', id: 193447, actualName: 'Velothi Ur-Mage\'s Amulet' },
   { enumName: 'DEXTERITY', id: 45241, actualName: 'Major Savagery' },
@@ -29,7 +29,7 @@ const mismatchedAbilities = [
   { enumName: 'CRUSHING_SHOCK', id: 23214, actualName: 'Boundless Storm' },
   { enumName: 'BOUNDLESS_STORM', id: 62547, actualName: 'Deadly Cloak' },
   { enumName: 'HURRICANE', id: 62529, actualName: 'Quick Cloak' },
-  { enumName: 'ERUPTION', id: 118720, actualName: 'Pummeling Goliath Bash' },
+  { enumName: 'HEARTH_AND_HOME', id: 118720, actualName: 'Pummeling Goliath Bash' },
   { enumName: 'LIQUID_LIGHTNING', id: 38891, actualName: 'Whirling Blades' },
   { enumName: 'WALL_OF_ELEMENTS', id: 102136, actualName: 'Zaan' },
   { enumName: 'ELEMENTAL_BLOCKADE', id: 75752, actualName: 'Roar of Alkosh' },

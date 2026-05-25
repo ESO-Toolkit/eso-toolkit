@@ -232,7 +232,7 @@ export const HealerGuide: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
       {/* Hero Section */}
       <Box sx={{ ...heroSx(theme), mb: 4 }}>
-        <Stack spacing={1} alignItems="flex-start">
+        <Stack spacing={1} sx={{ alignItems: 'flex-start' }}>
           <Typography
             variant="h3"
             component="h1"
@@ -252,7 +252,7 @@ export const HealerGuide: React.FC = () => {
           >
             Healer 101
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" sx={{ color: 'text.secondary' }}>
             Learn how to keep your group alive, buffed, and steady in PvE.
           </Typography>
           <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
@@ -286,10 +286,9 @@ export const HealerGuide: React.FC = () => {
               desc: 'Drop ground heals, refresh HoTs, weave heavies, and time your buffs.',
             },
           ].map((s) => (
-            // @ts-expect-error - MUI Grid item prop typing issue
-            <Grid item key={s.n} xs={12} md={4}>
+            <Grid key={s.n} size={{ xs: 12, md: 4 }}>
               <Paper sx={frostCardSx(theme)}>
-                <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: 'flex-start' }}>
                   <Box
                     sx={{
                       width: 28,
@@ -312,10 +311,8 @@ export const HealerGuide: React.FC = () => {
                     {s.n}
                   </Box>
                   <Box>
-                    <Typography variant="subtitle1" fontWeight={800}>
-                      {s.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                    <Typography variant="subtitle1">{s.title}</Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
                       {s.desc}
                     </Typography>
                   </Box>
@@ -364,13 +361,12 @@ export const HealerGuide: React.FC = () => {
               'Symphony of Blades',
               "Grand Rejuvenation (Master's Restoration Staff)",
             ].map((name) => (
-              // @ts-expect-error - MUI Grid item prop typing issue
-              <Grid item key={name} xs={12} md={4}>
+              <Grid key={name} size={{ xs: 12, md: 4 }}>
                 <Paper sx={frostCardSx(theme)}>
-                  <Typography variant="subtitle1" fontWeight={800}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                     {name}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.75 }}>
                     Chosen for reliable uptime and group sustain while you learn mechanics.
                   </Typography>
                 </Paper>
@@ -378,7 +374,7 @@ export const HealerGuide: React.FC = () => {
             ))}
           </Grid>
           <Divider sx={{ my: 2 }} />
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Don’t have the monster helm yet? Use any survivability option while you work toward
             Symphony.
           </Typography>
@@ -423,7 +419,7 @@ export const HealerGuide: React.FC = () => {
             <Chip label="Monster: Symphony → Magma (flex)" />
             <Chip label="Arena: Grand Rejuvenation" />
           </Stack>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
             Coordinate set responsibilities with your co‑healer; avoid duplicate unique buffs.
           </Typography>
         </Paper>
@@ -470,15 +466,19 @@ export const HealerGuide: React.FC = () => {
           </Typography>
           <Grid container spacing={2}>
             {outlineSlides.slice(0, 6).map((sl) => (
-              // @ts-expect-error - MUI Grid item prop typing issue
-              <Grid item key={sl.index} xs={12} md={6}>
+              <Grid key={sl.index} size={{ xs: 12, md: 6 }}>
                 <Paper sx={frostCardSx(theme)}>
-                  <Typography variant="subtitle1" fontWeight={800}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                     {sl.title}
                   </Typography>
                   <Stack component="ul" spacing={0.5} sx={{ mt: 1, pl: 2 }}>
                     {sl.items.slice(0, 6).map((it, idx) => (
-                      <Typography key={idx} component="li" variant="body2" color="text.secondary">
+                      <Typography
+                        key={idx}
+                        component="li"
+                        variant="body2"
+                        sx={{ color: 'text.secondary' }}
+                      >
                         {it.text}
                       </Typography>
                     ))}
@@ -497,17 +497,17 @@ export const HealerGuide: React.FC = () => {
           aria-controls="advanced-content"
           id="advanced-header"
         >
-          <Typography fontWeight={800}>
+          <Typography sx={{ fontWeight: 800 }}>
             Advanced: Full gear explorer, activation types, and example builds
           </Typography>
         </AccordionSummary>
-        <AccordionDetails>
+        <AccordionDetails id="advanced-content">
           {/* Gear Explorer */}
           <Box>
             <Stack
               direction={{ xs: 'column', md: 'row' }}
               spacing={2}
-              alignItems={{ xs: 'stretch', md: 'center' }}
+              sx={{ alignItems: { xs: 'stretch', md: 'center' } }}
             >
               <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: '-.01em' }}>
                 Gear Explorer
@@ -519,12 +519,14 @@ export const HealerGuide: React.FC = () => {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search sets, aliases, or slots..."
                 aria-label="Search healer gear sets"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
                 sx={{ minWidth: { xs: '100%', md: 320 } }}
               />
@@ -554,20 +556,18 @@ export const HealerGuide: React.FC = () => {
 
             <Grid container spacing={2} sx={{ mt: 1 }}>
               {filtered.map((set) => (
-                // @ts-expect-error - MUI Grid item prop typing issue
-                <Grid item key={`${set.full_name}-${set.category}`} xs={12} sm={6} md={4}>
+                <Grid key={`${set.full_name}-${set.category}`} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack
                       direction="row"
-                      alignItems="center"
                       spacing={1}
-                      justifyContent="space-between"
+                      sx={{ justifyContent: 'space-between', alignItems: 'center' }}
                     >
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         {set.abbreviation && (
                           <Chip size="small" label={set.abbreviation} sx={{ fontWeight: 700 }} />
                         )}
-                        <Typography variant="subtitle1" fontWeight={800}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                           {set.full_name}
                         </Typography>
                       </Stack>
@@ -580,7 +580,7 @@ export const HealerGuide: React.FC = () => {
                       </Tooltip>
                     </Stack>
                     {set.description && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25 }}>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1.25 }}>
                         {set.description}
                       </Typography>
                     )}
@@ -613,7 +613,7 @@ export const HealerGuide: React.FC = () => {
             </Grid>
 
             {filtered.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
                 No sets match your filters.
               </Typography>
             )}
@@ -626,22 +626,20 @@ export const HealerGuide: React.FC = () => {
             </Typography>
             <Grid container spacing={2}>
               {activationEntries.map(([key, desc]) => (
-                // @ts-expect-error - MUI Grid item prop typing issue
-                <Grid item key={key} xs={12} sm={6} md={4}>
+                <Grid key={key} size={{ xs: 12, sm: 6, md: 4 }}>
                   <Paper sx={frostCardSx(theme)}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Box component="span" role="img" aria-label={key} sx={{ fontSize: 18 }}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <span role="img" aria-label={key} style={{ fontSize: 18 }}>
                         {activationIcons[key] || 'ℹ️'}
-                      </Box>
+                      </span>
                       <Typography
                         variant="subtitle2"
-                        fontWeight={700}
-                        sx={{ textTransform: 'capitalize' }}
+                        sx={{ fontWeight: 700, textTransform: 'capitalize' }}
                       >
                         {key.replace('_', ' ')}
                       </Typography>
                     </Stack>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                       {desc}
                     </Typography>
                   </Paper>
@@ -658,16 +656,15 @@ export const HealerGuide: React.FC = () => {
             <Paper sx={{ ...frostCardSx(theme), mt: 1 }}>
               <Grid container spacing={2}>
                 {healingGuideData.build_strategies.example_builds.map((b) => (
-                  // @ts-expect-error - MUI Grid item prop typing issue
-                  <Grid item key={b.build_name} xs={12} md={6}>
+                  <Grid key={b.build_name} size={{ xs: 12, md: 6 }}>
                     <Paper sx={frostCardSx(theme)}>
-                      <Typography variant="subtitle2" fontWeight={800}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                         {b.build_name}
                       </Typography>
                       <Divider sx={{ my: 1 }} />
                       <Stack spacing={0.5}>
                         {Object.entries(b.gear_distribution).map(([k, v]) => (
-                          <Stack key={k} direction="row" spacing={1} alignItems="center">
+                          <Stack key={k} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                             <Typography
                               variant="caption"
                               sx={{ minWidth: 90, color: 'text.secondary' }}
@@ -688,13 +685,13 @@ export const HealerGuide: React.FC = () => {
           {/* Notes */}
           <Box sx={{ mt: 4 }}>
             <Paper sx={frostCardSx(theme)}>
-              <Typography variant="subtitle1" fontWeight={800}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                 Notes & Disclaimers
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                 {healingGuideData.implementation_notes.disclaimer}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
                 {healingGuideData.implementation_notes.duplication}
               </Typography>
             </Paper>

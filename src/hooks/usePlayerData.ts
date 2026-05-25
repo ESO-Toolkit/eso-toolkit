@@ -2,37 +2,46 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { useSelectedReportAndFight } from '../ReportFightContext';
+import type { ReportFightContextInput } from '../store/contextTypes';
 import {
-  selectPlayerData,
-  selectPlayerDataLoadingState,
+  selectIsPlayerDataLoadingForContext,
+  selectPlayerDataEntryForContext,
 } from '../store/player_data/playerDataSelectors';
-import { fetchPlayerData, PlayerDataState } from '../store/player_data/playerDataSlice';
+import { fetchPlayerData, PlayerDataEntry } from '../store/player_data/playerDataSlice';
+import type { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
-export function usePlayerData(): {
-  playerData: PlayerDataState | null;
+import { useResolvedReportFightContext } from './useResolvedReportFightContext';
+
+interface UsePlayerDataOptions {
+  context?: ReportFightContextInput;
+}
+
+export function usePlayerData(options?: UsePlayerDataOptions): {
+  playerData: PlayerDataEntry | null;
   isPlayerDataLoading: boolean;
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useSelectedReportAndFight();
+  const context = useResolvedReportFightContext(options?.context);
 
-  // Move selectors BEFORE the effects that use them
-  const playerData = useSelector(selectPlayerData);
-  const isPlayerDataLoading = useSelector(selectPlayerDataLoadingState);
+  const playerData = useSelector((state: RootState) =>
+    selectPlayerDataEntryForContext(state, context),
+  );
+  const isPlayerDataLoading = useSelector((state: RootState) =>
+    selectIsPlayerDataLoadingForContext(state, context),
+  );
 
   React.useEffect(() => {
-    if (reportId && fightId) {
-      const fightIdNumber = parseInt(fightId, 10);
-      if (!isNaN(fightIdNumber)) {
-        dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, client }));
-      }
+    if (context.reportCode && context.fightId !== null && client) {
+      dispatch(
+        fetchPlayerData({ reportCode: context.reportCode, fightId: context.fightId, client }),
+      );
     }
-  }, [dispatch, reportId, fightId, client]);
+  }, [dispatch, context.reportCode, context.fightId, client]);
 
   return React.useMemo(
-    () => ({ playerData, isPlayerDataLoading }),
+    () => ({ playerData: playerData ?? null, isPlayerDataLoading }),
     [playerData, isPlayerDataLoading],
   );
 }

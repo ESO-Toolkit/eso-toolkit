@@ -543,5 +543,93 @@ describe('detectBuildIssues', () => {
       );
       expect(hasMinorAegisIssueWithoutAura).toBe(true); // Should report as missing
     });
+
+    it('should detect missing Exploiter CP for DPS', () => {
+      // Test DPS role - should check for Exploiter CP
+      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps', [], 9, {
+        stamina: 32000,
+        magicka: 15000,
+      });
+      const hasExploiterIssue = dpsIssues.some((issue) => issue.message.includes('Exploiter'));
+      expect(hasExploiterIssue).toBe(true);
+
+      // Test with Exploiter in auras
+      const mockAurasWithExploiter = [
+        { name: 'Exploiter', id: 63880, stacks: 1 },
+        { name: 'Minor Slayer', id: 147226, stacks: 1 },
+      ];
+
+      const dpsIssuesWithExploiter = detectBuildIssues(
+        [],
+        mockBuffLookup,
+        1000,
+        2000,
+        mockAurasWithExploiter,
+        'dps',
+        [],
+        9,
+        { stamina: 32000, magicka: 15000 },
+      );
+      const hasExploiterIssueWithAura = dpsIssuesWithExploiter.some((issue) =>
+        issue.message.includes('Exploiter'),
+      );
+      expect(hasExploiterIssueWithAura).toBe(false); // Should NOT report as missing
+    });
+
+    it('should detect missing Skilled Tracker passive for DPS', () => {
+      // Test DPS role - should check for Skilled Tracker
+      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps', [], 9, {
+        stamina: 32000,
+        magicka: 15000,
+      });
+      const hasSkilledTrackerIssue = dpsIssues.some((issue) =>
+        issue.message.includes('Skilled Tracker'),
+      );
+      expect(hasSkilledTrackerIssue).toBe(true);
+
+      // Test with Skilled Tracker in auras
+      const mockAurasWithSkilledTracker = [
+        { name: 'Skilled Tracker', id: 40393, stacks: 1 },
+        { name: 'Minor Slayer', id: 147226, stacks: 1 },
+      ];
+
+      const dpsIssuesWithSkilledTracker = detectBuildIssues(
+        [],
+        mockBuffLookup,
+        1000,
+        2000,
+        mockAurasWithSkilledTracker,
+        'dps',
+        [],
+        9,
+        { stamina: 32000, magicka: 15000 },
+      );
+      const hasSkilledTrackerIssueWithAura = dpsIssuesWithSkilledTracker.some((issue) =>
+        issue.message.includes('Skilled Tracker'),
+      );
+      expect(hasSkilledTrackerIssueWithAura).toBe(false); // Should NOT report as missing
+    });
+
+    it('should NOT check for Exploiter or Skilled Tracker for non-DPS roles', () => {
+      // Test tank role - should NOT check for Exploiter or Skilled Tracker
+      const tankIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'tank');
+      const hasExploiterIssue = tankIssues.some((issue) => issue.message.includes('Exploiter'));
+      const hasSkilledTrackerIssue = tankIssues.some((issue) =>
+        issue.message.includes('Skilled Tracker'),
+      );
+      expect(hasExploiterIssue).toBe(false);
+      expect(hasSkilledTrackerIssue).toBe(false);
+
+      // Test healer role - should NOT check for Exploiter or Skilled Tracker
+      const healerIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'healer');
+      const hasExploiterIssueHealer = healerIssues.some((issue) =>
+        issue.message.includes('Exploiter'),
+      );
+      const hasSkilledTrackerIssueHealer = healerIssues.some((issue) =>
+        issue.message.includes('Skilled Tracker'),
+      );
+      expect(hasExploiterIssueHealer).toBe(false);
+      expect(hasSkilledTrackerIssueHealer).toBe(false);
+    });
   });
 });

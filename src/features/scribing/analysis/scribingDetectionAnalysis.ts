@@ -33,19 +33,6 @@ export interface DetectionLogger {
   error?: (message: string, data?: unknown) => void;
 }
 
-/**
- * Helper function to log debug information with fallback to console.log for workers
- */
-function logDebug(logger: DetectionLogger | undefined, message: string, data?: unknown): void {
-  if (logger?.debug) {
-    logger.debug(message, data);
-  } else {
-    // Fallback to console.log for debugging in workers
-    // eslint-disable-next-line no-console
-    console.log(message, data);
-  }
-}
-
 interface ScribingDataStructure {
   grimoires?: Record<string, { id?: number; nameTransformations?: Record<string, unknown> }>;
   signatureScripts?: Record<
@@ -684,31 +671,17 @@ function detectAffixScripts(
       }
     });
 
-    if (logger?.debug) {
-      logger.debug('Affix detection cast window results', {
-        abilityId,
-        playerId,
-        castIndex,
-        triggerStart,
-        buffs: windowBuffs.map((buff) => buff.abilityGameID),
-        debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
-        damage: windowDamage.map((damage) => damage.abilityGameID),
-        heals: windowHeals.map((heal) => heal.abilityGameID),
-        resources: windowResources.map((resource) => resource.abilityGameID),
-      });
-    } else {
-      logDebug(logger, '[ScribingDetection] Affix detection cast window results', {
-        abilityId,
-        playerId,
-        castIndex,
-        triggerStart,
-        buffs: windowBuffs.map((buff) => buff.abilityGameID),
-        debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
-        damage: windowDamage.map((damage) => damage.abilityGameID),
-        heals: windowHeals.map((heal) => heal.abilityGameID),
-        resources: windowResources.map((resource) => resource.abilityGameID),
-      });
-    }
+    logger?.debug?.('Affix detection cast window results', {
+      abilityId,
+      playerId,
+      castIndex,
+      triggerStart,
+      buffs: windowBuffs.map((buff) => buff.abilityGameID),
+      debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
+      damage: windowDamage.map((damage) => damage.abilityGameID),
+      heals: windowHeals.map((heal) => heal.abilityGameID),
+      resources: windowResources.map((resource) => resource.abilityGameID),
+    });
   });
 
   const serializeCandidateMap = (
@@ -720,16 +693,6 @@ function detectAffixScripts(
     }));
 
   logger?.debug?.('Affix detection candidate summary', {
-    abilityId,
-    playerId,
-    buffCandidates: serializeCandidateMap(buffCandidates),
-    debuffCandidates: serializeCandidateMap(debuffCandidates),
-    damageCandidates: serializeCandidateMap(damageCandidates),
-    healCandidates: serializeCandidateMap(healCandidates),
-    resourceCandidates: serializeCandidateMap(resourceCandidates),
-  });
-
-  logDebug(logger, '[ScribingDetection] Affix detection candidate summary', {
     abilityId,
     playerId,
     buffCandidates: serializeCandidateMap(buffCandidates),
@@ -894,20 +857,6 @@ function detectAffixScripts(
     })),
   });
 
-  logDebug(logger, '[ScribingDetection] Affix detection aggregated candidates', {
-    abilityId,
-    playerId,
-    aggregatedCandidates: aggregatedCandidates.map((candidate) => ({
-      key: candidate.key,
-      scriptName: candidate.scriptName,
-      dominantType: candidate.dominantType,
-      consistency: candidate.consistency,
-      immediateTriggerRatio: candidate.immediateTriggerRatio,
-      abilityIds: Array.from(candidate.abilityIds).sort((a, b) => a - b),
-      castIndexes: Array.from(candidate.castSet).sort((a, b) => a - b),
-    })),
-  });
-
   aggregatedCandidates.sort((a, b) => {
     // Prioritize candidates with high immediate trigger ratios (>= 0.5 means at least 50% immediate)
     const aHasImmediateTrigger = a.immediateTriggerRatio >= 0.5;
@@ -944,17 +893,6 @@ function detectAffixScripts(
   }
 
   logger?.info?.('Affix detection selected top candidate', {
-    abilityId,
-    playerId,
-    grimoireKey,
-    scriptName: topAggregate.scriptName,
-    dominantType: topAggregate.dominantType,
-    consistency: topAggregate.consistency,
-    abilityIds: Array.from(topAggregate.abilityIds).sort((a, b) => a - b),
-    castIndexes: Array.from(topAggregate.castSet).sort((a, b) => a - b),
-  });
-
-  logDebug(logger, '[ScribingDetection] ✅ SELECTED TOP CANDIDATE (FINAL RESULT)', {
     abilityId,
     playerId,
     grimoireKey,

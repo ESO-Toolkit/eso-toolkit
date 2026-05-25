@@ -11,7 +11,7 @@ interface HealingRow {
   raw: number;
   hps: number;
   overheal: number;
-  overhealHps: number;
+  rawHps: number;
   overhealPercentage: number;
   iconUrl?: string;
   ressurects: number;
@@ -21,15 +21,19 @@ interface HealingRow {
 
 interface HealingDonePanelViewProps {
   healingRows: HealingRow[];
+  onPlayerClick?: (playerId: string) => void;
 }
 
-type SortField = 'name' | 'raw' | 'hps' | 'overheal';
+type SortField = 'name' | 'raw' | 'hps' | 'overheal' | 'rawHps';
 type SortDirection = 'asc' | 'desc';
 
 /**
  * Dumb component that only handles rendering the healing done panel UI
  */
-export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows }) => {
+export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
+  healingRows,
+  onPlayerClick,
+}) => {
   const roleColors = useRoleColors();
   const { reportId, fightId } = useSelectedReportAndFight();
   const [sortField, setSortField] = useState<SortField>('raw');
@@ -57,6 +61,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
         case 'overheal':
           aValue = a.overheal;
           bValue = b.overheal;
+          break;
+        case 'rawHps':
+          aValue = a.rawHps;
+          bValue = b.rawHps;
           break;
         default:
           return 0;
@@ -219,6 +227,29 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
         >
           Overheal{getSortIcon('overheal')}
         </Box>
+        <Box
+          onClick={() => handleSort('rawHps')}
+          sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '12px',
+            backgroundColor:
+              sortField === 'rawHps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            fontSize: '0.75rem',
+            color:
+              sortField === 'rawHps' ? '#38bdf8' : roleColors.isDarkMode ? '#ecf0f1' : '#334155',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
+            },
+          }}
+        >
+          Raw HPS{getSortIcon('rawHps')}
+        </Box>
       </Box>
 
       {healingRows.length > 0 ? (
@@ -270,7 +301,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '2fr 3fr 1fr 1fr 1fr 1fr',
+              gridTemplateColumns: '2fr 3fr 1fr 1fr 1fr 1fr 1fr',
               gap: 2,
               p: 1.5,
               backgroundColor: 'transparent',
@@ -386,6 +417,19 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             </Box>
             <Box
               sx={{
+                textAlign: 'right',
+                cursor: 'pointer',
+                userSelect: 'none',
+                '&:hover': {
+                  color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                },
+              }}
+              onClick={() => handleSort('rawHps')}
+            >
+              Raw HPS{getSortIcon('rawHps')}
+            </Box>
+            <Box
+              sx={{
                 textAlign: 'center',
               }}
             >
@@ -411,7 +455,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '2fr 3fr 1fr 1fr 1fr 1fr',
+                  gridTemplateColumns: '2fr 3fr 1fr 1fr 1fr 1fr 1fr',
                   gap: 2,
                   p: 1.5,
                   backgroundColor: 'transparent',
@@ -431,11 +475,12 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                   {row.iconUrl && (
                     <Avatar
                       src={row.iconUrl}
-                      alt="icon"
+                      alt=""
                       sx={{ width: 32, height: 32, flexShrink: 0 }}
                     />
                   )}
-                  <Typography
+                  <Box
+                    onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                     sx={{
                       fontWeight: 500,
                       fontSize: '0.875rem',
@@ -445,6 +490,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       whiteSpace: 'nowrap',
                       flex: 1,
                       minWidth: 0,
+                      ...(onPlayerClick && {
+                        cursor: 'pointer',
+                        '&:hover': { textDecoration: 'underline' },
+                      }),
                       ...(roleColors.isDarkMode
                         ? {
                             color: playerColor,
@@ -460,7 +509,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                     }}
                   >
                     {row.name}
-                  </Typography>
+                  </Box>
                 </Box>
 
                 {/* Amount with Progress Bar */}
@@ -530,6 +579,21 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                   }}
                 >
                   {formatNumber(row.overheal)}
+                </Typography>
+
+                {/* Raw HPS */}
+                <Typography
+                  sx={{
+                    color: roleColors.isDarkMode ? '#ce93d8' : '#9333ea',
+                    fontWeight: 500,
+                    fontSize: '0.875rem',
+                    textAlign: 'right',
+                    textShadow: roleColors.isDarkMode
+                      ? '0 1px 3px rgba(0,0,0,0.5)'
+                      : '0 1px 0 rgba(147,51,234,0.2)',
+                  }}
+                >
+                  {formatNumber(row.rawHps)}
                 </Typography>
 
                 {/* Deaths */}
@@ -642,7 +706,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                     {row.iconUrl && (
                       <Avatar
                         src={row.iconUrl}
-                        alt="icon"
+                        alt=""
                         sx={{ width: 28, height: 28, flexShrink: 0 }}
                       />
                     )}
@@ -655,6 +719,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
                         maxWidth: '150px',
+                        ...(onPlayerClick && {
+                          cursor: 'pointer',
+                          '&:hover': { textDecoration: 'underline' },
+                        }),
                         ...(roleColors.isDarkMode
                           ? { color: playerColor }
                           : {
@@ -665,6 +733,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                               textShadow: '0 1px 1px rgba(0,0,0,0.2)',
                             }),
                       }}
+                      onClick={onPlayerClick ? () => onPlayerClick(row.id) : undefined}
                     >
                       {row.name}
                     </Typography>
@@ -737,7 +806,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                         : '0 1px 0 rgba(234,88,12,0.2)',
                     }}
                   >
-                    Overheal: {formatNumber(row.overheal)}
+                    Overheal: {formatNumber(row.overheal)} | Raw HPS: {formatNumber(row.rawHps)}
                   </Typography>
                   {row.deaths > 0 && (
                     <Box

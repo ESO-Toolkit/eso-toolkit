@@ -21,8 +21,8 @@ const CONFIG = {
     'VITE_RELEASE_VERSION'
   ],
   optionalEnvVars: [
-    'SENTRY_DSN',
-    'SENTRY_ENVIRONMENT',
+    'ERROR_TRACKING_TOKEN',
+    'ERROR_TRACKING_ENVIRONMENT',
     'REACT_APP_VERSION'
   ]
 };
@@ -192,9 +192,9 @@ async function setupMonitoring() {
         errorRate: 0.05 // 5%
       }
     },
-    sentry: {
-      enabled: !!process.env.SENTRY_DSN,
-      environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'production'
+    errorTracking: {
+      enabled: !!process.env.ERROR_TRACKING_TOKEN,
+      environment: process.env.ERROR_TRACKING_ENVIRONMENT || process.env.NODE_ENV || 'production'
     }
   };
   

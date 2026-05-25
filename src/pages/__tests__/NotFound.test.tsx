@@ -40,6 +40,7 @@ describe('NotFound', () => {
   });
 
   it('navigates to home when "Go Home" button is clicked', async () => {
+    const user = userEvent.setup();
     render(
       <MemoryRouter>
         <NotFound />
@@ -47,12 +48,13 @@ describe('NotFound', () => {
     );
 
     const homeButton = screen.getByRole('button', { name: /go home/i });
-    await userEvent.click(homeButton);
+    await user.click(homeButton);
 
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
   it('navigates back when "Go Back" button is clicked', async () => {
+    const user = userEvent.setup();
     render(
       <MemoryRouter>
         <NotFound />
@@ -60,7 +62,7 @@ describe('NotFound', () => {
     );
 
     const backButton = screen.getByRole('button', { name: /go back/i });
-    await userEvent.click(backButton);
+    await user.click(backButton);
 
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });

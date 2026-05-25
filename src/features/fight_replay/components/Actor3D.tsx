@@ -266,8 +266,6 @@ export const Actor3DElement: React.FC<Actor3DElementProps> = ({
       >
         <meshBasicMaterial color={TAUNT_RING_COLOR} transparent opacity={TAUNT_RING_OPACITY} />
       </mesh>
-
-      {/* TODO: Add optimized ActorNameBillboard when this component is refactored to use timeline/lookup */}
     </group>
   );
 };

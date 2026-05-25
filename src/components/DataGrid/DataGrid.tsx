@@ -111,13 +111,13 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX
   const hasValue = columnFilterValue !== undefined && columnFilterValue !== '';
 
   return (
-    <Box sx={{ mt: 1 }} onClick={(e) => e.stopPropagation()}>
+    <Box sx={{ mt: 1 }} onClick={(e: React.MouseEvent<HTMLDivElement>) => e.stopPropagation()}>
       <TextField
         size="small"
         type={isNumeric ? 'number' : 'text'}
         placeholder={`Filter ${columnDef.header?.toString() || column.id}...`}
         value={(columnFilterValue as string | number | undefined) ?? ''}
-        onChange={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const value = e.target.value;
           if (isNumeric) {
             // For numeric columns, set the raw string value and let TanStack handle the filtering
@@ -127,31 +127,33 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX
             column.setFilterValue(value || undefined);
           }
         }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  column.setFilterValue(undefined);
-                }}
-                sx={{
-                  padding: '2px',
-                  visibility: hasValue ? 'visible' : 'hidden', // Always takes up space but invisible when no value
-                  '&:hover': {
-                    backgroundColor: hasValue
-                      ? alpha(theme.palette.primary.main, 0.08)
-                      : 'transparent',
-                  },
-                }}
-                aria-label="Clear filter"
-                disabled={!hasValue}
-              >
-                <Clear sx={{ fontSize: '14px' }} />
-              </IconButton>
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.stopPropagation();
+                    column.setFilterValue(undefined);
+                  }}
+                  sx={{
+                    padding: '2px',
+                    visibility: hasValue ? 'visible' : 'hidden', // Always takes up space but invisible when no value
+                    '&:hover': {
+                      backgroundColor: hasValue
+                        ? alpha(theme.palette.primary.main, 0.08)
+                        : 'transparent',
+                    },
+                  }}
+                  aria-label="Clear filter"
+                  disabled={!hasValue}
+                >
+                  <Clear sx={{ fontSize: '14px' }} />
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
         }}
         sx={{
           width: '100%',
@@ -241,6 +243,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
               size="small"
+              aria-label="First page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,
@@ -264,6 +267,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               size="small"
+              aria-label="Previous page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,
@@ -299,6 +303,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               size="small"
+              aria-label="Next page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,
@@ -322,6 +327,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
               size="small"
+              aria-label="Last page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,

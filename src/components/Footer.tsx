@@ -1,4 +1,4 @@
-import { Launch, ChevronRight } from '@mui/icons-material';
+import { Launch, ChevronRight, BugReport } from '@mui/icons-material';
 import { Box, Button, Container, Typography, useTheme } from '@mui/material';
 import Link from '@mui/material/Link';
 import { alpha } from '@mui/material/styles';
@@ -7,6 +7,8 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
+
+import { useBugReport } from './BugReportDialog';
 
 type FooterLink = {
   label: string;
@@ -18,6 +20,7 @@ type FooterLink = {
 
 export const Footer: React.FC = React.memo(() => {
   const theme = useTheme();
+  const { openBugReport, BugReportDialog } = useBugReport();
 
   const accentColor = theme.palette.mode === 'dark' ? '#38bdf8' : '#2563eb';
 
@@ -31,7 +34,13 @@ export const Footer: React.FC = React.memo(() => {
 
       { label: 'Text Editor', href: '/text-editor' },
 
-      { label: 'Log Analyzer', href: '/logs' },
+      { label: 'Log Analyzer', href: '/my-reports' },
+
+      { label: 'Roster Builder', href: '/roster-builder' },
+
+      { label: 'My Reports', href: '/my-reports' },
+
+      { label: 'Gear Sets', href: '/gear-sets' },
     ],
 
     [],
@@ -41,13 +50,13 @@ export const Footer: React.FC = React.memo(() => {
     () => [
       { label: 'Home', href: '/' },
 
-      { label: 'Latest Reports', href: '/latest-reports' },
+      { label: 'Privacy Settings', href: '/privacy-settings' },
 
-      { label: 'My Reports', href: '/my-reports' },
+      { label: 'Calculation Knowledge Base', href: '/docs/calculations' },
 
-      { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
+      { label: "What's New", href: '/whats-new' },
 
-      { label: 'GitHub', href: 'https://github.com/bkrupa/eso-log-aggregator', external: true },
+      { label: 'About', href: '/about' },
     ],
 
     [],
@@ -681,6 +690,7 @@ export const Footer: React.FC = React.memo(() => {
 
             <Typography
               variant="h4"
+              component="h2"
               sx={{
                 fontWeight: 800,
 
@@ -747,21 +757,23 @@ export const Footer: React.FC = React.memo(() => {
             }}
           >
             <Button
-              component="a"
               href="https://discord.gg/mMjwcQYFdc"
               target="_blank"
               rel="noopener noreferrer"
               sx={primaryButtonSx}
               startIcon={
-                <Box component="img" src={discordIcon} alt="" sx={{ width: 20, height: 20 }} />
+                <img
+                  src={discordIcon}
+                  alt=""
+                  style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }}
+                />
               }
             >
               Join Discord
             </Button>
 
             <Button
-              component="a"
-              href="https://github.com/bkrupa/eso-log-aggregator"
+              href="https://github.com/ESO-Toolkit/eso-toolkit"
               target="_blank"
               rel="noopener noreferrer"
               sx={secondaryButtonSx}
@@ -825,7 +837,7 @@ export const Footer: React.FC = React.memo(() => {
                       : '0 16px 32px rgba(148, 163, 184, 0.3)',
                 }}
               >
-                <img src={esoLogo} alt="ESO Helpers" style={{ width: 28, height: 28 }} />
+                <img src={esoLogo} alt="ESO Toolkit logo" style={{ width: 28, height: 28 }} />
               </Box>
 
               <Box
@@ -839,6 +851,7 @@ export const Footer: React.FC = React.memo(() => {
               >
                 <Typography
                   variant="h5"
+                  component="h3"
                   sx={{
                     fontWeight: 800,
 
@@ -965,28 +978,36 @@ export const Footer: React.FC = React.memo(() => {
                       width: '100%',
                     }}
                   >
-                    {section.links.map((link) => (
-                      <Link
-                        key={link.label}
-                        component={link.external ? 'a' : RouterLink}
-                        href={link.external ? link.href : undefined}
-                        to={!link.external ? link.href : undefined}
-                        target={link.external ? '_blank' : undefined}
-                        rel={link.external ? 'noopener noreferrer' : undefined}
-                        underline="none"
-                        sx={linkBaseSx}
-                      >
-                        <Typography component="span" sx={{ flexGrow: 1 }}>
-                          {link.label}
-                        </Typography>
-
-                        {link.external ? (
+                    {section.links.map((link) =>
+                      link.external ? (
+                        <Link
+                          key={link.label}
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          underline="none"
+                          sx={linkBaseSx}
+                        >
+                          <Typography component="span" sx={{ flexGrow: 1 }}>
+                            {link.label}
+                          </Typography>
                           <Launch className="footer-link-icon" sx={linkIconSx} />
-                        ) : (
+                        </Link>
+                      ) : (
+                        <Link
+                          key={link.label}
+                          component={RouterLink}
+                          to={link.href}
+                          underline="none"
+                          sx={linkBaseSx}
+                        >
+                          <Typography component="span" sx={{ flexGrow: 1 }}>
+                            {link.label}
+                          </Typography>
                           <ChevronRight className="footer-link-icon" sx={linkIconSx} />
-                        )}
-                      </Link>
-                    ))}
+                        </Link>
+                      ),
+                    )}
                   </Box>
                 </Box>
               ))}
@@ -1063,8 +1084,60 @@ export const Footer: React.FC = React.memo(() => {
             Studios, Bethesda, or esologs.com. All trademarks are the property of their respective
             owners.
           </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
+            <Link
+              component={RouterLink}
+              to="/privacy"
+              sx={{
+                fontSize: '0.8rem',
+                opacity: 0.6,
+                color: 'inherit',
+                textDecoration: 'none',
+                transition: 'opacity 0.2s ease',
+                '&:hover': { opacity: 1, color: accentColor },
+              }}
+            >
+              Privacy Policy
+            </Link>
+
+            <Button
+              size="small"
+              startIcon={<BugReport sx={{ fontSize: '0.9rem !important' }} />}
+              onClick={() => {
+                openBugReport({ url: window.location.href });
+              }}
+              sx={{
+                fontSize: '0.8rem',
+                opacity: 0.6,
+                color: 'inherit',
+                textTransform: 'none',
+                padding: '2px 8px',
+                minWidth: 0,
+                border: 'none',
+                background: 'none',
+                transition: 'opacity 0.2s ease',
+                '&:hover': {
+                  opacity: 1,
+                  color: accentColor,
+                  background: 'none',
+                },
+              }}
+            >
+              Report a Bug
+            </Button>
+          </Box>
         </Box>
       </Container>
+
+      <BugReportDialog />
     </Box>
   );
 });

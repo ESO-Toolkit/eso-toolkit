@@ -1,0 +1,5 @@
+{
+  "name": "eso-logs-mcp-shared",
+  "private": true,
+  "type": "module"
+}

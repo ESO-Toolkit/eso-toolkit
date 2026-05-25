@@ -1,5 +1,6 @@
-import { Box, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Box, Chip, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import type { UserReportSummaryFragment } from '../../../graphql/gql/graphql';
@@ -7,11 +8,12 @@ import {
   formatReportDateTime,
   formatReportDuration,
   getReportVisibilityColor,
+  isReportEmpty,
 } from '../reportFormatting';
 
 interface ReportListMobileProps {
   reports: UserReportSummaryFragment[];
-  onSelect: (code: string) => void;
+  onSelect: (code: string, event?: React.MouseEvent) => void;
   showOwner?: boolean;
 }
 
@@ -27,12 +29,19 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
   }
 
   return (
-    <Stack spacing={2} mt={2}>
+    <Stack spacing={2} sx={{ mt: 2 }}>
       {reports.map((report) => (
         <Paper
           key={report.code}
           variant="outlined"
-          onClick={() => onSelect(report.code)}
+          onClick={(e: React.MouseEvent<HTMLDivElement>) => onSelect(report.code, e)}
+          onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
+            // Handle middle-click
+            if (e.button === 1) {
+              e.preventDefault();
+              onSelect(report.code, e);
+            }
+          }}
           sx={{
             p: 2,
             borderRadius: 2,
@@ -41,7 +50,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
-            background: (theme) =>
+            background: (theme: Theme) =>
               theme.palette.mode === 'dark'
                 ? 'linear-gradient(rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
                 : 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
@@ -54,12 +63,35 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             },
           }}
         >
-          <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
-            <Box flex={1} minWidth={0}>
-              <Typography variant="subtitle1" fontWeight={600} noWrap>
-                {report.title || 'Untitled Report'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
+          <Box
+            sx={{
+              justifyContent: 'space-between',
+              gap: 1,
+              alignItems: 'flex-start',
+              display: 'flex',
+            }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>
+                  {report.title || 'Untitled Report'}
+                </Typography>
+                {isReportEmpty(report) && (
+                  <Tooltip
+                    title="This log may contain no fight data due to an upload or parsing issue on ESO Logs"
+                    arrow
+                  >
+                    <Chip
+                      label="Empty Log"
+                      size="small"
+                      color="warning"
+                      variant="outlined"
+                      sx={{ flexShrink: 0, fontSize: '0.65rem', height: 18 }}
+                    />
+                  </Tooltip>
+                )}
+              </Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {report.code}
               </Typography>
             </Box>
@@ -73,13 +105,13 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
                 // Override default chip text color with higher specificity
                 '& .MuiChip-label': {
                   ...(report.visibility === 'public' && {
-                    color: (theme) =>
+                    color: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
                         : 'rgba(0, 0, 0, 0.87) !important', // Dark text in light mode
                   }),
                   ...(report.visibility === 'private' && {
-                    color: (theme) =>
+                    color: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
                         : 'rgba(0, 0, 0, 0.87) !important', // Dark text in light mode
@@ -92,9 +124,9 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             />
           </Box>
 
-          <Box display="flex" flexWrap="wrap" columnGap={2} rowGap={1}>
+          <Box sx={{ rowGap: 1, columnGap: 2, flexWrap: 'wrap', display: 'flex' }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Zone
               </Typography>
               <Typography variant="body2">{report.zone?.name || 'Unknown Zone'}</Typography>
@@ -102,7 +134,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
 
             {showOwner && (
               <Box>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Owner
                 </Typography>
                 <Typography variant="body2">{report.owner?.name || 'Unknown'}</Typography>
@@ -110,14 +142,14 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             )}
 
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Start Time
               </Typography>
               <Typography variant="body2">{formatReportDateTime(report.startTime)}</Typography>
             </Box>
 
             <Box>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Duration
               </Typography>
               <Typography variant="body2">

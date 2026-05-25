@@ -1,0 +1,68 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Wizard Wardrobe import integration round-trips the sample file through JSON and back to Lua: wizard-wardrobe-sample-json 1`] = `
+{
+  "Default": {
+    "@SampleAccount": {
+      "$AccountWide": {
+        "autoEquipSetups": true,
+        "pages": {
+          "GEN": {
+            "0": {
+              "123456789": 1,
+            },
+            "1": {
+              "name": "General Page",
+            },
+          },
+        },
+        "prebuffs": [
+          {
+            "0": {
+              "delay": 500,
+              "toggle": false,
+            },
+            "3": 12345,
+          },
+        ],
+        "selectedZoneTag": "GEN",
+        "setups": {
+          "GEN": [
+            {
+              "condition": {
+                "boss": "Trash",
+                "trash": -1,
+              },
+              "cp": {
+                "1": 29,
+              },
+              "disabled": false,
+              "food": {
+                "id": 123,
+                "link": "|H1:item:123:1|h|h",
+              },
+              "gear": {
+                "0": {
+                  "id": "1",
+                  "link": "|H1:item:1:1|h|h",
+                },
+              },
+              "name": "General Setup",
+              "skills": {
+                "0": {
+                  "3": 12345,
+                  "8": 67890,
+                },
+                "1": {
+                  "3": 22222,
+                },
+              },
+            },
+          ],
+        },
+        "version": 1,
+      },
+    },
+  },
+}
+`;

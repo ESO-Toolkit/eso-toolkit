@@ -22,8 +22,27 @@ export const selectSelectedTargetId = (state: RootState): number | null => {
 };
 export const selectSelectedPlayerId = (state: RootState): RootState['ui']['selectedPlayerId'] =>
   state.ui.selectedPlayerId;
+
+export const selectSelectedFriendlyPlayerId = (
+  state: RootState,
+): RootState['ui']['selectedFriendlyPlayerId'] => state.ui.selectedFriendlyPlayerId;
+
 export const selectSelectedTabId = (state: RootState): RootState['ui']['selectedTabId'] =>
   state.ui.selectedTabId;
+export const selectMyReportsPage = (state: RootState): RootState['ui']['myReportsPage'] =>
+  state.ui.myReportsPage;
+
+export const selectPerfTier = (state: RootState): RootState['ui']['perfTier'] => state.ui.perfTier;
+export const selectChartIntensity = (state: RootState): RootState['ui']['chartIntensity'] =>
+  state.ui.chartIntensity ?? 'subtle';
+export const selectPerfTierOverride = (state: RootState): RootState['ui']['perfTierOverride'] =>
+  state.ui.perfTierOverride;
+// Tier the app should actually apply — override wins when set to anything
+// other than 'auto'. This is what feature gates should consume.
+export const selectEffectivePerfTier = createSelector(
+  [selectPerfTier, selectPerfTierOverride],
+  (detected, override) => (override === 'auto' ? detected : override),
+);
 
 // Combined UI state
 export const selectCombinedUIState = createSelector([selectUI], (ui) => ({
@@ -34,4 +53,5 @@ export const selectCombinedUIState = createSelector([selectUI], (ui) => ({
   selectedTargetId: ui.selectedTargetIds.length > 0 ? ui.selectedTargetIds[0] : null, // Compatibility
   selectedPlayerId: ui.selectedPlayerId,
   selectedTabId: ui.selectedTabId,
+  myReportsPage: ui.myReportsPage,
 }));

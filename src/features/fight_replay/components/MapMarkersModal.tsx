@@ -12,6 +12,7 @@ import {
   DialogTitle,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 
@@ -45,6 +46,8 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
   onLoadMarkers,
   onClearMarkers,
 }) => {
+  const theme = useTheme();
+  const darkMode = theme.palette.mode === 'dark';
   const [mapMarkersInput, setMapMarkersInput] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -114,19 +117,20 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
       fullWidth
       onKeyDown={handleKeyDown}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
-      PaperProps={{
-        component: 'div', // Ensure Dialog doesn't create a form
-        onClick: (e: React.MouseEvent) => e.stopPropagation(),
+      slotProps={{
+        paper: {
+          component: 'div', // Ensure Dialog doesn't create a form
+          onClick: (e: React.MouseEvent) => e.stopPropagation(),
+        },
       }}
     >
       <DialogTitle>Import M0R Markers</DialogTitle>
 
       <DialogContent>
-        <Box
-          component="form"
+        <form
           onSubmit={handleFormSubmit}
           noValidate
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}
         >
           {/* Instructions */}
           <Typography variant="body2" color="text.secondary">
@@ -165,10 +169,23 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
                   label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
                   color="success"
                   size="small"
-                  sx={{ fontWeight: 'medium' }}
+                  sx={{
+                    fontWeight: 'medium',
+                    backdropFilter: 'blur(8px)',
+                    background: darkMode ? 'rgba(46, 125, 50, 0.25)' : 'rgba(46, 125, 50, 0.12)',
+                  }}
                 />
                 {markerStats.is3D && (
-                  <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
+                  <Chip
+                    label="3D Filtering"
+                    color="info"
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      backdropFilter: 'blur(8px)',
+                      background: darkMode ? 'rgba(2, 136, 209, 0.12)' : 'rgba(2, 136, 209, 0.06)',
+                    }}
+                  />
                 )}
                 {markerStats.removed > 0 && (
                   <Chip
@@ -176,6 +193,10 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
                     color="warning"
                     size="small"
                     variant="outlined"
+                    sx={{
+                      backdropFilter: 'blur(8px)',
+                      background: darkMode ? 'rgba(237, 108, 2, 0.12)' : 'rgba(237, 108, 2, 0.06)',
+                    }}
                   />
                 )}
               </Box>
@@ -199,11 +220,16 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             )}
 
           {loadError && <Alert severity="error">{loadError}</Alert>}
-        </Box>
+        </form>
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} color="inherit" type="button">
+        <Button
+          onClick={handleClose}
+          color="inherit"
+          type="button"
+          sx={{ '&:hover': { color: 'error.main' } }}
+        >
           Close
         </Button>
         {markersState && markersState.markers.length > 0 && (

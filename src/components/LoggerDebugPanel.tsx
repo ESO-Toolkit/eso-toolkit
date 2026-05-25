@@ -128,17 +128,19 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      PaperProps={{
-        sx: {
-          height: '80vh',
-          display: 'flex',
-          flexDirection: 'column',
+      slotProps={{
+        paper: {
+          sx: {
+            height: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+          },
         },
       }}
     >
       <DialogTitle>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Box display="flex" alignItems="center" gap={1}>
+        <Box sx={{ justifyContent: 'space-between', alignItems: 'center', display: 'flex' }}>
+          <Box sx={{ gap: 1, alignItems: 'center', display: 'flex' }}>
             <BugReportIcon />
             <Typography variant="h6">Logger Debug Panel</Typography>
             <Chip
@@ -147,7 +149,7 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
               color="primary"
             />
           </Box>
-          <IconButton onClick={onClose} size="small">
+          <IconButton onClick={onClose} size="small" aria-label="Close">
             <CloseIcon />
           </IconButton>
         </Box>
@@ -162,7 +164,7 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
             sx={{ pb: 1 }}
           />
           <CardContent sx={{ pt: 0 }}>
-            <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
+            <Box sx={{ flexWrap: 'wrap', gap: 2, alignItems: 'center', display: 'flex' }}>
               {/* Current log level */}
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <InputLabel>Log Level</InputLabel>
@@ -212,6 +214,7 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
               <Tooltip title="Clear all filters">
                 <IconButton
                   size="small"
+                  aria-label="Clear all filters"
                   onClick={() => {
                     setFilterLevel('ALL');
                     setFilterContext('');
@@ -224,7 +227,7 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
             }
           />
           <CardContent sx={{ pt: 0 }}>
-            <Box display="flex" gap={2} flexWrap="wrap">
+            <Box sx={{ flexWrap: 'wrap', gap: 2, display: 'flex' }}>
               {/* Filter by level */}
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <InputLabel>Filter Level</InputLabel>
@@ -280,8 +283,8 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
           }}
         >
           {filteredEntries.length === 0 ? (
-            <Box p={3} textAlign="center">
-              <Typography color="text.secondary">
+            <Box sx={{ textAlign: 'center', p: 3 }}>
+              <Typography sx={{ color: 'text.secondary' }}>
                 {entries.length === 0 ? 'No log entries' : 'No entries match current filters'}
               </Typography>
             </Box>
@@ -301,7 +304,7 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
                   >
                     <ListItemText
                       primary={
-                        <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                        <Box sx={{ gap: 1, alignItems: 'center', display: 'flex', mb: 0.5 }}>
                           <Chip
                             label={getLogLevelName(entry.level)}
                             size="small"
@@ -315,8 +318,7 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
                           />
                           <Typography
                             variant="caption"
-                            color="text.secondary"
-                            sx={{ fontFamily: 'monospace' }}
+                            sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
                           >
                             {formatTimestamp(entry.timestamp)}
                           </Typography>
@@ -348,8 +350,8 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
                             <Typography
                               component="div"
                               variant="caption"
-                              color="text.secondary"
                               sx={{
+                                color: 'text.secondary',
                                 fontFamily: 'monospace',
                                 fontSize: '0.75rem',
                                 whiteSpace: 'pre-wrap',

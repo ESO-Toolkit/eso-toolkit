@@ -75,7 +75,7 @@ class GraphqlTestHarness {
       );
     }
 
-    this.client = createEsoLogsClient(accessToken);
+    this.client = createEsoLogsClient(accessToken, 'https://www.esologs.com/api/v2/client');
     this.shouldDisposeClient = true;
   }
 

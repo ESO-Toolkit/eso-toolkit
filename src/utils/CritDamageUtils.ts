@@ -1,9 +1,10 @@
-import { wardenData } from '../data/skillsets/warden';
+import { wardenData } from '../data/skill-lines/class/warden';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { ArmorType } from '../types/playerDetails';
 
+import { resolveArmorType } from './armorUtils';
 import {
   BuffLookupData,
   isBuffActive as checkBuffActiveAtTimestamp,
@@ -12,6 +13,11 @@ import {
 import { getSetCount, countAxesInWeaponSlots, hasTwoHandedAxeEquipped } from './gearUtilities';
 
 const CRITICAL_DAMAGE_BUFF_VARIANTS: Partial<Record<KnownAbilities, KnownAbilities[]>> = {
+  // Advanced Species has two passive ranks; either may appear in combatantInfo.auras
+  [KnownAbilities.ADVANCED_SPECIES]: [
+    KnownAbilities.ADVANCED_SPECIES,
+    KnownAbilities.ADVANCED_SPECIES_RANK_1,
+  ],
   [KnownAbilities.LUCENT_ECHOES_RECIPIENT]: [
     KnownAbilities.LUCENT_ECHOES_RECIPIENT,
     KnownAbilities.LUCENT_ECHOES_WEARER,
@@ -91,6 +97,7 @@ export interface CriticalDamageNotImplementedSource extends BaseCriticalDamageSo
 export enum AlwaysOnCriticalDamageSources {
   DEXTERITY,
   FIGHTING_FINESSE,
+  BACKSTABBER,
 }
 
 export interface CriticalDamageAlwaysOnSource extends BaseCriticalDamageSource {
@@ -106,7 +113,6 @@ export enum ComputedCriticalDamageSources {
   ADVANCED_SPECIES,
   DUAL_WIELD_AXES,
   TWO_HANDED_BATTLE_AXE,
-  BACKSTABBER,
   ELEMENTAL_CATALYST,
   LUCENT_ECHOES,
 }
@@ -185,9 +191,10 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
+    key: AlwaysOnCriticalDamageSources.BACKSTABBER,
     name: 'Backstabber',
     description: 'Critical damage from Backstabber champion point (10%)',
-    source: 'not_implemented',
+    source: 'always_on',
   },
   {
     key: ComputedCriticalDamageSources.ELEMENTAL_CATALYST,
@@ -201,6 +208,13 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     name: 'Lucent Echoes',
     description: 'Critical damage from Lucent Echoes set bonus (11%)',
     source: 'computed',
+  },
+  {
+    ability: KnownAbilities.BLESSING_AT_THE_PEAK,
+    value: CriticalDamageValues.BLESSING_AT_THE_PEAK,
+    name: 'Blessing at the Peak',
+    description: 'Critical damage from Blessing at the Peak passive (10%)',
+    source: 'aura',
   },
   {
     ability: KnownAbilities.HEMORRHAGE,
@@ -314,20 +328,17 @@ export function isComputedSourceActive(
     case ComputedCriticalDamageSources.FATED_FORTUNE:
       return isAuraActive(combatantInfo, KnownAbilities.FATED_FORTUNE_STAGE_ONE);
     case ComputedCriticalDamageSources.SUL_XAN_TORMENT:
-      return isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT_SET, 5);
+      return isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT, 5);
     case ComputedCriticalDamageSources.MORA_SCRIBE_THESIS:
-      return isGearSourceActive(combatantInfo, KnownSetIDs.MORA_SCRIBE_THESIS_SET, 5);
+      return isGearSourceActive(combatantInfo, KnownSetIDs.MORA_SCRIBE, 5);
     case ComputedCriticalDamageSources.HARPOONER_WADING_KILT:
-      return isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONER_WADING_KILT_SET, 1);
+      return isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONERS_KILT, 1);
     case ComputedCriticalDamageSources.ADVANCED_SPECIES:
       return isAuraActive(combatantInfo, KnownAbilities.ADVANCED_SPECIES);
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES:
       return countAxesInWeaponSlots(combatantInfo) > 0;
     case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE:
       return hasTwoHandedAxeEquipped(combatantInfo);
-    case ComputedCriticalDamageSources.BACKSTABBER:
-      // TODO Detect if the backstabber CP is equipped
-      return false;
     case ComputedCriticalDamageSources.ELEMENTAL_CATALYST:
       return timestamp
         ? isDebuffActiveAtTimestamp(debuffLookup, KnownAbilities.FLAME_WEAKNESS, timestamp) ||
@@ -619,21 +630,17 @@ export function getCritDamageFromComputedSource(
       return 0;
     case ComputedCriticalDamageSources.SUL_XAN_TORMENT: {
       // Check if player has 5 pieces of Sul-Xan's Torment equipped
-      const hasFullSet = isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT_SET, 5);
+      const hasFullSet = isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT, 5);
       return hasFullSet ? CriticalDamageValues.SUL_XAN_TORMENT : 0;
     }
     case ComputedCriticalDamageSources.MORA_SCRIBE_THESIS: {
       // Check if player has 5 pieces of Mora Scribe's Thesis equipped
-      const hasFullMoraSet = isGearSourceActive(
-        combatantInfo,
-        KnownSetIDs.MORA_SCRIBE_THESIS_SET,
-        5,
-      );
+      const hasFullMoraSet = isGearSourceActive(combatantInfo, KnownSetIDs.MORA_SCRIBE, 5);
       return hasFullMoraSet ? CriticalDamageValues.MORA_SCRIBE_THESIS : 0;
     }
     case ComputedCriticalDamageSources.HARPOONER_WADING_KILT: {
       // Check if player has Harpooner's Wading Kilt equipped
-      const hasKilt = isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONER_WADING_KILT_SET, 1);
+      const hasKilt = isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONERS_KILT, 1);
       return hasKilt ? CriticalDamageValues.HARPOONER_WADING_KILT : 0;
     }
     case ComputedCriticalDamageSources.ADVANCED_SPECIES: {
@@ -646,7 +653,14 @@ export function getCritDamageFromComputedSource(
           })
           .some((a) => a?.name === t.name),
       );
-      return animalCompanionAbilities.length * CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY;
+      // Rank II (86069) grants 5% per ability; Rank I (86068) grants 2% per ability
+      const hasRank2 = combatantInfo.auras.some(
+        (aura) => aura.ability === KnownAbilities.ADVANCED_SPECIES,
+      );
+      const perAbilityValue = hasRank2
+        ? CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY
+        : CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY_RANK_1;
+      return animalCompanionAbilities.length * perAbilityValue;
     }
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES: {
       const axeCount = countAxesInWeaponSlots(combatantInfo);
@@ -656,10 +670,6 @@ export function getCritDamageFromComputedSource(
       return hasTwoHandedAxeEquipped(combatantInfo)
         ? CriticalDamageValues.TWO_HANDED_BATTLE_AXE
         : 0;
-    }
-    case ComputedCriticalDamageSources.BACKSTABBER: {
-      // Always active as requested
-      return CriticalDamageValues.BACKSTABBER;
     }
     case ComputedCriticalDamageSources.ELEMENTAL_CATALYST: {
       // Calculate damage based on active elemental weakness debuffs
@@ -696,11 +706,19 @@ export function getCritDamageFromAlwaysOnSource(
 ): number {
   switch (source.key) {
     case AlwaysOnCriticalDamageSources.DEXTERITY: {
-      const medPieces = combatantInfo?.gear?.filter((item) => item.type === ArmorType.MEDIUM);
+      const medPieces = combatantInfo?.gear?.filter(
+        (item) => resolveArmorType(item) === ArmorType.MEDIUM,
+      );
       return (medPieces?.length || 0) * CriticalDamageValues.DEXTERITY_PER_PIECE;
     }
     case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE: {
       return CriticalDamageValues.FIGHTING_FINESSE;
     }
+    case AlwaysOnCriticalDamageSources.BACKSTABBER: {
+      // Positional data is undetectable from log data; assume flanking
+      return CriticalDamageValues.BACKSTABBER;
+    }
+    default:
+      return 0;
   }
 }

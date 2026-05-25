@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { APP_AUTH_PORT_KEY } from './AppAuth';
 import {
   getPkceCodeVerifier,
   CLIENT_ID,
@@ -15,12 +16,14 @@ import {
   clearIntendedDestination,
 } from './features/auth/auth';
 import { useAuth } from './features/auth/AuthContext';
+import { KalpaAuthSuccess } from './features/auth/KalpaAuthSuccess';
 import { useAppDispatch } from './store/useAppDispatch';
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token'; // Adjust if needed
 export const OAuthRedirect: React.FC = () => {
   const dispatch = useAppDispatch();
   const [error, setError] = useState<string | null>(null);
+  const [kalpaSuccess, setKalpaSuccess] = useState(false);
   const { rebindAccessToken } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -47,6 +50,7 @@ export const OAuthRedirect: React.FC = () => {
       return;
     }
 
+    const controller = new AbortController();
     const fetchToken = async (): Promise<void> => {
       try {
         const redirectUri = getRedirectUri();
@@ -61,12 +65,55 @@ export const OAuthRedirect: React.FC = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: body.toString(),
+          signal: controller.signal,
         });
         if (!response.ok) throw new Error('Token exchange failed');
-        const data = await response.json();
-        localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
+        const data = (await response.json()) as Record<string, unknown>;
+        if (!data.access_token || typeof data.access_token !== 'string') {
+          throw new Error('Invalid token response — missing access_token');
+        }
+
+        // Check if this is a desktop app auth flow
+        const appPort = sessionStorage.getItem(APP_AUTH_PORT_KEY);
+        if (appPort) {
+          sessionStorage.removeItem(APP_AUTH_PORT_KEY);
+          const portNum = Number(appPort);
+          if (!Number.isInteger(portNum) || portNum < 1 || portNum > 65535) {
+            setError('Invalid desktop app port.');
+            return;
+          }
+          // Send tokens to the desktop app's localhost server in the background.
+          // We POST JSON so the desktop app can respond with a confirmation,
+          // letting us verify delivery before showing the success page.
+          const callbackUrl = `http://localhost:${appPort}/callback`;
+          try {
+            const callbackResp = await fetch(callbackUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token || null,
+                expires_in: data.expires_in || 3600,
+              }),
+            });
+            if (!callbackResp.ok) {
+              throw new Error(`Desktop app responded with ${callbackResp.status}`);
+            }
+          } catch {
+            setError(
+              'Could not connect to the desktop application. ' +
+                'Please make sure it is running and try again.',
+            );
+            return;
+          }
+          setKalpaSuccess(true);
+          return;
+        }
+
+        // Normal web auth flow
+        localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token as string);
         // Store refresh token if provided
-        if (data.refresh_token) {
+        if (data.refresh_token && typeof data.refresh_token === 'string') {
           localStorage.setItem('refresh_token', data.refresh_token);
         }
         rebindAccessToken();
@@ -76,6 +123,7 @@ export const OAuthRedirect: React.FC = () => {
         clearIntendedDestination();
         navigate(destination);
       } catch (err) {
+        if (controller.signal.aborted) return;
         if (err instanceof Error) {
           setError(err.message);
         } else {
@@ -83,14 +131,19 @@ export const OAuthRedirect: React.FC = () => {
         }
       }
     };
-    fetchToken();
+    void fetchToken();
+    return () => controller.abort();
   }, [dispatch, rebindAccessToken, params, navigate]);
+
+  if (kalpaSuccess) {
+    return <KalpaAuthSuccess />;
+  }
 
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '4rem' }}>
       {error ? (
         <>
-          <Typography color="error" gutterBottom>
+          <Typography color="error" gutterBottom role="alert">
             {error}
           </Typography>
           {error.includes('PKCE code verifier') && (

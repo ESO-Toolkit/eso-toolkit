@@ -25,7 +25,7 @@ const TexturedMesh: React.FC<{ url: string; size: number; position: [number, num
   size,
   position,
 }) => {
-  const texture = useTexture(url, (loadedTexture) => {
+  const texture = useTexture(url, (loadedTexture: import('three').Texture) => {
     loadedTexture.wrapS = RepeatWrapping;
     loadedTexture.wrapT = RepeatWrapping;
     loadedTexture.flipY = false;

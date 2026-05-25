@@ -52,7 +52,7 @@ export const ScriptSelector: React.FC<ScriptSelectorProps> = ({
         <MenuItem key={option.id} value={option.id}>
           <Box>
             <Typography variant="body1">{option.name}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
               {option.description}
             </Typography>
           </Box>
@@ -60,7 +60,7 @@ export const ScriptSelector: React.FC<ScriptSelectorProps> = ({
       ))}
     </Select>
     {error && (
-      <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+      <Typography variant="caption" sx={{ color: 'error', mt: 0.5 }}>
         {error}
       </Typography>
     )}
@@ -82,7 +82,7 @@ export const SimulationResultDisplay: React.FC<SimulationResultDisplayProps> = (
     return (
       <Card>
         <CardContent>
-          <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+          <Box sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}>
             <CircularProgress />
             <Typography variant="body1" sx={{ ml: 2 }}>
               Calculating skill properties...
@@ -106,7 +106,7 @@ export const SimulationResultDisplay: React.FC<SimulationResultDisplayProps> = (
     return (
       <Card>
         <CardContent>
-          <Typography variant="body1" color="text.secondary" textAlign="center" py={4}>
+          <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}>
             Select a grimoire and click simulate to see results
           </Typography>
         </CardContent>
@@ -134,7 +134,7 @@ export const SimulationResultDisplay: React.FC<SimulationResultDisplayProps> = (
           {result.calculatedSkill.name}
         </Typography>
 
-        <Typography variant="body2" color="text.secondary" paragraph>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
           {result.calculatedSkill.description}
         </Typography>
 
@@ -146,7 +146,7 @@ export const SimulationResultDisplay: React.FC<SimulationResultDisplayProps> = (
             <Typography variant="subtitle2" gutterBottom>
               Scribing Combination
             </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               <Chip
                 label={`Grimoire: ${result.combination.grimoire}`}
                 color="primary"
@@ -182,42 +182,42 @@ export const SimulationResultDisplay: React.FC<SimulationResultDisplayProps> = (
               Skill Properties
             </Typography>
             <Stack spacing={1}>
-              <Box display="flex" justifyContent="space-between">
+              <Box sx={{ justifyContent: 'space-between', display: 'flex' }}>
                 <Typography variant="body2">Resource Type:</Typography>
-                <Typography variant="body2" fontWeight="medium">
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                   {result.calculatedSkill.resourceType}
                 </Typography>
               </Box>
-              <Box display="flex" justifyContent="space-between">
+              <Box sx={{ justifyContent: 'space-between', display: 'flex' }}>
                 <Typography variant="body2">Cost:</Typography>
-                <Typography variant="body2" fontWeight="medium">
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                   {result.calculatedSkill.cost}
                 </Typography>
               </Box>
-              <Box display="flex" justifyContent="space-between">
+              <Box sx={{ justifyContent: 'space-between', display: 'flex' }}>
                 <Typography variant="body2">Cast Time:</Typography>
-                <Typography variant="body2" fontWeight="medium">
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                   {(result.calculatedSkill.castTime / 1000).toFixed(1)}s
                 </Typography>
               </Box>
-              <Box display="flex" justifyContent="space-between">
+              <Box sx={{ justifyContent: 'space-between', display: 'flex' }}>
                 <Typography variant="body2">Range:</Typography>
-                <Typography variant="body2" fontWeight="medium">
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                   {result.calculatedSkill.range}m
                 </Typography>
               </Box>
               {result.calculatedSkill.duration && (
-                <Box display="flex" justifyContent="space-between">
+                <Box sx={{ justifyContent: 'space-between', display: 'flex' }}>
                   <Typography variant="body2">Duration:</Typography>
-                  <Typography variant="body2" fontWeight="medium">
+                  <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                     {(result.calculatedSkill.duration / 1000).toFixed(1)}s
                   </Typography>
                 </Box>
               )}
               {result.calculatedSkill.damage && (
-                <Box display="flex" justifyContent="space-between">
+                <Box sx={{ justifyContent: 'space-between', display: 'flex' }}>
                   <Typography variant="body2">Damage:</Typography>
-                  <Typography variant="body2" fontWeight="medium">
+                  <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
                     {result.calculatedSkill.damage.amount} ({result.calculatedSkill.damage.type})
                   </Typography>
                 </Box>
@@ -259,7 +259,7 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
   isSimulating,
   disabled = false,
 }) => (
-  <Stack direction="row" spacing={2} justifyContent="center">
+  <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
     <Button
       variant="contained"
       startIcon={<RefreshIcon />}

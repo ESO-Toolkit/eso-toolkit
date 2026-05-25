@@ -1,0 +1,20 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": [],
+    "github.copilot.chat.mcp.enabled": true,
+    "terminal.integrated.profiles.windows": {
+        "PowerShell (.env)": {
+            "source": "PowerShell",
+            "args": [
+                "-NoExit",
+                "-Command",
+                "if (Test-Path .env) { Get-Content .env | ForEach-Object { if ($_ -match '^([^#=][^=]*)=(.*)$') { [System.Environment]::SetEnvironmentVariable($Matches[1].Trim(), $Matches[2].Trim(), 'Process') } } }"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell (.env)",
+    "chat.tools.terminal.autoApprove": {
+        "gh": true,
+        "ConvertFrom-Json": true
+    }
+}

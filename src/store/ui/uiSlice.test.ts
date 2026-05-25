@@ -28,12 +28,17 @@ describe('uiSlice', () => {
     it('should initialize with correct default values', () => {
       const state = store.getState() as { ui: UIState };
       expect(state.ui).toEqual({
+        chartIntensity: 'subtle',
         darkMode: true,
         selectedPlayerId: null,
         selectedTabId: null,
         selectedTargetIds: [],
+        selectedFriendlyPlayerId: null,
         showExperimentalTabs: false,
         sidebarOpen: false,
+        myReportsPage: 1,
+        perfTier: 'medium',
+        perfTierOverride: 'auto',
       });
     });
   });
@@ -285,12 +290,17 @@ describe('uiSlice', () => {
 
       const state = store.getState() as { ui: UIState };
       expect(state.ui).toEqual({
+        chartIntensity: 'subtle',
         darkMode: false,
         selectedPlayerId: 123,
         selectedTabId: 2,
         selectedTargetIds: [],
+        selectedFriendlyPlayerId: null,
         showExperimentalTabs: true,
         sidebarOpen: true,
+        myReportsPage: 1,
+        perfTier: 'medium',
+        perfTierOverride: 'auto',
       });
     });
 

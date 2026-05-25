@@ -1,11 +1,13 @@
 import {
   Login,
   Logout,
-  Person,
   ExpandMore,
   Build,
-  ExpandLess,
   Assessment,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
+  ChevronRight,
+  Speed as SpeedIcon,
 } from '@mui/icons-material';
 import {
   AppBar,
@@ -16,30 +18,45 @@ import {
   IconButton,
   useTheme,
   Container,
-  Tooltip,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Fade,
+  ButtonBase,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import type { SxProps, Theme } from '@mui/material/styles';
+import { alpha, styled } from '@mui/material/styles';
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
-import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
+import {
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  setFallbackDestination,
+  startPKCEAuth,
+} from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { useCurrentUserAvatar } from '../hooks/useCurrentUserAvatar';
+import { usePersistentDarkMode } from '../hooks/usePersistentDarkMode';
+import {
+  useViewTransitionNavigate,
+  type ViewTransitionType,
+} from '../hooks/useViewTransitionNavigate';
 
+import { PerfTierToggle } from './PerfTierToggle';
 import { ThemeToggle } from './ThemeToggle';
 
 // Animated Hamburger Icon
-const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) => ({
+const HamburgerButton = styled(IconButton, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{ open: boolean }>(({ theme, open }) => ({
   width: 48,
   height: 48,
   padding: 12,
   borderRadius: 8,
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  transition:
+    'background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
     backgroundColor: 'rgba(56, 189, 248, 0.1)',
     transform: 'scale(1.05)',
@@ -49,7 +66,8 @@ const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) 
     height: 2,
     backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
     borderRadius: 2,
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition:
+      'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     transformOrigin: 'center',
     '&:nth-of-type(1)': {
       transform: open ? 'translateY(7px) rotate(45deg)' : 'translateY(0) rotate(0)',
@@ -73,300 +91,130 @@ const HamburgerLines = styled(Box)({
   justifyContent: 'center',
 });
 
-// Modern Mobile Menu Overlay
-const MobileMenuOverlay = styled(Box)<{ open: boolean }>(({ theme, open }) => ({
+// ─── Mobile Bottom Sheet Components ─────────────────────────────────────────
+
+const MobileBackdrop = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{ open: boolean }>(({ open }) => ({
   position: 'fixed',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-      : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-  backdropFilter: 'blur(20px)',
-  zIndex: 1300,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
+  inset: 0,
+  background: 'rgba(0, 0, 0, 0.6)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  zIndex: 1299,
   opacity: open ? 1 : 0,
   visibility: open ? 'visible' : 'hidden',
-  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
+  transition: 'opacity 0.3s ease, visibility 0.3s ease',
+}));
+
+const MobileBottomSheet = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})<{ open: boolean }>(({ theme, open }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    position: 'fixed',
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    background:
-      theme.palette.mode === 'dark'
-        ? 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 70%)'
-        : 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 70%)',
-    animation: open ? 'pulse-bg 4s ease-in-out infinite alternate' : 'none',
-  },
-  '@keyframes pulse-bg': {
-    '0%': { opacity: 0.3, transform: 'scale(0.8)' },
-    '100%': { opacity: 0.6, transform: 'scale(1.2)' },
-  },
-}));
-
-const MobileMenuContent = styled(Box)<{ open: boolean }>(({ theme: _theme, open }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '2rem',
-  zIndex: 1,
-  transform: open ? 'translateY(0) scale(1)' : 'translateY(50px) scale(0.9)',
-  opacity: open ? 1 : 0,
-  transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-  transitionDelay: open ? '0.1s' : '0s',
-}));
-
-const MobileNavButton = styled(Button)(({ theme }) => ({
-  minWidth: 280,
-  height: 64,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(0, 225, 255, 0.05) 100%)'
-      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
-      : '1px solid rgba(59, 130, 246, 0.15)',
-  borderRadius: 16,
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-  fontSize: '1.1rem',
-  fontWeight: 600,
-  textTransform: 'none',
-  backdropFilter: 'blur(10px)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  position: 'relative',
-  overflow: 'hidden',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: '-100%',
-    width: '100%',
-    height: '100%',
-    background:
-      theme.palette.mode === 'dark'
-        ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)'
-        : 'linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.1), transparent)',
-    transition: 'left 0.6s ease',
-  },
-  '&:hover': {
-    background:
-      theme.palette.mode === 'dark'
-        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
-        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%)',
-    borderColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.25)',
-    transform: 'translateY(-2px) scale(1.02)',
-    boxShadow:
-      theme.palette.mode === 'dark'
-        ? '0 10px 30px rgba(56, 189, 248, 0.2)'
-        : '0 10px 30px rgba(59, 130, 246, 0.15)',
-    '&::before': {
-      left: '100%',
+    maxHeight: '80dvh',
+    boxSizing: 'border-box',
+    zIndex: 1300,
+    background: isDark
+      ? 'linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.99) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.99) 100%)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    borderRadius: '20px 20px 0 0',
+    border: `1px solid ${isDark ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)'}`,
+    borderBottom: 'none',
+    boxShadow: isDark
+      ? '0 -20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
+      : '0 -20px 60px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.8)',
+    transform: open ? 'translateY(0)' : 'translateY(100%)',
+    transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    overscrollBehavior: 'contain',
+    paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 24px)',
+    '@keyframes sheetItemIn': {
+      from: { opacity: 0, transform: 'translateY(8px)' },
+      to: { opacity: 1, transform: 'translateY(0)' },
     },
-  },
-  '&:active': {
-    transform: 'translateY(0) scale(1)',
-  },
-}));
-
-const CloseButton = styled(IconButton)(({ theme }) => ({
-  position: 'absolute',
-  top: 20,
-  right: 20,
-  width: 48,
-  height: 48,
-  background:
-    theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
-      : '1px solid rgba(59, 130, 246, 0.15)',
-  borderRadius: 12,
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    background:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.12)',
-    transform: 'rotate(90deg) scale(1.1)',
-  },
-}));
-
-const MobileSubmenuContainer = styled(Box, {
-  shouldForwardProp: (prop) => !['open', 'itemCount'].includes(prop as string),
-})<{ open: boolean; itemCount?: number }>(({ theme, open, itemCount = 3 }) => ({
-  width: '100%',
-  overflow: 'hidden',
-  // Calculate height dynamically based on number of items: items × (52px height + 4px margin) + top padding
-  height: open ? `${itemCount * 56 + 4}px` : 0,
-  transition: 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  marginBottom: open ? theme.spacing(1) : 0,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  paddingTop: open ? theme.spacing(0.5) : 0,
-  background: open
-    ? theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.6) 100%)'
-      : 'linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.8) 100%)'
-    : 'transparent',
-  borderRadius: open ? '0 0 16px 16px' : 0,
-  backdropFilter: open ? 'blur(10px)' : 'none',
-}));
-
-const BaseMobileSubmenuItem = styled(Button, {
-  shouldForwardProp: (prop) => !['open', 'index', 'colorVariant'].includes(prop as string),
-})<{
-  open: boolean;
-  index: number;
-  colorVariant: 'default' | 'destructive' | 'positive';
-}>(({ theme, open, index, colorVariant }) => {
-  // Define color schemes for different variants
-  const getColors = (): {
-    borderLeft: string;
-    borderLeftHover: string;
-    borderHover: string;
-    gradient: string;
-    shadow: string;
-  } => {
-    switch (colorVariant) {
-      case 'destructive':
-        return {
-          borderLeft:
-            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(220, 38, 38, 0.5)',
-          borderLeftHover:
-            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.8)' : 'rgba(220, 38, 38, 0.9)',
-          borderHover:
-            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(220, 38, 38, 0.3)',
-          gradient:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(220, 38, 38, 0.02) 50%, transparent 100%)'
-              : 'linear-gradient(135deg, rgba(220, 38, 38, 0.04) 0%, rgba(185, 28, 28, 0.02) 50%, transparent 100%)',
-          shadow:
-            theme.palette.mode === 'dark'
-              ? '0 4px 12px rgba(239, 68, 68, 0.12)'
-              : '0 4px 12px rgba(220, 38, 38, 0.1)',
-        };
-      case 'positive':
-        return {
-          borderLeft:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.5)',
-          borderLeftHover:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.8)' : 'rgba(100, 116, 139, 0.9)',
-          borderHover:
-            theme.palette.mode === 'dark'
-              ? 'rgba(148, 163, 184, 0.25)'
-              : 'rgba(100, 116, 139, 0.3)',
-          gradient:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.06) 0%, rgba(100, 116, 139, 0.02) 50%, transparent 100%)'
-              : 'linear-gradient(135deg, rgba(100, 116, 139, 0.04) 0%, rgba(71, 85, 105, 0.02) 50%, transparent 100%)',
-          shadow:
-            theme.palette.mode === 'dark'
-              ? '0 4px 12px rgba(148, 163, 184, 0.1)'
-              : '0 4px 12px rgba(100, 116, 139, 0.08)',
-        };
-      default:
-        return {
-          borderLeft:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.3)' : 'rgba(100, 116, 139, 0.4)',
-          borderLeftHover:
-            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.8)',
-          borderHover:
-            theme.palette.mode === 'dark'
-              ? 'rgba(148, 163, 184, 0.2)'
-              : 'rgba(100, 116, 139, 0.25)',
-          gradient:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.06) 0%, rgba(100, 116, 139, 0.02) 50%, transparent 100%)'
-              : 'linear-gradient(135deg, rgba(100, 116, 139, 0.04) 0%, rgba(71, 85, 105, 0.02) 50%, transparent 100%)',
-          shadow:
-            theme.palette.mode === 'dark'
-              ? '0 4px 12px rgba(148, 163, 184, 0.1)'
-              : '0 4px 12px rgba(100, 116, 139, 0.08)',
-        };
-    }
-  };
-
-  const colors = getColors();
-
-  return {
-    width: '100%',
-    maxWidth: 'none',
-    height: 52,
-    marginBottom: theme.spacing(0.5),
-    background: 'transparent',
-    border: `1px solid transparent`,
-    borderLeft: `2px solid ${colors.borderLeft}`,
-    borderRadius: 8,
-    color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-    fontSize: '0.95rem',
-    fontWeight: 500,
-    textTransform: 'none',
-    position: 'relative',
-    overflow: 'hidden',
-    justifyContent: 'flex-start',
-    paddingLeft: theme.spacing(2),
-    opacity: open ? 1 : 0,
-    transform: open ? 'translateX(0) scale(1)' : 'translateX(-20px) scale(0.95)',
-    transition: `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)`,
-    transitionDelay: open ? `${0.1 + index * 0.08}s` : '0s',
-    '&::before': {
+    '&::after': {
       content: '""',
       position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: colors.gradient,
-      opacity: 0,
-      transition: 'opacity 0.3s ease',
-      borderRadius: 8,
+      inset: 0,
+      backgroundImage: noiseTexture,
+      backgroundSize: '128px 128px',
+      opacity: isDark ? 0.3 : 0.15,
+      pointerEvents: 'none',
+      borderRadius: 'inherit',
+      zIndex: 0,
     },
-    '&:hover': {
-      background:
-        theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.6)',
-      borderColor: colors.borderHover,
-      borderLeftColor: colors.borderLeftHover,
-      borderLeftWidth: '3px',
-      transform: open ? 'translateX(2px) scale(1.02)' : 'translateX(-20px) scale(0.95)',
-      boxShadow: colors.shadow,
-      '&::before': {
-        opacity: 1,
-      },
-    },
-    '&:active': {
-      transform: open ? 'translateX(1px) scale(1)' : 'translateX(-20px) scale(0.95)',
-      background:
-        theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(248, 250, 252, 0.8)',
+    '&::-webkit-scrollbar': { width: 4 },
+    '&::-webkit-scrollbar-track': { background: 'transparent' },
+    '&::-webkit-scrollbar-thumb': {
+      background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)',
+      borderRadius: 2,
     },
   };
 });
 
-const AuthIconButton = styled(IconButton)(({ theme }) => ({
-  width: 40,
-  height: 40,
-  borderRadius: 8,
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-  '&:hover': {
-    backgroundColor:
-      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
-    transform: 'scale(1.1)',
-    boxShadow:
-      theme.palette.mode === 'dark'
-        ? '0 4px 20px rgba(56, 189, 248, 0.15)'
-        : '0 4px 20px rgba(59, 130, 246, 0.12)',
-  },
-}));
+const MobileSheetItem = styled(ButtonBase, {
+  shouldForwardProp: (prop) => prop !== 'active',
+})<{ active?: boolean }>(({ theme, active }) => {
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? '#38bdf8' : '#3b82f6';
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 12,
+    padding: '10px 12px',
+    borderRadius: 12,
+    width: '100%',
+    textAlign: 'left',
+    position: 'relative',
+    transition: 'background 0.2s ease, transform 0.2s ease',
+    background: active ? (isDark ? alpha(accent, 0.1) : alpha(accent, 0.06)) : 'transparent',
+    ...(active && {
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        top: '20%',
+        bottom: '20%',
+        width: 3,
+        borderRadius: 2,
+        background: accent,
+      },
+    }),
+    '&:active': {
+      transform: 'scale(0.98)',
+      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    },
+    '@media (hover: hover)': {
+      '&:hover': {
+        background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+      },
+    },
+  };
+});
+
+const MobileSectionLabel = styled(Typography)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
+    fontSize: '0.65rem',
+    fontWeight: 700,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: isDark ? 'rgba(148, 163, 184, 0.6)' : 'rgba(100, 116, 139, 0.6)',
+    padding: '16px 20px 6px',
+    fontFamily: 'Space Grotesk, Inter, system-ui',
+    position: 'relative',
+    zIndex: 1,
+  };
+});
 
 // Calculator SVG icon component
 type CalculatorProps = {
@@ -404,67 +252,268 @@ const Calculator = ({ size }: CalculatorProps): React.JSX.Element => (
   </svg>
 );
 
-// Function to determine logo text based on current path
-const getLogoText = (pathname: string): string => {
-  // Landing page
-  if (pathname === '/' || pathname === '') {
-    return 'ESO Toolkit';
-  }
+// ─── Shared desktop nav button styles ────────────────────────────────────────
 
-  // Calculator page
-  if (pathname.includes('/calculator')) {
-    return 'ESO Toolkit';
-  }
+const navButtonSx = (theme: Theme) =>
+  ({
+    px: 2,
+    py: 1,
+    borderRadius: 2,
+    textTransform: 'none',
+    fontWeight: 500,
+    position: 'relative',
+    overflow: 'hidden',
+    transition:
+      'background 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    background: 'transparent',
+    border: '1px solid transparent',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background:
+        theme.palette.mode === 'dark'
+          ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
+          : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+      opacity: 0,
+      transition: 'opacity 0.3s ease',
+      borderRadius: 'inherit',
+    },
+    '&:hover': {
+      transform: 'translateY(-1px)',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.08)' : 'rgba(59, 130, 246, 0.06)',
+      borderColor:
+        theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.15)',
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+          : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+      '&::before': { opacity: 1 },
+    },
+    '&:active': { transform: 'translateY(0)' },
+  }) as const;
 
-  // Text editor page
-  if (pathname.includes('/text-editor')) {
-    return 'ESO Toolkit';
-  }
+// ─── SVG noise texture for dropdown panels ──────────────────────────────────
 
-  // Log analyzer related pages (reports, logs, etc.)
-  if (
-    pathname.includes('/report/') ||
-    pathname.includes('/logs') ||
-    pathname.includes('/latest-reports') ||
-    pathname.includes('/my-reports')
-  ) {
-    return 'ESO Toolkit';
-  }
+const noiseTexture = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E")`;
 
-  // Default for other pages
-  return 'ESO Toolkit';
+// ─── Shared dropdown paper styles ────────────────────────────────────────────
+
+const dropdownPaperSx = (theme: Theme): SxProps<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? '#38bdf8' : '#3b82f6';
+  const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
+
+  return {
+    overflow: 'hidden',
+    mt: 1,
+    minWidth: 280,
+    background: isDark
+      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.78) 0%, rgba(3, 7, 18, 0.88) 100%)'
+      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.94) 100%)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    border: `1px solid ${alpha(accent, isDark ? 0.12 : 0.1)}`,
+    borderRadius: '16px',
+    boxShadow: isDark
+      ? `0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px ${alpha(accent, 0.08)}, inset 0 1px 0 ${alpha('#fff', 0.05)}`
+      : `0 20px 60px rgba(15, 23, 42, 0.15), 0 0 0 1px ${alpha(accent, 0.06)}`,
+    py: 0,
+    // Stagger entrance for children
+    '@keyframes dropdownShimmer': {
+      '0%': { backgroundPosition: '-200% center' },
+      '100%': { backgroundPosition: '200% center' },
+    },
+    '@keyframes menuItemIn': {
+      '0%': { opacity: 0, transform: 'translateY(8px) scale(0.96)' },
+      '100%': { opacity: 1, transform: 'translateY(0) scale(1)' },
+    },
+    // Animated shimmer accent line
+    '&::before': {
+      content: '""',
+      display: 'block',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: '2px',
+      background: `linear-gradient(90deg, transparent 0%, ${accent} 15%, ${accentAlt} 50%, ${accent} 85%, transparent 100%)`,
+      backgroundSize: '200% 100%',
+      animation: 'dropdownShimmer 3s linear infinite',
+      zIndex: 2,
+    },
+    // Noise texture + spotlight layer
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      backgroundImage: noiseTexture,
+      backgroundSize: '128px 128px',
+      opacity: isDark ? 0.4 : 0.2,
+      pointerEvents: 'none',
+      zIndex: 0,
+      borderRadius: 'inherit',
+    },
+    // Spotlight glow follows --mouse-x / --mouse-y (set via JS)
+    '& > .dropdown-spotlight': {
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+      zIndex: 0,
+      borderRadius: 'inherit',
+      background: `radial-gradient(320px circle at var(--mouse-x, 50%) var(--mouse-y, 0%), ${alpha(accent, isDark ? 0.07 : 0.05)}, transparent 60%)`,
+      transition: 'background 0.15s ease',
+    },
+  };
+};
+
+// ─── Dropdown section header ─────────────────────────────────────────────────
+
+const dropdownHeaderSx = (theme: Theme): SxProps<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
+  const accent = isDark ? '#38bdf8' : '#3b82f6';
+  const accentAlt = isDark ? '#0ea5e9' : '#2563eb';
+
+  return {
+    px: 2,
+    pt: 2,
+    pb: 1,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    position: 'relative',
+    zIndex: 1,
+    // Section label gradient
+    '& .dropdown-header-label': {
+      fontFamily: 'Space Grotesk, Inter, system-ui',
+      fontWeight: 700,
+      fontSize: '0.7rem',
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const,
+      background: `linear-gradient(135deg, ${accent} 0%, ${accentAlt} 100%)`,
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    },
+    // Fading separator line
+    '&::after': {
+      content: '""',
+      flex: 1,
+      height: '1px',
+      background: `linear-gradient(90deg, ${alpha(accent, 0.25)}, transparent)`,
+    },
+  };
+};
+
+// ─── Dropdown menu item ──────────────────────────────────────────────────────
+
+const menuItemSx = (theme: Theme, itemAccent: string, index: number): SxProps<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
+
+  return {
+    py: 1,
+    px: 1.5,
+    borderRadius: '10px',
+    mx: 0.75,
+    my: 0.25,
+    position: 'relative',
+    zIndex: 1,
+    // Staggered entrance animation
+    opacity: 0,
+    animation: 'menuItemIn 0.3s ease-out forwards',
+    animationDelay: `${index * 0.04}s`,
+    transition:
+      'background 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease',
+    '& .MuiListItemIcon-root': {
+      transition:
+        'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      minWidth: 40,
+    },
+    '& .MuiListItemText-primary': {
+      fontSize: '0.875rem',
+      fontWeight: 550,
+      lineHeight: 1.3,
+    },
+    '& .MuiListItemText-secondary': {
+      fontSize: '0.7rem',
+      opacity: 0.45,
+      lineHeight: 1.3,
+      mt: 0.15,
+      transition: 'opacity 0.25s ease',
+    },
+    '&:hover': {
+      background: isDark
+        ? `linear-gradient(135deg, ${alpha(itemAccent, 0.12)} 0%, ${alpha(itemAccent, 0.03)} 100%)`
+        : `linear-gradient(135deg, ${alpha(itemAccent, 0.1)} 0%, ${alpha(itemAccent, 0.02)} 100%)`,
+      transform: 'translateX(4px)',
+      boxShadow: isDark
+        ? `inset 2px 0 0 ${itemAccent}, 0 2px 12px ${alpha(itemAccent, 0.1)}`
+        : `inset 2px 0 0 ${itemAccent}, 0 2px 8px ${alpha(itemAccent, 0.06)}`,
+      '& .menu-icon-badge': {
+        borderColor: alpha(itemAccent, 0.5),
+        background: alpha(itemAccent, isDark ? 0.2 : 0.12),
+        boxShadow: isDark ? `0 0 12px ${alpha(itemAccent, 0.25)}` : 'none',
+        transform: 'scale(1.1)',
+      },
+      '& .MuiListItemText-secondary': {
+        opacity: 0.75,
+      },
+    },
+    '&:active': {
+      transform: 'translateX(2px) scale(0.99)',
+      background: alpha(itemAccent, isDark ? 0.16 : 0.12),
+    },
+  };
+};
+
+// ─── Avatar gradient helper ─────────────────────────────────────────────────
+
+const avatarGradients: [string, string][] = [
+  ['#f59e0b', '#ef4444'],
+  ['#3b82f6', '#8b5cf6'],
+  ['#06b6d4', '#3b82f6'],
+  ['#22c55e', '#06b6d4'],
+  ['#8b5cf6', '#ec4899'],
+  ['#ef4444', '#f59e0b'],
+  ['#ec4899', '#f43f5e'],
+  ['#14b8a6', '#22c55e'],
+];
+
+const getAvatarProps = (name: string): { gradient: string; color: string; initials: string } => {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % avatarGradients.length;
+  const [c1, c2] = avatarGradients[idx];
+  const initials = name.slice(0, 2).toUpperCase();
+  return { gradient: `linear-gradient(135deg, ${c1}, ${c2})`, color: c1, initials };
 };
 
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, currentUser, userLoading, userError, refetchUser, rebindAccessToken } =
     useAuth();
   const hasRequestedUser = React.useRef(false);
-  const navigate = useNavigate();
+  const navigate = useViewTransitionNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const { darkMode, toggleDarkMode } = usePersistentDarkMode();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [reportsAnchorEl, setReportsAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [mobileToolsOpen, setMobileToolsOpen] = React.useState(false);
-  const [mobileReportsOpen, setMobileReportsOpen] = React.useState(false);
-  const [mobileAccountOpen, setMobileAccountOpen] = React.useState(false);
-
-  // Determine logo text based on current location
-  const logoText = getLogoText(location.pathname);
+  const [profileAnchorEl, setProfileAnchorEl] = React.useState<null | HTMLElement>(null);
+  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const dragStartY = React.useRef(0);
 
   const userDisplayName = React.useMemo(() => {
     if (!currentUser) return '';
     return currentUser.naDisplayName || currentUser.euDisplayName || currentUser.name || '';
-  }, [currentUser]);
-
-  React.useEffect(() => {
-    if (currentUser) {
-      // Temporary debug log to verify header data flow
-      // eslint-disable-next-line no-console
-      console.log('[HeaderBar] Current user loaded', currentUser);
-    }
   }, [currentUser]);
 
   React.useEffect(() => {
@@ -481,6 +530,24 @@ export const HeaderBar: React.FC = () => {
     return '';
   }, [userDisplayName, userLoading, userError]);
 
+  const { avatarThumbUrl } = useCurrentUserAvatar();
+
+  const avatarProps = React.useMemo(
+    () => getAvatarProps(userDisplayName || 'U'),
+    [userDisplayName],
+  );
+
+  const handleProfileMenuOpen = React.useCallback(
+    (event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>): void => {
+      setProfileAnchorEl(event.currentTarget);
+    },
+    [],
+  );
+
+  const handleProfileMenuClose = React.useCallback((): void => {
+    setProfileAnchorEl(null);
+  }, []);
+
   React.useEffect(() => {
     const onScroll = (): void => setScrolled(window.scrollY > 8);
     onScroll();
@@ -488,72 +555,78 @@ export const HeaderBar: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Lock body scroll when mobile sheet is open
+  React.useEffect(() => {
+    if (mobileOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      return () => {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [mobileOpen]);
+
+  // Close mobile sheet on Escape
+  React.useEffect(() => {
+    if (!mobileOpen) return;
+    const handleEscape = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [mobileOpen]);
+
   const handleLogin = React.useCallback((): void => {
+    setFallbackDestination(location.pathname + location.search + location.hash);
     startPKCEAuth();
     setMobileOpen(false);
-  }, []);
+  }, [location]);
 
   const handleLogout = React.useCallback((): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
     rebindAccessToken();
-    navigate('/');
+    navigate('/', { vtType: 'down' });
     setMobileOpen(false);
   }, [rebindAccessToken, navigate]);
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
-    if (!mobileOpen) {
-      // Reset submenus when opening mobile menu
-      setMobileToolsOpen(false);
-      setMobileReportsOpen(false);
-      setMobileAccountOpen(false);
+  };
+
+  const handleSheetTouchStart = React.useCallback((e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    if (sheetRef.current) sheetRef.current.style.transition = 'none';
+  }, []);
+
+  const handleSheetTouchMove = React.useCallback((e: React.TouchEvent) => {
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (dy > 0 && sheetRef.current) {
+      sheetRef.current.style.transform = `translateY(${dy}px)`;
     }
-  };
+  }, []);
 
-  const handleMobileToolsToggle = (): void => {
-    if (!mobileToolsOpen) {
-      // Close account and reports submenus if they're open
-      setMobileAccountOpen(false);
-      setMobileReportsOpen(false);
+  const handleSheetTouchEnd = React.useCallback((e: React.TouchEvent) => {
+    const dy = e.changedTouches[0].clientY - dragStartY.current;
+    if (sheetRef.current) {
+      sheetRef.current.style.transition = '';
+      sheetRef.current.style.transform = '';
     }
-    setMobileToolsOpen(!mobileToolsOpen);
-  };
+    if (dy > 80) setMobileOpen(false);
+  }, []);
 
-  const handleMobileReportsToggle = (): void => {
-    if (!mobileReportsOpen) {
-      // Close tools and account submenus if they're open
-      setMobileToolsOpen(false);
-      setMobileAccountOpen(false);
+  const handleNavigateToProfile = React.useCallback((): void => {
+    if (currentUser?.name) {
+      navigate(`/u/${currentUser.name}`, { vtType: 'forward' });
     }
-    setMobileReportsOpen(!mobileReportsOpen);
-  };
-
-  const handleMobileAccountToggle = (): void => {
-    if (!mobileAccountOpen) {
-      // Close tools and reports submenus if they're open
-      setMobileToolsOpen(false);
-      setMobileReportsOpen(false);
-    }
-    setMobileAccountOpen(!mobileAccountOpen);
-  };
-
-  const handleAccountClick = (event: React.MouseEvent<HTMLElement>): void => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = (): void => {
-    setAnchorEl(null);
-  };
-
-  const handleViewReports = (): void => {
-    navigate('/my-reports');
-    setAnchorEl(null);
-  };
-
-  const handleLogoutFromMenu = (): void => {
-    handleLogout();
-    setAnchorEl(null);
-  };
+    setMobileOpen(false);
+  }, [currentUser, navigate]);
 
   const handleToolsClick = (event: React.MouseEvent<HTMLElement>): void => {
     setToolsAnchorEl(event.currentTarget);
@@ -575,124 +648,139 @@ export const HeaderBar: React.FC = () => {
     if (path.startsWith('http')) {
       window.open(path, '_blank', 'noopener,noreferrer');
     } else {
-      navigate(path);
+      navigate(path, { vtType: 'forward' });
     }
     setToolsAnchorEl(null);
     setReportsAnchorEl(null);
     setMobileOpen(false);
-    setMobileToolsOpen(false);
-    setMobileReportsOpen(false);
-    setMobileAccountOpen(false);
   };
 
   const handleSampleReport = React.useCallback((): void => {
-    navigate('/sample-report');
+    navigate('/sample-report', { vtType: 'forward' });
     setReportsAnchorEl(null);
     setMobileOpen(false);
-    setMobileReportsOpen(false);
   }, [navigate]);
-
-  const handleMobileViewReports = React.useCallback((): void => {
-    navigate('/my-reports');
-    setMobileOpen(false);
-    setMobileAccountOpen(false);
-  }, [navigate]);
-
-  const handleMobileAuthAction = React.useCallback((): void => {
-    if (isLoggedIn) {
-      handleLogout();
-    } else {
-      handleLogin();
-    }
-    setMobileOpen(false);
-    setMobileAccountOpen(false);
-  }, [isLoggedIn, handleLogout, handleLogin]);
 
   const toolsItems = [
     {
       text: 'Text Editor',
+      desc: 'Format guild announcements',
       icon: '📝',
+      accent: '#f59e0b',
       path: '/text-editor',
     },
     {
       text: 'Calculator',
-      icon: <Calculator size="24" />,
+      desc: 'Stat & damage math',
+      icon: <Calculator size="16" />,
+      accent: '#22c55e',
       path: '/calculator',
     },
     {
-      text: 'Logs',
-      icon: '📋',
-      path: '/logs',
-    },
-    {
       text: 'Parse Analysis',
+      desc: 'Break down your parses',
       icon: '📈',
+      accent: '#a855f7',
       path: '/parse-analysis',
     },
     {
-      text: 'Calculation Knowledge Base',
-      icon: '📚',
-      path: '/docs/calculations',
+      text: 'Loadout Manager',
+      desc: 'Manage gear loadouts',
+      icon: '⚔️',
+      accent: '#ef4444',
+      path: '/loadout-manager',
+    },
+    {
+      text: 'Roster Builder',
+      desc: 'Plan trial compositions',
+      icon: '👥',
+      accent: '#06b6d4',
+      path: '/roster-builder',
+    },
+    {
+      text: 'Build Editor',
+      desc: 'Create & share builds',
+      icon: '🔧',
+      accent: '#3b82f6',
+      path: '/build-editor',
     },
   ];
 
-  const reportsItems = [
-    {
-      text: 'Sample Report',
-      icon: '🎲',
-      action: handleSampleReport,
-    },
-    {
-      text: 'Latest Report',
-      icon: '📊',
-      path: '/latest-reports',
-    },
-    {
-      text: 'Leaderboards',
-      icon: '🏆',
-      path: '/leaderboards',
-    },
-  ];
+  const reportsItems = React.useMemo(() => {
+    const items = [];
 
-  const accountItems = React.useMemo(() => {
-    const items: Array<{
-      text: string;
-      icon: React.ReactElement;
-      action: () => void;
-      colorVariant: 'default' | 'destructive' | 'positive';
-    }> = [];
-
+    // Add "My Reports" if user is logged in
     if (isLoggedIn) {
       items.push({
-        text: 'View my reports',
-        icon: <Person sx={{ fontSize: 18 }} />,
-        action: handleMobileViewReports,
-        colorVariant: 'default',
-      });
-      items.push({
-        text: 'Log out',
-        icon: <Logout sx={{ fontSize: 18 }} />,
-        action: handleMobileAuthAction,
-        colorVariant: 'destructive',
-      });
-    } else {
-      items.push({
-        text: 'Log in',
-        icon: <Login sx={{ fontSize: 18 }} />,
-        action: handleMobileAuthAction,
-        colorVariant: 'positive',
+        text: 'My Reports',
+        desc: 'Your uploaded logs',
+        icon: '📁',
+        accent: '#f59e0b',
+        path: '/my-reports',
       });
     }
+
+    // Always show these items
+    items.push(
+      {
+        text: 'Sample Report',
+        desc: 'Explore a demo log',
+        icon: '🎲',
+        accent: '#a855f7',
+        action: handleSampleReport,
+      },
+      {
+        text: 'Latest Reports',
+        desc: 'Recently uploaded',
+        icon: '📊',
+        accent: '#06b6d4',
+        path: '/latest-reports',
+      },
+      {
+        text: 'Leaderboards',
+        desc: 'Top parse rankings',
+        icon: '🏆',
+        accent: '#eab308',
+        path: '/leaderboards',
+      },
+    );
+
     return items;
-  }, [isLoggedIn, handleMobileAuthAction, handleMobileViewReports]);
+  }, [isLoggedIn, handleSampleReport]);
 
   const navItems = [
     {
-      text: 'Discord',
-      icon: <img src={discordIcon} alt="Discord" style={{ width: 18, height: 18 }} />,
-      href: 'https://discord.gg/mMjwcQYFdc',
+      text: 'Roster Hub',
+      icon: '👥',
+      path: '/roster-hub',
+    },
+    {
+      text: 'Build Hub',
+      icon: '🏗️',
+      path: '/build-hub',
+    },
+    {
+      text: 'Pack Hub',
+      icon: '🧩',
+      path: '/pack-hub',
     },
   ];
+
+  // Lateral peer paths — ordered left-to-right for slide direction
+  const lateralPeers = navItems.map((i) => i.path);
+
+  const getLateralTransitionType = React.useCallback(
+    (targetPath: string): ViewTransitionType => {
+      const fromIdx = lateralPeers.indexOf(location.pathname);
+      const toIdx = lateralPeers.indexOf(targetPath);
+      if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+        return toIdx > fromIdx ? 'slide-left' : 'slide-right';
+      }
+      return 'forward';
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [location.pathname],
+  );
 
   return (
     <>
@@ -701,6 +789,7 @@ export const HeaderBar: React.FC = () => {
         color="transparent"
         elevation={0}
         sx={{
+          viewTransitionName: 'site-header',
           boxShadow: scrolled ? '0 10px 30px rgba(0,0,0,0.35)' : 'none',
           transition: 'box-shadow .2s ease',
         }}
@@ -711,7 +800,7 @@ export const HeaderBar: React.FC = () => {
               <Button
                 color="inherit"
                 sx={{ p: 0, minWidth: 0, '&:hover': { background: 'transparent' } }}
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/', { vtType: 'down' })}
               >
                 <Typography
                   variant="h6"
@@ -734,8 +823,8 @@ export const HeaderBar: React.FC = () => {
                     backgroundClip: 'text',
                   }}
                 >
-                  <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
-                  {logoText}
+                  <img src={esoLogo} alt="ESO Toolkit logo" style={{ width: 30, height: 30 }} />
+                  ESO Toolkit
                 </Typography>
               </Button>
             </Box>
@@ -745,71 +834,23 @@ export const HeaderBar: React.FC = () => {
                 <Button
                   key={item.text}
                   color="inherit"
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={() =>
+                    navigate(item.path, { vtType: getLateralTransitionType(item.path) })
+                  }
                   startIcon={
                     typeof item.icon === 'string' ? (
-                      <Box
-                        component="span"
+                      <span
                         role="img"
                         aria-label={item.text.toLowerCase()}
-                        sx={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
+                        style={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
                       >
                         {item.icon}
-                      </Box>
+                      </span>
                     ) : (
                       item.icon
                     )
                   }
-                  sx={{
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    background: 'transparent',
-                    border: '1px solid transparent',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
-                          : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
-                      opacity: 0,
-                      transition: 'opacity 0.3s ease',
-                      borderRadius: 'inherit',
-                    },
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.08)'
-                          : 'rgba(59, 130, 246, 0.06)',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.2)'
-                          : 'rgba(59, 130, 246, 0.15)',
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                          : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                      '&::before': {
-                        opacity: 1,
-                      },
-                    },
-                    '&:active': {
-                      transform: 'translateY(0)',
-                    },
-                  }}
+                  sx={navButtonSx(theme)}
                 >
                   {item.text}
                 </Button>
@@ -821,54 +862,7 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleReportsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Assessment />}
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent',
-                  border: '1px solid transparent',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                    borderRadius: 'inherit',
-                  },
-                  '&:hover': {
-                    transform: 'translateY(-1px)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.08)'
-                        : 'rgba(59, 130, 246, 0.06)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.2)'
-                        : 'rgba(59, 130, 246, 0.15)',
-                    boxShadow:
-                      theme.palette.mode === 'dark'
-                        ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                        : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                    '&::before': {
-                      opacity: 1,
-                    },
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                  },
-                }}
+                sx={navButtonSx(theme)}
               >
                 Reports
               </Button>
@@ -879,111 +873,170 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleToolsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Build />}
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent',
-                  border: '1px solid transparent',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                    borderRadius: 'inherit',
-                  },
-                  '&:hover': {
-                    transform: 'translateY(-1px)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.08)'
-                        : 'rgba(59, 130, 246, 0.06)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.2)'
-                        : 'rgba(59, 130, 246, 0.15)',
-                    boxShadow:
-                      theme.palette.mode === 'dark'
-                        ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                        : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                    '&::before': {
-                      opacity: 1,
-                    },
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                  },
-                }}
+                sx={navButtonSx(theme)}
               >
                 Tools
               </Button>
-              <ThemeToggle />
+              {!isLoggedIn && <ThemeToggle />}
               {isLoggedIn ? (
-                <Tooltip title="Account" arrow placement="bottom">
-                  <Button
-                    onClick={handleAccountClick}
-                    startIcon={<Person />}
+                <Box
+                  onClick={handleProfileMenuOpen}
+                  aria-label={userLabel ? `Profile: ${userLabel}` : 'Profile'}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleProfileMenuOpen(e);
+                    }
+                  }}
+                  sx={{
+                    display: { xs: 'none', sm: 'flex' },
+                    alignItems: 'center',
+                    gap: 1,
+                    cursor: 'pointer',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: '12px',
+                    transition:
+                      'background 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}`,
+                    background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+                    '&:hover': {
+                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)',
+                      boxShadow: isDark
+                        ? `0 4px 16px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.04)`
+                        : `0 4px 16px rgba(0,0,0,0.06)`,
+                      '& .profile-chevron': { opacity: 0.7, transform: 'translateY(1px)' },
+                    },
+                    '&:active': { transform: 'scale(0.97)' },
+                  }}
+                >
+                  {/* Avatar */}
+                  <Box
                     sx={{
-                      display: { xs: 'none', sm: 'flex' },
-                      maxWidth: 220,
-                      fontWeight: 600,
-                      color:
-                        theme.palette.mode === 'dark'
-                          ? theme.palette.grey[100]
-                          : theme.palette.text.primary,
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: '999px',
-                      bgcolor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(59,130,246,0.12)'
-                          : 'rgba(59,130,246,0.16)',
-                      textTransform: 'none',
-                      '&:hover': {
-                        bgcolor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(59,130,246,0.2)'
-                            : 'rgba(59,130,246,0.24)',
-                      },
+                      width: 32,
+                      height: 32,
+                      borderRadius: '9px',
+                      background: avatarThumbUrl ? 'transparent' : avatarProps.gradient,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: '#fff',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                      position: 'relative',
+                      flexShrink: 0,
+                      boxShadow: `0 2px 8px ${alpha(avatarProps.color, 0.35)}`,
+                      transition: 'box-shadow 0.25s ease',
                     }}
                   >
-                    <Typography
-                      variant="body2"
+                    {avatarThumbUrl ? (
+                      <img
+                        src={avatarThumbUrl}
+                        alt={userDisplayName || 'User avatar'}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '9px',
+                        }}
+                      />
+                    ) : (
+                      avatarProps.initials
+                    )}
+                    {/* Online indicator */}
+                    <Box
                       sx={{
-                        fontWeight: 600,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        position: 'absolute',
+                        bottom: -2,
+                        right: -2,
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: '#22c55e',
+                        border: `2px solid ${isDark ? '#0f172a' : '#ffffff'}`,
+                        boxShadow: '0 0 6px rgba(34,197,94,0.5)',
                       }}
-                    >
-                      {userLabel || 'Account'}
-                    </Typography>
-                  </Button>
-                </Tooltip>
+                    />
+                  </Box>
+                  <Typography
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                      maxWidth: 140,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: isDark ? '#e2e8f0' : '#1e293b',
+                    }}
+                  >
+                    {userLabel || 'Profile'}
+                  </Typography>
+                  <ExpandMore
+                    className="profile-chevron"
+                    sx={{
+                      fontSize: 16,
+                      opacity: 0.4,
+                      transition: 'opacity 0.25s ease, transform 0.25s ease',
+                      color: isDark ? '#94a3b8' : '#64748b',
+                    }}
+                  />
+                </Box>
               ) : (
-                <Tooltip title="Log in" arrow placement="bottom">
-                  <AuthIconButton onClick={handleLogin}>
-                    <Login />
-                  </AuthIconButton>
-                </Tooltip>
+                <Button
+                  onClick={handleLogin}
+                  startIcon={<Login sx={{ fontSize: '18px !important' }} />}
+                  aria-label="Sign in with ESO Logs"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    px: 2.5,
+                    py: 0.75,
+                    borderRadius: '10px',
+                    background: isDark
+                      ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                      : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    boxShadow: isDark
+                      ? '0 4px 16px rgba(59,130,246,0.3), inset 0 1px 0 rgba(255,255,255,0.15)'
+                      : '0 4px 16px rgba(59,130,246,0.25), inset 0 1px 0 rgba(255,255,255,0.2)',
+                    transition:
+                      'box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      inset: 0,
+                      background:
+                        'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+                      opacity: 0,
+                      transition: 'opacity 0.25s ease',
+                    },
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: isDark
+                        ? '0 8px 24px rgba(59,130,246,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                        : '0 8px 24px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.25)',
+                      '&::before': { opacity: 1 },
+                    },
+                    '&:active': { transform: 'translateY(0) scale(0.97)' },
+                  }}
+                >
+                  Sign in
+                </Button>
               )}
             </Box>
 
             <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
-              <ThemeToggle />
               <HamburgerButton
                 open={mobileOpen}
                 onClick={handleDrawerToggle}
@@ -1000,88 +1053,6 @@ export const HeaderBar: React.FC = () => {
         </Container>
       </AppBar>
 
-      {/* Account Menu for Logged In Users */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        onClick={handleMenuClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        slotProps={{
-          paper: {
-            elevation: 0,
-            sx: {
-              overflow: 'visible',
-              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-              mt: 1.5,
-              minWidth: 180,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
-              border:
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgba(59, 130, 246, 0.15)',
-              borderRadius: 2,
-              '&::before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-              },
-            },
-          },
-        }}
-      >
-        <MenuItem
-          onClick={handleViewReports}
-          sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 1,
-            mx: 1,
-            mb: 0.5,
-            '&:hover': {
-              backgroundColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.08)'
-                  : 'rgba(59, 130, 246, 0.08)',
-            },
-          }}
-        >
-          <Person sx={{ mr: 1.5, fontSize: 20 }} />
-          View my reports
-        </MenuItem>
-        <MenuItem
-          onClick={handleLogoutFromMenu}
-          sx={{
-            py: 1.5,
-            px: 2,
-            borderRadius: 1,
-            mx: 1,
-            color: 'error.main',
-            '&:hover': {
-              backgroundColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(239, 68, 68, 0.08)'
-                  : 'rgba(220, 38, 38, 0.08)',
-            },
-          }}
-        >
-          <Logout sx={{ mr: 1.5, fontSize: 20 }} />
-          Log out
-        </MenuItem>
-      </Menu>
-
       {/* Tools Submenu */}
       <Menu
         anchorEl={toolsAnchorEl}
@@ -1089,68 +1060,61 @@ export const HeaderBar: React.FC = () => {
         onClose={handleToolsClose}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
-            sx: {
-              overflow: 'visible',
-              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-              mt: 1.5,
-              minWidth: 180,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
-              border:
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgba(59, 130, 246, 0.15)',
-              borderRadius: 2,
-              '&::before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                left: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-              },
+            sx: dropdownPaperSx(theme),
+            onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty(
+                '--mouse-x',
+                `${((e.clientX - rect.left) / rect.width) * 100}%`,
+              );
+              e.currentTarget.style.setProperty(
+                '--mouse-y',
+                `${((e.clientY - rect.top) / rect.height) * 100}%`,
+              );
             },
           },
         }}
       >
-        {toolsItems.map((item) => (
+        <Box className="dropdown-spotlight" />
+        <Box sx={dropdownHeaderSx(theme)}>
+          <Build sx={{ fontSize: 14, color: isDark ? '#38bdf8' : '#3b82f6' }} />
+          <span className="dropdown-header-label">Tools</span>
+        </Box>
+        {toolsItems.map((item, index) => (
           <MenuItem
             key={item.text}
             onClick={() => handleToolNavigation(item.path)}
-            sx={{
-              py: 1.5,
-              px: 2,
-              borderRadius: 1,
-              mx: 1,
-              mb: 0.5,
-              '&:hover': {
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.08)'
-                    : 'rgba(59, 130, 246, 0.08)',
-              },
-            }}
+            sx={menuItemSx(theme, item.accent, index)}
           >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              {typeof item.icon === 'string' ? (
-                <Box sx={{ fontSize: 18 }}>{item.icon}</Box>
-              ) : (
-                item.icon
-              )}
+            <ListItemIcon>
+              <Box
+                className="menu-icon-badge"
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
+                  fontSize: typeof item.icon === 'string' ? 15 : undefined,
+                  transition:
+                    'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+              >
+                {item.icon}
+              </Box>
             </ListItemIcon>
-            <ListItemText primary={item.text} />
+            <ListItemText primary={item.text} secondary={item.desc} />
           </MenuItem>
         ))}
+        <Box sx={{ pb: 0.5 }} />
       </Menu>
 
       {/* Reports Submenu */}
@@ -1160,41 +1124,32 @@ export const HeaderBar: React.FC = () => {
         onClose={handleReportsClose}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
-            sx: {
-              overflow: 'visible',
-              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-              mt: 1.5,
-              minWidth: 180,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
-                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
-              backdropFilter: 'blur(20px)',
-              border:
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgba(59, 130, 246, 0.15)',
-              borderRadius: 2,
-              '&::before': {
-                content: '""',
-                display: 'block',
-                position: 'absolute',
-                top: 0,
-                left: 14,
-                width: 10,
-                height: 10,
-                bgcolor: 'background.paper',
-                transform: 'translateY(-50%) rotate(45deg)',
-                zIndex: 0,
-              },
+            sx: dropdownPaperSx(theme),
+            onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty(
+                '--mouse-x',
+                `${((e.clientX - rect.left) / rect.width) * 100}%`,
+              );
+              e.currentTarget.style.setProperty(
+                '--mouse-y',
+                `${((e.clientY - rect.top) / rect.height) * 100}%`,
+              );
             },
           },
         }}
       >
-        {reportsItems.map((item) => (
+        <Box className="dropdown-spotlight" />
+        <Box sx={dropdownHeaderSx(theme)}>
+          <Assessment sx={{ fontSize: 14, color: isDark ? '#38bdf8' : '#3b82f6' }} />
+          <span className="dropdown-header-label">Reports</span>
+        </Box>
+        {reportsItems.map((item, index) => (
           <MenuItem
             key={item.text}
             onClick={() => {
@@ -1204,301 +1159,700 @@ export const HeaderBar: React.FC = () => {
                 handleToolNavigation(item.path);
               }
             }}
+            sx={menuItemSx(theme, item.accent, index)}
+          >
+            <ListItemIcon>
+              <Box
+                className="menu-icon-badge"
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
+                  fontSize: 15,
+                  transition:
+                    'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                }}
+              >
+                {item.icon}
+              </Box>
+            </ListItemIcon>
+            <ListItemText primary={item.text} secondary={item.desc} />
+          </MenuItem>
+        ))}
+        <Box sx={{ pb: 0.5 }} />
+      </Menu>
+
+      {/* Profile Dropdown */}
+      <Menu
+        anchorEl={profileAnchorEl}
+        open={Boolean(profileAnchorEl)}
+        onClose={handleProfileMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
+        slotProps={{
+          transition: { timeout: 200 },
+          paper: {
+            elevation: 0,
+            sx: {
+              ...dropdownPaperSx(theme),
+              minWidth: 240,
+            } as SxProps<Theme>,
+            onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              e.currentTarget.style.setProperty(
+                '--mouse-x',
+                `${((e.clientX - rect.left) / rect.width) * 100}%`,
+              );
+              e.currentTarget.style.setProperty(
+                '--mouse-y',
+                `${((e.clientY - rect.top) / rect.height) * 100}%`,
+              );
+            },
+          },
+        }}
+      >
+        <Box className="dropdown-spotlight" />
+        {/* Clickable user card → navigates to profile */}
+        <ButtonBase
+          onClick={() => {
+            handleNavigateToProfile();
+            handleProfileMenuClose();
+          }}
+          sx={{
+            width: '100%',
+            px: 2,
+            pt: 2,
+            pb: 1.75,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            position: 'relative',
+            zIndex: 1,
+            borderRadius: '12px 12px 0 0',
+            textAlign: 'left',
+            transition: 'background 0.2s ease',
+            '&:hover': {
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              '& .profile-card-arrow': {
+                opacity: 0.7,
+                transform: 'translateX(2px)',
+              },
+            },
+          }}
+        >
+          <Box
             sx={{
-              py: 1.5,
-              px: 2,
-              borderRadius: 1,
-              mx: 1,
-              mb: 0.5,
+              width: 44,
+              height: 44,
+              borderRadius: '12px',
+              background: avatarThumbUrl ? 'transparent' : avatarProps.gradient,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.95rem',
+              fontWeight: 800,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+              flexShrink: 0,
+              boxShadow: `0 4px 12px ${alpha(avatarProps.color, 0.35)}`,
+              position: 'relative',
+            }}
+          >
+            {avatarThumbUrl ? (
+              <img
+                src={avatarThumbUrl}
+                alt={userDisplayName || 'User avatar'}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '12px',
+                }}
+              />
+            ) : (
+              avatarProps.initials
+            )}
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: -2,
+                right: -2,
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                background: '#22c55e',
+                border: `2.5px solid ${isDark ? 'rgba(15,23,42,0.95)' : '#ffffff'}`,
+                boxShadow: '0 0 8px rgba(34,197,94,0.5)',
+              }}
+            />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                lineHeight: 1.3,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {userLabel || 'Profile'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.72rem',
+                opacity: 0.4,
+                lineHeight: 1.3,
+                mt: 0.25,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                letterSpacing: '0.01em',
+              }}
+            >
+              View profile
+            </Typography>
+          </Box>
+          <ChevronRight
+            className="profile-card-arrow"
+            sx={{
+              fontSize: 18,
+              opacity: 0.25,
+              color: isDark ? '#94a3b8' : '#64748b',
+              flexShrink: 0,
+              ml: 'auto',
+              transition: 'opacity 0.2s ease, transform 0.2s ease',
+            }}
+          />
+        </ButtonBase>
+        {/* Footer toolbar: sign-out + theme toggle */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.75,
+            px: 1.5,
+            py: 1,
+            position: 'relative',
+            zIndex: 1,
+            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+          }}
+        >
+          <ButtonBase
+            onClick={() => {
+              handleLogout();
+              handleProfileMenuClose();
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              px: 1,
+              py: 0.625,
+              borderRadius: '8px',
+              transition: 'background 0.2s ease, color 0.2s ease',
               '&:hover': {
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.08)'
-                    : 'rgba(59, 130, 246, 0.08)',
+                background: isDark ? 'rgba(248,113,113,0.1)' : 'rgba(220,38,38,0.06)',
+                '& .sign-out-icon, & .sign-out-text': {
+                  color: isDark ? '#f87171' : '#dc2626',
+                },
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              {typeof item.icon === 'string' ? (
-                <Box sx={{ fontSize: 18 }}>{item.icon}</Box>
-              ) : (
-                item.icon
-              )}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </MenuItem>
-        ))}
-      </Menu>
-
-      {/* Modern Mobile Menu Overlay */}
-      <MobileMenuOverlay open={mobileOpen}>
-        <CloseButton onClick={handleDrawerToggle} aria-label="close menu">
-          ✕
-        </CloseButton>
-
-        <MobileMenuContent open={mobileOpen}>
-          <Typography
-            variant="h4"
+            <Logout
+              className="sign-out-icon"
+              sx={{
+                fontSize: 14,
+                color: isDark ? 'rgba(148,163,184,0.5)' : 'rgba(100,116,139,0.5)',
+                transition: 'color 0.2s ease',
+              }}
+            />
+            <Typography
+              className="sign-out-text"
+              sx={{
+                fontSize: '0.76rem',
+                fontWeight: 500,
+                color: isDark ? 'rgba(148,163,184,0.5)' : 'rgba(100,116,139,0.5)',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                lineHeight: 1,
+                transition: 'color 0.2s ease',
+              }}
+            >
+              Sign out
+            </Typography>
+          </ButtonBase>
+          <Box sx={{ flex: 1 }} />
+          <PerfTierToggle size="small" />
+          <IconButton
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              toggleDarkMode();
+            }}
+            size="small"
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             sx={{
-              fontWeight: 800,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
-                  : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              mb: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              textTransform:
-                location.pathname === '/' || location.pathname === '' ? 'uppercase' : 'none',
+              width: 32,
+              height: 32,
+              borderRadius: '9px',
+              background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.08 : 0.05),
+              border: `1px solid ${alpha(isDark ? '#f59e0b' : '#6366f1', 0.1)}`,
+              transition: 'background 0.2s ease, border-color 0.2s ease, transform 0.15s ease',
+              '&:hover': {
+                background: alpha(isDark ? '#f59e0b' : '#6366f1', isDark ? 0.16 : 0.1),
+                borderColor: alpha(isDark ? '#f59e0b' : '#6366f1', 0.22),
+                transform: 'scale(1.06)',
+              },
+              '&:active': { transform: 'scale(0.95)' },
             }}
           >
-            <img src={esoLogo} alt="ESO Helpers" style={{ width: 32, height: 32 }} />
-            {logoText}
-          </Typography>
+            {darkMode ? (
+              <LightModeIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+            ) : (
+              <DarkModeIcon sx={{ fontSize: 16, color: '#6366f1' }} />
+            )}
+          </IconButton>
+        </Box>
+      </Menu>
 
-          {navItems.map((item, index) => (
-            <MobileNavButton
-              key={item.text}
-              href={item.href}
-              onClick={(_e: React.MouseEvent) => {
-                window.open(item.href, '_blank', 'noopener,noreferrer');
-                handleDrawerToggle();
-              }}
-              startIcon={
-                typeof item.icon === 'string' ? (
-                  <Box sx={{ fontSize: 20, mr: 1 }}>{item.icon}</Box>
-                ) : (
-                  <Box sx={{ mr: 1 }}>{item.icon}</Box>
-                )
+      {/* Mobile Bottom Sheet */}
+      <MobileBackdrop open={mobileOpen} onClick={() => setMobileOpen(false)} />
+      <MobileBottomSheet open={mobileOpen} ref={sheetRef}>
+        {/* Drag Handle */}
+        <Box
+          onTouchStart={handleSheetTouchStart}
+          onTouchMove={handleSheetTouchMove}
+          onTouchEnd={handleSheetTouchEnd}
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            pt: 1.5,
+            pb: 1,
+            cursor: 'grab',
+            position: 'relative',
+            zIndex: 1,
+          }}
+        >
+          <Box
+            sx={{
+              width: 36,
+              height: 4,
+              borderRadius: 2,
+              background: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+            }}
+          />
+        </Box>
+
+        {/* User Card */}
+        {isLoggedIn && (
+          <Box
+            onClick={handleNavigateToProfile}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleNavigateToProfile();
               }
+            }}
+            sx={{
+              mx: 2,
+              mb: 0.5,
+              p: 1.5,
+              borderRadius: 3,
+              background: isDark
+                ? `linear-gradient(135deg, ${alpha(avatarProps.color, 0.08)} 0%, rgba(15,23,42,0.4) 100%)`
+                : `linear-gradient(135deg, ${alpha(avatarProps.color, 0.06)} 0%, rgba(255,255,255,0.4) 100%)`,
+              border: `1px solid ${alpha(avatarProps.color, isDark ? 0.15 : 0.12)}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              cursor: 'pointer',
+              transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
+              zIndex: 1,
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                background: `radial-gradient(120px circle at 20% 50%, ${alpha(avatarProps.color, 0.1)}, transparent 60%)`,
+                pointerEvents: 'none',
+              },
+              '&:active': { transform: 'scale(0.98)' },
+            }}
+          >
+            <Box
               sx={{
-                animationDelay: `${index * 0.1}s`,
-                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                '@keyframes slideInUp': {
-                  '0%': { opacity: 0, transform: 'translateY(30px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
+                width: 40,
+                height: 40,
+                borderRadius: '11px',
+                background: avatarThumbUrl ? 'transparent' : avatarProps.gradient,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.85rem',
+                fontWeight: 800,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: '#fff',
+                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                flexShrink: 0,
+                boxShadow: `0 4px 12px ${alpha(avatarProps.color, 0.35)}`,
+                position: 'relative',
               }}
             >
-              {item.text}
-            </MobileNavButton>
-          ))}
-
-          {/* Reports submenu in mobile menu */}
-          <Box>
-            <MobileNavButton
-              onClick={handleMobileReportsToggle}
-              endIcon={mobileReportsOpen ? <ExpandLess /> : <ExpandMore />}
-              startIcon={<Assessment />}
-              sx={{
-                animationDelay: `${navItems.length * 0.1}s`,
-                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                background: mobileReportsOpen
-                  ? theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
-                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.08) 100%)'
-                  : theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%)'
-                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%)',
-                borderColor: mobileReportsOpen
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.4)'
-                    : 'rgba(59, 130, 246, 0.3)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.2)'
-                    : 'rgba(59, 130, 246, 0.15)',
-                borderRadius: mobileReportsOpen ? '16px 16px 0 0' : '16px',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  background: mobileReportsOpen
-                    ? theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%)'
-                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.12) 100%)'
-                    : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.4)'
-                      : 'rgba(59, 130, 246, 0.25)',
-                },
-                '@keyframes slideInUp': {
-                  '0%': { opacity: 0, transform: 'translateY(30px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
-              }}
-            >
-              Reports
-            </MobileNavButton>
-
-            {/* Reports submenu items */}
-            <MobileSubmenuContainer open={mobileReportsOpen} itemCount={reportsItems.length}>
-              {reportsItems.map((item, index) => (
-                <BaseMobileSubmenuItem
-                  key={item.text}
-                  open={mobileReportsOpen}
-                  index={index}
-                  colorVariant="default"
-                  onClick={() => {
-                    if (item.action) {
-                      item.action();
-                    } else if (item.path) {
-                      handleToolNavigation(item.path);
-                    }
+              {avatarThumbUrl ? (
+                <img
+                  src={avatarThumbUrl}
+                  alt={userDisplayName || 'User avatar'}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    borderRadius: '11px',
                   }}
-                  startIcon={
-                    typeof item.icon === 'string' ? (
-                      <Box sx={{ fontSize: 18, mr: 1 }}>{item.icon}</Box>
-                    ) : (
-                      <Box sx={{ mr: 1 }}>{item.icon}</Box>
-                    )
-                  }
-                >
-                  {item.text}
-                </BaseMobileSubmenuItem>
-              ))}
-            </MobileSubmenuContainer>
-          </Box>
-
-          {/* Tools submenu in mobile menu */}
-          <Box>
-            <MobileNavButton
-              onClick={handleMobileToolsToggle}
-              endIcon={mobileToolsOpen ? <ExpandLess /> : <ExpandMore />}
-              startIcon={<Build />}
+                />
+              ) : (
+                avatarProps.initials
+              )}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: -2,
+                  right: -2,
+                  width: 11,
+                  height: 11,
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  border: `2.5px solid ${isDark ? 'rgba(15,23,42,0.95)' : '#ffffff'}`,
+                  boxShadow: '0 0 6px rgba(34,197,94,0.5)',
+                }}
+              />
+            </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.9rem',
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  lineHeight: 1.3,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {userLabel || 'Profile'}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '0.72rem',
+                  opacity: 0.45,
+                  lineHeight: 1.3,
+                  mt: 0.15,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                }}
+              >
+                View profile
+              </Typography>
+            </Box>
+            <ChevronRight
               sx={{
-                animationDelay: `${navItems.length * 0.1}s`,
-                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                background: mobileToolsOpen
-                  ? theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
-                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.08) 100%)'
-                  : theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(14, 165, 233, 0.05) 100%)'
-                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.04) 100%)',
-                borderColor: mobileToolsOpen
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.4)'
-                    : 'rgba(59, 130, 246, 0.3)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.2)'
-                    : 'rgba(59, 130, 246, 0.15)',
-                borderRadius: mobileToolsOpen ? '16px 16px 0 0' : '16px',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  background: mobileToolsOpen
-                    ? theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(14, 165, 233, 0.15) 100%)'
-                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.12) 100%)'
-                    : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(14, 165, 233, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.4)'
-                      : 'rgba(59, 130, 246, 0.25)',
-                },
-                '@keyframes slideInUp': {
-                  '0%': { opacity: 0, transform: 'translateY(30px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
+                fontSize: 18,
+                opacity: 0.3,
+                color: isDark ? '#94a3b8' : '#64748b',
+                flexShrink: 0,
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Navigate */}
+        <MobileSectionLabel>Navigate</MobileSectionLabel>
+        <Box sx={{ px: 1.5, position: 'relative', zIndex: 1 }}>
+          {navItems.map((item, i) => (
+            <MobileSheetItem
+              key={item.text}
+              active={location.pathname === item.path}
+              onClick={() => {
+                navigate(item.path, { vtType: getLateralTransitionType(item.path) });
+                setMobileOpen(false);
+              }}
+              sx={{
+                opacity: 0,
+                animation: mobileOpen
+                  ? `sheetItemIn 0.3s ease-out ${0.05 + i * 0.03}s both`
+                  : 'none',
               }}
             >
-              Tools
-            </MobileNavButton>
+              <Box sx={{ fontSize: 18, width: 24, textAlign: 'center', flexShrink: 0 }}>
+                {item.icon}
+              </Box>
+              <Typography sx={{ fontWeight: 500, fontSize: '0.925rem' }}>{item.text}</Typography>
+            </MobileSheetItem>
+          ))}
+        </Box>
 
-            {/* Tools submenu items */}
-            <MobileSubmenuContainer open={mobileToolsOpen} itemCount={toolsItems.length}>
-              {toolsItems.map((item, index) => (
-                <BaseMobileSubmenuItem
-                  key={item.text}
-                  open={mobileToolsOpen}
-                  index={index}
-                  colorVariant="default"
-                  onClick={() => handleToolNavigation(item.path)}
-                  startIcon={
-                    typeof item.icon === 'string' ? (
-                      <Box sx={{ fontSize: 18, mr: 1 }}>{item.icon}</Box>
-                    ) : (
-                      <Box sx={{ mr: 1 }}>{item.icon}</Box>
-                    )
-                  }
-                >
-                  {item.text}
-                </BaseMobileSubmenuItem>
-              ))}
-            </MobileSubmenuContainer>
-          </Box>
-
-          {/* Account submenu in mobile menu */}
-          <Box>
-            <MobileNavButton
-              onClick={handleMobileAccountToggle}
-              endIcon={mobileAccountOpen ? <ExpandLess /> : <ExpandMore />}
-              startIcon={<Person />}
+        {/* Reports */}
+        <MobileSectionLabel>Reports</MobileSectionLabel>
+        <Box sx={{ px: 1.5, position: 'relative', zIndex: 1 }}>
+          {reportsItems.map((item, i) => (
+            <MobileSheetItem
+              key={item.text}
+              onClick={() => {
+                if (item.action) item.action();
+                else if (item.path) handleToolNavigation(item.path);
+              }}
               sx={{
-                animationDelay: `${(navItems.length + 1) * 0.1}s`,
-                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                background: mobileAccountOpen
-                  ? theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
-                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(29, 78, 216, 0.08) 100%)'
-                  : theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
-                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
-                borderColor: mobileAccountOpen
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(59, 130, 246, 0.4)'
-                    : 'rgba(37, 99, 235, 0.3)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(59, 130, 246, 0.2)'
-                    : 'rgba(37, 99, 235, 0.15)',
-                borderRadius: mobileAccountOpen ? '16px 16px 0 0' : '16px',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                '&:hover': {
-                  background: mobileAccountOpen
-                    ? theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 100%)'
-                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(29, 78, 216, 0.12) 100%)'
-                    : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
-                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(59, 130, 246, 0.4)'
-                      : 'rgba(37, 99, 235, 0.25)',
-                },
-                '@keyframes slideInUp': {
-                  '0%': { opacity: 0, transform: 'translateY(30px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
+                opacity: 0,
+                animation: mobileOpen
+                  ? `sheetItemIn 0.3s ease-out ${0.15 + i * 0.03}s both`
+                  : 'none',
               }}
             >
-              Account
-            </MobileNavButton>
-
-            {/* Account submenu items */}
-            <MobileSubmenuContainer open={mobileAccountOpen} itemCount={accountItems.length}>
-              {accountItems.map((item, index) => (
-                <BaseMobileSubmenuItem
-                  key={item.text}
-                  open={mobileAccountOpen}
-                  index={index}
-                  colorVariant={item.colorVariant}
-                  onClick={item.action}
-                  startIcon={<Box sx={{ mr: 1 }}>{item.icon}</Box>}
-                >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
+                  fontSize: 15,
+                  flexShrink: 0,
+                }}
+              >
+                {item.icon}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
                   {item.text}
-                </BaseMobileSubmenuItem>
-              ))}
-            </MobileSubmenuContainer>
-          </Box>
-        </MobileMenuContent>
-      </MobileMenuOverlay>
+                </Typography>
+                <Typography sx={{ fontSize: '0.7rem', opacity: 0.45, lineHeight: 1.3, mt: 0.15 }}>
+                  {item.desc}
+                </Typography>
+              </Box>
+            </MobileSheetItem>
+          ))}
+        </Box>
+
+        {/* Tools */}
+        <MobileSectionLabel>Tools</MobileSectionLabel>
+        <Box sx={{ px: 1.5, position: 'relative', zIndex: 1 }}>
+          {toolsItems.map((item, i) => (
+            <MobileSheetItem
+              key={item.text}
+              onClick={() => handleToolNavigation(item.path)}
+              sx={{
+                opacity: 0,
+                animation: mobileOpen
+                  ? `sheetItemIn 0.3s ease-out ${0.25 + i * 0.03}s both`
+                  : 'none',
+              }}
+            >
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: alpha(item.accent, isDark ? 0.12 : 0.08),
+                  border: `1px solid ${alpha(item.accent, 0.15)}`,
+                  fontSize: typeof item.icon === 'string' ? 15 : undefined,
+                  flexShrink: 0,
+                }}
+              >
+                {item.icon}
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                  {item.text}
+                </Typography>
+                <Typography sx={{ fontSize: '0.7rem', opacity: 0.45, lineHeight: 1.3, mt: 0.15 }}>
+                  {item.desc}
+                </Typography>
+              </Box>
+            </MobileSheetItem>
+          ))}
+        </Box>
+
+        {/* Appearance — theme + performance tier */}
+        <MobileSectionLabel>Appearance</MobileSectionLabel>
+        <Box
+          sx={{
+            px: 1.5,
+            position: 'relative',
+            zIndex: 1,
+            opacity: 0,
+            animation: mobileOpen ? `sheetItemIn 0.3s ease-out 0.35s both` : 'none',
+          }}
+        >
+          <MobileSheetItem
+            onClick={toggleDarkMode}
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: alpha('#f59e0b', isDark ? 0.12 : 0.08),
+                border: `1px solid ${alpha('#f59e0b', 0.15)}`,
+                flexShrink: 0,
+              }}
+            >
+              {darkMode ? (
+                <LightModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              ) : (
+                <DarkModeIcon sx={{ fontSize: 18, color: '#f59e0b' }} />
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                Theme
+              </Typography>
+              <Typography sx={{ fontSize: '0.7rem', opacity: 0.55, lineHeight: 1.3, mt: 0.15 }}>
+                {darkMode ? 'Dark' : 'Light'} · tap to switch
+              </Typography>
+            </Box>
+          </MobileSheetItem>
+
+          <PerfTierToggle
+            renderTrigger={({ onClick, currentLabel, isOverridden }) => (
+              <MobileSheetItem
+                onClick={onClick}
+                aria-label={`Performance: ${currentLabel} — change`}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: alpha('#06b6d4', isDark ? 0.12 : 0.08),
+                    border: `1px solid ${alpha('#06b6d4', 0.15)}`,
+                    flexShrink: 0,
+                  }}
+                >
+                  <SpeedIcon
+                    sx={{
+                      fontSize: 18,
+                      color: isOverridden ? theme.palette.warning.main : '#06b6d4',
+                    }}
+                  />
+                </Box>
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Typography sx={{ fontWeight: 550, fontSize: '0.875rem', lineHeight: 1.3 }}>
+                    Performance
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.7rem', opacity: 0.55, lineHeight: 1.3, mt: 0.15 }}>
+                    {currentLabel}
+                    {isOverridden ? ' · pinned' : ''}
+                  </Typography>
+                </Box>
+                <ChevronRight
+                  sx={{
+                    fontSize: 18,
+                    opacity: 0.35,
+                    color: isDark ? '#94a3b8' : '#64748b',
+                    flexShrink: 0,
+                  }}
+                />
+              </MobileSheetItem>
+            )}
+          />
+        </Box>
+        <Box sx={{ px: 2, pt: 1, pb: 1, position: 'relative', zIndex: 1 }}>
+          {isLoggedIn ? (
+            <Button
+              onClick={() => {
+                handleLogout();
+                setMobileOpen(false);
+              }}
+              startIcon={<Logout sx={{ fontSize: 18 }} />}
+              fullWidth
+              sx={{
+                py: 1.25,
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                background: isDark ? 'rgba(239,68,68,0.06)' : 'rgba(220,38,38,0.04)',
+                border: `1px solid ${isDark ? 'rgba(239,68,68,0.12)' : 'rgba(220,38,38,0.08)'}`,
+                color: isDark ? '#f87171' : '#dc2626',
+                transition: 'background 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
+                '&:hover': {
+                  background: isDark ? 'rgba(239,68,68,0.1)' : 'rgba(220,38,38,0.08)',
+                  borderColor: isDark ? 'rgba(239,68,68,0.25)' : 'rgba(220,38,38,0.18)',
+                },
+                '&:active': { transform: 'scale(0.98)' },
+              }}
+            >
+              Log out
+            </Button>
+          ) : (
+            <Button
+              onClick={handleLogin}
+              startIcon={<Login sx={{ fontSize: 20 }} />}
+              fullWidth
+              sx={{
+                py: 1.5,
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                letterSpacing: '0.01em',
+                background: isDark
+                  ? 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(59,130,246,0.12) 100%)'
+                  : 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(37,99,235,0.1) 100%)',
+                border: `1px solid ${isDark ? 'rgba(56,189,248,0.25)' : 'rgba(59,130,246,0.2)'}`,
+                color: isDark ? '#e0f2fe' : '#1e40af',
+                boxShadow: isDark
+                  ? '0 4px 16px rgba(56,189,248,0.12), inset 0 1px 0 rgba(255,255,255,0.06)'
+                  : '0 4px 16px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.5)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: 0,
+                  background: isDark
+                    ? 'linear-gradient(135deg, rgba(56,189,248,0.08), transparent 60%)'
+                    : 'linear-gradient(135deg, rgba(59,130,246,0.06), transparent 60%)',
+                  opacity: 0,
+                  transition: 'opacity 0.25s ease',
+                },
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: isDark
+                    ? '0 8px 24px rgba(56,189,248,0.18), inset 0 1px 0 rgba(255,255,255,0.08)'
+                    : '0 8px 24px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.6)',
+                  borderColor: isDark ? 'rgba(56,189,248,0.35)' : 'rgba(59,130,246,0.3)',
+                  '&::before': { opacity: 1 },
+                },
+                '&:active': { transform: 'translateY(0) scale(0.98)' },
+              }}
+            >
+              Sign in with ESO Logs
+            </Button>
+          )}
+        </Box>
+      </MobileBottomSheet>
     </>
   );
 };

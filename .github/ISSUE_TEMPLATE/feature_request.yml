@@ -1,0 +1,55 @@
+name: Feature Request
+description: Suggest a new feature or improvement for ESO Log Aggregator
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement! Please describe the feature you'd like to see.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: What problem does this feature solve? Is it related to a frustration with the current tool?
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature or change you'd like.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or workarounds?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the application does this relate to?
+      options:
+        - Combat Log Parsing
+        - Data Visualization / Charts
+        - Fight Replay (3D)
+        - UI / Navigation
+        - Performance
+        - Testing / Developer Experience
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any mockups, screenshots, or links that help illustrate the request.

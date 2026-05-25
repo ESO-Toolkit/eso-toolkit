@@ -1,0 +1,25 @@
+name: Label Merge Conflicts
+
+# Runs on push to main — checks all open PRs for conflicts and adds/removes
+# a "merge-conflict" label. This catches the silent GitHub Actions failure where
+# pull_request workflows stop running when a PR becomes unmergeable.
+
+on:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label-conflicts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PRs for merge conflicts
+        uses: eps1lon/actions-label-merge-conflict@1df065ebe6e3310545d4f4c4e862e43bdca146f0 # v3.0.3
+        with:
+          dirtyLabel: 'merge-conflict'
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          commentOnDirty: 'This PR now has merge conflicts with the base branch. **GitHub is silently skipping all `pull_request` workflows** (including deploy previews) until conflicts are resolved. Please merge or rebase from `${{ github.event.repository.default_branch }}`.'
+          commentOnClean: 'Merge conflicts have been resolved. Workflows will run on the next push.'

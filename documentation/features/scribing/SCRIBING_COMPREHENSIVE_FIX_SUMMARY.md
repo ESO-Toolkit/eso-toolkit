@@ -75,7 +75,7 @@ const { resourceEvents: resources } = useResourceEvents();
 ```typescript
 // Selector just reads from Redux state
 const events = useSelector(selectDamageEvents);
-// If state.events.damage.events is [], selector returns []
+// If the damage cache has no entry for the active context, selector returns []
 // No fetching happens!
 ```
 

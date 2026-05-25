@@ -1,9 +1,10 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { executeDamageOverTimeTask, damageOverTimeActions } from '@/store/worker_results';
+import { executeDamageOverTimeTask } from '@/store/worker_results';
 
 import { FightFragment } from '../../graphql/gql/graphql';
+import type { ReportFightContextInput } from '../../store/contextTypes';
 import {
   selectDamageOverTimeResult,
   selectWorkerTaskLoading,
@@ -16,22 +17,21 @@ import { usePlayerData } from '../usePlayerData';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 // Hook for damage over time calculation
-export function useDamageOverTimeTask(): {
+interface UseDamageOverTimeTaskOptions {
+  context?: ReportFightContextInput;
+}
+
+export function useDamageOverTimeTask(options?: UseDamageOverTimeTaskOptions): {
   damageOverTimeData: unknown;
   isDamageOverTimeLoading: boolean;
   damageOverTimeError: string | null;
   damageOverTimeProgress: number | null;
   selectedFight: FightFragment | null;
 } {
-  const { dispatch, selectedFight } = useWorkerTaskDependencies();
+  const { dispatch, selectedFight } = useWorkerTaskDependencies(options);
 
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-
-  // Clear any existing result when dependencies change to force fresh calculation
-  React.useEffect(() => {
-    dispatch(damageOverTimeActions.clearResult());
-  }, [dispatch, selectedFight, playerData, damageEvents]);
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents({ context: options?.context });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: options?.context });
 
   // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
@@ -44,7 +44,7 @@ export function useDamageOverTimeTask(): {
       damageEvents !== null;
 
     if (allDependenciesReady) {
-      dispatch(
+      const promise = dispatch(
         executeDamageOverTimeTask({
           fight: selectedFight,
           players: playerData.playersById,
@@ -52,6 +52,9 @@ export function useDamageOverTimeTask(): {
           bucketSizeMs: 1000, // 1 second buckets
         }),
       );
+      return () => {
+        promise.abort();
+      };
     }
   }, [
     dispatch,

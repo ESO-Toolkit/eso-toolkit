@@ -21,13 +21,15 @@ export const NotFound: React.FC = () => {
   return (
     <Container maxWidth="md">
       <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        minHeight="60vh"
-        textAlign="center"
-        gap={3}
+        sx={{
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: 3,
+          textAlign: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+          display: 'flex',
+        }}
       >
         <Typography
           variant="h1"
@@ -56,8 +58,8 @@ export const NotFound: React.FC = () => {
 
         <Typography
           variant="body1"
-          color="text.secondary"
           sx={{
+            color: 'text.secondary',
             maxWidth: '500px',
             mb: 2,
             fontSize: { xs: '1rem', sm: '1.1rem' },
@@ -67,7 +69,7 @@ export const NotFound: React.FC = () => {
           you may have mistyped the URL.
         </Typography>
 
-        <Box display="flex" gap={2} flexWrap="wrap" justifyContent="center">
+        <Box sx={{ flexWrap: 'wrap', justifyContent: 'center', gap: 2, display: 'flex' }}>
           <Button
             variant="contained"
             size="large"
@@ -93,8 +95,8 @@ export const NotFound: React.FC = () => {
           </Button>
         </Box>
 
-        <Box mt={4}>
-          <Typography variant="body2" color="text.secondary">
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Need help? Contact support or check the documentation.
           </Typography>
         </Box>

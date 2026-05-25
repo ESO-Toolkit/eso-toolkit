@@ -1,3 +1,5 @@
+import ClearIcon from '@mui/icons-material/Clear';
+import SearchIcon from '@mui/icons-material/Search';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import {
   Box,
@@ -8,7 +10,10 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
 import { BuffUptime, BuffUptimeProgressBar } from './BuffUptimeProgressBar';
@@ -33,11 +38,23 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   canOpenTimeline = false,
 }) => {
   const descriptionId = React.useId();
+  const [nameFilter, setNameFilter] = React.useState('');
+
+  const filteredStatusEffectUptimes = React.useMemo(() => {
+    if (!statusEffectUptimes || !nameFilter.trim()) return statusEffectUptimes;
+    const normalizedFilter = nameFilter.trim().toLowerCase();
+    return statusEffectUptimes.filter((effect) =>
+      effect.abilityName.toLowerCase().includes(normalizedFilter),
+    );
+  }, [statusEffectUptimes, nameFilter]);
 
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
           <Typography variant="h6">Status Effect Uptimes</Typography>
           <Skeleton variant="circular" width={36} height={36} />
         </Stack>
@@ -58,13 +75,13 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
                     position: 'relative',
                     height: 48,
                     borderRadius: 2,
-                    bgcolor: (theme) =>
+                    bgcolor: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'rgba(255,255,255,0.08)'
                         : 'rgba(203, 213, 225, 0.3)',
-                    border: (theme) =>
+                    border: (theme: Theme) =>
                       theme.palette.mode === 'dark' ? 'none' : '1px solid rgba(15, 23, 42, 0.08)',
-                    boxShadow: (theme) =>
+                    boxShadow: (theme: Theme) =>
                       theme.palette.mode === 'dark'
                         ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
                         : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
@@ -101,7 +118,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6">Status Effect Uptimes</Typography>
         <Tooltip title="View status effect uptimes timeline">
           <span>
@@ -119,17 +136,49 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
         </Tooltip>
       </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} id={descriptionId}>
         {selectedTargetId
           ? 'Shows status effects applied to the selected target'
           : 'Shows status effects applied to all targets'}
         {selectedTargetId && '. Click on a status effect to view in ESO Logs'}.
       </Typography>
 
-      {statusEffectUptimes && statusEffectUptimes.length > 0 ? (
+      {statusEffectUptimes && statusEffectUptimes.length > 0 && (
+        <TextField
+          size="small"
+          fullWidth
+          placeholder="Filter by name..."
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          sx={{ mb: 1 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: nameFilter && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setNameFilter('')}
+                    edge="end"
+                    aria-label="clear filter"
+                  >
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      )}
+
+      {filteredStatusEffectUptimes && filteredStatusEffectUptimes.length > 0 ? (
         <Box sx={{ height: '100%', overflowY: 'auto' }}>
           <List disablePadding>
-            {statusEffectUptimes.map((statusEffect) => {
+            {filteredStatusEffectUptimes.map((statusEffect) => {
               return (
                 <ListItem
                   key={statusEffect.abilityGameID}
@@ -155,10 +204,12 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
           </List>
         </Box>
       ) : (
-        <Typography variant="body2" color="text.secondary">
-          {selectedTargetId
-            ? 'No status effects found for the selected target.'
-            : 'No status effects found.'}
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {nameFilter
+            ? `No status effects matching "${nameFilter}" found.`
+            : selectedTargetId
+              ? 'No status effects found for the selected target.'
+              : 'No status effects found.'}
         </Typography>
       )}
     </Box>

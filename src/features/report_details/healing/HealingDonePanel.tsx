@@ -1,35 +1,43 @@
 import { Box, Typography } from '@mui/material';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { HealingDoneTableSkeleton } from '../../../components/HealingDoneTableSkeleton';
-import { FightFragment } from '../../../graphql/gql/graphql';
+import { PlayerCardModal } from '../../../components/PlayerCardModal';
 import {
   useCastEvents,
   useHealingEvents,
   useReportMasterData,
   usePlayerData,
   useDeathEvents,
+  useResolvedReportFightContext,
+  useFightForContext,
 } from '../../../hooks';
+import type { ReportFightContextInput } from '../../../store/contextTypes';
 import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
+import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { HealingDonePanelView } from './HealingDonePanelView';
 
 interface HealingDonePanelProps {
-  fight: FightFragment;
+  context?: ReportFightContextInput;
 }
 
 /**
  * Smart component that handles data processing and state management for healing done panel
  */
-export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
+export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) => {
+  const resolvedContext = useResolvedReportFightContext(context);
+  const fight = useFightForContext(resolvedContext);
   // Use hooks to get data
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents({ context: resolvedContext });
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData({
+    context: resolvedContext,
+  });
+  const { castEvents, isCastEventsLoading } = useCastEvents({ context: resolvedContext });
+  const { playerData, isPlayerDataLoading } = usePlayerData({ context: resolvedContext });
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents({ context: resolvedContext });
 
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
@@ -97,9 +105,9 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
     return counts;
   }, [deathEvents, fight]);
 
-  const fightDuration = useMemo(() => {
+  const fightDurationMs = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
-      return (Number(fight.endTime) - Number(fight.startTime)) / 1000;
+      return Number(fight.endTime) - Number(fight.startTime);
     }
     return 1;
   }, [fight]);
@@ -152,8 +160,8 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
           id,
           name,
           raw,
-          hps: fightDuration > 0 ? raw / fightDuration : 0,
-          overhealHps: fightDuration > 0 ? overheal / fightDuration : 0,
+          hps: fightDurationMs > 0 ? raw / msToSeconds(fightDurationMs) : 0,
+          rawHps: fightDurationMs > 0 ? (raw + overheal) / msToSeconds(fightDurationMs) : 0,
           overheal,
           overhealPercentage,
           iconUrl,
@@ -167,11 +175,28 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
     healingStatistics,
     isPlayerActor,
     masterData.actorsById,
-    fightDuration,
+    fightDurationMs,
     resByPlayer,
     deathsByPlayer,
     getPlayerRole,
   ]);
+
+  // --- PlayerCardModal state ---
+  const [modalPlayerId, setModalPlayerId] = useState<string | null>(null);
+
+  const handlePlayerClick = useCallback((playerId: string) => {
+    setModalPlayerId(playerId);
+  }, []);
+
+  const handleModalClose = useCallback(() => {
+    setModalPlayerId(null);
+  }, []);
+
+  const handleModalPlayerChange = useCallback((playerId: string | number) => {
+    setModalPlayerId(String(playerId));
+  }, []);
+
+  const orderedPlayerIds = useMemo(() => healingRows.map((row) => row.id), [healingRows]);
 
   // Show table skeleton while data is being fetched
   if (isLoading) {
@@ -191,7 +216,17 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
 
   return (
     <Box data-testid="healing-done-panel">
-      <HealingDonePanelView healingRows={healingRows} />
+      <HealingDonePanelView healingRows={healingRows} onPlayerClick={handlePlayerClick} />
+      {modalPlayerId !== null && (
+        <PlayerCardModal
+          open
+          onClose={handleModalClose}
+          currentPlayerId={modalPlayerId}
+          orderedPlayerIds={orderedPlayerIds}
+          onPlayerChange={handleModalPlayerChange}
+          context={resolvedContext}
+        />
+      )}
     </Box>
   );
 };

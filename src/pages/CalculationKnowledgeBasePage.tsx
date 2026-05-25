@@ -95,7 +95,7 @@ const markdownStyles = {
 } as const;
 
 const markdownComponents: Components = {
-  a: ({ href, children, ...props }) => (
+  a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
     <Link {...props} href={href} target="_blank" rel="noopener noreferrer">
       {children}
     </Link>
@@ -107,11 +107,11 @@ export const CalculationKnowledgeBasePage: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
-      <Box display="flex" flexDirection="column" gap={2} mb={4}>
-        <Typography variant="h3" component="h1" fontWeight={800} gutterBottom>
+      <Box sx={{ flexDirection: 'column', gap: 2, display: 'flex', mb: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800 }}>
           Calculation Knowledge Base
         </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
+        <Typography variant="subtitle1" sx={{ color: 'text.secondary' }}>
           Explore how ESO Toolkit derives combat analytics, where data comes from, and how we
           transform logs into actionable insights.
         </Typography>
@@ -128,7 +128,7 @@ export const CalculationKnowledgeBasePage: React.FC = () => {
         >
           This content mirrors the internal documentation in{' '}
           <Link
-            href="https://github.com/bkrupa/eso-log-aggregator"
+            href="https://github.com/ESO-Toolkit/eso-toolkit"
             target="_blank"
             rel="noopener noreferrer"
           >

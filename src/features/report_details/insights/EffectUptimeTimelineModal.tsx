@@ -12,36 +12,17 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import {
-  CategoryScale,
-  Chart as ChartJS,
-  Legend,
-  LineElement,
-  LinearScale,
-  PointElement,
-  TimeSeriesScale,
-  Title,
-  Tooltip as ChartTooltip,
-} from 'chart.js';
-import type { ChartData, ChartDataset, ChartOptions, LegendItem, TooltipItem } from 'chart.js';
 import React from 'react';
 
-import { LineChart } from '../../../components/LazyCharts';
+import { EChart } from '../../../components/EChart';
+import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { hexToRgb } from '../../../utils/echartsTheme';
+import { escapeHtml } from '../../../utils/escape-html';
+import { msToSeconds } from '../../../utils/fightDuration';
 
 import type { BuffUptime } from './BuffUptimeProgressBar';
 import { buildUptimeTimelineSeries, type UptimeTimelineSeries } from './utils/buildUptimeTimeline';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  TimeSeriesScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-);
 
 const TIMELINE_COLORS = [
   '#7c3aed',
@@ -74,10 +55,6 @@ interface EffectUptimeTimelineModalProps {
   prefetchedSeries?: UptimeTimelineSeries[];
 }
 
-interface LegendHiddenState {
-  hiddenIds: Set<string>;
-}
-
 export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps> = ({
   open,
   onClose,
@@ -92,15 +69,7 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
   prefetchedSeries,
 }) => {
   const theme = useTheme();
-  const [hiddenState, setHiddenState] = React.useState<LegendHiddenState>({
-    hiddenIds: new Set<string>(),
-  });
-
-  React.useEffect(() => {
-    if (open) {
-      setHiddenState({ hiddenIds: new Set<string>() });
-    }
-  }, [open, uptimes, prefetchedSeries]);
+  const { theme: echartsTheme } = useEChartsTheme();
 
   const series = React.useMemo<UptimeTimelineSeries[]>(() => {
     if (prefetchedSeries) {
@@ -116,148 +85,106 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     });
   }, [prefetchedSeries, uptimes, lookup, fightStartTime, fightEndTime, targetFilter]);
 
-  const fightDurationSeconds = React.useMemo(() => {
+  const fightDurationMs = React.useMemo(() => {
     if (!fightStartTime || !fightEndTime || fightEndTime <= fightStartTime) {
       return 0;
     }
 
-    return (fightEndTime - fightStartTime) / 1000;
+    return fightEndTime - fightStartTime;
   }, [fightStartTime, fightEndTime]);
 
-  const chartData = React.useMemo<ChartData<'line'>>(() => {
-    const datasets: Array<ChartDataset<'line'> & { customId: string }> = series.map(
-      (dataset, index) => {
-        const color = TIMELINE_COLORS[index % TIMELINE_COLORS.length];
-        const isHidden = hiddenState.hiddenIds.has(dataset.id);
-
-        return {
-          label: dataset.label,
-          data: dataset.points,
-          parsing: false as const,
-          stepped: 'after' as const,
-          pointRadius: 0,
-          borderColor: color,
-          backgroundColor: `${color}33`,
-          borderWidth: 2,
-          fill: true,
-          hidden: isHidden,
-          tension: 0,
-          customId: dataset.id,
-        };
-      },
-    );
-
-    return { datasets };
-  }, [series, hiddenState.hiddenIds]);
-
   const formatSeconds = React.useCallback((value: number) => {
-    if (Number.isNaN(value)) {
-      return '0.0s';
-    }
+    if (Number.isNaN(value)) return '0.0s';
     const minutes = Math.floor(value / 60);
     const seconds = value % 60;
-    if (minutes > 0) {
-      return `${minutes}m ${seconds.toFixed(1)}s`;
-    }
+    if (minutes > 0) return `${minutes}m ${seconds.toFixed(1)}s`;
     return `${seconds.toFixed(1)}s`;
   }, []);
 
-  const handleLegendClick = React.useCallback(
-    (_event: unknown, legendItem: LegendItem, legend: { chart: ChartJS }) => {
-      const datasetIndex = legendItem.datasetIndex;
-      if (datasetIndex == null) {
-        return;
-      }
+  const chartOption = React.useMemo(() => {
+    const duration = msToSeconds(fightDurationMs);
 
-      const dataset = legend.chart.data.datasets?.[datasetIndex] as
-        | (ChartDataset<'line'> & { customId?: string })
-        | undefined;
-      if (!dataset?.customId) {
-        return;
-      }
+    const echartsSeries = series.map((dataset, index) => {
+      const color = TIMELINE_COLORS[index % TIMELINE_COLORS.length];
+      return {
+        name: dataset.label,
+        type: 'line' as const,
+        data: dataset.points.map((p: { x: number; y: number }) => [
+          p.x,
+          p.y > 0 ? index + 0.85 : index,
+        ]),
+        step: 'end' as const,
+        showSymbol: false,
+        symbolSize: 0,
+        lineStyle: {
+          color,
+          width: 1,
+          opacity: 0.7,
+        },
+        areaStyle: {
+          color: color + '30',
+          origin: index,
+        },
+        emphasis: {
+          areaStyle: { color: color + '55' },
+          lineStyle: { width: 1.5, opacity: 1 },
+        },
+      };
+    });
 
-      setHiddenState((prev) => {
-        const next = new Set(prev.hiddenIds);
-        if (next.has(dataset.customId!)) {
-          next.delete(dataset.customId!);
-        } else {
-          next.add(dataset.customId!);
-        }
-        return { hiddenIds: next };
-      });
-    },
-    [],
-  );
-
-  const chartOptions = React.useMemo<ChartOptions<'line'>>(
-    () => ({
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false as const,
-      interaction: {
-        intersect: false,
-        mode: 'nearest' as const,
+    return {
+      color: TIMELINE_COLORS.slice(0, series.length),
+      xAxis: {
+        type: 'value',
+        min: 0,
+        max: duration || undefined,
+        name: 'Fight Time',
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: { color: echartsTheme.mutedColor },
+        axisLabel: {
+          color: echartsTheme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => formatSeconds(v),
+        },
+        axisLine: { lineStyle: { color: echartsTheme.borderColor } },
+        splitLine: { show: false },
       },
-      plugins: {
-        legend: {
-          position: 'top' as const,
-          labels: {
-            usePointStyle: true,
-          },
-          onClick: handleLegendClick,
-        },
-        tooltip: {
-          intersect: false,
-          callbacks: {
-            title: (items: TooltipItem<'line'>[]) => {
-              if (!items || items.length === 0) {
-                return '';
-              }
-              const first = items[0];
-              const xValue = typeof first.parsed.x === 'number' ? first.parsed.x : 0;
-              return `Time: ${formatSeconds(xValue)}`;
-            },
-            label: (context: TooltipItem<'line'>) => {
-              const status = (context.parsed.y ?? 0) > 0 ? 'Active' : 'Inactive';
-              return `${context.dataset.label ?? 'Effect'}: ${status}`;
-            },
-          },
-        },
-        title: {
-          display: false,
-        },
+      yAxis: {
+        type: 'value',
+        min: -0.2,
+        max: Math.max(series.length, 1),
+        axisLabel: { show: false },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { show: false },
       },
-      scales: {
-        x: {
-          type: 'linear',
-          min: 0,
-          max: fightDurationSeconds || undefined,
-          ticks: {
-            callback: (value) => {
-              const numeric = typeof value === 'number' ? value : Number(value);
-              return formatSeconds(numeric);
-            },
-          },
-          title: {
-            display: true,
-            text: 'Fight Time',
-          },
-        },
-        y: {
-          min: 0,
-          max: 1.1,
-          ticks: {
-            callback: (value) => (Number(value) >= 1 ? 'Active' : ''),
-          },
-          title: {
-            display: true,
-            text: 'Effect Activity',
-          },
+      legend: { show: false },
+      tooltip: {
+        trigger: 'axis',
+        appendToBody: true,
+        formatter: (params: Array<{ seriesName: string; value: number[]; color: string }>) => {
+          if (!params[0]) return '';
+          const time = formatSeconds(params[0].value[0]);
+          const active = params.filter((p) => {
+            const idx = series.findIndex((s) => s.label === p.seriesName);
+            return p.value[1] > idx + 0.4;
+          });
+          if (active.length === 0) {
+            return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor}">Time: ${time}</div><div>No active effects</div></div>`;
+          }
+          const lines = active.map(
+            (p) =>
+              `<div style="display:flex;align-items:center;gap:6px">` +
+              `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>` +
+              `${escapeHtml(p.seriesName)}: <b>Active</b></div>`,
+          );
+          return `<div style="font-size:13px"><div style="color:${echartsTheme.mutedColor};margin-bottom:4px">Time: ${time}</div>${lines.join('')}</div>`;
         },
       },
-    }),
-    [fightDurationSeconds, formatSeconds, handleLegendClick],
-  );
+      series: echartsSeries,
+    };
+  }, [series, fightDurationMs, formatSeconds, echartsTheme]);
 
   const categoryBadge = React.useMemo(() => {
     switch (category) {
@@ -276,28 +203,91 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TimelineIcon color="primary" />
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <TimelineIcon sx={{ color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a' }} />
             <Typography variant="h6">{title}</Typography>
             <Chip label={categoryBadge.label} color={categoryBadge.color} size="small" />
           </Stack>
           {subtitle && (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {subtitle}
             </Typography>
           )}
         </Box>
         <Tooltip title="Close">
-          <IconButton onClick={onClose} size="small">
+          <IconButton
+            onClick={onClose}
+            size="small"
+            aria-label="Close"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.10)' },
+            }}
+          >
             <CloseIcon />
           </IconButton>
         </Tooltip>
       </DialogTitle>
       <DialogContent sx={{ minHeight: 420 }}>
         {hasData ? (
-          <Box sx={{ height: 380 }}>
-            <LineChart data={chartData} options={chartOptions} />
-          </Box>
+          <>
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 0.5,
+                mb: 1.5,
+                px: 0.5,
+                py: 0.5,
+                borderRadius: '10px',
+                background: echartsTheme.darkMode
+                  ? 'rgba(15, 23, 42, 0.4)'
+                  : 'rgba(248, 250, 252, 0.6)',
+                border: echartsTheme.darkMode
+                  ? '1px solid rgba(255, 255, 255, 0.06)'
+                  : '1px solid rgba(148, 163, 184, 0.12)',
+              }}
+            >
+              {series.map((s, index) => {
+                const color = TIMELINE_COLORS[index % TIMELINE_COLORS.length];
+                const rgb = hexToRgb(color);
+                return (
+                  <Box
+                    key={s.label}
+                    sx={{
+                      height: 24,
+                      borderRadius: '12px',
+                      px: 0.75,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      color: echartsTheme.darkMode
+                        ? 'rgba(226, 232, 240, 0.85)'
+                        : 'rgba(30, 41, 59, 0.85)',
+                      background: `rgba(${rgb}, ${echartsTheme.darkMode ? 0.08 : 0.04})`,
+                      border: `1px solid rgba(${rgb}, ${echartsTheme.darkMode ? 0.25 : 0.15})`,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: color,
+                        flexShrink: 0,
+                        boxShadow: echartsTheme.darkMode ? `0 0 4px ${color}` : 'none',
+                      }}
+                    />
+                    {s.label}
+                  </Box>
+                );
+              })}
+            </Box>
+            <EChart option={chartOption} height={380} group="fightReport" />
+          </>
         ) : (
           <Box
             sx={{
@@ -308,9 +298,12 @@ export const EffectUptimeTimelineModal: React.FC<EffectUptimeTimelineModalProps>
               backgroundColor:
                 theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.04)',
               borderRadius: 2,
+              border: `1px solid ${
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.08)'
+              }`,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               No uptime timeline data available for the current selection.
             </Typography>
           </Box>

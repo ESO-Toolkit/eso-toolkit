@@ -1,45 +1,70 @@
-import { SkillsetData } from '../../skillsets/Skillset';
+import type { SkillLineData } from '../../types/skill-line-types';
+import { AbilityId } from '../ability-ids';
 
-export const darkBrotherhoodData: SkillsetData = {
-  weapon: 'Dark Brotherhood',
-  skillLines: {
-    darkBrotherhood: {
-      name: 'Dark Brotherhood',
-      icon: '🗡️',
-      passives: [
-        {
-          name: 'Apprentice Assassin',
-          description: 'Allows you to assassinate innocents.',
-          requirement: '',
-        },
-        {
-          name: 'Seasoned Assassin',
-          description: 'Decreases the delay before you can assassinate someone by 50%.',
-          requirement: '',
-        },
-        {
-          name: 'Shadow Rider',
-          description: 'Reduces the radius guards can detect you while mounted by 50%.',
-          requirement: '',
-        },
-        {
-          name: 'Padomaic Sprint',
-          description:
-            'Reduces the bounty from assault, murder, and theft by 64 and allows you to flee on foot 50% longer before guards give up their chase.',
-          requirement: '',
-        },
+export const darkBrotherhood: SkillLineData = {
+  id: 0,
+  name: 'Dark Brotherhood',
+  class: 'guild',
+  category: 'guild',
+  icon: 'passive_guild_32.webp',
+  sourceUrl: 'https://eso-hub.com/en/skills/guild/dark-brotherhood',
+  skills: [
+    {
+      id: AbilityId.BLADE_OF_WOE,
+      alternateIds: [
+        76325, 77101, 77374, 78219, 80477, 80603, 146297, 146299, 146300, 146301, 169629,
       ],
-      actives: [
-        {
-          name: 'Blade of Woe',
-          cost: '0',
-          target: 'Enemy',
-          description:
-            'Allows you to assassinate innocent NPCs when sneaking behind them. This ability becomes available after completing the Dark Brotherhood quest line.',
-          morphs: [],
-        },
-      ],
-      ultimates: [],
+      name: 'Blade of Woe',
+      description:
+        'Call the weapon of the Dark Brotherhood to your hand and deliver a killing blow to an unsuspecting target. Experience from this target is reduced by 75%. This ability does not work on players or difficult targets.',
+      type: 'passive',
+      icon: 'achievement_darkbrotherhood_003',
+      maxRank: 1,
     },
-  },
+    {
+      id: AbilityId.SCALES_OF_PITILESS_JUSTICE,
+      alternateIds: [77392, 77394, 77395, 79275, 79865, 79866],
+      name: 'Scales of Pitiless Justice',
+      description:
+        'Bounty and Heat resulting from a witnessed Murder or Assault is reduced by 50%.',
+      type: 'passive',
+      icon: 'ability_darkbrotherhood_passive_002',
+      maxRank: 1,
+    },
+    {
+      id: AbilityId.PADOMAIC_SPRINT,
+      alternateIds: [77397, 77398, 77399, 79868, 80393],
+      name: 'Padomaic Sprint',
+      description:
+        'Grants Major Expedition, increasing your Movement Speed by 30% for 12 seconds after killing an enemy with Blade of Woe.',
+      type: 'passive',
+      icon: 'ability_darkbrotherhood_passive_004',
+      maxRank: 1,
+    },
+    {
+      id: AbilityId.SHADOWY_SUPPLIER,
+      icon: 'ability_darkbrotherhood_passive_003',
+      name: 'Shadowy Supplier',
+      type: 'passive',
+      maxRank: 4,
+    },
+    {
+      id: AbilityId.SHADOW_RIDER,
+      icon: 'ability_darkbrotherhood_passive_005',
+      name: 'Shadow Rider',
+      description: 'Aggression radius from hostile monsters is decreased by 50% while mounted.',
+      type: 'passive',
+      maxRank: 1,
+    },
+    {
+      id: AbilityId.SPECTRAL_ASSASSIN,
+      alternateIds: [77401, 80636, 151926],
+      name: 'Spectral Assassin',
+      description:
+        '15% chance to shroud you when using the Blade of Woe, shielding you from being witnessed and receiving a Bounty.',
+      type: 'passive',
+      icon: 'ability_darkbrotherhood_passive_006',
+      maxRank: 1,
+    },
+  ],
 };

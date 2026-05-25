@@ -1,10 +1,10 @@
-// Import MUI icons
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import HandshakeIcon from '@mui/icons-material/Handshake';
 import HealingIcon from '@mui/icons-material/Healing';
 import InsightsIcon from '@mui/icons-material/Insights';
 import ListIcon from '@mui/icons-material/List';
@@ -32,14 +32,17 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { Suspense } from 'react';
+import React, { Suspense, useDeferredValue } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
+import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
 import { FightFragment } from '../../graphql/gql/graphql';
+import { useReportMasterData } from '../../hooks';
 import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
+import { BuffSourcePlayerSelector } from './insights/BuffSourcePlayerSelector';
 import { TargetSelector } from './insights/TargetSelector';
 import { useFightNavigation } from './ReportFightHeader';
 
@@ -105,6 +108,9 @@ const RotationAnalysisPanel = React.lazy(() =>
     default: module.RotationAnalysisPanel,
   })),
 );
+const SynergyPanel = React.lazy(() =>
+  import('./synergy/SynergyPanel').then((module) => ({ default: module.SynergyPanel })),
+);
 const TalentsGridPanel = React.lazy(() =>
   import('./talents/TalentsGridPanel').then((module) => ({ default: module.TalentsGridPanel })),
 );
@@ -161,6 +167,13 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
   const validSelectedTabId = getValidTabId(selectedTabId);
 
+  // Defer the heavy content swap so the tab highlight paints instantly.
+  // getTabsMeta reflow runs against the small tab-bar DOM change, not
+  // the 1500+ element panel swap that follows in the next frame.
+  // Re-validate the deferred value so it never points at a tab that has
+  // been removed (e.g. when showExperimentalTabs flips to false mid-defer).
+  const deferredTabId = getValidTabId(useDeferredValue(validSelectedTabId));
+
   // Get navigation data and functions
   const {
     navigationMode,
@@ -174,6 +187,22 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
+  // Generate player list for the buff source selector
+  const { reportMasterData } = useReportMasterData();
+  const playerList = React.useMemo(() => {
+    if (!fight?.friendlyPlayers || !reportMasterData?.actorsById) {
+      return [];
+    }
+
+    return fight.friendlyPlayers
+      .filter((id): id is number => id !== null)
+      .map((id) => ({
+        id,
+        name: reportMasterData.actorsById[id]?.name || `Player ${id}`,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [fight?.friendlyPlayers, reportMasterData?.actorsById]);
+
   return (
     <React.Fragment>
       {/* Target Selection and Navigation Row */}
@@ -184,18 +213,39 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: { xs: 'wrap', md: 'nowrap' },
-          gap: { xs: 2, md: 0 },
+          gap: { xs: 2, md: 2 },
         }}
       >
-        <FormControl
+        {/* Selectors Group */}
+        <Box
           sx={{
-            minWidth: { xs: '100%', sm: 180, md: 200 },
-            maxWidth: { xs: '100%', md: 'none' },
-            overflow: 'visible',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: { xs: 'wrap', md: 'nowrap' },
+            flex: { xs: '1 1 100%', md: '0 1 auto' },
           }}
         >
-          <TargetSelector />
-        </FormControl>
+          <FormControl
+            sx={{
+              minWidth: { xs: '100%', sm: 180, md: 200 },
+              maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
+            }}
+          >
+            <TargetSelector />
+          </FormControl>
+
+          <FormControl
+            sx={{
+              minWidth: { xs: '100%', sm: 180, md: 200 },
+              maxWidth: { xs: '100%', md: 'none' },
+              overflow: 'visible',
+            }}
+          >
+            <BuffSourcePlayerSelector players={playerList} />
+          </FormControl>
+        </Box>
 
         {/* Fight Navigation - aligned with target selector */}
         <Box
@@ -221,25 +271,26 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onClick={navigateToPrevious}
             disabled={!navigationData.previousFight}
             size="small"
+            aria-label="Previous fight"
             sx={{
-              width: { xs: 32, md: 28 },
-              height: { xs: 32, md: 28 },
-              borderRadius: { xs: '6px', md: '8px' },
-              backgroundColor: 'transparent',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
-                transform: 'scale(1.05)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+                transform: 'scale(1.08)',
               },
               '&:disabled': {
-                opacity: 0.3,
-                cursor: 'not-allowed',
+                opacity: 0.25,
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
               },
             }}
           >
-            <ArrowBackIcon fontSize="small" />
+            <ChevronLeftIcon />
           </IconButton>
 
           {/* Mode Toggle */}
@@ -339,25 +390,26 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onClick={navigateToNext}
             disabled={!navigationData.nextFight}
             size="small"
+            aria-label="Next fight"
             sx={{
-              width: { xs: 32, md: 28 },
-              height: { xs: 32, md: 28 },
-              borderRadius: { xs: '6px', md: '8px' },
-              backgroundColor: 'transparent',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
-                transform: 'scale(1.05)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+                transform: 'scale(1.08)',
               },
               '&:disabled': {
-                opacity: 0.3,
-                cursor: 'not-allowed',
+                opacity: 0.25,
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
               },
             }}
           >
-            <ArrowForwardIcon fontSize="small" />
+            <ChevronRightIcon />
           </IconButton>
         </Box>
       </Box>
@@ -376,7 +428,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       >
         <Tabs
           value={validSelectedTabId}
-          onChange={(_, v) => {
+          onChange={(_: React.SyntheticEvent, v: unknown) => {
             onTabChange(v as TabId);
           }}
           sx={{
@@ -499,6 +551,14 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             icon={
               <Tooltip title="Damage Reduction">
                 <ShieldIcon />
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TabId.SYNERGIES}
+            icon={
+              <Tooltip title="Synergies">
+                <HandshakeIcon />
               </Tooltip>
             }
           />
@@ -644,106 +704,152 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         </Tooltip>
       </Box>
 
-      {/* Tab Content */}
-      <Box sx={{ mt: 2 }} data-testid="fight-tab-content-container">
-        <AnimatedTabContent
-          tabKey={validSelectedTabId}
-          data-testid={`tab-content-${validSelectedTabId}`}
-        >
-          {validSelectedTabId === TabId.INSIGHTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
-              <InsightsPanel fight={fight} />
-            </Suspense>
+      {/* Tab Content — uses deferredTabId so the tab highlight paints
+           instantly while the heavy panel swap renders in the next frame.
+           contain: layout style limits reflow scope so MUI's
+           getTabsMeta doesn't trigger a full-page layout recalc.
+           (paint omitted — it would clip disablePortal overlays in child panels) */}
+      <Box sx={{ mt: 2, contain: 'layout style' }} data-testid="fight-tab-content-container">
+        <AnimatedTabContent tabKey={deferredTabId} data-testid={`tab-content-${deferredTabId}`}>
+          {deferredTabId === TabId.INSIGHTS && (
+            <PanelErrorBoundary panelName="Insights">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
+                <InsightsPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {validSelectedTabId === TabId.PLAYERS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.PLAYERS} />}>
-              <PlayersPanel />
-            </Suspense>
+          {deferredTabId === TabId.PLAYERS && (
+            <PanelErrorBoundary panelName="Players">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.PLAYERS} />}>
+                <PlayersPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {validSelectedTabId === TabId.DAMAGE_DONE && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
-              <DamageDonePanel />
-            </Suspense>
+          {deferredTabId === TabId.DAMAGE_DONE && (
+            <PanelErrorBoundary panelName="Damage Done">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
+                <DamageDonePanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {validSelectedTabId === TabId.HEALING_DONE && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
-              <HealingDonePanel fight={fight} />
-            </Suspense>
+          {deferredTabId === TabId.HEALING_DONE && (
+            <PanelErrorBoundary panelName="Healing Done">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
+                <HealingDonePanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {validSelectedTabId === TabId.DEATHS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
-              <DeathEventPanel fight={fight} />
-            </Suspense>
+          {deferredTabId === TabId.DEATHS && (
+            <PanelErrorBoundary panelName="Deaths">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
+                <DeathEventPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
-              <CriticalDamagePanel phaseTransitionInfo={phaseTransitionInfo} />
-            </Suspense>
+          {deferredTabId === TabId.CRITICAL_DAMAGE && (
+            <PanelErrorBoundary panelName="Critical Damage">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
+                <CriticalDamagePanel phaseTransitionInfo={phaseTransitionInfo} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {validSelectedTabId === TabId.PENETRATION && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
-              <PenetrationPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
-            </Suspense>
+          {deferredTabId === TabId.PENETRATION && (
+            <PanelErrorBoundary panelName="Penetration">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
+                <PenetrationPanel phaseTransitionInfo={phaseTransitionInfo} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
-              <DamageReductionPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
-            </Suspense>
+          {deferredTabId === TabId.DAMAGE_REDUCTION && (
+            <PanelErrorBoundary panelName="Damage Reduction">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
+                <DamageReductionPanel phaseTransitionInfo={phaseTransitionInfo} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
-              <LocationHeatmapPanel fight={fight} />
-            </Suspense>
+          {deferredTabId === TabId.SYNERGIES && (
+            <PanelErrorBoundary panelName="Synergies">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.SYNERGIES} />}>
+                <SynergyPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.RAW_EVENTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.RAW_EVENTS} />}>
-              <EventsPanel />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.LOCATION_HEATMAP && (
+            <PanelErrorBoundary panelName="Location Heatmap">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
+                <LocationHeatmapPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.TARGET_EVENTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.TARGET_EVENTS} />}>
-              <TargetEventsPanel />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.RAW_EVENTS && (
+            <PanelErrorBoundary panelName="Raw Events">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.RAW_EVENTS} />}>
+                <EventsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.DIAGNOSTICS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DIAGNOSTICS} />}>
-              <DiagnosticsPanel />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.TARGET_EVENTS && (
+            <PanelErrorBoundary panelName="Target Events">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.TARGET_EVENTS} />}>
+                <TargetEventsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.ACTORS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.ACTORS} />}>
-              <ActorsPanel />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.DIAGNOSTICS && (
+            <PanelErrorBoundary panelName="Diagnostics">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DIAGNOSTICS} />}>
+                <DiagnosticsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.TALENTS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.TALENTS} />}>
-              <TalentsGridPanel fight={fight} />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.ACTORS && (
+            <PanelErrorBoundary panelName="Actors">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.ACTORS} />}>
+                <ActorsPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.ROTATION_ANALYSIS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.ROTATION_ANALYSIS} />}>
-              <RotationAnalysisPanel fight={fight} />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.TALENTS && (
+            <PanelErrorBoundary panelName="Talents">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.TALENTS} />}>
+                <TalentsGridPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.AURAS_OVERVIEW && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.AURAS_OVERVIEW} />}>
-              <AurasPanel />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.ROTATION_ANALYSIS && (
+            <PanelErrorBoundary panelName="Rotation Analysis">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.ROTATION_ANALYSIS} />}>
+                <RotationAnalysisPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.BUFFS_OVERVIEW && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.BUFFS_OVERVIEW} />}>
-              <BuffsOverviewPanel />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.AURAS_OVERVIEW && (
+            <PanelErrorBoundary panelName="Auras Overview">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.AURAS_OVERVIEW} />}>
+                <AurasPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.DEBUFFS_OVERVIEW && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
-              <DebuffsOverviewPanel />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.BUFFS_OVERVIEW && (
+            <PanelErrorBoundary panelName="Buffs Overview">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.BUFFS_OVERVIEW} />}>
+                <BuffsOverviewPanel />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
-          {showExperimentalTabs && validSelectedTabId === TabId.MAPS && (
-            <Suspense fallback={<PanelLoadingFallback tabId={TabId.MAPS} />}>
-              <MapsPanel fight={fight} />
-            </Suspense>
+          {showExperimentalTabs && deferredTabId === TabId.DEBUFFS_OVERVIEW && (
+            <PanelErrorBoundary panelName="Debuffs Overview">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
+                <DebuffsOverviewPanel />
+              </Suspense>
+            </PanelErrorBoundary>
+          )}
+          {showExperimentalTabs && deferredTabId === TabId.MAPS && (
+            <PanelErrorBoundary panelName="Maps">
+              <Suspense fallback={<PanelLoadingFallback tabId={TabId.MAPS} />}>
+                <MapsPanel fight={fight} />
+              </Suspense>
+            </PanelErrorBoundary>
           )}
         </AnimatedTabContent>
       </Box>

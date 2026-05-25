@@ -1,3 +1,4 @@
+import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Box,
@@ -6,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Typography,
   List,
   ListItem,
@@ -14,6 +16,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
 interface DamageTypeHelpModalProps {
@@ -55,7 +58,7 @@ const AOE_ABILITIES = [
   { id: 118314, name: 'Scorch' },
   { id: 143944, name: 'Subterranean Assault' },
   { id: 143946, name: 'Deep Fissure' },
-  { id: 118720, name: 'Eruption' },
+  { id: 118720, name: 'Hearth and Home' },
   { id: 23202, name: 'Liquid Lightning' },
   { id: 23667, name: 'Elemental Ring 2' },
   { id: 29809, name: 'Pulsar' },
@@ -73,7 +76,7 @@ const AOE_ABILITIES = [
   { id: 26869, name: 'Wall of Fire' },
   { id: 80172, name: 'Blockade of Fire' },
   { id: 26794, name: 'Unstable Wall of Fire' },
-  { id: 44432, name: 'Engulfing Flames Skill' },
+  { id: 44432, name: 'Engulfing Dragonfire' },
   { id: 26879, name: 'Wall of Frost' },
   { id: 26871, name: 'Unstable Wall of Frost' },
   { id: 108936, name: 'Blockade of Frost' },
@@ -123,6 +126,9 @@ const STATUS_EFFECT_ABILITIES = [
  * Help modal explaining damage type calculations
  */
 export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, onClose }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   const handleClose = (): void => {
     onClose();
   };
@@ -219,16 +225,26 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
       fullWidth
       onKeyDown={handleKeyDown}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
-      PaperProps={{
-        component: 'div',
-        onClick: (e: React.MouseEvent) => e.stopPropagation(),
-      }}
     >
       <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6" component="span">
             Damage Type Calculations
           </Typography>
+          <IconButton
+            onClick={handleClose}
+            size="small"
+            aria-label="Close"
+            sx={{
+              color: 'text.secondary',
+              '&:hover': {
+                color: '#ef4444',
+                bgcolor: 'rgba(239, 68, 68, 0.1)',
+              },
+            }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
         </Box>
       </DialogTitle>
 
@@ -249,11 +265,9 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                   alignItems: 'flex-start',
                   borderRadius: 2,
                   mb: 2,
-                  bgcolor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                   border: '1px solid',
-                  borderColor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
                   p: 2,
                 }}
               >
@@ -287,11 +301,8 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                     size="small"
                     sx={{
                       mb: 1,
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(59, 130, 246, 0.15)'
-                          : 'rgba(59, 130, 246, 0.1)',
-                      color: (theme) => (theme.palette.mode === 'dark' ? '#60a5fa' : '#2563eb'),
+                      bgcolor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)',
+                      color: isDark ? '#60a5fa' : '#2563eb',
                       fontWeight: 600,
                     }}
                   />
@@ -301,8 +312,7 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                     sx={{
                       display: 'block',
                       fontFamily: 'monospace',
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
+                      bgcolor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
                       p: 1.5,
                       borderRadius: 1,
                       lineHeight: 1.5,
@@ -330,8 +340,6 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                   <Box sx={{ width: '100%', mt: 2 }}>
                     <Accordion
                       sx={{
-                        bgcolor: (theme) =>
-                          theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
                         boxShadow: 'none',
                         '&:before': { display: 'none' },
                       }}
@@ -370,10 +378,7 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
                                 color: 'text.secondary',
                                 p: 0.5,
                                 borderRadius: 0.5,
-                                bgcolor: (theme) =>
-                                  theme.palette.mode === 'dark'
-                                    ? 'rgba(255,255,255,0.05)'
-                                    : 'rgba(0,0,0,0.03)',
+                                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
                               }}
                             >
                               {ability.name} ({ability.id})
@@ -393,15 +398,9 @@ export const DamageTypeHelpModal: React.FC<DamageTypeHelpModalProps> = ({ open, 
               mt: 2,
               p: 2,
               borderRadius: 2,
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'rgba(59, 130, 246, 0.1)'
-                  : 'rgba(59, 130, 246, 0.05)',
+              bgcolor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
               border: '1px solid',
-              borderColor: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'rgba(59, 130, 246, 0.3)'
-                  : 'rgba(59, 130, 246, 0.2)',
+              borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.2)',
             }}
           >
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>

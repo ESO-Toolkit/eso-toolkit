@@ -2,19 +2,38 @@ import { createMockState } from '../../test/utils/reduxMockFactories';
 import { DamageEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
+import { resolveCacheKey } from '../utils/keyedCacheState';
 import { selectDamageEventsByPlayer } from './damageEventsSelectors';
 
 // Helper to create state with specific damage events
-const createStateWithDamageEvents = (damageEvents: DamageEvent[]): RootState =>
-  createMockState({
+const createStateWithDamageEvents = (damageEvents: DamageEvent[]): RootState => {
+  const base = createMockState();
+  const reportCode = base.report.activeContext.reportId ?? base.report.reportId;
+  const fightId = base.report.activeContext.fightId ?? 1;
+  const { key } = resolveCacheKey({ reportCode, fightId });
+
+  return {
+    ...base,
     events: {
-      ...createMockState().events,
+      ...base.events,
       damage: {
-        ...createMockState().events.damage,
-        events: damageEvents,
+        entries: {
+          [key]: {
+            events: damageEvents,
+            status: 'succeeded',
+            error: null,
+            cacheMetadata: {
+              lastFetchedTimestamp: Date.now(),
+              restrictToFightWindow: true,
+            },
+            currentRequest: null,
+          },
+        },
+        accessOrder: [key],
       },
     },
-  });
+  } as RootState;
+};
 
 // Helper function to create test damage events
 const createDamageEvent = (sourceID: number, targetID: number, amount: number): DamageEvent => ({
