@@ -196,7 +196,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       .map((id) => ({
         id,
         name: reportMasterData.actorsById[id]?.name || `Player ${id}`,
-        displayName: reportMasterData.actorsById[id]?.displayName || null,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [fight?.friendlyPlayers, reportMasterData?.actorsById]);
