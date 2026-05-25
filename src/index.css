@@ -116,20 +116,6 @@ code {
   }
 }
 
-/* WCAG 2.2 Target Size (Level AA) — 44px minimum on coarse-pointer devices.
-   Scoped to navigation/standalone interactive elements only;
-   inline prose links are excluded to preserve text flow. */
-@media (pointer: coarse) {
-  nav a,
-  footer a,
-  [role='navigation'] a,
-  button,
-  [role='button'],
-  [role='tab'],
-  [role='menuitem'] {
-    min-height: 44px;
-  }
-}
 
 /* Pickr theme CSS variables */
 :root {
