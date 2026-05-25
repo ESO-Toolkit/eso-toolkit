@@ -319,7 +319,7 @@ async function _detectSignatureScript(
   try {
     // Find all casts of this ability by this player
     const abilityCasts = combatEvents.casts.filter(
-      (e) => e.sourceID === playerId && e.abilityGameID === abilityId,
+      (e) => e.type === 'cast' && e.sourceID === playerId && e.abilityGameID === abilityId,
     );
 
     if (abilityCasts.length === 0) {
@@ -348,7 +348,7 @@ async function _detectSignatureScript(
     };
 
     const checkAndCountSignature = (
-      event: { abilityGameID: number; extraAbilityGameID?: number },
+      event: { abilityGameID: number; extraAbilityGameID?: number | null },
       eventType: string,
       castIndex: number,
     ): void => {

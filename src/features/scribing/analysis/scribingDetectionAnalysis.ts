@@ -431,28 +431,53 @@ function detectSignatureScript(
     .filter(([, effect]) => effect.castIndices.size >= abilityCasts.length * MIN_CONSISTENCY)
     .sort((a, b) => b[1].castIndices.size - a[1].castIndices.size);
 
-  if (consistentEffects.length === 0) {
-    return null;
+  if (consistentEffects.length > 0) {
+    const [topEffectId, topEffect] = consistentEffects[0];
+    const castCount = topEffect.castIndices.size;
+    const confidence = Math.min(0.95, castCount / abilityCasts.length);
+    const scriptName = SIGNATURE_SCRIPT_ID_TO_NAME.get(topEffectId);
+
+    return {
+      name: scriptName || `Signature Script (Effect ID: ${topEffectId})`,
+      confidence,
+      detectionMethod: 'Post-Cast Pattern Analysis',
+      evidence: [
+        `Analyzed ${abilityCasts.length} casts`,
+        `Found ${consistentEffects.length} consistent effects`,
+        `Top effect: ${topEffect.type} ID ${topEffectId} (${castCount}/${abilityCasts.length} casts)`,
+        ...consistentEffects
+          .slice(0, 3)
+          .map(([id, eff]) => `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`),
+      ],
+    };
   }
 
-  const [topEffectId, topEffect] = consistentEffects[0];
-  const castCount = topEffect.castIndices.size;
-  const confidence = Math.min(0.95, castCount / abilityCasts.length);
-  const scriptName = SIGNATURE_SCRIPT_ID_TO_NAME.get(topEffectId);
+  const minCorrelation =
+    abilityCasts.length >= 4 ? abilityCasts.length - 2 : Math.ceil(abilityCasts.length * 0.5);
 
-  return {
-    name: scriptName || `Signature Script (Effect ID: ${topEffectId})`,
-    confidence,
-    detectionMethod: 'Post-Cast Pattern Analysis',
-    evidence: [
-      `Analyzed ${abilityCasts.length} casts`,
-      `Found ${consistentEffects.length} consistent effects`,
-      `Top effect: ${topEffect.type} ID ${topEffectId} (${castCount}/${abilityCasts.length} casts)`,
-      ...consistentEffects
-        .slice(0, 3)
-        .map(([id, eff]) => `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`),
-    ],
-  };
+  const highlyCorrelated = Array.from(signatureEffects.entries())
+    .filter(([, effect]) => effect.castIndices.size >= minCorrelation)
+    .sort((a, b) => b[1].castIndices.size - a[1].castIndices.size);
+
+  if (highlyCorrelated.length > 0) {
+    const correlatedIds = highlyCorrelated
+      .slice(0, 5)
+      .map(([id, eff]) => `${eff.type} ${id} (${eff.castIndices.size}/${abilityCasts.length} casts)`);
+
+    return {
+      name: 'Correlated Abilities Detected',
+      confidence: 0.3,
+      detectionMethod: 'Correlation Analysis',
+      evidence: [
+        `Analyzed ${abilityCasts.length} casts`,
+        `No signature script identified (need ≥${Math.ceil(abilityCasts.length * MIN_CONSISTENCY)}/${abilityCasts.length} consistency)`,
+        `Found ${highlyCorrelated.length} highly correlated abilities (≥${minCorrelation}/${abilityCasts.length} casts):`,
+        ...correlatedIds,
+      ],
+    };
+  }
+
+  return null;
 }
 
 function detectAffixScripts(

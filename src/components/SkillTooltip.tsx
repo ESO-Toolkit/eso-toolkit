@@ -667,7 +667,8 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       >
                         {finalScribedData.signatureScript.name}
                       </Typography>
-                      {finalScribedData.signatureScript.confidence != null && (
+                      {finalScribedData.signatureScript.confidence != null &&
+                        finalScribedData.signatureScript.confidence < 1.0 && (
                         <Typography
                           variant="caption"
                           sx={{
@@ -698,7 +699,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             `via ${finalScribedData.signatureScript.detectionMethod}`,
                           finalScribedData.signatureScript.evidence &&
                             finalScribedData.signatureScript.evidence.length > 0 &&
-                            `Sources: ${finalScribedData.signatureScript.evidence.join(', ')}`,
+                            finalScribedData.signatureScript.evidence[0],
                         ]
                           .filter(Boolean)
                           .join(' · ')}
@@ -736,8 +737,8 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       }}
                     >
                       {finalScribedData.affixScripts.map(
-                        (affixScript: ScribedSkillAffixInfo, index: number) => (
-                          <Box key={index}>
+                        (affixScript: ScribedSkillAffixInfo) => (
+                          <Box key={affixScript.id}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <Typography
                                 variant="caption"
@@ -749,7 +750,8 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                               >
                                 {affixScript.name}
                               </Typography>
-                              {affixScript.confidence != null && (
+                              {affixScript.confidence != null &&
+                                affixScript.confidence < 1.0 && (
                                 <Typography
                                   variant="caption"
                                   sx={{
