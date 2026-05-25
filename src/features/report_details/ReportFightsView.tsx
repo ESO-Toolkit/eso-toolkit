@@ -99,15 +99,8 @@ function getTrialNameFromBoss(
   // Check boss names FIRST to handle mixed-trial reports
   const cleanBossName = bossName.toLowerCase();
 
-  // Opulent Ordeal bosses
-  if (
-    [
-      'opulent trio',
-      'opulent web eater',
-      'opulent arid varlet',
-      'opulent knightshade',
-    ].some((name) => cleanBossName.includes(name))
-  ) {
+  // Opulent Ordeal bosses (single ranked encounter; individual names are trash, not bosses)
+  if (cleanBossName.includes('opulent trio')) {
     return 'Opulent Ordeal';
   }
 
