@@ -121,6 +121,7 @@ const bossAvatars: Record<string, string> = {
   // Sanctum Ophidia
   Ozara: ozaraAvatar,
   'Possessed Manticora': possessedManticoraAvatar,
+  'Possessed Mantikora': possessedManticoraAvatar,
   Stonebreaker: stonebreakerAvatar,
   'The Serpent': theSerpentAvatar,
   Serpent: theSerpentAvatar,
