@@ -141,13 +141,23 @@ export const TRIALS: TrialConfig[] = [
   },
 
   {
-    id: 'OAC',
-    name: 'Oathsworn Citadel',
+    id: 'OO',
+    name: 'Opulent Ordeal',
     type: 'trial',
     bosses: [
-      { name: 'Knight Commander Phantas', trashPacksBefore: 2 },
-      { name: 'The Shining Ones', trashPacksBefore: 2 },
-      { name: 'Vandacia', trashPacksBefore: 1 },
+      { name: 'Running Phase', trashPacksBefore: 1 },
+      { name: 'Opulent Trio', trashPacksBefore: 0 },
+    ],
+  },
+
+  {
+    id: 'OSC',
+    name: 'Ossein Cage',
+    type: 'trial',
+    bosses: [
+      { name: 'Shapers of Flesh', trashPacksBefore: 2 },
+      { name: 'Jynorah and Skorkhif', trashPacksBefore: 2 },
+      { name: 'Overfiend Kazpian', trashPacksBefore: 1 },
     ],
   },
 

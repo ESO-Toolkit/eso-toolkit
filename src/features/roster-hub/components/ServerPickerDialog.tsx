@@ -99,7 +99,8 @@ const TRIAL_ABBREVS: Record<string, string> = {
   DSR: 'dsr',
   SE: 'se',
   LC: 'lc',
-  OAC: 'oac',
+  OO: 'oo',
+  OSC: 'osc',
 };
 
 /** Build a channel name preview from pattern + current form values. */

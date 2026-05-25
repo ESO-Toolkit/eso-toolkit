@@ -226,10 +226,10 @@ const rosters = {
     ],
   },
 
-  // Oathsworn Citadel #1 — MuLtiCoLOrEd PoNiEs
+  // Ossein Cage #1 — MuLtiCoLOrEd PoNiEs
   'seed-oc-01': {
     v: 2,
-    n: 'OAC #1 — MuLtiCoLOrEd PoNiEs',
+    n: 'OSC #1 — MuLtiCoLOrEd PoNiEs',
     t1: { pn: 'Bittergreen', gs: { s1: 651, s2: 650, ms: 633 } },
     t2: { pn: 'Seeker-Deer', gs: { s1: 589, s2: 770, a: [609, 627] } },
     h1: { pn: "Vex'alya", s1: 185, s2: 332, ms: 666, a: [362] },
