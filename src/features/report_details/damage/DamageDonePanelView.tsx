@@ -437,7 +437,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('name')}
-              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('name'); } }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSort('name');
+                }
+              }}
               aria-label="Sort by name"
             >
               Name{getSortIcon('name')}
@@ -454,7 +459,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('dps')}
-              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('dps'); } }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSort('dps');
+                }
+              }}
               aria-label="Sort by DPS"
             >
               DPS{getSortIcon('dps')}
@@ -472,7 +482,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 position: 'relative',
               }}
               onClick={() => handleSort('activeDps')}
-              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('activeDps'); } }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSort('activeDps');
+                }
+              }}
               aria-label="Sort by active DPS"
             >
               <Box
@@ -498,7 +513,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 },
               }}
               onClick={() => handleSort('criticalDamage')}
-              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort('criticalDamage'); } }}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleSort('criticalDamage');
+                }
+              }}
               aria-label="Sort by critical damage"
             >
               Crit %{getSortIcon('criticalDamage')}

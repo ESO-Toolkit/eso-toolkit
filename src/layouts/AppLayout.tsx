@@ -122,7 +122,13 @@ export const AppLayout: React.FC = () => {
           <Box
             aria-live="polite"
             role="status"
-            sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)' }}
+            sx={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              overflow: 'hidden',
+              clip: 'rect(0,0,0,0)',
+            }}
           >
             {announcement}
           </Box>

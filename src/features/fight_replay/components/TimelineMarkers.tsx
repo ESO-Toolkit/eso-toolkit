@@ -133,7 +133,7 @@ export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
                   handleMarkerClick(marker);
                 }
               }}
-              aria-label={`Event marker at ${Math.round((marker.timestamp / 1000))}s`}
+              aria-label={`Event marker at ${Math.round(marker.timestamp / 1000)}s`}
               sx={{
                 position: 'absolute',
                 left: `${position}%`,

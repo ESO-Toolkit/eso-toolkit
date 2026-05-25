@@ -277,12 +277,7 @@ const MainApp: React.FC = () => {
     <ReduxThemeProvider>
       <KalpaBanner />
       <HeaderBar />
-      <Box
-        component="main"
-        id="main-content"
-        tabIndex={-1}
-        sx={{ outline: 'none' }}
-      >
+      <Box component="main" id="main-content" tabIndex={-1} sx={{ outline: 'none' }}>
         <LandingPage />
       </Box>
     </ReduxThemeProvider>

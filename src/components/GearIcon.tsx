@@ -119,7 +119,9 @@ export const GearIcon: React.FC<GearIconProps> = ({
     >
       {imgEl}
     </span>
-  ) : imgEl;
+  ) : (
+    imgEl
+  );
 
   if (showTooltip && tooltipContent) {
     return (

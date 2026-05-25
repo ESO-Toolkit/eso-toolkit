@@ -2313,7 +2313,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <CvIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Text-Editor
               </Typography>
               <Typography
@@ -2337,7 +2341,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <CalculatorIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Build Calculator
               </Typography>
               <Typography
@@ -2365,7 +2373,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <FileLoopIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Log Analyzer
               </Typography>
               <Typography
@@ -2389,7 +2401,11 @@ export const LandingPage: React.FC = () => {
               <ToolIcon>
                 <PeopleIcon size="2rem" />
               </ToolIcon>
-              <Typography variant="h5" component="h2" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
+              >
                 Roster Builder
               </Typography>
               <Typography
