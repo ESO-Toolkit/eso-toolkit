@@ -116,6 +116,17 @@ code {
   }
 }
 
+/* WCAG 2.2 touch target sizing — ensure 44px minimum on touch devices */
+@media (pointer: coarse) {
+  a,
+  button,
+  [role='button'],
+  [role='tab'],
+  [role='menuitem'] {
+    min-height: 44px;
+  }
+}
+
 /* Pickr theme CSS variables */
 :root {
   --site-bg: #121212;

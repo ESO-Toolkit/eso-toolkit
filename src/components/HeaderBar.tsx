@@ -799,7 +799,7 @@ export const HeaderBar: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
               <Button
                 color="inherit"
-                sx={{ p: 0, minWidth: 0, '&:hover': { background: 'transparent' } }}
+                sx={{ p: 0, minWidth: 44, minHeight: 44, '&:hover': { background: 'transparent' } }}
                 onClick={() => navigate('/', { vtType: 'down' })}
               >
                 <Typography
@@ -832,7 +832,7 @@ export const HeaderBar: React.FC = () => {
             <Box
               component="nav"
               aria-label="Main navigation"
-              sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}
+              sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1.5 }}
             >
               {navItems.map((item) => (
                 <Button
@@ -1044,7 +1044,7 @@ export const HeaderBar: React.FC = () => {
               )}
             </Box>
 
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: { xs: 'flex', lg: 'none' }, alignItems: 'center', gap: 1 }}>
               <HamburgerButton
                 open={mobileOpen}
                 onClick={handleDrawerToggle}
