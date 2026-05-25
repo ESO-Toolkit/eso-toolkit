@@ -71,46 +71,48 @@ const Search: React.FC<SearchProps> = ({
         size="small"
         fullWidth
         autoFocus={autoFocus}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-            </InputAdornment>
-          ),
-          endAdornment: (
-            <InputAdornment position="end" sx={{ gap: 0.5 }}>
-              {resultCount != null && value.trim().length >= 2 && (
-                <Typography
-                  sx={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {resultCount} result{resultCount !== 1 ? 's' : ''}
-                </Typography>
-              )}
-              {value.length > 0 && (
-                <IconButton
-                  size="small"
-                  onClick={() => onChange('')}
-                  aria-label="Clear search"
-                  tabIndex={-1}
-                  sx={{
-                    p: 0.25,
-                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                    '&:hover': {
-                      color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
-                    },
-                  }}
-                >
-                  <CloseIcon sx={{ fontSize: 15 }} />
-                </IconButton>
-              )}
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end" sx={{ gap: 0.5 }}>
+                {resultCount != null && value.trim().length >= 2 && (
+                  <Typography
+                    sx={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {resultCount} result{resultCount !== 1 ? 's' : ''}
+                  </Typography>
+                )}
+                {value.length > 0 && (
+                  <IconButton
+                    size="small"
+                    onClick={() => onChange('')}
+                    aria-label="Clear search"
+                    tabIndex={-1}
+                    sx={{
+                      p: 0.25,
+                      color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                      '&:hover': {
+                        color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
+                      },
+                    }}
+                  >
+                    <CloseIcon sx={{ fontSize: 15 }} />
+                  </IconButton>
+                )}
+              </InputAdornment>
+            ),
+          },
         }}
         sx={{
           '& .MuiOutlinedInput-root': {
@@ -268,46 +270,46 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
       fullWidth
       fullScreen={isMobile}
       className="glass-dialog"
-      TransitionComponent={SlideUp}
-      TransitionProps={{ timeout: { enter: 280, exit: 200 } }}
-      PaperProps={{
-        sx: {
-          borderRadius: isMobile ? 0 : '20px',
-          // Phase 3 M9: blur reduced from 20px → 10px to cut composite cost.
-          // On mobile the dialog is fullScreen and the blur is invisible
-          // behind the opaque sheet, so no media-gating needed.
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          border: isMobile
-            ? 'none'
-            : isDark
-              ? '1px solid #1f2937'
-              : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: isMobile ? '100vh' : '90vh',
-          // Subtle top-edge glow
-          '&::after': isMobile
-            ? {}
-            : {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: '10%',
-                right: '10%',
-                height: '1px',
-                background: isDark
-                  ? 'linear-gradient(90deg, transparent, rgba(var(--be-accent-rgb, 56, 189, 248), 0.35), transparent)'
-                  : 'linear-gradient(90deg, transparent, rgba(var(--be-accent-rgb, 56, 189, 248), 0.18), transparent)',
-                pointerEvents: 'none',
-                zIndex: 1,
-              },
-        },
-      }}
+      slots={{ transition: SlideUp }}
       slotProps={{
+        transition: { timeout: { enter: 280, exit: 200 } },
+        paper: {
+          sx: {
+            borderRadius: isMobile ? 0 : '20px',
+            // Phase 3 M9: blur reduced from 20px → 10px to cut composite cost.
+            // On mobile the dialog is fullScreen and the blur is invisible
+            // behind the opaque sheet, so no media-gating needed.
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            border: isMobile
+              ? 'none'
+              : isDark
+                ? '1px solid #1f2937'
+                : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: isMobile ? '100vh' : '90vh',
+            // Subtle top-edge glow
+            '&::after': isMobile
+              ? {}
+              : {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: '10%',
+                  right: '10%',
+                  height: '1px',
+                  background: isDark
+                    ? 'linear-gradient(90deg, transparent, rgba(var(--be-accent-rgb, 56, 189, 248), 0.35), transparent)'
+                    : 'linear-gradient(90deg, transparent, rgba(var(--be-accent-rgb, 56, 189, 248), 0.18), transparent)',
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                },
+          },
+        },
         backdrop: {
           sx: {
             background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)',

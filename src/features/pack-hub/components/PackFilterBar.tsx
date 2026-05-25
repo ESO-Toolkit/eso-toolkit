@@ -163,7 +163,11 @@ export const PackFilterBar: React.FC<PackFilterBarProps> = React.memo(
                 ),
                 endAdornment: filters.search ? (
                   <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => onFilterChange('search', '')}>
+                    <IconButton
+                      size="small"
+                      onClick={() => onFilterChange('search', '')}
+                      aria-label="Clear search"
+                    >
                       <Clear sx={{ fontSize: '0.85rem' }} />
                     </IconButton>
                   </InputAdornment>

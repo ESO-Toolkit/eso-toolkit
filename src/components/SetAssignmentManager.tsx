@@ -751,16 +751,16 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           key={assignment.setName}
           title={
             <Box>
-              <Typography variant="caption" display="block">
+              <Typography variant="caption" sx={{ display: 'block' }}>
                 <strong>{assignment.setName}</strong> ({roleBadge.label})
               </Typography>
               {isAssigned && (
-                <Typography variant="caption" display="block">
+                <Typography variant="caption" sx={{ display: 'block' }}>
                   Assigned to: {assignment.assignedTo.join(', ')}
                 </Typography>
               )}
               {!isAssigned && (
-                <Typography variant="caption" display="block" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
                   Click to assign this set to a role
                 </Typography>
               )}
@@ -958,8 +958,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             </Typography>
             <Typography
               variant="caption"
-              fontWeight={slotValue ? 600 : 400}
               sx={{
+                fontWeight: slotValue ? 600 : 400,
                 display: 'block',
                 color: slotValue ? 'text.primary' : 'text.disabled',
                 fontStyle: slotValue ? 'normal' : 'italic',
@@ -975,6 +975,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             <Tooltip title="Clear slot">
               <IconButton
                 size="small"
+                aria-label="Clear slot"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   onAssignSet('', slotKey, slotType);
@@ -1045,8 +1046,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             </Typography>
             <Typography
               variant="caption"
-              fontWeight={slotValue ? 600 : 400}
               sx={{
+                fontWeight: slotValue ? 600 : 400,
                 display: 'block',
                 color: slotValue ? 'text.primary' : 'text.disabled',
                 fontStyle: slotValue ? 'normal' : 'italic',
@@ -1062,6 +1063,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             <Tooltip title="Clear slot">
               <IconButton
                 size="small"
+                aria-label="Clear slot"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   onAssignSet('', slotKey, slotType);
@@ -1121,8 +1123,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             />
             <Typography
               variant="caption"
-              fontWeight={isPrimary ? 700 : 600}
               sx={{
+                fontWeight: isPrimary ? 700 : 600,
                 color: isPrimary ? color : `${color}80`,
                 fontSize: '0.675rem',
                 letterSpacing: '0.07em',
@@ -1193,8 +1195,8 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             />
             <Typography
               variant="caption"
-              fontWeight={isPrimary ? 700 : 600}
               sx={{
+                fontWeight: isPrimary ? 700 : 600,
                 color: isPrimary ? color : `${color}80`,
                 fontSize: '0.675rem',
                 letterSpacing: '0.07em',
@@ -1933,7 +1935,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
         <Box>
           {/* Role Filter Buttons */}
           <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography variant="body2" fontWeight="bold">
+            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
               Filter by Role:
             </Typography>
             <ButtonGroup size="small" variant="outlined">
@@ -1962,10 +1964,10 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
           {/* Legend */}
           <Paper variant="outlined" sx={{ p: 1.5, mb: 2, bgcolor: 'action.hover' }}>
-            <Typography variant="caption" fontWeight="bold" sx={{ display: 'block', mb: 0.5 }}>
+            <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 0.5 }}>
               Legend:
             </Typography>
-            <Stack direction="row" spacing={2} flexWrap="wrap">
+            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <ShieldIcon sx={{ fontSize: 14, color: roleColors.tank }} />
                 <Typography variant="caption">Tank-specific set</Typography>
@@ -1984,7 +1986,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           {/* Filtered Sets */}
           {(roleFilter === 'all' || roleFilter === 'tank') && (
             <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
                 Tank Sets
               </Typography>
               <Box>
@@ -1997,7 +1999,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
           {(roleFilter === 'all' || roleFilter === 'healer') && (
             <Box sx={{ mb: 2 }}>
-              <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
                 Healer Sets
               </Typography>
               <Box>
@@ -2012,7 +2014,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
             <>
               {/* Flexible Sets */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
                   Flexible (Tank/Healer)
                 </Typography>
                 <Box>
@@ -2024,7 +2026,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
               {/* Monster Sets */}
               <Box>
-                <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
                   Monster Sets
                 </Typography>
                 <Box>
@@ -2038,7 +2040,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
 
           {/* Quick Stats */}
           <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
-            <Stack direction="row" spacing={3} justifyContent="center">
+            <Stack direction="row" spacing={3} sx={{ justifyContent: 'center' }}>
               <Typography variant="caption">
                 <strong>Total Sets Assigned:</strong> {setAssignments.size}
               </Typography>
@@ -2099,7 +2101,7 @@ export const SetAssignmentManager: React.FC<SetAssignmentManagerProps> = ({
           >
             Quick assign
           </Typography>
-          <Typography variant="body2" fontWeight={700} noWrap sx={{ letterSpacing: '-0.01em' }}>
+          <Typography variant="body2" noWrap sx={{ fontWeight: 700, letterSpacing: '-0.01em' }}>
             {selectedSetForAssign}
           </Typography>
         </Box>

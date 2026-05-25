@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import App from './App';
+import { preloadIconData } from './features/loadout-manager/utils/itemIconResolver';
 import './index.css';
 import './styles/view-transitions.css';
 import store, { type RootState } from './store/storeWithHistory';
 import { setPerfTier } from './store/ui/uiSlice';
 import { heuristicPerfTier } from './utils/detectPerfTier';
+
+preloadIconData();
 
 // First-paint perf-tier priming. For a first-time visitor with no
 // persisted store, the default is 'medium' — which would leave a low-end

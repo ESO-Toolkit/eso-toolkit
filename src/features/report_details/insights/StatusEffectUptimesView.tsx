@@ -51,7 +51,10 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+        <Stack
+          direction="row"
+          sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+        >
           <Typography variant="h6">Status Effect Uptimes</Typography>
           <Skeleton variant="circular" width={36} height={36} />
         </Stack>
@@ -115,7 +118,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6">Status Effect Uptimes</Typography>
         <Tooltip title="View status effect uptimes timeline">
           <span>
@@ -133,7 +136,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
         </Tooltip>
       </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} id={descriptionId}>
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }} id={descriptionId}>
         {selectedTargetId
           ? 'Shows status effects applied to the selected target'
           : 'Shows status effects applied to all targets'}
@@ -201,7 +204,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
           </List>
         </Box>
       ) : (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           {nameFilter
             ? `No status effects matching "${nameFilter}" found.`
             : selectedTargetId

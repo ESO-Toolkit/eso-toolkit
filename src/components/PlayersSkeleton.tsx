@@ -45,7 +45,7 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
     }}
   >
     <CardContent sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Inner wrapper — flex:1 gap:2 (mirrors the <Box flex={1} minHeight={0} gap={2}> wrapper) */}
+      {/* Inner wrapper — flex:1 gap:2 (mirrors the <Box sx={{ flex: 1, gap: 2, minHeight: 0 }}> wrapper) */}
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
         {/* ── Left column: identity, skills, talents, gear ── */}
         <Box sx={{ flex: 0, minWidth: 0 }}>
@@ -97,7 +97,7 @@ export const PlayerCardSkeleton: React.FC<{ index?: number }> = ({ index = 0 }) 
             <Skeleton variant="text" width={`${55 + (index % 3) * 10}%`} height={14} />
           </Box>
 
-          {/* Talents + Gear — the real card wraps both in one <Box mb={1.5}> */}
+          {/* Talents + Gear — the real card wraps both in one <Box sx={{ mb: 1.5 }}> */}
           <Box sx={{ mb: 1.5 }}>
             {/* Row 1: 5 skills + cyan divider + 1 ultimate (mb:1.25) */}
             <Box
@@ -298,7 +298,7 @@ export const PlayersSkeleton: React.FC<PlayersSkeletonProps> = ({
   return (
     <Box data-testid={dataTestId} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {/* Controls: search · sort · role filter · Stats (Customize Chips) button */}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
         <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 200 } }} />
         <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 180 } }} />
         <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 120 } }} />

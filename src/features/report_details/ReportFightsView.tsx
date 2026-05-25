@@ -756,7 +756,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       >
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Typography variant="body1" fontWeight="medium">
+            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
               No fights available
             </Typography>
             <Chip
@@ -767,7 +767,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               sx={{ fontSize: '0.7rem', height: 20 }}
             />
           </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             This log contains no fight data, likely due to an upload or parsing issue on ESO Logs.
           </Typography>
           <Button

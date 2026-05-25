@@ -2271,9 +2271,9 @@ export const LandingPage: React.FC = () => {
           {isLoggedIn && isReady && clientIsLoggedIn ? (
             <AuthenticatedLandingSection />
           ) : isLoggedIn && (!isReady || !clientIsLoggedIn) ? (
-            <Box display="flex" justifyContent="center" alignItems="center" sx={{ py: 4 }}>
+            <Box sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}>
               <CircularProgress size={24} sx={{ mr: 2 }} />
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                 Initializing...
               </Typography>
             </Box>

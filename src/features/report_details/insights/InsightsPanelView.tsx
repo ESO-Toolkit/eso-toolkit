@@ -320,7 +320,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                     </Box>
                     <ListItemText
                       primary={cp.name}
-                      primaryTypographyProps={{ fontWeight: 600 }}
+                      slotProps={{ primary: { sx: { fontWeight: 600 } } }}
                       secondary={
                         buffActors[cp.knownAbility] && buffActors[cp.knownAbility]?.size
                           ? Array.from(buffActors[cp.knownAbility] as Set<string>).join(', ')

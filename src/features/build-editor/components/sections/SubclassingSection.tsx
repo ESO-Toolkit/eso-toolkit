@@ -273,8 +273,8 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledIds, onCha
               boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
             },
           },
+          list: { dense: true, 'aria-label': `Skill line picker for slot ${slot + 1}` },
         }}
-        MenuListProps={{ dense: true, 'aria-label': `Skill line picker for slot ${slot + 1}` }}
       >
         {LINES_BY_CLASS.map(({ cls, lines }, groupIdx) => {
           const clsColor = CLASS_COLOR_MAP[cls.id].accent;
@@ -443,7 +443,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ classSkillLines }) => {
         />
       )}
       {/* Class color dots for involved classes */}
-      <Stack direction="row" spacing={0.5} alignItems="center">
+      <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
         {involvedClasses.map((def) => {
           const color = CLASS_COLOR_MAP[def.ownerClass].accent;
           return (
@@ -499,7 +499,7 @@ const SubclassingSectionComponent: React.FC = () => {
     <Stack spacing={2}>
       {/* Explainer */}
       <Box>
-        <Typography variant="caption" color="text.secondary" sx={sectionLabelSx}>
+        <Typography variant="caption" sx={{ ...sectionLabelSx, color: 'text.secondary' }}>
           Class Skill Lines
         </Typography>
         <Typography

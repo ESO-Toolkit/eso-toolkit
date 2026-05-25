@@ -134,7 +134,7 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
       fullScreen={isMobile}
       disableEnforceFocus
       className="glass-dialog"
-      TransitionComponent={SlideUpTransition}
+      slots={{ transition: SlideUpTransition }}
       slotProps={{
         paper: {
           sx: {
@@ -333,6 +333,7 @@ export const BuildPreviewDialog: React.FC<BuildPreviewDialogProps> = ({
           <iframe
             src={embedUrl}
             title={`Preview: ${build.title}`}
+            sandbox="allow-same-origin allow-scripts allow-popups"
             style={{
               position: 'absolute',
               top: isMobile ? 6 : 8,

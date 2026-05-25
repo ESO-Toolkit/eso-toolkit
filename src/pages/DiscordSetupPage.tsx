@@ -52,7 +52,7 @@ export const DiscordSetupPage: React.FC = () => {
           </Button>
         )}
 
-        <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <Box
             sx={{
               width: 44,
@@ -75,7 +75,7 @@ export const DiscordSetupPage: React.FC = () => {
             <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', lineHeight: 1.2 }}>
               ESO Toolkit Discord bot
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.82rem' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
               Admin setup guide
             </Typography>
           </Box>
@@ -83,8 +83,8 @@ export const DiscordSetupPage: React.FC = () => {
 
         <Typography
           variant="body2"
-          color="text.secondary"
           sx={{
+            color: 'text.secondary',
             fontSize: '0.85rem',
             lineHeight: 1.55,
             pb: 0.5,

@@ -181,7 +181,7 @@ export const CookieConsent: React.FC = () => {
             <IconButton
               size="small"
               onClick={handleDeclineAll}
-              aria-label="close"
+              aria-label="Close"
               sx={{
                 position: 'absolute',
                 top: 8,
@@ -322,25 +322,27 @@ export const CookieConsent: React.FC = () => {
       {/* Granular Preferences Dialog */}
       <Dialog
         open={showDetails}
-        TransitionComponent={Transition}
         keepMounted
         onClose={handleCloseDetails}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: '14px',
-            border: `1px solid ${theme.palette.divider}`,
-            background:
-              theme.palette.mode === 'dark'
-                ? 'linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(3,7,18,0.98) 100%)'
-                : theme.palette.background.paper,
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? '0 8px 30px rgba(0, 0, 0, 0.25)'
-                : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+        slots={{ transition: Transition }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '14px',
+              border: `1px solid ${theme.palette.divider}`,
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(3,7,18,0.98) 100%)'
+                  : theme.palette.background.paper,
+              backdropFilter: 'blur(24px)',
+              WebkitBackdropFilter: 'blur(24px)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+                  : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+            },
           },
         }}
       >

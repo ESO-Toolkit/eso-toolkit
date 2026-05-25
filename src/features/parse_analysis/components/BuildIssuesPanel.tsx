@@ -15,9 +15,9 @@ export const BuildIssuesPanel: React.FC<BuildIssuesPanelProps> = ({ issues }) =>
 
   if (!issues || issues.length === 0) {
     return (
-      <Stack direction="row" spacing={1.5} alignItems="center">
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
         <CheckCircleIcon color="success" fontSize="small" />
-        <Typography variant="body2" fontWeight={500}>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
           No build issues detected for this parse.
         </Typography>
       </Stack>
@@ -47,7 +47,7 @@ export const BuildIssuesPanel: React.FC<BuildIssuesPanelProps> = ({ issues }) =>
           }}
         >
           <WarningAmberIcon color="warning" sx={{ fontSize: 16, mt: 0.25, flexShrink: 0 }} />
-          <Typography variant="caption" fontWeight={500}>
+          <Typography variant="caption" sx={{ fontWeight: 500 }}>
             {issue.message}
           </Typography>
         </Box>

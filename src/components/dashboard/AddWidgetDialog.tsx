@@ -83,14 +83,16 @@ export const AddWidgetDialog: React.FC<AddWidgetDialogProps> = ({ open, onClose,
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          background: 'linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(11,18,32,0.98) 100%)',
-          border: '1px solid rgba(56,189,248,0.3)',
-          borderRadius: '20px',
-          boxShadow:
-            '0 40px 100px rgba(0,0,0,0.6), 0 0 80px rgba(56,189,248,0.1), inset 0 1px 0 rgba(255,255,255,0.08)',
-          overflow: 'hidden',
+      slotProps={{
+        paper: {
+          sx: {
+            background: 'linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(11,18,32,0.98) 100%)',
+            border: '1px solid rgba(56,189,248,0.3)',
+            borderRadius: '20px',
+            boxShadow:
+              '0 40px 100px rgba(0,0,0,0.6), 0 0 80px rgba(56,189,248,0.1), inset 0 1px 0 rgba(255,255,255,0.08)',
+            overflow: 'hidden',
+          },
         },
       }}
     >

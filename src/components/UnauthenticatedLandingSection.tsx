@@ -136,8 +136,10 @@ export const UnauthenticatedLandingSection: React.FC = () => {
               fontSize: { xs: '0.9rem', sm: '1rem' },
             },
           }}
-          InputProps={{
-            startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
+          slotProps={{
+            input: {
+              startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
+            },
           }}
         />
         <Button

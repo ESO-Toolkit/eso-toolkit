@@ -151,7 +151,7 @@ export const PackAddonsStep: React.FC<PackAddonsStepProps> = ({
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Extension sx={{ fontSize: 18, color: accentColor }} />
-            <Typography variant="body2" fontWeight={700}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
               Addons
             </Typography>
             {addons.length > 0 && (
@@ -170,7 +170,7 @@ export const PackAddonsStep: React.FC<PackAddonsStepProps> = ({
             )}
           </Box>
           {addons.length > 0 && (
-            <Typography variant="caption" color="text.disabled" sx={{ fontSize: '0.62rem' }}>
+            <Typography variant="caption" sx={{ color: 'text.disabled', fontSize: '0.62rem' }}>
               {requiredCount} required · {optionalCount} optional
             </Typography>
           )}
@@ -210,10 +210,10 @@ export const PackAddonsStep: React.FC<PackAddonsStepProps> = ({
               >
                 <Extension sx={{ fontSize: 24, color: alpha(accentColor, 0.6) }} />
               </Box>
-              <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
                 No addons yet
               </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ lineHeight: 1.5 }}>
+              <Typography variant="caption" sx={{ color: 'text.disabled', lineHeight: 1.5 }}>
                 Use the form below to add addons to your pack.
                 <br />
                 You can drag to reorder them after adding.
@@ -310,10 +310,10 @@ export const PackAddonsStep: React.FC<PackAddonsStepProps> = ({
                       }}
                     />
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={600} noWrap>
+                      <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>
                         {option.title}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap>
+                      <Typography variant="caption" noWrap sx={{ color: 'text.secondary' }}>
                         by {option.author}
                         {option.category ? ` · ${option.category}` : ''}
                         {option.downloads ? ` · ${option.downloads} downloads` : ''}
@@ -351,8 +351,9 @@ export const PackAddonsStep: React.FC<PackAddonsStepProps> = ({
                   {...params}
                   placeholder="Search ESOUI addons…"
                   slotProps={{
+                    ...params.slotProps,
                     input: {
-                      ...params.InputProps,
+                      ...params.slotProps.input,
                       startAdornment: (
                         <>
                           {searchLoading ? (
@@ -360,7 +361,7 @@ export const PackAddonsStep: React.FC<PackAddonsStepProps> = ({
                           ) : (
                             <Extension sx={{ fontSize: 16, color: 'text.disabled', mr: 0.5 }} />
                           )}
-                          {params.InputProps.startAdornment}
+                          {params.slotProps.input.startAdornment}
                         </>
                       ),
                     },

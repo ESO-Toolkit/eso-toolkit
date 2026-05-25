@@ -1,4 +1,4 @@
-import { ContentCopy, DeleteOutline, EditOutlined } from '@mui/icons-material';
+import { ContentCopy, DeleteOutlined, EditOutlined } from '@mui/icons-material';
 import {
   Box,
   Card,
@@ -407,7 +407,7 @@ export const BuildCard: React.FC<BuildCardProps> = React.memo(
                   aria-label="Delete build"
                   sx={{ width: 36, height: 36 }}
                 >
-                  <DeleteOutline sx={{ fontSize: 17 }} />
+                  <DeleteOutlined sx={{ fontSize: 17 }} />
                 </IconButton>
               </Tooltip>
             )}

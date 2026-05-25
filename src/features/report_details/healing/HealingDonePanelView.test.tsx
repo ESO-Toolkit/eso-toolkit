@@ -103,10 +103,11 @@ describe('HealingDonePanelView', () => {
       </TestWrapper>,
     );
 
+    const user = userEvent.setup();
     // Click Raw HPS header to sort — find the desktop header (not mobile pill)
     const rawHpsHeaders = screen.getAllByText(/^Raw HPS/);
     // Click the first one (desktop header)
-    await userEvent.click(rawHpsHeaders[0]);
+    await user.click(rawHpsHeaders[0]);
 
     // After clicking, rows should be sorted by rawHps descending
     // HighRawHPS (3000) should appear before LowRawHPS (1000)

@@ -1,4 +1,4 @@
-import { ErrorOutline, Refresh, BugReport } from '@mui/icons-material';
+import { ErrorOutlined, Refresh, BugReport } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -144,28 +144,29 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       return (
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="100vh"
-          bgcolor="background.default"
-          p={3}
+          sx={{
+            bgcolor: 'background.default',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            display: 'flex',
+            p: 3,
+          }}
         >
           <Paper elevation={3} sx={{ maxWidth: 600, width: '100%', p: 4 }}>
-            <Stack spacing={3} alignItems="center">
-              <ErrorOutline color="error" sx={{ fontSize: 64 }} />
+            <Stack spacing={3} sx={{ alignItems: 'center' }}>
+              <ErrorOutlined color="error" sx={{ fontSize: 64 }} />
 
               <Typography
                 variant="h4"
                 component="h1"
-                textAlign="center"
-                color="error"
                 data-testid="error-boundary-title"
+                sx={{ color: 'error', textAlign: 'center' }}
               >
                 Something went wrong
               </Typography>
 
-              <Typography variant="body1" textAlign="center" color="text.secondary">
+              <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center' }}>
                 An unexpected error occurred. This has been automatically reported to our team. You
                 can try again, reload the page, or report the issue if it persists.
               </Typography>
@@ -176,7 +177,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                   <Typography variant="subtitle2" gutterBottom>
                     <strong>Error:</strong>
                   </Typography>
-                  <Typography variant="body2" fontFamily="monospace" fontSize="0.85rem">
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
                     {error.message || 'Unknown error'}
                   </Typography>
                 </Alert>
@@ -223,8 +224,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                           <Typography
                             variant="body2"
                             component="pre"
-                            fontFamily="monospace"
                             sx={{
+                              fontFamily: 'monospace',
                               whiteSpace: 'pre-wrap',
                               wordBreak: 'break-word',
                               fontSize: '0.7rem',
@@ -242,8 +243,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                           <Typography
                             variant="body2"
                             component="pre"
-                            fontFamily="monospace"
                             sx={{
+                              fontFamily: 'monospace',
                               whiteSpace: 'pre-wrap',
                               wordBreak: 'break-word',
                               fontSize: '0.7rem',
@@ -282,7 +283,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 </Button>
               </Stack>
 
-              <Typography variant="body2" color="text.secondary" textAlign="center">
+              <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
                 If this keeps happening, please{' '}
                 <Link
                   href="https://github.com/ESO-Toolkit/eso-toolkit/issues"

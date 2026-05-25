@@ -130,6 +130,7 @@ describe('BuffUptimesView - Name Filter', () => {
   });
 
   it('clears filter via clear button', async () => {
+    const user = userEvent.setup();
     renderView();
     typeFilter('courage');
 
@@ -138,7 +139,7 @@ describe('BuffUptimesView - Name Filter', () => {
 
     // Click clear
     const clearBtn = screen.getByRole('button', { name: 'clear filter' });
-    await userEvent.click(clearBtn);
+    await user.click(clearBtn);
 
     // All buffs visible again
     expect(screen.getByText('Major Courage')).toBeInTheDocument();
@@ -194,13 +195,14 @@ describe('DebuffUptimesView - Name Filter', () => {
   });
 
   it('clears filter via clear button', async () => {
+    const user = userEvent.setup();
     renderView();
     typeFilter('breach');
 
     expect(screen.queryByText('Crusher')).not.toBeInTheDocument();
 
     const clearBtn = screen.getByRole('button', { name: 'clear filter' });
-    await userEvent.click(clearBtn);
+    await user.click(clearBtn);
 
     expect(screen.getByText('Major Breach')).toBeInTheDocument();
     expect(screen.getByText('Crusher')).toBeInTheDocument();
@@ -255,13 +257,14 @@ describe('StatusEffectUptimesView - Name Filter', () => {
   });
 
   it('clears filter via clear button', async () => {
+    const user = userEvent.setup();
     renderView();
     typeFilter('burn');
 
     expect(screen.queryByText('Chilled')).not.toBeInTheDocument();
 
     const clearBtn = screen.getByRole('button', { name: 'clear filter' });
-    await userEvent.click(clearBtn);
+    await user.click(clearBtn);
 
     expect(screen.getByText('Burning')).toBeInTheDocument();
     expect(screen.getByText('Chilled')).toBeInTheDocument();

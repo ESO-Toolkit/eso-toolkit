@@ -3,7 +3,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import React, { Suspense } from 'react';
 
 const ChartLoadingFallback: React.FC = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+  <Box sx={{ justifyContent: 'center', alignItems: 'center', height: '300px', display: 'flex' }}>
     <CircularProgress />
   </Box>
 );

@@ -22,6 +22,11 @@ import {
   isTwoHandedWeapon,
   parseWeaponTypeFromIconUrl,
 } from '../itemIconResolver';
+import { preloadIconData } from '../itemIconResolver';
+
+beforeAll(async () => {
+  await preloadIconData();
+});
 
 const CDN = 'https://esoicons.uesp.net/esoui/art/icons';
 

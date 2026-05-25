@@ -18,7 +18,7 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import InfoIcon from '@mui/icons-material/Info';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PersonIcon from '@mui/icons-material/Person';
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutlined';
 import RestoreIcon from '@mui/icons-material/Restore';
 import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -1151,13 +1151,13 @@ const ParseAnalysisPageContent: React.FC = () => {
           mb: 2,
         }}
       >
-        <Stack direction="row" spacing={1.5} alignItems="center">
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <FastfoodIcon color={semanticColor} sx={{ fontSize: 20 }} />
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" fontWeight={600}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {hasFood ? 'Food Buff Detected' : 'No Food/Drink Detected'}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               {hasFood
                 ? `${foodLabel}${state.foodResult?.foodNames.length > 0 ? `: ${state.foodResult.foodNames.join(', ')}` : ''}`
                 : 'Food or drink buff is recommended for optimal parse performance'}
@@ -1211,7 +1211,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         }}
       >
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2.5 }}>
             <Box
               sx={{
                 width: 28,
@@ -1229,16 +1229,21 @@ const ParseAnalysisPageContent: React.FC = () => {
             >
               <AccessTimeIcon color={progressColor} sx={{ fontSize: '1rem' }} />
             </Box>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, letterSpacing: '-0.01em' }}>
               Activity Uptime
             </Typography>
           </Stack>
 
           <Typography
             variant="h3"
-            fontWeight={800}
-            color={activityColor}
-            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: activityColor,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {percentDisplay}%
           </Typography>
@@ -1255,38 +1260,38 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Stack spacing={0.75}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Active Time
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {activeSeconds.toFixed(1)}s /{' '}
                 {fightDurationMs != null ? (fightDurationMs / 1000).toFixed(1) : '?'}s
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Casts
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {totalCasts} ({baseActiveSeconds.toFixed(1)}s)
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Channel Bonus
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 +{channelExtraSeconds.toFixed(1)}s
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Downtime
               </Typography>
               <Typography
                 variant="caption"
-                fontWeight={600}
                 sx={{
+                  fontWeight: 600,
                   color:
                     downtimeSeconds <= 5
                       ? theme.palette.mode === 'dark'
@@ -1305,8 +1310,8 @@ const ParseAnalysisPageContent: React.FC = () => {
           {!isGood && (
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mt: 1.5,
                 p: 1,
@@ -1342,7 +1347,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         }}
       >
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2.5 }}>
             <Box
               sx={{
                 width: 28,
@@ -1360,16 +1365,21 @@ const ParseAnalysisPageContent: React.FC = () => {
             >
               <SpeedIcon color={isGoodCPM ? 'success' : 'warning'} sx={{ fontSize: '1rem' }} />
             </Box>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, letterSpacing: '-0.01em' }}>
               Casts Per Minute
             </Typography>
           </Stack>
 
           <Typography
             variant="h3"
-            fontWeight={800}
-            color={cpmColor}
-            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: cpmColor,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {cpm.toFixed(1)}
           </Typography>
@@ -1384,7 +1394,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             }}
           />
 
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {isExcellentCPM && 'Excellent — very high APM'}
             {isGoodCPM && !isExcellentCPM && 'Good — room for improvement'}
             {!isGoodCPM && 'Low — try to cast more frequently'}
@@ -1408,7 +1418,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         }}
       >
         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2.5 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 2.5 }}>
             <Box
               sx={{
                 width: 28,
@@ -1428,34 +1438,39 @@ const ParseAnalysisPageContent: React.FC = () => {
             >
               <FlashOnIcon color="primary" sx={{ fontSize: '1rem' }} />
             </Box>
-            <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, letterSpacing: '-0.01em' }}>
               Damage Per Second
             </Typography>
           </Stack>
 
           <Typography
             variant="h3"
-            fontWeight={800}
-            color="primary.main"
-            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: 'primary.main',
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {Math.round(dps).toLocaleString()}
           </Typography>
 
           <Stack spacing={0.5}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Total Damage
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {totalDamage.toLocaleString()}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Fight Duration
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {(durationMs / 60000).toFixed(1)} min
               </Typography>
             </Box>
@@ -1481,9 +1496,9 @@ const ParseAnalysisPageContent: React.FC = () => {
     return (
       <Accordion defaultExpanded={true} disableGutters sx={glassAccordionSx}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             <RotateRightIcon color="info" fontSize="small" />
-            <Typography variant="subtitle2" fontWeight={600}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
               Rotation Analysis
             </Typography>
             {spammableAbilities && spammableAbilities.length > 0 && (
@@ -1502,7 +1517,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             {/* Opener */}
             {opener.length > 0 && (
               <Box>
-                <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
                   Opener (First {Math.round(state.rotationResult.openerDuration)}s)
                 </Typography>
                 <Box
@@ -1523,8 +1538,8 @@ const ParseAnalysisPageContent: React.FC = () => {
             {/* Recommended Rotation */}
             {recommendedRotation && recommendedRotation.length > 0 && (
               <Box>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={600}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                     Recommended Order
                   </Typography>
                   <Chip
@@ -1549,8 +1564,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                 </Box>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 1, display: 'block' }}
+                  sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
                 >
                   Maintains optimal cast intervals for each skill
                 </Typography>
@@ -1559,8 +1573,8 @@ const ParseAnalysisPageContent: React.FC = () => {
 
             {rotationPattern && rotationPattern.length > 0 && (
               <Box>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                  <Typography variant="subtitle2" fontWeight={600}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                     Detected Pattern
                   </Typography>
                   {patternRepetitions && patternRepetitions > 1 && (
@@ -1590,7 +1604,7 @@ const ParseAnalysisPageContent: React.FC = () => {
 
             {spammableAbilities && spammableAbilities.length > 0 && (
               <Box>
-                <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
                   Frequently Used
                 </Typography>
                 <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
@@ -1610,7 +1624,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             {/* Skill Intervals */}
             {skillIntervals && skillIntervals.length > 0 && (
               <Box>
-                <Typography variant="subtitle2" gutterBottom fontWeight={600}>
+                <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
                   Skill Cast Intervals
                 </Typography>
                 <Stack spacing={0.5}>
@@ -1658,7 +1672,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                           sx={{ height: 20, fontSize: '0.65rem' }}
                         />
                       )}
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                         ×{skill.castCount}
                       </Typography>
                     </Box>
@@ -1666,8 +1680,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                 </Stack>
                 <Typography
                   variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 1, display: 'block' }}
+                  sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
                 >
                   Average casts of other abilities between each use
                 </Typography>
@@ -1675,7 +1688,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             )}
 
             {opener.length === 0 && rotation.length === 0 && (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 No rotation data available
               </Typography>
             )}
@@ -1713,11 +1726,9 @@ const ParseAnalysisPageContent: React.FC = () => {
           <Stack
             direction="row"
             spacing={1}
-            alignItems="center"
-            justifyContent="space-between"
-            sx={{ mb: 2.5 }}
+            sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
               <Box
                 sx={{
                   width: 28,
@@ -1738,7 +1749,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                   sx={{ fontSize: '1rem' }}
                 />
               </Box>
-              <Typography variant="subtitle2" fontWeight={600} sx={{ letterSpacing: '-0.01em' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, letterSpacing: '-0.01em' }}>
                 Weave Accuracy
               </Typography>
             </Stack>
@@ -1755,14 +1766,19 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Typography
             variant="h3"
-            fontWeight={800}
-            color={weaveColor}
-            sx={{ lineHeight: 1, letterSpacing: '-0.02em', fontSize: '2rem', mb: 1.5 }}
+            sx={{
+              color: weaveColor,
+              fontWeight: 800,
+              lineHeight: 1,
+              letterSpacing: '-0.02em',
+              fontSize: '2rem',
+              mb: 1.5,
+            }}
           >
             {weaveAccuracy.toFixed(1)}%
           </Typography>
 
-          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', mb: 1, display: 'block' }}>
             {properWeaves} / {totalSkills} skills had a light attack before them
           </Typography>
 
@@ -1778,34 +1794,34 @@ const ParseAnalysisPageContent: React.FC = () => {
 
           <Stack spacing={0.75}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Light Attacks
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {lightAttacks}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Proper Weaves
               </Typography>
-              <Typography variant="caption" fontWeight={600} color="success.main">
+              <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 600 }}>
                 {properWeaves}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Missed Weaves
               </Typography>
-              <Typography variant="caption" fontWeight={600} color="error.main">
+              <Typography variant="caption" sx={{ color: 'error.main', fontWeight: 600 }}>
                 {missedWeaves}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 Avg. Timing
               </Typography>
-              <Typography variant="caption" fontWeight={600}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
                 {averageWeaveTiming.toFixed(0)}ms
               </Typography>
             </Box>
@@ -1814,8 +1830,8 @@ const ParseAnalysisPageContent: React.FC = () => {
           {!isGoodWeaving && (
             <Typography
               variant="caption"
-              color="text.secondary"
               sx={{
+                color: 'text.secondary',
                 display: 'block',
                 mt: 1.5,
                 p: 1,
@@ -1865,7 +1881,7 @@ const ParseAnalysisPageContent: React.FC = () => {
         >
           Parse Analysis
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
           Analyze your ESO parse logs — food, uptime, CPM, weaving, buffs, and rotation.
           {!state.reportCode && ' Paste your ESOLogs report URL below to get started.'}
         </Typography>
@@ -1980,7 +1996,7 @@ const ParseAnalysisPageContent: React.FC = () => {
       {!state.reportCode && !state.loading && (
         <Accordion defaultExpanded={false} disableGutters sx={{ mb: 4, ...glassAccordionSx }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
               {/* Icon lockup */}
               <Box
                 sx={{
@@ -2001,7 +2017,7 @@ const ParseAnalysisPageContent: React.FC = () => {
               >
                 <CheckCircleIcon color="success" sx={{ fontSize: '14px' }} />
               </Box>
-              <Typography variant="subtitle1" fontWeight={600}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 How to set up a live parse
               </Typography>
             </Stack>
@@ -2076,7 +2092,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                     },
                   ] as { step: number; title: string; body: React.ReactNode }[]
                 ).map(({ step, title, body }) => (
-                  <Stack key={step} direction="row" spacing={2} alignItems="flex-start">
+                  <Stack key={step} direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
                     <Box
                       sx={{
                         width: 28,
@@ -2098,18 +2114,16 @@ const ParseAnalysisPageContent: React.FC = () => {
                     >
                       <Typography
                         variant="caption"
-                        fontWeight={700}
-                        color="primary.main"
-                        sx={{ lineHeight: 1 }}
+                        sx={{ color: 'primary.main', fontWeight: 700, lineHeight: 1 }}
                       >
                         {step}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography variant="body2" fontWeight={600}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {title}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         {body}
                       </Typography>
                     </Box>
@@ -2138,7 +2152,7 @@ const ParseAnalysisPageContent: React.FC = () => {
           }}
         >
           <ErrorIcon color="error" sx={{ fontSize: 20, mt: 0.25, flexShrink: 0 }} />
-          <Typography variant="body2" color="error" fontWeight={500}>
+          <Typography variant="body2" sx={{ color: 'error', fontWeight: 500 }}>
             {state.error}
           </Typography>
         </Box>
@@ -2168,7 +2182,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             </Typography>
 
             {/* Header with Icon Lockup */}
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2 }}>
               {/* Icon Lockup: 24×24 with gradient background */}
               <Box
                 sx={{
@@ -2189,10 +2203,10 @@ const ParseAnalysisPageContent: React.FC = () => {
               >
                 <RotateRightIcon color="info" sx={{ fontSize: '14px' }} />
               </Box>
-              <Typography variant="subtitle2" fontWeight={600}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 {availableFights.length === 1 ? 'Latest Fight' : 'Available Fights'}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 — next check in {pollCountdown}s
               </Typography>
             </Stack>
@@ -2276,7 +2290,7 @@ const ParseAnalysisPageContent: React.FC = () => {
               </Box>
             ))}
           </Card>
-          <Typography variant="caption" color="text.secondary" textAlign="center">
+          <Typography variant="caption" sx={{ color: 'text.secondary', textAlign: 'center' }}>
             Analyzing combat events…
           </Typography>
         </Box>
@@ -2295,15 +2309,17 @@ const ParseAnalysisPageContent: React.FC = () => {
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}
-                justifyContent="space-between"
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                sx={{
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                }}
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
                     {state.fightName}
                   </Typography>
 
-                  <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                  <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap' }}>
                     <Chip
                       icon={<PersonIcon sx={{ fontSize: 14 }} />}
                       label={state.playerName}
@@ -2435,7 +2451,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                 sx={glassAccordionSx}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <Box
                       sx={{
                         width: 24,
@@ -2455,7 +2471,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                     >
                       <ErrorIcon color="warning" sx={{ fontSize: '14px' }} />
                     </Box>
-                    <Typography variant="subtitle2" fontWeight={600}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       Build Issues
                     </Typography>
                     <Chip
@@ -2486,9 +2502,9 @@ const ParseAnalysisPageContent: React.FC = () => {
                     : 'rgba(46, 125, 50, 0.04)',
                 }}
               >
-                <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                   <CheckCircleIcon color="success" fontSize="small" />
-                  <Typography variant="body2" fontWeight={500}>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
                     No build issues detected
                   </Typography>
                 </Stack>
@@ -2498,7 +2514,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             {state.buffChecklist && (
               <Accordion disableGutters sx={glassAccordionSx}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <Box
                       sx={{
                         width: 24,
@@ -2518,7 +2534,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                     >
                       <CheckCircleIcon color="primary" sx={{ fontSize: '14px' }} />
                     </Box>
-                    <Typography variant="subtitle2" fontWeight={600}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       Buff Source Analysis
                     </Typography>
                     {state.buffChecklist.summary.totalRedundantBuffs > 0 && (
@@ -2541,7 +2557,7 @@ const ParseAnalysisPageContent: React.FC = () => {
             {state.debuffChecklist && (
               <Accordion disableGutters sx={glassAccordionSx}>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                     <Box
                       sx={{
                         width: 24,
@@ -2561,7 +2577,7 @@ const ParseAnalysisPageContent: React.FC = () => {
                     >
                       <InfoIcon color="info" sx={{ fontSize: '14px' }} />
                     </Box>
-                    <Typography variant="subtitle2" fontWeight={600}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                       Debuffs Applied to Target
                     </Typography>
                     <Chip
