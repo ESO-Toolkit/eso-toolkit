@@ -1,9 +1,8 @@
 import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import { Box, Card, CardContent, Chip, Stack, Typography, useTheme, Theme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import React, { useContext } from 'react';
+import React from 'react';
 
-import { AbilityIdMapperContext } from '@/contexts/AbilityIdMapperContext';
 import { useLogger } from '@/hooks/useLogger';
 
 import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
@@ -38,6 +37,8 @@ export interface SkillTooltipProps {
   stats?: SkillStat[];
   // Rich description body; accept ReactNode so callers can colorize parts
   description: React.ReactNode;
+  // Pre-resolved scribing data from the tooltip mapper (name-based detection)
+  scribedSkillData?: import('../features/scribing/types').ScribedSkillData;
   // Fight and player context for automatic scribing detection
   fightId?: string;
   playerId?: number;
@@ -151,6 +152,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   morphOf,
   stats,
   description,
+  scribedSkillData,
   fightId,
   playerId,
 }) => {
@@ -158,24 +160,15 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const logger = useLogger();
   const isDark = theme.palette.mode === 'dark';
 
-  // Resolve the game ability ID from the report-local ability ID via the mapper context.
-  // ESO Logs talent.guid is a report-local index; the scribing database uses game ability IDs.
-  const abilityMapper = useContext(AbilityIdMapperContext);
-  const resolvedAbilityId = React.useMemo(() => {
-    if (!abilityId) return abilityId;
-    const mapped = abilityMapper?.getAbilityById(abilityId);
-    return mapped?.gameID ?? abilityId;
-  }, [abilityId, abilityMapper]);
-
-  // Always use automatic scribing detection when fight and player context available
+  // Try automatic scribing detection when fight and player context available
   const { scribedSkillData: detectedScribingData } = useSkillScribingData(
     fightId,
     playerId,
-    resolvedAbilityId,
+    abilityId,
   );
 
-  // Use detected scribing data
-  const finalScribedData = detectedScribingData;
+  // Prefer hook-detected data, fall back to pre-resolved prop data (from name-based detection)
+  const finalScribedData = detectedScribingData ?? scribedSkillData ?? null;
 
   // Ensure at least one icon source is provided
   if (!iconUrl && !iconSlug) {
