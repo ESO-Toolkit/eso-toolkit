@@ -454,160 +454,149 @@ export const ReportFightHeader: React.FC = () => {
       </Box>
 
       {/* ── Fight title ────────────────────────────────────────── */}
-      <Box sx={{ mb: { xs: 1.5, sm: 2 } }}>
-        {/* Name row: title + badge + metadata all on one line */}
-        <Box
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: { xs: 1, sm: 1.5 },
+          gap: 1.5,
+          flexWrap: { xs: 'wrap', md: 'nowrap' },
+        }}
+      >
+        <Typography
+          ref={titleRef}
+          variant="h4"
+          gutterBottom={false}
+          data-testid="fight-title"
           sx={{
-            display: 'flex',
-            alignItems: 'baseline',
-            flexWrap: 'wrap',
-            gap: { xs: 0.75, sm: 1 },
-            rowGap: 0.5,
+            fontSize: { xs: '1.4rem', sm: '1.65rem', md: '1.85rem' },
+            fontWeight: 600,
+            lineHeight: 1.25,
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+            willChange: 'contents',
+            contain: 'layout style',
+            opacity: 1,
+            visibility: 'visible',
+            transition: 'none',
+            textRendering: 'optimizeSpeed',
           }}
         >
-          <Typography
-            ref={titleRef}
-            variant="h4"
-            gutterBottom={false}
-            data-testid="fight-title"
-            sx={{
-              fontSize: { xs: '1.35rem', sm: '1.6rem', md: '1.85rem' },
-              fontWeight: 600,
-              lineHeight: 1.3,
-              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-              willChange: 'contents',
-              contain: 'layout style',
-              opacity: 1,
-              visibility: 'visible',
-              transition: 'none',
-              textRendering: 'optimizeSpeed',
-              mr: 0.5,
-            }}
-          >
-            {fight
-              ? fight.name
-              : fightId
-                ? `Fight ${fightId}`
-                : 'Loading...'}
-          </Typography>
+          {fight
+            ? fight.name
+            : fightId
+              ? `Fight ${fightId}`
+              : 'Loading...'}
+        </Typography>
 
-          {/* Status badge + metadata inline */}
-          {fight && (() => {
-            const isBossFight = fight.difficulty != null;
-            const bossWasKilled =
-              isBossFight &&
-              fight.bossPercentage !== null &&
-              fight.bossPercentage !== undefined &&
-              fight.bossPercentage <= 1.0;
-            const trashWasKilled =
-              !isBossFight && (fight.kill === true || fight.kill === null);
-            const isKill = bossWasKilled || trashWasKilled;
+        {fight && (() => {
+          const isBossFight = fight.difficulty != null;
+          const bossWasKilled =
+            isBossFight &&
+            fight.bossPercentage !== null &&
+            fight.bossPercentage !== undefined &&
+            fight.bossPercentage <= 1.0;
+          const trashWasKilled =
+            !isBossFight && (fight.kill === true || fight.kill === null);
+          const isKill = bossWasKilled || trashWasKilled;
 
-            const ms = fight.endTime - fight.startTime;
-            const totalSec = Math.floor(ms / 1000);
-            const m = Math.floor(totalSec / 60);
-            const s = totalSec % 60;
-            const duration = m > 0
-              ? `${m}:${s.toString().padStart(2, '0')}`
-              : `${s}s`;
+          const ms = fight.endTime - fight.startTime;
+          const totalSec = Math.floor(ms / 1000);
+          const m = Math.floor(totalSec / 60);
+          const s = totalSec % 60;
+          const duration = m > 0
+            ? `${m}:${s.toString().padStart(2, '0')}`
+            : `${s}s`;
 
-            const badgeColor = isKill
-              ? (isDarkMode ? '#4ade80' : '#16a34a')
-              : getWipeColor(fight.bossPercentage ?? 100);
+          const badgeColor = isKill
+            ? (isDarkMode ? '#4ade80' : '#16a34a')
+            : getWipeColor(fight.bossPercentage ?? 100);
 
-            const badgeBg = isKill
-              ? (isDarkMode ? 'rgba(74, 222, 128, 0.12)' : 'rgba(22, 163, 74, 0.1)')
-              : `${badgeColor}18`;
+          const difficultyLabel =
+            fight.difficulty != null && fight.difficulty >= 122 ? 'Veteran HM'
+            : fight.difficulty != null && fight.difficulty >= 121 ? 'Veteran'
+            : null;
 
-            const badgeBorder = isKill
-              ? (isDarkMode ? 'rgba(74, 222, 128, 0.25)' : 'rgba(22, 163, 74, 0.2)')
-              : `${badgeColor}40`;
+          const diffColor = fight.difficulty != null && fight.difficulty >= 122
+            ? (isDarkMode ? '#fbbf24' : '#d97706')
+            : (isDarkMode ? '#60a5fa' : '#2563eb');
 
-            const difficultyLabel =
-              fight.difficulty != null && fight.difficulty >= 122 ? 'HM'
-              : fight.difficulty != null && fight.difficulty >= 121 ? 'Vet'
-              : null;
-
-            const diffColor = fight.difficulty != null && fight.difficulty >= 122
-              ? (isDarkMode ? '#fbbf24' : '#d97706')
-              : (isDarkMode ? '#60a5fa' : '#2563eb');
-
-            return (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.75,
-                  position: 'relative',
-                  top: '-1px',
-                }}
-              >
-                {/* Kill/wipe badge */}
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    px: 1,
-                    py: 0.25,
-                    borderRadius: '8px',
-                    background: badgeBg,
-                    border: `1px solid ${badgeBorder}`,
-                    lineHeight: 1,
-                  }}
-                >
-                  {isKill && (
-                    <CheckCircleIcon sx={{ fontSize: '0.85rem', color: badgeColor }} />
-                  )}
-                  <Typography
-                    sx={{
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      color: badgeColor,
-                      letterSpacing: '0.04em',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
-                  </Typography>
-                </Box>
-
-                {/* Duration */}
+          return (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flexShrink: 0,
+              }}
+            >
+              {difficultyLabel && (
                 <Typography
                   sx={{
                     fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: isDarkMode ? '#64748b' : '#94a3b8',
+                    fontWeight: 600,
+                    color: diffColor,
+                  }}
+                >
+                  {difficultyLabel}
+                </Typography>
+              )}
+
+              <Box
+                component="span"
+                sx={{
+                  width: '1px',
+                  height: '14px',
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+                  display: { xs: 'none', sm: 'block' },
+                }}
+              />
+
+              <Typography
+                sx={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: isDarkMode ? '#94a3b8' : '#64748b',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {duration}
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1.25,
+                  py: 0.375,
+                  borderRadius: '8px',
+                  background: isKill
+                    ? (isDarkMode ? 'rgba(74, 222, 128, 0.15)' : 'rgba(22, 163, 74, 0.1)')
+                    : `${badgeColor}1a`,
+                  border: `1px solid ${isKill
+                    ? (isDarkMode ? 'rgba(74, 222, 128, 0.3)' : 'rgba(22, 163, 74, 0.25)')
+                    : `${badgeColor}40`}`,
+                }}
+              >
+                {isKill && (
+                  <CheckCircleIcon sx={{ fontSize: '0.9rem', color: badgeColor }} />
+                )}
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: badgeColor,
+                    letterSpacing: '0.03em',
                     fontVariantNumeric: 'tabular-nums',
                   }}
                 >
-                  {duration}
+                  {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
                 </Typography>
-
-                {/* Difficulty chip */}
-                {difficultyLabel && (
-                  <Typography
-                    sx={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.05em',
-                      textTransform: 'uppercase',
-                      color: diffColor,
-                      px: 0.75,
-                      py: 0.125,
-                      borderRadius: '5px',
-                      background: `${diffColor}18`,
-                      border: `1px solid ${diffColor}30`,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {difficultyLabel}
-                  </Typography>
-                )}
               </Box>
-            );
-          })()}
-        </Box>
+            </Box>
+          );
+        })()}
       </Box>
     </React.Fragment>
   );
