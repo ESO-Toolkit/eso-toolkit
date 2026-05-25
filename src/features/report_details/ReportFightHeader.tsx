@@ -1,4 +1,5 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import GroupsIcon from '@mui/icons-material/Groups';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -28,6 +29,23 @@ import { createDefaultRoster } from '@/types/roster';
 import { cleanArray } from '@/utils/cleanArray';
 import { convertLogPlayersToRoster, type LogPlayerDetails } from '@/utils/logToRoster';
 import { encodeRosterToURL } from '@/utils/rosterEncoding';
+
+function getWipeColor(percentage: number): string {
+  const clamped = Math.max(0, Math.min(100, percentage));
+  const hue = ((100 - clamped) / 100) * 120;
+  const s = 80,
+    l = 55;
+  const sN = s / 100,
+    lN = l / 100;
+  const a = sN * Math.min(lN, 1 - lN);
+  const ch = (n: number) => {
+    const k = (n + hue / 30) % 12;
+    return Math.round(255 * (lN - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))))
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${ch(0)}${ch(8)}${ch(4)}`;
+}
 
 // Custom hook for fight navigation logic
 export const useFightNavigation = (): {
@@ -209,35 +227,8 @@ export const ReportFightHeader: React.FC = () => {
       titleElement.style.transform = 'translateZ(0)'; // Force layer creation
       titleElement.getBoundingClientRect(); // Force layout
 
-      // Upgrade to real content when available
       if (fight) {
-        const isBossFight = fight.difficulty != null;
-        let statusIndicator: string;
-
-        if (isBossFight) {
-          // Boss fight logic
-          const bossWasKilled =
-            fight.bossPercentage !== null &&
-            fight.bossPercentage !== undefined &&
-            fight.bossPercentage <= 1.0;
-          statusIndicator = bossWasKilled
-            ? '✓'
-            : fight.bossPercentage
-              ? `${Math.round(fight.bossPercentage)}%`
-              : 'Wipe';
-        } else {
-          // Trash fight logic - use kill field
-          const wasKilled = fight.kill === true || fight.kill === null;
-          statusIndicator = wasKilled ? '✓' : 'Wipe';
-        }
-
-        titleElement.textContent = '';
-        titleElement.appendChild(document.createTextNode(`${fight.name} (`));
-        const span = document.createElement('span');
-        span.style.fontWeight = '300';
-        span.textContent = statusIndicator;
-        titleElement.appendChild(span);
-        titleElement.appendChild(document.createTextNode(')'));
+        titleElement.textContent = fight.name;
       }
     }
   }, [fight, isFightLoading, fightId]);
@@ -498,39 +489,92 @@ export const ReportFightHeader: React.FC = () => {
             textRendering: 'optimizeSpeed',
           }}
         >
-          {/* Fallback content for SSR/initial render */}
           {fight
-            ? (() => {
-                const isBossFight = fight.difficulty != null;
-                let statusIndicator: string;
-
-                if (isBossFight) {
-                  // Boss fight logic
-                  const bossWasKilled =
-                    fight.bossPercentage !== null &&
-                    fight.bossPercentage !== undefined &&
-                    fight.bossPercentage <= 1.0;
-                  statusIndicator = bossWasKilled
-                    ? '✓'
-                    : fight.bossPercentage
-                      ? `${Math.round(fight.bossPercentage)}%`
-                      : 'Wipe';
-                } else {
-                  // Trash fight logic - use kill field
-                  const wasKilled = fight.kill === true || fight.kill === null;
-                  statusIndicator = wasKilled ? '✓' : 'Wipe';
-                }
-
-                return (
-                  <>
-                    {fight.name} (<span style={{ fontWeight: 300 }}>{statusIndicator}</span>)
-                  </>
-                );
-              })()
+            ? fight.name
             : fightId
               ? `Fight ${fightId}`
               : 'Loading...'}
         </Typography>
+
+        {fight &&
+          (() => {
+            const isBossFight = fight.difficulty != null;
+            const bossWasKilled =
+              isBossFight &&
+              fight.bossPercentage !== null &&
+              fight.bossPercentage !== undefined &&
+              fight.bossPercentage <= 1.0;
+            const trashWasKilled =
+              !isBossFight && (fight.kill === true || fight.kill === null);
+            const isKill = bossWasKilled || trashWasKilled;
+
+            if (isKill) {
+              return (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: '10px',
+                    background: isDarkMode
+                      ? 'rgba(74, 222, 128, 0.12)'
+                      : 'rgba(22, 163, 74, 0.1)',
+                    border: isDarkMode
+                      ? '1px solid rgba(74, 222, 128, 0.25)'
+                      : '1px solid rgba(22, 163, 74, 0.2)',
+                  }}
+                >
+                  <CheckCircleIcon
+                    sx={{
+                      fontSize: '1.1rem',
+                      color: isDarkMode ? '#4ade80' : '#16a34a',
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      color: isDarkMode ? '#4ade80' : '#16a34a',
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    KILL
+                  </Typography>
+                </Box>
+              );
+            }
+
+            const pct = fight.bossPercentage ?? 100;
+            const color = getWipeColor(pct);
+            return (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: '10px',
+                  background: `${color}18`,
+                  border: `1px solid ${color}40`,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color,
+                    letterSpacing: '0.03em',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {Math.round(pct)}%
+                </Typography>
+              </Box>
+            );
+          })()}
       </Stack>
     </React.Fragment>
   );
