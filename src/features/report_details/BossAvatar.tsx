@@ -37,7 +37,7 @@ import hallOfFleshcraftAvatar from '@/assets/Ossein Cage/Boss Avatars/hall of fl
 import jynorahAndSkorkhifAvatar from '@/assets/Ossein Cage/Boss Avatars/jynorah and skorkhif.png';
 import overfiendKazpianAvatar from '@/assets/Ossein Cage/Boss Avatars/overfiend kazpian.png';
 import redWitchGednaRelvelAvatar from '@/assets/Ossein Cage/Boss Avatars/red witch gedna relvel.png';
-import torturedRanyuAvatar from '@/assets/Ossein Cage/Boss Avatars/tortued ranyu.png';
+import torturedRanyuAvatar from '@/assets/Ossein Cage/Boss Avatars/tortured ranyu.png';
 import ashTitanAvatar from '@/assets/Rockgrove/Boss Avatars/ash titan.png';
 import basksInSnakesAvatar from '@/assets/Rockgrove/Boss Avatars/basks-in-snakes.png';
 import flameHeraldBahseiAvatar from '@/assets/Rockgrove/Boss Avatars/flame-herald bahsei.png';
@@ -65,10 +65,15 @@ const bossAvatars: Record<string, string> = {
   // Ossein Cage
   'Blood Drinker Thisa': bloodDrinkerThisaAvatar,
   'Hall of Fleshcraft': hallOfFleshcraftAvatar,
+  'Shaper of Flesh': hallOfFleshcraftAvatar,
+  'Shapers of Flesh': hallOfFleshcraftAvatar,
   'Jynorah and Skorkhif': jynorahAndSkorkhifAvatar,
   'Overfiend Kazpian': overfiendKazpianAvatar,
   'Red Witch Gedna Relvel': redWitchGednaRelvelAvatar,
   'Tortured Ranyu': torturedRanyuAvatar,
+  'Tortured Kathutet': torturedRanyuAvatar,
+  'Tortured Amkaos': torturedRanyuAvatar,
+  'Tortured Trio': torturedRanyuAvatar,
 
   // Dreadsail Reef
   'Bow Breaker': bowBreakerAvatar,
@@ -121,6 +126,7 @@ const bossAvatars: Record<string, string> = {
   // Sanctum Ophidia
   Ozara: ozaraAvatar,
   'Possessed Manticora': possessedManticoraAvatar,
+  'Possessed Mantikora': possessedManticoraAvatar,
   Stonebreaker: stonebreakerAvatar,
   'The Serpent': theSerpentAvatar,
   Serpent: theSerpentAvatar,
