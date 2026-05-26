@@ -231,7 +231,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
         >
           {lineName}
         </Typography>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Typography
             sx={{
               fontSize: 10,
@@ -268,7 +268,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
               >
                 {group.base.name}
               </Typography>
-              <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap' }}>
                 <PickerTile skill={group.base} onSelect={onSelect} />
                 {group.morphs.map((m) => (
                   <PickerTile key={m.id} skill={m} onSelect={onSelect} isMorph />
@@ -380,16 +380,18 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
       maxWidth="sm"
       fullWidth
       className="glass-dialog"
-      PaperProps={{
-        sx: {
-          borderRadius: '20px',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: '90vh',
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '20px',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
         },
       }}
     >
@@ -419,12 +421,14 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
             size="small"
             fullWidth
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+                  </InputAdornment>
+                ),
+              },
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -927,9 +931,7 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
     <Box>
       <Stack
         direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: 1.5, px: 0.5 }}
+        sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1.5, px: 0.5 }}
       >
         <Typography
           variant="caption"
@@ -960,8 +962,12 @@ const SkillBarRow: React.FC<SkillBarProps> = ({ label, bar, onOpenPicker, onRemo
         >
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ fontSize: '0.62rem', fontWeight: 600, fontFamily: 'Space Grotesk' }}
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.62rem',
+              fontWeight: 600,
+              fontFamily: 'Space Grotesk',
+            }}
           >
             {filled} / 6
           </Typography>
@@ -1077,7 +1083,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
           onRemove={(slotIndex) => handleRemove(0, slotIndex)}
         />
 
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ py: 0.5 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 0.5 }}>
           <Box
             sx={{
               flex: 1,

@@ -99,7 +99,8 @@ const TRIAL_ABBREVS: Record<string, string> = {
   DSR: 'dsr',
   SE: 'se',
   LC: 'lc',
-  OAC: 'oac',
+  OO: 'oo',
+  OSC: 'osc',
 };
 
 /** Build a channel name preview from pattern + current form values. */
@@ -618,17 +619,19 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
         maxWidth="sm"
         fullWidth
         className="glass-dialog"
-        PaperProps={{
-          sx: {
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-            backgroundColor: 'transparent',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '20px',
-            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-            maxHeight: '90vh',
+        slotProps={{
+          paper: {
+            sx: {
+              background: isDark
+                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+                : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+              backgroundColor: 'transparent',
+              backdropFilter: 'blur(20px)',
+              borderRadius: '20px',
+              border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+              boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+              maxHeight: '90vh',
+            },
           },
         }}
       >
@@ -642,11 +645,12 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
             color: isDark ? '#e5e7eb' : '#1e293b',
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             {step === 'configure' && (
               <IconButton
                 onClick={handleBack}
                 size="small"
+                aria-label="Back"
                 sx={{ color: 'text.secondary', mr: -0.5 }}
               >
                 <ArrowBack fontSize="small" />
@@ -676,16 +680,15 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                 {step === 'success' ? 'Published!' : 'Publish to Discord'}
               </Typography>
               {step === 'select' && (
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.72rem' }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.72rem' }}>
                   Select a server to post your roster
                 </Typography>
               )}
               {step === 'configure' && selectedGuild && (
                 <Typography
                   variant="caption"
-                  color="text.secondary"
                   noWrap
-                  sx={{ fontSize: '0.75rem' }}
+                  sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
                 >
                   {selectedGuild.name}
                 </Typography>
@@ -722,8 +725,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               {displayDesc && (
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ mt: 0.25, fontSize: '0.78rem', opacity: 0.7 }}
+                  sx={{ color: 'text.secondary', mt: 0.25, fontSize: '0.78rem', opacity: 0.7 }}
                 >
                   {displayDesc}
                 </Typography>
@@ -756,8 +758,14 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               </Typography>
               <Typography
                 variant="body2"
-                color="text.secondary"
-                sx={{ mb: 2, fontSize: '0.8rem', maxWidth: 360, mx: 'auto', lineHeight: 1.45 }}
+                sx={{
+                  color: 'text.secondary',
+                  mb: 2,
+                  fontSize: '0.8rem',
+                  maxWidth: 360,
+                  mx: 'auto',
+                  lineHeight: 1.45,
+                }}
               >
                 We&apos;ll show which of your servers already have the ESO Toolkit bot. Not
                 installed yet? A server admin needs to add it first. Takes about 60 seconds.
@@ -794,8 +802,13 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               </Button>
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mt: 1.25, fontSize: '0.7rem', opacity: 0.7 }}
+                sx={{
+                  color: 'text.secondary',
+                  display: 'block',
+                  mt: 1.25,
+                  fontSize: '0.7rem',
+                  opacity: 0.7,
+                }}
               >
                 We only read your server list, never your messages.
               </Typography>
@@ -936,8 +949,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       </Typography>
                       <Typography
                         variant="body2"
-                        color="text.secondary"
                         sx={{
+                          color: 'text.secondary',
                           fontSize: '0.78rem',
                           maxWidth: 360,
                           mx: 'auto',
@@ -1042,8 +1055,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                           </Typography>
                           <Typography
                             variant="caption"
-                            color="text.secondary"
                             sx={{
+                              color: 'text.secondary',
                               display: 'block',
                               lineHeight: 1.4,
                               mt: 0.125,
@@ -1134,8 +1147,8 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
 
                   <Typography
                     variant="caption"
-                    color="text.secondary"
                     sx={{
+                      color: 'text.secondary',
                       textAlign: 'center',
                       fontSize: '0.7rem',
                       opacity: 0.75,
@@ -1248,6 +1261,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                       >
                         <Avatar
                           src={getGuildIconUrl(guild.id, guild.icon) ?? undefined}
+                          alt={guild.name}
                           sx={{ width: 36, height: 36, fontSize: '0.85rem', bgcolor: '#5865F2' }}
                         >
                           {guild.name.charAt(0)}
@@ -1311,6 +1325,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                         <Tooltip title="Advanced settings">
                           <IconButton
                             size="small"
+                            aria-label="Advanced settings"
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
                               onClose();
@@ -1396,8 +1411,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   {inviteClicked && (
                     <Typography
                       variant="caption"
-                      color="text.secondary"
-                      sx={{ display: 'block', textAlign: 'center', mt: 1 }}
+                      sx={{ color: 'text.secondary', display: 'block', textAlign: 'center', mt: 1 }}
                     >
                       Added the bot? Click refresh to see your new server.
                     </Typography>
@@ -1479,7 +1493,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                     background: isDark ? 'rgba(254,185,0,0.04)' : 'rgba(254,185,0,0.03)',
                   }}
                 >
-                  <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 0.5 }}>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 0.5 }}>
                     <Shield sx={{ fontSize: 16, color: '#FEB900' }} />
                     <Typography
                       variant="body2"
@@ -1490,8 +1504,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
                   </Stack>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', lineHeight: 1.5, mb: 0.75 }}
+                    sx={{ color: 'text.secondary', display: 'block', lineHeight: 1.5, mb: 0.75 }}
                   >
                     You can publish now, or a server admin can{' '}
                     <Box
@@ -2185,7 +2198,7 @@ export const ServerPickerDialog: React.FC<ServerPickerDialogProps> = ({
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
                 Roster Published!
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
                 Posted to{' '}
                 <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
                   #{publishResult.channelName}

@@ -27,8 +27,19 @@ const mockLocalStorage = {
   removeItem: jest.fn(),
 };
 
+const mockSessionStorage = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+};
+
 Object.defineProperty(window, 'localStorage', {
   value: mockLocalStorage,
+  writable: true,
+});
+
+Object.defineProperty(window, 'sessionStorage', {
+  value: mockSessionStorage,
   writable: true,
 });
 
@@ -36,6 +47,7 @@ describe('OAuth Basic Functions', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue(null);
+    mockSessionStorage.getItem.mockReturnValue(null);
   });
 
   describe('PKCE Code Verifier Management', () => {
@@ -43,16 +55,16 @@ describe('OAuth Basic Functions', () => {
       const testVerifier = 'test-verifier-123';
 
       setPkceCodeVerifier(testVerifier);
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(PKCE_CODE_VERIFIER_KEY, testVerifier);
+      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(PKCE_CODE_VERIFIER_KEY, testVerifier);
 
-      mockLocalStorage.getItem.mockReturnValue(testVerifier);
+      mockSessionStorage.getItem.mockReturnValue(testVerifier);
       const retrieved = getPkceCodeVerifier();
       expect(retrieved).toBe(testVerifier);
-      expect(mockLocalStorage.getItem).toHaveBeenCalledWith(PKCE_CODE_VERIFIER_KEY);
+      expect(mockSessionStorage.getItem).toHaveBeenCalledWith(PKCE_CODE_VERIFIER_KEY);
     });
 
     it('should return empty string when no verifier is stored', () => {
-      mockLocalStorage.getItem.mockReturnValue(null);
+      mockSessionStorage.getItem.mockReturnValue(null);
       const retrieved = getPkceCodeVerifier();
       expect(retrieved).toBe('');
     });

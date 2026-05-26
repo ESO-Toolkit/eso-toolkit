@@ -173,7 +173,7 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
       }}
     >
       <DialogTitle>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">Select {slotName} Item</Typography>
           <Button size="small" onClick={handleDialogClose} startIcon={<CloseIcon />}>
             Close
@@ -223,9 +223,9 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
             noOptionsText={noOptionsText}
             renderOption={(props, option) => (
               <li {...props} key={option.itemId}>
-                <Stack spacing={0.5} width="100%">
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography fontWeight={600}>
+                <Stack spacing={0.5} sx={{ width: '100%' }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <Typography sx={{ fontWeight: 600 }}>
                       {deriveItemNameForSlot(option.itemId, targetSlot)}
                     </Typography>
                     <Chip
@@ -241,10 +241,10 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
                       }}
                     />
                   </Stack>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {option.info.type} {slotName}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     Item ID: {option.itemId}
                   </Typography>
                 </Stack>
@@ -278,8 +278,8 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
                 Currently Equipped
               </Typography>
               <Stack spacing={0.5}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography fontWeight={600}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <Typography sx={{ fontWeight: 600 }}>
                     {deriveItemNameForSlot(currentItem.itemId, targetSlot)}
                   </Typography>
                   <Chip
@@ -295,7 +295,7 @@ export const ItemPickerDialog: React.FC<ItemPickerDialogProps> = ({
                     }}
                   />
                 </Stack>
-                <Typography variant="caption" color="text.secondary">
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Item ID: {currentItem.itemId}
                 </Typography>
               </Stack>

@@ -105,6 +105,18 @@ const ALLOWED_OPERATIONS = new Set([
 
 const MAX_BODY_BYTES = 100_000; // 100 KB
 
+const OPERATION_NAME_RE = /\b(?:query|mutation|subscription)\s+([A-Za-z_]\w*)/g;
+
+function extractOperationNames(queryDoc: string): string[] {
+  const names: string[] = [];
+  let match;
+  while ((match = OPERATION_NAME_RE.exec(queryDoc)) !== null) {
+    names.push(match[1]);
+  }
+  OPERATION_NAME_RE.lastIndex = 0;
+  return names;
+}
+
 // Singleflight: coalesce concurrent identical cacheable requests so only one
 // hits upstream. Each caller clones the shared response.
 const inflight = new Map<string, Promise<Response>>();
@@ -118,9 +130,7 @@ async function buildCacheKey(url: string, bodyStr: string): Promise<string> {
 
 // ─── Proxy handler ────────────────────────────────────────────────────────────
 
-export async function handleGraphqlProxy(
-  c: Context<{ Bindings: Env }>,
-): Promise<Response> {
+export async function handleGraphqlProxy(c: Context<{ Bindings: Env }>): Promise<Response> {
   let body: unknown;
   let bodyStr: string;
   try {
@@ -139,10 +149,20 @@ export async function handleGraphqlProxy(
     return c.json({ error: 'Unknown or missing operation' }, 400);
   }
 
-  const parsed = body as { operationName?: string };
-  if (parsed.operationName && parsed.operationName !== operationHint) {
+  const parsed = body as { operationName?: string; query?: string };
+  if (!parsed.operationName || parsed.operationName !== operationHint) {
     return c.json({ error: 'operationName must match the query parameter' }, 400);
   }
+
+  if (typeof parsed.query !== 'string' || !parsed.query.trim()) {
+    return c.json({ error: 'Missing query document' }, 400);
+  }
+
+  const docOps = extractOperationNames(parsed.query);
+  if (docOps.length !== 1 || docOps[0] !== operationHint) {
+    return c.json({ error: 'Query document must contain exactly the declared operation' }, 400);
+  }
+
   const isCacheable = Boolean(operationHint && CACHEABLE_OPERATIONS.has(operationHint));
 
   // Check edge cache first — cache hits avoid upstream entirely

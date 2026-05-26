@@ -403,7 +403,7 @@ export const PrivacySettingsPage: React.FC = () => {
                   <Switch
                     checked={analyticsEnabled}
                     onChange={(e) => setAnalyticsEnabled(e.target.checked)}
-                    inputProps={{ 'aria-label': 'Toggle analytics consent' }}
+                    slotProps={{ input: { 'aria-label': 'Toggle analytics consent' } }}
                   />
                 }
                 label=""
@@ -426,7 +426,7 @@ export const PrivacySettingsPage: React.FC = () => {
                   <Switch
                     checked={errorTrackingEnabled}
                     onChange={(e) => setErrorTrackingEnabled(e.target.checked)}
-                    inputProps={{ 'aria-label': 'Toggle error tracking consent' }}
+                    slotProps={{ input: { 'aria-label': 'Toggle error tracking consent' } }}
                   />
                 }
                 label=""

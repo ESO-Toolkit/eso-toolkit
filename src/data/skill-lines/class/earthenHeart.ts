@@ -244,8 +244,6 @@ export const earthenHeart: SkillLineData = {
         'The strength of mountains fuels your mightiest blows. Dealing damage with a fully-charged Heavy Attack also applies Off Balance to the target and restores 1430 Stamina. The Stamina restore can occur once every 0.5 seconds.',
       isPassive: true,
     },
-    // TODO: Add Heart of Stone passive (new U49 passive, icon: ability_dragonknight_032,
-    // description: 'Rock and stone shield your heart, turning aside sharp blades and barbed words. Increases your Armor by 2974.')
-    // Requires ClassSkillId.DRAGONKNIGHT_HEART_OF_STONE — ID not yet determinable from available data sources.
+    // Heart of Stone passive (U49) — ID pending from ESO data sources
   ],
 };

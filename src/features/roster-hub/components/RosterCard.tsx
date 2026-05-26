@@ -1,4 +1,10 @@
-import { ContentCopy, DeleteOutline, EditOutlined, Extension, MoreVert } from '@mui/icons-material';
+import {
+  ContentCopy,
+  DeleteOutlined,
+  EditOutlined,
+  Extension,
+  MoreVert,
+} from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -52,7 +58,8 @@ export const TRIAL_LABELS: Record<string, string> = {
   KA: "Kyne's Aegis",
   LC: 'Lucent Citadel',
   MOL: 'Maw of Lorkhaj',
-  OAC: 'Oathsworn Citadel',
+  OO: 'Opulent Ordeal',
+  OSC: 'Ossein Cage',
   RG: 'Rockgrove',
   SE: "Sanity's Edge",
   SO: 'Sanctum Ophidia',
@@ -71,7 +78,8 @@ export const TRIAL_SHORT: Record<string, string> = {
   KA: 'KA',
   LC: 'LC',
   MOL: 'MoL',
-  OAC: 'OAC',
+  OO: 'OO',
+  OSC: 'OSC',
   RG: 'RG',
   SE: 'SE',
   SO: 'SO',
@@ -90,7 +98,8 @@ export const TRIAL_ACCENT: Record<string, string> = {
   KA: '#06b6d4', // cyan
   LC: '#8b5cf6', // violet
   MOL: '#ec4899', // pink
-  OAC: '#f43f5e', // rose
+  OO: '#d946ef', // fuchsia
+  OSC: '#f43f5e', // rose
   RG: '#14b8a6', // teal
   SE: '#ef4444', // red
   SO: '#3b82f6', // blue
@@ -557,7 +566,7 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
             {isOwner && (
               <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
                 <ListItemIcon sx={{ color: 'inherit' }}>
-                  <DeleteOutline sx={{ fontSize: 18 }} />
+                  <DeleteOutlined sx={{ fontSize: 18 }} />
                 </ListItemIcon>
                 <ListItemText>Delete</ListItemText>
               </MenuItem>

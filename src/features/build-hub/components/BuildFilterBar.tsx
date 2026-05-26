@@ -216,7 +216,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                     ? 'rgba(255,255,255,0.38)'
                     : 'rgba(0,0,0,0.38)',
               }}
-              MenuProps={{ PaperProps: { sx: menuPaperSx } }}
+              MenuProps={{ slotProps: { paper: { sx: menuPaperSx } } }}
             >
               {CLASS_OPTIONS.map((o) => (
                 <MenuItem key={o.value} value={o.value}>
@@ -244,7 +244,7 @@ export const BuildFilterBar: React.FC<BuildFilterBarProps> = React.memo(
                     ? 'rgba(255,255,255,0.38)'
                     : 'rgba(0,0,0,0.38)',
               }}
-              MenuProps={{ PaperProps: { sx: menuPaperSx } }}
+              MenuProps={{ slotProps: { paper: { sx: menuPaperSx } } }}
             >
               {ROLE_OPTIONS.map((o) => (
                 <MenuItem key={o.value} value={o.value}>

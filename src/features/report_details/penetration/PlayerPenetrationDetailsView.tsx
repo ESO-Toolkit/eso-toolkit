@@ -9,18 +9,17 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { LineChart } from '../../../components/LazyCharts';
-import '../../../utils/chartRegistration';
+import { EChart } from '../../../components/EChart';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
-import {
-  usePhaseAnnotations,
-  useInactiveIntervalAnnotations,
-} from '../../../hooks/useChartAnnotations';
+import { usePhaseMarkLines, useInactiveMarkAreas } from '../../../hooks/useEChartsAnnotations';
+import { useEChartsTheme } from '../../../hooks/useEChartsTheme';
 import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { buildGoalMarkLine } from '../../../utils/echartsAnnotationUtils';
+import { glowLineStyle, gradientAreaStyle, steppedLineDefaults } from '../../../utils/echartsTheme';
 import { msToSeconds } from '../../../utils/fightDuration';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
@@ -93,24 +92,104 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
     }));
   }, [penetrationSources]);
 
-  // Memoize expensive chart data transformations to prevent recalculation on every render
-  const chartLabels = React.useMemo(() => {
-    return penetrationData?.dataPoints.map((point) => point.relativeTime.toFixed(1)) || [];
-  }, [penetrationData?.dataPoints]);
+  const { theme } = useEChartsTheme();
 
-  const chartDataPoints = React.useMemo(() => {
+  const chartData = React.useMemo(() => {
     return (
-      penetrationData?.dataPoints.map((point) => ({
-        x: point.relativeTime,
-        y: point.penetration,
-      })) || []
+      penetrationData?.dataPoints.map((point) => [point.relativeTime, point.penetration]) || []
     );
   }, [penetrationData?.dataPoints]);
 
-  const phaseAnnotations = usePhaseAnnotations(phaseTransitionInfo);
-  const inactiveTimeAnnotations = useInactiveIntervalAnnotations(
-    penetrationData?.inactiveCombatIntervals,
-  );
+  const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo);
+  const inactiveMarkAreas = useInactiveMarkAreas(penetrationData?.inactiveCombatIntervals);
+
+  const chartOption = React.useMemo(() => {
+    const lineColor = '#1976d2';
+    const fightDuration = msToSeconds(fightDurationMs);
+
+    const goalLine = buildGoalMarkLine(18200, 'Goal: 18,200', '#ff6b6b');
+    const baseLine = buildGoalMarkLine(
+      playerBasePenetration,
+      `Base: ${playerBasePenetration.toLocaleString()}`,
+      '#2196f3',
+      { position: 'insideStartTop' },
+    );
+
+    const markLineData = [goalLine, baseLine];
+    if (phaseMarkLines?.data) {
+      markLineData.push(...phaseMarkLines.data);
+    }
+
+    return {
+      xAxis: {
+        type: 'value',
+        min: 0,
+        max: fightDuration,
+        name: 'Time (seconds)',
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: { color: theme.mutedColor },
+        axisLabel: {
+          color: theme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => `${v.toFixed(1)}s`,
+        },
+        axisLine: { lineStyle: { color: theme.borderColor } },
+        splitLine: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 20000,
+        name: 'Penetration',
+        nameLocation: 'middle',
+        nameGap: 50,
+        nameTextStyle: { color: theme.mutedColor },
+        axisLabel: {
+          color: theme.mutedColor,
+          fontSize: 11,
+          formatter: (v: number) => v.toLocaleString(),
+        },
+        axisLine: { show: false },
+        splitLine: { lineStyle: { color: theme.gridLineColor, type: 'dotted' } },
+      },
+      legend: { show: false },
+      tooltip: {
+        trigger: 'axis',
+        appendToBody: true,
+        formatter: (params: Array<{ value: number[] }>) => {
+          const p = params[0];
+          if (!p) return '';
+          const time = Number(p.value[0]).toFixed(1);
+          const pen = Number(p.value[1]);
+          const color = pen >= 18200 ? '#22c55e' : '#ef4444';
+          return `<div style="font-size:13px">
+            <div style="color:${theme.mutedColor}">Time: ${time}s</div>
+            <div style="font-weight:600;color:${color}">${pen.toLocaleString()} penetration</div>
+          </div>`;
+        },
+      },
+      series: [
+        {
+          type: 'line',
+          data: chartData,
+          ...steppedLineDefaults(),
+          lineStyle: {
+            color: lineColor,
+            width: 2,
+            ...glowLineStyle(lineColor, theme.intensity, theme.perfTier),
+          },
+          areaStyle: gradientAreaStyle(lineColor, theme.intensity, theme.perfTier),
+          markLine: {
+            silent: true,
+            symbol: ['none', 'none'],
+            data: markLineData,
+          },
+          ...(inactiveMarkAreas ? { markArea: inactiveMarkAreas } : {}),
+        },
+      ],
+    };
+  }, [chartData, fightDurationMs, playerBasePenetration, phaseMarkLines, inactiveMarkAreas, theme]);
 
   if (!penetrationData) {
     return (
@@ -207,8 +286,8 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
             <PlayerIcon player={player} />
             <Typography
               variant="subtitle1"
-              fontWeight="bold"
               sx={{
+                fontWeight: 'bold',
                 fontSize: '1.75rem',
                 textShadow: roleColors.getAccordionTextShadow(),
               }}
@@ -321,130 +400,13 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               >
                 Penetration vs Time
               </Typography>
-              <Box sx={{ width: '100%', height: 300 }}>
-                <LineChart
-                  data={{
-                    labels: chartLabels,
-                    datasets: [
-                      {
-                        label: 'Penetration',
-                        data: chartDataPoints,
-                        borderColor: '#1976d2',
-                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                        borderWidth: 2,
-                        fill: false,
-                        stepped: 'after',
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        tension: 0,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                      intersect: false,
-                      mode: 'index',
-                    },
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                      tooltip: {
-                        callbacks: {
-                          title: (context) => `Time: ${Number(context[0].parsed.x).toFixed(1)}s`,
-                          label: (context) => `${context.parsed.y} penetration`,
-                        },
-                      },
-                      annotation: {
-                        annotations: {
-                          ...(inactiveTimeAnnotations ?? {}),
-                          goalLine: {
-                            type: 'line',
-                            yMin: 18200,
-                            yMax: 18200,
-                            borderColor: '#ff6b6b',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            label: {
-                              content: 'Goal: 18,200',
-                              display: true,
-                              position: 'end',
-                              backgroundColor: 'rgba(255, 107, 107, 0.8)',
-                              color: 'white',
-                              font: {
-                                size: 12,
-                              },
-                              padding: 4,
-                            },
-                          },
-                          baseLine: {
-                            type: 'line',
-                            yMin: playerBasePenetration,
-                            yMax: playerBasePenetration,
-                            borderColor: '#2196f3',
-                            borderWidth: 2,
-                            borderDash: [3, 3],
-                            label: {
-                              content: `Base: ${playerBasePenetration.toLocaleString()}`,
-                              display: true,
-                              position: 'start',
-                              backgroundColor: 'rgba(33, 150, 243, 0.8)',
-                              color: 'white',
-                              font: {
-                                size: 12,
-                              },
-                              padding: 4,
-                            },
-                          },
-                          ...(phaseAnnotations ?? {}),
-                        },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        type: 'linear',
-                        display: true,
-                        min: 0,
-                        max: msToSeconds(fightDurationMs),
-                        title: {
-                          display: true,
-                          text: 'Time (seconds)',
-                        },
-                        ticks: {
-                          callback: function (value) {
-                            return `${Number(value).toFixed(1)}s`;
-                          },
-                        },
-                      },
-                      y: {
-                        display: true,
-                        title: {
-                          display: true,
-                          text: 'Penetration',
-                        },
-                        min: 0,
-                        max: 20000,
-                        ticks: {
-                          callback: function (value) {
-                            return `${value}`;
-                          },
-                        },
-                      },
-                    },
-                    elements: {
-                      point: {
-                        hoverRadius: 6,
-                      },
-                    },
-                    animation: {
-                      duration: 0, // Disable animations for better performance
-                    },
-                  }}
-                />
+              <Box role="img" aria-label="Penetration over time chart">
+                <EChart option={chartOption} height={300} group="fightReport" />
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', mt: 1, display: 'block' }}
+              >
                 Shows penetration changes over the duration of the fight. Data voxelized to 1-second
                 intervals (highest value per interval). Data points:{' '}
                 {penetrationData.dataPoints.length}

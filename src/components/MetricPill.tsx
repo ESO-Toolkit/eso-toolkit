@@ -95,7 +95,7 @@ export const MetricPill: React.FC<MetricPillProps> = ({
   const theme = useTheme();
   const content = (
     <Box
-      role="text"
+      role="group"
       aria-label={ariaLabel ?? `${label}: ${value}${suffix ?? ''}`}
       sx={(theme: Theme) => ({
         display: 'flex',

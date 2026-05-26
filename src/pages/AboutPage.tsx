@@ -14,7 +14,7 @@ const InfoRow: React.FC<{ label: string; value?: string }> = ({ label, value }) 
       flexWrap: 'wrap',
     }}
   >
-    <Typography variant="subtitle2" color="text.secondary" sx={{ minWidth: 160 }}>
+    <Typography variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 160 }}>
       {label}
     </Typography>
     <Typography
@@ -44,6 +44,10 @@ export const AboutPage: React.FC = () => {
       }
     | undefined
   >(undefined);
+
+  React.useEffect(() => {
+    document.title = 'About | ESO Toolkit';
+  }, []);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -84,7 +88,7 @@ export const AboutPage: React.FC = () => {
           <Typography variant="h3" sx={{ fontWeight: 800 }}>
             About ESO Toolkit
           </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="subtitle1" sx={{ color: 'text.secondary', mt: 1 }}>
             Current release details and build metadata.
           </Typography>
         </Box>
@@ -105,7 +109,11 @@ export const AboutPage: React.FC = () => {
           }}
         >
           <Stack spacing={2.5}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{ alignItems: 'center' }}
+            >
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
                 Release information
               </Typography>
@@ -132,7 +140,7 @@ export const AboutPage: React.FC = () => {
         </Paper>
 
         {!buildInfo && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Loading release information...
           </Typography>
         )}

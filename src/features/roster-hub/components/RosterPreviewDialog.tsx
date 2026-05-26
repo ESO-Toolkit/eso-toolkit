@@ -1,5 +1,5 @@
 import {
-  ChatBubbleOutline,
+  ChatBubbleOutlined,
   ContentCopy,
   EditOutlined,
   Fullscreen,
@@ -155,7 +155,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
       fullScreen={isMobile}
       disableEnforceFocus
       className="glass-dialog"
-      TransitionComponent={SlideUpTransition}
+      slots={{ transition: SlideUpTransition }}
       slotProps={{
         paper: {
           sx: {
@@ -434,7 +434,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               zIndex: 1,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Preview unavailable
             </Typography>
             <Button size="small" onClick={handleOpenFullPage} startIcon={<OpenInNew />}>
@@ -479,6 +479,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
           <iframe
             src={embedUrl}
             title={`Preview: ${roster.title}`}
+            sandbox="allow-same-origin allow-scripts allow-popups"
             /* onLoad not used — loaded signal comes via postMessage from RosterViewPage */
             style={{
               position: 'absolute',
@@ -547,7 +548,7 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
                 },
               }}
             >
-              <ChatBubbleOutline
+              <ChatBubbleOutlined
                 sx={{
                   fontSize: 15,
                   color: commentsOpen ? accentColor : 'text.disabled',
@@ -556,8 +557,8 @@ export const RosterPreviewDialog: React.FC<RosterPreviewDialogProps> = ({
               />
               <Typography
                 variant="body2"
-                fontWeight={600}
                 sx={{
+                  fontWeight: 600,
                   fontSize: '0.8rem',
                   color: commentsOpen
                     ? isDark

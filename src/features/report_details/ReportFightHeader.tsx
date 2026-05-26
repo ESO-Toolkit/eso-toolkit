@@ -1,4 +1,5 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import GroupsIcon from '@mui/icons-material/Groups';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -7,7 +8,6 @@ import {
   Button,
   CircularProgress,
   IconButton,
-  Stack,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -28,6 +28,23 @@ import { createDefaultRoster } from '@/types/roster';
 import { cleanArray } from '@/utils/cleanArray';
 import { convertLogPlayersToRoster, type LogPlayerDetails } from '@/utils/logToRoster';
 import { encodeRosterToURL } from '@/utils/rosterEncoding';
+
+function getWipeColor(percentage: number): string {
+  const clamped = Math.max(0, Math.min(100, percentage));
+  const hue = ((100 - clamped) / 100) * 120;
+  const s = 80,
+    l = 55;
+  const sN = s / 100,
+    lN = l / 100;
+  const a = sN * Math.min(lN, 1 - lN);
+  const ch = (n: number): string => {
+    const k = (n + hue / 30) % 12;
+    return Math.round(255 * (lN - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))))
+      .toString(16)
+      .padStart(2, '0');
+  };
+  return `#${ch(0)}${ch(8)}${ch(4)}`;
+}
 
 // Custom hook for fight navigation logic
 export const useFightNavigation = (): {
@@ -191,60 +208,15 @@ export const ReportFightHeader: React.FC = () => {
   const { reportId, fightId } = useSelectedReportAndFight();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const { fight, isFightLoading } = useCurrentFight();
+  const { fight } = useCurrentFight();
 
   // Ref for immediate title rendering
   const titleRef = React.useRef<HTMLElement>(null);
 
-  // AGGRESSIVE LCP OPTIMIZATION: Paint content before React hydration
   React.useLayoutEffect(() => {
-    if (titleRef.current && fightId) {
-      // Bypass React and directly manipulate DOM for immediate paint
-      const titleElement = titleRef.current;
-
-      // Set immediate static content
-      titleElement.textContent = `Fight ${fightId}`;
-
-      // Force immediate browser paint
-      titleElement.style.transform = 'translateZ(0)'; // Force layer creation
-      titleElement.getBoundingClientRect(); // Force layout
-
-      // Upgrade to real content when available
-      if (fight) {
-        const isBossFight = fight.difficulty != null;
-        let statusIndicator: string;
-
-        if (isBossFight) {
-          // Boss fight logic
-          const bossWasKilled =
-            fight.bossPercentage !== null &&
-            fight.bossPercentage !== undefined &&
-            fight.bossPercentage <= 1.0;
-          statusIndicator = bossWasKilled
-            ? '✓'
-            : fight.bossPercentage
-              ? `${Math.round(fight.bossPercentage)}%`
-              : 'Wipe';
-        } else {
-          // Trash fight logic - use kill field
-          const wasKilled = fight.kill === true || fight.kill === null;
-          statusIndicator = wasKilled ? '✓' : 'Wipe';
-        }
-
-        titleElement.innerHTML = `${fight.name} (<span style="font-weight: 300;">${statusIndicator}</span>)`;
-      }
-    }
-  }, [fight, isFightLoading, fightId]);
-
-  // Force immediate render on mount
-  React.useLayoutEffect(() => {
-    if (titleRef.current && fightId && !fight) {
-      // Ensure content is visible immediately, even before fight data loads
-      titleRef.current.textContent = `Fight ${fightId}`;
-      titleRef.current.style.visibility = 'visible';
-      titleRef.current.style.opacity = '1';
-    }
-  }, [fightId, fight, isFightLoading]);
+    if (!titleRef.current || !fightId) return;
+    titleRef.current.textContent = fight ? fight.name : `Fight ${fightId}`;
+  }, [fight, fightId]);
 
   // ── Create Roster from fight players ──────────────────────────────────────
   const playersById = useSelector((state: RootState) => selectActivePlayersById(state));
@@ -305,8 +277,11 @@ export const ReportFightHeader: React.FC = () => {
     borderRadius: '99px',
     fontWeight: 500,
     fontSize: '0.8125rem',
-    padding: isMobile ? '6px' : '6px 14px',
-    minWidth: isMobile ? 36 : 'auto',
+    padding: isMobile ? '0px' : '6px 14px',
+    minWidth: isMobile ? '36px !important' : 'auto',
+    minHeight: isMobile ? '36px !important' : 'auto',
+    width: isMobile ? 36 : 'auto',
+    height: isMobile ? '36px !important' : 'auto',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     transition: 'all 0.2s ease',
@@ -319,10 +294,10 @@ export const ReportFightHeader: React.FC = () => {
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: { xs: 0.75, sm: 1 },
-          mb: { xs: 1.5, sm: 2 },
-          py: { xs: 0.75, sm: 1 },
-          px: { xs: 1, sm: 1.5 },
+          gap: { xs: 0.5, sm: 1 },
+          mb: { xs: 1, sm: 2 },
+          py: { xs: 0.5, sm: 1 },
+          px: { xs: 0.75, sm: 1.5 },
           borderRadius: '12px',
           background: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
@@ -336,6 +311,11 @@ export const ReportFightHeader: React.FC = () => {
               aria-label="Back to Fight List"
               size="small"
               sx={{
+                width: 36,
+                height: 36,
+                minWidth: '36px !important',
+                minHeight: '36px !important',
+                padding: '6px',
                 color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
                 '&:hover': {
                   color: isDarkMode ? '#e2e8f0' : '#1e293b',
@@ -457,11 +437,15 @@ export const ReportFightHeader: React.FC = () => {
       </Box>
 
       {/* ── Fight title ────────────────────────────────────────── */}
-      <Stack
-        direction="row"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ mb: { xs: 2, sm: 3, md: 4 } }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: { xs: 1, sm: 1.5 },
+          gap: { xs: 0.75, sm: 1.5 },
+          flexWrap: { xs: 'wrap', md: 'nowrap' },
+        }}
       >
         <Typography
           ref={titleRef}
@@ -469,65 +453,148 @@ export const ReportFightHeader: React.FC = () => {
           gutterBottom={false}
           data-testid="fight-title"
           sx={{
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },
-            fontWeight: 500,
-            lineHeight: 1.2,
-            // Use system fonts for fastest rendering - most aggressive stack
+            fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' },
+            fontWeight: 600,
+            lineHeight: 1.25,
             fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-            // Pre-allocate space to prevent layout shift
-            minHeight: { xs: '1.8rem', sm: '2.4rem', md: '2.7rem' },
-            // AGGRESSIVE LCP optimizations
-            willChange: 'contents', // Hint that content will change
-            contain: 'layout style', // Contain layout calculations
-            // Force immediate visibility and prioritize painting
+            willChange: 'contents',
+            contain: 'layout style',
             opacity: 1,
             visibility: 'visible',
-            // Critical rendering hints
-            '&': {
-              // Ensure this element gets prioritized in paint order
-              zIndex: 1,
-              position: 'relative',
-            },
-            // Remove any transitions that could delay initial paint
             transition: 'none',
-            // Optimize text rendering for speed over quality initially
             textRendering: 'optimizeSpeed',
           }}
         >
-          {/* Fallback content for SSR/initial render */}
-          {fight
-            ? (() => {
-                const isBossFight = fight.difficulty != null;
-                let statusIndicator: string;
-
-                if (isBossFight) {
-                  // Boss fight logic
-                  const bossWasKilled =
-                    fight.bossPercentage !== null &&
-                    fight.bossPercentage !== undefined &&
-                    fight.bossPercentage <= 1.0;
-                  statusIndicator = bossWasKilled
-                    ? '✓'
-                    : fight.bossPercentage
-                      ? `${Math.round(fight.bossPercentage)}%`
-                      : 'Wipe';
-                } else {
-                  // Trash fight logic - use kill field
-                  const wasKilled = fight.kill === true || fight.kill === null;
-                  statusIndicator = wasKilled ? '✓' : 'Wipe';
-                }
-
-                return (
-                  <>
-                    {fight.name} (<span style={{ fontWeight: 300 }}>{statusIndicator}</span>)
-                  </>
-                );
-              })()
-            : fightId
-              ? `Fight ${fightId}`
-              : 'Loading...'}
+          {fight ? fight.name : fightId ? `Fight ${fightId}` : 'Loading...'}
         </Typography>
-      </Stack>
+
+        {fight &&
+          (() => {
+            const isBossFight = fight.difficulty != null;
+            const bossWasKilled =
+              isBossFight &&
+              fight.bossPercentage !== null &&
+              fight.bossPercentage !== undefined &&
+              fight.bossPercentage <= 1.0;
+            const trashWasKilled = !isBossFight && (fight.kill === true || fight.kill === null);
+            const isKill = bossWasKilled || trashWasKilled;
+
+            const ms = fight.endTime - fight.startTime;
+            const totalSec = Math.floor(ms / 1000);
+            const m = Math.floor(totalSec / 60);
+            const s = totalSec % 60;
+            const duration = m > 0 ? `${m}:${s.toString().padStart(2, '0')}` : `${s}s`;
+
+            const badgeColor = isKill
+              ? isDarkMode
+                ? '#4ade80'
+                : '#16a34a'
+              : getWipeColor(fight.bossPercentage ?? 100);
+
+            const difficultyLabel =
+              fight.difficulty != null && fight.difficulty >= 122
+                ? 'Veteran HM'
+                : fight.difficulty != null && fight.difficulty >= 121
+                  ? 'Veteran'
+                  : null;
+
+            const diffColor =
+              fight.difficulty != null && fight.difficulty >= 122
+                ? isDarkMode
+                  ? '#fbbf24'
+                  : '#d97706'
+                : isDarkMode
+                  ? '#60a5fa'
+                  : '#2563eb';
+
+            return (
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: '10px',
+                  flexShrink: 0,
+                  background: isDarkMode ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
+                  border: isDarkMode
+                    ? '1px solid rgba(255, 255, 255, 0.08)'
+                    : '1px solid rgba(0, 0, 0, 0.06)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                {/* Kill/wipe status */}
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.4,
+                    px: 0.75,
+                    py: 0.125,
+                    borderRadius: '6px',
+                    background: isKill
+                      ? isDarkMode
+                        ? 'rgba(74, 222, 128, 0.15)'
+                        : 'rgba(22, 163, 74, 0.12)'
+                      : `${badgeColor}1a`,
+                  }}
+                >
+                  {isKill && <CheckCircleIcon sx={{ fontSize: '0.8rem', color: badgeColor }} />}
+                  <Typography
+                    sx={{
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      color: badgeColor,
+                      letterSpacing: '0.04em',
+                      fontVariantNumeric: 'tabular-nums',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {isKill ? 'KILL' : `${Math.round(fight.bossPercentage ?? 100)}%`}
+                  </Typography>
+                </Box>
+
+                {/* Difficulty */}
+                {difficultyLabel && (
+                  <Typography
+                    sx={{
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: diffColor,
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    {difficultyLabel}
+                  </Typography>
+                )}
+
+                {/* Thin divider */}
+                <Box
+                  component="span"
+                  sx={{
+                    width: '1px',
+                    height: '12px',
+                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                  }}
+                />
+
+                {/* Duration */}
+                <Typography
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? '#64748b' : '#94a3b8',
+                    fontVariantNumeric: 'tabular-nums',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {duration}
+                </Typography>
+              </Box>
+            );
+          })()}
+      </Box>
     </React.Fragment>
   );
 };

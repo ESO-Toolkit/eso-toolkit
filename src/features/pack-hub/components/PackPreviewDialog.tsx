@@ -163,7 +163,7 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         px: 1.5,
         py: 0.85,
         borderRadius: '10px',
-        minWidth: 72,
+        minWidth: { xs: 'auto', sm: 72 },
         background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
         border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
         backdropFilter: 'blur(8px)',
@@ -203,27 +203,29 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
       fullWidth
       maxWidth="md"
       fullScreen={fullScreen}
-      TransitionComponent={SlideUpTransition}
-      PaperProps={{
-        sx: {
-          overflow: 'hidden',
-          borderRadius: fullScreen ? 0 : 4,
-          background: isDark
-            ? `linear-gradient(165deg, ${accentColor}18 0%, rgba(152,131,227,0.06) 35%, rgba(11,18,32,0.92) 75%)`
-            : `linear-gradient(165deg, ${accentColor}14 0%, rgba(152,131,227,0.05) 35%, rgba(255,255,255,0.97) 75%)`,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
-          boxShadow: isDark
-            ? `0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px ${accentColor}25, 0 0 60px ${accentColor}20`
-            : `0 24px 80px rgba(0,0,0,0.18), 0 0 0 1px ${accentColor}20`,
+      slots={{ transition: SlideUpTransition }}
+      slotProps={{
+        paper: {
+          sx: {
+            overflow: 'hidden',
+            borderRadius: fullScreen ? 0 : 4,
+            background: isDark
+              ? `linear-gradient(165deg, ${accentColor}18 0%, rgba(152,131,227,0.06) 35%, rgba(11,18,32,0.92) 75%)`
+              : `linear-gradient(165deg, ${accentColor}14 0%, rgba(152,131,227,0.05) 35%, rgba(255,255,255,0.97) 75%)`,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
+            boxShadow: isDark
+              ? `0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px ${accentColor}25, 0 0 60px ${accentColor}20`
+              : `0 24px 80px rgba(0,0,0,0.18), 0 0 0 1px ${accentColor}20`,
+          },
         },
-      }}
-      BackdropProps={{
-        sx: {
-          backgroundColor: isDark ? 'rgba(5,10,20,0.72)' : 'rgba(15,23,42,0.38)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
+        backdrop: {
+          sx: {
+            backgroundColor: isDark ? 'rgba(5,10,20,0.72)' : 'rgba(15,23,42,0.38)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+          },
         },
       }}
     >
@@ -291,7 +293,7 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         sx={{
           position: 'relative',
           zIndex: 1,
-          px: { xs: 2.5, sm: 4 },
+          px: { xs: 1.5, sm: 4 },
           pt: { xs: 3.5, sm: 4 },
           pb: 2.5,
         }}
@@ -358,7 +360,7 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
             fontSize: { xs: '1.45rem', sm: '1.75rem' },
             letterSpacing: '-0.02em',
             lineHeight: 1.2,
-            pr: 5,
+            pr: { xs: 2, sm: 5 },
             background: isDark
               ? `linear-gradient(135deg, #f8fafc 0%, ${accentColor} 130%)`
               : `linear-gradient(135deg, #0f172a 0%, ${accentColor} 130%)`,
@@ -397,7 +399,15 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         )}
 
         {/* Stats row */}
-        <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            mt: 2.5,
+            flexWrap: 'wrap',
+            '& > *': { minWidth: { xs: 'auto', sm: 72 } },
+          }}
+        >
           {renderStat('Addons', pack.addons.length, accentColor)}
           {renderStat('Required', requiredCount, '#c4a44a')}
           {renderStat('Optional', optionalCount, '#94a3b8')}
@@ -431,45 +441,47 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
           size="small"
           fullWidth
           variant="outlined"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search sx={{ fontSize: 17, opacity: 0.5 }} />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position="end">
-                <Box
-                  component="kbd"
-                  sx={{
-                    fontSize: '0.62rem',
-                    fontWeight: 700,
-                    px: 0.75,
-                    py: 0.25,
-                    borderRadius: '4px',
-                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-                    border: isDark
-                      ? '1px solid rgba(255,255,255,0.1)'
-                      : '1px solid rgba(0,0,0,0.08)',
-                    opacity: 0.6,
-                    display: { xs: 'none', sm: 'inline-block' },
-                  }}
-                >
-                  /
-                </Box>
-              </InputAdornment>
-            ),
-            sx: {
-              borderRadius: '10px',
-              background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-              '& fieldset': {
-                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-              },
-              '&:hover fieldset': {
-                borderColor: `${accentColor}55 !important`,
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: `${accentColor} !important`,
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ fontSize: 17, opacity: 0.5 }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Box
+                    component="kbd"
+                    sx={{
+                      fontSize: '0.62rem',
+                      fontWeight: 700,
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: '4px',
+                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.1)'
+                        : '1px solid rgba(0,0,0,0.08)',
+                      opacity: 0.6,
+                      display: { xs: 'none', sm: 'inline-block' },
+                    }}
+                  >
+                    /
+                  </Box>
+                </InputAdornment>
+              ),
+              sx: {
+                borderRadius: '10px',
+                background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                '& fieldset': {
+                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                },
+                '&:hover fieldset': {
+                  borderColor: `${accentColor}55 !important`,
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: `${accentColor} !important`,
+                },
               },
             },
           }}

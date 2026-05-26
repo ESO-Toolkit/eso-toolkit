@@ -127,31 +127,33 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX
             column.setFilterValue(value || undefined);
           }
         }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                size="small"
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.stopPropagation();
-                  column.setFilterValue(undefined);
-                }}
-                sx={{
-                  padding: '2px',
-                  visibility: hasValue ? 'visible' : 'hidden', // Always takes up space but invisible when no value
-                  '&:hover': {
-                    backgroundColor: hasValue
-                      ? alpha(theme.palette.primary.main, 0.08)
-                      : 'transparent',
-                  },
-                }}
-                aria-label="Clear filter"
-                disabled={!hasValue}
-              >
-                <Clear sx={{ fontSize: '14px' }} />
-              </IconButton>
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.stopPropagation();
+                    column.setFilterValue(undefined);
+                  }}
+                  sx={{
+                    padding: '2px',
+                    visibility: hasValue ? 'visible' : 'hidden', // Always takes up space but invisible when no value
+                    '&:hover': {
+                      backgroundColor: hasValue
+                        ? alpha(theme.palette.primary.main, 0.08)
+                        : 'transparent',
+                    },
+                  }}
+                  aria-label="Clear filter"
+                  disabled={!hasValue}
+                >
+                  <Clear sx={{ fontSize: '14px' }} />
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
         }}
         sx={{
           width: '100%',
@@ -241,6 +243,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
               size="small"
+              aria-label="First page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,
@@ -264,6 +267,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               size="small"
+              aria-label="Previous page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,
@@ -299,6 +303,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               size="small"
+              aria-label="Next page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,
@@ -322,6 +327,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
               size="small"
+              aria-label="Last page"
               sx={{
                 transition: theme.transitions.create(['all'], {
                   duration: theme.transitions.duration.short,
@@ -566,6 +572,8 @@ export const DataGrid = <T extends Record<string, unknown>>({
   if (loading) {
     return (
       <Paper
+        aria-live="polite"
+        role="status"
         sx={{
           height: autoHeight ? 'auto' : height,
           display: 'flex',
@@ -627,7 +635,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
       <TableContainer
         sx={{
           flex: autoHeight ? 'unset' : 1,
-          overflowX: 'hidden',
+          overflowX: { xs: 'auto', md: 'hidden' },
           overflowY: autoHeight ? 'visible' : 'auto',
           scrollbarGutter: 'stable both-edges',
         }}
@@ -635,6 +643,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
         <Table
           stickyHeader
           size="small"
+          aria-label={title || 'Data grid'}
           sx={{
             tableLayout: 'fixed',
             width: '100%',
@@ -653,6 +662,13 @@ export const DataGrid = <T extends Record<string, unknown>>({
                   return (
                     <TableCell
                       key={header.id}
+                      aria-sort={
+                        sortDirection === 'asc'
+                          ? 'ascending'
+                          : sortDirection === 'desc'
+                            ? 'descending'
+                            : undefined
+                      }
                       sx={{
                         fontWeight: 600,
                         cursor: canSort ? 'pointer' : 'default',

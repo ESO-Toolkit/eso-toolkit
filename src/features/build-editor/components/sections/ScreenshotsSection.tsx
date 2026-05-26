@@ -54,8 +54,7 @@ const ScreenshotsSectionComponent: React.FC = () => {
     <Stack spacing={1.5}>
       <Typography
         variant="caption"
-        color="text.disabled"
-        sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+        sx={{ color: 'text.disabled', fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
       >
         Screenshots of character stats, gear, or skills.
       </Typography>
@@ -72,10 +71,13 @@ const ScreenshotsSectionComponent: React.FC = () => {
         >
           <Typography
             variant="caption"
-            color="text.disabled"
-            mb={1.5}
-            display="block"
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+            sx={{
+              color: 'text.disabled',
+              display: 'block',
+              mb: 1.5,
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontStyle: 'italic',
+            }}
           >
             No screenshots yet
           </Typography>
@@ -149,6 +151,7 @@ const ScreenshotsSectionComponent: React.FC = () => {
                         <IconButton
                           className="remove-btn"
                           size="small"
+                          aria-label="Remove screenshot"
                           onClick={() => dispatch(removeScreenshot(i))}
                           sx={{
                             position: 'absolute',

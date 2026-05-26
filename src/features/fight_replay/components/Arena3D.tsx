@@ -571,7 +571,11 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   }
 
   return (
-    <div style={{ width: '100%', height: '400px', position: 'relative' }}>
+    <div
+      style={{ width: '100%', height: '400px', position: 'relative' }}
+      role="img"
+      aria-label="3D fight replay arena showing player positions over time"
+    >
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
           key={`canvas-${fight.id}`} // Stable key prevents unnecessary recreation
@@ -642,11 +646,13 @@ export const Arena3D: React.FC<Arena3DProps> = ({
                     : undefined
                 }
                 disableScrollLock
-                MenuListProps={{
-                  dense: true,
-                  onContextMenu: (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
+                slotProps={{
+                  list: {
+                    dense: true,
+                    onContextMenu: (event: React.MouseEvent) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    },
                   },
                 }}
                 onContextMenu={(event) => {
@@ -700,20 +706,20 @@ export const Arena3D: React.FC<Arena3DProps> = ({
                 disableAutoFocus
                 disableEnforceFocus
                 disableRestoreFocus
-                MenuListProps={{
-                  dense: true,
-                  onContextMenu: (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  },
-                  onMouseLeave: handleGroupMouseLeave,
-                  sx: { pointerEvents: 'auto' },
-                }}
-                onContextMenu={(event) => {
+                onContextMenu={(event: React.MouseEvent) => {
                   event.preventDefault();
                   event.stopPropagation();
                 }}
                 slotProps={{
+                  list: {
+                    dense: true,
+                    onContextMenu: (event: React.MouseEvent) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    },
+                    onMouseLeave: handleGroupMouseLeave,
+                    sx: { pointerEvents: 'auto' },
+                  },
                   paper: {
                     onMouseLeave: handleGroupMouseLeave,
                     sx: { pointerEvents: 'auto' },
@@ -813,6 +819,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
           <Tooltip title="Unlock camera from actor">
             <IconButton
               size="small"
+              aria-label="Unlock camera from actor"
               onClick={handleUnlockCamera}
               sx={{
                 color: 'white',

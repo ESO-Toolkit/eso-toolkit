@@ -657,6 +657,20 @@ export const ZONE_SCALE_DATA: Record<number, ZoneScaleData[]> = {
       maxZ: 84558.0,
     },
   ],
+
+  // Opulent Ordeal (zone 1565 / vOO)
+  1565: [
+    {
+      name: 'Opulent Ordeal',
+      mapId: 2796,
+      zoneId: 1565,
+      scaleFactor: 0.0000216821,
+      minX: 27019.0,
+      maxX: 73140.0,
+      minZ: 21963.0,
+      maxZ: 68084.0,
+    },
+  ],
 };
 
 /**
@@ -677,6 +691,7 @@ export const ZONE_NAMES: Record<number, string> = {
   1427: "Sanity's Edge",
   1478: 'Lucent Citadel',
   1548: 'Ossein Cage',
+  1565: 'Opulent Ordeal',
 };
 
 /**

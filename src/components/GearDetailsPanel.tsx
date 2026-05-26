@@ -564,6 +564,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 <IconButton
                   onClick={goToPreviousPlayer}
                   disabled={sortedPlayers.length <= 1 || isTransitioning}
+                  aria-label="Previous player"
                   sx={{
                     p: { xs: 0.5, sm: 0.4 },
                     backgroundColor: 'transparent',
@@ -700,6 +701,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 <IconButton
                   onClick={goToNextPlayer}
                   disabled={sortedPlayers.length <= 1 || isTransitioning}
+                  aria-label="Next player"
                   sx={{
                     p: { xs: 0.5, sm: 0.4 },
                     backgroundColor: 'transparent',
@@ -743,6 +745,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
             {/* Enhanced close button */}
             <IconButton
               onClick={onClose}
+              aria-label="Close gear details"
               sx={{
                 p: { xs: 0.7, sm: 0.6 },
                 backgroundColor:

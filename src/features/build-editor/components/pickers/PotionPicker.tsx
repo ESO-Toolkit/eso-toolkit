@@ -147,7 +147,7 @@ const PotionCategorySection: React.FC<PotionCategorySectionProps> = ({
           },
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={0.75}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
           <Box
             component={'img' as React.ElementType}
             src={iconUrl}
@@ -165,7 +165,7 @@ const PotionCategorySection: React.FC<PotionCategorySectionProps> = ({
             {group.category}
           </Typography>
         </Stack>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Typography
             sx={{
               fontSize: 10,
@@ -251,7 +251,7 @@ const PotionRow: React.FC<PotionRowProps> = ({ item, isSelected, catColor, onSel
         sx={{ width: 22, height: 22, flexShrink: 0, opacity: 0.7 }}
       />
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Typography
             noWrap
             sx={{
@@ -342,16 +342,18 @@ const PotionPickerDialog: React.FC<PotionPickerDialogProps> = ({
       maxWidth="sm"
       fullWidth
       className="glass-dialog"
-      PaperProps={{
-        sx: {
-          borderRadius: '20px',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: '90vh',
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '20px',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
         },
       }}
     >
@@ -382,12 +384,14 @@ const PotionPickerDialog: React.FC<PotionPickerDialogProps> = ({
             size="small"
             fullWidth
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+                  </InputAdornment>
+                ),
+              },
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -480,8 +484,11 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
         <Box sx={glassEmptySx(isDark)}>
           <Typography
             variant="caption"
-            color="text.disabled"
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+            sx={{
+              color: 'text.disabled',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontStyle: 'italic',
+            }}
           >
             No potions selected
           </Typography>
@@ -494,7 +501,7 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
 
           return (
             <GlassPanel key={p.id} sx={{ p: 1.25 }}>
-              <Stack direction="row" alignItems="center" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 {iconUrl && (
                   <Box
                     component={'img' as React.ElementType}
@@ -503,13 +510,16 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                     sx={{ width: 28, height: 28, flexShrink: 0, opacity: 0.85 }}
                   />
                 )}
-                <Box flex={1} minWidth={0}>
-                  <Stack direction="row" spacing={0.75} alignItems="center">
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                     <Typography
                       variant="caption"
-                      fontWeight={700}
                       noWrap
-                      sx={{ fontSize: 12, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 12,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                      }}
                     >
                       {p.name}
                     </Typography>
@@ -531,8 +541,11 @@ export const PotionPicker: React.FC<PotionPickerProps> = ({ potions, onChange })
                   </Stack>
                   <Typography
                     variant="caption"
-                    color="text.disabled"
-                    sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                    sx={{
+                      color: 'text.disabled',
+                      fontSize: 10,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                    }}
                   >
                     {p.effects.join(' · ')}
                   </Typography>

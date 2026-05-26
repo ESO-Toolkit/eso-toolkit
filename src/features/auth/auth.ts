@@ -72,9 +72,7 @@ export function clearIntendedDestination(): void {
 const generateCodeVerifier = (): string => {
   const array = new Uint32Array(32);
   window.crypto.getRandomValues(array);
-  const verifier = Array.from(array, (dec) => ('0' + dec.toString(16)).slice(-2)).join('');
-  localStorage.setItem(PKCE_CODE_VERIFIER_KEY, verifier);
-  return verifier;
+  return Array.from(array, (dec) => ('0' + dec.toString(16)).slice(-2)).join('');
 };
 
 const base64UrlEncode = (str: ArrayBuffer): string => {

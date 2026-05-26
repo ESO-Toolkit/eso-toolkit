@@ -32,7 +32,7 @@ export const PlayerIcon: React.FC<PlayerIconProps> = ({ player }) => {
           sx={{ width: 40, height: 40 }}
         />
       ) : (
-        <Avatar sx={{ width: 40, height: 40 }} />
+        <Avatar alt={String(resolveActorName(player))} sx={{ width: 40, height: 40 }} />
       )}
       {/* Class icon badge when showing custom avatar */}
       {customAvatar && classIconSrc && (

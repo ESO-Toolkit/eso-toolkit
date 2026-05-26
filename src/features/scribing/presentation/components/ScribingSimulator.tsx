@@ -28,6 +28,10 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
 }) => {
   const logger = useLogger('ScribingSimulator');
 
+  React.useEffect(() => {
+    document.title = 'Scribing Simulator | ESO Toolkit';
+  }, []);
+
   const {
     // Data
     grimoires,
@@ -74,15 +78,18 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
     const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
     navigator.clipboard.writeText(shareUrl);
 
-    // TODO: Show toast notification
     logger.info('Configuration URL copied to clipboard', { shareUrl });
   };
 
   if (isLoading) {
     return (
       <Container maxWidth="xl" className={className}>
-        <Box display="flex" justifyContent="center" alignItems="center" py={8}>
-          <CircularProgress />
+        <Box
+          role="status"
+          aria-live="polite"
+          sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 8 }}
+        >
+          <CircularProgress aria-label="Loading scribing data" />
           <Typography variant="h6" sx={{ ml: 2 }}>
             Loading scribing data...
           </Typography>
@@ -114,11 +121,11 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
 
   return (
     <Container maxWidth="xl" className={className}>
-      <Box py={4}>
-        <Typography variant="h4" component="h1" gutterBottom textAlign="center">
+      <Box sx={{ py: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
           ESO Scribing Simulator
         </Typography>
-        <Typography variant="body1" color="text.secondary" textAlign="center" paragraph>
+        <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center', mb: 2 }}>
           Design and simulate custom scribing combinations for Elder Scrolls Online
         </Typography>
 

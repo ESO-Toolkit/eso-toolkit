@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { execFile } from 'node:child_process';
-import { resolve, basename } from 'node:path';
+import { resolve, basename, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
@@ -41,9 +41,7 @@ async function runGit(args: string[], cwd: string): Promise<string> {
 function resolveWorktreePath(worktreePath: string | undefined): string {
   if (worktreePath) return resolve(worktreePath);
   if (activeWorktree) return activeWorktree;
-  throw new Error(
-    'No active worktree. Use worktree_list or worktree_create first.',
-  );
+  throw new Error('No active worktree. Use worktree_list or worktree_create first.');
 }
 
 interface ToolResult {
@@ -59,6 +57,42 @@ function ok(data: unknown): ToolResult {
 
 function fail(message: string): ToolResult {
   return { content: [{ type: 'text', text: message }], isError: true };
+}
+
+const ALLOWED_COMMANDS = new Set([
+  'git',
+  'npm',
+  'npx',
+  'node',
+  'pnpm',
+  'tsc',
+  'eslint',
+  'prettier',
+]);
+
+function parseArgv(input: string): string[] {
+  const tokens: string[] = [];
+  let current = '';
+  let inSingle = false;
+  let inDouble = false;
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (ch === "'" && !inDouble) {
+      inSingle = !inSingle;
+    } else if (ch === '"' && !inSingle) {
+      inDouble = !inDouble;
+    } else if ((ch === ' ' || ch === '\t') && !inSingle && !inDouble) {
+      if (current.length > 0) {
+        tokens.push(current);
+        current = '';
+      }
+    } else {
+      current += ch;
+    }
+  }
+  if (current.length > 0) tokens.push(current);
+  return tokens;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,41 +169,40 @@ server.tool(
   'worktree_create',
   'Create a new worktree for a ticket branch and set it as active',
   {
-    ticket: z
-      .string()
-      .describe('Ticket ID, e.g. "ESO-716"'),
-    description: z
-      .string()
-      .describe('Branch description, e.g. "add-dismiss-button"'),
+    ticket: z.string().describe('Ticket ID, e.g. "ESO-716"'),
+    description: z.string().describe('Branch description, e.g. "add-dismiss-button"'),
   },
   async ({ ticket, description }) => {
     try {
+      if (!/^[A-Za-z0-9_-]+$/.test(ticket)) {
+        return fail('Invalid ticket ID. Use only letters, numbers, hyphens, and underscores.');
+      }
+      if (!/^[a-z0-9-]+$/.test(description)) {
+        return fail('Invalid description. Use only lowercase letters, numbers, and hyphens.');
+      }
+
       const repoRoot = getRepoRoot();
       const worktreeDir = getWorktreeDir();
 
-      const branchName = `${ticket}/${description}`
-        .toLowerCase()
-        .replace(/\s+/g, '-');
+      const branchName = `${ticket}/${description}`.toLowerCase().replace(/\s+/g, '-');
       const wtPath = resolve(worktreeDir, ticket);
+
+      const normalizedWtDir = resolve(worktreeDir) + sep;
+      if (!resolve(wtPath).startsWith(normalizedWtDir)) {
+        return fail('Invalid ticket ID: path escapes worktree directory.');
+      }
 
       // Fetch latest main
       await runGit(['fetch', 'origin', 'main'], repoRoot);
 
       // Create worktree
-      await runGit(
-        ['worktree', 'add', wtPath, '-b', branchName, 'origin/main'],
-        repoRoot,
-      );
+      await runGit(['worktree', 'add', wtPath, '-b', branchName, 'origin/main'], repoRoot);
 
       activeWorktree = wtPath;
 
       // Determine port slot: list worktrees and find next available slot
-      const listRaw = await runGit(
-        ['worktree', 'list', '--porcelain'],
-        repoRoot,
-      );
-      const worktreeCount =
-        listRaw.split(/\n\n+/).filter((b) => b.trim()).length;
+      const listRaw = await runGit(['worktree', 'list', '--porcelain'], repoRoot);
+      const worktreeCount = listRaw.split(/\n\n+/).filter((b) => b.trim()).length;
       // Slot 0 is main, new worktrees get subsequent slots
       const slot = worktreeCount - 1;
       const httpPort = 3000 + slot * 2;
@@ -193,29 +226,34 @@ server.tool(
 
 server.tool(
   'worktree_run',
-  'Run a shell command in a worktree directory (refuses to run in main repo)',
+  'Run a command in a worktree directory (refuses to run in main repo)',
   {
-    command: z.string().describe('Shell command to execute'),
-    worktreePath: z
-      .string()
-      .optional()
-      .describe('Worktree path (defaults to active worktree)'),
+    command: z.string().describe('Command to execute (e.g. "npm install", "git status")'),
+    worktreePath: z.string().optional().describe('Worktree path (defaults to active worktree)'),
   },
   async ({ command, worktreePath }) => {
     try {
       const resolved = resolveWorktreePath(worktreePath);
       const repoRoot = getRepoRoot();
 
-      // Guard: refuse to run in main repo
       if (resolve(resolved) === resolve(repoRoot)) {
+        return fail('Refusing to run command in main repo. Use a worktree path instead.');
+      }
+
+      const argv = parseArgv(command);
+      if (argv.length === 0) {
+        return fail('Empty command.');
+      }
+
+      const executable = basename(argv[0]);
+      if (!ALLOWED_COMMANDS.has(executable)) {
         return fail(
-          'Refusing to run command in main repo. Use a worktree path instead.',
+          `Command "${executable}" is not in the allowlist. Allowed: ${[...ALLOWED_COMMANDS].join(', ')}`,
         );
       }
 
-      const { stdout, stderr } = await execFileAsync(command, [], {
+      const { stdout, stderr } = await execFileAsync(argv[0], argv.slice(1), {
         cwd: resolved,
-        shell: true,
         timeout: 120_000,
         maxBuffer: 10 * 1024 * 1024,
       });
@@ -227,9 +265,7 @@ server.tool(
       return ok(stdout.trim() + (stderr ? `\n\nSTDERR:\n${stderr.trim()}` : ''));
     } catch (err) {
       const error = err as Error & { stderr?: string };
-      return fail(
-        error.stderr?.trim() || error.message,
-      );
+      return fail(error.stderr?.trim() || error.message);
     }
   },
 );
@@ -261,12 +297,8 @@ server.tool(
       }
 
       // Check if worktrees exist (beyond main)
-      const raw = await runGit(
-        ['worktree', 'list', '--porcelain'],
-        repoRoot,
-      );
-      const worktreeCount =
-        raw.split(/\n\n+/).filter((b) => b.trim()).length;
+      const raw = await runGit(['worktree', 'list', '--porcelain'], repoRoot);
+      const worktreeCount = raw.split(/\n\n+/).filter((b) => b.trim()).length;
 
       if (worktreeCount > 1) {
         return ok(
@@ -289,30 +321,22 @@ server.tool(
   'worktree_push',
   'Push the current branch in a worktree to origin (refuses to push main)',
   {
-    worktreePath: z
-      .string()
-      .optional()
-      .describe('Worktree path (defaults to active worktree)'),
-    force: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('Use --force-with-lease'),
+    worktreePath: z.string().optional().describe('Worktree path (defaults to active worktree)'),
+    force: z.boolean().optional().default(false).describe('Use --force-with-lease'),
   },
   async ({ worktreePath, force }) => {
     try {
       const resolved = resolveWorktreePath(worktreePath);
 
       // Safety: refuse to push main
-      const branch = await runGit(
-        ['branch', '--show-current'],
-        resolved,
-      );
+      const branch = await runGit(['branch', '--show-current'], resolved);
 
       if (branch === 'main' || branch === 'master') {
-        return fail(
-          `Refusing to push branch "${branch}". Only push feature branches.`,
-        );
+        return fail(`Refusing to push branch "${branch}". Only push feature branches.`);
+      }
+
+      if (!branch || /^-/.test(branch) || !/^[\w./-]+$/.test(branch)) {
+        return fail(`Invalid branch name: "${branch}".`);
       }
 
       const pushArgs = ['push', 'origin', 'HEAD'];
@@ -336,10 +360,7 @@ server.tool(
   'worktree_status',
   'Show git status and recent commits in a worktree',
   {
-    worktreePath: z
-      .string()
-      .optional()
-      .describe('Worktree path (defaults to active worktree)'),
+    worktreePath: z.string().optional().describe('Worktree path (defaults to active worktree)'),
   },
   async ({ worktreePath }) => {
     try {
@@ -350,9 +371,7 @@ server.tool(
         runGit(['log', '--oneline', '-5'], resolved),
       ]);
 
-      return ok(
-        `=== Status ===\n${status || '(clean)'}\n\n=== Recent Commits ===\n${log}`,
-      );
+      return ok(`=== Status ===\n${status || '(clean)'}\n\n=== Recent Commits ===\n${log}`);
     } catch (err) {
       return fail(`Status check failed: ${(err as Error).message}`);
     }
@@ -367,10 +386,7 @@ server.tool(
   'worktree_diff',
   'Show git diff in a worktree (staged or unstaged)',
   {
-    worktreePath: z
-      .string()
-      .optional()
-      .describe('Worktree path (defaults to active worktree)'),
+    worktreePath: z.string().optional().describe('Worktree path (defaults to active worktree)'),
     staged: z
       .boolean()
       .optional()
@@ -391,9 +407,7 @@ server.tool(
       // Truncate at 500KB
       const MAX_SIZE = 500 * 1024;
       if (diff.length > MAX_SIZE) {
-        diff =
-          diff.substring(0, MAX_SIZE) +
-          '\n\n... [truncated at 500KB] ...';
+        diff = diff.substring(0, MAX_SIZE) + '\n\n... [truncated at 500KB] ...';
       }
 
       return ok(diff || '(no changes)');

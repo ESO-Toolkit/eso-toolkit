@@ -861,9 +861,6 @@ export enum PenetrationValues {
 
   // Hew and Sunder provides 1236 penetration per enemy within 8 meters (5-piece)
   HEW_AND_SUNDER_PER_ENEMY = 1236,
-
-  // TODO: Add more penetration values
-  // etc.
 }
 
 /**
@@ -933,12 +930,6 @@ export enum CriticalDamageValues {
 
   // Elemental Catalyst provides 5% critical damage per elemental weakness debuff
   ELEMENTAL_CATALYST_PER_WEAKNESS = 5,
-
-  // TODO: Add more critical damage values
-  // Examples:
-  // MOTHER_SORROW_5_PIECE = X,
-  // RELEQUEN_5_PIECE = X,
-  // etc.
 }
 
 /**

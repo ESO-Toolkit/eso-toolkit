@@ -11,6 +11,10 @@ export const SampleReportPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    document.title = 'Sample Report | ESO Toolkit';
+  }, []);
+
+  React.useEffect(() => {
     if (SAMPLE_REPORT_LIST.length === 0) {
       setErrorMessage('No sample reports are configured.');
       return;

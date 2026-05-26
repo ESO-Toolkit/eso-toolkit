@@ -38,6 +38,10 @@ export const RosterHubPage: React.FC = () => {
   const { filteredRosters, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useRosterHub(token);
 
+  React.useEffect(() => {
+    document.title = 'Roster Hub | ESO Toolkit';
+  }, []);
+
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editRoster, setEditRoster] = React.useState<HubRoster | null>(null);
@@ -238,16 +242,14 @@ export const RosterHubPage: React.FC = () => {
         {!loading && filteredRosters.length === 0 && !error && (
           <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
             <SearchOff sx={{ fontSize: 48, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
-            <Typography variant="h6" color="text.secondary" fontWeight={600}>
+            <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 600 }}>
               {filters.trial || filters.tag || filters.search
                 ? 'No matching rosters'
                 : 'No rosters yet'}
             </Typography>
             <Typography
               variant="body2"
-              color="text.disabled"
-              mt={0.75}
-              sx={{ maxWidth: 360, mx: 'auto' }}
+              sx={{ color: 'text.disabled', mt: 0.75, maxWidth: 360, mx: 'auto' }}
             >
               {filters.trial || filters.tag || filters.search
                 ? 'Try broadening your search or removing some filters.'
@@ -298,7 +300,7 @@ export const RosterHubPage: React.FC = () => {
               Load more
             </Button>
           ) : filteredRosters.length > 0 ? (
-            <Typography variant="caption" color="text.disabled">
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
               All rosters loaded
             </Typography>
           ) : null}

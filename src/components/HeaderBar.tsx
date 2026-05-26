@@ -799,7 +799,7 @@ export const HeaderBar: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
               <Button
                 color="inherit"
-                sx={{ p: 0, minWidth: 0, '&:hover': { background: 'transparent' } }}
+                sx={{ p: 0, minWidth: 44, minHeight: 44, '&:hover': { background: 'transparent' } }}
                 onClick={() => navigate('/', { vtType: 'down' })}
               >
                 <Typography
@@ -823,13 +823,17 @@ export const HeaderBar: React.FC = () => {
                     backgroundClip: 'text',
                   }}
                 >
-                  <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
+                  <img src={esoLogo} alt="ESO Toolkit logo" style={{ width: 30, height: 30 }} />
                   ESO Toolkit
                 </Typography>
               </Button>
             </Box>
 
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+            <Box
+              component="nav"
+              aria-label="Main navigation"
+              sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1.5 }}
+            >
               {navItems.map((item) => (
                 <Button
                   key={item.text}
@@ -862,6 +866,8 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleReportsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Assessment />}
+                aria-haspopup="true"
+                aria-expanded={Boolean(reportsAnchorEl)}
                 sx={navButtonSx(theme)}
               >
                 Reports
@@ -873,6 +879,8 @@ export const HeaderBar: React.FC = () => {
                 onClick={handleToolsClick}
                 endIcon={<ExpandMore />}
                 startIcon={<Build />}
+                aria-haspopup="true"
+                aria-expanded={Boolean(toolsAnchorEl)}
                 sx={navButtonSx(theme)}
               >
                 Tools
@@ -937,7 +945,7 @@ export const HeaderBar: React.FC = () => {
                     {avatarThumbUrl ? (
                       <img
                         src={avatarThumbUrl}
-                        alt=""
+                        alt={userDisplayName || 'User avatar'}
                         style={{
                           width: '100%',
                           height: '100%',
@@ -1036,11 +1044,13 @@ export const HeaderBar: React.FC = () => {
               )}
             </Box>
 
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: { xs: 'flex', lg: 'none' }, alignItems: 'center', gap: 1 }}>
               <HamburgerButton
                 open={mobileOpen}
                 onClick={handleDrawerToggle}
                 aria-label="toggle navigation"
+                aria-expanded={mobileOpen}
+                aria-controls="mobile-nav-menu"
               >
                 <HamburgerLines>
                   <Box className="hamburger-line" />
@@ -1058,11 +1068,11 @@ export const HeaderBar: React.FC = () => {
         anchorEl={toolsAnchorEl}
         open={Boolean(toolsAnchorEl)}
         onClose={handleToolsClose}
-        TransitionComponent={Fade}
-        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1122,11 +1132,11 @@ export const HeaderBar: React.FC = () => {
         anchorEl={reportsAnchorEl}
         open={Boolean(reportsAnchorEl)}
         onClose={handleReportsClose}
-        TransitionComponent={Fade}
-        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'left', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
             sx: dropdownPaperSx(theme),
@@ -1192,11 +1202,11 @@ export const HeaderBar: React.FC = () => {
         anchorEl={profileAnchorEl}
         open={Boolean(profileAnchorEl)}
         onClose={handleProfileMenuClose}
-        TransitionComponent={Fade}
-        TransitionProps={{ timeout: 200 }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slots={{ transition: Fade }}
         slotProps={{
+          transition: { timeout: 200 },
           paper: {
             elevation: 0,
             sx: {
@@ -1268,7 +1278,7 @@ export const HeaderBar: React.FC = () => {
             {avatarThumbUrl ? (
               <img
                 src={avatarThumbUrl}
-                alt=""
+                alt={userDisplayName || 'User avatar'}
                 style={{
                   width: '100%',
                   height: '100%',
@@ -1423,7 +1433,14 @@ export const HeaderBar: React.FC = () => {
 
       {/* Mobile Bottom Sheet */}
       <MobileBackdrop open={mobileOpen} onClick={() => setMobileOpen(false)} />
-      <MobileBottomSheet open={mobileOpen} ref={sheetRef}>
+      <MobileBottomSheet
+        open={mobileOpen}
+        ref={sheetRef}
+        role="dialog"
+        aria-modal={mobileOpen}
+        aria-label="Navigation menu"
+        id="mobile-nav-menu"
+      >
         {/* Drag Handle */}
         <Box
           onTouchStart={handleSheetTouchStart}
@@ -1510,7 +1527,7 @@ export const HeaderBar: React.FC = () => {
               {avatarThumbUrl ? (
                 <img
                   src={avatarThumbUrl}
-                  alt=""
+                  alt={userDisplayName || 'User avatar'}
                   style={{
                     width: '100%',
                     height: '100%',

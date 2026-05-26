@@ -136,8 +136,10 @@ export const UnauthenticatedLandingSection: React.FC = () => {
               fontSize: { xs: '0.9rem', sm: '1rem' },
             },
           }}
-          InputProps={{
-            startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
+          slotProps={{
+            input: {
+              startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
+            },
           }}
         />
         <Button
@@ -226,6 +228,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
             textTransform: 'none',
             fontWeight: 400,
             fontSize: '0.875rem',
+            minHeight: 44,
             color:
               theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(51, 65, 85, 0.7)',
             '&:hover': {

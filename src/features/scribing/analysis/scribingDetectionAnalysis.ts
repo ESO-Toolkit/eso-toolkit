@@ -15,7 +15,7 @@ import type {
 } from '../types';
 import { getScribingSkillByAbilityId, type ScribingSkillInfo } from '../utils/Scribing';
 
-export const SCRIBING_DETECTION_SCHEMA_VERSION = 2;
+export const SCRIBING_DETECTION_SCHEMA_VERSION = 3;
 
 export interface CombatEventData {
   buffs: BuffEvent[];
@@ -31,19 +31,6 @@ export interface DetectionLogger {
   info?: (message: string, data?: unknown) => void;
   warn?: (message: string, data?: unknown) => void;
   error?: (message: string, data?: unknown) => void;
-}
-
-/**
- * Helper function to log debug information with fallback to console.log for workers
- */
-function logDebug(logger: DetectionLogger | undefined, message: string, data?: unknown): void {
-  if (logger?.debug) {
-    logger.debug(message, data);
-  } else {
-    // Fallback to console.log for debugging in workers
-    // eslint-disable-next-line no-console
-    console.log(message, data);
-  }
 }
 
 interface ScribingDataStructure {
@@ -342,20 +329,48 @@ function detectSignatureScript(
   }
 
   const SIGNATURE_WINDOW_MS = 1500;
-  const signatureEffects = new Map<number, { name: string; count: number; type: string }>();
+  const signatureEffects = new Map<
+    number,
+    { name: string; castIndices: Set<number>; type: string }
+  >();
+
+  const recordSignatureHit = (effectId: number, eventType: string, castIndex: number): void => {
+    if (!signatureEffects.has(effectId)) {
+      signatureEffects.set(effectId, {
+        name: `${eventType} ${effectId}`,
+        castIndices: new Set(),
+        type: eventType,
+      });
+    }
+    signatureEffects.get(effectId)!.castIndices.add(castIndex);
+  };
+
+  // Assign each event to the nearest preceding cast whose window contains it.
+  // This prevents double-counting when casts overlap (cast within 1.5s of each other).
+  const findOwningCastIndex = (eventTimestamp: number): number | null => {
+    let bestIndex: number | null = null;
+    for (let i = abilityCasts.length - 1; i >= 0; i--) {
+      const castTs = abilityCasts[i].timestamp;
+      if (eventTimestamp > castTs && eventTimestamp <= castTs + SIGNATURE_WINDOW_MS) {
+        bestIndex = i;
+        break;
+      }
+      if (castTs < eventTimestamp - SIGNATURE_WINDOW_MS) {
+        break;
+      }
+    }
+    return bestIndex;
+  };
 
   const checkAndCountSignature = (
-    event: { abilityGameID: number; extraAbilityGameID?: number | null },
+    event: { abilityGameID: number; extraAbilityGameID?: number | null; timestamp: number },
     eventType: string,
   ): void => {
+    const castIndex = findOwningCastIndex(event.timestamp);
+    if (castIndex === null) return;
+
     if (event.abilityGameID !== abilityId && VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)) {
-      const existing =
-        signatureEffects.get(event.abilityGameID) ||
-        ({ name: `${eventType} ${event.abilityGameID}`, count: 0, type: eventType } as const);
-      signatureEffects.set(event.abilityGameID, {
-        ...existing,
-        count: existing.count + 1,
-      });
+      recordSignatureHit(event.abilityGameID, eventType, castIndex);
     }
 
     if (
@@ -363,105 +378,65 @@ function detectSignatureScript(
       event.extraAbilityGameID !== abilityId &&
       VALID_SIGNATURE_SCRIPT_IDS.has(event.extraAbilityGameID)
     ) {
-      const existing =
-        signatureEffects.get(event.extraAbilityGameID) ||
-        ({
-          name: `${eventType} ${event.extraAbilityGameID}`,
-          count: 0,
-          type: eventType,
-        } as const);
-      signatureEffects.set(event.extraAbilityGameID, {
-        ...existing,
-        count: existing.count + 1,
-      });
+      recordSignatureHit(event.extraAbilityGameID, eventType, castIndex);
     }
   };
 
-  for (const cast of abilityCasts) {
-    const windowEnd = cast.timestamp + SIGNATURE_WINDOW_MS;
+  // Process all events once, assigning each to its nearest preceding cast
+  combatEvents.buffs
+    .filter((b) => b.sourceID === playerId)
+    .forEach((b) => checkAndCountSignature(b, 'buff'));
 
-    combatEvents.buffs
-      .filter(
-        (buff) =>
-          buff.sourceID === playerId &&
-          buff.timestamp > cast.timestamp &&
-          buff.timestamp <= windowEnd,
-      )
-      .forEach((buff) => checkAndCountSignature(buff, 'buff'));
+  combatEvents.debuffs
+    .filter((d) => d.sourceID === playerId)
+    .forEach((d) => checkAndCountSignature(d, 'debuff'));
 
-    combatEvents.debuffs
-      .filter(
-        (debuff) =>
-          debuff.sourceID === playerId &&
-          debuff.timestamp > cast.timestamp &&
-          debuff.timestamp <= windowEnd,
-      )
-      .forEach((debuff) => checkAndCountSignature(debuff, 'debuff'));
+  combatEvents.damage
+    .filter((d) => d.sourceID === playerId)
+    .forEach((d) => checkAndCountSignature(d, 'damage'));
 
-    combatEvents.damage
-      .filter(
-        (damage) =>
-          damage.sourceID === playerId &&
-          damage.timestamp > cast.timestamp &&
-          damage.timestamp <= windowEnd,
-      )
-      .forEach((damage) => checkAndCountSignature(damage, 'damage'));
+  combatEvents.heals
+    .filter((h) => h.sourceID === playerId)
+    .forEach((h) => checkAndCountSignature(h, 'healing'));
 
-    combatEvents.heals
-      .filter(
-        (heal) =>
-          heal.sourceID === playerId &&
-          heal.timestamp > cast.timestamp &&
-          heal.timestamp <= windowEnd,
-      )
-      .forEach((heal) => checkAndCountSignature(heal, 'healing'));
+  combatEvents.resources
+    .filter((r) => r.sourceID === playerId)
+    .forEach((r) => checkAndCountSignature(r, 'resource'));
 
-    combatEvents.resources
-      .filter(
-        (resource) =>
-          resource.sourceID === playerId &&
-          resource.timestamp > cast.timestamp &&
-          resource.timestamp <= windowEnd,
-      )
-      .forEach((resource) => checkAndCountSignature(resource, 'resource'));
-
-    combatEvents.casts
-      .filter(
-        (castEvent) =>
-          castEvent.sourceID === playerId &&
-          castEvent.abilityGameID !== abilityId &&
-          castEvent.timestamp > cast.timestamp &&
-          castEvent.timestamp <= windowEnd,
-      )
-      .forEach((castEvent) => checkAndCountSignature(castEvent, 'cast'));
-  }
+  combatEvents.casts
+    .filter((c) => c.sourceID === playerId && c.abilityGameID !== abilityId)
+    .forEach((c) => checkAndCountSignature(c, 'cast'));
 
   const MIN_CONSISTENCY = 0.5;
   const consistentEffects = Array.from(signatureEffects.entries())
-    .filter(([, effect]) => effect.count >= abilityCasts.length * MIN_CONSISTENCY)
-    .sort((a, b) => b[1].count - a[1].count);
+    .filter(([, effect]) => effect.castIndices.size >= abilityCasts.length * MIN_CONSISTENCY)
+    .sort((a, b) => b[1].castIndices.size - a[1].castIndices.size);
 
-  if (consistentEffects.length === 0) {
-    return null;
+  if (consistentEffects.length > 0) {
+    const [topEffectId, topEffect] = consistentEffects[0];
+    const castCount = topEffect.castIndices.size;
+    const confidence = Math.min(0.95, castCount / abilityCasts.length);
+    const scriptName = SIGNATURE_SCRIPT_ID_TO_NAME.get(topEffectId);
+
+    return {
+      name: scriptName || `Signature Script (Effect ID: ${topEffectId})`,
+      confidence,
+      detectionMethod: 'Post-Cast Pattern Analysis',
+      evidence: [
+        `Analyzed ${abilityCasts.length} casts`,
+        `Found ${consistentEffects.length} consistent effects`,
+        `Top effect: ${topEffect.type} ID ${topEffectId} (${castCount}/${abilityCasts.length} casts)`,
+        ...consistentEffects
+          .slice(0, 3)
+          .map(
+            ([id, eff]) =>
+              `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`,
+          ),
+      ],
+    };
   }
 
-  const [topEffectId, topEffect] = consistentEffects[0];
-  const confidence = Math.min(0.95, topEffect.count / abilityCasts.length);
-  const scriptName = SIGNATURE_SCRIPT_ID_TO_NAME.get(topEffectId);
-
-  return {
-    name: scriptName || `Signature Script (Effect ID: ${topEffectId})`,
-    confidence,
-    detectionMethod: 'Post-Cast Pattern Analysis',
-    evidence: [
-      `Analyzed ${abilityCasts.length} casts`,
-      `Found ${consistentEffects.length} consistent effects`,
-      `Top effect: ${topEffect.type} ID ${topEffectId} (${topEffect.count}/${abilityCasts.length} casts)`,
-      ...consistentEffects
-        .slice(0, 3)
-        .map(([id, eff]) => `${eff.type} ${id}: ${eff.count} occurrences`),
-    ],
-  };
+  return null;
 }
 
 function detectAffixScripts(
@@ -684,31 +659,17 @@ function detectAffixScripts(
       }
     });
 
-    if (logger?.debug) {
-      logger.debug('Affix detection cast window results', {
-        abilityId,
-        playerId,
-        castIndex,
-        triggerStart,
-        buffs: windowBuffs.map((buff) => buff.abilityGameID),
-        debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
-        damage: windowDamage.map((damage) => damage.abilityGameID),
-        heals: windowHeals.map((heal) => heal.abilityGameID),
-        resources: windowResources.map((resource) => resource.abilityGameID),
-      });
-    } else {
-      logDebug(logger, '[ScribingDetection] Affix detection cast window results', {
-        abilityId,
-        playerId,
-        castIndex,
-        triggerStart,
-        buffs: windowBuffs.map((buff) => buff.abilityGameID),
-        debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
-        damage: windowDamage.map((damage) => damage.abilityGameID),
-        heals: windowHeals.map((heal) => heal.abilityGameID),
-        resources: windowResources.map((resource) => resource.abilityGameID),
-      });
-    }
+    logger?.debug?.('Affix detection cast window results', {
+      abilityId,
+      playerId,
+      castIndex,
+      triggerStart,
+      buffs: windowBuffs.map((buff) => buff.abilityGameID),
+      debuffs: windowDebuffs.map((debuff) => debuff.abilityGameID),
+      damage: windowDamage.map((damage) => damage.abilityGameID),
+      heals: windowHeals.map((heal) => heal.abilityGameID),
+      resources: windowResources.map((resource) => resource.abilityGameID),
+    });
   });
 
   const serializeCandidateMap = (
@@ -720,16 +681,6 @@ function detectAffixScripts(
     }));
 
   logger?.debug?.('Affix detection candidate summary', {
-    abilityId,
-    playerId,
-    buffCandidates: serializeCandidateMap(buffCandidates),
-    debuffCandidates: serializeCandidateMap(debuffCandidates),
-    damageCandidates: serializeCandidateMap(damageCandidates),
-    healCandidates: serializeCandidateMap(healCandidates),
-    resourceCandidates: serializeCandidateMap(resourceCandidates),
-  });
-
-  logDebug(logger, '[ScribingDetection] Affix detection candidate summary', {
     abilityId,
     playerId,
     buffCandidates: serializeCandidateMap(buffCandidates),
@@ -894,20 +845,6 @@ function detectAffixScripts(
     })),
   });
 
-  logDebug(logger, '[ScribingDetection] Affix detection aggregated candidates', {
-    abilityId,
-    playerId,
-    aggregatedCandidates: aggregatedCandidates.map((candidate) => ({
-      key: candidate.key,
-      scriptName: candidate.scriptName,
-      dominantType: candidate.dominantType,
-      consistency: candidate.consistency,
-      immediateTriggerRatio: candidate.immediateTriggerRatio,
-      abilityIds: Array.from(candidate.abilityIds).sort((a, b) => a - b),
-      castIndexes: Array.from(candidate.castSet).sort((a, b) => a - b),
-    })),
-  });
-
   aggregatedCandidates.sort((a, b) => {
     // Prioritize candidates with high immediate trigger ratios (>= 0.5 means at least 50% immediate)
     const aHasImmediateTrigger = a.immediateTriggerRatio >= 0.5;
@@ -944,17 +881,6 @@ function detectAffixScripts(
   }
 
   logger?.info?.('Affix detection selected top candidate', {
-    abilityId,
-    playerId,
-    grimoireKey,
-    scriptName: topAggregate.scriptName,
-    dominantType: topAggregate.dominantType,
-    consistency: topAggregate.consistency,
-    abilityIds: Array.from(topAggregate.abilityIds).sort((a, b) => a - b),
-    castIndexes: Array.from(topAggregate.castSet).sort((a, b) => a - b),
-  });
-
-  logDebug(logger, '[ScribingDetection] ✅ SELECTED TOP CANDIDATE (FINAL RESULT)', {
     abilityId,
     playerId,
     grimoireKey,

@@ -144,6 +144,31 @@ function getTrialNameFromBoss(
   // Check boss names FIRST to handle mixed-trial reports
   const cleanBossName = bossName.toLowerCase();
 
+  // Opulent Ordeal bosses (single ranked encounter; individual names are trash, not bosses)
+  if (cleanBossName.includes('opulent trio')) {
+    return 'Opulent Ordeal';
+  }
+
+  // Ossein Cage bosses
+  if (
+    [
+      'gedna relvel',
+      'hall of fleshcraft',
+      'shaper of flesh',
+      'shapers of flesh',
+      'tortured ranyu',
+      'tortured kathutet',
+      'tortured amkaos',
+      'tortured trio',
+      'jynorah',
+      'skorkhif',
+      'blood drinker thisa',
+      'overfiend kazpian',
+    ].some((name) => cleanBossName.includes(name))
+  ) {
+    return 'Ossein Cage';
+  }
+
   // Sanity's Edge bosses
   if (
     ['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela'].some((name) =>
@@ -230,9 +255,15 @@ function getTrialNameFromBoss(
   }
 
   if (
-    ['possessed manticora', 'stonebreaker', 'ozara', 'serpent', 'manticora'].some((name) =>
-      cleanBossName.includes(name),
-    )
+    [
+      'possessed manticora',
+      'possessed mantikora',
+      'stonebreaker',
+      'ozara',
+      'serpent',
+      'mantikora',
+      'manticora',
+    ].some((name) => cleanBossName.includes(name))
   ) {
     return 'Sanctum Ophidia';
   }
@@ -273,6 +304,7 @@ function getTrialNameFromBoss(
     { names: ['hel ra', 'vhrc'], id: 'Hel Ra Citadel' },
     { names: ['aetherian', 'vaa'], id: 'Aetherian Archive' },
     { names: ['ossein cage'], id: 'Ossein Cage' },
+    { names: ['opulent ordeal', 'voo'], id: 'Opulent Ordeal' },
     { names: ['eye of the storm'], id: 'Eye of the Storm' },
   ].find((trial) => trial.names.some((name) => zoneName.includes(name)));
 
@@ -294,6 +326,7 @@ function getTrialHMType(trialName: string): 'per-boss' | 'final-boss-only' | 'sp
     "Sanity's Edge",
     'Lucent Citadel',
     'Ossein Cage',
+    'Opulent Ordeal',
   ];
 
   const specialTrials = ['Cloudrest', 'Asylum'];
@@ -756,7 +789,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       >
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Typography variant="body1" fontWeight="medium">
+            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
               No fights available
             </Typography>
             <Chip
@@ -767,7 +800,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               sx={{ fontSize: '0.7rem', height: 20 }}
             />
           </Box>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             This log contains no fight data, likely due to an upload or parsing issue on ESO Logs.
           </Typography>
           <Button
@@ -1366,6 +1399,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
                       else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 3;
                       else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
+                      else if (zoneName.includes('Opulent Ordeal')) expectedTotalBosses = 1;
 
                       // Determine color based on completion against expected total
                       let color = getThemeColors.circleOrange; // orange - default for low completion

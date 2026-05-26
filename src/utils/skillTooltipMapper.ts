@@ -3,8 +3,7 @@ import React from 'react';
 import type { ScribedSkillData } from '@/features/scribing/types';
 
 import { SkillStat, SkillTooltipProps } from '../components/SkillTooltip';
-// TODO: Implement proper scribing detection services
-// Temporary stubs to prevent compilation errors
+// Scribing detection stubs — full implementation pending unified detection service
 const analyzeScribingSkillWithSignature = (..._args: unknown[]): null => null;
 const getScribingSkillByAbilityId = (
   abilityId: number,
@@ -105,7 +104,7 @@ export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps
     iconUrl,
     headerBadge,
     morphOfName,
-    scribedSkillData: _scribedSkillData,
+    scribedSkillData,
   } = opts;
 
   // Resolve fields, letting the node override parent inheritFrom
@@ -170,6 +169,7 @@ export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps
     morphOf: morphOfName,
     stats,
     description: descriptionNode,
+    scribedSkillData,
   };
 }
 
@@ -466,9 +466,6 @@ export function enrichScribedSkillData(
       };
     }
   }
-
-  // TODO: Add signature script detection here when we have access to combat log data
-  // For now, we can only enhance with basic ability ID lookup
 
   return enhanced;
 }

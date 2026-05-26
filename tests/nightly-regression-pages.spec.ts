@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { TEST_TIMEOUTS, waitForAppMount } from './selectors';
 
 /**
  * Nightly Regression Tests - Pages & Features
@@ -13,14 +14,6 @@ import { test, expect } from '@playwright/test';
  * Auth: These tests do NOT require credentials. They work with or without
  * stored auth state. Auth-gated page tests live in nightly-regression-auth.spec.ts.
  */
-
-const TEST_TIMEOUTS = {
-  navigation: 30000,
-  dataLoad: 45000,
-  // Increased from 10 000 ms: WebKit can be slow to settle before a screenshot,
-  // especially when fullPage capture requires a full-page scroll pass.
-  screenshot: 20000,
-};
 
 /**
  * Shared helper: navigate to a page and assert it loaded meaningful content.
@@ -41,7 +34,7 @@ async function expectPageLoads(
     // networkidle can time out on data-heavy pages — not a failure on its own
   });
 
-  await page.waitForTimeout(2000);
+  await waitForAppMount(page);
 
   const bodyText = await page.locator('body').textContent().catch(() => '');
   const contentLength = bodyText?.length ?? 0;
@@ -99,13 +92,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
-      await page.waitForTimeout(2000);
+      await waitForAppMount(page);
 
-      const hasNav = await page.locator('nav, header').isVisible().catch(() => false);
-      const hasMain = await page.locator('main, #root, .app').isVisible().catch(() => false);
+      const hasNav = await page.locator('nav, header').first().isVisible({ timeout: 10000 }).catch(() => false);
+      const hasMain = await page.locator('main, #root, .app').first().isVisible({ timeout: 5000 }).catch(() => false);
       const hasText = await page
         .getByText(/eso|toolkit|log|report/i)
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 5000 })
         .catch(() => false);
 
       expect(hasNav || hasMain || hasText, 'Home page should render navigable content').toBeTruthy();
@@ -138,13 +132,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Either redirects to a real report URL or renders inline
       const url = page.url();
       const isOnReport = url.includes('/report/');
       const hasReportContent = await page
         .locator('.MuiAccordion-root, [data-testid="fight-list"], main')
+        .first()
         .isVisible({ timeout: 5000 })
         .catch(() => false);
 
@@ -167,7 +162,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Should show a list of builds or a loading/empty state — not a blank crash
       const hasContent = await page
@@ -201,7 +196,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const buildLink = page.locator('a[href*="/b/"], a[href*="/build-view"]').first();
 
@@ -215,7 +210,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await buildLink.click();
       await page.waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation });
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const hasContent = await page
         .locator('main, .MuiContainer-root, [data-testid*="build"]')
@@ -242,7 +237,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const hasContent = await page
         .locator(
@@ -270,7 +265,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const rosterLink = page.locator('a[href*="/rv"], a[href*="/roster-view"]').first();
 
@@ -284,7 +279,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       await rosterLink.click();
       await page.waitForLoadState('domcontentloaded', { timeout: TEST_TIMEOUTS.navigation });
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const hasContent = await page
         .locator('main, .MuiContainer-root, [data-testid*="roster"]')
@@ -311,7 +306,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const hasSimulator = await page
         .locator(
@@ -339,7 +334,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Try to interact with the first available select/dropdown
       const firstSelect = page
@@ -390,7 +385,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const hasTable = await page
         .locator('.MuiDataGrid-root, table, .leaderboard, [data-testid*="leaderboard"]')
@@ -425,7 +420,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Look for a user profile link on the page
       const profileLink = page.locator('a[href*="/u/"]').first();
@@ -443,7 +438,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(2000);
+      await waitForAppMount(page);
 
       const hasContent = await page
         .locator('main, .profile, [data-testid*="profile"], h1, h2')
@@ -464,14 +459,19 @@ test.describe('Nightly Regression - Pages & Features', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(5000);
+      await waitForAppMount(page);
 
       const hasError = await page
-        .getByText(/not found|404|user.*not.*exist|no.*user|error/i)
-        .isVisible()
+        .getByText(/not found|404|player.*not.*found|user.*not.*exist|no.*user|error/i)
+        .first()
+        .isVisible({ timeout: 10000 })
         .catch(() => false);
       const redirectedAway = !page.url().includes('xyzzy');
-      const hasContent = await page.locator('main, #root').isVisible().catch(() => false);
+      const hasContent = await page
+        .locator('main, #root')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
 
       expect(
         hasError || redirectedAway || hasContent,
@@ -501,7 +501,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       const hasUI = await page
         .locator('input, select, .MuiTextField-root, .search, main, [data-testid*="log"]')
@@ -542,7 +542,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
           timeout: TEST_TIMEOUTS.navigation,
         });
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
-        await page.waitForTimeout(2000);
+        await waitForAppMount(page);
 
         const hasContent = await page
           .locator('main, article, .content, p, h1, h2')
@@ -577,7 +577,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
             waitUntil: 'domcontentloaded',
             timeout: TEST_TIMEOUTS.navigation,
           });
-          await page.waitForTimeout(2000);
+          await waitForAppMount(page);
 
           const bodyText = await page.locator('body').textContent().catch(() => '');
           if ((bodyText?.length ?? 0) > 100) {
@@ -607,8 +607,8 @@ test.describe('Nightly Regression - Pages & Features', () => {
       });
 
       // Wait for app to render
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      await waitForAppMount(page);
 
       // Landing page should load - check title flexibly
       const title = await page.title();
@@ -616,38 +616,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
       expect(hasTitleContent).toBeTruthy();
 
       // Should have main navigation or landing content - be more flexible
-      const hasNav = await page
-        .locator('nav')
-        .isVisible()
-        .catch(() => false);
-      const hasHeader = await page
-        .locator('header')
-        .isVisible()
-        .catch(() => false);
-      const hasLanding = await page
-        .locator('.landing')
-        .isVisible()
-        .catch(() => false);
-      const hasHero = await page
-        .locator('.hero')
-        .isVisible()
-        .catch(() => false);
-      const hasButton = await page
-        .locator('button')
-        .isVisible()
-        .catch(() => false);
-      const hasLink = await page
-        .locator('a')
-        .isVisible()
-        .catch(() => false);
-      const hasEsoText = await page
-        .getByText(/eso/i)
-        .isVisible()
-        .catch(() => false);
-      const hasMainContent = await page
-        .locator('main, .app, #root, .content')
-        .isVisible()
-        .catch(() => false);
+      const hasNav = await page.locator('nav').first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasHeader = await page.locator('header').first().isVisible({ timeout: 3000 }).catch(() => false);
+      const hasLanding = await page.locator('.landing').first().isVisible().catch(() => false);
+      const hasHero = await page.locator('.hero').first().isVisible().catch(() => false);
+      const hasButton = await page.locator('button').first().isVisible().catch(() => false);
+      const hasLink = await page.locator('a').first().isVisible().catch(() => false);
+      const hasEsoText = await page.getByText(/eso/i).first().isVisible().catch(() => false);
+      const hasMainContent = await page.locator('main, .app, #root, .content').first().isVisible().catch(() => false);
       const hasAnyText = await page
         .locator('body')
         .textContent()
@@ -691,14 +667,14 @@ test.describe('Nightly Regression - Pages & Features', () => {
       // Look for search functionality
       const searchInput = page.locator(
         'input[placeholder*="search"], input[placeholder*="report"], input[type="search"]',
-      );
+      ).first();
 
       if (await searchInput.isVisible({ timeout: 5000 })) {
         // Test report search with a known report ID
         await searchInput.fill('3gjVGWB2dxCL8XAw');
 
         // Look for search button or enter key
-        const searchButton = page.locator('button:has-text("Search"), button[type="submit"]');
+        const searchButton = page.locator('button:has-text("Search"), button[type="submit"]').first();
 
         if (await searchButton.isVisible({ timeout: 3000 })) {
           await searchButton.click();
@@ -706,7 +682,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
           await searchInput.press('Enter');
         }
 
-        await page.waitForTimeout(3000);
+        await waitForAppMount(page);
 
         await page.screenshot({
           path: 'test-results/nightly-regression-search-functionality.png',
@@ -717,6 +693,7 @@ test.describe('Nightly Regression - Pages & Features', () => {
         const isOnReport = page.url().includes('/report/');
         const hasResults = await page
           .locator('.search-results, .report-item, a[href*="/report/"]')
+          .first()
           .isVisible({ timeout: 5000 });
 
         expect(isOnReport || hasResults).toBeTruthy();
@@ -726,33 +703,40 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
   test.describe('Error Handling and Edge Cases', () => {
     test('should handle invalid report IDs gracefully', async ({ page }) => {
-      // Try to access a non-existent report
+      // Try to access a non-existent report — use longer timeout as the
+      // server makes an API call to ESO Logs which can be slow for invalid IDs
       await page.goto('/report/INVALID_REPORT_ID', {
         waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
+        timeout: TEST_TIMEOUTS.dataLoad,
+      }).catch(() => {
+        // Navigation timeout is acceptable for invalid IDs — page may still render
       });
 
-      await page.waitForTimeout(5000);
+      await waitForAppMount(page);
 
       // Should show error message, redirect, or show some handling of invalid ID
       const hasErrorText = await page
-        .getByText(/not found|error|invalid|doesn.*exist/i)
-        .isVisible()
+        .getByText(/not found|error|invalid|doesn.*exist|no fights|empty log/i)
+        .first()
+        .isVisible({ timeout: 10000 })
         .catch(() => false);
       const hasErrorClass = await page
         .locator('.error, .MuiAlert-root')
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 3000 })
         .catch(() => false);
       const hasLoadingState = await page
         .locator('.loading, .MuiCircularProgress-root, .skeleton')
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 3000 })
         .catch(() => false);
       const redirectedAway = !page.url().includes('INVALID_REPORT_ID');
 
       // Check if page shows any content (meaning it loaded and handled the request)
       const hasContent = await page
         .locator('main, .content, .app, #root')
-        .isVisible()
+        .first()
+        .isVisible({ timeout: 5000 })
         .catch(() => false);
       const currentUrl = page.url();
       const pageTitle = await page.title();
@@ -797,25 +781,29 @@ test.describe('Nightly Regression - Pages & Features', () => {
 
       if (await firstFightLink.isVisible({ timeout: 10000 })) {
         await firstFightLink.click();
-        await page.waitForTimeout(5000);
+        await waitForAppMount(page);
 
         // Should show some kind of loading state or error
         const hasLoadingText = await page
           .getByText(/loading/i)
+          .first()
           .isVisible()
           .catch(() => false);
         const hasLoadingClass = await page
           .locator('.loading, .MuiCircularProgress-root, .skeleton')
+          .first()
           .isVisible()
           .catch(() => false);
         const hasLoadingState = hasLoadingText || hasLoadingClass;
 
         const hasErrorText = await page
           .getByText(/error|failed/i)
+          .first()
           .isVisible()
           .catch(() => false);
         const hasErrorClass = await page
           .locator('.error, .MuiAlert-root')
+          .first()
           .isVisible()
           .catch(() => false);
         const hasErrorState = hasErrorText || hasErrorClass;

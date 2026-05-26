@@ -848,6 +848,10 @@ export const RosterBuilderPage: React.FC = () => {
   // roleColors moved to RosterCardSections
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    document.title = 'Roster Builder | ESO Toolkit';
+  }, []);
+
   // Use the precomputed glass style constant — stable reference prevents MUI
   // from regenerating emotion CSS classes on every render.
   const glassTextField = isDarkMode ? GLASS_SX_DARK : GLASS_SX_LIGHT;
@@ -1546,7 +1550,7 @@ export const RosterBuilderPage: React.FC = () => {
   }, [roster]);
 
   return (
-    <Container component="main" maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Development Banner */}
       <WorkInProgressDisclaimer featureName="Roster Builder" sx={{ mb: 3 }} />
 
@@ -2577,10 +2581,10 @@ export const RosterBuilderPage: React.FC = () => {
                   popper: {
                     disablePortal: true,
                   },
-                }}
-                ChipProps={{
-                  onMouseDown: (event) => {
-                    event.stopPropagation();
+                  chip: {
+                    onMouseDown: (event: React.MouseEvent) => {
+                      event.stopPropagation();
+                    },
                   },
                 }}
                 renderInput={(params) => (
@@ -2596,9 +2600,9 @@ export const RosterBuilderPage: React.FC = () => {
                     sx={glassTextField}
                   />
                 )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => {
-                    const { key, ...chipProps } = getTagProps({ index });
+                renderValue={(value, getItemProps) =>
+                  (value as string[]).map((option, index) => {
+                    const { key, ...chipProps } = getItemProps({ index });
                     return (
                       <Chip
                         label={option}

@@ -368,7 +368,7 @@ export const DeathEventPanelSkeleton: React.FC<{
   };
 
   return (
-    <Box mt={2} data-testid={dataTestId}>
+    <Box data-testid={dataTestId} sx={{ mt: 2 }}>
       {/* ═══ Header ═══ */}
       <Box sx={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: 1.5, mb: 3 }}>
         {/* "Deaths" title — with mr:0.5 matching real Typography */}

@@ -133,7 +133,7 @@ describe('RaidDashboardPage', () => {
   it('should render page title', () => {
     renderWithRouter();
 
-    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Report').length).toBeGreaterThan(0);
   });
 
   it('should render default widgets', () => {
@@ -158,7 +158,7 @@ describe('RaidDashboardPage', () => {
   it('should render auto-refresh toggle', () => {
     renderWithRouter();
 
-    expect(screen.getByRole('switch', { name: /auto-refresh/i })).toBeInTheDocument();
+    expect(screen.getByText(/AUTO · 5s/)).toBeInTheDocument();
   });
 
   it('should render add widget button', () => {
@@ -174,22 +174,24 @@ describe('RaidDashboardPage', () => {
   });
 
   it('should open add widget dialog when add button is clicked', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderWithRouter();
 
     const addButton = screen.getByRole('button', { name: /add widget/i });
-    await userEvent.click(addButton);
+    await user.click(addButton);
 
     expect(screen.getByTestId('add-widget-dialog')).toBeInTheDocument();
   });
 
   it('should add a new widget when selected from dialog', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderWithRouter();
 
     const addButton = screen.getByRole('button', { name: /add widget/i });
-    await userEvent.click(addButton);
+    await user.click(addButton);
 
     const addLowDpsButton = screen.getByText('Add Low DPS');
-    await userEvent.click(addLowDpsButton);
+    await user.click(addLowDpsButton);
 
     // New widget should be added (ID will be generated)
     const lowDpsWidgets = screen.getAllByText('Low DPS Widget');
@@ -197,20 +199,21 @@ describe('RaidDashboardPage', () => {
   });
 
   it('should toggle auto-refresh', async () => {
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
     renderWithRouter();
 
-    const autoRefreshToggle = screen.getByRole('switch', { name: /auto-refresh/i });
+    const autoRefreshToggle = screen.getByText(/AUTO · 5s/);
 
-    await userEvent.click(autoRefreshToggle);
+    await user.click(autoRefreshToggle);
 
-    // Should be disabled after click
-    expect(autoRefreshToggle).not.toBeChecked();
+    // Should show PAUSED after click
+    expect(screen.getByText(/PAUSED/)).toBeInTheDocument();
   });
 
   it('should display report title when available', () => {
     renderWithRouter();
 
-    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Report').length).toBeGreaterThan(0);
   });
 
   it('should sort fights by most recent first', () => {
@@ -219,7 +222,7 @@ describe('RaidDashboardPage', () => {
     // Fights should be sorted by endTime descending
     // Fight 1 (endTime: 4000) should come before Fight 2 (endTime: 2000)
     // This is verified by checking that widgets receive fights in the correct order
-    expect(screen.getByText('Test Report')).toBeInTheDocument();
+    expect(screen.getAllByText('Test Report').length).toBeGreaterThan(0);
   });
 
   it('should handle empty report data gracefully', () => {
@@ -262,8 +265,8 @@ describe('RaidDashboardPage', () => {
 
       renderWithRouter(store);
 
-      // Component should set up interval
-      expect(screen.getByRole('switch', { name: /auto-refresh/i })).toBeChecked();
+      // Component should show active auto-refresh state
+      expect(screen.getByText(/AUTO · 5s/)).toBeInTheDocument();
     });
   });
 

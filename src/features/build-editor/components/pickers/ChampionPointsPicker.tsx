@@ -224,10 +224,10 @@ const CPSlot: React.FC<CPSlotProps> = ({
           {entry ? (
             <Typography
               variant="caption"
-              fontWeight={700}
-              display="block"
               noWrap
               sx={{
+                fontWeight: 700,
+                display: 'block',
                 color: tree.color,
                 fontSize: 12,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
@@ -240,8 +240,8 @@ const CPSlot: React.FC<CPSlotProps> = ({
           ) : (
             <Typography
               variant="caption"
-              display="block"
               sx={{
+                display: 'block',
                 color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.28)',
                 fontSize: 11,
                 fontFamily: 'Space Grotesk, Inter, system-ui',
@@ -303,10 +303,10 @@ const PassiveRow: React.FC<PassiveRowProps> = ({
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           variant="caption"
-          fontWeight={600}
-          display="block"
           noWrap
           sx={{
+            fontWeight: 600,
+            display: 'block',
             fontSize: 11,
             fontFamily: 'Space Grotesk, Inter, system-ui',
             color: points > 0 ? 'text.primary' : 'text.secondary',

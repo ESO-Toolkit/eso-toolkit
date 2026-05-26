@@ -12,9 +12,9 @@
 import BoltIcon from '@mui/icons-material/Bolt';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import FileCopyIcon from '@mui/icons-material/FileCopy';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
@@ -150,8 +150,7 @@ export const SetupList: React.FC<SetupListProps> = ({
         >
           <Typography
             variant="caption"
-            color="text.secondary"
-            sx={{ fontSize: '0.65rem', fontWeight: 600 }}
+            sx={{ color: 'text.secondary', fontSize: '0.65rem', fontWeight: 600 }}
           >
             {filtered.length}/{setups.length}
           </Typography>
@@ -275,7 +274,7 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         {/* Content */}
         <Stack spacing={0.4} sx={{ flex: 1, minWidth: 0 }}>
           {/* Row 1: name + condition */}
-          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
             <Typography
               variant="body2"
               sx={{
@@ -290,8 +289,7 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
             {conditionSummary && (
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                sx={{ color: 'text.secondary', flexShrink: 0, whiteSpace: 'nowrap' }}
               >
                 · {conditionSummary}
               </Typography>
@@ -308,11 +306,10 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
           <Stack
             direction="row"
             spacing={0.5}
-            alignItems="center"
-            sx={{ flexWrap: 'wrap', rowGap: 0.3 }}
+            sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.3 }}
           >
             {progressSections.length === 0 ? (
-              <Typography variant="caption" color="text.disabled">
+              <Typography variant="caption" sx={{ color: 'text.disabled' }}>
                 Empty
               </Typography>
             ) : (
@@ -327,6 +324,7 @@ const LoadoutRow: React.FC<LoadoutRowProps> = ({
         <IconButton
           size="small"
           onClick={handleMenuOpen}
+          aria-label="Setup actions"
           sx={{
             flexShrink: 0,
             opacity: 0.5,
@@ -434,11 +432,11 @@ const BadgeBox: React.FC<{ selected: boolean; children: React.ReactNode }> = ({
 );
 
 const SkillStrip: React.FC<{ bar?: SkillBar; label: string }> = ({ bar, label }) => (
-  <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+  <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', minWidth: 0 }}>
     <Typography
       variant="caption"
-      color="text.secondary"
       sx={{
+        color: 'text.secondary',
         width: 14,
         flexShrink: 0,
         fontWeight: 700,
@@ -449,7 +447,7 @@ const SkillStrip: React.FC<{ bar?: SkillBar; label: string }> = ({ bar, label })
     >
       {label}
     </Typography>
-    <Stack direction="row" spacing={0.4} useFlexGap alignItems="center">
+    <Stack direction="row" spacing={0.4} useFlexGap sx={{ alignItems: 'center' }}>
       {SKILL_SLOTS.map((slot) => (
         <AbilityIcon key={slot} abilityId={bar?.[slot]} size={24} />
       ))}

@@ -182,7 +182,7 @@ function parseExistingFiles() {
 function buildTsBlock(exportVar, name, setType, bonuses) {
   // Use double quotes for name/icon if they contain a single quote
   const nameHasApostrophe = name.includes("'");
-  const nameQ = nameHasApostrophe ? `"${name}"` : `'${name}'`;
+  const nameQ = nameHasApostrophe ? `"${name.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"` : `'${name}'`;
 
   // Determine if any bonus string contains a single quote — use double quotes then
   // Also collapse embedded newlines (from API paragraph breaks) to spaces
@@ -192,7 +192,7 @@ function buildTsBlock(exportVar, name, setType, bonuses) {
         .replace(/\r?\n/g, ' ')
         .replace(/\s{2,}/g, ' ')
         .trim();
-      if (clean.includes("'")) return `    "${clean}",`;
+      if (clean.includes("'")) return `    "${clean.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}",`;
       return `    '${clean}',`;
     })
     .join('\n');

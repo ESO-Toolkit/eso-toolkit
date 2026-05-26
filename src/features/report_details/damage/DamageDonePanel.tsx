@@ -50,7 +50,6 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
   const selectedTargetIds = useSelectedTargetIds();
   const actorsById = useSelector(selectActorsById);
 
-  // Get damage over time data
   const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask({
     context: resolvedContext,
   });
@@ -86,14 +85,14 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
       });
     }
 
-    // Add NPCs
+    // Add NPCs (enemyNPCs are objects with an .id property, not bare numbers)
     if (fight.enemyNPCs) {
-      fight.enemyNPCs.forEach((npcId) => {
-        if (typeof npcId === 'number') {
-          const actor = actorsById[npcId];
+      fight.enemyNPCs.forEach((npc) => {
+        if (npc && typeof npc.id === 'number') {
+          const actor = actorsById[npc.id];
           targets.push({
-            id: npcId,
-            name: resolveActorName(actor, npcId),
+            id: npc.id,
+            name: resolveActorName(actor, npc.id),
           });
         }
       });
@@ -383,6 +382,14 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
 
   const orderedPlayerIds = useMemo(() => damageRows.map((row) => row.id), [damageRows]);
 
+  const resolvePlayerName = useCallback(
+    (playerId: number, fallbackName: string): string => {
+      const actor = actorsById[playerId];
+      return resolveActorName(actor, playerId, fallbackName);
+    },
+    [actorsById],
+  );
+
   // Show table skeleton while data is being fetched
   if (isLoading) {
     return <DamageDoneTableSkeleton rowCount={10} />;
@@ -409,6 +416,9 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
         selectedTargetIds={selectedTargetIds}
         availableTargets={availableTargets}
         onPlayerClick={handlePlayerClick}
+        context={resolvedContext}
+        fight={fight}
+        resolvePlayerName={resolvePlayerName}
       />
       {modalPlayerId !== null && (
         <PlayerCardModal

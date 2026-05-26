@@ -37,6 +37,8 @@ export interface SkillTooltipProps {
   stats?: SkillStat[];
   // Rich description body; accept ReactNode so callers can colorize parts
   description: React.ReactNode;
+  // Pre-resolved scribing data from the tooltip mapper (name-based detection)
+  scribedSkillData?: import('../features/scribing/types').ScribedSkillData;
   // Fight and player context for automatic scribing detection
   fightId?: string;
   playerId?: number;
@@ -150,6 +152,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   morphOf,
   stats,
   description,
+  scribedSkillData,
   fightId,
   playerId,
 }) => {
@@ -157,15 +160,19 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const logger = useLogger();
   const isDark = theme.palette.mode === 'dark';
 
-  // Always use automatic scribing detection when fight and player context available
+  // Try automatic scribing detection when fight and player context available
   const { scribedSkillData: detectedScribingData } = useSkillScribingData(
     fightId,
     playerId,
     abilityId,
   );
 
-  // Use detected scribing data
-  const finalScribedData = detectedScribingData;
+  // Prefer hook-detected data only when it has meaningful results (was actually cast),
+  // otherwise the prop-based data from PlayerCard's worker detection is more accurate
+  const finalScribedData =
+    (detectedScribingData?.wasCastInFight ? detectedScribingData : null) ??
+    scribedSkillData ??
+    null;
 
   // Ensure at least one icon source is provided
   if (!iconUrl && !iconSlug) {
@@ -317,7 +324,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
             mb: 1.25,
           }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             {resolvedIconUrl && (
               <Box
                 sx={{
@@ -632,7 +639,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                               opacity: 0.75,
                             }}
                           >
-                            {Math.round(finalScribedData.recipe.confidence * 100)}% match confidence
+                            {Math.floor(finalScribedData.recipe.confidence * 100)}% match confidence
                           </Typography>
                         )}
                       </Box>
@@ -653,31 +660,55 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       borderLeft: `2px solid ${alpha(theme.palette.primary.main, 0.3)}`,
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: 'text.primary',
-                        fontSize: '0.72rem',
-                        fontWeight: 600,
-                        display: 'block',
-                      }}
-                    >
-                      {finalScribedData.signatureScript.name}
-                    </Typography>
-                    {finalScribedData.signatureScript.evidence &&
-                      finalScribedData.signatureScript.evidence.length > 0 && (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: 'text.secondary',
-                            fontSize: '0.64rem',
-                            fontStyle: 'italic',
-                            opacity: 0.75,
-                          }}
-                        >
-                          Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
-                        </Typography>
-                      )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.primary',
+                          fontSize: '0.72rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {finalScribedData.signatureScript.name}
+                      </Typography>
+                      {finalScribedData.signatureScript.confidence != null &&
+                        finalScribedData.signatureScript.confidence < 1.0 && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: '0.6rem',
+                              fontStyle: 'italic',
+                              opacity: 0.7,
+                            }}
+                          >
+                            ({Math.floor(finalScribedData.signatureScript.confidence * 100)}%)
+                          </Typography>
+                        )}
+                    </Box>
+                    {(finalScribedData.signatureScript.detectionMethod ||
+                      (finalScribedData.signatureScript.evidence &&
+                        finalScribedData.signatureScript.evidence.length > 0)) && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: '0.64rem',
+                          fontStyle: 'italic',
+                          opacity: 0.75,
+                        }}
+                      >
+                        {[
+                          finalScribedData.signatureScript.detectionMethod &&
+                            `via ${finalScribedData.signatureScript.detectionMethod}`,
+                          finalScribedData.signatureScript.evidence &&
+                            finalScribedData.signatureScript.evidence.length > 0 &&
+                            finalScribedData.signatureScript.evidence[0],
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
               )}
@@ -709,9 +740,9 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                         borderLeft: `2px solid ${alpha(theme.palette.secondary.main, 0.3)}`,
                       }}
                     >
-                      {finalScribedData.affixScripts.map(
-                        (affixScript: ScribedSkillAffixInfo, index: number) => (
-                          <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {finalScribedData.affixScripts.map((affixScript: ScribedSkillAffixInfo) => (
+                        <Box key={affixScript.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <Typography
                               variant="caption"
                               sx={{
@@ -722,7 +753,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             >
                               {affixScript.name}
                             </Typography>
-                            {affixScript.confidence && affixScript.confidence < 1.0 && (
+                            {affixScript.confidence != null && affixScript.confidence < 1.0 && (
                               <Typography
                                 variant="caption"
                                 sx={{
@@ -732,12 +763,38 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                                   opacity: 0.7,
                                 }}
                               >
-                                ({Math.round(affixScript.confidence * 100)}%)
+                                ({Math.floor(affixScript.confidence * 100)}%)
                               </Typography>
                             )}
                           </Box>
-                        ),
-                      )}
+                          {(affixScript.detectionMethod ||
+                            (affixScript.evidence?.abilityNames &&
+                              affixScript.evidence.abilityNames.length > 0)) && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.64rem',
+                                fontStyle: 'italic',
+                                opacity: 0.75,
+                                display: 'block',
+                              }}
+                            >
+                              {[
+                                affixScript.detectionMethod && `via ${affixScript.detectionMethod}`,
+                                affixScript.evidence?.abilityNames &&
+                                  affixScript.evidence.abilityNames.length > 0 &&
+                                  `Sources: ${affixScript.evidence.abilityNames.join(', ')}`,
+                                affixScript.evidence?.occurrenceCount != null &&
+                                  affixScript.evidence.occurrenceCount > 0 &&
+                                  `(${affixScript.evidence.occurrenceCount} occurrences)`,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </Typography>
+                          )}
+                        </Box>
+                      ))}
                     </Stack>
                   ) : (
                     <Typography
@@ -755,8 +812,8 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 </Box>
               ) : null}
 
-              {/* Effects List - only show if skill was cast */}
-              {finalScribedData.wasCastInFight !== false && (
+              {/* Effects List - only show if skill was cast and effects detected */}
+              {finalScribedData.wasCastInFight !== false && finalScribedData.effects.length > 0 && (
                 <Box>
                   <ScribingSectionLabel color={theme.palette.text.primary}>
                     Effects

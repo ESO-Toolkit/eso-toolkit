@@ -1,4 +1,7 @@
+import SearchIcon from '@mui/icons-material/Search';
+import SortIcon from '@mui/icons-material/Sort';
 import TuneIcon from '@mui/icons-material/Tune';
+import ViewStreamIcon from '@mui/icons-material/ViewStream';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 import {
   Badge,
@@ -6,15 +9,15 @@ import {
   Button,
   IconButton,
   Typography,
-  TextField,
+  InputBase,
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
-  Stack,
   Chip,
   Tooltip,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useState, useMemo, useCallback } from 'react';
 
 import { PlayersSkeleton } from '../../../components/PlayersSkeleton';
@@ -138,6 +141,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     potionResultsByPlayer,
     rolesByPlayerId,
   }) => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('role');
     const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
@@ -191,7 +196,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const maxStamina = maxStaminaByPlayer?.[String(player.id)] ?? 0;
         const maxMagicka = maxMagickaByPlayer?.[String(player.id)] ?? 0;
         const distanceTraveled = distanceByPlayer?.[String(player.id)] ?? null;
-        const playerGearSets = (playerDataSet ?? [])
+        const playerGearSets = [...(playerDataSet ?? [])]
           .sort((a, b) => b.count - a.count)
           .filter((s) => s.count > 0);
         const critDamageSummary = criticalDamageByPlayer?.[String(player.id)];
@@ -344,127 +349,344 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         data-testid="players-panel-view"
         sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
       >
-        {/* Controls */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
-          <TextField
-            label="Search players"
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ minWidth: { sm: 200 } }}
-          />
+        {/* Controls toolbar */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 1.5,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: '14px',
+            background: isDarkMode
+              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.7) 50%, rgba(51, 65, 85, 0.6) 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: isDarkMode
+              ? '1px solid rgba(56, 189, 248, 0.15)'
+              : '1px solid rgba(59, 130, 246, 0.12)',
+            boxShadow: isDarkMode
+              ? '0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03)'
+              : '0 2px 12px rgba(15, 23, 42, 0.06)',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          {/* Search */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flex: { xs: 1, sm: '0 1 220px' },
+              borderRadius: '10px',
+              px: 1.5,
+              py: 0.75,
+              background: isDarkMode
+                ? alpha(theme.palette.common.white, 0.04)
+                : alpha(theme.palette.common.black, 0.03),
+              border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.1)'}`,
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:focus-within': {
+                borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.35)',
+                boxShadow: isDarkMode
+                  ? '0 0 0 2px rgba(56, 189, 248, 0.15)'
+                  : '0 0 0 2px rgba(59, 130, 246, 0.1)',
+                background: isDarkMode
+                  ? alpha(theme.palette.common.white, 0.06)
+                  : alpha(theme.palette.common.black, 0.01),
+              },
+            }}
+          >
+            <SearchIcon sx={{ fontSize: '1.1rem', color: 'text.secondary', opacity: 0.6 }} />
+            <InputBase
+              placeholder="Search players..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{
+                flex: 1,
+                fontSize: '0.825rem',
+                fontWeight: 500,
+                color: 'text.primary',
+                '& input::placeholder': {
+                  color: isDarkMode ? '#94a3b8' : '#64748b',
+                  opacity: 1,
+                },
+              }}
+              inputProps={{ 'aria-label': 'Search players' }}
+            />
+          </Box>
 
-          <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
-            <InputLabel>Sort by</InputLabel>
+          {/* Sort */}
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 } }}>
             <Select
               value={sortOption}
-              label="Sort by"
               onChange={(e) => setSortOption(e.target.value as SortOption)}
+              displayEmpty
+              startAdornment={
+                <SortIcon
+                  sx={{ fontSize: '1rem', mr: 0.75, color: 'text.secondary', opacity: 0.6 }}
+                />
+              }
+              sx={{
+                fontSize: '0.825rem',
+                fontWeight: 500,
+                borderRadius: '10px',
+                background: isDarkMode
+                  ? alpha(theme.palette.common.white, 0.04)
+                  : alpha(theme.palette.common.black, 0.03),
+                border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.1)'}`,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                '&:hover': {
+                  background: isDarkMode
+                    ? alpha(theme.palette.common.white, 0.06)
+                    : alpha(theme.palette.common.black, 0.05),
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                },
+                '&.Mui-focused': {
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.35)',
+                  boxShadow: isDarkMode
+                    ? '0 0 0 2px rgba(56, 189, 248, 0.15)'
+                    : '0 0 0 2px rgba(59, 130, 246, 0.1)',
+                },
+                '& .MuiSelect-select': {
+                  py: 0.875,
+                  pl: 0.5,
+                },
+              }}
+              aria-label="Sort by"
             >
-              <MenuItem value="role">Role</MenuItem>
+              <MenuItem value="role">Default</MenuItem>
               <MenuItem value="alphabetical">Alphabetical</MenuItem>
-              <MenuItem value="stamina-high">Stamina (High to Low)</MenuItem>
-              <MenuItem value="stamina-low">Stamina (Low to High)</MenuItem>
-              <MenuItem value="hp-high">HP (High to Low)</MenuItem>
-              <MenuItem value="hp-low">HP (Low to High)</MenuItem>
-              <MenuItem value="magicka-high">Magicka (High to Low)</MenuItem>
-              <MenuItem value="magicka-low">Magicka (Low to High)</MenuItem>
+              <MenuItem value="stamina-high">Stamina (High → Low)</MenuItem>
+              <MenuItem value="stamina-low">Stamina (Low → High)</MenuItem>
+              <MenuItem value="hp-high">HP (High → Low)</MenuItem>
+              <MenuItem value="hp-low">HP (Low → High)</MenuItem>
+              <MenuItem value="magicka-high">Magicka (High → Low)</MenuItem>
+              <MenuItem value="magicka-low">Magicka (Low → High)</MenuItem>
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: { sm: 120 } }}>
-            <InputLabel>Filter by role</InputLabel>
+          {/* Role filter */}
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 140 } }}>
             <Select
               value={roleFilter}
-              label="Filter by role"
               onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+              displayEmpty
+              startAdornment={
+                <ViewStreamIcon
+                  sx={{ fontSize: '1rem', mr: 0.75, color: 'text.secondary', opacity: 0.6 }}
+                />
+              }
+              sx={{
+                fontSize: '0.825rem',
+                fontWeight: 500,
+                borderRadius: '10px',
+                background: isDarkMode
+                  ? alpha(theme.palette.common.white, 0.04)
+                  : alpha(theme.palette.common.black, 0.03),
+                border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.1)'}`,
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                '&:hover': {
+                  background: isDarkMode
+                    ? alpha(theme.palette.common.white, 0.06)
+                    : alpha(theme.palette.common.black, 0.05),
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.25)' : 'rgba(59, 130, 246, 0.2)',
+                },
+                '&.Mui-focused': {
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.35)',
+                  boxShadow: isDarkMode
+                    ? '0 0 0 2px rgba(56, 189, 248, 0.15)'
+                    : '0 0 0 2px rgba(59, 130, 246, 0.1)',
+                },
+                '& .MuiSelect-select': {
+                  py: 0.875,
+                  pl: 0.5,
+                },
+              }}
+              aria-label="Filter by role"
             >
               <MenuItem value="all">All Roles</MenuItem>
               <MenuItem value="dps">DPS</MenuItem>
               <MenuItem value="tank">Tank</MenuItem>
               <MenuItem value="healer">Healer</MenuItem>
-              <MenuItem value="supports">Supports (Tanks & Healers)</MenuItem>
+              <MenuItem value="supports">Supports</MenuItem>
             </Select>
           </FormControl>
 
-          <Tooltip title="Choose which stat chips are shown on each player card" arrow>
-            <Badge
-              badgeContent={visibleChips.length}
-              color="primary"
-              invisible={visibleChips.length === STAT_CHIP_IDS.length}
-              max={99}
-            >
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={handleOpenChipModal}
-                startIcon={<TuneIcon />}
-                aria-label="Customize stat chips"
-                sx={{ alignSelf: 'center', textTransform: 'none', whiteSpace: 'nowrap' }}
+          {/* Spacer on desktop */}
+          <Box sx={{ flex: 1, display: { xs: 'none', sm: 'block' } }} />
+
+          {/* Action buttons */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Tooltip title="Choose which stat chips are shown on each player card" arrow>
+              <Badge
+                badgeContent={visibleChips.length}
+                color="primary"
+                invisible={visibleChips.length === STAT_CHIP_IDS.length}
+                max={99}
               >
-                Stats
-              </Button>
-            </Badge>
-          </Tooltip>
+                <Button
+                  size="small"
+                  onClick={handleOpenChipModal}
+                  startIcon={<TuneIcon sx={{ fontSize: '1rem !important' }} />}
+                  aria-label="Customize stat chips"
+                  sx={{
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.8rem',
+                    fontWeight: 500,
+                    borderRadius: '10px',
+                    px: 1.5,
+                    py: 0.75,
+                    color: isDarkMode ? '#e2e8f0' : '#334155',
+                    background: isDarkMode
+                      ? alpha(theme.palette.common.white, 0.04)
+                      : alpha(theme.palette.common.black, 0.03),
+                    border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.1)'}`,
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      background: isDarkMode
+                        ? 'rgba(56, 189, 248, 0.1)'
+                        : 'rgba(59, 130, 246, 0.08)',
+                      borderColor: isDarkMode
+                        ? 'rgba(56, 189, 248, 0.25)'
+                        : 'rgba(59, 130, 246, 0.2)',
+                      color: isDarkMode ? '#93c5fd' : '#2563eb',
+                    },
+                  }}
+                >
+                  Stats
+                </Button>
+              </Badge>
+            </Tooltip>
 
-          <Tooltip
-            title={
-              metricsLayout === 'wrap'
-                ? 'Metrics: wrap view — click to switch to scroll view'
-                : 'Metrics: scroll view — click to switch to wrap view'
-            }
-            arrow
-          >
-            <IconButton
-              size="small"
-              onClick={toggleMetricsLayout}
-              sx={{
-                alignSelf: 'center',
-                border: '1px solid',
-                borderColor: metricsLayout === 'wrap' ? 'primary.main' : 'divider',
-                borderRadius: 1,
-                px: 1,
-                color: metricsLayout === 'wrap' ? 'primary.main' : 'inherit',
-                bgcolor: metricsLayout === 'wrap' ? 'primary.main' : 'transparent',
-                '&:hover': {
-                  bgcolor: metricsLayout === 'wrap' ? 'primary.dark' : undefined,
-                },
-              }}
-              aria-label={
+            <Tooltip
+              title={
                 metricsLayout === 'wrap'
-                  ? 'Switch to scroll view for metrics'
-                  : 'Switch to wrap view for metrics'
+                  ? 'Metrics: wrap view — click to switch to scroll view'
+                  : 'Metrics: scroll view — click to switch to wrap view'
               }
-              aria-pressed={metricsLayout === 'wrap'}
+              arrow
             >
-              <WrapTextIcon
-                fontSize="small"
-                sx={{ color: metricsLayout === 'wrap' ? 'primary.contrastText' : 'inherit' }}
-              />
-            </IconButton>
-          </Tooltip>
-        </Stack>
+              <IconButton
+                size="small"
+                onClick={toggleMetricsLayout}
+                sx={{
+                  borderRadius: '10px',
+                  p: 0.875,
+                  color: isDarkMode ? '#e2e8f0' : '#334155',
+                  background:
+                    metricsLayout === 'wrap'
+                      ? isDarkMode
+                        ? alpha('#38bdf8', 0.15)
+                        : alpha('#3b82f6', 0.1)
+                      : isDarkMode
+                        ? alpha(theme.palette.common.white, 0.04)
+                        : alpha(theme.palette.common.black, 0.03),
+                  border: `1px solid ${
+                    metricsLayout === 'wrap'
+                      ? isDarkMode
+                        ? 'rgba(56, 189, 248, 0.3)'
+                        : 'rgba(59, 130, 246, 0.25)'
+                      : isDarkMode
+                        ? 'rgba(56, 189, 248, 0.12)'
+                        : 'rgba(59, 130, 246, 0.1)'
+                  }`,
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    background:
+                      metricsLayout === 'wrap'
+                        ? isDarkMode
+                          ? alpha('#38bdf8', 0.22)
+                          : alpha('#3b82f6', 0.15)
+                        : isDarkMode
+                          ? alpha(theme.palette.common.white, 0.08)
+                          : alpha(theme.palette.common.black, 0.06),
+                    borderColor: isDarkMode
+                      ? 'rgba(56, 189, 248, 0.25)'
+                      : 'rgba(59, 130, 246, 0.2)',
+                  },
+                }}
+                aria-label={
+                  metricsLayout === 'wrap'
+                    ? 'Switch to scroll view for metrics'
+                    : 'Switch to wrap view for metrics'
+                }
+                aria-pressed={metricsLayout === 'wrap'}
+              >
+                <WrapTextIcon sx={{ fontSize: '1.1rem' }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
 
-        {/* Results summary */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <Typography variant="body2" color="text.secondary">
-            Showing {filteredAndSortedPlayerCards.length} of {playerCards.length} players
+        {/* Results summary + active filters */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', px: 0.5 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              letterSpacing: '0.01em',
+            }}
+          >
+            Showing{' '}
+            <Box
+              component="span"
+              sx={{ color: 'text.primary', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+            >
+              {filteredAndSortedPlayerCards.length}
+            </Box>{' '}
+            of{' '}
+            <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+              {playerCards.length}
+            </Box>{' '}
+            players
           </Typography>
           {searchTerm && (
             <Chip
-              label={`Search: "${searchTerm}"`}
+              label={`"${searchTerm}"`}
               size="small"
               onDelete={() => setSearchTerm('')}
+              sx={{
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                height: 24,
+                background: isDarkMode ? alpha('#38bdf8', 0.12) : alpha('#3b82f6', 0.08),
+                border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
+                color: isDarkMode ? '#93c5fd' : '#2563eb',
+                '& .MuiChip-deleteIcon': {
+                  fontSize: '0.9rem',
+                  color: isDarkMode ? '#93c5fd' : '#3b82f6',
+                  '&:hover': { color: isDarkMode ? '#bfdbfe' : '#1d4ed8' },
+                },
+              }}
             />
           )}
           {roleFilter !== 'all' && (
             <Chip
-              label={`Role: ${
-                roleFilter === 'supports' ? 'Supports (Tanks & Healers)' : roleFilter.toUpperCase()
-              }`}
+              label={roleFilter === 'supports' ? 'Supports' : roleFilter.toUpperCase()}
               size="small"
               onDelete={() => setRoleFilter('all')}
+              sx={{
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                height: 24,
+                background: isDarkMode ? alpha('#38bdf8', 0.12) : alpha('#3b82f6', 0.08),
+                border: `1px solid ${isDarkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.15)'}`,
+                color: isDarkMode ? '#93c5fd' : '#2563eb',
+                '& .MuiChip-deleteIcon': {
+                  fontSize: '0.9rem',
+                  color: isDarkMode ? '#93c5fd' : '#3b82f6',
+                  '&:hover': { color: isDarkMode ? '#bfdbfe' : '#1d4ed8' },
+                },
+              }}
             />
           )}
         </Box>

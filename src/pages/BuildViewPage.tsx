@@ -70,6 +70,7 @@ import { selectSavedBuilds } from '../store/saved_builds';
 import { CHAMPION_POINT_ABILITIES, ChampionPointAbilityId } from '../types/champion-points';
 import { decodeBuildFromURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
+import { sanitizeYoutubeUrl } from '../utils/sanitize-url';
 import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
@@ -1743,7 +1744,7 @@ const ViewStats: React.FC<{ setup: BuildSetup; build: Build }> = ({ setup, build
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(auto-fit, minmax(96px, 1fr))' },
           gap: 2,
           justifyItems: 'center',
           py: 1,
@@ -2709,12 +2710,12 @@ export const BuildViewPage: React.FC = () => {
                     </Typography>
                   </Box>
                 )}
-                {build.guide.youtubeUrl && (
+                {sanitizeYoutubeUrl(build.guide.youtubeUrl) && (
                   <Button
                     size="small"
                     variant="outlined"
                     startIcon={<YouTubeIcon sx={{ color: '#ef4444' }} />}
-                    href={build.guide.youtubeUrl}
+                    href={sanitizeYoutubeUrl(build.guide.youtubeUrl)!}
                     target="_blank"
                     rel="noopener noreferrer"
                     sx={{

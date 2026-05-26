@@ -88,6 +88,7 @@ const uiTransform = createTransform<UIState, Partial<UIState>>(
       myReportsPage: 1,
       perfTier: 'medium',
       perfTierOverride: 'auto',
+      chartIntensity: 'subtle',
     };
 
     // Merge persisted preferences with initial report-specific state

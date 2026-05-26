@@ -71,7 +71,7 @@ export const TargetEventsPanel: React.FC<TargetEventsPanelProps> = ({ context })
     : '';
 
   return (
-    <Box mt={2}>
+    <Box sx={{ mt: 2 }}>
       <Typography variant="h6" gutterBottom>
         Target Events
         {selectedTargetId && ` for ${targetName}`}

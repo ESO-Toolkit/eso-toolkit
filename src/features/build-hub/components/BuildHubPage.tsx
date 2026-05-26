@@ -37,6 +37,10 @@ export const BuildHubPage: React.FC = () => {
   const { filteredBuilds, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     useBuildHub(token);
 
+  React.useEffect(() => {
+    document.title = 'Build Hub | ESO Toolkit';
+  }, []);
+
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editBuild, setEditBuild] = React.useState<HubBuild | null>(null);
@@ -231,16 +235,14 @@ export const BuildHubPage: React.FC = () => {
         {!loading && filteredBuilds.length === 0 && !error && (
           <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
             <SearchOff sx={{ fontSize: 48, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
-            <Typography variant="h6" color="text.secondary" fontWeight={600}>
+            <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 600 }}>
               {filters.esoClass || filters.role || filters.tag || filters.search
                 ? 'No matching builds'
                 : 'No builds yet'}
             </Typography>
             <Typography
               variant="body2"
-              color="text.disabled"
-              mt={0.75}
-              sx={{ maxWidth: 360, mx: 'auto' }}
+              sx={{ color: 'text.disabled', mt: 0.75, maxWidth: 360, mx: 'auto' }}
             >
               {filters.esoClass || filters.role || filters.tag || filters.search
                 ? 'Try broadening your search or removing some filters.'
@@ -291,7 +293,7 @@ export const BuildHubPage: React.FC = () => {
               Load more
             </Button>
           ) : filteredBuilds.length > 0 ? (
-            <Typography variant="caption" color="text.disabled">
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
               All builds loaded
             </Typography>
           ) : null}

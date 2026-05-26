@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type PerfTier = 'low' | 'medium' | 'high';
 export type PerfTierOverride = 'auto' | PerfTier;
+export type ChartIntensity = 'subtle' | 'bold';
 
 export interface UIState {
   darkMode: boolean;
@@ -14,6 +15,7 @@ export interface UIState {
   myReportsPage: number; // Persisted page number for my-reports
   perfTier: PerfTier;
   perfTierOverride: PerfTierOverride;
+  chartIntensity: ChartIntensity;
 }
 
 const initialState: UIState = {
@@ -30,6 +32,7 @@ const initialState: UIState = {
   // empty persisted store.
   perfTier: 'medium',
   perfTierOverride: 'auto',
+  chartIntensity: 'subtle',
 };
 
 const uiSlice = createSlice({
@@ -80,6 +83,9 @@ const uiSlice = createSlice({
     setPerfTierOverride: (state, action: PayloadAction<PerfTierOverride>) => {
       state.perfTierOverride = action.payload;
     },
+    setChartIntensity: (state, action: PayloadAction<ChartIntensity>) => {
+      state.chartIntensity = action.payload;
+    },
   },
 });
 
@@ -97,5 +103,6 @@ export const {
   setMyReportsPage,
   setPerfTier,
   setPerfTierOverride,
+  setChartIntensity,
 } = uiSlice.actions;
 export default uiSlice.reducer;

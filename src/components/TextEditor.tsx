@@ -11,6 +11,7 @@ import {
   ClickAwayListener,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import DOMPurify from 'dompurify';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/texteditor-theme-bridge.css';
 import { HexColorPicker } from 'react-colorful';
@@ -501,6 +502,10 @@ export const TextEditor: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
+  useEffect(() => {
+    document.title = 'Text Editor | ESO Toolkit';
+  }, []);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
@@ -857,7 +862,7 @@ export const TextEditor: React.FC = () => {
 - Mundus stones for build optimization.
 - Target dummies to hone your DPS, healing, and tanking skills.`;
 
-    editorRef.current.innerHTML = deserializeFromESO(exampleText);
+    editorRef.current.innerHTML = DOMPurify.sanitize(deserializeFromESO(exampleText));
     setCharCount(exampleText.length);
   }, []); // Run once on mount
 
@@ -866,7 +871,7 @@ export const TextEditor: React.FC = () => {
     const esoText = serializeToESO(editorRef.current);
     // Strip all color codes independently (handles nested codes safely)
     const cleaned = esoText.replace(/\|c[0-9A-Fa-f]{6}/g, '').replace(/\|r/g, '');
-    editorRef.current.innerHTML = deserializeFromESO(cleaned);
+    editorRef.current.innerHTML = DOMPurify.sanitize(deserializeFromESO(cleaned));
     setCharCount(cleaned.length);
   };
 
@@ -907,7 +912,7 @@ export const TextEditor: React.FC = () => {
       .replace(/'/g, '&#039;')
       .replace(/\|c([0-9A-Fa-f]{6})([\s\S]*?)\|r/g, '<span style="color: #$1">$2</span>')
       .replace(/\n/g, '<br>');
-    return <span dangerouslySetInnerHTML={{ __html: previewText }} />;
+    return <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(previewText) }} />;
   };
 
   return (

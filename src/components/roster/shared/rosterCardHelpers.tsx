@@ -90,6 +90,7 @@ export const getUltimateIcon = (ultimate: string | undefined): React.ReactElemen
   return (
     <Avatar
       src={`https://assets.rpglogs.com/img/eso/abilities/${iconFile}.png`}
+      alt=""
       sx={{ width: 20, height: 20, mr: 0.5 }}
       variant="rounded"
     />
@@ -103,6 +104,7 @@ export const getHealerBuffIcon = (buff: string | undefined): React.ReactElement 
   return (
     <Avatar
       src={`https://assets.rpglogs.com/img/eso/abilities/${iconFile}.png`}
+      alt=""
       sx={{ width: 20, height: 20, mr: 0.5 }}
       variant="rounded"
     />
@@ -116,6 +118,7 @@ export const getSkillLineIcon = (skillLine: string): React.ReactElement | null =
   const avatar = (
     <Avatar
       src={`https://assets.rpglogs.com/img/eso/abilities/${iconFile}.png`}
+      alt=""
       sx={{ width: 20, height: 20, mr: 0.5 }}
       variant="rounded"
     />

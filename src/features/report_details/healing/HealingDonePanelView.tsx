@@ -475,7 +475,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                   {row.iconUrl && (
                     <Avatar
                       src={row.iconUrl}
-                      alt="icon"
+                      alt={row.name}
                       sx={{ width: 32, height: 32, flexShrink: 0 }}
                     />
                   )}
@@ -706,7 +706,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                     {row.iconUrl && (
                       <Avatar
                         src={row.iconUrl}
-                        alt="icon"
+                        alt={row.name}
                         sx={{ width: 28, height: 28, flexShrink: 0 }}
                       />
                     )}

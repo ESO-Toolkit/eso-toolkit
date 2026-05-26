@@ -232,9 +232,6 @@ export const HealerCard = React.memo<HealerCardProps>(
                             label="Primary Set (Body)"
                             placeholder="e.g., Stone-Talker's Oath"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -262,9 +259,6 @@ export const HealerCard = React.memo<HealerCardProps>(
                             label="Secondary Set (Jewelry)"
                             placeholder="e.g., Worm's Raiment"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -293,9 +287,6 @@ export const HealerCard = React.memo<HealerCardProps>(
                             label="Monster/Mythic Set"
                             placeholder="e.g., Symphony of Blades"
                             sx={glassSx}
-                            InputProps={{
-                              ...params.InputProps,
-                            }}
                           />
                         )}
                         renderOption={(props, option) => <li {...props}>{option}</li>}
@@ -505,10 +496,10 @@ export const HealerCard = React.memo<HealerCardProps>(
                               options={[]}
                               value={healer.labels || []}
                               onChange={(_, value) => onChange({ labels: value })}
-                              renderTags={(value, getTagProps) =>
-                                value.map((option, index) => (
+                              renderValue={(value, getItemProps) =>
+                                (value as string[]).map((option, index) => (
                                   <Chip
-                                    {...getTagProps({ index })}
+                                    {...getItemProps({ index })}
                                     key={option}
                                     label={option}
                                     size="small"

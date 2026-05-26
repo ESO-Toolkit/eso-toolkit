@@ -1,8 +1,7 @@
-// Import MUI icons
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HandshakeIcon from '@mui/icons-material/Handshake';
@@ -23,7 +22,6 @@ import {
   Tabs,
   Tab,
   Tooltip,
-  FormControl,
   FormControlLabel,
   Switch,
   Icon,
@@ -43,8 +41,7 @@ import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
-import { BuffSourcePlayerSelector } from './insights/BuffSourcePlayerSelector';
-import { TargetSelector } from './insights/TargetSelector';
+import { CombinedFilterDropdown } from './insights/CombinedFilterDropdown';
 import { useFightNavigation } from './ReportFightHeader';
 
 // Lazy load heavy panel components for better initial page load performance
@@ -124,7 +121,6 @@ const PanelLoadingFallback: React.FC<{ tabId: TabId }> = ({ tabId }) => (
 interface FightDetailsViewProps {
   fight: FightFragment;
   selectedTabId?: TabId;
-  isLoading: boolean;
   onTabChange: (tabId: TabId) => void;
   showExperimentalTabs: boolean;
   onToggleExperimentalTabs: (enabled: boolean) => void;
@@ -200,6 +196,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       .map((id) => ({
         id,
         name: reportMasterData.actorsById[id]?.name || `Player ${id}`,
+        displayName: reportMasterData.actorsById[id]?.displayName || null,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [fight?.friendlyPlayers, reportMasterData?.actorsById]);
@@ -209,44 +206,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       {/* Target Selection and Navigation Row */}
       <Box
         sx={{
-          mb: 2,
+          mb: { xs: 0.75, md: 2 },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: { xs: 'wrap', md: 'nowrap' },
-          gap: { xs: 2, md: 2 },
+          gap: { xs: 0.75, md: 2 },
         }}
       >
-        {/* Selectors Group */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            flexWrap: { xs: 'wrap', md: 'nowrap' },
-            flex: { xs: '1 1 100%', md: '0 1 auto' },
-          }}
-        >
-          <FormControl
-            sx={{
-              minWidth: { xs: '100%', sm: 180, md: 200 },
-              maxWidth: { xs: '100%', md: 'none' },
-              overflow: 'visible',
-            }}
-          >
-            <TargetSelector />
-          </FormControl>
-
-          <FormControl
-            sx={{
-              minWidth: { xs: '100%', sm: 180, md: 200 },
-              maxWidth: { xs: '100%', md: 'none' },
-              overflow: 'visible',
-            }}
-          >
-            <BuffSourcePlayerSelector players={playerList} />
-          </FormControl>
-        </Box>
+        <CombinedFilterDropdown players={playerList} />
 
         {/* Fight Navigation - aligned with target selector */}
         <Box
@@ -260,11 +228,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               : '1px solid rgba(0, 0, 0, 0.08)',
             backdropFilter: 'blur(8px)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
-            p: { xs: 0.5, md: 0.75 },
-            gap: { xs: 0.25, md: 0.5 },
+            p: { xs: 0.375, md: 0.75 },
+            gap: { xs: 0.5, md: 0.5 },
             width: { xs: '100%', md: 'auto' },
-            justifyContent: { xs: 'center', md: 'flex-start' },
-            minWidth: 0, // Allow shrinking
+            justifyContent: 'center',
+            minWidth: 0,
           }}
         >
           {/* Previous Button */}
@@ -274,24 +242,28 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             size="small"
             aria-label="Previous fight"
             sx={{
-              width: { xs: 32, md: 28 },
-              height: { xs: 32, md: 28 },
-              borderRadius: { xs: '6px', md: '8px' },
-              backgroundColor: 'transparent',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+              width: { xs: 32, md: 36 },
+              height: { xs: 32, md: 36 },
+              minWidth: { xs: '32px !important', md: 36 },
+              minHeight: { xs: '32px !important', md: 36 },
+              borderRadius: { xs: '8px', md: '10px' },
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
+              padding: { xs: '4px', md: '5px' },
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
               '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
-                transform: 'scale(1.05)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+                transform: 'scale(1.08)',
               },
               '&:disabled': {
-                opacity: 0.3,
-                cursor: 'not-allowed',
+                opacity: 0.25,
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
               },
             }}
           >
-            <ArrowBackIcon fontSize="small" />
+            <ChevronLeftIcon />
           </IconButton>
 
           {/* Mode Toggle */}
@@ -320,11 +292,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               },
               '& .MuiToggleButton-root': {
                 px: { xs: 1.25, md: 1.5 },
-                py: 0.5,
-                fontSize: { xs: '0.75rem', md: '0.75rem' },
+                py: { xs: 0.25, md: 0.5 },
+                fontSize: { xs: '0.725rem', md: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
                 minWidth: 'auto',
+                minHeight: 'unset',
                 height: { xs: 32, md: 28 },
                 border: 'none',
                 borderRadius: '6px',
@@ -356,11 +329,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {/* Counter */}
           <Box
             sx={{
-              px: { xs: 1, md: 1.5 },
-              py: 0.5,
+              px: { xs: 0.75, md: 1.5 },
+              py: { xs: 0.25, md: 0.5 },
               backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: { xs: '6px', md: '8px' },
-              minWidth: { xs: '40px', md: '48px' },
+              minWidth: { xs: '36px', md: '48px' },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -393,24 +366,28 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             size="small"
             aria-label="Next fight"
             sx={{
-              width: { xs: 32, md: 28 },
-              height: { xs: 32, md: 28 },
-              borderRadius: { xs: '6px', md: '8px' },
-              backgroundColor: 'transparent',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
+              width: { xs: 32, md: 36 },
+              height: { xs: 32, md: 36 },
+              minWidth: { xs: '32px !important', md: 36 },
+              minHeight: { xs: '32px !important', md: 36 },
+              borderRadius: { xs: '8px', md: '10px' },
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
+              padding: { xs: '4px', md: '5px' },
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
               '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
-                transform: 'scale(1.05)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+                transform: 'scale(1.08)',
               },
               '&:disabled': {
-                opacity: 0.3,
-                cursor: 'not-allowed',
+                opacity: 0.25,
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
               },
             }}
           >
-            <ArrowForwardIcon fontSize="small" />
+            <ChevronRightIcon />
           </IconButton>
         </Box>
       </Box>
@@ -420,7 +397,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          mb: 1,
+          mb: { xs: 0.5, md: 1 },
           width: '100%',
           minWidth: 0,
           overflow: 'visible',
@@ -710,7 +687,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
            contain: layout style limits reflow scope so MUI's
            getTabsMeta doesn't trigger a full-page layout recalc.
            (paint omitted — it would clip disablePortal overlays in child panels) */}
-      <Box sx={{ mt: 2, contain: 'layout style' }} data-testid="fight-tab-content-container">
+      <Box
+        sx={{ mt: { xs: 1, md: 2 }, contain: 'layout style' }}
+        data-testid="fight-tab-content-container"
+      >
         <AnimatedTabContent tabKey={deferredTabId} data-testid={`tab-content-${deferredTabId}`}>
           {deferredTabId === TabId.INSIGHTS && (
             <PanelErrorBoundary panelName="Insights">

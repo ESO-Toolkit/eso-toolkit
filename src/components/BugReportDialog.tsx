@@ -1,4 +1,4 @@
-﻿import { BugReport, Send, Feedback, CheckCircleOutline, Close } from '@mui/icons-material';
+﻿import { BugReport, Send, Feedback, CheckCircleOutlined, Close } from '@mui/icons-material';
 import {
   Alert,
   Dialog,
@@ -153,8 +153,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
     <Grow in timeout={400}>
       <Stack
         spacing={3}
-        alignItems="center"
         sx={{
+          alignItems: 'center',
           py: { xs: 4, sm: 5 },
           ...successPulse,
           animation: 'successPulse 0.5s ease-out',
@@ -174,7 +174,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             WebkitBackdropFilter: 'blur(10px)',
           }}
         >
-          <CheckCircleOutline
+          <CheckCircleOutlined
             sx={{
               fontSize: 38,
               color: 'success.main',
@@ -183,7 +183,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           />
         </Box>
 
-        <Box textAlign="center">
+        <Box sx={{ textAlign: 'center' }}>
           <Typography
             variant="h5"
             sx={{
@@ -200,8 +200,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           </Typography>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ maxWidth: 360, mx: 'auto', lineHeight: 1.7 }}
+            sx={{ color: 'text.secondary', maxWidth: 360, mx: 'auto', lineHeight: 1.7 }}
           >
             {isBugReport
               ? 'Thank you for reporting this issue. Our team has been notified and will investigate.'
@@ -252,7 +251,6 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               ? 'What went wrong? What were you doing when it happened?'
               : 'Share your thoughts or suggestions…'
           }
-          autoFocus
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 2,
@@ -293,8 +291,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         <Stack
           direction="row"
           spacing={1}
-          alignItems="center"
           sx={{
+            alignItems: 'center',
             px: 0.5,
             opacity: 0.6,
             transition: 'opacity 0.2s ease',
@@ -310,7 +308,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               flexShrink: 0,
             }}
           />
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             We&apos;ll automatically include your current page URL and browser info to help with
             diagnosis.
           </Typography>
@@ -329,36 +327,36 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
-      TransitionComponent={Fade}
       transitionDuration={{ enter: 250, exit: 200 }}
-      PaperProps={{
-        sx: {
-          background: panelBg,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          border: panelBorder,
-          borderRadius: isMobile ? 0 : '14px',
-          boxShadow: panelShadow,
-          overflow: 'hidden',
-          minHeight: isMobile ? '100dvh' : undefined,
-          maxHeight: isMobile ? '100dvh' : '85vh',
-          // Subtle animated top-edge accent (rounded to match Paper corners)
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '2px',
-            background: accentGradient,
-            zIndex: 1,
-            ...shimmer,
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 3s linear infinite',
+      slots={{ transition: Fade }}
+      slotProps={{
+        paper: {
+          sx: {
+            background: panelBg,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: panelBorder,
+            borderRadius: isMobile ? 0 : '14px',
+            boxShadow: panelShadow,
+            overflow: 'hidden',
+            minHeight: isMobile ? '100dvh' : undefined,
+            maxHeight: isMobile ? '100dvh' : '85vh',
+            // Subtle animated top-edge accent (rounded to match Paper corners)
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '2px',
+              background: accentGradient,
+              zIndex: 1,
+              ...shimmer,
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 3s linear infinite',
+            },
           },
         },
-      }}
-      slotProps={{
         backdrop: {
           sx: {
             backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(15, 23, 42, 0.35)',
@@ -379,7 +377,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             : 'transparent',
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={2}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           {/* Icon badge */}
           <Box
             sx={{
@@ -423,7 +421,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             >
               {isBugReport ? 'Report a Bug' : 'Send Feedback'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.65 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary', opacity: 0.65 }}>
               {isBugReport
                 ? 'Help us improve by reporting issues'
                 : 'Share your thoughts and suggestions'}

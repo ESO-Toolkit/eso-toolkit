@@ -1,4 +1,4 @@
-import { BugReport, Feedback, HelpOutline } from '@mui/icons-material';
+import { BugReport, Feedback, HelpOutlined } from '@mui/icons-material';
 import { Button, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import React from 'react';
 
@@ -54,20 +54,20 @@ export const HelpSupportButton: React.FC = () => {
         aria-label="Help and support"
         title="Help & Support"
       >
-        <HelpOutline />
+        <HelpOutlined />
       </IconButton>
 
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        PaperProps={{
-          sx: { minWidth: 200 },
+        slotProps={{
+          paper: { sx: { minWidth: 200 } },
         }}
       >
         <MenuItem onClick={handleHelp}>
           <ListItemIcon>
-            <HelpOutline fontSize="small" />
+            <HelpOutlined fontSize="small" />
           </ListItemIcon>
           <ListItemText>Help & Documentation</ListItemText>
         </MenuItem>

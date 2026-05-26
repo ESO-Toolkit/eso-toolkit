@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -131,6 +131,7 @@ export function useMultiFightDeathAnalysis(reportCode: string): UseMultiFightDea
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to analyze death events';
       setError(errorMessage);
+      // eslint-disable-next-line no-console
       console.error('Death analysis error:', err);
     } finally {
       setIsLoading(false);

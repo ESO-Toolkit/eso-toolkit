@@ -104,6 +104,10 @@ export const LoadoutManager: React.FC = () => {
   const theme = useTheme();
   const isMdDown = useMediaQuery(theme.breakpoints.down('md'));
 
+  React.useEffect(() => {
+    document.title = 'Loadout Manager | ESO Toolkit';
+  }, []);
+
   // Glass design tokens
   const isDarkMode = theme.palette.mode === 'dark';
   const glassTextField = {
@@ -500,15 +504,15 @@ export const LoadoutManager: React.FC = () => {
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={1.5}
-            alignItems={{ md: 'center' }}
-            justifyContent={{ md: 'space-between' }}
+            sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
           >
             {/* Left: back + icon lockup */}
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
               <Tooltip title="Back" arrow>
                 <IconButton
                   onClick={handleBack}
                   size="small"
+                  aria-label="Go back"
                   sx={{
                     borderRadius: '8px',
                     '&:hover': {
@@ -586,8 +590,7 @@ export const LoadoutManager: React.FC = () => {
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-              alignItems={{ sm: 'center' }}
-              sx={{ flexShrink: 0 }}
+              sx={{ alignItems: { sm: 'center' }, flexShrink: 0 }}
             >
               <FormControl sx={{ minWidth: 180, ...glassTextField }} size="small">
                 <InputLabel id="trial-select-label">Trial / Activity</InputLabel>
@@ -630,7 +633,7 @@ export const LoadoutManager: React.FC = () => {
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {trial.name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {trial.type === 'trial'
                             ? 'Trial'
                             : trial.type === 'arena'
@@ -646,7 +649,7 @@ export const LoadoutManager: React.FC = () => {
               </FormControl>
 
               {/* Import / Export grouped control + overflow */}
-              <Stack direction="row" spacing={0.5} alignItems="center">
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                 <Box
                   sx={{
                     display: 'flex',
@@ -661,6 +664,7 @@ export const LoadoutManager: React.FC = () => {
                     <IconButton
                       size="small"
                       onClick={handleImportClick}
+                      aria-label="Import data"
                       sx={{
                         borderRadius: 0,
                         px: 1,
@@ -688,6 +692,7 @@ export const LoadoutManager: React.FC = () => {
                         size="small"
                         onClick={handleExportClick}
                         disabled={setups.length === 0}
+                        aria-label="Export data"
                         sx={{
                           borderRadius: 0,
                           px: 1,
@@ -710,6 +715,7 @@ export const LoadoutManager: React.FC = () => {
                     onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
                       setOverflowAnchor(e.currentTarget)
                     }
+                    aria-label="More actions"
                     sx={{
                       borderRadius: '8px',
                       '&:hover': {
@@ -738,15 +744,13 @@ export const LoadoutManager: React.FC = () => {
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={1}
-            alignItems={{ md: 'center' }}
-            justifyContent={{ md: 'space-between' }}
+            sx={{ justifyContent: { md: 'space-between' }, alignItems: { md: 'center' } }}
           >
             {/* Left cluster: character selectors + page controls */}
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1}
-              alignItems={{ sm: 'center' }}
-              sx={{ minWidth: 0, flexShrink: 1 }}
+              sx={{ alignItems: { sm: 'center' }, minWidth: 0, flexShrink: 1 }}
             >
               <CharacterSelector />
 
@@ -762,7 +766,7 @@ export const LoadoutManager: React.FC = () => {
               />
 
               {/* Page select + rename + add */}
-              <Stack direction="row" spacing={0.5} alignItems="center">
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                 <FormControl sx={{ minWidth: 120, ...glassTextField }} size="small">
                   <InputLabel id="page-select-label">Page</InputLabel>
                   <Select
@@ -816,6 +820,7 @@ export const LoadoutManager: React.FC = () => {
                         size="small"
                         onClick={() => handleOpenRename(currentPage)}
                         disabled={renameDisabled}
+                        aria-label="Rename page"
                         sx={{
                           borderRadius: '6px',
                           '&:hover': {
@@ -834,6 +839,7 @@ export const LoadoutManager: React.FC = () => {
                       size="small"
                       color="primary"
                       onClick={handleAddPage}
+                      aria-label="Add page"
                       sx={{
                         borderRadius: '6px',
                         '&:hover': {
@@ -851,18 +857,20 @@ export const LoadoutManager: React.FC = () => {
             </Stack>
 
             {/* Right cluster: search + new */}
-            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flexShrink: 0 }}>
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexShrink: 0 }}>
               <TextField
                 value={searchTerm}
                 onChange={handleSearchChange}
                 placeholder="Search setups..."
                 size="small"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  },
                 }}
                 sx={{
                   width: { xs: '100%', sm: 180 },
@@ -894,7 +902,7 @@ export const LoadoutManager: React.FC = () => {
         </Paper>
 
         {/* ── Main content: list + editor ───────────────────── */}
-        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
+        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: 'stretch' }}>
           {/* Setup list — narrower on desktop */}
           <Box
             sx={{
@@ -945,7 +953,7 @@ export const LoadoutManager: React.FC = () => {
                     border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
                   }}
                 >
-                  <Stack spacing={1} alignItems="center">
+                  <Stack spacing={1} sx={{ alignItems: 'center' }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                       Select a setup
                     </Typography>
@@ -974,13 +982,15 @@ export const LoadoutManager: React.FC = () => {
         anchor="right"
         open={drawerOpen && Boolean(selectedSetup)}
         onClose={() => setDrawerOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          sx: {
-            width: { xs: '100%', sm: 440 },
-            backdropFilter: 'blur(12px)',
-            backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
-            borderLeft: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        keepMounted
+        slotProps={{
+          paper: {
+            sx: {
+              width: { xs: '100%', sm: 440 },
+              backdropFilter: 'blur(12px)',
+              backgroundColor: isDarkMode ? 'rgba(20,20,30,0.92)' : 'rgba(255,255,255,0.94)',
+              borderLeft: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >
@@ -1058,12 +1068,14 @@ export const LoadoutManager: React.FC = () => {
       <Dialog
         open={renameDialogOpen}
         onClose={() => setRenameDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            backdropFilter: 'blur(20px)',
-            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
-            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              backdropFilter: 'blur(20px)',
+              backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >
@@ -1090,12 +1102,14 @@ export const LoadoutManager: React.FC = () => {
       <Dialog
         open={clearDialogOpen}
         onClose={() => setClearDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            backdropFilter: 'blur(20px)',
-            backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
-            border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              backdropFilter: 'blur(20px)',
+              backgroundColor: isDarkMode ? 'rgba(15,15,25,0.9)' : 'rgba(255,255,255,0.94)',
+              border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            },
           },
         }}
       >

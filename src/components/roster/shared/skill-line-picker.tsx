@@ -287,8 +287,8 @@ const SlotPicker: React.FC<SlotPickerProps> = ({ slot, value, disabledLabels, on
               boxShadow: isDark ? '0 8px 32px rgba(0,0,0,0.5)' : '0 8px 32px rgba(0,0,0,0.12)',
             },
           },
+          list: { dense: true, 'aria-label': `Skill line picker for slot ${slot + 1}` },
         }}
-        MenuListProps={{ dense: true, 'aria-label': `Skill line picker for slot ${slot + 1}` }}
       >
         {LINES_BY_CLASS.map(({ cls, lines }, groupIdx) => {
           const clsColor = CLASS_COLOR_MAP[cls.id].accent;

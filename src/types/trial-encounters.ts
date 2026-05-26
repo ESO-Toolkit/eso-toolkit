@@ -685,6 +685,87 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       },
     ],
   },
+  {
+    id: 'ossein_cage',
+    name: 'Ossein Cage',
+    shortName: 'OSC',
+    encounters: [
+      {
+        id: 'trash_1',
+        type: 'trash',
+        name: 'Carrion Halls',
+        description: 'Worm Cult forces in Coldharbour vault',
+      },
+      {
+        id: 'boss_1',
+        type: 'boss',
+        name: 'Shapers of Flesh',
+        description: 'Carrion Portal phase with add management',
+      },
+      {
+        id: 'trash_2',
+        type: 'trash',
+        name: 'Hall of Fleshcraft',
+        description: 'Osteon Skullmancers and Tormented Crushers',
+      },
+      {
+        id: 'boss_2',
+        type: 'boss',
+        name: 'Jynorah and Skorkhif',
+        description: 'Dual-boss on superheated platform with champion duel phase',
+      },
+      {
+        id: 'trash_3',
+        type: 'trash',
+        name: 'Pre-Kazpian Gauntlet',
+        description: 'Dreadful Abductors and Osteon Crypt Keepers',
+      },
+      {
+        id: 'boss_3',
+        type: 'boss',
+        name: 'Overfiend Kazpian',
+        description: 'Final boss with Familiar Foes summon phase',
+      },
+      {
+        id: 'mini_1',
+        type: 'mini_boss',
+        name: 'Red Witch Gedna Relvel',
+        description: 'Optional boss via Dreadful Portal',
+      },
+      {
+        id: 'mini_2',
+        type: 'mini_boss',
+        name: 'Tortured Trio',
+        description: 'Optional boss: Tortured Amkaos, Kathutet, and Ranyu',
+      },
+      {
+        id: 'mini_3',
+        type: 'mini_boss',
+        name: 'Blood Drinker Thisa',
+        description: 'Optional boss via Dreadful Portal',
+      },
+    ],
+  },
+  {
+    id: 'opulent_ordeal',
+    name: 'Opulent Ordeal',
+    shortName: 'OO',
+    encounters: [
+      {
+        id: 'trash_1',
+        type: 'trash',
+        name: 'Running Phase',
+        description: 'Three-team relay through Drylands, Eclipse, and Cobweb districts',
+      },
+      {
+        id: 'boss_1',
+        type: 'boss',
+        name: 'Opulent Trio',
+        description:
+          'Opulent Arid Varlet, Opulent Knightshade, and Opulent Web Eater — split and burn',
+      },
+    ],
+  },
 ] as const;
 
 /** Lookup a trial by its id */

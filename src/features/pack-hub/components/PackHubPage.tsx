@@ -37,6 +37,10 @@ export const PackHubPage: React.FC = () => {
   const { filteredPacks, loading, error, filters, hasMore, setFilter, loadMore, refresh, vote } =
     usePackHub(token);
 
+  React.useEffect(() => {
+    document.title = 'Pack Hub | ESO Toolkit';
+  }, []);
+
   const [deleteTarget, setDeleteTarget] = React.useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
   const [editPack, setEditPack] = React.useState<HubPack | null>(null);
@@ -255,16 +259,14 @@ export const PackHubPage: React.FC = () => {
         {!loading && filteredPacks.length === 0 && !error && (
           <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
             <SearchOff sx={{ fontSize: 48, color: 'text.disabled', mb: 2, opacity: 0.5 }} />
-            <Typography variant="h6" color="text.secondary" fontWeight={600}>
+            <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 600 }}>
               {filters.packType || filters.tag || filters.search
                 ? 'No matching packs'
                 : 'No packs yet'}
             </Typography>
             <Typography
               variant="body2"
-              color="text.disabled"
-              mt={0.75}
-              sx={{ maxWidth: 360, mx: 'auto' }}
+              sx={{ color: 'text.disabled', mt: 0.75, maxWidth: 360, mx: 'auto' }}
             >
               {filters.packType || filters.tag || filters.search
                 ? 'Try broadening your search or removing some filters.'
@@ -313,7 +315,7 @@ export const PackHubPage: React.FC = () => {
               Load more
             </Button>
           ) : filteredPacks.length > 0 ? (
-            <Typography variant="caption" color="text.disabled">
+            <Typography variant="caption" sx={{ color: 'text.disabled' }}>
               All packs loaded
             </Typography>
           ) : null}

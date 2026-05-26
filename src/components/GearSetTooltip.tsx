@@ -154,7 +154,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
             mb: 1.25,
           }}
         >
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
             {iconUrl && (
               <Box
                 sx={{

@@ -433,6 +433,7 @@ const GearTile: React.FC<GearTileProps> = ({
         {hasGear && (
           <IconButton
             size="small"
+            aria-label="Remove gear"
             onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation();
               onRemove();
@@ -788,7 +789,7 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
     GEAR_SLOTS.find((s) => s.slot === slotIndex)!;
 
   return (
-    <Stack spacing={2} alignItems="center">
+    <Stack spacing={2} sx={{ alignItems: 'center' }}>
       {/* ── APPAREL ────────────────────────── */}
       <Typography
         variant="caption"
@@ -808,21 +809,21 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       </Typography>
 
       {/* Row 1: Head · Chest · Shoulders */}
-      <Stack direction="row" spacing={1} justifyContent="center">
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center' }}>
         {renderTile(slotDef(0))}
         {renderTile(slotDef(2))}
         {renderTile(slotDef(3))}
       </Stack>
 
       {/* Row 2: Hands · Belt · Legs */}
-      <Stack direction="row" spacing={1} justifyContent="center">
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center' }}>
         {renderTile(slotDef(16))}
         {renderTile(slotDef(6))}
         {renderTile(slotDef(8))}
       </Stack>
 
       {/* Row 3: Feet */}
-      <Stack direction="row" spacing={1} justifyContent="center">
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center' }}>
         {renderTile(slotDef(9))}
       </Stack>
 
@@ -845,7 +846,7 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
         Accessories
       </Typography>
 
-      <Stack direction="row" spacing={1} justifyContent="center">
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center' }}>
         {renderTile(slotDef(1))}
         {renderTile(slotDef(11))}
         {renderTile(slotDef(12))}
@@ -871,13 +872,13 @@ export const GearSelector: React.FC<GearSelectorProps> = ({
       </Typography>
 
       {/* Front bar */}
-      <Stack direction="row" spacing={1} justifyContent="center">
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center' }}>
         {renderTile(slotDef(4))}
         {renderTile(slotDef(5))}
       </Stack>
 
       {/* Back bar */}
-      <Stack direction="row" spacing={1} justifyContent="center">
+      <Stack direction="row" spacing={1} sx={{ justifyContent: 'center' }}>
         {renderTile(slotDef(20))}
         {renderTile(slotDef(21))}
       </Stack>

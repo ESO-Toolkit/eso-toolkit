@@ -206,6 +206,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
 
   return (
     <Box
+      role="button"
+      tabIndex={0}
+      aria-label={`${buff.abilityName}: ${Math.round(pct)}% uptime`}
       sx={{
         width: '100%',
         position: 'relative',
@@ -215,6 +218,12 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         },
       }}
       onClick={onMainClick}
+      onKeyDown={(e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onMainClick();
+        }
+      }}
     >
       {/* Progress bars container */}
       <Box

@@ -90,12 +90,20 @@ jest.mock('./components/ScrollRestoration', () => ({
   ScrollRestoration: () => null,
 }));
 
+jest.mock('./components/shared', () => ({
+  SiteBackground: () => null,
+}));
+
 jest.mock('./components/UpdateNotification', () => ({
   UpdateNotification: () => null,
 }));
 
 jest.mock('./components/BugReportDialog', () => ({
   ModernFeedbackFab: () => null,
+}));
+
+jest.mock('./hooks/usePerfTier', () => ({
+  usePerfTier: () => 'medium',
 }));
 
 jest.mock('./layouts/AppLayout', () => {

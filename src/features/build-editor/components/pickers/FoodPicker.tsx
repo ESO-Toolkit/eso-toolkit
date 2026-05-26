@@ -177,7 +177,7 @@ const FoodCategorySection: React.FC<FoodCategorySectionProps> = ({
           },
         }}
       >
-        <Stack direction="row" alignItems="center" spacing={0.75}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
           {iconUrl && (
             <Box
               component={'img' as React.ElementType}
@@ -197,7 +197,7 @@ const FoodCategorySection: React.FC<FoodCategorySectionProps> = ({
             {group.category}
           </Typography>
         </Stack>
-        <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Typography
             sx={{
               fontSize: 10,
@@ -257,7 +257,7 @@ const FoodCategorySection: React.FC<FoodCategorySectionProps> = ({
                   />
                 )}
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                     <Typography
                       noWrap
                       sx={{
@@ -367,16 +367,18 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
       maxWidth="sm"
       fullWidth
       className="glass-dialog"
-      PaperProps={{
-        sx: {
-          borderRadius: '20px',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-            : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-          backgroundColor: 'transparent',
-          border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-          maxHeight: '90vh',
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '20px',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
         },
       }}
     >
@@ -407,12 +409,14 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
             size="small"
             fullWidth
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+                  </InputAdornment>
+                ),
+              },
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -474,7 +478,7 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
                         />
                       )}
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                           <Typography
                             noWrap
                             sx={{
@@ -617,7 +621,7 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
     <Stack spacing={1}>
       {currentFood ? (
         <GlassPanel sx={{ p: 1.25 }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
             {(() => {
               const iconUrl = getCategoryIconUrl(currentFood.category);
               return iconUrl ? (
@@ -629,13 +633,16 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
                 />
               ) : null;
             })()}
-            <Box flex={1} minWidth={0}>
-              <Stack direction="row" spacing={0.75} alignItems="center">
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                 <Typography
                   variant="caption"
-                  fontWeight={700}
                   noWrap
-                  sx={{ fontSize: 12, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: 12,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                  }}
                 >
                   {currentFood.name}
                 </Typography>
@@ -658,8 +665,11 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
               </Stack>
               <Typography
                 variant="caption"
-                color="text.disabled"
-                sx={{ fontSize: 10, fontFamily: 'Space Grotesk, Inter, system-ui' }}
+                sx={{
+                  color: 'text.disabled',
+                  fontSize: 10,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                }}
               >
                 {currentFood.category}
               </Typography>
@@ -678,8 +688,11 @@ export const FoodPicker: React.FC<FoodPickerProps> = ({ food, onChange }) => {
         <Box sx={glassEmptySx(isDark)}>
           <Typography
             variant="caption"
-            color="text.disabled"
-            sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontStyle: 'italic' }}
+            sx={{
+              color: 'text.disabled',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontStyle: 'italic',
+            }}
           >
             No food / drink selected
           </Typography>

@@ -259,20 +259,19 @@ ${downloadBtn}
       outDir: 'build',
       sourcemap: env.GENERATE_SOURCEMAP === 'true' ? 'hidden' : false, // Enable hidden sourcemaps for error tracking, disable for normal builds
       target: 'es2020',
-      minify: 'esbuild', // Use esbuild for faster, less memory-intensive minification
-      rollupOptions: {
+      minify: true,
+      rolldownOptions: {
         output: {
-          // Manual chunk splitting for better caching and reduced memory usage
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            mui: ['@mui/material', '@mui/icons-material'],
-            apollo: ['@apollo/client'],
-            redux: ['@reduxjs/toolkit', 'react-redux', 'redux-persist'],
-            router: ['react-router-dom', 'history'],
-            charts: ['chart.js', 'react-chartjs-2', 'chartjs-plugin-annotation'],
+          manualChunks(id) {
+            if (id.includes('node_modules/react-dom')) return 'vendor';
+            if (id.includes('node_modules/react/')) return 'vendor';
+            if (id.includes('node_modules/@mui/')) return 'mui';
+            if (id.includes('node_modules/@apollo/')) return 'apollo';
+            if (id.includes('node_modules/@reduxjs/') || id.includes('node_modules/react-redux') || id.includes('node_modules/redux-persist')) return 'redux';
+            if (id.includes('node_modules/react-router-dom') || id.includes('node_modules/history')) return 'router';
+            if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) return 'charts';
           },
           chunkFileNames: (chunkInfo) => {
-            // Create a separate chunk for the large abilities.json data
             if (
               chunkInfo.name === 'abilities-data' ||
               (chunkInfo.moduleIds &&
@@ -283,15 +282,12 @@ ${downloadBtn}
             return 'assets/[name]-[hash].js';
           },
           assetFileNames: (assetInfo) => {
-            // Optimize asset naming for better caching
             if (assetInfo.name && assetInfo.name.endsWith('.png')) {
               return 'assets/images/[name]-[hash][extname]';
             }
             return 'assets/[name]-[hash][extname]';
           },
         },
-        // Reduce memory usage during bundling
-        maxParallelFileOps: 2,
       },
       // Increase chunk size warning limit
       chunkSizeWarningLimit: 1000,
@@ -320,8 +316,7 @@ ${downloadBtn}
         'react-redux',
         '@mui/material',
         '@mui/icons-material',
-        'chart.js',
-        'react-chartjs-2',
+        'echarts/core',
       ],
       exclude: [
         // Exclude the large abilities.json from being pre-bundled

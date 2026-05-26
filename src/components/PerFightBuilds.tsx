@@ -271,13 +271,23 @@ const PlayerOverrideEditor: React.FC<PlayerOverrideEditorProps> = React.memo(
           <Box sx={{ display: 'flex', gap: 0.25 }}>
             {hasOverride && (
               <Tooltip title="Reset to base build">
-                <IconButton size="small" onClick={handleReset} sx={{ p: 0.25 }}>
+                <IconButton
+                  size="small"
+                  onClick={handleReset}
+                  sx={{ p: 0.25 }}
+                  aria-label="Reset to base build"
+                >
                   <ResetIcon sx={{ fontSize: '0.85rem' }} />
                 </IconButton>
               </Tooltip>
             )}
             <Tooltip title={isEditing ? 'Done editing' : 'Edit overrides'}>
-              <IconButton size="small" onClick={() => setIsEditing(!isEditing)} sx={{ p: 0.25 }}>
+              <IconButton
+                size="small"
+                onClick={() => setIsEditing(!isEditing)}
+                sx={{ p: 0.25 }}
+                aria-label={isEditing ? 'Done editing' : 'Edit overrides'}
+              >
                 {isEditing ? (
                   <CheckIcon sx={{ fontSize: '0.85rem', color: '#22c55e' }} />
                 ) : (
