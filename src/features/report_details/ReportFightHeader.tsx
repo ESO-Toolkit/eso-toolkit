@@ -277,8 +277,11 @@ export const ReportFightHeader: React.FC = () => {
     borderRadius: '99px',
     fontWeight: 500,
     fontSize: '0.8125rem',
-    padding: isMobile ? '6px' : '6px 14px',
-    minWidth: isMobile ? 36 : 'auto',
+    padding: isMobile ? '0px' : '6px 14px',
+    minWidth: isMobile ? '36px !important' : 'auto',
+    minHeight: isMobile ? '36px !important' : 'auto',
+    width: isMobile ? 36 : 'auto',
+    height: isMobile ? '36px !important' : 'auto',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
     transition: 'all 0.2s ease',
@@ -291,10 +294,10 @@ export const ReportFightHeader: React.FC = () => {
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: { xs: 0.75, sm: 1 },
-          mb: { xs: 1.5, sm: 2 },
-          py: { xs: 0.75, sm: 1 },
-          px: { xs: 1, sm: 1.5 },
+          gap: { xs: 0.5, sm: 1 },
+          mb: { xs: 1, sm: 2 },
+          py: { xs: 0.5, sm: 1 },
+          px: { xs: 0.75, sm: 1.5 },
           borderRadius: '12px',
           background: isDarkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
@@ -308,6 +311,11 @@ export const ReportFightHeader: React.FC = () => {
               aria-label="Back to Fight List"
               size="small"
               sx={{
+                width: 36,
+                height: 36,
+                minWidth: '36px !important',
+                minHeight: '36px !important',
+                padding: '6px',
                 color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
                 '&:hover': {
                   color: isDarkMode ? '#e2e8f0' : '#1e293b',
@@ -435,7 +443,7 @@ export const ReportFightHeader: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           mb: { xs: 1, sm: 1.5 },
-          gap: 1.5,
+          gap: { xs: 0.75, sm: 1.5 },
           flexWrap: { xs: 'wrap', md: 'nowrap' },
         }}
       >
@@ -445,7 +453,7 @@ export const ReportFightHeader: React.FC = () => {
           gutterBottom={false}
           data-testid="fight-title"
           sx={{
-            fontSize: { xs: '1.4rem', sm: '1.65rem', md: '1.85rem' },
+            fontSize: { xs: '1.35rem', sm: '1.65rem', md: '1.85rem' },
             fontWeight: 600,
             lineHeight: 1.25,
             fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',

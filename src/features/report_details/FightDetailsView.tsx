@@ -206,12 +206,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       {/* Target Selection and Navigation Row */}
       <Box
         sx={{
-          mb: 2,
+          mb: { xs: 0.75, md: 2 },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: { xs: 'wrap', md: 'nowrap' },
-          gap: { xs: 2, md: 2 },
+          gap: { xs: 0.75, md: 2 },
         }}
       >
         <CombinedFilterDropdown players={playerList} />
@@ -228,11 +228,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               : '1px solid rgba(0, 0, 0, 0.08)',
             backdropFilter: 'blur(8px)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
-            p: { xs: 0.5, md: 0.75 },
-            gap: { xs: 0.25, md: 0.5 },
+            p: { xs: 0.375, md: 0.75 },
+            gap: { xs: 0.5, md: 0.5 },
             width: { xs: '100%', md: 'auto' },
-            justifyContent: { xs: 'center', md: 'flex-start' },
-            minWidth: 0, // Allow shrinking
+            justifyContent: 'center',
+            minWidth: 0,
           }}
         >
           {/* Previous Button */}
@@ -242,12 +242,16 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             size="small"
             aria-label="Previous fight"
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '10px',
+              width: { xs: 32, md: 36 },
+              height: { xs: 32, md: 36 },
+              minWidth: { xs: '32px !important', md: 36 },
+              minHeight: { xs: '32px !important', md: 36 },
+              borderRadius: { xs: '8px', md: '10px' },
               backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
               color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
+              padding: { xs: '4px', md: '5px' },
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
               '&:hover': {
                 backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
                 color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
@@ -288,11 +292,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               },
               '& .MuiToggleButton-root': {
                 px: { xs: 1.25, md: 1.5 },
-                py: 0.5,
-                fontSize: { xs: '0.75rem', md: '0.75rem' },
+                py: { xs: 0.25, md: 0.5 },
+                fontSize: { xs: '0.725rem', md: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
                 minWidth: 'auto',
+                minHeight: 'unset',
                 height: { xs: 32, md: 28 },
                 border: 'none',
                 borderRadius: '6px',
@@ -324,11 +329,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {/* Counter */}
           <Box
             sx={{
-              px: { xs: 1, md: 1.5 },
-              py: 0.5,
+              px: { xs: 0.75, md: 1.5 },
+              py: { xs: 0.25, md: 0.5 },
               backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: { xs: '6px', md: '8px' },
-              minWidth: { xs: '40px', md: '48px' },
+              minWidth: { xs: '36px', md: '48px' },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -361,12 +366,16 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             size="small"
             aria-label="Next fight"
             sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '10px',
+              width: { xs: 32, md: 36 },
+              height: { xs: 32, md: 36 },
+              minWidth: { xs: '32px !important', md: 36 },
+              minHeight: { xs: '32px !important', md: 36 },
+              borderRadius: { xs: '8px', md: '10px' },
               backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
               color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
+              padding: { xs: '4px', md: '5px' },
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
               '&:hover': {
                 backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
                 color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
@@ -388,7 +397,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          mb: 1,
+          mb: { xs: 0.5, md: 1 },
           width: '100%',
           minWidth: 0,
           overflow: 'visible',
@@ -678,7 +687,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
            contain: layout style limits reflow scope so MUI's
            getTabsMeta doesn't trigger a full-page layout recalc.
            (paint omitted — it would clip disablePortal overlays in child panels) */}
-      <Box sx={{ mt: 2, contain: 'layout style' }} data-testid="fight-tab-content-container">
+      <Box sx={{ mt: { xs: 1, md: 2 }, contain: 'layout style' }} data-testid="fight-tab-content-container">
         <AnimatedTabContent tabKey={deferredTabId} data-testid={`tab-content-${deferredTabId}`}>
           {deferredTabId === TabId.INSIGHTS && (
             <PanelErrorBoundary panelName="Insights">

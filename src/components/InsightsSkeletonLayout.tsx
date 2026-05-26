@@ -20,52 +20,48 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
       {showHeader && (
         <Box
           sx={{
-            mb: 2,
+            mb: { xs: 0.75, md: 2 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: { xs: 'wrap', md: 'nowrap' },
-            gap: { xs: 2, md: 0 },
+            gap: { xs: 0.75, md: 2 },
           }}
         >
           {/* Target Selector — matches CombinedFilterDropdown button */}
-          <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Skeleton
-              variant="rounded"
-              width={240}
-              height={38}
-              sx={{
-                borderRadius: '10px',
-                maxWidth: { xs: '100%', sm: 240 },
-              }}
-            />
-          </Box>
+          <Skeleton
+            variant="rounded"
+            height={36}
+            sx={{
+              borderRadius: '10px',
+              width: { xs: '100%', sm: 240 },
+            }}
+          />
 
           {/* Fight Navigation */}
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              backgroundColor: (theme: Theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.03)'
+                  : 'rgba(0, 0, 0, 0.04)',
               borderRadius: { xs: '10px', md: '12px' },
-              border: '1px solid rgba(0, 0, 0, 0.08)',
-              p: { xs: 0.5, md: 0.75 },
-              gap: { xs: 0.25, md: 0.5 },
+              border: (theme: Theme) =>
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(255, 255, 255, 0.08)'
+                  : '1px solid rgba(0, 0, 0, 0.08)',
+              p: { xs: 0.375, md: 0.75 },
+              gap: { xs: 0.5, md: 0.5 },
               width: { xs: '100%', md: 'auto' },
-              justifyContent: { xs: 'center', md: 'flex-start' },
+              justifyContent: 'center',
             }}
           >
-            {/* Previous Button */}
-            <Skeleton variant="rounded" width={28} height={28} />
-
-            {/* Mode Toggle */}
-            <Skeleton variant="rounded" width={120} height={28} />
-
-            {/* Counter */}
-            <Skeleton variant="rounded" width={48} height={28} />
-
-            {/* Next Button */}
-            <Skeleton variant="rounded" width={28} height={28} />
+            <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+            <Skeleton variant="rounded" width={120} height={32} sx={{ borderRadius: '8px' }} />
+            <Skeleton variant="rounded" width={44} height={32} sx={{ borderRadius: '6px' }} />
+            <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
           </Box>
         </Box>
       )}
@@ -76,27 +72,23 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            mb: 1,
+            mb: { xs: 0.5, md: 1 },
             width: '100%',
             gap: 1,
             overflowX: 'auto',
           }}
         >
           <Box sx={{ display: 'flex', gap: 1, flexGrow: 1 }}>
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: 9 }).map((_, i) => (
               <Skeleton
                 key={i}
-                variant="rounded"
+                variant="circular"
                 width={40}
                 height={40}
-                sx={{
-                  borderRadius: '50%',
-                  flexShrink: 0,
-                }}
+                sx={{ flexShrink: 0 }}
               />
             ))}
           </Box>
-          <Skeleton variant="rounded" width={80} height={32} />
         </Box>
       )}
 

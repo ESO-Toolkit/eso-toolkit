@@ -203,10 +203,19 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
   );
 
   if (isMasterDataLoading) {
-    return <Skeleton variant="rounded" width={200} height={36} />;
+    return (
+      <Skeleton
+        variant="rounded"
+        height={36}
+        sx={{
+          width: { xs: '100%', sm: 200 },
+          borderRadius: '10px',
+        }}
+      />
+    );
   }
 
-  if (!fight?.enemyNPCs?.length) return null;
+  const hasTargets = (fight?.enemyNPCs?.length ?? 0) > 0;
 
   return (
     <>
@@ -231,8 +240,11 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           fontSize: '0.825rem',
           color: isDarkMode ? '#e2e8f0' : '#1e293b',
           borderRadius: '10px',
-          px: 2,
-          py: 0.875,
+          px: { xs: 1.5, md: 2 },
+          py: { xs: 0.5, md: 0.875 },
+          minHeight: { xs: '36px', md: 'auto' },
+          width: { xs: '100%', md: 'auto' },
+          justifyContent: { xs: 'space-between', md: 'flex-start' },
           position: 'relative',
           background: isDarkMode
             ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 50%, rgba(51, 65, 85, 0.7) 100%)'
@@ -261,27 +273,31 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
           }),
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1 } }}>
           <FilterListIcon sx={{ fontSize: '1rem', opacity: 0.6 }} />
-          <Box
-            component="span"
-            sx={{
-              color: isDarkMode ? '#38bdf8' : '#3b82f6',
-              fontWeight: 600,
-            }}
-          >
-            {targetLabel}
-          </Box>
-          <Box
-            component="span"
-            sx={{
-              opacity: 0.3,
-              mx: 0.25,
-              fontSize: '0.7rem',
-            }}
-          >
-            ·
-          </Box>
+          {hasTargets && (
+            <>
+              <Box
+                component="span"
+                sx={{
+                  color: isDarkMode ? '#38bdf8' : '#3b82f6',
+                  fontWeight: 600,
+                }}
+              >
+                {targetLabel}
+              </Box>
+              <Box
+                component="span"
+                sx={{
+                  opacity: 0.3,
+                  mx: 0.25,
+                  fontSize: '0.7rem',
+                }}
+              >
+                ·
+              </Box>
+            </>
+          )}
           <Box component="span" sx={{ opacity: 0.8 }}>
             {playerLabel}
           </Box>
@@ -298,7 +314,7 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         sx={popoverSx}
       >
         {/* Target Section */}
-        <Box sx={sectionHeaderSx}>
+        {hasTargets && (<><Box sx={sectionHeaderSx}>
           <GpsFixedIcon
             sx={{
               fontSize: '0.85rem',
@@ -466,14 +482,16 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
               </ListItemButton>
             );
           })}
-        </Box>
+        </Box></>)}
 
-        <Divider
-          sx={{
-            borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
-            mx: 1.5,
-          }}
-        />
+        {hasTargets && (
+          <Divider
+            sx={{
+              borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
+              mx: 1.5,
+            }}
+          />
+        )}
 
         {/* Player Section */}
         <Box sx={sectionHeaderSx}>
