@@ -72,10 +72,38 @@ const HeaderSkeleton: React.FC = () => (
           justifyContent: 'center',
         }}
       >
-        <Box sx={{ width: 32, height: 32, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: '8px' }} />
-        <Box sx={{ width: 120, height: 32, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: '8px' }} />
-        <Box sx={{ width: 44, height: 32, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: '6px' }} />
-        <Box sx={{ width: 32, height: 32, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: '8px' }} />
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '8px',
+          }}
+        />
+        <Box
+          sx={{
+            width: 120,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '8px',
+          }}
+        />
+        <Box
+          sx={{
+            width: 44,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '6px',
+          }}
+        />
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '8px',
+          }}
+        />
       </Box>
     </Box>
   </>

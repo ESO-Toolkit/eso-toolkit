@@ -314,164 +314,70 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
         sx={popoverSx}
       >
         {/* Target Section */}
-        {hasTargets && (<><Box sx={sectionHeaderSx}>
-          <GpsFixedIcon
-            sx={{
-              fontSize: '0.85rem',
-              color: isDarkMode ? '#38bdf8' : '#3b82f6',
-            }}
-          />
-          <Typography
-            variant="caption"
-            sx={{
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              fontWeight: 700,
-              fontSize: '0.65rem',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: isDarkMode ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.7)',
-            }}
-          >
-            Target
-          </Typography>
-        </Box>
-
-        <Box role="listbox" aria-label="Target filter" aria-multiselectable="true" sx={{ pb: 0.5 }}>
-          <ListItemButton
-            role="option"
-            aria-selected={isAllBosses}
-            onClick={handleToggleAllBosses}
-            selected={isAllBosses}
-            sx={{
-              ...listItemSx,
-              '&.Mui-selected': {
-                background: isDarkMode ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.08)',
-                '&:hover': {
-                  background: isDarkMode ? 'rgba(56, 189, 248, 0.18)' : 'rgba(59, 130, 246, 0.12)',
-                },
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              <Checkbox size="small" checked={isAllBosses} sx={checkboxSx} tabIndex={-1} />
-            </ListItemIcon>
-            <ListItemText
-              primary="All Bosses"
-              slotProps={{
-                primary: {
-                  sx: {
-                    fontSize: '0.825rem',
-                    fontWeight: isAllBosses ? 600 : 400,
-                    fontFamily: 'Inter, system-ui',
-                    color: isAllBosses
-                      ? isDarkMode
-                        ? '#38bdf8'
-                        : '#3b82f6'
-                      : isDarkMode
-                        ? '#e2e8f0'
-                        : '#1e293b',
-                  },
-                },
-              }}
-            />
-          </ListItemButton>
-
-          <ListItemButton
-            role="option"
-            aria-selected={isAllEnemies}
-            onClick={handleToggleAllEnemies}
-            selected={isAllEnemies}
-            sx={{
-              ...listItemSx,
-              '&.Mui-selected': {
-                background: isDarkMode ? 'rgba(168, 85, 247, 0.12)' : 'rgba(139, 69, 255, 0.08)',
-                '&:hover': {
-                  background: isDarkMode ? 'rgba(168, 85, 247, 0.18)' : 'rgba(139, 69, 255, 0.12)',
-                },
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 32 }}>
-              <Checkbox
-                size="small"
-                checked={isAllEnemies}
+        {hasTargets && (
+          <>
+            <Box sx={sectionHeaderSx}>
+              <GpsFixedIcon
                 sx={{
-                  ...checkboxSx,
-                  '&.Mui-checked': {
-                    color: isDarkMode ? '#a855f7' : '#8b45ff',
-                  },
+                  fontSize: '0.85rem',
+                  color: isDarkMode ? '#38bdf8' : '#3b82f6',
                 }}
-                tabIndex={-1}
               />
-            </ListItemIcon>
-            <ListItemText
-              primary="All Enemies"
-              slotProps={{
-                primary: {
-                  sx: {
-                    fontSize: '0.825rem',
-                    fontWeight: isAllEnemies ? 600 : 400,
-                    fontFamily: 'Inter, system-ui',
-                    color: isAllEnemies
-                      ? isDarkMode
-                        ? '#a855f7'
-                        : '#8b45ff'
-                      : isDarkMode
-                        ? '#e2e8f0'
-                        : '#1e293b',
-                  },
-                },
-              }}
-            />
-          </ListItemButton>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontWeight: 700,
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: isDarkMode ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.7)',
+                }}
+              >
+                Target
+              </Typography>
+            </Box>
 
-          {targetsList.map((target) => {
-            const isSelected =
-              !isAllBosses && !isAllEnemies && individualTargets.includes(target.id);
-            return (
+            <Box
+              role="listbox"
+              aria-label="Target filter"
+              aria-multiselectable="true"
+              sx={{ pb: 0.5 }}
+            >
               <ListItemButton
-                key={target.id}
                 role="option"
-                aria-selected={isSelected}
-                onClick={() => handleToggleTarget(target.id)}
-                selected={isSelected}
+                aria-selected={isAllBosses}
+                onClick={handleToggleAllBosses}
+                selected={isAllBosses}
                 sx={{
                   ...listItemSx,
                   '&.Mui-selected': {
-                    background: isDarkMode ? 'rgba(34, 197, 94, 0.12)' : 'rgba(5, 150, 105, 0.08)',
+                    background: isDarkMode
+                      ? 'rgba(56, 189, 248, 0.12)'
+                      : 'rgba(59, 130, 246, 0.08)',
                     '&:hover': {
                       background: isDarkMode
-                        ? 'rgba(34, 197, 94, 0.18)'
-                        : 'rgba(5, 150, 105, 0.12)',
+                        ? 'rgba(56, 189, 248, 0.18)'
+                        : 'rgba(59, 130, 246, 0.12)',
                     },
                   },
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 32 }}>
-                  <Checkbox
-                    size="small"
-                    checked={isSelected}
-                    sx={{
-                      ...checkboxSx,
-                      '&.Mui-checked': {
-                        color: isDarkMode ? '#22c55e' : '#059669',
-                      },
-                    }}
-                    tabIndex={-1}
-                  />
+                  <Checkbox size="small" checked={isAllBosses} sx={checkboxSx} tabIndex={-1} />
                 </ListItemIcon>
                 <ListItemText
-                  primary={target.name}
+                  primary="All Bosses"
                   slotProps={{
                     primary: {
                       sx: {
                         fontSize: '0.825rem',
-                        fontWeight: isSelected ? 600 : 400,
+                        fontWeight: isAllBosses ? 600 : 400,
                         fontFamily: 'Inter, system-ui',
-                        color: isSelected
+                        color: isAllBosses
                           ? isDarkMode
-                            ? '#22c55e'
-                            : '#059669'
+                            ? '#38bdf8'
+                            : '#3b82f6'
                           : isDarkMode
                             ? '#e2e8f0'
                             : '#1e293b',
@@ -480,9 +386,122 @@ const CombinedFilterDropdownComponent: React.FC<CombinedFilterDropdownProps> = (
                   }}
                 />
               </ListItemButton>
-            );
-          })}
-        </Box></>)}
+
+              <ListItemButton
+                role="option"
+                aria-selected={isAllEnemies}
+                onClick={handleToggleAllEnemies}
+                selected={isAllEnemies}
+                sx={{
+                  ...listItemSx,
+                  '&.Mui-selected': {
+                    background: isDarkMode
+                      ? 'rgba(168, 85, 247, 0.12)'
+                      : 'rgba(139, 69, 255, 0.08)',
+                    '&:hover': {
+                      background: isDarkMode
+                        ? 'rgba(168, 85, 247, 0.18)'
+                        : 'rgba(139, 69, 255, 0.12)',
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 32 }}>
+                  <Checkbox
+                    size="small"
+                    checked={isAllEnemies}
+                    sx={{
+                      ...checkboxSx,
+                      '&.Mui-checked': {
+                        color: isDarkMode ? '#a855f7' : '#8b45ff',
+                      },
+                    }}
+                    tabIndex={-1}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primary="All Enemies"
+                  slotProps={{
+                    primary: {
+                      sx: {
+                        fontSize: '0.825rem',
+                        fontWeight: isAllEnemies ? 600 : 400,
+                        fontFamily: 'Inter, system-ui',
+                        color: isAllEnemies
+                          ? isDarkMode
+                            ? '#a855f7'
+                            : '#8b45ff'
+                          : isDarkMode
+                            ? '#e2e8f0'
+                            : '#1e293b',
+                      },
+                    },
+                  }}
+                />
+              </ListItemButton>
+
+              {targetsList.map((target) => {
+                const isSelected =
+                  !isAllBosses && !isAllEnemies && individualTargets.includes(target.id);
+                return (
+                  <ListItemButton
+                    key={target.id}
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleToggleTarget(target.id)}
+                    selected={isSelected}
+                    sx={{
+                      ...listItemSx,
+                      '&.Mui-selected': {
+                        background: isDarkMode
+                          ? 'rgba(34, 197, 94, 0.12)'
+                          : 'rgba(5, 150, 105, 0.08)',
+                        '&:hover': {
+                          background: isDarkMode
+                            ? 'rgba(34, 197, 94, 0.18)'
+                            : 'rgba(5, 150, 105, 0.12)',
+                        },
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 32 }}>
+                      <Checkbox
+                        size="small"
+                        checked={isSelected}
+                        sx={{
+                          ...checkboxSx,
+                          '&.Mui-checked': {
+                            color: isDarkMode ? '#22c55e' : '#059669',
+                          },
+                        }}
+                        tabIndex={-1}
+                      />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={target.name}
+                      slotProps={{
+                        primary: {
+                          sx: {
+                            fontSize: '0.825rem',
+                            fontWeight: isSelected ? 600 : 400,
+                            fontFamily: 'Inter, system-ui',
+                            color: isSelected
+                              ? isDarkMode
+                                ? '#22c55e'
+                                : '#059669'
+                              : isDarkMode
+                                ? '#e2e8f0'
+                                : '#1e293b',
+                          },
+                        },
+                      }}
+                    />
+                  </ListItemButton>
+                );
+              })}
+            </Box>
+          </>
+        )}
 
         {hasTargets && (
           <Divider

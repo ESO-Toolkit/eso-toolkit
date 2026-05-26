@@ -44,9 +44,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
               display: 'flex',
               alignItems: 'center',
               backgroundColor: (theme: Theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255, 255, 255, 0.03)'
-                  : 'rgba(0, 0, 0, 0.04)',
+                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: { xs: '10px', md: '12px' },
               border: (theme: Theme) =>
                 theme.palette.mode === 'dark'
@@ -80,13 +78,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
         >
           <Box sx={{ display: 'flex', gap: 1, flexGrow: 1 }}>
             {Array.from({ length: 9 }).map((_, i) => (
-              <Skeleton
-                key={i}
-                variant="circular"
-                width={40}
-                height={40}
-                sx={{ flexShrink: 0 }}
-              />
+              <Skeleton key={i} variant="circular" width={40} height={40} sx={{ flexShrink: 0 }} />
             ))}
           </Box>
         </Box>

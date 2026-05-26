@@ -687,7 +687,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
            contain: layout style limits reflow scope so MUI's
            getTabsMeta doesn't trigger a full-page layout recalc.
            (paint omitted — it would clip disablePortal overlays in child panels) */}
-      <Box sx={{ mt: { xs: 1, md: 2 }, contain: 'layout style' }} data-testid="fight-tab-content-container">
+      <Box
+        sx={{ mt: { xs: 1, md: 2 }, contain: 'layout style' }}
+        data-testid="fight-tab-content-container"
+      >
         <AnimatedTabContent tabKey={deferredTabId} data-testid={`tab-content-${deferredTabId}`}>
           {deferredTabId === TabId.INSIGHTS && (
             <PanelErrorBoundary panelName="Insights">
