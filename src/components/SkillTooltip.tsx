@@ -167,8 +167,12 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
     abilityId,
   );
 
-  // Prefer hook-detected data, fall back to pre-resolved prop data (from name-based detection)
-  const finalScribedData = detectedScribingData ?? scribedSkillData ?? null;
+  // Prefer hook-detected data only when it has meaningful results (was actually cast),
+  // otherwise the prop-based data from PlayerCard's worker detection is more accurate
+  const finalScribedData =
+    (detectedScribingData?.wasCastInFight ? detectedScribingData : null) ??
+    scribedSkillData ??
+    null;
 
   // Ensure at least one icon source is provided
   if (!iconUrl && !iconSlug) {
@@ -808,8 +812,8 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 </Box>
               ) : null}
 
-              {/* Effects List - only show if skill was cast */}
-              {finalScribedData.wasCastInFight !== false && (
+              {/* Effects List - only show if skill was cast and effects detected */}
+              {finalScribedData.wasCastInFight !== false && finalScribedData.effects.length > 0 && (
                 <Box>
                   <ScribingSectionLabel color={theme.palette.text.primary}>
                     Effects

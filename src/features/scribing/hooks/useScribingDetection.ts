@@ -436,33 +436,6 @@ async function _detectSignatureScript(
       };
     }
 
-    const minCorrelation =
-      abilityCasts.length >= 4 ? abilityCasts.length - 2 : Math.ceil(abilityCasts.length * 0.5);
-
-    const highlyCorrelated = Array.from(signatureEffects.entries())
-      .filter(([_, effect]) => effect.castIndices.size >= minCorrelation)
-      .sort((a, b) => b[1].castIndices.size - a[1].castIndices.size);
-
-    if (highlyCorrelated.length > 0) {
-      const correlatedIds = highlyCorrelated
-        .slice(0, 5)
-        .map(
-          ([id, eff]) => `${eff.type} ${id} (${eff.castIndices.size}/${abilityCasts.length} casts)`,
-        );
-
-      return {
-        name: 'Correlated Abilities Detected',
-        confidence: 0.3,
-        detectionMethod: 'Correlation Analysis',
-        evidence: [
-          `Analyzed ${abilityCasts.length} casts`,
-          `No signature script identified (need ≥${Math.ceil(abilityCasts.length * MIN_CONSISTENCY)}/${abilityCasts.length} consistency)`,
-          `Found ${highlyCorrelated.length} highly correlated abilities (≥${minCorrelation}/${abilityCasts.length} casts):`,
-          ...correlatedIds,
-        ],
-      };
-    }
-
     return null;
   } catch (error) {
     moduleLogger.error(
