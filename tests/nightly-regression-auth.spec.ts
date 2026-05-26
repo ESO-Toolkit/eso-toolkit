@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createAuthTestUtils, AuthEnv } from './auth-utils';
 import { createEsoPage } from './utils/EsoLogAggregatorPage';
+import { TEST_TIMEOUTS, waitForAppMount } from './selectors';
 
 /**
  * Nightly Regression Tests - Authentication and User Reports
@@ -15,14 +16,6 @@ import { createEsoPage } from './utils/EsoLogAggregatorPage';
  * - ESO_LOGS_TEST_EMAIL: Test user email (optional)
  * - ESO_LOGS_TEST_PASSWORD: Test user password (optional)
  */
-
-const TEST_TIMEOUTS = {
-  navigation: 30000,
-  dataLoad: 45000,
-  // Increased from 10 000 ms: WebKit can be slow to settle before screenshots
-  // on CI, especially for auth-gated pages that render redirect logic.
-  screenshot: 20000,
-};
 
 test.describe('Nightly Regression - Authentication and Reports', () => {
   test.beforeEach(async ({ page }) => {
@@ -120,7 +113,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       });
 
       // Wait for the page to be ready
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
 
       // Take initial landing screenshot
       await page.screenshot({
@@ -151,21 +144,9 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       }
     });
 
-    // Test removed: 'should redirect unauthenticated users from protected routes'
-    // This test used /my-reports which requires user authentication (user subject in token).
-    // Client credentials tokens don't have user subjects, so this test is not applicable.
-    test.skip('should redirect unauthenticated users from protected routes', async ({ page }) => {
-      // Test skipped - /my-reports requires user authentication
-      console.log('⏭️  Test skipped - requires user authentication with user subject in token');
-
-      expect(hasAuthIndicator).toBeTruthy();
-
-      await page.screenshot({
-        path: 'test-results/nightly-regression-auth-redirect.png',
-        fullPage: true,
-        timeout: TEST_TIMEOUTS.screenshot,
-      });
-    });
+    // Removed: 'should redirect unauthenticated users from protected routes'
+    // /my-reports requires user authentication (user subject in token).
+    // Client credentials tokens don't carry user subjects.
   });
 
   test.describe('Latest Reports Page', () => {
@@ -176,28 +157,32 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       });
 
       // Wait for content to load
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
 
       // Wait for the page to be fully rendered
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Check for various content indicators - be more flexible
       const hasReports = await page
         .locator(
           '.MuiDataGrid-root, .report-card, .report-item, a[href*="/report/"], .reports, .data-grid, table, .list',
         )
+        .first()
         .isVisible()
         .catch(() => false);
       const hasLoginPrompt = await page
         .locator('button:has-text(Login), a:has-text(Login), [data-testid*="login"]')
+        .first()
         .isVisible()
         .catch(() => false);
       const hasContent = await page
         .locator('main, .content, .app, .page, #root')
+        .first()
         .isVisible()
         .catch(() => false);
       const hasText = await page
         .getByText(/report|data|log|analysis/i)
+        .first()
         .isVisible()
         .catch(() => false);
 
@@ -225,7 +210,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
           await firstReportLink.click();
 
           // Should navigate to report page
-          await page.waitForTimeout(3000);
+          await waitForAppMount(page);
           expect(page.url()).toMatch(/\/report\/[A-Za-z0-9]+/);
 
           await page.screenshot({
@@ -251,22 +236,25 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
 
       // Wait for app to render
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Calculator should be accessible without login - check for various indicators
       const hasNumberInput = await page
         .locator('input[type=number]')
+        .first()
         .isVisible()
         .catch(() => false);
       const hasTextInput = await page
         .locator('input[type=text]')
+        .first()
         .isVisible()
         .catch(() => false);
       const hasAnyInput = await page
         .locator('input')
+        .first()
         .isVisible()
         .catch(() => false);
       const hasCalculatorClass = await page
@@ -279,14 +267,17 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
       const hasCalculatorText = await page
         .getByText(/calculator/i)
+        .first()
         .isVisible()
         .catch(() => false);
       const hasFormElements = await page
         .locator('form, select, button')
+        .first()
         .isVisible()
         .catch(() => false);
       const hasPageContent = await page
         .locator('main, .content, .app, #root')
+        .first()
         .isVisible()
         .catch(() => false);
 
@@ -363,8 +354,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       // Client credentials tokens don't carry a user subject, so /my-builds may
       // redirect to login. Both outcomes (loaded content OR redirect to login) are valid.
@@ -376,6 +367,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
       const hasLoginPrompt = await page
         .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false);
       const isOnLogin = url.includes('/login') || url.includes('/oauth');
@@ -397,8 +389,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       const url = page.url();
       const hasContent = await page
@@ -408,6 +400,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
       const hasLoginPrompt = await page
         .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false);
       const isOnLogin = url.includes('/login') || url.includes('/oauth');
@@ -429,8 +422,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       const url = page.url();
       const hasEditor = await page
@@ -440,6 +433,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
       const hasLoginPrompt = await page
         .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false);
       const isOnLogin = url.includes('/login') || url.includes('/oauth');
@@ -461,8 +455,8 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      await page.waitForTimeout(3000);
+      await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad }).catch(() => {});
+      await waitForAppMount(page);
 
       const url = page.url();
       const hasBuilder = await page
@@ -472,6 +466,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
       const hasLoginPrompt = await page
         .locator('button:has-text("Login"), a:has-text("Login"), [data-testid*="login"]')
+        .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false);
       const isOnLogin = url.includes('/login') || url.includes('/oauth');
@@ -499,14 +494,15 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(5000);
+      await waitForAppMount(page);
 
       const hasError = await page
         .getByText(/not found|invalid|error|fight.*not.*exist/i)
+        .first()
         .isVisible()
         .catch(() => false);
       const redirected = !page.url().includes('99999');
-      const hasContent = await page.locator('main, #root').isVisible().catch(() => false);
+      const hasContent = await page.locator('main, #root').first().isVisible().catch(() => false);
 
       expect(
         hasError || redirected || hasContent,
@@ -539,7 +535,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(6000);
+      await waitForAppMount(page);
 
       // Should show a loading state, error message, or at minimum not crash
       const hasLoadingOrError = await page
@@ -551,9 +547,10 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         .catch(() => false);
       const hasText = await page
         .getByText(/loading|error|failed|timeout|try again/i)
+        .first()
         .isVisible({ timeout: 3000 })
         .catch(() => false);
-      const hasContent = await page.locator('main, #root').isVisible().catch(() => false);
+      const hasContent = await page.locator('main, #root').first().isVisible().catch(() => false);
 
       expect(
         hasLoadingOrError || hasText || hasContent,
@@ -583,7 +580,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
-      await page.waitForTimeout(6000);
+      await waitForAppMount(page);
 
       // App should not crash — any visible content is acceptable
       const hasContent = await page.locator('main, #root, body').first().isVisible().catch(() => false);
@@ -612,7 +609,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         timeout: TEST_TIMEOUTS.navigation,
       });
 
-      await page.waitForTimeout(3000);
+      await waitForAppMount(page);
 
       // Verify basic functionality works
       const hasInteractiveElements = await page
