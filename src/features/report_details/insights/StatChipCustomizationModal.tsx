@@ -24,6 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import TuneIcon from '@mui/icons-material/Tune';
 import {
   Box,
   Button,
@@ -34,7 +35,9 @@ import {
   DialogTitle,
   IconButton,
   Typography,
+  useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
 
 import type { StatChipId } from './statChipConfig';
@@ -55,6 +58,9 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: chipId,
   });
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+  const accent = isDarkMode ? '#38bdf8' : '#3b82f6';
 
   const meta = STAT_CHIP_META[chipId];
 
@@ -65,14 +71,30 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
         display: 'flex',
         alignItems: 'center',
         gap: 0.5,
-        py: 0.25,
-        borderRadius: 1,
+        py: 0.5,
+        px: 1,
+        borderRadius: '8px',
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: transition
+          ? `${transition}, background-color 150ms ease, border-color 150ms ease`
+          : 'background-color 150ms ease, border-color 150ms ease',
         opacity: isDragging ? 0.4 : 1,
         cursor: isDragging ? 'grabbing' : 'default',
+        border: '1px solid transparent',
+        background: checked
+          ? isDarkMode
+            ? 'rgba(56, 189, 248, 0.12)'
+            : 'rgba(59, 130, 246, 0.08)'
+          : 'transparent',
         '&:hover': {
-          bgcolor: 'action.hover',
+          background: checked
+            ? isDarkMode
+              ? 'rgba(56, 189, 248, 0.18)'
+              : 'rgba(59, 130, 246, 0.12)'
+            : isDarkMode
+              ? 'rgba(56, 189, 248, 0.1)'
+              : 'rgba(59, 130, 246, 0.06)',
+          borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.25)' : 'rgba(59, 130, 246, 0.2)',
         },
       }}
     >
@@ -83,27 +105,53 @@ const SortableChipRow: React.FC<SortableChipRowProps> = ({ chipId, checked, onTo
         {...listeners}
         sx={{
           cursor: 'grab',
-          color: 'text.disabled',
+          color: isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)',
           p: 0.25,
           '&:active': { cursor: 'grabbing' },
+          '&:hover': {
+            color: accent,
+          },
         }}
         aria-label={`Drag to reorder ${meta.label}`}
-        tabIndex={-1}
       >
         <DragIndicatorIcon fontSize="small" />
       </IconButton>
 
       {/* Checkbox */}
-      <Checkbox size="small" checked={checked} onChange={() => onToggle(chipId)} sx={{ p: 0.25 }} />
+      <Checkbox
+        size="small"
+        checked={checked}
+        onChange={() => onToggle(chipId)}
+        slotProps={{ input: { 'aria-label': `Toggle ${meta.label}` } }}
+        sx={{
+          p: 0.25,
+          color: isDarkMode ? 'rgba(148, 163, 184, 0.5)' : 'rgba(100, 116, 139, 0.5)',
+          '&.Mui-checked': {
+            color: accent,
+          },
+        }}
+      />
 
       {/* Label */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flex: 1 }}>
         <StatChipIcon chipId={chipId} />
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: checked ? 600 : 500,
+            color: checked ? accent : isDarkMode ? '#e2e8f0' : '#1e293b',
+          }}
+        >
           {meta.label}
         </Typography>
         {meta.roleFilter && (
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              fontSize: '0.65rem',
+              color: isDarkMode ? '#94a3b8' : '#64748b',
+            }}
+          >
             ({meta.roleFilter.join(', ')})
           </Typography>
         )}
@@ -132,6 +180,10 @@ function buildInitialOrder(visibleChips: StatChipId[]): StatChipId[] {
 
 export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProps> = React.memo(
   ({ open, onClose, visibleChips, onSave }) => {
+    const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
+    const accent = isDarkMode ? '#38bdf8' : '#3b82f6';
+
     // orderedIds holds the full list of all chips in user-defined order.
     // visibleSet tracks which chips are checked (will appear on cards).
     const [orderedIds, setOrderedIds] = useState<StatChipId[]>(() =>
@@ -201,8 +253,17 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
         slotProps={{
           paper: {
             sx: {
-              backdropFilter: 'blur(20px)',
               borderRadius: '16px',
+              border: isDarkMode
+                ? '1px solid rgba(56, 189, 248, 0.2)'
+                : '1px solid rgba(59, 130, 246, 0.15)',
+              background: isDarkMode
+                ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.97) 0%, rgba(30, 41, 59, 0.95) 50%, rgba(51, 65, 85, 0.93) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%)',
+              backdropFilter: 'blur(16px)',
+              boxShadow: isDarkMode
+                ? '0 16px 48px rgba(0, 0, 0, 0.5), 0 0 80px rgba(56, 189, 248, 0.08)'
+                : '0 12px 40px rgba(0, 0, 0, 0.1), 0 0 60px rgba(59, 130, 246, 0.05)',
             },
           },
         }}
@@ -212,22 +273,82 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
             fontWeight: 700,
             fontSize: '1.1rem',
             pb: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color: isDarkMode ? '#e2e8f0' : '#1e293b',
           }}
         >
-          Customize Stat Chips
+          <TuneIcon sx={{ fontSize: '1.2rem', color: accent }} />
+          <Box
+            component="span"
+            sx={{
+              background: `linear-gradient(135deg, ${accent}, ${isDarkMode ? '#7dd3fc' : '#60a5fa'})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            Customize Stat Chips
+          </Box>
         </DialogTitle>
 
-        <DialogContent sx={{ pt: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <DialogContent sx={{ '&.MuiDialogContent-root': { pt: 1 } }}>
+          <Typography
+            variant="body2"
+            sx={{
+              mb: 2,
+              color: isDarkMode ? '#94a3b8' : '#64748b',
+            }}
+          >
             Choose which stats to display on player cards and drag to reorder. Preferences are saved
             to your browser.
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1, mb: 1.5 }}>
-            <Button size="small" variant="text" onClick={handleSelectAll}>
+            <Button
+              size="small"
+              onClick={handleSelectAll}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                borderRadius: '16px',
+                px: 1.5,
+                py: 0.25,
+                color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                border: isDarkMode
+                  ? '1px solid rgba(56, 189, 248, 0.25)'
+                  : '1px solid rgba(59, 130, 246, 0.2)',
+                background: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(59, 130, 246, 0.05)',
+                '&:hover': {
+                  background: isDarkMode ? 'rgba(56, 189, 248, 0.18)' : 'rgba(59, 130, 246, 0.12)',
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.3)',
+                },
+              }}
+            >
               Select All
             </Button>
-            <Button size="small" variant="text" onClick={handleSelectNone}>
+            <Button
+              size="small"
+              onClick={handleSelectNone}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                borderRadius: '16px',
+                px: 1.5,
+                py: 0.25,
+                color: isDarkMode ? '#e2e8f0' : '#1e293b',
+                border: isDarkMode
+                  ? '1px solid rgba(56, 189, 248, 0.25)'
+                  : '1px solid rgba(59, 130, 246, 0.2)',
+                background: isDarkMode ? 'rgba(56, 189, 248, 0.08)' : 'rgba(59, 130, 246, 0.05)',
+                '&:hover': {
+                  background: isDarkMode ? 'rgba(56, 189, 248, 0.18)' : 'rgba(59, 130, 246, 0.12)',
+                  borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.3)',
+                },
+              }}
+            >
               Select None
             </Button>
           </Box>
@@ -238,7 +359,7 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={orderedIds} strategy={verticalListSortingStrategy}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {orderedIds.map((chipId) => (
                   <SortableChipRow
                     key={chipId}
@@ -252,11 +373,57 @@ export const StatChipCustomizationModal: React.FC<StatChipCustomizationModalProp
           </DndContext>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={onClose} color="inherit" size="small">
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 2,
+            pt: 1.5,
+            borderTop: isDarkMode
+              ? '1px solid rgba(56, 189, 248, 0.1)'
+              : '1px solid rgba(59, 130, 246, 0.08)',
+          }}
+        >
+          <Button
+            onClick={onClose}
+            size="small"
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: '8px',
+              px: 2,
+              color: isDarkMode ? '#94a3b8' : '#64748b',
+              border: isDarkMode
+                ? '1px solid rgba(148, 163, 184, 0.2)'
+                : '1px solid rgba(100, 116, 139, 0.15)',
+              '&:hover': {
+                background: isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'rgba(100, 116, 139, 0.06)',
+                borderColor: isDarkMode ? 'rgba(148, 163, 184, 0.35)' : 'rgba(100, 116, 139, 0.25)',
+              },
+            }}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave} variant="contained" size="small">
+          <Button
+            onClick={handleSave}
+            size="small"
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: '8px',
+              px: 2.5,
+              color: '#ffffff',
+              background: accent,
+              boxShadow: isDarkMode
+                ? `0 2px 12px ${alpha(accent, 0.4)}`
+                : `0 2px 8px ${alpha(accent, 0.3)}`,
+              '&:hover': {
+                background: isDarkMode ? alpha('#38bdf8', 0.85) : alpha('#3b82f6', 0.85),
+                boxShadow: isDarkMode
+                  ? `0 4px 20px ${alpha(accent, 0.5)}`
+                  : `0 4px 16px ${alpha(accent, 0.4)}`,
+              },
+            }}
+          >
             Save
           </Button>
         </DialogActions>

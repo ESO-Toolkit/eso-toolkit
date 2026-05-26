@@ -40,6 +40,10 @@ function ensureIconData(): IconData | null {
   return null;
 }
 
+// Eagerly start loading icon data at module import time so synchronous
+// lookups resolve as early as possible.
+ensureIconData();
+
 export async function preloadIconData(): Promise<void> {
   if (iconData) return;
   if (!iconDataPromise) {
