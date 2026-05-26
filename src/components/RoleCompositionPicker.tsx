@@ -10,7 +10,7 @@ import {
   Favorite as HealerIcon,
   AutoAwesome as DpsIcon,
 } from '@mui/icons-material';
-import { Box, ButtonBase, Typography } from '@mui/material';
+import { Box, ButtonBase, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
 
@@ -91,6 +91,7 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
 
     const bgBase = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.03)';
     const borderBase = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
+    const compact = !useMediaQuery(theme.breakpoints.up('sm'));
 
     const renderRoleStepper = (
       role: 'tanks' | 'healers',
@@ -102,28 +103,33 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
       const canIncrement = local.dps > 0 && local[role] < ROSTER_SIZE;
       const canDecrement = count > 0;
 
+      const btnSize = compact ? 36 : 26;
+      const btnRadius = compact ? '8px' : '6px';
+
       return (
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 0.75,
-            px: 1,
-            py: 0.5,
-            borderRadius: '8px',
+            gap: compact ? 1 : 0.75,
+            px: compact ? 1.25 : 1,
+            py: compact ? 0.75 : 0.5,
+            borderRadius: compact ? '10px' : '8px',
             bgcolor: `${color}10`,
             border: `1px solid ${color}25`,
+            flex: compact ? '1 1 100%' : '0 0 auto',
           }}
         >
           {icon}
           <Typography
             sx={{
-              fontSize: '0.7rem',
+              fontSize: compact ? '0.75rem' : '0.7rem',
               fontWeight: 600,
               color,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
-              minWidth: 48,
+              flex: 1,
+              minWidth: 0,
             }}
           >
             {label}
@@ -132,14 +138,15 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
           <ButtonBase
             onClick={() => handleDecrement(role)}
             disabled={!canDecrement}
+            aria-label={`Decrease ${label}`}
             sx={{
-              width: 26,
-              height: 26,
-              borderRadius: '6px',
+              width: btnSize,
+              height: btnSize,
+              borderRadius: btnRadius,
               bgcolor: canDecrement ? `${color}18` : 'transparent',
               border: `1px solid ${canDecrement ? `${color}40` : borderBase}`,
               color: canDecrement ? color : 'text.disabled',
-              fontSize: '0.95rem',
+              fontSize: compact ? '1.1rem' : '0.95rem',
               fontWeight: 700,
               lineHeight: 1,
               '&:hover': canDecrement ? { bgcolor: `${color}30` } : {},
@@ -151,10 +158,10 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
           <Typography
             ref={role === 'tanks' ? tanksRef : healersRef}
             sx={{
-              fontSize: '0.9rem',
+              fontSize: compact ? '1rem' : '0.9rem',
               fontWeight: 700,
               color,
-              minWidth: 16,
+              minWidth: compact ? 20 : 16,
               textAlign: 'center',
               fontFamily: '"Space Grotesk", monospace',
             }}
@@ -165,14 +172,15 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
           <ButtonBase
             onClick={() => handleIncrement(role)}
             disabled={!canIncrement}
+            aria-label={`Increase ${label}`}
             sx={{
-              width: 26,
-              height: 26,
-              borderRadius: '6px',
+              width: btnSize,
+              height: btnSize,
+              borderRadius: btnRadius,
               bgcolor: canIncrement ? `${color}18` : 'transparent',
               border: `1px solid ${canIncrement ? `${color}40` : borderBase}`,
               color: canIncrement ? color : 'text.disabled',
-              fontSize: '0.95rem',
+              fontSize: compact ? '1.1rem' : '0.95rem',
               fontWeight: 700,
               lineHeight: 1,
               '&:hover': canIncrement ? { bgcolor: `${color}30` } : {},
@@ -190,10 +198,15 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
-          gap: 1.5,
+          gap: compact ? 1 : 1.5,
           ...(embedded
             ? { p: 0 }
-            : { p: 1, borderRadius: '10px', bgcolor: bgBase, border: `1px solid ${borderBase}` }),
+            : {
+                p: compact ? 1.25 : 1,
+                borderRadius: compact ? '12px' : '10px',
+                bgcolor: bgBase,
+                border: `1px solid ${borderBase}`,
+              }),
         }}
       >
         {/* Role steppers */}
@@ -212,78 +225,91 @@ export const RoleCompositionPicker = React.memo<RoleCompositionPickerProps>(
         )}
 
         {/* Separator — interactive roles vs auto-calculated */}
-        <Box
-          sx={{
-            width: '1px',
-            height: 20,
-            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
-            mx: 0.25,
-          }}
-        />
+        {!compact && (
+          <Box
+            sx={{
+              width: '1px',
+              height: 20,
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
+              mx: 0.25,
+            }}
+          />
+        )}
 
-        {/* DPS counter (read-only, auto-adjusts) */}
+        {/* DPS counter + total — on mobile these share a full-width row */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 0.75,
-            px: 1,
-            py: 0.5,
-            borderRadius: '8px',
-            bgcolor: `${roleColors.dps}08`,
-            border: `1px dashed ${roleColors.dps}20`,
-            opacity: 0.85,
+            gap: compact ? 1.5 : 0.75,
+            ...(compact && { flex: '1 1 100%' }),
           }}
         >
-          <DpsIcon sx={{ fontSize: '0.85rem', color: roleColors.dps }} />
-          <Typography
+          <Box
             sx={{
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              color: roleColors.dps,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              minWidth: 24,
+              display: 'flex',
+              alignItems: 'center',
+              gap: compact ? 1 : 0.75,
+              px: compact ? 1.25 : 1,
+              py: compact ? 0.75 : 0.5,
+              borderRadius: compact ? '10px' : '8px',
+              bgcolor: `${roleColors.dps}08`,
+              border: `1px dashed ${roleColors.dps}20`,
+              opacity: 0.85,
+              flex: compact ? 1 : '0 0 auto',
             }}
           >
-            DPS
-          </Typography>
-          <Typography
-            ref={dpsRef}
-            sx={{
-              fontSize: '0.9rem',
-              fontWeight: 700,
-              color: roleColors.dps,
-              fontFamily: '"Space Grotesk", monospace',
-            }}
-          >
-            {local.dps}
-          </Typography>
-        </Box>
+            <DpsIcon sx={{ fontSize: '0.85rem', color: roleColors.dps }} />
+            <Typography
+              sx={{
+                fontSize: compact ? '0.75rem' : '0.7rem',
+                fontWeight: 600,
+                color: roleColors.dps,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                flex: compact ? 1 : 'unset',
+                minWidth: compact ? 0 : 24,
+              }}
+            >
+              DPS
+            </Typography>
+            <Typography
+              ref={dpsRef}
+              sx={{
+                fontSize: compact ? '1rem' : '0.9rem',
+                fontWeight: 700,
+                color: roleColors.dps,
+                fontFamily: '"Space Grotesk", monospace',
+              }}
+            >
+              {local.dps}
+            </Typography>
+          </Box>
 
-        {/* Total roster size indicator */}
-        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Typography
-            sx={{
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(15,23,42,0.3)',
-              fontFamily: '"Space Grotesk", monospace',
-            }}
-          >
-            {ROSTER_SIZE}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '0.6rem',
-              fontWeight: 500,
-              color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.2)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            players
-          </Typography>
+          {/* Total roster size indicator */}
+          <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography
+              sx={{
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(15,23,42,0.3)',
+                fontFamily: '"Space Grotesk", monospace',
+              }}
+            >
+              {ROSTER_SIZE}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.6rem',
+                fontWeight: 500,
+                color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.2)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}
+            >
+              players
+            </Typography>
+          </Box>
         </Box>
       </Box>
     );
