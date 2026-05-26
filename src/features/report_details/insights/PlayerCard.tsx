@@ -51,6 +51,7 @@ import { selectPlayersByIdForContext } from '../../../store/player_data/playerDa
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { selectActiveReportContext } from '../../../store/report/reportSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
+import { selectScribingDetectionsResult } from '../../../store/worker_results';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -58,6 +59,7 @@ import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
 import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnalysisUtils';
+import { SCRIBING_DETECTION_SCHEMA_VERSION } from '../../scribing/analysis/scribingDetectionAnalysis';
 import { ScribedSkillData } from '../../scribing/types';
 
 import type { StatChipId } from './statChipConfig';
@@ -331,23 +333,45 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       return `${rounded.toLocaleString()} m`;
     }, [distanceTraveled]);
 
-    // Memoize tooltip props lookup to avoid repeated function calls
+    // Pull full detection results from Redux for this player
+    const scribingResult = useSelector(selectScribingDetectionsResult);
+
+    // Build a full ScribedSkillData lookup keyed by transformation name (matches talent.name)
+    const scribedSkillsLookup = React.useMemo(() => {
+      const lookup = new Map<string, ScribedSkillData>();
+
+      // Primary source: worker detection results (has signature/affix/wasCastInFight)
+      if (scribingResult?.players[player.id]) {
+        Object.values(scribingResult.players[player.id]).forEach((detection) => {
+          if (
+            !detection?.scribedSkillData ||
+            detection.schemaVersion !== SCRIBING_DETECTION_SCHEMA_VERSION
+          ) {
+            return;
+          }
+          lookup.set(detection.scribingInfo.transformation, detection.scribedSkillData);
+        });
+      }
+
+      // Fallback: GrimoireData from the older pipeline (basic fields only)
+      scribingSkills.forEach((grimoire) => {
+        grimoire.skills.forEach((skill) => {
+          if (!lookup.has(skill.skillName)) {
+            lookup.set(skill.skillName, {
+              grimoireName: grimoire.grimoireName,
+              effects: skill.effects,
+              recipe: skill.recipe,
+            });
+          }
+        });
+      });
+
+      return lookup;
+    }, [scribingResult, player.id, scribingSkills]);
+
     const tooltipPropsLookup = React.useMemo(() => {
       const lookup = new Map<number, ReturnType<typeof buildTooltipProps>>();
       const clsKey = toClassKey(player.type);
-
-      // Create a lookup map for scribed skills data by talent name
-      const scribedSkillsLookup = new Map<string, ScribedSkillData>();
-      scribingSkills.forEach((grimoire) => {
-        grimoire.skills.forEach((skill) => {
-          // Use the actual talent name as the key for mapping
-          scribedSkillsLookup.set(skill.skillName, {
-            grimoireName: grimoire.grimoireName,
-            effects: skill.effects,
-            recipe: skill.recipe, // Include the enhanced recipe information
-          });
-        });
-      });
 
       talents.forEach((talent) => {
         const key = talent.guid;
@@ -368,7 +392,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       });
 
       return lookup;
-    }, [talents, player.type, scribingSkills]);
+    }, [talents, player.type, scribedSkillsLookup]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
@@ -1223,6 +1247,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                       }
                                       abilityId={talent.guid}
+                                      scribedSkillData={
+                                        rich?.scribedSkillData ??
+                                        scribedSkillsLookup.get(talent.name)
+                                      }
                                       fightId={fightId || undefined}
                                       playerId={player.id}
                                     />
