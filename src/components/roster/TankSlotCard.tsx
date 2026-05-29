@@ -155,10 +155,11 @@ export const TankCard = React.memo<TankCardProps>(
                   freeSolo
                   size="small"
                   options={[...availableGroups].sort()}
-                  value={tank.group?.groupName || ''}
+                  value={tank.groups?.[0] ?? tank.group?.groupName ?? ''}
                   onChange={(_, value) =>
                     onChange({
-                      group: value ? { groupName: value } : undefined,
+                      groups: value ? [value] : undefined,
+                      group: undefined,
                     })
                   }
                   renderInput={(params) => (
@@ -192,7 +193,7 @@ export const TankCard = React.memo<TankCardProps>(
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
-                    color: tankIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    color: tankIsDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                     mb: 1,
                   }}
                 >
@@ -391,7 +392,7 @@ export const TankCard = React.memo<TankCardProps>(
                     <ExpandMoreIcon
                       sx={{
                         fontSize: 18,
-                        color: tankIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+                        color: tankIsDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                       }}
                     />
                   }
@@ -403,7 +404,7 @@ export const TankCard = React.memo<TankCardProps>(
                       fontWeight: 600,
                       fontFamily: 'Space Grotesk, Inter, system-ui',
                       letterSpacing: 0.5,
-                      color: tankIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                      color: tankIsDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                     }}
                   >
                     Advanced Options

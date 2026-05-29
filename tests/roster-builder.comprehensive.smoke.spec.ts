@@ -13,6 +13,8 @@
 
 import { test, expect, Page } from '@playwright/test';
 
+import { KnownSetIDs } from '../src/types/abilities';
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 /** Capture page errors during a callback. */
@@ -28,6 +30,7 @@ async function generateFullRoster(page: Page) {
   return page.evaluate(async () => {
     const { encodeRosterToURL } = await import('/src/utils/rosterEncoding.ts');
     const { createDefaultRoster } = await import('/src/types/roster.ts');
+    const { KnownSetIDs } = await import('/src/types/abilities.ts');
 
     const roster = createDefaultRoster();
     roster.rosterName = '✓ Complete Raid Team';
@@ -35,13 +38,13 @@ async function generateFullRoster(page: Page) {
     // ─── Tanks ───────────────────────────────────────────────────────────
     roster.tanks[0] = {
       playerName: 'TankA',
-      playerNumber: 1,
+      playerNumber: String(1),
       roleLabel: 'MT',
       labels: ['Main', 'Trash Tank'],
       gearSets: {
         set1: 768, // LUCENT_ECHOES
         set2: 648, // PEARLESCENT_WARD
-        monsterSet: 1261, // Cephaliarch's Flail
+        monsterSet: KnownSetIDs.NAZARAY,
       },
       skillLines: {
         line1: 'Draconic Power',
@@ -51,19 +54,19 @@ async function generateFullRoster(page: Page) {
       },
       ultimate: 'Aggressive Warhorn',
       specificSkills: ['Pierce Armor', 'Unrelenting Assault'],
-      group: { groupName: 'Tank Pair' },
+      groups: ['Tank Pair'],
       notes: 'Single Bar Build',
     };
 
     roster.tanks[1] = {
       playerName: 'TankB',
-      playerNumber: 2,
+      playerNumber: String(2),
       roleLabel: 'OT',
       labels: ['Offtank', 'Trash Tank'],
       gearSets: {
         set1: 768, // LUCENT_ECHOES
         set2: 648, // PEARLESCENT_WARD
-        monsterSet: 1261,
+        monsterSet: KnownSetIDs.ARCHDRUID_DEVYRIC,
       },
       skillLines: {
         line1: 'Draconic Power',
@@ -73,17 +76,17 @@ async function generateFullRoster(page: Page) {
       },
       ultimate: 'Glacial Colossus',
       specificSkills: ['Pierce Armor'],
-      group: { groupName: 'Tank Pair' },
+      groups: ['Tank Pair'],
       notes: 'Backup Build',
     };
 
     // ─── Healers ──────────────────────────────────────────────────────────
     roster.healers[0] = {
       playerName: 'HealerA',
-      playerNumber: 1,
+      playerNumber: String(1),
       roleLabel: 'H1',
       labels: ['Backup Healer'],
-      set1: 654, // JORVULD's_GUIDANCE
+      set1: KnownSetIDs.JORVULDS_GUIDANCE,
       set2: 2342, // ROARING_OPPORTUNIST
       monsterSet: 2268, // Zaan
       skillLines: {
@@ -95,16 +98,16 @@ async function generateFullRoster(page: Page) {
       healerBuff: 'Enlivening Overflow',
       championPoint: 'Enlivening Overflow',
       ultimate: 'Aggressive Warhorn',
-      group: { groupName: 'Healer Pair' },
+      groups: ['Healer Pair'],
       notes: 'Primary Healer',
     };
 
     roster.healers[1] = {
       playerName: 'HealerB',
-      playerNumber: 2,
+      playerNumber: String(2),
       roleLabel: 'H2',
       labels: ['Lead Healer'],
-      set1: 654, // JORVULD's_GUIDANCE
+      set1: KnownSetIDs.JORVULDS_GUIDANCE,
       set2: 2342, // ROARING_OPPORTUNIST
       monsterSet: 2268, // Zaan
       skillLines: {
@@ -116,7 +119,7 @@ async function generateFullRoster(page: Page) {
       healerBuff: 'From the Brink',
       championPoint: 'From the Brink',
       ultimate: 'Glacial Colossus',
-      group: { groupName: 'Healer Pair' },
+      groups: ['Healer Pair'],
       notes: 'Backup Healer',
     };
 
@@ -126,7 +129,7 @@ async function generateFullRoster(page: Page) {
     roster.dpsSlots[0] = {
       slotNumber: 1,
       playerName: 'DPS1',
-      playerNumber: 1,
+      playerNumber: String(1),
       roleLabel: 'DD1',
       labels: ['Stamina', 'Melee'],
       set1: 691, // CRYPTCANON_VESTMENTS
@@ -140,17 +143,17 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: 'Hardy',
       ultimate: 'Aggressive Warhorn',
-      group: { groupName: 'Slayer Stack 1' },
+      groups: ['Slayer Stack 1'],
       notes: 'High DPS priority',
     };
 
     roster.dpsSlots[1] = {
       slotNumber: 2,
       playerName: 'DPS2',
-      playerNumber: 2,
+      playerNumber: String(2),
       roleLabel: 'DD2',
       labels: ['Stamina', 'Ranged'],
-      set1: 620, // RELEQUEN
+      set1: KnownSetIDs.RELEQUEN,
       set2: 127, // DEADLY_STRIKE
       monsterSet: 2268,
       skillLines: {
@@ -161,18 +164,18 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: 'Piercing',
       ultimate: 'Aggressive Warhorn',
-      group: { groupName: 'Slayer Stack 1' },
+      groups: ['Slayer Stack 1'],
       notes: 'Portal opener',
     };
 
     roster.dpsSlots[2] = {
       slotNumber: 3,
       playerName: 'DPS3',
-      playerNumber: 3,
+      playerNumber: String(3),
       roleLabel: 'DD3',
       labels: ['Magicka', 'Elemental'],
-      set1: 620, // RELEQUEN
-      set2: 641, // PERFECTED_SIRORIA (rotation if available)
+      set1: KnownSetIDs.RELEQUEN,
+      set2: 641, // SERPENTS_DISDAIN (rotation if available)
       monsterSet: 2268,
       skillLines: {
         line1: 'Dark Magic',
@@ -182,17 +185,17 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: 'Mighty',
       ultimate: 'Aggressive Warhorn',
-      group: { groupName: 'Slayer Stack 2' },
+      groups: ['Slayer Stack 2'],
       notes: 'Backbar Support',
     };
 
     roster.dpsSlots[3] = {
       slotNumber: 4,
       playerName: 'DPS4',
-      playerNumber: 4,
+      playerNumber: String(4),
       roleLabel: 'DD4',
       labels: ['Stamina', 'Sub DPS'],
-      set1: 620, // RELEQUEN
+      set1: KnownSetIDs.RELEQUEN,
       set2: 127, // DEADLY_STRIKE
       monsterSet: 2268,
       skillLines: {
@@ -203,7 +206,7 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: 'Hardy',
       ultimate: 'Glacial Colossus',
-      group: { groupName: 'Slayer Stack 2' },
+      groups: ['Slayer Stack 2'],
       notes: 'Flexible build',
     };
 
@@ -211,10 +214,10 @@ async function generateFullRoster(page: Page) {
     roster.dpsSlots[4] = {
       slotNumber: 5,
       playerName: 'JailDD1',
-      playerNumber: 5,
+      playerNumber: String(5),
       roleLabel: 'Jail',
       labels: ['Jail', 'Opener'],
-      set1: 620, // RELEQUEN
+      set1: KnownSetIDs.RELEQUEN,
       set2: 627, // SPAULDER_OF_RUIN (Mythic)
       jailDDType: 'zenkosh',
       skillLines: {
@@ -225,18 +228,18 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: 'Piercing',
       ultimate: 'Aggressive Warhorn',
-      group: { groupName: 'Jail Stack' },
+      groups: ['Jail Stack'],
       notes: 'Requires heavy attack weaving',
     };
 
     roster.dpsSlots[5] = {
       slotNumber: 6,
       playerName: 'JailDD2',
-      playerNumber: 6,
+      playerNumber: String(6),
       roleLabel: 'Banner',
       labels: ['Jail', 'Banner'],
-      set1: 620, // RELEQUEN
-      set2: 701, // BANNER_OF_THE_ETERNAL (if exists)
+      set1: KnownSetIDs.RELEQUEN,
+      set2: 701, // PEACE_AND_SERENITY
       jailDDType: 'banner',
       skillLines: {
         line1: 'Storm Calling',
@@ -246,18 +249,18 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: 'Mighty',
       ultimate: 'Aggressive Warhorn',
-      group: { groupName: 'Jail Stack' },
+      groups: ['Jail Stack'],
       notes: 'Banner placement crucial',
     };
 
     roster.dpsSlots[6] = {
       slotNumber: 7,
       playerName: 'JailDD3',
-      playerNumber: 7,
+      playerNumber: String(7),
       roleLabel: 'Portal',
       labels: ['Jail', 'Portal', 'Cleanse'],
-      set1: 620, // RELEQUEN
-      set2: 701,
+      set1: KnownSetIDs.RELEQUEN,
+      set2: 701, // PEACE_AND_SERENITY
       jailDDType: 'wm',
       skillLines: {
         line1: 'Grave Lord',
@@ -267,7 +270,7 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: 'Hardy',
       ultimate: 'Aggressive Warhorn',
-      group: { groupName: 'Jail Stack' },
+      groups: ['Jail Stack'],
       notes: 'WM portal responsibility',
     };
 
@@ -275,10 +278,10 @@ async function generateFullRoster(page: Page) {
     roster.dpsSlots[7] = {
       slotNumber: 8,
       playerName: 'DPS8',
-      playerNumber: 8,
+      playerNumber: String(8),
       roleLabel: 'Flex',
       labels: ['Flexible', 'Backup'],
-      set1: 620, // RELEQUEN
+      set1: KnownSetIDs.RELEQUEN,
       set2: 127, // DEADLY_STRIKE
       monsterSet: 2268,
       jailDDType: 'custom',
@@ -291,7 +294,7 @@ async function generateFullRoster(page: Page) {
       },
       championPoint: null,
       ultimate: null,
-      group: { groupName: 'Flex' },
+      groups: ['Flex'],
       notes: 'Substitute player',
     };
 
@@ -429,6 +432,11 @@ test.describe('Roster Builder — Complete Feature Coverage', () => {
     // Verify player groups
     expect(decodedRoster.availableGroups).toContain('Tank Pair');
     expect(decodedRoster.availableGroups).toContain('Jail Stack');
+
+    // Verify gear sets survive the round-trip (IDs are real KnownSetIDs, not names)
+    expect(decodedRoster.healers[0].set1).toBe(KnownSetIDs.JORVULDS_GUIDANCE);
+    expect(decodedRoster.tanks[0].gearSets.monsterSet).toBe(KnownSetIDs.NAZARAY);
+    expect(decodedRoster.dpsSlots[1].set1).toBe(KnownSetIDs.RELEQUEN);
   });
 
   test('read-only view displays complete roster data', async ({ page }) => {

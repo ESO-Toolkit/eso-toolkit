@@ -171,10 +171,11 @@ export const HealerCard = React.memo<HealerCardProps>(
                   freeSolo
                   size="small"
                   options={[...availableGroups].sort()}
-                  value={healer.group?.groupName || ''}
+                  value={healer.groups?.[0] ?? healer.group?.groupName ?? ''}
                   onChange={(_, value) =>
                     onChange({
-                      group: value ? { groupName: value } : undefined,
+                      groups: value ? [value] : undefined,
+                      group: undefined,
                     })
                   }
                   renderInput={(params) => (
@@ -202,7 +203,7 @@ export const HealerCard = React.memo<HealerCardProps>(
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: '0.08em',
-                    color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    color: healerIsDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                     mb: 1,
                   }}
                 >
@@ -317,8 +318,11 @@ export const HealerCard = React.memo<HealerCardProps>(
                           },
                         }}
                       >
-                        <InputLabel>Champion Points</InputLabel>
+                        <InputLabel id={`healer-cp-label-${healerNum}`}>
+                          Champion Points
+                        </InputLabel>
                         <Select
+                          labelId={`healer-cp-label-${healerNum}`}
                           value={healer.healerBuff || ''}
                           onChange={(e) =>
                             onChange({
@@ -437,7 +441,7 @@ export const HealerCard = React.memo<HealerCardProps>(
                     <ExpandMoreIcon
                       sx={{
                         fontSize: 18,
-                        color: healerIsDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.3)',
+                        color: healerIsDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                       }}
                     />
                   }
@@ -449,7 +453,7 @@ export const HealerCard = React.memo<HealerCardProps>(
                       fontWeight: 600,
                       fontFamily: 'Space Grotesk, Inter, system-ui',
                       letterSpacing: 0.5,
-                      color: healerIsDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.4)',
+                      color: healerIsDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)',
                     }}
                   >
                     Advanced Options
