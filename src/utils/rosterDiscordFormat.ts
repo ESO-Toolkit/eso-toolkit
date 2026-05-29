@@ -213,7 +213,9 @@ export const generateDiscordFormat = (roster: RaidRoster): string => {
     const labelsPart = dd.labels?.length ? bracketed(dd.labels) : '';
     const player = playerMention(dd.playerName);
 
-    lines.push(`${arrow}⚔️ **#${dd.slotNumber}${jailType}**:${pos}${roleNote}${labelsPart}${player}`);
+    lines.push(
+      `${arrow}⚔️ **#${dd.slotNumber}${jailType}**:${pos}${roleNote}${labelsPart}${player}`,
+    );
 
     const ddGearParts: string[] = [];
     if (dd.set1) ddGearParts.push(getSetDisplayName(dd.set1));

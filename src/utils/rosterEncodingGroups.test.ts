@@ -16,11 +16,7 @@
 
 import { CompressionStream, DecompressionStream } from 'node:stream/web';
 
-import {
-  createDefaultRoster,
-  defaultTankSetup,
-  defaultHealerSetup,
-} from '../types/roster';
+import { createDefaultRoster, defaultTankSetup, defaultHealerSetup } from '../types/roster';
 
 import { encodeRosterToURL, decodeRosterFromURL } from './rosterEncoding';
 

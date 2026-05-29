@@ -318,9 +318,7 @@ export const HealerCard = React.memo<HealerCardProps>(
                           },
                         }}
                       >
-                        <InputLabel id={`healer-cp-label-${healerNum}`}>
-                          Champion Points
-                        </InputLabel>
+                        <InputLabel id={`healer-cp-label-${healerNum}`}>Champion Points</InputLabel>
                         <Select
                           labelId={`healer-cp-label-${healerNum}`}
                           value={healer.healerBuff || ''}

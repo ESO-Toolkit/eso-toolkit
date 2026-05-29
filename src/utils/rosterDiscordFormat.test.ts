@@ -16,11 +16,7 @@ import {
   type RaidRoster,
 } from '../types/roster';
 
-import {
-  groupArrow,
-  formatPosition,
-  generateDiscordFormat,
-} from './rosterDiscordFormat';
+import { groupArrow, formatPosition, generateDiscordFormat } from './rosterDiscordFormat';
 
 // Zero-width space used by escapeDiscord to break Discord mention triggers.
 const ZWSP = '​';
