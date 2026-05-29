@@ -64,9 +64,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
         return;
       }
 
-      const thisPlayerData = player.id ? playerData.playersById[player.id] : undefined;
-
-      const talents = thisPlayerData?.combatantInfo?.talents || [];
+      const talents = player.combatantInfo?.talents || [];
 
       // Check for ultimate abilities using the KnownAbilities mappings
       Object.entries(ULTIMATE_ABILITY_MAPPINGS).forEach(([abilityId, knownAbility]) => {
@@ -124,13 +122,17 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, context }) 
       return null;
     }
 
-    // Sort damage events by timestamp to find the earliest one
-    const sortedDamageEvents = [...damageEvents].sort((a, b) => a.timestamp - b.timestamp);
-
-    // Find the first damage event from a friendly player
-    const firstDamageEvent = sortedDamageEvents.find(
-      (event) => event.sourceIsFriendly && fight.friendlyPlayers?.includes(event.sourceID),
-    );
+    // Find the earliest-timestamp damage event from a friendly player in a single O(n) scan
+    let firstDamageEvent = null;
+    for (const event of damageEvents) {
+      if (
+        event.sourceIsFriendly &&
+        fight.friendlyPlayers?.includes(event.sourceID) &&
+        (firstDamageEvent === null || event.timestamp < firstDamageEvent.timestamp)
+      ) {
+        firstDamageEvent = event;
+      }
+    }
 
     if (!firstDamageEvent) {
       return null;

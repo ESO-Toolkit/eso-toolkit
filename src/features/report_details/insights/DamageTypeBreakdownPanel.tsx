@@ -37,7 +37,7 @@ const MAGIC_DAMAGE_TYPES = Object.freeze(
 const AOE_ABILITY_IDS = Object.freeze(
   new Set([
     126633, // Elemental Ring
-    75752, // Elemental Blockade
+    75752, // Roar of Alkosh
     133494, // Elemental Storm
     227072, // Elemental Storm Tick
     172672, // Elemental Susceptibility
@@ -47,7 +47,7 @@ const AOE_ABILITY_IDS = Object.freeze(
     189869, // Frost Reach
     185407, // Flame Reach
     191078, // Shock Reach
-    183006, // Elemental Drain / Cephaliarch's Flail
+    183006, // Cephaliarch's Flail
     32711, // Volley
     32714, // Endless Hail
     32948, // Arrow Barrage
@@ -68,11 +68,11 @@ const AOE_ABILITY_IDS = Object.freeze(
     143944, // Subterranean Assault
     143946, // Deep Fissure
     118720, // Hearth and Home
-    23202, // Impulse / Liquid Lightning
+    23202, // Liquid Lightning
     23667, // Elemental Ring 2
     29809, // Pulsar
     29806, // Elemental Drain 2
-    23232, // Force Pulse / Hurricane
+    23232, // Hurricane
     23214, // Crushing Shock
     23196, // Force Shock
     23208, // Destructive Touch
@@ -96,9 +96,9 @@ const AOE_ABILITY_IDS = Object.freeze(
     40267, // Wall of Storms
     40252, // Unstable Wall of Storms (appears twice in source list)
     61502, // Blockade of Storms
-    62547, // Boundless Storm
-    62529, // Additional ability
-    38891, // Additional ability
+    62547, // Deadly Cloak
+    62529, // Quick Cloak
+    38891, // Whirling Blades
     38792, // Lightning Flood
     126474, // Lightning Splash
     38745, // Blazing Spear
@@ -123,14 +123,14 @@ const AOE_ABILITY_IDS = Object.freeze(
 // Status Effects - ability.id IN (18084,95136,95134,178127,148801,178118,21929,178123)
 const STATUS_EFFECT_ABILITY_IDS = Object.freeze(
   new Set([
-    18084, // Status effect ability
-    95136, // Status effect ability
-    95134, // Status effect ability
-    178127, // Status effect ability
-    148801, // Status effect ability
-    178118, // Status effect ability
-    21929, // Status effect ability
-    178123, // Status effect ability
+    18084, // Burning
+    95136, // Chilled
+    95134, // Concussed
+    178127, // Poisoned
+    148801, // Diseased
+    178118, // Hemorrhaging
+    21929, // Overcharged
+    178123, // Sundered
   ]),
 );
 

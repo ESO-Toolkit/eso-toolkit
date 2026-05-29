@@ -206,31 +206,31 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
 
   return (
     <Box
-      role="button"
-      tabIndex={0}
-      aria-label={`${buff.abilityName}: ${Math.round(pct)}% uptime`}
       sx={{
         width: '100%',
         position: 'relative',
-        cursor: 'pointer',
-        '&:hover': {
-          opacity: 0.9,
-        },
-      }}
-      onClick={onMainClick}
-      onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onMainClick();
-        }
       }}
     >
-      {/* Progress bars container */}
+      {/* Progress bars container — focusable control (avoids nesting interactive elements) */}
       <Box
+        role="button"
+        tabIndex={0}
+        aria-label={`${buff.abilityName}: ${Math.round(pct)}% uptime`}
+        onClick={onMainClick}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onMainClick();
+          }
+        }}
         sx={{
           position: 'relative',
           height: buff.allStacksData ? 56 : 48, // Taller for multi-stack abilities
           borderRadius: 2,
+          cursor: 'pointer',
+          '&:hover': {
+            opacity: 0.9,
+          },
           bgcolor:
             theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(203, 213, 225, 0.3)',
           border: theme.palette.mode === 'dark' ? 'none' : '1px solid rgba(15, 23, 42, 0.08)',
@@ -295,7 +295,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         )}
       </Box>
 
-      {/* Content overlay */}
+      {/* Content overlay — non-interactive so clicks pass through to the bar-button below */}
       <Box
         sx={{
           position: 'absolute',
@@ -307,6 +307,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           alignItems: 'center',
           px: 2,
           gap: 1.5,
+          pointerEvents: 'none',
         }}
       >
         {/* Icon */}
@@ -482,6 +483,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
               sx={{
                 ml: 0.5,
                 padding: 0.5,
+                pointerEvents: 'auto',
                 color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
                 transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                 transition: 'transform 0.3s ease-in-out',

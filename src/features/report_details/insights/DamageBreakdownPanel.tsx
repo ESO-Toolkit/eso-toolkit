@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
+import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { parseDamageTypeFlags } from '../../../types/abilities';
 import { DamageEvent } from '../../../types/combatlogEvents';
 
@@ -25,11 +26,12 @@ interface DamageBreakdown {
 }
 
 export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
-  fight,
+  fight: _fight,
   selectedPlayerId,
 }) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const selectedTargetIds = useSelectedTargetIds();
 
   // Calculate damage breakdown by ability
   const damageBreakdown = React.useMemo(() => {
@@ -37,12 +39,17 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
       return [];
     }
 
-    // Filter damage events for friendly players only, and optionally by selected player
+    // Filter damage dealt by friendly sources to hostile targets, honoring the
+    // selected-player and selected-target filters. Mirrors DamageTypeBreakdownPanel
+    // so the two side-by-side panels report consistent totals.
     const friendlyDamageEvents = damageEvents.filter((event: DamageEvent) => {
-      if (!event.sourceIsFriendly || !fight.friendlyPlayers?.includes(event.sourceID)) {
+      if (event.sourceIsFriendly !== true || event.targetIsFriendly) {
         return false;
       }
       if (selectedPlayerId != null && event.sourceID !== selectedPlayerId) {
+        return false;
+      }
+      if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
         return false;
       }
       return true;
@@ -116,7 +123,7 @@ export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({
 
     // Sort by total damage descending
     return breakdown.sort((a, b) => b.totalDamage - a.totalDamage);
-  }, [damageEvents, fight.friendlyPlayers, reportMasterData?.abilitiesById, selectedPlayerId]);
+  }, [damageEvents, reportMasterData?.abilitiesById, selectedPlayerId, selectedTargetIds]);
 
   const totalDamage = React.useMemo(() => {
     return damageBreakdown.reduce((sum, item) => sum + item.totalDamage, 0);

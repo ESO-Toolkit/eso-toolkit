@@ -31,7 +31,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { Suspense, useDeferredValue } from 'react';
+import React, { Suspense, useDeferredValue, useMemo } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
@@ -184,6 +184,33 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
+  // Shared style for the Previous/Next navigation IconButtons (depends on
+  // isDarkMode, so it is computed inside the component rather than at module scope).
+  const navIconButtonSx = useMemo(
+    () => ({
+      width: { xs: 32, md: 36 },
+      height: { xs: 32, md: 36 },
+      minWidth: { xs: '32px !important', md: 36 },
+      minHeight: { xs: '32px !important', md: 36 },
+      borderRadius: { xs: '8px', md: '10px' },
+      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+      color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
+      padding: { xs: '4px', md: '5px' },
+      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
+      '&:hover': {
+        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+        color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+        transform: 'scale(1.08)',
+      },
+      '&:disabled': {
+        opacity: 0.25,
+        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+      },
+    }),
+    [isDarkMode],
+  );
+
   // Generate player list for the buff source selector
   const { reportMasterData } = useReportMasterData();
   const playerList = React.useMemo(() => {
@@ -241,27 +268,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             disabled={!navigationData.previousFight}
             size="small"
             aria-label="Previous fight"
-            sx={{
-              width: { xs: 32, md: 36 },
-              height: { xs: 32, md: 36 },
-              minWidth: { xs: '32px !important', md: 36 },
-              minHeight: { xs: '32px !important', md: 36 },
-              borderRadius: { xs: '8px', md: '10px' },
-              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
-              padding: { xs: '4px', md: '5px' },
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
-              '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
-                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
-                transform: 'scale(1.08)',
-              },
-              '&:disabled': {
-                opacity: 0.25,
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
-              },
-            }}
+            sx={navIconButtonSx}
           >
             <ChevronLeftIcon />
           </IconButton>
@@ -365,27 +372,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             disabled={!navigationData.nextFight}
             size="small"
             aria-label="Next fight"
-            sx={{
-              width: { xs: 32, md: 36 },
-              height: { xs: 32, md: 36 },
-              minWidth: { xs: '32px !important', md: 36 },
-              minHeight: { xs: '32px !important', md: 36 },
-              borderRadius: { xs: '8px', md: '10px' },
-              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
-              padding: { xs: '4px', md: '5px' },
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
-              '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
-                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
-                transform: 'scale(1.08)',
-              },
-              '&:disabled': {
-                opacity: 0.25,
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
-              },
-            }}
+            sx={navIconButtonSx}
           >
             <ChevronRightIcon />
           </IconButton>
@@ -401,7 +388,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           width: '100%',
           minWidth: 0,
           overflow: 'visible',
-          maxWidth: '100vw',
+          maxWidth: '100%',
         }}
       >
         <Tabs
@@ -414,7 +401,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             flexGrow: 1,
             minHeight: 'auto',
             overflow: 'visible',
-            maxWidth: 'calc(100vw - 80px)', // Leave space for experimental toggle
+            maxWidth: '100%', // Shrink within the flex row (minWidth:0 + flexGrow:1) instead of viewport-relative clamp
             '& .MuiTabs-indicator': {
               display: 'none',
             },
@@ -666,10 +653,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 checked={showExperimentalTabs}
                 onChange={(e) => onToggleExperimentalTabs(e.target.checked)}
                 size="small"
+                slotProps={{ input: { 'aria-label': 'Show experimental tabs' } }}
               />
             }
             label={
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box
+                component="span"
+                aria-hidden="true"
+                sx={{ display: 'flex', alignItems: 'center' }}
+              >
                 🧪
               </Box>
             }

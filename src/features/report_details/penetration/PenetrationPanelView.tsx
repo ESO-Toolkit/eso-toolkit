@@ -23,7 +23,7 @@ export interface PenetrationPanelViewProps {
   readonly selectedTargetIds: Set<number>;
   readonly isLoading: boolean;
   readonly fight: Fight;
-  readonly expandedPlayers: Record<number, boolean>;
+  readonly expandedPlayers: Record<string, boolean>;
   readonly onPlayerExpandChange: (
     playerId: string,
   ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
@@ -119,6 +119,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             . Click to expand details.{' '}
             <button
               type="button"
+              aria-haspopup="dialog"
               onClick={() => setCmxDialogOpen(true)}
               style={{
                 background: 'none',
@@ -146,7 +147,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
                 player={player}
                 name={player.name}
                 fight={fight}
-                expanded={expandedPlayers[player.id] || false}
+                expanded={expandedPlayers[player.id.toString()] || false}
                 onExpandChange={onPlayerExpandChange(player.id.toString())}
                 penetrationData={playerPenetrationData || null}
                 isLoading={isLoading}
@@ -157,8 +158,14 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         </Box>
       )}
 
-      <Dialog open={cmxDialogOpen} onClose={() => setCmxDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+      <Dialog
+        open={cmxDialogOpen}
+        onClose={() => setCmxDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="cmx-dialog-title"
+      >
+        <DialogTitle id="cmx-dialog-title" sx={{ fontFamily: 'Space Grotesk, sans-serif' }}>
           Why is my value different from CMX?
         </DialogTitle>
         <DialogContent dividers>

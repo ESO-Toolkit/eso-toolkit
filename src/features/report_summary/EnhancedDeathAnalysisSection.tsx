@@ -292,7 +292,7 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                       {pattern.description}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      <strong>� Additional Info:</strong> {pattern.suggestion}
+                      <strong>Additional Info:</strong> {pattern.suggestion}
                     </Typography>
                     {pattern.affectedPlayers.length > 0 && (
                       <Box
@@ -520,6 +520,7 @@ export const EnhancedDeathAnalysisSection: React.FC<EnhancedDeathAnalysisSection
                         checked={showTrashFights}
                         onChange={(e) => setShowTrashFights(e.target.checked)}
                         size="small"
+                        slotProps={{ input: { 'aria-label': 'Toggle trash fights' } }}
                         sx={{
                           '& .MuiSwitch-switchBase.Mui-checked': {
                             color: '#38bdf8',

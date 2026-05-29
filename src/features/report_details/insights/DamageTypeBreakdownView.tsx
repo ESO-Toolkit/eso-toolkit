@@ -222,14 +222,17 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
           </IconButton>
         </Tooltip>
       </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
         Damage breakdown by damage type from friendly players: {formatNumber(totalDamage)}
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+        Categories overlap, so percentages can exceed 100%.
       </Typography>
 
       {damageTypeBreakdown.length > 0 ? (
         <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
           <List disablePadding>
-            {damageTypeBreakdown.map((damageType, idx) => {
+            {damageTypeBreakdown.map((damageType) => {
               const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
               // Try custom mapping first (by display name), then fall back to enum-based mapping
               const color =
@@ -246,7 +249,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
                 '💥'; // Default explosion
 
               return (
-                <ListItem key={idx} sx={{ py: 1.5, pl: 0.5, pr: 1.5 }} divider>
+                <ListItem key={damageType.damageType} sx={{ py: 1.5, pl: 0.5, pr: 1.5 }} divider>
                   <Box sx={{ width: '100%' }}>
                     {/* Progress bar container with content inside */}
                     <Box

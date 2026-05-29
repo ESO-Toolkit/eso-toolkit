@@ -100,7 +100,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
     );
   }, [penetrationData?.dataPoints]);
 
-  const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo);
+  const phaseMarkLines = usePhaseMarkLines(phaseTransitionInfo, expanded);
   const inactiveMarkAreas = useInactiveMarkAreas(penetrationData?.inactiveCombatIntervals);
 
   const chartOption = React.useMemo(() => {

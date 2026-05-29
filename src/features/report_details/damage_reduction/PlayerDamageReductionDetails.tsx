@@ -614,9 +614,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 borderRadius: 2,
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
-                cursor: 'pointer',
               }}
-              onClick={() => onExpandChange({} as React.SyntheticEvent, true)}
             >
               <CardContent sx={{ py: 2 }}>
                 <Box
@@ -629,7 +627,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   }}
                 >
                   <Typography variant="body2">
-                    Click to expand and view damage reduction timeline chart
+                    Expand to view the damage reduction timeline chart
                   </Typography>
                 </Box>
               </CardContent>

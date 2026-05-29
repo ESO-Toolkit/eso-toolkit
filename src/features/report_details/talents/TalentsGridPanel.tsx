@@ -1,6 +1,6 @@
 import { Box, Typography, Avatar, Chip, Card, CardContent, Stack, Button } from '@mui/material';
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { DataGrid } from '../../../components/LazyDataGrid';
 import { useLogger } from '../../../contexts/LoggerContext';
@@ -19,7 +19,7 @@ interface TalentRow {
   type: number;
   abilityIcon: string;
   flags: number;
-  playerCount: number;
+  playerKeys: Set<string>;
   playerNames: string[];
   rawTalentData: PlayerTalent;
 }
@@ -45,11 +45,15 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
       const combatantInfo = player.combatantInfo;
       const talents = combatantInfo?.talents || [];
 
+      const playerKey = String(fightPlayer);
+
       talents.forEach((talent: PlayerTalent) => {
-        if (talentMap.has(talent.guid)) {
-          const existingTalent = talentMap.get(talent.guid);
-          if (existingTalent) {
-            existingTalent.playerCount += 1;
+        const existingTalent = talentMap.get(talent.guid);
+        if (existingTalent) {
+          // Count each distinct player once per talent guid, even if the
+          // player's talents array lists the same guid more than once.
+          if (!existingTalent.playerKeys.has(playerKey)) {
+            existingTalent.playerKeys.add(playerKey);
             existingTalent.playerNames.push(playerName);
           }
         } else {
@@ -59,7 +63,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
             type: talent.type || 0,
             abilityIcon: talent.abilityIcon || '',
             flags: talent.flags || 0,
-            playerCount: 1,
+            playerKeys: new Set([playerKey]),
             playerNames: [playerName],
             rawTalentData: talent,
           });
@@ -73,6 +77,28 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
   // Create column helper
   const columnHelper = createColumnHelper<TalentRow>();
 
+  // Stable handler shared across all Raw JSON cells (avoids per-row allocation)
+  const handleCopyJson = useCallback(
+    async (rawTalentData: PlayerTalent, guid: number): Promise<void> => {
+      const jsonString = JSON.stringify(rawTalentData, null, 2);
+      try {
+        await navigator.clipboard.writeText(jsonString);
+      } catch (error) {
+        logger.error('Failed to copy talent data to clipboard', error as Error, {
+          talentGuid: guid,
+        });
+        // Fallback: create a temporary textarea element
+        const textarea = document.createElement('textarea');
+        textarea.value = jsonString;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+    },
+    [logger],
+  );
+
   // Define columns for the table
   const columns = useMemo(
     () => [
@@ -82,7 +108,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         cell: (info) => (
           <Avatar
             src={info.row.original.abilityIcon}
-            alt=""
+            alt={info.row.original.name}
             sx={{ width: 32, height: 32 }}
             variant="rounded"
           />
@@ -116,11 +142,12 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         ),
         size: 80,
       }),
-      columnHelper.accessor('playerCount', {
+      columnHelper.display({
+        id: 'playerCount',
         header: 'Players',
         cell: (info) => (
           <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 600 }}>
-            {info.getValue()}
+            {info.row.original.playerNames.length}
           </Typography>
         ),
         size: 100,
@@ -149,40 +176,20 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
       columnHelper.display({
         id: 'copyJson',
         header: 'Raw JSON',
-        cell: (info) => {
-          const handleCopyJson = async (): Promise<void> => {
-            try {
-              const jsonString = JSON.stringify(info.row.original.rawTalentData, null, 2);
-              await navigator.clipboard.writeText(jsonString);
-            } catch (error) {
-              logger.error('Failed to copy talent data to clipboard', error as Error, {
-                talentGuid: info.row.original.guid,
-              });
-              // Fallback: create a temporary textarea element
-              const textarea = document.createElement('textarea');
-              textarea.value = JSON.stringify(info.row.original.rawTalentData, null, 2);
-              document.body.appendChild(textarea);
-              textarea.select();
-              document.execCommand('copy');
-              document.body.removeChild(textarea);
-            }
-          };
-
-          return (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleCopyJson}
-              sx={{ fontSize: '0.75rem' }}
-            >
-              Copy JSON
-            </Button>
-          );
-        },
+        cell: (info) => (
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => handleCopyJson(info.row.original.rawTalentData, info.row.original.guid)}
+            sx={{ fontSize: '0.75rem' }}
+          >
+            Copy JSON
+          </Button>
+        ),
         size: 120,
       }),
     ],
-    [columnHelper, logger],
+    [columnHelper, handleCopyJson],
   );
 
   if (talentRows.length === 0) {

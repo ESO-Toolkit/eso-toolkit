@@ -1531,6 +1531,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                                   toggleTrashForEncounter(encounter.id);
                                 }}
                                 size="small"
+                                slotProps={{
+                                  input: {
+                                    'aria-label': `Show ${encounter.preTrash.length + encounter.postTrash.length} trash fights for this encounter`,
+                                  },
+                                }}
                                 sx={{
                                   '& .MuiSwitch-switchBase.Mui-checked': {
                                     color: '#38bdf8',

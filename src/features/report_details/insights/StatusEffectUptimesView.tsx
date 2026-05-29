@@ -176,7 +176,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
       )}
 
       {filteredStatusEffectUptimes && filteredStatusEffectUptimes.length > 0 ? (
-        <Box sx={{ height: '100%', overflowY: 'auto' }}>
+        <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
             {filteredStatusEffectUptimes.map((statusEffect) => {
               return (

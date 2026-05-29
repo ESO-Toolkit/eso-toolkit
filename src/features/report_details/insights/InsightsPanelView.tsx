@@ -22,7 +22,28 @@ interface InsightsPanelViewProps {
   isLoading: boolean;
 }
 
-const ABILITY_DATA = [
+// Shared styling for the insight card wrappers (used by the header card and
+// every panel card below) so the gradient/sizing lives in one place.
+const insightCardWrapperSx = {
+  flex: '1 1 calc(50% - 8px)',
+  minWidth: { xs: '100%', sm: '300px' },
+} as const;
+
+const insightPaperSx = {
+  p: 2,
+  height: '100%',
+  background:
+    'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+} as const;
+
+interface AbilityDatum {
+  name: string;
+  ids: string[];
+  icon?: string;
+  knownAbilities: KnownAbilities[];
+}
+
+const ABILITY_DATA: AbilityDatum[] = [
   {
     name: 'Colossus',
     ids: ['122388'],
@@ -32,6 +53,7 @@ const ABILITY_DATA = [
   {
     name: 'Atronach',
     ids: ['23495'],
+    icon: undefined,
     knownAbilities: [KnownAbilities.SUMMON_CHARGED_ATRONACH],
   },
   {
@@ -43,6 +65,7 @@ const ABILITY_DATA = [
   {
     name: 'Horn',
     ids: ['40223'],
+    icon: undefined,
     knownAbilities: [KnownAbilities.AGGRESSIVE_HORN],
   },
 ];
@@ -93,16 +116,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         }}
       >
         {/* Fight Insights Header - Full Width */}
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: '300px' } }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              height: '100%',
-              background:
-                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-            }}
-          >
+        <Box sx={insightCardWrapperSx}>
+          <Paper elevation={2} sx={insightPaperSx}>
             <Typography
               variant="h6"
               gutterBottom
@@ -115,6 +130,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
+                aria-hidden
                 sx={{
                   width: 32,
                   height: 32,
@@ -134,7 +150,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               </Box>
               <Typography
                 sx={{
-                  '& strong': { fontWeight: 100 },
+                  '& strong': { fontWeight: 600 },
                   '& span': { fontWeight: 400 },
                   fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
                 }}
@@ -147,6 +163,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
             {fightInitiator && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
                 <Box
+                  aria-hidden
                   sx={{
                     width: 32,
                     height: 32,
@@ -166,7 +183,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 </Box>
                 <Typography
                   sx={{
-                    '& strong': { fontWeight: 100 },
+                    '& strong': { fontWeight: 600 },
                     '& span': { fontWeight: 400 },
                     fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
                   }}
@@ -186,7 +203,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' },
                 }}
               >
-                Abilities Equipped:
+                Key Group Abilities:
               </Typography>
               <Box
                 sx={{
@@ -246,10 +263,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           overflow: 'hidden',
                         }}
                       >
-                        <AbilityIcon
-                          abilityId={ability.ids[0]}
-                          fallbackIcon={'icon' in ability ? ability.icon : undefined}
-                        />
+                        <AbilityIcon abilityId={ability.ids[0]} fallbackIcon={ability.icon} />
                       </Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography
@@ -280,7 +294,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                             textOverflow: 'ellipsis',
                           }}
                         >
-                          {hasPlayers ? equippedBy.join(', ') : 'Not equipped'}
+                          {hasPlayers ? equippedBy.join(', ') : '—'}
                         </Typography>
                       </Box>
                     </Box>
@@ -298,7 +312,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' },
                 }}
               >
-                Champion Points Equipped:
+                Key Champion Points:
               </Typography>
               <List dense>
                 {CHAMPION_POINT_DATA.map((cp) => (
@@ -307,6 +321,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                     sx={{ pl: 0, display: 'flex', alignItems: 'center', gap: 1.5 }}
                   >
                     <Box
+                      aria-hidden
                       sx={{
                         width: 32,
                         height: 32,
@@ -324,7 +339,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                       secondary={
                         buffActors[cp.knownAbility] && buffActors[cp.knownAbility]?.size
                           ? Array.from(buffActors[cp.knownAbility] as Set<string>).join(', ')
-                          : 'None'
+                          : '—'
                       }
                       sx={{
                         '& .MuiListItemText-secondary': {
@@ -341,72 +356,32 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         </Box>
         {/* All panels in flexbox with 2 items per row */}
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: '300px' } }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              height: '100%',
-              background:
-                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-            }}
-          >
+        <Box sx={insightCardWrapperSx}>
+          <Paper elevation={2} sx={insightPaperSx}>
             <StatusEffectUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: '300px' } }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              height: '100%',
-              background:
-                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-            }}
-          >
+        <Box sx={insightCardWrapperSx}>
+          <Paper elevation={2} sx={insightPaperSx}>
             <BuffUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: '300px' } }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              height: '100%',
-              background:
-                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-            }}
-          >
+        <Box sx={insightCardWrapperSx}>
+          <Paper elevation={2} sx={insightPaperSx}>
             <DebuffUptimesPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: '300px' } }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              height: '100%',
-              background:
-                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-            }}
-          >
+        <Box sx={insightCardWrapperSx}>
+          <Paper elevation={2} sx={insightPaperSx}>
             <DamageBreakdownPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: '300px' } }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              height: '100%',
-              background:
-                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-            }}
-          >
+        <Box sx={insightCardWrapperSx}>
+          <Paper elevation={2} sx={insightPaperSx}>
             <DamageTypeBreakdownPanel fight={fight} selectedPlayerId={selectedPlayerId} />
           </Paper>
         </Box>

@@ -215,21 +215,17 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     return uptimeSeries.map((s) => s.label);
   }, [uptimeSeries]);
 
-  const handlePlayerChipClick = React.useCallback(
-    (id: number) => {
-      setHiddenPlayerIds((prev) => {
-        const allIds = new Set(playerOptions.map((p) => p.id));
-        const visibleCount = playerOptions.filter((p) => !prev.has(p.id)).length;
-        if (visibleCount === 1 && !prev.has(id)) {
-          return new Set();
-        }
-        const next = new Set(allIds);
+  const handlePlayerChipClick = React.useCallback((id: number) => {
+    setHiddenPlayerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
         next.delete(id);
-        return next;
-      });
-    },
-    [playerOptions],
-  );
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   const handleTargetChipClick = React.useCallback((id: number) => {
     setLocalTargetIds((prev) => {
@@ -240,20 +236,17 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     });
   }, []);
 
-  const handleBuffChipClick = React.useCallback(
-    (name: string) => {
-      setHiddenBuffNames((prev) => {
-        const visibleCount = buffOptions.filter((b) => !prev.has(b)).length;
-        if (visibleCount === 1 && !prev.has(name)) {
-          return new Set();
-        }
-        const next = new Set(buffOptions);
+  const handleBuffChipClick = React.useCallback((name: string) => {
+    setHiddenBuffNames((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
         next.delete(name);
-        return next;
-      });
-    },
-    [buffOptions],
-  );
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }, []);
 
   const visibleBuffLegendEntries = React.useMemo(() => {
     if (!stacked || uptimeSeries.length === 0) return [];

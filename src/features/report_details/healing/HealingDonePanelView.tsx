@@ -91,10 +91,21 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
     }
   };
 
-  // Get sort indicator icon
-  const getSortIcon = (field: SortField): string => {
-    if (sortField !== field) return ' ⇅';
-    return sortDirection === 'asc' ? ' ↑' : ' ↓';
+  // Get sort indicator glyph (decorative — hidden from screen readers)
+  const getSortGlyph = (field: SortField): string => {
+    if (sortField !== field) return '⇅';
+    return sortDirection === 'asc' ? '↑' : '↓';
+  };
+
+  // Decorative sort indicator: glyph is aria-hidden, sort state is conveyed via aria-sort
+  const getSortIcon = (field: SortField): React.ReactNode => (
+    <span aria-hidden="true"> {getSortGlyph(field)}</span>
+  );
+
+  // Map current sort state to an aria-sort value for the column header
+  const getAriaSort = (field: SortField): 'ascending' | 'descending' | 'none' => {
+    if (sortField !== field) return 'none';
+    return sortDirection === 'asc' ? 'ascending' : 'descending';
   };
 
   // Format numbers for display with commas as thousand separators
@@ -119,7 +130,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
         <Typography
           variant="caption"
           sx={{
-            color: roleColors.isDarkMode ? '#888' : '#64748b',
+            color: roleColors.isDarkMode ? '#9ca3af' : '#64748b',
             fontSize: '0.75rem',
             fontStyle: 'italic',
             display: { xs: 'none', sm: 'block' },
@@ -366,6 +377,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
             }}
           >
             <Box
+              role="columnheader"
+              aria-sort={getAriaSort('name')}
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -378,6 +391,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
               Name{getSortIcon('name')}
             </Box>
             <Box
+              role="columnheader"
+              aria-sort={getAriaSort('raw')}
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -390,6 +405,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
               Amount{getSortIcon('raw')}
             </Box>
             <Box
+              role="columnheader"
+              aria-sort={getAriaSort('hps')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -403,6 +420,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
               HPS{getSortIcon('hps')}
             </Box>
             <Box
+              role="columnheader"
+              aria-sort={getAriaSort('overheal')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -416,6 +435,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
               Overheal{getSortIcon('overheal')}
             </Box>
             <Box
+              role="columnheader"
+              aria-sort={getAriaSort('rawHps')}
               sx={{
                 textAlign: 'right',
                 cursor: 'pointer',
@@ -429,24 +450,30 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
               Raw HPS{getSortIcon('rawHps')}
             </Box>
             <Box
+              role="columnheader"
               sx={{
                 textAlign: 'center',
               }}
             >
-              💀
+              <span role="img" aria-label="Deaths">
+                💀
+              </span>
             </Box>
             <Box
+              role="columnheader"
               sx={{
                 textAlign: 'center',
               }}
             >
-              ❤️
+              <span role="img" aria-label="Resurrects">
+                ❤️
+              </span>
             </Box>
           </Box>
 
           {/* Data Rows */}
           {sortedRows.map((row, index) => {
-            const percentage = ((row.raw / totalHealing) * 100).toFixed(2);
+            const percentage = (totalHealing > 0 ? (row.raw / totalHealing) * 100 : 0).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
             return (
@@ -616,7 +643,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                           : '0 1px 0 rgba(220,38,38,0.2)',
                       }}
                     >
-                      💀 {row.deaths}
+                      <span role="img" aria-label="Deaths">
+                        💀
+                      </span>{' '}
+                      {row.deaths}
                     </Typography>
                   </Box>
                 ) : (
@@ -624,7 +654,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                     sx={{
                       fontSize: '0.875rem',
                       fontWeight: 500,
-                      color: roleColors.isDarkMode ? '#666' : '#999',
+                      color: roleColors.isDarkMode ? '#9ca3af' : '#64748b',
                       textAlign: 'center',
                     }}
                   >
@@ -652,7 +682,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                           : '0 1px 0 rgba(34,197,94,0.2)',
                       }}
                     >
-                      ❤️ {row.ressurects}
+                      <span role="img" aria-label="Resurrects">
+                        ❤️
+                      </span>{' '}
+                      {row.ressurects}
                     </Typography>
                   </Box>
                 ) : (
@@ -660,7 +693,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                     sx={{
                       fontSize: '0.875rem',
                       fontWeight: 500,
-                      color: roleColors.isDarkMode ? '#666' : '#999',
+                      color: roleColors.isDarkMode ? '#9ca3af' : '#64748b',
                       textAlign: 'center',
                     }}
                   >
@@ -673,7 +706,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
 
           {/* Mobile Card Layout */}
           {sortedRows.map((row, index) => {
-            const percentage = ((row.raw / totalHealing) * 100).toFixed(2);
+            const percentage = (totalHealing > 0 ? (row.raw / totalHealing) * 100 : 0).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
             return (
@@ -810,6 +843,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                   </Typography>
                   {row.deaths > 0 && (
                     <Box
+                      aria-label={`${row.deaths} deaths`}
                       sx={{
                         px: 1.5,
                         py: 0.5,
@@ -827,12 +861,13 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      💀 {row.deaths}
+                      <span aria-hidden="true">💀</span> {row.deaths}
                     </Box>
                   )}
                   {row.ressurects > 0 && (
                     <Box
                       onClick={() => handleResurrectClick(row.id)}
+                      aria-label={`${row.ressurects} resurrects`}
                       sx={{
                         px: 1.5,
                         py: 0.5,
@@ -849,7 +884,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({
                         },
                       }}
                     >
-                      ❤️ {row.ressurects}
+                      <span aria-hidden="true">❤️</span> {row.ressurects}
                     </Box>
                   )}
                 </Box>

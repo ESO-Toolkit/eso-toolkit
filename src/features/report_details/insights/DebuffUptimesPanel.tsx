@@ -220,6 +220,47 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     return playerIds;
   }, [debuffsLookup]);
 
+  // Pre-index damage events by sourceID in a single pass so per-player stagger /
+  // Touch of Z'en lookups are O(1) instead of re-filtering the full array per player.
+  const damageEventsBySource = React.useMemo(() => {
+    const bySource = new Map<number, typeof damageEvents>();
+    if (!damageEvents) return bySource;
+    for (const event of damageEvents) {
+      const bucket = bySource.get(event.sourceID);
+      if (bucket) {
+        bucket.push(event);
+      } else {
+        bySource.set(event.sourceID, [event]);
+      }
+    }
+    return bySource;
+  }, [damageEvents]);
+
+  // Pre-index debuff intervals by sourceID (the friendly player who applied the debuff)
+  // in a single pass so per-player Touch of Z'en / Elemental Weakness lookups are O(1)
+  // instead of re-filtering every ability's interval list per player.
+  const buffIntervalsBySource = React.useMemo(() => {
+    type Intervals = NonNullable<typeof debuffsLookup>['buffIntervals'];
+    const bySource = new Map<number, Intervals>();
+    if (!debuffsLookup) return bySource;
+    Object.entries(debuffsLookup.buffIntervals).forEach(([abilityId, intervals]) => {
+      intervals.forEach((interval) => {
+        let perSource = bySource.get(interval.sourceID);
+        if (!perSource) {
+          perSource = {} as Intervals;
+          bySource.set(interval.sourceID, perSource);
+        }
+        const list = perSource[abilityId];
+        if (list) {
+          list.push(interval);
+        } else {
+          perSource[abilityId] = [interval];
+        }
+      });
+    });
+    return bySource;
+  }, [debuffsLookup]);
+
   // Calculate per-player stagger stacks when a player is selected
   const staggerStackUptimes = React.useMemo(() => {
     if (!staggerStacksData?.length) return [];
@@ -233,10 +274,10 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       : [];
 
     // If a player is selected and we have damage events, calculate per-player stagger
-    if (selectedPlayerId && damageEvents && allFriendlyPlayers.length > 0) {
+    if (selectedPlayerId && damageEventsBySource.size > 0 && allFriendlyPlayers.length > 0) {
       // Calculate stagger for each player to get group averages
       const playerStaggerResults = allFriendlyPlayers.map((playerId: number) => {
-        const playerDamageEvents = damageEvents.filter((event) => event.sourceID === playerId);
+        const playerDamageEvents = damageEventsBySource.get(playerId) ?? [];
 
         const playerStagger = calculateStaggerStacks({
           damageEvents: playerDamageEvents,
@@ -363,7 +404,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
   }, [
     staggerStacksData,
     selectedPlayerId,
-    damageEvents,
+    damageEventsBySource,
     fightStartTime,
     fightEndTime,
     reportMasterData?.abilitiesById,
@@ -383,28 +424,21 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       : [];
 
     // If a player is selected and we have damage/debuff data, calculate per-player Touch of Z'en
-    if (selectedPlayerId && debuffsLookup && damageEvents && fightStartTime && fightEndTime) {
+    if (
+      selectedPlayerId &&
+      debuffsLookup &&
+      damageEventsBySource.size > 0 &&
+      fightStartTime &&
+      fightEndTime
+    ) {
       // Calculate Touch of Z'en stacks for each player
       const playerTouchOfZenResults = allFriendlyPlayers.map((playerId: number) => {
         const playerDebuffsLookup = {
           ...debuffsLookup,
-          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce(
-            (acc, abilityId) => {
-              const intervals = debuffsLookup.buffIntervals[abilityId];
-              // Filter intervals to only include those from this player
-              const playerIntervals = intervals.filter(
-                (interval: { sourceID: number }) => interval.sourceID === playerId,
-              );
-              if (playerIntervals.length > 0) {
-                acc[abilityId] = playerIntervals;
-              }
-              return acc;
-            },
-            {} as typeof debuffsLookup.buffIntervals,
-          ),
+          buffIntervals: buffIntervalsBySource.get(playerId) ?? {},
         };
 
-        const playerDamageEvents = damageEvents.filter((event) => event.sourceID === playerId);
+        const playerDamageEvents = damageEventsBySource.get(playerId) ?? [];
 
         const playerTouchOfZen = calculateTouchOfZenStacks({
           debuffsLookup: playerDebuffsLookup,
@@ -516,7 +550,8 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     allDotAbilityIds,
     selectedPlayerId,
     debuffsLookup,
-    damageEvents,
+    damageEventsBySource,
+    buffIntervalsBySource,
     fightStartTime,
     fightEndTime,
     reportMasterData?.abilitiesById,
@@ -541,20 +576,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       const playerElementalWeaknessResults = allFriendlyPlayers.map((playerId: number) => {
         const playerDebuffsLookup = {
           ...debuffsLookup,
-          buffIntervals: Object.keys(debuffsLookup.buffIntervals).reduce(
-            (acc, abilityId) => {
-              const intervals = debuffsLookup.buffIntervals[abilityId];
-              // Filter intervals to only include those from this player
-              const playerIntervals = intervals.filter(
-                (interval: { sourceID: number }) => interval.sourceID === playerId,
-              );
-              if (playerIntervals.length > 0) {
-                acc[abilityId] = playerIntervals;
-              }
-              return acc;
-            },
-            {} as typeof debuffsLookup.buffIntervals,
-          ),
+          buffIntervals: buffIntervalsBySource.get(playerId) ?? {},
         };
 
         const playerElementalWeakness = calculateElementalWeaknessStacks({
@@ -665,6 +687,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     elementalWeaknessStacksData,
     selectedPlayerId,
     debuffsLookup,
+    buffIntervalsBySource,
     fightStartTime,
     fightEndTime,
     reportMasterData?.abilitiesById,

@@ -174,19 +174,10 @@ const identifySpammableSkills = (abilities: AbilityUsage[]): SpammableSkill[] =>
 // Helper function to analyze general rotation patterns
 const analyzeGeneralRotation = (
   abilities: AbilityUsage[],
-  allCastEvents: UnifiedCastEvent[],
-  playerId: string,
-  friendlyPlayerIds: Set<string>,
+  playerCastEventsInput: UnifiedCastEvent[],
 ): GeneralRotation => {
-  // Filter cast events for this player and other friendly players, sorted by timestamp
-  const playerCastEvents = allCastEvents
-    .filter(
-      (event) =>
-        String(event.sourceID) === playerId &&
-        event.sourceIsFriendly &&
-        friendlyPlayerIds.has(String(event.sourceID)),
-    )
-    .sort((a, b) => a.timestamp - b.timestamp);
+  // Cast events are already scoped to this player; sort by timestamp
+  const playerCastEvents = [...playerCastEventsInput].sort((a, b) => a.timestamp - b.timestamp);
 
   if (playerCastEvents.length < 5) {
     return {
@@ -196,27 +187,38 @@ const analyzeGeneralRotation = (
     };
   }
 
-  // Find common sequences of 3-5 abilities
-  const sequences: { [key: string]: number } = {};
+  // Precompute abilityId → name once (O(1) lookups instead of abilities.find per event)
+  const abilityNameById = new Map<number | string, string>();
+  abilities.forEach((a) => abilityNameById.set(a.abilityId, a.abilityName));
+  const nameFor = (event: UnifiedCastEvent): string =>
+    abilityNameById.get(event.abilityGameID) || 'Unknown';
+
+  // Find common sequences of 3 abilities, accumulating timing in the same single pass
+  const sequences: {
+    [key: string]: { frequency: number; totalInterval: number; intervalCount: number };
+  } = {};
   const sequenceLength = 3;
 
   for (let i = 0; i <= playerCastEvents.length - sequenceLength; i++) {
-    const sequence = playerCastEvents.slice(i, i + sequenceLength).map((event) => {
-      const ability = abilities.find((a) => a.abilityId === event.abilityGameID);
-      return ability?.abilityName || 'Unknown';
-    });
+    const window = playerCastEvents.slice(i, i + sequenceLength);
+    const sequenceKey = window.map(nameFor).join(' → ');
 
-    const sequenceKey = sequence.join(' → ');
-    sequences[sequenceKey] = (sequences[sequenceKey] || 0) + 1;
+    const entry = (sequences[sequenceKey] ||= {
+      frequency: 0,
+      totalInterval: 0,
+      intervalCount: 0,
+    });
+    entry.frequency++;
+    if (window.length > 1) {
+      entry.totalInterval += (window[window.length - 1].timestamp - window[0].timestamp) / 1000;
+      entry.intervalCount++;
+    }
   }
 
   // Find opener sequence (first 5 abilities used most commonly at fight start)
   const openerSequence = playerCastEvents
     .slice(0, Math.min(5, playerCastEvents.length))
-    .map((event) => {
-      const ability = abilities.find((a) => a.abilityId === event.abilityGameID);
-      return ability?.abilityName || 'Unknown';
-    });
+    .map(nameFor);
 
   // Identify filler abilities (low-priority abilities used between main rotation)
   const sortedAbilities = [...abilities].sort((a, b) => b.useCount - a.useCount);
@@ -233,43 +235,14 @@ const analyzeGeneralRotation = (
     .slice(0, 3);
 
   // Convert sequences to common sequences with frequency and timing data
+  // (timing was accumulated in the single sliding-window pass above)
   const commonSequences: RotationSequence[] = Object.entries(sequences)
-    .filter(([_, frequency]) => frequency >= 2) // Only sequences that occurred multiple times
-    .map(([sequenceKey, frequency]) => {
-      const abilityNames = sequenceKey.split(' → ');
-
-      // Calculate average interval for this sequence
-      let totalInterval = 0;
-      let intervalCount = 0;
-
-      for (let i = 0; i <= playerCastEvents.length - abilityNames.length; i++) {
-        const sequenceMatch = playerCastEvents
-          .slice(i, i + abilityNames.length)
-          .every((event, idx) => {
-            const ability = abilities.find((a) => a.abilityId === event.abilityGameID);
-            return ability?.abilityName === abilityNames[idx];
-          });
-
-        if (sequenceMatch) {
-          const sequenceEvents = playerCastEvents.slice(i, i + abilityNames.length);
-          if (sequenceEvents.length > 1) {
-            const interval =
-              (sequenceEvents[sequenceEvents.length - 1].timestamp - sequenceEvents[0].timestamp) /
-              1000;
-            totalInterval += interval;
-            intervalCount++;
-          }
-        }
-      }
-
-      const averageInterval = intervalCount > 0 ? totalInterval / intervalCount : 0;
-
-      return {
-        sequence: abilityNames,
-        frequency,
-        averageInterval,
-      };
-    })
+    .filter(([_, data]) => data.frequency >= 2) // Only sequences that occurred multiple times
+    .map(([sequenceKey, data]) => ({
+      sequence: sequenceKey.split(' → '),
+      frequency: data.frequency,
+      averageInterval: data.intervalCount > 0 ? data.totalInterval / data.intervalCount : 0,
+    }))
     .sort((a, b) => b.frequency - a.frequency)
     .slice(0, 5);
 
@@ -311,15 +284,25 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
         .map((id: number) => String(id)),
     );
 
+    // Group cast events per player in a single pass (avoids re-filtering the full
+    // castEvents array for every player in analyzeGeneralRotation)
+    const castEventsByPlayer: Record<string, UnifiedCastEvent[]> = {};
+
     // Process cast events for each player, filtering to only include friendly players
     castEvents.forEach((castEvent: UnifiedCastEvent) => {
       // Skip if not from a friendly player
       if (!castEvent.sourceIsFriendly) return;
 
+      // Exclude begincast events so each channeled/charged ability is counted once,
+      // keeping APM / spammable scores consistent with the Synergy panel
+      if (castEvent.type !== 'cast') return;
+
       const playerId = String(castEvent.sourceID || '');
 
       // Additional check: ensure this player is in the friendlyPlayers list
       if (!friendlyPlayerIds.has(playerId)) return;
+
+      (castEventsByPlayer[playerId] ||= []).push(castEvent);
 
       const playerInfo = playersById[playerId] as
         | { displayName?: string; name?: string }
@@ -388,12 +371,11 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       // Identify spammable skills
       analysis.spammableSkills = identifySpammableSkills(analysis.abilities);
 
-      // Generate general rotation analysis
+      // Generate general rotation analysis (pass the player's own cast slice to avoid
+      // re-filtering the full castEvents array per player)
       analysis.generalRotation = analyzeGeneralRotation(
         analysis.abilities,
-        castEvents,
-        analysis.playerId,
-        friendlyPlayerIds,
+        castEventsByPlayer[analysis.playerId] || [],
       );
 
       // Calculate average time between casts for each ability
@@ -437,32 +419,41 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
           };
         }
 
-        // Track resource levels over time
-        if (resourceEvent.targetResources) {
-          if (resourceEvent.targetResources.magicka !== undefined) {
+        // Track resource levels over time, normalized to a 0-100 percentage so they
+        // match the '%' label and LinearProgress in the view (targetResources values
+        // are raw absolutes, not percentages)
+        const targetResources = resourceEvent.targetResources;
+        if (targetResources) {
+          if (targetResources.magicka !== undefined && targetResources.maxMagicka > 0) {
             resourceDataByPlayer[playerId].magickaLevels.push(
-              resourceEvent.targetResources.magicka,
+              (targetResources.magicka / targetResources.maxMagicka) * 100,
             );
           }
-          if (resourceEvent.targetResources.stamina !== undefined) {
+          if (targetResources.stamina !== undefined && targetResources.maxStamina > 0) {
             resourceDataByPlayer[playerId].staminaLevels.push(
-              resourceEvent.targetResources.stamina,
+              (targetResources.stamina / targetResources.maxStamina) * 100,
             );
           }
         }
 
-        // Track resource waste (when at max and trying to gain more)
-        if (resourceEvent.resourceChangeType && resourceEvent.resourceChange > 0) {
-          const currentResource =
-            resourceEvent.targetResources?.magicka || resourceEvent.targetResources?.stamina || 0;
-          const maxResource = 100; // Assuming percentage-based resources
-
-          if (currentResource >= maxResource) {
-            if (resourceEvent.resourceChangeType === 0) {
-              // Magicka
+        // Track resource waste (gaining resource while already capped). Select the
+        // resource and its real cap by resourceChangeType (0 = magicka, 6 = stamina)
+        // rather than truthy-OR, so current value, cap, and waste bucket all key to
+        // the same resource. NOTE: resourceChangeType 0 is falsy, so guard against
+        // undefined explicitly rather than truthiness (otherwise magicka is dropped).
+        if (
+          targetResources &&
+          resourceEvent.resourceChangeType !== undefined &&
+          resourceEvent.resourceChange > 0
+        ) {
+          if (resourceEvent.resourceChangeType === 0) {
+            // Magicka
+            if (targetResources.magicka >= targetResources.maxMagicka) {
               resourceDataByPlayer[playerId].magickaWaste += resourceEvent.resourceChange;
-            } else if (resourceEvent.resourceChangeType === 6) {
-              // Stamina
+            }
+          } else if (resourceEvent.resourceChangeType === 6) {
+            // Stamina
+            if (targetResources.stamina >= targetResources.maxStamina) {
               resourceDataByPlayer[playerId].staminaWaste += resourceEvent.resourceChange;
             }
           }

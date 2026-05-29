@@ -74,7 +74,7 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                   <ListItem key={damage.abilityGameID} sx={{ py: 1, pl: 0 }} divider>
                     <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1.25 }}>
                       {damage.icon ? (
-                        <AbilityIcon abilityId={damage.abilityGameID} />
+                        <AbilityIcon abilityId={damage.abilityGameID} fallbackIcon={damage.icon} />
                       ) : (
                         <Avatar sx={{ width: 32, height: 32 }} variant="rounded">
                           {damage.abilityName.charAt(0)}

@@ -138,7 +138,7 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                       Most Used Abilities
                     </Typography>
                     <List dense>
-                      {analysis.abilities
+                      {[...analysis.abilities]
                         .sort((a, b) => b.useCount - a.useCount)
                         .slice(0, 5)
                         .map((ability) => (
@@ -207,8 +207,11 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                     </Typography>
                     {analysis.skillPriorities.length > 0 ? (
                       <List dense>
-                        {analysis.skillPriorities.map((priority, index) => (
-                          <ListItem key={index} sx={{ px: 0 }}>
+                        {analysis.skillPriorities.map((priority) => (
+                          <ListItem
+                            key={`${priority.higherPrioritySkill}->${priority.lowerPrioritySkill}`}
+                            sx={{ px: 0 }}
+                          >
                             <ListItemText
                               primary={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -260,8 +263,8 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                     </Typography>
                     {analysis.spammableSkills.length > 0 ? (
                       <List dense>
-                        {analysis.spammableSkills.map((skill, index) => (
-                          <ListItem key={index} sx={{ px: 0 }}>
+                        {analysis.spammableSkills.map((skill) => (
+                          <ListItem key={skill.abilityName} sx={{ px: 0 }}>
                             <ListItemText
                               primary={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -302,7 +305,7 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {analysis.generalRotation.openerSequence.map((ability, index) => (
                           <Chip
-                            key={index}
+                            key={`${index}-${ability}`}
                             label={`${index + 1}. ${ability}`}
                             size="small"
                             variant="outlined"
@@ -326,26 +329,24 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                     </Typography>
                     {analysis.generalRotation.commonSequences.length > 0 ? (
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        {analysis.generalRotation.commonSequences
-                          .slice(0, 3)
-                          .map((sequence, index) => (
-                            <Box
-                              key={index}
-                              sx={{
-                                p: 1,
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: 1,
-                              }}
-                            >
-                              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                                {sequence.sequence.join(' → ')}
-                              </Typography>
-                              <Typography variant="caption" color="textSecondary">
-                                {sequence.frequency}x used • {sequence.averageInterval.toFixed(1)}s
-                                avg
-                              </Typography>
-                            </Box>
-                          ))}
+                        {analysis.generalRotation.commonSequences.slice(0, 3).map((sequence) => (
+                          <Box
+                            key={`${sequence.sequence.join('→')}-${sequence.frequency}`}
+                            sx={{
+                              p: 1,
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                              {sequence.sequence.join(' → ')}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {sequence.frequency}x used • {sequence.averageInterval.toFixed(1)}s
+                              avg
+                            </Typography>
+                          </Box>
+                        ))}
                       </Box>
                     ) : (
                       <Typography variant="body2" color="textSecondary">
@@ -364,7 +365,12 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                     {analysis.generalRotation.fillerAbilities.length > 0 ? (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {analysis.generalRotation.fillerAbilities.map((ability, index) => (
-                          <Chip key={index} label={ability} size="small" variant="outlined" />
+                          <Chip
+                            key={`${ability}-${index}`}
+                            label={ability}
+                            size="small"
+                            variant="outlined"
+                          />
                         ))}
                       </Box>
                     ) : (
@@ -385,7 +391,7 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {analysis.rotationPattern.map((abilityName, index) => (
                       <Chip
-                        key={index}
+                        key={`${index}-${abilityName}`}
                         label={abilityName}
                         size="small"
                         variant="outlined"

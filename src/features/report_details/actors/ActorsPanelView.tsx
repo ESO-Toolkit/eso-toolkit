@@ -90,13 +90,24 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
     [actorsById],
   );
 
+  // Group combatant info events by sourceID once, so cells and the copy
+  // callback can do O(1) lookups instead of re-filtering the full array.
+  const combatantInfoBySourceId = React.useMemo(() => {
+    const m = new Map<string, CombatantInfoEvent[]>();
+    for (const event of combatantInfoEvents) {
+      const key = String(event.sourceID);
+      const arr = m.get(key);
+      if (arr) arr.push(event);
+      else m.set(key, [event]);
+    }
+    return m;
+  }, [combatantInfoEvents]);
+
   // Function to copy combatant info events for a specific player
   const copyCombatantInfoEvents = React.useCallback(
     async (actorId: string | number) => {
-      // Filter combatant info events for this specific actor
-      const playerCombatantInfoEvents = combatantInfoEvents.filter(
-        (event) => String(event.sourceID) === String(actorId),
-      );
+      // Look up combatant info events for this specific actor
+      const playerCombatantInfoEvents = combatantInfoBySourceId.get(String(actorId)) ?? [];
 
       if (playerCombatantInfoEvents.length === 0) {
         return;
@@ -118,7 +129,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
         document.body.removeChild(textArea);
       }
     },
-    [combatantInfoEvents],
+    [combatantInfoBySourceId],
   );
 
   // Create column helper
@@ -235,9 +246,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
         size: 160,
         cell: (info) => {
           const actorId = info.row.original.id;
-          const playerCombatantInfoEvents = combatantInfoEvents.filter(
-            (event) => String(event.sourceID) === String(actorId),
-          );
+          const playerCombatantInfoEvents = combatantInfoBySourceId.get(String(actorId)) ?? [];
 
           if (playerCombatantInfoEvents.length === 0) {
             return (
@@ -270,7 +279,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       copyPlayerData,
       actorsById,
       copyActorData,
-      combatantInfoEvents,
+      combatantInfoBySourceId,
       copyCombatantInfoEvents,
     ],
   );
