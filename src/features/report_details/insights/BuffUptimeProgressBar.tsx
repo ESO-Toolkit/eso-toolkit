@@ -275,6 +275,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           <LinearProgress
             variant="determinate"
             value={pct}
+            aria-hidden="true"
             sx={{
               height: '100%',
               borderRadius: 2,
@@ -310,11 +311,12 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           pointerEvents: 'none',
         }}
       >
-        {/* Icon */}
+        {/* Icon — decorative; the parent button's aria-label conveys the ability name */}
         {buff.icon ? (
           <Avatar
             src={`https://assets.rpglogs.com/img/eso/abilities/${buff.icon}.png`}
-            alt={buff.abilityName}
+            alt=""
+            aria-hidden="true"
             sx={{
               width: 32,
               height: 32,
@@ -326,6 +328,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           />
         ) : (
           <Avatar
+            aria-hidden="true"
             sx={{
               width: 32,
               height: 32,
@@ -337,8 +340,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           </Avatar>
         )}
 
-        {/* Text content */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* Text content — decorative; the parent button's aria-label conveys name + uptime */}
+        <Box aria-hidden="true" sx={{ flex: 1, minWidth: 0 }}>
           <Typography
             variant="body2"
             sx={{
@@ -381,6 +384,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
           <Typography
             variant="body2"
+            aria-hidden="true"
             sx={{
               fontWeight: 700,
               color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
@@ -395,6 +399,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           {/* Delta indicator - only show if groupAverage is provided */}
           {delta !== null && (
             <Box
+              aria-hidden="true"
               sx={{
                 display: 'flex',
                 alignItems: 'center',

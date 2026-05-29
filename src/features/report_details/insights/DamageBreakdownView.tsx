@@ -41,6 +41,10 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
           <Typography variant="h6" gutterBottom>
             Damage Breakdown
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Total damage dealt by friendly players:{' '}
+            <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
+          </Typography>
           <Skeleton variant="rectangular" width="100%" height={40} />
           <Skeleton variant="rectangular" width="100%" height={300} sx={{ mt: 2 }} />
         </Box>
@@ -310,6 +314,7 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                         <LinearProgress
                           variant="determinate"
                           value={Math.max(0, Math.min(100, percentage))}
+                          aria-label={`${damage.abilityName}: ${percentage.toFixed(1)}% of total damage`}
                           sx={{
                             height: 8,
                             borderRadius: 999,
