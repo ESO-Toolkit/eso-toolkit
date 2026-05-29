@@ -16,7 +16,12 @@ import {
   type RaidRoster,
 } from '../types/roster';
 
-import { groupArrow, formatPosition, generateDiscordFormat } from './rosterDiscordFormat';
+import {
+  groupArrow,
+  groupsArrow,
+  formatPosition,
+  generateDiscordFormat,
+} from './rosterDiscordFormat';
 
 // Zero-width space used by escapeDiscord to break Discord mention triggers.
 const ZWSP = '​';
@@ -41,6 +46,26 @@ describe('groupArrow', () => {
 
   it('returns empty string for a non-directional group name', () => {
     expect(groupArrow('Slayer Stack 1')).toBe('');
+  });
+});
+
+describe('groupsArrow', () => {
+  it('uses the first directional group even when it is not first in the array', () => {
+    // DPS can be in multiple groups; the directional one may be second.
+    expect(groupsArrow(['Portal', 'Left Stack'])).toBe('⬅️');
+    expect(groupsArrow(['Slayer Stack 1', 'Right Stack'])).toBe('➡️');
+  });
+
+  it('returns empty string when no group is directional', () => {
+    expect(groupsArrow(['Portal', 'Slayer Stack 1'])).toBe('');
+    expect(groupsArrow([])).toBe('');
+    expect(groupsArrow(undefined)).toBe('');
+  });
+
+  it('falls back to the legacy single group field when no plural groups are set', () => {
+    expect(groupsArrow(undefined, 'Left Stack')).toBe('⬅️');
+    // Plural groups take precedence over the legacy field.
+    expect(groupsArrow(['Right Stack'], 'Left Stack')).toBe('➡️');
   });
 });
 
@@ -156,6 +181,20 @@ describe('generateDiscordFormat', () => {
     // No arrow anywhere in the output for a group-less roster.
     expect(output).not.toContain('⬅️');
     expect(output).not.toContain('➡️');
+  });
+
+  it('renders the DPS arrow from a non-first directional group (multi-group slot)', () => {
+    // Regression: groups:['Portal','Left Stack'] — the directional group is second.
+    const roster = createDefaultRoster();
+    roster.dpsSlots[0] = {
+      slotNumber: 1,
+      playerName: 'MultiGroupDPS',
+      groups: ['Portal', 'Left Stack'],
+    };
+
+    const output = generateDiscordFormat(roster);
+
+    expect(output).toContain('⬅️⚔️ **#1');
   });
 
   it('renders NO arrow for a non-directional group name (group set, but no left/right)', () => {

@@ -37,13 +37,32 @@ export const escapeDiscord = (value?: string | null): string => {
   );
 };
 
-/** Derive group arrow from a group name: "left" → ⬅️, "right" → ➡️ */
+/** Derive a directional arrow from a single group name: "left" → ⬅️, "right" → ➡️ */
 export const groupArrow = (groupName?: string): string => {
   if (!groupName) return '';
   const lower = groupName.toLowerCase();
   if (lower.includes('left')) return '⬅️';
   if (lower.includes('right')) return '➡️';
   return '';
+};
+
+/**
+ * Derive a directional arrow from a slot's group memberships.
+ *
+ * Slots (DPS especially) can belong to multiple groups, and the directional
+ * one need not be first — e.g. `['Portal', 'Left Stack']`. Scan all groups for
+ * the first that yields a left/right arrow, then fall back to the deprecated
+ * single `group` field for legacy rosters. Returns '' when no group is
+ * directional (or none is set), so non-directional groups render no arrow.
+ */
+export const groupsArrow = (groups?: string[], legacyGroupName?: string): string => {
+  if (groups?.length) {
+    for (const name of groups) {
+      const arrow = groupArrow(name);
+      if (arrow) return arrow;
+    }
+  }
+  return groupArrow(legacyGroupName);
 };
 
 /** Convert a playerNumber into a pointing emoji, or return the raw value */
@@ -148,7 +167,7 @@ export const generateDiscordFormat = (roster: RaidRoster): string => {
   // Tanks — directional arrow only when a left/right group is set (no positional default)
   roster.tanks.forEach((tank, idx) => {
     const num = idx + 1;
-    const arrow = groupArrow(tank.groups?.[0] ?? tank.group?.groupName);
+    const arrow = groupsArrow(tank.groups, tank.group?.groupName);
     const label = escapeDiscord(tank.roleLabel) || (num === 1 ? 'MT' : 'OT');
     const ult = bracket(tank.ultimate);
     const pos = formatPosition(tank.positionTag, tank.playerNumber);
@@ -174,7 +193,7 @@ export const generateDiscordFormat = (roster: RaidRoster): string => {
 
   // Healers — directional arrow only when a left/right group is set (no positional default)
   roster.healers.forEach((h, index) => {
-    const arrow = groupArrow(h.groups?.[0] ?? h.group?.groupName);
+    const arrow = groupsArrow(h.groups, h.group?.groupName);
     const label = escapeDiscord(h.roleLabel) || `H${index + 1}`;
     const pos = formatPosition(h.positionTag, h.playerNumber);
     const roleNote = bracket(h.roleNotes);
@@ -204,7 +223,7 @@ export const generateDiscordFormat = (roster: RaidRoster): string => {
   const sortedDPS = [...roster.dpsSlots].sort((a, b) => a.slotNumber - b.slotNumber);
 
   sortedDPS.forEach((dd) => {
-    const arrow = groupArrow(dd.groups?.[0] ?? dd.group?.groupName);
+    const arrow = groupsArrow(dd.groups, dd.group?.groupName);
     const jailType = dd.jailDDType
       ? ` [${formatJailDDType(dd.jailDDType, dd.customDescription)}]`
       : '';
