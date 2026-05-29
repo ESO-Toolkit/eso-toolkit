@@ -145,11 +145,10 @@ export const generateDiscordFormat = (roster: RaidRoster): string => {
     return result.filter(Boolean);
   };
 
-  // Tanks — arrow from group name, defaults MT=⬅️ OT=➡️
+  // Tanks — directional arrow only when a left/right group is set (no positional default)
   roster.tanks.forEach((tank, idx) => {
     const num = idx + 1;
-    const arrow =
-      groupArrow(tank.groups?.[0] ?? tank.group?.groupName) || (num === 1 ? '⬅️' : '➡️');
+    const arrow = groupArrow(tank.groups?.[0] ?? tank.group?.groupName);
     const label = escapeDiscord(tank.roleLabel) || (num === 1 ? 'MT' : 'OT');
     const ult = bracket(tank.ultimate);
     const pos = formatPosition(tank.positionTag, tank.playerNumber);
@@ -173,9 +172,9 @@ export const generateDiscordFormat = (roster: RaidRoster): string => {
   lines.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
   lines.push('');
 
-  // Healers — arrow from group name, defaults H1=⬅️ H2=➡️
+  // Healers — directional arrow only when a left/right group is set (no positional default)
   roster.healers.forEach((h, index) => {
-    const arrow = groupArrow(h.groups?.[0] ?? h.group?.groupName) || (index === 0 ? '⬅️' : '➡️');
+    const arrow = groupArrow(h.groups?.[0] ?? h.group?.groupName);
     const label = escapeDiscord(h.roleLabel) || `H${index + 1}`;
     const pos = formatPosition(h.positionTag, h.playerNumber);
     const roleNote = bracket(h.roleNotes);

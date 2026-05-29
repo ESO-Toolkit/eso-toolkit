@@ -142,6 +142,42 @@ describe('generateDiscordFormat', () => {
     expect(output).toContain('➡️💖');
   });
 
+  it('renders NO directional arrow when no group is set on any role', () => {
+    // A default roster has no groups → tanks/healers/DPS must show the bare
+    // role glyph with no positional ⬅️/➡️ default. Guards the "arrows only when
+    // set in the roster builder" behavior across all three roles.
+    const roster = createDefaultRoster();
+    roster.tanks[0] = { ...defaultTankSetup(1), playerName: 'NoGroupTank' };
+    roster.healers[0] = { ...defaultHealerSetup(1), playerName: 'NoGroupHealer' };
+    roster.dpsSlots[0] = { slotNumber: 1, playerName: 'NoGroupDPS' };
+
+    const output = generateDiscordFormat(roster);
+
+    // Lines render with the role glyph immediately, no preceding arrow.
+    expect(output).toContain('🛡️ **MT**');
+    expect(output).toContain('💖 **H1**');
+    expect(output).toContain('⚔️ **#1');
+    // No arrow anywhere in the output for a group-less roster.
+    expect(output).not.toContain('⬅️');
+    expect(output).not.toContain('➡️');
+  });
+
+  it('renders NO arrow for a non-directional group name (group set, but no left/right)', () => {
+    // "Slayer Stack 1" is a real group but carries no direction → no arrow.
+    const roster = createDefaultRoster();
+    roster.tanks[0] = {
+      ...defaultTankSetup(1),
+      playerName: 'StackTank',
+      groups: ['Slayer Stack 1'],
+    };
+
+    const output = generateDiscordFormat(roster);
+
+    expect(output).toContain('🛡️ **MT**');
+    expect(output).not.toContain('⬅️🛡️');
+    expect(output).not.toContain('➡️🛡️');
+  });
+
   it('neutralizes a malicious @everyone player name so it cannot ping', () => {
     const output = generateDiscordFormat(buildSampleRoster());
     // The raw, pingable "@everyone" (no zero-width space after @) must NOT appear.
