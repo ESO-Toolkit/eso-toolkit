@@ -104,8 +104,17 @@ module.exports = {
 
   // Ignore patterns
   modulePathIgnorePatterns: ['<rootDir>/.claude/worktrees/', '<rootDir>/.deepsec/'],
-  testPathIgnorePatterns: ['node_modules', 'build', 'scribing-e2e\\.(test|spec)\\.(ts|tsx)$'],
-  transformIgnorePatterns: ['node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three|uuid|echarts|zrender))'],
+  // NOTE: 'build' must be anchored to the Vite output dir (<rootDir>/build) — an
+  // unanchored 'build' also matches src/features/build-editor and would silently
+  // skip every test in that feature.
+  testPathIgnorePatterns: [
+    'node_modules',
+    '<rootDir>/build/',
+    'scribing-e2e\\.(test|spec)\\.(ts|tsx)$',
+  ],
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three|uuid|echarts|zrender))',
+  ],
 
   // Watch plugins
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
