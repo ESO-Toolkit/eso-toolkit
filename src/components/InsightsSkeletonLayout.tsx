@@ -121,7 +121,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
             <Box sx={{ mb: 2.5 }}>
               <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 300 }}>
-                Abilities Equipped:
+                Key Group Abilities:
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
                 {[...Array(4)].map((_, index) => (
@@ -150,7 +150,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
             <Box>
               <Typography variant="subtitle1" sx={{ mb: 0, fontWeight: 300 }}>
-                Champion Points Equipped:
+                Key Champion Points:
               </Typography>
               <Box sx={{ mt: 1 }}>
                 {[...Array(2)].map((_, index) => (
