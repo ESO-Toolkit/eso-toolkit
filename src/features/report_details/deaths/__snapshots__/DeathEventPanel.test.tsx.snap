@@ -900,10 +900,12 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle missing deb
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -1138,10 +1140,12 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle null/undefi
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -1428,10 +1432,12 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -1590,7 +1596,13 @@ exports[`DeathEventPanel Taunt Status Tests Edge Cases should handle taunt statu
             </div>
             <div
               class="MuiBox-root css-bmt4fs"
-            />
+            >
+              <div
+                class="MuiBox-root css-994eo2"
+              >
+                BLOCKING
+              </div>
+            </div>
           </div>
           <div
             class="MuiBox-root css-15j3nkd"
@@ -1737,10 +1749,12 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -2035,10 +2049,12 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -2381,10 +2397,12 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -2733,10 +2751,12 @@ exports[`DeathEventPanel Taunt Status Tests Recent Attacks Taunt Indicators shou
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -3037,10 +3057,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -3265,44 +3287,11 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should handle
             >
               Recent Attacks
             </span>
-            <div
-              class="MuiBox-root css-1kkt86i"
+            <p
+              class="MuiTypography-root MuiTypography-body2 css-xy7jrq-MuiTypography-root"
             >
-              <div
-                class="MuiBox-root css-1gvzuft"
-              >
-                <span
-                  class="MuiTypography-root MuiTypography-caption css-1a4mfyu-MuiTypography-root"
-                >
-                  <span
-                    style="font-weight: 500;"
-                  >
-                    Exploiter
-                  </span>
-                  <span
-                    style="opacity: 0.4; margin: 0px 3px;"
-                  >
-                    /
-                  </span>
-                  <span
-                    style="margin-right: 2px; font-size: 0.55rem; color: rgb(100, 116, 139); font-weight: 700;"
-                    title="Attacker was taunted"
-                  >
-                    TAUNT
-                  </span>
-                  <span
-                    style="color: rgb(255, 107, 107); font-weight: 600;"
-                  >
-                    Enemy Boss
-                  </span>
-                </span>
-                <span
-                  class="MuiTypography-root MuiTypography-caption css-bchyre-MuiTypography-root"
-                >
-                  3,000
-                </span>
-              </div>
-            </div>
+              No recent attacks recorded
+            </p>
           </div>
         </div>
       </div>
@@ -3356,10 +3345,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -3702,10 +3693,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -3948,10 +3941,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
@@ -4194,10 +4189,12 @@ exports[`DeathEventPanel Taunt Status Tests Taunt Status Snapshots should render
           class="MuiBox-root css-wq87pz"
         >
           <a
+            aria-label="View DPS Player deaths on ESO Logs (opens in new tab)"
             href="https://www.esologs.com/reports/test-report?fight=1&source=456&type=deaths"
             rel="noopener noreferrer"
             style="text-decoration: none;"
             target="_blank"
+            title="View DPS Player deaths on ESO Logs (opens in new tab)"
           >
             <div
               class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault css-ls5b0u-MuiChip-root"
