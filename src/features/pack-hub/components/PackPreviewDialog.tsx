@@ -163,7 +163,7 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         px: 1.5,
         py: 0.85,
         borderRadius: '10px',
-        minWidth: 72,
+        minWidth: { xs: 'auto', sm: 72 },
         background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
         border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
         backdropFilter: 'blur(8px)',
@@ -293,7 +293,7 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         sx={{
           position: 'relative',
           zIndex: 1,
-          px: { xs: 2.5, sm: 4 },
+          px: { xs: 1.5, sm: 4 },
           pt: { xs: 3.5, sm: 4 },
           pb: 2.5,
         }}
@@ -360,7 +360,7 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
             fontSize: { xs: '1.45rem', sm: '1.75rem' },
             letterSpacing: '-0.02em',
             lineHeight: 1.2,
-            pr: 5,
+            pr: { xs: 2, sm: 5 },
             background: isDark
               ? `linear-gradient(135deg, #f8fafc 0%, ${accentColor} 130%)`
               : `linear-gradient(135deg, #0f172a 0%, ${accentColor} 130%)`,
@@ -399,7 +399,15 @@ export const PackPreviewDialog: React.FC<PackPreviewDialogProps> = ({
         )}
 
         {/* Stats row */}
-        <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            mt: 2.5,
+            flexWrap: 'wrap',
+            '& > *': { minWidth: { xs: 'auto', sm: 72 } },
+          }}
+        >
           {renderStat('Addons', pack.addons.length, accentColor)}
           {renderStat('Required', requiredCount, '#c4a44a')}
           {renderStat('Optional', optionalCount, '#94a3b8')}

@@ -133,7 +133,7 @@ export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
                   handleMarkerClick(marker);
                 }
               }}
-              aria-label={`Event marker at ${Math.round(marker.timestamp / 1000)}s`}
+              aria-label={getTooltipContent(marker)}
               sx={{
                 position: 'absolute',
                 left: `${position}%`,
@@ -144,15 +144,11 @@ export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 zIndex: 1,
-                '&:hover, &:focus-visible': {
+                '&:hover': {
                   width: 5,
                   height: 28,
                   marginTop: -2,
                   boxShadow: `0 0 8px ${color}`,
-                },
-                '&:focus-visible': {
-                  outline: '2px solid currentColor',
-                  outlineOffset: 2,
                 },
                 '&::before': {
                   content: '""',

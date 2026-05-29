@@ -186,11 +186,13 @@ export const KalpaBanner: React.FC = () => {
         sx={{
           position: 'absolute',
           top: '50%',
-          right: { xs: 4, sm: 8 },
+          right: { xs: 2, sm: 8 },
           transform: 'translateY(-50%)',
           color: 'text.secondary',
           opacity: 0.6,
-          padding: { xs: '4px', sm: '5px' },
+          minWidth: 44,
+          minHeight: 44,
+          padding: '10px',
           '&:hover': { opacity: 1 },
           zIndex: 1,
         }}

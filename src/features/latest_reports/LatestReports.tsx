@@ -322,7 +322,7 @@ export const LatestReports: React.FC = () => {
                   sx={{
                     borderRadius: 2,
                     mb: 3,
-                    overflowX: 'hidden',
+                    overflowX: 'auto',
                   }}
                 >
                   <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
@@ -355,9 +355,21 @@ export const LatestReports: React.FC = () => {
                         <TableRow
                           key={report.code}
                           hover
+                          tabIndex={0}
+                          role="link"
+                          aria-label={`View report ${report.title || report.code}`}
                           onClick={(e: React.MouseEvent<HTMLTableRowElement>) =>
                             handleReportClick(report.code, e)
                           }
+                          onKeyDown={(e: React.KeyboardEvent<HTMLTableRowElement>) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleReportClick(
+                                report.code,
+                                e as unknown as React.MouseEvent<HTMLTableRowElement>,
+                              );
+                            }
+                          }}
                           onMouseDown={(e: React.MouseEvent<HTMLTableRowElement>) => {
                             // Handle middle-click
                             if (e.button === 1) {

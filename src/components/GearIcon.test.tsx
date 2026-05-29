@@ -46,7 +46,7 @@ describe('GearIcon', () => {
 
     render(<GearIcon gear={mockGear} onClick={handleClick} />);
 
-    const icon = screen.getByRole('img');
+    const icon = screen.getByRole('button');
     fireEvent.click(icon);
 
     expect(handleClick).toHaveBeenCalledTimes(1);

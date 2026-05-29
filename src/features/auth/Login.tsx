@@ -23,7 +23,7 @@ export const Login: React.FC = () => {
   const banMessage = banReason || userError;
 
   React.useEffect(() => {
-    document.title = 'Sign In | ESO Toolkit';
+    document.title = 'Log In | ESO Toolkit';
   }, []);
 
   const handleLogin = (): boolean => {
@@ -32,7 +32,7 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
+    <Container maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
       <Box
         sx={{
           display: 'flex',

@@ -80,11 +80,25 @@ export const GearIcon: React.FC<GearIconProps> = ({
   // Choose color set based on whether we want desaturated colors
   const colors = useDesaturatedColors ? desaturatedQualityColors : qualityColors;
 
-  const imgEl = (
+  const iconElement = (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <img
       src={iconUrl}
       alt={alt}
       className={className}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e: React.KeyboardEvent<HTMLImageElement>): void => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick(e as unknown as React.MouseEvent<HTMLElement>);
+              }
+            }
+          : undefined
+      }
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
       style={{
         width: size,
         height: size,
@@ -97,31 +111,29 @@ export const GearIcon: React.FC<GearIconProps> = ({
         ...style,
       }}
       onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-        // Fallback to a placeholder or hide on error
         const target = e.target as HTMLImageElement;
         target.style.display = 'none';
       }}
     />
   );
 
-  const iconElement = onClick ? (
-    <span
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e: React.KeyboardEvent<HTMLSpanElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick(e as unknown as React.MouseEvent<HTMLElement>);
-        }
-      }}
-      style={{ display: 'inline-flex', alignItems: 'center' }}
-    >
-      {imgEl}
-    </span>
-  ) : (
-    imgEl
-  );
+  const qualityLabel =
+    quality !== 'normal' ? (
+      <Box
+        component="span"
+        sx={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+          clip: 'rect(0 0 0 0)',
+          clipPath: 'inset(50%)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {quality} quality
+      </Box>
+    ) : null;
 
   if (showTooltip && tooltipContent) {
     return (
@@ -132,12 +144,24 @@ export const GearIcon: React.FC<GearIconProps> = ({
         leaveTouchDelay={3000}
         arrow
       >
-        <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center' }}>
+        <Box
+          component="span"
+          sx={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}
+        >
           {iconElement}
+          {qualityLabel}
         </Box>
       </Tooltip>
     );
   }
 
-  return iconElement;
+  return (
+    <Box
+      component="span"
+      sx={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}
+    >
+      {iconElement}
+      {qualityLabel}
+    </Box>
+  );
 };

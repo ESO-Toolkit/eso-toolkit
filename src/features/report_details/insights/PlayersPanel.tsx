@@ -44,8 +44,8 @@ import {
   BLUE_CHAMPION_POINTS,
   GREEN_CHAMPION_POINTS,
 } from '../../../types/abilities';
-import { CastEvent, CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
-import { PlayerGear, PlayerTalent } from '../../../types/playerDetails';
+import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
+import { PlayerGear } from '../../../types/playerDetails';
 import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import {
   createSkillLineAbilityMapping,
@@ -72,8 +72,7 @@ import {
   type BarSwapAnalysisResult,
 } from '../../parse_analysis/utils/parseAnalysisUtils';
 
-// Scribing detection stub — full implementation pending unified detection service
-const analyzeAllPlayersScribingSkills = (..._args: unknown[]): Record<string, never> => ({});
+// Recipe lookup stubs — full recipe resolution pending unified detection service
 const findScribingRecipe = async (_skillId: unknown, _skillName?: string): Promise<null> => null;
 const formatScribingRecipeForDisplay = (
   _recipe: unknown,
@@ -191,24 +190,44 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
       return [];
     }
 
-    return Object.values(playerData.playersById)
-      .map((player) => {
-        const talents = player.combatantInfo?.talents ?? [];
-        const abilityIds = Array.from(
-          new Set(
-            talents
-              .map((talent) => talent.guid)
-              .filter((guid) => typeof guid === 'number' && isScribingAbility(guid)),
-          ),
-        );
+    const playerIds = new Set(Object.values(playerData.playersById).map((p) => p.id));
 
-        return {
-          playerId: player.id,
-          abilityIds,
-        };
-      })
+    const abilitiesByPlayer = new Map<number, Set<number>>();
+
+    // Scan talent GUIDs (works when ESO Logs provides the transformed ID)
+    Object.values(playerData.playersById).forEach((player) => {
+      const talents = player.combatantInfo?.talents ?? [];
+      talents.forEach((talent) => {
+        if (typeof talent.guid === 'number' && isScribingAbility(talent.guid)) {
+          if (!abilitiesByPlayer.has(player.id)) {
+            abilitiesByPlayer.set(player.id, new Set());
+          }
+          abilitiesByPlayer.get(player.id)!.add(talent.guid);
+        }
+      });
+    });
+
+    // Scan cast events for scribing ability IDs (handles when talent.guid is the base game ID)
+    castEvents.forEach((event) => {
+      if (
+        event.type === 'cast' &&
+        playerIds.has(event.sourceID) &&
+        isScribingAbility(event.abilityGameID)
+      ) {
+        if (!abilitiesByPlayer.has(event.sourceID)) {
+          abilitiesByPlayer.set(event.sourceID, new Set());
+        }
+        abilitiesByPlayer.get(event.sourceID)!.add(event.abilityGameID);
+      }
+    });
+
+    return Array.from(abilitiesByPlayer.entries())
+      .map(([playerId, abilityIds]) => ({
+        playerId,
+        abilityIds: Array.from(abilityIds),
+      }))
       .filter((entry) => entry.abilityIds.length > 0);
-  }, [playerData]);
+  }, [playerData, castEvents]);
 
   const existingScribingAbilities = React.useMemo(() => {
     if (!scribingResult || fightIdNumber === null || scribingResult.fightId !== fightIdNumber) {
@@ -1002,171 +1021,53 @@ export const PlayersPanel: React.FC<PlayersPanelProps> = ({ context: contextOver
     maxResourcesByPlayer,
   ]);
 
-  // Calculate scribing skills per player using the utility function
+  // Build scribing skills per player from the worker detection results
   const scribingSkillsByPlayer = React.useMemo(() => {
-    if (
-      !friendlyBuffEvents ||
-      !debuffEvents ||
-      !damageEvents ||
-      !resourceEvents ||
-      !castEvents ||
-      !abilitiesById ||
-      !playerData?.playersById
-    ) {
+    if (!scribingResult || fightIdNumber === null || scribingResult.fightId !== fightIdNumber) {
       return {};
     }
 
-    // Create the player details structure expected by the utility function
-    const playerDetailsData = {
-      data: {
-        playerDetails: {
-          tanks: Object.values(playerData.playersById)
-            .filter((player) => player?.combatantInfo?.talents)
-            .map((player) => ({
-              id: player?.id ?? 0,
-              name: player?.name ?? 'Unknown Player',
-              combatantInfo: {
-                talents: player?.combatantInfo?.talents ?? [],
-              },
-            })),
-          dps: [] as Array<{
-            id: number;
-            name: string;
-            combatantInfo: { talents: PlayerTalent[] };
-          }>,
-          healers: [] as Array<{
-            id: number;
-            name: string;
-            combatantInfo: { talents: PlayerTalent[] };
-          }>,
-        },
-      },
-    };
-
-    // Create the master data structure expected by the utility function
-    const masterDataStructure = {
-      reportData: {
-        report: {
-          masterData: {
-            abilities: Object.values(abilitiesById),
-          },
-        },
-      },
-    };
-
-    // Use the utility function to analyze all players' scribing skills
-    const allPlayersScribingResults = analyzeAllPlayersScribingSkills(
-      playerDetailsData,
-      masterDataStructure,
-      debuffEvents,
-      friendlyBuffEvents,
-      resourceEvents,
-      damageEvents,
-      healingEvents,
-      castEvents.filter((e) => e.type === 'cast') as CastEvent[],
-    );
-
-    // Transform the results to match the expected GrimoireData structure
     const result: Record<string, GrimoireData[]> = {};
 
-    Object.entries(allPlayersScribingResults as Record<string, unknown[]>).forEach(
-      ([playerIdStr, scribingSkills]) => {
-        const grimoireDataList: GrimoireData[] = [];
+    Object.entries(scribingResult.players).forEach(([playerIdStr, abilityMap]) => {
+      const grimoireDataList: GrimoireData[] = [];
 
-        (
-          scribingSkills as Array<{
-            grimoire: string;
-            talentGuid: number;
-            talentName: string;
-            effects: Array<{
-              id: number;
-              name: string;
-              icon?: string;
-              abilityName?: string;
-              events?: unknown[];
-            }>;
-          }>
-        ).forEach((skillAnalysis) => {
-          // Find existing grimoire or create new one
-          let grimoireData = grimoireDataList.find(
-            (g) => g.grimoireName === skillAnalysis.grimoire,
-          );
-          if (!grimoireData) {
-            grimoireData = {
-              grimoireName: skillAnalysis.grimoire,
-              skills: [],
-            };
-            grimoireDataList.push(grimoireData);
-          }
+      Object.values(abilityMap).forEach((detection) => {
+        if (
+          !detection?.scribedSkillData ||
+          detection.schemaVersion !== SCRIBING_DETECTION_SCHEMA_VERSION
+        ) {
+          return;
+        }
 
-          // Convert effects to the expected format
-          const skillEffects = skillAnalysis.effects.map((effect) => {
-            // Determine the type based on the events in this effect
-            let effectType: 'damage' | 'heal' | 'buff' | 'debuff' | 'aura' | 'resource' = 'buff';
+        const { scribedSkillData, scribingInfo } = detection;
 
-            if (effect.events && effect.events.length > 0) {
-              const firstEvent = effect.events[0] as { type?: string };
-              if (firstEvent.type) {
-                switch (firstEvent.type) {
-                  case 'damage':
-                    effectType = 'damage';
-                    break;
-                  case 'heal':
-                    effectType = 'heal';
-                    break;
-                  case 'applybuff':
-                  case 'applybuffstack':
-                  case 'removebuff':
-                  case 'removebuffstack':
-                    effectType = 'buff';
-                    break;
-                  case 'applydebuff':
-                  case 'applydebuffstack':
-                  case 'removedebuff':
-                  case 'removedebuffstack':
-                    effectType = 'debuff';
-                    break;
-                  case 'resourcechange':
-                    effectType = 'resource';
-                    break;
-                  default:
-                    effectType = 'buff';
-                }
-              }
-            }
+        let grimoireData = grimoireDataList.find(
+          (g) => g.grimoireName === scribedSkillData.grimoireName,
+        );
+        if (!grimoireData) {
+          grimoireData = {
+            grimoireName: scribedSkillData.grimoireName,
+            skills: [],
+          };
+          grimoireDataList.push(grimoireData);
+        }
 
-            return {
-              abilityId: effect.id,
-              abilityName: effect.abilityName || effect.name,
-              type: effectType,
-              count: effect.events?.length || 0,
-            };
-          });
-
-          // Add this skill to the grimoire
-          // Use the original talent name for proper skill identification
-          grimoireData.skills.push({
-            skillId: skillAnalysis.talentGuid, // Use the talent GUID as unique identifier
-            skillName: skillAnalysis.talentName, // Use the original talent name
-            effects: skillEffects,
-          });
+        grimoireData.skills.push({
+          skillId: detection.effectiveAbilityId,
+          skillName: scribingInfo.transformation,
+          effects: scribedSkillData.effects,
+          recipe: scribedSkillData.recipe,
         });
+      });
 
+      if (grimoireDataList.length > 0) {
         result[playerIdStr] = grimoireDataList;
-      },
-    );
+      }
+    });
 
     return result;
-  }, [
-    friendlyBuffEvents,
-    debuffEvents,
-    damageEvents,
-    healingEvents,
-    resourceEvents,
-    castEvents,
-    abilitiesById,
-    playerData?.playersById,
-  ]);
+  }, [scribingResult, fightIdNumber]);
 
   // Calculate class analysis for each player
   const classAnalysisByPlayer = React.useMemo(() => {

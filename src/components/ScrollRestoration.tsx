@@ -17,9 +17,12 @@ export const ScrollRestoration: React.FC = () => {
     }
 
     const scrollToTop = (): void => window.scrollTo(0, 0);
-    const focusMain = (): void => {
-      const main = document.getElementById('main-content');
-      if (main) main.focus({ preventScroll: true });
+
+    const focusMainContent = (): void => {
+      const mainContent = document.getElementById('main-content');
+      if (mainContent) {
+        mainContent.focus({ preventScroll: true });
+      }
     };
 
     // If a view transition is running, wait until it finishes
@@ -32,17 +35,17 @@ export const ScrollRestoration: React.FC = () => {
       activeVT.finished
         .then(() => {
           scrollToTop();
-          focusMain();
+          focusMainContent();
         })
         .catch(() => {
           scrollToTop();
-          focusMain();
+          focusMainContent();
         });
     } else {
       scrollToTop();
-      focusMain();
+      focusMainContent();
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   return null;
 };

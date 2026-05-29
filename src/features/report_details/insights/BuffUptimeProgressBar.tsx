@@ -208,19 +208,13 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
     <Box
       role="button"
       tabIndex={0}
-      aria-label={`View ${buff.abilityName} uptime details`}
+      aria-label={`${buff.abilityName}: ${Math.round(pct)}% uptime`}
       sx={{
         width: '100%',
         position: 'relative',
         cursor: 'pointer',
-        '&:hover, &:focus-visible': {
+        '&:hover': {
           opacity: 0.9,
-        },
-        '&:focus-visible': {
-          outline: '2px solid',
-          outlineColor: 'primary.main',
-          outlineOffset: 2,
-          borderRadius: 2,
         },
       }}
       onClick={onMainClick}

@@ -111,7 +111,7 @@ export const BuildEditorLayout: React.FC = () => {
   }, [dispatch, store]);
 
   return (
-    <Box component="main" sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
       {/* Header: build name + progress + save/share */}
       <BuildCompletionHeader />
 

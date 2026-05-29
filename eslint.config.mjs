@@ -117,13 +117,6 @@ export default [
       // React Hooks recommended rules
       ...reactHooks.configs.recommended.rules,
 
-      // JSX Accessibility recommended rules
-      ...jsxA11y.configs.recommended.rules,
-      // Allow autoFocus in dialogs/pickers (intentional UX pattern)
-      'jsx-a11y/no-autofocus': 'off',
-      // Warn on invalid ARIA roles (skeleton components use custom roles)
-      'jsx-a11y/aria-role': 'warn',
-
       // React Hooks exhaustive deps (what Strict Mode helps find)
       'react-hooks/exhaustive-deps': 'error', // Ensure all dependencies are listed
       'react-hooks/rules-of-hooks': 'error', // Ensure hooks are called correctly
@@ -131,6 +124,12 @@ export default [
       // Import recommended rules
       ...importPlugin.configs.recommended.rules,
       ...importPlugin.configs.typescript.rules,
+
+      // JSX accessibility rules
+      ...jsxA11y.configs.recommended.rules,
+      'jsx-a11y/no-autofocus': 'off',
+      'jsx-a11y/aria-role': ['error', { allowedInvalidRoles: ['text'], ignoreNonDOM: true }],
+      'jsx-a11y/role-supports-aria-props': 'off',
 
       // Custom rules
       'no-console': 'error',

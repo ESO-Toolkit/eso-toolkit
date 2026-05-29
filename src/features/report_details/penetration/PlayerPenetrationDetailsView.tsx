@@ -400,7 +400,9 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               >
                 Penetration vs Time
               </Typography>
-              <EChart option={chartOption} height={300} group="fightReport" />
+              <Box role="img" aria-label="Penetration over time chart">
+                <EChart option={chartOption} height={300} group="fightReport" />
+              </Box>
               <Typography
                 variant="caption"
                 sx={{ color: 'text.secondary', mt: 1, display: 'block' }}

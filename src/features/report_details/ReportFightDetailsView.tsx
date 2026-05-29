@@ -31,9 +31,9 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
     // If fights are loading OR if we have no fights data yet, show skeleton
     if (fightsLoading || !reportData?.fights) {
       return (
-        <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
+        <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, position: 'relative' }}>
           <ReportFightHeader />
-          <Box sx={{ mt: 2, minHeight: '600px' }}>
+          <Box sx={{ mt: { xs: 1, md: 2 }, minHeight: '600px' }}>
             {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true)}
           </Box>
         </Paper>
@@ -50,7 +50,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   return (
     <Paper
       elevation={2}
-      sx={{ p: 3, position: 'relative' }}
+      sx={{ p: { xs: 2, sm: 3 }, position: 'relative' }}
       data-testid={fight ? 'report-fight-details-loaded' : 'report-fight-details-loading'}
     >
       <ReportFightHeader />
@@ -58,7 +58,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
       {fight ? (
         <FightDetails />
       ) : (
-        <Box sx={{ mt: 2, minHeight: '600px' }}>
+        <Box sx={{ mt: { xs: 1, md: 2 }, minHeight: '600px' }}>
           {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true)}
         </Box>
       )}

@@ -144,6 +144,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       return (
         <Box
+          role="alert"
           sx={{
             bgcolor: 'background.default',
             justifyContent: 'center',

@@ -261,7 +261,7 @@ const ParseAnalysisPageContent: React.FC = () => {
   const roleColors = useRoleColors();
   const theme = useTheme();
 
-  useEffect(() => {
+  React.useEffect(() => {
     document.title = 'Parse Analysis | ESO Toolkit';
   }, []);
 
@@ -1649,7 +1649,10 @@ const ParseAnalysisPageContent: React.FC = () => {
                         },
                       }}
                     >
-                      <Typography variant="caption" sx={{ minWidth: 160, fontWeight: 500 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{ minWidth: { xs: 80, sm: 160 }, fontWeight: 500 }}
+                      >
                         {skill.abilityName}
                       </Typography>
                       <Chip

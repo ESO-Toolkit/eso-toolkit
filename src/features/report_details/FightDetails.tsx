@@ -58,7 +58,6 @@ export const FightDetails: React.FC = () => {
         onTabChange={setSelectedTab}
         showExperimentalTabs={showExperimentalTabs}
         onToggleExperimentalTabs={setShowExperimentalTabs}
-        isLoading={false}
       />
     </div>
   );

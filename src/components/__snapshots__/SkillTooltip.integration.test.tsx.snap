@@ -301,54 +301,6 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
       <div
         class="MuiBox-root css-1usdf5u"
       />
-      <div
-        class="MuiBox-root css-1r2f04i"
-      >
-        <div
-          class="MuiBox-root css-ygaf6y"
-        >
-          <div
-            class="MuiBox-root css-1nvjkr"
-          />
-          <span
-            class="MuiTypography-root MuiTypography-caption css-g0sr8l-MuiTypography-root"
-          >
-            Grimoire: 
-            Traveling Knife
-          </span>
-        </div>
-        <div
-          class="MuiBox-root css-16f3xvq"
-        >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-h06i46-MuiTypography-root"
-          >
-            Script Analysis Unavailable
-          </span>
-          <span
-            class="MuiTypography-root MuiTypography-caption css-lqyo0p-MuiTypography-root"
-          >
-            This scribing skill was not cast during this fight, so the complete recipe could not be detected.
-          </span>
-        </div>
-        <div
-          class="MuiBox-root css-19idom"
-        >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-1dqqjzz-MuiTypography-root"
-          >
-            Affix Scripts
-          </span>
-          <span
-            class="MuiTypography-root MuiTypography-caption css-11xta6z-MuiTypography-root"
-          >
-            Skill was never cast in this fight, so affix scripts could not be detected.
-          </span>
-        </div>
-      </div>
-      <div
-        class="MuiBox-root css-1usdf5u"
-      />
       <p
         class="MuiTypography-root MuiTypography-body2 css-133rwpx-MuiTypography-root"
       >

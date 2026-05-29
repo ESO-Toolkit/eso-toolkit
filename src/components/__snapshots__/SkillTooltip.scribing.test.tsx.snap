@@ -265,16 +265,19 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <div
           class="MuiBox-root css-s3az8z"
         >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-1b8syan-MuiTypography-root"
+          <div
+            class="MuiBox-root css-171onha"
           >
-            Shattering Knife
-          </span>
+            <span
+              class="MuiTypography-root MuiTypography-caption css-ldjl4n-MuiTypography-root"
+            >
+              Shattering Knife
+            </span>
+          </div>
           <span
             class="MuiTypography-root MuiTypography-caption css-1uwi21c-MuiTypography-root"
           >
-            Evidence: 
-            Ability ID 217340 found in database
+            via database-lookup · Ability ID 217340 found in database
           </span>
         </div>
       </div>
@@ -290,19 +293,28 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           class="MuiStack-root css-qepzwc-MuiStack-root"
         >
           <div
-            class="MuiBox-root css-171onha"
+            class="MuiBox-root css-0"
           >
-            <span
-              class="MuiTypography-root MuiTypography-caption css-ldjl4n-MuiTypography-root"
+            <div
+              class="MuiBox-root css-171onha"
             >
-              Armor Breach
-            </span>
+              <span
+                class="MuiTypography-root MuiTypography-caption css-ldjl4n-MuiTypography-root"
+              >
+                Armor Breach
+              </span>
+              <span
+                class="MuiTypography-root MuiTypography-caption css-1j8viat-MuiTypography-root"
+              >
+                (
+                80
+                %)
+              </span>
+            </div>
             <span
-              class="MuiTypography-root MuiTypography-caption css-1j8viat-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-1n2by86-MuiTypography-root"
             >
-              (
-              80
-              %)
+              via effect-analysis · Sources: Armor Reduction · (8 occurrences)
             </span>
           </div>
         </div>
@@ -489,24 +501,28 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <div
           class="MuiBox-root css-s3az8z"
         >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-1b8syan-MuiTypography-root"
+          <div
+            class="MuiBox-root css-171onha"
           >
-            No signature script detected
+            <span
+              class="MuiTypography-root MuiTypography-caption css-ldjl4n-MuiTypography-root"
+            >
+              No signature script detected
+            </span>
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1j8viat-MuiTypography-root"
+            >
+              (
+              0
+              %)
+            </span>
+          </div>
+          <span
+            class="MuiTypography-root MuiTypography-caption css-1uwi21c-MuiTypography-root"
+          >
+            via fallback
           </span>
         </div>
-      </div>
-      <div
-        class="MuiBox-root css-0"
-      >
-        <span
-          class="MuiTypography-root MuiTypography-caption css-hkq2l3-MuiTypography-root"
-        >
-          Effects
-        </span>
-        <div
-          class="MuiBox-root css-yi3mkw"
-        />
       </div>
     </div>
     <div
@@ -792,16 +808,26 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         <div
           class="MuiBox-root css-s3az8z"
         >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-1b8syan-MuiTypography-root"
+          <div
+            class="MuiBox-root css-171onha"
           >
-            Shattering Knife
-          </span>
+            <span
+              class="MuiTypography-root MuiTypography-caption css-ldjl4n-MuiTypography-root"
+            >
+              Shattering Knife
+            </span>
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1j8viat-MuiTypography-root"
+            >
+              (
+              95
+              %)
+            </span>
+          </div>
           <span
             class="MuiTypography-root MuiTypography-caption css-1uwi21c-MuiTypography-root"
           >
-            Evidence: 
-            Multiple damage instances, Armor reduction effects, Healing components
+            via effect-pattern-analysis · Multiple damage instances
           </span>
         </div>
       </div>

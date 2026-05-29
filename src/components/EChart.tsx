@@ -4,8 +4,9 @@ import React, { Suspense } from 'react';
 
 const ChartLoadingFallback: React.FC = () => (
   <Box
-    sx={{ justifyContent: 'center', alignItems: 'center', height: '300px', display: 'flex' }}
+    role="status"
     aria-live="polite"
+    sx={{ justifyContent: 'center', alignItems: 'center', height: '300px', display: 'flex' }}
   >
     <CircularProgress aria-label="Loading chart" />
   </Box>

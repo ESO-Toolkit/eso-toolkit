@@ -78,6 +78,8 @@ const KalpaIcon = ({ size }: { size: string }): JSX.Element => (
     height={size}
     viewBox="0 0 24 24"
     fill="none"
+    aria-hidden="true"
+    focusable="false"
   >
     <rect x="2" y="3" width="20" height="18" rx="3" fill="currentColor" opacity=".2" />
     <rect
@@ -112,6 +114,8 @@ const AddonIcon = ({ size }: { size: string }): JSX.Element => (
     height={size}
     viewBox="0 0 24 24"
     fill="none"
+    aria-hidden="true"
+    focusable="false"
   >
     <path
       d="M20.5 11H19V7a2 2 0 00-2-2h-4V3.5a2.5 2.5 0 00-5 0V5H4a2 2 0 00-2 2v3.8h1.5a2.5 2.5 0 010 5H2V19a2 2 0 002 2h3.8v-1.5a2.5 2.5 0 015 0V21H17a2 2 0 002-2v-4h1.5a2.5 2.5 0 000-5z"
@@ -135,6 +139,8 @@ const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
     height={size}
     viewBox="0 0 20 20"
     fill="currentColor"
+    aria-hidden="true"
+    focusable="false"
   >
     <g fill="currentColor">
       <path
@@ -154,7 +160,14 @@ const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
 );
 
 const CvIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    focusable="false"
+  >
     <g fill="none">
       <path
         fill="currentColor"
@@ -192,7 +205,14 @@ const CvIcon = ({ size }: { size: string }): JSX.Element => (
 );
 
 const FileLoopIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    focusable="false"
+  >
     <g fill="currentColor">
       <g opacity=".2">
         <path d="M12.143 4h-3.55a1 1 0 0 0-1 1v2l.448 8.056a1 1 0 0 0 .998.944h7.554a1 1 0 0 0 1-1V8.21a.5.5 0 0 0-.15-.357l-3.804-3.71a.5.5 0 0 0-.35-.143h-1.146Z" />
@@ -223,7 +243,14 @@ const FileLoopIcon = ({ size }: { size: string }): JSX.Element => (
 );
 
 const PeopleIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+    focusable="false"
+  >
     <g fill="currentColor">
       <g opacity=".2">
         <path d="M9.75 7.75a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z" />
@@ -287,7 +314,7 @@ const PeopleIcon = ({ size }: { size: string }): JSX.Element => (
 );
 
 // Styled components using your existing design
-const LandingContainer = styled(Box)(({ theme }) => ({
+const LandingContainer = styled('main')(({ theme }) => ({
   minHeight: '100vh',
   background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
   position: 'relative',
@@ -2196,6 +2223,10 @@ export const LandingPage: React.FC = () => {
   const toolsSectionRef = useRef<HTMLDivElement>(null);
   const navigate = useViewTransitionNavigate();
 
+  useEffect(() => {
+    document.title = 'ESO Toolkit';
+  }, []);
+
   // Defer complex animations until after initial render
   React.useEffect(() => {
     const timer = setTimeout(() => {
@@ -2229,7 +2260,7 @@ export const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <LandingContainer>
+    <LandingContainer id="main-content">
       {showcaseGlobalStyles}
       <HeroSection id="home" showAnimations={showAnimations}>
         <ParticleContainer>
@@ -2271,8 +2302,12 @@ export const LandingPage: React.FC = () => {
           {isLoggedIn && isReady && clientIsLoggedIn ? (
             <AuthenticatedLandingSection />
           ) : isLoggedIn && (!isReady || !clientIsLoggedIn) ? (
-            <Box sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}>
-              <CircularProgress size={24} sx={{ mr: 2 }} />
+            <Box
+              role="status"
+              aria-live="polite"
+              sx={{ justifyContent: 'center', alignItems: 'center', display: 'flex', py: 4 }}
+            >
+              <CircularProgress size={24} sx={{ mr: 2 }} aria-label="Initializing" />
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                 Initializing...
               </Typography>
@@ -2315,7 +2350,7 @@ export const LandingPage: React.FC = () => {
               </ToolIcon>
               <Typography
                 variant="h5"
-                component="h2"
+                component="h3"
                 sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
               >
                 Text-Editor
@@ -2343,7 +2378,7 @@ export const LandingPage: React.FC = () => {
               </ToolIcon>
               <Typography
                 variant="h5"
-                component="h2"
+                component="h3"
                 sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
               >
                 Build Calculator
@@ -2375,7 +2410,7 @@ export const LandingPage: React.FC = () => {
               </ToolIcon>
               <Typography
                 variant="h5"
-                component="h2"
+                component="h3"
                 sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
               >
                 Log Analyzer
@@ -2403,7 +2438,7 @@ export const LandingPage: React.FC = () => {
               </ToolIcon>
               <Typography
                 variant="h5"
-                component="h2"
+                component="h3"
                 sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}
               >
                 Roster Builder

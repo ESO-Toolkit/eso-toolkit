@@ -228,6 +228,7 @@ export const UnauthenticatedLandingSection: React.FC = () => {
             textTransform: 'none',
             fontWeight: 400,
             fontSize: '0.875rem',
+            minHeight: 44,
             color:
               theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(51, 65, 85, 0.7)',
             '&:hover': {

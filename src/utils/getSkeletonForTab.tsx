@@ -41,34 +41,24 @@ export enum TabId {
 // Shared header skeleton for FightDetailsView
 const HeaderSkeleton: React.FC = () => (
   <>
-    {/* Target Selection and Navigation Row Skeleton - from FightDetailsView */}
     <Box
       sx={{
-        mb: 2,
+        mb: { xs: 0.75, md: 2 },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: { xs: 'wrap', md: 'nowrap' },
-        gap: { xs: 2, md: 0 },
+        gap: { xs: 0.75, md: 2 },
       }}
     >
-      {/* Target Selector */}
       <Box
-        sx={{ minWidth: { xs: '100%', sm: 180, md: 200 }, maxWidth: { xs: '100%', md: 'none' } }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            height: 56,
-            maxWidth: { xs: '100%', sm: 180, md: 200 },
-            minWidth: { xs: '100%', sm: 180, md: 200 },
-            backgroundColor: 'rgba(0, 0, 0, 0.11)',
-            borderRadius: 1,
-          }}
-        />
-      </Box>
-
-      {/* Fight Navigation */}
+        sx={{
+          width: { xs: '100%', sm: 240 },
+          height: 36,
+          backgroundColor: 'rgba(0, 0, 0, 0.11)',
+          borderRadius: '10px',
+        }}
+      />
       <Box
         sx={{
           display: 'flex',
@@ -76,30 +66,43 @@ const HeaderSkeleton: React.FC = () => (
           backgroundColor: 'rgba(0, 0, 0, 0.04)',
           borderRadius: { xs: '10px', md: '12px' },
           border: '1px solid rgba(0, 0, 0, 0.08)',
-          p: { xs: 0.5, md: 0.75 },
-          gap: { xs: 0.25, md: 0.5 },
+          p: { xs: 0.375, md: 0.75 },
+          gap: { xs: 0.5, md: 0.5 },
           width: { xs: '100%', md: 'auto' },
-          justifyContent: { xs: 'center', md: 'flex-start' },
+          justifyContent: 'center',
         }}
       >
-        {/* Previous Button */}
         <Box
-          sx={{ width: 28, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+          sx={{
+            width: 32,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '8px',
+          }}
         />
-
-        {/* Mode Toggle */}
         <Box
-          sx={{ width: 120, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+          sx={{
+            width: 120,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '8px',
+          }}
         />
-
-        {/* Counter */}
         <Box
-          sx={{ width: 48, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+          sx={{
+            width: 44,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '6px',
+          }}
         />
-
-        {/* Next Button */}
         <Box
-          sx={{ width: 28, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+          sx={{
+            width: 32,
+            height: 32,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: '8px',
+          }}
         />
       </Box>
     </Box>
@@ -112,14 +115,14 @@ const TabsSkeleton: React.FC = () => (
     sx={{
       display: 'flex',
       alignItems: 'center',
-      mb: 1,
+      mb: { xs: 0.5, md: 1 },
       width: '100%',
       gap: 1,
       overflowX: 'auto',
     }}
   >
     <Box sx={{ display: 'flex', gap: 1, flexGrow: 1 }}>
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 9 }).map((_, i) => (
         <Box
           key={i}
           sx={{
@@ -132,7 +135,6 @@ const TabsSkeleton: React.FC = () => (
         />
       ))}
     </Box>
-    <Box sx={{ width: 80, height: 32, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }} />
   </Box>
 );
 

@@ -319,104 +319,103 @@ async function _detectSignatureScript(
   try {
     // Find all casts of this ability by this player
     const abilityCasts = combatEvents.casts.filter(
-      (e) => e.sourceID === playerId && e.abilityGameID === abilityId,
+      (e) => e.type === 'cast' && e.sourceID === playerId && e.abilityGameID === abilityId,
     );
 
     if (abilityCasts.length === 0) {
       return null;
     }
 
-    // Analyze all event types that appear consistently after casts
-    const SIGNATURE_WINDOW_MS = 1500; // Signature effects appear within 1.5 seconds (some like Gladiator's Tenacity trigger at ~1.2s)
-    const signatureEffects = new Map<number, { name: string; count: number; type: string }>();
+    const SIGNATURE_WINDOW_MS = 1500;
+    const signatureEffects = new Map<
+      number,
+      { name: string; castIndices: Set<number>; type: string }
+    >();
 
-    // Helper function to check and count signature script IDs
+    const recordSignatureHit = (effectId: number, eventType: string, castIndex: number): void => {
+      if (!signatureEffects.has(effectId)) {
+        signatureEffects.set(effectId, {
+          name: `${eventType} ${effectId}`,
+          castIndices: new Set(),
+          type: eventType,
+        });
+      }
+      signatureEffects.get(effectId)!.castIndices.add(castIndex);
+    };
+
+    // Assign each event to the nearest preceding cast whose window contains it
+    const findOwningCastIndex = (eventTimestamp: number): number | null => {
+      let bestIndex: number | null = null;
+      for (let i = abilityCasts.length - 1; i >= 0; i--) {
+        const castTs = abilityCasts[i].timestamp;
+        if (eventTimestamp > castTs && eventTimestamp <= castTs + SIGNATURE_WINDOW_MS) {
+          bestIndex = i;
+          break;
+        }
+        if (castTs < eventTimestamp - SIGNATURE_WINDOW_MS) {
+          break;
+        }
+      }
+      return bestIndex;
+    };
+
     const checkAndCountSignature = (
-      event: { abilityGameID: number; extraAbilityGameID?: number },
+      event: { abilityGameID: number; extraAbilityGameID?: number | null; timestamp: number },
       eventType: string,
     ): void => {
-      // Check primary abilityGameID
+      const castIndex = findOwningCastIndex(event.timestamp);
+      if (castIndex === null) return;
+
       if (
         event.abilityGameID !== abilityId &&
         VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)
       ) {
-        const existing = signatureEffects.get(event.abilityGameID) || {
-          name: `${eventType} ${event.abilityGameID}`,
-          count: 0,
-          type: eventType,
-        };
-        signatureEffects.set(event.abilityGameID, { ...existing, count: existing.count + 1 });
+        recordSignatureHit(event.abilityGameID, eventType, castIndex);
       }
-      // Check extraAbilityGameID
       if (
         event.extraAbilityGameID &&
         event.extraAbilityGameID !== abilityId &&
         VALID_SIGNATURE_SCRIPT_IDS.has(event.extraAbilityGameID)
       ) {
-        const existing = signatureEffects.get(event.extraAbilityGameID) || {
-          name: `${eventType} ${event.extraAbilityGameID}`,
-          count: 0,
-          type: eventType,
-        };
-        signatureEffects.set(event.extraAbilityGameID, { ...existing, count: existing.count + 1 });
+        recordSignatureHit(event.extraAbilityGameID, eventType, castIndex);
       }
     };
 
-    for (const cast of abilityCasts) {
-      const windowEnd = cast.timestamp + SIGNATURE_WINDOW_MS;
+    // Process all events once, assigning each to its nearest preceding cast
+    combatEvents.buffs
+      .filter((b) => b.sourceID === playerId)
+      .forEach((b) => checkAndCountSignature(b, 'buff'));
 
-      // Check buffs
-      const postCastBuffs = combatEvents.buffs.filter(
-        (b) => b.sourceID === playerId && b.timestamp > cast.timestamp && b.timestamp <= windowEnd,
-      );
-      postCastBuffs.forEach((b) => checkAndCountSignature(b, 'buff'));
+    combatEvents.debuffs
+      .filter((d) => d.sourceID === playerId)
+      .forEach((d) => checkAndCountSignature(d, 'debuff'));
 
-      // Check debuffs
-      const postCastDebuffs = combatEvents.debuffs.filter(
-        (d) => d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
-      );
-      postCastDebuffs.forEach((d) => checkAndCountSignature(d, 'debuff'));
+    combatEvents.damage
+      .filter((d) => d.sourceID === playerId)
+      .forEach((d) => checkAndCountSignature(d, 'damage'));
 
-      // Check damage events
-      const postCastDamage = combatEvents.damage.filter(
-        (d) => d.sourceID === playerId && d.timestamp > cast.timestamp && d.timestamp <= windowEnd,
-      );
-      postCastDamage.forEach((d) => checkAndCountSignature(d, 'damage'));
+    combatEvents.heals
+      .filter((h) => h.sourceID === playerId)
+      .forEach((h) => checkAndCountSignature(h, 'healing'));
 
-      // Check healing events
-      const postCastHeals = combatEvents.heals.filter(
-        (h) => h.sourceID === playerId && h.timestamp > cast.timestamp && h.timestamp <= windowEnd,
-      );
-      postCastHeals.forEach((h) => checkAndCountSignature(h, 'healing'));
+    combatEvents.resources
+      .filter((r) => r.sourceID === playerId)
+      .forEach((r) => checkAndCountSignature(r, 'resource'));
 
-      // Check resource events (e.g., Anchorite's Potency grants ultimate via resource events)
-      const postCastResources = combatEvents.resources.filter(
-        (r) => r.sourceID === playerId && r.timestamp > cast.timestamp && r.timestamp <= windowEnd,
-      );
-      postCastResources.forEach((r) => checkAndCountSignature(r, 'resource'));
+    combatEvents.casts
+      .filter((c) => c.sourceID === playerId && c.abilityGameID !== abilityId)
+      .forEach((c) => checkAndCountSignature(c, 'cast'));
 
-      // Check cast events (signature scripts can trigger additional casts)
-      const postCastCasts = combatEvents.casts.filter(
-        (c) =>
-          c.sourceID === playerId &&
-          c.abilityGameID !== abilityId && // Exclude the original ability
-          c.timestamp > cast.timestamp &&
-          c.timestamp <= windowEnd,
-      );
-      postCastCasts.forEach((c) => checkAndCountSignature(c, 'cast'));
-    }
-
-    // Signature effects should appear consistently (in at least 50% of casts)
     const MIN_CONSISTENCY = 0.5;
     const consistentEffects = Array.from(signatureEffects.entries())
-      .filter(([_, effect]) => effect.count >= abilityCasts.length * MIN_CONSISTENCY)
-      .sort((a, b) => b[1].count - a[1].count);
+      .filter(([_, effect]) => effect.castIndices.size >= abilityCasts.length * MIN_CONSISTENCY)
+      .sort((a, b) => b[1].castIndices.size - a[1].castIndices.size);
 
     if (consistentEffects.length > 0) {
       const [topEffectId, topEffect] = consistentEffects[0];
-      const confidence = Math.min(0.95, topEffect.count / abilityCasts.length);
+      const castCount = topEffect.castIndices.size;
+      const confidence = Math.min(0.95, castCount / abilityCasts.length);
 
-      // Look up the signature script name from the database
       const scriptName = SIGNATURE_SCRIPT_ID_TO_NAME.get(topEffectId);
 
       return {
@@ -426,39 +425,13 @@ async function _detectSignatureScript(
         evidence: [
           `Analyzed ${abilityCasts.length} casts`,
           `Found ${consistentEffects.length} consistent effects`,
-          `Top effect: ${topEffect.type} ID ${topEffectId} (${topEffect.count}/${abilityCasts.length} casts)`,
+          `Top effect: ${topEffect.type} ID ${topEffectId} (${castCount}/${abilityCasts.length} casts)`,
           ...consistentEffects
             .slice(0, 3)
-            .map(([id, eff]) => `${eff.type} ${id}: ${eff.count} occurrences`),
-        ],
-      };
-    }
-
-    // If no signature script detected above threshold, check for highly correlated abilities
-    // Show abilities that appear in at least (n-2) casts (or 50% if fewer than 4 casts)
-    const minCorrelation =
-      abilityCasts.length >= 4 ? abilityCasts.length - 2 : Math.ceil(abilityCasts.length * 0.5);
-
-    const highlyCorrelated = Array.from(signatureEffects.entries())
-      .filter(([_, effect]) => effect.count >= minCorrelation)
-      .sort((a, b) => b[1].count - a[1].count);
-
-    if (highlyCorrelated.length > 0) {
-      // Return info about correlated abilities instead of null
-      const correlatedIds = highlyCorrelated
-        .slice(0, 5)
-        .map(([id, eff]) => `${eff.type} ${id} (${eff.count}/${abilityCasts.length} casts)`);
-
-      return {
-        name: 'Correlated Abilities Detected',
-        confidence: 0.3, // Low confidence since not identified as signature script
-        detectionMethod: 'Correlation Analysis',
-        evidence: [
-          `Analyzed ${abilityCasts.length} casts`,
-          `No signature script identified (need ≥${Math.ceil(abilityCasts.length * MIN_CONSISTENCY)}/${abilityCasts.length} consistency)`,
-          `Found ${highlyCorrelated.length} highly correlated abilities (≥${minCorrelation}/${abilityCasts.length} casts):`,
-          ...correlatedIds,
-          `💡 These may be ability effects rather than signature scripts`,
+            .map(
+              ([id, eff]) =>
+                `${eff.type} ${id}: ${eff.castIndices.size}/${abilityCasts.length} casts`,
+            ),
         ],
       };
     }
@@ -536,9 +509,9 @@ async function _detectAffixScripts(
       VALID_AFFIX_SCRIPT_IDS.forEach((id) => GRIMOIRE_COMPATIBLE_AFFIX_IDS.add(id));
     }
 
-    // Find casts of this ability
+    // Find casts of this ability (exclude begincast events for accurate counting)
     const casts = combatEvents.casts.filter(
-      (e) => e.sourceID === playerId && e.abilityGameID === abilityId,
+      (e) => e.type === 'cast' && e.sourceID === playerId && e.abilityGameID === abilityId,
     );
 
     if (casts.length === 0) {
@@ -580,8 +553,9 @@ async function _detectAffixScripts(
         }
       };
 
-      // Next cast that isn't the contingency itself is the ideal trigger signal.
-      recordNext(events.casts, (event) => event.abilityGameID !== ability);
+      // Next completed cast that isn't the contingency itself is the ideal trigger signal.
+      const completedCasts = events.casts.filter((e) => e.type === 'cast');
+      recordNext(completedCasts, (event) => event.abilityGameID !== ability);
 
       // Fallbacks: combat or healing events triggered by the follow-up skill.
       recordNext(events.damage);
@@ -600,7 +574,7 @@ async function _detectAffixScripts(
 
       if (candidates.length === 0) {
         // As a final fallback, allow a subsequent cast even if it's the same ability.
-        const nextCast = events.casts.find(
+        const nextCast = completedCasts.find(
           (event) => event.sourceID === player && event.timestamp > cast.timestamp,
         );
         if (nextCast) {

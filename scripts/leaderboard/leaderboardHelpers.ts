@@ -64,10 +64,10 @@ export const LEGACY_PARTITION_ENCOUNTER_IDS = new Set<number>([
   7, // Hel Ra Citadel - Yokeda Kai
   8, // Hel Ra Citadel - The Warrior
   9, // Sanctum Ophidia - Possessed Mantikora
-  10, // Sanctum Ophidia - Ozara
-  11, // Sanctum Ophidia - The Serpent
-  21, // Asylum Sanctorium - Saint Felms
-  22, // Asylum Sanctorium - Saint Llothis
+  10, // Sanctum Ophidia - Stonebreaker
+  11, // Sanctum Ophidia - Ozara
+  21, // Asylum Sanctorium - Saint Llothis
+  22, // Asylum Sanctorium - Saint Felms
   23, // Asylum Sanctorium - Saint Olms
   24, // Cloudrest - Siroria
   25, // Cloudrest - Relequen
