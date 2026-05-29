@@ -23,7 +23,7 @@ export const NotFound: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container component="main" maxWidth="md">
       <Box
         sx={{
           flexDirection: 'column',

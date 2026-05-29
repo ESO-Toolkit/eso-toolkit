@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import React, { Suspense, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -276,7 +277,9 @@ const MainApp: React.FC = () => {
     <ReduxThemeProvider>
       <KalpaBanner />
       <HeaderBar />
-      <LandingPage />
+      <Box component="main" id="main-content" tabIndex={-1} sx={{ outline: 'none' }}>
+        <LandingPage />
+      </Box>
     </ReduxThemeProvider>
   );
 };

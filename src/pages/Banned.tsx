@@ -25,7 +25,7 @@ export const Banned: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
+    <Container component="main" maxWidth="sm" sx={{ mt: 8, mb: 4 }}>
       <Paper
         elevation={3}
         sx={{

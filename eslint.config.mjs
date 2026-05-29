@@ -2,10 +2,10 @@
 import js from '@eslint/js';
 import typescript from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
-import jsxA11y from 'eslint-plugin-jsx-a11y';
 import storybook from 'eslint-plugin-storybook';
 
 export default [
@@ -89,9 +89,9 @@ export default [
     },
     plugins: {
       '@typescript-eslint': typescript,
+      'jsx-a11y': jsxA11y,
       react,
       'react-hooks': reactHooks,
-      'jsx-a11y': jsxA11y,
       import: importPlugin,
       storybook,
     },
@@ -262,6 +262,15 @@ export default [
       parserOptions: {
         project: null,
       },
+    },
+  },
+
+  // Skeleton components use "role" as a component prop (e.g., role="tank")
+  // which triggers false positives from jsx-a11y/aria-role
+  {
+    files: ['src/components/RosterBuilderSkeleton.tsx'],
+    rules: {
+      'jsx-a11y/aria-role': 'off',
     },
   },
 ];

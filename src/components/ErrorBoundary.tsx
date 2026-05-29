@@ -154,7 +154,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             p: 3,
           }}
         >
-          <Paper elevation={3} sx={{ maxWidth: 600, width: '100%', p: 4 }}>
+          <Paper elevation={3} role="alert" sx={{ maxWidth: 600, width: '100%', p: 4 }}>
             <Stack spacing={3} sx={{ alignItems: 'center' }}>
               <ErrorOutlined color="error" sx={{ fontSize: 64 }} />
 

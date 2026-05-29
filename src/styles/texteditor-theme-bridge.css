@@ -163,6 +163,10 @@ input[type='color'] {
   box-shadow: 0 0 0 2px var(--accent, #38bdf8) !important;
 }
 
+.text-editor-page textarea:focus-visible {
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+}
+
 /* Custom selection highlighting for better visibility */
 .text-editor-page textarea::selection {
   background-color: #3b82f6 !important;
