@@ -7,9 +7,11 @@
  */
 
 import {
+  CheckCircleRounded as CheckCircleIcon,
   Close as CloseIcon,
   ExpandMore as ExpandIcon,
   FilterList as FilterListIcon,
+  InfoOutlined as InfoIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import {
@@ -19,8 +21,10 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  IconButton,
   InputAdornment,
   ListSubheader,
+  Popover,
   Stack,
   TextField,
   Tooltip,
@@ -51,7 +55,6 @@ const MAX_RESULTS = 100;
 
 const TILE_SIZE = 58;
 const ULT_SIZE = 66;
-const PICKER_TILE = 44;
 
 const SLOT_LABELS: Record<number, string> = {
   3: '1',
@@ -78,6 +81,16 @@ interface SkillGroup {
   morphs: SkillData[];
 }
 
+/** Resolve the base ability id for a skill, falling back to its own id. */
+const getBaseId = (s: SkillData): number => s.baseSkillId ?? s.baseAbilityId ?? s.id;
+
+/** A skill is a morph when it points at a base ability other than itself. */
+const isMorphSkill = (s: SkillData): boolean => getBaseId(s) !== s.id;
+
+/** Collapse whitespace/newlines into a single-line summary for inline display. */
+const summarizeDescription = (desc?: string): string =>
+  desc ? desc.replace(/\s+/g, ' ').trim() : '';
+
 const PICKER_TABS = [
   { label: 'Class', category: 'class' },
   { label: 'Weapon', category: 'weapon' },
@@ -103,77 +116,270 @@ function groupSkillsByBase(skills: SkillData[]): SkillGroup[] {
   return result;
 }
 
-// ── Picker Skill Tile ───────────────────────────────────────────────────────
+// ── Picker Skill Option Row ──────────────────────────────────────────────────
 
-interface PickerTileProps {
+interface SkillOptionRowProps {
   skill: SkillData;
   onSelect: (skill: SkillData) => void;
-  isMorph?: boolean;
+  /** Whether this option is a morph (vs. the base ability). */
+  isMorph: boolean;
+  /** Whether this skill is the one currently slotted for the target slot. */
+  isCurrent?: boolean;
+  /** Slightly indent + lighten morph rows so they read as children of the base. */
+  indented?: boolean;
 }
 
-const PickerTile: React.FC<PickerTileProps> = ({ skill, onSelect, isMorph }) => {
+/**
+ * A fully-labeled, selectable skill option. Shows the icon alongside the skill
+ * name, a BASE/MORPH badge, a "slotted" marker, and a one-line description so
+ * users never have to identify a morph from its icon alone. An info button
+ * opens the complete tooltip text (tooltips are unreliable on touch devices).
+ */
+const SkillOptionRow: React.FC<SkillOptionRowProps> = ({
+  skill,
+  onSelect,
+  isMorph,
+  isCurrent = false,
+  indented = false,
+}) => {
   const isDark = useTheme().palette.mode === 'dark';
   const isUlt = skill.isUltimate;
-  const accent = isUlt ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
+  const accentRgb = isUlt ? '255,179,0' : '56,189,248';
+  const [infoEl, setInfoEl] = useState<HTMLElement | null>(null);
+
+  const summary = summarizeDescription(skill.description);
+  const muted = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.45)';
+
+  const badgeColor = isMorph
+    ? isDark
+      ? '#7dd3fc'
+      : '#0284c7'
+    : isDark
+      ? 'rgba(255,255,255,0.55)'
+      : 'rgba(0,0,0,0.50)';
 
   return (
-    <Tooltip
-      title={
-        <Box>
-          <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
-          {isMorph && <Typography sx={{ fontSize: 10, opacity: 0.7 }}>Morph</Typography>}
-          {skill.category && (
-            <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
-          )}
-        </Box>
-      }
-      arrow
-      placement="top"
-    >
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
       <ButtonBase
         onClick={() => onSelect(skill)}
-        aria-label={`${skill.name}${isMorph ? ' (morph)' : ''}`}
+        aria-label={`${skill.name}${isMorph ? ' (morph)' : ' (base ability)'}${
+          isCurrent ? ' — currently slotted' : ''
+        }`}
         sx={{
-          width: PICKER_TILE,
-          height: PICKER_TILE,
-          borderRadius: isMorph ? '8px' : '10px',
-          border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-          background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-          overflow: 'hidden',
-          flexShrink: 0,
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.25,
+          py: 0.75,
+          px: 1,
+          borderRadius: 1.75,
+          textAlign: 'left',
+          border: `1px solid ${isCurrent ? `rgba(${accentRgb},0.55)` : 'transparent'}`,
+          background: isCurrent ? `rgba(${accentRgb},${isDark ? 0.14 : 0.08})` : 'transparent',
           transition: 'all 150ms',
           '&:hover': {
-            borderColor: `${accent}0.6)`,
-            background: `${accent}0.10)`,
-            transform: 'scale(1.08)',
-            boxShadow: `0 0 12px ${accent}0.15)`,
+            background: isCurrent
+              ? `rgba(${accentRgb},${isDark ? 0.18 : 0.11})`
+              : isDark
+                ? 'rgba(255,255,255,0.05)'
+                : 'rgba(0,0,0,0.035)',
           },
         }}
       >
         {skill.icon ? (
           <img
             src={resolveIconUrl(skill.icon)}
-            alt={skill.name}
+            alt=""
             loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 9,
+              flexShrink: 0,
+              objectFit: 'cover',
+              display: 'block',
+              opacity: indented ? 0.96 : 1,
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+            }}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
         ) : (
-          <Typography
+          <Box
             sx={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-              userSelect: 'none',
+              width: 38,
+              height: 38,
+              borderRadius: '9px',
+              flexShrink: 0,
+              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            }}
+          />
+        )}
+
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontSize: 12.5,
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                lineHeight: 1.3,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {skill.name}
+            </Typography>
+            <Box
+              component="span"
+              sx={{
+                flexShrink: 0,
+                fontSize: 8.5,
+                fontWeight: 700,
+                letterSpacing: 0.6,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: badgeColor,
+                border: `1px solid ${alpha(badgeColor, 0.4)}`,
+                borderRadius: '4px',
+                px: 0.5,
+                py: '1px',
+                lineHeight: 1.4,
+              }}
+            >
+              {isMorph ? 'MORPH' : 'BASE'}
+            </Box>
+            {isCurrent && (
+              <Stack
+                direction="row"
+                spacing={0.25}
+                sx={{ alignItems: 'center', flexShrink: 0, color: `rgba(${accentRgb},1)` }}
+              >
+                <CheckCircleIcon sx={{ fontSize: 12 }} />
+                <Typography
+                  sx={{
+                    fontSize: 8.5,
+                    fontWeight: 700,
+                    letterSpacing: 0.5,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                  }}
+                >
+                  SLOTTED
+                </Typography>
+              </Stack>
+            )}
+          </Stack>
+          {summary && (
+            <Typography
+              sx={{
+                fontSize: 10.5,
+                color: muted,
+                lineHeight: 1.35,
+                mt: 0.15,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {summary}
+            </Typography>
+          )}
+        </Box>
+      </ButtonBase>
+
+      {skill.description && (
+        <>
+          <IconButton
+            size="small"
+            aria-label={`More about ${skill.name}`}
+            onClick={(e) => setInfoEl(e.currentTarget)}
+            sx={{
+              flexShrink: 0,
+              color: infoEl
+                ? `rgba(${accentRgb},1)`
+                : isDark
+                  ? 'rgba(255,255,255,0.35)'
+                  : 'rgba(0,0,0,0.30)',
+              '&:hover': { color: `rgba(${accentRgb},1)` },
             }}
           >
-            ?
-          </Typography>
-        )}
-      </ButtonBase>
-    </Tooltip>
+            <InfoIcon sx={{ fontSize: 16 }} />
+          </IconButton>
+          <Popover
+            open={Boolean(infoEl)}
+            anchorEl={infoEl}
+            onClose={() => setInfoEl(null)}
+            anchorOrigin={{ vertical: 'center', horizontal: 'left' }}
+            transformOrigin={{ vertical: 'center', horizontal: 'right' }}
+            slotProps={{
+              paper: {
+                sx: {
+                  maxWidth: 300,
+                  p: 1.5,
+                  borderRadius: '12px',
+                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                  background: isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.98)',
+                  backdropFilter: 'blur(12px)',
+                },
+              },
+            }}
+          >
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 0.75 }}>
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                }}
+              >
+                {skill.name}
+              </Typography>
+              <Box
+                component="span"
+                sx={{
+                  fontSize: 8.5,
+                  fontWeight: 700,
+                  letterSpacing: 0.6,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  color: badgeColor,
+                  border: `1px solid ${alpha(badgeColor, 0.4)}`,
+                  borderRadius: '4px',
+                  px: 0.5,
+                  py: '1px',
+                }}
+              >
+                {isMorph ? 'MORPH' : 'BASE'}
+              </Box>
+            </Stack>
+            {skill.category && (
+              <Typography
+                sx={{
+                  fontSize: 10,
+                  color: muted,
+                  mb: 0.5,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                }}
+              >
+                {skill.category}
+                {skill.isUltimate ? ' · Ultimate' : ''}
+              </Typography>
+            )}
+            <Typography
+              sx={{
+                fontSize: 11.5,
+                lineHeight: 1.5,
+                color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.72)',
+                whiteSpace: 'pre-line',
+              }}
+            >
+              {skill.description}
+            </Typography>
+          </Popover>
+        </>
+      )}
+    </Box>
   );
 };
 
@@ -184,6 +390,8 @@ interface SkillLineSectionProps {
   isUltimate: boolean;
   onSelect: (skill: SkillData) => void;
   defaultExpanded?: boolean;
+  /** Ability id currently slotted in the target slot, for highlighting. */
+  currentAbilityId?: number;
 }
 
 const SkillLineSection: React.FC<SkillLineSectionProps> = ({
@@ -191,6 +399,7 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
   isUltimate,
   onSelect,
   defaultExpanded = false,
+  currentAbilityId,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -253,27 +462,39 @@ const SkillLineSection: React.FC<SkillLineSectionProps> = ({
       </ButtonBase>
 
       <Collapse in={expanded} unmountOnExit>
-        <Stack spacing={1.25} sx={{ pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}>
+        <Stack spacing={1.5} sx={{ pl: 1, pr: 0.5, pb: 1.5, pt: 0.5 }}>
           {groups.map((group) => (
             <Box key={group.base.id}>
-              <Typography
-                sx={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-                  mb: 0.5,
-                  letterSpacing: 0.3,
-                }}
-              >
-                {group.base.name}
-              </Typography>
-              <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                <PickerTile skill={group.base} onSelect={onSelect} />
-                {group.morphs.map((m) => (
-                  <PickerTile key={m.id} skill={m} onSelect={onSelect} isMorph />
-                ))}
-              </Stack>
+              <SkillOptionRow
+                skill={group.base}
+                onSelect={onSelect}
+                isMorph={isMorphSkill(group.base)}
+                isCurrent={group.base.id === currentAbilityId}
+              />
+              {group.morphs.length > 0 && (
+                <Stack
+                  spacing={0.25}
+                  sx={{
+                    ml: 2.5,
+                    pl: 1,
+                    mt: 0.25,
+                    borderLeft: `1.5px solid ${
+                      isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'
+                    }`,
+                  }}
+                >
+                  {group.morphs.map((m) => (
+                    <SkillOptionRow
+                      key={m.id}
+                      skill={m}
+                      onSelect={onSelect}
+                      isMorph
+                      indented
+                      isCurrent={m.id === currentAbilityId}
+                    />
+                  ))}
+                </Stack>
+              )}
             </Box>
           ))}
         </Stack>
@@ -291,6 +512,8 @@ interface SkillPickerDialogProps {
   isUltimate: boolean;
   slotLabel: string;
   selectedClassLineIds: readonly (string | null)[];
+  /** Ability id currently slotted in the target slot, for highlighting. */
+  currentAbilityId?: number;
 }
 
 const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
@@ -300,6 +523,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
   isUltimate,
   slotLabel,
   selectedClassLineIds,
+  currentAbilityId,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [activeTab, setActiveTab] = useState(0);
@@ -454,77 +678,15 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                 No {isUltimate ? 'ultimates' : 'skills'} found
               </Typography>
             ) : (
-              <Stack spacing={0.5}>
+              <Stack spacing={0.25}>
                 {searchResults.map((skill) => (
-                  <ButtonBase
+                  <SkillOptionRow
                     key={skill.id}
-                    onClick={() => handleSelect(skill)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.25,
-                      py: 0.75,
-                      px: 1,
-                      borderRadius: 1.5,
-                      width: '100%',
-                      textAlign: 'left',
-                      '&:hover': {
-                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      },
-                    }}
-                  >
-                    {skill.icon ? (
-                      <img
-                        src={resolveIconUrl(skill.icon)}
-                        alt=""
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 6,
-                          flexShrink: 0,
-                          border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                          objectFit: 'cover',
-                        }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '6px',
-                          bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography
-                        sx={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {skill.name}
-                      </Typography>
-                      {skill.category && (
-                        <Typography
-                          sx={{
-                            fontSize: 10,
-                            color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                            lineHeight: 1.2,
-                          }}
-                        >
-                          {skill.category}
-                          {skill.isUltimate ? ' \u00b7 Ultimate' : ''}
-                        </Typography>
-                      )}
-                    </Box>
-                  </ButtonBase>
+                    skill={skill}
+                    onSelect={handleSelect}
+                    isMorph={isMorphSkill(skill)}
+                    isCurrent={skill.id === currentAbilityId}
+                  />
                 ))}
               </Stack>
             )}
@@ -693,6 +855,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                             isUltimate={isUltimate}
                             onSelect={handleSelect}
                             defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
+                            currentAbilityId={currentAbilityId}
                           />
                         ))}
                       </Box>
@@ -704,6 +867,7 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                       lineName={line.name}
                       isUltimate={isUltimate}
                       onSelect={handleSelect}
+                      currentAbilityId={currentAbilityId}
                     />
                   ))}
             </Box>
@@ -1133,6 +1297,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
         isUltimate={picker.slotIndex === ULTIMATE_SLOT}
         slotLabel={SLOT_LABELS[picker.slotIndex] ?? String(picker.slotIndex)}
         selectedClassLineIds={selectedClassLineIds}
+        currentAbilityId={skills[picker.barIndex]?.[picker.slotIndex]}
       />
     </>
   );
