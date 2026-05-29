@@ -17,7 +17,7 @@ export default defineConfig({
 
   forbidOnly: !!process.env.CI,
 
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
 
   workers: process.env.CI
     ? calculateOptimalWorkers({
@@ -58,6 +58,10 @@ export default defineConfig({
           ],
         },
       },
+    },
+    {
+      name: 'mobile-a11y',
+      use: { ...devices['Pixel 5'] },
     },
   ],
 
