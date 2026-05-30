@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Item Picker Dialog Component
  * Provides a typeahead experience for selecting gear items per slot.
  */

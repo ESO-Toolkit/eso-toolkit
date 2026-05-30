@@ -1,4 +1,4 @@
-﻿/**
+/**
  * refresh-class-skills.mjs
  *
  * Fetches all class skill descriptions and icons from the ESO-Hub API and

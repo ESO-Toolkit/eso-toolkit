@@ -1,4 +1,4 @@
-﻿import { Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
