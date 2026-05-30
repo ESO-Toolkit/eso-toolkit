@@ -43,7 +43,10 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   selectedActorIdRef,
   timeRef,
 }) => {
-  const [showShareSnackbar, setShowShareSnackbar] = useState(false);
+  const [shareSnackbar, setShareSnackbar] = useState<{
+    severity: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   // Format time for display
   const formatTime = useCallback((timeMs: number) => {
@@ -91,7 +94,7 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       // Check if clipboard API is available and we're in a secure context
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(shareUrl);
-        setShowShareSnackbar(true);
+        setShareSnackbar({ severity: 'success', message: 'Shareable URL copied to clipboard!' });
       } else {
         // Fallback for non-secure contexts or unsupported browsers
         const textArea = document.createElement('textarea');
@@ -106,21 +109,28 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         try {
           // Use deprecated execCommand as fallback for non-secure contexts
           document.execCommand('copy');
-          setShowShareSnackbar(true);
+          setShareSnackbar({ severity: 'success', message: 'Shareable URL copied to clipboard!' });
         } catch {
           // Last resort - show the textarea for manual copy
           textArea.style.position = 'static';
           textArea.style.left = 'auto';
           textArea.style.top = 'auto';
           textArea.select();
-          setShowShareSnackbar(true);
+          setShareSnackbar({ severity: 'success', message: 'Shareable URL copied to clipboard!' });
         }
 
         document.body.removeChild(textArea);
       }
-    } catch {
-      // Show the URL in an alert as a final fallback
-      alert('Unable to share. Please copy the current URL manually.');
+    } catch (error) {
+      // The user dismissing the native share sheet rejects with AbortError —
+      // that is an intentional cancel, not a failure, so stay silent.
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
+      setShareSnackbar({
+        severity: 'error',
+        message: 'Unable to share. Please copy the page URL manually.',
+      });
     }
   }, [reportId, fightId, currentTime, selectedActorIdRef, formatTime, timeRef]);
 
@@ -142,22 +152,22 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         </IconButton>
       </Tooltip>
 
-      {/* Share URL Success Snackbar. Kept at bottom-center (avoids colliding with the
-          global AppBar); extended to 5s and announced via the Alert's live region. */}
+      {/* Share result Snackbar. Bottom-center (avoids colliding with the global AppBar);
+          5s, and announced via the Alert's live region. Success or error. */}
       <Snackbar
-        open={showShareSnackbar}
+        open={shareSnackbar !== null}
         autoHideDuration={5000}
-        onClose={() => setShowShareSnackbar(false)}
+        onClose={() => setShareSnackbar(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          onClose={() => setShowShareSnackbar(false)}
-          severity="success"
+          onClose={() => setShareSnackbar(null)}
+          severity={shareSnackbar?.severity ?? 'success'}
           role="status"
           aria-live="polite"
           sx={{ width: '100%' }}
         >
-          Shareable URL copied to clipboard!
+          {shareSnackbar?.message ?? ''}
         </Alert>
       </Snackbar>
     </>

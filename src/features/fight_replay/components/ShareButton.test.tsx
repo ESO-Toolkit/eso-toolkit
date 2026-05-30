@@ -56,4 +56,35 @@ describe('ShareButton', () => {
       expect(snackbar?.className).toMatch(/MuiSnackbar-anchorOriginBottom/);
     });
   });
+
+  it('stays silent when the user cancels the native share sheet (AbortError)', async () => {
+    // Web Share API present but rejects with AbortError (user dismissed the sheet).
+    (navigator as Navigator & { share?: unknown }).share = jest
+      .fn()
+      .mockRejectedValue(new DOMException('Share canceled', 'AbortError'));
+
+    render(<ShareButton reportId="r1" fightId="1" currentTime={0} />);
+    fireEvent.click(screen.getByRole('button', { name: /share current replay time/i }));
+
+    // No snackbar (neither success nor error) should appear for an intentional cancel.
+    await waitFor(() => {
+      expect(navigator.share).toHaveBeenCalled();
+    });
+    expect(screen.queryByText(/copied to clipboard/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/unable to share/i)).not.toBeInTheDocument();
+  });
+
+  it('shows an error snackbar when sharing genuinely fails', async () => {
+    // No Web Share API; clipboard write rejects with a non-abort error.
+    (navigator.clipboard.writeText as jest.Mock).mockRejectedValueOnce(new Error('denied'));
+
+    render(<ShareButton reportId="r1" fightId="1" currentTime={0} />);
+    fireEvent.click(screen.getByRole('button', { name: /share current replay time/i }));
+
+    const errorAlert = await screen.findByText(/unable to share/i);
+    expect(errorAlert.closest('.MuiAlert-root')).toHaveAttribute('role', 'status');
+    expect(
+      errorAlert.closest('.MuiAlert-standardError, .MuiAlert-filledError, .MuiAlert-root'),
+    ).toBeTruthy();
+  });
 });
