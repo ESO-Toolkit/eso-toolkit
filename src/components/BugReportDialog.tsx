@@ -1,4 +1,4 @@
-﻿import { BugReport, Send, Feedback, CheckCircleOutlined, Close } from '@mui/icons-material';
+import { BugReport, Send, Feedback, CheckCircleOutlined, Close } from '@mui/icons-material';
 import {
   Alert,
   Dialog,

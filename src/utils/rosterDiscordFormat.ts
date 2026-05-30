@@ -12,7 +12,7 @@ import { getSetDisplayName } from './setNameUtils';
  * escaped via {@link escapeDiscord} to prevent unwanted mentions / markdown injection.
  */
 
-const ZERO_WIDTH_SPACE = '​';
+const ZERO_WIDTH_SPACE = '\u200B';
 
 /**
  * Neutralize Discord mentions and escape markdown control characters in a

@@ -1,4 +1,4 @@
-﻿import { GearSetData } from '../../types/gearSet';
+import { GearSetData } from '../../types/gearSet';
 
 export const agility: GearSetData = {
   name: 'Agility',

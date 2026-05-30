@@ -24,7 +24,7 @@ import {
 } from './rosterDiscordFormat';
 
 // Zero-width space used by escapeDiscord to break Discord mention triggers.
-const ZWSP = '​';
+const ZWSP = '\u200B';
 
 describe('groupArrow', () => {
   it("maps a 'Left'-containing group name to the left arrow", () => {
