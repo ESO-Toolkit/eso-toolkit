@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { generateFallbackTexture } from './DynamicMapTexture';
+import { applyFloorTexture, generateFallbackTexture } from './DynamicMapTexture';
 
 /**
  * generateFallbackTexture backs the "blank floor" fix: when a CDN map texture fails to
@@ -66,5 +66,49 @@ describe('generateFallbackTexture', () => {
     expect(a.image).not.toBe(b.image);
     a.dispose();
     b.dispose();
+  });
+});
+
+/**
+ * applyFloorTexture is the contract every async map-load callback (CDN success and
+ * failure→fallback, in both the useFrame and useEffect paths) routes through. The
+ * on-demand RenderLoop only repaints when something marks the scene dirty; these texture
+ * swaps fire from promise callbacks outside any React commit / time change / camera move,
+ * so they MUST invoke onTextureChange or a freshly-loaded floor would not paint while
+ * playback is paused (until an unrelated dirty event). These tests pin that contract
+ * directly — no live R3F canvas required (jsdom can't provide one).
+ */
+describe('applyFloorTexture', () => {
+  const makeMaterial = () =>
+    ({ map: null, needsUpdate: false }) as unknown as THREE.MeshPhongMaterial;
+  const makeTexture = () => ({}) as unknown as THREE.Texture;
+
+  it('binds the texture and flags the material for a GPU re-upload', () => {
+    const material = makeMaterial();
+    const texture = makeTexture();
+    applyFloorTexture(material, texture);
+    expect(material.map).toBe(texture);
+    expect(material.needsUpdate).toBe(true);
+  });
+
+  it('invokes onTextureChange so the on-demand RenderLoop repaints (paint-correctness)', () => {
+    const material = makeMaterial();
+    const onTextureChange = jest.fn();
+    applyFloorTexture(material, makeTexture(), onTextureChange);
+    expect(onTextureChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('is a no-op when the material has unmounted (ref is null) — no throw, no callback', () => {
+    const onTextureChange = jest.fn();
+    expect(() => applyFloorTexture(null, makeTexture(), onTextureChange)).not.toThrow();
+    expect(onTextureChange).not.toHaveBeenCalled();
+  });
+
+  it('works without an onTextureChange (optional dirty signal) — still swaps the texture', () => {
+    const material = makeMaterial();
+    const texture = makeTexture();
+    expect(() => applyFloorTexture(material, texture)).not.toThrow();
+    expect(material.map).toBe(texture);
+    expect(material.needsUpdate).toBe(true);
   });
 });

@@ -14,6 +14,14 @@ interface DynamicMapTextureProps {
   timeRef?: React.RefObject<number> | { current: number };
   size: number;
   position: [number, number, number];
+  /**
+   * Called whenever the floor material's texture is swapped from an async load callback
+   * (CDN success or failure → procedural fallback). The scene's on-demand RenderLoop gates
+   * `gl.render` behind a dirty budget; these swaps happen outside any React commit / time
+   * change / camera move, so without this signal the new floor would not paint while paused
+   * until the next unrelated dirty event. Optional — absence simply means no on-demand gate.
+   */
+  onTextureChange?: () => void;
 }
 
 // Map texture cache to avoid reloading the same textures
@@ -73,6 +81,29 @@ export function generateFallbackTexture(): THREE.CanvasTexture {
 }
 
 /**
+ * Swap the floor material's texture and signal the on-demand RenderLoop to repaint.
+ *
+ * Centralizes the contract every async load callback (CDN success or failure→fallback)
+ * must honor: a no-op if the material has unmounted, otherwise bind the texture, flag the
+ * material for a GPU re-upload, and fire `onTextureChange` — because these swaps happen in
+ * promise callbacks outside any React commit / time change / camera move, so without that
+ * signal the new floor would not paint while playback is paused. Extracted (and exported)
+ * so the contract is unit-testable without a live R3F canvas, which jsdom can't provide.
+ */
+export function applyFloorTexture(
+  material: THREE.MeshPhongMaterial | null,
+  texture: THREE.Texture,
+  onTextureChange?: () => void,
+): void {
+  if (!material) {
+    return;
+  }
+  material.map = texture;
+  material.needsUpdate = true;
+  onTextureChange?.();
+}
+
+/**
  * Component that dynamically updates map texture based on timeline using useFrame
  * This provides high-performance map switching without React render cycles
  */
@@ -81,6 +112,7 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   timeRef,
   size,
   position,
+  onTextureChange,
 }) => {
   const logger = useLogger();
   const meshRef = useRef<THREE.Mesh>(null);
@@ -150,19 +182,18 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
     if (currentMapFileRef.current !== currentMapEntry.mapFile) {
       currentMapFileRef.current = currentMapEntry.mapFile;
 
-      // Load new texture asynchronously
+      // Load new texture asynchronously. Guard on the map file still being current (the
+      // user may have scrubbed to a different phase before the fetch resolved).
       loadTexture(currentMapEntry.mapFile)
         .then((texture) => {
-          if (materialRef.current && currentMapFileRef.current === currentMapEntry.mapFile) {
-            materialRef.current.map = texture;
-            materialRef.current.needsUpdate = true;
+          if (currentMapFileRef.current === currentMapEntry.mapFile) {
+            applyFloorTexture(materialRef.current, texture, onTextureChange);
           }
         })
         .catch(() => {
           // CDN load failed — show the procedural grid floor instead of a blank plane.
-          if (materialRef.current && currentMapFileRef.current === currentMapEntry.mapFile) {
-            materialRef.current.map = fallbackTexture;
-            materialRef.current.needsUpdate = true;
+          if (currentMapFileRef.current === currentMapEntry.mapFile) {
+            applyFloorTexture(materialRef.current, fallbackTexture, onTextureChange);
           }
         });
     }
@@ -176,22 +207,18 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
       loadTexture(firstMapFile)
         .then((texture) => {
           if (materialRef.current) {
-            materialRef.current.map = texture;
-            materialRef.current.needsUpdate = true;
             currentMapFileRef.current = firstMapFile;
           }
+          applyFloorTexture(materialRef.current, texture, onTextureChange);
         })
         .catch((_error) => {
           // Initial CDN load failed — show the procedural grid floor instead of a blank
           // plane. Reset the file ref so a later successful load can still replace it.
-          if (materialRef.current) {
-            materialRef.current.map = fallbackTexture;
-            materialRef.current.needsUpdate = true;
-          }
+          applyFloorTexture(materialRef.current, fallbackTexture, onTextureChange);
           currentMapFileRef.current = null;
         });
     }
-  }, [mapTimeline, loadTexture, fallbackTexture]);
+  }, [mapTimeline, loadTexture, fallbackTexture, onTextureChange]);
 
   // Cleanup on unmount
   useEffect(() => {
