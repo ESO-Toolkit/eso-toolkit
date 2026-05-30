@@ -1,3 +1,5 @@
+import { getBaseUrl } from './envUtils';
+
 /**
  * Curated sample report codes whose report metadata is bundled as static JSON
  * in `public/sample-reports/<code>/report.json`.
@@ -27,7 +29,11 @@ export const SAMPLE_REPORT_LIST: ReadonlyArray<string> = [...SAMPLE_REPORT_CODES
 /**
  * Build the URL for a bundled sample report JSON file served from `public/`.
  *
- * Uses a root-relative path (`/sample-reports/…`) which works for both the Vite
- * dev server and the production deployment (base URL defaults to `"/"`).
+ * Resolves against Vite's base URL (`getBaseUrl()`) so the file is fetched from
+ * `<base>/sample-reports/…` rather than the origin root. A root-relative path
+ * would 404 on any non-root deployment — e.g. the GitHub Pages PR previews
+ * served under `/dev-previews/pr-<n>/` — which surfaced the bundled sample as
+ * an empty log. `getBaseUrl()` always returns a value ending in `/`.
  */
-export const getSampleReportUrl = (code: string): string => `/sample-reports/${code}/report.json`;
+export const getSampleReportUrl = (code: string): string =>
+  `${getBaseUrl()}sample-reports/${code}/report.json`;
