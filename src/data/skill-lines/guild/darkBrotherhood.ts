@@ -6,7 +6,7 @@ export const darkBrotherhood: SkillLineData = {
   name: 'Dark Brotherhood',
   class: 'guild',
   category: 'guild',
-  icon: 'passive_guild_32.webp',
+  icon: 'ability_darkbrotherhood_passive_002',
   sourceUrl: 'https://eso-hub.com/en/skills/guild/dark-brotherhood',
   skills: [
     {

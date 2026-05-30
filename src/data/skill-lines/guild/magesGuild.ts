@@ -6,7 +6,7 @@ export const magesGuild: SkillLineData = {
   name: 'Mages Guild',
   class: 'guild',
   category: 'guild',
-  icon: 'class_003',
+  icon: 'ability_mageguild_005',
   sourceUrl: 'https://eso-hub.com/en/skills/guild/mages-guild',
   skills: [
     // Ultimate abilities
