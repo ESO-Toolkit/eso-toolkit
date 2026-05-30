@@ -51,9 +51,22 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     }
   }
 
-  // Actor selection and camera following state
-  // null = no actor selected/following, number = following that actor ID
+  // Actor selection and camera following state.
+  // null = no actor selected/following, number = following that actor ID.
+  //
+  // The ref is the synchronous source of truth read every frame by CameraFollower's
+  // useFrame loop and by KeyboardCameraControls. `followingActorId` mirrors it as React
+  // state purely so UI (the "Following:" chip) can react to changes. The two are always
+  // written together via setFollowingActor below — no polling needed.
   const followingActorIdRef = useRef<number | null>(initialSelectedActorId);
+  const [followingActorId, setFollowingActorId] = useState<number | null>(initialSelectedActorId);
+
+  // Single mutation point that keeps the ref (read by the render loop) and the state
+  // (read by the UI) in lockstep.
+  const setFollowingActor = useCallback((actorId: number | null) => {
+    followingActorIdRef.current = actorId;
+    setFollowingActorId(actorId);
+  }, []);
 
   // Player path visualization state
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(
@@ -171,15 +184,18 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     seekTo(Math.min(selectedFight.endTime - selectedFight.startTime, currentTime + 10000));
   }, [selectedFight, currentTime, seekTo]);
 
-  const handleActorClick = useCallback((actorId: number) => {
-    // Set camera to follow the clicked actor
-    followingActorIdRef.current = actorId;
-  }, []);
+  const handleActorClick = useCallback(
+    (actorId: number) => {
+      // Set camera to follow the clicked actor
+      setFollowingActor(actorId);
+    },
+    [setFollowingActor],
+  );
 
   const handleCameraUnlock = useCallback(() => {
     // Stop following any actor
-    followingActorIdRef.current = null;
-  }, []);
+    setFollowingActor(null);
+  }, [setFollowingActor]);
 
   // Keyboard shortcuts for player path features
   useEffect(() => {
@@ -214,6 +230,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           mapTimeline={mapTimeline}
           scrubbingMode={scrubbingMode}
           followingActorIdRef={followingActorIdRef}
+          followingActorId={followingActorId}
           onCameraUnlock={handleCameraUnlock}
           onActorClick={handleActorClick}
           markersState={markersState}

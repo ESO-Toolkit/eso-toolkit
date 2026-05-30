@@ -73,6 +73,12 @@ interface Arena3DProps {
     frameSkipRate: number;
   };
   followingActorIdRef: React.RefObject<number | null>;
+  /**
+   * Currently-followed actor ID as React state (mirrors `followingActorIdRef.current`).
+   * Owned by FightReplay3D so the "Following:" chip re-renders when the followed actor
+   * changes — without polling the ref.
+   */
+  followingActorId: number | null;
   onCameraUnlock?: () => void;
   onActorClick?: (actorId: number) => void;
   markersState?: MapMarkersState | null;
@@ -96,6 +102,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   mapTimeline,
   scrubbingMode,
   followingActorIdRef,
+  followingActorId,
   onCameraUnlock,
   onActorClick,
   markersState,
@@ -374,23 +381,9 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     };
   }, [fight.boundingBox]);
 
-  // State to track the currently followed actor ID for UI updates
-  const [followingActorId, setFollowingActorId] = useState<number | null>(
-    followingActorIdRef.current,
-  );
-
-  // Update state when ref changes (this will be triggered by actor clicks)
-  useEffect(() => {
-    const checkRefChanges = (): void => {
-      if (followingActorIdRef.current !== followingActorId) {
-        setFollowingActorId(followingActorIdRef.current);
-      }
-    };
-
-    // Check periodically for ref changes
-    const interval = setInterval(checkRefChanges, 100);
-    return () => clearInterval(interval);
-  }, [followingActorIdRef, followingActorId]);
+  // `followingActorId` is supplied by FightReplay3D (the single source of truth that also
+  // updates `followingActorIdRef`). No polling needed — the chip re-renders whenever the
+  // parent state changes.
 
   // Get the name of the actor being followed
   const followingActorName = useMemo(() => {
@@ -407,8 +400,10 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   }, [lookup, followingActorId, timeRef]);
 
   const handleUnlockCamera = (): void => {
+    // Delegate to the owner (FightReplay3D), which clears both the ref and the mirrored
+    // state. Also clear the ref directly so the synchronous render-loop read is correct
+    // even if no onCameraUnlock handler was provided.
     followingActorIdRef.current = null;
-    setFollowingActorId(null);
     onCameraUnlock?.();
   };
 

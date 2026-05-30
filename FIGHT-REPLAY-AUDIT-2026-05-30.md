@@ -47,12 +47,13 @@ A user-supplied report turned out to render the 3D arena locally (its event data
 CORS-blocked), which unblocked items previously deferred for prod-only QA. Verified directly with
 Chrome MCP + `gl.info.render.frame`:
 
-| Area    | Change                                                                                                                                 | Verified by                                      |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Bug     | **Unique React keys** for coincident death markers (`death-<ts>-<targetID>` collided) — was a runtime-only bug the static audit missed | Live: `death-990503-54` console error eliminated |
-| Quality | Non-deprecated `PCFShadowMap` (`shadows="percentage"`)                                                                                 | Live: deprecation warning gone                   |
-| UX/a11y | Replace blocking share `alert()` with a snackbar; treat share-sheet cancel (AbortError) as a silent no-op                              | `ShareButton.test.tsx` (cancel + failure paths)  |
-| a11y    | `prefers-reduced-motion` snaps the follow camera instead of lerping; new `usePrefersReducedMotion` hook                                | `usePrefersReducedMotion.test.ts`; live          |
+| Area    | Change                                                                                                                                                                                                                                                                                     | Verified by                                                                                                               |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Bug     | **Unique React keys** for coincident death markers (`death-<ts>-<targetID>` collided) — was a runtime-only bug the static audit missed                                                                                                                                                     | Live: `death-990503-54` console error eliminated                                                                          |
+| Quality | Non-deprecated `PCFShadowMap` (`shadows="percentage"`)                                                                                                                                                                                                                                     | Live: deprecation warning gone                                                                                            |
+| UX/a11y | Replace blocking share `alert()` with a snackbar; treat share-sheet cancel (AbortError) as a silent no-op                                                                                                                                                                                  | `ShareButton.test.tsx` (cancel + failure paths)                                                                           |
+| a11y    | `prefers-reduced-motion` snaps the follow camera instead of lerping; new `usePrefersReducedMotion` hook                                                                                                                                                                                    | `usePrefersReducedMotion.test.ts`; live                                                                                   |
+| Quality | Replace `setInterval(checkRefChanges, 100)` ref-polling in `Arena3D` with a state/callback. `followingActorId` now lives in `FightReplay3D` as the single source of truth (`setFollowingActor` writes ref + state in lockstep); the "Following:" chip re-renders on change without polling | Live: clicked an actor → "Following: @Brassmoose" chip appeared instantly; unlock cleared it. 183 replay jest tests green |
 
 ### `frameloop=demand` — TRIED AND REVERTED
 
@@ -90,7 +91,8 @@ cannot be safely verified locally. Grouped by theme.
   a non-reactive render-control approach that coexists with the manual priority-999 render loop.
 - **Selection-ring geometry shared across actors** (`AnimationFrameActor3D.tsx`) — memory cleanup,
   not a runtime stall (the verifier corrected the original "GPU stall" claim).
-- `setInterval(checkRefChanges, 100)` ref-polling in `Arena3D` → replace with state/callback.
+- ~~`setInterval(checkRefChanges, 100)` ref-polling in `Arena3D` → replace with state/callback.~~
+  ✅ **SHIPPED** (see Live-verified follow-up table).
 
 ### Asset robustness (CDN map textures, `assets.rpglogs.com`)
 
