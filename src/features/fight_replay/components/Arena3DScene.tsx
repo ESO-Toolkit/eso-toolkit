@@ -1,6 +1,6 @@
 import { Grid, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import React, { Suspense, useMemo, useState, useCallback } from 'react';
+import React, { Suspense, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
@@ -124,14 +124,87 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
 };
 
 /**
- * Manual render loop component to handle prioritized useFrame callbacks
+ * Number of extra frames to keep rendering after the last detected change. Async work
+ * (CDN map textures resolving, material.needsUpdate flushing, OrbitControls damping) can
+ * land a frame or two after the triggering event, so we render a short tail rather than
+ * exactly one frame, to avoid a stale paint.
  */
-const RenderLoop: React.FC = () => {
-  const { gl, scene, camera } = useThree();
+const RENDER_TAIL_FRAMES = 4;
 
-  // Manual render at lowest priority (highest number) to ensure all other useFrame callbacks run first
+interface RenderLoopProps {
+  timeRef: React.RefObject<number> | { current: number };
+  followingActorIdRef: React.RefObject<number | null>;
+  /**
+   * Budget ref shared with the parent scene. The parent refills it on every React commit
+   * (see Arena3DScene) so that scene mutations driven by state — markers, trails, player
+   * visibility, HUD toggles — repaint even while playback is paused. RenderLoop also
+   * refills it from per-frame signals (time, camera, follow) below.
+   */
+  renderBudgetRef: React.RefObject<number>;
+}
+
+/**
+ * Manual render loop that owns the single `gl.render()` call at the lowest useFrame
+ * priority (highest number), so every other useFrame callback runs first.
+ *
+ * On-demand gating: rather than rendering on every animation frame (which wastes the GPU
+ * doing identical work while paused and idle — ~73 redundant renders/sec), the render is
+ * gated behind a dirty budget (a ref, never React state — state would re-render the tree
+ * every frame and reintroduce the very cost we're removing). The budget is refilled by:
+ *   - playback / scrubbing: `timeRef.current` advancing (set every frame while playing, so
+ *     the playing path renders every frame exactly as before — no regression by construction)
+ *   - camera motion: OrbitControls `'change'` events (drag / zoom)
+ *   - actor-follow: a non-null `followingActorIdRef` means the follow camera is lerping
+ *   - any React commit of the scene (markers/trails/visibility/HUD) via the parent (see
+ *     Arena3DScene)
+ * When none of these are active the scene is genuinely static, so we skip the render.
+ */
+const RenderLoop: React.FC<RenderLoopProps> = ({
+  timeRef,
+  followingActorIdRef,
+  renderBudgetRef,
+}) => {
+  const { gl, scene, camera, controls } = useThree();
+
+  const lastRenderedTimeRef = useRef<number | null>(null);
+
+  // Refill the budget whenever the user moves the camera via OrbitControls.
+  useEffect(() => {
+    if (!controls) {
+      return;
+    }
+    const markDirty = (): void => {
+      renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    };
+    // OrbitControls extends EventDispatcher and emits 'change' on every camera mutation.
+    const orbit = controls as unknown as {
+      addEventListener: (type: string, cb: () => void) => void;
+      removeEventListener: (type: string, cb: () => void) => void;
+    };
+    orbit.addEventListener('change', markDirty);
+    return () => orbit.removeEventListener('change', markDirty);
+  }, [controls, renderBudgetRef]);
+
+  // Manual render at lowest priority (highest number) to ensure all other useFrame
+  // callbacks (camera, actors, map, HUD) run first.
   useFrame(() => {
-    gl.render(scene, camera);
+    const currentTime = timeRef.current;
+
+    // Time advanced (playback or scrub) → the scene changed; refill the budget.
+    if (lastRenderedTimeRef.current !== currentTime) {
+      renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    }
+
+    // The follow camera lerps toward its target every frame while active, so keep rendering.
+    if (followingActorIdRef.current !== null) {
+      renderBudgetRef.current = RENDER_TAIL_FRAMES;
+    }
+
+    if (renderBudgetRef.current > 0) {
+      renderBudgetRef.current -= 1;
+      lastRenderedTimeRef.current = currentTime;
+      gl.render(scene, camera);
+    }
   }, 999); // Very low priority to render after all updates
 
   return null;
@@ -191,6 +264,16 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   showPlayerPathsHUD = false,
   showPlayerTrails = false,
 }) => {
+  // Shared render budget for the on-demand RenderLoop. Refilled on every React commit of
+  // this scene (effect below, intentionally no deps) so state-driven mutations — markers,
+  // trails, player visibility, HUD toggles, prop changes — always repaint, even while
+  // playback is paused. RenderLoop also tops it up from per-frame signals (time / camera /
+  // follow). A ref, never state: a state flag would re-render every frame.
+  const renderBudgetRef = useRef(RENDER_TAIL_FRAMES);
+  useEffect(() => {
+    renderBudgetRef.current = RENDER_TAIL_FRAMES;
+  });
+
   // State for player visibility (actor models in 3D scene)
   const [playerVisibility, setPlayerVisibility] = useState<Map<number, boolean>>(new Map());
 
@@ -373,8 +456,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         slowFrameThreshold={33}
         maxSlowFrameLogsPerMinute={10}
       />
-      {/* Manual render loop - highest priority to render after all updates */}
-      <RenderLoop />
+      {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
+      <RenderLoop
+        timeRef={timeRef}
+        followingActorIdRef={followingActorIdRef}
+        renderBudgetRef={renderBudgetRef}
+      />
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
       {/* Keyboard camera controls (WASD) - disabled when following an actor */}
