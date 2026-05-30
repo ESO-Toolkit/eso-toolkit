@@ -64,6 +64,8 @@ type ContextMenuState =
 
 interface Arena3DProps {
   timeRef: React.RefObject<number> | { current: number };
+  /** Whether playback is active — drives the always/demand render loop. */
+  isPlaying?: boolean;
   showActorNames?: boolean;
   mapTimeline?: MapTimeline;
   scrubbingMode?: {
@@ -92,6 +94,7 @@ interface Arena3DProps {
 
 export const Arena3D: React.FC<Arena3DProps> = ({
   timeRef,
+  isPlaying = false,
   showActorNames = false,
   mapTimeline,
   scrubbingMode,
@@ -586,6 +589,11 @@ export const Arena3D: React.FC<Arena3DProps> = ({
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
           key={`canvas-${fight.id}`} // Stable key prevents unnecessary recreation
+          // While playing, use the proven continuous loop. While paused, switch to
+          // on-demand rendering so a static scene stops re-rendering ~60-70x/sec.
+          // Paused ref-bypass mutations (seek/scrub, follow-actor, async texture load)
+          // request a frame explicitly via invalidate().
+          frameloop={isPlaying ? 'always' : 'demand'}
           camera={{
             position: initialCameraPosition,
             fov: 30,

@@ -1,4 +1,4 @@
-import { useFrame } from '@react-three/fiber';
+import { useFrame, invalidate } from '@react-three/fiber';
 import { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
@@ -105,6 +105,9 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
           if (materialRef.current && currentMapFileRef.current === currentMapEntry.mapFile) {
             materialRef.current.map = texture;
             materialRef.current.needsUpdate = true;
+            // Async resolution bypasses React/useFrame — request a paint so the new
+            // map shows while paused (demand mode).
+            invalidate();
           }
         })
         .catch(() => {
@@ -112,6 +115,7 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
           if (materialRef.current) {
             materialRef.current.map = null;
             materialRef.current.needsUpdate = true;
+            invalidate();
           }
         });
     }
@@ -128,6 +132,9 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
             materialRef.current.map = texture;
             materialRef.current.needsUpdate = true;
             currentMapFileRef.current = firstMapFile;
+            // Initial texture resolves after mount via a promise (not useFrame), so in
+            // demand mode the floor would stay blank without an explicit frame request.
+            invalidate();
           }
         })
         .catch((_error) => {

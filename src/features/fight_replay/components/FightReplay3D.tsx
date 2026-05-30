@@ -1,4 +1,5 @@
 import { Paper } from '@mui/material';
+import { invalidate } from '@react-three/fiber';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
@@ -132,16 +133,26 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsDragging(dragging);
   }, []);
 
+  // Seek/skip/scrub mutate timeRef directly, which bypasses React. In demand mode
+  // (paused) the scene won't redraw on its own, so request a frame after each jump.
+  const seekTo = useCallback(
+    (time: number) => {
+      setCurrentTime(time);
+      animationTimeRef.setTime(time);
+      invalidate();
+    },
+    [animationTimeRef],
+  );
+
   const handleTimeChange = useCallback(
     (time: number) => {
       const clampedTime = Math.max(
         0,
         Math.min(time, selectedFight.endTime - selectedFight.startTime),
       );
-      setCurrentTime(clampedTime);
-      animationTimeRef.setTime(clampedTime);
+      seekTo(clampedTime);
     },
-    [selectedFight, animationTimeRef],
+    [selectedFight, seekTo],
   );
 
   const handleSpeedChange = useCallback((speed: number) => {
@@ -149,35 +160,32 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   }, []);
 
   const handleSkipToStart = useCallback(() => {
-    setCurrentTime(0);
-    animationTimeRef.setTime(0);
-  }, [animationTimeRef]);
+    seekTo(0);
+  }, [seekTo]);
 
   const handleSkipToEnd = useCallback(() => {
-    setCurrentTime(selectedFight.endTime - selectedFight.startTime);
-    animationTimeRef.setTime(selectedFight.endTime - selectedFight.startTime);
-  }, [selectedFight, animationTimeRef]);
+    seekTo(selectedFight.endTime - selectedFight.startTime);
+  }, [selectedFight, seekTo]);
 
   const handleSkipBackward10 = useCallback(() => {
-    const newTime = Math.max(0, currentTime - 10000);
-    setCurrentTime(newTime);
-    animationTimeRef.setTime(newTime);
-  }, [currentTime, animationTimeRef]);
+    seekTo(Math.max(0, currentTime - 10000));
+  }, [currentTime, seekTo]);
 
   const handleSkipForward10 = useCallback(() => {
-    const newTime = Math.min(selectedFight.endTime - selectedFight.startTime, currentTime + 10000);
-    setCurrentTime(newTime);
-    animationTimeRef.setTime(newTime);
-  }, [selectedFight, currentTime, animationTimeRef]);
+    seekTo(Math.min(selectedFight.endTime - selectedFight.startTime, currentTime + 10000));
+  }, [selectedFight, currentTime, seekTo]);
 
   const handleActorClick = useCallback((actorId: number) => {
-    // Set camera to follow the clicked actor
+    // Set camera to follow the clicked actor. The ref write bypasses React, so
+    // request a frame for the camera to reposition while paused (demand mode).
     followingActorIdRef.current = actorId;
+    invalidate();
   }, []);
 
   const handleCameraUnlock = useCallback(() => {
     // Stop following any actor
     followingActorIdRef.current = null;
+    invalidate();
   }, []);
 
   // Keyboard shortcuts for player path features
@@ -209,6 +217,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       <Paper elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
         <Arena3D
           timeRef={animationTimeRef.timeRef}
+          isPlaying={isPlaying}
           showActorNames={showActorNames}
           mapTimeline={mapTimeline}
           scrubbingMode={scrubbingMode}
