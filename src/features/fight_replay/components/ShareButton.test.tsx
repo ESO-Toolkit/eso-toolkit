@@ -39,7 +39,7 @@ describe('ShareButton', () => {
     expect(screen.getByRole('button', { name: /share current replay time/i })).toBeInTheDocument();
   });
 
-  it('announces copy success via a top-anchored, polite live region', async () => {
+  it('announces copy success via a bottom-anchored, polite live region', async () => {
     render(<ShareButton reportId="r1" fightId="1" currentTime={12_000} />);
 
     fireEvent.click(screen.getByRole('button', { name: /share current replay time/i }));
@@ -50,10 +50,10 @@ describe('ShareButton', () => {
     expect(alertRoot).toHaveAttribute('role', 'status');
     expect(alertRoot).toHaveAttribute('aria-live', 'polite');
 
-    // Snackbar is anchored to the top (visible above the replay) rather than the bottom.
+    // Snackbar stays bottom-anchored to avoid colliding with the global AppBar.
     await waitFor(() => {
       const snackbar = document.querySelector('.MuiSnackbar-root');
-      expect(snackbar?.className).toMatch(/MuiSnackbar-anchorOriginTop/);
+      expect(snackbar?.className).toMatch(/MuiSnackbar-anchorOriginBottom/);
     });
   });
 });

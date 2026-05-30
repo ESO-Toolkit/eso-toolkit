@@ -142,12 +142,13 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         </IconButton>
       </Tooltip>
 
-      {/* Share URL Success Snackbar — top-center so it is visible above the replay */}
+      {/* Share URL Success Snackbar. Kept at bottom-center (avoids colliding with the
+          global AppBar); extended to 5s and announced via the Alert's live region. */}
       <Snackbar
         open={showShareSnackbar}
         autoHideDuration={5000}
         onClose={() => setShowShareSnackbar(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
           onClose={() => setShowShareSnackbar(false)}
