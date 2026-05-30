@@ -78,13 +78,11 @@ should be confirmed in broader QA, though the async-texture-load invalidate site
 These are confirmed and worth doing, but their correctness depends on the live 3D render and so
 cannot be safely verified locally. Grouped by theme.
 
-### Performance (the big one first)
+### Performance
 
-- **On-demand rendering when paused/scrubbing** (`frameloop="demand"` + `invalidate()`). The Canvas
-  currently renders ~60fps continuously even when paused. Time is driven by an _external_ rAF loop
-  mutating `timeRef`, which does **not** auto-invalidate R3F — so demand mode requires calling
-  `invalidate()` at every `timeRef` mutation site (playback loop + all skip/seek handlers + map
-  texture swap). High value, but a naïve change yields a frozen scene on pause; needs visual QA.
+- ~~**On-demand rendering when paused/scrubbing** (`frameloop="demand"`)~~ — **SHIPPED** (see the
+  Live-verified section above). Still owed: confirm a mid-fight map/phase transition redraws on a
+  fight that has one.
 - **Selection-ring geometry shared across actors** (`AnimationFrameActor3D.tsx`) — memory cleanup,
   not a runtime stall (the verifier corrected the original "GPU stall" claim).
 - `setInterval(checkRefChanges, 100)` ref-polling in `Arena3D` → replace with state/callback.
