@@ -9,7 +9,12 @@ module.exports = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       '<rootDir>/src/test/__mocks__/fileMock.js',
-    // Worker mocks - Mock web workers that use import.meta.url
+    // Worker mocks - Mock web workers that use import.meta.url.
+    // CalculateActorPositions holds pure position-lookup helpers (no import.meta.url /
+    // worker side effects) consumed directly by app + test code, so it must resolve to
+    // its real implementation. This exception MUST precede the broad worker rules below.
+    '^.*/workers/calculations/CalculateActorPositions$':
+      '<rootDir>/src/workers/calculations/CalculateActorPositions.ts',
     '^.*/workers$': '<rootDir>/src/test/__mocks__/workersMock.ts',
     '^.*/workers/(.*)$': '<rootDir>/src/test/__mocks__/workerFactoriesMock.ts',
     // Discord auth uses import.meta.env which Jest/ts-jest cannot parse
