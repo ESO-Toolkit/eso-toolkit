@@ -142,16 +142,18 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
         </IconButton>
       </Tooltip>
 
-      {/* Share URL Success Snackbar */}
+      {/* Share URL Success Snackbar — top-center so it is visible above the replay */}
       <Snackbar
         open={showShareSnackbar}
-        autoHideDuration={3000}
+        autoHideDuration={5000}
         onClose={() => setShowShareSnackbar(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
           onClose={() => setShowShareSnackbar(false)}
           severity="success"
+          role="status"
+          aria-live="polite"
           sx={{ width: '100%' }}
         >
           Shareable URL copied to clipboard!

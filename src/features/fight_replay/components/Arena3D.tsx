@@ -630,9 +630,9 @@ export const Arena3D: React.FC<Arena3DProps> = ({
           />
         </Canvas>
 
-        {/* HTML Overlay HUD - DISABLED: Can cause conflicts with 3D scene interactions */}
-        {/* Using 3D canvas-based HUD instead for better integration */}
-
+        {/* HUD elements (player list, boss health) are rendered inside the Canvas as
+            canvas-based components in Arena3DScene to avoid HTML-overlay conflicts with
+            3D pointer interactions. */}
         {contextMenu && (
           <ClickAwayListener onClickAway={handleCloseContextMenu}>
             <div>
@@ -788,6 +788,18 @@ export const Arena3D: React.FC<Arena3DProps> = ({
             sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
           >
             <strong>Mouse:</strong> Rotate & zoom
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>P:</strong> Toggle player list
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>T:</strong> Toggle player trails
           </Typography>
           <Typography
             variant="caption"

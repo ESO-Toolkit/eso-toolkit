@@ -115,6 +115,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
       onClose={handleClose}
       maxWidth="md"
       fullWidth
+      aria-labelledby="map-markers-dialog-title"
       onKeyDown={handleKeyDown}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
       slotProps={{
@@ -124,7 +125,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         },
       }}
     >
-      <DialogTitle>Import M0R Markers</DialogTitle>
+      <DialogTitle id="map-markers-dialog-title">Import M0R Markers</DialogTitle>
 
       <DialogContent>
         <form

@@ -150,6 +150,10 @@ export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
                   marginTop: -2,
                   boxShadow: `0 0 8px ${color}`,
                 },
+                '&:focus-visible': {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: '1px',
+                },
                 '&::before': {
                   content: '""',
                   position: 'absolute',

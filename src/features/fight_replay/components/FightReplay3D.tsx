@@ -10,7 +10,6 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import { MapMarkersState } from '../types/mapMarkers';
-
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
