@@ -1,5 +1,4 @@
 import { Paper } from '@mui/material';
-import { invalidate } from '@react-three/fiber';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
@@ -133,13 +132,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsDragging(dragging);
   }, []);
 
-  // Seek/skip/scrub mutate timeRef directly, which bypasses React. In demand mode
-  // (paused) the scene won't redraw on its own, so request a frame after each jump.
   const seekTo = useCallback(
     (time: number) => {
       setCurrentTime(time);
       animationTimeRef.setTime(time);
-      invalidate();
     },
     [animationTimeRef],
   );
@@ -176,16 +172,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   }, [selectedFight, currentTime, seekTo]);
 
   const handleActorClick = useCallback((actorId: number) => {
-    // Set camera to follow the clicked actor. The ref write bypasses React, so
-    // request a frame for the camera to reposition while paused (demand mode).
+    // Set camera to follow the clicked actor
     followingActorIdRef.current = actorId;
-    invalidate();
   }, []);
 
   const handleCameraUnlock = useCallback(() => {
     // Stop following any actor
     followingActorIdRef.current = null;
-    invalidate();
   }, []);
 
   // Keyboard shortcuts for player path features
@@ -217,7 +210,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       <Paper elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
         <Arena3D
           timeRef={animationTimeRef.timeRef}
-          isPlaying={isPlaying}
           showActorNames={showActorNames}
           mapTimeline={mapTimeline}
           scrubbingMode={scrubbingMode}
