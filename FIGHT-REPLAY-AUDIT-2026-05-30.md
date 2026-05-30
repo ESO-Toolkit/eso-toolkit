@@ -26,17 +26,18 @@ existing tests. The findings below are targeted, not a rewrite.
 
 ## Shipped in this PR (verifiable locally)
 
-| Area        | Change                                                                                              | Verified by                                      |
-| ----------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Tests       | Unit tests for `mapScaling`, `playerColors`, `pathUtils`, `mapMarkerConverters` (round-trips)       | Jest (62 new tests)                              |
-| Correctness | Clamp URL `?time=` to `[0, duration]` (rejects negative / beyond-duration / NaN / ±Infinity)        | `replayTime.test.ts`; Playwright deep-link specs |
-| a11y        | `:focus-visible` outlines on TimelineSlider thumb + TimelineMarkers                                 | Jest render + lint                               |
-| a11y        | Share snackbar: `role=status` / `aria-live=polite`, 5s duration (kept bottom-anchored)              | `ShareButton.test.tsx`                           |
-| a11y        | `MapMarkersModal` Dialog associated to its title via `aria-labelledby`/`id` (WCAG 1.3.1)            | Jest render                                      |
-| a11y        | 44×44 touch targets for playback buttons on coarse-pointer devices (scoped, no global theme change) | `PlaybackButtons.test.tsx` + lint                |
-| UX          | Document `P` / `T` keyboard shortcuts in the help overlay                                           | DOM                                              |
-| Quality     | Remove misleading "DISABLED" HUD comment; accurate note instead                                     | review                                           |
-| Quality     | Dedupe 4× identical default camera-position fallback into one pure helper (byte-identical math)     | replay suite (148 tests)                         |
+| Area        | Change                                                                                                                                                 | Verified by                                                                                                                                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tests       | Unit tests for `mapScaling`, `playerColors`, `pathUtils`, `mapMarkerConverters` (round-trips)                                                          | Jest (62 new tests)                                                                                                                                                                                                                    |
+| Correctness | Clamp URL `?time=` to `[0, duration]` (rejects negative / beyond-duration / NaN / ±Infinity)                                                           | `replayTime.test.ts`; Playwright deep-link specs                                                                                                                                                                                       |
+| a11y        | `:focus-visible` outlines on TimelineSlider thumb + TimelineMarkers                                                                                    | Jest render + lint                                                                                                                                                                                                                     |
+| a11y        | Share snackbar: `role=status` / `aria-live=polite`, 5s duration (kept bottom-anchored)                                                                 | `ShareButton.test.tsx`                                                                                                                                                                                                                 |
+| a11y        | `MapMarkersModal` Dialog associated to its title via `aria-labelledby`/`id` (WCAG 1.3.1)                                                               | Jest render                                                                                                                                                                                                                            |
+| a11y        | 44×44 touch targets for playback buttons on coarse-pointer devices (scoped, no global theme change)                                                    | `PlaybackButtons.test.tsx` + lint                                                                                                                                                                                                      |
+| UX          | Document `P` / `T` keyboard shortcuts in the help overlay                                                                                              | DOM                                                                                                                                                                                                                                    |
+| Quality     | Remove misleading "DISABLED" HUD comment; accurate note instead                                                                                        | review                                                                                                                                                                                                                                 |
+| Quality     | Dedupe 4× identical default camera-position fallback into one pure helper (byte-identical math)                                                        | replay suite (148 tests)                                                                                                                                                                                                               |
+| Robustness  | Procedural grid fallback floor texture on CDN map-texture load failure (missing zone / mapFile mismatch / 404), replacing the blank `map = null` plane | `DynamicMapTexture.test.ts` (5 tests: non-null CanvasTexture, 512², null-context guard, per-instance). Floor non-regression verified live on Dreadsail Reef (its CDN texture loads, so the fallback path isn't live-triggerable there) |
 
 Net test delta: **+73 tests** in the replay area (81 → 154), all green. Full `tsc` clean, full
 `eslint --max-warnings 0` clean, and all 18 defensive Playwright replay specs pass.
@@ -97,7 +98,10 @@ cannot be safely verified locally. Grouped by theme.
 ### Asset robustness (CDN map textures, `assets.rpglogs.com`)
 
 - Retry with backoff on 404/timeout; explicit load timeout (~5s) → faster degraded fallback.
-- Bundle a local procedural fallback texture for missing zones / mapFile mismatches.
+- ~~Bundle a local procedural fallback texture for missing zones / mapFile mismatches.~~
+  ✅ **SHIPPED** — `DynamicMapTexture` now applies a procedurally-generated grid `CanvasTexture`
+  (lazy, per-instance, null-context-guarded) on CDN load failure instead of `map = null` (which
+  left a featureless solid-color floor). See the Shipped table.
 - Marker text-sprite DPR scaling + anti-aliasing (`Marker3D.createTextTexture`).
 - (Rejected: `crossOrigin` — three.js `TextureLoader` already defaults to `anonymous`.)
 
