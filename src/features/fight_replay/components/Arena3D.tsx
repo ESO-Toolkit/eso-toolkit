@@ -614,7 +614,9 @@ export const Arena3D: React.FC<Arena3DProps> = ({
               logger.info('WebGL context restored successfully');
             });
           }}
-          shadows
+          // 'percentage' = PCFShadowMap; the bare `shadows` default (PCFSoftShadowMap)
+          // is deprecated in three 0.184 and logs a console warning every render.
+          shadows="percentage"
           style={{ background: '#1a1a1a' }}
         >
           <Arena3DScene
