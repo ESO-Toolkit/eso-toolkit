@@ -64,13 +64,14 @@ non-reactive approach that coexists with the manual render loop (e.g. drive rend
 owned loop rather than toggling R3F's mode) — left as future work. The paused-render waste is real
 (~73/sec doing nothing) but is **not** worth a playback regression.
 
-### Latent bugs found while writing tests (documented, not fixed here)
+### Latent bugs found while writing tests
 
-- **`extractPlayerPaths` drops the frame at timestamp 0.** `lastSampleTime` initializes to `0`, so
-  the first frame fails `timestamp - lastSampleTime < minSampleInterval` (`0 - 0 = 0 < 100`). A path
-  whose data starts exactly at `t=0` loses its first point. Pinned by a test; fix is a one-liner
-  (initialize `lastSampleTime = -minSampleInterval` or special-case the first sample) but deferred
-  to keep this PR's behavior changes minimal. See `pathUtils.test.ts`.
+- **`extractPlayerPaths` drops the frame at timestamp 0.** ✅ **FIXED.** `lastSampleTime` initialized
+  to `0`, so the first frame failed `timestamp - lastSampleTime < minSampleInterval` (`0 - 0 = 0 <
+100`) and a path whose data started exactly at `t=0` lost its first point. Now initializes to
+  `-config.minSampleInterval`, so the first frame always passes the guard (`0 - (-100) = 100 >=
+100`). The test that documented the drop was flipped to assert the t=0 frame is kept
+  (`pathUtils.test.ts`). Verified by Jest (21 pathUtils tests green).
 - **ELMS decode→encode is not Y-identical.** The decoder offsets Y by `50 * size`
   (`elmsMarkersDecoder.ts`), which the encoder does not subtract; round-tripping a marker shifts its
   Y. Documented in `mapMarkerConverters.test.ts` as intended-current behavior.

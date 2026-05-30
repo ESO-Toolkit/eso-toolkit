@@ -89,7 +89,7 @@ describe('extractPlayerPaths', () => {
 
   it('enforces minSampleInterval — frames closer than the interval are skipped', () => {
     const lookup = makeLookup([
-      { t: 1000, actors: [makeActor(1, [0, 0, 0])] }, // first sample (>= interval since lastSampleTime=0)
+      { t: 1000, actors: [makeActor(1, [0, 0, 0])] }, // first sample (always kept)
       { t: 1050, actors: [makeActor(1, [10, 0, 0])] }, // 50ms later -> skipped
       { t: 1150, actors: [makeActor(1, [20, 0, 0])] }, // 150ms after last sample -> sampled
     ]);
@@ -98,16 +98,17 @@ describe('extractPlayerPaths', () => {
     expect(points.map((p) => p.timestamp)).toEqual([1000, 1150]);
   });
 
-  it('skips a frame at timestamp 0 because lastSampleTime initializes to 0', () => {
-    // Documents a real quirk: the very first frame at t=0 fails the
-    // (timestamp - lastSampleTime < minSampleInterval) check (0 - 0 = 0 < 100),
-    // so a path whose data starts exactly at t=0 drops its first frame.
+  it('keeps the first frame at timestamp 0 (lastSampleTime starts at -minSampleInterval)', () => {
+    // Regression guard: lastSampleTime initializes to -minSampleInterval, so the very
+    // first frame — even one at exactly t=0 — passes the
+    // (timestamp - lastSampleTime < minSampleInterval) check (0 - (-100) = 100 >= 100).
+    // Previously lastSampleTime started at 0 and silently dropped a path's t=0 point.
     const lookup = makeLookup([
       { t: 0, actors: [makeActor(1, [0, 0, 0])] },
       { t: 150, actors: [makeActor(1, [20, 0, 0])] },
     ]);
     const paths = extractPlayerPaths(lookup, [1], { ...noSmoothing, minSampleInterval: 100 });
-    expect(paths.get(1)!.points.map((p) => p.timestamp)).toEqual([150]);
+    expect(paths.get(1)!.points.map((p) => p.timestamp)).toEqual([0, 150]);
   });
 
   it('filters points that move less than minDistance', () => {
