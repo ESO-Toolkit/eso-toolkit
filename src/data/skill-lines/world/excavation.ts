@@ -12,7 +12,7 @@ export const excavation: SkillLineData = {
   name: 'Excavation',
   class: 'world',
   category: 'world',
-  icon: 'ability_world_excavation_001',
+  icon: 'u26_ability_digging_01',
   sourceUrl: 'https://eso-hub.com/en/skills/world/excavation',
   skills: [
     {

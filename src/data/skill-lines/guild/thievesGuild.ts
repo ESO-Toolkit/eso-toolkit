@@ -6,7 +6,7 @@ export const thievesGuild: SkillLineData = {
   name: 'Thieves Guild',
   class: 'guild',
   category: 'guild',
-  icon: 'passive_guild_32.webp',
+  icon: 'ability_thievesguild_passive_001',
   sourceUrl: 'https://eso-hub.com/en/skills/guild/thieves-guild',
   skills: [
     {

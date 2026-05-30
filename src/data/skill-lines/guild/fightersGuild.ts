@@ -6,7 +6,7 @@ export const fightersGuild: SkillLineData = {
   name: 'Fighters Guild',
   class: 'guild',
   category: 'guild',
-  icon: 'class_003',
+  icon: 'ability_fightersguild_005',
   sourceUrl: 'https://eso-hub.com/en/skills/guild/fighters-guild',
   skills: [
     // Ultimate abilities

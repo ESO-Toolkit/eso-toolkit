@@ -6,7 +6,7 @@ export const soulMagic: SkillLineData = {
   name: 'Soul Magic',
   class: 'world',
   category: 'world',
-  icon: 'ability_soul_magic_soul_strike',
+  icon: 'ability_otherclass_002',
   sourceUrl: 'https://eso-hub.com/en/skills/world/soul-magic',
   skills: [
     {
@@ -24,7 +24,7 @@ export const soulMagic: SkillLineData = {
       name: 'Shatter Soul',
       description:
         'Burn an enemy from the inside with soulfire, dealing 14814 Magic Damage over 5 seconds. Upon completion, the soulfire overflows and explodes from the enemy, dealing 2399 Magic Damage to all enemies near them. While channeling this ability, you gain immunity to all disabling effects. Enemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility. This ability is considered direct damage. Upon completion, deals damage to all enemies near your target.',
-      icon: 'ability_soul_magic_shatter_soul',
+      icon: 'ability_otherclass_002_a',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,
