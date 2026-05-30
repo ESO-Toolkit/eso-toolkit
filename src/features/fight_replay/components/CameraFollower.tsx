@@ -2,6 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useRef } from 'react';
 import { type Controls, Vector3 } from 'three';
 
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import {
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
@@ -17,18 +18,25 @@ interface CameraFollowerProps {
   lookup: TimestampPositionLookup | null;
   timeRef: React.RefObject<number> | { current: number };
   followingActorIdRef: React.RefObject<number | null>;
+  /** When paused the scene renders on demand, so the follow camera must snap (a lerp
+   * would need continuous frames). Defaults to true (snap) when omitted. */
+  isPlaying?: boolean;
 }
 
 export const CameraFollower: React.FC<CameraFollowerProps> = ({
   lookup,
   timeRef,
   followingActorIdRef,
+  isPlaying = false,
 }) => {
   const { camera, controls } = useThree();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const targetPositionRef = useRef(new Vector3());
   const cameraOffsetRef = useRef<Vector3 | null>(null);
   const wasFollowingRef = useRef(false);
-  const smoothingFactor = 0.05; // Adjust for smoother/faster following
+  // Smoothly follow during playback; snap (factor 1) when reduced motion is requested
+  // or when paused (on-demand rendering can't drive a per-frame lerp).
+  const smoothingFactor = prefersReducedMotion || !isPlaying ? 1 : 0.05;
 
   // Pre-allocated scratch vectors to avoid per-frame allocations
   const _scratchActorPos = useRef(new Vector3());

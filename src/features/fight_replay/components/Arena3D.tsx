@@ -630,6 +630,7 @@ export const Arena3D: React.FC<Arena3DProps> = ({
           <Arena3DScene
             timeRef={timeRef}
             lookup={lookup}
+            isPlaying={isPlaying}
             showActorNames={showActorNames}
             mapTimeline={mapTimeline}
             scrubbingMode={scrubbingMode}

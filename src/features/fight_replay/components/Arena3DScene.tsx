@@ -143,6 +143,8 @@ const RenderLoop: React.FC = () => {
 export interface Arena3DSceneProps {
   timeRef: React.RefObject<number> | { current: number };
   lookup: TimestampPositionLookup | null;
+  /** Whether playback is active — controls follow-camera smoothing vs snap. */
+  isPlaying?: boolean;
   showActorNames?: boolean;
   mapTimeline?: MapTimeline;
   scrubbingMode?: {
@@ -176,6 +178,7 @@ export interface Arena3DSceneProps {
 export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   timeRef,
   lookup,
+  isPlaying = false,
   showActorNames = false,
   mapTimeline,
   scrubbingMode,
@@ -376,7 +379,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       {/* Manual render loop - highest priority to render after all updates */}
       <RenderLoop />
       {/* Camera follower system */}
-      <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
+      <CameraFollower
+        lookup={lookup}
+        timeRef={timeRef}
+        followingActorIdRef={followingActorIdRef}
+        isPlaying={isPlaying}
+      />
       {/* Keyboard camera controls (WASD) - disabled when following an actor */}
       <KeyboardCameraControls enabled={!followingActorIdRef.current} />
       {/* Lighting */}
