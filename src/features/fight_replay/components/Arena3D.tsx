@@ -35,6 +35,25 @@ const logger = new Logger({
   contextPrefix: 'Arena3D',
 });
 
+/**
+ * Compute the default (fallback) camera position used whenever actor positions
+ * are unavailable. The camera is placed southwest of and above the target.
+ * Extracted so the four fallback branches share one implementation.
+ */
+function computeDefaultCameraPosition(
+  target: [number, number, number],
+  minDistance: number,
+  actorScale: number,
+): [number, number, number] {
+  const viewDistance = Math.max(30, minDistance * 2.5) * actorScale;
+  const [targetX, targetY, targetZ] = target;
+  return [
+    targetX - viewDistance * 0.6,
+    targetY + viewDistance * 0.5,
+    targetZ + viewDistance * 0.6,
+  ];
+}
+
 type ContextMenuState =
   | {
       type: 'ground';
@@ -439,13 +458,11 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     ];
 
     if (!lookup?.positionsByTimestamp || !fight) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
@@ -454,13 +471,11 @@ export const Arena3D: React.FC<Arena3DProps> = ({
       .map(Number)
       .sort((a, b) => a - b);
     if (timestamps.length === 0) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
@@ -468,26 +483,22 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     const actorsAtStart = lookup.positionsByTimestamp[startTime];
 
     if (!actorsAtStart) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
     // Get all actor positions at fight start
     const actors = Object.values(actorsAtStart);
     if (actors.length === 0) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
