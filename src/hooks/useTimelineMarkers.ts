@@ -92,13 +92,15 @@ export const useTimelineMarkers = (
         }
         return true;
       })
-      .map((event) => {
+      .map((event, index) => {
         // Get actor names from store (we'll use IDs if names aren't available)
         const actorName = `Actor ${event.targetID}`;
         const killerName = event.sourceID ? `Actor ${event.sourceID}` : undefined;
 
         return {
-          id: `death-${event.timestamp}-${event.targetID}`,
+          // Include the index so two death events for the same actor at the same
+          // timestamp (which occur in ESO combat logs) produce unique React keys.
+          id: `death-${event.timestamp}-${event.targetID}-${index}`,
           timestamp: event.timestamp - currentFight.startTime,
           type: 'death' as const,
           label: event.targetIsFriendly ? `💀 ${actorName}` : `☠️ ${actorName}`,
