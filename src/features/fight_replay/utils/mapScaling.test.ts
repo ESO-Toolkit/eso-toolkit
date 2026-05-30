@@ -26,7 +26,9 @@ function makeMapData(overrides: Partial<ZoneScaleData>): ZoneScaleData {
 
 describe('computeUnitsPerMeter', () => {
   it('returns a positive finite number for valid square bounds', () => {
-    const result = computeUnitsPerMeter(makeMapData({ minX: 0, maxX: 10000, minZ: 0, maxZ: 10000 }));
+    const result = computeUnitsPerMeter(
+      makeMapData({ minX: 0, maxX: 10000, minZ: 0, maxZ: 10000 }),
+    );
     expect(result).not.toBeNull();
     expect(Number.isFinite(result as number)).toBe(true);
     expect(result as number).toBeGreaterThan(0);

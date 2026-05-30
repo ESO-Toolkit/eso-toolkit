@@ -26,17 +26,17 @@ existing tests. The findings below are targeted, not a rewrite.
 
 ## Shipped in this PR (verifiable locally)
 
-| Area | Change | Verified by |
-|---|---|---|
-| Tests | Unit tests for `mapScaling`, `playerColors`, `pathUtils`, `mapMarkerConverters` (round-trips) | Jest (62 new tests) |
-| Correctness | Clamp URL `?time=` to `[0, duration]` (rejects negative / beyond-duration / NaN / ±Infinity) | `replayTime.test.ts`; Playwright deep-link specs |
-| a11y | `:focus-visible` outlines on TimelineSlider thumb + TimelineMarkers | Jest render + lint |
-| a11y | Share snackbar: `role=status` / `aria-live=polite`, 5s duration (kept bottom-anchored) | `ShareButton.test.tsx` |
-| a11y | `MapMarkersModal` Dialog associated to its title via `aria-labelledby`/`id` (WCAG 1.3.1) | Jest render |
-| a11y | 44×44 touch targets for playback buttons on coarse-pointer devices (scoped, no global theme change) | `PlaybackButtons.test.tsx` + lint |
-| UX | Document `P` / `T` keyboard shortcuts in the help overlay | DOM |
-| Quality | Remove misleading "DISABLED" HUD comment; accurate note instead | review |
-| Quality | Dedupe 4× identical default camera-position fallback into one pure helper (byte-identical math) | replay suite (148 tests) |
+| Area        | Change                                                                                              | Verified by                                      |
+| ----------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Tests       | Unit tests for `mapScaling`, `playerColors`, `pathUtils`, `mapMarkerConverters` (round-trips)       | Jest (62 new tests)                              |
+| Correctness | Clamp URL `?time=` to `[0, duration]` (rejects negative / beyond-duration / NaN / ±Infinity)        | `replayTime.test.ts`; Playwright deep-link specs |
+| a11y        | `:focus-visible` outlines on TimelineSlider thumb + TimelineMarkers                                 | Jest render + lint                               |
+| a11y        | Share snackbar: `role=status` / `aria-live=polite`, 5s duration (kept bottom-anchored)              | `ShareButton.test.tsx`                           |
+| a11y        | `MapMarkersModal` Dialog associated to its title via `aria-labelledby`/`id` (WCAG 1.3.1)            | Jest render                                      |
+| a11y        | 44×44 touch targets for playback buttons on coarse-pointer devices (scoped, no global theme change) | `PlaybackButtons.test.tsx` + lint                |
+| UX          | Document `P` / `T` keyboard shortcuts in the help overlay                                           | DOM                                              |
+| Quality     | Remove misleading "DISABLED" HUD comment; accurate note instead                                     | review                                           |
+| Quality     | Dedupe 4× identical default camera-position fallback into one pure helper (byte-identical math)     | replay suite (148 tests)                         |
 
 Net test delta: **+73 tests** in the replay area (81 → 154), all green. Full `tsc` clean, full
 `eslint --max-warnings 0` clean, and all 18 defensive Playwright replay specs pass.
@@ -60,8 +60,9 @@ These are confirmed and worth doing, but their correctness depends on the live 3
 cannot be safely verified locally. Grouped by theme.
 
 ### Performance (the big one first)
+
 - **On-demand rendering when paused/scrubbing** (`frameloop="demand"` + `invalidate()`). The Canvas
-  currently renders ~60fps continuously even when paused. Time is driven by an *external* rAF loop
+  currently renders ~60fps continuously even when paused. Time is driven by an _external_ rAF loop
   mutating `timeRef`, which does **not** auto-invalidate R3F — so demand mode requires calling
   `invalidate()` at every `timeRef` mutation site (playback loop + all skip/seek handlers + map
   texture swap). High value, but a naïve change yields a frozen scene on pause; needs visual QA.
@@ -70,30 +71,35 @@ cannot be safely verified locally. Grouped by theme.
 - `setInterval(checkRefChanges, 100)` ref-polling in `Arena3D` → replace with state/callback.
 
 ### Asset robustness (CDN map textures, `assets.rpglogs.com`)
+
 - Retry with backoff on 404/timeout; explicit load timeout (~5s) → faster degraded fallback.
 - Bundle a local procedural fallback texture for missing zones / mapFile mismatches.
 - Marker text-sprite DPR scaling + anti-aliasing (`Marker3D.createTextTexture`).
 - (Rejected: `crossOrigin` — three.js `TextureLoader` already defaults to `anonymous`.)
 
 ### Accessibility (canvas-rendered, can't axe-test locally)
+
 - Canvas wrapper `role="img"` + static label → live region announcing playback state/time.
 - `prefers-reduced-motion` handling for playback + camera animation.
 - HUD canvas text contrast (BossHealthHUD / PlayerListHUD) to WCAG 4.5:1.
 
 ### Mobile / touch
+
 - Touch camera-control guidance (OrbitControls supports touch; no UI hint exists). WASD is useless on touch.
 - Long-press alternative to right-click for adding markers.
 - Responsive / fullscreen arena height (currently fixed 400px); landscape layout.
 - DPR clamping in canvas HUDs.
 
 ### UX
+
 - Help overlay auto-hides after 8s → make shortcuts more discoverable.
 - Frame-step controls + precise current-time display.
 - Player-list HUD emoji affordances/tooltips; camera-unlock chip styling.
 
 ### Correctness (camera math — can't see the result locally)
+
 - **#23 Coordinate-transform mismatch** between `arenaDimensions` and `cameraSettings`. Marked
-  "safe" by the workflow but its fix *rewrites camera coordinate math*; deferred until the camera
+  "safe" by the workflow but its fix _rewrites camera coordinate math_; deferred until the camera
   result can be visually confirmed (the two transforms may be intentionally different spaces).
 - Health interpolation when one sampled position lacks health data (rare edge case).
 
@@ -114,4 +120,4 @@ Surfaced by auditors, refuted on closer reading — recorded so they aren't re-r
 
 ---
 
-*Workflow run: 63 agents, ~28 min, 7 audit dimensions + 2 research topics + adversarial verification.*
+_Workflow run: 63 agents, ~28 min, 7 audit dimensions + 2 research topics + adversarial verification._

@@ -35,7 +35,9 @@ function makeActor(
  * sortedTimestamps is derived and sorted; irregular intervals are used so the
  * binary-search path in the worker helpers is exercised.
  */
-function makeLookup(frames: Array<{ t: number; actors: ActorPosition[] }>): TimestampPositionLookup {
+function makeLookup(
+  frames: Array<{ t: number; actors: ActorPosition[] }>,
+): TimestampPositionLookup {
   const positionsByTimestamp: Record<number, Record<number, ActorPosition>> = {};
   for (const { t, actors } of frames) {
     positionsByTimestamp[t] = {};

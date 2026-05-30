@@ -47,11 +47,7 @@ function computeDefaultCameraPosition(
 ): [number, number, number] {
   const viewDistance = Math.max(30, minDistance * 2.5) * actorScale;
   const [targetX, targetY, targetZ] = target;
-  return [
-    targetX - viewDistance * 0.6,
-    targetY + viewDistance * 0.5,
-    targetZ + viewDistance * 0.6,
-  ];
+  return [targetX - viewDistance * 0.6, targetY + viewDistance * 0.5, targetZ + viewDistance * 0.6];
 }
 
 type ContextMenuState =

@@ -32,7 +32,9 @@ describe('createMarkerFromElmsIcon', () => {
   });
 
   it('throws on an unknown icon key', () => {
-    expect(() => createMarkerFromElmsIcon(99999, { x: 0, y: 0, z: 0 })).toThrow(/Unknown Elms icon/);
+    expect(() => createMarkerFromElmsIcon(99999, { x: 0, y: 0, z: 0 })).toThrow(
+      /Unknown Elms icon/,
+    );
   });
 
   it('defaults colour to opaque white when the template has none', () => {
