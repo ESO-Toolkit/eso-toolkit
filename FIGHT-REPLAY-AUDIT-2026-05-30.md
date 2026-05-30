@@ -66,6 +66,22 @@ non-reactive approach that coexists with the manual render loop (e.g. drive rend
 owned loop rather than toggling R3F's mode) — left as future work. The paused-render waste is real
 (~73/sec doing nothing) but is **not** worth a playback regression.
 
+**Update — correct approach built, PARKED on a branch pending live QA.** The non-reactive version
+described above was implemented on `wip/fight-replay-ondemand-render` (NOT merged): the existing
+priority-999 `RenderLoop` keeps `frameloop='always'` but gates its `gl.render` behind a
+render-budget _ref_ (never state) refilled by playback/scrub (`timeRef` advancing), camera motion
+(OrbitControls `'change'`), actor-follow (`followingActorIdRef != null`), and any React commit of
+the scene (markers/trails/visibility/HUD). Playing renders every frame by construction (time
+changes every frame), so the prior fps regression cannot recur. It is **parked, not shipped**,
+because the unverified risk is _paint-correctness_, not fps: an async CDN map texture resolving
+while paused-and-static flips `material.needsUpdate` inside a child `useFrame` _without_
+re-rendering `Arena3DScene`, so the commit-refill effect may not fire and the budget may already be
+drained → a missed repaint. The local dev env can't measure/observe this reliably (the dev-only
+`PerformanceMonitor`'s setState-in-`useFrame` confounds playing fps). **Verify on the deploy-preview
+/ prod** (real data renders there): watch that paused→texture-load, paused→add-marker, paused→toggle
+trails, and follow-cam-settle all repaint, and confirm paused-static drawCalls→~0 while playing
+drawCalls stay in-baseline. Only then rebase onto `feat`/merge.
+
 ### Latent bugs found while writing tests
 
 - **`extractPlayerPaths` drops the frame at timestamp 0.** ✅ **FIXED.** `lastSampleTime` initialized
