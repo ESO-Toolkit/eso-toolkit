@@ -596,7 +596,25 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             failIfMajorPerformanceCaveat: false,
           }}
           onContextMenu={handleCanvasContextMenu}
-          onCreated={({ gl }) => {
+          onCreated={(state) => {
+            const { gl } = state;
+            // Dev-only: expose the renderer/scene/camera for perf probing (e.g.
+            // gl.info.render.frame, toggling gl.shadowMap.autoUpdate, timing gl.render).
+            // R3F keeps these in its own reconciler, unreachable through the main React
+            // fiber tree, so this is the only handle. Stripped from production builds.
+            if (process.env.NODE_ENV === 'development') {
+              const w = window as unknown as {
+                __gl?: unknown;
+                __scene?: unknown;
+                __camera?: unknown;
+                __r3f?: unknown;
+              };
+              w.__gl = gl;
+              w.__scene = state.scene;
+              w.__camera = state.camera;
+              w.__r3f = state; // root store; has advance(timestamp) to run all useFrame subs once
+            }
+
             // Handle WebGL context loss and restoration
             const canvas = gl.domElement;
 
