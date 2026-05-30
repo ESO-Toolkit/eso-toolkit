@@ -66,40 +66,40 @@ non-reactive approach that coexists with the manual render loop (e.g. drive rend
 owned loop rather than toggling R3F's mode) — left as future work. The paused-render waste is real
 (~73/sec doing nothing) but is **not** worth a playback regression.
 
-**Update — correct approach built, PARTIALLY VERIFIED, still PARKED (verification PR #1160).** The
-non-reactive version described above was implemented on `wip/fight-replay-ondemand-render` (NOT
-merged): the existing priority-999 `RenderLoop` keeps `frameloop='always'` but gates its `gl.render`
-behind a render-budget _ref_ (never state) refilled by playback/scrub (`timeRef` advancing), camera
-motion (OrbitControls `'change'`), actor-follow (`followingActorIdRef != null`), and any React commit
-of the scene (markers/trails/visibility/HUD, via a deps-less effect in `Arena3DScene`).
+**Update — correct approach built and ✅ SHIPPED.** The non-reactive version described above is now in
+this PR: the priority-999 `RenderLoop` keeps `frameloop='always'` but gates its `gl.render` behind a
+render-budget _ref_ (never state — a state flag would re-render the tree every frame and reintroduce
+the very cost being removed). The budget is refilled by playback/scrub (`timeRef` advancing), camera
+motion (OrbitControls `'change'`), actor follow/selection (`followingActorIdRef != null`), any React
+commit of the scene (markers/trails/visibility, via a deps-less effect in `Arena3DScene`), and async
+map-texture swaps (`DynamicMapTexture` → `markSceneDirty`). Playing renders **every frame by
+construction** (time advances every frame → budget refilled), so the prior reactive-`frameloop` fps
+regression cannot recur.
 
-Live-measured on the Dreadsail Reef fight (single-file overlay onto the running dev server, draw-call
-counting on the canvas WebGL2 context — `gl.info` is unreachable through the React fiber tree):
+**Paint-correctness audit.** A read-only subtree audit (13 scene components) surfaced two candidate
+missed-paint sources while paused; one was real:
 
-- ✅ **The win**: paused + static drawCalls **~9000/sec → 0/sec**.
-- ✅ Playing renders **every frame** (drawCalls present every tick on both `feat` and the D branch);
-  the prior fps regression does not recur (by construction — time changes every frame while playing).
-- ✅ Repaint edges all fire then settle back to 0: toggle trails (T) / player list (P) (React commit),
-  camera drag (OrbitControls `'change'`, settles since damping is off), actor-follow lerp
-  (continuous while following; clears on unlock).
+- **`DynamicMapTexture`** swaps `material.map` from `TextureLoader` promise callbacks (success +
+  fallback `.catch`, in both the `useFrame` and initial-load `useEffect` paths) — outside any React
+  commit / time change / camera move. **Fixed**: all four sites route through a new exported
+  `applyFloorTexture(material, texture, onTextureChange)` helper; `Arena3DScene` passes
+  `markSceneDirty` so the budget refills and the new floor paints while paused.
+- **`AnimationFrameActor3D`** selection visuals — **not a gap**: `selectedActorRef` _is_
+  `followingActorIdRef`, so while any actor is selected the `followingActorIdRef.current !== null`
+  refill keeps the budget topped every frame; deselect routes through React state (commit). A
+  load-bearing code comment records this so the refill isn't "optimized away."
+- The other 10 components are time-driven (read `timeRef` → frozen when paused → nothing to paint) and
+  safe.
 
-**Why still PARKED — the main path is UNVERIFIED, not passing.** The risk is _paint-correctness_, and
-the one fight that renders locally (Dreadsail) made **zero `assets.rpglogs.com` requests** all session —
-its `mapTimeline` is empty, so `DynamicMapTexture`'s `useFrame` early-returns and the floor comes from
-the Suspense/grid fallback (which paints inside the initial budget). So the **CDN-map-texture path was
-never exercised** — and that is the _designed-normal_ path for most fights. The hazard: a CDN texture
-resolves from a network promise _after_ the ~4-frame budget drains, sets `material.needsUpdate` with
-budget already 0, and the floor stays on the fallback until the user interacts. D's dirty-tracking is
-**heuristic** (it enumerates dirty sources); this is one async, non-React-commit source found by code
-reading, and the subtree was not audited for others.
-
-**To make D shippable** (more than a one-liner): (a) thread the `renderBudgetRef` into
-`DynamicMapTexture` and bump it in **both** the load-success and the catch (Task-B fallback)
-callbacks; (b) unit-test that contract (awkward — R3F-in-jsdom limits component tests, same wall hit
-for Task B); (c) **audit the scene subtree for other async dirty sources** that mutate materials while
-paused. Then verify on a **CDN-texture fight** (prod, where real data renders) that paused→texture-load
-repaints, before rebasing onto `feat`/merging. Until then the paused-render waste (~73–150/sec) stays —
-it is not worth a possibly-blank floor on the common load path.
+**Verified.** Live on Dreadsail Reef (single-file overlay + canvas draw-call counting — `gl.info` is
+unreachable through the React fiber tree): paused-static drawCalls **~9000/sec → 0** (the win); playing
+renders every frame (no regression); toggle trails (T) / list (P), camera drag (settles, damping off),
+and actor select→follow→unlock all repaint then settle; floor non-regressed. The
+**CDN-texture-resolve-while-paused** path can't be triggered on Dreadsail (empty `mapTimeline` → no CDN
+fetch), so it is verified by composition instead: `applyFloorTexture` invokes `onTextureChange`
+(4 unit tests in `DynamicMapTexture.test.ts`) ∘ the live-proven "budget bump → scene paints" behavior =
+texture-load → paint. Not directly observed on a CDN-texture floor; worth a confirming glance on prod,
+but the contract is closed in code and test.
 
 ### Latent bugs found while writing tests
 
@@ -122,9 +122,9 @@ cannot be safely verified locally. Grouped by theme.
 
 ### Performance
 
-- **On-demand rendering when paused** — tried via `frameloop={isPlaying ? 'always' : 'demand'}` and
-  **reverted** (regressed playback ~40→24fps; see the Live-verified section). A correct version needs
-  a non-reactive render-control approach that coexists with the manual priority-999 render loop.
+- ~~**On-demand rendering when paused**~~ ✅ **SHIPPED** (paused-static renders ~9000/sec → 0 via a
+  budget-gated `RenderLoop` that coexists with the manual priority-999 loop; see the
+  `frameloop=demand` section above for the full write-up and verification).
 - **Selection-ring geometry shared across actors** (`AnimationFrameActor3D.tsx`) — memory cleanup,
   not a runtime stall (the verifier corrected the original "GPU stall" claim).
 - ~~`setInterval(checkRefChanges, 100)` ref-polling in `Arena3D` → replace with state/callback.~~
