@@ -102,6 +102,74 @@ fetch), so it is verified by composition instead: `applyFloorTexture` invokes `o
 texture-load → paint. Not directly observed on a CDN-texture floor; worth a confirming glance on prod,
 but the contract is closed in code and test.
 
+### Actor-loop consolidation refactor — INVESTIGATED, NOT JUSTIFIED (do not build)
+
+A follow-up session was briefed to consolidate the ~50 per-actor `useFrame`s (+ the per-actor
+`ActorNameBillboard` `useFrame`) into one orchestrator loop in `Arena3DScene`, dedupe the per-actor
+`getActorPositionAtClosestTimestamp`, and hoist billboard allocations — targeting ~75 → ~120fps on
+the heavy Rockgrove fight (`report/yNXakmx76QFBcpRZ/fight/4/replay`, ~50 actors). **The refactor was
+not built: profiling showed it cannot deliver the target, because the per-actor `useFrame` JS is not
+the bottleneck.** The remaining per-frame cost is in a different layer (DOM layout/paint) that the
+briefed refactor does not touch.
+
+**Method.** The prior "~11ms/frame, spread across the useFrames" figure was measured in dev and is
+confounded — the dev React profiling build alone spends ~22% of frame time in React `measure`
+(`logComponentRender` / `addObjectDiffToProperties` / `jsxDEV`), all stripped from prod. A clean
+measurement requires the prod preview **with every other tab closed** (a stray `localhost:3000`
+replay tab was found contaminating the first capture — 62% of its samples were the dev page's main
+thread, identifiable by the Vite `?v=` query and raw `.tsx` source URLs). Captures were taken with
+Chrome MCP `performance_start_trace` while playing from a dense mid-fight moment (~86s of the 215s
+fight, names on — `FightReplay.tsx` hardcodes `showActorNames={true}`, so billboards are in-path),
+then self-time aggregated per script chunk from the reconstructed CPU profile.
+
+**Clean prod result (single tab, 0.00% dev contamination, ~15s playing capture):**
+
+| Layer                                   | Per-frame self-time |
+| --------------------------------------- | ------------------- |
+| App `useFrame` JS (FightReplay + THREE) | **~2.45 ms/frame**  |
+| React (`vendor` chunk)                  | ~1.52 ms/frame      |
+| **Total scripting**                     | **~4 ms/frame**     |
+| Idle                                    | **~69% of frame**   |
+
+No single fat lever: the top app function is ~3.6% of the chunk; the THREE matrix/quaternion math the
+brief suspected (`multiplyMatrices`, `updateMatrixWorld`, `compose`, `copy`, `getWorldQuaternion`) is
+**0.1–0.2% each** in clean prod. The per-actor lookup is already O(1) (`hasRegularIntervals === true`
+for this fight) and the dedup/alloc-hoist wins measure ~0.1–0.2% — real but invisible to fps. So the
+consolidation's premise (broadly cheapen ~50 useFrames to claw back ~5ms) is moot: there is no ~5ms
+of useFrame JS to claw back. Zeroing the entire actor loop would not reach 120fps.
+
+**Measurement caveat (load-bearing).** Raw-rAF fps on the test hardware is **vsync-capped at 60Hz**
+(frame interval median 16.6ms, min 8ms) — it physically cannot express 75 vs 120, so the headline
+metric here is **per-frame work-time-ms**, not fps. (75fps ⇒ 13.3ms; 120fps ⇒ 8.3ms; measured prod
+useFrame JS is ~2.45ms.) The prior "~75fps" baseline came from higher-refresh hardware.
+
+**Where the real per-frame cost is: DOM layout/paint, not the 3D loop.** A paused-vs-playing trace
+comparison isolates it cleanly — these events fire ~once per frame while **playing** and are
+**entirely absent while paused**:
+
+| Event (per second) | Playing       | Paused |
+| ------------------ | ------------- | ------ |
+| `Layout`           | 892 events    | **0**  |
+| `Paint`            | 1719 events   | **0**  |
+| `UpdateLayer`      | 39,400 events | **0**  |
+
+The 3D canvas paints on the GPU; this `Layout`/`Paint` is **HTML DOM** thrash. The live DOM shows the
+culprit layer: the MUI `<Slider>` track/thumb (`MuiSlider-track` / `MuiSlider-thumb`) rewrites inline
+`left:` / `width:` styles and the `m:ss` time readout updates as the playhead advances (MUI was ~6%
+of the playing trace; absent when paused). It is **only ~0.5ms/frame** of layout+paint, so it is not
+a smoothness problem at 60Hz — but it is the _only_ playing-specific cost beyond the GPU canvas, and
+therefore the sole candidate lever for any future high-refresh fps work. The throttled 500ms
+`setCurrentTime` React state is **not** the driver (it commits ~2×/s, not 60×/s); the per-frame DOM
+write originates from a separate path that tracks the playhead — investigating and detaching that
+(e.g. driving the scrubber position off `timeRef` via a direct transform write, or `content-visibility`
+/ compositor-only updates) is the recommended, scoped follow-up. **Out of scope for this PR** and
+unmeasurable for fps on 60Hz hardware, so deliberately deferred rather than coded blind.
+
+**Conclusion.** The per-actor `useFrame` consolidation is **not justified** — it optimizes a layer
+(~2.45ms/frame, 69% idle) that is not the bottleneck and cannot reach 120fps. 75fps is already smooth
+and shipped. The actionable lever for any future fps work is the per-frame DOM layout/paint from the
+MUI timeline slider, documented above. No code change shipped from this investigation.
+
 ### Latent bugs found while writing tests
 
 - **`extractPlayerPaths` drops the frame at timestamp 0.** ✅ **FIXED.** `lastSampleTime` initialized
