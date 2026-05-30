@@ -11,6 +11,8 @@ import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import { MapMarkersState } from '../types/mapMarkers';
 
+import { clampReplayTime } from '../utils/replayTime';
+
 import { Arena3D } from './Arena3D';
 import { PlaybackControls } from './PlaybackControls';
 
@@ -79,8 +81,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     }
   }
 
-  // Playback state - initialize with URL parameter if available
-  const [currentTime, setCurrentTime] = useState(initialTime);
+  // Clamp the URL-provided time to the valid fight range so a malformed deep link
+  // (e.g. ?time=-5000 or ?time=999999999) cannot initialize playback out of bounds.
+  const fightDuration = selectedFight.endTime - selectedFight.startTime;
+  const clampedInitialTime = clampReplayTime(initialTime, fightDuration);
+
+  // Playback state - initialize with URL parameter if available (clamped to range)
+  const [currentTime, setCurrentTime] = useState(clampedInitialTime);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isScrubbingMode, setIsScrubbingMode] = useState(false);
