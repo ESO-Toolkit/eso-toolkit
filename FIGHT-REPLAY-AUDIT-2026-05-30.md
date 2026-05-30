@@ -66,21 +66,40 @@ non-reactive approach that coexists with the manual render loop (e.g. drive rend
 owned loop rather than toggling R3F's mode) — left as future work. The paused-render waste is real
 (~73/sec doing nothing) but is **not** worth a playback regression.
 
-**Update — correct approach built, PARKED on a branch pending live QA.** The non-reactive version
-described above was implemented on `wip/fight-replay-ondemand-render` (NOT merged): the existing
-priority-999 `RenderLoop` keeps `frameloop='always'` but gates its `gl.render` behind a
-render-budget _ref_ (never state) refilled by playback/scrub (`timeRef` advancing), camera motion
-(OrbitControls `'change'`), actor-follow (`followingActorIdRef != null`), and any React commit of
-the scene (markers/trails/visibility/HUD). Playing renders every frame by construction (time
-changes every frame), so the prior fps regression cannot recur. It is **parked, not shipped**,
-because the unverified risk is _paint-correctness_, not fps: an async CDN map texture resolving
-while paused-and-static flips `material.needsUpdate` inside a child `useFrame` _without_
-re-rendering `Arena3DScene`, so the commit-refill effect may not fire and the budget may already be
-drained → a missed repaint. The local dev env can't measure/observe this reliably (the dev-only
-`PerformanceMonitor`'s setState-in-`useFrame` confounds playing fps). **Verify on the deploy-preview
-/ prod** (real data renders there): watch that paused→texture-load, paused→add-marker, paused→toggle
-trails, and follow-cam-settle all repaint, and confirm paused-static drawCalls→~0 while playing
-drawCalls stay in-baseline. Only then rebase onto `feat`/merge.
+**Update — correct approach built, PARTIALLY VERIFIED, still PARKED (verification PR #1160).** The
+non-reactive version described above was implemented on `wip/fight-replay-ondemand-render` (NOT
+merged): the existing priority-999 `RenderLoop` keeps `frameloop='always'` but gates its `gl.render`
+behind a render-budget _ref_ (never state) refilled by playback/scrub (`timeRef` advancing), camera
+motion (OrbitControls `'change'`), actor-follow (`followingActorIdRef != null`), and any React commit
+of the scene (markers/trails/visibility/HUD, via a deps-less effect in `Arena3DScene`).
+
+Live-measured on the Dreadsail Reef fight (single-file overlay onto the running dev server, draw-call
+counting on the canvas WebGL2 context — `gl.info` is unreachable through the React fiber tree):
+
+- ✅ **The win**: paused + static drawCalls **~9000/sec → 0/sec**.
+- ✅ Playing renders **every frame** (drawCalls present every tick on both `feat` and the D branch);
+  the prior fps regression does not recur (by construction — time changes every frame while playing).
+- ✅ Repaint edges all fire then settle back to 0: toggle trails (T) / player list (P) (React commit),
+  camera drag (OrbitControls `'change'`, settles since damping is off), actor-follow lerp
+  (continuous while following; clears on unlock).
+
+**Why still PARKED — the main path is UNVERIFIED, not passing.** The risk is _paint-correctness_, and
+the one fight that renders locally (Dreadsail) made **zero `assets.rpglogs.com` requests** all session —
+its `mapTimeline` is empty, so `DynamicMapTexture`'s `useFrame` early-returns and the floor comes from
+the Suspense/grid fallback (which paints inside the initial budget). So the **CDN-map-texture path was
+never exercised** — and that is the _designed-normal_ path for most fights. The hazard: a CDN texture
+resolves from a network promise _after_ the ~4-frame budget drains, sets `material.needsUpdate` with
+budget already 0, and the floor stays on the fallback until the user interacts. D's dirty-tracking is
+**heuristic** (it enumerates dirty sources); this is one async, non-React-commit source found by code
+reading, and the subtree was not audited for others.
+
+**To make D shippable** (more than a one-liner): (a) thread the `renderBudgetRef` into
+`DynamicMapTexture` and bump it in **both** the load-success and the catch (Task-B fallback)
+callbacks; (b) unit-test that contract (awkward — R3F-in-jsdom limits component tests, same wall hit
+for Task B); (c) **audit the scene subtree for other async dirty sources** that mutate materials while
+paused. Then verify on a **CDN-texture fight** (prod, where real data renders) that paused→texture-load
+repaints, before rebasing onto `feat`/merging. Until then the paused-render waste (~73–150/sec) stays —
+it is not worth a possibly-blank floor on the common load path.
 
 ### Latent bugs found while writing tests
 
