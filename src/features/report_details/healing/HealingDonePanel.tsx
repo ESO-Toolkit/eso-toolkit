@@ -113,11 +113,19 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ context }) =
   }, [fight]);
 
   const isPlayerActor = useMemo(() => {
-    return (id: string | number) => {
+    return (id: string) => {
       const actor = masterData.actorsById[id];
-      return actor && actor.type === 'Player';
+      if (!actor) {
+        return false;
+      }
+
+      if (fight?.friendlyPlayers?.some((friendlyId) => friendlyId?.toString() === id)) {
+        return true;
+      }
+
+      return fight?.friendlyNPCs?.some((npc) => npc?.id?.toString() === id);
     };
-  }, [masterData.actorsById]);
+  }, [masterData.actorsById, fight]);
 
   // Helper function to determine player role
   const getPlayerRole = useMemo(() => {

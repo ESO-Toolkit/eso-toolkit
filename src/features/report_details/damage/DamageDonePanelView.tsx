@@ -98,11 +98,14 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
     });
   }, [damageRows, sortField, sortDirection]);
 
-  // Find the highest damage for progress bar calculations
-  const maxDamage = sortedRows.length > 0 ? Math.max(...sortedRows.map((row) => row.total)) : 1;
-
-  // Calculate total damage for percentage display
-  const totalDamage = sortedRows.reduce((sum, row) => sum + row.total, 0);
+  // Derived totals (maxDamage for progress bars, totalDamage for percentages)
+  const { maxDamage, totalDamage } = useMemo(
+    () => ({
+      maxDamage: sortedRows.length > 0 ? Math.max(...sortedRows.map((row) => row.total)) : 1,
+      totalDamage: sortedRows.reduce((sum, row) => sum + row.total, 0),
+    }),
+    [sortedRows],
+  );
 
   // Handle column header clicks for sorting
   const handleSort = (field: SortField): void => {
@@ -479,6 +482,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             </Box>
             <Tooltip title="Deaths" arrow>
               <Box
+                role="img"
+                aria-label="Deaths"
                 sx={{
                   textAlign: 'center',
                 }}
@@ -488,6 +493,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             </Tooltip>
             <Tooltip title="Resurrects" arrow>
               <Box
+                role="img"
+                aria-label="Resurrects"
                 sx={{
                   textAlign: 'center',
                 }}
@@ -497,6 +504,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             </Tooltip>
             <Tooltip title="Casts Per Minute" arrow>
               <Box
+                role="img"
+                aria-label="Casts per minute"
                 sx={{
                   textAlign: 'center',
                 }}
@@ -1121,6 +1130,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         }}
                       >
                         <Typography
+                          aria-hidden="true"
                           sx={{
                             fontSize: '0.75rem',
                             color: roleColors.isDarkMode ? '#f87171' : '#dc2626',

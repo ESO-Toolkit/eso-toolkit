@@ -417,6 +417,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`View ${playerName} deaths on ESO Logs (opens in new tab)`}
+                  title={`View ${playerName} deaths on ESO Logs (opens in new tab)`}
                   style={{ textDecoration: 'none' }}
                 >
                   {chip}
@@ -528,7 +530,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 
           return (
             <Card
-              key={idx}
+              key={`${info.playerId}-${info.timestamp}`}
               sx={{
                 ...glassCard(theme.palette.mode),
                 position: 'relative',

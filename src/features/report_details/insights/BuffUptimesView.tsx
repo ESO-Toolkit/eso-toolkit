@@ -44,12 +44,27 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
 }) => {
   const descriptionId = React.useId();
   const [nameFilter, setNameFilter] = React.useState('');
+  const [expandedRows, setExpandedRows] = React.useState(false);
 
   const filteredBuffUptimes = React.useMemo(() => {
     if (!nameFilter.trim()) return buffUptimes;
     const normalizedFilter = nameFilter.trim().toLowerCase();
     return buffUptimes.filter((buff) => buff.abilityName.toLowerCase().includes(normalizedFilter));
   }, [buffUptimes, nameFilter]);
+
+  // Cap the number of rendered rows to avoid mounting a large number of
+  // progress bars at once (each can expand into a stacks Collapse). Mirrors
+  // the slice cap used in DamageBreakdownView, with an opt-in "show more".
+  const ROW_CAP = 30;
+  const visibleBuffUptimes = expandedRows
+    ? filteredBuffUptimes
+    : filteredBuffUptimes.slice(0, ROW_CAP);
+  const hiddenCount = filteredBuffUptimes.length - visibleBuffUptimes.length;
+
+  // Collapse back to the cap whenever the result set changes (filter/data).
+  React.useEffect(() => {
+    setExpandedRows(false);
+  }, [nameFilter, buffUptimes]);
 
   if (isLoading) {
     return (
@@ -193,7 +208,7 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
       {filteredBuffUptimes.length > 0 ? (
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
-            {filteredBuffUptimes.map((buff) => {
+            {visibleBuffUptimes.map((buff) => {
               return (
                 <ListItem
                   key={buff.abilityGameID}
@@ -216,6 +231,13 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
               );
             })}
           </List>
+          {hiddenCount > 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+              <Button size="small" onClick={() => setExpandedRows(true)}>
+                Show {hiddenCount} more
+              </Button>
+            </Box>
+          )}
         </Box>
       ) : (
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>

@@ -207,8 +207,11 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
       return true;
     }
 
-    // Still loading if fight data is not available
-    if (friendlyPlayerIds.size === 0 || !fightDuration) {
+    // Still loading if fight data is not available.
+    // Note: a resolved fight with zero friendly players is NOT loading — it
+    // should fall through to the View's empty state, so we only gate on fight
+    // data still being unavailable (no duration yet), not on player count.
+    if (!fightDuration) {
       return true;
     }
 
@@ -217,13 +220,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
 
     // Data is ready
     return false;
-  }, [
-    isMasterDataLoading,
-    isFriendlyBuffEventsLoading,
-    friendlyBuffsLookup,
-    friendlyPlayerIds,
-    fightDuration,
-  ]);
+  }, [isMasterDataLoading, isFriendlyBuffEventsLoading, friendlyBuffsLookup, fightDuration]);
 
   const prefetchedSeries = React.useMemo(() => {
     if (!friendlyBuffsLookup || !fightStartTime || !fightEndTime) {

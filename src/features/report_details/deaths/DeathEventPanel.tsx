@@ -41,40 +41,78 @@ interface AttackEvent {
   attackerWasTaunted?: boolean | null;
 }
 
-// Simple health calculation function
+// OPTIMIZED: Binary search for the first index whose timestamp >= target.
+function lowerBoundByTimestamp(events: { timestamp: number }[], target: number): number {
+  let left = 0;
+  let right = events.length - 1;
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    if (events[mid].timestamp >= target) {
+      right = mid - 1;
+    } else {
+      left = mid + 1;
+    }
+  }
+  return left;
+}
+
+// OPTIMIZED: Binary search for the last index whose timestamp <= target.
+function upperBoundByTimestamp(
+  events: { timestamp: number }[],
+  target: number,
+  fromIndex = 0,
+): number {
+  let left = fromIndex;
+  let right = events.length - 1;
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    if (events[mid].timestamp <= target) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+  return right;
+}
+
+// Simple health calculation function.
+// OPTIMIZED: callers pass timestamp-sorted arrays so we can binary-search the
+// look-back window instead of linearly filtering the full event arrays per death.
 function calculateHealthBeforeDeath(
   playerId: string,
   deathTimestamp: number,
-  damageEvents: DamageEvent[],
-  healingEvents: HealEvent[],
-  resourceEvents: ResourceChangeEvent[],
+  sortedDamageEvents: DamageEvent[],
+  sortedHealingEvents: HealEvent[],
+  sortedResourceEvents: ResourceChangeEvent[],
 ): { health: number | null; maxHealth: number | null } {
   const timeWindow = 10000; // Look back 10 seconds
   const minTimeBeforeDeath = 10; // Must be at least 10ms before death
+  const windowStart = deathTimestamp - timeWindow;
+  const windowEnd = deathTimestamp - minTimeBeforeDeath;
+
+  const collectWindow = <T extends { timestamp: number; targetID?: number | null }>(
+    sortedEvents: T[],
+  ): T[] => {
+    const startIndex = lowerBoundByTimestamp(sortedEvents, windowStart);
+    const endIndex = upperBoundByTimestamp(sortedEvents, windowEnd, startIndex);
+    const result: T[] = [];
+    for (let i = startIndex; i <= endIndex; i++) {
+      const e = sortedEvents[i];
+      if (
+        String(e.targetID ?? '') === playerId &&
+        (e as { targetResources?: { hitPoints?: number } }).targetResources?.hitPoints !== undefined
+      ) {
+        result.push(e);
+      }
+    }
+    return result;
+  };
 
   // Combine all events that might have health data
   const allHealthEvents = [
-    ...damageEvents.filter(
-      (e) =>
-        String(e.targetID ?? '') === playerId &&
-        e.timestamp >= deathTimestamp - timeWindow &&
-        e.timestamp <= deathTimestamp - minTimeBeforeDeath &&
-        e.targetResources?.hitPoints !== undefined,
-    ),
-    ...healingEvents.filter(
-      (e) =>
-        String(e.targetID ?? '') === playerId &&
-        e.timestamp >= deathTimestamp - timeWindow &&
-        e.timestamp <= deathTimestamp - minTimeBeforeDeath &&
-        e.targetResources?.hitPoints !== undefined,
-    ),
-    ...resourceEvents.filter(
-      (e) =>
-        String(e.targetID ?? '') === playerId &&
-        e.timestamp >= deathTimestamp - timeWindow &&
-        e.timestamp <= deathTimestamp - minTimeBeforeDeath &&
-        e.targetResources?.hitPoints !== undefined,
-    ),
+    ...collectWindow(sortedDamageEvents),
+    ...collectWindow(sortedHealingEvents),
+    ...collectWindow(sortedResourceEvents),
   ].sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0)); // Most recent first
 
   // Find the most recent event with valid health data
@@ -186,6 +224,10 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
 
     // OPTIMIZED: Sort damage events by timestamp for efficient range queries
     const sortedDamageEvents = [...damageEvents].sort((a, b) => a.timestamp - b.timestamp);
+    // OPTIMIZED: Sort healing/resource events ONCE so per-death health lookups can
+    // binary-search the look-back window instead of re-filtering the full arrays.
+    const sortedHealingEvents = [...healingEvents].sort((a, b) => a.timestamp - b.timestamp);
+    const sortedResourceEvents = [...resourceEvents].sort((a, b) => a.timestamp - b.timestamp);
 
     // OPTIMIZED: Group deaths by player for batch processing
     const deathsByPlayer = new Map<string, DeathEvent[]>();
@@ -289,16 +331,25 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
         const timeWindowMs = 1000; // Look back 1 second
         const simultaneousWindowMs = 50; // Treat damage within 50ms as simultaneous
 
-        const recentDamageToPlayer = sortedDamageEvents
-          .filter(
-            (dmgEvent) =>
-              String(dmgEvent.targetID ?? '') === playerId &&
-              dmgEvent.timestamp >= deathTimestamp - timeWindowMs &&
-              dmgEvent.timestamp <= deathTimestamp &&
-              typeof dmgEvent.amount === 'number' &&
-              dmgEvent.amount > 0,
-          )
-          .sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0)); // Most recent first
+        // OPTIMIZED: Binary-search the [deathTimestamp - timeWindowMs, deathTimestamp]
+        // window instead of linearly filtering the full sorted damage array per death.
+        const kbStartIndex = lowerBoundByTimestamp(
+          sortedDamageEvents,
+          deathTimestamp - timeWindowMs,
+        );
+        const kbEndIndex = upperBoundByTimestamp(sortedDamageEvents, deathTimestamp, kbStartIndex);
+        const recentDamageToPlayer: DamageEvent[] = [];
+        for (let i = kbStartIndex; i <= kbEndIndex; i++) {
+          const dmgEvent = sortedDamageEvents[i];
+          if (
+            String(dmgEvent.targetID ?? '') === playerId &&
+            typeof dmgEvent.amount === 'number' &&
+            dmgEvent.amount > 0
+          ) {
+            recentDamageToPlayer.push(dmgEvent);
+          }
+        }
+        recentDamageToPlayer.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0)); // Most recent first
 
         if (recentDamageToPlayer.length > 0) {
           const mostRecentDamage = recentDamageToPlayer[0];
@@ -371,11 +422,14 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
         // If we have a killing blow event, exclude it from recent attacks
         let lastAttacks: AttackEvent[];
         if (killingBlowEvent) {
-          // Filter out the killing blow event (match by timestamp and amount)
+          // Exclude every hit that contributed to the killing blow. The killing blow's
+          // amount is the SUMMED simultaneous damage, so matching on amount misses the
+          // individual contributing hits. Instead, drop any attack within the same
+          // simultaneity window (mirrors how the killing blow group is built above).
           const filteredAttacks = allValidAttacks.filter(
             (attack) =>
-              attack.timestamp !== killingBlowEvent!.timestamp ||
-              attack.amount !== killingBlowEvent!.amount,
+              Math.abs((attack.timestamp ?? 0) - (killingBlowEvent!.timestamp ?? 0)) >
+              simultaneousWindowMs,
           );
           lastAttacks = filteredAttacks.slice(-3);
         } else {
@@ -419,8 +473,8 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
           playerId,
           deathTimestamp,
           sortedDamageEvents,
-          healingEvents,
-          resourceEvents,
+          sortedHealingEvents,
+          sortedResourceEvents,
         );
 
         deaths.push({
@@ -428,12 +482,15 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ context }) => 
           timestamp: deathEvent.timestamp ?? 0,
           killingBlow,
           lastAttacks,
-          stamina: deathEvent.targetResources.stamina,
-          maxStamina: deathEvent.targetResources.maxStamina,
+          stamina: deathEvent.targetResources?.stamina ?? null,
+          maxStamina: deathEvent.targetResources?.maxStamina ?? null,
           health,
           maxHealth,
           killingBlowDamage,
-          wasBlocking: false,
+          // Wire the previously dead 'BLOCKING' badge to real data: derive from whether
+          // the killing blow (or, failing that, the most recent attack) was blocked.
+          wasBlocking:
+            killingBlow?.wasBlocked ?? lastAttacks[lastAttacks.length - 1]?.wasBlocked ?? null,
           deathDurationMs: deathDurationData?.deathDurationMs ?? null,
           resurrectionTime: deathDurationData?.resurrectionTime ?? null,
           killerWasTaunted: killingBlow?.attackerWasTaunted ?? null,

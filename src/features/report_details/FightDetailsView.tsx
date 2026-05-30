@@ -31,7 +31,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { Suspense, useDeferredValue } from 'react';
+import React, { Suspense, useDeferredValue, useMemo } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { PanelErrorBoundary } from '../../components/PanelErrorBoundary';
@@ -184,6 +184,33 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
+  // Shared style for the Previous/Next navigation IconButtons (depends on
+  // isDarkMode, so it is computed inside the component rather than at module scope).
+  const navIconButtonSx = useMemo(
+    () => ({
+      width: { xs: 32, md: 36 },
+      height: { xs: 32, md: 36 },
+      minWidth: { xs: '32px !important', md: 36 },
+      minHeight: { xs: '32px !important', md: 36 },
+      borderRadius: { xs: '8px', md: '10px' },
+      backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
+      color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
+      padding: { xs: '4px', md: '5px' },
+      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
+      '&:hover': {
+        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+        color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
+        transform: 'scale(1.08)',
+      },
+      '&:disabled': {
+        opacity: 0.25,
+        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+      },
+    }),
+    [isDarkMode],
+  );
+
   // Generate player list for the buff source selector
   const { reportMasterData } = useReportMasterData();
   const playerList = React.useMemo(() => {
@@ -241,27 +268,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             disabled={!navigationData.previousFight}
             size="small"
             aria-label="Previous fight"
-            sx={{
-              width: { xs: 32, md: 36 },
-              height: { xs: 32, md: 36 },
-              minWidth: { xs: '32px !important', md: 36 },
-              minHeight: { xs: '32px !important', md: 36 },
-              borderRadius: { xs: '8px', md: '10px' },
-              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
-              padding: { xs: '4px', md: '5px' },
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
-              '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
-                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
-                transform: 'scale(1.08)',
-              },
-              '&:disabled': {
-                opacity: 0.25,
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
-              },
-            }}
+            sx={navIconButtonSx}
           >
             <ChevronLeftIcon />
           </IconButton>
@@ -365,27 +372,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             disabled={!navigationData.nextFight}
             size="small"
             aria-label="Next fight"
-            sx={{
-              width: { xs: 32, md: 36 },
-              height: { xs: 32, md: 36 },
-              minWidth: { xs: '32px !important', md: 36 },
-              minHeight: { xs: '32px !important', md: 36 },
-              borderRadius: { xs: '8px', md: '10px' },
-              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)',
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.7)',
-              padding: { xs: '4px', md: '5px' },
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              '& .MuiSvgIcon-root': { fontSize: { xs: '1.15rem', md: '1.5rem' } },
-              '&:hover': {
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
-                color: isDarkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.9)',
-                transform: 'scale(1.08)',
-              },
-              '&:disabled': {
-                opacity: 0.25,
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
-              },
-            }}
+            sx={navIconButtonSx}
           >
             <ChevronRightIcon />
           </IconButton>
@@ -401,7 +388,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           width: '100%',
           minWidth: 0,
           overflow: 'visible',
-          maxWidth: '100vw',
+          maxWidth: '100%',
         }}
       >
         <Tabs
@@ -414,7 +401,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             flexGrow: 1,
             minHeight: 'auto',
             overflow: 'visible',
-            maxWidth: 'calc(100vw - 80px)', // Leave space for experimental toggle
+            maxWidth: '100%', // Shrink within the flex row (minWidth:0 + flexGrow:1) instead of viewport-relative clamp
             '& .MuiTabs-indicator': {
               display: 'none',
             },
@@ -460,6 +447,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         >
           <Tab
             value={TabId.INSIGHTS}
+            aria-label="Insights"
             icon={
               <Tooltip title="Insights">
                 <InsightsIcon />
@@ -468,6 +456,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.PLAYERS}
+            aria-label="Players"
             icon={
               <Tooltip title="Players">
                 <PeopleIcon />
@@ -476,6 +465,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DAMAGE_DONE}
+            aria-label="Damage Done"
             icon={
               <Tooltip title="Damage Done">
                 <Icon
@@ -489,6 +479,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.HEALING_DONE}
+            aria-label="Healing Done"
             icon={
               <Tooltip title="Healing Done">
                 <HealingIcon />
@@ -497,6 +488,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DEATHS}
+            aria-label="Deaths"
             icon={
               <Tooltip title="Deaths">
                 <Icon
@@ -510,6 +502,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.CRITICAL_DAMAGE}
+            aria-label="Critical Damage"
             icon={
               <Tooltip title="Critical Damage">
                 <WhatshotIcon />
@@ -518,6 +511,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.PENETRATION}
+            aria-label="Penetration"
             icon={
               <Tooltip title="Penetration">
                 <SecurityIcon />
@@ -526,6 +520,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DAMAGE_REDUCTION}
+            aria-label="Damage Reduction"
             icon={
               <Tooltip title="Damage Reduction">
                 <ShieldIcon />
@@ -534,6 +529,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.SYNERGIES}
+            aria-label="Synergies"
             icon={
               <Tooltip title="Synergies">
                 <HandshakeIcon />
@@ -544,6 +540,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {/* Always render experimental tabs, but hide them when disabled */}
           <Tab
             value={TabId.LOCATION_HEATMAP}
+            aria-label="Location Heatmap"
             icon={
               <Tooltip title="Location Heatmap">
                 <MapIcon />
@@ -553,6 +550,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.RAW_EVENTS}
+            aria-label="Raw Events"
             icon={
               <Tooltip title="Raw Events">
                 <ListIcon />
@@ -562,6 +560,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.TARGET_EVENTS}
+            aria-label="Target Events"
             icon={
               <Tooltip title="Target Events">
                 <GpsFixedIcon />
@@ -571,6 +570,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DIAGNOSTICS}
+            aria-label="Diagnostics"
             icon={
               <Tooltip title="Diagnostics">
                 <BugReportIcon />
@@ -580,6 +580,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.ACTORS}
+            aria-label="Actors"
             icon={
               <Tooltip title="Actors">
                 <Person />
@@ -589,6 +590,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.TALENTS}
+            aria-label="Talents"
             icon={
               <Tooltip title="Talents">
                 <StarIcon />
@@ -598,6 +600,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.ROTATION_ANALYSIS}
+            aria-label="Rotation Analysis"
             icon={
               <Tooltip title="Rotation Analysis">
                 <RepeatIcon />
@@ -607,6 +610,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.AURAS_OVERVIEW}
+            aria-label="Auras Overview"
             icon={
               <Tooltip title="Auras Overview">
                 <AutoAwesomeIcon />
@@ -616,6 +620,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.BUFFS_OVERVIEW}
+            aria-label="Buffs Overview"
             icon={
               <Tooltip title="Buffs Overview">
                 <FlareIcon />
@@ -625,6 +630,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.DEBUFFS_OVERVIEW}
+            aria-label="Debuffs Overview"
             icon={
               <Tooltip title="Debuffs Overview">
                 <Icon
@@ -639,6 +645,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           />
           <Tab
             value={TabId.MAPS}
+            aria-label="Maps"
             icon={
               <Tooltip title="Maps">
                 <TerrainIcon />
@@ -666,10 +673,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 checked={showExperimentalTabs}
                 onChange={(e) => onToggleExperimentalTabs(e.target.checked)}
                 size="small"
+                slotProps={{ input: { 'aria-label': 'Show experimental tabs' } }}
               />
             }
             label={
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box
+                component="span"
+                aria-hidden="true"
+                sx={{ display: 'flex', alignItems: 'center' }}
+              >
                 🧪
               </Box>
             }

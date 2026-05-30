@@ -124,10 +124,6 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     isCastEventsLoading,
   ]);
 
-  const isDataReady = useMemo(() => {
-    return !isLoading;
-  }, [isLoading]);
-
   // Memoize damage calculations to prevent unnecessary recalculations
   const damageStatistics = useMemo(() => {
     const damageByPlayer: Record<number, number> = {};
@@ -395,8 +391,9 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ context }) => 
     return <DamageDoneTableSkeleton rowCount={10} />;
   }
 
-  // Don't render until we have data
-  if (!isDataReady) {
+  // Render a styled empty state when there is no damage data to show
+  // (e.g. all damage filtered out by target selection). Mirrors HealingDonePanel.
+  if (damageRows.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
         <Typography variant="body1" color="text.secondary">
