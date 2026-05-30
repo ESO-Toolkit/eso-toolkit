@@ -47,18 +47,22 @@ A user-supplied report turned out to render the 3D arena locally (its event data
 CORS-blocked), which unblocked items previously deferred for prod-only QA. Verified directly with
 Chrome MCP + `gl.info.render.frame`:
 
-| Area    | Change                                                                                                                                 | Verified by                                                  |
-| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Bug     | **Unique React keys** for coincident death markers (`death-<ts>-<targetID>` collided) — was a runtime-only bug the static audit missed | Live: `death-990503-54` console error eliminated             |
-| Perf    | **`frameloop=demand` while paused** — paused renders **~73/sec → 0/sec** (`gl.info`), playback uses the proven `always` loop           | Live: gl.info; play/pause/seek/OrbitControls-drag all redraw |
-| Quality | Non-deprecated `PCFShadowMap` (`shadows="percentage"`)                                                                                 | Live: deprecation warning gone                               |
-| UX/a11y | Replace blocking share `alert()` with a snackbar; treat share-sheet cancel (AbortError) as a silent no-op                              | `ShareButton.test.tsx` (cancel + failure paths)              |
-| a11y    | `prefers-reduced-motion` (+ paused) snaps the follow camera instead of lerping; new `usePrefersReducedMotion` hook                     | `usePrefersReducedMotion.test.ts`; live no-regression        |
+| Area    | Change                                                                                                                                 | Verified by                                      |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Bug     | **Unique React keys** for coincident death markers (`death-<ts>-<targetID>` collided) — was a runtime-only bug the static audit missed | Live: `death-990503-54` console error eliminated |
+| Quality | Non-deprecated `PCFShadowMap` (`shadows="percentage"`)                                                                                 | Live: deprecation warning gone                   |
+| UX/a11y | Replace blocking share `alert()` with a snackbar; treat share-sheet cancel (AbortError) as a silent no-op                              | `ShareButton.test.tsx` (cancel + failure paths)  |
+| a11y    | `prefers-reduced-motion` snaps the follow camera instead of lerping; new `usePrefersReducedMotion` hook                                | `usePrefersReducedMotion.test.ts`; live          |
 
-The `frameloop` win was measured with `gl.info.render.frame` (not the in-scene FPS readout, which is
-confounded by the dev-only Performance Monitor's `setState`-in-`useFrame` loop — a path that does not
-exist in production). Mid-fight map/phase transitions were **not** exercised (this fight has none) and
-should be confirmed in broader QA, though the async-texture-load invalidate site is wired for it.
+### `frameloop=demand` — TRIED AND REVERTED
+
+`frameloop={isPlaying ? 'always' : 'demand'}` correctly dropped paused renders ~73→0/sec, but it
+**regressed playback from ~40fps to ~24fps** (measured via `gl.info.render.frame`): the reactive
+`frameloop` switch fights the manual priority-999 render loop and drops frames while playing.
+Playback smoothness outweighs the paused-GPU savings, so it was reverted. A correct version needs a
+non-reactive approach that coexists with the manual render loop (e.g. drive renders via a single
+owned loop rather than toggling R3F's mode) — left as future work. The paused-render waste is real
+(~73/sec doing nothing) but is **not** worth a playback regression.
 
 ### Latent bugs found while writing tests (documented, not fixed here)
 
@@ -80,9 +84,9 @@ cannot be safely verified locally. Grouped by theme.
 
 ### Performance
 
-- ~~**On-demand rendering when paused/scrubbing** (`frameloop="demand"`)~~ — **SHIPPED** (see the
-  Live-verified section above). Still owed: confirm a mid-fight map/phase transition redraws on a
-  fight that has one.
+- **On-demand rendering when paused** — tried via `frameloop={isPlaying ? 'always' : 'demand'}` and
+  **reverted** (regressed playback ~40→24fps; see the Live-verified section). A correct version needs
+  a non-reactive render-control approach that coexists with the manual priority-999 render loop.
 - **Selection-ring geometry shared across actors** (`AnimationFrameActor3D.tsx`) — memory cleanup,
   not a runtime stall (the verifier corrected the original "GPU stall" claim).
 - `setInterval(checkRefChanges, 100)` ref-polling in `Arena3D` → replace with state/callback.
