@@ -27,6 +27,12 @@ export interface UseTimelineMarkersOptions {
   customMarkers?: CustomMarker[];
 }
 
+// Hoisted so the default `customMarkers` is a stable reference. A fresh `[]` per call
+// would change the `markers` useMemo's deps every render, recomputing (and re-identifying)
+// the markers array on every playback tick — which defeats React.memo on the consumer and
+// re-renders the whole marker list 10×/sec during playback.
+const EMPTY_CUSTOM_MARKERS: CustomMarker[] = [];
+
 export interface UseTimelineMarkersResult {
   /** All timeline markers (sorted by timestamp) */
   markers: TimelineAnnotation[];
@@ -46,7 +52,8 @@ export interface UseTimelineMarkersResult {
 export const useTimelineMarkers = (
   options: UseTimelineMarkersOptions = {},
 ): UseTimelineMarkersResult => {
-  const { config: configOverrides, customMarkers: providedCustomMarkers = [] } = options;
+  const { config: configOverrides, customMarkers: providedCustomMarkers = EMPTY_CUSTOM_MARKERS } =
+    options;
 
   // Merge config with defaults
   const config: TimelineMarkerConfig = useMemo(

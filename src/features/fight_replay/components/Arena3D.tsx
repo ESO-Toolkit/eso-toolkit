@@ -96,7 +96,7 @@ interface Arena3DProps {
   showPlayerTrails?: boolean;
 }
 
-export const Arena3D: React.FC<Arena3DProps> = ({
+const Arena3DComponent: React.FC<Arena3DProps> = ({
   timeRef,
   showActorNames = false,
   mapTimeline,
@@ -852,3 +852,15 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     </div>
   );
 };
+
+/**
+ * Memoized so the entire 3D scene tree (the R3F <Canvas>, ~50 actor components, HUD,
+ * markers) does NOT re-reconcile on every playback tick. The parent FightReplay3D updates
+ * `currentTime` state ~10×/sec during playback (for the playback controls); that re-render
+ * would otherwise reconcile this whole subtree, which dominated the playback frame cost and
+ * collapsed it to single-digit fps. None of Arena3D's props depend on `currentTime` — the
+ * scene reads time via the mutable `timeRef` inside useFrame — so the memo holds across the
+ * tick. (Requires the props to be referentially stable: scrubbingMode is memoized in
+ * useScrubbingMode; the handlers are useCallback'd in FightReplay3D.)
+ */
+export const Arena3D = React.memo(Arena3DComponent);
