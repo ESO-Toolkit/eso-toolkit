@@ -44,7 +44,23 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
   onSkipForward10,
 }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 1,
+        // On touch devices, enforce a 44x44 minimum tap target and a little more
+        // spacing so the playback controls are comfortable to use on mobile.
+        '@media (pointer: coarse)': {
+          gap: 1.5,
+          '& .MuiIconButton-root': {
+            minWidth: 44,
+            minHeight: 44,
+          },
+        },
+      }}
+    >
       <IconButton onClick={onSkipToStart} size="small" aria-label="Skip to start">
         <SkipPrevious />
       </IconButton>

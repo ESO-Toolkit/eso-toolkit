@@ -27,6 +27,12 @@ export interface UseTimelineMarkersOptions {
   customMarkers?: CustomMarker[];
 }
 
+// Hoisted so the default `customMarkers` is a stable reference. A fresh `[]` per call
+// would change the `markers` useMemo's deps every render, recomputing (and re-identifying)
+// the markers array on every playback tick — which defeats React.memo on the consumer and
+// re-renders the whole marker list 10×/sec during playback.
+const EMPTY_CUSTOM_MARKERS: CustomMarker[] = [];
+
 export interface UseTimelineMarkersResult {
   /** All timeline markers (sorted by timestamp) */
   markers: TimelineAnnotation[];
@@ -46,7 +52,8 @@ export interface UseTimelineMarkersResult {
 export const useTimelineMarkers = (
   options: UseTimelineMarkersOptions = {},
 ): UseTimelineMarkersResult => {
-  const { config: configOverrides, customMarkers: providedCustomMarkers = [] } = options;
+  const { config: configOverrides, customMarkers: providedCustomMarkers = EMPTY_CUSTOM_MARKERS } =
+    options;
 
   // Merge config with defaults
   const config: TimelineMarkerConfig = useMemo(
@@ -92,13 +99,15 @@ export const useTimelineMarkers = (
         }
         return true;
       })
-      .map((event) => {
+      .map((event, index) => {
         // Get actor names from store (we'll use IDs if names aren't available)
         const actorName = `Actor ${event.targetID}`;
         const killerName = event.sourceID ? `Actor ${event.sourceID}` : undefined;
 
         return {
-          id: `death-${event.timestamp}-${event.targetID}`,
+          // Include the index so two death events for the same actor at the same
+          // timestamp (which occur in ESO combat logs) produce unique React keys.
+          id: `death-${event.timestamp}-${event.targetID}-${index}`,
           timestamp: event.timestamp - currentFight.startTime,
           type: 'death' as const,
           label: event.targetIsFriendly ? `💀 ${actorName}` : `☠️ ${actorName}`,

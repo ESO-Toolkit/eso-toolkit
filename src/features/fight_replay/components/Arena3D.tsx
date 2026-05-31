@@ -35,6 +35,21 @@ const logger = new Logger({
   contextPrefix: 'Arena3D',
 });
 
+/**
+ * Compute the default (fallback) camera position used whenever actor positions
+ * are unavailable. The camera is placed southwest of and above the target.
+ * Extracted so the four fallback branches share one implementation.
+ */
+function computeDefaultCameraPosition(
+  target: [number, number, number],
+  minDistance: number,
+  actorScale: number,
+): [number, number, number] {
+  const viewDistance = Math.max(30, minDistance * 2.5) * actorScale;
+  const [targetX, targetY, targetZ] = target;
+  return [targetX - viewDistance * 0.6, targetY + viewDistance * 0.5, targetZ + viewDistance * 0.6];
+}
+
 type ContextMenuState =
   | {
       type: 'ground';
@@ -58,6 +73,12 @@ interface Arena3DProps {
     frameSkipRate: number;
   };
   followingActorIdRef: React.RefObject<number | null>;
+  /**
+   * Currently-followed actor ID as React state (mirrors `followingActorIdRef.current`).
+   * Owned by FightReplay3D so the "Following:" chip re-renders when the followed actor
+   * changes — without polling the ref.
+   */
+  followingActorId: number | null;
   onCameraUnlock?: () => void;
   onActorClick?: (actorId: number) => void;
   markersState?: MapMarkersState | null;
@@ -75,12 +96,13 @@ interface Arena3DProps {
   showPlayerTrails?: boolean;
 }
 
-export const Arena3D: React.FC<Arena3DProps> = ({
+const Arena3DComponent: React.FC<Arena3DProps> = ({
   timeRef,
   showActorNames = false,
   mapTimeline,
   scrubbingMode,
   followingActorIdRef,
+  followingActorId,
   onCameraUnlock,
   onActorClick,
   markersState,
@@ -359,23 +381,9 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     };
   }, [fight.boundingBox]);
 
-  // State to track the currently followed actor ID for UI updates
-  const [followingActorId, setFollowingActorId] = useState<number | null>(
-    followingActorIdRef.current,
-  );
-
-  // Update state when ref changes (this will be triggered by actor clicks)
-  useEffect(() => {
-    const checkRefChanges = (): void => {
-      if (followingActorIdRef.current !== followingActorId) {
-        setFollowingActorId(followingActorIdRef.current);
-      }
-    };
-
-    // Check periodically for ref changes
-    const interval = setInterval(checkRefChanges, 100);
-    return () => clearInterval(interval);
-  }, [followingActorIdRef, followingActorId]);
+  // `followingActorId` is supplied by FightReplay3D (the single source of truth that also
+  // updates `followingActorIdRef`). No polling needed — the chip re-renders whenever the
+  // parent state changes.
 
   // Get the name of the actor being followed
   const followingActorName = useMemo(() => {
@@ -392,8 +400,10 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   }, [lookup, followingActorId, timeRef]);
 
   const handleUnlockCamera = (): void => {
+    // Delegate to the owner (FightReplay3D), which clears both the ref and the mirrored
+    // state. Also clear the ref directly so the synchronous render-loop read is correct
+    // even if no onCameraUnlock handler was provided.
     followingActorIdRef.current = null;
-    setFollowingActorId(null);
     onCameraUnlock?.();
   };
 
@@ -439,13 +449,11 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     ];
 
     if (!lookup?.positionsByTimestamp || !fight) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
@@ -454,13 +462,11 @@ export const Arena3D: React.FC<Arena3DProps> = ({
       .map(Number)
       .sort((a, b) => a - b);
     if (timestamps.length === 0) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
@@ -468,26 +474,22 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     const actorsAtStart = lookup.positionsByTimestamp[startTime];
 
     if (!actorsAtStart) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
     // Get all actor positions at fight start
     const actors = Object.values(actorsAtStart);
     if (actors.length === 0) {
-      const viewDistance = Math.max(30, cameraSettings.minDistance * 2.5) * actorScale;
-      const [targetX, targetY, targetZ] = defaultTarget;
-      const defaultPosition: [number, number, number] = [
-        targetX - viewDistance * 0.6,
-        targetY + viewDistance * 0.5,
-        targetZ + viewDistance * 0.6,
-      ];
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
@@ -594,7 +596,25 @@ export const Arena3D: React.FC<Arena3DProps> = ({
             failIfMajorPerformanceCaveat: false,
           }}
           onContextMenu={handleCanvasContextMenu}
-          onCreated={({ gl }) => {
+          onCreated={(state) => {
+            const { gl } = state;
+            // Dev-only: expose the renderer/scene/camera for perf probing (e.g.
+            // gl.info.render.frame, toggling gl.shadowMap.autoUpdate, timing gl.render).
+            // R3F keeps these in its own reconciler, unreachable through the main React
+            // fiber tree, so this is the only handle. Stripped from production builds.
+            if (process.env.NODE_ENV === 'development') {
+              const w = window as unknown as {
+                __gl?: unknown;
+                __scene?: unknown;
+                __camera?: unknown;
+                __r3f?: unknown;
+              };
+              w.__gl = gl;
+              w.__scene = state.scene;
+              w.__camera = state.camera;
+              w.__r3f = state; // root store; has advance(timestamp) to run all useFrame subs once
+            }
+
             // Handle WebGL context loss and restoration
             const canvas = gl.domElement;
 
@@ -607,7 +627,9 @@ export const Arena3D: React.FC<Arena3DProps> = ({
               logger.info('WebGL context restored successfully');
             });
           }}
-          shadows
+          // 'percentage' = PCFShadowMap; the bare `shadows` default (PCFSoftShadowMap)
+          // is deprecated in three 0.184 and logs a console warning every render.
+          shadows="percentage"
           style={{ background: '#1a1a1a' }}
         >
           <Arena3DScene
@@ -630,9 +652,9 @@ export const Arena3D: React.FC<Arena3DProps> = ({
           />
         </Canvas>
 
-        {/* HTML Overlay HUD - DISABLED: Can cause conflicts with 3D scene interactions */}
-        {/* Using 3D canvas-based HUD instead for better integration */}
-
+        {/* HUD elements (player list, boss health) are rendered inside the Canvas as
+            canvas-based components in Arena3DScene to avoid HTML-overlay conflicts with
+            3D pointer interactions. */}
         {contextMenu && (
           <ClickAwayListener onClickAway={handleCloseContextMenu}>
             <div>
@@ -791,6 +813,18 @@ export const Arena3D: React.FC<Arena3DProps> = ({
           </Typography>
           <Typography
             variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>P:</strong> Toggle player list
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>T:</strong> Toggle player trails
+          </Typography>
+          <Typography
+            variant="caption"
             sx={{ color: 'rgba(255, 255, 255, 0.5)', display: 'block', mt: 1, fontSize: '0.7rem' }}
           >
             Press H to toggle this help
@@ -836,3 +870,15 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     </div>
   );
 };
+
+/**
+ * Memoized so the entire 3D scene tree (the R3F <Canvas>, ~50 actor components, HUD,
+ * markers) does NOT re-reconcile on every playback tick. The parent FightReplay3D updates
+ * `currentTime` state ~10×/sec during playback (for the playback controls); that re-render
+ * would otherwise reconcile this whole subtree, which dominated the playback frame cost and
+ * collapsed it to single-digit fps. None of Arena3D's props depend on `currentTime` — the
+ * scene reads time via the mutable `timeRef` inside useFrame — so the memo holds across the
+ * tick. (Requires the props to be referentially stable: scrubbingMode is memoized in
+ * useScrubbingMode; the handlers are useCallback'd in FightReplay3D.)
+ */
+export const Arena3D = React.memo(Arena3DComponent);

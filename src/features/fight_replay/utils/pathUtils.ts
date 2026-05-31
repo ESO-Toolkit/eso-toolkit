@@ -95,7 +95,11 @@ export function extractPlayerPaths(
     .map(Number)
     .sort((a, b) => a - b);
 
-  let lastSampleTime = 0;
+  // Initialize to -minSampleInterval (not 0) so the very first frame — including one
+  // at exactly t=0 — always passes the (timestamp - lastSampleTime < minSampleInterval)
+  // guard below. Initializing to 0 silently dropped a path's first point when its data
+  // started at t=0 (0 - 0 = 0 < 100).
+  let lastSampleTime = -config.minSampleInterval;
 
   // Sample positions at regular intervals
   for (const timestamp of timestamps) {

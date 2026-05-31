@@ -14,6 +14,14 @@ interface DynamicMapTextureProps {
   timeRef?: React.RefObject<number> | { current: number };
   size: number;
   position: [number, number, number];
+  /**
+   * Called whenever the floor material's texture is swapped from an async load callback
+   * (CDN success or failure → procedural fallback). The scene's on-demand RenderLoop gates
+   * `gl.render` behind a dirty budget; these swaps happen outside any React commit / time
+   * change / camera move, so without this signal the new floor would not paint while paused
+   * until the next unrelated dirty event. Optional — absence simply means no on-demand gate.
+   */
+  onTextureChange?: () => void;
 }
 
 // Map texture cache to avoid reloading the same textures
@@ -26,6 +34,76 @@ export const clearMapTextureCache = (): void => {
 };
 
 /**
+ * Generate a procedural grid texture used as the floor when a map texture fails to load
+ * (e.g. a zone exists in ESO but its mapFile isn't on the CDN yet, or a 404/timeout).
+ * Without this the material falls back to a featureless solid-color plane; the grid keeps
+ * the floor readable and visually consistent with the arena Grid overlay.
+ *
+ * Drawing is guarded: in environments without a 2D canvas backend (jsdom under Jest,
+ * `getContext('2d')` returns null) we still return a valid — if blank — CanvasTexture so
+ * callers can rely on `material.map` being non-null.
+ */
+export function generateFallbackTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  const size = 512;
+  canvas.width = size;
+  canvas.height = size;
+
+  const context = canvas.getContext('2d');
+  if (context) {
+    const gridSize = 10;
+    const cellSize = size / gridSize;
+
+    context.fillStyle = '#3a3a3a';
+    context.fillRect(0, 0, size, size);
+    context.strokeStyle = '#5a5a5a';
+    context.lineWidth = 1;
+
+    for (let i = 0; i <= gridSize; i++) {
+      const pos = i * cellSize;
+      context.beginPath();
+      context.moveTo(pos, 0);
+      context.lineTo(pos, size);
+      context.stroke();
+      context.beginPath();
+      context.moveTo(0, pos);
+      context.lineTo(size, pos);
+      context.stroke();
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+/**
+ * Swap the floor material's texture and signal the on-demand RenderLoop to repaint.
+ *
+ * Centralizes the contract every async load callback (CDN success or failure→fallback)
+ * must honor: a no-op if the material has unmounted, otherwise bind the texture, flag the
+ * material for a GPU re-upload, and fire `onTextureChange` — because these swaps happen in
+ * promise callbacks outside any React commit / time change / camera move, so without that
+ * signal the new floor would not paint while playback is paused. Extracted (and exported)
+ * so the contract is unit-testable without a live R3F canvas, which jsdom can't provide.
+ */
+export function applyFloorTexture(
+  material: THREE.MeshPhongMaterial | null,
+  texture: THREE.Texture,
+  onTextureChange?: () => void,
+): void {
+  if (!material) {
+    return;
+  }
+  material.map = texture;
+  material.needsUpdate = true;
+  onTextureChange?.();
+}
+
+/**
  * Component that dynamically updates map texture based on timeline using useFrame
  * This provides high-performance map switching without React render cycles
  */
@@ -34,6 +112,7 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   timeRef,
   size,
   position,
+  onTextureChange,
 }) => {
   const logger = useLogger();
   const meshRef = useRef<THREE.Mesh>(null);
@@ -44,6 +123,10 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
 
   // Create geometry
   const geometry = useMemo(() => new THREE.PlaneGeometry(size, size), [size]);
+
+  // Per-instance procedural fallback (grid) texture, applied when a CDN map texture fails
+  // to load. Memoized so it's generated once per mount and disposed in cleanup below.
+  const fallbackTexture = useMemo(() => generateFallbackTexture(), []);
 
   // Load texture with caching
   const loadTexture = useMemo(() => {
@@ -99,19 +182,18 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
     if (currentMapFileRef.current !== currentMapEntry.mapFile) {
       currentMapFileRef.current = currentMapEntry.mapFile;
 
-      // Load new texture asynchronously
+      // Load new texture asynchronously. Guard on the map file still being current (the
+      // user may have scrubbed to a different phase before the fetch resolved).
       loadTexture(currentMapEntry.mapFile)
         .then((texture) => {
-          if (materialRef.current && currentMapFileRef.current === currentMapEntry.mapFile) {
-            materialRef.current.map = texture;
-            materialRef.current.needsUpdate = true;
+          if (currentMapFileRef.current === currentMapEntry.mapFile) {
+            applyFloorTexture(materialRef.current, texture, onTextureChange);
           }
         })
         .catch(() => {
-          // Fallback to default material on error
-          if (materialRef.current) {
-            materialRef.current.map = null;
-            materialRef.current.needsUpdate = true;
+          // CDN load failed — show the procedural grid floor instead of a blank plane.
+          if (currentMapFileRef.current === currentMapEntry.mapFile) {
+            applyFloorTexture(materialRef.current, fallbackTexture, onTextureChange);
           }
         });
     }
@@ -125,25 +207,27 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
       loadTexture(firstMapFile)
         .then((texture) => {
           if (materialRef.current) {
-            materialRef.current.map = texture;
-            materialRef.current.needsUpdate = true;
             currentMapFileRef.current = firstMapFile;
           }
+          applyFloorTexture(materialRef.current, texture, onTextureChange);
         })
         .catch((_error) => {
-          // Use default material if loading fails
+          // Initial CDN load failed — show the procedural grid floor instead of a blank
+          // plane. Reset the file ref so a later successful load can still replace it.
+          applyFloorTexture(materialRef.current, fallbackTexture, onTextureChange);
           currentMapFileRef.current = null;
         });
     }
-  }, [mapTimeline, loadTexture]);
+  }, [mapTimeline, loadTexture, fallbackTexture, onTextureChange]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       geometry.dispose();
+      fallbackTexture.dispose();
       clearMapTextureCache();
     };
-  }, [geometry]);
+  }, [geometry, fallbackTexture]);
 
   return (
     <mesh

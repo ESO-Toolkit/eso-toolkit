@@ -10,6 +10,7 @@ import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import { MapMarkersState } from '../types/mapMarkers';
+import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
 import { PlaybackControls } from './PlaybackControls';
@@ -50,9 +51,22 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     }
   }
 
-  // Actor selection and camera following state
-  // null = no actor selected/following, number = following that actor ID
+  // Actor selection and camera following state.
+  // null = no actor selected/following, number = following that actor ID.
+  //
+  // The ref is the synchronous source of truth read every frame by CameraFollower's
+  // useFrame loop and by KeyboardCameraControls. `followingActorId` mirrors it as React
+  // state purely so UI (the "Following:" chip) can react to changes. The two are always
+  // written together via setFollowingActor below — no polling needed.
   const followingActorIdRef = useRef<number | null>(initialSelectedActorId);
+  const [followingActorId, setFollowingActorId] = useState<number | null>(initialSelectedActorId);
+
+  // Single mutation point that keeps the ref (read by the render loop) and the state
+  // (read by the UI) in lockstep.
+  const setFollowingActor = useCallback((actorId: number | null) => {
+    followingActorIdRef.current = actorId;
+    setFollowingActorId(actorId);
+  }, []);
 
   // Player path visualization state
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(
@@ -79,8 +93,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     }
   }
 
-  // Playback state - initialize with URL parameter if available
-  const [currentTime, setCurrentTime] = useState(initialTime);
+  // Clamp the URL-provided time to the valid fight range so a malformed deep link
+  // (e.g. ?time=-5000 or ?time=999999999) cannot initialize playback out of bounds.
+  const fightDuration = selectedFight.endTime - selectedFight.startTime;
+  const clampedInitialTime = clampReplayTime(initialTime, fightDuration);
+
+  // Playback state - initialize with URL parameter if available (clamped to range)
+  const [currentTime, setCurrentTime] = useState(clampedInitialTime);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isScrubbingMode, setIsScrubbingMode] = useState(false);
@@ -126,16 +145,23 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsDragging(dragging);
   }, []);
 
+  const seekTo = useCallback(
+    (time: number) => {
+      setCurrentTime(time);
+      animationTimeRef.setTime(time);
+    },
+    [animationTimeRef],
+  );
+
   const handleTimeChange = useCallback(
     (time: number) => {
       const clampedTime = Math.max(
         0,
         Math.min(time, selectedFight.endTime - selectedFight.startTime),
       );
-      setCurrentTime(clampedTime);
-      animationTimeRef.setTime(clampedTime);
+      seekTo(clampedTime);
     },
-    [selectedFight, animationTimeRef],
+    [selectedFight, seekTo],
   );
 
   const handleSpeedChange = useCallback((speed: number) => {
@@ -143,36 +169,33 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   }, []);
 
   const handleSkipToStart = useCallback(() => {
-    setCurrentTime(0);
-    animationTimeRef.setTime(0);
-  }, [animationTimeRef]);
+    seekTo(0);
+  }, [seekTo]);
 
   const handleSkipToEnd = useCallback(() => {
-    setCurrentTime(selectedFight.endTime - selectedFight.startTime);
-    animationTimeRef.setTime(selectedFight.endTime - selectedFight.startTime);
-  }, [selectedFight, animationTimeRef]);
+    seekTo(selectedFight.endTime - selectedFight.startTime);
+  }, [selectedFight, seekTo]);
 
   const handleSkipBackward10 = useCallback(() => {
-    const newTime = Math.max(0, currentTime - 10000);
-    setCurrentTime(newTime);
-    animationTimeRef.setTime(newTime);
-  }, [currentTime, animationTimeRef]);
+    seekTo(Math.max(0, currentTime - 10000));
+  }, [currentTime, seekTo]);
 
   const handleSkipForward10 = useCallback(() => {
-    const newTime = Math.min(selectedFight.endTime - selectedFight.startTime, currentTime + 10000);
-    setCurrentTime(newTime);
-    animationTimeRef.setTime(newTime);
-  }, [selectedFight, currentTime, animationTimeRef]);
+    seekTo(Math.min(selectedFight.endTime - selectedFight.startTime, currentTime + 10000));
+  }, [selectedFight, currentTime, seekTo]);
 
-  const handleActorClick = useCallback((actorId: number) => {
-    // Set camera to follow the clicked actor
-    followingActorIdRef.current = actorId;
-  }, []);
+  const handleActorClick = useCallback(
+    (actorId: number) => {
+      // Set camera to follow the clicked actor
+      setFollowingActor(actorId);
+    },
+    [setFollowingActor],
+  );
 
   const handleCameraUnlock = useCallback(() => {
     // Stop following any actor
-    followingActorIdRef.current = null;
-  }, []);
+    setFollowingActor(null);
+  }, [setFollowingActor]);
 
   // Keyboard shortcuts for player path features
   useEffect(() => {
@@ -207,6 +230,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           mapTimeline={mapTimeline}
           scrubbingMode={scrubbingMode}
           followingActorIdRef={followingActorIdRef}
+          followingActorId={followingActorId}
           onCameraUnlock={handleCameraUnlock}
           onActorClick={handleActorClick}
           markersState={markersState}

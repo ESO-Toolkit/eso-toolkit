@@ -108,6 +108,11 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
             width: isDragging ? 20 : 16,
             height: isDragging ? 20 : 16,
             transition: 'width 0.2s ease, height 0.2s ease',
+            '&:focus-visible': {
+              outline: '2px solid',
+              outlineColor: 'primary.main',
+              outlineOffset: '2px',
+            },
           },
           '& .MuiSlider-track': {
             height: isDragging ? 6 : 4,

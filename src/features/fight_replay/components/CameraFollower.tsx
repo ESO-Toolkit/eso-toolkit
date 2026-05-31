@@ -2,6 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useRef } from 'react';
 import { type Controls, Vector3 } from 'three';
 
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import {
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
@@ -25,10 +26,13 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
   followingActorIdRef,
 }) => {
   const { camera, controls } = useThree();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const targetPositionRef = useRef(new Vector3());
   const cameraOffsetRef = useRef<Vector3 | null>(null);
   const wasFollowingRef = useRef(false);
-  const smoothingFactor = 0.05; // Adjust for smoother/faster following
+  // Smoothly follow during playback; snap instantly (factor 1) when the user has
+  // requested reduced motion.
+  const smoothingFactor = prefersReducedMotion ? 1 : 0.05;
 
   // Pre-allocated scratch vectors to avoid per-frame allocations
   const _scratchActorPos = useRef(new Vector3());

@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 
 interface UseScrubbingModeProps {
   isScrubbingMode: boolean;
@@ -60,10 +60,18 @@ export const useScrubbingMode = ({
     return 1;
   })();
 
-  return {
-    renderQuality,
-    shouldUpdatePositions,
-    shouldRenderEffects,
-    frameSkipRate,
-  };
+  // Memoize the result object so its identity is stable across re-renders when the
+  // scrubbing inputs haven't changed. Consumers (Arena3D) are memoized on their props;
+  // a fresh object every render — e.g. on the 10Hz currentTime playback tick — would
+  // break that memo and re-render the entire 3D scene tree. Recomputes only when
+  // isScrubbingMode/isDragging change, which is also when the values above can change.
+  return useMemo(
+    () => ({
+      renderQuality,
+      shouldUpdatePositions,
+      shouldRenderEffects,
+      frameSkipRate,
+    }),
+    [renderQuality, shouldUpdatePositions, shouldRenderEffects, frameSkipRate],
+  );
 };

@@ -32,7 +32,7 @@ interface TimelineMarkersProps {
  * - Click-to-jump functionality
  * - Color-coded by marker type
  */
-export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
+const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
   markers,
   duration,
   onMarkerClick,
@@ -150,6 +150,10 @@ export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
                   marginTop: -2,
                   boxShadow: `0 0 8px ${color}`,
                 },
+                '&:focus-visible': {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: '1px',
+                },
                 '&::before': {
                   content: '""',
                   position: 'absolute',
@@ -170,3 +174,13 @@ export const TimelineMarkers: React.FC<TimelineMarkersProps> = ({
     </Box>
   );
 };
+
+/**
+ * Memoized so the marker list (one MUI Tooltip per death/phase event — ~26 for a raid
+ * fight) does NOT re-render on every playback tick. Its props are stable during playback:
+ * `markers` is a useMemo'd array, `duration` is constant, `onMarkerClick` is a useCallback.
+ * The parent (TimelineSlider) re-renders ~10×/sec as the slider thumb moves; without this
+ * memo that dragged every Tooltip's layout/popper machinery along, forcing reflow and
+ * collapsing playback to single-digit fps. See FIGHT-REPLAY-AUDIT-2026-05-30.md.
+ */
+export const TimelineMarkers = React.memo(TimelineMarkersComponent);
