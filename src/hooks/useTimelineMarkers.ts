@@ -10,12 +10,14 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+import { selectActorsById } from '../store/master_data/masterDataSelectors';
 import { selectCurrentFight, selectDeathEvents } from '../store/selectors/eventsSelectors';
 import {
   TimelineAnnotation,
   PhaseMarker,
   DeathMarker,
   CustomMarker,
+  ClusterMarker,
   TimelineMarkerConfig,
   DEFAULT_MARKER_CONFIG,
 } from '../types/timelineAnnotations';
@@ -32,6 +34,106 @@ export interface UseTimelineMarkersOptions {
 // the markers array on every playback tick — which defeats React.memo on the consumer and
 // re-renders the whole marker list 10×/sec during playback.
 const EMPTY_CUSTOM_MARKERS: CustomMarker[] = [];
+
+type LeafMarker = PhaseMarker | DeathMarker | CustomMarker;
+
+/**
+ * The "bucket" a marker clusters within. Clustering is within-type only so the on-rail
+ * shape/color channel survives (WCAG 1.4.1); friendly and enemy deaths are kept in
+ * separate buckets too, since they render as different-colored triangles and own distinct
+ * legend rows. Two markers only ever merge if they share a key.
+ */
+const clusterKey = (marker: LeafMarker): string =>
+  marker.type === 'death' ? `death-${marker.isFriendly ? 'friendly' : 'enemy'}` : marker.type;
+
+/**
+ * Collapse runs of same-key markers that fall within `thresholdMs` of their neighbor into
+ * a single {@link ClusterMarker}. A lone marker (no near same-key neighbor) passes through
+ * untouched, so the common sparse timeline is unaffected; only genuine bursts collapse.
+ *
+ * Pure and synchronous — called inside the `markers` useMemo, so its output is a stable
+ * reference across playback ticks and the downstream `TimelineMarkers` memo holds. It is
+ * deliberately time-based (no DOM/width measurement), which keeps it off the playback
+ * perf hot path entirely.
+ *
+ * @param sorted markers already sorted ascending by timestamp
+ * @param thresholdMs max gap between consecutive same-key members of one cluster
+ */
+export const collapseClusters = (
+  sorted: TimelineAnnotation[],
+  thresholdMs: number,
+): TimelineAnnotation[] => {
+  if (thresholdMs <= 0 || sorted.length < 2) {
+    return sorted;
+  }
+
+  // Build per-key runs in a single pass. `runs` preserves first-seen order so the output
+  // stays deterministic; within each key we accumulate temporally-adjacent members.
+  const result: TimelineAnnotation[] = [];
+  // Group index keyed by clusterKey -> the open run we might still extend.
+  const openRun = new Map<string, LeafMarker[]>();
+  // Track the position in `result` (or a holding list) each key's run will land in, so the
+  // final order is by the run's earliest timestamp. Simplest correct approach: collect all
+  // runs, then re-sort by first member's timestamp at the end.
+  const finishedRuns: LeafMarker[][] = [];
+
+  const closeRun = (key: string): void => {
+    const run = openRun.get(key);
+    if (run) {
+      finishedRuns.push(run);
+      openRun.delete(key);
+    }
+  };
+
+  for (const marker of sorted) {
+    // Cluster markers are never re-clustered; phase/death/custom only.
+    if (marker.type === 'cluster') {
+      result.push(marker);
+      continue;
+    }
+    const leaf = marker as LeafMarker;
+    const key = clusterKey(leaf);
+    const run = openRun.get(key);
+    if (run && leaf.timestamp - run[run.length - 1].timestamp <= thresholdMs) {
+      run.push(leaf);
+    } else {
+      // The previous open run for this key (if any) can no longer be extended — its newest
+      // member is already further than thresholdMs behind this one (input is sorted).
+      closeRun(key);
+      openRun.set(key, [leaf]);
+    }
+  }
+  for (const key of Array.from(openRun.keys())) {
+    closeRun(key);
+  }
+
+  for (const run of finishedRuns) {
+    if (run.length === 1) {
+      result.push(run[0]);
+      continue;
+    }
+    const first = run[0];
+    const clusterType = first.type;
+    const isFriendly = clusterType === 'death' ? (first as DeathMarker).isFriendly : undefined;
+    const cluster: ClusterMarker = {
+      // Stable id from the members so the same burst yields the same key across renders.
+      id: `cluster-${run[0].id}-${run[run.length - 1].id}`,
+      // Seek target = the earliest member, so clicking a cluster jumps to where the burst began.
+      timestamp: first.timestamp,
+      type: 'cluster',
+      clusterType,
+      isFriendly,
+      members: run,
+      count: run.length,
+      label: `${run.length} ${clusterType === 'death' ? 'deaths' : `${clusterType} markers`}`,
+      color: first.color,
+    };
+    result.push(cluster);
+  }
+
+  // Re-sort: runs were emitted grouped-by-key, so restore global timestamp order.
+  return result.sort((a, b) => a.timestamp - b.timestamp);
+};
 
 export interface UseTimelineMarkersResult {
   /** All timeline markers (sorted by timestamp) */
@@ -64,6 +166,10 @@ export const useTimelineMarkers = (
   // Get fight data
   const currentFight = useSelector(selectCurrentFight);
   const deathEvents = useSelector(selectDeathEvents);
+  // Actor name lookup keyed by actor id (ReportActorFragment map). This is a memoized,
+  // context-keyed selector (createReportFightContextSelector), so it returns a stable
+  // reference across playback ticks — safe to add to the deathMarkers useMemo deps.
+  const actorsById = useSelector(selectActorsById);
 
   // Generate phase markers
   const phaseMarkers = useMemo((): PhaseMarker[] => {
@@ -100,9 +206,13 @@ export const useTimelineMarkers = (
         return true;
       })
       .map((event, index) => {
-        // Get actor names from store (we'll use IDs if names aren't available)
-        const actorName = `Actor ${event.targetID}`;
-        const killerName = event.sourceID ? `Actor ${event.sourceID}` : undefined;
+        // Resolve real actor names from master data, falling back to `Actor <id>` only when a
+        // name is genuinely unavailable. Use `||` (not `??`) so empty-string names also fall back.
+        const actorName = actorsById[event.targetID]?.name || `Actor ${event.targetID}`;
+        // ESO environmental deaths have sourceID 0; preserve the existing "no killer" behavior.
+        const killerName = event.sourceID
+          ? actorsById[event.sourceID]?.name || `Actor ${event.sourceID}`
+          : undefined;
 
         return {
           // Include the index so two death events for the same actor at the same
@@ -126,6 +236,7 @@ export const useTimelineMarkers = (
     config.showEnemyDeaths,
     currentFight,
     deathEvents,
+    actorsById,
   ]);
 
   // Combine all markers
@@ -137,11 +248,22 @@ export const useTimelineMarkers = (
     ];
 
     // Sort by timestamp
-    return allMarkers.sort((a, b) => a.timestamp - b.timestamp);
+    allMarkers.sort((a, b) => a.timestamp - b.timestamp);
+
+    // Collapse dense same-type bursts into clusters so the rail stays legible. The window is
+    // an absolute millisecond span (see clusterThresholdMs) — DOM-blind and time-based, not
+    // pixel-based, so it's independent of the responsive rail width and off the playback-perf
+    // hot path. Skipped when clustering is disabled.
+    if (config.clusterMarkers) {
+      return collapseClusters(allMarkers, config.clusterThresholdMs);
+    }
+    return allMarkers;
   }, [
     config.showPhases,
     config.showDeaths,
     config.showCustom,
+    config.clusterMarkers,
+    config.clusterThresholdMs,
     phaseMarkers,
     deathMarkers,
     providedCustomMarkers,

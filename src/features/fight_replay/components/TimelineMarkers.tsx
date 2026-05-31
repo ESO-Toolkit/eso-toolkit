@@ -71,8 +71,72 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
           return marker.isFriendly ? theme.palette.error.main : theme.palette.warning.main;
         case 'custom':
           return theme.palette.info.main;
+        case 'cluster':
+          // A cluster inherits the color of the type it groups so the hue channel still maps
+          // to "what kind of burst" this is.
+          switch (marker.clusterType) {
+            case 'phase':
+              return theme.palette.primary.main;
+            case 'death':
+              return marker.isFriendly ? theme.palette.error.main : theme.palette.warning.main;
+            case 'custom':
+              return theme.palette.info.main;
+            default:
+              return theme.palette.grey[500];
+          }
         default:
           return theme.palette.grey[500];
+      }
+    },
+    [theme],
+  );
+
+  // Distinguish marker types by SHAPE, not color alone (WCAG 1.4.1). Each type gets a
+  // distinct cap so the timeline is readable without relying on hue. Derived per marker
+  // inside the render map — no upstream array changes, so TimelineMarkers' memo holds.
+  const getMarkerCap = useCallback(
+    (marker: TimelineAnnotation, color: string): React.CSSProperties => {
+      // Shapes are grid-centered on the rail by the parent (no absolute offsets). Keep
+      // `transform` only where the shape itself needs rotating (the diamond).
+      switch (marker.type) {
+        case 'phase':
+          // Diamond cap — a structural beat in the fight. Slightly larger than the
+          // single-event caps so phases read as the most important beats at a glance.
+          return {
+            width: 10,
+            height: 10,
+            backgroundColor: color,
+            transform: 'rotate(45deg)',
+          };
+        case 'death':
+          // Downward triangle — a hit/death.
+          return {
+            width: 0,
+            height: 0,
+            borderLeft: '6px solid transparent',
+            borderRight: '6px solid transparent',
+            borderTop: `9px solid ${color}`,
+          };
+        case 'cluster':
+          // Hollow stacked square — reads as "several events here", distinct from the three
+          // single-event shapes. Kept in the cluster's inherited hue (see getMarkerColor) and
+          // outlined rather than filled so it doesn't masquerade as a single solid marker.
+          return {
+            width: 11,
+            height: 11,
+            backgroundColor: theme.palette.background.paper,
+            border: `2px solid ${color}`,
+            borderRadius: '2px',
+          };
+        case 'custom':
+        default:
+          // Round pin — user-placed.
+          return {
+            width: 9,
+            height: 9,
+            borderRadius: '50%',
+            backgroundColor: color,
+          };
       }
     },
     [theme],
@@ -92,6 +156,18 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
           return marker.description
             ? `${marker.label} at ${timeStr}\n${marker.description}`
             : `${marker.label} at ${timeStr}`;
+        case 'cluster': {
+          // Header line (e.g. "5 deaths at 2:14") + one line per grouped event so the
+          // tooltip still surfaces everything the collapsed markers would have shown.
+          const lines = marker.members.map((m) => `• ${m.label} (${formatTime(m.timestamp)})`);
+          // Cap the listed members so a huge wipe doesn't produce a screen-tall tooltip.
+          const MAX_LINES = 8;
+          const shown = lines.slice(0, MAX_LINES);
+          if (lines.length > MAX_LINES) {
+            shown.push(`…and ${lines.length - MAX_LINES} more`);
+          }
+          return `${marker.label} at ${timeStr}\n${shown.join('\n')}`;
+        }
       }
     },
     [formatTime],
@@ -120,9 +196,18 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
       {markers.map((marker) => {
         const position = getMarkerPosition(marker.timestamp);
         const color = getMarkerColor(marker);
+        const cap = getMarkerCap(marker, color);
 
         return (
-          <Tooltip key={marker.id} title={getTooltipContent(marker)} placement="top" arrow>
+          <Tooltip
+            key={marker.id}
+            title={getTooltipContent(marker)}
+            placement="top"
+            arrow
+            // Render the embedded newlines (death "Killed by" + cluster member lists) as
+            // actual line breaks instead of collapsing them to spaces.
+            slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line' } } }}
+          >
             <Box
               role="button"
               tabIndex={0}
@@ -135,36 +220,39 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
               }}
               aria-label={getTooltipContent(marker)}
               sx={{
+                // A transparent, vertically-centered hit-area — NO long colored stem (the
+                // proto sits the caps directly on the rail). The cap (shape channel) is the
+                // only visible element; the box just gives it a comfortable click/focus
+                // target and a tooltip anchor.
                 position: 'absolute',
                 left: `${position}%`,
-                transform: 'translateX(-50%)',
-                width: 3,
-                height: 24,
-                backgroundColor: color,
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: 14,
+                height: 22,
+                display: 'grid',
+                placeItems: 'center',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
                 zIndex: 1,
-                '&:hover': {
-                  width: 5,
-                  height: 28,
-                  marginTop: -2,
-                  boxShadow: `0 0 8px ${color}`,
-                },
                 '&:focus-visible': {
                   outline: `2px solid ${theme.palette.primary.main}`,
-                  outlineOffset: '1px',
+                  outlineOffset: '2px',
+                  borderRadius: '3px',
                 },
+                // Per-type cap (shape channel — see getMarkerCap), centered on the rail with a
+                // soft colored glow; the glow intensifies and the cap lifts slightly on hover.
                 '&::before': {
                   content: '""',
-                  position: 'absolute',
-                  top: -4,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 0,
-                  height: 0,
-                  borderLeft: '4px solid transparent',
-                  borderRight: '4px solid transparent',
-                  borderBottom: `4px solid ${color}`,
+                  position: 'static',
+                  filter: `drop-shadow(0 1px 1px rgba(0,0,0,0.5)) drop-shadow(0 0 3px ${color})`,
+                  transition: 'filter 0.15s ease, transform 0.15s ease',
+                  ...cap,
+                  // Override the old translateX from getMarkerCap — the cap is now grid-centered.
+                  transform: cap.transform?.includes('rotate') ? 'rotate(45deg)' : 'none',
+                },
+                '&:hover::before': {
+                  filter: `drop-shadow(0 0 7px ${color}) drop-shadow(0 0 3px ${color})`,
+                  transform: `${cap.transform?.includes('rotate') ? 'rotate(45deg) ' : ''}scale(1.18)`,
                 },
               }}
             />

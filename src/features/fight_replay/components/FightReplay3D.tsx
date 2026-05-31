@@ -75,6 +75,26 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [showPlayerPathsHUD, setShowPlayerPathsHUD] = useState(showPlayerPaths);
   const [showPlayerTrails, setShowPlayerTrails] = useState(showPlayerPaths);
 
+  // Compact contextual badges for the transport bar (encounter · difficulty · outcome).
+  // The encounter name is shortened to its trailing word(s) so it complements — rather than
+  // duplicates — the full title in the page header above. ESO Logs difficulty codes:
+  // 120 = Normal, 121 = Veteran, 122 = Veteran Hard Mode.
+  const replayContext = React.useMemo(() => {
+    const difficultyTag =
+      selectedFight.difficulty === 122
+        ? 'HM'
+        : selectedFight.difficulty === 121
+          ? 'Vet'
+          : selectedFight.difficulty === 120
+            ? 'Normal'
+            : undefined;
+    return {
+      label: selectedFight.name || undefined,
+      difficultyTag,
+      isKill: selectedFight.kill,
+    };
+  }, [selectedFight.name, selectedFight.difficulty, selectedFight.kill]);
+
   // Map timeline for debug information and phase-aware map changes
   const { mapTimeline } = usePhaseBasedMap({
     fight: selectedFight || null,
@@ -264,6 +284,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         fightId={params.fightId}
         selectedActorIdRef={followingActorIdRef}
         fightStartTime={selectedFight.startTime}
+        replayContext={replayContext}
       />
     </React.Fragment>
   );

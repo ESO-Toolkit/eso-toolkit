@@ -1,7 +1,9 @@
-import { LockOpen } from '@mui/icons-material';
+import { LockOpen, Videocam } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 import {
   Box,
+  Chip,
   ClickAwayListener,
   IconButton,
   Tooltip,
@@ -19,14 +21,18 @@ import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
+import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
 import { COMMON_MARKER_GROUPS, MarkerGroup, MarkerGroupKey } from '../utils/mapMarkerConverters';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
+import { getVisiblePlayerIds } from '../utils/pathUtils';
 
 import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
+import { BossHealthPanel } from './BossHealthPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerSpritePreview } from './MarkerSpritePreview';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
+import { PlayerListPanel } from './PlayerListPanel';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
 
 // Create logger instance for Arena3D
@@ -34,6 +40,10 @@ const logger = new Logger({
   level: LogLevel.WARN,
   contextPrefix: 'Arena3D',
 });
+
+// Stable empty Set for the player-list overlay's selection fallback — avoids a fresh Set
+// each render churning the panel.
+const EMPTY_SELECTION: Set<number> = new Set();
 
 /**
  * Compute the default (fallback) camera position used whenever actor positions
@@ -116,6 +126,23 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
+  // so the DOM PlayerListPanel overlay — which renders the toggle controls — and the
+  // in-canvas actors share one source of truth. Changes only on a user toggle, so the
+  // re-render is rare and cheap; Arena3D's React.memo still guards against the per-tick
+  // currentTime re-render from FightReplay3D (that prop is unaffected here).
+  const [playerVisibility, setPlayerVisibility] = useState<Map<number, boolean>>(new Map());
+  const handlePlayerVisibilityChange = useCallback((actorId: number, visible: boolean) => {
+    setPlayerVisibility((prev) => {
+      const next = new Map(prev);
+      next.set(actorId, visible);
+      return next;
+    });
+  }, []);
+
+  // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
+  const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [submenuState, setSubmenuState] = useState<{
     key: MarkerGroupKey;
@@ -559,7 +586,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       <div
         style={{
           width: '100%',
-          height: '400px',
+          height: ARENA_HEIGHT,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -574,7 +601,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   return (
     <div
-      style={{ width: '100%', height: '400px', position: 'relative' }}
+      style={{ width: '100%', height: ARENA_HEIGHT, position: 'relative' }}
       role="img"
       aria-label="3D fight replay arena showing player positions over time"
     >
@@ -646,15 +673,32 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             fight={fight}
             initialTarget={initialCameraTarget}
             selectedPlayerIds={selectedPlayerIds}
-            onPlayerSelectionChange={onPlayerSelectionChange}
-            showPlayerPathsHUD={showPlayerPathsHUD}
             showPlayerTrails={showPlayerTrails}
+            playerVisibility={playerVisibility}
           />
         </Canvas>
 
-        {/* HUD elements (player list, boss health) are rendered inside the Canvas as
-            canvas-based components in Arena3DScene to avoid HTML-overlay conflicts with
-            3D pointer interactions. */}
+        {/* Boss health — DOM overlay (top-right), crisp + theme-styled. Always shown when
+            bosses with health are present. */}
+        <BossHealthPanel lookup={lookup} timeRef={timeRef} />
+
+        {/* Player list — DOM overlay (top-left), shown when the player-paths HUD is toggled
+            on (P key). Real scroll region so every player is reachable. */}
+        {showPlayerPathsHUD && onPlayerSelectionChange && (
+          <PlayerListPanel
+            playerIds={availablePlayerIds}
+            lookup={lookup}
+            timeRef={timeRef}
+            selectedPlayerIds={selectedPlayerIds ?? EMPTY_SELECTION}
+            onPlayerSelectionChange={onPlayerSelectionChange}
+            playerVisibility={playerVisibility}
+            onPlayerVisibilityChange={handlePlayerVisibilityChange}
+          />
+        )}
+
+        {/* Player-list + boss-health HUDs are DOM overlays (above) rendered as siblings of
+            the <Canvas>, not in-canvas textured planes — crisp text, real scroll, native
+            MUI styling. */}
         {contextMenu && (
           <ClickAwayListener onClickAway={handleCloseContextMenu}>
             <div>
@@ -832,40 +876,76 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         </Box>
       </Collapse>
 
-      {/* Camera Unlock Button - Show when following an actor */}
+      {/* Persistent help affordance - re-opens the keyboard help panel once it auto-hides */}
+      {!showKeyboardHelp && (
+        <Tooltip title="Keyboard controls (H)">
+          <IconButton
+            aria-label="Show keyboard controls"
+            size="small"
+            onClick={() => setShowKeyboardHelp(true)}
+            sx={{
+              position: 'absolute',
+              bottom: 16,
+              right: 16,
+              color: 'white',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            <HelpOutline fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {/* Camera Unlock Chip - Show when following an actor. Anchored top-center so it
+          doesn't overlap the top-left PlayerListPanel DOM overlay. Styled to
+          match the elevated transport: dark cyan-glass with a glowing accent border + a
+          videocam glyph, so it reads as part of the same designed surface over the 3D scene. */}
       {followingActorId && followingActorName && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 16,
-            left: 16,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            borderRadius: 1,
-            padding: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-          }}
-        >
-          <Typography variant="caption" sx={{ color: 'white' }}>
-            Following: {followingActorName}
-          </Typography>
-          <Tooltip title="Unlock camera from actor">
-            <IconButton
-              size="small"
-              aria-label="Unlock camera from actor"
-              onClick={handleUnlockCamera}
-              sx={{
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                },
-              }}
-            >
-              <LockOpen fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <Tooltip title="Unlock camera from actor">
+          <Chip
+            icon={<Videocam sx={{ fontSize: '1rem' }} />}
+            label={
+              <Box
+                component="span"
+                sx={{ display: 'inline-flex', alignItems: 'baseline', gap: 0.5 }}
+              >
+                <Box component="span" sx={{ color: 'rgba(226,232,240,0.7)', fontSize: '0.7rem' }}>
+                  Following
+                </Box>
+                <Box component="span" sx={{ fontWeight: 700 }}>
+                  {followingActorName}
+                </Box>
+              </Box>
+            }
+            aria-label="Unlock camera from actor"
+            onDelete={handleUnlockCamera}
+            deleteIcon={<LockOpen />}
+            sx={(theme) => ({
+              position: 'absolute',
+              top: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              height: 32,
+              color: '#e2e8f0',
+              backgroundColor: 'rgba(13, 20, 48, 0.82)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: `1px solid ${theme.palette.primary.main}59`,
+              borderRadius: '999px',
+              boxShadow: `0 6px 22px rgba(0,0,0,0.5), 0 0 16px ${theme.palette.primary.main}3a`,
+              fontSize: '0.8rem',
+              '& .MuiChip-icon': { color: theme.palette.primary.main, ml: 0.75 },
+              '& .MuiChip-deleteIcon': {
+                color: 'rgba(226,232,240,0.6)',
+                fontSize: '1.05rem',
+                '&:hover': { color: theme.palette.primary.main },
+              },
+            })}
+          />
+        </Tooltip>
       )}
     </div>
   );

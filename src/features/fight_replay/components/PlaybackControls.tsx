@@ -12,10 +12,12 @@ import React from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
+import { TRANSPORT_SPACING, transportSurface } from '../constants/replayDesign';
 
 import { PlaybackButtons } from './PlaybackButtons';
 import { ShareButton } from './ShareButton';
 import { SpeedSelector } from './SpeedSelector';
+import { TimelineLegend } from './TimelineLegend';
 import { TimelineSlider } from './TimelineSlider';
 
 interface PlaybackControlsProps {
@@ -39,6 +41,12 @@ interface PlaybackControlsProps {
   fightId?: string;
   selectedActorIdRef?: React.RefObject<number | null>;
   fightStartTime?: number;
+  /** Contextual badges shown in the transport (encounter/difficulty/outcome). */
+  replayContext?: {
+    label?: string;
+    difficultyTag?: string;
+    isKill?: boolean | null;
+  };
 }
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
@@ -72,6 +80,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   fightId,
   selectedActorIdRef,
   fightStartTime: _fightStartTime,
+  replayContext,
 }) => {
   // Use optimized timeline scrubbing for better performance
   const {
@@ -81,7 +90,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     handleSliderChange,
     handleSliderChangeStart,
     handleSliderChangeEnd,
-    progressPercent,
     optimizedStep,
   } = useOptimizedTimelineScrubbing({
     duration,
@@ -114,59 +122,83 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
 
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
-        p: 2,
-        backgroundColor: 'background.paper',
-        borderRadius: 1,
-        border: '1px solid',
-        borderColor: 'divider',
-      }}
+        gap: TRANSPORT_SPACING.sectionGap,
+        px: TRANSPORT_SPACING.padX,
+        pt: TRANSPORT_SPACING.padTop,
+        pb: TRANSPORT_SPACING.padBottom,
+        // Docked "control deck" surface — a faint top-edge accent wash lifts it off the
+        // arena above without floating over the 3D scene (see audit: rejected floating
+        // transport, which would occlude bottom-edge actors).
+        ...transportSurface(theme),
+      })}
     >
-      {/* Timeline Slider with time display and progress indicator */}
+      {/* Scrub rail with time readout + event markers overlaid on the track */}
       <TimelineSlider
         displayTime={displayTime}
         duration={duration}
         isDragging={isDragging}
         isScrubbingMode={isScrubbingMode}
-        progressPercent={progressPercent}
         optimizedStep={optimizedStep}
         onSliderChange={handleSliderChange}
         onSliderChangeEnd={handleSliderChangeEnd}
         onSliderChangeStart={handleSliderChangeStart}
         markers={markers}
         onMarkerClick={handleMarkerClick}
+        replayContext={replayContext}
       />
 
-      {/* Playback control buttons */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-        <PlaybackButtons
-          isPlaying={isPlaying}
-          onPlayPause={onPlayPause}
-          onSkipToStart={onSkipToStart}
-          onSkipToEnd={onSkipToEnd}
-          onSkipBackward10={onSkipBackward10}
-          onSkipForward10={onSkipForward10}
-        />
+      {/* One dense control row: transport cluster centered, utilities split to the
+          edges. On narrow screens it wraps gracefully. */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.75, // proto .ctl gap: 14px
+          flexWrap: 'wrap',
+          rowGap: TRANSPORT_SPACING.sectionGap,
+        }}
+      >
+        {/* Left: speed segment (proto .lz — flex:1) */}
+        <Box
+          sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-start', minWidth: 120 }}
+        >
+          <SpeedSelector
+            playbackSpeed={playbackSpeed}
+            onSpeedChange={onSpeedChange}
+            speeds={PLAYBACK_SPEEDS}
+          />
+        </Box>
 
-        {/* Share button (only shown if report and fight IDs are provided) */}
-        <ShareButton
-          reportId={reportId}
-          fightId={fightId}
-          currentTime={currentTime}
-          selectedActorIdRef={selectedActorIdRef}
-          timeRef={timeRef}
-        />
+        {/* Center: transport cluster — skip + play + skip (proto .cz) */}
+        <Box sx={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
+          <PlaybackButtons
+            isPlaying={isPlaying}
+            onPlayPause={onPlayPause}
+            onSkipToStart={onSkipToStart}
+            onSkipToEnd={onSkipToEnd}
+            onSkipBackward10={onSkipBackward10}
+            onSkipForward10={onSkipForward10}
+          />
+        </Box>
+
+        {/* Right: share pill (proto .rz — flex:1, justify end) */}
+        <Box sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-end', minWidth: 120 }}>
+          <ShareButton
+            reportId={reportId}
+            fightId={fightId}
+            currentTime={currentTime}
+            selectedActorIdRef={selectedActorIdRef}
+            timeRef={timeRef}
+          />
+        </Box>
       </Box>
 
-      {/* Playback speed selector */}
-      <SpeedSelector
-        playbackSpeed={playbackSpeed}
-        onSpeedChange={onSpeedChange}
-        speeds={PLAYBACK_SPEEDS}
-      />
+      {/* Legend — full-width row at the very bottom of the transport (proto .legend,
+          margin-top:13px). Below the controls, not beside the speed chips. */}
+      {markers.length > 0 && <TimelineLegend markers={markers} />}
     </Box>
   );
 };

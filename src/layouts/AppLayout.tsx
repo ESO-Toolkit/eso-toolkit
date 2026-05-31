@@ -41,6 +41,10 @@ export const AppLayout: React.FC = () => {
   const isLandingPage = location.pathname === '/' || location.pathname === '';
   // Build editor needs a wider container and less vertical padding
   const isBuildEditor = location.pathname.startsWith('/build-editor');
+  // The 3D fight replay is an immersive viewport — let it use the full-width
+  // container instead of the default reading-width column.
+  const isFightReplay = location.pathname.endsWith('/replay');
+  const isWideRoute = isBuildEditor || isFightReplay;
 
   // Embed mode: strip chrome (header/footer) for iframe previews
   const isEmbed = searchParams.get('embed') === '1';
@@ -112,15 +116,15 @@ export const AppLayout: React.FC = () => {
           <HeaderBar />
           <Box component="main" id="main-content" tabIndex={-1} sx={{ outline: 'none', flex: 1 }}>
             <Container
-              maxWidth={isBuildEditor ? 'xl' : 'md'}
+              maxWidth={isWideRoute ? 'xl' : 'md'}
               sx={{
                 px: { xs: isLandingPage ? 2 : 0, sm: 2 },
               }}
             >
               <Box
                 sx={{
-                  pt: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 8 },
-                  pb: { xs: isLandingPage ? 2 : 0, sm: isBuildEditor ? 2 : 4 },
+                  pt: { xs: isLandingPage ? 2 : 0, sm: isWideRoute ? 2 : 8 },
+                  pb: { xs: isLandingPage ? 2 : 0, sm: isWideRoute ? 2 : 4 },
                   minHeight: 'calc(100vh - 200px)',
                 }}
               >

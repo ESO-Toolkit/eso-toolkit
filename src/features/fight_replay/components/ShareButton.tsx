@@ -7,10 +7,12 @@
  */
 
 import { Share } from '@mui/icons-material';
-import { Alert, IconButton, Snackbar, Tooltip } from '@mui/material';
+import { Alert, Button, Snackbar, Tooltip } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 
 import { getBaseUrl } from '@/utils/envUtils';
+
+import { TRANSPORT_MOTION } from '../constants/replayDesign';
 
 interface ShareButtonProps {
   /** Report ID for URL generation */
@@ -141,15 +143,38 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
 
   return (
     <>
-      <Tooltip title="Share current replay time">
-        <IconButton
+      <Tooltip title="Copy a link to this exact replay moment">
+        <Button
           onClick={handleShareUrl}
-          size="small"
-          color="secondary"
+          variant="outlined"
           aria-label="Share current replay time"
+          startIcon={<Share sx={{ fontSize: '1.05rem' }} />}
+          disableElevation
+          sx={(theme) => ({
+            // Match the bold proto's share pill exactly: soft cyan-tinted fill, cyan-glass
+            // border, cyan text, 11px radius, 34px tall to line up with the speed chips.
+            height: 34,
+            borderRadius: '11px',
+            px: '13px',
+            fontSize: '13px',
+            fontWeight: 600,
+            textTransform: 'none',
+            color: 'primary.main',
+            border: '1px solid',
+            borderColor: `${theme.palette.primary.main}47`, // ~0.28 alpha
+            backgroundColor: `${theme.palette.primary.main}0f`, // ~0.06 alpha
+            transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, border-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
+            '&:hover': {
+              backgroundColor: `${theme.palette.primary.main}1f`,
+              borderColor: `${theme.palette.primary.main}80`,
+            },
+            // Hide the word on very narrow screens; the icon + tooltip + aria-label carry it.
+            '& .MuiButton-startIcon': { mr: { xs: 0, sm: 0.75 } },
+            '& .share-label': { display: { xs: 'none', sm: 'inline' } },
+          })}
         >
-          <Share />
-        </IconButton>
+          <span className="share-label">Share</span>
+        </Button>
       </Tooltip>
 
       {/* Share result Snackbar. Bottom-center (avoids colliding with the global AppBar);

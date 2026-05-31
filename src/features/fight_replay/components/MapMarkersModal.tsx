@@ -1,7 +1,13 @@
 /**
  * Modal dialog for importing Map Markers (M0R and Elms formats)
  */
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlaceIcon from '@mui/icons-material/Place';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -12,13 +18,20 @@ import {
   DialogTitle,
   TextField,
   Typography,
+  useMediaQuery,
   useTheme,
 } from '@mui/material';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { useMarkerStats } from '../../../hooks/useMarkerStats';
+import { isElmsMarkersFormat } from '../../../utils/elmsMarkersDecoder';
 import { MapMarkersState } from '../types/mapMarkers';
+
+import { MarkerSpritePreview } from './MarkerSpritePreview';
+
+/** Verified-decodable Elms sample (zone 636 Hel Ra Citadel, lands inside the map bounding box) */
+const ELMS_SAMPLE = '/636//80000,15000,70000,21//636//90000,15000,80000,18/';
 
 interface MapMarkersModalProps {
   /** Whether the modal is open */
@@ -33,6 +46,10 @@ interface MapMarkersModalProps {
   onLoadMarkers: (markersString: string) => void;
   /** Callback when markers are cleared */
   onClearMarkers: () => void;
+  /** Optional: copy currently-loaded markers as an Elms string */
+  onExportElms?: () => void;
+  /** Optional: copy currently-loaded markers as an M0R string */
+  onExportMor?: () => void;
 }
 
 /**
@@ -45,36 +62,58 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
   markersState,
   onLoadMarkers,
   onClearMarkers,
+  onExportElms,
+  onExportMor,
 }) => {
   const theme = useTheme();
-  const darkMode = theme.palette.mode === 'dark';
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [mapMarkersInput, setMapMarkersInput] = useState('');
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Calculate marker statistics
-  const markerStats = useMarkerStats(markersState ?? undefined, fight);
+  const trimmedInput = mapMarkersInput.trim();
+
+  // Live validation of the raw input string — drives the Load gate and live feedback.
+  const inputStats = useMarkerStats(trimmedInput, fight);
+  // Stats for the already-committed markers — drives the "Currently Loaded" section only.
+  const committedStats = useMarkerStats(markersState ?? undefined, fight);
+
+  const hasInput = trimmedInput.length > 0;
+  const inputFailed = hasInput && !inputStats.success;
+  // Load is only safe to fire when the live preview validates AND has matching markers,
+  // because the parent closes the modal on load.
+  const canLoad = inputStats.success && inputStats.filtered > 0;
+
+  const detectedFormat = useMemo(
+    () => (hasInput ? (isElmsMarkersFormat(trimmedInput) ? 'Elms' : 'M0R') : null),
+    [hasInput, trimmedInput],
+  );
+
+  // Distinct Elms icon keys present in the committed markers (for the loaded preview).
+  const committedIconKeys = useMemo(() => {
+    if (!markersState) {
+      return [] as number[];
+    }
+    const keys = new Set<number>();
+    for (const marker of markersState.markers) {
+      if (typeof marker.elmsIconKey === 'number') {
+        keys.add(marker.elmsIconKey);
+      }
+    }
+    return Array.from(keys).slice(0, 24);
+  }, [markersState]);
 
   const handleLoadMarkers = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
       event.stopPropagation();
 
-      const trimmedInput = mapMarkersInput.trim();
-      if (!trimmedInput) {
+      if (!canLoad) {
         return;
       }
 
-      try {
-        onLoadMarkers(trimmedInput);
-        setLoadError(null);
-        setMapMarkersInput('');
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Failed to load markers. Please try again.';
-        setLoadError(message);
-      }
+      onLoadMarkers(trimmedInput);
+      setMapMarkersInput('');
     },
-    [mapMarkersInput, onLoadMarkers],
+    [canLoad, trimmedInput, onLoadMarkers],
   );
 
   const handleClearMarkers = useCallback(
@@ -83,7 +122,6 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
       event.stopPropagation();
 
       onClearMarkers();
-      setLoadError(null);
       setMapMarkersInput('');
     },
     [onClearMarkers],
@@ -109,12 +147,15 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
     event.stopPropagation();
   }, []);
 
+  const hasCommittedMarkers = Boolean(markersState && markersState.markers.length > 0);
+
   return (
     <Dialog
       open={open}
       onClose={handleClose}
       maxWidth="md"
       fullWidth
+      fullScreen={fullScreen}
       aria-labelledby="map-markers-dialog-title"
       onKeyDown={handleKeyDown}
       onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -125,7 +166,19 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         },
       }}
     >
-      <DialogTitle id="map-markers-dialog-title">Import M0R Markers</DialogTitle>
+      <DialogTitle
+        id="map-markers-dialog-title"
+        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+      >
+        <PlaceIcon sx={{ color: 'primary.main' }} />
+        Import Map Markers
+        <Box
+          component="span"
+          sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.85rem', ml: 0.5 }}
+        >
+          M0R or Elms
+        </Box>
+      </DialogTitle>
 
       <DialogContent>
         <form
@@ -135,12 +188,75 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         >
           {/* Instructions */}
           <Typography variant="body2" color="text.secondary">
-            Paste your M0R Markers or Elms Markers string below. The markers will be automatically
-            filtered to match the current map and displayed in the 3D arena.
+            Paste a markers string exported from <strong>M0RMarkers</strong> or{' '}
+            <strong>EnchantedMapsLite (Elms)</strong> below. Markers are auto-detected, filtered to
+            the current map, and rendered in the 3D arena.
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-            Supported formats: M0R Markers (&lt;zone]...) or Elms Markers (/zone//x,y,z,iconKey/)
+          <Typography variant="caption" color="text.secondary">
+            In <strong>M0RMarkers</strong>, open the markers menu and use Export/Share to copy the
+            string. In <strong>EnchantedMapsLite</strong>, use its export to copy the
+            <code> /zone//x,y,z,iconKey/ </code> string. Then paste it here.
           </Typography>
+
+          {/* Format reference + copyable sample */}
+          <Accordion
+            disableGutters
+            elevation={0}
+            sx={{ bgcolor: 'action.hover', border: 1, borderColor: 'divider', borderRadius: 1 }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle2">Format reference &amp; sample</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Elms grammar:{' '}
+                  <Box component="code" sx={{ fontFamily: 'monospace' }}>
+                    /zone//x,y,z,iconKey/
+                  </Box>{' '}
+                  (one segment per marker). Copyable example:
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.75rem',
+                    p: 1,
+                    mt: 0.5,
+                    mb: 0,
+                    bgcolor: 'background.default',
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    overflowX: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {ELMS_SAMPLE}
+                </Box>
+                <Button
+                  size="small"
+                  startIcon={<ContentCopyIcon fontSize="small" />}
+                  type="button"
+                  sx={{ mt: 0.5 }}
+                  onClick={() => setMapMarkersInput(ELMS_SAMPLE)}
+                >
+                  Use sample
+                </Button>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  M0R grammar:{' '}
+                  <Box component="code" sx={{ fontFamily: 'monospace' }}>
+                    &lt;zone]timestamp]minX:minY:minZ]...]positions&gt;
+                  </Box>
+                  . Export the full string directly from the M0RMarkers addon (it is too long to
+                  hand-write).
+                </Typography>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
 
           {/* Input Field */}
           <TextField
@@ -150,6 +266,8 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             rows={6}
             fullWidth
             value={mapMarkersInput}
+            error={inputFailed}
+            helperText={inputFailed ? inputStats.error : undefined}
             onChange={(e) => setMapMarkersInput(e.target.value)}
             onKeyDown={(e) => {
               // Prevent modal close on Escape when typing
@@ -159,72 +277,90 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
             }}
           />
 
-          {/* Current Markers Status */}
-          {markersState && markersState.markers.length > 0 && markerStats.success && (
+          {/* Live status line for the pasted input */}
+          {hasInput && inputStats.success && (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Typography variant="caption" color="text.secondary">
+                Detected <strong>{detectedFormat}</strong> format · {inputStats.totalDecoded}{' '}
+                decoded · {inputStats.filtered} match this map
+                {inputStats.mapName ? ` (${inputStats.mapName})` : ''}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Live validation: zone mismatch / decode failure */}
+          {inputFailed && <Alert severity="error">{inputStats.error}</Alert>}
+
+          {/* Live validation: decoded but nothing matches this map */}
+          {hasInput && inputStats.success && inputStats.filtered === 0 && (
+            <Alert severity="warning">
+              No markers in this string match the current map
+              {inputStats.mapName ? ` (${inputStats.mapName})` : ''}.
+              {inputStats.totalDecoded > 0 && ' All markers were filtered out by bounding box.'}
+            </Alert>
+          )}
+
+          {/* Live validation: ready-to-load summary */}
+          {canLoad && (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Chip
+                label={`${inputStats.filtered} / ${inputStats.totalDecoded} markers`}
+                color="success"
+                size="small"
+                variant="outlined"
+              />
+              {inputStats.is3D && (
+                <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
+              )}
+              {inputStats.removed > 0 && (
+                <Chip
+                  label={`${inputStats.removed} filtered out`}
+                  color="warning"
+                  size="small"
+                  variant="outlined"
+                />
+              )}
+            </Box>
+          )}
+
+          {/* Currently Loaded markers (already committed) */}
+          {hasCommittedMarkers && committedStats.success && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Typography variant="subtitle2" color="text.secondary">
                 Currently Loaded:
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Chip
-                  label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
+                  label={`${committedStats.filtered} / ${committedStats.totalDecoded} markers`}
                   color="success"
                   size="small"
-                  sx={{
-                    fontWeight: 'medium',
-                    backdropFilter: 'blur(8px)',
-                    background: darkMode ? 'rgba(46, 125, 50, 0.25)' : 'rgba(46, 125, 50, 0.12)',
-                  }}
+                  variant="outlined"
                 />
-                {markerStats.is3D && (
-                  <Chip
-                    label="3D Filtering"
-                    color="info"
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      backdropFilter: 'blur(8px)',
-                      background: darkMode ? 'rgba(2, 136, 209, 0.12)' : 'rgba(2, 136, 209, 0.06)',
-                    }}
-                  />
+                {committedStats.is3D && (
+                  <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
                 )}
-                {markerStats.removed > 0 && (
+                {committedStats.removed > 0 && (
                   <Chip
-                    label={`${markerStats.removed} filtered out`}
+                    label={`${committedStats.removed} filtered out`}
                     color="warning"
                     size="small"
                     variant="outlined"
-                    sx={{
-                      backdropFilter: 'blur(8px)',
-                      background: darkMode ? 'rgba(237, 108, 2, 0.12)' : 'rgba(237, 108, 2, 0.06)',
-                    }}
                   />
                 )}
               </Box>
+              {committedIconKeys.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {committedIconKeys.map((iconKey) => (
+                    <MarkerSpritePreview key={iconKey} iconKey={iconKey} />
+                  ))}
+                </Box>
+              )}
             </Box>
           )}
-
-          {/* Error State */}
-          {markersState && !markerStats.success && (
-            <Alert severity="error">{markerStats.error}</Alert>
-          )}
-
-          {/* No Matches Warning */}
-          {markersState &&
-            markersState.markers.length > 0 &&
-            markerStats.success &&
-            markerStats.filtered === 0 && (
-              <Alert severity="warning">
-                No markers match the current map ({markerStats.mapName}).
-                {markerStats.totalDecoded > 0 && ' All markers were filtered out by bounding box.'}
-              </Alert>
-            )}
-
-          {loadError && <Alert severity="error">{loadError}</Alert>}
         </form>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
+      <DialogActions sx={{ px: 3, pb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Button
           onClick={handleClose}
           color="inherit"
@@ -233,7 +369,29 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         >
           Close
         </Button>
-        {markersState && markersState.markers.length > 0 && (
+        {hasCommittedMarkers && onExportElms && (
+          <Button
+            onClick={onExportElms}
+            color="secondary"
+            variant="outlined"
+            type="button"
+            startIcon={<ContentCopyIcon />}
+          >
+            Copy Elms
+          </Button>
+        )}
+        {hasCommittedMarkers && onExportMor && (
+          <Button
+            onClick={onExportMor}
+            color="secondary"
+            variant="outlined"
+            type="button"
+            startIcon={<ContentCopyIcon />}
+          >
+            Copy M0R
+          </Button>
+        )}
+        {hasCommittedMarkers && (
           <Button onClick={handleClearMarkers} color="secondary" variant="outlined" type="button">
             Clear Markers
           </Button>
@@ -242,7 +400,7 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
           onClick={handleLoadMarkers}
           variant="contained"
           color="primary"
-          disabled={!mapMarkersInput.trim()}
+          disabled={!canLoad}
           type="button"
         >
           Load Markers
