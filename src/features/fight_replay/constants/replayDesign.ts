@@ -1,30 +1,30 @@
 /**
  * Replay surface design tokens
  *
- * Shared values for the fight-replay transport bar and in-scene HUDs so spacing rhythm,
- * elevation, motion, and the canvas-HUD palette stay consistent across components instead
- * of being re-derived as scattered magic numbers.
+ * Shared spacing rhythm, elevation, and motion for the fight-replay transport bar so its
+ * micro-interactions feel like one system instead of scattered magic numbers.
  *
- * Two distinct consumers, two different rules:
+ * These are consumed by DOM/MUI components (the transport bar) via `sx` helpers that read
+ * live theme tokens — prefer the `transportSurface()` / motion helpers below over hardcoded
+ * hex so the bar tracks the active light/dark palette (theme lives in `ReduxThemeProvider`).
  *
- *  1. DOM/MUI components (transport bar) — these use `sx` helpers that read live theme
- *     tokens. Prefer the `transportSurface()` / motion helpers below over hardcoded hex so
- *     the bar tracks the active light/dark palette (theme lives in `ReduxThemeProvider`).
- *
- *  2. Canvas-2D HUDs (PlayerListHUD, BossHealthHUD) — these paint into an offscreen 2D
- *     context inside the R3F render loop. They MUST NOT read the MUI theme or allocate in
- *     their per-frame `updateHUD()`/`updateHealthHUD()` draw pass (documented perf landmine).
- *     So the canvas palette here is a frozen, theme-aligned constant snapshot: the same
- *     cyan/slate language as the MUI theme, expressed as ready-to-use canvas color strings,
- *     resolved once at module load and read directly in the draw code. It is intentionally
- *     NOT wired to light/dark mode — the 3D arena is always a dark scene, so the HUDs are
- *     always dark-on-glass regardless of the app's light/dark setting.
+ * (The in-scene player-list and boss-health HUDs are now DOM overlays that read the live
+ * theme directly; they no longer need a frozen canvas palette here.)
  *
  * @module replayDesign
  */
 
 import type { Theme } from '@mui/material/styles';
 import type { SystemStyleObject } from '@mui/system';
+
+/**
+ * Responsive arena viewport height (a CSS `clamp` expression): tracks a 16:9 ratio of the
+ * available width, floored so it never shrinks below the old fixed size and capped so it
+ * doesn't run past the fold. Shared so the in-scene DOM overlays (PlayerListPanel) can bound
+ * their scroll region to the exact same height the arena uses, instead of duplicating the
+ * literal and risking drift.
+ */
+export const ARENA_HEIGHT = 'clamp(420px, 56.25vw, 78vh)';
 
 /**
  * Spacing rhythm for the transport bar, in MUI spacing units (×8px). Kept deliberately
@@ -98,59 +98,3 @@ export const transportSurface = (theme: Theme): SystemStyleObject<Theme> => {
     },
   };
 };
-
-/**
- * Canvas-2D HUD palette — a frozen, theme-aligned snapshot (see module header for why this
- * is a constant and not a theme read). Mirrors the dark-mode design tokens
- * (`bg #0b1220`, `panel #0f172a`, `accent #38bdf8`, `text #e5e7eb`, `muted #94a3b8`, …)
- * expressed as canvas fill/stroke strings. Read directly in the draw loop; never recomputed.
- */
-export const HUD_PALETTE = {
-  /** Panel background — translucent slate so the arena reads faintly through the HUD. */
-  panelBg: 'rgba(15, 23, 42, 0.82)',
-  /** Slightly darker header strip to separate the title from the rows. */
-  headerBg: 'rgba(2, 6, 23, 0.9)',
-  /** Hairline border — cyan-tinted at low alpha to match the MUI glass panels. */
-  border: 'rgba(148, 210, 255, 0.16)',
-  /** Inner divider lines (row separators / header underline). */
-  divider: 'rgba(148, 210, 255, 0.1)',
-
-  /** Primary text — the theme's `text.primary`. */
-  text: '#e5e7eb',
-  /** Secondary/label text — the theme's `text.secondary` muted slate. */
-  muted: '#94a3b8',
-  /** Accent — cyan `primary.main`, used for selection + active icons. */
-  accent: '#38bdf8',
-  /** Brighter cyan `secondary.main` for emphasis (boss name underglow, active fills). */
-  accent2: '#00e1ff',
-
-  /** Row states. */
-  rowSelected: 'rgba(56, 189, 248, 0.16)',
-  rowHover: 'rgba(148, 210, 255, 0.08)',
-
-  /** Icon states — non-color cues carry the real meaning; color is reinforcement only. */
-  iconActive: '#38bdf8',
-  iconInactive: 'rgba(148, 163, 184, 0.55)',
-  iconHover: '#e5e7eb',
-
-  /** Health bar ramp — theme success/warning/error. */
-  hpTrack: 'rgba(2, 6, 23, 0.85)',
-  hpTrackBorder: 'rgba(148, 210, 255, 0.18)',
-  hpGood: '#22c55e',
-  hpWarn: '#ff9800',
-  hpCritical: '#ef4444',
-  /** Dead/disabled boss name. */
-  dead: '#64748b',
-} as const;
-
-/**
- * Canvas font stack. The app's UI font is Inter; canvas text can't use the variable font
- * reliably across the texture pipeline, so we name Inter first with robust fallbacks. Boss
- * names use a heavier weight to echo the Space Grotesk display register without depending on
- * the web font being loaded into the canvas.
- */
-export const HUD_FONT = {
-  family: "Inter, system-ui, 'Segoe UI', Arial, sans-serif",
-  /** Display weight for emphasis (boss name). */
-  displayWeight: 700,
-} as const;

@@ -1,6 +1,6 @@
 import { Grid, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
-import React, { Suspense, useMemo, useState, useCallback, useRef, useEffect } from 'react';
+import React, { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
@@ -10,24 +10,21 @@ import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
 import { MapMarkersState } from '../types/mapMarkers';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
-import {
-  extractPlayerPaths,
-  getVisiblePlayerIds,
-  getPlayerInfo,
-  DEFAULT_PATH_SAMPLING,
-} from '../utils/pathUtils';
-import { globalPlayerColorManager, getPlayerPathColor } from '../utils/playerColors';
+import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
+import { getPlayerPathColor } from '../utils/playerColors';
 
 import { AnimationFrameActor3D } from './AnimationFrameActor3D';
-import { BossHealthHUD } from './BossHealthHUD';
 import { CameraFollower } from './CameraFollower';
 import { DynamicMapTexture } from './DynamicMapTexture';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
-import { PlayerListHUD } from './PlayerListHUD';
 import { PlayerPathTrail3D } from './PlayerPathTrail3D';
+
+// Stable empty Map for the optional playerVisibility prop default — a fresh `new Map()` in
+// the default would change identity every render and churn child memoization.
+const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
 
 // Create logger instance for Arena3DScene
 const logger = new Logger({
@@ -240,12 +237,13 @@ export interface Arena3DSceneProps {
   initialTarget?: [number, number, number];
   /** Selected player IDs for path visualization */
   selectedPlayerIds?: Set<number>;
-  /** Callback when player selection changes */
-  onPlayerSelectionChange?: (selectedIds: Set<number>) => void;
-  /** Whether to show player paths HUD */
-  showPlayerPathsHUD?: boolean;
   /** Whether to show player trail paths */
   showPlayerTrails?: boolean;
+  /**
+   * Per-player visibility of the 3D actor models. Owned by Arena3D (so the DOM PlayerListPanel
+   * overlay and these in-canvas actors share one source of truth) and passed down here.
+   */
+  playerVisibility?: Map<number, boolean>;
 }
 
 /**
@@ -267,9 +265,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   fight,
   initialTarget,
   selectedPlayerIds = new Set(),
-  onPlayerSelectionChange,
-  showPlayerPathsHUD = false,
   showPlayerTrails = false,
+  playerVisibility = EMPTY_VISIBILITY,
 }) => {
   // Shared render budget for the on-demand RenderLoop. Refilled on every React commit of
   // this scene (effect below, intentionally no deps) so state-driven mutations — markers,
@@ -291,17 +288,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
   }, []);
 
-  // State for player visibility (actor models in 3D scene)
-  const [playerVisibility, setPlayerVisibility] = useState<Map<number, boolean>>(new Map());
-
-  // Handler for toggling player visibility
-  const handlePlayerVisibilityChange = useCallback((actorId: number, visible: boolean) => {
-    setPlayerVisibility((prev) => {
-      const next = new Map(prev);
-      next.set(actorId, visible);
-      return next;
-    });
-  }, []);
+  // Player visibility is now owned by Arena3D and passed in as a prop, so the DOM
+  // PlayerListPanel overlay (which renders the toggle controls) and these in-canvas actors
+  // share one source of truth.
 
   // Calculate arena dimensions and camera settings based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -456,11 +445,6 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     return paths;
   }, [lookup, selectedPlayerIds, showPlayerTrails]);
 
-  // Get all visible player IDs for HUD
-  const availablePlayerIds = useMemo(() => {
-    return lookup ? getVisiblePlayerIds(lookup) : [];
-  }, [lookup]);
-
   // Debug logging for Scene component
 
   return (
@@ -540,8 +524,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         onActorClick={onActorClick}
         playerVisibility={playerVisibility}
       />
-      {/* Boss Health HUD - positioned in corner of 3D scene */}
-      <BossHealthHUD lookup={lookup} timeRef={timeRef} />
+      {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
+          the <Canvas> (crisp text, real scroll region, native MUI styling) — not in-canvas
+          textured planes. Only world-anchored labels (actor names) remain in the scene. */}
       {/* Map Markers - Render raid/dungeon markers if provided (M0R or Elms format) */}
       {markersState && (
         <MapMarkers
@@ -561,37 +546,6 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           visible={showPlayerTrails}
         />
       )}
-      {/* Player List HUD - 3D Canvas Version with Fixed Screen-Space Positioning */}
-      {showPlayerPathsHUD && onPlayerSelectionChange && lookup && (
-        <PlayerListHUD
-          paths={
-            new Map(
-              availablePlayerIds.map((id) => {
-                const playerInfo = getPlayerInfo(lookup, id);
-                return [
-                  id,
-                  {
-                    actorId: id,
-                    name: playerInfo?.name || `Player ${id}`,
-                    role: playerInfo?.role,
-                    points: [],
-                    color: getPlayerPathColor(id),
-                    visible: playerVisibility.get(id) ?? true,
-                  },
-                ];
-              }),
-            )
-          }
-          selectedPlayerIds={selectedPlayerIds}
-          onPlayerSelectionChange={onPlayerSelectionChange}
-          onPlayerVisibilityChange={handlePlayerVisibilityChange}
-          lookup={lookup}
-          timeRef={timeRef}
-          colorManager={globalPlayerColorManager}
-          visible={showPlayerPathsHUD}
-          positionOffset={{ x: -20, y: 20 }}
-        />
-      )}{' '}
       {/* Interaction plane for context menu support (Alt + Right Click) */}
       <mesh
         position={[arenaDimensions.centerX, -0.019, arenaDimensions.centerZ]}
