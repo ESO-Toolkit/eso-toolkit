@@ -16,7 +16,7 @@ import {
   AccordionDetails,
   Tooltip,
 } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -62,29 +62,10 @@ import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnal
 import { SCRIBING_DETECTION_SCHEMA_VERSION } from '../../scribing/analysis/scribingDetectionAnalysis';
 import { ScribedSkillData } from '../../scribing/types';
 
+import { MetricsScrollRow } from './MetricsScrollRow';
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
 import { StatChipIcon } from './StatChipIcon';
-// Styled component for metrics scroll container with thin scrollbar
-const MetricsScrollContainer = styled(Box)(({ theme }) => ({
-  overflowX: 'auto',
-  overflowY: 'hidden',
-  WebkitOverflowScrolling: 'touch',
-  scrollbarWidth: 'thin',
-  '&::-webkit-scrollbar': {
-    height: '8px',
-  },
-  '&::-webkit-scrollbar-track': {
-    background: theme.palette.grey[200],
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: theme.palette.grey[500],
-    borderRadius: '4px',
-  },
-  '&::-webkit-scrollbar-thumb:hover': {
-    background: theme.palette.grey[700],
-  },
-}));
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -1731,7 +1712,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 44, sm: 28, md: 28 },
                     }}
                   >
-                    <MetricsScrollContainer
+                    <MetricsScrollRow
+                      scrollable={metricsLayout !== 'wrap'}
                       sx={{
                         display: 'flex',
                         flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
@@ -1765,7 +1747,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           </React.Fragment>
                         ))}
                       </Typography>
-                    </MetricsScrollContainer>
+                    </MetricsScrollRow>
                   </Box>
 
                   {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (
