@@ -937,8 +937,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                   // painted (both prefixed + standard for cross-browser).
                   background:
                     'conic-gradient(from var(--tdps-angle), transparent 0deg, rgba(251,191,36,0.15) 40deg, rgba(245,158,11,0.85) 80deg, #fde68a 100deg, rgba(245,158,11,0.85) 120deg, rgba(251,191,36,0.15) 160deg, transparent 200deg, transparent 360deg)',
-                  WebkitMask:
-                    'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                  WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
                   mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
                   WebkitMaskComposite: 'xor',
                   maskComposite: 'exclude',
