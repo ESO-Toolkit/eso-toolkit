@@ -10,6 +10,7 @@
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+import { selectActorsById } from '../store/master_data/masterDataSelectors';
 import { selectCurrentFight, selectDeathEvents } from '../store/selectors/eventsSelectors';
 import {
   TimelineAnnotation,
@@ -64,6 +65,10 @@ export const useTimelineMarkers = (
   // Get fight data
   const currentFight = useSelector(selectCurrentFight);
   const deathEvents = useSelector(selectDeathEvents);
+  // Actor name lookup keyed by actor id (ReportActorFragment map). This is a memoized,
+  // context-keyed selector (createReportFightContextSelector), so it returns a stable
+  // reference across playback ticks — safe to add to the deathMarkers useMemo deps.
+  const actorsById = useSelector(selectActorsById);
 
   // Generate phase markers
   const phaseMarkers = useMemo((): PhaseMarker[] => {
@@ -100,9 +105,13 @@ export const useTimelineMarkers = (
         return true;
       })
       .map((event, index) => {
-        // Get actor names from store (we'll use IDs if names aren't available)
-        const actorName = `Actor ${event.targetID}`;
-        const killerName = event.sourceID ? `Actor ${event.sourceID}` : undefined;
+        // Resolve real actor names from master data, falling back to `Actor <id>` only when a
+        // name is genuinely unavailable. Use `||` (not `??`) so empty-string names also fall back.
+        const actorName = actorsById[event.targetID]?.name || `Actor ${event.targetID}`;
+        // ESO environmental deaths have sourceID 0; preserve the existing "no killer" behavior.
+        const killerName = event.sourceID
+          ? actorsById[event.sourceID]?.name || `Actor ${event.sourceID}`
+          : undefined;
 
         return {
           // Include the index so two death events for the same actor at the same
@@ -126,6 +135,7 @@ export const useTimelineMarkers = (
     config.showEnemyDeaths,
     currentFight,
     deathEvents,
+    actorsById,
   ]);
 
   // Combine all markers

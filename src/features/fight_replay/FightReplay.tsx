@@ -389,6 +389,8 @@ export const FightReplay: React.FC = () => {
         markersState={markersState}
         onLoadMarkers={handleLoadMarkers}
         onClearMarkers={handleClearMarkers}
+        onExportElms={() => handleExportMarkers('elms')}
+        onExportMor={() => handleExportMarkers('mor')}
       />
 
       {/* 3D Arena */}

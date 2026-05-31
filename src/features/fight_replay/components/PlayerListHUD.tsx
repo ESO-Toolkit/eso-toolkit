@@ -299,8 +299,10 @@ class PlayerListHUDRenderer {
       ctx.font = `${HUD_CONFIG.iconFontSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
+      // Distinct glyphs for shown vs hidden so the state isn't conveyed by color
+      // alone (WCAG 1.4.1). The slashed-eye reads as "hidden" at a glance.
       ctx.fillText(
-        player.visible ? '👁' : '👁',
+        player.visible ? '👁' : '🚫',
         eyeIconX + HUD_CONFIG.iconSize / 2,
         eyeIconY + HUD_CONFIG.iconSize / 2,
       );
