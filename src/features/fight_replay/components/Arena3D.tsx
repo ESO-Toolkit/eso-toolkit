@@ -35,6 +35,12 @@ const logger = new Logger({
   contextPrefix: 'Arena3D',
 });
 
+// Responsive arena viewport height. The replay should dominate the page rather than
+// sit in a fixed 400px letterbox: track a 16:9 ratio of the available width, but floor
+// it so it never gets smaller than the old size and cap it so it doesn't run past the
+// fold on tall/wide screens. Pure CSS — no JS, no per-frame cost, no memo impact.
+const ARENA_HEIGHT = 'clamp(420px, 56.25vw, 78vh)';
+
 /**
  * Compute the default (fallback) camera position used whenever actor positions
  * are unavailable. The camera is placed southwest of and above the target.
@@ -559,7 +565,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       <div
         style={{
           width: '100%',
-          height: '400px',
+          height: ARENA_HEIGHT,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -574,7 +580,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   return (
     <div
-      style={{ width: '100%', height: '400px', position: 'relative' }}
+      style={{ width: '100%', height: ARENA_HEIGHT, position: 'relative' }}
       role="img"
       aria-label="3D fight replay arena showing player positions over time"
     >
