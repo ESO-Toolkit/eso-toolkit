@@ -136,10 +136,12 @@ in-path), then self-time aggregated per script chunk / V8 category from the reco
 | GC                                      | 0.23 ms      | 1.4%  |
 | **BUSY (everything except `(idle)`)**   | **10.45 ms** | 63%   |
 
-This **reconciles with both** the brief's "~11ms/frame" and the prior session's ~75fps baseline
-(75fps ⇒ 13.3ms budget; 10.45ms busy + scheduling/compositor overhead fits). The earlier
-mis-aggregation that folded `(program)` + native into "idle" (and so reported a too-rosy ~4ms / 69%
-idle) was the error — the honest busy figure is **~10.5ms**, distributed.
+This **reconciles with the brief's "~11ms/frame."** The earlier mis-aggregation that folded
+`(program)` + native into "idle" (and so reported a too-rosy ~4ms / 69% idle) was the error — the
+honest busy figure is **~10.5ms**, distributed. It is also the more-likely reading of the prior
+session's ~75fps baseline: 75fps ⇒ a 13.3ms budget, so a work-limited ~10.5ms fits — though 75fps
+alone does not _prove_ 10.5 over 5ms, since a refresh-limited display would also read 75 regardless of
+work. (See the measurement caveat: the prior 75 was necessarily on a ≥75Hz display.)
 
 No single fat lever, and crucially **the dominant slices are ones the consolidation does not touch**:
 `(program)`/native (3.9 + 1.3ms — V8 dispatch, GC glue, raster/upload), React commit (1.5ms), MUI
@@ -148,14 +150,24 @@ concentration: the top app function is ~3.6% of its chunk, and the THREE matrix/
 brief suspected (`multiplyMatrices`, `updateMatrixWorld`, `compose`, `copy`, `getWorldQuaternion`) is
 **0.1–0.2% each**. The per-actor lookup is already O(1) (`hasRegularIntervals === true` for this fight),
 and the dedup + billboard-alloc-hoist wins each measure ~0.1–0.2% — real micro-cleanups, but invisible
-to fps. Even zeroing the entire actor loop leaves ~8ms of structural/runtime cost, so it cannot reach
-the 8.3ms (120fps) budget.
+to fps.
+
+What the consolidation actually buys is the removal of per-subscriber `useFrame` **dispatch** overhead
+— µs-scale, ~0.2ms at most. Reaching 120fps (8.3ms budget) from 10.45ms means cutting ~2.1ms, which is
+~87% of the **entire** per-actor loop (2.43ms) — i.e. you would have to delete almost all per-actor
+position/material/billboard work, not restructure it. So in raw work-time the actor loop is _just
+barely_ the lever (2.43 of the 2.1ms gap), but only near-total elimination would suffice, and that
+necessarily drops the position updates that make the replay move. Consolidation does none of that. (And
+this ignores that ~5ms of the 10.45 is `(program)`/native/GC the refactor cannot reach at all.)
 
 **Measurement caveat (load-bearing).** Raw-rAF fps on the test hardware is **vsync-capped at 60Hz**
-(frame interval median 16.6ms, min 8ms) — it physically cannot express 75 vs 120, so the headline
-metric here is **per-frame work-time-ms**, not fps. (75fps ⇒ 13.3ms; 120fps ⇒ 8.3ms; measured prod
-busy is ~10.5ms.) Hence all numbers above are work-time, and a before/after fps delta is not
-observable on this display.
+(frame interval median 16.6ms, min 8ms) — rAF can never report more than the display refresh, so it
+physically cannot express 75 vs 120 here, and the headline metric is **per-frame work-time-ms**, not
+fps. This also pins down the prior baseline: ~75fps is _unobservable_ on a 60Hz panel, so that
+measurement was necessarily taken on a **≥75Hz display** — and this session's 60Hz panel is exactly
+why the fps figure can't be reproduced or moved here. (75fps ⇒ 13.3ms; 120fps ⇒ 8.3ms; measured prod
+busy is ~10.5ms.) A before/after fps delta is therefore not observable on this display; only work-time
+is.
 
 **A secondary, smaller finding — per-frame DOM layout/paint exists but is tiny (~0.5ms).** A
 paused-vs-playing trace comparison shows `Layout`/`Paint` events fire ~once per frame while
@@ -172,9 +184,11 @@ is **out of scope for this PR** and unmeasurable for fps on 60Hz hardware.
 
 **Conclusion.** The per-actor `useFrame` consolidation is **not justified**: per-frame cost is
 ~10.5ms of structurally-distributed work (V8 runtime/program ~5ms, React commit ~1.5ms, app useFrame
-JS only ~2.4ms with no internal hotspot, MUI ~1ms), so cheapening the actor loop cannot reach the
-8.3ms/120fps budget and carries real visual-regression risk for ~0 measurable gain. 75fps is already
-smooth and shipped. No code change shipped from this investigation; the micro-cleanups (lookup dedup,
+JS only ~2.4ms with no internal hotspot, MUI ~1ms). Consolidation removes only per-subscriber dispatch
+overhead (~0.2ms) — reaching the 8.3ms/120fps budget would require deleting ~87% of the entire actor
+loop's work (the position/material/billboard updates themselves), which restructuring does not do and
+which would stop the replay from moving. So it carries real visual-regression risk for ~0 measurable
+gain. 75fps is already smooth and shipped. No code change shipped from this investigation; the micro-cleanups (lookup dedup,
 billboard alloc hoist) and the unidentified ~0.5ms per-frame DOM write are recorded as low-priority
 follow-ups, not fps wins.
 
