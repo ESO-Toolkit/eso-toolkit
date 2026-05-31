@@ -4,9 +4,17 @@ import React from 'react';
 import type { StatChipId } from './statChipConfig';
 import { getChipIconColor } from './statChipConfig';
 
+/**
+ * Icon dimension — either a fixed pixel value or a responsive map keyed by
+ * MUI breakpoint (e.g. `{ xs: 18, md: 16 }`). Responsive sizing lets the metric
+ * row render larger, touch-friendly icons on mobile while staying compact on
+ * desktop.
+ */
+type ResponsiveSize = number | Partial<Record<'xs' | 'sm' | 'md' | 'lg' | 'xl', number>>;
+
 interface StatChipIconProps {
   chipId: StatChipId;
-  size?: number;
+  size?: ResponsiveSize;
   /** Explicit colour override — when omitted the icon uses its category colour. */
   color?: string;
 }
@@ -23,7 +31,11 @@ const strokeSx = {
 /** Filled accent — solid dots / highlights to anchor the eye. */
 const fillSx = { fill: 'currentColor', stroke: 'none' };
 
-export const StatChipIcon: React.FC<StatChipIconProps> = ({ chipId, size = 16, color }) => {
+export const StatChipIcon: React.FC<StatChipIconProps> = ({
+  chipId,
+  size = { xs: 18, sm: 16, md: 16 },
+  color,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const resolvedColor = color ?? getChipIconColor(chipId, isDark);

@@ -202,14 +202,19 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
           minHeight: { xs: 28, sm: 'auto', md: 'auto' },
         }}
       >
-        <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
+        <Box
+          component="img"
+          src={mundusIcon}
+          alt=""
+          sx={{ width: { xs: 16, sm: 14, md: 12 }, height: { xs: 16, sm: 14, md: 12 } }}
+        />
         <Box component="span" sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}></Box>
         <Box
           component="span"
           sx={{
             display: 'inline',
             fontWeight: 700,
-            fontSize: { xs: 8, sm: 9, md: 10 },
+            fontSize: { xs: 13, sm: 11, md: 10 },
             letterSpacing: '.01em',
             color: 'primary.main',
             textTransform: 'uppercase',
@@ -569,7 +574,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(dpsValue)} DPS
               </Box>
@@ -587,7 +596,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(hpsValue)} HPS
               </Box>
@@ -609,7 +622,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {critChance.toFixed(1)}%
               </Box>
@@ -633,7 +650,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 component="span"
                 sx={{
                   fontWeight: 700,
-                  fontSize: { xs: 8, sm: 9, md: 10 },
+                  fontSize: { xs: 13, sm: 11, md: 10 },
                   letterSpacing: '.01em',
                   color:
                     critDamageSummary.avg >= 125
@@ -663,7 +680,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(totalDamage)}
               </Box>
@@ -685,7 +706,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(totalCritDamage)}
               </Box>
@@ -707,7 +732,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(critDps)} CDPS
               </Box>
@@ -739,7 +768,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               sx={{
                 display: 'inline',
                 fontWeight: 700,
-                fontSize: { xs: 8, sm: 9, md: 10 },
+                fontSize: { xs: 13, sm: 11, md: 10 },
                 letterSpacing: '.01em',
                 color: foodInfo.color,
               }}
@@ -768,7 +797,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               sx={{
                 display: 'inline',
                 fontWeight: 700,
-                fontSize: { xs: 8, sm: 9, md: 10 },
+                fontSize: { xs: 13, sm: 11, md: 10 },
                 letterSpacing: '.01em',
                 color: potionInfo.color,
               }}
@@ -860,7 +889,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 sx={{
                   fontWeight: 700,
                   letterSpacing: '0.05em',
-                  fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                  fontSize: { xs: 13, sm: 11, md: 10 },
                 }}
               >
                 {barSwapResult.barSetupPattern}
@@ -1699,7 +1728,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       alignItems: 'center',
                       justifyContent: 'flex-start',
                       minWidth: 0,
-                      minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 28, md: 28 },
+                      minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 44, sm: 28, md: 28 },
                     }}
                   >
                     <MetricsScrollContainer
@@ -1708,7 +1737,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
                         overflowX: metricsLayout === 'wrap' ? 'hidden' : 'auto',
                         gap: { xs: 0.75, sm: 0.5, md: 0.5 },
-                        minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 24, md: 24 },
+                        minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 44, sm: 24, md: 24 },
                         flex: '1 1 auto',
                         minWidth: 0,
                         mr: 0.5,
@@ -1724,9 +1753,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           gap:
                             metricsLayout === 'wrap'
                               ? { xs: 1, sm: 0.75, md: 0.5 }
-                              : { xs: 0.75, sm: 0.5, md: 0.25 },
+                              : { xs: 1, sm: 0.5, md: 0.25 },
                           whiteSpace: metricsLayout === 'wrap' ? 'normal' : 'nowrap',
-                          fontSize: { xs: '0.85rem', sm: '0.8rem', md: 'body2.fontSize' },
+                          fontSize: { xs: 13, sm: 11, md: 'body2.fontSize' },
                         }}
                       >
                         {statChipEntries.map((entry, i) => (
