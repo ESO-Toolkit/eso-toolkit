@@ -320,9 +320,7 @@ export const FightReplay: React.FC = () => {
           {fight.maps?.[0]?.name || fight.name}
         </Typography>
 
-        <Box
-          sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}
-        >
+        <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           {fight.maps?.[0]?.name && fight.name && fight.maps[0].name !== fight.name && (
             <Typography variant="subtitle1" color="text.secondary">
               {fight.name}

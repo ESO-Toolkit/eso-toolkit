@@ -36,7 +36,12 @@ const LEGEND_ENTRIES: Record<LegendKey, LegendEntry> = {
     color: 'error.main',
     shape: 'triangle',
   },
-  'enemy-death': { key: 'enemy-death', label: 'Enemy death', color: 'warning.main', shape: 'triangle' },
+  'enemy-death': {
+    key: 'enemy-death',
+    label: 'Enemy death',
+    color: 'warning.main',
+    shape: 'triangle',
+  },
   custom: { key: 'custom', label: 'Marker', color: 'info.main', shape: 'pin' },
 };
 

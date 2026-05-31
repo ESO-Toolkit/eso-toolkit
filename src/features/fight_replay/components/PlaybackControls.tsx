@@ -158,7 +158,9 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         }}
       >
         {/* Left: playback speed */}
-        <Box sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-start', minWidth: 120 }}>
+        <Box
+          sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-start', minWidth: 120 }}
+        >
           <SpeedSelector
             playbackSpeed={playbackSpeed}
             onSpeedChange={onSpeedChange}

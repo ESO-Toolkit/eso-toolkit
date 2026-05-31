@@ -268,8 +268,8 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
           {hasInput && inputStats.success && (
             <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
               <Typography variant="caption" color="text.secondary">
-                Detected <strong>{detectedFormat}</strong> format ·{' '}
-                {inputStats.totalDecoded} decoded · {inputStats.filtered} match this map
+                Detected <strong>{detectedFormat}</strong> format · {inputStats.totalDecoded}{' '}
+                decoded · {inputStats.filtered} match this map
                 {inputStats.mapName ? ` (${inputStats.mapName})` : ''}
               </Typography>
             </Box>
