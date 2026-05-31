@@ -14,6 +14,7 @@ import {
   PhaseMarker,
   DeathMarker,
   CustomMarker,
+  ClusterMarker,
   TimelineAnnotation,
 } from '../../../types/timelineAnnotations';
 
@@ -52,6 +53,17 @@ const custom: CustomMarker = {
   label: 'Note',
 };
 
+const cluster: ClusterMarker = {
+  id: 'cluster-1',
+  timestamp: 70000,
+  type: 'cluster',
+  clusterType: 'death',
+  isFriendly: true,
+  label: '3 deaths',
+  count: 3,
+  members: [friendlyDeath],
+};
+
 describe('TimelineLegend', () => {
   it('renders nothing when there are no markers', () => {
     const { container } = render(<TimelineLegend markers={[]} />);
@@ -72,12 +84,18 @@ describe('TimelineLegend', () => {
     expect(screen.getByText('Enemy death')).toBeInTheDocument();
   });
 
-  it('renders all four entries when every type is present', () => {
+  it('renders all four base entries when every type is present', () => {
     const all: TimelineAnnotation[] = [phase, friendlyDeath, enemyDeath, custom];
     render(<TimelineLegend markers={all} />);
     expect(screen.getByText('Phase')).toBeInTheDocument();
     expect(screen.getByText('Ally death')).toBeInTheDocument();
     expect(screen.getByText('Enemy death')).toBeInTheDocument();
     expect(screen.getByText('Marker')).toBeInTheDocument();
+  });
+
+  it('surfaces the grouped-events entry only when a cluster is present', () => {
+    expect(render(<TimelineLegend markers={[phase]} />).queryByText('Grouped events')).toBeNull();
+    render(<TimelineLegend markers={[cluster]} />);
+    expect(screen.getByText('Grouped events')).toBeInTheDocument();
   });
 });

@@ -10,7 +10,12 @@ import { render, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import { TimelineMarkers } from './TimelineMarkers';
-import { PhaseMarker, DeathMarker, CustomMarker } from '../../../types/timelineAnnotations';
+import {
+  PhaseMarker,
+  DeathMarker,
+  CustomMarker,
+  ClusterMarker,
+} from '../../../types/timelineAnnotations';
 
 describe('TimelineMarkers', () => {
   const mockPhaseMarker: PhaseMarker = {
@@ -43,6 +48,21 @@ describe('TimelineMarkers', () => {
     description: 'Team wipe avoided',
     deletable: true,
     color: '#2196f3',
+  };
+
+  const mockClusterMarker: ClusterMarker = {
+    id: 'cluster-1',
+    timestamp: 50000,
+    type: 'cluster',
+    clusterType: 'death',
+    isFriendly: true,
+    label: '3 deaths',
+    count: 3,
+    members: [
+      { ...mockDeathMarker, id: 'd1', timestamp: 50000, label: '💀 A' },
+      { ...mockDeathMarker, id: 'd2', timestamp: 50500, label: '💀 B' },
+      { ...mockDeathMarker, id: 'd3', timestamp: 51000, label: '💀 C' },
+    ],
   };
 
   const duration = 120000; // 2 minutes
@@ -200,6 +220,43 @@ describe('TimelineMarkers', () => {
       );
 
       expect(container.firstChild).toBeTruthy();
+    });
+  });
+
+  describe('Cluster Markers', () => {
+    it('renders a cluster marker', () => {
+      const { container } = render(
+        <TimelineMarkers markers={[mockClusterMarker]} duration={duration} />,
+      );
+      expect(container.firstChild).toBeTruthy();
+    });
+
+    it('seeks to the cluster timestamp (earliest member) on click', () => {
+      const onMarkerClick = jest.fn();
+      const { container } = render(
+        <TimelineMarkers
+          markers={[mockClusterMarker]}
+          duration={duration}
+          onMarkerClick={onMarkerClick}
+        />,
+      );
+      const marker = container.querySelector('[role="button"]');
+      expect(marker).toBeTruthy();
+      if (marker) {
+        fireEvent.click(marker);
+        expect(onMarkerClick).toHaveBeenCalledWith(50000);
+      }
+    });
+
+    it('exposes the grouped member labels via the marker aria-label', () => {
+      const { container } = render(
+        <TimelineMarkers markers={[mockClusterMarker]} duration={duration} />,
+      );
+      const marker = container.querySelector('[role="button"]');
+      const label = marker?.getAttribute('aria-label') ?? '';
+      expect(label).toContain('3 deaths');
+      expect(label).toContain('💀 A');
+      expect(label).toContain('💀 C');
     });
   });
 

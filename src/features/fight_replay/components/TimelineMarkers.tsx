@@ -71,6 +71,19 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
           return marker.isFriendly ? theme.palette.error.main : theme.palette.warning.main;
         case 'custom':
           return theme.palette.info.main;
+        case 'cluster':
+          // A cluster inherits the color of the type it groups so the hue channel still maps
+          // to "what kind of burst" this is.
+          switch (marker.clusterType) {
+            case 'phase':
+              return theme.palette.primary.main;
+            case 'death':
+              return marker.isFriendly ? theme.palette.error.main : theme.palette.warning.main;
+            case 'custom':
+              return theme.palette.info.main;
+            default:
+              return theme.palette.grey[500];
+          }
         default:
           return theme.palette.grey[500];
       }
@@ -103,6 +116,19 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
             borderRight: '4px solid transparent',
             borderTop: `5px solid ${color}`,
           };
+        case 'cluster':
+          // Hollow stacked square — reads as "several events here", distinct from the three
+          // single-event shapes. Kept in the cluster's inherited hue (see getMarkerColor) and
+          // outlined rather than filled so it doesn't masquerade as a single solid marker.
+          return {
+            width: 9,
+            height: 9,
+            top: -6,
+            backgroundColor: theme.palette.background.paper,
+            border: `2px solid ${color}`,
+            borderRadius: '2px',
+            transform: 'translateX(-50%)',
+          };
         case 'custom':
         default:
           // Round pin — user-placed.
@@ -116,7 +142,7 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
           };
       }
     },
-    [],
+    [theme],
   );
 
   // Get tooltip content for marker
@@ -133,6 +159,18 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
           return marker.description
             ? `${marker.label} at ${timeStr}\n${marker.description}`
             : `${marker.label} at ${timeStr}`;
+        case 'cluster': {
+          // Header line (e.g. "5 deaths at 2:14") + one line per grouped event so the
+          // tooltip still surfaces everything the collapsed markers would have shown.
+          const lines = marker.members.map((m) => `• ${m.label} (${formatTime(m.timestamp)})`);
+          // Cap the listed members so a huge wipe doesn't produce a screen-tall tooltip.
+          const MAX_LINES = 8;
+          const shown = lines.slice(0, MAX_LINES);
+          if (lines.length > MAX_LINES) {
+            shown.push(`…and ${lines.length - MAX_LINES} more`);
+          }
+          return `${marker.label} at ${timeStr}\n${shown.join('\n')}`;
+        }
       }
     },
     [formatTime],
@@ -164,7 +202,15 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
         const cap = getMarkerCap(marker, color);
 
         return (
-          <Tooltip key={marker.id} title={getTooltipContent(marker)} placement="top" arrow>
+          <Tooltip
+            key={marker.id}
+            title={getTooltipContent(marker)}
+            placement="top"
+            arrow
+            // Render the embedded newlines (death "Killed by" + cluster member lists) as
+            // actual line breaks instead of collapsing them to spaces.
+            slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line' } } }}
+          >
             <Box
               role="button"
               tabIndex={0}

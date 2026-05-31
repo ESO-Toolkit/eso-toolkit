@@ -8,12 +8,13 @@
  */
 
 import { Box, Slider, Typography } from '@mui/material';
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
 
 import { TimelineLegend } from './TimelineLegend';
 import { TimelineMarkers } from './TimelineMarkers';
+import { TimelineScrubPreview } from './TimelineScrubPreview';
 interface TimelineSliderProps {
   /** Current playback time in milliseconds */
   displayTime: number;
@@ -60,6 +61,11 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   markers,
   onMarkerClick,
 }) => {
+  // The rail wrapper that the hover skim-preview tracks the cursor over. A ref (not a
+  // handler prop) so the preview attaches its high-frequency pointermove listener without
+  // re-rendering this component or the memoized TimelineMarkers child.
+  const railRef = useRef<HTMLDivElement>(null);
+
   // Format time for display
   const formatTime = useCallback((timeMs: number) => {
     const totalSeconds = Math.floor(timeMs / 1000);
@@ -91,7 +97,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
           sit ON the scrub track (chapter-marker model) rather than in a detached
           strip below it. TimelineMarkers stays a separately-memoized child — only
           stable props (markers/duration/onMarkerClick) cross the boundary. */}
-      <Box sx={{ position: 'relative', py: 0.5 }}>
+      <Box ref={railRef} sx={{ position: 'relative', py: 0.5 }}>
         <Slider
           value={displayTime}
           min={0}
@@ -155,6 +161,13 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
           >
             <TimelineMarkers markers={markers} duration={duration} onMarkerClick={onMarkerClick} />
           </Box>
+        )}
+
+        {/* Hover skim-preview — a SIBLING of TimelineMarkers (never an ancestor) so its
+            per-pointermove state churn can't re-render the memoized marker list. It tracks
+            the cursor over railRef and shows the hovered time + nearest event. */}
+        {duration > 0 && (
+          <TimelineScrubPreview railRef={railRef} duration={duration} markers={markers} />
         )}
       </Box>
 

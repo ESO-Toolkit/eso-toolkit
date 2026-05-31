@@ -18,14 +18,14 @@ interface TimelineLegendProps {
   markers: TimelineAnnotation[];
 }
 
-type LegendKey = 'phase' | 'friendly-death' | 'enemy-death' | 'custom';
+type LegendKey = 'phase' | 'friendly-death' | 'enemy-death' | 'custom' | 'cluster';
 
 interface LegendEntry {
   key: LegendKey;
   label: string;
   /** theme.palette path resolved via sx tokens */
   color: string;
-  shape: 'diamond' | 'triangle' | 'pin';
+  shape: 'diamond' | 'triangle' | 'pin' | 'stack';
 }
 
 const LEGEND_ENTRIES: Record<LegendKey, LegendEntry> = {
@@ -43,6 +43,9 @@ const LEGEND_ENTRIES: Record<LegendKey, LegendEntry> = {
     shape: 'triangle',
   },
   custom: { key: 'custom', label: 'Marker', color: 'info.main', shape: 'pin' },
+  // A cluster can group any type, so its swatch is hue-neutral; the hollow stacked square
+  // (matching the on-rail cluster cap) is what keys it.
+  cluster: { key: 'cluster', label: 'Grouped events', color: 'text.secondary', shape: 'stack' },
 };
 
 /** Small shape swatch matching the on-rail marker caps. */
@@ -62,6 +65,23 @@ const LegendSwatch: React.FC<{ color: string; shape: LegendEntry['shape'] }> = (
           borderTop: '7px solid',
           borderTopColor: color,
           display: 'inline-block',
+        }}
+      />
+    );
+  }
+  if (shape === 'stack') {
+    // Hollow outlined square — mirrors the on-rail cluster cap.
+    return (
+      <Box
+        component="span"
+        sx={{
+          width: 9,
+          height: 9,
+          border: '2px solid',
+          borderColor: color,
+          borderRadius: '2px',
+          display: 'inline-block',
+          boxSizing: 'border-box',
         }}
       />
     );
@@ -89,6 +109,7 @@ const TimelineLegendComponent: React.FC<TimelineLegendProps> = ({ markers }) => 
       if (m.type === 'phase') keys.add('phase');
       else if (m.type === 'custom') keys.add('custom');
       else if (m.type === 'death') keys.add(m.isFriendly ? 'friendly-death' : 'enemy-death');
+      else if (m.type === 'cluster') keys.add('cluster');
     }
     return keys;
   }, [markers]);

@@ -98,3 +98,19 @@ transport-single-dense-bar · markers-overlaid-on-rail (highest perf caution) ·
 ## 4. Rejected (do NOT action)
 - **snackbar-occluded-by-transport-bar** — transport is document-flow not pinned; bottom-center is test-enforced to avoid the top AppBar.
 - **marker-track-alignment-imprecise** — verified against MUI Slider source: horizontal rail is full-width, no inset; markers use the identical `left:X% translate(-50%)` mapping. No drift.
+
+---
+
+## 5. Phase 2 (shipped — density clustering + hover skim-preview)
+
+The two items deferred from the Option-A bold layer for being low-marginal-value on the now-wide rail and highest perf risk:
+
+### marker density clustering (`density-overlap-no-clustering`)
+- **Time-threshold, not px-threshold.** The audit said "cluster within px threshold INSIDE the existing `markers` useMemo", but that useMemo lives in `useTimelineMarkers.ts`, which is DOM-blind (no rail width). Pixel thresholding would have required a `ResizeObserver` on the responsive `clamp()` rail and moving clustering to where width is known — more code and more re-render surface next to the memo landmine. Chose a time threshold instead — and an **absolute** one (`clusterThresholdMs`, default ~2.5s), not proportional to duration: a raid wipe is a burst in real time regardless of fight length, so a fixed window folds the wipe without ballooning to 8-14s and erasing genuine death timing in long pulls. Width-independent, no DOM measurement, trivially off the playback hot path.
+- **Within-type only.** A new `ClusterMarker` carries `clusterType` so the shape/color channel (WCAG 1.4.1) survives; friendly and enemy deaths stay in separate buckets. Cluster renders a hollow stacked square, lists its members in the tooltip (capped at 8 + "…and N more"), seeks to the earliest member on click, and gets its own "Grouped events" legend row. Pure `collapseClusters()` runs inside the markers useMemo, so output stays a stable reference → `TimelineMarkers` memo holds.
+
+### hover skim-preview (`hover-scrub-preview`)
+- A 3D replay has no pre-rendered thumbnail track, so the buildable reading is a cursor-following bubble showing the hovered timecode + nearest event label (within 5% of duration). Lives in `TimelineScrubPreview.tsx`.
+- **Perf isolation by construction.** `pointermove` fires fast; the component owns ALL hover state and is mounted as a *sibling* of `TimelineMarkers` (never an ancestor), so its churn never re-renders the marker memo. It attaches its listener to the rail via a ref (no handler prop on the slider), and respects `prefers-reduced-motion`.
+
+**Verification:** `tsc` ✓ · `eslint ./src --max-warnings 0` ✓ · `npm run build` ✓ · `jest` 3033 passed / 0 failed (incl. new `collapseClusters` + `TimelineScrubPreview` + cluster legend/marker tests) ✓ · Playwright replay E2E 20 passed / 1 pre-existing flaky ✓.
