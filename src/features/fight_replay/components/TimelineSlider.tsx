@@ -12,6 +12,7 @@ import React, { useCallback } from 'react';
 
 import { TimelineAnnotation } from '../../../types/timelineAnnotations';
 
+import { TimelineLegend } from './TimelineLegend';
 import { TimelineMarkers } from './TimelineMarkers';
 interface TimelineSliderProps {
   /** Current playback time in milliseconds */
@@ -150,6 +151,9 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
           </Box>
         )}
       </Box>
+
+      {/* Legend — explains the marker shape/color vocabulary; only shows present types */}
+      {markers && markers.length > 0 && <TimelineLegend markers={markers} />}
     </>
   );
 };

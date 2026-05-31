@@ -78,6 +78,47 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
     [theme],
   );
 
+  // Distinguish marker types by SHAPE, not color alone (WCAG 1.4.1). Each type gets a
+  // distinct cap so the timeline is readable without relying on hue. Derived per marker
+  // inside the render map — no upstream array changes, so TimelineMarkers' memo holds.
+  const getMarkerCap = useCallback(
+    (marker: TimelineAnnotation, color: string): React.CSSProperties => {
+      switch (marker.type) {
+        case 'phase':
+          // Flag/diamond cap — a structural beat in the fight.
+          return {
+            width: 8,
+            height: 8,
+            top: -6,
+            backgroundColor: color,
+            transform: 'translateX(-50%) rotate(45deg)',
+          };
+        case 'death':
+          // Downward triangle — a hit/death.
+          return {
+            width: 0,
+            height: 0,
+            top: -5,
+            borderLeft: '4px solid transparent',
+            borderRight: '4px solid transparent',
+            borderTop: `5px solid ${color}`,
+          };
+        case 'custom':
+        default:
+          // Round pin — user-placed.
+          return {
+            width: 7,
+            height: 7,
+            top: -5,
+            borderRadius: '50%',
+            backgroundColor: color,
+            transform: 'translateX(-50%)',
+          };
+      }
+    },
+    [],
+  );
+
   // Get tooltip content for marker
   const getTooltipContent = useCallback(
     (marker: TimelineAnnotation): string => {
@@ -120,6 +161,7 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
       {markers.map((marker) => {
         const position = getMarkerPosition(marker.timestamp);
         const color = getMarkerColor(marker);
+        const cap = getMarkerCap(marker, color);
 
         return (
           <Tooltip key={marker.id} title={getTooltipContent(marker)} placement="top" arrow>
@@ -154,17 +196,12 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
                   outline: `2px solid ${theme.palette.primary.main}`,
                   outlineOffset: '1px',
                 },
+                // Per-type cap (shape channel — see getMarkerCap).
                 '&::before': {
                   content: '""',
                   position: 'absolute',
-                  top: -4,
                   left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 0,
-                  height: 0,
-                  borderLeft: '4px solid transparent',
-                  borderRight: '4px solid transparent',
-                  borderBottom: `4px solid ${color}`,
+                  ...cap,
                 },
               }}
             />
