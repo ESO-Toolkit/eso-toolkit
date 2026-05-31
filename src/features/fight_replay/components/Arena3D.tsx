@@ -1,7 +1,9 @@
 import { LockOpen } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 import {
   Box,
+  Chip,
   ClickAwayListener,
   IconButton,
   Tooltip,
@@ -838,40 +840,54 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         </Box>
       </Collapse>
 
-      {/* Camera Unlock Button - Show when following an actor */}
+      {/* Persistent help affordance - re-opens the keyboard help panel once it auto-hides */}
+      {!showKeyboardHelp && (
+        <Tooltip title="Keyboard controls (H)">
+          <IconButton
+            aria-label="Show keyboard controls"
+            size="small"
+            onClick={() => setShowKeyboardHelp(true)}
+            sx={{
+              position: 'absolute',
+              bottom: 16,
+              right: 16,
+              color: 'white',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            <HelpOutline fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {/* Camera Unlock Chip - Show when following an actor. Anchored top-center so it
+          doesn't overlap the top-left PlayerListHUD rendered inside the Canvas. */}
       {followingActorId && followingActorName && (
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 16,
-            left: 16,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            borderRadius: 1,
-            padding: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-          }}
-        >
-          <Typography variant="caption" sx={{ color: 'white' }}>
-            Following: {followingActorName}
-          </Typography>
-          <Tooltip title="Unlock camera from actor">
-            <IconButton
-              size="small"
-              aria-label="Unlock camera from actor"
-              onClick={handleUnlockCamera}
-              sx={{
-                color: 'white',
+        <Tooltip title="Unlock camera from actor">
+          <Chip
+            label={`Following: ${followingActorName}`}
+            aria-label="Unlock camera from actor"
+            onDelete={handleUnlockCamera}
+            deleteIcon={<LockOpen />}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'white',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              '& .MuiChip-deleteIcon': {
+                color: 'rgba(255, 255, 255, 0.7)',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  color: 'white',
                 },
-              }}
-            >
-              <LockOpen fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
+              },
+            }}
+          />
+        </Tooltip>
       )}
     </div>
   );

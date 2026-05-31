@@ -1,4 +1,7 @@
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import PlaceIcon from '@mui/icons-material/Place';
 import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -297,69 +300,84 @@ export const FightReplay: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Back to Fight Button */}
-      <Box sx={{ mb: 2 }}>
+      {/* Header: back action + one title cluster (no competing headings — "3D View"
+          already lives in the document title). Title is the map name, falling back to
+          the fight/encounter name; the fight name becomes a subtitle and the duration a
+          chip, so the metadata reads as a hierarchy instead of three stacked lines. */}
+      <Box sx={{ mb: 3 }}>
         <Button
-          variant="outlined"
+          variant="text"
           startIcon={<ArrowBackIcon />}
           onClick={handleBackToFight}
           disabled={!reportId || !fightId}
           type="button"
+          sx={{ ml: -1, mb: 1 }}
         >
           Back to Fight
         </Button>
+
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
+          {fight.maps?.[0]?.name || fight.name}
+        </Typography>
+
+        <Box
+          sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}
+        >
+          {fight.maps?.[0]?.name && fight.name && fight.maps[0].name !== fight.name && (
+            <Typography variant="subtitle1" color="text.secondary">
+              {fight.name}
+            </Typography>
+          )}
+          <Chip
+            label={formatDuration(fight.endTime - fight.startTime)}
+            size="small"
+            variant="outlined"
+            icon={<AccessTimeIcon />}
+          />
+        </Box>
       </Box>
 
-      {/* Map Name Header */}
-      {fight.maps && fight.maps.length > 0 && fight.maps[0]?.name && (
-        <Typography variant="h4" gutterBottom sx={{ mb: 1 }}>
-          {fight.maps[0].name}
-        </Typography>
-      )}
+      {/* Map markers: a primary action grouped with its export buttons, and the
+          status chips on their own line so actions and read-outs don't compete. */}
+      <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<PlaceIcon />}
+            onClick={() => setMarkersModalOpen(true)}
+            type="button"
+          >
+            {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
+          </Button>
 
-      <Typography variant="h5" gutterBottom>
-        Fight Replay - 3D View
-      </Typography>
-
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        {fight.name} - Duration: {formatDuration(fight.endTime - fight.startTime)}
-      </Typography>
-
-      {/* Map Markers Import Button and Status (M0R or Elms format) */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => setMarkersModalOpen(true)}
-          type="button"
-        >
-          {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
-        </Button>
-
-        {markersState && markersState.markers.length > 0 && (
-          <>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => handleExportMarkers('elms')}
-              type="button"
-            >
-              Export Elms Markers
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => handleExportMarkers('mor')}
-              type="button"
-            >
-              Export M0R Markers
-            </Button>
-          </>
-        )}
+          {markersState && markersState.markers.length > 0 && (
+            <>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<ContentCopyIcon />}
+                onClick={() => handleExportMarkers('elms')}
+                type="button"
+              >
+                Copy Elms
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<ContentCopyIcon />}
+                onClick={() => handleExportMarkers('mor')}
+                type="button"
+              >
+                Copy M0R
+              </Button>
+            </>
+          )}
+        </Box>
 
         {/* Marker Statistics */}
         {markersState && markerStats.success && (
-          <>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             <Chip
               label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
               color="success"
@@ -377,7 +395,7 @@ export const FightReplay: React.FC = () => {
                 variant="outlined"
               />
             )}
-          </>
+          </Box>
         )}
       </Box>
 
