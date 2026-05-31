@@ -48,7 +48,16 @@ const Harness: React.FC<{ duration: number; markers?: (PhaseMarker | DeathMarker
   React.useEffect(() => {
     if (railRef.current) {
       railRef.current.getBoundingClientRect = () =>
-        ({ left: 0, width: 1000, top: 0, height: 10, right: 1000, bottom: 10, x: 0, y: 0 }) as DOMRect;
+        ({
+          left: 0,
+          width: 1000,
+          top: 0,
+          height: 10,
+          right: 1000,
+          bottom: 10,
+          x: 0,
+          y: 0,
+        }) as DOMRect;
     }
   }, []);
   return (

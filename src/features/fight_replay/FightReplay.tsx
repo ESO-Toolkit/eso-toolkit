@@ -251,9 +251,7 @@ export const FightReplay: React.FC = () => {
 
   // Shared back action for the state screens (only navigable when we have the ids).
   const stateBackAction =
-    reportId && fightId
-      ? { actionLabel: 'Back to Fight', onAction: handleBackToFight }
-      : {};
+    reportId && fightId ? { actionLabel: 'Back to Fight', onAction: handleBackToFight } : {};
 
   // Non-render states share one cohesive panel (spinner / error / empty) wrapped in the
   // same page padding so the chrome is consistent with the loaded view.

@@ -148,9 +148,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
               // Cyan text-glow gives the hero timecode the luminous "designed" quality from
               // the bold proto (only in dark mode — it would muddy the light theme).
               textShadow:
-                theme.palette.mode === 'dark'
-                  ? `0 0 22px ${theme.palette.primary.main}73`
-                  : 'none',
+                theme.palette.mode === 'dark' ? `0 0 22px ${theme.palette.primary.main}73` : 'none',
               transition: `color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
             })}
           >
@@ -256,8 +254,7 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
                 theme.palette.mode === 'dark'
                   ? 'linear-gradient(180deg, #0a1020, #13203b)'
                   : 'none',
-              boxShadow:
-                theme.palette.mode === 'dark' ? 'inset 0 1px 2px rgba(0,0,0,0.6)' : 'none',
+              boxShadow: theme.palette.mode === 'dark' ? 'inset 0 1px 2px rgba(0,0,0,0.6)' : 'none',
               borderRadius: 3,
               transition: `height ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
             },

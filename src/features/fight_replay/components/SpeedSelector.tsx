@@ -61,10 +61,7 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const menuOpen = Boolean(menuAnchor);
 
-  const quickSpeeds = useMemo(
-    () => QUICK_SPEEDS.filter((s) => speeds.includes(s)),
-    [speeds],
-  );
+  const quickSpeeds = useMemo(() => QUICK_SPEEDS.filter((s) => speeds.includes(s)), [speeds]);
 
   const isQuickSpeed = quickSpeeds.includes(playbackSpeed);
 
@@ -116,8 +113,7 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
           `linear-gradient(135deg, ${t.palette.primary.main}, ${t.palette.secondary.main})`,
         // Match the proto: the active chip uses the dark page-bg as its text color (reads on
         // the bright cyan gradient) with the proto's stronger glow.
-        color: (t: Theme) =>
-          t.palette.mode === 'dark' ? t.palette.background.default : '#fff',
+        color: (t: Theme) => (t.palette.mode === 'dark' ? t.palette.background.default : '#fff'),
         boxShadow: (t: Theme) => `0 0 14px ${t.palette.primary.main}66`,
         '&:hover': {
           backgroundImage: (t: Theme) =>

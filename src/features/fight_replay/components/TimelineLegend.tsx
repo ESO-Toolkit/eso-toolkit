@@ -153,7 +153,12 @@ const TimelineLegendComponent: React.FC<TimelineLegendProps> = ({ markers }) => 
               <LegendSwatch color={entry.color} shape={entry.shape} />
               <Typography
                 variant="caption"
-                sx={{ color: 'text.secondary', fontWeight: 600, lineHeight: 1, letterSpacing: '0.01em' }}
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 600,
+                  lineHeight: 1,
+                  letterSpacing: '0.01em',
+                }}
               >
                 {entry.label}
               </Typography>
