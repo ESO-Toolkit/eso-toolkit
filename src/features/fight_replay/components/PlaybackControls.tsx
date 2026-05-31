@@ -81,7 +81,6 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     handleSliderChange,
     handleSliderChangeStart,
     handleSliderChangeEnd,
-    progressPercent,
     optimizedStep,
   } = useOptimizedTimelineScrubbing({
     duration,
@@ -117,21 +116,28 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 2,
-        p: 2,
+        gap: 1.5,
+        px: { xs: 1.5, sm: 2.5 },
+        pt: 1.5,
+        pb: 2,
+        // Docked glass transport bar — visually continuous with the arena above it
+        // (the arena Paper has its own bottom edge), giving a "VOD player" feel
+        // without floating over the 3D scene and occluding bottom-edge actors.
         backgroundColor: 'background.paper',
-        borderRadius: 1,
+        backgroundImage: (theme) =>
+          `linear-gradient(180deg, ${theme.palette.action.hover} 0%, transparent 64px)`,
+        borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider',
+        boxShadow: 3,
       }}
     >
-      {/* Timeline Slider with time display and progress indicator */}
+      {/* Scrub rail with time readout + event markers overlaid on the track */}
       <TimelineSlider
         displayTime={displayTime}
         duration={duration}
         isDragging={isDragging}
         isScrubbingMode={isScrubbingMode}
-        progressPercent={progressPercent}
         optimizedStep={optimizedStep}
         onSliderChange={handleSliderChange}
         onSliderChangeEnd={handleSliderChangeEnd}
@@ -140,33 +146,49 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         onMarkerClick={handleMarkerClick}
       />
 
-      {/* Playback control buttons */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-        <PlaybackButtons
-          isPlaying={isPlaying}
-          onPlayPause={onPlayPause}
-          onSkipToStart={onSkipToStart}
-          onSkipToEnd={onSkipToEnd}
-          onSkipBackward10={onSkipBackward10}
-          onSkipForward10={onSkipForward10}
-        />
+      {/* One dense control row: transport cluster centered, utilities split to the
+          edges. On narrow screens it wraps gracefully. */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          flexWrap: 'wrap',
+          rowGap: 1.5,
+        }}
+      >
+        {/* Left: playback speed */}
+        <Box sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-start', minWidth: 120 }}>
+          <SpeedSelector
+            playbackSpeed={playbackSpeed}
+            onSpeedChange={onSpeedChange}
+            speeds={PLAYBACK_SPEEDS}
+          />
+        </Box>
 
-        {/* Share button (only shown if report and fight IDs are provided) */}
-        <ShareButton
-          reportId={reportId}
-          fightId={fightId}
-          currentTime={currentTime}
-          selectedActorIdRef={selectedActorIdRef}
-          timeRef={timeRef}
-        />
+        {/* Center: transport buttons (the focal cluster) */}
+        <Box sx={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
+          <PlaybackButtons
+            isPlaying={isPlaying}
+            onPlayPause={onPlayPause}
+            onSkipToStart={onSkipToStart}
+            onSkipToEnd={onSkipToEnd}
+            onSkipBackward10={onSkipBackward10}
+            onSkipForward10={onSkipForward10}
+          />
+        </Box>
+
+        {/* Right: utilities (share) */}
+        <Box sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-end', minWidth: 120 }}>
+          <ShareButton
+            reportId={reportId}
+            fightId={fightId}
+            currentTime={currentTime}
+            selectedActorIdRef={selectedActorIdRef}
+            timeRef={timeRef}
+          />
+        </Box>
       </Box>
-
-      {/* Playback speed selector */}
-      <SpeedSelector
-        playbackSpeed={playbackSpeed}
-        onSpeedChange={onSpeedChange}
-        speeds={PLAYBACK_SPEEDS}
-      />
     </Box>
   );
 };

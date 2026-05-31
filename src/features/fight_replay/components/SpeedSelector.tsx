@@ -6,7 +6,7 @@
  * @module SpeedSelector
  */
 
-import { Box, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import React from 'react';
 
 interface SpeedSelectorProps {
@@ -32,25 +32,19 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
   speeds = DEFAULT_PLAYBACK_SPEEDS,
 }) => {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-      <FormControl size="small" sx={{ minWidth: 120 }}>
-        <InputLabel>Speed</InputLabel>
-        <Select
-          value={playbackSpeed}
-          label="Speed"
-          onChange={(e) => onSpeedChange(e.target.value as number)}
-        >
-          {speeds.map((speed) => (
-            <MenuItem key={speed} value={speed}>
-              {speed}x
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      <Typography variant="body2" color="text.secondary">
-        Playback Speed
-      </Typography>
-    </Box>
+    <FormControl size="small" sx={{ minWidth: 96 }}>
+      <InputLabel>Speed</InputLabel>
+      <Select
+        value={playbackSpeed}
+        label="Speed"
+        onChange={(e) => onSpeedChange(e.target.value as number)}
+      >
+        {speeds.map((speed) => (
+          <MenuItem key={speed} value={speed}>
+            {speed}x
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 };

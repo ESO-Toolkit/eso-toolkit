@@ -69,7 +69,21 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
         <Replay10 />
       </IconButton>
 
-      <IconButton onClick={onPlayPause} size="large" aria-label={isPlaying ? 'Pause' : 'Play'}>
+      {/* Play/pause is the primary action — a filled accent circle makes it the
+          unmistakable focal point versus the flat ghost skip buttons. */}
+      <IconButton
+        onClick={onPlayPause}
+        size="large"
+        aria-label={isPlaying ? 'Pause' : 'Play'}
+        sx={{
+          color: 'primary.contrastText',
+          backgroundColor: 'primary.main',
+          boxShadow: 2,
+          '&:hover': { backgroundColor: 'primary.dark' },
+          // Optical centering: the play triangle reads slightly left-heavy.
+          '& .MuiSvgIcon-root': { fontSize: '1.75rem' },
+        }}
+      >
         {isPlaying ? <Pause /> : <PlayArrow />}
       </IconButton>
 

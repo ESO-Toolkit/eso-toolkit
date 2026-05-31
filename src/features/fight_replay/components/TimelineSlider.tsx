@@ -22,8 +22,6 @@ interface TimelineSliderProps {
   isDragging: boolean;
   /** Whether in scrubbing mode (rapid time changes) */
   isScrubbingMode: boolean;
-  /** Progress percentage (0-100) */
-  progressPercent: number;
   /** Optimized step size for the slider */
   optimizedStep: number;
   /** Callback when slider value changes */
@@ -45,15 +43,15 @@ interface TimelineSliderProps {
  * Features:
  * - Dynamic step size based on duration
  * - Visual feedback when dragging (larger thumb, thicker track)
- * - Scrubbing mode indicator with warning color
- * - Progress bar with percentage display
+ * - Scrubbing mode indicator (track tint)
+ * - Event markers overlaid on the scrub rail
+ * - Scrub-time bubble at the thumb
  */
 export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   displayTime,
   duration,
   isDragging,
   isScrubbingMode,
-  progressPercent,
   optimizedStep,
   onSliderChange,
   onSliderChangeEnd,
@@ -71,94 +69,86 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
 
   return (
     <>
-      {/* Time Display */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
+      {/* Time Display — current / total. tabular-nums stops the digits jittering as
+          the time ticks (otherwise proportional figures shift width every frame). */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.primary', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+        >
           {formatTime(displayTime)}
-          {isScrubbingMode && (
-            <Typography
-              component="span"
-              variant="caption"
-              sx={{
-                ml: 1,
-                color: 'warning.main',
-                fontWeight: 'bold',
-              }}
-            >
-              (SCRUBBING)
-            </Typography>
-          )}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant="body2"
+          sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums' }}
+        >
           {formatTime(duration)}
         </Typography>
       </Box>
 
-      {/* Timeline Slider */}
-      <Slider
-        value={displayTime}
-        min={0}
-        max={duration}
-        step={optimizedStep}
-        onChange={onSliderChange}
-        onChangeCommitted={onSliderChangeEnd}
-        onMouseDown={onSliderChangeStart}
-        sx={{
-          '& .MuiSlider-thumb': {
-            width: isDragging ? 20 : 16,
-            height: isDragging ? 20 : 16,
-            transition: 'width 0.2s ease, height 0.2s ease',
-            '&:focus-visible': {
-              outline: '2px solid',
-              outlineColor: 'primary.main',
-              outlineOffset: '2px',
-            },
-          },
-          '& .MuiSlider-track': {
-            height: isDragging ? 6 : 4,
-            transition: 'height 0.2s ease',
-          },
-          '& .MuiSlider-rail': {
-            height: isDragging ? 6 : 4,
-            transition: 'height 0.2s ease',
-          },
-          // Visual feedback for scrubbing mode
-          ...(isScrubbingMode && {
-            '& .MuiSlider-track': {
-              backgroundColor: 'warning.main',
-            },
-          }),
-        }}
-      />
-
-      {/* Timeline Markers */}
-      {markers && markers.length > 0 && (
-        <TimelineMarkers markers={markers} duration={duration} onMarkerClick={onMarkerClick} />
-      )}
-
-      {/* Progress indicator */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 60 }}>
-          {Math.round(progressPercent)}%
-        </Typography>
-        <Box
+      {/* Slider + event markers share one relatively-positioned rail so the markers
+          sit ON the scrub track (chapter-marker model) rather than in a detached
+          strip below it. TimelineMarkers stays a separately-memoized child — only
+          stable props (markers/duration/onMarkerClick) cross the boundary. */}
+      <Box sx={{ position: 'relative', py: 0.5 }}>
+        <Slider
+          value={displayTime}
+          min={0}
+          max={duration}
+          step={optimizedStep}
+          onChange={onSliderChange}
+          onChangeCommitted={onSliderChangeEnd}
+          onMouseDown={onSliderChangeStart}
+          aria-label="Replay timeline"
+          getAriaValueText={formatTime}
+          valueLabelDisplay="auto"
+          valueLabelFormat={formatTime}
           sx={{
-            flex: 1,
-            height: 2,
-            backgroundColor: 'action.disabled',
-            borderRadius: 1,
-            overflow: 'hidden',
+            // Sit above the marker overlay so the thumb stays grabbable.
+            position: 'relative',
+            zIndex: 1,
+            '& .MuiSlider-thumb': {
+              width: isDragging ? 20 : 16,
+              height: isDragging ? 20 : 16,
+              transition: 'width 0.2s ease, height 0.2s ease',
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.main',
+                outlineOffset: '2px',
+              },
+            },
+            '& .MuiSlider-track': {
+              height: isDragging ? 6 : 4,
+              transition: 'height 0.2s ease',
+              ...(isScrubbingMode && { backgroundColor: 'info.main' }),
+            },
+            '& .MuiSlider-rail': {
+              height: isDragging ? 6 : 4,
+              transition: 'height 0.2s ease',
+            },
           }}
-        >
+        />
+
+        {/* Event markers overlaid on the rail. Absolutely-positioned wrapper so the
+            markers sit centered on the track without pushing layout; TimelineMarkers
+            itself is untouched (stable props preserve its React.memo). pointer-events
+            are re-enabled per-marker inside the component. */}
+        {markers && markers.length > 0 && (
           <Box
             sx={{
-              width: `${progressPercent}%`,
-              height: '100%',
-              backgroundColor: 'primary.main',
-              transition: isDragging ? 'none' : 'width 0.1s ease',
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none',
+              '& > *': { pointerEvents: 'auto' },
+              zIndex: 0,
             }}
-          />
-        </Box>
+          >
+            <TimelineMarkers markers={markers} duration={duration} onMarkerClick={onMarkerClick} />
+          </Box>
+        )}
       </Box>
     </>
   );
