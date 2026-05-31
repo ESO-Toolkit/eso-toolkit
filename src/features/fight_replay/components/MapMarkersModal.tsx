@@ -3,6 +3,7 @@
  */
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlaceIcon from '@mui/icons-material/Place';
 import {
   Accordion,
   AccordionDetails,
@@ -165,7 +166,19 @@ export const MapMarkersModal: React.FC<MapMarkersModalProps> = ({
         },
       }}
     >
-      <DialogTitle id="map-markers-dialog-title">Import Map Markers (M0R or Elms)</DialogTitle>
+      <DialogTitle
+        id="map-markers-dialog-title"
+        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+      >
+        <PlaceIcon sx={{ color: 'primary.main' }} />
+        Import Map Markers
+        <Box
+          component="span"
+          sx={{ color: 'text.secondary', fontWeight: 500, fontSize: '0.85rem', ml: 0.5 }}
+        >
+          M0R or Elms
+        </Box>
+      </DialogTitle>
 
       <DialogContent>
         <form

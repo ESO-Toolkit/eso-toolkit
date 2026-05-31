@@ -12,10 +12,12 @@ import React from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
+import { TRANSPORT_SPACING, transportSurface } from '../constants/replayDesign';
 
 import { PlaybackButtons } from './PlaybackButtons';
 import { ShareButton } from './ShareButton';
 import { SpeedSelector } from './SpeedSelector';
+import { TimelineLegend } from './TimelineLegend';
 import { TimelineSlider } from './TimelineSlider';
 
 interface PlaybackControlsProps {
@@ -39,6 +41,12 @@ interface PlaybackControlsProps {
   fightId?: string;
   selectedActorIdRef?: React.RefObject<number | null>;
   fightStartTime?: number;
+  /** Contextual badges shown in the transport (encounter/difficulty/outcome). */
+  replayContext?: {
+    label?: string;
+    difficultyTag?: string;
+    isKill?: boolean | null;
+  };
 }
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
@@ -72,6 +80,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   fightId,
   selectedActorIdRef,
   fightStartTime: _fightStartTime,
+  replayContext,
 }) => {
   // Use optimized timeline scrubbing for better performance
   const {
@@ -113,24 +122,18 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
 
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         display: 'flex',
         flexDirection: 'column',
-        gap: 1.5,
-        px: { xs: 1.5, sm: 2.5 },
-        pt: 1.5,
-        pb: 2,
-        // Docked glass transport bar — visually continuous with the arena above it
-        // (the arena Paper has its own bottom edge), giving a "VOD player" feel
-        // without floating over the 3D scene and occluding bottom-edge actors.
-        backgroundColor: 'background.paper',
-        backgroundImage: (theme) =>
-          `linear-gradient(180deg, ${theme.palette.action.hover} 0%, transparent 64px)`,
-        borderRadius: 2,
-        border: '1px solid',
-        borderColor: 'divider',
-        boxShadow: 3,
-      }}
+        gap: TRANSPORT_SPACING.sectionGap,
+        px: TRANSPORT_SPACING.padX,
+        pt: TRANSPORT_SPACING.padTop,
+        pb: TRANSPORT_SPACING.padBottom,
+        // Docked "control deck" surface — a faint top-edge accent wash lifts it off the
+        // arena above without floating over the 3D scene (see audit: rejected floating
+        // transport, which would occlude bottom-edge actors).
+        ...transportSurface(theme),
+      })}
     >
       {/* Scrub rail with time readout + event markers overlaid on the track */}
       <TimelineSlider
@@ -144,6 +147,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         onSliderChangeStart={handleSliderChangeStart}
         markers={markers}
         onMarkerClick={handleMarkerClick}
+        replayContext={replayContext}
       />
 
       {/* One dense control row: transport cluster centered, utilities split to the
@@ -152,12 +156,12 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1.5,
+          gap: 1.75, // proto .ctl gap: 14px
           flexWrap: 'wrap',
-          rowGap: 1.5,
+          rowGap: TRANSPORT_SPACING.sectionGap,
         }}
       >
-        {/* Left: playback speed */}
+        {/* Left: speed segment (proto .lz — flex:1) */}
         <Box
           sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-start', minWidth: 120 }}
         >
@@ -168,7 +172,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           />
         </Box>
 
-        {/* Center: transport buttons (the focal cluster) */}
+        {/* Center: transport cluster — skip + play + skip (proto .cz) */}
         <Box sx={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
           <PlaybackButtons
             isPlaying={isPlaying}
@@ -180,7 +184,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           />
         </Box>
 
-        {/* Right: utilities (share) */}
+        {/* Right: share pill (proto .rz — flex:1, justify end) */}
         <Box sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-end', minWidth: 120 }}>
           <ShareButton
             reportId={reportId}
@@ -191,6 +195,10 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           />
         </Box>
       </Box>
+
+      {/* Legend — full-width row at the very bottom of the transport (proto .legend,
+          margin-top:13px). Below the controls, not beside the speed chips. */}
+      {markers.length > 0 && <TimelineLegend markers={markers} />}
     </Box>
   );
 };

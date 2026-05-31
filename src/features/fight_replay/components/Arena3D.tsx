@@ -1,4 +1,4 @@
-import { LockOpen } from '@mui/icons-material';
+import { LockOpen, Videocam } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 import {
@@ -864,28 +864,47 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       )}
 
       {/* Camera Unlock Chip - Show when following an actor. Anchored top-center so it
-          doesn't overlap the top-left PlayerListHUD rendered inside the Canvas. */}
+          doesn't overlap the top-left PlayerListHUD rendered inside the Canvas. Styled to
+          match the elevated transport: dark cyan-glass with a glowing accent border + a
+          videocam glyph, so it reads as part of the same designed surface over the 3D scene. */}
       {followingActorId && followingActorName && (
         <Tooltip title="Unlock camera from actor">
           <Chip
-            label={`Following: ${followingActorName}`}
+            icon={<Videocam sx={{ fontSize: '1rem' }} />}
+            label={
+              <Box component="span" sx={{ display: 'inline-flex', alignItems: 'baseline', gap: 0.5 }}>
+                <Box component="span" sx={{ color: 'rgba(226,232,240,0.7)', fontSize: '0.7rem' }}>
+                  Following
+                </Box>
+                <Box component="span" sx={{ fontWeight: 700 }}>
+                  {followingActorName}
+                </Box>
+              </Box>
+            }
             aria-label="Unlock camera from actor"
             onDelete={handleUnlockCamera}
             deleteIcon={<LockOpen />}
-            sx={{
+            sx={(theme) => ({
               position: 'absolute',
               top: 16,
               left: '50%',
               transform: 'translateX(-50%)',
-              color: 'white',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              height: 32,
+              color: '#e2e8f0',
+              backgroundColor: 'rgba(13, 20, 48, 0.82)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: `1px solid ${theme.palette.primary.main}59`,
+              borderRadius: '999px',
+              boxShadow: `0 6px 22px rgba(0,0,0,0.5), 0 0 16px ${theme.palette.primary.main}3a`,
+              fontSize: '0.8rem',
+              '& .MuiChip-icon': { color: theme.palette.primary.main, ml: 0.75 },
               '& .MuiChip-deleteIcon': {
-                color: 'rgba(255, 255, 255, 0.7)',
-                '&:hover': {
-                  color: 'white',
-                },
+                color: 'rgba(226,232,240,0.6)',
+                fontSize: '1.05rem',
+                '&:hover': { color: theme.palette.primary.main },
               },
-            }}
+            })}
           />
         </Tooltip>
       )}

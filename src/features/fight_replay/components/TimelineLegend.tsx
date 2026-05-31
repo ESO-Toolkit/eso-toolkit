@@ -124,9 +124,9 @@ const TimelineLegendComponent: React.FC<TimelineLegendProps> = ({ markers }) => 
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        gap: 1.5,
-        rowGap: 0.5,
-        mt: 0.25,
+        gap: 0.75,
+        rowGap: 0.75,
+        mt: 0.5,
       }}
       aria-label="Timeline marker legend"
     >
@@ -135,9 +135,26 @@ const TimelineLegendComponent: React.FC<TimelineLegendProps> = ({ markers }) => 
         .map((k) => {
           const entry = LEGEND_ENTRIES[k];
           return (
-            <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box
+              key={k}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.625,
+                pl: 0.875,
+                pr: 1,
+                py: 0.25,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'action.hover',
+              }}
+            >
               <LegendSwatch color={entry.color} shape={entry.shape} />
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', fontWeight: 600, lineHeight: 1, letterSpacing: '0.01em' }}
+              >
                 {entry.label}
               </Typography>
             </Box>

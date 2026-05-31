@@ -8,6 +8,7 @@ import {
   getAllActorPositionsAtTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { RenderPriority } from '../constants/renderPriorities';
+import { HUD_FONT, HUD_PALETTE } from '../constants/replayDesign';
 
 interface BossHealthHUDProps {
   lookup: TimestampPositionLookup | null;
@@ -86,63 +87,79 @@ class BossHealthHUDRenderer {
     this.context.imageSmoothingQuality = 'high';
     this.context.textRendering = 'optimizeLegibility';
 
+    const ctx = this.context;
     const width = this.canvas.width;
     const height = this.canvas.height;
     const padding = 30; // Increased from 22 for more background space
+    const radius = 18; // Rounded panel corners (canvas is 700px wide for crispness)
 
-    // Background panel
-    this.context.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    this.context.fillRect(0, 0, width, height);
+    // Rounded glass panel — theme-aligned slate, cyan-tinted hairline border (matches the
+    // MUI glass panels + the player-list HUD). All colors come from the frozen HUD_PALETTE;
+    // no theme read and no allocation beyond the implicit path (per-frame perf contract).
+    ctx.fillStyle = HUD_PALETTE.panelBg;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, width, height, radius);
+    ctx.fill();
 
-    // Border
-    this.context.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-    this.context.lineWidth = 2; // Scaled for higher resolution
-    this.context.strokeRect(1, 1, width - 2, height - 2);
+    ctx.strokeStyle = HUD_PALETTE.border;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(1, 1, width - 2, height - 2, radius - 1);
+    ctx.stroke();
 
-    // Boss name
-    this.context.font = '900 48px Arial'; // Much larger font for crisp text
-    this.context.textAlign = 'left';
-    this.context.textBaseline = 'top';
+    // Boss name — heavy display weight (echoes the Space Grotesk headings)
+    ctx.font = `${HUD_FONT.displayWeight} 46px ${HUD_FONT.family}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = isDead ? HUD_PALETTE.dead : HUD_PALETTE.text;
+    ctx.fillText(name, padding, padding);
 
-    this.context.fillStyle = isDead ? '#888888' : '#ffffff';
-    this.context.fillText(name, padding, padding);
-
-    const nameHeight = 50; // Increased to accommodate 48px font
-    const barY = padding + nameHeight + 8; // More spacing for larger fonts
-    const barHeight = 40; // Made taller (was 32px)
+    const nameHeight = 50; // Accommodate the name font
+    const barY = padding + nameHeight + 8;
+    const barHeight = 38;
     const barWidth = width - 2 * padding;
+    const barRadius = barHeight / 2;
 
     if (isDead) {
-      // Show "DEAD" indicator
-      this.context.font = '900 42px Arial'; // Large font for "DEAD" text
-      this.context.fillStyle = '#ff4444';
-      this.context.fillText('DEAD', padding, barY);
+      // "DEAD" indicator in the error hue
+      ctx.font = `${HUD_FONT.displayWeight} 40px ${HUD_FONT.family}`;
+      ctx.fillStyle = HUD_PALETTE.hpCritical;
+      ctx.fillText('DEAD', padding, barY);
     } else {
-      // Health bar background
-      this.context.fillStyle = '#333333';
-      this.context.fillRect(padding, barY, barWidth, barHeight);
+      // Health bar track (rounded)
+      ctx.fillStyle = HUD_PALETTE.hpTrack;
+      ctx.beginPath();
+      ctx.roundRect(padding, barY, barWidth, barHeight, barRadius);
+      ctx.fill();
 
-      // Health bar fill
+      // Health bar fill (rounded, ramped). Bar length is the primary cue; color reinforces.
       const fillWidth = (barWidth * percentage) / 100;
-      const healthColor = percentage > 50 ? '#4caf50' : percentage > 25 ? '#ff9800' : '#f44336';
+      const healthColor =
+        percentage > 50 ? HUD_PALETTE.hpGood : percentage > 25 ? HUD_PALETTE.hpWarn : HUD_PALETTE.hpCritical;
+      if (fillWidth > 0) {
+        ctx.fillStyle = healthColor;
+        ctx.beginPath();
+        ctx.roundRect(padding, barY, Math.max(barHeight, fillWidth), barHeight, barRadius);
+        ctx.fill();
+      }
 
-      this.context.fillStyle = healthColor;
-      this.context.fillRect(padding, barY, fillWidth, barHeight);
+      // Track hairline
+      ctx.strokeStyle = HUD_PALETTE.hpTrackBorder;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(padding, barY, barWidth, barHeight, barRadius);
+      ctx.stroke();
 
-      // Health text overlay on bar
-      this.context.font = '900 28px Arial'; // Reduced from 30px to 28px
-      this.context.textAlign = 'center';
-      this.context.textBaseline = 'middle';
-
-      // Text with outline for readability
-      const healthText = `${percentage.toFixed(1)}% (${Math.round(currentHealth).toLocaleString()} / ${Math.round(maxHealth).toLocaleString()})`;
-
-      this.context.strokeStyle = '#000000';
-      this.context.lineWidth = 3; // Thicker outline for larger text
-      this.context.strokeText(healthText, width / 2, barY + barHeight / 2);
-
-      this.context.fillStyle = '#ffffff';
-      this.context.fillText(healthText, width / 2, barY + barHeight / 2);
+      // Health text overlay on bar, with a dark outline for legibility on any fill color
+      ctx.font = `700 26px ${HUD_FONT.family}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const healthText = `${percentage.toFixed(1)}%  ·  ${Math.round(currentHealth).toLocaleString()} / ${Math.round(maxHealth).toLocaleString()}`;
+      ctx.strokeStyle = 'rgba(2, 6, 23, 0.85)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(healthText, width / 2, barY + barHeight / 2 + 1);
+      ctx.fillStyle = HUD_PALETTE.text;
+      ctx.fillText(healthText, width / 2, barY + barHeight / 2 + 1);
     }
 
     // Mark texture for update

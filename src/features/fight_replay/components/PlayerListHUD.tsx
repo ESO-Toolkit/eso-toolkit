@@ -14,6 +14,7 @@ import {
   getActorPositionAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { RenderPriority } from '../constants/renderPriorities';
+import { HUD_FONT, HUD_PALETTE } from '../constants/replayDesign';
 import { PlayerPath } from '../utils/pathUtils';
 import { PlayerColorManager } from '../utils/playerColors';
 
@@ -52,34 +53,52 @@ interface PlayerListHUDProps {
 /**
  * HUD canvas dimensions and styling
  */
+// Theme-aligned, legibility-bumped layout. Fonts are ≥11/12px (audit P3
+// playerlist-legibility-tiny-fonts), spacing has more breathing room, and all colors come
+// from the frozen HUD_PALETTE (the same cyan/slate language as the MUI theme). These are
+// module-level constants — read directly in the per-frame draw loop with zero allocation
+// and zero theme reads (the documented HUD perf contract).
+/**
+ * Supersample factor: the canvas backing store is this many times the logical HUD size, so
+ * the texture has enough resolution to stay crisp when sampled onto the 3D plane (combined
+ * with anisotropic + mipmap filtering on the texture). 3× balances sharpness against the
+ * cost of clearing/redrawing a larger canvas each update.
+ */
+const HUD_SUPERSAMPLE = 3;
+
 const HUD_CONFIG = {
-  width: 165, // Canvas width in pixels (increased for icons)
-  height: 251, // Canvas height in pixels (233 + 18 for header)
-  padding: 8, // Inner padding (10% smaller: 9 * 0.9, rounded)
-  lineHeight: 16, // Line height for text (10% smaller: 18 * 0.9, rounded)
-  headerHeight: 18, // Compact header for collapse control
-  playerHeight: 20, // Height per player entry (10% smaller: 22 * 0.9, rounded)
-  buttonHeight: 16, // Button height (10% smaller: 18 * 0.9, rounded)
-  fontSize: 9, // Base font size (10% smaller: 10 * 0.9, rounded)
-  titleFontSize: 10, // Title font size (compact for header)
-  iconSize: 14, // Icon button size
-  iconFontSize: 11, // Icon font size
-  maxNameLength: 16, // Maximum characters for player names (reduced for icons)
-  healthBarWidth: 50, // Width of health bar
-  healthBarHeight: 3, // Height of health bar
-  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  borderColor: 'rgba(255, 255, 255, 0.3)',
-  textColor: '#ffffff',
-  selectedColor: 'rgba(100, 200, 255, 0.3)',
-  hoverColor: 'rgba(255, 255, 255, 0.1)',
-  headerBackgroundColor: 'rgba(30, 30, 30, 0.9)',
-  iconActiveColor: 'rgba(100, 255, 100, 0.9)',
-  iconInactiveColor: 'rgba(150, 150, 150, 0.6)',
-  iconHoverColor: 'rgba(200, 200, 255, 0.8)',
-  healthBarBackgroundColor: 'rgba(60, 60, 60, 0.8)',
-  healthBarFillColor: 'rgba(100, 200, 100, 0.9)',
-  healthBarLowColor: 'rgba(200, 100, 50, 0.9)',
-  healthBarCriticalColor: 'rgba(200, 50, 50, 0.9)',
+  width: 184, // Canvas width in pixels (room for larger text + icons)
+  height: 312, // Canvas height: header (24) + padding (10) + 12 rows * 22 + bottom pad (14)
+  padding: 10, // Inner padding
+  lineHeight: 18, // Line height for text
+  headerHeight: 24, // Header for collapse control + title
+  playerHeight: 22, // Height per player entry (more breathing room)
+  buttonHeight: 18, // Button height
+  fontSize: 11, // Base font size (legible)
+  titleFontSize: 12, // Title font size
+  iconSize: 16, // Icon button size
+  iconFontSize: 13, // Icon font size
+  maxNameLength: 16, // Maximum characters for player names
+  healthBarWidth: 54, // Width of health bar
+  healthBarHeight: 4, // Height of health bar
+  cornerRadius: 8, // Rounded panel corners
+  backgroundColor: HUD_PALETTE.panelBg,
+  borderColor: HUD_PALETTE.border,
+  textColor: HUD_PALETTE.text,
+  mutedColor: HUD_PALETTE.muted,
+  selectedColor: HUD_PALETTE.rowSelected,
+  hoverColor: HUD_PALETTE.rowHover,
+  headerBackgroundColor: HUD_PALETTE.headerBg,
+  accentColor: HUD_PALETTE.accent,
+  dividerColor: HUD_PALETTE.divider,
+  iconActiveColor: HUD_PALETTE.iconActive,
+  iconInactiveColor: HUD_PALETTE.iconInactive,
+  iconHoverColor: HUD_PALETTE.iconHover,
+  healthBarBackgroundColor: HUD_PALETTE.hpTrack,
+  healthBarFillColor: HUD_PALETTE.hpGood,
+  healthBarLowColor: HUD_PALETTE.hpWarn,
+  healthBarCriticalColor: HUD_PALETTE.hpCritical,
+  fontFamily: HUD_FONT.family,
 } as const;
 
 /**
@@ -97,10 +116,13 @@ class PlayerListHUDRenderer {
   private isCollapsed = false;
 
   constructor() {
-    // Create high-resolution canvas for crisp text
+    // Supersample the canvas so the texture stays crisp when sampled onto the 3D plane at
+    // a distance/angle. 3× (up from 2×) + the same anisotropic/mipmap filtering BossHealthHUD
+    // uses fixes the soft/pixelated look — the old 2× texture with default filtering read
+    // blurry once mapped into the scene.
     this.canvas = document.createElement('canvas');
-    this.canvas.width = HUD_CONFIG.width * 2; // 2x for high DPI
-    this.canvas.height = HUD_CONFIG.height * 2; // 2x for high DPI
+    this.canvas.width = HUD_CONFIG.width * HUD_SUPERSAMPLE;
+    this.canvas.height = HUD_CONFIG.height * HUD_SUPERSAMPLE;
     this.canvas.style.width = `${HUD_CONFIG.width}px`;
     this.canvas.style.height = `${HUD_CONFIG.height}px`;
 
@@ -111,16 +133,24 @@ class PlayerListHUDRenderer {
 
     this.context = context;
 
-    // Scale context for high DPI rendering
-    this.context.scale(2, 2);
+    // Scale so all draw code can keep using logical (CSS-pixel) coordinates.
+    this.context.scale(HUD_SUPERSAMPLE, HUD_SUPERSAMPLE);
 
     // Configure high-quality rendering
     this.context.imageSmoothingEnabled = true;
     this.context.imageSmoothingQuality = 'high';
     this.context.textRendering = 'optimizeLegibility';
 
-    // Create texture
+    // The blur was insufficient texture resolution (the panel is magnified on screen), so
+    // the 3× supersample above is the real fix. Use plain linear filtering with NO mipmaps:
+    // updateHUD() runs every frame and flags needsUpdate, and generateMipmaps would
+    // regenerate the full mip chain for this (now larger) texture on every one of those
+    // frames — exactly the per-frame GPU cost the HUD perf contract forbids. Mipmaps only
+    // help minification anyway, which isn't this panel's failure mode.
     this.texture = new THREE.CanvasTexture(this.canvas);
+    this.texture.magFilter = THREE.LinearFilter;
+    this.texture.minFilter = THREE.LinearFilter;
+    this.texture.generateMipmaps = false;
     this.texture.needsUpdate = true;
   }
 
@@ -141,43 +171,60 @@ class PlayerListHUDRenderer {
 
     // Get effective height based on collapsed state
     const effectiveHeight = this.isCollapsed ? HUD_CONFIG.headerHeight : HUD_CONFIG.height;
+    const r = HUD_CONFIG.cornerRadius;
+    const w = HUD_CONFIG.width;
 
-    // Background panel - only draw what's needed
+    // Rounded panel path — reused for both the fill and the hairline border so the panel
+    // reads as a cohesive glass card rather than a hard black box. roundRect is a cheap
+    // built-in path op (no allocation beyond the implicit path).
+    const panelPath = (inset: number, h: number): void => {
+      ctx.beginPath();
+      ctx.roundRect(inset, inset, w - inset * 2, h - inset * 2, r);
+    };
+
+    // Background panel
     ctx.fillStyle = HUD_CONFIG.backgroundColor;
-    ctx.fillRect(0, 0, HUD_CONFIG.width, effectiveHeight);
+    panelPath(0, effectiveHeight);
+    ctx.fill();
 
-    // Border - adjust to effective height
+    // Header strip (clipped to the rounded top so it follows the corners)
+    ctx.save();
+    panelPath(0, effectiveHeight);
+    ctx.clip();
+    ctx.fillStyle = this.hoveredHeader ? HUD_CONFIG.hoverColor : HUD_CONFIG.headerBackgroundColor;
+    ctx.fillRect(0, 0, w, HUD_CONFIG.headerHeight);
+    ctx.restore();
+
+    // Hairline border
     ctx.strokeStyle = HUD_CONFIG.borderColor;
     ctx.lineWidth = 1;
-    ctx.strokeRect(0.5, 0.5, HUD_CONFIG.width - 1, effectiveHeight - 1);
+    panelPath(0.5, effectiveHeight);
+    ctx.stroke();
 
-    // Header
-    ctx.fillStyle = this.hoveredHeader ? HUD_CONFIG.hoverColor : HUD_CONFIG.headerBackgroundColor;
-    ctx.fillRect(0, 0, HUD_CONFIG.width, HUD_CONFIG.headerHeight);
-
-    // Header border (only draw bottom border if expanded)
+    // Header divider (only when expanded)
     if (!this.isCollapsed) {
-      ctx.strokeStyle = HUD_CONFIG.borderColor;
+      ctx.strokeStyle = HUD_CONFIG.dividerColor;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(0, HUD_CONFIG.headerHeight);
-      ctx.lineTo(HUD_CONFIG.width, HUD_CONFIG.headerHeight);
+      ctx.moveTo(HUD_CONFIG.padding, HUD_CONFIG.headerHeight);
+      ctx.lineTo(w - HUD_CONFIG.padding, HUD_CONFIG.headerHeight);
       ctx.stroke();
     }
 
-    // Header text
-    ctx.fillStyle = HUD_CONFIG.textColor;
-    ctx.font = `${HUD_CONFIG.titleFontSize}px Arial`;
+    // Header title — uppercased label register (matches the DOM HUD-card titles)
+    ctx.fillStyle = HUD_CONFIG.mutedColor;
+    ctx.font = `600 ${HUD_CONFIG.titleFontSize}px ${HUD_CONFIG.fontFamily}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Players', HUD_CONFIG.padding, HUD_CONFIG.headerHeight / 2);
+    ctx.fillText('PLAYERS', HUD_CONFIG.padding, HUD_CONFIG.headerHeight / 2 + 1);
 
-    // Collapse/expand arrow
+    // Collapse/expand chevron
+    ctx.fillStyle = HUD_CONFIG.mutedColor;
     ctx.textAlign = 'right';
     ctx.fillText(
-      this.isCollapsed ? '▶' : '▼',
-      HUD_CONFIG.width - HUD_CONFIG.padding,
-      HUD_CONFIG.headerHeight / 2,
+      this.isCollapsed ? '▸' : '▾',
+      w - HUD_CONFIG.padding,
+      HUD_CONFIG.headerHeight / 2 + 1,
     );
 
     const players = Array.from(paths.values());
@@ -197,37 +244,42 @@ class PlayerListHUDRenderer {
       const isSelected = selectedPlayerIds.has(player.actorId);
       const isHovered = i === this.hoveredIndex;
 
-      // Background for selected/hovered items
+      // Background for selected/hovered items — rounded inset pill, with a left accent
+      // edge when selected so selection is conveyed by shape + position, not color alone.
       if (isSelected || isHovered) {
+        const rowX = HUD_CONFIG.padding - 2;
+        const rowW = HUD_CONFIG.width - 2 * (HUD_CONFIG.padding - 2);
         ctx.fillStyle = isSelected ? HUD_CONFIG.selectedColor : HUD_CONFIG.hoverColor;
-        ctx.fillRect(
-          HUD_CONFIG.padding,
-          y,
-          HUD_CONFIG.width - 2 * HUD_CONFIG.padding,
-          HUD_CONFIG.playerHeight,
-        );
+        ctx.beginPath();
+        ctx.roundRect(rowX, y, rowW, HUD_CONFIG.playerHeight, 6);
+        ctx.fill();
+        if (isSelected) {
+          ctx.fillStyle = HUD_CONFIG.accentColor;
+          ctx.beginPath();
+          ctx.roundRect(rowX, y + 3, 2.5, HUD_CONFIG.playerHeight - 6, 2);
+          ctx.fill();
+        }
       }
 
-      // Color indicator
+      // Color indicator — rounded swatch matching the DOM player-row dots
       const assignment = colorManager.getAssignment(player.actorId);
       if (assignment) {
         ctx.fillStyle = assignment.colorValue;
-        ctx.fillRect(HUD_CONFIG.padding + 2, y + 5, 12, 12);
-
-        // Color border
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(HUD_CONFIG.padding + 2, y + 5, 12, 12);
+        ctx.beginPath();
+        ctx.roundRect(HUD_CONFIG.padding + 2, y + 5, 12, 12, 3);
+        ctx.fill();
       }
 
       // Player name
       ctx.fillStyle = HUD_CONFIG.textColor;
-      ctx.font = `${HUD_CONFIG.fontSize}px Arial`;
+      ctx.font = `500 ${HUD_CONFIG.fontSize}px ${HUD_CONFIG.fontFamily}`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
 
       const nameX = HUD_CONFIG.padding + 20;
-      const nameY = y + HUD_CONFIG.playerHeight / 2;
+      // Name sits in the upper part of the row; the health bar tucks under it. Both fit
+      // inside playerHeight so rows never bleed into each other.
+      const nameY = y + 7;
 
       // Truncate names to maximum character length
       let displayName = player.name;
@@ -237,7 +289,7 @@ class PlayerListHUDRenderer {
 
       ctx.fillText(displayName, nameX, nameY);
 
-      // Health bar - small horizontal bar below name with 3px gap
+      // Health bar - rounded sliver tucked below the name
       if (lookup && currentTime >= 0) {
         const position = getActorPositionAtClosestTimestamp(lookup, player.actorId, currentTime);
 
@@ -245,42 +297,38 @@ class PlayerListHUDRenderer {
           const healthPercent = Math.max(0, Math.min(1, position.health.percentage / 100));
 
           const healthBarX = nameX;
-          const healthBarY = nameY + HUD_CONFIG.fontSize / 2 + 3; // Position below text with small gap
+          const healthBarY = nameY + 6; // Tuck below the name baseline
+          const bw = HUD_CONFIG.healthBarWidth;
+          const bh = HUD_CONFIG.healthBarHeight;
+          const br = bh / 2;
 
-          // Background
+          // Track
           ctx.fillStyle = HUD_CONFIG.healthBarBackgroundColor;
-          ctx.fillRect(
-            healthBarX,
-            healthBarY,
-            HUD_CONFIG.healthBarWidth,
-            HUD_CONFIG.healthBarHeight,
-          );
+          ctx.beginPath();
+          ctx.roundRect(healthBarX, healthBarY, bw, bh, br);
+          ctx.fill();
 
-          // Health fill with color based on health percentage
+          // Fill — color ramp by health percentage (color reinforces, the bar length is
+          // the primary cue).
           let healthColor: string = HUD_CONFIG.healthBarFillColor;
           if (healthPercent < 0.25) {
             healthColor = HUD_CONFIG.healthBarCriticalColor;
           } else if (healthPercent < 0.5) {
             healthColor = HUD_CONFIG.healthBarLowColor;
           }
+          if (healthPercent > 0) {
+            ctx.fillStyle = healthColor;
+            ctx.beginPath();
+            ctx.roundRect(healthBarX, healthBarY, Math.max(bh, bw * healthPercent), bh, br);
+            ctx.fill();
+          }
 
-          ctx.fillStyle = healthColor;
-          ctx.fillRect(
-            healthBarX,
-            healthBarY,
-            HUD_CONFIG.healthBarWidth * healthPercent,
-            HUD_CONFIG.healthBarHeight,
-          );
-
-          // Border
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+          // Hairline border
+          ctx.strokeStyle = HUD_CONFIG.healthBarBackgroundColor;
           ctx.lineWidth = 0.5;
-          ctx.strokeRect(
-            healthBarX,
-            healthBarY,
-            HUD_CONFIG.healthBarWidth,
-            HUD_CONFIG.healthBarHeight,
-          );
+          ctx.beginPath();
+          ctx.roundRect(healthBarX, healthBarY, bw, bh, br);
+          ctx.stroke();
         }
       }
 
@@ -296,7 +344,7 @@ class PlayerListHUDRenderer {
           : HUD_CONFIG.iconInactiveColor;
 
       ctx.fillStyle = eyeColor;
-      ctx.font = `${HUD_CONFIG.iconFontSize}px Arial`;
+      ctx.font = `${HUD_CONFIG.iconFontSize}px ${HUD_CONFIG.fontFamily}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       // Distinct glyphs for shown vs hidden so the state isn't conveyed by color

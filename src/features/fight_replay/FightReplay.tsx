@@ -18,6 +18,7 @@ import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositions
 
 import { FightReplay3D } from './components/FightReplay3D';
 import { MapMarkersModal } from './components/MapMarkersModal';
+import { ReplayStatePanel } from './components/ReplayStatePanel';
 import { MapMarkersState } from './types/mapMarkers';
 import {
   createMarkerFromElmsIcon,
@@ -248,52 +249,61 @@ export const FightReplay: React.FC = () => {
     (isHostileBuffEventsLoading && hostileBuffEvents.length === 0) ||
     (isFightLoading && !fight);
 
-  // Loading state - only show if we're actually missing data
+  // Shared back action for the state screens (only navigable when we have the ids).
+  const stateBackAction =
+    reportId && fightId
+      ? { actionLabel: 'Back to Fight', onAction: handleBackToFight }
+      : {};
+
+  // Non-render states share one cohesive panel (spinner / error / empty) wrapped in the
+  // same page padding so the chrome is consistent with the loaded view.
   if (isInitialLoading) {
     return (
-      <Box sx={{ p: 3 }} aria-live="polite">
-        <Typography variant="h5" gutterBottom>
-          Fight Replay - 3D View
-        </Typography>
-        <Alert severity="info">Loading actor position data...</Alert>
+      <Box sx={{ p: 3 }}>
+        <ReplayStatePanel
+          kind="loading"
+          title="Loading replay"
+          detail="Reconstructing actor positions and combat events for the 3D arena…"
+        />
       </Box>
     );
   }
 
-  // Error state
   if (actorPositionsError) {
     return (
-      <Box sx={{ p: 3 }} aria-live="polite">
-        <Typography variant="h5" gutterBottom>
-          Fight Replay - 3D View
-        </Typography>
-        <Alert severity="error">Error loading actor positions: {actorPositionsError}</Alert>
+      <Box sx={{ p: 3 }}>
+        <ReplayStatePanel
+          kind="error"
+          title="Couldn't load the replay"
+          detail={`Error loading actor positions: ${actorPositionsError}`}
+          {...stateBackAction}
+        />
       </Box>
     );
   }
 
-  // No fight selected
   if (!fight) {
     return (
-      <Box sx={{ p: 3 }} aria-live="polite">
-        <Typography variant="h5" gutterBottom>
-          Fight Replay - 3D View
-        </Typography>
-        <Alert severity="warning">
-          No fight selected. Please select a fight to view the replay.
-        </Alert>
+      <Box sx={{ p: 3 }}>
+        <ReplayStatePanel
+          kind="empty"
+          title="No fight selected"
+          detail="Pick a fight from the report to watch its 3D replay."
+          {...stateBackAction}
+        />
       </Box>
     );
   }
 
-  // No lookup data
   if (!lookup) {
     return (
-      <Box sx={{ p: 3 }} aria-live="polite">
-        <Typography variant="h5" gutterBottom>
-          Fight Replay - 3D View
-        </Typography>
-        <Alert severity="warning">No actor position data available for this fight.</Alert>
+      <Box sx={{ p: 3 }}>
+        <ReplayStatePanel
+          kind="empty"
+          title="No position data for this fight"
+          detail="This fight doesn't have the actor-position data needed to render the 3D replay."
+          {...stateBackAction}
+        />
       </Box>
     );
   }
