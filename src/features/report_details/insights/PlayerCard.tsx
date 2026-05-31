@@ -412,6 +412,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             ? '1px solid rgba(255, 255, 255, 0.1)'
             : '1px solid rgba(59, 130, 246, 0.3)',
         ...(isTopDps && {
+          // Allow the electric ring + outer halo (negative insets) to render
+          // beyond the card edge instead of being clipped by MUI's default
+          // overflow:hidden on Card.
+          overflow: 'visible' as const,
           boxShadow:
             theme.palette.mode === 'dark'
               ? '0 0 16px rgba(245,158,11,0.18), 0 0 40px rgba(245,158,11,0.06), inset 0 1px 0 rgba(251,191,36,0.12)'
@@ -910,21 +914,55 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           data-testid={`player-card-${player.id}`}
         >
           {isTopDps && (
-            <Box
-              aria-hidden="true"
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background:
-                  'linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.5) 20%, rgba(251,191,36,1) 50%, rgba(245,158,11,0.5) 80%, transparent 100%)',
-                borderRadius: '4px 4px 0 0',
-                boxShadow: '0 0 8px rgba(251,191,36,0.7), 0 0 18px rgba(245,158,11,0.35)',
-                zIndex: 2,
-              }}
-            />
+            <>
+              {/* Electric border (top DPS): rotating conic-gradient gold edge.
+                  Adapted from the "electric border" aesthetic to the project's
+                  MUI/token idiom. Scoped to this card via absolute inset so it
+                  cannot bleed into neighbouring cards. Both layers animate via
+                  CSS keyframes, so the global prefers-reduced-motion rule in
+                  ReduxThemeProvider neutralises the motion automatically. */}
+              <Box
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  inset: '-1px',
+                  borderRadius: '14px',
+                  padding: '1.5px',
+                  zIndex: 2,
+                  pointerEvents: 'none',
+                  // The conic gradient is the moving "current"; animating its
+                  // start angle (via the --tdps-angle custom property) sweeps the
+                  // bright spot around the edge while the element itself stays
+                  // put. The mask carves out the centre so only the 1.5px ring is
+                  // painted (both prefixed + standard for cross-browser).
+                  background:
+                    'conic-gradient(from var(--tdps-angle), transparent 0deg, rgba(251,191,36,0.15) 40deg, rgba(245,158,11,0.85) 80deg, #fde68a 100deg, rgba(245,158,11,0.85) 120deg, rgba(251,191,36,0.15) 160deg, transparent 200deg, transparent 360deg)',
+                  WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                  mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                  WebkitMaskComposite: 'xor',
+                  maskComposite: 'exclude',
+                  animation: 'electricBorderSpin 4s linear infinite',
+                  filter: 'drop-shadow(0 0 4px rgba(245,158,11,0.55))',
+                }}
+              />
+              {/* Soft outer halo that gently pulses, giving the "energised" feel
+                  without the visual noise of a fast crackle. */}
+              <Box
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  inset: '-3px',
+                  borderRadius: '16px',
+                  zIndex: 0,
+                  pointerEvents: 'none',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 0 14px 1px rgba(245,158,11,0.35), 0 0 34px 4px rgba(245,158,11,0.12)'
+                      : '0 0 14px 1px rgba(180,83,9,0.28), 0 0 34px 4px rgba(245,158,11,0.14)',
+                  animation: 'electricBorderPulse 2.8s ease-in-out infinite',
+                }}
+              />
+            </>
           )}
           <CardContent
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
