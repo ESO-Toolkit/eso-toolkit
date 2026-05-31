@@ -105,7 +105,6 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
           valueLabelDisplay="auto"
           valueLabelFormat={formatTime}
           sx={{
-            // Sit above the marker overlay so the thumb stays grabbable.
             position: 'relative',
             zIndex: 1,
             '& .MuiSlider-thumb': {
@@ -130,10 +129,13 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
           }}
         />
 
-        {/* Event markers overlaid on the rail. Absolutely-positioned wrapper so the
-            markers sit centered on the track without pushing layout; TimelineMarkers
-            itself is untouched (stable props preserve its React.memo). pointer-events
-            are re-enabled per-marker inside the component. */}
+        {/* Event markers overlaid on the rail. The wrapper sits ABOVE the slider
+            (zIndex 2) so each marker can receive its own hover/click — otherwise the
+            slider's tall hit area swallows them and click-to-seek/tooltips break. The
+            wrapper itself is pointer-events:none so empty gaps between markers fall
+            through to the slider (empty-track click still scrubs; the thumb still
+            drags); only the individual markers (re-enabled inside the component) are
+            interactive. TimelineMarkers stays untouched → its React.memo holds. */}
         {markers && markers.length > 0 && (
           <Box
             sx={{
@@ -142,9 +144,13 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
               right: 0,
               top: '50%',
               transform: 'translateY(-50%)',
+              zIndex: 2,
+              // The overlay and TimelineMarkers' own full-width container must NOT
+              // capture events (they'd block the slider). Only the individual marker
+              // hit-areas (role="button") are interactive, so empty track between
+              // markers still reaches the slider underneath.
               pointerEvents: 'none',
-              '& > *': { pointerEvents: 'auto' },
-              zIndex: 0,
+              '& [role="button"]': { pointerEvents: 'auto' },
             }}
           >
             <TimelineMarkers markers={markers} duration={duration} onMarkerClick={onMarkerClick} />
