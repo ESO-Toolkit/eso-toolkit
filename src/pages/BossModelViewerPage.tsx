@@ -4,12 +4,14 @@ import {
   Container,
   Chip,
   FormControl,
+  FormControlLabel,
   InputLabel,
   ListSubheader,
   MenuItem,
   Paper,
   Select,
   Stack,
+  Switch,
   Typography,
   type SelectChangeEvent,
 } from '@mui/material';
@@ -43,6 +45,15 @@ const AUDIT_META: Record<AuditAction, { label: string; color: string }> = {
   FIX: { label: '❌ Wrong creature', color: '#f87171' },
   PLACEHOLDER: { label: '🔲 Placeholder (no real mesh)', color: '#9ca3af' },
   VERIFY: { label: '🔍 Needs eyeball', color: '#a78bfa' },
+};
+
+// The committed set = real meshes (Keep / Keep-shared) + the dragon bodies (Texture).
+// These are the only bosses with an actual GLB on disk; everything else shows a
+// placeholder. The "committed only" toggle filters the dropdown to just these.
+const COMMITTED_ACTIONS = new Set<AuditAction>(['KEEP', 'KEEP-SHARED', 'TEXTURE']);
+const isCommittedBoss = (bossName: string): boolean => {
+  const audit = auditByBoss[bossName];
+  return audit ? COMMITTED_ACTIONS.has(audit.action) : false;
 };
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -454,6 +465,12 @@ const BossInfoPanel: React.FC<{ boss: Boss; trialName: string }> = ({ boss, tria
 export const BossModelViewerPage: React.FC = () => {
   const [selectedId, setSelectedId] = React.useState<string>('');
   const [modelStatus, setModelStatus] = React.useState<ModelStatus>('loading');
+  const [committedOnly, setCommittedOnly] = React.useState<boolean>(true);
+
+  const visibleOptions = React.useMemo(
+    () => (committedOnly ? bossOptions.filter((o) => isCommittedBoss(o.boss.name)) : bossOptions),
+    [committedOnly],
+  );
 
   const selected = React.useMemo(() => bossOptions.find((o) => o.id === selectedId), [selectedId]);
 
@@ -471,7 +488,7 @@ export const BossModelViewerPage: React.FC = () => {
     const items: React.ReactNode[] = [];
     let currentTrial = '';
 
-    for (const option of bossOptions) {
+    for (const option of visibleOptions) {
       if (option.trialName !== currentTrial) {
         currentTrial = option.trialName;
         const trial = typedData.trials[currentTrial];
@@ -500,7 +517,7 @@ export const BossModelViewerPage: React.FC = () => {
     }
 
     return items;
-  }, []);
+  }, [visibleOptions]);
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -513,6 +530,25 @@ export const BossModelViewerPage: React.FC = () => {
           boss reflects the June-2026 model audit — ✅ real mesh (confirm it looks right), 🎨 dragon
           body needing a skin, ❌ wrong creature, 🔲 humanoid placeholder (no real mesh yet).
         </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={committedOnly}
+                onChange={(e) => {
+                  setCommittedOnly(e.target.checked);
+                  setSelectedId('');
+                  setModelStatus('loading');
+                }}
+              />
+            }
+            label="Committed models only"
+          />
+          <Typography variant="caption" color="text.secondary">
+            Showing {visibleOptions.length} of {bossOptions.length} bosses
+          </Typography>
+        </Box>
 
         <FormControl fullWidth>
           <InputLabel id="boss-select-label">Select a boss</InputLabel>
