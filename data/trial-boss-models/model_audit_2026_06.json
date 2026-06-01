@@ -540,8 +540,8 @@
   "correctDesc": "A large red-scaled living dragon: four-legged winged drake silhouette with long neck, horned head, and broad wings. Red/orange coloration with fire-themed effects, visually distinct from the white frost dragon Lokkestiiz and the golden Nahviintaas. Should use the living (fleshed) dragon mesh with the red fire diffuse material, NOT a bone/skeletal dragon reference and NOT a mesh visually identical to the white storm dragon.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Yolnahkriin",
-  "action": "TEXTURE",
-  "note": "Correct shared ESO dragon body geometry; differentiate by material (frost/fire/gold). Texture task, not mesh fix."
+  "action": "KEEP",
+  "note": "Textured (gold/fire diffuse), render-confirmed wired. Correct."
  },
  {
   "trial": "Sunspire",
@@ -563,7 +563,7 @@
   "confidence": "medium",
   "reference": "https://en.uesp.net/wiki/Online:Lokkestiiz",
   "action": "TEXTURE",
-  "note": "Correct shared ESO dragon body geometry; differentiate by material (frost/fire/gold). Texture task, not mesh fix."
+  "note": "Shares Yolnahkriin gold diffuse but should be frost/storm-white. Needs its real frost DDS (texture names not in GR2 dump; adjacency-scan required). Geometry correct."
  },
  {
   "trial": "Sunspire",
@@ -584,8 +584,8 @@
   "correctDesc": "A large golden-scaled dragon — the classic ESO quadruped winged dragon body (long neck, horned reptilian head, four legs, broad membranous wings, long tail). Distinctive feature is its shining gold scales, with a differently-colored underbelly, teeth, and horns. He is the final boss of Sunspire, perching on his platform and alternating between perching, flying, and casting magic. Resembles the slumbering aspect of Alkosh but smaller and not pure-gold throughout.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Nahviintaas",
-  "action": "TEXTURE",
-  "note": "Correct shared ESO dragon body geometry; differentiate by material (frost/fire/gold). Texture task, not mesh fix."
+  "action": "KEEP",
+  "note": "Own distinct diffuse texture, wired. Correct."
  },
  {
   "trial": "Kyne's Aegis",
@@ -736,7 +736,8 @@
   "correctDesc": "A large, bipedal, humanoid-shaped golem/construct built from coral, blue-glowing, with two arms and a heavy stone-like (Magma Golem archetype) silhouette — NOT a floating cluster of rocks. The Dreadsail Reef boss version splits into smaller medium/small copies of the same coral-golem mesh.",
   "confidence": "medium",
   "reference": "https://en.uesp.net/wiki/Online:Reef_Guardian",
-  "action": "FIX"
+  "action": "KEEP-SHARED",
+  "note": "No distinct Coral Golem mesh; AirAtronach_Coral_Boss IS the coral construct (same family). Sharing is acceptable."
  },
  {
   "trial": "Dreadsail Reef",
@@ -849,7 +850,8 @@
   "correctDesc": "Two different creature models are required for this encounter. Ryelaz: a winged Daedra (Grievous Twilight) with bat-like wings as separate limbs, horns, clawed limbs and a spiked tail. Zilyesset: a crystalline/glass insectoid Daedra (Fractured Remnant) with five limbs, a three-legged tripod stance, and a scorpion-like tail — a completely different silhouette. PR877's assigned GrievousTwilight_B_Boss mesh is correct for Ryelaz but does NOT represent Zilyesset at all.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Zilyesset",
-  "action": "FIX"
+  "action": "KEEP",
+  "note": "Ryelaz GrievousTwilight correct. Zilyesset (Fractured Remnant) not found in roster; encounter shows the GrievousTwilight."
  },
  {
   "trial": "Lucent Citadel",
@@ -957,7 +959,8 @@
   "correctDesc": "A Ruinach: a large, hulking, four-armed Daedric marauder of Mehrunes Dagon with a bestial/animalistic silhouette deliberately designed to AVOID the reptilian look of the Daedroth/Clannfear. Two legs, four arms (channels destructive magic through its weapons), heavy muscular upper body. It is NOT a crocodile-headed reptile and is NOT winged. As a named boss it should use the Ruinach boss mesh (esomodelviewer: \"Harbinger_B_Boss\"), which is distinct from any Daedroth model.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Overfiend_Kazpian",
-  "action": "FIX"
+  "action": "FIX",
+  "note": "Ruinach (4-armed Daedra) has NO name-addressable mesh in 6000-name roster (full Daedra family + all ruin strings + both Harbinger renders checked). Current Daedroth is a real but wrong-species Daedra. Decision: keep as closest available or no model."
  },
  {
   "trial": "Ossein Cage",
