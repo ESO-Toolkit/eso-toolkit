@@ -15,7 +15,7 @@ import { getPlayerPathColor } from '../utils/playerColors';
 
 import { CameraFollower } from './CameraFollower';
 import { DynamicMapTexture } from './DynamicMapTexture';
-import { FigureReplayActors3D } from './FigureReplayActors3D';
+import { InstancedReplayFigures3D } from './InstancedReplayFigures3D';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
@@ -77,7 +77,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   const effectiveShowNames = showNames && shouldRenderEffects;
 
   return (
-    <FigureReplayActors3D
+    <InstancedReplayFigures3D
       lookup={lookup}
       timeRef={timeRef}
       scale={scale}

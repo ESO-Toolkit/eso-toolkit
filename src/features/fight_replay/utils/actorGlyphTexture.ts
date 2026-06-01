@@ -17,7 +17,19 @@ import { getReplayActorAccentColor } from './actorVisualState';
 
 const GLYPH_TEXTURE_SIZE = 128;
 
-type GlyphSymbol = 'tank' | 'healer' | 'dps' | 'boss' | 'enemy' | 'npc' | 'pet' | 'dot';
+export type GlyphSymbol = 'tank' | 'healer' | 'dps' | 'boss' | 'enemy' | 'npc' | 'pet' | 'dot';
+
+/** Every glyph symbol, for pre-building the finite set of instanced glyph groups. */
+export const GLYPH_SYMBOLS: readonly GlyphSymbol[] = [
+  'tank',
+  'healer',
+  'dps',
+  'boss',
+  'enemy',
+  'npc',
+  'pet',
+  'dot',
+];
 
 const textureCache = new Map<string, THREE.CanvasTexture>();
 
@@ -110,6 +122,50 @@ export function getActorGlyphTexture(actor: ActorPosition | null | undefined): T
     return cached;
   }
 
+  const texture = drawGlyph(symbol, color);
+  textureCache.set(key, texture);
+  return texture;
+}
+
+/** The glyph symbol for an actor (role/type), exposed for instanced glyph grouping. */
+export function getActorGlyphSymbol(actor: ActorPosition | null | undefined): GlyphSymbol {
+  return symbolForActor(actor);
+}
+
+/**
+ * The "alive" accent color for a glyph symbol, used to bake one stable glyph texture per symbol
+ * group in the instanced renderer. Dead state is conveyed by dimming (per-instance opacity), not
+ * by re-tinting, so the group texture stays constant and the group never needs to be rebuilt.
+ */
+export function getGlyphSymbolColor(symbol: GlyphSymbol): string {
+  switch (symbol) {
+    case 'tank':
+      return getReplayActorAccentColor({ type: 'player', role: 'tank', isDead: false });
+    case 'healer':
+      return getReplayActorAccentColor({ type: 'player', role: 'healer', isDead: false });
+    case 'dps':
+      return getReplayActorAccentColor({ type: 'player', role: 'dps', isDead: false });
+    case 'boss':
+      return getReplayActorAccentColor({ type: 'boss', isDead: false });
+    case 'enemy':
+      return getReplayActorAccentColor({ type: 'enemy', isDead: false });
+    case 'npc':
+      return getReplayActorAccentColor({ type: 'friendly_npc', isDead: false });
+    case 'pet':
+      return getReplayActorAccentColor({ type: 'pet', isDead: false });
+    default:
+      return getReplayActorAccentColor({ type: 'player', isDead: false });
+  }
+}
+
+/** Get the stable glyph texture for a symbol group (alive color), used by the instanced renderer. */
+export function getGlyphTextureForSymbol(symbol: GlyphSymbol): THREE.CanvasTexture {
+  const color = getGlyphSymbolColor(symbol);
+  const key = `${symbol}|${color}`;
+  const cached = textureCache.get(key);
+  if (cached) {
+    return cached;
+  }
   const texture = drawGlyph(symbol, color);
   textureCache.set(key, texture);
   return texture;
