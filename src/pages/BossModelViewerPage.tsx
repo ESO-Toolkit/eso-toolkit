@@ -201,14 +201,23 @@ const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
       -center.z * targetScale,
     );
 
-    // Apply species color tint to all meshes
+    // Material handling: a few models (the Sunspire dragons) carry baked diffuse +
+    // normal textures — show those faithfully (the GLB's color map must be flagged
+    // sRGB or it renders washed-out/grey). Only the UNtextured majority gets the
+    // species color tint so they're not flat grey.
     cloned.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        const mat = child.material as THREE.MeshStandardMaterial;
-        if (mat.isMeshStandardMaterial) {
-          mat.emissive = new THREE.Color(color);
-          mat.emissiveIntensity = 0.05;
-        }
+      if (!(child instanceof THREE.Mesh)) return;
+      const mat = child.material as THREE.MeshStandardMaterial;
+      if (!mat?.isMeshStandardMaterial) return;
+      if (mat.map) {
+        // Textured model: keep its real skin, just ensure correct color space.
+        mat.map.colorSpace = THREE.SRGBColorSpace;
+        mat.color.set('#ffffff');
+        mat.needsUpdate = true;
+      } else {
+        // Untextured mesh: tint by species so it reads, not flat grey.
+        mat.emissive = new THREE.Color(color);
+        mat.emissiveIntensity = 0.05;
       }
     });
 
