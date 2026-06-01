@@ -370,6 +370,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         return;
       }
 
+      // Never shadow OS/browser chords (Ctrl/⌘ + key — e.g. Ctrl+= / Ctrl+- page zoom, Ctrl+F
+      // find). Our single-key shortcuts must not fire on a modified press, and we must not
+      // preventDefault() those combos. (Shift+arrows for ±10s is intentional and handled below.)
+      if (event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
       // Raw key (preserves symbols/arrows/case); the toggle switch below lowercases letters.
       const { key } = event;
 
