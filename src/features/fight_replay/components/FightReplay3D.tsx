@@ -8,6 +8,7 @@ import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
+import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import { MapMarkersState } from '../types/mapMarkers';
@@ -78,12 +79,23 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setFollowingActorId(actorId);
   }, []);
 
+  // Persisted viewer prefs (localStorage). FightReplay3D owns the speed + path/trail slices;
+  // Arena3D owns the names + performance slices (it persists those itself via the same hook).
+  // initialPrefs/storedPrefs are a one-time mount snapshot used only to seed the state below.
+  const { initialPrefs, storedPrefs, persistPrefs } = useReplayPrefs();
+
   // Player path visualization state
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(
     new Set(initialSelectedPlayerIds),
   );
-  const [showPlayerPathsHUD, setShowPlayerPathsHUD] = useState(showPlayerPaths);
-  const [showPlayerTrails, setShowPlayerTrails] = useState(showPlayerPaths);
+  // Seed from the stored pref when present, else the showPlayerPaths prop (the feature default).
+  // `?? prop` (not initialPrefs) so an explicit prop still wins when the user has never toggled.
+  const [showPlayerPathsHUD, setShowPlayerPathsHUD] = useState(
+    storedPrefs.showPlayerPaths ?? showPlayerPaths,
+  );
+  const [showPlayerTrails, setShowPlayerTrails] = useState(
+    storedPrefs.showTrails ?? showPlayerPaths,
+  );
 
   // Compact contextual badges for the transport bar (encounter · difficulty · outcome).
   // The encounter name is shortened to its trailing word(s) so it complements — rather than
@@ -131,7 +143,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Playback state - initialize with URL parameter if available (clamped to range)
   const [currentTime, setCurrentTime] = useState(clampedInitialTime);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [playbackSpeed, setPlaybackSpeed] = useState(initialPrefs.playbackSpeed);
   const [isScrubbingMode, setIsScrubbingMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -313,6 +325,16 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
+
+  // Persist FightReplay3D's pref slice (speed + path/trail toggles) whenever it changes. The hook
+  // does a read-merge-write so this never clobbers the names/performance slice Arena3D persists.
+  useEffect(() => {
+    persistPrefs({
+      playbackSpeed,
+      showPlayerPaths: showPlayerPathsHUD,
+      showTrails: showPlayerTrails,
+    });
+  }, [persistPrefs, playbackSpeed, showPlayerPathsHUD, showPlayerTrails]);
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
   // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need

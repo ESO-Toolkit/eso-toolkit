@@ -19,6 +19,7 @@ import { Canvas } from '@react-three/fiber';
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
+import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
 import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
@@ -137,17 +138,22 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
+  // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
+  // speed/path slices live in FightReplay3D. Both use the same read-merge-write hook so neither
+  // clobbers the other's keys. initialPrefs is a one-time mount snapshot used only to seed below.
+  const { initialPrefs, persistPrefs } = useReplayPrefs();
+
   // Local override to hide/show the floating name cards, toggled with the N key. ANDs with the
   // incoming showActorNames prop so turning names off here always wins. Lets you declutter a
   // crowd to see the player models, then bring identity back. Applies to every variant.
-  const [namesEnabled, setNamesEnabled] = useState(true);
+  const [namesEnabled, setNamesEnabled] = useState(initialPrefs.showNames);
 
   // Performance mode (off by default). When on, the player figures stop casting shadows — the
   // shadow pass re-submits the full humanoid geometry for every figure (~75k tris at 23 players,
   // scaling with actor count), so dropping it roughly halves the figure tri load and buys headroom
   // for very large fights. Purely a fidelity/cost trade; button-only (P/T are already taken by the
   // player-paths HUD and trails in FightReplay3D).
-  const [performanceMode, setPerformanceMode] = useState(false);
+  const [performanceMode, setPerformanceMode] = useState(initialPrefs.performanceMode);
 
   // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
   // so the DOM PlayerListPanel overlay — which renders the toggle controls — and the
@@ -176,6 +182,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       return next;
     });
   }, []);
+
+  // Persist Arena3D's pref slice (names + performance) on change. Read-merge-write in the hook
+  // means this never clobbers the speed/path slice FightReplay3D persists.
+  useEffect(() => {
+    persistPrefs({ showNames: namesEnabled, performanceMode });
+  }, [persistPrefs, namesEnabled, performanceMode]);
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
