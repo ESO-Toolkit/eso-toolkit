@@ -126,10 +126,12 @@ const GAIT_SPEED_TAU = 0.2; // seconds; EMA time constant for the smoothed speed
 const GAIT_SPEED_FULL = 0.6; // units/SECOND mapping to full lean/bob (≈ a brisk reposition)
 const GAIT_MAX_LEAN = 0.22; // radians of forward lean at full speed (~12.6°)
 const GAIT_BOB_AMP = 0.05; // world-unit vertical bob amplitude at full speed
-// Bob cycles per world unit travelled. Actors move fast (~0.5–1.1 units/frame), so this MUST stay
-// low or the bob aliases into high-frequency vibration (verified live: 7.0 strobed at ~3.8 cycles/
-// frame). 0.4 keeps it well under the 0.5-cycle/frame Nyquist limit even at the fastest observed
-// step, so the bob reads as a slow rise/fall over a stride rather than a jitter.
+// Bob cycles per world unit of accumulated travel. Kept low so the bob can't alias into
+// high-frequency vibration: the bob advances GAIT_BOB_FREQ × (per-frame path increment) cycles per
+// frame, and the per-frame increment is small (sub-0.05u even at 5× playback on 60Hz, measured from
+// the lookup), so 0.4 stays far under the 0.5-cycle/frame Nyquist limit. Reads as a slow rise/fall
+// over a stride, not a jitter. (Phase keys off accumulated path length, so it is framerate- and
+// playback-speed-independent.)
 const GAIT_BOB_FREQ = 0.4;
 
 // Walk-flipbook phase tuning.
