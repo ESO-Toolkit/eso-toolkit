@@ -14,6 +14,7 @@ import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 
 import { CameraFollower } from './CameraFollower';
+import { CameraResetControls } from './CameraResetControls';
 import { CanvasWheelZoom } from './CanvasWheelZoom';
 import { DynamicMapTexture } from './DynamicMapTexture';
 import { InstancedReplayFigures3D } from './InstancedReplayFigures3D';
@@ -213,6 +214,14 @@ export interface Arena3DSceneProps {
   onMarkerContextMenu?: (payload: MarkerContextMenuPayload) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
+  /**
+   * The fitted initial camera POSITION (bbox-fit at fight start, computed by Arena3D). Threaded
+   * down so the `r` reset key (CameraResetControls) can return to the exact view the user
+   * started at, not a generic constant.
+   */
+  initialPosition?: [number, number, number];
+  /** Clears the React "Following:" chip when an in-canvas action (reset/frame-all) unfollows. */
+  onUnfollow?: () => void;
   /** Selected player IDs for path visualization */
   selectedPlayerIds?: Set<number>;
   /** Whether to show player trail paths */
@@ -249,6 +258,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   onMarkerContextMenu,
   fight,
   initialTarget,
+  initialPosition,
+  onUnfollow,
   selectedPlayerIds = new Set(),
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
@@ -452,6 +463,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       />
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
+      {/* In-canvas camera keys: r = reset to fitted initial view, g = frame all actors. Lives in
+          the Canvas because it needs the camera + controls (the DOM keydown has no handle). */}
+      {initialPosition && initialTarget && (
+        <CameraResetControls
+          initialCameraPosition={initialPosition}
+          initialCameraTarget={initialTarget}
+          followingActorIdRef={followingActorIdRef}
+          onUnfollow={onUnfollow}
+          lookup={lookup}
+          timeRef={timeRef}
+        />
+      )}
       {/* Keyboard camera controls (WASD) - disabled when following an actor */}
       <KeyboardCameraControls enabled={!followingActorIdRef.current} />
       {/* Lighting */}

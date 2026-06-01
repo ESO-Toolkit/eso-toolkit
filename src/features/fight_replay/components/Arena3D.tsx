@@ -468,13 +468,13 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     return `Actor ${followingActorId}`;
   }, [lookup, followingActorId, timeRef]);
 
-  const handleUnlockCamera = (): void => {
+  const handleUnlockCamera = useCallback((): void => {
     // Delegate to the owner (FightReplay3D), which clears both the ref and the mirrored
     // state. Also clear the ref directly so the synchronous render-loop read is correct
     // even if no onCameraUnlock handler was provided.
     followingActorIdRef.current = null;
     onCameraUnlock?.();
-  };
+  }, [followingActorIdRef, onCameraUnlock]);
 
   // Calculate initial camera target and position based on actor bounding box at fight start
   // MUST be before any early returns to comply with React Hooks rules
@@ -719,6 +719,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onMarkerContextMenu={handleMarkerContextMenu}
             fight={fight}
             initialTarget={initialCameraTarget}
+            initialPosition={initialCameraPosition}
+            onUnfollow={handleUnlockCamera}
             selectedPlayerIds={selectedPlayerIds}
             showPlayerTrails={showPlayerTrails}
             playerVisibility={playerVisibility}
