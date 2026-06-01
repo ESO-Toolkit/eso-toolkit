@@ -1,0 +1,43 @@
+[package]
+name = "eso-model-extractor"
+version = "0.1.0"
+edition = "2024"
+description = "Extract 3D models (GR2) from ESO's MNF/DAT archives and convert to glTF"
+license = "MIT"
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Binary parsing
+byteorder = "1"
+
+# Compression
+flate2 = "1"          # zlib/deflate decompression
+libloading = "0.8"    # Dynamic library loading (Oodle DLL)
+
+# glTF export
+gltf-json = "1"
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Progress & logging
+indicatif = "0.17"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Parallel iteration  
+rayon = "1"
+
+# Glob patterns for file filtering
+glob = "0.3"
+
+# Regex for model name search
+regex = "1"
+
+[build-dependencies]
+cc = "1"

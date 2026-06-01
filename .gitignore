@@ -204,3 +204,6 @@ discord-notify-worker/node_modules/
 /.factory/*.har
 /.factory/*.trace
 /.factory/skills/
+
+# Claude agent scratch workspace — heavy artefacts (GLBs, renders, traces).
+/.scratch/

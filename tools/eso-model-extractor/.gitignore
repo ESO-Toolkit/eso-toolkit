@@ -1,0 +1,6 @@
+/target
+/extracted_models
+/scratch
+
+# Proprietary Oodle decompression DLL (copy from ESO installation at runtime)
+oo2core_8_win64.dll

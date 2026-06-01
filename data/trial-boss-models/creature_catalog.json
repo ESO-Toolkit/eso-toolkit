@@ -1,0 +1,4446 @@
+{
+  "total_meshes": 456,
+  "total_species": 132,
+  "species": {
+    "AirAtronach": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "AirAtronach_Coral_Boss",
+          "fi": 2732009,
+          "size_kb": 1055,
+          "verts": 13752,
+          "tris": 19862,
+          "is_boss": true
+        },
+        {
+          "name": "AirAtronach_B_Boss",
+          "fi": 631111,
+          "size_kb": 619,
+          "verts": 7930,
+          "tris": 11170,
+          "is_boss": true
+        },
+        {
+          "name": "AirAtronach_C_Boss",
+          "fi": 3158319,
+          "size_kb": 612,
+          "verts": 7893,
+          "tris": 11170,
+          "is_boss": true
+        },
+        {
+          "name": "AirAtronach_A_Basic",
+          "fi": 631109,
+          "size_kb": 292,
+          "verts": 3600,
+          "tris": 4986,
+          "is_boss": false
+        }
+      ]
+    },
+    "ArgonianBehemoth": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "ArgonianBehemoth_A_Basic",
+          "fi": 669101,
+          "size_kb": 416,
+          "verts": 5207,
+          "tris": 8130,
+          "is_boss": false
+        },
+        {
+          "name": "ArgonianBehemoth_A_Red_Basic",
+          "fi": 2643525,
+          "size_kb": 416,
+          "verts": 5207,
+          "tris": 8130,
+          "is_boss": false
+        }
+      ]
+    },
+    "Bear": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Bear_FlameAtronach_Pet",
+          "fi": 1156439,
+          "size_kb": 289,
+          "verts": 3472,
+          "tris": 5946,
+          "is_boss": false
+        },
+        {
+          "name": "Bear_Polar_Basic",
+          "fi": 547001,
+          "size_kb": 177,
+          "verts": 2031,
+          "tris": 3098,
+          "is_boss": false
+        },
+        {
+          "name": "Bear_A_Basic",
+          "fi": 170519,
+          "size_kb": 177,
+          "verts": 2031,
+          "tris": 3098,
+          "is_boss": false
+        }
+      ]
+    },
+    "Bear02": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Bear02_A_Basic_00",
+          "fi": 874691,
+          "size_kb": 507,
+          "verts": 6359,
+          "tris": 10092,
+          "is_boss": false
+        }
+      ]
+    },
+    "BearCub": {
+      "has_boss": false,
+      "variant_count": 9,
+      "variants": [
+        {
+          "name": "BearCub_A_Golden",
+          "fi": 2495555,
+          "size_kb": 988,
+          "verts": 12824,
+          "tris": 19202,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_A_DragonCult",
+          "fi": 1531693,
+          "size_kb": 871,
+          "verts": 11281,
+          "tris": 16590,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_A_Potentate",
+          "fi": 2534917,
+          "size_kb": 712,
+          "verts": 9174,
+          "tris": 13435,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_A_Gloomspore",
+          "fi": 2405807,
+          "size_kb": 618,
+          "verts": 7829,
+          "tris": 12562,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_A_Moonstone",
+          "fi": 3287545,
+          "size_kb": 567,
+          "verts": 7334,
+          "tris": 9626,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_A_FrostAtronach",
+          "fi": 1573585,
+          "size_kb": 505,
+          "verts": 6412,
+          "tris": 9584,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_HeartsAwe",
+          "fi": 3083815,
+          "size_kb": 488,
+          "verts": 6105,
+          "tris": 9882,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_A_Basic",
+          "fi": 878853,
+          "size_kb": 474,
+          "verts": 5958,
+          "tris": 9316,
+          "is_boss": false
+        },
+        {
+          "name": "BearCub_B_Lizard",
+          "fi": 1419847,
+          "size_kb": 424,
+          "verts": 5276,
+          "tris": 8536,
+          "is_boss": false
+        }
+      ]
+    },
+    "Beetle": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Beetle_Fabricant_Basic",
+          "fi": 1066395,
+          "size_kb": 482,
+          "verts": 6274,
+          "tris": 7312,
+          "is_boss": false
+        },
+        {
+          "name": "Beetle_MistralThunderbug_Basic",
+          "fi": 3032939,
+          "size_kb": 299,
+          "verts": 3706,
+          "tris": 5058,
+          "is_boss": false
+        }
+      ]
+    },
+    "BlackwoodGuardian": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "BlackwoodGuardian_F_TP",
+          "fi": 3184663,
+          "size_kb": 896,
+          "verts": 10482,
+          "tris": 16658,
+          "is_boss": false
+        },
+        {
+          "name": "BlackwoodGuardian_U_TP",
+          "fi": 3113937,
+          "size_kb": 896,
+          "verts": 10482,
+          "tris": 16658,
+          "is_boss": false
+        }
+      ]
+    },
+    "BoneColossus": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "BoneColossus_A_Giant",
+          "fi": 2397405,
+          "size_kb": 3435,
+          "verts": 45487,
+          "tris": 66581,
+          "is_boss": false
+        },
+        {
+          "name": "BoneColossus_A_Shade",
+          "fi": 2557453,
+          "size_kb": 741,
+          "verts": 9761,
+          "tris": 12086,
+          "is_boss": false
+        },
+        {
+          "name": "BoneColossus_A_Basic",
+          "fi": 170499,
+          "size_kb": 709,
+          "verts": 9254,
+          "tris": 11664,
+          "is_boss": false
+        }
+      ]
+    },
+    "BoneDragon": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "BoneDragon_A_Basic",
+          "fi": 1167549,
+          "size_kb": 3187,
+          "verts": 41991,
+          "tris": 63786,
+          "is_boss": false
+        }
+      ]
+    },
+    "Bonecolossus": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Bonecolossus_F_TP",
+          "fi": 3263255,
+          "size_kb": 2072,
+          "verts": 24581,
+          "tris": 39564,
+          "is_boss": false
+        },
+        {
+          "name": "Bonecolossus_U_TP",
+          "fi": 3219205,
+          "size_kb": 2069,
+          "verts": 24537,
+          "tris": 39570,
+          "is_boss": false
+        }
+      ]
+    },
+    "BrawnMajesty": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "BrawnMajesty_Fledgling_Gryphon",
+          "fi": 3223205,
+          "size_kb": 1421,
+          "verts": 18742,
+          "tris": 24240,
+          "is_boss": false
+        }
+      ]
+    },
+    "CatLargeSenche": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "CatLargeSenche_Wraithhaunt_Base",
+          "fi": 2739405,
+          "size_kb": 1458,
+          "verts": 19147,
+          "tris": 27962,
+          "is_boss": false
+        },
+        {
+          "name": "CatLargeSenche_FrostAtronach",
+          "fi": 2360475,
+          "size_kb": 1402,
+          "verts": 18300,
+          "tris": 28228,
+          "is_boss": false
+        },
+        {
+          "name": "CatLargeSenche_A_DragonCult",
+          "fi": 1550701,
+          "size_kb": 476,
+          "verts": 5972,
+          "tris": 9928,
+          "is_boss": false
+        }
+      ]
+    },
+    "ChaurusEgg": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ChaurusEgg_A_Basic",
+          "fi": 2472129,
+          "size_kb": 83,
+          "verts": 805,
+          "tris": 1432,
+          "is_boss": false
+        }
+      ]
+    },
+    "ChaurusReaper": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ChaurusReaper_A_01",
+          "fi": 2483863,
+          "size_kb": 1090,
+          "verts": 14136,
+          "tris": 21320,
+          "is_boss": false
+        }
+      ]
+    },
+    "ChaurusReaperHatchling": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ChaurusReaperHatchling_A_01",
+          "fi": 2485653,
+          "size_kb": 1090,
+          "verts": 14136,
+          "tris": 21320,
+          "is_boss": false
+        }
+      ]
+    },
+    "ChaurusReaperPet": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ChaurusReaperPet_A_01",
+          "fi": 2560907,
+          "size_kb": 1090,
+          "verts": 14136,
+          "tris": 21320,
+          "is_boss": false
+        }
+      ]
+    },
+    "ChubLoon": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ChubLoon_GhostCoast_Critter",
+          "fi": 2731575,
+          "size_kb": 186,
+          "verts": 2149,
+          "tris": 3514,
+          "is_boss": false
+        }
+      ]
+    },
+    "Clannfear": {
+      "has_boss": true,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "Clannfear_Armored_Basic",
+          "fi": 657983,
+          "size_kb": 303,
+          "verts": 3690,
+          "tris": 5678,
+          "is_boss": false
+        },
+        {
+          "name": "Clannfear_B_Champion",
+          "fi": 145697,
+          "size_kb": 253,
+          "verts": 3044,
+          "tris": 4346,
+          "is_boss": false
+        },
+        {
+          "name": "Clannfear_D_Boss",
+          "fi": 146185,
+          "size_kb": 239,
+          "verts": 2855,
+          "tris": 4180,
+          "is_boss": true
+        },
+        {
+          "name": "Clannfear_A_Basic",
+          "fi": 529879,
+          "size_kb": 208,
+          "verts": 2424,
+          "tris": 3708,
+          "is_boss": false
+        },
+        {
+          "name": "Clannfear_C_Basic_CH",
+          "fi": 533259,
+          "size_kb": 208,
+          "verts": 2424,
+          "tris": 3708,
+          "is_boss": false
+        }
+      ]
+    },
+    "ClockWorkImperfect": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ClockWorkImperfect_A_Basic",
+          "fi": 1158669,
+          "size_kb": 2810,
+          "verts": 37628,
+          "tris": 48483,
+          "is_boss": false
+        }
+      ]
+    },
+    "ClockWorkTitan": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ClockWorkTitan_A_Basic",
+          "fi": 1154543,
+          "size_kb": 2921,
+          "verts": 39807,
+          "tris": 42876,
+          "is_boss": false
+        }
+      ]
+    },
+    "Crocodile": {
+      "has_boss": true,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Crocodile_B_Boss",
+          "fi": 540051,
+          "size_kb": 262,
+          "verts": 3236,
+          "tris": 3864,
+          "is_boss": true
+        },
+        {
+          "name": "Crocodile_A_Basic",
+          "fi": 170531,
+          "size_kb": 236,
+          "verts": 2860,
+          "tris": 3636,
+          "is_boss": false
+        }
+      ]
+    },
+    "Daedroth": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "Daedroth_Armored_Basic",
+          "fi": 658017,
+          "size_kb": 604,
+          "verts": 7716,
+          "tris": 11510,
+          "is_boss": false
+        },
+        {
+          "name": "Daedroth_ArmoredGreen_Basic",
+          "fi": 697213,
+          "size_kb": 556,
+          "verts": 7074,
+          "tris": 10546,
+          "is_boss": false
+        },
+        {
+          "name": "Daedroth_B_Boss",
+          "fi": 591993,
+          "size_kb": 368,
+          "verts": 4585,
+          "tris": 6624,
+          "is_boss": true
+        },
+        {
+          "name": "Daedroth_A_Basic",
+          "fi": 530081,
+          "size_kb": 367,
+          "verts": 4572,
+          "tris": 6648,
+          "is_boss": false
+        }
+      ]
+    },
+    "DragonFly": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "DragonFly_A_Basic",
+          "fi": 1027418,
+          "size_kb": 492,
+          "verts": 6206,
+          "tris": 9452,
+          "is_boss": false
+        },
+        {
+          "name": "DragonFly_LunarMoth_Variant2",
+          "fi": 2537301,
+          "size_kb": 474,
+          "verts": 6126,
+          "tris": 7934,
+          "is_boss": false
+        },
+        {
+          "name": "DragonFly_A_Dwemer",
+          "fi": 1050739,
+          "size_kb": 411,
+          "verts": 5298,
+          "tris": 6012,
+          "is_boss": false
+        }
+      ]
+    },
+    "DragonFrog": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "DragonFrog_A_Critter",
+          "fi": 916513,
+          "size_kb": 342,
+          "verts": 4172,
+          "tris": 6910,
+          "is_boss": false
+        }
+      ]
+    },
+    "DragonViper": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "DragonViper_ColorfulSepAdder_Basic",
+          "fi": 2548721,
+          "size_kb": 537,
+          "verts": 6866,
+          "tris": 9402,
+          "is_boss": false
+        },
+        {
+          "name": "DragonViper_A_Basic",
+          "fi": 915735,
+          "size_kb": 397,
+          "verts": 4909,
+          "tris": 7774,
+          "is_boss": false
+        },
+        {
+          "name": "DragonViper_BalmoraConstrictor_Basic",
+          "fi": 2792345,
+          "size_kb": 302,
+          "verts": 3705,
+          "tris": 5520,
+          "is_boss": false
+        }
+      ]
+    },
+    "Dragonfly": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Dragonfly_LunarMoth_Phoenix",
+          "fi": 2780173,
+          "size_kb": 491,
+          "verts": 6267,
+          "tris": 7934,
+          "is_boss": false
+        },
+        {
+          "name": "Dragonfly_WhiteMoth",
+          "fi": 2391027,
+          "size_kb": 485,
+          "verts": 6284,
+          "tris": 7438,
+          "is_boss": false
+        }
+      ]
+    },
+    "DreughLand": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "DreughLand_Ruddymanjr_Basic",
+          "fi": 1113439,
+          "size_kb": 367,
+          "verts": 4521,
+          "tris": 7086,
+          "is_boss": false
+        },
+        {
+          "name": "DreughLand_Murkmire_Basic",
+          "fi": 813361,
+          "size_kb": 349,
+          "verts": 4316,
+          "tris": 6232,
+          "is_boss": false
+        },
+        {
+          "name": "DreughLand_A_Basic",
+          "fi": 548273,
+          "size_kb": 222,
+          "verts": 2605,
+          "tris": 4010,
+          "is_boss": false
+        }
+      ]
+    },
+    "DruidicWispMother": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "DruidicWispMother_C",
+          "fi": 2774557,
+          "size_kb": 1227,
+          "verts": 15875,
+          "tris": 25995,
+          "is_boss": false
+        }
+      ]
+    },
+    "Durzog": {
+      "has_boss": false,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "Durzog_AshCinder_Pet",
+          "fi": 3224543,
+          "size_kb": 288,
+          "verts": 3618,
+          "tris": 4158,
+          "is_boss": false
+        },
+        {
+          "name": "Durzog_B_Snow",
+          "fi": 644623,
+          "size_kb": 284,
+          "verts": 3538,
+          "tris": 4158,
+          "is_boss": false
+        },
+        {
+          "name": "Durzog_A_Basic",
+          "fi": 620875,
+          "size_kb": 246,
+          "verts": 3002,
+          "tris": 3844,
+          "is_boss": false
+        },
+        {
+          "name": "Durzog_B_Pet",
+          "fi": 2407933,
+          "size_kb": 245,
+          "verts": 3002,
+          "tris": 3844,
+          "is_boss": false
+        },
+        {
+          "name": "Durzog_A_Pet",
+          "fi": 1527893,
+          "size_kb": 245,
+          "verts": 2999,
+          "tris": 3844,
+          "is_boss": false
+        }
+      ]
+    },
+    "DwarfArmoredFrostTroll": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "DwarfArmoredFrostTroll",
+          "fi": 1458655,
+          "size_kb": 1069,
+          "verts": 14276,
+          "tris": 16995,
+          "is_boss": false
+        }
+      ]
+    },
+    "DwarvenColossus": {
+      "has_boss": false,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "DwarvenColossus_Body_A_Basic",
+          "fi": 1055511,
+          "size_kb": 1504,
+          "verts": 20103,
+          "tris": 24534,
+          "is_boss": false
+        },
+        {
+          "name": "DwarvenColossus_TorsoAndHead_A",
+          "fi": 1443059,
+          "size_kb": 880,
+          "verts": 11603,
+          "tris": 14574,
+          "is_boss": false
+        },
+        {
+          "name": "DwarvenColossus_A_Arm_R",
+          "fi": 1056077,
+          "size_kb": 251,
+          "verts": 3037,
+          "tris": 4252,
+          "is_boss": false
+        },
+        {
+          "name": "DwarvenColossus_A_Arm_L",
+          "fi": 1056075,
+          "size_kb": 190,
+          "verts": 2246,
+          "tris": 2976,
+          "is_boss": false
+        }
+      ]
+    },
+    "DwarvenSpider": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "DwarvenSpider_FrostAtronach_Base",
+          "fi": 1547109,
+          "size_kb": 1303,
+          "verts": 17211,
+          "tris": 23289,
+          "is_boss": false
+        }
+      ]
+    },
+    "DwemerSpider": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "DwemerSpider_IronAtronach_Armed",
+          "fi": 3153603,
+          "size_kb": 3694,
+          "verts": 53758,
+          "tris": 17920,
+          "is_boss": false
+        },
+        {
+          "name": "DwemerSpider_IronAtronach_Disarmed",
+          "fi": 3153607,
+          "size_kb": 2851,
+          "verts": 41422,
+          "tris": 13808,
+          "is_boss": false
+        }
+      ]
+    },
+    "ESO": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "ESO_Guar_03",
+          "fi": 146549,
+          "size_kb": 229,
+          "verts": 2729,
+          "tris": 3686,
+          "is_boss": false
+        },
+        {
+          "name": "ESO_Guar_01",
+          "fi": 146545,
+          "size_kb": 209,
+          "verts": 2446,
+          "tris": 3438,
+          "is_boss": false
+        },
+        {
+          "name": "ESO_Ghost",
+          "fi": 695971,
+          "size_kb": 201,
+          "verts": 2346,
+          "tris": 3466,
+          "is_boss": false
+        }
+      ]
+    },
+    "Echatere": {
+      "has_boss": true,
+      "variant_count": 7,
+      "variants": [
+        {
+          "name": "Echatere_FemalePack1_Basic",
+          "fi": 879019,
+          "size_kb": 497,
+          "verts": 6390,
+          "tris": 8704,
+          "is_boss": false
+        },
+        {
+          "name": "Echatere_Pack2_Basic",
+          "fi": 812487,
+          "size_kb": 465,
+          "verts": 5877,
+          "tris": 8552,
+          "is_boss": false
+        },
+        {
+          "name": "Echatere_Pack1_Basic",
+          "fi": 812485,
+          "size_kb": 414,
+          "verts": 5190,
+          "tris": 7622,
+          "is_boss": false
+        },
+        {
+          "name": "Echatere_Pack3_Basic",
+          "fi": 812489,
+          "size_kb": 394,
+          "verts": 4926,
+          "tris": 7166,
+          "is_boss": false
+        },
+        {
+          "name": "Echatere_Female_Basic",
+          "fi": 876087,
+          "size_kb": 380,
+          "verts": 4790,
+          "tris": 6368,
+          "is_boss": false
+        },
+        {
+          "name": "Echatere_B_Boss",
+          "fi": 876085,
+          "size_kb": 378,
+          "verts": 4758,
+          "tris": 6482,
+          "is_boss": true
+        },
+        {
+          "name": "Echatere_A_Basic",
+          "fi": 681325,
+          "size_kb": 291,
+          "verts": 3548,
+          "tris": 5272,
+          "is_boss": false
+        }
+      ]
+    },
+    "Fangtome": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Fangtome_Dragonwar",
+          "fi": 3194001,
+          "size_kb": 3160,
+          "verts": 45832,
+          "tris": 15362,
+          "is_boss": false
+        }
+      ]
+    },
+    "FellSentry": {
+      "has_boss": true,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "FellSentry_B_Boss",
+          "fi": 814417,
+          "size_kb": 560,
+          "verts": 7227,
+          "tris": 9480,
+          "is_boss": true
+        },
+        {
+          "name": "FellSentry_A_Basic",
+          "fi": 654675,
+          "size_kb": 410,
+          "verts": 5151,
+          "tris": 7400,
+          "is_boss": false
+        }
+      ]
+    },
+    "FleshAbomination": {
+      "has_boss": true,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "FleshAbomination_C_Boss",
+          "fi": 777383,
+          "size_kb": 527,
+          "verts": 6677,
+          "tris": 9978,
+          "is_boss": true
+        },
+        {
+          "name": "FleshAbomination_B_Boss",
+          "fi": 671753,
+          "size_kb": 447,
+          "verts": 5619,
+          "tris": 8532,
+          "is_boss": true
+        },
+        {
+          "name": "FleshAbomination_A_Basic",
+          "fi": 640581,
+          "size_kb": 412,
+          "verts": 5182,
+          "tris": 7442,
+          "is_boss": false
+        }
+      ]
+    },
+    "FleshAtronach": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "FleshAtronach_ImpKing_Basic",
+          "fi": 851155,
+          "size_kb": 354,
+          "verts": 4329,
+          "tris": 7378,
+          "is_boss": false
+        }
+      ]
+    },
+    "ForestWraith": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "ForestWraith_A_Basic",
+          "fi": 2752879,
+          "size_kb": 945,
+          "verts": 12053,
+          "tris": 18962,
+          "is_boss": false
+        }
+      ]
+    },
+    "FrostAtronach": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "FrostAtronach_BlackSoulgem",
+          "fi": 3255745,
+          "size_kb": 2167,
+          "verts": 31235,
+          "tris": 11129,
+          "is_boss": false
+        },
+        {
+          "name": "FrostAtronach_A_Basic",
+          "fi": 553451,
+          "size_kb": 359,
+          "verts": 4483,
+          "tris": 6358,
+          "is_boss": false
+        }
+      ]
+    },
+    "FrostTroll": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "FrostTroll_F_TP",
+          "fi": 3198017,
+          "size_kb": 3291,
+          "verts": 40511,
+          "tris": 44108,
+          "is_boss": false
+        },
+        {
+          "name": "FrostTroll_U_TP",
+          "fi": 3198015,
+          "size_kb": 3169,
+          "verts": 38962,
+          "tris": 42912,
+          "is_boss": false
+        }
+      ]
+    },
+    "Gargoyle": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Gargoyle_Vampiric_Basic_A",
+          "fi": 2494381,
+          "size_kb": 1069,
+          "verts": 13769,
+          "tris": 22786,
+          "is_boss": false
+        },
+        {
+          "name": "Gargoyle_Flame_Basic_A",
+          "fi": 1541479,
+          "size_kb": 418,
+          "verts": 5174,
+          "tris": 8180,
+          "is_boss": false
+        },
+        {
+          "name": "Gargoyle_A_Basic",
+          "fi": 185175,
+          "size_kb": 286,
+          "verts": 3428,
+          "tris": 5252,
+          "is_boss": false
+        }
+      ]
+    },
+    "Giant": {
+      "has_boss": false,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "Giant_Plague_Basic",
+          "fi": 1192235,
+          "size_kb": 635,
+          "verts": 8222,
+          "tris": 10941,
+          "is_boss": false
+        },
+        {
+          "name": "Giant_Snow_Basic",
+          "fi": 671189,
+          "size_kb": 451,
+          "verts": 5703,
+          "tris": 8029,
+          "is_boss": false
+        },
+        {
+          "name": "Giant_B_Basic",
+          "fi": 535619,
+          "size_kb": 443,
+          "verts": 5581,
+          "tris": 8061,
+          "is_boss": false
+        },
+        {
+          "name": "Giant_A_Basic",
+          "fi": 170497,
+          "size_kb": 441,
+          "verts": 5542,
+          "tris": 8026,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantBat": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "GiantBat_A_Basic",
+          "fi": 170495,
+          "size_kb": 182,
+          "verts": 2096,
+          "tris": 2964,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantBoar": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "GiantBoar_A_Prince",
+          "fi": 2593401,
+          "size_kb": 1601,
+          "verts": 21815,
+          "tris": 21842,
+          "is_boss": false
+        },
+        {
+          "name": "GiantBoar_A_Basic",
+          "fi": 1544519,
+          "size_kb": 1261,
+          "verts": 16929,
+          "tris": 19664,
+          "is_boss": false
+        },
+        {
+          "name": "GiantBoar_A_Boss",
+          "fi": 1544521,
+          "size_kb": 479,
+          "verts": 6046,
+          "tris": 7896,
+          "is_boss": true
+        },
+        {
+          "name": "GiantBoar_A_Armor",
+          "fi": 1544517,
+          "size_kb": 335,
+          "verts": 4187,
+          "tris": 5514,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantFemale": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "GiantFemale_A_Basic",
+          "fi": 688149,
+          "size_kb": 597,
+          "verts": 7741,
+          "tris": 9907,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantMosquito": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "GiantMosquito_A_Basic",
+          "fi": 916599,
+          "size_kb": 668,
+          "verts": 8678,
+          "tris": 11418,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantSalamander": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "GiantSalamander_A_Basic",
+          "fi": 1209147,
+          "size_kb": 506,
+          "verts": 6372,
+          "tris": 9864,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantSnake": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "GiantSnake_A_Basic",
+          "fi": 170489,
+          "size_kb": 194,
+          "verts": 2240,
+          "tris": 3538,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantSpider": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "GiantSpider_DaedricMephala_Basic",
+          "fi": 2827497,
+          "size_kb": 1339,
+          "verts": 17398,
+          "tris": 27168,
+          "is_boss": false
+        },
+        {
+          "name": "GiantSpider_FrostBite_Basic",
+          "fi": 2491861,
+          "size_kb": 1111,
+          "verts": 14256,
+          "tris": 24096,
+          "is_boss": false
+        },
+        {
+          "name": "GiantSpider_B_Boss",
+          "fi": 536235,
+          "size_kb": 236,
+          "verts": 2790,
+          "tris": 4640,
+          "is_boss": true
+        },
+        {
+          "name": "GiantSpider_A_Basic",
+          "fi": 170493,
+          "size_kb": 221,
+          "verts": 2676,
+          "tris": 3828,
+          "is_boss": false
+        }
+      ]
+    },
+    "GiantWasp": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "GiantWasp_Mephala_Basic",
+          "fi": 810091,
+          "size_kb": 264,
+          "verts": 3204,
+          "tris": 4928,
+          "is_boss": false
+        },
+        {
+          "name": "GiantWasp_A_Basic",
+          "fi": 170491,
+          "size_kb": 224,
+          "verts": 2666,
+          "tris": 3926,
+          "is_boss": false
+        },
+        {
+          "name": "GiantWasp_B_Critter",
+          "fi": 192455,
+          "size_kb": 107,
+          "verts": 1101,
+          "tris": 1532,
+          "is_boss": false
+        }
+      ]
+    },
+    "Glyptodon": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Glyptodon_A_Simple",
+          "fi": 1560007,
+          "size_kb": 184,
+          "verts": 2165,
+          "tris": 3094,
+          "is_boss": false
+        }
+      ]
+    },
+    "GreatDane": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "GreatDane_A_SilverDaenianWerewolfTracker",
+          "fi": 1405769,
+          "size_kb": 508,
+          "verts": 6461,
+          "tris": 9361,
+          "is_boss": false
+        }
+      ]
+    },
+    "GrievousTwilight": {
+      "has_boss": true,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "GrievousTwilight_B_Boss",
+          "fi": 661909,
+          "size_kb": 614,
+          "verts": 7794,
+          "tris": 11348,
+          "is_boss": true
+        },
+        {
+          "name": "GrievousTwilight_A_Basic",
+          "fi": 654215,
+          "size_kb": 459,
+          "verts": 5688,
+          "tris": 8738,
+          "is_boss": false
+        }
+      ]
+    },
+    "Gryphon": {
+      "has_boss": true,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Gryphon_A_Tame",
+          "fi": 1227373,
+          "size_kb": 2120,
+          "verts": 28068,
+          "tris": 38422,
+          "is_boss": false
+        },
+        {
+          "name": "Gryphon_A_Boss",
+          "fi": 2702925,
+          "size_kb": 2091,
+          "verts": 27647,
+          "tris": 37104,
+          "is_boss": true
+        },
+        {
+          "name": "Gryphon_A_Basic",
+          "fi": 1191791,
+          "size_kb": 2049,
+          "verts": 27130,
+          "tris": 36358,
+          "is_boss": false
+        }
+      ]
+    },
+    "GryphonBaby": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "GryphonBaby_QueenAyrenn_Basic",
+          "fi": 2781273,
+          "size_kb": 1449,
+          "verts": 19114,
+          "tris": 24640,
+          "is_boss": false
+        },
+        {
+          "name": "GryphonBaby_A_Basic",
+          "fi": 1200289,
+          "size_kb": 1424,
+          "verts": 18826,
+          "tris": 24300,
+          "is_boss": false
+        }
+      ]
+    },
+    "Guar": {
+      "has_boss": false,
+      "variant_count": 23,
+      "variants": [
+        {
+          "name": "Guar_Golden_Pet",
+          "fi": 2517845,
+          "size_kb": 814,
+          "verts": 10581,
+          "tris": 14748,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_DragonCult_Pet",
+          "fi": 1532971,
+          "size_kb": 549,
+          "verts": 6979,
+          "tris": 10324,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Scalecaller_Pet",
+          "fi": 1192535,
+          "size_kb": 501,
+          "verts": 6354,
+          "tris": 9330,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_UmarilsCovenant_Basic",
+          "fi": 2792511,
+          "size_kb": 486,
+          "verts": 6156,
+          "tris": 8962,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_UmarilsCovenant_Monster_Basic",
+          "fi": 2792765,
+          "size_kb": 486,
+          "verts": 6149,
+          "tris": 8962,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_GloomSpore_Pet",
+          "fi": 2405789,
+          "size_kb": 478,
+          "verts": 5958,
+          "tris": 9684,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Gloomspore_Monster",
+          "fi": 2404035,
+          "size_kb": 467,
+          "verts": 5793,
+          "tris": 9682,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Potentate_Pet",
+          "fi": 2539021,
+          "size_kb": 433,
+          "verts": 5438,
+          "tris": 7988,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Spriggin_Critter",
+          "fi": 1101555,
+          "size_kb": 421,
+          "verts": 5255,
+          "tris": 8086,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_LizardGuarCalf_Pet",
+          "fi": 1424561,
+          "size_kb": 417,
+          "verts": 5210,
+          "tris": 8450,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_XitahranNymph_Pet",
+          "fi": 2732367,
+          "size_kb": 391,
+          "verts": 4876,
+          "tris": 7196,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_MossyVvardvark_Critter",
+          "fi": 2660593,
+          "size_kb": 330,
+          "verts": 4054,
+          "tris": 6502,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_FlameAtronach_Pet",
+          "fi": 1166365,
+          "size_kb": 294,
+          "verts": 3560,
+          "tris": 5774,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Vvardvark_Critter",
+          "fi": 1101557,
+          "size_kb": 281,
+          "verts": 3426,
+          "tris": 5368,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Redoran_Vvardvark_Basic",
+          "fi": 3252657,
+          "size_kb": 252,
+          "verts": 3018,
+          "tris": 4880,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Egg_Pet",
+          "fi": 2788575,
+          "size_kb": 251,
+          "verts": 3036,
+          "tris": 4482,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_C_Basic",
+          "fi": 146547,
+          "size_kb": 230,
+          "verts": 2741,
+          "tris": 3726,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Peryite_Pet",
+          "fi": 3254331,
+          "size_kb": 228,
+          "verts": 2690,
+          "tris": 4118,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_ShadowGhost_Pet",
+          "fi": 2812551,
+          "size_kb": 228,
+          "verts": 2705,
+          "tris": 4126,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_A_Basic",
+          "fi": 146237,
+          "size_kb": 189,
+          "verts": 2181,
+          "tris": 3166,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Bantam_Honor",
+          "fi": 3083739,
+          "size_kb": 163,
+          "verts": 1862,
+          "tris": 2900,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Scuttler_Basic",
+          "fi": 568153,
+          "size_kb": 134,
+          "verts": 1464,
+          "tris": 2000,
+          "is_boss": false
+        },
+        {
+          "name": "Guar_Bantam_Critter",
+          "fi": 592365,
+          "size_kb": 118,
+          "verts": 1246,
+          "tris": 1868,
+          "is_boss": false
+        }
+      ]
+    },
+    "GuarCritter": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "GuarCritter",
+          "fi": 1152229,
+          "size_kb": 222,
+          "verts": 2617,
+          "tris": 4126,
+          "is_boss": false
+        }
+      ]
+    },
+    "Hag": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Hag_A_Basic",
+          "fi": 309153,
+          "size_kb": 438,
+          "verts": 5546,
+          "tris": 7569,
+          "is_boss": false
+        }
+      ]
+    },
+    "HagRaven": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "HagRaven_B_Basic",
+          "fi": 660421,
+          "size_kb": 475,
+          "verts": 6055,
+          "tris": 7904,
+          "is_boss": false
+        },
+        {
+          "name": "HagRaven_A_Basic",
+          "fi": 551829,
+          "size_kb": 445,
+          "verts": 5617,
+          "tris": 7635,
+          "is_boss": false
+        }
+      ]
+    },
+    "HajMota": {
+      "has_boss": true,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "HajMota_Coral_Basic",
+          "fi": 2727221,
+          "size_kb": 874,
+          "verts": 11208,
+          "tris": 17680,
+          "is_boss": false
+        },
+        {
+          "name": "HajMota_B_Boss",
+          "fi": 810603,
+          "size_kb": 608,
+          "verts": 7808,
+          "tris": 10776,
+          "is_boss": true
+        },
+        {
+          "name": "HajMota_A_Basic",
+          "fi": 810601,
+          "size_kb": 497,
+          "verts": 6295,
+          "tris": 8919,
+          "is_boss": false
+        }
+      ]
+    },
+    "HajMotaPet": {
+      "has_boss": false,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "HajMotaPet_Coral_Base",
+          "fi": 2698123,
+          "size_kb": 863,
+          "verts": 11068,
+          "tris": 17440,
+          "is_boss": false
+        },
+        {
+          "name": "HajMotaPet_IusBegotten_Base",
+          "fi": 3077151,
+          "size_kb": 608,
+          "verts": 7816,
+          "tris": 10776,
+          "is_boss": false
+        },
+        {
+          "name": "HajMotaPet_A_Basic",
+          "fi": 1027366,
+          "size_kb": 506,
+          "verts": 6431,
+          "tris": 8919,
+          "is_boss": false
+        },
+        {
+          "name": "HajMotaPet_Ancestral_Base",
+          "fi": 3006033,
+          "size_kb": 505,
+          "verts": 6431,
+          "tris": 8919,
+          "is_boss": false
+        },
+        {
+          "name": "HajMotaPet_B_Basic",
+          "fi": 2654345,
+          "size_kb": 502,
+          "verts": 6431,
+          "tris": 8919,
+          "is_boss": false
+        }
+      ]
+    },
+    "Harbinger": {
+      "has_boss": true,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "Harbinger_C_Incarnate",
+          "fi": 2658023,
+          "size_kb": 3204,
+          "verts": 42094,
+          "tris": 63857,
+          "is_boss": false
+        },
+        {
+          "name": "Harbinger_B_Boss",
+          "fi": 2636767,
+          "size_kb": 2369,
+          "verts": 31012,
+          "tris": 46987,
+          "is_boss": true
+        },
+        {
+          "name": "Harbinger_A_Basic",
+          "fi": 2645893,
+          "size_kb": 2172,
+          "verts": 28408,
+          "tris": 42930,
+          "is_boss": false
+        },
+        {
+          "name": "Harbinger_A_Basic",
+          "fi": 2588661,
+          "size_kb": 2170,
+          "verts": 28368,
+          "tris": 42930,
+          "is_boss": false
+        },
+        {
+          "name": "Harbinger_A_MehrunesDagon",
+          "fi": 2567931,
+          "size_kb": 1750,
+          "verts": 23235,
+          "tris": 29518,
+          "is_boss": false
+        }
+      ]
+    },
+    "Harpy": {
+      "has_boss": true,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Harpy_Snow_basic",
+          "fi": 662253,
+          "size_kb": 254,
+          "verts": 3107,
+          "tris": 3873,
+          "is_boss": false
+        },
+        {
+          "name": "Harpy_B_Boss",
+          "fi": 607225,
+          "size_kb": 248,
+          "verts": 3026,
+          "tris": 3770,
+          "is_boss": true
+        },
+        {
+          "name": "Harpy_A_Basic",
+          "fi": 607259,
+          "size_kb": 218,
+          "verts": 2610,
+          "tris": 3304,
+          "is_boss": false
+        }
+      ]
+    },
+    "Harpy02": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Harpy02_A_Basic",
+          "fi": 874003,
+          "size_kb": 748,
+          "verts": 9896,
+          "tris": 10784,
+          "is_boss": false
+        }
+      ]
+    },
+    "Harvester": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "Harvester_Mehrunes",
+          "fi": 2637777,
+          "size_kb": 1377,
+          "verts": 17942,
+          "tris": 27108,
+          "is_boss": false
+        },
+        {
+          "name": "Harvester_Mehrunes",
+          "fi": 2639663,
+          "size_kb": 1376,
+          "verts": 17938,
+          "tris": 27108,
+          "is_boss": false
+        },
+        {
+          "name": "Harvester_Monstrous_Boss",
+          "fi": 638231,
+          "size_kb": 435,
+          "verts": 5480,
+          "tris": 7520,
+          "is_boss": true
+        },
+        {
+          "name": "Harvester_A_Boss",
+          "fi": 194829,
+          "size_kb": 433,
+          "verts": 5476,
+          "tris": 7066,
+          "is_boss": true
+        }
+      ]
+    },
+    "HarvesterOrb": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "HarvesterOrb_A_Basic",
+          "fi": 527727,
+          "size_kb": 77,
+          "verts": 726,
+          "tris": 1200,
+          "is_boss": false
+        }
+      ]
+    },
+    "HistGuardian": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "HistGuardian_C_Basic",
+          "fi": 1444557,
+          "size_kb": 1980,
+          "verts": 25930,
+          "tris": 40609,
+          "is_boss": false
+        },
+        {
+          "name": "HistGuardian_A_Basic",
+          "fi": 1405573,
+          "size_kb": 1978,
+          "verts": 25886,
+          "tris": 40669,
+          "is_boss": false
+        },
+        {
+          "name": "HistGuardian_B_Basic",
+          "fi": 1406039,
+          "size_kb": 1707,
+          "verts": 22311,
+          "tris": 34937,
+          "is_boss": false
+        }
+      ]
+    },
+    "HistGuardianTotemPole": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "HistGuardianTotemPole_A_Basic",
+          "fi": 1420621,
+          "size_kb": 205,
+          "verts": 2875,
+          "tris": 2000,
+          "is_boss": false
+        }
+      ]
+    },
+    "HobbyDragon": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "HobbyDragon_A_Basic",
+          "fi": 1482807,
+          "size_kb": 802,
+          "verts": 11042,
+          "tris": 8574,
+          "is_boss": false
+        }
+      ]
+    },
+    "HobbyGuar": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "HobbyGuar_Stitchdwell_Basic",
+          "fi": 2723367,
+          "size_kb": 1331,
+          "verts": 18932,
+          "tris": 8302,
+          "is_boss": false
+        },
+        {
+          "name": "HobbyGuar_A_Basic",
+          "fi": 1461753,
+          "size_kb": 433,
+          "verts": 5579,
+          "tris": 7046,
+          "is_boss": false
+        }
+      ]
+    },
+    "Horse": {
+      "has_boss": false,
+      "variant_count": 10,
+      "variants": [
+        {
+          "name": "Horse_FrostAtronach_Base",
+          "fi": 1546865,
+          "size_kb": 680,
+          "verts": 8795,
+          "tris": 12896,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_FrostAtronach_Pony",
+          "fi": 2354675,
+          "size_kb": 679,
+          "verts": 8705,
+          "tris": 13202,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_LegionZero_Base_Ghost",
+          "fi": 2503457,
+          "size_kb": 674,
+          "verts": 8873,
+          "tris": 11056,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_DragonCult_Pony",
+          "fi": 1532923,
+          "size_kb": 565,
+          "verts": 7220,
+          "tris": 10502,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_DragonScale_Base",
+          "fi": 1429705,
+          "size_kb": 543,
+          "verts": 7345,
+          "tris": 5312,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_DragonHunter_Base",
+          "fi": 1514501,
+          "size_kb": 426,
+          "verts": 5648,
+          "tris": 4526,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_LionsGuard_Base",
+          "fi": 3111561,
+          "size_kb": 319,
+          "verts": 3886,
+          "tris": 6466,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_ChaurusEggGather_Base",
+          "fi": 2557543,
+          "size_kb": 283,
+          "verts": 3486,
+          "tris": 5350,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_LucentGuardian_Base",
+          "fi": 3077205,
+          "size_kb": 240,
+          "verts": 2822,
+          "tris": 4674,
+          "is_boss": false
+        },
+        {
+          "name": "Horse_Wraithhaunt_Base",
+          "fi": 2707109,
+          "size_kb": 217,
+          "verts": 2554,
+          "tris": 4144,
+          "is_boss": false
+        }
+      ]
+    },
+    "Hunger": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Hunger_A_Basic",
+          "fi": 1054127,
+          "size_kb": 742,
+          "verts": 9396,
+          "tris": 15316,
+          "is_boss": false
+        }
+      ]
+    },
+    "IceWraith": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "IceWraith_A_Basic",
+          "fi": 189767,
+          "size_kb": 473,
+          "verts": 6023,
+          "tris": 8366,
+          "is_boss": false
+        }
+      ]
+    },
+    "Imp": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Imp_Frozen_Basic",
+          "fi": 2545035,
+          "size_kb": 222,
+          "verts": 2682,
+          "tris": 3256,
+          "is_boss": false
+        },
+        {
+          "name": "Imp_Fire_Basic",
+          "fi": 692011,
+          "size_kb": 191,
+          "verts": 2205,
+          "tris": 3184,
+          "is_boss": false
+        },
+        {
+          "name": "Imp_A_Basic",
+          "fi": 692007,
+          "size_kb": 187,
+          "verts": 2153,
+          "tris": 3100,
+          "is_boss": false
+        }
+      ]
+    },
+    "Indrik": {
+      "has_boss": false,
+      "variant_count": 9,
+      "variants": [
+        {
+          "name": "Indrik_HollowMetal_Base",
+          "fi": 3253961,
+          "size_kb": 1223,
+          "verts": 16100,
+          "tris": 22222,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_Monster_Corrupt",
+          "fi": 1396177,
+          "size_kb": 875,
+          "verts": 11419,
+          "tris": 16386,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_A_Pet",
+          "fi": 1393685,
+          "size_kb": 867,
+          "verts": 11326,
+          "tris": 15786,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_A_Basic",
+          "fi": 1221837,
+          "size_kb": 851,
+          "verts": 11096,
+          "tris": 15962,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_Corrupt_Base",
+          "fi": 1396415,
+          "size_kb": 762,
+          "verts": 9837,
+          "tris": 14512,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_NocturnalSoldier_Base",
+          "fi": 2655937,
+          "size_kb": 749,
+          "verts": 9689,
+          "tris": 14510,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_Carnavale_Base",
+          "fi": 3084053,
+          "size_kb": 737,
+          "verts": 9538,
+          "tris": 14250,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_Base",
+          "fi": 1392413,
+          "size_kb": 729,
+          "verts": 9383,
+          "tris": 14076,
+          "is_boss": false
+        },
+        {
+          "name": "Indrik_Nascent_Base",
+          "fi": 1434597,
+          "size_kb": 685,
+          "verts": 8836,
+          "tris": 12696,
+          "is_boss": false
+        }
+      ]
+    },
+    "Infernium": {
+      "has_boss": true,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Infernium_A_Boss",
+          "fi": 2685613,
+          "size_kb": 2246,
+          "verts": 29520,
+          "tris": 44322,
+          "is_boss": true
+        },
+        {
+          "name": "Infernium_A_Basic",
+          "fi": 2657971,
+          "size_kb": 1960,
+          "verts": 25684,
+          "tris": 38992,
+          "is_boss": false
+        }
+      ]
+    },
+    "InferniumPet": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "InferniumPet_A_Basic",
+          "fi": 2661477,
+          "size_kb": 1223,
+          "verts": 15842,
+          "tris": 24652,
+          "is_boss": false
+        }
+      ]
+    },
+    "IronAtronach": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "IronAtronach_A_Basic",
+          "fi": 814427,
+          "size_kb": 402,
+          "verts": 5040,
+          "tris": 7450,
+          "is_boss": false
+        }
+      ]
+    },
+    "Kagouti": {
+      "has_boss": false,
+      "variant_count": 7,
+      "variants": [
+        {
+          "name": "Kagouti_FrostAtronach_Monster",
+          "fi": 2360441,
+          "size_kb": 913,
+          "verts": 12719,
+          "tris": 7700,
+          "is_boss": false
+        },
+        {
+          "name": "Kagouti_Sovngarde_Pet",
+          "fi": 2599201,
+          "size_kb": 465,
+          "verts": 5915,
+          "tris": 8316,
+          "is_boss": false
+        },
+        {
+          "name": "Kagouti_Fabricant_Basic",
+          "fi": 1066415,
+          "size_kb": 434,
+          "verts": 5586,
+          "tris": 6900,
+          "is_boss": false
+        },
+        {
+          "name": "Kagouti_FrostAtronach_pet",
+          "fi": 1573247,
+          "size_kb": 346,
+          "verts": 4275,
+          "tris": 6590,
+          "is_boss": false
+        },
+        {
+          "name": "Kagouti_Alit_Basic",
+          "fi": 607651,
+          "size_kb": 179,
+          "verts": 2041,
+          "tris": 3000,
+          "is_boss": false
+        },
+        {
+          "name": "Kagouti_A_Basic",
+          "fi": 607645,
+          "size_kb": 174,
+          "verts": 1994,
+          "tris": 3002,
+          "is_boss": false
+        },
+        {
+          "name": "Kagouti_Broken_Basic",
+          "fi": 607649,
+          "size_kb": 172,
+          "verts": 1913,
+          "tris": 3050,
+          "is_boss": false
+        }
+      ]
+    },
+    "KagoutiCritter": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "KagoutiCritter_A_Basic",
+          "fi": 1068751,
+          "size_kb": 177,
+          "verts": 2005,
+          "tris": 3226,
+          "is_boss": false
+        }
+      ]
+    },
+    "KwamaQueen": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "KwamaQueen_A_Basic",
+          "fi": 1071531,
+          "size_kb": 1031,
+          "verts": 15226,
+          "tris": 20632,
+          "is_boss": false
+        }
+      ]
+    },
+    "KwamaScrib": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "KwamaScrib_C_Basic_PS4",
+          "fi": 674617,
+          "size_kb": 236,
+          "verts": 2783,
+          "tris": 4410,
+          "is_boss": false
+        },
+        {
+          "name": "KwamaScrib_A_Basic",
+          "fi": 194957,
+          "size_kb": 188,
+          "verts": 2168,
+          "tris": 3000,
+          "is_boss": false
+        },
+        {
+          "name": "KwamaScrib_B_Critter",
+          "fi": 194959,
+          "size_kb": 120,
+          "verts": 1273,
+          "tris": 1514,
+          "is_boss": false
+        }
+      ]
+    },
+    "KwamaWarrior": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "KwamaWarrior_A_Basic",
+          "fi": 613561,
+          "size_kb": 254,
+          "verts": 3072,
+          "tris": 4238,
+          "is_boss": false
+        }
+      ]
+    },
+    "Lamia": {
+      "has_boss": true,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Lamia_A_Boss",
+          "fi": 527791,
+          "size_kb": 248,
+          "verts": 2953,
+          "tris": 4554,
+          "is_boss": true
+        },
+        {
+          "name": "Lamia_B_Basic",
+          "fi": 527787,
+          "size_kb": 244,
+          "verts": 2899,
+          "tris": 4494,
+          "is_boss": false
+        }
+      ]
+    },
+    "Lich": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Lich_U_TP",
+          "fi": 2814477,
+          "size_kb": 536,
+          "verts": 6079,
+          "tris": 9788,
+          "is_boss": false
+        },
+        {
+          "name": "Lich_A_Basic",
+          "fi": 650555,
+          "size_kb": 289,
+          "verts": 3525,
+          "tris": 4894,
+          "is_boss": false
+        }
+      ]
+    },
+    "Lilmoth": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Lilmoth_Crocodile",
+          "fi": 3159883,
+          "size_kb": 210,
+          "verts": 2483,
+          "tris": 3226,
+          "is_boss": false
+        }
+      ]
+    },
+    "Lurcher": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Lurcher_Briarheart_Basic",
+          "fi": 874711,
+          "size_kb": 397,
+          "verts": 5030,
+          "tris": 6431,
+          "is_boss": false
+        },
+        {
+          "name": "Lurcher_A_Basic",
+          "fi": 288063,
+          "size_kb": 372,
+          "verts": 4677,
+          "tris": 6152,
+          "is_boss": false
+        },
+        {
+          "name": "Lurcher_B_Basic",
+          "fi": 309141,
+          "size_kb": 372,
+          "verts": 4677,
+          "tris": 6152,
+          "is_boss": false
+        }
+      ]
+    },
+    "MON": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "MON_FrostAtronach_Horse_Base",
+          "fi": 2362857,
+          "size_kb": 662,
+          "verts": 8496,
+          "tris": 12606,
+          "is_boss": false
+        },
+        {
+          "name": "MON_Gloomspore_Bear_Base",
+          "fi": 2403263,
+          "size_kb": 577,
+          "verts": 7206,
+          "tris": 12708,
+          "is_boss": false
+        },
+        {
+          "name": "MON_Gloomspore_Guar_Base",
+          "fi": 2403253,
+          "size_kb": 478,
+          "verts": 5957,
+          "tris": 9682,
+          "is_boss": false
+        }
+      ]
+    },
+    "Mammoth": {
+      "has_boss": true,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "Mammoth_B_Boss",
+          "fi": 531889,
+          "size_kb": 364,
+          "verts": 4557,
+          "tris": 6319,
+          "is_boss": true
+        },
+        {
+          "name": "Mammoth_A_Basic",
+          "fi": 531887,
+          "size_kb": 322,
+          "verts": 4011,
+          "tris": 5441,
+          "is_boss": false
+        }
+      ]
+    },
+    "MammothCritter": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "MammothCritter_C_Critter",
+          "fi": 855241,
+          "size_kb": 317,
+          "verts": 3951,
+          "tris": 5341,
+          "is_boss": false
+        }
+      ]
+    },
+    "Mantikora": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "Mantikora_B_Boss",
+          "fi": 651175,
+          "size_kb": 480,
+          "verts": 6030,
+          "tris": 9072,
+          "is_boss": true
+        },
+        {
+          "name": "Mantikora_Mehrunes_Boss",
+          "fi": 2669831,
+          "size_kb": 472,
+          "verts": 5924,
+          "tris": 8888,
+          "is_boss": true
+        },
+        {
+          "name": "Mantikora_B_Basic",
+          "fi": 2664655,
+          "size_kb": 340,
+          "verts": 4111,
+          "tris": 6848,
+          "is_boss": false
+        },
+        {
+          "name": "Mantikora_A_Basic",
+          "fi": 639663,
+          "size_kb": 340,
+          "verts": 4102,
+          "tris": 6828,
+          "is_boss": false
+        }
+      ]
+    },
+    "Markarth": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Markarth_Bear_Pup",
+          "fi": 1194265,
+          "size_kb": 347,
+          "verts": 4239,
+          "tris": 7020,
+          "is_boss": false
+        }
+      ]
+    },
+    "MindTerror": {
+      "has_boss": true,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "MindTerror_A_Boss",
+          "fi": 2841085,
+          "size_kb": 1310,
+          "verts": 17477,
+          "tris": 20518,
+          "is_boss": true
+        },
+        {
+          "name": "MindTerror_A_Minion",
+          "fi": 2840985,
+          "size_kb": 775,
+          "verts": 9714,
+          "tris": 17242,
+          "is_boss": false
+        }
+      ]
+    },
+    "Minotaur": {
+      "has_boss": true,
+      "variant_count": 7,
+      "variants": [
+        {
+          "name": "Minotaur_A_Druadach",
+          "fi": 2567959,
+          "size_kb": 1722,
+          "verts": 23163,
+          "tris": 26510,
+          "is_boss": false
+        },
+        {
+          "name": "Minotaur_BlackDrakeRanged",
+          "fi": 2597079,
+          "size_kb": 1432,
+          "verts": 18875,
+          "tris": 25610,
+          "is_boss": false
+        },
+        {
+          "name": "Minotaur_A_DruadachRanged",
+          "fi": 2587323,
+          "size_kb": 1380,
+          "verts": 18185,
+          "tris": 24402,
+          "is_boss": false
+        },
+        {
+          "name": "Minotaur_B_Boss",
+          "fi": 1007596,
+          "size_kb": 1361,
+          "verts": 17906,
+          "tris": 24526,
+          "is_boss": true
+        },
+        {
+          "name": "Minotaur_BlackDrake",
+          "fi": 2596429,
+          "size_kb": 1325,
+          "verts": 17184,
+          "tris": 26510,
+          "is_boss": false
+        },
+        {
+          "name": "Minotaur_A_Melee",
+          "fi": 1003625,
+          "size_kb": 1126,
+          "verts": 14494,
+          "tris": 23024,
+          "is_boss": false
+        },
+        {
+          "name": "Minotaur_A_Caster",
+          "fi": 1004244,
+          "size_kb": 908,
+          "verts": 11584,
+          "tris": 18848,
+          "is_boss": false
+        }
+      ]
+    },
+    "MolagBal": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "MolagBal_U_TP",
+          "fi": 3009391,
+          "size_kb": 769,
+          "verts": 8916,
+          "tris": 13808,
+          "is_boss": false
+        },
+        {
+          "name": "MolagBal_World_Boss",
+          "fi": 552257,
+          "size_kb": 694,
+          "verts": 8854,
+          "tris": 13244,
+          "is_boss": true
+        },
+        {
+          "name": "MolagBal_B_Boss",
+          "fi": 659971,
+          "size_kb": 674,
+          "verts": 8582,
+          "tris": 13244,
+          "is_boss": true
+        },
+        {
+          "name": "MolagBal_A_Boss",
+          "fi": 254831,
+          "size_kb": 674,
+          "verts": 8582,
+          "tris": 13244,
+          "is_boss": true
+        }
+      ]
+    },
+    "MonstrousSenche": {
+      "has_boss": false,
+      "variant_count": 9,
+      "variants": [
+        {
+          "name": "MonstrousSenche_GryphonChimera_Base",
+          "fi": 2574617,
+          "size_kb": 3027,
+          "verts": 42460,
+          "tris": 31104,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_FallenTitan_Monster",
+          "fi": 3186063,
+          "size_kb": 694,
+          "verts": 8826,
+          "tris": 14374,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_FallenTitan_Base",
+          "fi": 3011179,
+          "size_kb": 665,
+          "verts": 8428,
+          "tris": 13726,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_SanguineGargoyle_Base",
+          "fi": 3116591,
+          "size_kb": 587,
+          "verts": 7336,
+          "tris": 12264,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_LucentGuardian_Base",
+          "fi": 3077489,
+          "size_kb": 573,
+          "verts": 7251,
+          "tris": 11094,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_Bear_Monster_Base",
+          "fi": 2741523,
+          "size_kb": 446,
+          "verts": 5506,
+          "tris": 8986,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_Bear_Base",
+          "fi": 2723395,
+          "size_kb": 443,
+          "verts": 5462,
+          "tris": 8986,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_CarnavaleWelwa_Base",
+          "fi": 3093469,
+          "size_kb": 368,
+          "verts": 4572,
+          "tris": 7220,
+          "is_boss": false
+        },
+        {
+          "name": "MonstrousSenche_Welwa_Base",
+          "fi": 2531757,
+          "size_kb": 358,
+          "verts": 4436,
+          "tris": 7034,
+          "is_boss": false
+        }
+      ]
+    },
+    "Mudcrab": {
+      "has_boss": true,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "Mudcrab_CoralCrab_B",
+          "fi": 1213449,
+          "size_kb": 351,
+          "verts": 4359,
+          "tris": 6532,
+          "is_boss": false
+        },
+        {
+          "name": "Mudcrab_CoralCrab_A",
+          "fi": 1209937,
+          "size_kb": 255,
+          "verts": 3085,
+          "tris": 4766,
+          "is_boss": false
+        },
+        {
+          "name": "Mudcrab_B_Boss",
+          "fi": 569871,
+          "size_kb": 187,
+          "verts": 2138,
+          "tris": 3408,
+          "is_boss": true
+        },
+        {
+          "name": "Mudcrab_CoralCrabBase_B",
+          "fi": 1213543,
+          "size_kb": 136,
+          "verts": 1491,
+          "tris": 2308,
+          "is_boss": false
+        },
+        {
+          "name": "Mudcrab_A_Basic",
+          "fi": 569861,
+          "size_kb": 125,
+          "verts": 1324,
+          "tris": 1997,
+          "is_boss": false
+        }
+      ]
+    },
+    "NecroCorruptedVoskronaGuardian": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "NecroCorruptedVoskronaGuardian_U_TP",
+          "fi": 3258933,
+          "size_kb": 4430,
+          "verts": 55417,
+          "tris": 51352,
+          "is_boss": false
+        }
+      ]
+    },
+    "Nereid": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Nereid_B_ShadeMother",
+          "fi": 2552145,
+          "size_kb": 540,
+          "verts": 6838,
+          "tris": 10806,
+          "is_boss": false
+        },
+        {
+          "name": "Nereid_FaceFX_Basic",
+          "fi": 846169,
+          "size_kb": 451,
+          "verts": 5673,
+          "tris": 7838,
+          "is_boss": false
+        },
+        {
+          "name": "Nereid_A_Basic",
+          "fi": 547657,
+          "size_kb": 419,
+          "verts": 5295,
+          "tris": 7010,
+          "is_boss": false
+        }
+      ]
+    },
+    "Netch": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Netch_Bull_Basic",
+          "fi": 626325,
+          "size_kb": 283,
+          "verts": 3357,
+          "tris": 5398,
+          "is_boss": false
+        },
+        {
+          "name": "Netch_Betty_Basic",
+          "fi": 626317,
+          "size_kb": 202,
+          "verts": 2303,
+          "tris": 3834,
+          "is_boss": false
+        },
+        {
+          "name": "Netch_Ghost_Sheet",
+          "fi": 1399075,
+          "size_kb": 185,
+          "verts": 2104,
+          "tris": 3424,
+          "is_boss": false
+        }
+      ]
+    },
+    "NetchPet": {
+      "has_boss": false,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "NetchPet_HollowJack",
+          "fi": 1410133,
+          "size_kb": 669,
+          "verts": 9052,
+          "tris": 7365,
+          "is_boss": false
+        },
+        {
+          "name": "NetchPet_DeathsJelly",
+          "fi": 3116075,
+          "size_kb": 453,
+          "verts": 5712,
+          "tris": 8836,
+          "is_boss": false
+        },
+        {
+          "name": "NetchPet_Crystal",
+          "fi": 2654897,
+          "size_kb": 444,
+          "verts": 5592,
+          "tris": 8680,
+          "is_boss": false
+        },
+        {
+          "name": "NetchPet_A_Bull_Basic",
+          "fi": 1555459,
+          "size_kb": 287,
+          "verts": 3430,
+          "tris": 5398,
+          "is_boss": false
+        },
+        {
+          "name": "NetchPet_A_Basic",
+          "fi": 882275,
+          "size_kb": 200,
+          "verts": 2303,
+          "tris": 3834,
+          "is_boss": false
+        }
+      ]
+    },
+    "NixHound": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "NixHound_Fabricant_Basic",
+          "fi": 1066417,
+          "size_kb": 380,
+          "verts": 4838,
+          "tris": 5966,
+          "is_boss": false
+        },
+        {
+          "name": "NixHound_A_Basic",
+          "fi": 695755,
+          "size_kb": 191,
+          "verts": 2228,
+          "tris": 3144,
+          "is_boss": false
+        }
+      ]
+    },
+    "NixOx": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "NixOx_A_Basic",
+          "fi": 1054701,
+          "size_kb": 787,
+          "verts": 10202,
+          "tris": 14770,
+          "is_boss": false
+        },
+        {
+          "name": "NixOx_Padomiac_Base",
+          "fi": 3083121,
+          "size_kb": 677,
+          "verts": 8631,
+          "tris": 13566,
+          "is_boss": false
+        }
+      ]
+    },
+    "Ogre": {
+      "has_boss": false,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "Ogre_D_Superior",
+          "fi": 662633,
+          "size_kb": 450,
+          "verts": 5686,
+          "tris": 7926,
+          "is_boss": false
+        },
+        {
+          "name": "Ogre_Caster_Basic",
+          "fi": 863399,
+          "size_kb": 416,
+          "verts": 5230,
+          "tris": 7286,
+          "is_boss": false
+        },
+        {
+          "name": "Ogre_C_Basic",
+          "fi": 662631,
+          "size_kb": 320,
+          "verts": 3961,
+          "tris": 5322,
+          "is_boss": false
+        },
+        {
+          "name": "Ogre_B_Superior",
+          "fi": 255955,
+          "size_kb": 253,
+          "verts": 3016,
+          "tris": 4474,
+          "is_boss": false
+        },
+        {
+          "name": "Ogre_A_Basic",
+          "fi": 255953,
+          "size_kb": 214,
+          "verts": 2501,
+          "tris": 3770,
+          "is_boss": false
+        }
+      ]
+    },
+    "Ogrim": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Ogrim_Armored_Basic",
+          "fi": 657977,
+          "size_kb": 368,
+          "verts": 4634,
+          "tris": 5988,
+          "is_boss": false
+        },
+        {
+          "name": "Ogrim_A_Basic",
+          "fi": 608061,
+          "size_kb": 205,
+          "verts": 2395,
+          "tris": 3466,
+          "is_boss": false
+        },
+        {
+          "name": "Ogrim_CH_Basic",
+          "fi": 608065,
+          "size_kb": 204,
+          "verts": 2384,
+          "tris": 3446,
+          "is_boss": false
+        }
+      ]
+    },
+    "SencheCub": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "SencheCub_DragonCult_Basic",
+          "fi": 1536639,
+          "size_kb": 785,
+          "verts": 10087,
+          "tris": 15413,
+          "is_boss": false
+        },
+        {
+          "name": "SencheCub_FrostAtronach_Pet",
+          "fi": 1573457,
+          "size_kb": 635,
+          "verts": 8141,
+          "tris": 11972,
+          "is_boss": false
+        }
+      ]
+    },
+    "SlayerMudcrab": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "SlayerMudcrab_A_Basic",
+          "fi": 1544077,
+          "size_kb": 143,
+          "verts": 1617,
+          "tris": 2596,
+          "is_boss": false
+        }
+      ]
+    },
+    "StoneAtronach": {
+      "has_boss": true,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "StoneAtronach_C_Jungle",
+          "fi": 1530099,
+          "size_kb": 325,
+          "verts": 3945,
+          "tris": 6858,
+          "is_boss": false
+        },
+        {
+          "name": "StoneAtronach_B_Boss",
+          "fi": 640555,
+          "size_kb": 323,
+          "verts": 3906,
+          "tris": 6884,
+          "is_boss": true
+        },
+        {
+          "name": "StoneAtronach_A_Basic",
+          "fi": 614195,
+          "size_kb": 319,
+          "verts": 3861,
+          "tris": 6798,
+          "is_boss": false
+        }
+      ]
+    },
+    "Titan": {
+      "has_boss": true,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Titan_A_Boss",
+          "fi": 234219,
+          "size_kb": 423,
+          "verts": 5231,
+          "tris": 8476,
+          "is_boss": true
+        }
+      ]
+    },
+    "TombGuardian": {
+      "has_boss": false,
+      "variant_count": 11,
+      "variants": [
+        {
+          "name": "TombGuardian_A_Basic",
+          "fi": 912191,
+          "size_kb": 1459,
+          "verts": 19528,
+          "tris": 22870,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_B_Basic",
+          "fi": 925383,
+          "size_kb": 1248,
+          "verts": 16682,
+          "tris": 19334,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_C_Basic",
+          "fi": 925379,
+          "size_kb": 955,
+          "verts": 12688,
+          "tris": 14762,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_D_Basic",
+          "fi": 925381,
+          "size_kb": 942,
+          "verts": 12514,
+          "tris": 14526,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_B_MornAeg",
+          "fi": 1486593,
+          "size_kb": 774,
+          "verts": 10183,
+          "tris": 12589,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_A_BasicBody",
+          "fi": 2358117,
+          "size_kb": 649,
+          "verts": 8520,
+          "tris": 9954,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_MorningStar_FX_Arms",
+          "fi": 3142123,
+          "size_kb": 515,
+          "verts": 6742,
+          "tris": 7548,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_C_MornAeg",
+          "fi": 2360297,
+          "size_kb": 493,
+          "verts": 6357,
+          "tris": 8165,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_A_ArmsFront",
+          "fi": 2358121,
+          "size_kb": 327,
+          "verts": 4168,
+          "tris": 4808,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_A_ArmsMiddle",
+          "fi": 2358123,
+          "size_kb": 315,
+          "verts": 3994,
+          "tris": 4572,
+          "is_boss": false
+        },
+        {
+          "name": "TombGuardian_A_ArmsBack",
+          "fi": 2358119,
+          "size_kb": 232,
+          "verts": 2846,
+          "tris": 3536,
+          "is_boss": false
+        }
+      ]
+    },
+    "Troll": {
+      "has_boss": true,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Troll_Craglorn_Boss",
+          "fi": 672165,
+          "size_kb": 875,
+          "verts": 11614,
+          "tris": 13474,
+          "is_boss": true
+        },
+        {
+          "name": "Troll_Armored_Boss",
+          "fi": 558737,
+          "size_kb": 724,
+          "verts": 9524,
+          "tris": 11383,
+          "is_boss": true
+        },
+        {
+          "name": "Troll_A_Basic",
+          "fi": 558735,
+          "size_kb": 595,
+          "verts": 7815,
+          "tris": 8646,
+          "is_boss": false
+        }
+      ]
+    },
+    "VampireLord": {
+      "has_boss": true,
+      "variant_count": 10,
+      "variants": [
+        {
+          "name": "VampireLord_A_Wings",
+          "fi": 2400125,
+          "size_kb": 2960,
+          "verts": 38733,
+          "tris": 60880,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_C_Basic",
+          "fi": 2494349,
+          "size_kb": 2281,
+          "verts": 29752,
+          "tris": 47484,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_B_Female",
+          "fi": 2587447,
+          "size_kb": 2171,
+          "verts": 28447,
+          "tris": 43504,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_A_Basic",
+          "fi": 1573229,
+          "size_kb": 2152,
+          "verts": 28101,
+          "tris": 44176,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_A_Female",
+          "fi": 2531925,
+          "size_kb": 2139,
+          "verts": 27895,
+          "tris": 44282,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_B_Basic",
+          "fi": 2479641,
+          "size_kb": 1695,
+          "verts": 22036,
+          "tris": 35206,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_Lurker_Boss",
+          "fi": 2823085,
+          "size_kb": 1412,
+          "verts": 18133,
+          "tris": 30072,
+          "is_boss": true
+        },
+        {
+          "name": "VampireLord_Lurker_Basic",
+          "fi": 2792917,
+          "size_kb": 947,
+          "verts": 12042,
+          "tris": 20026,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_Faun_Basic",
+          "fi": 2718715,
+          "size_kb": 435,
+          "verts": 5453,
+          "tris": 8486,
+          "is_boss": false
+        },
+        {
+          "name": "VampireLord_01_Costume",
+          "fi": 873839,
+          "size_kb": 293,
+          "verts": 3467,
+          "tris": 5744,
+          "is_boss": false
+        }
+      ]
+    },
+    "VerminousFabricant": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "VerminousFabricant_A_Basic",
+          "fi": 1052301,
+          "size_kb": 875,
+          "verts": 11390,
+          "tris": 16347,
+          "is_boss": false
+        }
+      ]
+    },
+    "VerminousFabricantPet": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "VerminousFabricantPet_A_Basic",
+          "fi": 2559283,
+          "size_kb": 872,
+          "verts": 11390,
+          "tris": 16347,
+          "is_boss": false
+        }
+      ]
+    },
+    "Voriplasm": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Voriplasm_A_Basic",
+          "fi": 1405303,
+          "size_kb": 341,
+          "verts": 4180,
+          "tris": 7296,
+          "is_boss": false
+        }
+      ]
+    },
+    "Wamasu": {
+      "has_boss": false,
+      "variant_count": 5,
+      "variants": [
+        {
+          "name": "Wamasu_C_Basic",
+          "fi": 1001786,
+          "size_kb": 464,
+          "verts": 5916,
+          "tris": 7920,
+          "is_boss": false
+        },
+        {
+          "name": "Wamasu_Krona_Basic",
+          "fi": 638203,
+          "size_kb": 339,
+          "verts": 4162,
+          "tris": 6384,
+          "is_boss": false
+        },
+        {
+          "name": "Wamasu_Fissure_Basic",
+          "fi": 2723489,
+          "size_kb": 307,
+          "verts": 3718,
+          "tris": 5964,
+          "is_boss": false
+        },
+        {
+          "name": "Wamasu_Nightmare_Pet",
+          "fi": 2551807,
+          "size_kb": 281,
+          "verts": 3381,
+          "tris": 5350,
+          "is_boss": false
+        },
+        {
+          "name": "Wamasu_A_Basic",
+          "fi": 159151,
+          "size_kb": 280,
+          "verts": 3365,
+          "tris": 5326,
+          "is_boss": false
+        }
+      ]
+    },
+    "Watcher": {
+      "has_boss": false,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "Watcher_B_Basic",
+          "fi": 731779,
+          "size_kb": 467,
+          "verts": 5777,
+          "tris": 9777,
+          "is_boss": false
+        },
+        {
+          "name": "Watcher_C_Basic",
+          "fi": 2603945,
+          "size_kb": 437,
+          "verts": 5437,
+          "tris": 9244,
+          "is_boss": false
+        },
+        {
+          "name": "Watcher_A_Pet",
+          "fi": 1527881,
+          "size_kb": 296,
+          "verts": 3589,
+          "tris": 5468,
+          "is_boss": false
+        },
+        {
+          "name": "Watcher_A_Basic",
+          "fi": 609917,
+          "size_kb": 283,
+          "verts": 3403,
+          "tris": 5412,
+          "is_boss": false
+        }
+      ]
+    },
+    "Welwa": {
+      "has_boss": false,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "Welwa_Dremnaken_Armored_Pet",
+          "fi": 2656131,
+          "size_kb": 894,
+          "verts": 11635,
+          "tris": 16360,
+          "is_boss": false
+        },
+        {
+          "name": "Welwa_Dremnaken_Armored",
+          "fi": 2643323,
+          "size_kb": 852,
+          "verts": 11041,
+          "tris": 15934,
+          "is_boss": false
+        },
+        {
+          "name": "Welwa_Dremnaken_Discord",
+          "fi": 3010891,
+          "size_kb": 362,
+          "verts": 4450,
+          "tris": 7072,
+          "is_boss": false
+        },
+        {
+          "name": "Welwa_Dremnaken_Unarmored",
+          "fi": 2643325,
+          "size_kb": 362,
+          "verts": 4450,
+          "tris": 7072,
+          "is_boss": false
+        }
+      ]
+    },
+    "Welwas": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Welwas_Prowler",
+          "fi": 2595461,
+          "size_kb": 669,
+          "verts": 8548,
+          "tris": 12874,
+          "is_boss": false
+        },
+        {
+          "name": "Welwas_Armored_Basic",
+          "fi": 638211,
+          "size_kb": 353,
+          "verts": 4366,
+          "tris": 6260,
+          "is_boss": false
+        },
+        {
+          "name": "Welwas_A_Basic",
+          "fi": 615205,
+          "size_kb": 247,
+          "verts": 2938,
+          "tris": 4378,
+          "is_boss": false
+        }
+      ]
+    },
+    "Werewolf": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Werewolf_Skeletal",
+          "fi": 2409321,
+          "size_kb": 1155,
+          "verts": 15208,
+          "tris": 20392,
+          "is_boss": false
+        },
+        {
+          "name": "Werewolf_Undead_Basic",
+          "fi": 560975,
+          "size_kb": 336,
+          "verts": 4095,
+          "tris": 6362,
+          "is_boss": false
+        },
+        {
+          "name": "Werewolf_A_Basic",
+          "fi": 553883,
+          "size_kb": 326,
+          "verts": 3958,
+          "tris": 6328,
+          "is_boss": false
+        }
+      ]
+    },
+    "WerewolfBehemoth": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "WerewolfBehemoth_A_Basic",
+          "fi": 1400071,
+          "size_kb": 1016,
+          "verts": 13416,
+          "tris": 16882,
+          "is_boss": false
+        }
+      ]
+    },
+    "WingedTwilight": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "WingedTwilight_A_Basic",
+          "fi": 599773,
+          "size_kb": 338,
+          "verts": 4198,
+          "tris": 5788,
+          "is_boss": false
+        }
+      ]
+    },
+    "WispMother": {
+      "has_boss": true,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "WispMother_B_Boss",
+          "fi": 671417,
+          "size_kb": 387,
+          "verts": 4768,
+          "tris": 7712,
+          "is_boss": true
+        }
+      ]
+    },
+    "Wolf02": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "Wolf02_FrostAtronach_Monster_Base",
+          "fi": 2360185,
+          "size_kb": 858,
+          "verts": 11210,
+          "tris": 15872,
+          "is_boss": false
+        },
+        {
+          "name": "Wolf02_DragonHunter_T3_Pet",
+          "fi": 1538699,
+          "size_kb": 715,
+          "verts": 9221,
+          "tris": 13267,
+          "is_boss": false
+        },
+        {
+          "name": "Wolf02_DragonHunter_T2_Pet",
+          "fi": 1523133,
+          "size_kb": 642,
+          "verts": 8214,
+          "tris": 11936,
+          "is_boss": false
+        }
+      ]
+    },
+    "WolfPup": {
+      "has_boss": false,
+      "variant_count": 3,
+      "variants": [
+        {
+          "name": "WolfPup_frostAtronach_Pet",
+          "fi": 1573223,
+          "size_kb": 876,
+          "verts": 11420,
+          "tris": 16080,
+          "is_boss": false
+        },
+        {
+          "name": "WolfPup_DragonCult_Pet",
+          "fi": 1533183,
+          "size_kb": 729,
+          "verts": 9427,
+          "tris": 13426,
+          "is_boss": false
+        },
+        {
+          "name": "WolfPup_DragonHunter_Tier1",
+          "fi": 1511745,
+          "size_kb": 486,
+          "verts": 6161,
+          "tris": 8982,
+          "is_boss": false
+        }
+      ]
+    },
+    "WraithOfCrows": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "WraithOfCrows_A_Basic",
+          "fi": 1146215,
+          "size_kb": 767,
+          "verts": 10015,
+          "tris": 12488,
+          "is_boss": false
+        },
+        {
+          "name": "WraithOfCrows_Helmet_A",
+          "fi": 1155677,
+          "size_kb": 42,
+          "verts": 328,
+          "tris": 540,
+          "is_boss": false
+        }
+      ]
+    },
+    "Yaghra": {
+      "has_boss": false,
+      "variant_count": 1,
+      "variants": [
+        {
+          "name": "Yaghra_HermitCrab_Telvanni_Basic",
+          "fi": 2828313,
+          "size_kb": 408,
+          "verts": 5009,
+          "tris": 8958,
+          "is_boss": false
+        }
+      ]
+    },
+    "YaghraBasic": {
+      "has_boss": false,
+      "variant_count": 2,
+      "variants": [
+        {
+          "name": "YaghraBasic_A_Melee",
+          "fi": 1207509,
+          "size_kb": 808,
+          "verts": 10322,
+          "tris": 16324,
+          "is_boss": false
+        },
+        {
+          "name": "YaghraBasic_A_Ranged",
+          "fi": 1207511,
+          "size_kb": 798,
+          "verts": 10135,
+          "tris": 16554,
+          "is_boss": false
+        }
+      ]
+    },
+    "YaghraSpider": {
+      "has_boss": true,
+      "variant_count": 4,
+      "variants": [
+        {
+          "name": "YaghraSpider_A_Minion",
+          "fi": 1218753,
+          "size_kb": 1451,
+          "verts": 19136,
+          "tris": 26440,
+          "is_boss": false
+        },
+        {
+          "name": "YaghraSpider_A_Boss",
+          "fi": 1218749,
+          "size_kb": 1342,
+          "verts": 17479,
+          "tris": 26552,
+          "is_boss": true
+        },
+        {
+          "name": "YaghraSpider_A_Collector",
+          "fi": 2653003,
+          "size_kb": 820,
+          "verts": 10520,
+          "tris": 16974,
+          "is_boss": false
+        },
+        {
+          "name": "YaghraSpider_HermitCrab_Basic",
+          "fi": 2725967,
+          "size_kb": 386,
+          "verts": 4726,
+          "tris": 8252,
+          "is_boss": false
+        }
+      ]
+    },
+    "mshCtrl": {
+      "has_boss": false,
+      "variant_count": 87,
+      "variants": [
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2653197,
+          "size_kb": 4168,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2676687,
+          "size_kb": 3524,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2652221,
+          "size_kb": 3453,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3266707,
+          "size_kb": 2680,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3251079,
+          "size_kb": 2590,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3266705,
+          "size_kb": 2149,
+          "verts": 573,
+          "tris": 972,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3266631,
+          "size_kb": 1689,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205823,
+          "size_kb": 1552,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3263457,
+          "size_kb": 1429,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230081,
+          "size_kb": 1370,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205821,
+          "size_kb": 1282,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1197313,
+          "size_kb": 1268,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 930471,
+          "size_kb": 1254,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1197311,
+          "size_kb": 1206,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1197315,
+          "size_kb": 1148,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203213,
+          "size_kb": 1128,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1220055,
+          "size_kb": 1124,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3251081,
+          "size_kb": 1045,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1197307,
+          "size_kb": 1026,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3251077,
+          "size_kb": 974,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219815,
+          "size_kb": 955,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219873,
+          "size_kb": 934,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3263455,
+          "size_kb": 904,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3265403,
+          "size_kb": 890,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205835,
+          "size_kb": 883,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229919,
+          "size_kb": 854,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203211,
+          "size_kb": 845,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229913,
+          "size_kb": 841,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229915,
+          "size_kb": 824,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203219,
+          "size_kb": 823,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1223097,
+          "size_kb": 806,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205819,
+          "size_kb": 797,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203217,
+          "size_kb": 759,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229917,
+          "size_kb": 752,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203153,
+          "size_kb": 747,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1232765,
+          "size_kb": 728,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1222439,
+          "size_kb": 723,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203223,
+          "size_kb": 710,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205825,
+          "size_kb": 682,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1220065,
+          "size_kb": 679,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 935453,
+          "size_kb": 673,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203221,
+          "size_kb": 670,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219869,
+          "size_kb": 667,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203203,
+          "size_kb": 661,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1209433,
+          "size_kb": 660,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1197309,
+          "size_kb": 627,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203205,
+          "size_kb": 600,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203209,
+          "size_kb": 593,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205827,
+          "size_kb": 585,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205829,
+          "size_kb": 585,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219819,
+          "size_kb": 547,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229921,
+          "size_kb": 547,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219867,
+          "size_kb": 505,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1209431,
+          "size_kb": 488,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230073,
+          "size_kb": 484,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229909,
+          "size_kb": 469,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203215,
+          "size_kb": 468,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219817,
+          "size_kb": 464,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205837,
+          "size_kb": 457,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229907,
+          "size_kb": 437,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219811,
+          "size_kb": 429,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1209435,
+          "size_kb": 400,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229911,
+          "size_kb": 399,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2778067,
+          "size_kb": 398,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230067,
+          "size_kb": 397,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1213517,
+          "size_kb": 372,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230071,
+          "size_kb": 356,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1219871,
+          "size_kb": 341,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230077,
+          "size_kb": 338,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3265405,
+          "size_kb": 333,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230075,
+          "size_kb": 330,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230079,
+          "size_kb": 318,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2771799,
+          "size_kb": 315,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230065,
+          "size_kb": 309,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205831,
+          "size_kb": 295,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1205833,
+          "size_kb": 255,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2857725,
+          "size_kb": 221,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 3265401,
+          "size_kb": 203,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2778065,
+          "size_kb": 171,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2778069,
+          "size_kb": 151,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230063,
+          "size_kb": 140,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 2721767,
+          "size_kb": 137,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230061,
+          "size_kb": 137,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1213515,
+          "size_kb": 127,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1203207,
+          "size_kb": 120,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1229923,
+          "size_kb": 120,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        },
+        {
+          "name": "mshCtrl_skelUtilities_impTri",
+          "fi": 1230069,
+          "size_kb": 120,
+          "verts": 14,
+          "tris": 12,
+          "is_boss": false
+        }
+      ]
+    }
+  }
+}

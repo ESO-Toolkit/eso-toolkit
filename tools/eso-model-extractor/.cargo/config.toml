@@ -1,0 +1,6 @@
+# Build notes:
+# If using the GNU toolchain (stable-x86_64-pc-windows-gnu), you may need
+# to install dlltool. Alternatively, build with the MSVC toolchain:
+#   cargo +stable-x86_64-pc-windows-msvc build
+# Or add the MSVC target to your GNU toolchain:
+#   rustup target add x86_64-pc-windows-msvc

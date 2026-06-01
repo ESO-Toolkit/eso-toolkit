@@ -46,6 +46,7 @@ Feature-specific documentation — [features/](./features/)
 | [Dynamic Camera Controls](./features/DYNAMIC_CAMERA_CONTROLS.md) | Camera zoom/target system |
 | [URL Param Sync](./features/URL_PARAM_SYNC.md) | Redux URL synchronization |
 | [Analytics Path Normalization](./features/analytics-path-normalization.md) | GA4 path normalization |
+| [Trial Boss Models](./features/trial-boss-models/) | Trial boss 3D model & texture mapping |
 | [Cookie Consent](./features/cookie-consent.md) | GDPR compliance |
 | [Slot Inference](./features/SLOT_INFERENCE_SOLUTION.md) | Item slot inference system |
 | [Scribing](./features/scribing/) | ESO scribing detection |
