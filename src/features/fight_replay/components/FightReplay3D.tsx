@@ -8,12 +8,18 @@ import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
+import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import { MapMarkersState } from '../types/mapMarkers';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
-import { PlaybackControls } from './PlaybackControls';
+import { PlaybackControls, PLAYBACK_SPEEDS } from './PlaybackControls';
+
+// Frame-step increment for the ,/. keys. The raw position sample interval (~4.7ms at 240Hz) is
+// imperceptible as a step, so we nudge by a usable 100ms — one React-state sync tick — which lets
+// an analyst inch through a moment frame-by-frame. Distinct from the ±1s arrow seek (Item 5).
+const FRAME_STEP_MS = 100;
 
 interface FightReplay3DProps {
   selectedFight: FightFragment;
@@ -208,6 +214,73 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     seekTo(Math.min(selectedFight.endTime - selectedFight.startTime, currentTime + 10000));
   }, [selectedFight, currentTime, seekTo]);
 
+  // Fight duration in ms — the upper bound every keyboard seek clamps to.
+  const duration = selectedFight.endTime - selectedFight.startTime;
+
+  // Relative seek that always reads the live time from the high-frequency ref (not the ~2Hz
+  // currentTime state), so rapid arrow taps compound correctly instead of snapping back to a
+  // stale React value. Clamped to [0, duration].
+  const seekBy = useCallback(
+    (deltaMs: number) => {
+      const base = animationTimeRef.timeRef.current ?? currentTime;
+      seekTo(Math.max(0, Math.min(duration, base + deltaMs)));
+    },
+    [animationTimeRef.timeRef, currentTime, duration, seekTo],
+  );
+
+  // +/- step through the same discrete speed ladder the on-screen SpeedSelector uses.
+  const stepSpeed = useCallback(
+    (direction: 1 | -1) => {
+      const idx = PLAYBACK_SPEEDS.indexOf(playbackSpeed);
+      // If the current speed isn't on the ladder (shouldn't happen), fall back to 1x's slot.
+      const currentIdx = idx === -1 ? PLAYBACK_SPEEDS.indexOf(1) : idx;
+      const nextIdx = Math.max(0, Math.min(PLAYBACK_SPEEDS.length - 1, currentIdx + direction));
+      setPlaybackSpeed(PLAYBACK_SPEEDS[nextIdx]);
+    },
+    [playbackSpeed],
+  );
+
+  // Frame-step (,/.): pause if playing, then nudge by FRAME_STEP_MS so the figures advance one
+  // small visible step. Stepping is only meaningful on a still frame, so we always pause first.
+  const frameStep = useCallback(
+    (direction: 1 | -1) => {
+      setIsPlaying(false);
+      seekBy(direction * FRAME_STEP_MS);
+    },
+    [seekBy],
+  );
+
+  // Timeline markers (phase/death/cluster), already relative to fight start (0..duration), used
+  // to jump to the previous/next key event with </>. Pure redux-selector hook (no dispatch), so
+  // calling it here doesn't duplicate the actor-positions task that Arena3D owns.
+  const { markers } = useTimelineMarkers();
+
+  // Jump to the previous (-1) or next (+1) event marker relative to the live playhead. Uses a
+  // small epsilon so repeated presses don't get stuck on the marker you just landed on.
+  const jumpToEvent = useCallback(
+    (direction: 1 | -1) => {
+      if (markers.length === 0) return;
+      const now = animationTimeRef.timeRef.current ?? currentTime;
+      const EPS = 1; // ms — step just past the current marker so repeats advance
+      const sorted = markers.map((m) => m.timestamp).sort((a, b) => a - b);
+      let targetTime: number | null = null;
+      if (direction === 1) {
+        targetTime = sorted.find((t) => t > now + EPS) ?? null;
+      } else {
+        for (let i = sorted.length - 1; i >= 0; i--) {
+          if (sorted[i] < now - EPS) {
+            targetTime = sorted[i];
+            break;
+          }
+        }
+      }
+      if (targetTime !== null) {
+        seekTo(Math.max(0, Math.min(duration, targetTime)));
+      }
+    },
+    [markers, animationTimeRef.timeRef, currentTime, duration, seekTo],
+  );
+
   const handleActorClick = useCallback(
     (actorId: number) => {
       // Set camera to follow the clicked actor
@@ -241,15 +314,66 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
 
-  // Keyboard shortcuts for player path features
+  // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
+  // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need
+  // the three.js camera handle; H/N live in Arena3D. This handler owns everything that mutates
+  // FightReplay3D's playback state.
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent): void => {
-      // Don't interfere with text input
+      // Don't interfere with text input.
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      switch (event.key.toLowerCase()) {
+      // Raw key (preserves symbols/arrows/case); the toggle switch below lowercases letters.
+      const { key } = event;
+
+      // Symbol + arrow shortcuts that .toLowerCase() can't normalize.
+      switch (key) {
+        case ' ': // Space — play/pause. Guard a focused transport button so Space doesn't BOTH
+          // click the button and toggle here (a button keeps focus after a mouse click).
+          if (event.target instanceof HTMLButtonElement) {
+            (event.target as HTMLButtonElement).blur();
+          }
+          handlePlayPause();
+          event.preventDefault();
+          return;
+        case 'ArrowLeft':
+          seekBy(event.shiftKey ? -10000 : -1000);
+          event.preventDefault();
+          return;
+        case 'ArrowRight':
+          seekBy(event.shiftKey ? 10000 : 1000);
+          event.preventDefault();
+          return;
+        case '+':
+        case '=': // unshifted '+' on most layouts
+          stepSpeed(1);
+          event.preventDefault();
+          return;
+        case '-':
+          stepSpeed(-1);
+          event.preventDefault();
+          return;
+        case '<': // Shift+, → jump to previous key event
+          jumpToEvent(-1);
+          event.preventDefault();
+          return;
+        case '>': // Shift+. → jump to next key event
+          jumpToEvent(1);
+          event.preventDefault();
+          return;
+        case ',': // frame-step backward (one small visible step)
+          frameStep(-1);
+          event.preventDefault();
+          return;
+        case '.': // frame-step forward
+          frameStep(1);
+          event.preventDefault();
+          return;
+      }
+
+      switch (key.toLowerCase()) {
         case 'p': // Toggle player paths HUD
           setShowPlayerPathsHUD((prev) => !prev);
           event.preventDefault();
@@ -267,7 +391,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [toggleFullscreen]);
+  }, [toggleFullscreen, handlePlayPause, seekBy, stepSpeed, frameStep, jumpToEvent]);
 
   return (
     // Relative wrapper holds the canvas (Paper) and the playback bar as SIBLINGS so the bar can dock

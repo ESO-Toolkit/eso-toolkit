@@ -56,7 +56,11 @@ interface PlaybackControlsProps {
   overlay?: boolean;
 }
 
-const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
+/**
+ * The discrete playback speeds the transport steps through. Exported so the +/- keyboard
+ * shortcuts (FightReplay3D) step through the SAME ladder the on-screen SpeedSelector uses.
+ */
+export const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
 
 /**
  * PlaybackControls Component
