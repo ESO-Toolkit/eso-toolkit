@@ -156,6 +156,54 @@ const STRIDE_LEN = 0.4;
 const GAIT_WALK_ENTER_SPEED = 0.18; // units/SECOND to start walking from idle
 const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be < enter)
 
+// ---- Boss model (single non-instanced GLB) ----
+//
+// Unlike players (a crowd → instanced single-material figures with per-instance setColorAt), the BOSS
+// is ONE actor rendered as its own self-materialled GLB scene. So it is NOT a third instanced layer:
+// it's a single <primitive> whose world matrix is rebuilt every frame inside this component's existing
+// useFrame (reusing the one proven idle gate) from the boss actor's position + facing + the live-tune
+// constants below. A handful of draw calls for one boss is O(1) in actor count.
+//
+// AirAtronach_Coral_Boss.glb (verified offline, .scratch/inspect-boss*.mjs): 1 mesh / 1 material / NO
+// embedded textures / 19,862 tris / no skeleton / no animations. It is mis-oriented (largest axis is
+// WIDTH — but an Air Atronach IS a wide swirling elemental, so "tallest axis = up" is not a reliable
+// test here) and not grounded. rotateX(-90°) stands it more upright (H 1.79→2.84, min.y 1.18→-0.53).
+//
+// THESE ARE LIVE-TUNE CONSTANTS. They are read fresh in the per-frame matrix compose (NOT baked into
+// geometry behind a load effect), so editing one takes effect on the next HMR commit immediately —
+// the boss is one actor, so rebuilding its world matrix per frame is free, and a baked/memoized
+// offset would go stale on HMR (the scene identity is unchanged so the memo/effect never re-runs).
+// The ground+recenter offset is derived live from the raw bbox under the current ORIENT (see useFrame),
+// so it auto-adapts when ORIENT changes — nothing here is a measured hardcode to re-derive by hand.
+const BOSS_MODEL_URL = `${import.meta.env.BASE_URL}models/bosses/AirAtronach_Coral_Boss.glb`;
+// Boss name / species → model. Hardcoded + trivially extensible; unknown boss → capsule fallback (no
+// model). Match is case-insensitive substring so "Tideborn Taleria" and an "AirAtronach" species both
+// resolve. We do NOT port PR #877's mapping infra (creature catalog/scan JSON, viewer page).
+const BOSS_MODEL_NAME_KEYS = ['taleria', 'airatronach', 'air atronach'];
+const ORIENT_EULER: [number, number, number] = [-Math.PI / 2, 0, 0]; // rotateX(-90°) to stand it up
+// World-unit scale. The oriented model is ≈2.84u tall (raw), so BOSS_SCALE≈0.9 makes it ≈2.5u —
+// clearly bigger than the ≈0.95u players without dwarfing the arena (the viewer's 3/maxDim≈0.87 is a
+// comparable reference). Reads as a boss. Tune live.
+const BOSS_SCALE = 0.9;
+const BOSS_Y_OFFSET = 0; // extra lift above the grounded feet (feet land at y=0 from the bbox offset)
+const BOSS_YAW_OFFSET = 0; // radians added to actor.rotation; the model's facing axis is unknown — tune
+// Dead-boss look (Taleria dies at fight end; observable). A non-instanced materialled mesh can't be
+// setColorAt'd like the capsule, so death is conveyed by lowering material opacity, optionally
+// darkening the material color, and squashing Y (feet stay grounded since the offset puts min.y at 0).
+// `transparent` is set ONCE at load (flipping it per frame recompiles the material); only opacity +
+// color are animated, and only on the dead-flag transition. THESE ARE THE USER'S LOOK CALL — lowered
+// opacity on a 19.8k-tri swirling mesh can show depth-sort artifacts; if it looks bad, the fallback is
+// darken-only (set DEAD_OPACITY back to 1 and lean on DEAD_DARKEN + DEAD_SQUASH_Y).
+const DEAD_OPACITY = 0.45;
+const DEAD_DARKEN = 0.45; // multiply material color toward black (1 = unchanged, 0 = black)
+const DEAD_SQUASH_Y = 0.55; // Y scale factor when dead (compresses toward the grounded feet)
+
+function getBossModelUrlForActor(actor: ActorPosition): string | null {
+  if (actor.type !== 'boss') return null;
+  const name = actor.name?.toLowerCase() ?? '';
+  return BOSS_MODEL_NAME_KEYS.some((key) => name.includes(key)) ? BOSS_MODEL_URL : null;
+}
+
 function isPlayerActor(actor: ActorPosition): boolean {
   return actor.type === 'player';
 }
@@ -250,10 +298,42 @@ interface FrameCache {
   playerVisibility: Map<number, boolean> | undefined;
   playerColorOverrides: Map<number, string> | undefined;
   actorIds: readonly number[];
+  // Signature of the live boss-tune constants + performanceMode. The boss is static, so the user
+  // tunes it while PAUSED; on an HMR const edit the component re-renders but frameCacheRef is
+  // preserved (no remount) → without this the time/lookup compare would early-return and the edit
+  // would never recompose. Folding the constants in forces exactly one recompose on the edit.
+  bossSignature: string;
+}
+
+// Baked boss model: the single mesh's geometry (node transform already baked in), its material(s)
+// with the original colors (for the dead-darken lerp), and the RAW (orient-independent) bounding box
+// used to derive the live grounded/recentered offset in the per-frame compose.
+interface BossModelData {
+  geometry: THREE.BufferGeometry;
+  materials: THREE.Material[];
+  originalColors: THREE.Color[];
+  rawBox: THREE.Box3;
 }
 
 function isThreatActor(actor: ActorPosition): boolean {
   return actor.type === 'boss' || actor.type === 'enemy';
+}
+
+// Signature folded into the FrameCache so a paused HMR edit of any live boss-tune constant (or a
+// performanceMode toggle) forces one recompose. Keep every value the per-frame boss compose reads.
+function bossTuneSignature(performanceMode: boolean): string {
+  return [
+    BOSS_SCALE,
+    BOSS_Y_OFFSET,
+    BOSS_YAW_OFFSET,
+    ORIENT_EULER[0],
+    ORIENT_EULER[1],
+    ORIENT_EULER[2],
+    DEAD_OPACITY,
+    DEAD_DARKEN,
+    DEAD_SQUASH_Y,
+    performanceMode ? 1 : 0,
+  ].join(',');
 }
 
 export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> = ({
@@ -315,6 +395,60 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     };
   }, []);
 
+  // Async-loaded boss model. Null until the GLB resolves; the boss falls back to the capsule body
+  // until then. On load we bake the mesh's node (world) transform into its geometry so the single
+  // <primitive> can be driven by a directly-written matrix (no double-applied node transform), set
+  // each material `transparent` ONCE (per-frame flipping would recompile), capture the original
+  // material colors (for the dead-darken lerp), and measure the RAW bbox — orient-independent, so the
+  // per-frame compose can re-derive the grounded/recentered offset live from the current ORIENT.
+  // Setting state triggers a React commit → Arena3DScene refills the on-demand render budget so the
+  // swap paints while paused.
+  const [bossModel, setBossModel] = useState<BossModelData | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const loader = new GLTFLoader();
+    loader.load(
+      BOSS_MODEL_URL,
+      (gltf) => {
+        if (cancelled) return;
+        let bossMesh: THREE.Mesh | null = null;
+        gltf.scene.updateMatrixWorld(true);
+        gltf.scene.traverse((obj) => {
+          const mesh = obj as THREE.Mesh;
+          if (mesh.isMesh && mesh.geometry && !bossMesh) {
+            bossMesh = mesh;
+          }
+        });
+        if (!bossMesh) return;
+        const mesh = bossMesh as THREE.Mesh;
+        // Bake the node transform into the geometry, then neutralise the node so the matrix we write
+        // each frame is the only transform applied.
+        const geometry = mesh.geometry as THREE.BufferGeometry;
+        geometry.applyMatrix4(mesh.matrixWorld);
+        const materials = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).filter(
+          (m): m is THREE.Material => !!m,
+        );
+        const originalColors = materials.map(
+          (m) => (m as THREE.MeshStandardMaterial).color?.clone() ?? new THREE.Color(1, 1, 1),
+        );
+        materials.forEach((m) => {
+          m.transparent = true; // set ONCE; only opacity/color animate (per-frame flip would recompile)
+        });
+        const rawBox = new THREE.Box3().setFromBufferAttribute(
+          geometry.getAttribute('position') as THREE.BufferAttribute,
+        );
+        setBossModel({ geometry, materials, originalColors, rawBox });
+      },
+      undefined,
+      () => {
+        // On load failure the capsule fallback stays — the boss just keeps the capsule blob.
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Mesh refs.
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const capRef = useRef<THREE.InstancedMesh>(null);
@@ -330,6 +464,24 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // One glyph InstancedMesh per symbol; each sized to the full instanceCount and indexed by the
   // same actor index (non-members are hidden) so instanceId → actorId stays uniform across layers.
   const glyphRefs = useRef<Map<GlyphSymbol, THREE.InstancedMesh>>(new Map());
+
+  // The single boss <primitive> (matrixAutoUpdate off; we write its world matrix each frame).
+  const bossMeshRef = useRef<THREE.Mesh>(null);
+  // Per-frame scratch for the boss world-matrix compose (allocated once, never per frame).
+  const bossTemp = useRef({
+    box: new THREE.Box3(),
+    center: new THREE.Vector3(),
+    euler: new THREE.Euler(),
+    orient: new THREE.Matrix4(),
+    offset: new THREE.Matrix4(),
+    scale: new THREE.Matrix4(),
+    yaw: new THREE.Matrix4(),
+    world: new THREE.Matrix4(),
+    color: new THREE.Color(),
+  });
+  // Cached boss dead-state so the material opacity/color write fires only on the transition (not
+  // every frame). undefined = never written yet (forces an initial write once the model loads).
+  const bossDeadRef = useRef<boolean | undefined>(undefined);
 
   // Per-instance opacity attribute arrays (filled in once meshes mount, in the layout effect).
   // `pose` holds one array per walk-pose layer (POSE_NAMES order); each pose layer carries its own
@@ -448,6 +600,14 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     };
   }, [poseGeometries]);
 
+  // Dispose the loaded boss geometry + material(s) when replaced or on unmount.
+  useEffect(() => {
+    return () => {
+      bossModel?.geometry.dispose();
+      bossModel?.materials.forEach((m) => m.dispose());
+    };
+  }, [bossModel]);
+
   // Assign glyph-group membership per actor index, once per lookup.
   useLayoutEffect(() => {
     const positions = lookup ? lookup.positionsByTimestamp : null;
@@ -526,6 +686,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     cacheRef.current = [];
   }, [instanceCount, geometries, materials, glyphMaterials, poseGeometries]);
 
+  // When the boss model loads (or is replaced), force one recompose: the setState commit refills the
+  // render budget, but the per-frame loop's frame cache would otherwise early-return while PAUSED and
+  // the model would never get positioned (boss invisible until the user scrubs). Nulling the frame
+  // cache makes the next budgeted frame recompose — placing the model + hiding its capsule. Also
+  // reset the boss dead-state cache so the first frame writes the material opacity/color.
+  useEffect(() => {
+    frameCacheRef.current = null;
+    bossDeadRef.current = undefined;
+  }, [bossModel]);
+
   const hideInstance = useCallback((mesh: THREE.InstancedMesh | null, index: number): void => {
     if (!mesh) return;
     const obj = tempObject.current;
@@ -540,6 +710,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     const currentTime = timeRef ? timeRef.current : 0;
     const selectedActorId = selectedActorRef.current;
     const prevFrame = frameCacheRef.current;
+    const bossSignature = bossTuneSignature(performanceMode);
 
     if (
       prevFrame &&
@@ -548,7 +719,8 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       prevFrame.selectedActorId === selectedActorId &&
       prevFrame.playerVisibility === playerVisibility &&
       prevFrame.playerColorOverrides === playerColorOverrides &&
-      prevFrame.actorIds === actorIds
+      prevFrame.actorIds === actorIds &&
+      prevFrame.bossSignature === bossSignature
     ) {
       return;
     }
@@ -559,6 +731,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       playerVisibility,
       playerColorOverrides,
       actorIds,
+      bossSignature,
     };
 
     if (!lookup || instanceCount === 0) {
@@ -572,6 +745,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
     let colorDirty = false;
     let opacityDirty = false;
+
+    // First boss actor that has a model loaded → drive the single <primitive> after the loop. Its
+    // capsule body + cap are hidden in the loop (anchor ring / vision wedge / glyph / name stay).
+    let bossActor: ActorPosition | null = null;
 
     for (let index = 0; index < instanceCount; index++) {
       const actorId = actorIds[index];
@@ -608,6 +785,15 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // shown (the capsule body and the other four pose layers are hidden off-screen). For everyone
       // else, the capsule body shows and all five pose layers are hidden.
       const useHumanoid = isPlayerActor(actor) && poseGeometries !== null;
+      // The boss becomes its real GLB model once that's loaded; its capsule body + cap are then
+      // hidden (anchor ring / vision wedge / glyph / name stay). The model itself is the single
+      // <primitive>, driven after this loop from the recorded boss actor. Only the FIRST matching
+      // boss drives the one primitive.
+      const useBossModel =
+        bossModel !== null && bossActor === null && getBossModelUrlForActor(actor) !== null;
+      if (useBossModel) {
+        bossActor = actor;
+      }
 
       // Per-player override (player panel) wins for living players only; dead stays grey. Only
       // players can be overridden — boss/enemy/npc/pet keep their type colors.
@@ -700,6 +886,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           }
         }
         hideInstance(bodyRef.current, index);
+      } else if (useBossModel) {
+        // Boss renders as the GLB model (driven after the loop). Hide its capsule body + all pose
+        // layers; the model takes the body's place. Anchor ring / vision wedge / glyph / name stay.
+        hideInstance(bodyRef.current, index);
+        poseRefs.current.forEach((mesh) => hideInstance(mesh, index));
       } else {
         // Body capsule: at group scale, dead squashes y to 0.3. Positioned at bodyHeight*0.6.
         obj.position.set(x, y + GROUND_LEVEL + bodyHeight * 0.6 * groupScale, z);
@@ -711,8 +902,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       }
 
       // Cap rides atop the capsule head. The humanoid already has its own head, so the cap is
-      // redundant (and would float at the wrong height) — hide it for humanoid players.
-      if (useHumanoid) {
+      // redundant (and would float at the wrong height) — hide it for humanoid players. The boss
+      // model replaces the capsule entirely, so its cap is hidden too.
+      if (useHumanoid || useBossModel) {
         hideInstance(capRef.current, index);
       } else {
         obj.position.set(x, y + GROUND_LEVEL + capY * groupScale, z);
@@ -723,14 +915,20 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       }
 
       // Glyph plane lies flat above the head, faces up (rotation -PI/2 X). For the humanoid it
-      // floats as a halo above the (taller) figure's head; for the capsule it rides just above
-      // the cap as before.
+      // floats as a halo above the (taller) figure's head; for the boss model it floats above the
+      // (much taller) model; for the capsule it rides just above the cap as before. The boss glyph
+      // height tracks BOSS_SCALE so it follows the model up/down when the scale is tuned live (the
+      // oriented model is ≈2.84u tall before scale).
       const glyphYWorld = useHumanoid
         ? y + GROUND_LEVEL + HUMANOID_TARGET_HEIGHT * groupScale + 0.12 * groupScale
-        : y + GROUND_LEVEL + glyphY * groupScale;
+        : useBossModel
+          ? y + GROUND_LEVEL + BOSS_Y_OFFSET + 2.84 * BOSS_SCALE + 0.25
+          : y + GROUND_LEVEL + glyphY * groupScale;
+      // Boss glyph rides a touch larger so it reads above the bigger model; others use group scale.
+      const glyphScale = useBossModel ? groupScale * 1.6 : groupScale;
       obj.position.set(x, glyphYWorld, z);
       obj.rotation.set(-Math.PI / 2, 0, 0);
-      obj.scale.setScalar(groupScale);
+      obj.scale.setScalar(glyphScale);
       obj.updateMatrix();
       glyphRefs.current.forEach((mesh, symbol) => {
         if (symbol === groupSymbol) {
@@ -833,6 +1031,64 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         selected,
         visible: true,
       };
+    }
+
+    // ---- Boss model: compose the single <primitive> world matrix from the live tune constants ----
+    // Runs strictly after the frame-cache early-return above, so a paused/idle scene adds no work
+    // (the boss is static — no time-driven term). The grounded/recentered offset is derived live
+    // from the RAW (orient-independent) bbox under the current ORIENT, so an HMR edit of ORIENT or
+    // any other constant takes effect immediately (folded into bossSignature → forces a recompose).
+    const bossMesh = bossMeshRef.current;
+    if (bossModel && bossMesh) {
+      if (bossActor) {
+        const t = bossTemp.current;
+        const [bx, by, bz] = bossActor.position;
+        const bossDead = bossActor.isDead;
+
+        // Compose M = T_world · R_yaw · S · T_offset · R_orient (applied right-to-left). T_offset is
+        // BEFORE scale so feet (oriented min.y → 0) stay grounded under scale and yaw spins about the
+        // model center; the dead Y-squash then compresses toward the grounded feet.
+        t.orient.makeRotationFromEuler(
+          t.euler.set(ORIENT_EULER[0], ORIENT_EULER[1], ORIENT_EULER[2]),
+        );
+        // Oriented bbox: re-AABB the raw box under ORIENT (8-corner transform — free for one actor).
+        t.box.copy(bossModel.rawBox).applyMatrix4(t.orient);
+        t.box.getCenter(t.center);
+        t.offset.makeTranslation(-t.center.x, -t.box.min.y, -t.center.z);
+        const squashY = bossDead ? DEAD_SQUASH_Y : 1;
+        t.scale.makeScale(BOSS_SCALE, BOSS_SCALE * squashY, BOSS_SCALE);
+        t.yaw.makeRotationY(bossActor.rotation + BOSS_YAW_OFFSET);
+        t.world.makeTranslation(bx, by + GROUND_LEVEL + BOSS_Y_OFFSET, bz);
+        // world = T_world · R_yaw · S · T_offset · R_orient
+        t.world.multiply(t.yaw).multiply(t.scale).multiply(t.offset).multiply(t.orient);
+        bossMesh.matrix.copy(t.world);
+        // matrixAutoUpdate is off, so three won't recompute matrixWorld from our write unless we flag
+        // it dirty — without this the matrix copy above would never reach the GPU.
+        bossMesh.matrixWorldNeedsUpdate = true;
+        bossMesh.visible = true;
+
+        // Dead-state material write, gated on the dead-flag TRANSITION (not every frame). `transparent`
+        // was set once at load; here we animate only opacity + color. Darken lerps toward black.
+        if (bossDeadRef.current !== bossDead) {
+          bossModel.materials.forEach((m, i) => {
+            const std = m as THREE.MeshStandardMaterial;
+            m.opacity = bossDead ? DEAD_OPACITY : 1;
+            if (std.color) {
+              const orig = bossModel.originalColors[i];
+              if (bossDead) {
+                t.color.copy(orig).multiplyScalar(DEAD_DARKEN);
+                std.color.copy(t.color);
+              } else {
+                std.color.copy(orig);
+              }
+            }
+          });
+          bossDeadRef.current = bossDead;
+        }
+      } else {
+        // No boss actor this frame (not present / not visible) → hide the model.
+        bossMesh.visible = false;
+      }
     }
 
     // Flush matrices every frame (positions change constantly during playback).
@@ -945,6 +1201,20 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           onPointerOut={handleOut}
         />
       ))}
+      {/* Boss model: a single non-instanced mesh whose world matrix is written each frame in the
+          useFrame above (matrixAutoUpdate off so the manual write isn't clobbered). castShadow tracks
+          performanceMode — the 19.8k-tri shadow pass is the one real per-boss cost lever. Hidden when
+          no boss actor is present this frame (bossMesh.visible toggled in the loop). */}
+      {bossModel && (
+        <mesh
+          ref={bossMeshRef}
+          geometry={bossModel.geometry}
+          material={bossModel.materials.length === 1 ? bossModel.materials[0] : bossModel.materials}
+          matrixAutoUpdate={false}
+          castShadow={!performanceMode}
+          receiveShadow={false}
+        />
+      )}
       <instancedMesh
         ref={capRef}
         args={[geometries.cap, materials.cap, instanceCount]}

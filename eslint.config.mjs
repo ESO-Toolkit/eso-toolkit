@@ -183,6 +183,7 @@ export default [
             'visible',
             'castShadow',
             'receiveShadow',
+            'matrixAutoUpdate',
             'args',
             'object', // For primitive components
             'renderOrder',
