@@ -2,38 +2,31 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
-import { DARK_ROLE_COLORS } from '../../../utils/roleColors';
 import {
-  ActorPosition,
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { RenderPriority } from '../constants/renderPriorities';
+import { getReplayActorLabelColor } from '../utils/actorVisualState';
 
 interface ActorNameBillboardProps {
   actorId: number;
   lookup: TimestampPositionLookup | null;
   timeRef?: React.RefObject<number> | { current: number };
   scale?: number;
+  anchorMode?: 'parent' | 'world';
 }
 
 // Performance constants
 const BILLBOARD_HEIGHT_OFFSET = 0.35; // Height above actor puck (3.5x puck height when scaled)
 const GEOMETRY_WIDTH = 3.0;
 const GEOMETRY_HEIGHT = 0.75;
-
-const ACTOR_COLORS = {
-  player: {
-    dps: DARK_ROLE_COLORS.dps,
-    tank: DARK_ROLE_COLORS.tank,
-    healer: DARK_ROLE_COLORS.healer,
-    default: '#95a5a6',
-  },
-  boss: '#8e44ad',
-  enemy: '#e74c3c',
-  friendly_npc: '#27ae60',
-  pet: '#f39c12',
-} as const;
+const GROUND_LEVEL = 0.05;
+const TEXTURE_WIDTH = 1024;
+const TEXTURE_HEIGHT = 256;
+const MAX_LABEL_TEXT_WIDTH = 760;
+const LABEL_FONT_SIZE = 54;
+const MIN_LABEL_FONT_SIZE = 34;
 
 // Shared geometry singleton for all billboards
 class SharedBillboardGeometry {
@@ -70,17 +63,16 @@ class BillboardTextRenderer {
 
   constructor() {
     // Get device pixel ratio for crisp rendering
-    // Use higher multiplier for better quality when zoomed out
-    this.pixelRatio = Math.min(window.devicePixelRatio || 1, 3); // Increased cap to 3x for sharper text
+    // Cap at 2x: crisp labels without the 3x texture upload cost on high-DPR displays.
+    this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
     this.canvas = document.createElement('canvas');
-    // Increase canvas resolution for sharper text at all zoom levels
-    this.canvas.width = 1024 * this.pixelRatio; // High resolution for crisp text
-    this.canvas.height = 256 * this.pixelRatio;
+    this.canvas.width = TEXTURE_WIDTH * this.pixelRatio;
+    this.canvas.height = TEXTURE_HEIGHT * this.pixelRatio;
 
     // Set CSS size to maintain the intended display size
-    this.canvas.style.width = '1024px';
-    this.canvas.style.height = '256px';
+    this.canvas.style.width = `${TEXTURE_WIDTH}px`;
+    this.canvas.style.height = `${TEXTURE_HEIGHT}px`;
 
     const context = this.canvas.getContext('2d');
     if (!context) {
@@ -92,6 +84,7 @@ class BillboardTextRenderer {
     this.context.scale(this.pixelRatio, this.pixelRatio);
 
     this.texture = new THREE.CanvasTexture(this.canvas);
+    this.texture.colorSpace = THREE.SRGBColorSpace;
     this.texture.needsUpdate = true;
 
     // Set texture filtering for better quality at various distances
@@ -99,33 +92,120 @@ class BillboardTextRenderer {
     this.texture.magFilter = THREE.LinearFilter;
     this.texture.minFilter = THREE.LinearMipmapLinearFilter; // Enable mipmaps for better quality when zoomed out
     this.texture.generateMipmaps = true; // Generate mipmaps for multi-scale rendering
-    this.texture.anisotropy = 4; // Add anisotropic filtering for better quality at angles
+    this.texture.anisotropy = 2;
+  }
+
+  private drawRoundedRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number,
+  ): void {
+    const right = x + width;
+    const bottom = y + height;
+
+    this.context.beginPath();
+    this.context.moveTo(x + radius, y);
+    this.context.lineTo(right - radius, y);
+    this.context.quadraticCurveTo(right, y, right, y + radius);
+    this.context.lineTo(right, bottom - radius);
+    this.context.quadraticCurveTo(right, bottom, right - radius, bottom);
+    this.context.lineTo(x + radius, bottom);
+    this.context.quadraticCurveTo(x, bottom, x, bottom - radius);
+    this.context.lineTo(x, y + radius);
+    this.context.quadraticCurveTo(x, y, x + radius, y);
+    this.context.closePath();
+  }
+
+  private setLabelFont(fontSize: number): void {
+    this.context.font = `800 ${fontSize}px Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif`;
+  }
+
+  private fitTextToWidth(name: string): { text: string; fontSize: number } {
+    let fontSize = LABEL_FONT_SIZE;
+    this.setLabelFont(fontSize);
+
+    while (
+      fontSize > MIN_LABEL_FONT_SIZE &&
+      this.context.measureText(name).width > MAX_LABEL_TEXT_WIDTH
+    ) {
+      fontSize -= 2;
+      this.setLabelFont(fontSize);
+    }
+
+    if (this.context.measureText(name).width <= MAX_LABEL_TEXT_WIDTH) {
+      return { text: name, fontSize };
+    }
+
+    const ellipsis = '...';
+    let end = name.length;
+    while (
+      end > 0 &&
+      this.context.measureText(`${name.slice(0, end)}${ellipsis}`).width > MAX_LABEL_TEXT_WIDTH
+    ) {
+      end -= 1;
+    }
+
+    return {
+      text: `${name.slice(0, Math.max(0, end))}${ellipsis}`,
+      fontSize,
+    };
   }
 
   private updateCanvas(name: string, color = '#ffffff', isAlive = true): void {
-    // Clear the canvas (use doubled logical size)
-    this.context.clearRect(0, 0, 1024, 256);
+    this.context.clearRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
     // Set high-quality text rendering for crisp output
     this.context.textAlign = 'center';
     this.context.textBaseline = 'middle';
-    this.context.font = '900 56px Arial';
     this.context.imageSmoothingEnabled = true;
     this.context.imageSmoothingQuality = 'high';
 
-    // Draw text with black outline for visibility
-    const centerX = 1024 / 2; // Doubled center position
-    const centerY = 256 / 2; // Doubled center position
+    const badgeX = 72;
+    const badgeY = 52;
+    const badgeWidth = TEXTURE_WIDTH - badgeX * 2;
+    const badgeHeight = 150;
+    const centerX = TEXTURE_WIDTH / 2;
+    const centerY = TEXTURE_HEIGHT / 2;
+    const fittedName = this.fitTextToWidth(name);
+    this.setLabelFont(fittedName.fontSize);
 
-    // Black outline - proportional thickness for good contrast
-    this.context.strokeStyle = '#000000';
-    this.context.lineWidth = 5;
-    this.context.strokeText(name, centerX, centerY);
+    this.context.save();
+    this.context.globalAlpha = isAlive ? 1 : 0.62;
+    this.context.shadowColor = 'rgba(0, 0, 0, 0.42)';
+    this.context.shadowBlur = 20;
+    this.context.shadowOffsetY = 8;
+    this.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 32);
+    const panelGradient = this.context.createLinearGradient(0, badgeY, 0, badgeY + badgeHeight);
+    panelGradient.addColorStop(0, 'rgba(15, 23, 42, 0.94)');
+    panelGradient.addColorStop(1, 'rgba(2, 6, 23, 0.82)');
+    this.context.fillStyle = panelGradient;
+    this.context.fill();
+    this.context.restore();
 
-    // Use the provided color for the text fill
-    // If the actor is dead, apply reduced opacity
-    this.context.fillStyle = isAlive ? color : color + '80'; // Add transparency for dead actors
-    this.context.fillText(name, centerX, centerY);
+    this.context.save();
+    this.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 32);
+    this.context.lineWidth = 3;
+    this.context.strokeStyle = 'rgba(226, 232, 240, 0.2)';
+    this.context.stroke();
+    this.context.restore();
+
+    this.context.save();
+    this.context.globalAlpha = isAlive ? 0.95 : 0.48;
+    this.context.fillStyle = color;
+    this.context.shadowColor = color;
+    this.context.shadowBlur = 14;
+    this.context.fillRect(badgeX + 42, badgeY + badgeHeight - 18, badgeWidth - 84, 5);
+    this.context.restore();
+
+    // Text outline keeps names readable over bright map textures and stacked actors.
+    this.context.strokeStyle = 'rgba(2, 6, 23, 0.94)';
+    this.context.lineWidth = Math.max(4, Math.round(fittedName.fontSize * 0.09));
+    this.context.strokeText(fittedName.text, centerX, centerY);
+
+    this.context.fillStyle = isAlive ? color : 'rgba(203, 213, 225, 0.78)';
+    this.context.fillText(fittedName.text, centerX, centerY);
 
     this.texture.needsUpdate = true;
   }
@@ -148,43 +228,41 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
   lookup,
   timeRef,
   scale = 1,
+  anchorMode = 'parent',
 }) => {
   const { camera } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
   const isVisible = useRef(true);
+  const parentQuaternionRef = useRef(new THREE.Quaternion());
+  const localQuaternionRef = useRef(new THREE.Quaternion());
+  const worldPositionRef = useRef(new THREE.Vector3());
 
   // Cache for last known actor data to avoid unnecessary updates
   const lastActorDataRef = useRef<{
     name: string;
     color: string;
     isAlive: boolean;
-    position: [number, number, number];
   } | null>(null);
 
   // Create text renderer once and reuse it
   const textRenderer = useMemo(() => new BillboardTextRenderer(), []);
+  const billboardMaterial = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: textRenderer.getTexture(),
+        transparent: true,
+        alphaTest: 0.1,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        depthTest: false,
+        toneMapped: false,
+      }),
+    [textRenderer],
+  );
 
   // Get shared geometry
   const geometry = useMemo(() => SharedBillboardGeometry.getInstance().getGeometry(), []);
-
-  // Helper function to get actor color
-  const getActorColor = (actor: ActorPosition): string => {
-    if (actor.isDead) {
-      return '#666666'; // Gray for dead actors
-    }
-
-    if (actor.type === 'player' && actor.role) {
-      return ACTOR_COLORS.player[actor.role] || ACTOR_COLORS.player.default;
-    }
-
-    const typeColor = ACTOR_COLORS[actor.type as keyof typeof ACTOR_COLORS];
-    if (typeof typeColor === 'string') {
-      return typeColor;
-    }
-
-    return ACTOR_COLORS.player.default;
-  };
 
   // High-frequency position and data updates via useFrame
   useFrame(() => {
@@ -209,32 +287,26 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
       isVisible.current = true;
     }
 
-    // Position relative to parent - just set height offset scaled by actor scale
-    // Parent component handles the base positioning
-    groupRef.current.position.set(0, BILLBOARD_HEIGHT_OFFSET * scale, 0);
+    if (anchorMode === 'world') {
+      const [x, y, z] = actor.position;
+      groupRef.current.position.set(x, y + GROUND_LEVEL + BILLBOARD_HEIGHT_OFFSET * scale, z);
+      groupRef.current.quaternion.copy(camera.quaternion);
+    } else {
+      // Position relative to parent - just set height offset scaled by actor scale.
+      groupRef.current.position.set(0, BILLBOARD_HEIGHT_OFFSET * scale, 0);
 
-    // IMPORTANT: The billboard is a child of the actor group, which has its own rotation
-    // We need to counteract the parent's rotation and then apply camera alignment
-
-    // Get the parent's world quaternion to counteract it
-    const parentWorldQuaternion =
-      groupRef.current.parent?.getWorldQuaternion(new THREE.Quaternion()) || new THREE.Quaternion();
-
-    // Create the desired world orientation (camera's quaternion)
-    const desiredWorldQuaternion = camera.quaternion.clone();
-
-    // Calculate the local quaternion needed to achieve the desired world orientation
-    // localQ = parentWorldQ^-1 * desiredWorldQ
-    const localQuaternion = parentWorldQuaternion.clone().invert().multiply(desiredWorldQuaternion);
-
-    // Apply the calculated local quaternion
-    groupRef.current.quaternion.copy(localQuaternion);
+      // The billboard is a child of the actor group, which has its own rotation. Counteract
+      // the parent's world orientation, then apply the camera orientation.
+      const parentWorldQuaternion = parentQuaternionRef.current.identity();
+      groupRef.current.parent?.getWorldQuaternion(parentWorldQuaternion);
+      localQuaternionRef.current.copy(parentWorldQuaternion).invert().multiply(camera.quaternion);
+      groupRef.current.quaternion.copy(localQuaternionRef.current);
+    }
 
     // Scale billboard based on camera distance for consistent screen size
     // Calculate distance from camera to billboard after positioning
-    const worldPosition = new THREE.Vector3();
-    groupRef.current.getWorldPosition(worldPosition);
-    const distanceToCamera = camera.position.distanceTo(worldPosition);
+    groupRef.current.getWorldPosition(worldPositionRef.current);
+    const distanceToCamera = camera.position.distanceTo(worldPositionRef.current);
 
     // Apply distance-based scaling with a base distance appropriate for the new closer camera
     // Base scale at 20 units distance, then scale proportionally
@@ -247,12 +319,11 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
     groupRef.current.scale.setScalar(scaleFactor);
 
     // Check if we need to update the text (only if data changed)
-    const actorColor = getActorColor(actor);
+    const actorColor = getReplayActorLabelColor(actor);
     const currentData = {
       name: actor.name,
       color: actorColor,
       isAlive: !actor.isDead,
-      position: [0, BILLBOARD_HEIGHT_OFFSET * scale, 0] as [number, number, number], // Relative position
     };
 
     const lastData = lastActorDataRef.current;
@@ -272,19 +343,13 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
   useEffect(() => {
     return () => {
       textRenderer.dispose();
+      billboardMaterial.dispose();
     };
-  }, [textRenderer]);
+  }, [billboardMaterial, textRenderer]);
 
   return (
     <group ref={groupRef}>
-      <mesh ref={meshRef} geometry={geometry}>
-        <meshBasicMaterial
-          map={textRenderer.getTexture()}
-          transparent
-          alphaTest={0.1}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      <mesh ref={meshRef} geometry={geometry} material={billboardMaterial} />
     </group>
   );
 };

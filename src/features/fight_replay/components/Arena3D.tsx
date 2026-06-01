@@ -23,6 +23,11 @@ import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
+import {
+  ACTOR_MARKER_VARIANT_LABELS,
+  nextActorMarkerVariant,
+  readInitialActorMarkerVariant,
+} from '../utils/actorMarkerVariant';
 import { COMMON_MARKER_GROUPS, MarkerGroup, MarkerGroupKey } from '../utils/mapMarkerConverters';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
@@ -126,6 +131,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Live A/B/C actor-marker variant. Seeded ONCE from the URL (?marker=a|b|c) so a deep link
+  // can pick the starting design; thereafter cycled live via the V key. Held as React state at
+  // this DOM layer (not a URL change) so flipping only swaps the actor child inside the scene —
+  // it never remounts the <Canvas>, time loop, camera, or worker lookup, which is exactly what
+  // lets the user flip between variants in motion while judging.
+  const [markerVariant, setMarkerVariant] = useState(() => readInitialActorMarkerVariant());
+  const [showVariantBadge, setShowVariantBadge] = useState(false);
 
   // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
   // so the DOM PlayerListPanel overlay — which renders the toggle controls — and the
@@ -325,11 +338,27 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         setShowKeyboardHelp((prev) => !prev);
         event.preventDefault();
       }
+
+      // V cycles the live A/B/C actor-marker variant. State swap only — no remount, so the
+      // user can flip designs while playback runs and the camera orbits.
+      if (event.key.toLowerCase() === 'v') {
+        setMarkerVariant((prev) => nextActorMarkerVariant(prev));
+        setShowVariantBadge(true);
+        event.preventDefault();
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, []);
+
+  // Keep the variant badge up briefly after each change so the user sees which design is live,
+  // then fade it. Re-arms on every change because showVariantBadge flips back to true above.
+  useEffect(() => {
+    if (!showVariantBadge) return;
+    const timer = setTimeout(() => setShowVariantBadge(false), 2600);
+    return () => clearTimeout(timer);
+  }, [showVariantBadge, markerVariant]);
 
   // Calculate arena dimensions based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -675,6 +704,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             selectedPlayerIds={selectedPlayerIds}
             showPlayerTrails={showPlayerTrails}
             playerVisibility={playerVisibility}
+            markerVariant={markerVariant}
           />
         </Canvas>
 
@@ -818,6 +848,60 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         )}
       </ReplayErrorBoundary>
 
+      {/* Actor-marker variant badge (A/B/C live toggle). Bottom-left to clear the player list
+          (top-left), boss health (top-right), keyboard help (bottom-right), and the Following
+          chip (top-center). Flashes on each V press, then fades. */}
+      <Collapse
+        in={showVariantBadge}
+        sx={{ position: 'absolute', bottom: 16, left: 16, zIndex: 5 }}
+      >
+        <Box
+          sx={(theme) => ({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: 'rgba(13, 20, 48, 0.86)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            border: `1px solid ${theme.palette.primary.main}59`,
+            borderRadius: '999px',
+            boxShadow: `0 6px 22px rgba(0,0,0,0.5), 0 0 16px ${theme.palette.primary.main}3a`,
+            px: 1.5,
+            py: 0.75,
+          })}
+        >
+          <Box
+            component="span"
+            sx={(theme) => ({
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 22,
+              height: 22,
+              borderRadius: '50%',
+              fontWeight: 800,
+              fontSize: '0.8rem',
+              color: '#0d1430',
+              backgroundColor: theme.palette.primary.main,
+            })}
+          >
+            {markerVariant}
+          </Box>
+          <Box
+            component="span"
+            sx={{ color: '#e2e8f0', fontSize: '0.78rem', fontWeight: 600, whiteSpace: 'nowrap' }}
+          >
+            {ACTOR_MARKER_VARIANT_LABELS[markerVariant]}
+          </Box>
+          <Box
+            component="span"
+            sx={{ color: 'rgba(226,232,240,0.55)', fontSize: '0.68rem', whiteSpace: 'nowrap' }}
+          >
+            (V to cycle)
+          </Box>
+        </Box>
+      </Collapse>
+
       {/* Performance Monitor Overlay - rendered outside Canvas for proper screen-space positioning */}
       {process.env.NODE_ENV === 'development' && <PerformanceMonitorExternal />}
 
@@ -866,6 +950,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
           >
             <strong>T:</strong> Toggle player trails
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>V:</strong> Cycle marker style (A/B/C)
           </Typography>
           <Typography
             variant="caption"

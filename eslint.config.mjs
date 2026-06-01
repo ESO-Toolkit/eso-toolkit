@@ -194,6 +194,11 @@ export default [
             'alphaTest',
             'shininess',
             'depthWrite',
+            'depthTest',
+            'toneMapped',
+            'blending',
+            'roughness',
+            'metalness',
 
             // Three.js light properties
             'intensity',
