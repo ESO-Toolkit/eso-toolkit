@@ -15,7 +15,7 @@ import {
   Typography,
   type SelectChangeEvent,
 } from '@mui/material';
-import { Center, OrbitControls, useGLTF } from '@react-three/drei';
+import { OrbitControls, useGLTF } from '@react-three/drei';
 import { Canvas, useThree } from '@react-three/fiber';
 import React from 'react';
 import * as THREE from 'three';
@@ -168,12 +168,18 @@ const getSpeciesColor = (boss: Boss): string => {
   return speciesColors[species] ?? '#38bdf8';
 };
 
+/** Floor grid height — models are grounded so their feet sit here. */
+const GRID_Y = -2;
+
 /** Renders an actual GLB model. */
 const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
   const { scene } = useGLTF(url);
   const cloned = React.useMemo(() => scene.clone(true), [scene]);
 
-  // Auto-fit: compute bounding box, normalize scale, and center
+  // Auto-fit: normalize scale, center on X/Z, and GROUND the model's feet on the
+  // grid (GRID_Y). ESO GR2 pivots vary wildly (feet, body-center, or far above for
+  // flying creatures), so a naive bbox-center leaves half the model under the floor.
+  // Grounding by the bbox minimum keeps every creature standing on the grid.
   const { camera } = useThree();
   React.useEffect(() => {
     // Reset transforms before measuring
@@ -188,8 +194,12 @@ const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
     const targetScale = 3 / maxDim; // Fit within ~3 units
 
     cloned.scale.setScalar(targetScale);
-    // Center the model at origin (translate by -center, then apply scale)
-    cloned.position.set(-center.x * targetScale, -center.y * targetScale, -center.z * targetScale);
+    // Center on X/Z, then sit the model's lowest point on the grid (feet on floor).
+    cloned.position.set(
+      -center.x * targetScale,
+      GRID_Y - box.min.y * targetScale,
+      -center.z * targetScale,
+    );
 
     // Apply species color tint to all meshes
     cloned.traverse((child) => {
@@ -202,10 +212,11 @@ const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
       }
     });
 
-    // Adjust camera to fit
+    // Adjust camera to frame the grounded model (look at its mid-height, which now
+    // sits ~1.5u above the grid since the model spans ~3u from the floor).
     if (camera instanceof THREE.PerspectiveCamera) {
       camera.position.set(4, 3, 4);
-      camera.lookAt(0, 0, 0);
+      camera.lookAt(0, GRID_Y + 1.5, 0);
     }
   }, [cloned, color, camera]);
 
@@ -285,11 +296,8 @@ const BossModelMesh: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus)
 
   if (checking) return null;
   if (useGlb) {
-    return (
-      <Center>
-        <GlbModel url={modelUrl} color={color} />
-      </Center>
-    );
+    // GlbModel grounds + centers itself; no <Center> wrapper (it would double-transform).
+    return <GlbModel url={modelUrl} color={color} />;
   }
   return <PlaceholderMesh boss={boss} />;
 };
@@ -306,10 +314,11 @@ const BossScene: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus) => 
       <directionalLight position={[5, 8, 5]} intensity={0.8} castShadow />
       <directionalLight position={[-3, 4, -3]} intensity={0.3} />
       <BossModelMesh boss={boss} onModelStatus={onModelStatus} />
-      <gridHelper args={[10, 20, '#334155', '#1e293b']} position={[0, -2, 0]} />
+      <gridHelper args={[10, 20, '#334155', '#1e293b']} position={[0, GRID_Y, 0]} />
       <OrbitControls
         enableDamping
         dampingFactor={0.1}
+        target={[0, -0.5, 0]}
         minDistance={2}
         maxDistance={15}
         maxPolarAngle={Math.PI / 2 - 0.05}
@@ -611,27 +620,44 @@ export const BossModelViewerPage: React.FC = () => {
                 <Chip
                   label={
                     modelStatus === 'glb'
-                      ? selected.boss.model
-                        ? 'Extracted Model'
-                        : 'Procedural'
-                      : modelStatus === 'no-model'
-                        ? 'No Model Data'
-                        : 'Placeholder'
+                      ? 'Real extracted model'
+                      : 'No model yet — placeholder shape'
                   }
                   size="small"
-                  color={
-                    modelStatus === 'glb' ? (selected.boss.model ? 'success' : 'info') : 'default'
-                  }
-                  variant={modelStatus === 'glb' ? 'filled' : 'outlined'}
+                  color={modelStatus === 'glb' ? 'success' : 'warning'}
+                  variant="filled"
                   sx={{
                     position: 'absolute',
                     top: 8,
                     right: 8,
                     zIndex: 1,
                     fontSize: '0.7rem',
-                    opacity: 0.85,
+                    fontWeight: 700,
                   }}
                 />
+              )}
+              {/* Make the placeholder unmistakable so a fallback sphere never reads
+                  as a broken real model. */}
+              {modelStatus === 'placeholder' && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 8,
+                    left: 8,
+                    right: 8,
+                    zIndex: 1,
+                    textAlign: 'center',
+                    px: 1.5,
+                    py: 0.75,
+                    borderRadius: 1.5,
+                    bgcolor: 'rgba(0,0,0,0.55)',
+                    color: '#fbbf24',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  This abstract shape is a stand-in — no real model has been extracted for this boss yet.
+                </Box>
               )}
             </Paper>
 
