@@ -125,7 +125,11 @@ export const transportSurface = (
     boxShadow: isDark
       ? '0 14px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)'
       : '0 10px 28px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.7)',
-    overflow: 'hidden',
+    // The compact overlay must NOT clip: the scrub-rail hover preview bubble renders ABOVE the
+    // rail and would be cut off at the bar's top edge. The compact paint (bottom scrim + the
+    // inset top seam) doesn't overflow the box, so visible is safe here. The expanded deck keeps
+    // overflow:hidden so its corner glow/gradient stays inside the rounded corners.
+    overflow: compact ? 'visible' : 'hidden',
     // Top-edge light seam — a thin accent gradient line that fades at both ends, the "this
     // surface is active" cue from the bold proto.
     '&::before': {
