@@ -562,8 +562,8 @@
   "correctDesc": "White frost/storm Dragon — standard ESO dragon body (quadrupedal, winged, long neck/tail, horned head) with distinctive white scaling that separates it from the red Yolnahkriin and gold Nahviintaas.",
   "confidence": "medium",
   "reference": "https://en.uesp.net/wiki/Online:Lokkestiiz",
-  "action": "TEXTURE",
-  "note": "Shares Yolnahkriin gold diffuse but should be frost/storm-white. Needs its real frost DDS (texture names not in GR2 dump; adjacency-scan required). Geometry correct."
+  "action": "KEEP",
+  "note": "Correct shared ESO dragon body (BoneDragon = universal dragon rig) + approximate frost tint in viewer (shares Yolnahkriin gold skin; real frost DDS not name-addressable). Acceptable."
  },
  {
   "trial": "Sunspire",

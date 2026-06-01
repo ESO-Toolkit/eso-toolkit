@@ -172,7 +172,11 @@ const getSpeciesColor = (boss: Boss): string => {
 const GRID_Y = -2;
 
 /** Renders an actual GLB model. */
-const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
+const GlbModel: React.FC<{ url: string; color: string; skinTint?: string }> = ({
+  url,
+  color,
+  skinTint,
+}) => {
   const { scene } = useGLTF(url);
   const cloned = React.useMemo(() => scene.clone(true), [scene]);
 
@@ -212,7 +216,9 @@ const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
       if (mat.map) {
         // Textured model: keep its real skin, just ensure correct color space.
         mat.map.colorSpace = THREE.SRGBColorSpace;
-        mat.color.set('#ffffff');
+        // skinTint multiplies the diffuse — used to approximate a missing variant
+        // (Lokkestiiz shares Yolnahkriin's gold skin but should read frost-blue).
+        mat.color.set(skinTint ?? '#ffffff');
         mat.needsUpdate = true;
       } else {
         // Untextured mesh: tint by species so it reads, not flat grey.
@@ -227,9 +233,16 @@ const GlbModel: React.FC<{ url: string; color: string }> = ({ url, color }) => {
       camera.position.set(4, 3, 4);
       camera.lookAt(0, GRID_Y + 1.5, 0);
     }
-  }, [cloned, color, camera]);
+  }, [cloned, color, camera, skinTint]);
 
   return <primitive object={cloned} />;
+};
+
+// Per-boss diffuse tint for textured models whose exact skin variant isn't the
+// one baked into the shared GLB. Lokkestiiz (frost dragon) shares Yolnahkriin's
+// gold skin — a cool multiply approximates frost until the real DDS is sourced.
+const SKIN_TINTS: Record<string, string> = {
+  Lokkestiiz: '#7fbfe6',
 };
 
 /** Fallback placeholder geometry when no GLB is available. */
@@ -306,7 +319,7 @@ const BossModelMesh: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus)
   if (checking) return null;
   if (useGlb) {
     // GlbModel grounds + centers itself; no <Center> wrapper (it would double-transform).
-    return <GlbModel url={modelUrl} color={color} />;
+    return <GlbModel url={modelUrl} color={color} skinTint={SKIN_TINTS[boss.name]} />;
   }
   return <PlaceholderMesh boss={boss} />;
 };
