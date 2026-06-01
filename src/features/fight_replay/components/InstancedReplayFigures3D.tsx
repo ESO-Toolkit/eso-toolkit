@@ -1,6 +1,7 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import {
   ActorPosition,
@@ -68,6 +69,23 @@ const MAX_ACTOR_HOVER_DISTANCE = 1000;
 // the view.
 const THREAT_SCALE = 1.55;
 const PLAYER_SCALE = 0.82;
+
+// Players render as a humanoid figure (CoolStickman, CC0); non-players keep the capsule blob so
+// the SHAPE itself signals "this is a player". The two body layers swap visibility per actor (the
+// same hide-at-y=-10000 trick the glyph groups use), so one body geometry is shown per actor and
+// instanceId → actorId stays uniform across every layer.
+const HUMANOID_MODEL_URL = `${import.meta.env.BASE_URL}models/coolstickman-baked.glb`;
+// Baked figure is 1.987m tall, feet at y=0. Normalize it to roughly the capsule figure's visual
+// height so the player crowd reads at a comparable scale and doesn't wall off the view. The
+// capsule body+cap stack at PLAYER_SCALE is ≈0.6 world units; a touch taller reads cleanly as a
+// person. Final scale = groupScale * HUMANOID_NORMALIZE.
+const HUMANOID_RAW_HEIGHT = 1.987;
+const HUMANOID_TARGET_HEIGHT = 0.95;
+const HUMANOID_NORMALIZE = HUMANOID_TARGET_HEIGHT / HUMANOID_RAW_HEIGHT;
+
+function isPlayerActor(actor: ActorPosition): boolean {
+  return actor.type === 'player';
+}
 
 function getActorIdsFromLookup(lookup: TimestampPositionLookup | null): number[] {
   if (!lookup?.positionsByTimestamp) return [];
@@ -184,9 +202,39 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // mid-fight), so we can assign each actor to one glyph group once and only toggle visibility.
   const glyphSymbolByIndex = useRef<GlyphSymbol[]>([]);
 
+  // Async-loaded humanoid body geometry (CoolStickman bake). Null until the GLB resolves; players
+  // fall back to the capsule body until then. Setting state on load triggers a React commit, which
+  // refills the on-demand render budget (Arena3DScene) so the swap actually paints while paused.
+  const [humanoidGeometry, setHumanoidGeometry] = useState<THREE.BufferGeometry | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const loader = new GLTFLoader();
+    loader.load(
+      HUMANOID_MODEL_URL,
+      (gltf) => {
+        if (cancelled) return;
+        let geo: THREE.BufferGeometry | null = null;
+        gltf.scene.traverse((obj) => {
+          if (!geo && (obj as THREE.Mesh).isMesh) {
+            geo = (obj as THREE.Mesh).geometry as THREE.BufferGeometry;
+          }
+        });
+        if (geo) setHumanoidGeometry(geo);
+      },
+      undefined,
+      () => {
+        // On load failure the capsule fallback stays — players just don't get the humanoid shape.
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Mesh refs.
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const capRef = useRef<THREE.InstancedMesh>(null);
+  const humanoidRef = useRef<THREE.InstancedMesh>(null);
   const visionRef = useRef<THREE.InstancedMesh>(null);
   const anchorRingRef = useRef<THREE.InstancedMesh>(null);
   const selectionRingRef = useRef<THREE.InstancedMesh>(null);
@@ -198,6 +246,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // Per-instance opacity attribute arrays (filled in once meshes mount, in the layout effect).
   const opacityArrays = useRef<{
     body?: Float32Array;
+    humanoid?: Float32Array;
     cap?: Float32Array;
     vision?: Float32Array;
     anchorRing?: Float32Array;
@@ -214,6 +263,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const materials = useMemo(
     () => ({
       body: new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1, transparent: true }),
+      humanoid: new THREE.MeshStandardMaterial({
+        roughness: 0.6,
+        metalness: 0.1,
+        transparent: true,
+      }),
       cap: new THREE.MeshStandardMaterial({ roughness: 0.5, metalness: 0.2, transparent: true }),
       vision: new THREE.MeshBasicMaterial({
         vertexColors: true,
@@ -275,6 +329,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     };
   }, [geometries, materials, glyphMaterials]);
 
+  // Dispose the loaded humanoid geometry when it is replaced or the component unmounts.
+  useEffect(() => {
+    return () => {
+      humanoidGeometry?.dispose();
+    };
+  }, [humanoidGeometry]);
+
   // Assign glyph-group membership per actor index, once per lookup.
   useLayoutEffect(() => {
     const positions = lookup ? lookup.positionsByTimestamp : null;
@@ -322,6 +383,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     o.anchorRing = setup(anchorRingRef.current, 10, true);
     o.vision = setup(visionRef.current, 11, true);
     o.body = setup(bodyRef.current, 12, true);
+    o.humanoid = setup(humanoidRef.current, 12, true);
     o.cap = setup(capRef.current, 13, true);
     setup(selectionRingRef.current, 14, false);
     setup(tauntRingRef.current, 15, false);
@@ -331,7 +393,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     });
 
     frameCacheRef.current = null; // force a rebuild on next frame
-  }, [instanceCount, geometries, materials, glyphMaterials]);
+  }, [instanceCount, geometries, materials, glyphMaterials, humanoidGeometry]);
 
   const hideInstance = useCallback((mesh: THREE.InstancedMesh | null, index: number): void => {
     if (!mesh) return;
@@ -387,6 +449,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       if (!actor || !isVisible) {
         if (cacheRef.current[index]?.visible !== false) {
           hideInstance(bodyRef.current, index);
+          hideInstance(humanoidRef.current, index);
           hideInstance(capRef.current, index);
           hideInstance(visionRef.current, index);
           hideInstance(anchorRingRef.current, index);
@@ -407,6 +470,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       const isThreat = isThreatActor(actor);
       const selected = selectedActorId === actorId;
       const taunted = actor.isTaunted || false;
+      // Players become the humanoid figure once its geometry has loaded; everyone else (and
+      // players pre-load) keeps the capsule blob. Exactly one of the two body layers is shown
+      // per actor — the other is hidden off-screen.
+      const useHumanoid = isPlayerActor(actor) && humanoidGeometry !== null;
 
       const accentColor = getReplayActorAccentColor(actor);
       const coreColor = getReplayActorCoreColor(actor);
@@ -419,22 +486,45 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       const visionOpacity = dead ? 0.12 : 0.42;
 
       // ---- Matrices ----
-      // Body: at group scale, dead squashes y to 0.3. Positioned at bodyHeight*0.6 like the figure.
-      obj.position.set(x, y + GROUND_LEVEL + bodyHeight * 0.6 * groupScale, z);
-      obj.rotation.set(0, actor.rotation, 0);
-      obj.scale.set(groupScale, groupScale * (dead ? 0.3 : 1), groupScale);
-      obj.updateMatrix();
-      bodyRef.current?.setMatrixAt(index, obj.matrix);
+      if (useHumanoid) {
+        // Humanoid is feet-anchored at y=0, so sit it on the ground (no center offset). Dead
+        // squashes y to 0.3 exactly like the capsule. Faces +Z, so actor.rotation maps directly.
+        const hScale = groupScale * HUMANOID_NORMALIZE;
+        obj.position.set(x, y + GROUND_LEVEL, z);
+        obj.rotation.set(0, actor.rotation, 0);
+        obj.scale.set(hScale, hScale * (dead ? 0.3 : 1), hScale);
+        obj.updateMatrix();
+        humanoidRef.current?.setMatrixAt(index, obj.matrix);
+        hideInstance(bodyRef.current, index);
+      } else {
+        // Body capsule: at group scale, dead squashes y to 0.3. Positioned at bodyHeight*0.6.
+        obj.position.set(x, y + GROUND_LEVEL + bodyHeight * 0.6 * groupScale, z);
+        obj.rotation.set(0, actor.rotation, 0);
+        obj.scale.set(groupScale, groupScale * (dead ? 0.3 : 1), groupScale);
+        obj.updateMatrix();
+        bodyRef.current?.setMatrixAt(index, obj.matrix);
+        hideInstance(humanoidRef.current, index);
+      }
 
-      // Cap rides at capY * groupScale.
-      obj.position.set(x, y + GROUND_LEVEL + capY * groupScale, z);
-      obj.rotation.set(0, actor.rotation, 0);
-      obj.scale.setScalar(groupScale);
-      obj.updateMatrix();
-      capRef.current?.setMatrixAt(index, obj.matrix);
+      // Cap rides atop the capsule head. The humanoid already has its own head, so the cap is
+      // redundant (and would float at the wrong height) — hide it for humanoid players.
+      if (useHumanoid) {
+        hideInstance(capRef.current, index);
+      } else {
+        obj.position.set(x, y + GROUND_LEVEL + capY * groupScale, z);
+        obj.rotation.set(0, actor.rotation, 0);
+        obj.scale.setScalar(groupScale);
+        obj.updateMatrix();
+        capRef.current?.setMatrixAt(index, obj.matrix);
+      }
 
-      // Glyph plane lies flat above the cap, faces up (rotation -PI/2 X).
-      obj.position.set(x, y + GROUND_LEVEL + glyphY * groupScale, z);
+      // Glyph plane lies flat above the head, faces up (rotation -PI/2 X). For the humanoid it
+      // floats as a halo above the (taller) figure's head; for the capsule it rides just above
+      // the cap as before.
+      const glyphYWorld = useHumanoid
+        ? y + GROUND_LEVEL + HUMANOID_TARGET_HEIGHT * groupScale + 0.12 * groupScale
+        : y + GROUND_LEVEL + glyphY * groupScale;
+      obj.position.set(x, glyphYWorld, z);
       obj.rotation.set(-Math.PI / 2, 0, 0);
       obj.scale.setScalar(groupScale);
       obj.updateMatrix();
@@ -495,12 +585,14 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
       if (changed) {
         bodyRef.current?.setColorAt(index, col.set(coreColor));
+        humanoidRef.current?.setColorAt(index, col.set(coreColor));
         capRef.current?.setColorAt(index, col.set(accentColor));
         anchorRingRef.current?.setColorAt(index, col.set(shellColor));
         visionRef.current?.setColorAt(index, col.set(accentColor));
         colorDirty = true;
 
         if (o.body) o.body[index] = bodyOpacity;
+        if (o.humanoid) o.humanoid[index] = bodyOpacity;
         if (o.cap) o.cap[index] = capOpacity;
         if (o.anchorRing) o.anchorRing[index] = ringOpacity;
         if (o.vision) o.vision[index] = visionOpacity;
@@ -529,6 +621,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     // Flush matrices every frame (positions change constantly during playback).
     [
       bodyRef.current,
+      humanoidRef.current,
       capRef.current,
       visionRef.current,
       anchorRingRef.current,
@@ -542,7 +635,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     });
 
     if (colorDirty) {
-      [bodyRef.current, capRef.current, anchorRingRef.current, visionRef.current].forEach((m) => {
+      [
+        bodyRef.current,
+        humanoidRef.current,
+        capRef.current,
+        anchorRingRef.current,
+        visionRef.current,
+      ].forEach((m) => {
         if (m?.instanceColor) m.instanceColor.needsUpdate = true;
       });
     }
@@ -554,6 +653,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         if (attr) attr.needsUpdate = true;
       };
       flag(bodyRef.current);
+      flag(humanoidRef.current);
       flag(capRef.current);
       flag(anchorRingRef.current);
       flag(visionRef.current);
@@ -615,6 +715,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         onPointerOver={handleOver}
         onPointerOut={handleOut}
       />
+      {humanoidGeometry && (
+        <instancedMesh
+          ref={humanoidRef}
+          args={[humanoidGeometry, materials.humanoid, instanceCount]}
+          castShadow
+          onClick={handleClick}
+          onPointerOver={handleOver}
+          onPointerOut={handleOut}
+        />
+      )}
       <instancedMesh
         ref={capRef}
         args={[geometries.cap, materials.cap, instanceCount]}
