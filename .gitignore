@@ -204,3 +204,14 @@ discord-notify-worker/node_modules/
 /.factory/*.har
 /.factory/*.trace
 /.factory/skills/
+
+# .scratch — same policy: keep .md notes, ignore heavy artefacts (perf traces,
+# screenshots, logs). Chrome traces here routinely exceed GitHub's 100 MB limit.
+/.scratch/*.json
+/.scratch/*.png
+/.scratch/*.webm
+/.scratch/*.har
+/.scratch/*.trace
+/.scratch/*.log
+/.scratch/*.html
+/.scratch/**/*.png
