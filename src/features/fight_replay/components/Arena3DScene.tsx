@@ -52,6 +52,8 @@ interface AnimationFrameSceneActorsProps {
   onActorClick?: (actorId: number) => void;
   playerVisibility?: Map<number, boolean>;
   playerColorOverrides?: Map<number, string>;
+  /** When true, player figures stop casting shadows (perf headroom for large fights). */
+  performanceMode?: boolean;
 }
 
 export interface GroundContextMenuPayload {
@@ -74,6 +76,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   onActorClick,
   playerVisibility,
   playerColorOverrides,
+  performanceMode,
 }) => {
   // Performance settings based on scrubbing mode
   const shouldRenderEffects = scrubbingMode?.shouldRenderEffects ?? true;
@@ -89,6 +92,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
       onActorClick={onActorClick}
       playerVisibility={playerVisibility}
       playerColorOverrides={playerColorOverrides}
+      performanceMode={performanceMode}
     />
   );
 };
@@ -222,6 +226,8 @@ export interface Arena3DSceneProps {
    * so the DOM player panel and the in-canvas figures share one source of truth.
    */
   playerColorOverrides?: Map<number, string>;
+  /** When true, player figures stop casting shadows (perf headroom for large fights). */
+  performanceMode?: boolean;
 }
 
 /**
@@ -246,6 +252,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
+  performanceMode = false,
 }) => {
   // Shared render budget for the on-demand RenderLoop. Refilled on every React commit of
   // this scene (effect below, intentionally no deps) so state-driven mutations — markers,
@@ -503,6 +510,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         onActorClick={onActorClick}
         playerVisibility={playerVisibility}
         playerColorOverrides={playerColorOverrides}
+        performanceMode={performanceMode}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
           the <Canvas> (crisp text, real scroll region, native MUI styling) — not in-canvas

@@ -57,6 +57,8 @@ interface InstancedReplayFigures3DProps {
   playerVisibility?: Map<number, boolean>;
   /** Per-player body-color overrides (actorId → hex). Living players only; dead stay grey. */
   playerColorOverrides?: Map<number, string>;
+  /** When true, the humanoid figures stop casting shadows (drops the shadow-pass tri load). */
+  performanceMode?: boolean;
 }
 
 const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
@@ -195,6 +197,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   onActorClick,
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
+  performanceMode = false,
 }) => {
   const bodyHeight = 0.55 * scale;
   const capY = bodyHeight + 0.02 * scale;
@@ -737,7 +740,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         <instancedMesh
           ref={humanoidRef}
           args={[humanoidGeometry, materials.humanoid, instanceCount]}
-          castShadow
+          castShadow={!performanceMode}
           onClick={handleClick}
           onPointerOver={handleOver}
           onPointerOut={handleOut}

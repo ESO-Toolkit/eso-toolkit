@@ -1,4 +1,5 @@
 import { LockOpen, Videocam } from '@mui/icons-material';
+import Bolt from '@mui/icons-material/Bolt';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 import Label from '@mui/icons-material/Label';
@@ -133,6 +134,13 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // incoming showActorNames prop so turning names off here always wins. Lets you declutter a
   // crowd to see the player models, then bring identity back. Applies to every variant.
   const [namesEnabled, setNamesEnabled] = useState(true);
+
+  // Performance mode (off by default). When on, the player figures stop casting shadows — the
+  // shadow pass re-submits the full humanoid geometry for every figure (~75k tris at 23 players,
+  // scaling with actor count), so dropping it roughly halves the figure tri load and buys headroom
+  // for very large fights. Purely a fidelity/cost trade; button-only (P/T are already taken by the
+  // player-paths HUD and trails in FightReplay3D).
+  const [performanceMode, setPerformanceMode] = useState(false);
 
   // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
   // so the DOM PlayerListPanel overlay — which renders the toggle controls — and the
@@ -703,6 +711,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             showPlayerTrails={showPlayerTrails}
             playerVisibility={playerVisibility}
             playerColorOverrides={playerColorOverrides}
+            performanceMode={performanceMode}
           />
         </Canvas>
 
@@ -911,6 +920,35 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           </Typography>
         </Box>
       </Collapse>
+
+      {/* Performance-mode toggle — drops player-figure shadows for extra headroom on very large
+          fights. Button-only (P/T are already bound to the player-paths HUD and trails). */}
+      <Tooltip
+        title={
+          performanceMode
+            ? 'Performance mode on — figure shadows off'
+            : 'Performance mode — drop figure shadows for large fights'
+        }
+      >
+        <IconButton
+          aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
+          aria-pressed={performanceMode}
+          size="small"
+          onClick={() => setPerformanceMode((prev) => !prev)}
+          sx={{
+            position: 'absolute',
+            bottom: 112,
+            right: 16,
+            color: performanceMode ? '#fcd34d' : 'rgba(255, 255, 255, 0.55)',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            },
+          }}
+        >
+          <Bolt fontSize="small" />
+        </IconButton>
+      </Tooltip>
 
       {/* Name-tag toggle - the on-screen affordance for the same state the N key flips, so the
           declutter control is discoverable without knowing the shortcut. */}
