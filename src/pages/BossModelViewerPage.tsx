@@ -219,6 +219,11 @@ const GlbModel: React.FC<{ url: string; color: string; skinTint?: string }> = ({
         // skinTint multiplies the diffuse — used to approximate a missing variant
         // (Lokkestiiz shares Yolnahkriin's gold skin but should read frost-blue).
         mat.color.set(skinTint ?? '#ffffff');
+        // ESO dragon diffuse is dark; a faint self-illum from the same map keeps the
+        // shadowed scales/wings from crushing to black without washing out the skin.
+        mat.emissiveMap = mat.map;
+        mat.emissive = new THREE.Color(skinTint ?? '#ffffff');
+        mat.emissiveIntensity = 0.35;
         mat.needsUpdate = true;
       } else {
         // Untextured mesh: tint by species so it reads, not flat grey.
@@ -332,9 +337,15 @@ const BossScene: React.FC<{ boss: Boss; onModelStatus: (status: ModelStatus) => 
 }) => {
   return (
     <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[5, 8, 5]} intensity={0.8} castShadow />
-      <directionalLight position={[-3, 4, -3]} intensity={0.3} />
+      {/* ESO creature diffuse textures are quite dark (avg luminance ~65/255), so
+          the model reads near-black under weak light. Strong ambient + a sky/ground
+          hemisphere fill + multi-angle key/fill/rim lights lift the real skin into
+          view. Lights only — no CDN-fetched HDR environment (offline-safe). */}
+      <ambientLight intensity={1.3} />
+      <hemisphereLight args={['#cfe3ff', '#3a3326', 1.1]} />
+      <directionalLight position={[5, 8, 5]} intensity={1.8} castShadow />
+      <directionalLight position={[-4, 4, -3]} intensity={0.9} />
+      <directionalLight position={[0, 3, -6]} intensity={0.6} />
       <BossModelMesh boss={boss} onModelStatus={onModelStatus} />
       <gridHelper args={[10, 20, '#334155', '#1e293b']} position={[0, GRID_Y, 0]} />
       <OrbitControls
