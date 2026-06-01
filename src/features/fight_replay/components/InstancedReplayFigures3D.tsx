@@ -88,6 +88,18 @@ const HUMANOID_RAW_HEIGHT = 1.987;
 const HUMANOID_TARGET_HEIGHT = 0.95;
 const HUMANOID_NORMALIZE = HUMANOID_TARGET_HEIGHT / HUMANOID_RAW_HEIGHT;
 
+// Movement-driven gait tuning. Speed is smoothed per-frame travel distance (world units/frame).
+// SPEED_FULL is the per-frame distance at which lean/bob hit full strength; above it they clamp.
+const GAIT_SPEED_SMOOTHING = 0.25; // EMA factor on raw per-frame distance (0..1; higher = snappier)
+const GAIT_SPEED_FULL = 0.12; // units/frame that maps to full lean/bob
+const GAIT_MAX_LEAN = 0.22; // radians of forward lean at full speed (~12.6°)
+const GAIT_BOB_AMP = 0.05; // world-unit vertical bob amplitude at full speed
+// Bob cycles per world unit travelled. Actors move fast (~0.5–1.1 units/frame), so this MUST stay
+// low or the bob aliases into high-frequency vibration (verified live: 7.0 strobed at ~3.8 cycles/
+// frame). 0.4 keeps it well under the 0.5-cycle/frame Nyquist limit even at the fastest observed
+// step, so the bob reads as a slow rise/fall over a stride rather than a jitter.
+const GAIT_BOB_FREQ = 0.4;
+
 function isPlayerActor(actor: ActorPosition): boolean {
   return actor.type === 'player';
 }
@@ -266,6 +278,20 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const tempObject = useRef(new THREE.Object3D());
   const tempColor = useRef(new THREE.Color());
 
+  // Per-instance gait state for the movement-driven lean/bob on the humanoid figures. We have only
+  // position+rotation per frame (no per-limb pose data), and skeletal walking can't be instanced in
+  // three core, so the figure leans forward ∝ speed and bobs vertically as it travels — a
+  // whole-body cue that reads at the tactical-map distances players actually watch (verified live;
+  // a leg-flipbook's limb motion is sub-pixel there). Movement-DRIVEN only: every term is zero when
+  // the actor is still, so a paused/idle scene adds no work and the on-demand render gate is intact.
+  const gaitRef = useRef<{
+    lastX: Float32Array;
+    lastZ: Float32Array;
+    speed: Float32Array; // smoothed units/frame
+    distance: Float32Array; // accumulated travel, drives the bob phase
+    seeded: Uint8Array; // whether lastX/Z hold a real previous sample yet
+  } | null>(null);
+
   const geometries = useMemo(() => createFigureGeometries(scale, bodyHeight), [scale, bodyHeight]);
 
   const materials = useMemo(
@@ -400,6 +426,15 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       if (arr) o.glyph.set(symbol, arr);
     });
 
+    // (Re)allocate gait state to the instance count.
+    gaitRef.current = {
+      lastX: new Float32Array(instanceCount),
+      lastZ: new Float32Array(instanceCount),
+      speed: new Float32Array(instanceCount),
+      distance: new Float32Array(instanceCount),
+      seeded: new Uint8Array(instanceCount),
+    };
+
     // Force a full rebuild on the next frame. Clearing BOTH caches is load-bearing: the
     // frame-level cache gates whether the loop runs at all, but the per-instance cache gates the
     // `changed` block that calls setColorAt. When the humanoid GLB loads, an actor's role color is
@@ -511,11 +546,39 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         // Humanoid is feet-anchored at y=0, so sit it on the ground (no center offset). Dead
         // squashes y to 0.3 exactly like the capsule. Faces +Z, so actor.rotation maps directly.
         const hScale = groupScale * HUMANOID_NORMALIZE;
-        obj.position.set(x, y + GROUND_LEVEL, z);
-        obj.rotation.set(0, actor.rotation, 0);
+
+        // ---- Movement-driven gait (lean + bob) ----
+        // Derive per-frame travel from the last sample, smooth it, and accumulate distance for the
+        // bob phase. Dead actors freeze (no gait). All terms vanish at zero speed → idle-gate-safe.
+        let lean = 0;
+        let bob = 0;
+        const gait = gaitRef.current;
+        if (gait && !dead) {
+          if (gait.seeded[index]) {
+            const dx = x - gait.lastX[index];
+            const dz = z - gait.lastZ[index];
+            const raw = Math.sqrt(dx * dx + dz * dz);
+            // EMA-smooth so a single quantized timestamp jump doesn't snap the lean.
+            gait.speed[index] += (raw - gait.speed[index]) * GAIT_SPEED_SMOOTHING;
+            gait.distance[index] += raw;
+          } else {
+            gait.seeded[index] = 1;
+          }
+          gait.lastX[index] = x;
+          gait.lastZ[index] = z;
+          const speedT = Math.min(1, gait.speed[index] / GAIT_SPEED_FULL);
+          lean = GAIT_MAX_LEAN * speedT;
+          bob = Math.sin(gait.distance[index] * GAIT_BOB_FREQ) * GAIT_BOB_AMP * speedT;
+        }
+
+        // Euler order YXZ: face first (Y), then lean forward about the rotated X — a forward pitch
+        // in the travel direction. Bob lifts the feet-anchored figure slightly; never below ground.
+        obj.position.set(x, y + GROUND_LEVEL + Math.max(0, bob), z);
+        obj.rotation.set(lean, actor.rotation, 0, 'YXZ');
         obj.scale.set(hScale, hScale * (dead ? 0.3 : 1), hScale);
         obj.updateMatrix();
         humanoidRef.current?.setMatrixAt(index, obj.matrix);
+        obj.rotation.order = 'XYZ'; // restore default for the order-agnostic writes below
         hideInstance(bodyRef.current, index);
       } else {
         // Body capsule: at group scale, dead squashes y to 0.3. Positioned at bodyHeight*0.6.
