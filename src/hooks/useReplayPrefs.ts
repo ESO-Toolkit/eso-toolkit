@@ -35,6 +35,8 @@ export interface ReplayPrefs {
   showTrails: boolean;
   /** Performance mode (drop figure shadows) on. */
   performanceMode: boolean;
+  /** Transport bar collapsed/hidden (cinema mode) — persists so the chosen state survives reload. */
+  barCollapsed: boolean;
 }
 
 /**
@@ -50,6 +52,7 @@ export const DEFAULT_REPLAY_PREFS: ReplayPrefs = {
   showPlayerPaths: false,
   showTrails: false,
   performanceMode: false,
+  barCollapsed: false,
 };
 
 const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -71,6 +74,7 @@ const sanitize = (raw: unknown): Partial<ReplayPrefs> => {
   if (isBool(obj.showPlayerPaths)) out.showPlayerPaths = obj.showPlayerPaths;
   if (isBool(obj.showTrails)) out.showTrails = obj.showTrails;
   if (isBool(obj.performanceMode)) out.performanceMode = obj.performanceMode;
+  if (isBool(obj.barCollapsed)) out.barCollapsed = obj.barCollapsed;
   return out;
 };
 

@@ -11,6 +11,7 @@ import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
+import { TRANSPORT_IDLE_MS, TRANSPORT_RESERVED, HAIRLINE_H } from '../constants/replayDesign';
 import { MapMarkersState } from '../types/mapMarkers';
 import { clampReplayTime } from '../utils/replayTime';
 
@@ -151,6 +152,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // normalizes lo/hi. Both set + a sane span → playback wraps within [A,B] until the chip clears.
   const [loopStart, setLoopStart] = useState<number | null>(null);
   const [loopEnd, setLoopEnd] = useState<number | null>(null);
+
+  // Transport bar visibility (cinema model). Master state for the compact bar:
+  //  - windowed: stays visible unless the user manually collapses it (C / chevron).
+  //  - fullscreen: auto-hides after idle (TRANSPORT_IDLE_MS) behind a progress hairline and
+  //    reveals on pointer activity; C still toggles manually.
+  // Seeded from the persisted barCollapsed pref so a user who prefers the collapsed cinema state
+  // keeps it across reloads.
+  const [barVisible, setBarVisible] = useState(!storedPrefs.barCollapsed);
 
   // High-performance time reference for 3D updates
   const animationTimeRef = useAnimationTimeRef({
@@ -349,15 +358,74 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
 
-  // Persist FightReplay3D's pref slice (speed + path/trail toggles) whenever it changes. The hook
-  // does a read-merge-write so this never clobbers the names/performance slice Arena3D persists.
+  // Persist FightReplay3D's pref slice (speed + path/trail toggles + bar-collapsed) whenever it
+  // changes. The hook does a read-merge-write so this never clobbers the names/performance slice
+  // Arena3D persists.
   useEffect(() => {
     persistPrefs({
       playbackSpeed,
       showPlayerPaths: showPlayerPathsHUD,
       showTrails: showPlayerTrails,
+      barCollapsed: !barVisible,
     });
-  }, [persistPrefs, playbackSpeed, showPlayerPathsHUD, showPlayerTrails]);
+  }, [persistPrefs, playbackSpeed, showPlayerPathsHUD, showPlayerTrails, barVisible]);
+
+  // Manual collapse toggle (C key + the bar's chevron / restore caret). Works in any mode.
+  const toggleBar = useCallback(() => setBarVisible((v) => !v), []);
+
+  // Fullscreen cinema auto-hide. Two halves:
+  //  1. Reveal on pointer/touch activity over the OUTER container (replayContainerRef — it is
+  //     pointer-events:auto; the inner positioning frame is pointer-events:none so a listener
+  //     there would never fire). Only meaningful in fullscreen.
+  //  2. An idle timer that hides the bar after TRANSPORT_IDLE_MS, re-armed on every reveal, and
+  //     guarded so it never hides mid-scrub/drag.
+  const idleTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const el = replayContainerRef.current;
+    if (!el) return;
+
+    const armIdle = (): void => {
+      if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = window.setTimeout(() => {
+        // Never hide while the user is actively scrubbing/dragging the timeline.
+        if (isDragging || isScrubbingMode) {
+          armIdle();
+          return;
+        }
+        setBarVisible(false);
+      }, TRANSPORT_IDLE_MS);
+    };
+
+    const reveal = (): void => {
+      setBarVisible(true);
+      armIdle();
+    };
+
+    // Passive listeners (never preventDefault) so canvas pinch/OrbitControls are untouched.
+    el.addEventListener('pointermove', reveal, { passive: true });
+    el.addEventListener('touchstart', reveal, { passive: true });
+    el.addEventListener('touchmove', reveal, { passive: true });
+    armIdle(); // start the clock on entering fullscreen
+    return () => {
+      el.removeEventListener('pointermove', reveal);
+      el.removeEventListener('touchstart', reveal);
+      el.removeEventListener('touchmove', reveal);
+      if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    };
+  }, [isFullscreen, isDragging, isScrubbingMode]);
+
+  // When the user LEAVES fullscreen (not on mount), restore the bar — exiting into an
+  // auto-hidden bar would be disorienting. Tracks the previous fullscreen state so the persisted
+  // barCollapsed seed isn't clobbered on the initial render.
+  const wasFullscreenRef = useRef(isFullscreen);
+  useEffect(() => {
+    if (wasFullscreenRef.current && !isFullscreen) {
+      setBarVisible(true);
+    }
+    wasFullscreenRef.current = isFullscreen;
+  }, [isFullscreen]);
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
   // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need
@@ -446,6 +514,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           setLoopOutPoint();
           event.preventDefault();
           break;
+        case 'c': // Collapse / restore the transport bar (cinema mode)
+          toggleBar();
+          event.preventDefault();
+          break;
       }
     };
 
@@ -460,6 +532,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     jumpToEvent,
     setLoopInPoint,
     setLoopOutPoint,
+    toggleBar,
   ]);
 
   return (
@@ -506,6 +579,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onPlayerSelectionChange={setSelectedPlayerIds}
           showPlayerPathsHUD={showPlayerPathsHUD}
           showPlayerTrails={showPlayerTrails}
+          // When the bar is hidden in fullscreen, only the hairline occludes the bottom, so the
+          // overlay panels can grow nearly full-height; otherwise reserve the full bar band.
+          reservedInset={isFullscreen && !barVisible ? HAIRLINE_H + 4 : TRANSPORT_RESERVED}
         />
       </Paper>
       {/* Playback controls — docked as a translucent overlay at the bottom of the canvas. The outer
@@ -546,6 +622,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           loopStart={loopStart}
           loopEnd={loopEnd}
           onClearLoop={clearLoop}
+          isFullscreen={isFullscreen}
+          barVisible={barVisible}
+          onToggleCollapse={toggleBar}
+          progressPct={
+            selectedFight.endTime > selectedFight.startTime
+              ? (currentTime / (selectedFight.endTime - selectedFight.startTime)) * 100
+              : 0
+          }
           overlay
         />
       </Box>

@@ -22,6 +22,7 @@ describe('useReplayPrefs', () => {
       showPlayerPaths: true,
       showTrails: true,
       performanceMode: true,
+      barCollapsed: true,
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
 
@@ -61,6 +62,13 @@ describe('useReplayPrefs', () => {
     // The default is also false, but storedPrefs proves the user explicitly stored it.
     expect(result.current.storedPrefs.showPlayerPaths).toBe(false);
     expect('showTrails' in result.current.storedPrefs).toBe(false);
+  });
+
+  it('restores the persisted barCollapsed flag', () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ barCollapsed: true }));
+    const { result } = renderHook(() => useReplayPrefs());
+    expect(result.current.storedPrefs.barCollapsed).toBe(true);
+    expect(result.current.initialPrefs.barCollapsed).toBe(true);
   });
 
   it('persistPrefs writes a partial patch and reads back', () => {

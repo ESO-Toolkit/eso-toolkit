@@ -27,6 +27,23 @@ import type { SystemStyleObject } from '@mui/system';
 export const ARENA_HEIGHT = 'clamp(420px, 56.25vw, 78vh)';
 
 /**
+ * The vertical band the compact transport bar occupies (px). ONE shared token consumed by every
+ * geometry that must clear the bar — the bar's own pinned height AND the max-height caps of the
+ * overlay panels (PlayerListPanel inner+outer caps, BossHealthPanel) — so the bar can never
+ * re-grow into the panels and the panels can never plunge into the bar. Measured against the real
+ * single-row layout: the 58px play orb + its -6px detached ring (~70px) + ~10px top/bottom padding,
+ * rounded to 80 with headroom. Scoped to desktop widths (the row wraps below this on very narrow
+ * viewports — mobile is a deferred refactor; see project_replay_mobile_refactor).
+ */
+export const TRANSPORT_RESERVED = 80;
+
+/** Fullscreen cinema auto-hide: idle time (ms) of no pointer activity before the bar fades. */
+export const TRANSPORT_IDLE_MS = 2500;
+
+/** Height (px) of the always-on progress hairline shown while the fullscreen bar is hidden. */
+export const HAIRLINE_H = 3;
+
+/**
  * Spacing rhythm for the transport bar, in MUI spacing units (×8px). Kept deliberately
  * small and consistent so the bar reads as one dense, intentional control cluster.
  */
@@ -34,10 +51,15 @@ export const TRANSPORT_SPACING = {
   /** Outer vertical padding of the docked bar (asymmetric: matches the bold proto). */
   padTop: 2, // 16px
   padBottom: 2.25, // 18px
+  /** Compact (single-row) vertical padding — tighter so the row hits the TRANSPORT_RESERVED band. */
+  padTopCompact: 1.25, // 10px
+  padBottomCompact: 1.25, // 10px
   /** Outer horizontal padding (tighter on xs). */
   padX: { xs: 1.75, sm: 2.75 },
   /** Gap between the rail block and the control row. */
   sectionGap: 1.25,
+  /** Gap between controls in the compact single row. */
+  sectionGapCompact: 0.75,
   /** Gap between controls within the control row. */
   controlGap: 1,
 } as const;
@@ -60,7 +82,11 @@ export const TRANSPORT_MOTION = {
  * "control deck" of a player rather than a flat form panel — without floating over the 3D
  * scene (the bar stays in document flow; see the audit's rejected "floating transport").
  */
-export const transportSurface = (theme: Theme, overlay = false): SystemStyleObject<Theme> => {
+export const transportSurface = (
+  theme: Theme,
+  overlay = false,
+  compact = false,
+): SystemStyleObject<Theme> => {
   const isDark = theme.palette.mode === 'dark';
   const primary = theme.palette.primary.main;
   const secondary = theme.palette.secondary.main;
@@ -71,23 +97,31 @@ export const transportSurface = (theme: Theme, overlay = false): SystemStyleObje
   // minimizing that occlusion) and squares its bottom corners to sit flush at the canvas edge.
   const paper = theme.palette.background.paper;
   const def = theme.palette.background.default;
+  // Compact overlay leans lighter (less blur, a bottom-up scrim instead of a solid panel) so the
+  // thinner bar reads as cinematic chrome floating over the scene rather than a heavy deck.
+  const blur = compact ? 6 : 10;
   return {
     position: 'relative' as const,
     borderRadius: overlay ? '12px 12px 0 0' : 3,
     border: '1px solid',
     borderColor: isDark ? 'rgba(148,210,255,0.18)' : 'divider',
-    ...(overlay ? { borderBottom: 'none', backdropFilter: 'blur(10px)' } : null),
+    ...(overlay ? { borderBottom: 'none', backdropFilter: `blur(${blur}px)` } : null),
     // Layered atmosphere — two soft accent glows pooling from the top corners over a vertical
     // panel gradient, so the bar reads as a lit "control deck" with depth, not a flat form
     // panel. All pure paint (no layout, no per-frame cost). Dark mode leans into the glow;
     // light mode keeps it whisper-subtle. The overlay variant uses translucent panel/default
-    // stops so the 3D scene shows faintly through the blur.
-    backgroundImage: isDark
-      ? `radial-gradient(120% 140% at 12% 0%, ${primary}24, transparent 42%),
-         radial-gradient(90% 120% at 92% 8%, ${secondary}14, transparent 50%),
-         linear-gradient(180deg, ${overlay ? alpha(paper, 0.82) : paper} 0%, ${overlay ? alpha(def, 0.82) : def} 100%)`
-      : `radial-gradient(120% 140% at 12% 0%, ${primary}10, transparent 45%),
-         linear-gradient(180deg, ${overlay ? alpha(paper, 0.88) : paper} 0%, ${overlay ? alpha(def, 0.88) : def} 120%)`,
+    // stops so the 3D scene shows faintly through the blur. The compact overlay swaps the solid
+    // panel stop for a bottom-anchored scrim (opaque at the bottom edge, fading up) so the scene
+    // reads through the top of the thin bar.
+    backgroundImage:
+      compact && overlay
+        ? `linear-gradient(0deg, ${alpha(def, 0.88)} 0%, ${alpha(paper, 0.5)} 60%, transparent 100%)`
+        : isDark
+          ? `radial-gradient(120% 140% at 12% 0%, ${primary}24, transparent 42%),
+           radial-gradient(90% 120% at 92% 8%, ${secondary}14, transparent 50%),
+           linear-gradient(180deg, ${overlay ? alpha(paper, 0.82) : paper} 0%, ${overlay ? alpha(def, 0.82) : def} 100%)`
+          : `radial-gradient(120% 140% at 12% 0%, ${primary}10, transparent 45%),
+           linear-gradient(180deg, ${overlay ? alpha(paper, 0.88) : paper} 0%, ${overlay ? alpha(def, 0.88) : def} 120%)`,
     boxShadow: isDark
       ? '0 14px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)'
       : '0 10px 28px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.7)',
@@ -105,5 +139,24 @@ export const transportSurface = (theme: Theme, overlay = false): SystemStyleObje
       opacity: isDark ? 0.7 : 0.4,
       pointerEvents: 'none',
     },
+  };
+};
+
+/**
+ * The always-on progress hairline shown while the fullscreen bar is auto-hidden — a thin
+ * elapsed-fill gradient flush at the bottom edge so the playhead position stays legible even when
+ * the full transport has faded. `pct` (0–100) is the fraction elapsed: brand cyan→magenta up to
+ * the playhead, then a faint primary tint for the remainder.
+ */
+export const transportHairline = (theme: Theme, pct: number): SystemStyleObject<Theme> => {
+  const clamped = Math.max(0, Math.min(100, pct));
+  return {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: `${HAIRLINE_H}px`,
+    background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} ${clamped}%, ${alpha(theme.palette.primary.main, 0.18)} ${clamped}%)`,
+    pointerEvents: 'none',
   };
 };

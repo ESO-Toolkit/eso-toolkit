@@ -54,6 +54,13 @@ interface TimelineSliderProps {
   loopEnd?: number | null;
   /** Clear both loop points (the loop chip's delete action). */
   onClearLoop?: () => void;
+  /**
+   * 'expanded' (default) = the full block: a hero-timecode header row + the context badges + the
+   * scrub rail. 'compact' = the single-row transport variant: a small inline timecode at the rail's
+   * left, the rail, and the badges/Loop chip folded into a details peek (Tune chip) so the whole
+   * thing fits one ~80px transport row.
+   */
+  density?: 'compact' | 'expanded';
 }
 
 /** Small pill badge for the transport's contextual read-outs (encounter, outcome, %). */
@@ -88,6 +95,80 @@ const ContextBadge: React.FC<{
 };
 
 /**
+ * A–B loop chip — shows the active loop span and clears it (mirrors the Following chip's delete
+ * affordance). Visible once at least one point is set; reads as "looping" when both are. Extracted
+ * so both the expanded badge row and the compact details peek render the identical chip.
+ */
+const LoopChip: React.FC<{
+  loopStart: number | null;
+  loopEnd: number | null;
+  onClearLoop?: () => void;
+  formatTime: (ms: number) => string;
+}> = ({ loopStart, loopEnd, onClearLoop, formatTime }) => (
+  <Box
+    component="span"
+    sx={(theme) => ({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 0.5,
+      pl: 1,
+      pr: 0.5,
+      py: 0.375,
+      borderRadius: 999,
+      border: '1px solid',
+      borderColor: 'secondary.main',
+      bgcolor: 'action.hover',
+      fontSize: '0.72rem',
+      fontWeight: 600,
+      lineHeight: 1,
+      color: 'secondary.main',
+      whiteSpace: 'nowrap',
+      fontVariantNumeric: 'tabular-nums',
+      boxShadow:
+        theme.palette.mode === 'dark' ? `0 0 10px ${theme.palette.secondary.main}40` : 'none',
+    })}
+  >
+    Loop{' '}
+    {loopStart != null && loopEnd != null
+      ? `${formatTime(Math.min(loopStart, loopEnd))}–${formatTime(Math.max(loopStart, loopEnd))}`
+      : loopStart != null
+        ? `A ${formatTime(loopStart)}`
+        : `B ${formatTime(loopEnd as number)}`}
+    {onClearLoop && (
+      <Box
+        component="button"
+        type="button"
+        aria-label="Clear A–B loop"
+        onClick={onClearLoop}
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 16,
+          height: 16,
+          p: 0,
+          border: 'none',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          background: 'transparent',
+          color: 'inherit',
+          fontSize: '0.85rem',
+          lineHeight: 1,
+          '&:hover': { bgcolor: 'action.selected' },
+          '&:focus-visible': {
+            outline: '2px solid',
+            outlineColor: 'secondary.main',
+            outlineOffset: 1,
+          },
+        }}
+      >
+        ×
+      </Box>
+    )}
+  </Box>
+);
+
+/**
  * Timeline Slider Component
  *
  * Provides an interactive timeline slider for navigating through fight replay.
@@ -113,7 +194,9 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   loopStart = null,
   loopEnd = null,
   onClearLoop,
+  density = 'expanded',
 }) => {
+  const compact = density === 'compact';
   // The rail wrapper that the hover skim-preview tracks the cursor over. A ref (not a
   // handler prop) so the preview attaches its high-frequency pointermove listener without
   // re-rendering this component or the memoized TimelineMarkers child.
@@ -140,146 +223,92 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   const loopEndPct = duration > 0 && loopEnd != null ? (loopEnd / duration) * 100 : null;
 
   return (
-    <>
+    <Box sx={compact ? { width: '100%' } : undefined}>
       {/* Time Display — the current time is the hero: a large Space-Grotesk anchor with the
           total time as a quiet trailing reference (VOD/esports convention). tabular-nums
           stops the digits jittering as the time ticks (proportional figures shift width
           every frame). The scrubbing state recolors the current time to the info hue so the
-          "you are dragging" cue is non-text (replaces the old plaintext "(SCRUBBING)"). */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 1,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-          <Typography
-            component="span"
-            sx={(theme) => ({
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              fontSize: { xs: '1.6rem', sm: '1.9rem' },
-              fontWeight: 600,
-              lineHeight: 1,
-              letterSpacing: '0.01em',
-              fontVariantNumeric: 'tabular-nums',
-              color: isScrubbingMode || isDragging ? 'info.main' : 'text.primary',
-              // Cyan text-glow gives the hero timecode the luminous "designed" quality from
-              // the bold proto (only in dark mode — it would muddy the light theme).
-              textShadow:
-                theme.palette.mode === 'dark' ? `0 0 22px ${theme.palette.primary.main}73` : 'none',
-              transition: `color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
-            })}
-          >
-            {formatTime(displayTime)}
-          </Typography>
-          <Typography
-            component="span"
-            variant="body2"
-            sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}
-          >
-            / {formatTime(duration)}
-          </Typography>
-        </Box>
-
-        {/* Context badges (encounter · difficulty · outcome · % elapsed) — the proto's
-            top-right cluster. Percent is derived live from the playhead. */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
-          {replayContext?.label && (
-            <ContextBadge>
-              {replayContext.label}
-              {replayContext.difficultyTag && (
-                <Box component="span" sx={{ color: 'secondary.main', fontWeight: 700 }}>
-                  {' '}
-                  · {replayContext.difficultyTag}
-                </Box>
-              )}
-            </ContextBadge>
-          )}
-          {replayContext?.isKill != null && (
-            <ContextBadge tone={replayContext.isKill ? 'success' : 'warning'}>
-              {replayContext.isKill ? 'Kill' : 'Wipe'}
-            </ContextBadge>
-          )}
-          {duration > 0 && (
-            <ContextBadge>
-              <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
-                {Math.round((displayTime / duration) * 100)}%
-              </Box>
-            </ContextBadge>
-          )}
-          {/* A–B loop chip — shows the active loop span and clears it (mirrors the Following chip's
-              delete affordance). Visible once at least one point is set; reads as "looping" when
-              both are. */}
-          {(loopStart != null || loopEnd != null) && (
-            <Box
+          "you are dragging" cue is non-text (replaces the old plaintext "(SCRUBBING)").
+          Hidden in compact density — the timecode + badges move to the control row below the
+          rail (rendered by PlaybackControls), so compact = rail only, full width. */}
+      {!compact && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-between',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+            <Typography
               component="span"
               sx={(theme) => ({
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.5,
-                pl: 1,
-                pr: 0.5,
-                py: 0.375,
-                borderRadius: 999,
-                border: '1px solid',
-                borderColor: 'secondary.main',
-                bgcolor: 'action.hover',
-                fontSize: '0.72rem',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontSize: { xs: '1.6rem', sm: '1.9rem' },
                 fontWeight: 600,
                 lineHeight: 1,
-                color: 'secondary.main',
-                whiteSpace: 'nowrap',
+                letterSpacing: '0.01em',
                 fontVariantNumeric: 'tabular-nums',
-                boxShadow:
+                color: isScrubbingMode || isDragging ? 'info.main' : 'text.primary',
+                // Cyan text-glow gives the hero timecode the luminous "designed" quality from
+                // the bold proto (only in dark mode — it would muddy the light theme).
+                textShadow:
                   theme.palette.mode === 'dark'
-                    ? `0 0 10px ${theme.palette.secondary.main}40`
+                    ? `0 0 22px ${theme.palette.primary.main}73`
                     : 'none',
+                transition: `color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
               })}
             >
-              Loop{' '}
-              {loopStart != null && loopEnd != null
-                ? `${formatTime(Math.min(loopStart, loopEnd))}–${formatTime(Math.max(loopStart, loopEnd))}`
-                : loopStart != null
-                  ? `A ${formatTime(loopStart)}`
-                  : `B ${formatTime(loopEnd as number)}`}
-              {onClearLoop && (
-                <Box
-                  component="button"
-                  type="button"
-                  aria-label="Clear A–B loop"
-                  onClick={onClearLoop}
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 16,
-                    height: 16,
-                    p: 0,
-                    border: 'none',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    background: 'transparent',
-                    color: 'inherit',
-                    fontSize: '0.85rem',
-                    lineHeight: 1,
-                    '&:hover': { bgcolor: 'action.selected' },
-                    '&:focus-visible': {
-                      outline: '2px solid',
-                      outlineColor: 'secondary.main',
-                      outlineOffset: 1,
-                    },
-                  }}
-                >
-                  ×
+              {formatTime(displayTime)}
+            </Typography>
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}
+            >
+              / {formatTime(duration)}
+            </Typography>
+          </Box>
+
+          {/* Context badges (encounter · difficulty · outcome · % elapsed) — the proto's
+            top-right cluster. Percent is derived live from the playhead. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+            {replayContext?.label && (
+              <ContextBadge>
+                {replayContext.label}
+                {replayContext.difficultyTag && (
+                  <Box component="span" sx={{ color: 'secondary.main', fontWeight: 700 }}>
+                    {' '}
+                    · {replayContext.difficultyTag}
+                  </Box>
+                )}
+              </ContextBadge>
+            )}
+            {replayContext?.isKill != null && (
+              <ContextBadge tone={replayContext.isKill ? 'success' : 'warning'}>
+                {replayContext.isKill ? 'Kill' : 'Wipe'}
+              </ContextBadge>
+            )}
+            {duration > 0 && (
+              <ContextBadge>
+                <Box component="span" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {Math.round((displayTime / duration) * 100)}%
                 </Box>
-              )}
-            </Box>
-          )}
+              </ContextBadge>
+            )}
+            {(loopStart != null || loopEnd != null) && (
+              <LoopChip
+                loopStart={loopStart}
+                loopEnd={loopEnd}
+                onClearLoop={onClearLoop}
+                formatTime={formatTime}
+              />
+            )}
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {/* Slider + event markers share one relatively-positioned rail so the markers
           sit ON the scrub track (chapter-marker model) rather than in a detached
@@ -450,8 +479,6 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
           <TimelineScrubPreview railRef={railRef} duration={duration} markers={markers} />
         )}
       </Box>
-      {/* NOTE: the marker legend now lives in the control row's bottom-left (PlaybackControls),
-          stacked above the speed chips — matching the bold proto's layout. */}
-    </>
+    </Box>
   );
 };

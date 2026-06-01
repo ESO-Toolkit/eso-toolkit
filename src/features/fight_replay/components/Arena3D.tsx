@@ -113,6 +113,12 @@ interface Arena3DProps {
   isFullscreen?: boolean;
   /** Toggle fullscreen of the whole replay block (owned by FightReplay3D, which holds the target ref). */
   onToggleFullscreen?: () => void;
+  /**
+   * Vertical band (px) reserved at the bottom for the transport bar, forwarded to the overlay
+   * panels so their height caps clear the bar. Owned by FightReplay3D (it knows the bar's
+   * visibility); when the bar is hidden in fullscreen it passes a tiny value so the panels grow.
+   */
+  reservedInset?: number;
 }
 
 const Arena3DComponent: React.FC<Arena3DProps> = ({
@@ -134,6 +140,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onPlayerSelectionChange,
   showPlayerPathsHUD = false,
   showPlayerTrails = false,
+  reservedInset,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
@@ -762,6 +769,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onPlayerVisibilityChange={handlePlayerVisibilityChange}
             playerColorOverrides={playerColorOverrides}
             onPlayerColorChange={handlePlayerColorChange}
+            reservedInset={reservedInset}
           />
         )}
 
@@ -948,6 +956,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             ['T', 'Player trails'],
             ['N', 'Name cards'],
             ['F', 'Fullscreen'],
+            ['C', 'Collapse controls'],
           ].map(([k, label]) => (
             <Typography
               key={k}

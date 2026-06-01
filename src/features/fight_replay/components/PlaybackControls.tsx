@@ -7,17 +7,24 @@
  * @module PlaybackControls
  */
 
-import { Box } from '@mui/material';
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import React from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
-import { TRANSPORT_SPACING, transportSurface } from '../constants/replayDesign';
+import {
+  TRANSPORT_SPACING,
+  TRANSPORT_MOTION,
+  transportSurface,
+  transportHairline,
+} from '../constants/replayDesign';
 
 import { PlaybackButtons } from './PlaybackButtons';
 import { ShareButton } from './ShareButton';
 import { SpeedSelector } from './SpeedSelector';
-import { TimelineLegend } from './TimelineLegend';
 import { TimelineSlider } from './TimelineSlider';
 
 interface PlaybackControlsProps {
@@ -60,6 +67,14 @@ interface PlaybackControlsProps {
   loopEnd?: number | null;
   /** Clear both loop points (the loop chip's delete action). */
   onClearLoop?: () => void;
+  /** True when the replay block is fullscreen — enables the cinema auto-hide + progress hairline. */
+  isFullscreen?: boolean;
+  /** Whether the bar is currently shown. When false in fullscreen the bar fades to a hairline. */
+  barVisible?: boolean;
+  /** Toggle the bar collapsed/shown (the chevron + restore caret; mirrors the C key). */
+  onToggleCollapse?: () => void;
+  /** Fraction elapsed (0–100) for the progress hairline shown while the bar is hidden. */
+  progressPct?: number;
 }
 
 /**
@@ -67,6 +82,14 @@ interface PlaybackControlsProps {
  * shortcuts (FightReplay3D) step through the SAME ladder the on-screen SpeedSelector uses.
  */
 export const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
+
+/** m:ss for the compact timecode read-out. */
+const formatTime = (timeMs: number): string => {
+  const totalSeconds = Math.floor(timeMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
 
 /**
  * PlaybackControls Component
@@ -102,6 +125,10 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   loopStart = null,
   loopEnd = null,
   onClearLoop,
+  isFullscreen = false,
+  barVisible = true,
+  onToggleCollapse,
+  progressPct = 0,
 }) => {
   // Use optimized timeline scrubbing for better performance
   const {
@@ -141,90 +168,173 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     onDraggingChange?.(isDragging);
   }, [isDragging, onDraggingChange]);
 
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  // The bar is "hidden" only in fullscreen cinema mode when barVisible is false; windowed always
+  // shows (collapse is opt-in via the chevron/C, which also flips barVisible). When hidden we fade
+  // + drop the bar and paint a thin progress hairline so the playhead stays legible.
+  const hidden = isFullscreen && !barVisible;
+  // Reduced motion: skip the translate (keep the opacity swap, which the theme zeroes globally).
+  const hideTransform = hidden && !prefersReducedMotion ? 'translateY(8px)' : 'none';
+
   return (
-    <Box
-      sx={(theme) => ({
-        display: 'flex',
-        flexDirection: 'column',
-        gap: TRANSPORT_SPACING.sectionGap,
-        px: TRANSPORT_SPACING.padX,
-        // Overlay variant trims vertical padding so the bar is thinner over the 3D scene.
-        pt: overlay ? TRANSPORT_SPACING.padBottom : TRANSPORT_SPACING.padTop,
-        pb: TRANSPORT_SPACING.padBottom,
-        // Docked "control deck" surface. In-flow below the canvas by default; the `overlay`
-        // variant is the translucent, blurred, flush-bottom bar docked over the canvas bottom
-        // (always on screen — the user chose always-visible controls over the audit's original
-        // no-floating-transport stance; translucency keeps bottom-edge occlusion minimal).
-        ...transportSurface(theme, overlay),
-      })}
-    >
-      {/* Scrub rail with time readout + event markers overlaid on the track */}
-      <TimelineSlider
-        displayTime={displayTime}
-        duration={duration}
-        isDragging={isDragging}
-        isScrubbingMode={isScrubbingMode}
-        optimizedStep={optimizedStep}
-        onSliderChange={handleSliderChange}
-        onSliderChangeEnd={handleSliderChangeEnd}
-        onSliderChangeStart={handleSliderChangeStart}
-        markers={markers}
-        onMarkerClick={handleMarkerClick}
-        replayContext={replayContext}
-        loopStart={loopStart}
-        loopEnd={loopEnd}
-        onClearLoop={onClearLoop}
-      />
+    <Box sx={{ position: 'relative' }}>
+      {/* Progress hairline — only while the fullscreen bar is hidden, so position stays legible. */}
+      {hidden && <Box sx={(t) => transportHairline(t, progressPct)} aria-hidden />}
+      {/* Restore caret sitting on the hairline — a REAL focusable button so keyboard/AT users can
+          bring the bar back without depending on pointer-move reveal. */}
+      {hidden && onToggleCollapse && (
+        <Tooltip title="Show controls (C)">
+          <IconButton
+            aria-label="Show controls"
+            size="small"
+            onClick={onToggleCollapse}
+            sx={{
+              position: 'absolute',
+              bottom: 6,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.85)',
+              backgroundColor: 'rgba(0,0,0,0.55)',
+              '&:hover': { backgroundColor: 'rgba(0,0,0,0.75)' },
+              zIndex: 1,
+            }}
+          >
+            <KeyboardArrowUp fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
 
-      {/* One dense control row: transport cluster centered, utilities split to the
-          edges. On narrow screens it wraps gracefully. */}
+      {/* The compact transport bar — a thin YouTube-style overlay. TWO stacked rows inside the
+          glass surface: (1) the scrub rail FULL-WIDTH across the top so it's always usable, and
+          (2) a short control row beneath it. This is the fix for the broken single-row layout
+          where the rail collapsed to 0px fighting the controls for horizontal space. */}
       <Box
-        sx={{
+        sx={(t) => ({
           display: 'flex',
-          alignItems: 'center',
-          gap: 1.75, // proto .ctl gap: 14px
-          flexWrap: 'wrap',
-          rowGap: TRANSPORT_SPACING.sectionGap,
-        }}
+          flexDirection: 'column',
+          gap: 0.25,
+          px: TRANSPORT_SPACING.padX,
+          pt: 0.75,
+          pb: TRANSPORT_SPACING.padBottomCompact,
+          boxSizing: 'border-box',
+          // Cinema auto-hide: fade + drop the bar (and disable its pointer events) when hidden.
+          opacity: hidden ? 0 : 1,
+          transform: hideTransform,
+          pointerEvents: hidden ? 'none' : 'auto',
+          transition: `opacity ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}, transform ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+          // Docked "control deck" surface (compact variant — lighter blur + bottom scrim).
+          ...transportSurface(t, overlay, true),
+        })}
       >
-        {/* Left: speed segment (proto .lz — flex:1) */}
+        {/* Row 1: scrub rail — full width, the primary control. density="compact" = rail only. */}
+        <TimelineSlider
+          displayTime={displayTime}
+          duration={duration}
+          isDragging={isDragging}
+          isScrubbingMode={isScrubbingMode}
+          optimizedStep={optimizedStep}
+          onSliderChange={handleSliderChange}
+          onSliderChangeEnd={handleSliderChangeEnd}
+          onSliderChangeStart={handleSliderChangeStart}
+          markers={markers}
+          onMarkerClick={handleMarkerClick}
+          replayContext={replayContext}
+          loopStart={loopStart}
+          loopEnd={loopEnd}
+          onClearLoop={onClearLoop}
+          density="compact"
+        />
+
+        {/* Row 2: a short control row — timecode + speed (left) · transport (center) ·
+            share + collapse (right). Small controls so the whole bar stays thin. */}
         <Box
-          sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-start', minWidth: 120 }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: TRANSPORT_SPACING.sectionGapCompact,
+            minHeight: 44,
+          }}
         >
-          <SpeedSelector
-            playbackSpeed={playbackSpeed}
-            onSpeedChange={onSpeedChange}
-            speeds={PLAYBACK_SPEEDS}
-          />
-        </Box>
+          {/* Left: timecode + speed */}
+          <Box
+            sx={{ flex: '1 1 0', display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}
+          >
+            <Box
+              component="span"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'baseline',
+                gap: 0.5,
+                flexShrink: 0,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontVariantNumeric: 'tabular-nums',
+                color: isScrubbingMode || isDragging ? 'info.main' : 'text.primary',
+              }}
+            >
+              <Box component="span" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                {formatTime(displayTime)}
+              </Box>
+              <Box
+                component="span"
+                sx={{ fontSize: '0.72rem', color: 'text.secondary', fontWeight: 500 }}
+              >
+                / {formatTime(duration)}
+              </Box>
+            </Box>
+            <SpeedSelector
+              playbackSpeed={playbackSpeed}
+              onSpeedChange={onSpeedChange}
+              speeds={PLAYBACK_SPEEDS}
+            />
+          </Box>
 
-        {/* Center: transport cluster — skip + play + skip (proto .cz) */}
-        <Box sx={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
-          <PlaybackButtons
-            isPlaying={isPlaying}
-            onPlayPause={onPlayPause}
-            onSkipToStart={onSkipToStart}
-            onSkipToEnd={onSkipToEnd}
-            onSkipBackward10={onSkipBackward10}
-            onSkipForward10={onSkipForward10}
-          />
-        </Box>
+          {/* Center: transport cluster (compact orb) */}
+          <Box sx={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
+            <PlaybackButtons
+              isPlaying={isPlaying}
+              onPlayPause={onPlayPause}
+              onSkipToStart={onSkipToStart}
+              onSkipToEnd={onSkipToEnd}
+              onSkipBackward10={onSkipBackward10}
+              onSkipForward10={onSkipForward10}
+              compact
+            />
+          </Box>
 
-        {/* Right: share pill (proto .rz — flex:1, justify end) */}
-        <Box sx={{ flex: '1 1 auto', display: 'flex', justifyContent: 'flex-end', minWidth: 120 }}>
-          <ShareButton
-            reportId={reportId}
-            fightId={fightId}
-            currentTime={currentTime}
-            selectedActorIdRef={selectedActorIdRef}
-            timeRef={timeRef}
-          />
+          {/* Right: share + collapse chevron */}
+          <Box
+            sx={{
+              flex: '1 1 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: 0.5,
+              minWidth: 0,
+            }}
+          >
+            <ShareButton
+              reportId={reportId}
+              fightId={fightId}
+              currentTime={currentTime}
+              selectedActorIdRef={selectedActorIdRef}
+              timeRef={timeRef}
+            />
+            {onToggleCollapse && (
+              <Tooltip title="Collapse controls (C)">
+                <IconButton
+                  aria-label="Collapse controls"
+                  size="small"
+                  onClick={onToggleCollapse}
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+                >
+                  <KeyboardArrowDown fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
         </Box>
       </Box>
-
-      {/* Legend — full-width row at the very bottom of the transport (proto .legend,
-          margin-top:13px). Below the controls, not beside the speed chips. */}
-      {markers.length > 0 && <TimelineLegend markers={markers} />}
     </Box>
   );
 };

@@ -40,7 +40,7 @@ import {
   TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
-import { ARENA_HEIGHT } from '../constants/replayDesign';
+import { ARENA_HEIGHT, TRANSPORT_RESERVED } from '../constants/replayDesign';
 import { getReplayActorResolvedAccentColor } from '../utils/actorVisualState';
 import { getPlayerInfo } from '../utils/pathUtils';
 import { PLAYER_PATH_COLORS } from '../utils/playerColors';
@@ -83,6 +83,13 @@ interface PlayerListPanelProps {
   playerColorOverrides: Map<number, string>;
   /** Set (hex) or clear (null → back to role color) a player's body color. */
   onPlayerColorChange: (actorId: number, color: string | null) => void;
+  /**
+   * Vertical band (px) reserved at the bottom for the docked transport bar, subtracted from the
+   * panel's height caps so a long roster stops ABOVE the bar instead of plunging into it. Defaults
+   * to the full bar height (TRANSPORT_RESERVED); callers pass a smaller value when the bar is
+   * hidden (fullscreen cinema mode) so the panel reclaims that space.
+   */
+  reservedInset?: number;
 }
 
 interface PlayerRowInfo {
@@ -112,6 +119,7 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   onPlayerVisibilityChange,
   playerColorOverrides,
   onPlayerColorChange,
+  reservedInset = TRANSPORT_RESERVED,
 }) => {
   const theme = useTheme();
   const [collapsed, setCollapsed] = useState(false);
@@ -196,8 +204,9 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
         left: 16,
         width: 232,
         maxWidth: 'calc(100% - 32px)',
-        // Cap to the arena viewport so the scroll region — not the page — absorbs overflow.
-        maxHeight: 'calc(100% - 32px)',
+        // Cap to the arena viewport MINUS the top margin and the reserved transport band, so the
+        // scroll region — not the page — absorbs overflow AND the panel stops above the bar.
+        maxHeight: `calc(100% - ${16 + reservedInset}px)`,
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 2,
@@ -257,10 +266,11 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
             overflowY: 'auto',
             // Cap the scroll region to the arena viewport (ARENA_HEIGHT — shared so this
             // tracks the arena exactly) minus the panel's top margin (16px) + header (~30px)
-            // + a little breathing room. So a long roster scrolls WITHIN the panel and never
-            // overruns the arena — the core fix vs. the old fixed-height canvas that silently
-            // clipped players past row 12.
-            maxHeight: `calc(${ARENA_HEIGHT} - 56px)`,
+            // + a little breathing room, AND the reserved transport band so the roster never
+            // plunges into the bar. This inner cap (pinned to raw ARENA_HEIGHT) is the real
+            // overrun — the outer % cap alone doesn't bound it. The core fix vs. the old
+            // fixed-height canvas that silently clipped players past row 12.
+            maxHeight: `calc(${ARENA_HEIGHT} - 56px - ${reservedInset}px)`,
             // Slim, theme-tinted scrollbar.
             '&::-webkit-scrollbar': { width: 6 },
             '&::-webkit-scrollbar-thumb': {
