@@ -14,6 +14,7 @@ import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 
 import { CameraFollower } from './CameraFollower';
+import { CanvasWheelZoom } from './CanvasWheelZoom';
 import { DynamicMapTexture } from './DynamicMapTexture';
 import { InstancedReplayFigures3D } from './InstancedReplayFigures3D';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
@@ -556,10 +557,14 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
         <meshBasicMaterial visible={false} transparent opacity={0} />
       </mesh>
-      {/* Controls - dynamically positioned based on fight area */}
+      {/* Controls - dynamically positioned based on fight area. Zoom is handled by CanvasWheelZoom
+          (cooperative wheel: plain wheel scrolls the page through the canvas, Ctrl/⌘+wheel or
+          fullscreen zooms) instead of OrbitControls' built-in wheel zoom, which preventDefault()s
+          every wheel event and traps page scroll over the canvas. enableZoom=false also governs the
+          touch pinch, which CanvasWheelZoom re-implements minimally so mobile pinch is preserved. */}
       <OrbitControls
         enablePan={true}
-        enableZoom={true}
+        enableZoom={false}
         enableRotate={true}
         minDistance={cameraSettings.minDistance}
         maxDistance={cameraSettings.maxDistance}
@@ -568,6 +573,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         target={cameraSettings.target as [number, number, number]}
         makeDefault
       />
+      <CanvasWheelZoom />
     </>
   );
 };

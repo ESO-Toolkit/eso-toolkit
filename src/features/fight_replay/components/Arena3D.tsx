@@ -37,6 +37,7 @@ import { MarkerSpritePreview } from './MarkerSpritePreview';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
+import { ReplayZoomHint } from './ReplayZoomHint';
 
 // Create logger instance for Arena3D
 const logger = new Logger({
@@ -715,6 +716,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           />
         </Canvas>
 
+        {/* One-time "Ctrl + scroll to zoom" hint — surfaced the first time the user scrolls plainly
+            over the canvas (cooperative zoom: plain wheel scrolls the page, Ctrl/⌘+wheel zooms). */}
+        <ReplayZoomHint />
+
         {/* Boss health — DOM overlay (top-right), crisp + theme-styled. Always shown when
             bosses with health are present. */}
         <BossHealthPanel lookup={lookup} timeRef={timeRef} />
@@ -937,7 +942,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           onClick={() => setPerformanceMode((prev) => !prev)}
           sx={{
             position: 'absolute',
-            bottom: 112,
+            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
+            bottom: 200,
             right: 16,
             color: performanceMode ? '#fcd34d' : 'rgba(255, 255, 255, 0.55)',
             backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -960,7 +966,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           onClick={() => setNamesEnabled((prev) => !prev)}
           sx={{
             position: 'absolute',
-            bottom: 64,
+            bottom: 152,
             right: 16,
             color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
             backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -982,7 +988,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onClick={() => setShowKeyboardHelp(true)}
             sx={{
               position: 'absolute',
-              bottom: 16,
+              bottom: 104,
               right: 16,
               color: 'white',
               backgroundColor: 'rgba(0, 0, 0, 0.85)',

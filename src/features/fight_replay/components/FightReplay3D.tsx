@@ -1,4 +1,4 @@
-import { Paper } from '@mui/material';
+import { Box, Paper } from '@mui/material';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
@@ -60,6 +60,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // written together via setFollowingActor below — no polling needed.
   const followingActorIdRef = useRef<number | null>(initialSelectedActorId);
   const [followingActorId, setFollowingActorId] = useState<number | null>(initialSelectedActorId);
+
+  // Wrapper around the canvas + the docked control bar. Used as the fullscreen target (Item 3) so one
+  // requestFullscreen() takes the whole replay block (3D view, overlays, and the controls) at once.
+  const replayContainerRef = useRef<HTMLDivElement>(null);
 
   // Single mutation point that keeps the ref (read by the render loop) and the state
   // (read by the UI) in lockstep.
@@ -242,8 +246,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   }, []);
 
   return (
-    <React.Fragment>
-      <Paper elevation={2} sx={{ mb: 3, overflow: 'hidden' }}>
+    // Relative wrapper holds the canvas (Paper) and the playback bar as SIBLINGS so the bar can dock
+    // as a bottom overlay over the canvas — the controls stay on screen without scrolling down to play,
+    // and the canvas keeps its full height. The bar sits OUTSIDE Paper (Paper has overflow:hidden, which
+    // would clip the bar's glow). This wrapper is also the fullscreen target (Item 3): one element to
+    // requestFullscreen() and both the canvas and the controls come along. mb:3 lives on the wrapper
+    // (moved off Paper) so the spacing below the block is unchanged.
+    <Box ref={replayContainerRef} sx={{ position: 'relative', mb: 3 }}>
+      <Paper elevation={2} sx={{ overflow: 'hidden' }}>
         <Arena3D
           timeRef={animationTimeRef.timeRef}
           showActorNames={showActorNames}
@@ -263,29 +273,44 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           showPlayerTrails={showPlayerTrails}
         />
       </Paper>
-      {/* Playback Controls */}
-      <PlaybackControls
-        currentTime={currentTime}
-        duration={selectedFight.endTime - selectedFight.startTime}
-        isPlaying={isPlaying}
-        playbackSpeed={playbackSpeed}
-        onTimeChange={handleTimeChange}
-        onPlayPause={handlePlayPause}
-        onSpeedChange={handleSpeedChange}
-        onSkipToStart={handleSkipToStart}
-        onSkipToEnd={handleSkipToEnd}
-        onSkipBackward10={handleSkipBackward10}
-        onSkipForward10={handleSkipForward10}
-        onPlayingChange={handlePlayingChange}
-        onScrubbingModeChange={handleScrubbingModeChange}
-        onDraggingChange={handleDraggingChange}
-        timeRef={animationTimeRef.timeRef}
-        reportId={params.reportId}
-        fightId={params.fightId}
-        selectedActorIdRef={followingActorIdRef}
-        fightStartTime={selectedFight.startTime}
-        replayContext={replayContext}
-      />
-    </React.Fragment>
+      {/* Playback controls — docked as a translucent overlay at the bottom of the canvas. The outer
+          Box is a positioning frame only (pointer-events:none) so its transparent area never steals
+          OrbitControls drags / actor clicks from the canvas beneath; PlaybackControls re-enables
+          pointer-events on its own glass surface. */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          pointerEvents: 'none',
+          '& > *': { pointerEvents: 'auto' },
+        }}
+      >
+        <PlaybackControls
+          currentTime={currentTime}
+          duration={selectedFight.endTime - selectedFight.startTime}
+          isPlaying={isPlaying}
+          playbackSpeed={playbackSpeed}
+          onTimeChange={handleTimeChange}
+          onPlayPause={handlePlayPause}
+          onSpeedChange={handleSpeedChange}
+          onSkipToStart={handleSkipToStart}
+          onSkipToEnd={handleSkipToEnd}
+          onSkipBackward10={handleSkipBackward10}
+          onSkipForward10={handleSkipForward10}
+          onPlayingChange={handlePlayingChange}
+          onScrubbingModeChange={handleScrubbingModeChange}
+          onDraggingChange={handleDraggingChange}
+          timeRef={animationTimeRef.timeRef}
+          reportId={params.reportId}
+          fightId={params.fightId}
+          selectedActorIdRef={followingActorIdRef}
+          fightStartTime={selectedFight.startTime}
+          replayContext={replayContext}
+          overlay
+        />
+      </Box>
+    </Box>
   );
 };

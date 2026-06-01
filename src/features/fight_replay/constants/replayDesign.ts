@@ -14,7 +14,7 @@
  * @module replayDesign
  */
 
-import type { Theme } from '@mui/material/styles';
+import { alpha, type Theme } from '@mui/material/styles';
 import type { SystemStyleObject } from '@mui/system';
 
 /**
@@ -60,25 +60,34 @@ export const TRANSPORT_MOTION = {
  * "control deck" of a player rather than a flat form panel — without floating over the 3D
  * scene (the bar stays in document flow; see the audit's rejected "floating transport").
  */
-export const transportSurface = (theme: Theme): SystemStyleObject<Theme> => {
+export const transportSurface = (theme: Theme, overlay = false): SystemStyleObject<Theme> => {
   const isDark = theme.palette.mode === 'dark';
   const primary = theme.palette.primary.main;
   const secondary = theme.palette.secondary.main;
+  // Overlay variant: the bar is DOCKED over the bottom of the 3D canvas (always on screen, no
+  // scroll-to-play) rather than in document flow below it. The original audit rejected a floating
+  // transport because it occludes bottom-edge actors — the user has since chosen always-visible
+  // controls, so the overlay leans translucent + backdrop-blurred (3D scene reads faintly through,
+  // minimizing that occlusion) and squares its bottom corners to sit flush at the canvas edge.
+  const paper = theme.palette.background.paper;
+  const def = theme.palette.background.default;
   return {
     position: 'relative' as const,
-    borderRadius: 3,
+    borderRadius: overlay ? '12px 12px 0 0' : 3,
     border: '1px solid',
     borderColor: isDark ? 'rgba(148,210,255,0.18)' : 'divider',
+    ...(overlay ? { borderBottom: 'none', backdropFilter: 'blur(10px)' } : null),
     // Layered atmosphere — two soft accent glows pooling from the top corners over a vertical
     // panel gradient, so the bar reads as a lit "control deck" with depth, not a flat form
     // panel. All pure paint (no layout, no per-frame cost). Dark mode leans into the glow;
-    // light mode keeps it whisper-subtle.
+    // light mode keeps it whisper-subtle. The overlay variant uses translucent panel/default
+    // stops so the 3D scene shows faintly through the blur.
     backgroundImage: isDark
       ? `radial-gradient(120% 140% at 12% 0%, ${primary}24, transparent 42%),
          radial-gradient(90% 120% at 92% 8%, ${secondary}14, transparent 50%),
-         linear-gradient(180deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`
+         linear-gradient(180deg, ${overlay ? alpha(paper, 0.82) : paper} 0%, ${overlay ? alpha(def, 0.82) : def} 100%)`
       : `radial-gradient(120% 140% at 12% 0%, ${primary}10, transparent 45%),
-         linear-gradient(180deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 120%)`,
+         linear-gradient(180deg, ${overlay ? alpha(paper, 0.88) : paper} 0%, ${overlay ? alpha(def, 0.88) : def} 120%)`,
     boxShadow: isDark
       ? '0 14px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)'
       : '0 10px 28px rgba(15,23,42,0.12), inset 0 1px 0 rgba(255,255,255,0.7)',

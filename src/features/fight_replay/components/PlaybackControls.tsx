@@ -47,6 +47,13 @@ interface PlaybackControlsProps {
     difficultyTag?: string;
     isKill?: boolean | null;
   };
+  /**
+   * When true the bar is docked as a translucent overlay over the bottom of the 3D canvas (always
+   * on screen, no scroll-to-play) rather than sitting in document flow below it. Uses the blurred,
+   * flush-bottom surface variant and slightly tighter vertical padding to minimize occlusion of
+   * bottom-edge actors.
+   */
+  overlay?: boolean;
 }
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4, 5];
@@ -81,6 +88,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   selectedActorIdRef,
   fightStartTime: _fightStartTime,
   replayContext,
+  overlay = false,
 }) => {
   // Use optimized timeline scrubbing for better performance
   const {
@@ -127,12 +135,14 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         flexDirection: 'column',
         gap: TRANSPORT_SPACING.sectionGap,
         px: TRANSPORT_SPACING.padX,
-        pt: TRANSPORT_SPACING.padTop,
+        // Overlay variant trims vertical padding so the bar is thinner over the 3D scene.
+        pt: overlay ? TRANSPORT_SPACING.padBottom : TRANSPORT_SPACING.padTop,
         pb: TRANSPORT_SPACING.padBottom,
-        // Docked "control deck" surface — a faint top-edge accent wash lifts it off the
-        // arena above without floating over the 3D scene (see audit: rejected floating
-        // transport, which would occlude bottom-edge actors).
-        ...transportSurface(theme),
+        // Docked "control deck" surface. In-flow below the canvas by default; the `overlay`
+        // variant is the translucent, blurred, flush-bottom bar docked over the canvas bottom
+        // (always on screen — the user chose always-visible controls over the audit's original
+        // no-floating-transport stance; translucency keeps bottom-edge occlusion minimal).
+        ...transportSurface(theme, overlay),
       })}
     >
       {/* Scrub rail with time readout + event markers overlaid on the track */}
