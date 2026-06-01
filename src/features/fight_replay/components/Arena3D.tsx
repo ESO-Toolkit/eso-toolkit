@@ -1,4 +1,4 @@
-import { LockOpen, Videocam } from '@mui/icons-material';
+import { Fullscreen, FullscreenExit, LockOpen, Videocam } from '@mui/icons-material';
 import Bolt from '@mui/icons-material/Bolt';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
@@ -108,6 +108,10 @@ interface Arena3DProps {
   showPlayerPathsHUD?: boolean;
   /** Whether to show player trail paths */
   showPlayerTrails?: boolean;
+  /** True when the replay block is fullscreen (drives the fill-height layout + the toggle icon). */
+  isFullscreen?: boolean;
+  /** Toggle fullscreen of the whole replay block (owned by FightReplay3D, which holds the target ref). */
+  onToggleFullscreen?: () => void;
 }
 
 const Arena3DComponent: React.FC<Arena3DProps> = ({
@@ -119,6 +123,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   followingActorId,
   onCameraUnlock,
   onActorClick,
+  isFullscreen = false,
+  onToggleFullscreen,
   markersState,
   onAddMarker,
   onRemoveMarker,
@@ -637,7 +643,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   return (
     <div
-      style={{ width: '100%', height: ARENA_HEIGHT, position: 'relative' }}
+      style={{
+        width: '100%',
+        // Fill the fullscreen container's height; otherwise the responsive 16:9-ish clamp.
+        height: isFullscreen ? '100%' : ARENA_HEIGHT,
+        position: 'relative',
+      }}
       role="img"
       aria-label="3D fight replay arena showing player positions over time"
     >
@@ -870,7 +881,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         <Box
           sx={{
             position: 'absolute',
-            bottom: 16,
+            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
+            bottom: 104,
             right: 16,
             backgroundColor: 'rgba(0, 0, 0, 0.85)',
             borderRadius: 1,
@@ -897,7 +909,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             variant="caption"
             sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
           >
-            <strong>Mouse:</strong> Rotate & zoom
+            <strong>Mouse drag:</strong> Rotate · <strong>Ctrl+scroll:</strong> Zoom
           </Typography>
           <Typography
             variant="caption"
@@ -919,12 +931,43 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           </Typography>
           <Typography
             variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>F:</strong> Fullscreen
+          </Typography>
+          <Typography
+            variant="caption"
             sx={{ color: 'rgba(255, 255, 255, 0.5)', display: 'block', mt: 1, fontSize: '0.7rem' }}
           >
             Press H to toggle this help
           </Typography>
         </Box>
       </Collapse>
+
+      {/* Fullscreen toggle — fullscreens the whole replay block (canvas + overlays + control bar).
+          Topmost in the bottom-right cluster; mirrors the F key. */}
+      {onToggleFullscreen && (
+        <Tooltip title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
+          <IconButton
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            aria-pressed={isFullscreen}
+            size="small"
+            onClick={onToggleFullscreen}
+            sx={{
+              position: 'absolute',
+              bottom: 248,
+              right: 16,
+              color: 'rgba(255, 255, 255, 0.7)',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+      )}
 
       {/* Performance-mode toggle — drops player-figure shadows for extra headroom on very large
           fights. Button-only (P/T are already bound to the player-paths HUD and trails). */}

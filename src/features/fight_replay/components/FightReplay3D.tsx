@@ -221,6 +221,26 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setFollowingActor(null);
   }, [setFollowingActor]);
 
+  // Fullscreen the whole replay block (canvas + overlays + the docked control bar, all of which live
+  // inside replayContainerRef). Toggled by the button in Arena3D's cluster and the `f` key.
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const toggleFullscreen = useCallback(() => {
+    const el = replayContainerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void el.requestFullscreen?.();
+    }
+  }, []);
+  useEffect(() => {
+    // Track real fullscreen state (covers Esc / browser-driven exit, not just our button).
+    const onChange = (): void =>
+      setIsFullscreen(document.fullscreenElement === replayContainerRef.current);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
   // Keyboard shortcuts for player path features
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent): void => {
@@ -238,12 +258,16 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           setShowPlayerTrails((prev) => !prev);
           event.preventDefault();
           break;
+        case 'f': // Toggle fullscreen of the replay block
+          toggleFullscreen();
+          event.preventDefault();
+          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [toggleFullscreen]);
 
   return (
     // Relative wrapper holds the canvas (Paper) and the playback bar as SIBLINGS so the bar can dock
@@ -252,10 +276,28 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     // would clip the bar's glow). This wrapper is also the fullscreen target (Item 3): one element to
     // requestFullscreen() and both the canvas and the controls come along. mb:3 lives on the wrapper
     // (moved off Paper) so the spacing below the block is unchanged.
-    <Box ref={replayContainerRef} sx={{ position: 'relative', mb: 3 }}>
+    <Box
+      ref={replayContainerRef}
+      sx={{
+        position: 'relative',
+        mb: 3,
+        // When fullscreen, the container fills the screen and its inner Paper/canvas fill height
+        // (Arena3D swaps ARENA_HEIGHT → 100% via the isFullscreen prop). The control bar stays
+        // docked at the bottom of the now-taller canvas, so playback works in fullscreen.
+        '&:fullscreen': {
+          mb: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: '#1a1a1a',
+          '& > .MuiPaper-root': { height: '100%', borderRadius: 0 },
+        },
+      }}
+    >
       <Paper elevation={2} sx={{ overflow: 'hidden' }}>
         <Arena3D
           timeRef={animationTimeRef.timeRef}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={toggleFullscreen}
           showActorNames={showActorNames}
           mapTimeline={mapTimeline}
           scrubbingMode={scrubbingMode}
