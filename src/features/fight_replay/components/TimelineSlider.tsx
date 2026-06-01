@@ -48,6 +48,12 @@ interface TimelineSliderProps {
     /** Whether the pull was a kill (true), a wipe (false), or unknown (undefined). */
     isKill?: boolean | null;
   };
+  /** A–B loop in-point (ms), or null when unset. Renders a shaded region + A flag on the rail. */
+  loopStart?: number | null;
+  /** A–B loop out-point (ms), or null when unset. Renders the B flag + completes the region. */
+  loopEnd?: number | null;
+  /** Clear both loop points (the loop chip's delete action). */
+  onClearLoop?: () => void;
 }
 
 /** Small pill badge for the transport's contextual read-outs (encounter, outcome, %). */
@@ -104,6 +110,9 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
   markers,
   onMarkerClick,
   replayContext,
+  loopStart = null,
+  loopEnd = null,
+  onClearLoop,
 }) => {
   // The rail wrapper that the hover skim-preview tracks the cursor over. A ref (not a
   // handler prop) so the preview attaches its high-frequency pointermove listener without
@@ -117,6 +126,18 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }, []);
+
+  // Normalize the A–B loop to [lo, hi] percentages of the rail for the region overlay. Both
+  // points must be set for the shaded region; a single point still shows its flag.
+  const loopRegion =
+    duration > 0 && loopStart != null && loopEnd != null
+      ? {
+          loPct: (Math.min(loopStart, loopEnd) / duration) * 100,
+          hiPct: (Math.max(loopStart, loopEnd) / duration) * 100,
+        }
+      : null;
+  const loopStartPct = duration > 0 && loopStart != null ? (loopStart / duration) * 100 : null;
+  const loopEndPct = duration > 0 && loopEnd != null ? (loopEnd / duration) * 100 : null;
 
   return (
     <>
@@ -188,6 +209,74 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
                 {Math.round((displayTime / duration) * 100)}%
               </Box>
             </ContextBadge>
+          )}
+          {/* A–B loop chip — shows the active loop span and clears it (mirrors the Following chip's
+              delete affordance). Visible once at least one point is set; reads as "looping" when
+              both are. */}
+          {(loopStart != null || loopEnd != null) && (
+            <Box
+              component="span"
+              sx={(theme) => ({
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                pl: 1,
+                pr: 0.5,
+                py: 0.375,
+                borderRadius: 999,
+                border: '1px solid',
+                borderColor: 'secondary.main',
+                bgcolor: 'action.hover',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                lineHeight: 1,
+                color: 'secondary.main',
+                whiteSpace: 'nowrap',
+                fontVariantNumeric: 'tabular-nums',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? `0 0 10px ${theme.palette.secondary.main}40`
+                    : 'none',
+              })}
+            >
+              Loop{' '}
+              {loopStart != null && loopEnd != null
+                ? `${formatTime(Math.min(loopStart, loopEnd))}–${formatTime(Math.max(loopStart, loopEnd))}`
+                : loopStart != null
+                  ? `A ${formatTime(loopStart)}`
+                  : `B ${formatTime(loopEnd as number)}`}
+              {onClearLoop && (
+                <Box
+                  component="button"
+                  type="button"
+                  aria-label="Clear A–B loop"
+                  onClick={onClearLoop}
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 16,
+                    height: 16,
+                    p: 0,
+                    border: 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    background: 'transparent',
+                    color: 'inherit',
+                    fontSize: '0.85rem',
+                    lineHeight: 1,
+                    '&:hover': { bgcolor: 'action.selected' },
+                    '&:focus-visible': {
+                      outline: '2px solid',
+                      outlineColor: 'secondary.main',
+                      outlineOffset: 1,
+                    },
+                  }}
+                >
+                  ×
+                </Box>
+              )}
+            </Box>
           )}
         </Box>
       </Box>
@@ -270,6 +359,61 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
             },
           })}
         />
+
+        {/* A–B loop region — a shaded band between the in/out points, drawn UNDER the slider
+            (zIndex 0, pointer-events none) so it tints the track without intercepting drags or
+            the markers above. A sibling of the slider/markers (never an ancestor) so it can't
+            re-render the memoized TimelineMarkers list. */}
+        {loopRegion && (
+          <Box
+            aria-hidden
+            sx={(theme) => ({
+              position: 'absolute',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              left: `${loopRegion.loPct}%`,
+              width: `${Math.max(0, loopRegion.hiPct - loopRegion.loPct)}%`,
+              height: 14,
+              borderRadius: 1,
+              pointerEvents: 'none',
+              zIndex: 0,
+              backgroundColor: `${theme.palette.secondary.main}26`,
+              borderLeft: `2px solid ${theme.palette.secondary.main}`,
+              borderRight: `2px solid ${theme.palette.secondary.main}`,
+            })}
+          />
+        )}
+        {/* A / B flags — small caps at the in/out points so each is visible even before both are
+            set (single-point loops still get a flag). Decorative, pointer-events none. */}
+        {[
+          { pct: loopStartPct, label: 'A' },
+          { pct: loopEndPct, label: 'B' },
+        ].map(({ pct, label }) =>
+          pct == null ? null : (
+            <Box
+              key={label}
+              aria-hidden
+              sx={(theme) => ({
+                position: 'absolute',
+                top: '50%',
+                left: `${pct}%`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 2,
+                pointerEvents: 'none',
+                px: 0.5,
+                borderRadius: 0.5,
+                fontSize: '0.6rem',
+                fontWeight: 700,
+                lineHeight: 1.4,
+                color: theme.palette.secondary.contrastText,
+                backgroundColor: theme.palette.secondary.main,
+                boxShadow: `0 0 6px ${theme.palette.secondary.main}99`,
+              })}
+            >
+              {label}
+            </Box>
+          ),
+        )}
 
         {/* Event markers overlaid on the rail. The wrapper sits ABOVE the slider
             (zIndex 2) so each marker can receive its own hover/click — otherwise the

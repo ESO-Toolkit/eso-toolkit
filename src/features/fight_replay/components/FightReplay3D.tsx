@@ -147,6 +147,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [isScrubbingMode, setIsScrubbingMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // A–B loop in/out points (ms into the fight), set with i/o. Raw (unordered); the playback hook
+  // normalizes lo/hi. Both set + a sane span → playback wraps within [A,B] until the chip clears.
+  const [loopStart, setLoopStart] = useState<number | null>(null);
+  const [loopEnd, setLoopEnd] = useState<number | null>(null);
+
   // High-performance time reference for 3D updates
   const animationTimeRef = useAnimationTimeRef({
     initialTime: currentTime,
@@ -162,6 +167,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     duration: selectedFight.endTime - selectedFight.startTime,
     onTimeUpdate: setCurrentTime,
     onEnd: () => setIsPlaying(false),
+    loopStart,
+    loopEnd,
   });
 
   // Scrubbing mode optimization
@@ -293,6 +300,22 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     [markers, animationTimeRef.timeRef, currentTime, duration, seekTo],
   );
 
+  // A–B loop: set the in/out point to the LIVE playhead (ref, not the lagged currentTime state).
+  const setLoopInPoint = useCallback(() => {
+    const t = animationTimeRef.timeRef.current ?? currentTime;
+    setLoopStart(Math.max(0, Math.min(duration, t)));
+  }, [animationTimeRef.timeRef, currentTime, duration]);
+
+  const setLoopOutPoint = useCallback(() => {
+    const t = animationTimeRef.timeRef.current ?? currentTime;
+    setLoopEnd(Math.max(0, Math.min(duration, t)));
+  }, [animationTimeRef.timeRef, currentTime, duration]);
+
+  const clearLoop = useCallback(() => {
+    setLoopStart(null);
+    setLoopEnd(null);
+  }, []);
+
   const handleActorClick = useCallback(
     (actorId: number) => {
       // Set camera to follow the clicked actor
@@ -408,12 +431,29 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           toggleFullscreen();
           event.preventDefault();
           break;
+        case 'i': // Set A–B loop IN point at the current time
+          setLoopInPoint();
+          event.preventDefault();
+          break;
+        case 'o': // Set A–B loop OUT point at the current time
+          setLoopOutPoint();
+          event.preventDefault();
+          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [toggleFullscreen, handlePlayPause, seekBy, stepSpeed, frameStep, jumpToEvent]);
+  }, [
+    toggleFullscreen,
+    handlePlayPause,
+    seekBy,
+    stepSpeed,
+    frameStep,
+    jumpToEvent,
+    setLoopInPoint,
+    setLoopOutPoint,
+  ]);
 
   return (
     // Relative wrapper holds the canvas (Paper) and the playback bar as SIBLINGS so the bar can dock
@@ -496,6 +536,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           selectedActorIdRef={followingActorIdRef}
           fightStartTime={selectedFight.startTime}
           replayContext={replayContext}
+          loopStart={loopStart}
+          loopEnd={loopEnd}
+          onClearLoop={clearLoop}
           overlay
         />
       </Box>

@@ -54,6 +54,12 @@ interface PlaybackControlsProps {
    * bottom-edge actors.
    */
   overlay?: boolean;
+  /** A–B loop in-point (ms into the fight), or null when unset. Drives the rail region + chip. */
+  loopStart?: number | null;
+  /** A–B loop out-point (ms), or null when unset. */
+  loopEnd?: number | null;
+  /** Clear both loop points (the loop chip's delete action). */
+  onClearLoop?: () => void;
 }
 
 /**
@@ -93,6 +99,9 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   fightStartTime: _fightStartTime,
   replayContext,
   overlay = false,
+  loopStart = null,
+  loopEnd = null,
+  onClearLoop,
 }) => {
   // Use optimized timeline scrubbing for better performance
   const {
@@ -162,6 +171,9 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         markers={markers}
         onMarkerClick={handleMarkerClick}
         replayContext={replayContext}
+        loopStart={loopStart}
+        loopEnd={loopEnd}
+        onClearLoop={onClearLoop}
       />
 
       {/* One dense control row: transport cluster centered, utilities split to the

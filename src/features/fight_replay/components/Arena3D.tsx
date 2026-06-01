@@ -904,51 +904,59 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             maxWidth: 280,
           }}
         >
-          <Typography variant="subtitle2" sx={{ color: 'white', mb: 1, fontWeight: 600 }}>
-            Camera Controls
+          <Typography variant="subtitle2" sx={{ color: 'white', mb: 0.5, fontWeight: 600 }}>
+            Camera
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>WASD:</strong> Move camera
+          {[
+            ['WASD', 'Move camera'],
+            ['Shift', 'Sprint'],
+            ['Drag', 'Rotate · Ctrl+scroll: Zoom'],
+            ['R', 'Reset view · G: Frame all'],
+          ].map(([k, label]) => (
+            <Typography
+              key={k}
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
+            >
+              <strong>{k}:</strong> {label}
+            </Typography>
+          ))}
+          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
+            Playback
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>Shift:</strong> Sprint (faster movement)
+          {[
+            ['Space', 'Play / pause'],
+            ['← →', 'Seek ±1s · Shift: ±10s'],
+            ['+ −', 'Speed up / down'],
+            [', .', 'Frame step'],
+            ['< >', 'Prev / next event'],
+            ['I O', 'Set loop in / out'],
+          ].map(([k, label]) => (
+            <Typography
+              key={k}
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
+            >
+              <strong>{k}:</strong> {label}
+            </Typography>
+          ))}
+          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
+            View
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>Mouse drag:</strong> Rotate · <strong>Ctrl+scroll:</strong> Zoom
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>P:</strong> Toggle player list
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>T:</strong> Toggle player trails
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>N:</strong> Toggle name cards
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>F:</strong> Fullscreen
-          </Typography>
+          {[
+            ['P', 'Player list'],
+            ['T', 'Player trails'],
+            ['N', 'Name cards'],
+            ['F', 'Fullscreen'],
+          ].map(([k, label]) => (
+            <Typography
+              key={k}
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
+            >
+              <strong>{k}:</strong> {label}
+            </Typography>
+          ))}
           <Typography
             variant="caption"
             sx={{ color: 'rgba(255, 255, 255, 0.5)', display: 'block', mt: 1, fontSize: '0.7rem' }}
