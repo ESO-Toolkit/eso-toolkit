@@ -24,7 +24,8 @@ import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
 import { BatchedActorNames3D } from './BatchedActorNames3D';
 
 /**
- * Instanced port of the standing-figure actor marker (`FigureReplayActors3D`).
+ * Instanced renderer for the standing-figure actor marker (body capsule + role-glyph cap + ground
+ * anchor ring + facing wedge + state rings + name card).
  *
  * The figure design is unchanged — body capsule + role-glyph cap + ground anchor ring + facing
  * wedge + state rings + name card. What changes is the rendering architecture: instead of one
@@ -64,7 +65,7 @@ const HIDDEN_SCALE = 0.0001;
 const MAX_ACTOR_HOVER_DISTANCE = 1000;
 
 // Threat (boss/enemy) figures stand large; players stay short/slim so the crowd doesn't wall off
-// the view — identical constants to FigureReplayActors3D.
+// the view.
 const THREAT_SCALE = 1.55;
 const PLAYER_SCALE = 0.82;
 
@@ -78,7 +79,7 @@ function getActorIdsFromLookup(lookup: TimestampPositionLookup | null): number[]
   return Array.from(ids).sort((a, b) => a - b);
 }
 
-// Flat ground wedge pointing in the actor's facing (+Z local), matching FigureReplayActors3D.
+// Flat ground wedge pointing in the actor's facing (+Z local).
 function createVisionCone(scale: number): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
   const radius = 0.18 * scale;

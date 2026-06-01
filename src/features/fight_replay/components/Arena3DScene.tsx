@@ -164,7 +164,7 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     // Keep rendering whenever an actor is followed/selected. Load-bearing for TWO reasons,
     // do not remove as "redundant":
     //  1. the follow camera lerps toward its target every frame while active;
-    //  2. the same ref drives FigureReplayActors3D selection, so an actor's
+    //  2. the same ref drives InstancedReplayFigures3D selection, so an actor's
     //     selection ring update (driven off this ref, not off timeRef) only paints while
     //     paused because this refill keeps the budget topped up.
     //     Deselecting routes through React state (FightReplay3D.setFollowingActor → commit),
