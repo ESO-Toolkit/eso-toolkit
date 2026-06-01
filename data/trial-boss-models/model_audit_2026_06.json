@@ -336,7 +336,7 @@
   "boss": "Assembly General",
   "type": "creature",
   "species": "DwarvenColossus",
-  "currentModel": "ClockWorkImperfect_A_Basic",
+  "currentModel": "DwarvenColossus_Body_A_Basic",
   "file_index": 1158669,
   "verdict": "likely-wrong",
   "realIdentity": "Dwarven Colossus (Dwemer/Dwarven Automaton — animunculus construct), not a humanoid race",
@@ -346,7 +346,8 @@
   "correctDesc": "A Dwarven Colossus — a massive (~6.3 m tall) brass/bronze Dwemer automaton with an imposing armored humanoid silhouette. It has asymmetric arms: a rotary blade gauntlet on one arm and a flame bellows cannon on the other. It is essentially a giant, heavily-armed version of a Dwarven Centurion. In the fight it stays rooted in place except during phase transitions.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Assembly_General",
-  "action": "FIX"
+  "action": "KEEP",
+  "note": "FIXED 2026-06: re-extracted correct Dwarven Colossus body mesh (fi=1055511). Render-confirmed."
  },
  {
   "trial": "Halls of Fabrication",
@@ -960,7 +961,7 @@
   "boss": "Red Witch Gedna Relvel",
   "type": "humanoid",
   "species": null,
-  "currentModel": null,
+  "currentModel": "Lich_A_Basic",
   "file_index": null,
   "verdict": "likely-wrong",
   "realIdentity": "Dark Elf (Dunmer) Lich — undead spellcaster",
@@ -970,7 +971,8 @@
   "correctDesc": "A skeletal, robed, floating undead spellcaster — the ESO \"Lich\" creature: gaunt withered/corpse-like face and hands, hooded/tattered mage robes, hunched humanoid silhouette that hovers rather than walks (lich \"flying\" behavior). As the \"Red Witch\" / \"Crimson Witch,\" she is almost certainly a red-tinted recolor of the base Lich creature model, not a living elf in robes. Distinct skeletal-undead silhouette, NOT a fleshed Dunmer mage.",
   "confidence": "medium",
   "reference": "https://en.uesp.net/wiki/Online:Red_Witch_Gedna_Relvel",
-  "action": "FIX"
+  "action": "KEEP",
+  "note": "FIXED 2026-06: re-extracted Lich mesh (fi=650555). Render-confirmed."
  },
  {
   "trial": "Ossein Cage",

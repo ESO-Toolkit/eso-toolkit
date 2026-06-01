@@ -207,3 +207,8 @@ discord-notify-worker/node_modules/
 
 # Claude agent scratch workspace — heavy artefacts (GLBs, renders, traces).
 /.scratch/
+
+# Proprietary Oodle decompression DLL (copied from an ESO/other game install at
+# extraction time — never commit). The extractor's own .gitignore covers its
+# target/ copy; this guards any stray copy anywhere in the tree.
+oo2core_*.dll
