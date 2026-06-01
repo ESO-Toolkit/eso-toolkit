@@ -76,10 +76,21 @@ const THREAT_SCALE = 1.55;
 const PLAYER_SCALE = 0.82;
 
 // Players render as a humanoid figure (CoolStickman, CC0); non-players keep the capsule blob so
-// the SHAPE itself signals "this is a player". The two body layers swap visibility per actor (the
-// same hide-at-y=-10000 trick the glyph groups use), so one body geometry is shown per actor and
-// instanceId → actorId stays uniform across every layer.
-const HUMANOID_MODEL_URL = `${import.meta.env.BASE_URL}models/coolstickman-baked.glb`;
+// the SHAPE itself signals "this is a player". The humanoid is a 5-POSE WALK FLIPBOOK: one neutral
+// idle stand + four walk-cycle poses (contact L, passing, contact R, passing), each a
+// single-material static mesh baked from the same rig (.scratch/bake-stickman-walk.mjs). Each pose
+// is its own InstancedMesh layer (exactly like the glyph groups), all sized to the full
+// instanceCount with instanceId → actorId uniform across every layer. A player is shown in the ONE
+// pose layer matching its current walk-cycle phase (derived from accumulated travel distance) and
+// hidden (y=-10000) in the other four. Non-players keep the capsule body. Draw-call cost is +4
+// layers (O(1), NOT per-actor) over a single-pose humanoid; instancing is preserved.
+const HUMANOID_WALK_MODEL_URL = `${import.meta.env.BASE_URL}models/coolstickman-walk.glb`;
+// Pose layer order. Index 0 is the idle stand; 1..4 are the walk cycle in phase order. The GLB
+// stores them as named meshes; we load them into this fixed order so the renderer indexes poses by
+// walk-cycle phase. WALK_POSE_COUNT (4) is the cyclic stride length used for phase math.
+const POSE_NAMES = ['idle', 'walk1', 'walk2', 'walk3', 'walk4'] as const;
+const POSE_COUNT = POSE_NAMES.length; // 5
+const WALK_POSE_COUNT = POSE_COUNT - 1; // 4 cyclic walk poses; index 0 is idle
 // Baked figure is 1.987m tall, feet at y=0. Normalize it to roughly the capsule figure's visual
 // height so the player crowd reads at a comparable scale and doesn't wall off the view. The
 // capsule body+cap stack at PLAYER_SCALE is ≈0.6 world units; a touch taller reads cleanly as a
@@ -88,10 +99,22 @@ const HUMANOID_RAW_HEIGHT = 1.987;
 const HUMANOID_TARGET_HEIGHT = 0.95;
 const HUMANOID_NORMALIZE = HUMANOID_TARGET_HEIGHT / HUMANOID_RAW_HEIGHT;
 
-// Movement-driven gait tuning. Speed is smoothed per-frame travel distance (world units/frame).
-// SPEED_FULL is the per-frame distance at which lean/bob hit full strength; above it they clamp.
-const GAIT_SPEED_SMOOTHING = 0.25; // EMA factor on raw per-frame distance (0..1; higher = snappier)
-const GAIT_SPEED_FULL = 0.12; // units/frame that maps to full lean/bob
+// Movement-driven gait tuning.
+//
+// Speed is measured in world units per SECOND (raw per-frame travel ÷ frame delta), NOT per frame.
+// This is load-bearing: a per-frame measure shrinks as framerate rises (less fight-time elapses per
+// frame), so a per-frame gate suppresses the walk/lean on high-refresh monitors while passing on
+// 60Hz — the same dilution that left a prior lean/bob "too subtle to see". Normalizing by delta
+// makes the gate and the lean/bob strength framerate-independent. (The walk-POSE index and bob
+// PHASE key off accumulated travel *distance* — a path length — so they were already framerate- and
+// playback-speed-independent; only the speed-derived gate + magnitudes needed the delta.)
+//
+// Thresholds are in units/second, derived from this fight's lookup ground-truth (top mover 134u /
+// median 64u over 215s → ~0.3–0.6 u/s typical, bursts higher) and verified by a deterministic
+// gait simulation over the lookup at both 60 and 165fps: all four walk poses occupy ~evenly and the
+// walk fraction is framerate-stable (~0.58). Re-derive from data if a very different fight is used.
+const GAIT_SPEED_SMOOTHING = 0.25; // EMA factor on raw per-second speed (0..1; higher = snappier)
+const GAIT_SPEED_FULL = 0.6; // units/SECOND mapping to full lean/bob (≈ a brisk reposition)
 const GAIT_MAX_LEAN = 0.22; // radians of forward lean at full speed (~12.6°)
 const GAIT_BOB_AMP = 0.05; // world-unit vertical bob amplitude at full speed
 // Bob cycles per world unit travelled. Actors move fast (~0.5–1.1 units/frame), so this MUST stay
@@ -99,6 +122,24 @@ const GAIT_BOB_AMP = 0.05; // world-unit vertical bob amplitude at full speed
 // frame). 0.4 keeps it well under the 0.5-cycle/frame Nyquist limit even at the fastest observed
 // step, so the bob reads as a slow rise/fall over a stride rather than a jitter.
 const GAIT_BOB_FREQ = 0.4;
+
+// Walk-flipbook phase tuning.
+// STRIDE_LEN = world units of travel per single pose step. The active walk pose advances as
+// floor(distance / STRIDE_LEN) % WALK_POSE_COUNT, where `distance` is accumulated path length —
+// framerate- and playback-speed-independent. Strobe-safety bound: floor((d+Δ)/S) − floor(d/S) is 0
+// or 1 whenever the per-frame path increment Δ < STRIDE_LEN, so as long as STRIDE_LEN exceeds the
+// sustained per-frame travel, the pose advances at most one step per frame (no leg vibration).
+// Sustained per-frame travel is small (sub-0.05u even at 5× playback on 60Hz), so 0.4 is safely
+// above it. Cadence: with ~0.3–0.6 u/s typical movement, 0.4 yields a step roughly every ~1s while
+// repositioning and several per second during bursts — deliberate and readable. The lookup-driven
+// gait sim confirmed all four poses cycle ~evenly. THIS IS THE LEAD LOOK TUNABLE: higher =
+// slower/longer strides, lower = quicker cadence (keep ≳0.1 to stay strobe-safe). Tune live.
+const STRIDE_LEN = 0.4;
+// Below this smoothed speed (units/SECOND) the figure is treated as standing → idle pose, no stride.
+// Must sit below typical movement (~0.3–0.6 u/s) and above standstill (~0) so genuinely-walking
+// players cycle while parked players hold idle. 0.15 u/s splits that gap; the gait sim showed a
+// ~0.58 walk fraction at this value, framerate-stable across 60–165fps.
+const GAIT_MOVE_EPSILON = 0.15;
 
 function isPlayerActor(actor: ActorPosition): boolean {
   return actor.type === 'player';
@@ -222,24 +263,32 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // mid-fight), so we can assign each actor to one glyph group once and only toggle visibility.
   const glyphSymbolByIndex = useRef<GlyphSymbol[]>([]);
 
-  // Async-loaded humanoid body geometry (CoolStickman bake). Null until the GLB resolves; players
-  // fall back to the capsule body until then. Setting state on load triggers a React commit, which
+  // Async-loaded humanoid pose geometries (the 5-pose walk flipbook). Null until the GLB resolves;
+  // players fall back to the capsule body until then. The array holds one BufferGeometry per pose in
+  // POSE_NAMES order (idle, walk1..walk4). Setting state on load triggers a React commit, which
   // refills the on-demand render budget (Arena3DScene) so the swap actually paints while paused.
-  const [humanoidGeometry, setHumanoidGeometry] = useState<THREE.BufferGeometry | null>(null);
+  const [poseGeometries, setPoseGeometries] = useState<THREE.BufferGeometry[] | null>(null);
   useEffect(() => {
     let cancelled = false;
     const loader = new GLTFLoader();
     loader.load(
-      HUMANOID_MODEL_URL,
+      HUMANOID_WALK_MODEL_URL,
       (gltf) => {
         if (cancelled) return;
-        let geo: THREE.BufferGeometry | null = null;
+        // Collect the named pose meshes and order them by POSE_NAMES so index → walk-cycle phase.
+        const byName = new Map<string, THREE.BufferGeometry>();
         gltf.scene.traverse((obj) => {
-          if (!geo && (obj as THREE.Mesh).isMesh) {
-            geo = (obj as THREE.Mesh).geometry as THREE.BufferGeometry;
+          const mesh = obj as THREE.Mesh;
+          if (mesh.isMesh && mesh.geometry) {
+            byName.set(mesh.name, mesh.geometry as THREE.BufferGeometry);
           }
         });
-        if (geo) setHumanoidGeometry(geo);
+        const ordered = POSE_NAMES.map((name) => byName.get(name));
+        // Only swap in the flipbook if every expected pose is present; otherwise keep the capsule
+        // fallback (a partial set would leave some phases blank).
+        if (ordered.every((g): g is THREE.BufferGeometry => g !== undefined)) {
+          setPoseGeometries(ordered);
+        }
       },
       undefined,
       () => {
@@ -254,7 +303,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // Mesh refs.
   const bodyRef = useRef<THREE.InstancedMesh>(null);
   const capRef = useRef<THREE.InstancedMesh>(null);
-  const humanoidRef = useRef<THREE.InstancedMesh>(null);
+  // One InstancedMesh per walk pose (idle, walk1..walk4), in POSE_NAMES order. Each is sized to the
+  // full instanceCount; a player is shown in exactly one and hidden in the other four per frame.
+  const poseRefs = useRef<Array<THREE.InstancedMesh | null>>(
+    Array.from({ length: POSE_COUNT }, () => null),
+  );
   const visionRef = useRef<THREE.InstancedMesh>(null);
   const anchorRingRef = useRef<THREE.InstancedMesh>(null);
   const selectionRingRef = useRef<THREE.InstancedMesh>(null);
@@ -264,31 +317,40 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const glyphRefs = useRef<Map<GlyphSymbol, THREE.InstancedMesh>>(new Map());
 
   // Per-instance opacity attribute arrays (filled in once meshes mount, in the layout effect).
+  // `pose` holds one array per walk-pose layer (POSE_NAMES order); each pose layer carries its own
+  // instanceOpacity buffer because the opacity write goes to every pose layer (not just the active
+  // one) so an actor migrating between poses is never left uncolored/opaque on its new layer.
   const opacityArrays = useRef<{
     body?: Float32Array;
-    humanoid?: Float32Array;
+    pose: Array<Float32Array | undefined>;
     cap?: Float32Array;
     vision?: Float32Array;
     anchorRing?: Float32Array;
     glyph: Map<GlyphSymbol, Float32Array>;
-  }>({ glyph: new Map() });
+  }>({ pose: [], glyph: new Map() });
 
   const cacheRef = useRef<Array<InstanceCache | null>>([]);
   const frameCacheRef = useRef<FrameCache | null>(null);
   const tempObject = useRef(new THREE.Object3D());
   const tempColor = useRef(new THREE.Color());
+  // Holds the active-pose matrix while the pose loop hides the other layers. hideInstance() reuses
+  // the shared tempObject and clobbers its matrix, so the visible-pose matrix must be stashed here
+  // BEFORE the hide calls run — otherwise the active write picks up a hidden matrix.
+  const poseMatrix = useRef(new THREE.Matrix4());
 
-  // Per-instance gait state for the movement-driven lean/bob on the humanoid figures. We have only
-  // position+rotation per frame (no per-limb pose data), and skeletal walking can't be instanced in
-  // three core, so the figure leans forward ∝ speed and bobs vertically as it travels — a
-  // whole-body cue that reads at the tactical-map distances players actually watch (verified live;
-  // a leg-flipbook's limb motion is sub-pixel there). Movement-DRIVEN only: every term is zero when
-  // the actor is still, so a paused/idle scene adds no work and the on-demand render gate is intact.
+  // Per-instance gait state. We have only position+rotation per frame (no per-limb pose data), and
+  // skeletal walking can't be instanced in three core, so motion is conveyed two ways, both driven
+  // by movement: (1) the WALK FLIPBOOK — accumulated travel distance selects which pose layer shows
+  // the legs (idle/walk1..walk4); (2) a whole-body LEAN + BOB folded into the matrix (the figure
+  // pitches forward ∝ speed and rises/falls over a stride). The two compose: legs step while the
+  // whole body tilts and bobs. Both are MOVEMENT-DRIVEN only — every term is zero when the actor is
+  // still (pose stays idle, lean/bob = 0), so a paused/idle scene adds no work and the on-demand
+  // render gate stays intact (a wall-clock-driven cycle would tick while paused and break it).
   const gaitRef = useRef<{
     lastX: Float32Array;
     lastZ: Float32Array;
     speed: Float32Array; // smoothed units/frame
-    distance: Float32Array; // accumulated travel, drives the bob phase
+    distance: Float32Array; // accumulated travel; drives BOTH the bob phase and the pose index
     seeded: Uint8Array; // whether lastX/Z hold a real previous sample yet
   } | null>(null);
 
@@ -363,12 +425,12 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     };
   }, [geometries, materials, glyphMaterials]);
 
-  // Dispose the loaded humanoid geometry when it is replaced or the component unmounts.
+  // Dispose the loaded pose geometries when they are replaced or the component unmounts.
   useEffect(() => {
     return () => {
-      humanoidGeometry?.dispose();
+      poseGeometries?.forEach((g) => g.dispose());
     };
-  }, [humanoidGeometry]);
+  }, [poseGeometries]);
 
   // Assign glyph-group membership per actor index, once per lookup.
   useLayoutEffect(() => {
@@ -417,7 +479,8 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     o.anchorRing = setup(anchorRingRef.current, 10, true);
     o.vision = setup(visionRef.current, 11, true);
     o.body = setup(bodyRef.current, 12, true);
-    o.humanoid = setup(humanoidRef.current, 12, true);
+    // Every pose layer is wired identically and at the same render order as the capsule body.
+    o.pose = poseRefs.current.map((mesh) => setup(mesh, 12, true));
     o.cap = setup(capRef.current, 13, true);
     setup(selectionRingRef.current, 14, false);
     setup(tauntRingRef.current, 15, false);
@@ -437,14 +500,14 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
     // Force a full rebuild on the next frame. Clearing BOTH caches is load-bearing: the
     // frame-level cache gates whether the loop runs at all, but the per-instance cache gates the
-    // `changed` block that calls setColorAt. When the humanoid GLB loads, an actor's role color is
+    // `changed` block that calls setColorAt. When the walk GLB loads, an actor's role color is
     // unchanged from its capsule-era cache entry, so without clearing cacheRef the `changed` check
-    // stays false and setColorAt never fires on the new humanoid layer → its instanceColor never
+    // stays false and setColorAt never fires on the new pose layers → their instanceColor never
     // lazily creates → players render white. Clearing cacheRef makes prev=undefined → changed →
-    // colors written to body AND humanoid next frame. cacheRef repopulates that same frame.
+    // colors written to body AND every pose layer next frame. cacheRef repopulates that same frame.
     frameCacheRef.current = null;
     cacheRef.current = [];
-  }, [instanceCount, geometries, materials, glyphMaterials, humanoidGeometry]);
+  }, [instanceCount, geometries, materials, glyphMaterials, poseGeometries]);
 
   const hideInstance = useCallback((mesh: THREE.InstancedMesh | null, index: number): void => {
     if (!mesh) return;
@@ -456,7 +519,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     mesh.setMatrixAt(index, obj.matrix);
   }, []);
 
-  useFrame(() => {
+  useFrame((_state, delta) => {
     const currentTime = timeRef ? timeRef.current : 0;
     const selectedActorId = selectedActorRef.current;
     const prevFrame = frameCacheRef.current;
@@ -502,7 +565,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       if (!actor || !isVisible) {
         if (cacheRef.current[index]?.visible !== false) {
           hideInstance(bodyRef.current, index);
-          hideInstance(humanoidRef.current, index);
+          poseRefs.current.forEach((mesh) => hideInstance(mesh, index));
           hideInstance(capRef.current, index);
           hideInstance(visionRef.current, index);
           hideInstance(anchorRingRef.current, index);
@@ -523,10 +586,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       const isThreat = isThreatActor(actor);
       const selected = selectedActorId === actorId;
       const taunted = actor.isTaunted || false;
-      // Players become the humanoid figure once its geometry has loaded; everyone else (and
-      // players pre-load) keeps the capsule blob. Exactly one of the two body layers is shown
-      // per actor — the other is hidden off-screen.
-      const useHumanoid = isPlayerActor(actor) && humanoidGeometry !== null;
+      // Players become the humanoid figure once the pose geometries have loaded; everyone else (and
+      // players pre-load) keeps the capsule blob. For a humanoid player, exactly one pose layer is
+      // shown (the capsule body and the other four pose layers are hidden off-screen). For everyone
+      // else, the capsule body shows and all five pose layers are hidden.
+      const useHumanoid = isPlayerActor(actor) && poseGeometries !== null;
 
       // Per-player override (player panel) wins for living players only; dead stays grey. Only
       // players can be overridden — boss/enemy/npc/pet keep their type colors.
@@ -547,19 +611,26 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         // squashes y to 0.3 exactly like the capsule. Faces +Z, so actor.rotation maps directly.
         const hScale = groupScale * HUMANOID_NORMALIZE;
 
-        // ---- Movement-driven gait (lean + bob) ----
-        // Derive per-frame travel from the last sample, smooth it, and accumulate distance for the
-        // bob phase. Dead actors freeze (no gait). All terms vanish at zero speed → idle-gate-safe.
+        // ---- Movement-driven gait (walk-pose flipbook + lean + bob) ----
+        // Derive per-frame travel from the last sample, smooth it, and accumulate distance. The
+        // distance drives BOTH the bob phase and the walk-pose index. Dead actors freeze (no gait,
+        // idle pose). All terms vanish at zero speed → idle-gate-safe.
         let lean = 0;
         let bob = 0;
+        let poseIndex = 0; // 0 = idle stand; 1..4 = walk cycle
         const gait = gaitRef.current;
         if (gait && !dead) {
           if (gait.seeded[index]) {
             const dx = x - gait.lastX[index];
             const dz = z - gait.lastZ[index];
             const raw = Math.sqrt(dx * dx + dz * dz);
-            // EMA-smooth so a single quantized timestamp jump doesn't snap the lean.
-            gait.speed[index] += (raw - gait.speed[index]) * GAIT_SPEED_SMOOTHING;
+            // Speed is units/SECOND (raw path increment ÷ frame delta) so the gate and lean/bob
+            // strength don't dilute on high-refresh monitors. Guard delta>0 (first frame / clock
+            // hiccups). EMA-smooth so one quantized-timestamp jump doesn't snap the speed.
+            const rawPerSec = delta > 0 ? raw / delta : 0;
+            gait.speed[index] += (rawPerSec - gait.speed[index]) * GAIT_SPEED_SMOOTHING;
+            // Distance is accumulated PATH LENGTH (not per-second) — drives the pose index and bob
+            // phase, both framerate- and playback-speed-independent by construction.
             gait.distance[index] += raw;
           } else {
             gait.seeded[index] = 1;
@@ -569,6 +640,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           const speedT = Math.min(1, gait.speed[index] / GAIT_SPEED_FULL);
           lean = GAIT_MAX_LEAN * speedT;
           bob = Math.sin(gait.distance[index] * GAIT_BOB_FREQ) * GAIT_BOB_AMP * speedT;
+          // Walk-pose phase: advance one pose per STRIDE_LEN of travel, cycling walk1..walk4. When
+          // effectively standing (smoothed speed below the move epsilon) snap to idle so a
+          // near-stationary player doesn't flicker between idle and the first walk pose on jitter.
+          if (gait.speed[index] >= GAIT_MOVE_EPSILON) {
+            const phase = Math.floor(gait.distance[index] / STRIDE_LEN) % WALK_POSE_COUNT;
+            poseIndex = 1 + phase; // 1..4
+          }
         }
 
         // Euler order YXZ: face first (Y), then lean forward about the rotated X — a forward pitch
@@ -577,8 +655,21 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         obj.rotation.set(lean, actor.rotation, 0, 'YXZ');
         obj.scale.set(hScale, hScale * (dead ? 0.3 : 1), hScale);
         obj.updateMatrix();
-        humanoidRef.current?.setMatrixAt(index, obj.matrix);
         obj.rotation.order = 'XYZ'; // restore default for the order-agnostic writes below
+        // Stash the active-pose matrix BEFORE the hide loop. hideInstance() mutates the shared
+        // tempObject and overwrites obj.matrix, so writing obj.matrix from inside the loop (when the
+        // active pose isn't index 0) would write a hidden matrix. Copy it out first.
+        const activeMatrix = poseMatrix.current.copy(obj.matrix);
+
+        // Show this actor in exactly the active pose layer; hide it in the capsule body and the
+        // other four pose layers. instanceId → actorId stays uniform across every pose layer.
+        for (let p = 0; p < POSE_COUNT; p++) {
+          if (p === poseIndex) {
+            poseRefs.current[p]?.setMatrixAt(index, activeMatrix);
+          } else {
+            hideInstance(poseRefs.current[p], index);
+          }
+        }
         hideInstance(bodyRef.current, index);
       } else {
         // Body capsule: at group scale, dead squashes y to 0.3. Positioned at bodyHeight*0.6.
@@ -587,7 +678,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         obj.scale.set(groupScale, groupScale * (dead ? 0.3 : 1), groupScale);
         obj.updateMatrix();
         bodyRef.current?.setMatrixAt(index, obj.matrix);
-        hideInstance(humanoidRef.current, index);
+        poseRefs.current.forEach((mesh) => hideInstance(mesh, index));
       }
 
       // Cap rides atop the capsule head. The humanoid already has its own head, so the cap is
@@ -669,14 +760,27 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
       if (changed) {
         bodyRef.current?.setColorAt(index, col.set(coreColor));
-        humanoidRef.current?.setColorAt(index, col.set(coreColor));
+        // Color + opacity are written to EVERY pose layer, not just the active one. Pose membership
+        // changes every frame as the actor walks, but color rarely changes, so when an actor
+        // migrates idle→walk1 its `changed` gate is usually false — if only the active layer were
+        // colored, the destination layer's instanceColor would never lazily create and the figure
+        // would render white on that pose. Coloring all five keeps every layer always-correct
+        // regardless of which is visible; pose-swap then only moves matrices (above). Five
+        // setColorAt instead of one is negligible since this path runs only when color/opacity change.
+        col.set(coreColor);
+        for (let p = 0; p < POSE_COUNT; p++) {
+          poseRefs.current[p]?.setColorAt(index, col);
+        }
         capRef.current?.setColorAt(index, col.set(accentColor));
         anchorRingRef.current?.setColorAt(index, col.set(shellColor));
         visionRef.current?.setColorAt(index, col.set(accentColor));
         colorDirty = true;
 
         if (o.body) o.body[index] = bodyOpacity;
-        if (o.humanoid) o.humanoid[index] = bodyOpacity;
+        for (let p = 0; p < POSE_COUNT; p++) {
+          const arr = o.pose[p];
+          if (arr) arr[index] = bodyOpacity;
+        }
         if (o.cap) o.cap[index] = capOpacity;
         if (o.anchorRing) o.anchorRing[index] = ringOpacity;
         if (o.vision) o.vision[index] = visionOpacity;
@@ -705,7 +809,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     // Flush matrices every frame (positions change constantly during playback).
     [
       bodyRef.current,
-      humanoidRef.current,
+      ...poseRefs.current,
       capRef.current,
       visionRef.current,
       anchorRingRef.current,
@@ -721,7 +825,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     if (colorDirty) {
       [
         bodyRef.current,
-        humanoidRef.current,
+        ...poseRefs.current,
         capRef.current,
         anchorRingRef.current,
         visionRef.current,
@@ -737,7 +841,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         if (attr) attr.needsUpdate = true;
       };
       flag(bodyRef.current);
-      flag(humanoidRef.current);
+      poseRefs.current.forEach((m) => flag(m));
       flag(capRef.current);
       flag(anchorRingRef.current);
       flag(visionRef.current);
@@ -799,16 +903,19 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         onPointerOver={handleOver}
         onPointerOut={handleOut}
       />
-      {humanoidGeometry && (
+      {poseGeometries?.map((geo, p) => (
         <instancedMesh
-          ref={humanoidRef}
-          args={[humanoidGeometry, materials.humanoid, instanceCount]}
+          key={POSE_NAMES[p]}
+          ref={(mesh) => {
+            poseRefs.current[p] = mesh;
+          }}
+          args={[geo, materials.humanoid, instanceCount]}
           castShadow={!performanceMode}
           onClick={handleClick}
           onPointerOver={handleOver}
           onPointerOut={handleOut}
         />
-      )}
+      ))}
       <instancedMesh
         ref={capRef}
         args={[geometries.cap, materials.cap, instanceCount]}
