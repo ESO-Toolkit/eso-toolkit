@@ -1118,13 +1118,13 @@
      "name": "Reactor, Reclaimer & Reducer",
      "model_type": "creature",
      "species": "Factotum",
-     "notes": "UESP: Trio of Factotum bosses. \"The Hunter\" was incorrect â€” this encounter is the Factotum trio. Uses ClockWork model family.",
+     "notes": "UESP: Trio of Factotum bosses. \"The Hunter\" was incorrect â€” this encounter is the Factotum trio. Uses ClockWork model family. [2026-06: Factotum trio; uses the Dwemer Centurion construct mesh like the other Factotum bosses, not ClockWorkTitan.]",
      "model": {
-      "name": "ClockWorkTitan_A_Basic",
-      "file_index": 1154543,
-      "size_kb": 2921,
-      "verts": 39807,
-      "tris": 42876
+      "name": "DwemerCenturion_B_Basic",
+      "file_index": 862681,
+      "size_kb": 311,
+      "verts": 8210,
+      "tris": 9076
      },
      "textures": {
       "primary": [],

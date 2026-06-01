@@ -310,7 +310,8 @@
   "correctDesc": "A large boss-scale Factotum: a bipedal, humanoid brass mechanical golem with two arms and two legs, a smooth masked/faceplate head, segmented pauldrons, and slender protruding metal limb pieces (Refabricated / Dwemer-inspired style). Reads as a tall humanoid robot, NOT a hulking top-heavy Centurion war-construct with a mace/hammer arm and steam vents.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Pinnacle_Factotum",
-  "action": "FIX"
+  "action": "KEEP",
+  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
  },
  {
   "trial": "Halls of Fabrication",
@@ -355,7 +356,7 @@
   "boss": "Reactor, Reclaimer & Reducer",
   "type": "creature",
   "species": "Factotum",
-  "currentModel": "ClockWorkTitan_A_Basic",
+  "currentModel": "DwemerCenturion_B_Basic",
   "file_index": 1154543,
   "verdict": "likely-wrong",
   "realIdentity": "Factotum",
@@ -367,7 +368,8 @@
   "correctDesc": "Three roughly humanoid-sized, bipedal brass/Dwemer mechanical constructs (Factotums) with Dwemer-inspired humanoid features in the \"Refabricated Style.\" Centurion/automaton-like silhouette standing upright. The Reactor and Reducer are melee constructs that wield swords; the Reclaimer is a stationary central construct. The three are visually near-identical to each other, differing mainly by elemental theming (shock/fire), so a single shared humanoid Factotum mesh is appropriate for the trio.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Halls_of_Fabrication",
-  "action": "FIX"
+  "action": "KEEP",
+  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
  },
  {
   "trial": "Asylum Sanctorium",
@@ -407,7 +409,8 @@
   "correctDesc": "A giant Factotum: a sleek humanoid clockwork automaton made of brass, with a smooth rounded conical-masked head, refined Sotha Sil Clockwork City aesthetic, and slim protruding metal limb pieces. As the warrior saint he carries an axe/melee weapon. Distinctly NOT a Dwemer Centurion. He is an oversized version of the standard factotum body (scale is just a transform on the same Factotum mesh).",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Saint_Felms_the_Bold",
-  "action": "FIX"
+  "action": "KEEP",
+  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
  },
  {
   "trial": "Asylum Sanctorium",
@@ -425,7 +428,8 @@
   "correctDesc": "A towering (~2.4m) smooth brass-and-clockwork Factotum automaton from the Clockwork City — humanoid-proportioned but oversized, with a smooth cone/mask-shaped faceplate, glowing soul-core, and segmented mechanical limbs. Saint Llothis is the caster form, wielding a staff and casting poison AoE. Distinct from the squat, heavily-armored Dwemer Centurion silhouette.",
   "confidence": "high",
   "reference": "https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious",
-  "action": "FIX"
+  "action": "KEEP",
+  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
  },
  {
   "trial": "Cloudrest",
