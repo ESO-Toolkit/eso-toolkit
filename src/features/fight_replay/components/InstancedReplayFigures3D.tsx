@@ -204,6 +204,23 @@ function getBossModelUrlForActor(actor: ActorPosition): string | null {
   return BOSS_MODEL_NAME_KEYS.some((key) => name.includes(key)) ? BOSS_MODEL_URL : null;
 }
 
+// Scan the lookup for the first boss actor that maps to a model, returning its URL (or null). Used to
+// gate the GLB load: non-Taleria fights never fetch/parse the 560 KB model. An actor's type/name are
+// fixed for the fight, so one timestamp's roster is representative; we scan a few in case the first
+// sampled timestamp is sparse, then stop at the first match.
+function getBossModelUrlInLookup(lookup: TimestampPositionLookup | null): string | null {
+  const positions = lookup?.positionsByTimestamp;
+  if (!positions) return null;
+  for (const ts of Object.keys(positions)) {
+    const atTs = positions[Number(ts)];
+    for (const id of Object.keys(atTs)) {
+      const url = getBossModelUrlForActor(atTs[Number(id)]);
+      if (url) return url;
+    }
+  }
+  return null;
+}
+
 function isPlayerActor(actor: ActorPosition): boolean {
   return actor.type === 'player';
 }
@@ -354,6 +371,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const actorIds = useMemo(() => getActorIdsFromLookup(lookup), [lookup]);
   const instanceCount = actorIds.length;
 
+  // URL of the boss model this fight needs, or null if no actor maps to one. Gates the GLB load so
+  // non-Taleria fights never fetch/parse the 560 KB model.
+  const bossModelUrl = useMemo(() => getBossModelUrlInLookup(lookup), [lookup]);
+
   // Stable index → glyph-group membership. An actor's symbol is fixed (role/type don't change
   // mid-fight), so we can assign each actor to one glyph group once and only toggle visibility.
   const glyphSymbolByIndex = useRef<GlyphSymbol[]>([]);
@@ -405,12 +426,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // swap paints while paused.
   const [bossModel, setBossModel] = useState<BossModelData | null>(null);
   useEffect(() => {
+    // Only load when this fight actually has a boss that maps to a model.
+    if (!bossModelUrl) {
+      setBossModel(null);
+      return;
+    }
     let cancelled = false;
     const loader = new GLTFLoader();
     loader.load(
-      BOSS_MODEL_URL,
+      bossModelUrl,
       (gltf) => {
-        if (cancelled) return;
         let bossMesh: THREE.Mesh | null = null;
         gltf.scene.updateMatrixWorld(true);
         gltf.scene.traverse((obj) => {
@@ -428,6 +453,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         const materials = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).filter(
           (m): m is THREE.Material => !!m,
         );
+        // If the component unmounted (or the url changed) while the GLB was in flight, dispose the
+        // just-parsed resources instead of leaking them — nothing will mount this geometry/material.
+        if (cancelled) {
+          geometry.dispose();
+          materials.forEach((m) => m.dispose());
+          return;
+        }
         const originalColors = materials.map(
           (m) => (m as THREE.MeshStandardMaterial).color?.clone() ?? new THREE.Color(1, 1, 1),
         );
@@ -447,7 +479,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [bossModelUrl]);
 
   // Mesh refs.
   const bodyRef = useRef<THREE.InstancedMesh>(null);
@@ -477,11 +509,15 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     scale: new THREE.Matrix4(),
     yaw: new THREE.Matrix4(),
     world: new THREE.Matrix4(),
-    color: new THREE.Color(),
   });
-  // Cached boss dead-state so the material opacity/color write fires only on the transition (not
-  // every frame). undefined = never written yet (forces an initial write once the model loads).
-  const bossDeadRef = useRef<boolean | undefined>(undefined);
+  // Cached signature of the last-written boss material state (alive/dead × opacity × darken). The
+  // material opacity/color write fires only when this changes — not every frame — but keying it on
+  // the full target state (not just the dead flag) means a paused HMR edit of DEAD_OPACITY/DEAD_DARKEN
+  // re-applies even though the dead flag itself did not transition. null = never written yet.
+  const bossMatStateRef = useRef<string | null>(null);
+  // Actor id currently rendered as the boss model (null when no boss model is shown). The boss mesh
+  // is not instanced, so its click/hover handlers read this instead of event.instanceId.
+  const bossActorIdRef = useRef<number | null>(null);
 
   // Per-instance opacity attribute arrays (filled in once meshes mount, in the layout effect).
   // `pose` holds one array per walk-pose layer (POSE_NAMES order); each pose layer carries its own
@@ -693,7 +729,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // reset the boss dead-state cache so the first frame writes the material opacity/color.
   useEffect(() => {
     frameCacheRef.current = null;
-    bossDeadRef.current = undefined;
+    bossMatStateRef.current = null;
   }, [bossModel]);
 
   const hideInstance = useCallback((mesh: THREE.InstancedMesh | null, index: number): void => {
@@ -749,6 +785,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     // First boss actor that has a model loaded → drive the single <primitive> after the loop. Its
     // capsule body + cap are hidden in the loop (anchor ring / vision wedge / glyph / name stay).
     let bossActor: ActorPosition | null = null;
+    let bossActorId = -1; // the loop actorId of bossActor (drives the boss mesh's click/hover)
 
     for (let index = 0; index < instanceCount; index++) {
       const actorId = actorIds[index];
@@ -793,6 +830,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         bossModel !== null && bossActor === null && getBossModelUrlForActor(actor) !== null;
       if (useBossModel) {
         bossActor = actor;
+        bossActorId = actorId;
       }
 
       // Per-player override (player panel) wins for living players only; dead stays grey. Only
@@ -1041,6 +1079,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     const bossMesh = bossMeshRef.current;
     if (bossModel && bossMesh) {
       if (bossActor) {
+        bossActorIdRef.current = bossActorId;
         const t = bossTemp.current;
         const [bx, by, bz] = bossActor.position;
         const bossDead = bossActor.isDead;
@@ -1067,27 +1106,27 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         bossMesh.matrixWorldNeedsUpdate = true;
         bossMesh.visible = true;
 
-        // Dead-state material write, gated on the dead-flag TRANSITION (not every frame). `transparent`
-        // was set once at load; here we animate only opacity + color. Darken lerps toward black.
-        if (bossDeadRef.current !== bossDead) {
+        // Dead-state material write, gated on a SIGNATURE of the target state (not just the dead flag)
+        // so it fires once per real change but still re-applies when a paused HMR edit of DEAD_OPACITY/
+        // DEAD_DARKEN changes the target without flipping `dead`. `transparent` was set once at load;
+        // here we animate only opacity + color (darken lerps toward black).
+        const targetOpacity = bossDead ? DEAD_OPACITY : 1;
+        const targetDarken = bossDead ? DEAD_DARKEN : 1;
+        const matState = `${targetOpacity},${targetDarken}`;
+        if (bossMatStateRef.current !== matState) {
           bossModel.materials.forEach((m, i) => {
             const std = m as THREE.MeshStandardMaterial;
-            m.opacity = bossDead ? DEAD_OPACITY : 1;
+            m.opacity = targetOpacity;
             if (std.color) {
-              const orig = bossModel.originalColors[i];
-              if (bossDead) {
-                t.color.copy(orig).multiplyScalar(DEAD_DARKEN);
-                std.color.copy(t.color);
-              } else {
-                std.color.copy(orig);
-              }
+              std.color.copy(bossModel.originalColors[i]).multiplyScalar(targetDarken);
             }
           });
-          bossDeadRef.current = bossDead;
+          bossMatStateRef.current = matState;
         }
       } else {
         // No boss actor this frame (not present / not visible) → hide the model.
         bossMesh.visible = false;
+        bossActorIdRef.current = null;
       }
     }
 
@@ -1166,6 +1205,24 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     document.body.style.cursor = 'auto';
   }, []);
 
+  // The boss mesh is not instanced (no instanceId), so it selects/hovers via the tracked boss actor
+  // id instead of getActorIdFromEvent. Mirrors the capsule body's click/hover so clicking the model
+  // still follows the boss.
+  const handleBossClick = useCallback(
+    (event: ThreeEvent<MouseEvent>) => {
+      const actorId = bossActorIdRef.current;
+      if (actorId === null) return;
+      event.stopPropagation();
+      onActorClick?.(actorId);
+    },
+    [onActorClick],
+  );
+  const handleBossOver = useCallback((event: ThreeEvent<PointerEvent>) => {
+    if (event.distance > MAX_ACTOR_HOVER_DISTANCE || bossActorIdRef.current === null) return;
+    event.stopPropagation();
+    document.body.style.cursor = 'pointer';
+  }, []);
+
   if (instanceCount === 0) {
     return null;
   }
@@ -1213,6 +1270,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           matrixAutoUpdate={false}
           castShadow={!performanceMode}
           receiveShadow={false}
+          onClick={handleBossClick}
+          onPointerOver={handleBossOver}
+          onPointerOut={handleOut}
         />
       )}
       <instancedMesh
