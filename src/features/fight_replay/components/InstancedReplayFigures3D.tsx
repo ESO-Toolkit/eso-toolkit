@@ -205,14 +205,19 @@ function getBossModelUrlForActor(actor: ActorPosition): string | null {
 }
 
 // Scan the lookup for the first boss actor that maps to a model, returning its URL (or null). Used to
-// gate the GLB load: non-Taleria fights never fetch/parse the 560 KB model. An actor's type/name are
-// fixed for the fight, so one timestamp's roster is representative; we scan a few in case the first
-// sampled timestamp is sparse, then stop at the first match.
+// gate the GLB load: non-Taleria fights never fetch/parse the 560 KB model. A boss is present from
+// fight start and an actor's type/name are fixed for the fight, so only a few timestamps' rosters need
+// checking — capped at BOSS_SCAN_TIMESTAMPS so a large NON-matching lookup (up to ~72k timestamps)
+// can't turn this memoized, render-time scan into a UI hitch. The cap is generous against a sparse
+// opening sample yet O(1) in fight length.
+const BOSS_SCAN_TIMESTAMPS = 8;
 function getBossModelUrlInLookup(lookup: TimestampPositionLookup | null): string | null {
   const positions = lookup?.positionsByTimestamp;
   if (!positions) return null;
-  for (const ts of Object.keys(positions)) {
-    const atTs = positions[Number(ts)];
+  const timestamps = Object.keys(positions);
+  const limit = Math.min(timestamps.length, BOSS_SCAN_TIMESTAMPS);
+  for (let i = 0; i < limit; i++) {
+    const atTs = positions[Number(timestamps[i])];
     for (const id of Object.keys(atTs)) {
       const url = getBossModelUrlForActor(atTs[Number(id)]);
       if (url) return url;
