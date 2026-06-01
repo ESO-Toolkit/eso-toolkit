@@ -9,7 +9,6 @@ import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
 import { MapMarkersState } from '../types/mapMarkers';
-import { ActorMarkerVariant, DEFAULT_ACTOR_MARKER_VARIANT } from '../utils/actorMarkerVariant';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
@@ -17,11 +16,9 @@ import { getPlayerPathColor } from '../utils/playerColors';
 import { CameraFollower } from './CameraFollower';
 import { DynamicMapTexture } from './DynamicMapTexture';
 import { FigureReplayActors3D } from './FigureReplayActors3D';
-import { InstancedReplayActors3D } from './InstancedReplayActors3D';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
-import { PawnReplayActors3D } from './PawnReplayActors3D';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
 import { PlayerPathTrail3D } from './PlayerPathTrail3D';
 
@@ -53,8 +50,6 @@ interface AnimationFrameSceneActorsProps {
   followingActorIdRef: React.RefObject<number | null>;
   onActorClick?: (actorId: number) => void;
   playerVisibility?: Map<number, boolean>;
-  /** Live A/B/C actor-marker variant (judging toggle). */
-  markerVariant?: ActorMarkerVariant;
 }
 
 export interface GroundContextMenuPayload {
@@ -63,9 +58,9 @@ export interface GroundContextMenuPayload {
 }
 
 /**
- * Batched actor renderer. Pucks, direction wedges, taunt rings, and selection rings are
- * instanced so the raid remains a handful of draw calls instead of one mesh/material stack
- * per actor.
+ * Actor renderer. Each actor is a standing figure (capsule body + role-glyph cap) with a
+ * ground anchor ring, facing wedge, and state rings; bosses/enemies stand larger so they
+ * read above the player crowd. Name cards float above and can be toggled off (N key).
  */
 const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   lookup,
@@ -76,33 +71,22 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   followingActorIdRef,
   onActorClick,
   playerVisibility,
-  markerVariant = DEFAULT_ACTOR_MARKER_VARIANT,
 }) => {
   // Performance settings based on scrubbing mode
   const shouldRenderEffects = scrubbingMode?.shouldRenderEffects ?? true;
   const effectiveShowNames = showNames && shouldRenderEffects;
 
-  // Live A/B/C variant switch. Every variant honors the IDENTICAL contract (lookup, timeRef,
-  // scale, showNames, selectedActorRef, onActorClick, playerVisibility) so flipping in motion
-  // never breaks click-to-follow, hover, or visibility gating. The switch is component-level,
-  // not a remount of the Canvas/time loop — see actorMarkerVariant + Arena3D's keyboard cycle.
-  const sharedProps = {
-    lookup,
-    timeRef,
-    scale,
-    showNames: effectiveShowNames,
-    selectedActorRef: followingActorIdRef,
-    onActorClick,
-    playerVisibility,
-  };
-
-  if (markerVariant === 'B') {
-    return <PawnReplayActors3D {...sharedProps} />;
-  }
-  if (markerVariant === 'C') {
-    return <FigureReplayActors3D {...sharedProps} />;
-  }
-  return <InstancedReplayActors3D {...sharedProps} />;
+  return (
+    <FigureReplayActors3D
+      lookup={lookup}
+      timeRef={timeRef}
+      scale={scale}
+      showNames={effectiveShowNames}
+      selectedActorRef={followingActorIdRef}
+      onActorClick={onActorClick}
+      playerVisibility={playerVisibility}
+    />
+  );
 };
 
 /**
@@ -180,9 +164,9 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     // Keep rendering whenever an actor is followed/selected. Load-bearing for TWO reasons,
     // do not remove as "redundant":
     //  1. the follow camera lerps toward its target every frame while active;
-    //  2. the same ref drives InstancedReplayActors3D selection, so an actor's
-    //     selection ring + puck/vision-cone instance update (driven off this ref, not off
-    //     timeRef) only paints while paused because this refill keeps the budget topped up.
+    //  2. the same ref drives FigureReplayActors3D selection, so an actor's
+    //     selection ring update (driven off this ref, not off timeRef) only paints while
+    //     paused because this refill keeps the budget topped up.
     //     Deselecting routes through React state (FightReplay3D.setFollowingActor → commit),
     //     which the commit-refill effect covers.
     if (followingActorIdRef.current !== null) {
@@ -229,8 +213,6 @@ export interface Arena3DSceneProps {
    * overlay and these in-canvas actors share one source of truth) and passed down here.
    */
   playerVisibility?: Map<number, boolean>;
-  /** Live A/B/C actor-marker variant (judging toggle), owned by Arena3D. */
-  markerVariant?: ActorMarkerVariant;
 }
 
 /**
@@ -254,7 +236,6 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   selectedPlayerIds = new Set(),
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
-  markerVariant = DEFAULT_ACTOR_MARKER_VARIANT,
 }) => {
   // Shared render budget for the on-demand RenderLoop. Refilled on every React commit of
   // this scene (effect below, intentionally no deps) so state-driven mutations — markers,
@@ -511,7 +492,6 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         followingActorIdRef={followingActorIdRef}
         onActorClick={onActorClick}
         playerVisibility={playerVisibility}
-        markerVariant={markerVariant}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
           the <Canvas> (crisp text, real scroll region, native MUI styling) — not in-canvas

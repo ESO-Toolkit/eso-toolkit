@@ -15,6 +15,12 @@ interface ActorNameBillboardProps {
   timeRef?: React.RefObject<number> | { current: number };
   scale?: number;
   anchorMode?: 'parent' | 'world';
+  /**
+   * Background-panel opacity multiplier (0–1). 1 = the default near-solid badge (A/B). The
+   * tall-figure variant (C) passes a low value so the banner is see-through and the player
+   * model behind it stays visible in a crowd; the text's dark outline keeps it readable.
+   */
+  panelOpacity?: number;
 }
 
 // Performance constants
@@ -153,7 +159,7 @@ class BillboardTextRenderer {
     };
   }
 
-  private updateCanvas(name: string, color = '#ffffff', isAlive = true): void {
+  private updateCanvas(name: string, color = '#ffffff', isAlive = true, panelOpacity = 1): void {
     this.context.clearRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
     // Set high-quality text rendering for crisp output
@@ -171,9 +177,10 @@ class BillboardTextRenderer {
     const fittedName = this.fitTextToWidth(name);
     this.setLabelFont(fittedName.fontSize);
 
+    const clampedPanel = Math.max(0, Math.min(1, panelOpacity));
     this.context.save();
-    this.context.globalAlpha = isAlive ? 1 : 0.62;
-    this.context.shadowColor = 'rgba(0, 0, 0, 0.42)';
+    this.context.globalAlpha = (isAlive ? 1 : 0.62) * clampedPanel;
+    this.context.shadowColor = `rgba(0, 0, 0, ${0.42 * clampedPanel})`;
     this.context.shadowBlur = 20;
     this.context.shadowOffsetY = 8;
     this.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 32);
@@ -187,7 +194,7 @@ class BillboardTextRenderer {
     this.context.save();
     this.drawRoundedRect(badgeX, badgeY, badgeWidth, badgeHeight, 32);
     this.context.lineWidth = 3;
-    this.context.strokeStyle = 'rgba(226, 232, 240, 0.2)';
+    this.context.strokeStyle = `rgba(226, 232, 240, ${0.2 * clampedPanel})`;
     this.context.stroke();
     this.context.restore();
 
@@ -210,8 +217,8 @@ class BillboardTextRenderer {
     this.texture.needsUpdate = true;
   }
 
-  updateText(name: string, color: string, isAlive: boolean): void {
-    this.updateCanvas(name, color, isAlive);
+  updateText(name: string, color: string, isAlive: boolean, panelOpacity = 1): void {
+    this.updateCanvas(name, color, isAlive, panelOpacity);
   }
 
   getTexture(): THREE.CanvasTexture {
@@ -229,6 +236,7 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
   timeRef,
   scale = 1,
   anchorMode = 'parent',
+  panelOpacity = 1,
 }) => {
   const { camera } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
@@ -334,7 +342,12 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
       lastData.isAlive !== currentData.isAlive;
 
     if (needsUpdate) {
-      textRenderer.updateText(currentData.name, currentData.color, currentData.isAlive);
+      textRenderer.updateText(
+        currentData.name,
+        currentData.color,
+        currentData.isAlive,
+        panelOpacity,
+      );
       lastActorDataRef.current = currentData;
     }
   }, RenderPriority.HUD);
@@ -349,7 +362,19 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
 
   return (
     <group ref={groupRef}>
-      <mesh ref={meshRef} geometry={geometry} material={billboardMaterial} />
+      {/* Stable per-actor renderOrder. The material uses depthTest:false so cards always draw
+          over the scene; without a fixed order, overlapping cards are drawn back-to-front by
+          camera distance, and that order REORDERS as the orbit camera moves — which makes
+          overlapping name cards pop between showing and hiding each other (most visible in the
+          tall-figure variant, where cards sit high and overlap). Keying renderOrder to a stable
+          per-actor value makes the draw order angle-independent, killing the flicker, while
+          keeping cards above the scene. The +1000 base keeps them above scene geometry. */}
+      <mesh
+        ref={meshRef}
+        geometry={geometry}
+        material={billboardMaterial}
+        renderOrder={1000 + actorId}
+      />
     </group>
   );
 };

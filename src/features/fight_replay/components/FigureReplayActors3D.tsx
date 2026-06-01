@@ -50,6 +50,41 @@ function getActorIdsFromLookup(lookup: TimestampPositionLookup | null): number[]
   return Array.from(ids).sort((a, b) => a - b);
 }
 
+// Flat ground wedge pointing in the actor's facing. Points along +Z in local space to match
+// variant A's vision-cone convention (object.rotation.y = actor.rotation), so the cone faces
+// the same way the actor does. (Earlier this pointed -Z, i.e. backwards.)
+function createVisionCone(scale: number): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+  const radius = 0.18 * scale;
+  const length = 0.7 * scale;
+  const half = radius * 0.55;
+  const tip = radius * 0.9;
+  const vertices = new Float32Array([
+    -half,
+    0,
+    tip,
+    half,
+    0,
+    tip,
+    radius * 0.8,
+    0,
+    length,
+    -half,
+    0,
+    tip,
+    radius * 0.8,
+    0,
+    length,
+    -radius * 0.8,
+    0,
+    length,
+  ]);
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex([0, 1, 2, 3, 4, 5]);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 interface FigureActorProps {
   actorId: number;
   lookup: TimestampPositionLookup | null;
@@ -74,6 +109,7 @@ const FigureActor: React.FC<FigureActorProps> = ({
   const bodyMaterialRef = useRef<THREE.MeshStandardMaterial>(null);
   const capMaterialRef = useRef<THREE.MeshStandardMaterial>(null);
   const ringMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
+  const visionMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
   const selectionRingRef = useRef<THREE.Mesh>(null);
   const tauntRingRef = useRef<THREE.Mesh>(null);
   const isVisibleRef = useRef(false);
@@ -87,6 +123,7 @@ const FigureActor: React.FC<FigureActorProps> = ({
       cap: new THREE.CylinderGeometry(0.14 * scale, 0.14 * scale, 0.04 * scale, 16),
       glyph: new THREE.PlaneGeometry(0.22 * scale, 0.22 * scale),
       ring: new THREE.RingGeometry(r * 0.8, r * 1.2, 40),
+      vision: createVisionCone(scale),
       selection: new THREE.RingGeometry(r * 1.6, r * 2.0, 48),
       taunt: new THREE.RingGeometry(r * 1.1, r * 1.4, 40),
     };
@@ -149,26 +186,45 @@ const FigureActor: React.FC<FigureActorProps> = ({
       prev.isSelected !== isSelected;
 
     if (changed) {
+      // Bodies/caps stay OPAQUE. Semi-transparent 3D solids sort inconsistently as the orbit
+      // camera moves (depth-write vs draw-order fights), which reads as pills flickering
+      // between full-color and see-through — a real bug, not a look. Instead of transparency,
+      // we let you see past the crowd by sizing: the boss/enemy stands large and the player
+      // pills are kept short/slim so they don't wall off the view. Dead actors fade (a single
+      // overlapping translucent layer sorts fine).
+      const isThreat = actor.type === 'boss' || actor.type === 'enemy';
+
       if (bodyMaterialRef.current) {
         bodyMaterialRef.current.color.set(core);
         bodyMaterialRef.current.opacity = actor.isDead ? 0.4 : 1;
         bodyMaterialRef.current.transparent = actor.isDead;
+        bodyMaterialRef.current.depthWrite = !actor.isDead;
       }
       if (capMaterialRef.current) {
         capMaterialRef.current.color.set(accent);
         capMaterialRef.current.opacity = actor.isDead ? 0.4 : 1;
         capMaterialRef.current.transparent = actor.isDead;
+        capMaterialRef.current.depthWrite = !actor.isDead;
       }
       glyphMaterial.map = glyphTexture;
-      glyphMaterial.opacity = actor.isDead ? 0.4 : 1;
+      glyphMaterial.opacity = actor.isDead ? 0.45 : 1;
       glyphMaterial.needsUpdate = true;
       if (ringMaterialRef.current) {
         ringMaterialRef.current.color.set(shell);
-        ringMaterialRef.current.opacity = actor.isDead ? 0.4 : 0.9;
+        ringMaterialRef.current.opacity = actor.isDead ? 0.35 : isThreat ? 0.95 : 0.7;
+      }
+      if (visionMaterialRef.current) {
+        visionMaterialRef.current.color.set(accent);
+        visionMaterialRef.current.opacity = actor.isDead ? 0.12 : 0.42;
       }
       // Dead figure collapses (body squashes toward the ground).
       if (bodyRef.current) {
         bodyRef.current.scale.y = actor.isDead ? 0.3 : 1;
+      }
+      // Threats stand large; players stay short/slim so the crowd doesn't block the boss or
+      // the view. Scaling the whole group keeps the cap + glyph riding on top of the body.
+      if (groupRef.current) {
+        groupRef.current.scale.setScalar(isThreat ? 1.55 : 0.82);
       }
       if (selectionRingRef.current) selectionRingRef.current.visible = isSelected;
       if (tauntRingRef.current) tauntRingRef.current.visible = isTaunted;
@@ -218,6 +274,23 @@ const FigureActor: React.FC<FigureActorProps> = ({
           ref={ringMaterialRef}
           transparent
           opacity={0.9}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Facing wedge (direction cone), flat on the ground like A/B */}
+      <mesh
+        geometry={geometries.vision}
+        position={[0, 0.012, 0]}
+        onClick={handleClick}
+        onPointerOver={handleOver}
+        onPointerOut={handleOut}
+      >
+        <meshBasicMaterial
+          ref={visionMaterialRef}
+          transparent
+          opacity={0.42}
+          depthWrite={false}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -282,7 +355,13 @@ const FigureActor: React.FC<FigureActorProps> = ({
       </mesh>
 
       {showName && (
-        <ActorNameBillboard actorId={actorId} lookup={lookup} timeRef={timeRef} scale={scale} />
+        <ActorNameBillboard
+          actorId={actorId}
+          lookup={lookup}
+          timeRef={timeRef}
+          scale={scale}
+          panelOpacity={0.22}
+        />
       )}
     </group>
   );

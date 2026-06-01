@@ -185,6 +185,7 @@ export default [
             'receiveShadow',
             'args',
             'object', // For primitive components
+            'renderOrder',
 
             // Three.js material properties
             'transparent',
