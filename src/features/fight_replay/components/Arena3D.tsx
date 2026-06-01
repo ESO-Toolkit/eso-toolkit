@@ -1,6 +1,8 @@
 import { LockOpen, Videocam } from '@mui/icons-material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
+import Label from '@mui/icons-material/Label';
+import LabelOff from '@mui/icons-material/LabelOff';
 import {
   Box,
   Chip,
@@ -892,6 +894,29 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           </Typography>
         </Box>
       </Collapse>
+
+      {/* Name-tag toggle - the on-screen affordance for the same state the N key flips, so the
+          declutter control is discoverable without knowing the shortcut. */}
+      <Tooltip title={namesEnabled ? 'Hide name tags (N)' : 'Show name tags (N)'}>
+        <IconButton
+          aria-label={namesEnabled ? 'Hide actor name tags' : 'Show actor name tags'}
+          aria-pressed={namesEnabled}
+          size="small"
+          onClick={() => setNamesEnabled((prev) => !prev)}
+          sx={{
+            position: 'absolute',
+            bottom: 64,
+            right: 16,
+            color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            },
+          }}
+        >
+          {namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />}
+        </IconButton>
+      </Tooltip>
 
       {/* Persistent help affordance - re-opens the keyboard help panel once it auto-hides */}
       {!showKeyboardHelp && (
