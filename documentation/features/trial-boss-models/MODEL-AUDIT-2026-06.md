@@ -17,9 +17,9 @@ offline rendering, and a per-boss web-research cross-reference against UESP / ES
 
 | Action | Count | Meaning |
 |---|---|---|
-| ✅ **Keep** | 12 | Real, correct creature model. Matches the boss. |
-| ✅ **Keep (shared)** | 12 | Legitimately reuses a same-species mesh (e.g. both Sea Giants → one Giant mesh). Fine. |
-| 🎨 **Texture** | 3 | Correct body geometry, wrong/missing skin — the 3 Sunspire dragons share one (correct) dragon body and need per-dragon materials. |
+| ✅ **Keep** | 12 | Real distinct ESO creature mesh, mapping-trusted as this boss. **Visual match pending your confirmation.** |
+| ✅ **Keep (shared)** | 12 | Real mesh legitimately reused across same-species bosses (e.g. both Sea Giants → one Giant mesh). Pending confirm. |
+| 🎨 **Texture** | 3 | Real (correct) dragon body geometry; the 3 Sunspire dragons differ by skin, not mesh. Skins partial/pending. |
 | ❌ **Fix** | 9 | A real mesh was extracted but it's the **wrong creature** for this boss. Needs a corrected extraction. |
 | 🔲 **Placeholder** | 16 | Humanoid boss built from ESO's modular player skeleton + armor. **No standalone creature mesh exists to extract** — got a generic robed-humanoid stand-in shared across many bosses. |
 | 🔍 **Verify** | 2 | Plausible mesh, but needs a human eyeball (The Warrior, The Serpent). |
@@ -82,7 +82,18 @@ manual pass.
 <!-- BEGIN PER-BOSS (generated) -->
 ## Per-boss results
 
-Action key: **✅ Keep** = real, correct model · **✅ Keep (shared)** = legitimately reuses a same-species mesh · **🎨 Texture** = correct body, skin pending · **❌ Fix** = wrong mesh, needs correct extraction · **🔲 Placeholder** = humanoid built from player skeleton+armor, no standalone mesh · **🔍 Verify** = needs a human eyeball.
+Action key: **✅ Keep** = real distinct mesh, mapping-trusted, visual confirm pending · **✅ Keep (shared)** = real mesh legitimately reused across same-species bosses · **🎨 Texture** = correct body, skin pending · **❌ Fix** = wrong mesh, needs correct extraction · **🔲 Placeholder** = humanoid built from player skeleton+armor, no standalone mesh · **🔍 Verify** = needs a human eyeball.
+
+> **On the "Keep" verdict:** these were classified by geometry hashing (proves the mesh is *distinct*,
+> not that it's the *right* creature) + a research identity pass (which is known to occasionally
+> hallucinate). Only a handful were eyeball-checked by the agent. So **every Keep is "looks like a real
+> ESO creature mesh and the mapping says it's this boss — please confirm visually,"** not a guarantee.
+>
+> **Sanity's Edge note** (the user flagged "Sanity's Edge models don't look right"): the two wrong ones
+> are **Exarchanic Yaseyla** + **Archwizard Twelvane** — both 🔲 placeholders (held back), which is why
+> they read wrong (a Redguard woman and a Khajiit mage both rendering as the same generic robed stand-in).
+> The other two, **Chimera** and **Ansuul** (Gloam Knight), were render-checked and look like a real
+> multi-headed beast / a real bladed wraith respectively — committed, pending your final look.
 
 ### Hel Ra Citadel (2014)
 
@@ -155,10 +166,12 @@ Action key: **✅ Keep** = real, correct model · **✅ Keep (shared)** = legiti
 | Yolnahkriin | 🎨 Texture | Yolnahkriin_Dragon | Dragon — fire (red) | **Correct body, wrong skin.** Same shared dragon body; needs red-fire material. |
 | Nahviintaas | 🎨 Texture | Nahviintaas_Dragon | Dragon — golden king | **Correct body, wrong skin.** Same shared dragon body; needs gold material. |
 
-> 🎨 **Texture** = the *geometry* is the real, correct ESO dragon body (all three Sunspire dragons use
-> the same skeleton in-game — sharing it is correct), but the three are distinguished by **material**,
-> which is not yet applied. This is a DDS-texture task, not a mesh fix. All three body GLBs are
-> committed; the per-dragon skins are pending.
+> 🎨 **Texture** = the *geometry* is the real ESO dragon body (all three Sunspire dragons use the same
+> skeleton in-game — sharing it is correct); they're distinguished by **material**. Precise byte state:
+> **Lokkestiiz and Yolnahkriin are byte-identical GLBs** (no skin baked — at most one is fully right),
+> while **Nahviintaas's GLB differs** (carries its own embedded textures). So this is "shared body,
+> skins partial — verify/build the per-dragon materials," not a mesh fix. All three body GLBs are
+> committed; the skins need per-dragon verification.
 
 ### Kyne's Aegis (2020)
 
