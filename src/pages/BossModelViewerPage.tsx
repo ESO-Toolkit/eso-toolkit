@@ -243,11 +243,15 @@ const GlbModel: React.FC<{ url: string; color: string; skinTint?: string }> = ({
   return <primitive object={cloned} />;
 };
 
-// Per-boss diffuse tint for textured models whose exact skin variant isn't the
-// one baked into the shared GLB. Lokkestiiz (frost dragon) shares Yolnahkriin's
-// gold skin — a cool multiply approximates frost until the real DDS is sourced.
+// Per-boss diffuse tint approximating ESO's RUNTIME fire/ice/etc. shader effects,
+// which the game applies on top of one shared base dragon skin and are NOT stored
+// as extractable textures (confirmed by PR#877's creator + a 197k-file scan). So
+// Lokkestiiz + Yolnahkriin share one gold base diffuse; the tint is the correct
+// stand-in for the engine's per-dragon coloring. Nahviintaas has its OWN distinct
+// texture and is intentionally left untinted.
 const SKIN_TINTS: Record<string, string> = {
-  Lokkestiiz: '#7fbfe6',
+  Lokkestiiz: '#8ec9ee', // frost / storm — cool blue
+  Yolnahkriin: '#ff8a4a', // fire — warm orange
 };
 
 /** Fallback placeholder geometry when no GLB is available. */
