@@ -113,7 +113,16 @@ const HUMANOID_NORMALIZE = HUMANOID_TARGET_HEIGHT / HUMANOID_RAW_HEIGHT;
 // median 64u over 215s → ~0.3–0.6 u/s typical, bursts higher) and verified by a deterministic
 // gait simulation over the lookup at both 60 and 165fps: all four walk poses occupy ~evenly and the
 // walk fraction is framerate-stable (~0.58). Re-derive from data if a very different fight is used.
-const GAIT_SPEED_SMOOTHING = 0.25; // EMA factor on raw per-second speed (0..1; higher = snappier)
+//
+// The speed EMA uses a fixed TIME CONSTANT (not a fixed per-frame factor): alpha = 1 − exp(−delta /
+// GAIT_SPEED_TAU). A fixed per-frame factor smooths over a constant number of FRAMES, i.e. a window
+// that shrinks in wall-clock as framerate rises — so on a high-refresh monitor the smoothed speed
+// reflects only a few ms of motion, crosses the walk gate erratically, and the figure flickers
+// idle↔walk several times a second (sim: ~4 toggles/s at 165fps vs ~1.5 at 60fps). A time-constant
+// EMA holds the smoothing window fixed in seconds, so the toggle rate is framerate-independent
+// (sim: ~1/s at both 60 and 165fps). Pair it with the enter/exit hysteresis below to kill the
+// remaining boundary chatter.
+const GAIT_SPEED_TAU = 0.2; // seconds; EMA time constant for the smoothed speed
 const GAIT_SPEED_FULL = 0.6; // units/SECOND mapping to full lean/bob (≈ a brisk reposition)
 const GAIT_MAX_LEAN = 0.22; // radians of forward lean at full speed (~12.6°)
 const GAIT_BOB_AMP = 0.05; // world-unit vertical bob amplitude at full speed
@@ -135,11 +144,15 @@ const GAIT_BOB_FREQ = 0.4;
 // gait sim confirmed all four poses cycle ~evenly. THIS IS THE LEAD LOOK TUNABLE: higher =
 // slower/longer strides, lower = quicker cadence (keep ≳0.1 to stay strobe-safe). Tune live.
 const STRIDE_LEN = 0.4;
-// Below this smoothed speed (units/SECOND) the figure is treated as standing → idle pose, no stride.
-// Must sit below typical movement (~0.3–0.6 u/s) and above standstill (~0) so genuinely-walking
-// players cycle while parked players hold idle. 0.15 u/s splits that gap; the gait sim showed a
-// ~0.58 walk fraction at this value, framerate-stable across 60–165fps.
-const GAIT_MOVE_EPSILON = 0.15;
+// Walk/idle gate WITH HYSTERESIS: a parked figure starts walking only when its smoothed speed rises
+// above the ENTER threshold, and returns to idle only when it falls below the (lower) EXIT
+// threshold. A single threshold makes a player whose speed hovers at the boundary flip idle↔walk
+// every frame (chatter); the enter>exit gap forces speed to clearly change state before the pose
+// does. Both are units/SECOND, straddling typical movement (~0.3–0.6 u/s) and standstill (~0). The
+// gait sim over the lookup gives ~1 toggle/s (max), framerate-stable across 60–165fps, walk fraction
+// ~0.58. These (with STRIDE_LEN and GAIT_SPEED_FULL) are the coupled, scale-sensitive look tunables.
+const GAIT_WALK_ENTER_SPEED = 0.18; // units/SECOND to start walking from idle
+const GAIT_WALK_EXIT_SPEED = 0.1; // units/SECOND to drop back to idle (must be < enter)
 
 function isPlayerActor(actor: ActorPosition): boolean {
   return actor.type === 'player';
@@ -349,9 +362,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   const gaitRef = useRef<{
     lastX: Float32Array;
     lastZ: Float32Array;
-    speed: Float32Array; // smoothed units/frame
+    speed: Float32Array; // smoothed units/SECOND (time-constant EMA)
     distance: Float32Array; // accumulated travel; drives BOTH the bob phase and the pose index
     seeded: Uint8Array; // whether lastX/Z hold a real previous sample yet
+    walking: Uint8Array; // hysteretic walk/idle latch (1 = currently walking)
   } | null>(null);
 
   const geometries = useMemo(() => createFigureGeometries(scale, bodyHeight), [scale, bodyHeight]);
@@ -496,6 +510,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       speed: new Float32Array(instanceCount),
       distance: new Float32Array(instanceCount),
       seeded: new Uint8Array(instanceCount),
+      walking: new Uint8Array(instanceCount),
     };
 
     // Force a full rebuild on the next frame. Clearing BOTH caches is load-bearing: the
@@ -626,9 +641,13 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
             const raw = Math.sqrt(dx * dx + dz * dz);
             // Speed is units/SECOND (raw path increment ÷ frame delta) so the gate and lean/bob
             // strength don't dilute on high-refresh monitors. Guard delta>0 (first frame / clock
-            // hiccups). EMA-smooth so one quantized-timestamp jump doesn't snap the speed.
+            // hiccups). The EMA uses a fixed TIME CONSTANT (alpha = 1−exp(−delta/tau)) so the
+            // smoothing window is constant in seconds — a fixed per-frame factor would smooth over a
+            // wall-clock window that shrinks as framerate rises, making the gate chatter on
+            // high-refresh monitors.
             const rawPerSec = delta > 0 ? raw / delta : 0;
-            gait.speed[index] += (rawPerSec - gait.speed[index]) * GAIT_SPEED_SMOOTHING;
+            const alpha = delta > 0 ? 1 - Math.exp(-delta / GAIT_SPEED_TAU) : 1;
+            gait.speed[index] += (rawPerSec - gait.speed[index]) * alpha;
             // Distance is accumulated PATH LENGTH (not per-second) — drives the pose index and bob
             // phase, both framerate- and playback-speed-independent by construction.
             gait.distance[index] += raw;
@@ -640,10 +659,18 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           const speedT = Math.min(1, gait.speed[index] / GAIT_SPEED_FULL);
           lean = GAIT_MAX_LEAN * speedT;
           bob = Math.sin(gait.distance[index] * GAIT_BOB_FREQ) * GAIT_BOB_AMP * speedT;
-          // Walk-pose phase: advance one pose per STRIDE_LEN of travel, cycling walk1..walk4. When
-          // effectively standing (smoothed speed below the move epsilon) snap to idle so a
-          // near-stationary player doesn't flicker between idle and the first walk pose on jitter.
-          if (gait.speed[index] >= GAIT_MOVE_EPSILON) {
+          // Hysteretic walk/idle latch: enter walking above the ENTER speed, return to idle only
+          // below the (lower) EXIT speed. A single threshold makes a boundary-hovering player flip
+          // poses every frame; the enter>exit gap forces a clear state change before the legs do.
+          const s = gait.speed[index];
+          if (gait.walking[index]) {
+            if (s < GAIT_WALK_EXIT_SPEED) gait.walking[index] = 0;
+          } else if (s >= GAIT_WALK_ENTER_SPEED) {
+            gait.walking[index] = 1;
+          }
+          // Walk-pose phase: advance one pose per STRIDE_LEN of travel, cycling walk1..walk4 while
+          // the walk latch is set; otherwise hold the idle pose.
+          if (gait.walking[index]) {
             const phase = Math.floor(gait.distance[index] / STRIDE_LEN) % WALK_POSE_COUNT;
             poseIndex = 1 + phase; // 1..4
           }
