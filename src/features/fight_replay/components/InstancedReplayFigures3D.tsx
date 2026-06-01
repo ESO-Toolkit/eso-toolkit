@@ -205,23 +205,34 @@ function getBossModelUrlForActor(actor: ActorPosition): string | null {
 }
 
 // Scan the lookup for the first boss actor that maps to a model, returning its URL (or null). Used to
-// gate the GLB load: non-Taleria fights never fetch/parse the 560 KB model. A boss is present from
-// fight start and an actor's type/name are fixed for the fight, so only a few timestamps' rosters need
-// checking — capped at BOSS_SCAN_TIMESTAMPS so a large NON-matching lookup (up to ~72k timestamps)
-// can't turn this memoized, render-time scan into a UI hitch. The cap is generous against a sparse
-// opening sample yet O(1) in fight length.
-const BOSS_SCAN_TIMESTAMPS = 8;
-function getBossModelUrlInLookup(lookup: TimestampPositionLookup | null): string | null {
+// gate the GLB load: non-Taleria fights never fetch/parse the 560 KB model.
+//
+// Correctness vs cost: a fixed timestamp cap is UNSOUND — a boss with no recorded death (a wipe) is
+// gated by recent-event visibility in CalculateActorPositions, so it can be absent from the earliest
+// buckets until its first event, and a small cap would miss it (→ capsule for the whole replay). The
+// matching case must therefore be allowed to find a late-appearing boss, while the NON-matching case
+// must not walk all ~72k timestamps at render time. Both are satisfied by sampling each distinct actor
+// ONCE: we walk timestamps but track which actor ids we've already checked and stop as soon as every
+// id in `actorIds` has been seen. Every actor appears within a bounded number of buckets (players from
+// start, a boss within its first event window), so this terminates early for matching AND non-matching
+// fights, yet still checks every actor — so it can't miss a late-spawning boss.
+function getBossModelUrlInLookup(
+  lookup: TimestampPositionLookup | null,
+  actorIds: readonly number[],
+): string | null {
   const positions = lookup?.positionsByTimestamp;
-  if (!positions) return null;
-  const timestamps = Object.keys(positions);
-  const limit = Math.min(timestamps.length, BOSS_SCAN_TIMESTAMPS);
-  for (let i = 0; i < limit; i++) {
-    const atTs = positions[Number(timestamps[i])];
+  if (!positions || actorIds.length === 0) return null;
+  const seen = new Set<number>();
+  for (const ts of Object.keys(positions)) {
+    const atTs = positions[Number(ts)];
     for (const id of Object.keys(atTs)) {
-      const url = getBossModelUrlForActor(atTs[Number(id)]);
+      const actorId = Number(id);
+      if (seen.has(actorId)) continue;
+      seen.add(actorId);
+      const url = getBossModelUrlForActor(atTs[actorId]);
       if (url) return url;
     }
+    if (seen.size >= actorIds.length) break; // every distinct actor sampled → no boss matched
   }
   return null;
 }
@@ -378,7 +389,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
   // URL of the boss model this fight needs, or null if no actor maps to one. Gates the GLB load so
   // non-Taleria fights never fetch/parse the 560 KB model.
-  const bossModelUrl = useMemo(() => getBossModelUrlInLookup(lookup), [lookup]);
+  const bossModelUrl = useMemo(() => getBossModelUrlInLookup(lookup, actorIds), [lookup, actorIds]);
 
   // Stable index → glyph-group membership. An actor's symbol is fixed (role/type don't change
   // mid-fight), so we can assign each actor to one glyph group once and only toggle visibility.
