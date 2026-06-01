@@ -16,8 +16,8 @@ import {
   getGlyphTextureForSymbol,
 } from '../utils/actorGlyphTexture';
 import {
-  getReplayActorAccentColor,
   getReplayActorCoreColor,
+  getReplayActorResolvedAccentColor,
   getReplayActorShellColor,
 } from '../utils/actorVisualState';
 import { enablePerInstanceOpacity } from '../utils/instanceOpacity';
@@ -55,9 +55,12 @@ interface InstancedReplayFigures3DProps {
   selectedActorRef: React.RefObject<number | null>;
   onActorClick?: (actorId: number) => void;
   playerVisibility?: Map<number, boolean>;
+  /** Per-player body-color overrides (actorId → hex). Living players only; dead stay grey. */
+  playerColorOverrides?: Map<number, string>;
 }
 
 const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
+const EMPTY_COLOR_OVERRIDES: Map<number, string> = new Map();
 const GROUND_LEVEL = 0.05;
 const SELECTION_COLOR = '#38bdf8';
 const TAUNT_COLOR = '#f87171';
@@ -175,6 +178,7 @@ interface FrameCache {
   time: number;
   selectedActorId: number | null;
   playerVisibility: Map<number, boolean> | undefined;
+  playerColorOverrides: Map<number, string> | undefined;
   actorIds: readonly number[];
 }
 
@@ -190,6 +194,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   selectedActorRef,
   onActorClick,
   playerVisibility = EMPTY_VISIBILITY,
+  playerColorOverrides = EMPTY_COLOR_OVERRIDES,
 }) => {
   const bodyHeight = 0.55 * scale;
   const capY = bodyHeight + 0.02 * scale;
@@ -392,7 +397,15 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       if (arr) o.glyph.set(symbol, arr);
     });
 
-    frameCacheRef.current = null; // force a rebuild on next frame
+    // Force a full rebuild on the next frame. Clearing BOTH caches is load-bearing: the
+    // frame-level cache gates whether the loop runs at all, but the per-instance cache gates the
+    // `changed` block that calls setColorAt. When the humanoid GLB loads, an actor's role color is
+    // unchanged from its capsule-era cache entry, so without clearing cacheRef the `changed` check
+    // stays false and setColorAt never fires on the new humanoid layer → its instanceColor never
+    // lazily creates → players render white. Clearing cacheRef makes prev=undefined → changed →
+    // colors written to body AND humanoid next frame. cacheRef repopulates that same frame.
+    frameCacheRef.current = null;
+    cacheRef.current = [];
   }, [instanceCount, geometries, materials, glyphMaterials, humanoidGeometry]);
 
   const hideInstance = useCallback((mesh: THREE.InstancedMesh | null, index: number): void => {
@@ -416,6 +429,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       prevFrame.time === currentTime &&
       prevFrame.selectedActorId === selectedActorId &&
       prevFrame.playerVisibility === playerVisibility &&
+      prevFrame.playerColorOverrides === playerColorOverrides &&
       prevFrame.actorIds === actorIds
     ) {
       return;
@@ -425,6 +439,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       time: currentTime,
       selectedActorId,
       playerVisibility,
+      playerColorOverrides,
       actorIds,
     };
 
@@ -475,9 +490,12 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // per actor — the other is hidden off-screen.
       const useHumanoid = isPlayerActor(actor) && humanoidGeometry !== null;
 
-      const accentColor = getReplayActorAccentColor(actor);
-      const coreColor = getReplayActorCoreColor(actor);
-      const shellColor = getReplayActorShellColor(actor);
+      // Per-player override (player panel) wins for living players only; dead stays grey. Only
+      // players can be overridden — boss/enemy/npc/pet keep their type colors.
+      const override = isPlayerActor(actor) ? playerColorOverrides.get(actorId) : undefined;
+      const accentColor = getReplayActorResolvedAccentColor(actor, override);
+      const coreColor = getReplayActorCoreColor(actor, override);
+      const shellColor = getReplayActorShellColor(actor, override);
 
       const bodyOpacity = dead ? 0.4 : 1;
       const capOpacity = dead ? 0.4 : 1;

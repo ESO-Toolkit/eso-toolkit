@@ -148,6 +148,20 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     });
   }, []);
 
+  // Per-player body-color overrides (actorId → hex), owned here for the same one-source-of-truth
+  // reason as playerVisibility: the DOM player panel sets them and the in-canvas figures read them.
+  // Empty by default → every player falls back to its role color. A null value clears the override
+  // (back to role). Changes only on a user action, so the re-render is rare and cheap.
+  const [playerColorOverrides, setPlayerColorOverrides] = useState<Map<number, string>>(new Map());
+  const handlePlayerColorChange = useCallback((actorId: number, color: string | null) => {
+    setPlayerColorOverrides((prev) => {
+      const next = new Map(prev);
+      if (color === null) next.delete(actorId);
+      else next.set(actorId, color);
+      return next;
+    });
+  }, []);
+
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -688,6 +702,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             selectedPlayerIds={selectedPlayerIds}
             showPlayerTrails={showPlayerTrails}
             playerVisibility={playerVisibility}
+            playerColorOverrides={playerColorOverrides}
           />
         </Canvas>
 
@@ -706,6 +721,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onPlayerSelectionChange={onPlayerSelectionChange}
             playerVisibility={playerVisibility}
             onPlayerVisibilityChange={handlePlayerVisibilityChange}
+            playerColorOverrides={playerColorOverrides}
+            onPlayerColorChange={handlePlayerColorChange}
           />
         )}
 

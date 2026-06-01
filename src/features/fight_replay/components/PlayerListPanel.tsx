@@ -23,7 +23,16 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { Box, Collapse, IconButton, Stack, Tooltip, Typography, useTheme } from '@mui/material';
+import {
+  Box,
+  Collapse,
+  IconButton,
+  Popover,
+  Stack,
+  Tooltip,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -32,8 +41,30 @@ import {
   getActorPositionAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT } from '../constants/replayDesign';
+import { getReplayActorResolvedAccentColor } from '../utils/actorVisualState';
 import { getPlayerInfo } from '../utils/pathUtils';
-import { getPlayerPathColor } from '../utils/playerColors';
+import { PLAYER_PATH_COLORS } from '../utils/playerColors';
+
+// Distinct palette offered in the per-player color picker. The role colors live at the top so the
+// common "recolor a player to a role hue" case is one click; the rest are the visually distinct
+// extras already used for player paths, so a player's body color can match its trail.
+const COLOR_PICKER_SWATCHES: string[] = [
+  PLAYER_PATH_COLORS.tank,
+  PLAYER_PATH_COLORS.healer,
+  PLAYER_PATH_COLORS.dps,
+  PLAYER_PATH_COLORS.red,
+  PLAYER_PATH_COLORS.green,
+  PLAYER_PATH_COLORS.cyan,
+  PLAYER_PATH_COLORS.yellow,
+  PLAYER_PATH_COLORS.pink,
+  PLAYER_PATH_COLORS.lime,
+  PLAYER_PATH_COLORS.indigo,
+  PLAYER_PATH_COLORS.teal,
+  PLAYER_PATH_COLORS.coral,
+  PLAYER_PATH_COLORS.emerald,
+  PLAYER_PATH_COLORS.violet,
+  PLAYER_PATH_COLORS.amber,
+];
 
 interface PlayerListPanelProps {
   /** Player actor IDs to list (derived from the position lookup). */
@@ -48,12 +79,17 @@ interface PlayerListPanelProps {
   /** Per-player visibility of the 3D actor model. */
   playerVisibility: Map<number, boolean>;
   onPlayerVisibilityChange: (actorId: number, visible: boolean) => void;
+  /** Per-player body-color overrides (actorId → hex). */
+  playerColorOverrides: Map<number, string>;
+  /** Set (hex) or clear (null → back to role color) a player's body color. */
+  onPlayerColorChange: (actorId: number, color: string | null) => void;
 }
 
 interface PlayerRowInfo {
   id: number;
   name: string;
-  color: string;
+  /** The role accent (figure's default color when no override is set). */
+  roleColor: string;
 }
 
 interface RowHealthRefs {
@@ -74,11 +110,19 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   onPlayerSelectionChange,
   playerVisibility,
   onPlayerVisibilityChange,
+  playerColorOverrides,
+  onPlayerColorChange,
 }) => {
   const theme = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
-  // Resolve names + colors once per player-set change (names are stable for the fight).
+  // The player whose color picker is open, plus its anchor element for the popover.
+  const [colorPicker, setColorPicker] = useState<{ id: number; anchorEl: HTMLElement } | null>(
+    null,
+  );
+
+  // Resolve names + role colors once per player-set change (both are stable for the fight). The
+  // role color is the figure's DEFAULT body color; an override (read live below) wins when set.
   const players = useMemo<PlayerRowInfo[]>(() => {
     if (!lookup) return [];
     return playerIds.map((id) => {
@@ -86,7 +130,11 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
       return {
         id,
         name: info?.name || `Player ${id}`,
-        color: getPlayerPathColor(id),
+        roleColor: getReplayActorResolvedAccentColor({
+          type: 'player',
+          role: info?.role,
+          isDead: false,
+        }),
       };
     });
   }, [playerIds, lookup]);
@@ -225,6 +273,9 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
             {players.map((player) => {
               const isSelected = selectedPlayerIds.has(player.id);
               const isVisible = playerVisibility.get(player.id) ?? true;
+              const override = playerColorOverrides.get(player.id);
+              const bodyColor = override ?? player.roleColor;
+              const hasOverride = override !== undefined;
               return (
                 <Box
                   key={player.id}
@@ -251,16 +302,34 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
                     }),
                   }}
                 >
-                  {/* Color swatch */}
-                  <Box
-                    sx={{
-                      flexShrink: 0,
-                      width: 11,
-                      height: 11,
-                      borderRadius: '3px',
-                      backgroundColor: player.color,
-                    }}
-                  />
+                  {/* Color swatch — click to recolor this player's figure. Previews the actual
+                      body color (override if set, else role color), with a ring when overridden. */}
+                  <Tooltip title="Change figure color">
+                    <Box
+                      component="button"
+                      aria-label={`Change ${player.name} figure color`}
+                      onClick={(e) => setColorPicker({ id: player.id, anchorEl: e.currentTarget })}
+                      sx={{
+                        flexShrink: 0,
+                        width: 13,
+                        height: 13,
+                        p: 0,
+                        borderRadius: '3px',
+                        cursor: 'pointer',
+                        backgroundColor: bodyColor,
+                        border: hasOverride
+                          ? `1.5px solid ${theme.palette.common.white}`
+                          : '1px solid rgba(255,255,255,0.25)',
+                        boxShadow: hasOverride ? `0 0 0 1px ${bodyColor}` : 'none',
+                        '&:hover': { transform: 'scale(1.15)' },
+                        '&:focus-visible': {
+                          outline: `2px solid ${theme.palette.primary.main}`,
+                          outlineOffset: 1,
+                        },
+                        transition: 'transform 0.1s ease',
+                      }}
+                    />
+                  </Tooltip>
 
                   {/* Name + health */}
                   <Box sx={{ flexGrow: 1, minWidth: 0 }}>
@@ -342,6 +411,100 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
           </Stack>
         </Box>
       </Collapse>
+
+      {/* Per-player color picker. A palette grid plus a "reset to role color" action. Selecting a
+          swatch sets the override; reset clears it (figure returns to its role color). */}
+      <Popover
+        open={colorPicker !== null}
+        anchorEl={colorPicker?.anchorEl ?? null}
+        onClose={() => setColorPicker(null)}
+        anchorOrigin={{ vertical: 'center', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'center', horizontal: 'left' }}
+        slotProps={{
+          paper: {
+            sx: {
+              p: 1,
+              backgroundColor: 'rgba(15, 23, 42, 0.96)',
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${theme.palette.primary.main}40`,
+              borderRadius: 1.5,
+            },
+          },
+        }}
+      >
+        {colorPicker && (
+          <Box sx={{ width: 132 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gap: 0.5,
+                mb: 0.75,
+              }}
+            >
+              {COLOR_PICKER_SWATCHES.map((swatch) => {
+                const active = playerColorOverrides.get(colorPicker.id) === swatch;
+                return (
+                  <Box
+                    key={swatch}
+                    component="button"
+                    aria-label={`Set color ${swatch}`}
+                    onClick={() => {
+                      onPlayerColorChange(colorPicker.id, swatch);
+                      setColorPicker(null);
+                    }}
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      p: 0,
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      backgroundColor: swatch,
+                      border: active
+                        ? `2px solid ${theme.palette.common.white}`
+                        : '1px solid rgba(255,255,255,0.2)',
+                      '&:hover': { transform: 'scale(1.12)' },
+                      '&:focus-visible': {
+                        outline: `2px solid ${theme.palette.primary.main}`,
+                        outlineOffset: 1,
+                      },
+                      transition: 'transform 0.1s ease',
+                    }}
+                  />
+                );
+              })}
+            </Box>
+            <Box
+              component="button"
+              onClick={() => {
+                onPlayerColorChange(colorPicker.id, null);
+                setColorPicker(null);
+              }}
+              sx={{
+                width: '100%',
+                py: 0.5,
+                border: 'none',
+                borderRadius: 1,
+                cursor: 'pointer',
+                backgroundColor: 'rgba(148, 210, 255, 0.08)',
+                color: theme.palette.text.secondary,
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                '&:hover': {
+                  backgroundColor: 'rgba(148, 210, 255, 0.16)',
+                  color: theme.palette.text.primary,
+                },
+                '&:focus-visible': {
+                  outline: `2px solid ${theme.palette.primary.main}`,
+                  outlineOffset: -2,
+                },
+              }}
+            >
+              Reset to role color
+            </Box>
+          </Box>
+        )}
+      </Popover>
     </Box>
   );
 };

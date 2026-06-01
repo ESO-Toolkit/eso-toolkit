@@ -56,6 +56,8 @@ function renderPanel(overrides: Partial<React.ComponentProps<typeof PlayerListPa
     onPlayerSelectionChange: jest.fn(),
     playerVisibility: new Map<number, boolean>(),
     onPlayerVisibilityChange: jest.fn(),
+    playerColorOverrides: new Map<number, string>(),
+    onPlayerColorChange: jest.fn(),
     ...overrides,
   };
   return { props, ...render(<PlayerListPanel {...props} />) };
@@ -72,6 +74,8 @@ describe('PlayerListPanel', () => {
         onPlayerSelectionChange={jest.fn()}
         playerVisibility={new Map()}
         onPlayerVisibilityChange={jest.fn()}
+        playerColorOverrides={new Map()}
+        onPlayerColorChange={jest.fn()}
       />,
     );
     expect(container).toBeEmptyDOMElement();
@@ -102,5 +106,30 @@ describe('PlayerListPanel', () => {
     // Defaults to visible, so the control offers "Hide".
     fireEvent.click(screen.getByLabelText('Hide @Player1'));
     expect(onPlayerVisibilityChange).toHaveBeenCalledWith(1, false);
+  });
+
+  it('sets a per-player color override from the picker', () => {
+    const onPlayerColorChange = jest.fn();
+    renderPanel({ onPlayerColorChange });
+    // Open the first player's color picker, then choose a palette swatch.
+    fireEvent.click(screen.getByLabelText('Change @Player1 figure color'));
+    const swatches = screen.getAllByLabelText(/^Set color #/);
+    expect(swatches.length).toBeGreaterThan(0);
+    fireEvent.click(swatches[3]);
+    expect(onPlayerColorChange).toHaveBeenCalledTimes(1);
+    const [id, color] = onPlayerColorChange.mock.calls[0];
+    expect(id).toBe(1);
+    expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+  });
+
+  it('clears a color override via reset-to-role', () => {
+    const onPlayerColorChange = jest.fn();
+    renderPanel({
+      onPlayerColorChange,
+      playerColorOverrides: new Map([[1, '#ff4757']]),
+    });
+    fireEvent.click(screen.getByLabelText('Change @Player1 figure color'));
+    fireEvent.click(screen.getByText('Reset to role color'));
+    expect(onPlayerColorChange).toHaveBeenCalledWith(1, null);
   });
 });

@@ -85,18 +85,45 @@ export function getReplayActorAccentColor(actor: ActorVisualInput): string {
   return REPLAY_ACTOR_COLORS.defaultPlayer;
 }
 
-export function getReplayActorCoreColor(actor: ActorVisualInput): string {
-  const accent = getReplayActorAccentColor(actor);
+/**
+ * Resolve the accent an actor's figure should use. `override` (a hex color, e.g. a per-player
+ * color chosen in the player panel) wins ONLY for a living actor — dead actors always read grey so
+ * the death state stays unambiguous. Non-overridden actors fall back to the role/type accent.
+ */
+function resolveAccent(actor: ActorVisualInput, override?: string | null): string {
+  if (override && !actor?.isDead) {
+    return override;
+  }
+  return getReplayActorAccentColor(actor);
+}
+
+export function getReplayActorCoreColor(actor: ActorVisualInput, override?: string | null): string {
+  const accent = resolveAccent(actor, override);
   return actor?.isDead
     ? blendHex(accent, REPLAY_ACTOR_COLORS.shell, 0.38)
     : blendHex(accent, '#ffffff', 0.18);
 }
 
-export function getReplayActorShellColor(actor: ActorVisualInput): string {
-  const accent = getReplayActorAccentColor(actor);
+export function getReplayActorShellColor(
+  actor: ActorVisualInput,
+  override?: string | null,
+): string {
+  const accent = resolveAccent(actor, override);
   return actor?.isDead
     ? blendHex(accent, REPLAY_ACTOR_COLORS.shell, 0.72)
     : blendHex(accent, REPLAY_ACTOR_COLORS.shell, 0.48);
+}
+
+/**
+ * Accent for the figure's cap/vision/swatch. Like {@link getReplayActorAccentColor} but honors a
+ * per-player override for living actors. This is the single source of truth the player-panel swatch
+ * and the 3D body both read, so the swatch always previews the figure's actual color.
+ */
+export function getReplayActorResolvedAccentColor(
+  actor: ActorVisualInput,
+  override?: string | null,
+): string {
+  return resolveAccent(actor, override);
 }
 
 export function getReplayActorHaloColor(actor: ActorVisualInput): string {

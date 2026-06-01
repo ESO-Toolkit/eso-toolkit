@@ -25,6 +25,7 @@ import { PlayerPathTrail3D } from './PlayerPathTrail3D';
 // Stable empty Map for the optional playerVisibility prop default — a fresh `new Map()` in
 // the default would change identity every render and churn child memoization.
 const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
+const EMPTY_COLOR_OVERRIDES: Map<number, string> = new Map();
 
 // Create logger instance for Arena3DScene
 const logger = new Logger({
@@ -50,6 +51,7 @@ interface AnimationFrameSceneActorsProps {
   followingActorIdRef: React.RefObject<number | null>;
   onActorClick?: (actorId: number) => void;
   playerVisibility?: Map<number, boolean>;
+  playerColorOverrides?: Map<number, string>;
 }
 
 export interface GroundContextMenuPayload {
@@ -71,6 +73,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   followingActorIdRef,
   onActorClick,
   playerVisibility,
+  playerColorOverrides,
 }) => {
   // Performance settings based on scrubbing mode
   const shouldRenderEffects = scrubbingMode?.shouldRenderEffects ?? true;
@@ -85,6 +88,7 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
       selectedActorRef={followingActorIdRef}
       onActorClick={onActorClick}
       playerVisibility={playerVisibility}
+      playerColorOverrides={playerColorOverrides}
     />
   );
 };
@@ -213,6 +217,11 @@ export interface Arena3DSceneProps {
    * overlay and these in-canvas actors share one source of truth) and passed down here.
    */
   playerVisibility?: Map<number, boolean>;
+  /**
+   * Per-player body-color overrides (actorId → hex). Owned by Arena3D alongside playerVisibility
+   * so the DOM player panel and the in-canvas figures share one source of truth.
+   */
+  playerColorOverrides?: Map<number, string>;
 }
 
 /**
@@ -236,6 +245,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   selectedPlayerIds = new Set(),
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
+  playerColorOverrides = EMPTY_COLOR_OVERRIDES,
 }) => {
   // Shared render budget for the on-demand RenderLoop. Refilled on every React commit of
   // this scene (effect below, intentionally no deps) so state-driven mutations — markers,
@@ -492,6 +502,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         followingActorIdRef={followingActorIdRef}
         onActorClick={onActorClick}
         playerVisibility={playerVisibility}
+        playerColorOverrides={playerColorOverrides}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
           the <Canvas> (crisp text, real scroll region, native MUI styling) — not in-canvas
