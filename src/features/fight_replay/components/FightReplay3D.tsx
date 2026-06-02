@@ -450,10 +450,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
       // Symbol + arrow shortcuts that .toLowerCase() can't normalize.
       switch (key) {
-        case ' ': // Space — play/pause. Guard a focused transport button so Space doesn't BOTH
-          // click the button and toggle here (a button keeps focus after a mouse click).
+        case ' ': // Space — play/pause. But never hijack Space from a focused button: Space is the
+          // native activation key for buttons, so toggling + preventDefault() here would break
+          // keyboard activation of Import/Load markers, Share, collapse, fullscreen, etc. Let the
+          // button handle its own Space; the canvas/transport background still toggles playback.
           if (event.target instanceof HTMLButtonElement) {
-            (event.target as HTMLButtonElement).blur();
+            return;
           }
           handlePlayPause();
           event.preventDefault();
