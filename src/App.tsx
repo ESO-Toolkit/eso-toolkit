@@ -212,6 +212,14 @@ const PublicProfilePage = React.lazy(() =>
   import('./pages/PublicProfilePage').then((module) => ({ default: module.PublicProfilePage })),
 );
 
+// Trial boss 3D model viewer — direct URL only (no nav link), for QA of the
+// extracted boss GLBs. See documentation/features/trial-boss-models.
+const BossModelViewerPage = React.lazy(() =>
+  import('./pages/BossModelViewerPage').then((module) => ({
+    default: module.BossModelViewerPage,
+  })),
+);
+
 // Null fallback for lazy-loaded routes — view transitions provide visual
 // feedback during navigation, so a skeleton loader is unnecessary and jarring.
 const LoadingFallback: React.FC = () => null;
@@ -634,6 +642,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <LoadoutManager />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/boss-models"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <BossModelViewerPage />
                   </Suspense>
                 </ErrorBoundary>
               }

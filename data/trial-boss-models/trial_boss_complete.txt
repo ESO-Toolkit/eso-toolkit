@@ -1,0 +1,543 @@
+==========================================================================================
+ESO TRIAL BOSS — COMPLETE ASSET MAPPING
+Models + Textures + Animations
+==========================================================================================
+
+SUMMARY
+  Total Bosses: 54 (30 creature, 24 humanoid)
+  Models with textures found: 22
+  Models without textures: 8
+  Primary textures (diffuse/normal/specular): 42
+  Additional textures (LOD/variant/mipmap): 88
+  Related GR2 files (skeleton/animation): 202
+
+
+------------------------------------------------------------------------------------------
+TRIAL: Hel Ra Citadel (2014) — Craglorn
+------------------------------------------------------------------------------------------
+
+  Ra Kotu
+    Type: HUMANOID (player-type skeleton)
+    Notes: Yokedan warrior, uses player-type skeleton
+
+  Yokeda Rok'dun
+    Type: HUMANOID (player-type skeleton)
+    Notes: Yokedan warrior, uses player-type skeleton
+
+  The Warrior
+    Type: HUMANOID (player-type skeleton)
+    Notes: Celestial being, unique humanoid model with celestial armor
+
+------------------------------------------------------------------------------------------
+TRIAL: Aetherian Archive (2014) — Craglorn
+------------------------------------------------------------------------------------------
+
+  Lightning Storm Atronach
+    Type: CREATURE (StormAtronach)
+    Model: StormAtronach_A_Basic (fi=547909, 292KB, 3668v/5296t)
+    Textures (13 total, 3 primary):
+      [   diffuse] fi=547915: 2048x1024 DXT5 (2048KB)
+      [    normal] fi=547917: 512x256 DXT5 (170KB)
+      [  specular] fi=547919: 2048x1024 uncompressed (8192KB)
+      + 10 additional textures (LOD/variant/mipmap)
+         fi=547921: 512x256 uncompressed (682KB)
+         fi=547923: 2048x1024 DXT5 (2048KB)
+         fi=547925: 512x256 DXT5 (170KB)
+         ... and 7 more
+    Related GR2: 2 other GR2
+    Variants (2):
+      StormAtronach_A_Basic (fi=547909, 292KB) [✓ 13 tex]
+      StormAtronach_B_Basic (fi=2752805, 257KB) [✓ 9 tex]
+
+  Foundation Stone Atronach
+    Type: CREATURE (StoneAtronach)
+    Model: StoneAtronach_B_Boss (fi=640555, 323KB, 3906v/6884t)
+    Textures (10 total, 3 primary):
+      [   diffuse] fi=640545: 1024x1024 DXT5 (1365KB)
+      [    normal] fi=640547: 1024x1024 DXT5 (1365KB)
+      [  specular] fi=640551: 4096x4096 DXT1 (10922KB)
+      + 7 additional textures (LOD/variant/mipmap)
+         fi=640553: 4096x4096 DXT5 (21845KB)
+         fi=640557: 1024x512 DXT5 (512KB)
+         fi=640559: 1024x512 DXT5 (512KB)
+         ... and 4 more
+    Related GR2: 1 anims, 4 other GR2
+    Variants (3):
+      StoneAtronach_C_Jungle (fi=1530099, 325KB) [✓ 4 tex]
+      StoneAtronach_B_Boss (fi=640555, 323KB) [✓ 10 tex]
+      StoneAtronach_A_Basic (fi=614195, 319KB) [✓ 20 tex]
+
+  Varlariel
+    Type: HUMANOID (player-type skeleton)
+    Notes: High Elf NPC, uses player-type skeleton
+
+  The Mage
+    Type: HUMANOID (player-type skeleton)
+    Notes: Celestial being, unique humanoid model
+
+------------------------------------------------------------------------------------------
+TRIAL: Sanctum Ophidia (2014) — Craglorn
+------------------------------------------------------------------------------------------
+
+  Stonebreaker
+    Type: CREATURE (Troll)
+    Model: Troll_Craglorn_Boss (fi=672165, 875KB, 11614v/13474t)
+    Textures (5 total, 0 primary):
+      + 5 additional textures (LOD/variant/mipmap)
+         fi=672159: 2048x2048 DXT1 (2730KB)
+         fi=672161: 2048x2048 DXT5 (5461KB)
+         fi=672163: 2048x2048 DXT5 (5461KB)
+         ... and 2 more
+    Related GR2: 1 anims, 3 other GR2
+    Variants (3):
+      Troll_Craglorn_Boss (fi=672165, 875KB) [✓ 5 tex]
+      Troll_Armored_Boss (fi=558737, 724KB) [✓ 3 tex]
+      Troll_A_Basic (fi=558735, 595KB) [✓ 3 tex]
+
+  Ozara
+    Type: CREATURE (Lamia)
+    Model: Lamia_A_Boss (fi=527791, 248KB, 2953v/4554t)
+    Textures (2 total, 2 primary):
+      [   diffuse] fi=527797: 256x256 DXT1 (42KB)
+      [    normal] fi=527801: 256x256 DXT5 (85KB)
+    Related GR2: 3 other GR2
+    Variants (2):
+      Lamia_A_Boss (fi=527791, 248KB) [✓ 2 tex]
+      Lamia_B_Basic (fi=527787, 244KB) [✓ 2 tex]
+
+  Possessed Mantikora
+    Type: CREATURE (Mantikora)
+    Model: Mantikora_B_Boss (fi=651175, 480KB, 6030v/9072t)
+    Textures (4 total, 0 primary):
+      + 4 additional textures (LOD/variant/mipmap)
+         fi=651169: 2048x2048 DXT1 (2730KB)
+         fi=651171: 2048x2048 DXT5 (5461KB)
+         fi=651173: 2048x2048 DXT5 (5461KB)
+         ... and 1 more
+    Related GR2: 9 anims
+    Variants (4):
+      Mantikora_B_Boss (fi=651175, 480KB) [✓ 4 tex]
+      Mantikora_Mehrunes_Boss (fi=2669831, 472KB) [✓ 18 tex]
+      Mantikora_B_Basic (fi=2664655, 340KB) [✓ 3 tex]
+      Mantikora_A_Basic (fi=639663, 340KB) [✓ 3 tex]
+
+  The Serpent
+    Type: HUMANOID (player-type skeleton)
+    Notes: Celestial being, unique serpentine humanoid model. Transform phase uses GiantSnake-like model.
+
+------------------------------------------------------------------------------------------
+TRIAL: Maw of Lorkhaj (2016) — Reaper's March
+------------------------------------------------------------------------------------------
+
+  Zhaj'hassa the Forgotten
+    Type: CREATURE (CatLargeSenche)
+    Model: CatLargeSenche_Wraithhaunt_Base (fi=2739405, 1458KB, 19147v/27962t)
+    Textures (1 total, 0 primary):
+      + 1 additional textures (LOD/variant/mipmap)
+         fi=2739395: 1024x1024 DXT1 (682KB)
+    Related GR2: 11 other GR2
+    Variants (3):
+      CatLargeSenche_Wraithhaunt_Base (fi=2739405, 1458KB) [✓ 1 tex]
+      CatLargeSenche_FrostAtronach (fi=2360475, 1402KB) [✓ 3 tex]
+      CatLargeSenche_A_DragonCult (fi=1550701, 476KB) [✓ 8 tex]
+
+  S'kinrai
+    Type: HUMANOID (player-type skeleton)
+    Notes: Dro-m'Athra Khajiit, humanoid player-type skeleton with Dro-m'Athra effects
+
+  Vashai
+    Type: HUMANOID (player-type skeleton)
+    Notes: Dro-m'Athra Khajiit, humanoid player-type skeleton with Dro-m'Athra effects
+
+  Rakkhat
+    Type: HUMANOID (player-type skeleton)
+    Notes: Dro-m'Athra Khajiit lord, humanoid with unique Dro-m'Athra appearance
+
+------------------------------------------------------------------------------------------
+TRIAL: Halls of Fabrication (2017) — Vvardenfell (Morrowind)
+------------------------------------------------------------------------------------------
+
+  Hunter-Killer Fabricants
+    Type: CREATURE (VerminousFabricant)
+    Model: VerminousFabricant_A_Basic (fi=1052301, 875KB, 11390v/16347t)
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 14 anims, 1 other GR2
+
+  Pinnacle Factotum
+    Type: CREATURE (DwemerCenturion)
+    Model: DwemerCenturion_B_Basic (fi=862681, 623KB, 8210v/9076t)
+    Textures (7 total, 3 primary):
+      [   diffuse] fi=862673: 256x512 DXT5 (170KB)
+      [    normal] fi=862675: 512x1024 DXT5 (682KB)
+      [  specular] fi=862677: 128x256 DXT5 (42KB)
+      + 4 additional textures (LOD/variant/mipmap)
+         fi=862683: 2048x2048 DXT1 (2730KB)
+         fi=862685: 2048x2048 DXT5 (5461KB)
+         fi=862689: 2048x2048 DXT1 (2730KB)
+         ... and 1 more
+    Related GR2: 1 anims, 1 other GR2
+    Variants (3):
+      DwemerCenturion_B_Basic (fi=862681, 623KB) [✓ 7 tex]
+      DwemerCenturion_C_Basic (fi=862695, 566KB) [✓ 3 tex]
+      DwemerCenturion_A_Basic (fi=548237, 550KB) [✓ 5 tex]
+
+  Archcustodian
+    Type: CREATURE (DwemerCenturion)
+    Model: DwemerCenturion_C_Basic (fi=862695, 566KB, 7456v/7854t)
+    Textures (3 total, 3 primary):
+      [   diffuse] fi=862685: 2048x2048 DXT5 (5461KB)
+      [    normal] fi=862689: 2048x2048 DXT1 (2730KB)
+      [  specular] fi=862691: 2048x2048 DXT5 (5461KB)
+    Variants (3):
+      DwemerCenturion_B_Basic (fi=862681, 623KB) [✓ 7 tex]
+      DwemerCenturion_C_Basic (fi=862695, 566KB) [✓ 3 tex]
+      DwemerCenturion_A_Basic (fi=548237, 550KB) [✓ 5 tex]
+
+  Assembly General
+    Type: CREATURE (ClockWorkImperfect)
+    Model: ClockWorkImperfect_A_Basic (fi=1158669, 2810KB, 37628v/48483t)
+    Textures (14 total, 3 primary):
+      [   diffuse] fi=1158673: 2048x1024 DXT5 (2730KB)
+      [    normal] fi=1158675: 512x256 DXT5 (170KB)
+      [  specular] fi=1158677: 2048x1024 DXT5 (2730KB)
+      + 11 additional textures (LOD/variant/mipmap)
+         fi=1158679: 512x256 DXT5 (170KB)
+         fi=1158681: 2048x1024 DXT5 (2730KB)
+         fi=1158683: 512x256 DXT5 (170KB)
+         ... and 8 more
+
+  The Hunter
+    Type: CREATURE (ClockWorkTitan)
+    Model: ClockWorkTitan_A_Basic (fi=1154543, 2921KB, 39807v/42876t)
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 13 other GR2
+
+------------------------------------------------------------------------------------------
+TRIAL: Asylum Sanctorium (2017) — Clockwork City
+------------------------------------------------------------------------------------------
+
+  Saint Olms the Just
+    Type: CREATURE (ClockWorkTitan)
+    Model: ClockWorkTitan_A_Basic (fi=1154543, 2921KB, 39807v/42876t)
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 13 other GR2
+
+  Saint Felms the Bold
+    Type: CREATURE (DwemerCenturion)
+    Model: DwemerCenturion_B_Basic (fi=862681, 623KB, 8210v/9076t)
+    Textures (7 total, 3 primary):
+      [   diffuse] fi=862673: 256x512 DXT5 (170KB)
+      [    normal] fi=862675: 512x1024 DXT5 (682KB)
+      [  specular] fi=862677: 128x256 DXT5 (42KB)
+      + 4 additional textures (LOD/variant/mipmap)
+         fi=862683: 2048x2048 DXT1 (2730KB)
+         fi=862685: 2048x2048 DXT5 (5461KB)
+         fi=862689: 2048x2048 DXT1 (2730KB)
+         ... and 1 more
+    Related GR2: 1 anims, 1 other GR2
+    Variants (2):
+      DwemerCenturion_B_Basic (fi=862681, 623KB) [✓ 7 tex]
+      DwemerCenturion_C_Basic (fi=862695, 566KB) [✓ 3 tex]
+
+  Saint Llothis the Pious
+    Type: CREATURE (DwemerCenturion)
+    Model: DwemerCenturion_C_Basic (fi=862695, 566KB, 7456v/7854t)
+    Textures (3 total, 3 primary):
+      [   diffuse] fi=862685: 2048x2048 DXT5 (5461KB)
+      [    normal] fi=862689: 2048x2048 DXT1 (2730KB)
+      [  specular] fi=862691: 2048x2048 DXT5 (5461KB)
+    Variants (2):
+      DwemerCenturion_B_Basic (fi=862681, 623KB) [✓ 7 tex]
+      DwemerCenturion_C_Basic (fi=862695, 566KB) [✓ 3 tex]
+
+------------------------------------------------------------------------------------------
+TRIAL: Cloudrest (2018) — Summerset
+------------------------------------------------------------------------------------------
+
+  Shade of Galenwe
+    Type: HUMANOID (player-type skeleton)
+    Notes: Welkynar knight shade, humanoid with gryphon rider armor
+
+  Shade of Siroria
+    Type: HUMANOID (player-type skeleton)
+    Notes: Welkynar knight shade, humanoid with gryphon rider armor
+
+  Shade of Relequen
+    Type: HUMANOID (player-type skeleton)
+    Notes: Welkynar knight shade, humanoid with gryphon rider armor
+
+  Z'Maja
+    Type: CREATURE (Sload)
+    Model: Sload_A_Basic (fi=1182249, 887KB, 11222v/18852t)
+    Textures (8 total, 2 primary):
+      [    normal] fi=1182253: 1024x512 DXT1 (341KB)
+      [  specular] fi=1182255: 1024x512 DXT5 (682KB)
+      + 6 additional textures (LOD/variant/mipmap)
+         fi=1182243: 256x256 DXT5 (85KB)
+         fi=1182257: 128x64 DXT5 (10KB)
+         fi=1182259: 1024x512 DXT5 (682KB)
+         ... and 3 more
+    Related GR2: 1 other GR2
+
+  Gryphon (Welkynar Mounts)
+    Type: CREATURE (Gryphon)
+    Model: Gryphon_A_Boss (fi=2702925, 2091KB, 27647v/37104t)
+    Textures (10 total, 0 primary):
+      + 10 additional textures (LOD/variant/mipmap)
+         fi=2702919: 4096x4096 DXT5 (21845KB)
+         fi=2702921: 4096x4096 DXT5 (21845KB)
+         fi=2702923: 4096x4096 DXT5 (21845KB)
+         ... and 7 more
+    Related GR2: 6 other GR2
+    Variants (3):
+      Gryphon_A_Tame (fi=1227373, 2120KB) [✓ 5 tex]
+      Gryphon_A_Boss (fi=2702925, 2091KB) [✓ 10 tex]
+      Gryphon_A_Basic (fi=1191791, 2049KB) [✓ 3 tex]
+
+------------------------------------------------------------------------------------------
+TRIAL: Sunspire (2019) — Northern Elsweyr
+------------------------------------------------------------------------------------------
+
+  Yolnahkriin
+    Type: CREATURE (Dragon)
+    Model: BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v/63786t)
+    ⚠ REFERENCE SKELETON ONLY — living model cannot be located by name search
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 8 other GR2
+
+  Lokkestiiz
+    Type: CREATURE (Dragon)
+    Model: BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v/63786t)
+    ⚠ REFERENCE SKELETON ONLY — living model cannot be located by name search
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 8 other GR2
+
+  Nahviintaas
+    Type: CREATURE (Dragon)
+    Model: BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v/63786t)
+    ⚠ REFERENCE SKELETON ONLY — living model cannot be located by name search
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 8 other GR2
+
+------------------------------------------------------------------------------------------
+TRIAL: Kyne's Aegis (2020) — Western Skyrim (Greymoor)
+------------------------------------------------------------------------------------------
+
+  Yandir the Butcher
+    Type: CREATURE (Giant)
+    Model: Giant_B_Basic (fi=535619, 443KB, 5581v/8061t)
+    Textures (3 total, 3 primary):
+      [   diffuse] fi=535613: 2048x2048 DXT5 (5461KB)
+      [    normal] fi=535615: 4096x4096 DXT5 (21845KB)
+      [  specular] fi=535617: 2048x2048 DXT5 (5461KB)
+    Variants (4):
+      Giant_Plague_Basic (fi=1192235, 635KB) [✓ 2 tex]
+      Giant_Snow_Basic (fi=671189, 451KB) [✓ 3 tex]
+      Giant_B_Basic (fi=535619, 443KB) [✓ 3 tex]
+      Giant_A_Basic (fi=170497, 441KB) [✓ 12 tex]
+
+  Captain Vrol
+    Type: HUMANOID (player-type skeleton)
+    Notes: Vampire sea captain, humanoid NPC model
+
+  Lord Falgravn
+    Type: CREATURE (VampireLord)
+    Model: VampireLord_A_Basic (fi=1573229, 2152KB, 28101v/44176t)
+    Textures (2 total, 2 primary):
+      [   diffuse] fi=1573231: 2048x1024 DXT5 (2048KB)
+      [    normal] fi=1573233: 512x256 DXT5 (170KB)
+    Related GR2: 2 anims, 12 other GR2
+    Variants (10):
+      VampireLord_A_Wings (fi=2400125, 2960KB) [✓ 4 tex]
+      VampireLord_C_Basic (fi=2494349, 2281KB) [✓ 3 tex]
+      VampireLord_B_Female (fi=2587447, 2171KB) [✓ 5 tex]
+      VampireLord_A_Basic (fi=1573229, 2152KB) [✓ 2 tex]
+      VampireLord_A_Female (fi=2531925, 2139KB) [✗ no tex]
+      VampireLord_B_Basic (fi=2479641, 1695KB) [✓ 9 tex]
+      VampireLord_Lurker_Boss (fi=2823085, 1412KB) [✓ 5 tex]
+      VampireLord_Lurker_Basic (fi=2792917, 947KB) [✓ 8 tex]
+      VampireLord_Faun_Basic (fi=2718715, 435KB) [✗ no tex]
+      VampireLord_01_Costume (fi=873839, 293KB) [✓ 1 tex]
+
+------------------------------------------------------------------------------------------
+TRIAL: Rockgrove (2021) — Blackwood
+------------------------------------------------------------------------------------------
+
+  Oaxiltso
+    Type: CREATURE (ArgonianBehemoth)
+    Model: ArgonianBehemoth_A_Red_Basic (fi=2643525, 416KB, 5207v/8130t)
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 4 anims, 6 other GR2
+    Variants (2):
+      ArgonianBehemoth_A_Basic (fi=669101, 416KB) [✗ no tex]
+      ArgonianBehemoth_A_Red_Basic (fi=2643525, 416KB) [✗ no tex]
+
+  Flame-Herald Bahsei
+    Type: HUMANOID (player-type skeleton)
+    Notes: Sul-Xan Argonian priest, humanoid NPC model
+
+  Xalvakka
+    Type: HUMANOID (player-type skeleton)
+    Notes: Sul-Xan Argonian warlord, humanoid NPC model
+
+------------------------------------------------------------------------------------------
+TRIAL: Dreadsail Reef (2022) — High Isle
+------------------------------------------------------------------------------------------
+
+  Lylanar and Turlassil
+    Type: HUMANOID (player-type skeleton)
+    Notes: Dreadsail sea elf twins, humanoid NPC models
+
+  Taleria
+    Type: HUMANOID (player-type skeleton)
+    Notes: Dreadsail Reef captain, humanoid NPC model
+
+  Reef Guardian
+    Type: CREATURE (CoralAtronach)
+    Model: AirAtronach_Coral_Boss (fi=2732009, 1055KB, 13752v/19862t)
+    Textures (6 total, 3 primary):
+      [   diffuse] fi=2732019: 1024x512 DXT1 (341KB)
+      [    normal] fi=2732021: 1024x512 DXT5 (682KB)
+      [  specular] fi=2732023: 256x128 DXT5 (42KB)
+      + 3 additional textures (LOD/variant/mipmap)
+         fi=2732033: 2048x2048 DXT5 (5461KB)
+         fi=2732035: 2048x2048 DXT5 (5461KB)
+         fi=2732037: 2048x2048 DXT5 (5461KB)
+    Related GR2: 2 anims, 8 other GR2
+
+  Tideborn
+    Type: CREATURE (Hadolid)
+    Model: GreyFallen_HadolidMelee_Basic (fi=2717671, 1155KB, 14972v/22978t)
+    Textures (9 total, 3 primary):
+      [   diffuse] fi=2717673: 2048x2048 DXT5 (5461KB)
+      [    normal] fi=2717675: 2048x2048 DXT5 (5461KB)
+      [  specular] fi=2717677: 2048x2048 DXT5 (5461KB)
+      + 6 additional textures (LOD/variant/mipmap)
+         fi=2717679: 1024x512 DXT5 (512KB)
+         fi=2717681: 1024x512 DXT5 (512KB)
+         fi=2717683: 1024x512 DXT5 (512KB)
+         ... and 3 more
+    Related GR2: 5 anims
+    Variants (2):
+      GreyFallen_HadolidMelee_Basic (fi=2717671, 1155KB) [✓ 9 tex]
+      GreyFallen_HadolidRanged_Basic (fi=2724771, 1101KB) [✓ 12 tex]
+
+------------------------------------------------------------------------------------------
+TRIAL: Sanity's Edge (2023) — Telvanni Peninsula (Necrom)
+------------------------------------------------------------------------------------------
+
+  Exarchon of Emblazoned Sins
+    Type: CREATURE (MindTerror)
+    Model: MindTerror_A_Boss (fi=2841085, 1310KB, 17477v/20518t)
+    Textures (2 total, 0 primary):
+      + 2 additional textures (LOD/variant/mipmap)
+         fi=2841075: 1024x1024 DXT5 (1365KB)
+         fi=2841077: 1024x1024 DXT5 (1365KB)
+    Related GR2: 2 anims
+    Variants (2):
+      MindTerror_A_Boss (fi=2841085, 1310KB) [✓ 2 tex]
+      MindTerror_A_Minion (fi=2840985, 775KB) [✓ 4 tex]
+
+  Ansuul the Tormented
+    Type: HUMANOID (player-type skeleton)
+    Notes: Daedric being, humanoid with unique nightmare-themed appearance. Multiple phases.
+
+  Mindterror Mini-bosses
+    Type: CREATURE (MindTerror)
+    Model: MindTerror_A_Minion (fi=2840985, 775KB, 9714v/17242t)
+    Textures (4 total, 0 primary):
+      + 4 additional textures (LOD/variant/mipmap)
+         fi=2840979: 1024x1024 DXT5 (1365KB)
+         fi=2840981: 1024x1024 DXT5 (1365KB)
+         fi=2840983: 1024x1024 DXT5 (1365KB)
+         ... and 1 more
+    Related GR2: 8 other GR2
+    Variants (2):
+      MindTerror_A_Boss (fi=2841085, 1310KB) [✓ 2 tex]
+      MindTerror_A_Minion (fi=2840985, 775KB) [✓ 4 tex]
+
+------------------------------------------------------------------------------------------
+TRIAL: Lucent Citadel (2024) — West Weald (Gold Road)
+------------------------------------------------------------------------------------------
+
+  Riftmaster
+    Type: CREATURE (Harbinger)
+    Model: Harbinger_B_Boss (fi=2636767, 2369KB, 31012v/46987t)
+    Textures: ⚠ NOT FOUND (stored in non-adjacent archive region)
+    Related GR2: 2 anims, 16 other GR2
+    Variants (5):
+      Harbinger_C_Incarnate (fi=2658023, 3204KB) [✓ 6 tex]
+      Harbinger_B_Boss (fi=2636767, 2369KB) [✗ no tex]
+      Harbinger_A_Basic (fi=2645893, 2172KB) [✓ 15 tex]
+      Harbinger_A_Basic (fi=2588661, 2170KB) [✓ 13 tex]
+      Harbinger_A_MehrunesDagon (fi=2567931, 1750KB) [✓ 6 tex]
+
+  Xoryn the Ruthless
+    Type: HUMANOID (player-type skeleton)
+    Notes: Daedric humanoid boss
+
+  Baron Thierry / Praxin Douare
+    Type: HUMANOID (player-type skeleton)
+    Notes: Humanoid NPC bosses
+
+  Infernium Encounter
+    Type: CREATURE (Infernium)
+    Model: Infernium_A_Boss (fi=2685613, 2246KB, 29520v/44322t)
+    Textures (3 total, 0 primary):
+      + 3 additional textures (LOD/variant/mipmap)
+         fi=2685607: 2048x2048 DXT1 (2730KB)
+         fi=2685609: 2048x2048 DXT5 (5461KB)
+         fi=2685611: 2048x2048 DXT5 (5461KB)
+    Related GR2: 10 anims, 2 other GR2
+    Variants (2):
+      Infernium_A_Boss (fi=2685613, 2246KB) [✓ 3 tex]
+      Infernium_A_Basic (fi=2657971, 1960KB) [✗ no tex]
+
+------------------------------------------------------------------------------------------
+TRIAL: Ossein Cage (2025) — Solstice (Coldharbour)
+------------------------------------------------------------------------------------------
+
+  Shapers of Flesh
+    Type: CREATURE (FleshAbomination)
+    Model: FleshAbomination_C_Boss (fi=777383, 527KB, 6677v/9978t)
+    Textures (4 total, 3 primary):
+      [   diffuse] fi=777389: 4096x2048 DXT1 (5461KB)
+      [    normal] fi=777391: 4096x2048 DXT5 (10922KB)
+      [  specular] fi=777393: 4096x2048 DXT5 (10922KB)
+      + 1 additional textures (LOD/variant/mipmap)
+         fi=777409: 1024x1024 DXT3 (1365KB)
+    Related GR2: 7 other GR2
+    Variants (3):
+      FleshAbomination_C_Boss (fi=777383, 527KB) [✓ 4 tex]
+      FleshAbomination_B_Boss (fi=671753, 447KB) [✗ no tex]
+      FleshAbomination_A_Basic (fi=640581, 412KB) [✗ no tex]
+
+  Jynorah & Skorkhif
+    Type: CREATURE (Titan)
+    Model: Titan_A_Boss (fi=234219, 423KB, 5231v/8476t)
+    Textures (10 total, 3 primary):
+      [   diffuse] fi=234211: 256x128 DXT5 (32KB)
+      [    normal] fi=234213: 256x128 DXT5 (32KB)
+      [  specular] fi=234215: 256x128 DXT5 (32KB)
+      + 7 additional textures (LOD/variant/mipmap)
+         fi=234217: 256x128 DXT1 (16KB)
+         fi=234229: 384x256 DXT5 (96KB)
+         fi=234231: 384x256 DXT5 (96KB)
+         ... and 4 more
+    Related GR2: 6 other GR2
+
+  Overfiend Kazpian
+    Type: HUMANOID (player-type skeleton)
+    Notes: Final boss in Mangled Court. Daedric Overfiend â€” likely unique humanoid model. Summons Ossein Colossus, Molag Kena, Low Warden Dusk, King Khrogo, and other Coldharbour creatures.
+
+  Red Witch Gedna Relvel
+    Type: HUMANOID (player-type skeleton)
+    Notes: Optional boss. Necromancer witch, summons Flesh Atronach, Skeletal Archer, and Skeletal Wolf.
+
+  Tortured Amkaos, Kathutet & Ranyu
+    Type: HUMANOID (player-type skeleton)
+    Notes: Optional boss trio. Tortured Dremora/Daedra, likely Dremora-humanoid models. Summons Watchlings.
+
+  Blood Drinker Thisa
+    Type: HUMANOID (player-type skeleton)
+    Notes: Optional boss. Vampire, summons Blood Crawlers, Blood Slingers, Bloodknights, and Gargoyles.

@@ -1,0 +1,1030 @@
+{
+  "description": "ESO Trial Boss to Creature Model Mapping",
+  "generated_by": "build_trial_boss_mapping.py",
+  "notes": [
+    "Each trial boss is mapped to either a specific creature model or marked as 'humanoid' (player-type skeleton).",
+    "Creature bosses reference models from the creature catalog (creature_catalog.json) by species and variant name.",
+    "file_index (fi) values can be used with eso-model-extractor to extract specific models.",
+    "Humanoid bosses use player-type skeleton models and are not extractable as standalone creature meshes.",
+    "Dragon models are multi-part (body, wings, head, tail as separate GR2 files) and require assembly."
+  ],
+  "trials": {
+    "Hel Ra Citadel": {
+      "location": "Craglorn",
+      "year": 2014,
+      "bosses": [
+        {
+          "name": "Ra Kotu",
+          "model_type": "humanoid",
+          "notes": "Yokedan warrior, uses player-type skeleton"
+        },
+        {
+          "name": "Yokeda Rok'dun",
+          "model_type": "humanoid",
+          "notes": "Yokedan warrior, uses player-type skeleton"
+        },
+        {
+          "name": "The Warrior",
+          "model_type": "humanoid",
+          "notes": "Celestial being, unique humanoid model with celestial armor"
+        }
+      ]
+    },
+    "Aetherian Archive": {
+      "location": "Craglorn",
+      "year": 2014,
+      "bosses": [
+        {
+          "name": "Lightning Storm Atronach",
+          "model_type": "creature",
+          "notes": "Storm Atronach creature model. StormAtronach_A_Basic is the standard creature mesh.",
+          "species": "StormAtronach",
+          "model": {
+            "name": "StormAtronach_A_Basic",
+            "file_index": 547909,
+            "size_kb": 292,
+            "verts": 3668,
+            "tris": 5296
+          },
+          "all_variants": [
+            {
+              "name": "StormAtronach_A_Basic",
+              "file_index": 547909,
+              "size_kb": 292
+            },
+            {
+              "name": "StormAtronach_B_Basic",
+              "file_index": 2752805,
+              "size_kb": 257
+            }
+          ]
+        },
+        {
+          "name": "Foundation Stone Atronach",
+          "model_type": "creature",
+          "notes": "Uses the boss-variant Stone Atronach model",
+          "species": "StoneAtronach",
+          "model": {
+            "name": "StoneAtronach_B_Boss",
+            "file_index": 640555,
+            "size_kb": 323,
+            "verts": 3906,
+            "tris": 6884
+          },
+          "all_variants": [
+            {
+              "name": "StoneAtronach_C_Jungle",
+              "file_index": 1530099,
+              "size_kb": 325
+            },
+            {
+              "name": "StoneAtronach_B_Boss",
+              "file_index": 640555,
+              "size_kb": 323
+            },
+            {
+              "name": "StoneAtronach_A_Basic",
+              "file_index": 614195,
+              "size_kb": 319
+            }
+          ]
+        },
+        {
+          "name": "Varlariel",
+          "model_type": "humanoid",
+          "notes": "High Elf NPC, uses player-type skeleton"
+        },
+        {
+          "name": "The Mage",
+          "model_type": "humanoid",
+          "notes": "Celestial being, unique humanoid model"
+        }
+      ]
+    },
+    "Sanctum Ophidia": {
+      "location": "Craglorn",
+      "year": 2014,
+      "bosses": [
+        {
+          "name": "Stonebreaker",
+          "model_type": "creature",
+          "notes": "Craglorn-specific boss troll variant",
+          "species": "Troll",
+          "model": {
+            "name": "Troll_Craglorn_Boss",
+            "file_index": 672165,
+            "size_kb": 875,
+            "verts": 11614,
+            "tris": 13474
+          },
+          "all_variants": [
+            {
+              "name": "Troll_Craglorn_Boss",
+              "file_index": 672165,
+              "size_kb": 875
+            },
+            {
+              "name": "Troll_Armored_Boss",
+              "file_index": 558737,
+              "size_kb": 724
+            },
+            {
+              "name": "Troll_A_Basic",
+              "file_index": 558735,
+              "size_kb": 595
+            }
+          ]
+        },
+        {
+          "name": "Ozara",
+          "model_type": "creature",
+          "notes": "Boss variant Lamia Queen",
+          "species": "Lamia",
+          "model": {
+            "name": "Lamia_A_Boss",
+            "file_index": 527791,
+            "size_kb": 248,
+            "verts": 2953,
+            "tris": 4554
+          },
+          "all_variants": [
+            {
+              "name": "Lamia_A_Boss",
+              "file_index": 527791,
+              "size_kb": 248
+            },
+            {
+              "name": "Lamia_B_Basic",
+              "file_index": 527787,
+              "size_kb": 244
+            }
+          ]
+        },
+        {
+          "name": "Possessed Mantikora",
+          "model_type": "creature",
+          "notes": "Boss variant Mantikora",
+          "species": "Mantikora",
+          "model": {
+            "name": "Mantikora_B_Boss",
+            "file_index": 651175,
+            "size_kb": 480,
+            "verts": 6030,
+            "tris": 9072
+          },
+          "all_variants": [
+            {
+              "name": "Mantikora_B_Boss",
+              "file_index": 651175,
+              "size_kb": 480
+            },
+            {
+              "name": "Mantikora_Mehrunes_Boss",
+              "file_index": 2669831,
+              "size_kb": 472
+            },
+            {
+              "name": "Mantikora_B_Basic",
+              "file_index": 2664655,
+              "size_kb": 340
+            },
+            {
+              "name": "Mantikora_A_Basic",
+              "file_index": 639663,
+              "size_kb": 340
+            }
+          ]
+        },
+        {
+          "name": "The Serpent",
+          "model_type": "humanoid",
+          "notes": "Celestial being, unique serpentine humanoid model. Transform phase uses GiantSnake-like model."
+        }
+      ]
+    },
+    "Maw of Lorkhaj": {
+      "location": "Reaper's March",
+      "year": 2016,
+      "bosses": [
+        {
+          "name": "Zhaj'hassa the Forgotten",
+          "model_type": "creature",
+          "notes": "Dro-m'Athra Senche boss. Uses CatLargeSenche_Wraithhaunt_Base (wraith/spectral variant matches Dro-m'Athra theme).",
+          "species": "CatLargeSenche",
+          "model": {
+            "name": "CatLargeSenche_Wraithhaunt_Base",
+            "file_index": 2739405,
+            "size_kb": 1458,
+            "verts": 19147,
+            "tris": 27962
+          },
+          "all_variants": [
+            {
+              "name": "CatLargeSenche_Wraithhaunt_Base",
+              "file_index": 2739405,
+              "size_kb": 1458
+            },
+            {
+              "name": "CatLargeSenche_FrostAtronach",
+              "file_index": 2360475,
+              "size_kb": 1402
+            },
+            {
+              "name": "CatLargeSenche_A_DragonCult",
+              "file_index": 1550701,
+              "size_kb": 476
+            }
+          ]
+        },
+        {
+          "name": "S'kinrai",
+          "model_type": "humanoid",
+          "notes": "Dro-m'Athra Khajiit, humanoid player-type skeleton with Dro-m'Athra effects"
+        },
+        {
+          "name": "Vashai",
+          "model_type": "humanoid",
+          "notes": "Dro-m'Athra Khajiit, humanoid player-type skeleton with Dro-m'Athra effects"
+        },
+        {
+          "name": "Rakkhat",
+          "model_type": "humanoid",
+          "notes": "Dro-m'Athra Khajiit lord, humanoid with unique Dro-m'Athra appearance"
+        }
+      ]
+    },
+    "Halls of Fabrication": {
+      "location": "Vvardenfell (Morrowind)",
+      "year": 2017,
+      "bosses": [
+        {
+          "name": "Hunter-Killer Fabricants",
+          "model_type": "creature",
+          "notes": "Pack of Fabricant creatures. Same base model as VerminousFabricant.",
+          "species": "VerminousFabricant",
+          "model": {
+            "name": "VerminousFabricant_A_Basic",
+            "file_index": 1052301,
+            "size_kb": 875,
+            "verts": 11390,
+            "tris": 16347
+          },
+          "all_variants": [
+            {
+              "name": "VerminousFabricant_A_Basic",
+              "file_index": 1052301,
+              "size_kb": 875
+            }
+          ]
+        },
+        {
+          "name": "Pinnacle Factotum",
+          "model_type": "creature",
+          "notes": "Clockwork City factotum automaton. Uses DwemerCenturion skeleton with Clockwork City textures.",
+          "species": "DwemerCenturion",
+          "model": {
+            "name": "DwemerCenturion_B_Basic",
+            "file_index": 862681,
+            "size_kb": 623,
+            "verts": 8210,
+            "tris": 9076
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566
+            },
+            {
+              "name": "DwemerCenturion_A_Basic",
+              "file_index": 548237,
+              "size_kb": 550
+            }
+          ]
+        },
+        {
+          "name": "Archcustodian",
+          "model_type": "creature",
+          "notes": "Large factotum automaton. Uses DwemerCenturion skeleton, same model family as Pinnacle Factotum.",
+          "species": "DwemerCenturion",
+          "model": {
+            "name": "DwemerCenturion_C_Basic",
+            "file_index": 862695,
+            "size_kb": 566,
+            "verts": 7456,
+            "tris": 7854
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566
+            },
+            {
+              "name": "DwemerCenturion_A_Basic",
+              "file_index": 548237,
+              "size_kb": 550
+            }
+          ]
+        },
+        {
+          "name": "Assembly General",
+          "model_type": "creature",
+          "notes": "The Imperfect - massive Clockwork construct, unique boss model",
+          "species": "ClockWorkImperfect",
+          "model": {
+            "name": "ClockWorkImperfect_A_Basic",
+            "file_index": 1158669,
+            "size_kb": 2810,
+            "verts": 37628,
+            "tris": 48483
+          },
+          "all_variants": [
+            {
+              "name": "ClockWorkImperfect_A_Basic",
+              "file_index": 1158669,
+              "size_kb": 2810
+            }
+          ]
+        },
+        {
+          "name": "The Hunter",
+          "model_type": "creature",
+          "notes": "Fabrication-created titan, similar to Clockwork Titan model",
+          "species": "ClockWorkTitan",
+          "model": {
+            "name": "ClockWorkTitan_A_Basic",
+            "file_index": 1154543,
+            "size_kb": 2921,
+            "verts": 39807,
+            "tris": 42876
+          },
+          "all_variants": [
+            {
+              "name": "ClockWorkTitan_A_Basic",
+              "file_index": 1154543,
+              "size_kb": 2921
+            }
+          ]
+        }
+      ]
+    },
+    "Asylum Sanctorium": {
+      "location": "Clockwork City",
+      "year": 2017,
+      "bosses": [
+        {
+          "name": "Saint Olms the Just",
+          "model_type": "creature",
+          "notes": "Gigantic clockwork titan, same model species as The Hunter in Halls of Fabrication. Main boss - always fought.",
+          "species": "ClockWorkTitan",
+          "model": {
+            "name": "ClockWorkTitan_A_Basic",
+            "file_index": 1154543,
+            "size_kb": 2921,
+            "verts": 39807,
+            "tris": 42876
+          },
+          "all_variants": [
+            {
+              "name": "ClockWorkTitan_A_Basic",
+              "file_index": 1154543,
+              "size_kb": 2921
+            }
+          ]
+        },
+        {
+          "name": "Saint Felms the Bold",
+          "model_type": "creature",
+          "notes": "Dual-wielding factotum warrior. Optional boss — can be fought separately or alongside Saint Olms. Same species as Pinnacle Factotum in Halls of Fabrication.",
+          "species": "DwemerCenturion",
+          "model": {
+            "name": "DwemerCenturion_B_Basic",
+            "file_index": 862681,
+            "size_kb": 623,
+            "verts": 8210,
+            "tris": 9076
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566
+            }
+          ]
+        },
+        {
+          "name": "Saint Llothis the Pious",
+          "model_type": "creature",
+          "notes": "Factotum poison mage. Optional boss — can be fought separately or alongside Saint Olms. Same species as Archcustodian in Halls of Fabrication.",
+          "species": "DwemerCenturion",
+          "model": {
+            "name": "DwemerCenturion_C_Basic",
+            "file_index": 862695,
+            "size_kb": 566,
+            "verts": 7456,
+            "tris": 7854
+          },
+          "all_variants": [
+            {
+              "name": "DwemerCenturion_B_Basic",
+              "file_index": 862681,
+              "size_kb": 623
+            },
+            {
+              "name": "DwemerCenturion_C_Basic",
+              "file_index": 862695,
+              "size_kb": 566
+            }
+          ]
+        }
+      ]
+    },
+    "Cloudrest": {
+      "location": "Summerset",
+      "year": 2018,
+      "bosses": [
+        {
+          "name": "Shade of Galenwe",
+          "model_type": "humanoid",
+          "notes": "Welkynar knight shade, humanoid with gryphon rider armor"
+        },
+        {
+          "name": "Shade of Siroria",
+          "model_type": "humanoid",
+          "notes": "Welkynar knight shade, humanoid with gryphon rider armor"
+        },
+        {
+          "name": "Shade of Relequen",
+          "model_type": "humanoid",
+          "notes": "Welkynar knight shade, humanoid with gryphon rider armor"
+        },
+        {
+          "name": "Z'Maja",
+          "model_type": "creature",
+          "notes": "Sea Sload boss. Uses Sload_A_Basic creature mesh (jellyfish-like aberration model).",
+          "species": "Sload",
+          "model": {
+            "name": "Sload_A_Basic",
+            "file_index": 1182249,
+            "size_kb": 887,
+            "verts": 11222,
+            "tris": 18852
+          },
+          "all_variants": [
+            {
+              "name": "Sload_A_Basic",
+              "file_index": 1182249,
+              "size_kb": 887
+            }
+          ]
+        },
+        {
+          "name": "Gryphon (Welkynar Mounts)",
+          "model_type": "creature",
+          "notes": "Welkynar gryphon mounts appear as mini-bosses. Uses Gryphon_A_Boss model.",
+          "species": "Gryphon",
+          "model": {
+            "name": "Gryphon_A_Boss",
+            "file_index": 2702925,
+            "size_kb": 2091,
+            "verts": 27647,
+            "tris": 37104
+          },
+          "all_variants": [
+            {
+              "name": "Gryphon_A_Tame",
+              "file_index": 1227373,
+              "size_kb": 2120
+            },
+            {
+              "name": "Gryphon_A_Boss",
+              "file_index": 2702925,
+              "size_kb": 2091
+            },
+            {
+              "name": "Gryphon_A_Basic",
+              "file_index": 1191791,
+              "size_kb": 2049
+            }
+          ]
+        }
+      ]
+    },
+    "Sunspire": {
+      "location": "Northern Elsweyr",
+      "year": 2019,
+      "bosses": [
+        {
+          "name": "Yolnahkriin",
+          "model_type": "creature",
+          "notes": "Fire Dragon. ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "species": "Dragon",
+          "model": {
+            "name": "BoneDragon_A_Basic",
+            "file_index": 1167549,
+            "size_kb": 3187,
+            "verts": 41991,
+            "tris": 63786
+          },
+          "model_note": "reference_skeleton",
+          "all_variants": [
+            {
+              "name": "BoneDragon_A_Basic",
+              "file_index": 1167549,
+              "size_kb": 3187
+            }
+          ]
+        },
+        {
+          "name": "Lokkestiiz",
+          "model_type": "creature",
+          "notes": "Ice Dragon. ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "species": "Dragon",
+          "model": {
+            "name": "BoneDragon_A_Basic",
+            "file_index": 1167549,
+            "size_kb": 3187,
+            "verts": 41991,
+            "tris": 63786
+          },
+          "model_note": "reference_skeleton",
+          "all_variants": [
+            {
+              "name": "BoneDragon_A_Basic",
+              "file_index": 1167549,
+              "size_kb": 3187
+            }
+          ]
+        },
+        {
+          "name": "Nahviintaas",
+          "model_type": "creature",
+          "notes": "Storm Dragon (final boss). ESO dragons do not use 'Dragon' in their GR2 mesh names. Living dragon models are stored as unnamed multi-part files that cannot be identified by name search. BoneDragon_A_Basic (fi=1167549, 3187KB, 41991v) is the skeletal dragon reference model with the same bone structure.",
+          "species": "Dragon",
+          "model": {
+            "name": "BoneDragon_A_Basic",
+            "file_index": 1167549,
+            "size_kb": 3187,
+            "verts": 41991,
+            "tris": 63786
+          },
+          "model_note": "reference_skeleton",
+          "all_variants": [
+            {
+              "name": "BoneDragon_A_Basic",
+              "file_index": 1167549,
+              "size_kb": 3187
+            }
+          ]
+        }
+      ]
+    },
+    "Kyne's Aegis": {
+      "location": "Western Skyrim (Greymoor)",
+      "year": 2020,
+      "bosses": [
+        {
+          "name": "Yandir the Butcher",
+          "model_type": "creature",
+          "notes": "Sea Giant. Uses the Giant model with Nordic/Sea Giant texture variant.",
+          "species": "Giant",
+          "model": {
+            "name": "Giant_B_Basic",
+            "file_index": 535619,
+            "size_kb": 443,
+            "verts": 5581,
+            "tris": 8061
+          },
+          "all_variants": [
+            {
+              "name": "Giant_Plague_Basic",
+              "file_index": 1192235,
+              "size_kb": 635
+            },
+            {
+              "name": "Giant_Snow_Basic",
+              "file_index": 671189,
+              "size_kb": 451
+            },
+            {
+              "name": "Giant_B_Basic",
+              "file_index": 535619,
+              "size_kb": 443
+            },
+            {
+              "name": "Giant_A_Basic",
+              "file_index": 170497,
+              "size_kb": 441
+            }
+          ]
+        },
+        {
+          "name": "Captain Vrol",
+          "model_type": "humanoid",
+          "notes": "Vampire sea captain, humanoid NPC model"
+        },
+        {
+          "name": "Lord Falgravn",
+          "model_type": "creature",
+          "notes": "Transforms into Vampire Lord form. Uses VampireLord creature model.",
+          "species": "VampireLord",
+          "model": {
+            "name": "VampireLord_A_Basic",
+            "file_index": 1573229,
+            "size_kb": 2152,
+            "verts": 28101,
+            "tris": 44176
+          },
+          "all_variants": [
+            {
+              "name": "VampireLord_A_Wings",
+              "file_index": 2400125,
+              "size_kb": 2960
+            },
+            {
+              "name": "VampireLord_C_Basic",
+              "file_index": 2494349,
+              "size_kb": 2281
+            },
+            {
+              "name": "VampireLord_B_Female",
+              "file_index": 2587447,
+              "size_kb": 2171
+            },
+            {
+              "name": "VampireLord_A_Basic",
+              "file_index": 1573229,
+              "size_kb": 2152
+            },
+            {
+              "name": "VampireLord_A_Female",
+              "file_index": 2531925,
+              "size_kb": 2139
+            },
+            {
+              "name": "VampireLord_B_Basic",
+              "file_index": 2479641,
+              "size_kb": 1695
+            },
+            {
+              "name": "VampireLord_Lurker_Boss",
+              "file_index": 2823085,
+              "size_kb": 1412
+            },
+            {
+              "name": "VampireLord_Lurker_Basic",
+              "file_index": 2792917,
+              "size_kb": 947
+            },
+            {
+              "name": "VampireLord_Faun_Basic",
+              "file_index": 2718715,
+              "size_kb": 435
+            },
+            {
+              "name": "VampireLord_01_Costume",
+              "file_index": 873839,
+              "size_kb": 293
+            }
+          ]
+        }
+      ]
+    },
+    "Rockgrove": {
+      "location": "Blackwood",
+      "year": 2021,
+      "bosses": [
+        {
+          "name": "Oaxiltso",
+          "model_type": "creature",
+          "notes": "Red Argonian Behemoth. Unique red color variant (fi=2643525).",
+          "species": "ArgonianBehemoth",
+          "model": {
+            "name": "ArgonianBehemoth_A_Red_Basic",
+            "file_index": 2643525,
+            "size_kb": 416,
+            "verts": 5207,
+            "tris": 8130
+          },
+          "all_variants": [
+            {
+              "name": "ArgonianBehemoth_A_Basic",
+              "file_index": 669101,
+              "size_kb": 416
+            },
+            {
+              "name": "ArgonianBehemoth_A_Red_Basic",
+              "file_index": 2643525,
+              "size_kb": 416
+            }
+          ]
+        },
+        {
+          "name": "Flame-Herald Bahsei",
+          "model_type": "humanoid",
+          "notes": "Sul-Xan Argonian priest, humanoid NPC model"
+        },
+        {
+          "name": "Xalvakka",
+          "model_type": "humanoid",
+          "notes": "Sul-Xan Argonian warlord, humanoid NPC model"
+        }
+      ]
+    },
+    "Dreadsail Reef": {
+      "location": "High Isle",
+      "year": 2022,
+      "bosses": [
+        {
+          "name": "Lylanar and Turlassil",
+          "model_type": "humanoid",
+          "notes": "Dreadsail sea elf twins, humanoid NPC models"
+        },
+        {
+          "name": "Taleria",
+          "model_type": "humanoid",
+          "notes": "Dreadsail Reef captain, humanoid NPC model"
+        },
+        {
+          "name": "Reef Guardian",
+          "model_type": "creature",
+          "notes": "Coral Atronach — reef-themed atronach creature (uses AirAtronach_Coral_Boss base).",
+          "species": "CoralAtronach",
+          "model": {
+            "name": "AirAtronach_Coral_Boss",
+            "file_index": 2732009,
+            "size_kb": 1055,
+            "verts": 13752,
+            "tris": 19862
+          },
+          "all_variants": [
+            {
+              "name": "AirAtronach_Coral_Boss",
+              "file_index": 2732009,
+              "size_kb": 1055
+            }
+          ]
+        },
+        {
+          "name": "Tideborn",
+          "model_type": "creature",
+          "notes": "Large Hadolid sea creature (crab-like). Oversized variant.",
+          "species": "Hadolid",
+          "model": {
+            "name": "GreyFallen_HadolidMelee_Basic",
+            "file_index": 2717671,
+            "size_kb": 1155,
+            "verts": 14972,
+            "tris": 22978
+          },
+          "all_variants": [
+            {
+              "name": "GreyFallen_HadolidMelee_Basic",
+              "file_index": 2717671,
+              "size_kb": 1155
+            },
+            {
+              "name": "GreyFallen_HadolidRanged_Basic",
+              "file_index": 2724771,
+              "size_kb": 1101
+            }
+          ]
+        }
+      ]
+    },
+    "Sanity's Edge": {
+      "location": "Telvanni Peninsula (Necrom)",
+      "year": 2023,
+      "bosses": [
+        {
+          "name": "Exarchon of Emblazoned Sins",
+          "model_type": "creature",
+          "notes": "Nightmare creature boss variant from Vaermina's realm",
+          "species": "MindTerror",
+          "model": {
+            "name": "MindTerror_A_Boss",
+            "file_index": 2841085,
+            "size_kb": 1310,
+            "verts": 17477,
+            "tris": 20518
+          },
+          "all_variants": [
+            {
+              "name": "MindTerror_A_Boss",
+              "file_index": 2841085,
+              "size_kb": 1310
+            },
+            {
+              "name": "MindTerror_A_Minion",
+              "file_index": 2840985,
+              "size_kb": 775
+            }
+          ]
+        },
+        {
+          "name": "Ansuul the Tormented",
+          "model_type": "humanoid",
+          "notes": "Daedric being, humanoid with unique nightmare-themed appearance. Multiple phases."
+        },
+        {
+          "name": "Mindterror Mini-bosses",
+          "model_type": "creature",
+          "notes": "Mindterror minions appear throughout the trial",
+          "species": "MindTerror",
+          "model": {
+            "name": "MindTerror_A_Minion",
+            "file_index": 2840985,
+            "size_kb": 775,
+            "verts": 9714,
+            "tris": 17242
+          },
+          "all_variants": [
+            {
+              "name": "MindTerror_A_Boss",
+              "file_index": 2841085,
+              "size_kb": 1310
+            },
+            {
+              "name": "MindTerror_A_Minion",
+              "file_index": 2840985,
+              "size_kb": 775
+            }
+          ]
+        }
+      ]
+    },
+    "Lucent Citadel": {
+      "location": "West Weald (Gold Road)",
+      "year": 2024,
+      "bosses": [
+        {
+          "name": "Riftmaster",
+          "model_type": "creature",
+          "notes": "Daedric Harbinger creature — large winged daedra boss",
+          "species": "Harbinger",
+          "model": {
+            "name": "Harbinger_B_Boss",
+            "file_index": 2636767,
+            "size_kb": 2369,
+            "verts": 31012,
+            "tris": 46987
+          },
+          "all_variants": [
+            {
+              "name": "Harbinger_C_Incarnate",
+              "file_index": 2658023,
+              "size_kb": 3204
+            },
+            {
+              "name": "Harbinger_B_Boss",
+              "file_index": 2636767,
+              "size_kb": 2369
+            },
+            {
+              "name": "Harbinger_A_Basic",
+              "file_index": 2645893,
+              "size_kb": 2172
+            },
+            {
+              "name": "Harbinger_A_Basic",
+              "file_index": 2588661,
+              "size_kb": 2170
+            },
+            {
+              "name": "Harbinger_A_MehrunesDagon",
+              "file_index": 2567931,
+              "size_kb": 1750
+            }
+          ]
+        },
+        {
+          "name": "Xoryn the Ruthless",
+          "model_type": "humanoid",
+          "notes": "Daedric humanoid boss"
+        },
+        {
+          "name": "Baron Thierry / Praxin Douare",
+          "model_type": "humanoid",
+          "notes": "Humanoid NPC bosses"
+        },
+        {
+          "name": "Infernium Encounter",
+          "model_type": "creature",
+          "notes": "Infernium creature boss — fire daedric beast from the Deadlands",
+          "species": "Infernium",
+          "model": {
+            "name": "Infernium_A_Boss",
+            "file_index": 2685613,
+            "size_kb": 2246,
+            "verts": 29520,
+            "tris": 44322
+          },
+          "all_variants": [
+            {
+              "name": "Infernium_A_Boss",
+              "file_index": 2685613,
+              "size_kb": 2246
+            },
+            {
+              "name": "Infernium_A_Basic",
+              "file_index": 2657971,
+              "size_kb": 1960
+            }
+          ]
+        }
+      ]
+    },
+    "Ossein Cage": {
+      "location": "Solstice (Coldharbour)",
+      "year": 2025,
+      "bosses": [
+        {
+          "name": "Shapers of Flesh",
+          "model_type": "creature",
+          "notes": "Multi-creature boss encounter in Hall of Fleshcraft. Likely uses FleshAbomination or similar Daedric flesh creature models. Summons include Fleshspawn, Harvesters, Ogrim, Daedroth, and Soul Shriven.",
+          "species": "FleshAbomination",
+          "model": {
+            "name": "FleshAbomination_C_Boss",
+            "file_index": 777383,
+            "size_kb": 527,
+            "verts": 6677,
+            "tris": 9978
+          },
+          "all_variants": [
+            {
+              "name": "FleshAbomination_C_Boss",
+              "file_index": 777383,
+              "size_kb": 527
+            },
+            {
+              "name": "FleshAbomination_B_Boss",
+              "file_index": 671753,
+              "size_kb": 447
+            },
+            {
+              "name": "FleshAbomination_A_Basic",
+              "file_index": 640581,
+              "size_kb": 412
+            }
+          ]
+        },
+        {
+          "name": "Jynorah & Skorkhif",
+          "model_type": "creature",
+          "notes": "Dual Daedric boss fight in Quarreler's Quarry. 'Titanic Clash' mechanic suggests Daedric Titan forms. Summons include Blazeforged Valneer (fire), Sparkstorm Myrinax (lightning), Flame Atronach, Cold-Flame Atronach, Banekin, and Daedroth.",
+          "species": "Titan",
+          "model": {
+            "name": "Titan_A_Boss",
+            "file_index": 234219,
+            "size_kb": 423,
+            "verts": 5231,
+            "tris": 8476
+          },
+          "all_variants": [
+            {
+              "name": "Titan_A_Boss",
+              "file_index": 234219,
+              "size_kb": 423
+            }
+          ]
+        },
+        {
+          "name": "Overfiend Kazpian",
+          "model_type": "humanoid",
+          "notes": "Final boss in Mangled Court. Daedric Overfiend — likely unique humanoid model. Summons Ossein Colossus, Molag Kena, Low Warden Dusk, King Khrogo, and other Coldharbour creatures."
+        },
+        {
+          "name": "Red Witch Gedna Relvel",
+          "model_type": "humanoid",
+          "notes": "Optional boss. Necromancer witch, summons Flesh Atronach, Skeletal Archer, and Skeletal Wolf."
+        },
+        {
+          "name": "Tortured Amkaos, Kathutet & Ranyu",
+          "model_type": "humanoid",
+          "notes": "Optional boss trio. Tortured Dremora/Daedra, likely Dremora-humanoid models. Summons Watchlings."
+        },
+        {
+          "name": "Blood Drinker Thisa",
+          "model_type": "humanoid",
+          "notes": "Optional boss. Vampire, summons Blood Crawlers, Blood Slingers, Bloodknights, and Gargoyles."
+        }
+      ]
+    }
+  }
+}

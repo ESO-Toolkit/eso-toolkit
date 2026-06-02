@@ -194,6 +194,12 @@ export default [
             'alphaTest',
             'shininess',
             'depthWrite',
+            'attach',
+            'roughness',
+            'metalness',
+            'emissive',
+            'emissiveIntensity',
+            'wireframe',
 
             // Three.js light properties
             'intensity',

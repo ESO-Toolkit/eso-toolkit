@@ -246,6 +246,13 @@ ${downloadBtn}
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
+      watch: {
+        // The eso-model-extractor's Rust build output (and the locked Oodle/Granny
+        // DLLs copied next to its binary for extraction) live under tools/. They're
+        // not app source, and the HMR file watcher crashes on the locked DLLs
+        // (EBUSY) — so keep the watcher out of the extractor tree entirely.
+        ignored: ['**/tools/eso-model-extractor/target/**'],
+      },
     },
 
     // Preview server configuration (for production preview)
