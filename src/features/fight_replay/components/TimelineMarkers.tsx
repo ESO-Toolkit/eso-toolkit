@@ -189,8 +189,8 @@ const TimelineMarkersComponent: React.FC<TimelineMarkersProps> = ({
         position: 'relative',
         width: '100%',
         height: 24,
-        mt: 0.5,
-        mb: 0.5,
+        // No vertical margins: the parent overlay centers this box on the rail line via
+        // translateY(-50%); margins would shift that centering and re-introduce the offset.
       }}
     >
       {markers.map((marker) => {

@@ -314,7 +314,21 @@ export const TimelineSlider: React.FC<TimelineSliderProps> = ({
           sit ON the scrub track (chapter-marker model) rather than in a detached
           strip below it. TimelineMarkers stays a separately-memoized child — only
           stable props (markers/duration/onMarkerClick) cross the boundary. */}
-      <Box ref={railRef} sx={{ position: 'relative', py: 0.5 }}>
+      {/* The rail wrapper is a FLEX box so its height collapses to exactly the Slider's height —
+          the Slider renders as inline-block, whose line-box descender space otherwise padded the
+          wrapper ~6px taller than the track and pushed its 50% line BELOW the rail (the "markers
+          sit below the line" bug). With flex, the wrapper's 50% == the Slider's rail line, the
+          single shared anchor every on-rail overlay below (event markers, A/B flags, loop region)
+          centers against via `top: 50%`. The Slider is set to flex:1 so it still spans full width. */}
+      <Box
+        ref={railRef}
+        sx={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          '& > .MuiSlider-root': { flex: 1 },
+        }}
+      >
         <Slider
           value={displayTime}
           min={0}
