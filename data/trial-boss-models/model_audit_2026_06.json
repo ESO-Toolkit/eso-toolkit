@@ -310,8 +310,8 @@
   "correctDesc": "A large boss-scale Factotum: a bipedal, humanoid brass mechanical golem with two arms and two legs, a smooth masked/faceplate head, segmented pauldrons, and slender protruding metal limb pieces (Refabricated / Dwemer-inspired style). Reads as a tall humanoid robot, NOT a hulking top-heavy Centurion war-construct with a mace/hammer arm and steam vents.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Pinnacle_Factotum",
-  "action": "KEEP",
-  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
+  "action": "WRONG-BEST-AVAIL",
+  "note": "WRONG creature (a Factotum, not a Dwemer Centurion) but BEST-AVAILABLE — no standalone Factotum mesh exists in the archive (6000-name roster). DwemerCenturion is the closest real ESO brass-construct. Verified by correctness audit."
  },
  {
   "trial": "Halls of Fabrication",
@@ -368,8 +368,8 @@
   "correctDesc": "Three roughly humanoid-sized, bipedal brass/Dwemer mechanical constructs (Factotums) with Dwemer-inspired humanoid features in the \"Refabricated Style.\" Centurion/automaton-like silhouette standing upright. The Reactor and Reducer are melee constructs that wield swords; the Reclaimer is a stationary central construct. The three are visually near-identical to each other, differing mainly by elemental theming (shock/fire), so a single shared humanoid Factotum mesh is appropriate for the trio.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Halls_of_Fabrication",
-  "action": "KEEP",
-  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
+  "action": "WRONG-BEST-AVAIL",
+  "note": "WRONG creature (Factotum trio) but BEST-AVAILABLE — no Factotum mesh exists. Was ClockWorkTitan, remapped to DwemerCenturion (closer). Verified."
  },
  {
   "trial": "Asylum Sanctorium",
@@ -409,8 +409,8 @@
   "correctDesc": "A giant Factotum: a sleek humanoid clockwork automaton made of brass, with a smooth rounded conical-masked head, refined Sotha Sil Clockwork City aesthetic, and slim protruding metal limb pieces. As the warrior saint he carries an axe/melee weapon. Distinctly NOT a Dwemer Centurion. He is an oversized version of the standard factotum body (scale is just a transform on the same Factotum mesh).",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Saint_Felms_the_Bold",
-  "action": "KEEP",
-  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
+  "action": "WRONG-BEST-AVAIL",
+  "note": "WRONG creature (a Factotum) but BEST-AVAILABLE — no Factotum mesh exists; DwemerCenturion is the closest. Verified."
  },
  {
   "trial": "Asylum Sanctorium",
@@ -428,8 +428,8 @@
   "correctDesc": "A towering (~2.4m) smooth brass-and-clockwork Factotum automaton from the Clockwork City — humanoid-proportioned but oversized, with a smooth cone/mask-shaped faceplate, glowing soul-core, and segmented mechanical limbs. Saint Llothis is the caster form, wielding a staff and casting poison AoE. Distinct from the squat, heavily-armored Dwemer Centurion silhouette.",
   "confidence": "high",
   "reference": "https://esomodelviewer.com/creatures/post/89-saint-llothis-the-pious",
-  "action": "KEEP",
-  "note": "2026-06: No standalone Factotum mesh exists in archive (6000-name roster). Dwemer Centurion construct is the best available representation — a Factotum is a Sotha-Sil brass Dwemer automaton. Render-confirmed."
+  "action": "WRONG-BEST-AVAIL",
+  "note": "WRONG creature (a giant Factotum) but BEST-AVAILABLE — no Factotum mesh exists; DwemerCenturion_C is the closest. Verified."
  },
  {
   "trial": "Cloudrest",
@@ -605,7 +605,8 @@
   "correctDesc": "A large armored Sea Giant warrior (~2.4m tall), blue/grey-skinned, clad in heavy Sea Giant armor (helm, pauldrons, cuirass, gauntlets, girdle, greaves, sabatons) and wielding a heavy serrated cleaver/greatsword. NOT the shaggy fur-clad club-wielding land-Giant silhouette. The assigned Giant_B_Basic mesh renders exactly this: an armored humanoid with the signature butcher cleaver.",
   "confidence": "medium",
   "reference": "https://en.uesp.net/wiki/Online:Yandir_the_Butcher",
-  "action": "KEEP"
+  "action": "WRONG-CREATURE",
+  "note": "WRONG creature: he is a SEA GIANT (armor-assembled HUMANOID, ~2.26m), not the generic Giant_B creature mesh. No standalone Sea Giant mesh exists — needs RenderDoc GPU capture (see EXTRACTION-GUIDE.md). Verified by correctness audit + esomodelviewer."
  },
  {
   "trial": "Kyne's Aegis",
@@ -736,8 +737,8 @@
   "correctDesc": "A large, bipedal, humanoid-shaped golem/construct built from coral, blue-glowing, with two arms and a heavy stone-like (Magma Golem archetype) silhouette — NOT a floating cluster of rocks. The Dreadsail Reef boss version splits into smaller medium/small copies of the same coral-golem mesh.",
   "confidence": "medium",
   "reference": "https://en.uesp.net/wiki/Online:Reef_Guardian",
-  "action": "KEEP-SHARED",
-  "note": "No distinct Coral Golem mesh; AirAtronach_Coral_Boss IS the coral construct (same family). Sharing is acceptable."
+  "action": "WRONG-BEST-AVAIL",
+  "note": "WRONG creature: a Coral Golem (Construct/Golem family), currently borrowing the AirAtronach coral mesh. Same coral-construct family so visually close, but a distinct creature. No better extractable mesh confirmed. Verified."
  },
  {
   "trial": "Dreadsail Reef",

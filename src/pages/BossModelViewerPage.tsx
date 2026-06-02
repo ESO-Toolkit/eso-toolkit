@@ -25,7 +25,15 @@ import bossData from '../../data/trial-boss-models/trial_boss_complete.json';
 
 // ── Audit status (June-2026 model audit) ─────────────────────────────────────
 
-type AuditAction = 'KEEP' | 'KEEP-SHARED' | 'TEXTURE' | 'FIX' | 'PLACEHOLDER' | 'VERIFY';
+type AuditAction =
+  | 'KEEP'
+  | 'KEEP-SHARED'
+  | 'TEXTURE'
+  | 'WRONG-BEST-AVAIL'
+  | 'WRONG-CREATURE'
+  | 'FIX'
+  | 'PLACEHOLDER'
+  | 'VERIFY';
 
 interface AuditRow {
   boss: string;
@@ -41,16 +49,25 @@ const auditByBoss: Record<string, AuditRow> = Object.fromEntries(
 const AUDIT_META: Record<AuditAction, { label: string; color: string }> = {
   KEEP: { label: '✅ Real mesh — confirm', color: '#22c55e' },
   'KEEP-SHARED': { label: '✅ Real (shared mesh)', color: '#22c55e' },
-  TEXTURE: { label: '🎨 Dragon body — needs skin', color: '#fbbf24' },
-  FIX: { label: '❌ Wrong creature', color: '#f87171' },
+  TEXTURE: { label: '🎨 Correct body — skin pending', color: '#fbbf24' },
+  'WRONG-BEST-AVAIL': { label: '🟠 Wrong creature — best available', color: '#fb923c' },
+  'WRONG-CREATURE': { label: '❌ Wrong creature — needs capture', color: '#f87171' },
+  FIX: { label: '❌ Wrong creature — no mesh exists', color: '#f87171' },
   PLACEHOLDER: { label: '🔲 Placeholder (no real mesh)', color: '#9ca3af' },
   VERIFY: { label: '🔍 Needs eyeball', color: '#a78bfa' },
 };
 
-// The committed set = real meshes (Keep / Keep-shared) + the dragon bodies (Texture).
-// These are the only bosses with an actual GLB on disk; everything else shows a
-// placeholder. The "committed only" toggle filters the dropdown to just these.
-const COMMITTED_ACTIONS = new Set<AuditAction>(['KEEP', 'KEEP-SHARED', 'TEXTURE']);
+// The committed set = every boss with an actual GLB on disk. That includes the
+// wrong-creature stand-ins (a real mesh is shown, just not the right creature) and
+// the dragon bodies — all are committed and worth showing (with honest labels).
+// Only the player-skeleton PLACEHOLDER bosses have no GLB.
+const COMMITTED_ACTIONS = new Set<AuditAction>([
+  'KEEP',
+  'KEEP-SHARED',
+  'TEXTURE',
+  'WRONG-BEST-AVAIL',
+  'WRONG-CREATURE',
+]);
 const isCommittedBoss = (bossName: string): boolean => {
   const audit = auditByBoss[bossName];
   return audit ? COMMITTED_ACTIONS.has(audit.action) : false;

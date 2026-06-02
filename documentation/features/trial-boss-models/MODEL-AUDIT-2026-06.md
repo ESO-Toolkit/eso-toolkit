@@ -15,18 +15,21 @@ gaps. **Scope of this round: model assets only** (no replay wiring, no viewer pa
 PR #877 shipped 54 boss GLBs. They are **not** all real, correct game models. After geometry hashing,
 offline rendering, and a per-boss web-research cross-reference against UESP / ESO-Hub:
 
+_(Counts below reconciled against a per-boss correctness audit cross-referencing UESP / eso-hub /
+esomodelviewer — see `model_audit_2026_06.json`.)_
+
 | Action | Count | Meaning |
 |---|---|---|
-| ✅ **Keep** | 12 | Real distinct ESO creature mesh, mapping-trusted as this boss. **Visual match pending your confirmation.** |
-| ✅ **Keep (shared)** | 12 | Real mesh legitimately reused across same-species bosses (e.g. both Sea Giants → one Giant mesh). Pending confirm. |
-| 🐉 **Wrong creature** | 3 | The 3 Sunspire dragons share `BoneDragon_A_Basic` — a real but **different** ESO enemy (the undead *skeletal* Bone Dragon). The living winged-dragon mesh is not locatable via file extraction (see Sunspire note). |
-| ❌ **Fix** | 9 | A real mesh was extracted but it's the **wrong creature** for this boss. Needs a corrected extraction. |
-| 🔲 **Placeholder** | 16 | Humanoid boss built from ESO's modular player skeleton + armor. **No standalone creature mesh exists to extract** — got a generic robed-humanoid stand-in shared across many bosses. |
+| ✅ **Keep** | 14 | Real distinct ESO creature mesh, mapping-trusted as this boss. **Visual match pending your confirmation.** |
+| ✅ **Keep (shared)** | 12 | Real mesh legitimately reused across same-species bosses. Pending confirm. |
+| 🟠 **Wrong — best available** | 5 | A real but *wrong-species* mesh; **no better mesh exists in the files** so it stands as the closest available (the 4 Factotum bosses → Dwemer Centurion; Reef Guardian → Air-Atronach coral). |
+| ❌ **Wrong — needs capture** | 4 | Wrong creature, and the correct one is **not file-extractable** — the 3 Sunspire living dragons (committed mesh is the skeletal Bone Dragon) + Yandir (a Sea Giant armor-humanoid). Needs RenderDoc GPU capture (see `EXTRACTION-GUIDE.md`). |
+| ❌ **Fix** | 1 | Overfiend Kazpian — a Ruinach given a Daedroth; no Ruinach mesh exists by name (capture or accept stand-in). |
+| 🔲 **Placeholder** | 16 | Humanoid boss built from ESO's modular player skeleton + armor. **No standalone creature mesh** — got a generic stand-in. Needs capture/assembly. |
 | 🔍 **Verify** | 2 | Plausible mesh, but needs a human eyeball (The Warrior, The Serpent). |
 
-So **24 of 54 are real correct meshes** (Keep + Keep-shared) and are committed to this branch pending
-your visual confirmation; **3 dragons** have correct bodies needing skins; **9 are wrong creatures** and
-**16 are placeholders** that single-mesh extraction can't fix.
+So **26 of 54 are right or acceptable** (Keep + Keep-shared); **5 are wrong-but-best-available**; **5 are
+wrong with no file-extractable fix** (dragons, Yandir, Kazpian — GPU capture); **16 are placeholders**.
 
 ### Method note: metadata lies, geometry + eyes don't
 
