@@ -143,7 +143,6 @@ export const Marker3D: React.FC<Marker3DProps> = ({
               <spriteMaterial
                 map={textTexture}
                 transparent
-                // eslint-disable-next-line react/no-unknown-property -- r3f sprite materials support depthTest
                 depthTest={false}
               />
             </sprite>
@@ -195,7 +194,6 @@ export const Marker3D: React.FC<Marker3DProps> = ({
               <spriteMaterial
                 map={textTexture}
                 transparent
-                // eslint-disable-next-line react/no-unknown-property -- r3f sprite materials support depthTest
                 depthTest={false}
               />
             </sprite>
