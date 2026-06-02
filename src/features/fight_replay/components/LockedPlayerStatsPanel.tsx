@@ -511,8 +511,11 @@ const AbilityBreakdownList: React.FC<{
         const playheadMs = timeRef.current ?? 0;
         const cutoff = fightStartTime + playheadMs;
         const next = queryAbilityBreakdown(index, cutoff, BREAKDOWN_TOP_N);
+        // Key the dirty-check on the DISPLAYED string (fmtNum), not a coarse 1K bucket. The row
+        // renders fmtNum(totalDamage) — exact integers below 1K, one-decimal K above — so a 1K
+        // bucket let the visible value go stale (e.g. 100→499, or 1.1K→1.4K) between boundaries.
         let sig = '';
-        for (const r of next) sig += `${r.abilityGameID}:${Math.round(r.totalDamage / 1000)};`;
+        for (const r of next) sig += `${r.abilityGameID}:${fmtNum(r.totalDamage)};`;
         if (sig !== lastSigRef.current) {
           lastSigRef.current = sig;
           setRows(next);
