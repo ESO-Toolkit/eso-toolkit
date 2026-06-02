@@ -19,6 +19,7 @@
  */
 
 import { DamageEvent, DeathEvent, HealEvent, HitType } from '../../../types/combatlogEvents';
+import type { BuffLookupData } from '../../../utils/BuffLookupUtils';
 
 /** Minimum elapsed seconds used as the rate denominator, so early-fight DPS/HPS doesn't explode. */
 export const MIN_RATE_WINDOW_SECONDS = 1;
@@ -363,5 +364,162 @@ export function queryAbilityBreakdown(
     });
   }
   rows.sort((a, b) => b.totalDamage - a.totalDamage);
+  return rows.slice(0, topN);
+}
+
+// ── Player-applied debuff uptime ──────────────────────────────────────────────────────────────
+//
+// "Debuffs applied BY the player" is trickier than buffs-received because the debuff lookup stores
+// the APPLIER in a different field per ability (the same inverted/normal split DebuffUptimesPanel
+// handles):
+//   - INVERTED abilities: sourceID = the friendly player who applied it, targetID = the enemy.
+//   - NORMAL abilities:   sourceID = the enemy carrying the debuff, targetID = the friendly applier.
+// There is no single "applier" field, so we classify per ability using the known friendly-player id
+// set: if an ability's intervals carry a friendly id in sourceID it's inverted (applier = sourceID),
+// otherwise the applier is targetID. Every IMPORTANT_DEBUFF_ABILITIES entry is player-applied, so we
+// only need to pick the applier field — not also distinguish applied-vs-received.
+//
+// UPTIME IS MEASURED ON THE PRIMARY-BOSS TARGET: for each ability we group the player's intervals by
+// the enemy they were on, compute per-enemy uptime, and take the MAX across enemies — i.e. the target
+// the player maintained the debuff on hardest (their "main target"). This deliberately differs from the
+// insights Debuffs tab default, which AVERAGES across all selected targets (so a 3-boss fight reads ~⅓
+// the number); the per-player replay panel wants the tank's actual maintenance on the boss they're on,
+// not a multi-boss average. The panel labels it "on boss" so the choice is explicit. (Matching the
+// insights "single target = Tideborn Taleria" view, this reproduces Crusher 93% / Major Vuln 90% etc.)
+
+/** One resolved player-applied debuff row at a cutoff. */
+export interface DebuffAppliedRow {
+  abilityGameID: string;
+  name: string;
+  icon?: string;
+  uptimePct: number;
+}
+
+/** Merge [start,end] intervals (sorted by start) and sum their length clipped to [windowStart, cutoff]. */
+function mergedClippedDuration(
+  intervals: Array<{ start: number; end: number }>,
+  windowStart: number,
+  cutoff: number,
+): number {
+  if (intervals.length === 0 || cutoff <= windowStart) return 0;
+  const sorted = intervals
+    .map((iv) => ({ start: Math.max(iv.start, windowStart), end: Math.min(iv.end, cutoff) }))
+    .filter((iv) => iv.end > iv.start)
+    .sort((a, b) => a.start - b.start);
+  let total = 0;
+  let curStart = -Infinity;
+  let curEnd = -Infinity;
+  for (const iv of sorted) {
+    if (iv.start > curEnd) {
+      if (curEnd > curStart) total += curEnd - curStart;
+      curStart = iv.start;
+      curEnd = iv.end;
+    } else if (iv.end > curEnd) {
+      curEnd = iv.end;
+    }
+  }
+  if (curEnd > curStart) total += curEnd - curStart;
+  return total;
+}
+
+/**
+ * Pre-classified, player-attributed debuff intervals — built once on lock. For each important debuff
+ * the player applied, the intervals are GROUPED BY ENEMY TARGET so the query can take the max per-enemy
+ * uptime (the primary-boss number) rather than a union or a multi-enemy average.
+ */
+export interface DebuffAppliedIndex {
+  abilities: Array<{
+    abilityGameID: string;
+    name: string;
+    icon?: string;
+    /** Map of enemy targetId → intervals of this debuff on that enemy that the player applied. */
+    byEnemy: Map<number, Array<{ start: number; end: number }>>;
+  }>;
+}
+
+/**
+ * Build the player-applied debuff index. `importantDebuffIds` is the curated IMPORTANT_DEBUFF_ABILITIES
+ * set; `friendlyPlayerIds` is used to classify a given ability's applier field (sourceID vs targetID).
+ */
+export function buildDebuffAppliedIndex(
+  playerId: number,
+  debuffLookup: BuffLookupData | null | undefined,
+  importantDebuffIds: ReadonlySet<number>,
+  friendlyPlayerIds: ReadonlySet<number>,
+  abilitiesById: Record<string | number, AbilityNameIcon>,
+): DebuffAppliedIndex {
+  const abilities: DebuffAppliedIndex['abilities'] = [];
+  if (!debuffLookup) return { abilities };
+
+  for (const [abilityIdStr, intervals] of Object.entries(debuffLookup.buffIntervals)) {
+    const abilityId = parseInt(abilityIdStr, 10);
+    if (!importantDebuffIds.has(abilityId)) continue;
+
+    // Classify: does any interval carry a friendly id in sourceID? Then applier = sourceID (inverted)
+    // and the enemy is the targetID; otherwise the applier is targetID and the enemy is the sourceID.
+    let inverted = false;
+    for (const iv of intervals) {
+      if (friendlyPlayerIds.has(iv.sourceID)) {
+        inverted = true;
+        break;
+      }
+    }
+
+    // Keep only intervals THIS player applied, grouped by the enemy they were on.
+    const byEnemy = new Map<number, Array<{ start: number; end: number }>>();
+    for (const iv of intervals) {
+      const applier = inverted ? iv.sourceID : iv.targetID;
+      if (applier !== playerId) continue;
+      const enemy = inverted ? iv.targetID : iv.sourceID;
+      let list = byEnemy.get(enemy);
+      if (!list) {
+        list = [];
+        byEnemy.set(enemy, list);
+      }
+      list.push({ start: iv.start, end: iv.end });
+    }
+    if (byEnemy.size === 0) continue;
+
+    const ability = abilitiesById[abilityIdStr];
+    abilities.push({
+      abilityGameID: abilityIdStr,
+      name: ability?.name || `Debuff ${abilityIdStr}`,
+      icon: ability?.icon != null ? String(ability.icon) : undefined,
+      byEnemy,
+    });
+  }
+  return { abilities };
+}
+
+/**
+ * Resolve top-N player-applied debuffs by PRIMARY-BOSS uptime% as of a cutoff. Per ability we compute
+ * each enemy's merged uptime (clipped to [windowStart, cutoff]) / elapsed window and take the MAX —
+ * the target the player maintained it on hardest. The elapsed denominator is the playhead window so
+ * the % is live as you scrub.
+ */
+export function queryDebuffApplied(
+  index: DebuffAppliedIndex,
+  windowStart: number,
+  cutoffTimestamp: number,
+  topN: number,
+): DebuffAppliedRow[] {
+  const elapsed = cutoffTimestamp - windowStart;
+  if (elapsed <= 0) return [];
+  const rows: DebuffAppliedRow[] = [];
+  for (const ability of index.abilities) {
+    let bestDur = 0;
+    for (const intervals of ability.byEnemy.values()) {
+      const dur = mergedClippedDuration(intervals, windowStart, cutoffTimestamp);
+      if (dur > bestDur) bestDur = dur;
+    }
+    if (bestDur <= 0) continue;
+    rows.push({
+      abilityGameID: ability.abilityGameID,
+      name: ability.name,
+      icon: ability.icon,
+      uptimePct: Math.min(100, (bestDur / elapsed) * 100),
+    });
+  }
+  rows.sort((a, b) => b.uptimePct - a.uptimePct);
   return rows.slice(0, topN);
 }

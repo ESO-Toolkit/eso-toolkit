@@ -56,14 +56,19 @@ import {
   getActorPositionAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { IMPORTANT_BUFF_ABILITIES } from '../../report_details/insights/BuffUptimesPanel';
+import { IMPORTANT_DEBUFF_ABILITIES } from '../../report_details/insights/DebuffUptimesPanel';
 import { getReplayActorResolvedAccentColor } from '../utils/actorVisualState';
 import {
   type AbilityBreakdownIndex,
   type AbilityBreakdownRow,
+  type DebuffAppliedIndex,
+  type DebuffAppliedRow,
   type LiveLockedStats,
   buildAbilityBreakdownIndex,
+  buildDebuffAppliedIndex,
   buildLockedStatsIndex,
   queryAbilityBreakdown,
+  queryDebuffApplied,
   queryLiveLockedStats,
 } from '../utils/lockedPlayerStats';
 import { getPlayerInfo } from '../utils/pathUtils';
@@ -526,6 +531,125 @@ const AbilityBreakdownList: React.FC<{
   );
 };
 
+/** Throttle + cap for the debuff-applied list (same discipline as the buff list). */
+const DEBUFF_THROTTLE_MS = 280;
+const DEBUFF_TOP_N = 4;
+
+/**
+ * Debuffs APPLIED BY the locked player, up to the playhead — e.g. a tank's Major Breach / Crusher
+ * uptime on the boss. Reuses the insights' curated IMPORTANT_DEBUFF_ABILITIES set. Debuff intervals
+ * store the applier in a different field per ability (inverted: sourceID; normal: targetID), so the
+ * index classifies each ability with the friendly-player id set before attributing it to the player
+ * (see buildDebuffAppliedIndex). Uptime is the PRIMARY-BOSS number (max per-enemy uptime — the target
+ * the player maintained it on hardest), labeled "on boss" to distinguish it from the insights Debuffs
+ * tab's multi-target average.
+ *
+ * Same sibling-isolated throttled-list pattern as the buff list; degrades gracefully while the
+ * debuff lookup + player data load.
+ */
+const DebuffUptimeList: React.FC<{
+  playerId: number;
+  fightStartTime: number;
+  timeRef: React.RefObject<number> | { current: number };
+}> = ({ playerId, fightStartTime, timeRef }) => {
+  const { debuffLookupData } = useDebuffLookupTask();
+  const { playerData } = usePlayerData();
+  const { reportMasterData } = useReportMasterData();
+  const abilitiesById = reportMasterData?.abilitiesById;
+
+  // Friendly player id set — used to classify each debuff's applier field.
+  const friendlyPlayerIds = useMemo(() => {
+    const ids = new Set<number>();
+    const byId = playerData?.playersById;
+    if (byId) for (const key of Object.keys(byId)) ids.add(Number(key));
+    return ids;
+  }, [playerData]);
+
+  const index: DebuffAppliedIndex = useMemo(
+    () =>
+      buildDebuffAppliedIndex(
+        playerId,
+        debuffLookupData,
+        IMPORTANT_DEBUFF_ABILITIES,
+        friendlyPlayerIds,
+        abilitiesById ?? {},
+      ),
+    [playerId, debuffLookupData, friendlyPlayerIds, abilitiesById],
+  );
+
+  const [rows, setRows] = useState<DebuffAppliedRow[]>([]);
+  const lastSigRef = useRef<string>('');
+
+  useEffect(() => {
+    if (index.abilities.length === 0) {
+      if (rows.length) setRows([]);
+      lastSigRef.current = '';
+      return;
+    }
+    let raf = 0;
+    let lastRun = -Infinity;
+    const tick = (now: number): void => {
+      if (now - lastRun >= DEBUFF_THROTTLE_MS) {
+        lastRun = now;
+        const playheadMs = timeRef.current ?? 0;
+        const cutoff = fightStartTime + playheadMs;
+        const next = queryDebuffApplied(index, fightStartTime, cutoff, DEBUFF_TOP_N);
+        let sig = '';
+        for (const r of next) sig += `${r.abilityGameID}:${Math.round(r.uptimePct)};`;
+        if (sig !== lastSigRef.current) {
+          lastSigRef.current = sig;
+          setRows(next);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, fightStartTime, timeRef]);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <Box sx={{ mt: 1 }}>
+      <Typography
+        sx={{
+          fontSize: '0.58rem',
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          color: 'text.secondary',
+          mb: 0.25,
+        }}
+      >
+        DEBUFFS APPLIED · ON BOSS
+      </Typography>
+      {rows.map((r) => (
+        <Box
+          key={r.abilityGameID}
+          sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1 }}
+        >
+          <Typography
+            noWrap
+            sx={{ fontSize: '0.72rem', color: 'text.primary', minWidth: 0, flex: 1 }}
+          >
+            {r.name}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+              color: 'text.secondary',
+            }}
+          >
+            {r.uptimePct.toFixed(0)}%
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = ({
   followingActorId,
   lookup,
@@ -625,6 +749,12 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
       )}
 
       <BuffUptimeList
+        playerId={followingActorId}
+        fightStartTime={fightStartTime}
+        timeRef={timeRef}
+      />
+
+      <DebuffUptimeList
         playerId={followingActorId}
         fightStartTime={fightStartTime}
         timeRef={timeRef}
