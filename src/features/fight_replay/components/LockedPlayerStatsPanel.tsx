@@ -10,6 +10,14 @@
  * mirrors usePlayerCardData.damageStats, healing mirrors HealingDonePanel — but feeds them through a
  * prefix-sum engine (lockedPlayerStats.ts) so an up-to-playhead query is O(log n) per frame.
  *
+ * TANK MODELED DR % (labeling matters): tanks also get an "est. DR" line — the SAME modeled
+ * resistance-based damage-reduction the /damage-reduction insights view computes (static gear/CP/
+ * passive resistance + dynamic buff/debuff resistance at the playhead → resistanceToDamageReduction,
+ * capped at 50%). It NEVER reads a damage event and omits Major/Minor Protection, block, and shields,
+ * so it is labeled "est." and sits beside the MEASURED damage-taken — never presented as true
+ * mitigation. It degrades gracefully: the measured scalars show immediately; the DR % line only
+ * appears once the (heavier, async) gear + buff/debuff lookups resolve.
+ *
  * PERF CONTRACT (mirrors BossHealthPanel's per-frame discipline):
  *   - The replay throttles `currentTime` React state to ~2Hz so it never re-reconciles Arena3D.
  *     Driving these numbers from React state would make them choppy AND risk per-tick renders. So
@@ -21,16 +29,26 @@
  *   - This panel is a React.memo'd leaf that owns its own state — its internal renders structurally
  *     cannot re-render Arena3D. Every per-frame value stays inside this leaf.
  *
- * SCOPE (this commit): live up-to-playhead SCALARS (DPS/HPS/damage-taken/crit/overheal/deaths).
- * Tank modeled resistance-DR %, buff/debuff uptime, and the per-ability breakdown layer on next.
+ * SCOPE: live up-to-playhead SCALARS (DPS/HPS/damage-taken/crit/overheal/deaths) for every role,
+ * plus a MODELED resistance-based damage-reduction % for tanks (see the tank labeling note above).
+ * Buff/debuff uptime and the per-ability breakdown layer on next.
  */
 
 import { Box, Typography, useTheme, alpha } from '@mui/material';
 import React, { useEffect, useMemo, useRef } from 'react';
 
+import { useCombatantInfoRecord } from '../../../hooks/events/useCombatantInfoRecord';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../../../hooks/events/useDeathEvents';
 import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
+import { usePlayerData } from '../../../hooks/usePlayerData';
+import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
+import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
+import {
+  calculateDynamicDamageReductionAtTimestamp,
+  calculateStaticResistanceValue,
+  resistanceToDamageReduction,
+} from '../../../utils/damageReductionUtils';
 import {
   type TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
@@ -189,6 +207,99 @@ const PlayerStatsContent: React.FC<{
   );
 };
 
+/**
+ * Tank modeled damage-reduction % — a thin live line under the tank scalars. Mounts only for tanks.
+ * Computes the static resistance once on lock, then a per-frame dynamic resistance at the playhead
+ * (frame-safe: isBuffActiveOnTarget is O(log m)), summed and run through resistanceToDamageReduction
+ * (caps 50%). Renders nothing until the gear + buff/debuff lookups resolve, so it never blocks the
+ * measured scalars above it. The DR value is written to a DOM ref by its own rAF loop — no React
+ * render per frame, same contract as the scalar path.
+ */
+const TankDamageReduction: React.FC<{
+  playerId: number;
+  fightStartTime: number;
+  timeRef: React.RefObject<number> | { current: number };
+}> = ({ playerId, fightStartTime, timeRef }) => {
+  const { combatantInfoRecord } = useCombatantInfoRecord();
+  const { playerData } = usePlayerData();
+  const { buffLookupData } = useBuffLookupTask();
+  const { debuffLookupData } = useDebuffLookupTask();
+
+  const player = playerData?.playersById?.[playerId] ?? null;
+  const combatantInfo = combatantInfoRecord?.[playerId] ?? null;
+
+  // Static resistance (gear/CP/passives) — recomputed only when the inputs change.
+  const staticResistance = useMemo(() => {
+    if (!player) return null;
+    return calculateStaticResistanceValue(combatantInfo, player);
+  }, [combatantInfo, player]);
+
+  const valueRef = useRef<HTMLSpanElement | null>(null);
+
+  // All four async inputs must be present before the modeled DR % means anything.
+  const ready = staticResistance != null && buffLookupData != null && debuffLookupData != null;
+
+  useEffect(() => {
+    if (!ready || !buffLookupData || !debuffLookupData || staticResistance == null) return;
+    let raf = 0;
+    const tick = (): void => {
+      const playheadMs = timeRef.current ?? 0;
+      const timestamp = fightStartTime + playheadMs;
+      const dynamic = calculateDynamicDamageReductionAtTimestamp(
+        buffLookupData,
+        debuffLookupData,
+        timestamp,
+        playerId,
+      );
+      const dr = resistanceToDamageReduction(staticResistance + dynamic);
+      const node = valueRef.current;
+      if (node) node.textContent = `${dr.toFixed(1)}%`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [
+    ready,
+    buffLookupData,
+    debuffLookupData,
+    staticResistance,
+    playerId,
+    fightStartTime,
+    timeRef,
+  ]);
+
+  // Until the lookups resolve, render nothing — the measured scalars carry the panel.
+  if (!ready) return null;
+
+  return (
+    <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
+      <Typography
+        component="span"
+        ref={valueRef}
+        sx={{
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontWeight: 700,
+          fontSize: '0.95rem',
+          fontVariantNumeric: 'tabular-nums',
+          color: 'text.primary',
+        }}
+      >
+        —
+      </Typography>
+      <Typography
+        sx={{
+          fontSize: '0.6rem',
+          fontWeight: 600,
+          letterSpacing: '0.04em',
+          color: 'text.secondary',
+        }}
+      >
+        EST. RESIST. DR
+      </Typography>
+    </Box>
+  );
+};
+
 const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = ({
   followingActorId,
   lookup,
@@ -280,9 +391,19 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
       />
 
       {role === 'tank' && (
-        <Typography sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}>
-          Damage taken &amp; deaths are measured up to the playhead.
-        </Typography>
+        <>
+          <TankDamageReduction
+            playerId={followingActorId}
+            fightStartTime={fightStartTime}
+            timeRef={timeRef}
+          />
+          <Typography
+            sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}
+          >
+            Damage taken &amp; deaths are measured; DR % is a modeled resistance estimate (excludes
+            Protection, block &amp; shields).
+          </Typography>
+        </>
       )}
     </Box>
   );
