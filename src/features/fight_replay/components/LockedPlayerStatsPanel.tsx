@@ -2,37 +2,45 @@
  * Locked-player stats panel — DOM overlay shown when the replay camera is locked onto a player.
  *
  * When the user follows an actor (the "Following: <name>" lock), this surfaces a compact,
- * role-tinted readout of that player's combat performance for the fight: DPS for damage roles,
- * HPS/overheal for healers, and resistance-based damage-reduction + survivability for tanks. It
- * REUSES the proven fight-insights calculations rather than re-deriving them:
- *   - DPS / total / crit       → usePlayerCardData (the same per-actor scalars the player card uses)
- *   - damage-reduction %        → useDamageReductionTask (the /damage-reduction insights view's calc)
- *   - HPS / overheal, dmg taken → small recompute from the raw event arrays already in the store
+ * role-tinted readout of that player's combat performance UP TO THE PLAYHEAD: scrub to 30s and you
+ * see the player's DPS/HPS/damage-taken as of 30s, not the whole-fight total. DPS for damage roles,
+ * HPS/overheal for healers, and measured damage-taken + survivability for tanks.
  *
- * SCOPE (v1): WHOLE-FIGHT totals, computed once when an actor is locked (not live-scrubbing). The
- * heavy data hook (usePlayerCardData) lives in an inner component that only mounts while an actor
- * is locked — mirroring PlayerCardModal's mount-on-select pattern — so it never runs during normal
- * playback. This deliberately does NOT use a per-frame rAF loop (the stats don't change per frame
- * at whole-fight scope), so it doesn't touch the replay's idle-gate / no-per-tick-reconcile contract.
+ * It REUSES the proven fight-insights semantics rather than re-deriving them — damage/crit filter
+ * mirrors usePlayerCardData.damageStats, healing mirrors HealingDonePanel — but feeds them through a
+ * prefix-sum engine (lockedPlayerStats.ts) so an up-to-playhead query is O(log n) per frame.
  *
- * IMPORTANT LABELING: the tank "damage reduction %" is a MODELED resistance estimate (gear/CP/buff
- * resistances → reduction %), NOT measured damage mitigated — it never reads a damage event and
- * omits Protection/block/shields. It is labeled "est. resistance DR" here so it's never read as
- * true mitigation. The measured "damage taken" beside it IS from real events.
+ * PERF CONTRACT (mirrors BossHealthPanel's per-frame discipline):
+ *   - The replay throttles `currentTime` React state to ~2Hz so it never re-reconciles Arena3D.
+ *     Driving these numbers from React state would make them choppy AND risk per-tick renders. So
+ *     the scalar values run on their OWN requestAnimationFrame loop that reads the high-frequency
+ *     `timeRef.current` and writes straight to DOM refs (textContent) — zero React render per frame.
+ *   - The heavy work (filter + sort + prefix-sum) happens ONCE on lock, inside an inner component
+ *     that only mounts while an actor is followed (mirroring PlayerCardModal's mount-on-select), so
+ *     it costs nothing during normal playback when nobody is locked.
+ *   - This panel is a React.memo'd leaf that owns its own state — its internal renders structurally
+ *     cannot re-render Arena3D. Every per-frame value stays inside this leaf.
+ *
+ * SCOPE (this commit): live up-to-playhead SCALARS (DPS/HPS/damage-taken/crit/overheal/deaths).
+ * Tank modeled resistance-DR %, buff/debuff uptime, and the per-ability breakdown layer on next.
  */
 
 import { Box, Typography, useTheme, alpha } from '@mui/material';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../../../hooks/events/useDeathEvents';
 import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
-import { usePlayerCardData } from '../../../hooks/usePlayerCardData';
 import {
   type TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
 import { getReplayActorResolvedAccentColor } from '../utils/actorVisualState';
+import {
+  type LiveLockedStats,
+  buildLockedStatsIndex,
+  queryLiveLockedStats,
+} from '../utils/lockedPlayerStats';
 import { getPlayerInfo } from '../utils/pathUtils';
 
 type Role = 'tank' | 'healer' | 'dps';
@@ -42,7 +50,11 @@ interface LockedPlayerStatsPanelProps {
   followingActorId: number | null;
   /** Position lookup — resolves the actor's name/role/type and is the shared id-space with playersById. */
   lookup: TimestampPositionLookup | null;
-  /** Fight duration in ms (for per-second rates). */
+  /** High-frequency playhead time (ms into the fight). Read every rAF tick. */
+  timeRef: React.RefObject<number> | { current: number };
+  /** Absolute fight start timestamp — added to the playhead to get the event-space cutoff. */
+  fightStartTime: number;
+  /** Fight duration in ms (currently informational; rates use the elapsed playhead). */
   fightDurationMs: number;
 }
 
@@ -57,123 +69,122 @@ const fmtNum = (n: number): string => {
 
 const fmtPct = (n: number): string => (Number.isFinite(n) ? `${n.toFixed(1)}%` : '—');
 
-/** A hero stat: big value + small label, optionally a sub-line. */
-const Stat: React.FC<{ value: string; label: string; hint?: string; accent?: string }> = ({
-  value,
-  label,
-  hint,
-  accent,
-}) => (
-  <Box sx={{ minWidth: 0 }}>
-    <Typography
-      sx={{
-        fontFamily: 'Space Grotesk, Inter, system-ui',
-        fontWeight: 700,
-        fontSize: '1.25rem',
-        lineHeight: 1.05,
-        fontVariantNumeric: 'tabular-nums',
-        color: accent || 'text.primary',
-      }}
-    >
-      {value}
-    </Typography>
-    <Typography
-      sx={{
-        fontSize: '0.66rem',
-        fontWeight: 600,
-        letterSpacing: '0.04em',
-        color: 'text.secondary',
-      }}
-    >
-      {label.toUpperCase()}
-    </Typography>
-    {hint && (
-      <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled', lineHeight: 1.1 }}>
-        {hint}
-      </Typography>
-    )}
-  </Box>
-);
+/** Which LiveLockedStats fields each role's three hero slots read, and how to format them. */
+interface StatSlot {
+  label: string;
+  /** Pull the raw number out of the live stats. */
+  pick: (s: LiveLockedStats) => number;
+  /** Format it for display. */
+  fmt: (n: number) => string;
+  /** Whether this slot gets the role accent color (the headline stat). */
+  accented?: boolean;
+}
+
+const ROLE_SLOTS: Record<Role, StatSlot[]> = {
+  dps: [
+    { label: 'DPS', pick: (s) => s.dps, fmt: fmtNum, accented: true },
+    { label: 'Damage', pick: (s) => s.totalDamage, fmt: fmtNum },
+    { label: 'Crit', pick: (s) => s.critChance, fmt: fmtPct },
+  ],
+  healer: [
+    { label: 'HPS', pick: (s) => s.hps, fmt: fmtNum, accented: true },
+    { label: 'Healing', pick: (s) => s.effectiveHealing, fmt: fmtNum },
+    { label: 'Overheal', pick: (s) => s.overhealPct, fmt: fmtPct },
+  ],
+  tank: [
+    { label: 'Dmg Taken', pick: (s) => s.damageTaken, fmt: fmtNum, accented: true },
+    { label: 'Deaths', pick: (s) => s.deaths, fmt: (n) => `${n}` },
+    { label: 'Dmg Done', pick: (s) => s.totalDamage, fmt: fmtNum },
+  ],
+};
 
 /**
- * Inner content — mounts ONLY while an actor is locked, so the heavy usePlayerCardData hook (≈12
- * event types + worker tasks) never runs during normal playback. Computes whole-fight stats for the
- * one locked player and renders a role-appropriate set.
+ * Inner content — mounts ONLY while an actor is locked. Builds the prefix-sum index once (keyed on
+ * playerId, so locking A→B rebuilds), then runs a rAF loop writing live values to DOM refs. No
+ * React render happens per frame.
  */
 const PlayerStatsContent: React.FC<{
   playerId: number;
   role: Role;
-  fightDurationMs: number;
+  fightStartTime: number;
   accent: string;
-}> = ({ playerId, role, fightDurationMs, accent }) => {
-  const card = usePlayerCardData({ playerId });
+  timeRef: React.RefObject<number> | { current: number };
+}> = ({ playerId, role, fightStartTime, accent, timeRef }) => {
   const { healingEvents } = useHealingEvents();
   const { damageEvents } = useDamageEvents();
   const { deathEvents } = useDeathEvents();
 
-  const durationSecs = fightDurationMs > 0 ? fightDurationMs / 1000 : 0;
+  // Built once per (player, event-set). Rebuilds when locking onto a different player or when the
+  // event arrays finish loading (lock-before-load → indexes fill in and the rAF loop picks them up).
+  const index = useMemo(
+    () => buildLockedStatsIndex(playerId, damageEvents, healingEvents, deathEvents),
+    [playerId, damageEvents, healingEvents, deathEvents],
+  );
 
-  // Healer recompute (effective healing / HPS / overheal%). Mirrors HealingDonePanel exactly:
-  // event.amount is ALREADY effective; overheal is a separate field.
-  const healing = useMemo(() => {
-    if (role !== 'healer') return null;
-    let raw = 0;
-    let overheal = 0;
-    for (const ev of healingEvents) {
-      if (ev.sourceID === playerId) {
-        raw += ev.amount ?? 0;
-        overheal += ev.overheal ?? 0;
+  const slots = ROLE_SLOTS[role];
+
+  // One DOM ref per hero-stat value node; the rAF loop writes textContent here.
+  const valueRefs = useRef<Array<HTMLSpanElement | null>>([]);
+
+  // Dev-only render counter — used to confirm this leaf does NOT re-render per frame while scrubbing
+  // (it should only render on lock/role change). Exposed on window for the Chrome-MCP perf check.
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+  if (process.env.NODE_ENV !== 'production') {
+    (window as unknown as { __lockedStatsRenders?: number }).__lockedStatsRenders =
+      renderCountRef.current;
+  }
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = (): void => {
+      const playheadMs = timeRef.current ?? 0;
+      const cutoff = fightStartTime + playheadMs;
+      const elapsedSeconds = playheadMs / 1000;
+      const stats = queryLiveLockedStats(index, cutoff, elapsedSeconds);
+      for (let i = 0; i < slots.length; i++) {
+        const node = valueRefs.current[i];
+        if (node) node.textContent = slots[i].fmt(slots[i].pick(stats));
       }
-    }
-    const total = raw + overheal;
-    return {
-      effective: raw,
-      hps: durationSecs > 0 ? raw / durationSecs : 0,
-      overhealPct: total > 0 ? (overheal / total) * 100 : 0,
+      raf = requestAnimationFrame(tick);
     };
-  }, [role, healingEvents, playerId, durationSecs]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [index, slots, fightStartTime, timeRef]);
 
-  // Tank recompute (measured damage TAKEN + deaths). All app summing keys by sourceID = damage
-  // DONE, so we flip the key to targetID for damage taken.
-  const survivability = useMemo(() => {
-    if (role !== 'tank') return null;
-    let taken = 0;
-    for (const ev of damageEvents) {
-      if (ev.targetID === playerId) taken += ev.amount ?? 0;
-    }
-    let deaths = 0;
-    for (const ev of deathEvents) {
-      if ((ev as { targetID?: number }).targetID === playerId) deaths += 1;
-    }
-    return { damageTaken: taken, deaths };
-  }, [role, damageEvents, deathEvents, playerId]);
-
-  if (role === 'healer') {
-    return (
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Stat value={fmtNum(healing?.hps ?? 0)} label="HPS" accent={accent} />
-        <Stat value={fmtNum(healing?.effective ?? 0)} label="Healing" />
-        <Stat value={fmtPct(healing?.overhealPct ?? 0)} label="Overheal" />
-      </Box>
-    );
-  }
-
-  if (role === 'tank') {
-    return (
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <Stat value={fmtNum(survivability?.damageTaken ?? 0)} label="Dmg Taken" accent={accent} />
-        <Stat value={`${survivability?.deaths ?? 0}`} label="Deaths" />
-        <Stat value={fmtNum(card.totalDamage ?? 0)} label="Dmg Done" />
-      </Box>
-    );
-  }
-
-  // DPS (default)
   return (
     <Box sx={{ display: 'flex', gap: 2 }}>
-      <Stat value={fmtNum(card.dpsValue ?? 0)} label="DPS" accent={accent} />
-      <Stat value={fmtNum(card.totalDamage ?? 0)} label="Damage" />
-      <Stat value={fmtPct(card.critChance ?? 0)} label="Crit" />
+      {slots.map((slot, i) => (
+        <Box key={slot.label} sx={{ minWidth: 0 }}>
+          <Typography
+            component="span"
+            ref={(el: HTMLSpanElement | null) => {
+              valueRefs.current[i] = el;
+            }}
+            sx={{
+              display: 'block',
+              fontFamily: 'Space Grotesk, Inter, system-ui',
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              lineHeight: 1.05,
+              fontVariantNumeric: 'tabular-nums',
+              color: slot.accented ? accent : 'text.primary',
+            }}
+          >
+            —
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.66rem',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              color: 'text.secondary',
+            }}
+          >
+            {slot.label.toUpperCase()}
+          </Typography>
+        </Box>
+      ))}
     </Box>
   );
 };
@@ -181,7 +192,8 @@ const PlayerStatsContent: React.FC<{
 const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = ({
   followingActorId,
   lookup,
-  fightDurationMs,
+  timeRef,
+  fightStartTime,
 }) => {
   const theme = useTheme();
 
@@ -225,6 +237,7 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         WebkitBackdropFilter: 'blur(10px)',
         border: `1px solid ${alpha(accent, 0.45)}`,
         boxShadow: `0 8px 26px rgba(0,0,0,0.5), 0 0 14px ${alpha(accent, 0.22)}`,
+        pointerEvents: 'none',
       }}
     >
       {/* Header: role pill + name */}
@@ -261,13 +274,14 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
       <PlayerStatsContent
         playerId={followingActorId}
         role={role}
-        fightDurationMs={fightDurationMs}
+        fightStartTime={fightStartTime}
         accent={accent}
+        timeRef={timeRef}
       />
 
       {role === 'tank' && (
         <Typography sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}>
-          Damage taken &amp; deaths are measured; resistance-based DR is a modeled estimate.
+          Damage taken &amp; deaths are measured up to the playhead.
         </Typography>
       )}
     </Box>
@@ -275,8 +289,8 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
 };
 
 /**
- * Memoized: only re-renders when the locked actor changes (or the lookup/duration). It does NOT
- * read the per-frame timeRef, so it never reconciles during playback — whole-fight stats are static
- * for a given locked actor.
+ * Memoized: only re-renders when the locked actor / lookup / fight changes. It does NOT take the
+ * per-frame time as a prop, so React never reconciles it during playback — the live numbers are
+ * written to DOM refs by the inner rAF loop.
  */
 export const LockedPlayerStatsPanel = React.memo(LockedPlayerStatsPanelComponent);

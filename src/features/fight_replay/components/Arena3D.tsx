@@ -758,11 +758,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         <BossHealthPanel lookup={lookup} timeRef={timeRef} />
 
         {/* Locked-player stats — DOM overlay (bottom-left), shown only while following a player.
-            Role-aware whole-fight readout (DPS / healer / tank), reusing the fight-insights calcs.
-            Renders nothing when not following or when locked onto a non-player. */}
+            Role-aware up-to-playhead readout (DPS / healer / tank), reusing the fight-insights
+            calcs via a prefix-sum engine + own rAF loop. Renders nothing when not following or
+            when locked onto a non-player. */}
         <LockedPlayerStatsPanel
           followingActorId={followingActorId}
           lookup={lookup}
+          timeRef={timeRef}
+          fightStartTime={fight.startTime}
           fightDurationMs={fight.endTime - fight.startTime}
         />
 
