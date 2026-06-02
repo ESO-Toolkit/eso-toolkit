@@ -2,6 +2,7 @@ import { Fullscreen, FullscreenExit, LockOpen, Videocam } from '@mui/icons-mater
 import Bolt from '@mui/icons-material/Bolt';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
+import Insights from '@mui/icons-material/Insights';
 import Label from '@mui/icons-material/Label';
 import LabelOff from '@mui/icons-material/LabelOff';
 import {
@@ -33,6 +34,7 @@ import { getVisiblePlayerIds } from '../utils/pathUtils';
 
 import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { BossHealthPanel } from './BossHealthPanel';
+import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerSpritePreview } from './MarkerSpritePreview';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
@@ -162,6 +164,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // player-paths HUD and trails in FightReplay3D).
   const [performanceMode, setPerformanceMode] = useState(initialPrefs.performanceMode);
 
+  // Locked-player stats panel: master on/off (J key + button) and which sections show (the panel's
+  // gear menu). Owned here because the panel mounts here and this mirrors the names/perf slices.
+  // Disabling unmounts the panel entirely, which stops its inner rAF loops — a real cost saving.
+  const [statsPanelEnabled, setStatsPanelEnabled] = useState(initialPrefs.statsPanelEnabled);
+  const [statsPanelSections, setStatsPanelSections] = useState(initialPrefs.statsPanelSections);
+
   // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
   // so the DOM PlayerListPanel overlay — which renders the toggle controls — and the
   // in-canvas actors share one source of truth. Changes only on a user toggle, so the
@@ -190,11 +198,16 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     });
   }, []);
 
-  // Persist Arena3D's pref slice (names + performance) on change. Read-merge-write in the hook
-  // means this never clobbers the speed/path slice FightReplay3D persists.
+  // Persist Arena3D's pref slice (names + performance + stats-panel) on change. Read-merge-write in
+  // the hook means this never clobbers the speed/path slice FightReplay3D persists.
   useEffect(() => {
-    persistPrefs({ showNames: namesEnabled, performanceMode });
-  }, [persistPrefs, namesEnabled, performanceMode]);
+    persistPrefs({
+      showNames: namesEnabled,
+      performanceMode,
+      statsPanelEnabled,
+      statsPanelSections,
+    });
+  }, [persistPrefs, namesEnabled, performanceMode, statsPanelEnabled, statsPanelSections]);
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
@@ -386,11 +399,20 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         setNamesEnabled((prev) => !prev);
         event.preventDefault();
       }
+
+      // J toggles the locked-player stats panel on/off. Gated on actually following someone (read
+      // via the always-current ref, since this effect's deps are []) so the key mirrors the on-screen
+      // button, which only appears while following — no flipping a hidden pref with zero feedback.
+      if (event.key.toLowerCase() === 'j' && followingActorIdRef.current != null) {
+        setStatsPanelEnabled((prev) => !prev);
+        event.preventDefault();
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+    // followingActorIdRef is a stable ref; listed to satisfy exhaustive-deps without re-binding.
+  }, [followingActorIdRef]);
 
   // Calculate arena dimensions based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -756,6 +778,23 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             bosses with health are present. */}
         <BossHealthPanel lookup={lookup} timeRef={timeRef} />
 
+        {/* Locked-player stats — DOM overlay (bottom-left), shown only while following a player.
+            Role-aware up-to-playhead readout (DPS / healer / tank), reusing the fight-insights
+            calcs via a prefix-sum engine + own rAF loop. Renders nothing when not following or
+            when locked onto a non-player. Gated on statsPanelEnabled (J key / button): disabling
+            UNMOUNTS it, which stops the inner rAF loops — not just a visual hide. */}
+        {statsPanelEnabled && (
+          <LockedPlayerStatsPanel
+            followingActorId={followingActorId}
+            lookup={lookup}
+            timeRef={timeRef}
+            fightStartTime={fight.startTime}
+            fightDurationMs={fight.endTime - fight.startTime}
+            sections={statsPanelSections}
+            onSectionsChange={setStatsPanelSections}
+          />
+        )}
+
         {/* Player list — DOM overlay (top-left), shown when the player-paths HUD is toggled
             on (P key). Real scroll region so every player is reachable. */}
         {showPlayerPathsHUD && onPlayerSelectionChange && (
@@ -955,6 +994,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             ['P', 'Player list'],
             ['T', 'Player trails'],
             ['N', 'Name cards'],
+            ['J', 'Player stats (when locked)'],
             ['F', 'Fullscreen'],
             ['C', 'Collapse controls'],
           ].map(([k, label]) => (
@@ -974,6 +1014,31 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           </Typography>
         </Box>
       </Collapse>
+
+      {/* Locked-player stats toggle — only shown while following a player (the panel's condition),
+          so it doesn't clutter the cluster otherwise. Mirrors the J key; on/off shown by color. */}
+      {followingActorId != null && (
+        <Tooltip title={statsPanelEnabled ? 'Hide player stats (J)' : 'Show player stats (J)'}>
+          <IconButton
+            aria-label={statsPanelEnabled ? 'Hide locked-player stats' : 'Show locked-player stats'}
+            aria-pressed={statsPanelEnabled}
+            size="small"
+            onClick={() => setStatsPanelEnabled((prev) => !prev)}
+            sx={{
+              position: 'absolute',
+              bottom: 296,
+              right: 16,
+              color: statsPanelEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            <Insights fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
 
       {/* Fullscreen toggle — fullscreens the whole replay block (canvas + overlays + control bar).
           Topmost in the bottom-right cluster; mirrors the F key. */}
