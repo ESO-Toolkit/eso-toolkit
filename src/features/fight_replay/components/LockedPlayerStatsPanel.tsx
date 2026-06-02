@@ -58,8 +58,12 @@ import {
 import { IMPORTANT_BUFF_ABILITIES } from '../../report_details/insights/BuffUptimesPanel';
 import { getReplayActorResolvedAccentColor } from '../utils/actorVisualState';
 import {
+  type AbilityBreakdownIndex,
+  type AbilityBreakdownRow,
   type LiveLockedStats,
+  buildAbilityBreakdownIndex,
   buildLockedStatsIndex,
+  queryAbilityBreakdown,
   queryLiveLockedStats,
 } from '../utils/lockedPlayerStats';
 import { getPlayerInfo } from '../utils/pathUtils';
@@ -334,7 +338,7 @@ const BuffUptimeList: React.FC<{
   const { reportMasterData } = useReportMasterData();
 
   const targetIds = useMemo(() => new Set<number>([playerId]), [playerId]);
-  const abilitiesById = reportMasterData?.abilitiesById ?? {};
+  const abilitiesById = reportMasterData?.abilitiesById;
 
   const [rows, setRows] = useState<UptimeRow[]>([]);
   // Signature of the last-pushed rows, so we only setState when the visible list actually changes.
@@ -359,7 +363,7 @@ const BuffUptimeList: React.FC<{
           fightStartTime,
           fightEndTime,
           fightDuration: playheadMs,
-          abilitiesById,
+          abilitiesById: abilitiesById ?? {},
           isDebuff: false,
           hostilityType: 0,
         });
@@ -418,6 +422,103 @@ const BuffUptimeList: React.FC<{
             }}
           >
             {r.pct.toFixed(0)}%
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+/** How often the ability breakdown recomputes while scrubbing, and how many abilities to surface. */
+const BREAKDOWN_THROTTLE_MS = 280;
+const BREAKDOWN_TOP_N = 3;
+
+/**
+ * Per-ability damage breakdown — the locked player's top damage abilities, up to the playhead.
+ * Reuses the same outgoing-damage filter + crit rule as the /damage insights DamageBreakdownPanel
+ * (extracted into buildAbilityBreakdownIndex/queryAbilityBreakdown). DPS-focused: the breakdown is
+ * only meaningful for damage roles, so the panel mounts it for DPS.
+ *
+ * Like the buff list, it builds its per-ability prefix index once on lock and recomputes the top-N
+ * on a ~3-4Hz throttle (a binary search per ability — cheap, but a reordering list must render
+ * through React, so not the per-frame DOM-ref path). Sibling-isolated, so the scalar leaf still
+ * renders once on lock.
+ */
+const AbilityBreakdownList: React.FC<{
+  playerId: number;
+  fightStartTime: number;
+  timeRef: React.RefObject<number> | { current: number };
+  accent: string;
+}> = ({ playerId, fightStartTime, timeRef, accent }) => {
+  const { damageEvents } = useDamageEvents();
+  const { reportMasterData } = useReportMasterData();
+  const abilitiesById = reportMasterData?.abilitiesById;
+
+  const index: AbilityBreakdownIndex = useMemo(
+    () => buildAbilityBreakdownIndex(playerId, damageEvents, abilitiesById ?? {}),
+    [playerId, damageEvents, abilitiesById],
+  );
+
+  const [rows, setRows] = useState<AbilityBreakdownRow[]>([]);
+  const lastSigRef = useRef<string>('');
+
+  useEffect(() => {
+    let raf = 0;
+    let lastRun = -Infinity;
+    const tick = (now: number): void => {
+      if (now - lastRun >= BREAKDOWN_THROTTLE_MS) {
+        lastRun = now;
+        const playheadMs = timeRef.current ?? 0;
+        const cutoff = fightStartTime + playheadMs;
+        const next = queryAbilityBreakdown(index, cutoff, BREAKDOWN_TOP_N);
+        let sig = '';
+        for (const r of next) sig += `${r.abilityGameID}:${Math.round(r.totalDamage / 1000)};`;
+        if (sig !== lastSigRef.current) {
+          lastSigRef.current = sig;
+          setRows(next);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [index, fightStartTime, timeRef]);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <Box sx={{ mt: 1 }}>
+      <Typography
+        sx={{
+          fontSize: '0.58rem',
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          color: 'text.secondary',
+          mb: 0.25,
+        }}
+      >
+        TOP ABILITIES
+      </Typography>
+      {rows.map((r) => (
+        <Box
+          key={r.abilityGameID}
+          sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1 }}
+        >
+          <Typography
+            noWrap
+            sx={{ fontSize: '0.72rem', color: 'text.primary', minWidth: 0, flex: 1 }}
+          >
+            {r.name}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+              color: accent,
+            }}
+          >
+            {fmtNum(r.totalDamage)}
           </Typography>
         </Box>
       ))}
@@ -528,6 +629,15 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         fightStartTime={fightStartTime}
         timeRef={timeRef}
       />
+
+      {role === 'dps' && (
+        <AbilityBreakdownList
+          playerId={followingActorId}
+          fightStartTime={fightStartTime}
+          timeRef={timeRef}
+          accent={accent}
+        />
+      )}
 
       {role === 'tank' && (
         <Typography sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}>
