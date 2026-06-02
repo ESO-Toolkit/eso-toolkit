@@ -360,6 +360,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // auto-hide work inside the mobile overlay for free, with no extra wiring.
   const isImmersive = isFullscreen || mobilePseudoFullscreen;
 
+  // The mobile inline preview = narrow viewport, not yet expanded into the overlay. In this state the
+  // transport is hidden (the canvas is a non-interactive teaser); it returns once the user expands.
+  const mobilePreview = isMobile && !isImmersive;
+
   const toggleFullscreen = useCallback(() => {
     // Mobile: flip the CSS pseudo-fullscreen overlay (the native API can't fullscreen a div on iOS).
     if (isMobile) {
@@ -451,6 +455,23 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     }
     wasFullscreenRef.current = isImmersive;
   }, [isImmersive]);
+
+  // Lock body scroll while the mobile pseudo-fullscreen overlay is open. The overlay is a fixed
+  // element over the page; without this the page behind it can still scroll/rubber-band under the
+  // touch gestures. Keyed ONLY on mobilePseudoFullscreen, so the effect body never runs on desktop
+  // (where it's permanently false) — the native Fullscreen path handles its own scroll containment.
+  useEffect(() => {
+    if (!mobilePseudoFullscreen) return;
+    const { body } = document;
+    const prevOverflow = body.style.overflow;
+    const prevOverscroll = body.style.overscrollBehavior;
+    body.style.overflow = 'hidden';
+    body.style.overscrollBehavior = 'none'; // kill iOS rubber-band past the overlay
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.overscrollBehavior = prevOverscroll;
+    };
+  }, [mobilePseudoFullscreen]);
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
   // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need
@@ -571,7 +592,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     // (moved off Paper) so the spacing below the block is unchanged.
     <Box
       ref={replayContainerRef}
-      sx={{
+      sx={(theme) => ({
         position: 'relative',
         mb: 3,
         // When fullscreen, the container fills the screen and its inner Paper/canvas fill height
@@ -584,13 +605,36 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           backgroundColor: '#1a1a1a',
           '& > .MuiPaper-root': { height: '100%', borderRadius: 0 },
         },
-      }}
+        // MOBILE pseudo-fullscreen: a position:fixed overlay filling the viewport. This is the iOS
+        // path — Safari can't requestFullscreen() a div, so we go fixed + body-locked instead. The
+        // ancestor chain has no transform/filter, so `fixed` resolves against the viewport (verified).
+        // Safe-area insets keep the close button + transport clear of the notch and home indicator
+        // (index.html sets viewport-fit=cover). The same inner Paper/canvas fill-height rules apply.
+        ...(mobilePseudoFullscreen
+          ? {
+              mb: 0,
+              position: 'fixed',
+              inset: 0,
+              zIndex: theme.zIndex.modal,
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#1a1a1a',
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+              paddingLeft: 'env(safe-area-inset-left)',
+              paddingRight: 'env(safe-area-inset-right)',
+              boxSizing: 'border-box',
+              '& > .MuiPaper-root': { height: '100%', borderRadius: 0 },
+            }
+          : null),
+      })}
     >
       <Paper elevation={2} sx={{ overflow: 'hidden' }}>
         <Arena3D
           timeRef={animationTimeRef.timeRef}
           isFullscreen={isImmersive}
           onToggleFullscreen={toggleFullscreen}
+          isMobile={isMobile}
           showActorNames={showActorNames}
           mapTimeline={mapTimeline}
           scrubbingMode={scrubbingMode}
@@ -614,52 +658,55 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       {/* Playback controls — docked as a translucent overlay at the bottom of the canvas. The outer
           Box is a positioning frame only (pointer-events:none) so its transparent area never steals
           OrbitControls drags / actor clicks from the canvas beneath; PlaybackControls re-enables
-          pointer-events on its own glass surface. */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          pointerEvents: 'none',
-          '& > *': { pointerEvents: 'auto' },
-        }}
-      >
-        <PlaybackControls
-          currentTime={currentTime}
-          duration={selectedFight.endTime - selectedFight.startTime}
-          isPlaying={isPlaying}
-          playbackSpeed={playbackSpeed}
-          onTimeChange={handleTimeChange}
-          onPlayPause={handlePlayPause}
-          onSpeedChange={handleSpeedChange}
-          onSkipToStart={handleSkipToStart}
-          onSkipToEnd={handleSkipToEnd}
-          onSkipBackward10={handleSkipBackward10}
-          onSkipForward10={handleSkipForward10}
-          onPlayingChange={handlePlayingChange}
-          onScrubbingModeChange={handleScrubbingModeChange}
-          onDraggingChange={handleDraggingChange}
-          timeRef={animationTimeRef.timeRef}
-          reportId={params.reportId}
-          fightId={params.fightId}
-          selectedActorIdRef={followingActorIdRef}
-          fightStartTime={selectedFight.startTime}
-          replayContext={replayContext}
-          loopStart={loopStart}
-          loopEnd={loopEnd}
-          onClearLoop={clearLoop}
-          isFullscreen={isImmersive}
-          barVisible={barVisible}
-          onToggleCollapse={toggleBar}
-          progressPct={
-            selectedFight.endTime > selectedFight.startTime
-              ? (currentTime / (selectedFight.endTime - selectedFight.startTime)) * 100
-              : 0
-          }
-          overlay
-        />
-      </Box>
+          pointer-events on its own glass surface. Hidden in the mobile inline preview — the teaser has
+          no transport; it returns inside the pseudo-fullscreen interactive mode. */}
+      {!mobilePreview && (
+        <Box
+          sx={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            pointerEvents: 'none',
+            '& > *': { pointerEvents: 'auto' },
+          }}
+        >
+          <PlaybackControls
+            currentTime={currentTime}
+            duration={selectedFight.endTime - selectedFight.startTime}
+            isPlaying={isPlaying}
+            playbackSpeed={playbackSpeed}
+            onTimeChange={handleTimeChange}
+            onPlayPause={handlePlayPause}
+            onSpeedChange={handleSpeedChange}
+            onSkipToStart={handleSkipToStart}
+            onSkipToEnd={handleSkipToEnd}
+            onSkipBackward10={handleSkipBackward10}
+            onSkipForward10={handleSkipForward10}
+            onPlayingChange={handlePlayingChange}
+            onScrubbingModeChange={handleScrubbingModeChange}
+            onDraggingChange={handleDraggingChange}
+            timeRef={animationTimeRef.timeRef}
+            reportId={params.reportId}
+            fightId={params.fightId}
+            selectedActorIdRef={followingActorIdRef}
+            fightStartTime={selectedFight.startTime}
+            replayContext={replayContext}
+            loopStart={loopStart}
+            loopEnd={loopEnd}
+            onClearLoop={clearLoop}
+            isFullscreen={isImmersive}
+            barVisible={barVisible}
+            onToggleCollapse={toggleBar}
+            progressPct={
+              selectedFight.endTime > selectedFight.startTime
+                ? (currentTime / (selectedFight.endTime - selectedFight.startTime)) * 100
+                : 0
+            }
+            overlay
+          />
+        </Box>
+      )}
     </Box>
   );
 };

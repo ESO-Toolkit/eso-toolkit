@@ -5,8 +5,10 @@ import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 import Insights from '@mui/icons-material/Insights';
 import Label from '@mui/icons-material/Label';
 import LabelOff from '@mui/icons-material/LabelOff';
+import OpenInFull from '@mui/icons-material/OpenInFull';
 import {
   Box,
+  Button,
   Chip,
   ClickAwayListener,
   IconButton,
@@ -20,6 +22,8 @@ import { Canvas } from '@react-three/fiber';
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
+import { usePerfTier } from '../../../hooks/usePerfTier';
+import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
 import { getMapScaleData } from '../../../types/zoneScaleData';
@@ -31,6 +35,7 @@ import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
 import { COMMON_MARKER_GROUPS, MarkerGroup, MarkerGroupKey } from '../utils/mapMarkerConverters';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
+import { decidePreviewMode } from '../utils/previewMode';
 
 import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { BossHealthPanel } from './BossHealthPanel';
@@ -111,10 +116,18 @@ interface Arena3DProps {
   showPlayerPathsHUD?: boolean;
   /** Whether to show player trail paths */
   showPlayerTrails?: boolean;
-  /** True when the replay block is fullscreen (drives the fill-height layout + the toggle icon). */
+  /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
   isFullscreen?: boolean;
   /** Toggle fullscreen of the whole replay block (owned by FightReplay3D, which holds the target ref). */
   onToggleFullscreen?: () => void;
+  /**
+   * True when the replay is in its mobile layout (narrow viewport). Combined with `isFullscreen`
+   * (which on mobile means the pseudo-fullscreen overlay) this yields the two mobile states:
+   *  - mobile preview  = isMobile && !isFullscreen → a scroll-safe, non-interactive teaser.
+   *  - mobile immersive = isMobile && isFullscreen → the live interactive overlay.
+   * Desktop passes false, so every mobile branch below is dead and the layout is unchanged.
+   */
+  isMobile?: boolean;
   /**
    * Vertical band (px) reserved at the bottom for the transport bar, forwarded to the overlay
    * panels so their height caps clear the bar. Owned by FightReplay3D (it knows the bar's
@@ -134,6 +147,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onActorClick,
   isFullscreen = false,
   onToggleFullscreen,
+  isMobile = false,
   markersState,
   onAddMarker,
   onRemoveMarker,
@@ -145,6 +159,18 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   reservedInset,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
+
+  // The two mobile sub-states (see the isMobile prop doc). On desktop both are false.
+  //  - mobilePreview: scroll-safe teaser on the report page; the canvas must NOT capture touches.
+  //  - mobileImmersive: the live pseudo-fullscreen overlay; full touch interaction, room for chrome.
+  const mobilePreview = isMobile && !isFullscreen;
+  const mobileImmersive = isMobile && isFullscreen;
+
+  // Inline-preview fidelity (static poster vs gentle idle), decided from GPU tier + reduced-motion.
+  // Only meaningful while in mobilePreview; on desktop these hooks still run but the value is unused.
+  const perfTier = usePerfTier();
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const previewMode = decidePreviewMode(perfTier, prefersReducedMotion);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
@@ -745,7 +771,11 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           // 'percentage' = PCFShadowMap; the bare `shadows` default (PCFSoftShadowMap)
           // is deprecated in three 0.184 and logs a console warning every render.
           shadows="percentage"
-          style={{ background: '#1a1a1a' }}
+          // In the mobile inline PREVIEW the canvas must not capture touches: pointer-events:none lets
+          // a one-finger drag fall straight through to the page so it scrolls normally (OrbitControls'
+          // hardcoded touch-action:none never bites because the element receives no touches). The
+          // user enters interaction via the Expand button. Desktop/immersive keep the default 'auto'.
+          style={{ background: '#1a1a1a', pointerEvents: mobilePreview ? 'none' : 'auto' }}
         >
           <Arena3DScene
             timeRef={timeRef}
@@ -767,23 +797,83 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             playerVisibility={playerVisibility}
             playerColorOverrides={playerColorOverrides}
             performanceMode={performanceMode}
+            mobileImmersive={mobileImmersive}
           />
         </Canvas>
 
+        {/* Mobile inline PREVIEW scrim — the report page shows a dimmed, non-interactive teaser of the
+            3D scene with one clear way in. The scrim is a thin gradient (scene still reads through),
+            sits above the pointer-events:none canvas, and carries the single Expand affordance. Tapping
+            it opens the pseudo-fullscreen interactive mode (onToggleFullscreen → mobilePseudoFullscreen).
+            The scrim itself stays pointer-events:none so a plain drag still scrolls the page; only the
+            button is interactive. Rendered only on mobile while not immersive. */}
+        {mobilePreview && (
+          <Box
+            aria-hidden={false}
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: 1,
+              pb: 3,
+              background:
+                'linear-gradient(180deg, rgba(15,20,40,0.18) 0%, rgba(10,14,30,0.05) 35%, rgba(10,14,30,0.45) 100%)',
+            }}
+          >
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<OpenInFull />}
+              onClick={onToggleFullscreen}
+              aria-label="Open the interactive 3D replay"
+              sx={(theme) => ({
+                pointerEvents: 'auto',
+                borderRadius: '999px',
+                px: 2.5,
+                py: 1,
+                fontWeight: 700,
+                textTransform: 'none',
+                backgroundColor: 'rgba(13,20,48,0.86)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                border: `1px solid ${theme.palette.primary.main}66`,
+                boxShadow: `0 8px 26px rgba(0,0,0,0.5), 0 0 18px ${theme.palette.primary.main}40`,
+                color: '#e2e8f0',
+                '& .MuiButton-startIcon': { color: theme.palette.primary.main },
+                '&:hover': { backgroundColor: 'rgba(13,20,48,0.95)' },
+              })}
+            >
+              Tap to explore
+            </Button>
+            <Typography
+              variant="caption"
+              sx={{ color: 'rgba(226,232,240,0.75)', fontSize: '0.7rem', pointerEvents: 'none' }}
+            >
+              {previewMode === 'static' ? 'Interactive 3D replay' : 'Live 3D replay'}
+            </Typography>
+          </Box>
+        )}
+
         {/* One-time "Ctrl + scroll to zoom" hint — surfaced the first time the user scrolls plainly
             over the canvas (cooperative zoom: plain wheel scrolls the page, Ctrl/⌘+wheel zooms). */}
-        <ReplayZoomHint />
+        {!mobilePreview && <ReplayZoomHint />}
 
         {/* Boss health — DOM overlay (top-right), crisp + theme-styled. Always shown when
-            bosses with health are present. */}
-        <BossHealthPanel lookup={lookup} timeRef={timeRef} />
+            bosses with health are present. Hidden in the mobile inline preview (the teaser stays
+            uncluttered); it returns inside the pseudo-fullscreen interactive mode. */}
+        {!mobilePreview && <BossHealthPanel lookup={lookup} timeRef={timeRef} />}
 
         {/* Locked-player stats — DOM overlay (bottom-left), shown only while following a player.
             Role-aware up-to-playhead readout (DPS / healer / tank), reusing the fight-insights
             calcs via a prefix-sum engine + own rAF loop. Renders nothing when not following or
             when locked onto a non-player. Gated on statsPanelEnabled (J key / button): disabling
-            UNMOUNTS it, which stops the inner rAF loops — not just a visual hide. */}
-        {statsPanelEnabled && (
+            UNMOUNTS it, which stops the inner rAF loops — not just a visual hide. Also suppressed in
+            the mobile inline preview. */}
+        {statsPanelEnabled && !mobilePreview && (
           <LockedPlayerStatsPanel
             followingActorId={followingActorId}
             lookup={lookup}
@@ -796,8 +886,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         )}
 
         {/* Player list — DOM overlay (top-left), shown when the player-paths HUD is toggled
-            on (P key). Real scroll region so every player is reachable. */}
-        {showPlayerPathsHUD && onPlayerSelectionChange && (
+            on (P key). Real scroll region so every player is reachable. Suppressed in the mobile
+            inline preview. */}
+        {showPlayerPathsHUD && onPlayerSelectionChange && !mobilePreview && (
           <PlayerListPanel
             playerIds={availablePlayerIds}
             lookup={lookup}
@@ -937,8 +1028,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       {/* Performance Monitor Overlay - rendered outside Canvas for proper screen-space positioning */}
       {process.env.NODE_ENV === 'development' && <PerformanceMonitorExternal />}
 
-      {/* Keyboard Controls Help - Shows briefly on load */}
-      <Collapse in={showKeyboardHelp}>
+      {/* Keyboard Controls Help - Shows briefly on load. Desktop-only: it documents physical-key
+          shortcuts (WASD/H/etc.) that don't exist on touch, so it never renders on mobile. */}
+      <Collapse in={showKeyboardHelp && !isMobile}>
         <Box
           sx={{
             position: 'absolute',
@@ -1016,8 +1108,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       </Collapse>
 
       {/* Locked-player stats toggle — only shown while following a player (the panel's condition),
-          so it doesn't clutter the cluster otherwise. Mirrors the J key; on/off shown by color. */}
-      {followingActorId != null && (
+          so it doesn't clutter the cluster otherwise. Mirrors the J key; on/off shown by color.
+          Desktop/immersive-only: on mobile the equivalent lives in the mobile control cluster. */}
+      {!isMobile && followingActorId != null && (
         <Tooltip title={statsPanelEnabled ? 'Hide player stats (J)' : 'Show player stats (J)'}>
           <IconButton
             aria-label={statsPanelEnabled ? 'Hide locked-player stats' : 'Show locked-player stats'}
@@ -1041,8 +1134,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       )}
 
       {/* Fullscreen toggle — fullscreens the whole replay block (canvas + overlays + control bar).
-          Topmost in the bottom-right cluster; mirrors the F key. */}
-      {onToggleFullscreen && (
+          Topmost in the bottom-right cluster; mirrors the F key. Desktop-only: mobile expands via the
+          preview's "Tap to explore" and exits via the mobile control cluster's Close. */}
+      {!isMobile && onToggleFullscreen && (
         <Tooltip title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
           <IconButton
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
@@ -1066,60 +1160,66 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       )}
 
       {/* Performance-mode toggle — drops player-figure shadows for extra headroom on very large
-          fights. Button-only (P/T are already bound to the player-paths HUD and trails). */}
-      <Tooltip
-        title={
-          performanceMode
-            ? 'Performance mode on — figure shadows off'
-            : 'Performance mode — drop figure shadows for large fights'
-        }
-      >
-        <IconButton
-          aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
-          aria-pressed={performanceMode}
-          size="small"
-          onClick={() => setPerformanceMode((prev) => !prev)}
-          sx={{
-            position: 'absolute',
-            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
-            bottom: 200,
-            right: 16,
-            color: performanceMode ? '#fcd34d' : 'rgba(255, 255, 255, 0.55)',
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.95)',
-            },
-          }}
+          fights. Button-only (P/T are already bound to the player-paths HUD and trails). Desktop/
+          immersive-only on the right-edge stack; the mobile equivalent lives in the mobile cluster. */}
+      {!isMobile && (
+        <Tooltip
+          title={
+            performanceMode
+              ? 'Performance mode on — figure shadows off'
+              : 'Performance mode — drop figure shadows for large fights'
+          }
         >
-          <Bolt fontSize="small" />
-        </IconButton>
-      </Tooltip>
+          <IconButton
+            aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
+            aria-pressed={performanceMode}
+            size="small"
+            onClick={() => setPerformanceMode((prev) => !prev)}
+            sx={{
+              position: 'absolute',
+              // Raised to clear the docked control-bar overlay at the bottom of the canvas.
+              bottom: 200,
+              right: 16,
+              color: performanceMode ? '#fcd34d' : 'rgba(255, 255, 255, 0.55)',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            <Bolt fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
 
       {/* Name-tag toggle - the on-screen affordance for the same state the N key flips, so the
-          declutter control is discoverable without knowing the shortcut. */}
-      <Tooltip title={namesEnabled ? 'Hide name tags (N)' : 'Show name tags (N)'}>
-        <IconButton
-          aria-label={namesEnabled ? 'Hide actor name tags' : 'Show actor name tags'}
-          aria-pressed={namesEnabled}
-          size="small"
-          onClick={() => setNamesEnabled((prev) => !prev)}
-          sx={{
-            position: 'absolute',
-            bottom: 152,
-            right: 16,
-            color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.95)',
-            },
-          }}
-        >
-          {namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />}
-        </IconButton>
-      </Tooltip>
+          declutter control is discoverable without knowing the shortcut. Desktop/immersive-only. */}
+      {!isMobile && (
+        <Tooltip title={namesEnabled ? 'Hide name tags (N)' : 'Show name tags (N)'}>
+          <IconButton
+            aria-label={namesEnabled ? 'Hide actor name tags' : 'Show actor name tags'}
+            aria-pressed={namesEnabled}
+            size="small"
+            onClick={() => setNamesEnabled((prev) => !prev)}
+            sx={{
+              position: 'absolute',
+              bottom: 152,
+              right: 16,
+              color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            {namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+      )}
 
-      {/* Persistent help affordance - re-opens the keyboard help panel once it auto-hides */}
-      {!showKeyboardHelp && (
+      {/* Persistent help affordance - re-opens the keyboard help panel once it auto-hides.
+          Desktop-only (no keyboard help on touch). */}
+      {!isMobile && !showKeyboardHelp && (
         <Tooltip title="Keyboard controls (H)">
           <IconButton
             aria-label="Show keyboard controls"
@@ -1144,8 +1244,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       {/* Camera Unlock Chip - Show when following an actor. Anchored top-center so it
           doesn't overlap the top-left PlayerListPanel DOM overlay. Styled to
           match the elevated transport: dark cyan-glass with a glowing accent border + a
-          videocam glyph, so it reads as part of the same designed surface over the 3D scene. */}
-      {followingActorId && followingActorName && (
+          videocam glyph, so it reads as part of the same designed surface over the 3D scene.
+          Suppressed in the mobile inline preview (it returns in the immersive overlay). */}
+      {!mobilePreview && followingActorId && followingActorName && (
         <Tooltip title="Unlock camera from actor">
           <Chip
             icon={<Videocam sx={{ fontSize: '1rem' }} />}
