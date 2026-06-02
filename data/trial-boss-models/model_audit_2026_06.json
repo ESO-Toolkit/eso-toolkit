@@ -540,8 +540,8 @@
   "correctDesc": "A large red-scaled living dragon: four-legged winged drake silhouette with long neck, horned head, and broad wings. Red/orange coloration with fire-themed effects, visually distinct from the white frost dragon Lokkestiiz and the golden Nahviintaas. Should use the living (fleshed) dragon mesh with the red fire diffuse material, NOT a bone/skeletal dragon reference and NOT a mesh visually identical to the white storm dragon.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Yolnahkriin",
-  "action": "KEEP",
-  "note": "Textured (gold/fire diffuse), render-confirmed wired. Correct."
+  "action": "WRONG-CREATURE",
+  "note": "WRONG CREATURE, not a skin issue: the committed mesh is BoneDragon_A_Basic — a real but DIFFERENT ESO enemy (undead skeletal Bone Dragon; filled-silhouette render shows ribcage + spine + wing struts with NO membrane). The LIVING winged Sunspire dragon mesh is NOT locatable via file extraction: ESO creature bodies are unnamed in the ZOSFT (verified via EsoExtractData 92k-name dump — even the known AirAtronach body isn't named), and no winged-dragon-sized mesh exists in the 6000-name internal-name roster. Confirmed across 3 methods (our scan-mnf, EsoExtractData ZOSFT, roster dump). GPU capture (RenderDoc/NinjaRipper) ruled out (EULA + un-rigged result). Options: accept labeled bone-dragon stand-in, or a license-clean generic winged dragon. Color tints are cosmetic only and do not fix the wrong-creature problem."
  },
  {
   "trial": "Sunspire",
@@ -562,8 +562,8 @@
   "correctDesc": "White frost/storm Dragon — standard ESO dragon body (quadrupedal, winged, long neck/tail, horned head) with distinctive white scaling that separates it from the red Yolnahkriin and gold Nahviintaas.",
   "confidence": "medium",
   "reference": "https://en.uesp.net/wiki/Online:Lokkestiiz",
-  "action": "KEEP",
-  "note": "Correct shared ESO dragon body (BoneDragon = universal dragon rig) + approximate frost tint in viewer (shares Yolnahkriin gold skin; real frost DDS not name-addressable). Acceptable."
+  "action": "WRONG-CREATURE",
+  "note": "WRONG CREATURE, not a skin issue: the committed mesh is BoneDragon_A_Basic — a real but DIFFERENT ESO enemy (undead skeletal Bone Dragon; filled-silhouette render shows ribcage + spine + wing struts with NO membrane). The LIVING winged Sunspire dragon mesh is NOT locatable via file extraction: ESO creature bodies are unnamed in the ZOSFT (verified via EsoExtractData 92k-name dump — even the known AirAtronach body isn't named), and no winged-dragon-sized mesh exists in the 6000-name internal-name roster. Confirmed across 3 methods (our scan-mnf, EsoExtractData ZOSFT, roster dump). GPU capture (RenderDoc/NinjaRipper) ruled out (EULA + un-rigged result). Options: accept labeled bone-dragon stand-in, or a license-clean generic winged dragon. Color tints are cosmetic only and do not fix the wrong-creature problem."
  },
  {
   "trial": "Sunspire",
@@ -584,8 +584,8 @@
   "correctDesc": "A large golden-scaled dragon — the classic ESO quadruped winged dragon body (long neck, horned reptilian head, four legs, broad membranous wings, long tail). Distinctive feature is its shining gold scales, with a differently-colored underbelly, teeth, and horns. He is the final boss of Sunspire, perching on his platform and alternating between perching, flying, and casting magic. Resembles the slumbering aspect of Alkosh but smaller and not pure-gold throughout.",
   "confidence": "high",
   "reference": "https://en.uesp.net/wiki/Online:Nahviintaas",
-  "action": "KEEP",
-  "note": "Own distinct diffuse texture, wired. Correct."
+  "action": "WRONG-CREATURE",
+  "note": "WRONG CREATURE, not a skin issue: the committed mesh is BoneDragon_A_Basic — a real but DIFFERENT ESO enemy (undead skeletal Bone Dragon; filled-silhouette render shows ribcage + spine + wing struts with NO membrane). The LIVING winged Sunspire dragon mesh is NOT locatable via file extraction: ESO creature bodies are unnamed in the ZOSFT (verified via EsoExtractData 92k-name dump — even the known AirAtronach body isn't named), and no winged-dragon-sized mesh exists in the 6000-name internal-name roster. Confirmed across 3 methods (our scan-mnf, EsoExtractData ZOSFT, roster dump). GPU capture (RenderDoc/NinjaRipper) ruled out (EULA + un-rigged result). Options: accept labeled bone-dragon stand-in, or a license-clean generic winged dragon. Color tints are cosmetic only and do not fix the wrong-creature problem."
  },
  {
   "trial": "Kyne's Aegis",

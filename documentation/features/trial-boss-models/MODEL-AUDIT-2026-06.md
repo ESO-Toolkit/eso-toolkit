@@ -19,7 +19,7 @@ offline rendering, and a per-boss web-research cross-reference against UESP / ES
 |---|---|---|
 | ✅ **Keep** | 12 | Real distinct ESO creature mesh, mapping-trusted as this boss. **Visual match pending your confirmation.** |
 | ✅ **Keep (shared)** | 12 | Real mesh legitimately reused across same-species bosses (e.g. both Sea Giants → one Giant mesh). Pending confirm. |
-| 🎨 **Texture** | 3 | Real (correct) dragon body geometry; the 3 Sunspire dragons differ by skin, not mesh. Skins partial/pending. |
+| 🐉 **Wrong creature** | 3 | The 3 Sunspire dragons share `BoneDragon_A_Basic` — a real but **different** ESO enemy (the undead *skeletal* Bone Dragon). The living winged-dragon mesh is not locatable via file extraction (see Sunspire note). |
 | ❌ **Fix** | 9 | A real mesh was extracted but it's the **wrong creature** for this boss. Needs a corrected extraction. |
 | 🔲 **Placeholder** | 16 | Humanoid boss built from ESO's modular player skeleton + armor. **No standalone creature mesh exists to extract** — got a generic robed-humanoid stand-in shared across many bosses. |
 | 🔍 **Verify** | 2 | Plausible mesh, but needs a human eyeball (The Warrior, The Serpent). |
@@ -43,7 +43,9 @@ manual pass.
    skeleton + swappable armor/body parts. The standalone-creature extractor can't produce one mesh for
    them. Fixing requires either (a) assembling body+armor parts offline, or (b) accepting a
    representative NPC/armor model per boss. The mapping's own notes state this.
-2. **Sunspire dragons differ by *texture*, not geometry.** All three living dragons share the same body
+2. **Sunspire dragons are the wrong creature (skeletal Bone Dragon).** See the Sunspire per-boss note
+   below — the living winged mesh is not file-extractable. _(Earlier draft of this doc wrongly framed it
+   as a texture issue; corrected.)_ The original (now-superseded) note read: all three living dragons share the same body
    GR2 (so the geometry hash is identical, and that's *correct* in-game). In ESO they're differentiated
    by **material/texture** (Lokkestiiz frost-white, Yolnahkriin red-fire, Nahviintaas gold). The fix is
    a **texture pipeline**, not a second mesh extraction. The living-dragon meshes are stored as
@@ -82,7 +84,7 @@ manual pass.
 <!-- BEGIN PER-BOSS (generated) -->
 ## Per-boss results
 
-Action key: **✅ Keep** = real distinct mesh, mapping-trusted, visual confirm pending · **✅ Keep (shared)** = real mesh legitimately reused across same-species bosses · **🎨 Texture** = correct body, skin pending · **❌ Fix** = wrong mesh, needs correct extraction · **🔲 Placeholder** = humanoid built from player skeleton+armor, no standalone mesh · **🔍 Verify** = needs a human eyeball.
+Action key: **✅ Keep** = real distinct mesh, mapping-trusted, visual confirm pending · **✅ Keep (shared)** = real mesh legitimately reused across same-species bosses · **🐉 Wrong creature** = a real but wrong ESO mesh (the skeletal Bone Dragon for the 3 living dragons); correct mesh not file-extractable · **❌ Fix** = wrong mesh, needs correct extraction · **🔲 Placeholder** = humanoid built from player skeleton+armor, no standalone mesh · **🔍 Verify** = needs a human eyeball.
 
 > **On the "Keep" verdict:** these were classified by geometry hashing (proves the mesh is *distinct*,
 > not that it's the *right* creature) + a research identity pass (which is known to occasionally
@@ -162,16 +164,24 @@ Action key: **✅ Keep** = real distinct mesh, mapping-trusted, visual confirm p
 
 | Boss | Action | Current model | Real identity | Note |
 |---|---|---|---|---|
-| Lokkestiiz | 🎨 Texture | Lokkestiiz_Dragon | Dragon — frost/storm (white) | **Correct body, wrong skin.** Shares the one ESO dragon body mesh; differentiate by frost-white material. |
-| Yolnahkriin | 🎨 Texture | Yolnahkriin_Dragon | Dragon — fire (red) | **Correct body, wrong skin.** Same shared dragon body; needs red-fire material. |
-| Nahviintaas | 🎨 Texture | Nahviintaas_Dragon | Dragon — golden king | **Correct body, wrong skin.** Same shared dragon body; needs gold material. |
+| Lokkestiiz | 🐉 Wrong creature | BoneDragon_A_Basic | Dragon — frost/storm | **Skeletal bone dragon, not the living dragon.** Living winged mesh not file-extractable. |
+| Yolnahkriin | 🐉 Wrong creature | BoneDragon_A_Basic | Dragon — fire | **Skeletal bone dragon.** Same. |
+| Nahviintaas | 🐉 Wrong creature | BoneDragon_A_Basic | Dragon — golden king | **Skeletal bone dragon.** Same. |
 
-> 🎨 **Texture** = the *geometry* is the real ESO dragon body (all three Sunspire dragons use the same
-> skeleton in-game — sharing it is correct); they're distinguished by **material**. Precise byte state:
-> **Lokkestiiz and Yolnahkriin are byte-identical GLBs** (no skin baked — at most one is fully right),
-> while **Nahviintaas's GLB differs** (carries its own embedded textures). So this is "shared body,
-> skins partial — verify/build the per-dragon materials," not a mesh fix. All three body GLBs are
-> committed; the skins need per-dragon verification.
+> 🐉 **Wrong creature (not a skin issue).** The committed dragon GLBs are `BoneDragon_A_Basic` — a real
+> but **different** ESO enemy, the undead *skeletal* Bone Dragon (a filled-silhouette render shows
+> ribcage + spine + wing *struts with no membrane*; the ZOSFT even names a `u48_bonedragon_bonebreath`
+> ability). The **living winged Sunspire dragon mesh is not locatable via file extraction**:
+> - ESO creature *bodies* are unnamed in the ZOSFT filename table — verified by dumping all 92,666 names
+>   with UESP's EsoExtractData; even the known-good AirAtronach body isn't named there.
+> - No winged-dragon-sized mesh (~15k+ verts with membrane) exists under any internal Granny name in the
+>   full 6,000-creature roster dump.
+> - Confirmed across **three independent methods** (our `scan-mnf`, EsoExtractData's ZOSFT, the roster dump).
+>
+> GPU capture (RenderDoc / NinjaRipper) was researched and **ruled out**: it's an ESO EULA violation and
+> yields an un-rigged, frozen-pose snapshot — worse than file extraction. The per-dragon color tints in
+> the viewer are cosmetic only and do **not** fix the wrong-creature problem. **Decision deferred to the
+> maintainer:** accept the labeled skeletal stand-in, or swap to a license-clean generic winged dragon.
 
 ### Kyne's Aegis (2020)
 
