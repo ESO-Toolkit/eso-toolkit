@@ -16,7 +16,7 @@ import {
   AccordionDetails,
   Tooltip,
 } from '@mui/material';
-import { styled, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
@@ -62,29 +62,10 @@ import { type BarSwapAnalysisResult } from '../../parse_analysis/utils/parseAnal
 import { SCRIBING_DETECTION_SCHEMA_VERSION } from '../../scribing/analysis/scribingDetectionAnalysis';
 import { ScribedSkillData } from '../../scribing/types';
 
+import { MetricsScrollRow } from './MetricsScrollRow';
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
 import { StatChipIcon } from './StatChipIcon';
-// Styled component for metrics scroll container with thin scrollbar
-const MetricsScrollContainer = styled(Box)(({ theme }) => ({
-  overflowX: 'auto',
-  overflowY: 'hidden',
-  WebkitOverflowScrolling: 'touch',
-  scrollbarWidth: 'thin',
-  '&::-webkit-scrollbar': {
-    height: '8px',
-  },
-  '&::-webkit-scrollbar-track': {
-    background: theme.palette.grey[200],
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: theme.palette.grey[500],
-    borderRadius: '4px',
-  },
-  '&::-webkit-scrollbar-thumb:hover': {
-    background: theme.palette.grey[700],
-  },
-}));
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -202,14 +183,19 @@ const MundusChip: React.FC<MundusChipProps> = ({ mundusBuffs }) => {
           minHeight: { xs: 28, sm: 'auto', md: 'auto' },
         }}
       >
-        <img src={mundusIcon} alt="" style={{ width: 12, height: 12 }} />
+        <Box
+          component="img"
+          src={mundusIcon}
+          alt=""
+          sx={{ width: { xs: 16, sm: 14, md: 12 }, height: { xs: 16, sm: 14, md: 12 } }}
+        />
         <Box component="span" sx={{ margin: { xs: '0 4px', sm: '0 2px', md: '0 1px' } }}></Box>
         <Box
           component="span"
           sx={{
             display: 'inline',
             fontWeight: 700,
-            fontSize: { xs: 8, sm: 9, md: 10 },
+            fontSize: { xs: 13, sm: 11, md: 10 },
             letterSpacing: '.01em',
             color: 'primary.main',
             textTransform: 'uppercase',
@@ -412,6 +398,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             ? '1px solid rgba(255, 255, 255, 0.1)'
             : '1px solid rgba(59, 130, 246, 0.3)',
         ...(isTopDps && {
+          // Allow the electric ring + outer halo (negative insets) to render
+          // beyond the card edge instead of being clipped by MUI's default
+          // overflow:hidden on Card.
+          overflow: 'visible' as const,
           boxShadow:
             theme.palette.mode === 'dark'
               ? '0 0 16px rgba(245,158,11,0.18), 0 0 40px rgba(245,158,11,0.06), inset 0 1px 0 rgba(251,191,36,0.12)'
@@ -565,7 +555,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(dpsValue)} DPS
               </Box>
@@ -583,7 +577,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(hpsValue)} HPS
               </Box>
@@ -605,7 +603,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {critChance.toFixed(1)}%
               </Box>
@@ -629,7 +631,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 component="span"
                 sx={{
                   fontWeight: 700,
-                  fontSize: { xs: 8, sm: 9, md: 10 },
+                  fontSize: { xs: 13, sm: 11, md: 10 },
                   letterSpacing: '.01em',
                   color:
                     critDamageSummary.avg >= 125
@@ -659,7 +661,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(totalDamage)}
               </Box>
@@ -681,7 +687,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(totalCritDamage)}
               </Box>
@@ -703,7 +713,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               <span style={{ margin: '0 1px' }} />
               <Box
                 component="span"
-                sx={{ fontWeight: 700, fontSize: { xs: 8, sm: 9, md: 10 }, letterSpacing: '.01em' }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: 13, sm: 11, md: 10 },
+                  letterSpacing: '.01em',
+                }}
               >
                 {formatStatValue(critDps)} CDPS
               </Box>
@@ -735,7 +749,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               sx={{
                 display: 'inline',
                 fontWeight: 700,
-                fontSize: { xs: 8, sm: 9, md: 10 },
+                fontSize: { xs: 13, sm: 11, md: 10 },
                 letterSpacing: '.01em',
                 color: foodInfo.color,
               }}
@@ -764,7 +778,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               sx={{
                 display: 'inline',
                 fontWeight: 700,
-                fontSize: { xs: 8, sm: 9, md: 10 },
+                fontSize: { xs: 13, sm: 11, md: 10 },
                 letterSpacing: '.01em',
                 color: potionInfo.color,
               }}
@@ -856,7 +870,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 sx={{
                   fontWeight: 700,
                   letterSpacing: '0.05em',
-                  fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                  fontSize: { xs: 13, sm: 11, md: 10 },
                 }}
               >
                 {barSwapResult.barSetupPattern}
@@ -910,21 +924,55 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           data-testid={`player-card-${player.id}`}
         >
           {isTopDps && (
-            <Box
-              aria-hidden="true"
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background:
-                  'linear-gradient(90deg, transparent 0%, rgba(245,158,11,0.5) 20%, rgba(251,191,36,1) 50%, rgba(245,158,11,0.5) 80%, transparent 100%)',
-                borderRadius: '4px 4px 0 0',
-                boxShadow: '0 0 8px rgba(251,191,36,0.7), 0 0 18px rgba(245,158,11,0.35)',
-                zIndex: 2,
-              }}
-            />
+            <>
+              {/* Electric border (top DPS): rotating conic-gradient gold edge.
+                  Adapted from the "electric border" aesthetic to the project's
+                  MUI/token idiom. Scoped to this card via absolute inset so it
+                  cannot bleed into neighbouring cards. Both layers animate via
+                  CSS keyframes, so the global prefers-reduced-motion rule in
+                  ReduxThemeProvider neutralises the motion automatically. */}
+              <Box
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  inset: '-1px',
+                  borderRadius: '14px',
+                  padding: '1.5px',
+                  zIndex: 2,
+                  pointerEvents: 'none',
+                  // The conic gradient is the moving "current"; animating its
+                  // start angle (via the --tdps-angle custom property) sweeps the
+                  // bright spot around the edge while the element itself stays
+                  // put. The mask carves out the centre so only the 1.5px ring is
+                  // painted (both prefixed + standard for cross-browser).
+                  background:
+                    'conic-gradient(from var(--tdps-angle), transparent 0deg, rgba(251,191,36,0.15) 40deg, rgba(245,158,11,0.85) 80deg, #fde68a 100deg, rgba(245,158,11,0.85) 120deg, rgba(251,191,36,0.15) 160deg, transparent 200deg, transparent 360deg)',
+                  WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                  mask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                  WebkitMaskComposite: 'xor',
+                  maskComposite: 'exclude',
+                  animation: 'electricBorderSpin 4s linear infinite',
+                  filter: 'drop-shadow(0 0 4px rgba(245,158,11,0.55))',
+                }}
+              />
+              {/* Soft outer halo that gently pulses, giving the "energised" feel
+                  without the visual noise of a fast crackle. */}
+              <Box
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  inset: '-3px',
+                  borderRadius: '16px',
+                  zIndex: 0,
+                  pointerEvents: 'none',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 0 14px 1px rgba(245,158,11,0.35), 0 0 34px 4px rgba(245,158,11,0.12)'
+                      : '0 0 14px 1px rgba(180,83,9,0.28), 0 0 34px 4px rgba(245,158,11,0.14)',
+                  animation: 'electricBorderPulse 2.8s ease-in-out infinite',
+                }}
+              />
+            </>
           )}
           <CardContent
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
@@ -1661,16 +1709,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       alignItems: 'center',
                       justifyContent: 'flex-start',
                       minWidth: 0,
-                      minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 28, md: 28 },
+                      minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 44, sm: 28, md: 28 },
                     }}
                   >
-                    <MetricsScrollContainer
+                    <MetricsScrollRow
+                      scrollable={metricsLayout !== 'wrap'}
                       sx={{
                         display: 'flex',
                         flexWrap: metricsLayout === 'wrap' ? 'wrap' : 'nowrap',
                         overflowX: metricsLayout === 'wrap' ? 'hidden' : 'auto',
                         gap: { xs: 0.75, sm: 0.5, md: 0.5 },
-                        minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 40, sm: 24, md: 24 },
+                        minHeight: metricsLayout === 'wrap' ? 'auto' : { xs: 44, sm: 24, md: 24 },
                         flex: '1 1 auto',
                         minWidth: 0,
                         mr: 0.5,
@@ -1686,9 +1735,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           gap:
                             metricsLayout === 'wrap'
                               ? { xs: 1, sm: 0.75, md: 0.5 }
-                              : { xs: 0.75, sm: 0.5, md: 0.25 },
+                              : { xs: 1, sm: 0.5, md: 0.25 },
                           whiteSpace: metricsLayout === 'wrap' ? 'normal' : 'nowrap',
-                          fontSize: { xs: '0.85rem', sm: '0.8rem', md: 'body2.fontSize' },
+                          fontSize: { xs: 13, sm: 11, md: 'body2.fontSize' },
                         }}
                       >
                         {statChipEntries.map((entry, i) => (
@@ -1698,7 +1747,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           </React.Fragment>
                         ))}
                       </Typography>
-                    </MetricsScrollContainer>
+                    </MetricsScrollRow>
                   </Box>
 
                   {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (

@@ -760,6 +760,26 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             '0%': { backgroundPosition: '-200% 0' },
             '100%': { backgroundPosition: '200% 0' },
           },
+          // Electric-border (top DPS): register the angle custom property so it
+          // can interpolate inside the conic-gradient. Without @property the
+          // gradient angle would not animate. Falls back gracefully (static
+          // ring) in engines that don't support @property.
+          '@property --tdps-angle': {
+            syntax: '"<angle>"',
+            initialValue: '0deg',
+            inherits: 'false',
+          },
+          // Sweep the gradient's start angle, NOT the element's transform — that
+          // keeps the rectangular ring in place and moves only the bright
+          // "current" travelling around its edge.
+          '@keyframes electricBorderSpin': {
+            to: { '--tdps-angle': '360deg' },
+          },
+          // Electric-border (top DPS): gentle glow pulse on the outer halo
+          '@keyframes electricBorderPulse': {
+            '0%, 100%': { opacity: 0.55 },
+            '50%': { opacity: 1 },
+          },
           '.u-fade-in': {
             animation: 'tooltipEnter 220ms cubic-bezier(0.26, 0.53, 0.74, 1.48) both',
           },

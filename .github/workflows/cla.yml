@@ -48,11 +48,12 @@ jobs:
         if: (github.event_name == 'issue_comment' && (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA')) || (github.event_name == 'pull_request_target' && github.event.action != 'closed')
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_AUTHOR_LOGIN: ${{ github.event.pull_request.user.login }}
         run: |
           if [ "${{ github.event_name }}" = "issue_comment" ]; then
             PR_AUTHOR=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} --jq '.user.login')
           else
-            PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+            PR_AUTHOR="$PR_AUTHOR_LOGIN"
           fi
 
           echo "Checking CLA for PR author: $PR_AUTHOR"
