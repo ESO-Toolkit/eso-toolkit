@@ -42,10 +42,9 @@ manual pass.
 
 ## Root causes (the three fix-classes)
 
-1. **Humanoids are not single meshes.** ESO assembles humanoid NPCs (the 16 placeholders) from a player
-   skeleton + swappable armor/body parts. The standalone-creature extractor can't produce one mesh for
-   them. Fixing requires either (a) assembling body+armor parts offline, or (b) accepting a
-   representative NPC/armor model per boss. The mapping's own notes state this.
+1. **Humanoids are not single meshes.** ESO assembles humanoid NPCs (the 16 placeholders + Yandir/Vrol)
+   from a player skeleton + swappable armor/body parts. The standalone-creature extractor can't produce
+   one mesh for them. **This was investigated exhaustively — see "Assembly investigation" below.**
 2. **Sunspire dragons are the wrong creature (skeletal Bone Dragon).** See the Sunspire per-boss note
    below — the living winged mesh is not file-extractable. _(Earlier draft of this doc wrongly framed it
    as a texture issue; corrected.)_ The original (now-superseded) note read: all three living dragons share the same body
@@ -55,6 +54,33 @@ manual pass.
    "unnamed multi-part" files, which is why distinct dragon bodies are hard to locate.
 3. **A handful of creature `file_index` values are wrong.** Fixable in JSON + re-extract once a full
    install is available.
+
+## Assembly investigation — can the humanoids / living dragons be built from files? (DEFINITIVE: no)
+
+This was pushed hard (multiple research passes + adversarial verification + on-disk tests). The honest,
+evidence-backed conclusion: **for the 16 humanoid bosses + Yandir/Vrol + the 3 living Sunspire dragons,
+there is no file-based way to produce the correct complete model.** What was actually proven:
+
+- **The parts ARE extractable and named.** Earlier belief that humanoid parts are "unnamed blobs" was
+  wrong — `EsoExtractData` reconstructs names (`Mdl_CustomizationSkeleton-Msh_Helmet_B`), and the
+  `mshBn_*` bone-name strings are readable in the raw GR2s. The `mshBn` skeleton-matching method is real.
+- **…but it can't pick a specific boss's parts.** Every humanoid armor/body piece binds to one shared
+  `CustomizationSkeleton` — e.g. `Helmet_B` has exactly **1 bone** (`mshBn_head`), which matches *every*
+  humanoid. Bone-matching a humanoid returns the entire armor corpus, with **zero per-boss signal**.
+- **The recipe (which parts a boss wears) is in no extractable file.** Verified across: the ESO Lua
+  addon API (all 4,344 functions — `GetUnitRace`/`GetUnitGender` + a 2D silhouette icon, but **nothing**
+  returns a unit's worn 3D equipment), UESP's datamined tables (2D item icons only), and the gamedata
+  NPC-definition binaries (undecoded; reverse-engineering them would be original unpublished work).
+- **The living dragon mesh isn't locatable** under any internal Granny name (the on-disk dragon GLB is
+  the skeletal `BoneDragon_A_Basic` — a different creature). Can't be *100%* proven absent, but no one —
+  including esomodelviewer.com's operator, the most experienced ESO ripper — has found it.
+- **Decisive tell:** that operator does **not** assemble humanoids from files; he recommends GPU capture.
+
+**So the only route to the correct geometry for these bosses is a live GPU frame capture** (RenderDoc —
+see `EXTRACTION-GUIDE.md` + `tools/renderdoc-rip/`), which is an ESO EULA violation and yields an
+un-rigged frozen pose. The two honest endpoints: **(a)** labeled stand-ins (what's committed), or
+**(b)** GPU capture when the real geometry is genuinely required. File extraction stays reserved for the
+self-contained creature bosses, where it works cleanly.
 
 > ⚠️ **Trust note on the research layer.** The per-boss "real identity" and the specific source-mesh
 > filenames below (`CWCfactotem_U_TP`, `DwarvenColossus_Body_A_Basic`, etc.) come from web research that
