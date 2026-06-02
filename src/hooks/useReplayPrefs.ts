@@ -24,6 +24,24 @@ import { useCallback, useMemo } from 'react';
 const VERSION = 1;
 const STORAGE_KEY = `replay.prefs.v${VERSION}`;
 
+/**
+ * Which sections of the locked-player stats panel are shown. Each flag gates one section; a section
+ * also only renders when it's relevant to the locked player's role (e.g. `dr` is tank-only). All
+ * default true, so the panel shows everything until the user trims it from the panel's gear menu.
+ */
+export interface StatsPanelSections {
+  /** Role hero stats row (DPS/Damage/Crit · HPS/Healing/Overheal · Dmg-taken/Deaths/Dmg-done). */
+  hero: boolean;
+  /** Tank modeled "est. resistance DR %" line. */
+  dr: boolean;
+  /** Buff-uptime list. */
+  buffs: boolean;
+  /** Debuffs-applied list. */
+  debuffs: boolean;
+  /** Per-ability damage breakdown (DPS). */
+  abilities: boolean;
+}
+
 export interface ReplayPrefs {
   /** Playback speed multiplier (one of the SpeedSelector ladder values). */
   playbackSpeed: number;
@@ -37,6 +55,10 @@ export interface ReplayPrefs {
   performanceMode: boolean;
   /** Transport bar collapsed/hidden (cinema mode) — persists so the chosen state survives reload. */
   barCollapsed: boolean;
+  /** Locked-player stats panel shown at all (disable toggle / key). */
+  statsPanelEnabled: boolean;
+  /** Which sections of the stats panel are shown (the panel's gear-menu checklist). */
+  statsPanelSections: StatsPanelSections;
 }
 
 /**
@@ -46,6 +68,14 @@ export interface ReplayPrefs {
  * — the hook only supplies the fallback when nothing is stored AND the caller has no stronger
  * initial value.
  */
+export const DEFAULT_STATS_PANEL_SECTIONS: StatsPanelSections = {
+  hero: true,
+  dr: true,
+  buffs: true,
+  debuffs: true,
+  abilities: true,
+};
+
 export const DEFAULT_REPLAY_PREFS: ReplayPrefs = {
   playbackSpeed: 1,
   showNames: true,
@@ -53,6 +83,8 @@ export const DEFAULT_REPLAY_PREFS: ReplayPrefs = {
   showTrails: false,
   performanceMode: false,
   barCollapsed: false,
+  statsPanelEnabled: true,
+  statsPanelSections: DEFAULT_STATS_PANEL_SECTIONS,
 };
 
 const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -75,6 +107,19 @@ const sanitize = (raw: unknown): Partial<ReplayPrefs> => {
   if (isBool(obj.showTrails)) out.showTrails = obj.showTrails;
   if (isBool(obj.performanceMode)) out.performanceMode = obj.performanceMode;
   if (isBool(obj.barCollapsed)) out.barCollapsed = obj.barCollapsed;
+  if (isBool(obj.statsPanelEnabled)) out.statsPanelEnabled = obj.statsPanelEnabled;
+  // statsPanelSections: accept a partial object, keep only the well-typed boolean flags, and merge
+  // over the defaults so a missing/corrupt flag falls back rather than disappearing.
+  if (obj.statsPanelSections && typeof obj.statsPanelSections === 'object') {
+    const s = obj.statsPanelSections as Record<string, unknown>;
+    const sections: StatsPanelSections = { ...DEFAULT_STATS_PANEL_SECTIONS };
+    if (isBool(s.hero)) sections.hero = s.hero;
+    if (isBool(s.dr)) sections.dr = s.dr;
+    if (isBool(s.buffs)) sections.buffs = s.buffs;
+    if (isBool(s.debuffs)) sections.debuffs = s.debuffs;
+    if (isBool(s.abilities)) sections.abilities = s.abilities;
+    out.statsPanelSections = sections;
+  }
   return out;
 };
 

@@ -1,6 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 
-import { DEFAULT_REPLAY_PREFS, useReplayPrefs, type ReplayPrefs } from './useReplayPrefs';
+import {
+  DEFAULT_REPLAY_PREFS,
+  DEFAULT_STATS_PANEL_SECTIONS,
+  useReplayPrefs,
+  type ReplayPrefs,
+} from './useReplayPrefs';
 
 const STORAGE_KEY = 'replay.prefs.v1';
 
@@ -23,6 +28,8 @@ describe('useReplayPrefs', () => {
       showTrails: true,
       performanceMode: true,
       barCollapsed: true,
+      statsPanelEnabled: false,
+      statsPanelSections: { hero: true, dr: false, buffs: true, debuffs: false, abilities: true },
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
 
@@ -69,6 +76,42 @@ describe('useReplayPrefs', () => {
     const { result } = renderHook(() => useReplayPrefs());
     expect(result.current.storedPrefs.barCollapsed).toBe(true);
     expect(result.current.initialPrefs.barCollapsed).toBe(true);
+  });
+
+  it('restores the persisted statsPanelEnabled flag', () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ statsPanelEnabled: false }));
+    const { result } = renderHook(() => useReplayPrefs());
+    // sanitize MUST have a branch for this key or it silently drops (resets every reload).
+    expect(result.current.storedPrefs.statsPanelEnabled).toBe(false);
+    expect(result.current.initialPrefs.statsPanelEnabled).toBe(false);
+  });
+
+  it('restores a partial statsPanelSections object, merging missing flags over the defaults', () => {
+    // Only `debuffs` stored → it's honored; every other section falls back to its default (true).
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ statsPanelSections: { debuffs: false } }),
+    );
+    const { result } = renderHook(() => useReplayPrefs());
+    expect(result.current.storedPrefs.statsPanelSections).toEqual({
+      ...DEFAULT_STATS_PANEL_SECTIONS,
+      debuffs: false,
+    });
+    expect(result.current.initialPrefs.statsPanelSections.debuffs).toBe(false);
+    expect(result.current.initialPrefs.statsPanelSections.hero).toBe(true);
+  });
+
+  it('drops a non-object statsPanelSections and a non-boolean section flag', () => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ statsPanelSections: 'all', statsPanelEnabled: 'yes' }),
+    );
+    const { result } = renderHook(() => useReplayPrefs());
+    // Wrong-typed → both dropped; initialPrefs uses the defaults.
+    expect(result.current.storedPrefs.statsPanelSections).toBeUndefined();
+    expect(result.current.storedPrefs.statsPanelEnabled).toBeUndefined();
+    expect(result.current.initialPrefs.statsPanelEnabled).toBe(true);
+    expect(result.current.initialPrefs.statsPanelSections).toEqual(DEFAULT_STATS_PANEL_SECTIONS);
   });
 
   it('persistPrefs writes a partial patch and reads back', () => {

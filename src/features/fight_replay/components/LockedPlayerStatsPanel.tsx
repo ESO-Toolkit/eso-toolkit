@@ -34,7 +34,18 @@
  * Buff/debuff uptime and the per-ability breakdown layer on next.
  */
 
-import { Box, Typography, useTheme, alpha } from '@mui/material';
+import Tune from '@mui/icons-material/Tune';
+import {
+  Box,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  Popover,
+  Tooltip,
+  Typography,
+  useTheme,
+  alpha,
+} from '@mui/material';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useReportMasterData } from '../../../hooks';
@@ -43,6 +54,10 @@ import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../../../hooks/events/useDeathEvents';
 import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
 import { usePlayerData } from '../../../hooks/usePlayerData';
+import {
+  DEFAULT_STATS_PANEL_SECTIONS,
+  type StatsPanelSections,
+} from '../../../hooks/useReplayPrefs';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
@@ -86,7 +101,27 @@ interface LockedPlayerStatsPanelProps {
   fightStartTime: number;
   /** Fight duration in ms (currently informational; rates use the elapsed playhead). */
   fightDurationMs: number;
+  /** Which sections to show. Omitted → all sections (back-compat default). */
+  sections?: StatsPanelSections;
+  /** Persist a sections change (from the panel's gear menu). Omitted → the gear menu is hidden. */
+  onSectionsChange?: (next: StatsPanelSections) => void;
 }
+
+/** A section the gear menu can toggle, paired with the roles it's relevant to. */
+interface SectionDef {
+  key: keyof StatsPanelSections;
+  label: string;
+  /** Roles this section applies to — the gear menu only lists it for those roles. */
+  roles: readonly Role[];
+}
+
+const SECTION_DEFS: readonly SectionDef[] = [
+  { key: 'hero', label: 'Hero stats', roles: ['tank', 'healer', 'dps'] },
+  { key: 'dr', label: 'Est. resistance DR %', roles: ['tank'] },
+  { key: 'buffs', label: 'Buff uptime', roles: ['tank', 'healer', 'dps'] },
+  { key: 'debuffs', label: 'Debuffs applied', roles: ['tank', 'healer', 'dps'] },
+  { key: 'abilities', label: 'Top abilities', roles: ['dps'] },
+];
 
 /** Compact, abbreviated number: 1.23M / 45.6K / 678. */
 const fmtNum = (n: number): string => {
@@ -655,8 +690,13 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
   lookup,
   timeRef,
   fightStartTime,
+  sections,
+  onSectionsChange,
 }) => {
   const theme = useTheme();
+
+  // Gear-menu anchor (the per-section toggle popover). Local UI state; doesn't affect playback.
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
   // Resolve the locked actor's identity from the lookup (same id-space as playersById — the lookup
   // is built by indexing playersById[actorId], so followingActorId is a valid player key).
@@ -679,6 +719,17 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
   const role: Role = actor.role ?? 'dps';
   const accent = getReplayActorResolvedAccentColor({ type: 'player', role, isDead: false });
 
+  // Effective section flags (prop, or the all-on default for back-compat — identical today, deduped
+  // against the prefs default). A section renders only when its flag is on AND it's relevant to this
+  // role (the role gates already enforced below stay in force).
+  const visible = sections ?? DEFAULT_STATS_PANEL_SECTIONS;
+
+  // The gear menu only lists sections relevant to this role, so a healer never sees "Top abilities".
+  const menuSections = onSectionsChange ? SECTION_DEFS.filter((s) => s.roles.includes(role)) : [];
+
+  // The tank caveat only makes sense when at least one of its referenced sections is showing.
+  const showTankCaveat = role === 'tank' && (visible.hero || visible.dr);
+
   return (
     <Box
       sx={{
@@ -698,10 +749,12 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         WebkitBackdropFilter: 'blur(10px)',
         border: `1px solid ${alpha(accent, 0.45)}`,
         boxShadow: `0 8px 26px rgba(0,0,0,0.5), 0 0 14px ${alpha(accent, 0.22)}`,
+        // The panel itself is click-through (so it doesn't block canvas drag); only the gear
+        // button + its popover opt back into pointer events.
         pointerEvents: 'none',
       }}
     >
-      {/* Header: role pill + name */}
+      {/* Header: role pill + name + (optional) gear menu for choosing which sections show. */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
         <Box
           component="span"
@@ -726,21 +779,42 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            flex: 1,
+            minWidth: 0,
           }}
         >
           {actor.name}
         </Typography>
+        {menuSections.length > 0 && (
+          <Tooltip title="Choose stats">
+            <IconButton
+              aria-label="Choose which stats to show"
+              size="small"
+              onClick={(e) => setMenuAnchor(e.currentTarget)}
+              sx={{
+                pointerEvents: 'auto',
+                p: 0.25,
+                color: alpha(theme.palette.text.secondary, 0.8),
+                '&:hover': { color: 'text.primary' },
+              }}
+            >
+              <Tune sx={{ fontSize: '0.95rem' }} />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
-      <PlayerStatsContent
-        playerId={followingActorId}
-        role={role}
-        fightStartTime={fightStartTime}
-        accent={accent}
-        timeRef={timeRef}
-      />
+      {visible.hero && (
+        <PlayerStatsContent
+          playerId={followingActorId}
+          role={role}
+          fightStartTime={fightStartTime}
+          accent={accent}
+          timeRef={timeRef}
+        />
+      )}
 
-      {role === 'tank' && (
+      {role === 'tank' && visible.dr && (
         <TankDamageReduction
           playerId={followingActorId}
           fightStartTime={fightStartTime}
@@ -748,19 +822,23 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         />
       )}
 
-      <BuffUptimeList
-        playerId={followingActorId}
-        fightStartTime={fightStartTime}
-        timeRef={timeRef}
-      />
+      {visible.buffs && (
+        <BuffUptimeList
+          playerId={followingActorId}
+          fightStartTime={fightStartTime}
+          timeRef={timeRef}
+        />
+      )}
 
-      <DebuffUptimeList
-        playerId={followingActorId}
-        fightStartTime={fightStartTime}
-        timeRef={timeRef}
-      />
+      {visible.debuffs && (
+        <DebuffUptimeList
+          playerId={followingActorId}
+          fightStartTime={fightStartTime}
+          timeRef={timeRef}
+        />
+      )}
 
-      {role === 'dps' && (
+      {role === 'dps' && visible.abilities && (
         <AbilityBreakdownList
           playerId={followingActorId}
           fightStartTime={fightStartTime}
@@ -769,11 +847,60 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         />
       )}
 
-      {role === 'tank' && (
+      {showTankCaveat && (
         <Typography sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}>
           Damage taken &amp; deaths are measured; DR % is a modeled resistance estimate (excludes
           Protection, block &amp; shields).
         </Typography>
+      )}
+
+      {onSectionsChange && (
+        <Popover
+          open={Boolean(menuAnchor)}
+          anchorEl={menuAnchor}
+          onClose={() => setMenuAnchor(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          slotProps={{
+            paper: {
+              sx: {
+                pointerEvents: 'auto',
+                px: 1.5,
+                py: 1,
+                backgroundColor: alpha(theme.palette.background.paper, 0.95),
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${alpha(accent, 0.4)}`,
+              },
+            },
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '0.6rem',
+              fontWeight: 700,
+              letterSpacing: '0.06em',
+              color: 'text.secondary',
+              mb: 0.5,
+            }}
+          >
+            SHOW STATS
+          </Typography>
+          {menuSections.map((s) => (
+            <FormControlLabel
+              key={s.key}
+              sx={{ display: 'flex', m: 0, mb: 0.25 }}
+              control={
+                <Checkbox
+                  size="small"
+                  checked={visible[s.key]}
+                  onChange={(e) => onSectionsChange({ ...visible, [s.key]: e.target.checked })}
+                  sx={{ p: 0.5, color: accent, '&.Mui-checked': { color: accent } }}
+                />
+              }
+              label={<Typography sx={{ fontSize: '0.78rem' }}>{s.label}</Typography>}
+            />
+          ))}
+        </Popover>
       )}
     </Box>
   );
