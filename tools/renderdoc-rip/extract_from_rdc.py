@@ -81,24 +81,116 @@ def cmd_list(controller):
     print("\nTip: the boss is usually one of the largest-vertex skinned draws.")
 
 
-def get_mesh(controller, a, use_vsin):
-    """Return (positions[list[(x,y,z)]], uvs, indices) for a drawcall."""
-    controller.SetFrameEvent(a.eventId, True)
+class MeshData(rd.MeshFormat):
+    indexOffset = 0
+    name = ""
+
+
+def unpackData(fmt, data):
+    if fmt.Special():
+        raise RuntimeError("Packed vertex formats are not supported")
+    formatChars = {
+        rd.CompType.UInt: "xBHxIxxxL",
+        rd.CompType.SInt: "xbhxixxxl",
+        rd.CompType.Float: "xxexfxxxd",
+    }
+    formatChars[rd.CompType.UNorm] = formatChars[rd.CompType.UInt]
+    formatChars[rd.CompType.UScaled] = formatChars[rd.CompType.UInt]
+    formatChars[rd.CompType.SNorm] = formatChars[rd.CompType.SInt]
+    formatChars[rd.CompType.SScaled] = formatChars[rd.CompType.SInt]
+    vfmt = str(fmt.compCount) + formatChars[fmt.compType][fmt.compByteWidth]
+    value = struct.unpack_from(vfmt, data, 0)
+    if fmt.compType == rd.CompType.UNorm:
+        divisor = float((2 ** (fmt.compByteWidth * 8)) - 1)
+        value = tuple(float(i) / divisor for i in value)
+    elif fmt.compType == rd.CompType.SNorm:
+        maxNeg = -float(2 ** (fmt.compByteWidth * 8)) / 2
+        divisor = float(-(maxNeg - 1))
+        value = tuple((float(i) if i == maxNeg else float(i) / divisor) for i in value)
+    if fmt.BGRAOrder():
+        value = tuple(value[i] for i in [2, 1, 0, 3])
+    return value
+
+
+def getMeshInputs(controller, draw):
     state = controller.GetPipelineState()
-    # choose the mesh data stage
-    if use_vsin:
-        mesh = state.GetVertexInputs()  # raw input
-    # Use the postvs / vsout data via the MeshFormat from the action.
-    # Simplest robust path: read the index buffer + the position input.
     ib = state.GetIBuffer()
     vbs = state.GetVBuffers()
-    # This is intentionally a thin reference implementation: RenderDoc's exact
-    # accessors vary by version. The decode_mesh.html example in the docs shows the
-    # full PipeState->MeshFormat->GetBufferData path; wire that here for your version.
-    raise NotImplementedError(
-        "Fill in mesh decode for your RenderDoc version using the official "
-        "decode_mesh example: https://renderdoc.org/docs/python_api/examples/renderdoc/decode_mesh.html"
-    )
+    attrs = state.GetVertexInputs()
+    out = []
+    for attr in attrs:
+        if attr.perInstance:
+            continue
+        m = MeshData()
+        m.indexResourceId = ib.resourceId
+        m.indexByteOffset = ib.byteOffset
+        m.indexByteStride = ib.byteStride
+        m.baseVertex = draw.baseVertex
+        m.indexOffset = draw.indexOffset
+        m.numIndices = draw.numIndices
+        if not (draw.flags & rd.ActionFlags.Indexed):
+            m.indexResourceId = rd.ResourceId.Null()
+        vb = vbs[attr.vertexBuffer]
+        m.vertexByteOffset = attr.byteOffset + vb.byteOffset + draw.vertexOffset * vb.byteStride
+        m.format = attr.format
+        m.vertexResourceId = vb.resourceId
+        m.vertexByteStride = vb.byteStride
+        m.name = attr.name
+        out.append(m)
+    return out
+
+
+def getIndices(controller, mesh):
+    fmtchar = {1: "B", 2: "H", 4: "I"}.get(mesh.indexByteStride, "B")
+    if mesh.indexResourceId != rd.ResourceId.Null():
+        ibdata = controller.GetBufferData(mesh.indexResourceId, mesh.indexByteOffset, 0)
+        offset = mesh.indexOffset * mesh.indexByteStride
+        indices = struct.unpack_from(str(mesh.numIndices) + fmtchar, ibdata, offset)
+        return [i + mesh.baseVertex for i in indices]
+    return list(range(mesh.numIndices))
+
+
+def readAttr(controller, meshAttr, vertexIndex):
+    offset = meshAttr.vertexByteOffset + meshAttr.vertexByteStride * vertexIndex
+    data = controller.GetBufferData(meshAttr.vertexResourceId, offset, 0)
+    return unpackData(meshAttr.format, data)
+
+
+def _pick(attrs, *needles):
+    for a in attrs:
+        n = (a.name or "").lower()
+        if any(k in n for k in needles):
+            return a
+    return None
+
+
+def get_mesh(controller, draw, use_vsin):
+    """Return (positions, uvs, indices) from a draw's VS-INPUT bindings.
+
+    VS-input is the pre-skin (bind/T-pose-ish) mesh — the cleanest static model and
+    most robust across RenderDoc versions. For the deformed on-screen pose instead,
+    RenderDoc exposes post-VS data via controller.GetPostVSData(0, 0,
+    rd.MeshDataStage.VSOut) — wire that if you specifically need the captured pose.
+    """
+    controller.SetFrameEvent(draw.eventId, True)
+    inputs = getMeshInputs(controller, draw)
+    if not inputs:
+        raise RuntimeError("no vertex inputs on this draw")
+    indices = getIndices(controller, inputs[0])
+    pos = _pick(inputs, "position", "pos", "sv_position") or inputs[0]
+    uv = _pick(inputs, "texcoord", "uv", "tex")
+    uniq = sorted(set(i for i in indices if i >= 0))
+    remap = {}
+    positions, uvs = [], []
+    for newi, vi in enumerate(uniq):
+        remap[vi] = newi
+        p = readAttr(controller, pos, vi)
+        positions.append((p[0], p[1], p[2] if len(p) > 2 else 0.0))
+        if uv:
+            u = readAttr(controller, uv, vi)
+            uvs.append((u[0], u[1] if len(u) > 1 else 0.0))
+    indices = [remap[i] for i in indices if i in remap]
+    return positions, uvs, indices
 
 
 def write_obj(path, positions, uvs, indices):
