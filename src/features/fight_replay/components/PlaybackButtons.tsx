@@ -25,6 +25,8 @@ interface PlaybackButtonsProps {
   onSkipBackward10: () => void;
   /** Callback to skip forward 10 seconds */
   onSkipForward10: () => void;
+  /** Compact variant — a smaller play orb + tighter spacing for the thin overlay transport bar. */
+  compact?: boolean;
 }
 
 /**
@@ -44,15 +46,20 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
   onSkipToEnd,
   onSkipBackward10,
   onSkipForward10,
+  compact = false,
 }) => {
+  // Compact overlay shrinks the play orb (58→38) and its ring/icon so the bar reads as a thin
+  // YouTube-style transport instead of a tall deck dominated by the orb.
+  const orbSize = compact ? 38 : 58;
   // Ghost skip buttons — flat by default, a soft accent tint on hover. Quiet next to the
   // play orb so the focal hierarchy reads instantly: one bright control, four supporting.
   const ghostSx = {
     color: 'text.secondary',
     borderRadius: 2,
+    ...(compact ? { padding: 0.5 } : null),
     transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
     '&:hover': { color: 'text.primary', backgroundColor: 'action.hover' },
-    '& .MuiSvgIcon-root': { fontSize: '1.4rem' },
+    '& .MuiSvgIcon-root': { fontSize: compact ? '1.15rem' : '1.4rem' },
   } as const;
 
   return (
@@ -100,8 +107,8 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
         sx={(theme) => ({
           position: 'relative',
           mx: 0.5,
-          width: 58,
-          height: 58,
+          width: orbSize,
+          height: orbSize,
           color: theme.palette.mode === 'dark' ? theme.palette.background.default : '#fff',
           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
           // Inner rim highlight + a bright radial accent glow — the luminous orb from the
@@ -130,7 +137,7 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
                 : `inset 0 0 0 1px rgba(255,255,255,0.5), 0 10px 30px ${theme.palette.primary.main}73`,
           },
           '&:active': { transform: 'scale(0.96)' },
-          '& .MuiSvgIcon-root': { fontSize: '1.9rem' },
+          '& .MuiSvgIcon-root': { fontSize: compact ? '1.3rem' : '1.9rem' },
         })}
       >
         {isPlaying ? <Pause /> : <PlayArrow />}

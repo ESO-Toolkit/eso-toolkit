@@ -2,8 +2,8 @@ import { ZoneScaleData } from '../../../types/zoneScaleData';
 
 const ARENA_SIZE_UNITS = 100;
 const CENTIMETERS_PER_METER = 100;
-const BASE_ACTOR_DIAMETER_UNITS = 0.3; // 2 * PUCK_RADIUS from SharedActor3DGeometries
-const TARGET_ACTOR_DIAMETER_METERS = 1.1; // Approximate puck diameter in world meters
+const BASE_ACTOR_DIAMETER_UNITS = 0.4; // 2 * active replay puck radius
+const TARGET_ACTOR_DIAMETER_METERS = 1.35; // Readable marker diameter in world meters
 const MIN_ACTOR_SCALE = 0.05;
 const MAX_ACTOR_SCALE = 4.0;
 export const DEFAULT_ACTOR_SCALE = 0.8;

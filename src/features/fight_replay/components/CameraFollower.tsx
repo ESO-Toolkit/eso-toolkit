@@ -14,12 +14,35 @@ const DEFAULT_CAMERA_TARGET = new Vector3(50, 0, 50);
 const DEFAULT_CAMERA_OFFSET = new Vector3(-20, 18, -20);
 export const DEFAULT_CAMERA_POSITION = DEFAULT_CAMERA_TARGET.clone().add(DEFAULT_CAMERA_OFFSET);
 
+// OrbitControls exposes `target` (a Vector3) that three's base Controls type omits; this is the
+// narrowest shape we need to read/translate it.
+type ControlsWithTarget = Controls<HTMLCanvasElement> & { target?: Vector3 };
+
 interface CameraFollowerProps {
   lookup: TimestampPositionLookup | null;
   timeRef: React.RefObject<number> | { current: number };
   followingActorIdRef: React.RefObject<number | null>;
 }
 
+/**
+ * Keeps the camera locked onto a followed actor WITHOUT taking control away from the user.
+ *
+ * Model (rotate-while-locked): OrbitControls stays ENABLED during follow. Each frame we move
+ * the orbit pivot (`controls.target`) a small step toward the actor, then translate the camera
+ * by the IDENTICAL vector. A common translation applied to both the camera and the pivot is a
+ * rigid motion, so it commutes with the user's orbit/pan and with `controls.update()` — the
+ * actor stays framed while the user is free to drag-rotate around it. OrbitControls' own
+ * `update()` owns orientation; we never call `camera.lookAt()` (that would fight the drag).
+ *
+ * RIGID-TRANSLATION INVARIANT (load-bearing — the old self-drift bug): `camera.position` and
+ * `controls.target` must move by the SAME Vector3 each frame. We derive that delta from the
+ * smoothed-target lerp result and `.add()` it to the camera — never a separately-computed
+ * camera offset (which drifts as the user rotates, the exact bug this rewrite removes).
+ *
+ * NOTE (honest naming): this is ORBIT-AROUND-ACTOR — the actor stays roughly centered and drag
+ * orbits around it. True free-look (FPS-style, pivot at the camera, actor allowed to drift
+ * off-center) is a different pivot we can swap to if the user prefers it.
+ */
 export const CameraFollower: React.FC<CameraFollowerProps> = ({
   lookup,
   timeRef,
@@ -27,42 +50,29 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
 }) => {
   const { camera, controls } = useThree();
   const prefersReducedMotion = usePrefersReducedMotion();
-  const targetPositionRef = useRef(new Vector3());
-  const cameraOffsetRef = useRef<Vector3 | null>(null);
   const wasFollowingRef = useRef(false);
   // Smoothly follow during playback; snap instantly (factor 1) when the user has
   // requested reduced motion.
   const smoothingFactor = prefersReducedMotion ? 1 : 0.05;
 
-  // Pre-allocated scratch vectors to avoid per-frame allocations
+  // Pre-allocated scratch vectors to avoid per-frame allocations.
   const _scratchActorPos = useRef(new Vector3());
-  const _scratchDesiredCamPos = useRef(new Vector3());
+  const _prevTarget = useRef(new Vector3());
+  const _delta = useRef(new Vector3());
 
-  // Run after camera controls (higher priority number = later execution)
+  // Run before the other camera updates; OrbitControls.update() (called below) reconciles
+  // orientation last, so ordering relative to drei's internal loop doesn't affect correctness —
+  // the equal-delta translation is a rigid motion that commutes with update().
   useFrame(() => {
     const isFollowing = !!followingActorIdRef.current;
-
-    // Detect when we stop following an actor
-    if (wasFollowingRef.current && !isFollowing && controls) {
-      // Update OrbitControls target to where the camera is currently looking
-      // This prevents the camera from snapping back to the original target
-      // Note: Controls type doesn't include target property, but OrbitControls has it
-      const controlsTarget = (controls as Controls<HTMLCanvasElement> & { target?: Vector3 })
-        .target;
-      if (controlsTarget && targetPositionRef.current) {
-        controlsTarget.copy(targetPositionRef.current);
-      }
-    }
-
     wasFollowingRef.current = isFollowing;
 
-    if (controls) {
-      (controls as Controls<HTMLCanvasElement>).enabled = !isFollowing;
+    if (!lookup || !isFollowing || !controls) {
+      return;
     }
 
-    if (!lookup || !isFollowing) {
-      // Reset camera offset when not following so next follow uses current position
-      cameraOffsetRef.current = null;
+    const controlsTarget = (controls as ControlsWithTarget).target;
+    if (!controlsTarget) {
       return;
     }
 
@@ -71,36 +81,28 @@ export const CameraFollower: React.FC<CameraFollowerProps> = ({
 
     const currentTime = timeRef.current;
     const actorPosition = getActorPositionAtClosestTimestamp(lookup, followingActorId, currentTime);
-
-    if (actorPosition) {
-      const [x, y, z] = actorPosition.position;
-      const newTargetPosition = _scratchActorPos.current.set(x, y, z);
-
-      // Initialize camera offset when we first start following
-      if (!cameraOffsetRef.current) {
-        // Calculate current offset from camera to actor to maintain relative position
-        // This preserves the user's current camera angle and distance
-        cameraOffsetRef.current = new Vector3().copy(camera.position).sub(newTargetPosition);
-
-        // Initialize target position to actor's current position to avoid lerping from (0,0,0)
-        targetPositionRef.current.copy(newTargetPosition);
-      }
-
-      // Smooth interpolation to new target position
-      targetPositionRef.current.lerp(newTargetPosition, smoothingFactor);
-
-      // Calculate where camera should be based on target position and maintained offset
-      const desiredCameraPosition = _scratchDesiredCamPos.current
-        .copy(targetPositionRef.current)
-        .add(cameraOffsetRef.current);
-
-      // Smoothly move camera to new position
-      camera.position.lerp(desiredCameraPosition, smoothingFactor);
-
-      // Always look at the actor
-      camera.lookAt(targetPositionRef.current);
+    if (!actorPosition) {
+      return;
     }
-  }, RenderPriority.FOLLOWER_CAMERA); // Run after camera controls which typically run at priority 0
+
+    const [x, y, z] = actorPosition.position;
+    const actorPos = _scratchActorPos.current.set(x, y, z);
+
+    // Smoothing eases the pivot from its CURRENT position toward the actor — seeding from the
+    // existing controls.target (not snapping it to the actor) means starting a follow doesn't
+    // pop the camera; it glides in. With reduced motion the factor is 1 (instant lock).
+    _prevTarget.current.copy(controlsTarget);
+    controlsTarget.lerp(actorPos, smoothingFactor);
+
+    // The SAME delta the pivot moved by — applied verbatim to the camera. This is the
+    // rigid-translation invariant: identical vector to both, so no self-drift under rotation.
+    _delta.current.subVectors(controlsTarget, _prevTarget.current);
+    camera.position.add(_delta.current);
+
+    // OrbitControls owns orientation. Do NOT call camera.lookAt() — it would override the
+    // user's drag-rotation every frame.
+    (controls as ControlsWithTarget & { update?: () => void }).update?.();
+  }, RenderPriority.FOLLOWER_CAMERA);
 
   return null;
 };

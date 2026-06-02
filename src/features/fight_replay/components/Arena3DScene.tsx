@@ -13,9 +13,11 @@ import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapS
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 
-import { AnimationFrameActor3D } from './AnimationFrameActor3D';
 import { CameraFollower } from './CameraFollower';
+import { CameraResetControls } from './CameraResetControls';
+import { CanvasWheelZoom } from './CanvasWheelZoom';
 import { DynamicMapTexture } from './DynamicMapTexture';
+import { InstancedReplayFigures3D } from './InstancedReplayFigures3D';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { MarkerContextMenuPayload } from './Marker3D';
@@ -25,6 +27,7 @@ import { PlayerPathTrail3D } from './PlayerPathTrail3D';
 // Stable empty Map for the optional playerVisibility prop default — a fresh `new Map()` in
 // the default would change identity every render and churn child memoization.
 const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
+const EMPTY_COLOR_OVERRIDES: Map<number, string> = new Map();
 
 // Create logger instance for Arena3DScene
 const logger = new Logger({
@@ -50,6 +53,9 @@ interface AnimationFrameSceneActorsProps {
   followingActorIdRef: React.RefObject<number | null>;
   onActorClick?: (actorId: number) => void;
   playerVisibility?: Map<number, boolean>;
+  playerColorOverrides?: Map<number, string>;
+  /** When true, player figures stop casting shadows (perf headroom for large fights). */
+  performanceMode?: boolean;
 }
 
 export interface GroundContextMenuPayload {
@@ -58,7 +64,9 @@ export interface GroundContextMenuPayload {
 }
 
 /**
- * Direct useFrame actors component - each actor uses useFrame independently
+ * Actor renderer. Each actor is a standing figure (capsule body + role-glyph cap) with a
+ * ground anchor ring, facing wedge, and state rings; bosses/enemies stand larger so they
+ * read above the player crowd. Name cards float above and can be toggled off (N key).
  */
 const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   lookup,
@@ -69,54 +77,25 @@ const AnimationFrameSceneActors: React.FC<AnimationFrameSceneActorsProps> = ({
   followingActorIdRef,
   onActorClick,
   playerVisibility,
+  playerColorOverrides,
+  performanceMode,
 }) => {
-  // Get list of actor IDs to render from the lookup structure
-  const actorIds = useMemo(() => {
-    if (!lookup || !lookup.positionsByTimestamp) return [];
-
-    // Get actor IDs from ALL timestamps, not just the first one
-    // This ensures we include NPCs that spawn later in the fight
-    const allActorIds = new Set<number>();
-
-    Object.values(lookup.positionsByTimestamp).forEach((timestampActors) => {
-      Object.keys(timestampActors).forEach((actorIdStr) => {
-        allActorIds.add(Number(actorIdStr));
-      });
-    });
-
-    const ids = Array.from(allActorIds);
-
-    return ids;
-  }, [lookup]);
-
   // Performance settings based on scrubbing mode
   const shouldRenderEffects = scrubbingMode?.shouldRenderEffects ?? true;
   const effectiveShowNames = showNames && shouldRenderEffects;
 
   return (
-    <>
-      {actorIds.map((actorId) => {
-        // Check if this actor should be visible
-        const isVisible = playerVisibility ? (playerVisibility.get(actorId) ?? true) : true;
-
-        if (!isVisible) {
-          return null;
-        }
-
-        return (
-          <AnimationFrameActor3D
-            key={actorId}
-            actorId={actorId}
-            lookup={lookup}
-            timeRef={timeRef}
-            scale={scale}
-            showName={effectiveShowNames}
-            selectedActorRef={followingActorIdRef}
-            onActorClick={onActorClick}
-          />
-        );
-      })}
-    </>
+    <InstancedReplayFigures3D
+      lookup={lookup}
+      timeRef={timeRef}
+      scale={scale}
+      showNames={effectiveShowNames}
+      selectedActorRef={followingActorIdRef}
+      onActorClick={onActorClick}
+      playerVisibility={playerVisibility}
+      playerColorOverrides={playerColorOverrides}
+      performanceMode={performanceMode}
+    />
   );
 };
 
@@ -195,9 +174,9 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     // Keep rendering whenever an actor is followed/selected. Load-bearing for TWO reasons,
     // do not remove as "redundant":
     //  1. the follow camera lerps toward its target every frame while active;
-    //  2. the same ref is AnimationFrameActor3D's `selectedActorRef`, so an actor's
-    //     selection ring + puck/vision-cone material update (driven off this ref, not off
-    //     timeRef) only paints while paused because this refill keeps the budget topped up.
+    //  2. the same ref drives InstancedReplayFigures3D selection, so an actor's
+    //     selection ring update (driven off this ref, not off timeRef) only paints while
+    //     paused because this refill keeps the budget topped up.
     //     Deselecting routes through React state (FightReplay3D.setFollowingActor → commit),
     //     which the commit-refill effect covers.
     if (followingActorIdRef.current !== null) {
@@ -235,6 +214,14 @@ export interface Arena3DSceneProps {
   onMarkerContextMenu?: (payload: MarkerContextMenuPayload) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
+  /**
+   * The fitted initial camera POSITION (bbox-fit at fight start, computed by Arena3D). Threaded
+   * down so the `r` reset key (CameraResetControls) can return to the exact view the user
+   * started at, not a generic constant.
+   */
+  initialPosition?: [number, number, number];
+  /** Clears the React "Following:" chip when an in-canvas action (reset/frame-all) unfollows. */
+  onUnfollow?: () => void;
   /** Selected player IDs for path visualization */
   selectedPlayerIds?: Set<number>;
   /** Whether to show player trail paths */
@@ -244,6 +231,13 @@ export interface Arena3DSceneProps {
    * overlay and these in-canvas actors share one source of truth) and passed down here.
    */
   playerVisibility?: Map<number, boolean>;
+  /**
+   * Per-player body-color overrides (actorId → hex). Owned by Arena3D alongside playerVisibility
+   * so the DOM player panel and the in-canvas figures share one source of truth.
+   */
+  playerColorOverrides?: Map<number, string>;
+  /** When true, player figures stop casting shadows (perf headroom for large fights). */
+  performanceMode?: boolean;
 }
 
 /**
@@ -264,9 +258,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   onMarkerContextMenu,
   fight,
   initialTarget,
+  initialPosition,
+  onUnfollow,
   selectedPlayerIds = new Set(),
   showPlayerTrails = false,
   playerVisibility = EMPTY_VISIBILITY,
+  playerColorOverrides = EMPTY_COLOR_OVERRIDES,
+  performanceMode = false,
 }) => {
   // Shared render budget for the on-demand RenderLoop. Refilled on every React commit of
   // this scene (effect below, intentionally no deps) so state-driven mutations — markers,
@@ -465,6 +463,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       />
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
+      {/* In-canvas camera keys: r = reset to fitted initial view, g = frame all actors. Lives in
+          the Canvas because it needs the camera + controls (the DOM keydown has no handle). */}
+      {initialPosition && initialTarget && (
+        <CameraResetControls
+          initialCameraPosition={initialPosition}
+          initialCameraTarget={initialTarget}
+          followingActorIdRef={followingActorIdRef}
+          onUnfollow={onUnfollow}
+          lookup={lookup}
+          timeRef={timeRef}
+        />
+      )}
       {/* Keyboard camera controls (WASD) - disabled when following an actor */}
       <KeyboardCameraControls enabled={!followingActorIdRef.current} />
       {/* Lighting */}
@@ -523,6 +533,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         followingActorIdRef={followingActorIdRef}
         onActorClick={onActorClick}
         playerVisibility={playerVisibility}
+        playerColorOverrides={playerColorOverrides}
+        performanceMode={performanceMode}
       />
       {/* Boss health + player list are now DOM overlays rendered by Arena3D as siblings of
           the <Canvas> (crisp text, real scroll region, native MUI styling) — not in-canvas
@@ -568,10 +580,14 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
         <meshBasicMaterial visible={false} transparent opacity={0} />
       </mesh>
-      {/* Controls - dynamically positioned based on fight area */}
+      {/* Controls - dynamically positioned based on fight area. Zoom is handled by CanvasWheelZoom
+          (cooperative wheel: plain wheel scrolls the page through the canvas, Ctrl/⌘+wheel or
+          fullscreen zooms) instead of OrbitControls' built-in wheel zoom, which preventDefault()s
+          every wheel event and traps page scroll over the canvas. enableZoom=false also governs the
+          touch pinch, which CanvasWheelZoom re-implements minimally so mobile pinch is preserved. */}
       <OrbitControls
         enablePan={true}
-        enableZoom={true}
+        enableZoom={false}
         enableRotate={true}
         minDistance={cameraSettings.minDistance}
         maxDistance={cameraSettings.maxDistance}
@@ -580,6 +596,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         target={cameraSettings.target as [number, number, number]}
         makeDefault
       />
+      <CanvasWheelZoom />
     </>
   );
 };

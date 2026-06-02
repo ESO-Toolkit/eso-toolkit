@@ -40,10 +40,11 @@ const death: DeathMarker = {
 };
 
 /** Mounts the preview over a rail with a stubbed 1000px-wide bounding box. */
-const Harness: React.FC<{ duration: number; markers?: (PhaseMarker | DeathMarker)[] }> = ({
-  duration,
-  markers,
-}) => {
+const Harness: React.FC<{
+  duration: number;
+  markers?: (PhaseMarker | DeathMarker)[];
+  children?: React.ReactNode;
+}> = ({ duration, markers, children }) => {
   const railRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
     if (railRef.current) {
@@ -62,6 +63,7 @@ const Harness: React.FC<{ duration: number; markers?: (PhaseMarker | DeathMarker
   }, []);
   return (
     <div ref={railRef} data-testid="rail">
+      {children}
       <TimelineScrubPreview railRef={railRef} duration={duration} markers={markers} />
     </div>
   );
@@ -109,5 +111,22 @@ describe('TimelineScrubPreview', () => {
     render(<Harness duration={0} />);
     pointerMoveAt(screen.getByTestId('rail'), 500);
     expect(screen.queryByText(/:/)).not.toBeInTheDocument();
+  });
+
+  it('suppresses the bubble when the cursor is over an event marker (no double tooltip)', () => {
+    render(
+      <Harness duration={duration} markers={[death]}>
+        <div role="button" data-testid="marker" />
+      </Harness>,
+    );
+    // A pointermove originating ON a marker hit-area must NOT show the skim bubble — the marker
+    // has its own richer MUI tooltip, so both would collide.
+    const marker = screen.getByTestId('marker');
+    fireEvent(marker, new MouseEvent('pointermove', { clientX: 500, bubbles: true }));
+    expect(screen.queryByText('1:00')).not.toBeInTheDocument();
+
+    // …but moving over the bare rail (not a marker) still shows the bubble.
+    pointerMoveAt(screen.getByTestId('rail'), 500);
+    expect(screen.getByText('1:00')).toBeInTheDocument();
   });
 });

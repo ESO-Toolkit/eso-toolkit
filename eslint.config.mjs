@@ -183,8 +183,10 @@ export default [
             'visible',
             'castShadow',
             'receiveShadow',
+            'matrixAutoUpdate',
             'args',
             'object', // For primitive components
+            'renderOrder',
 
             // Three.js material properties
             'transparent',
@@ -194,6 +196,11 @@ export default [
             'alphaTest',
             'shininess',
             'depthWrite',
+            'depthTest',
+            'toneMapped',
+            'blending',
+            'roughness',
+            'metalness',
 
             // Three.js light properties
             'intensity',

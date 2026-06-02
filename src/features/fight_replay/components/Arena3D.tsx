@@ -1,6 +1,9 @@
-import { LockOpen, Videocam } from '@mui/icons-material';
+import { Fullscreen, FullscreenExit, LockOpen, Videocam } from '@mui/icons-material';
+import Bolt from '@mui/icons-material/Bolt';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
+import Label from '@mui/icons-material/Label';
+import LabelOff from '@mui/icons-material/LabelOff';
 import {
   Box,
   Chip,
@@ -16,6 +19,7 @@ import { Canvas } from '@react-three/fiber';
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
+import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
 import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
@@ -34,6 +38,7 @@ import { MarkerSpritePreview } from './MarkerSpritePreview';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
+import { ReplayZoomHint } from './ReplayZoomHint';
 
 // Create logger instance for Arena3D
 const logger = new Logger({
@@ -104,6 +109,16 @@ interface Arena3DProps {
   showPlayerPathsHUD?: boolean;
   /** Whether to show player trail paths */
   showPlayerTrails?: boolean;
+  /** True when the replay block is fullscreen (drives the fill-height layout + the toggle icon). */
+  isFullscreen?: boolean;
+  /** Toggle fullscreen of the whole replay block (owned by FightReplay3D, which holds the target ref). */
+  onToggleFullscreen?: () => void;
+  /**
+   * Vertical band (px) reserved at the bottom for the transport bar, forwarded to the overlay
+   * panels so their height caps clear the bar. Owned by FightReplay3D (it knows the bar's
+   * visibility); when the bar is hidden in fullscreen it passes a tiny value so the panels grow.
+   */
+  reservedInset?: number;
 }
 
 const Arena3DComponent: React.FC<Arena3DProps> = ({
@@ -115,6 +130,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   followingActorId,
   onCameraUnlock,
   onActorClick,
+  isFullscreen = false,
+  onToggleFullscreen,
   markersState,
   onAddMarker,
   onRemoveMarker,
@@ -123,9 +140,27 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onPlayerSelectionChange,
   showPlayerPathsHUD = false,
   showPlayerTrails = false,
+  reservedInset,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Persisted viewer prefs (localStorage). Arena3D owns the names + performance slices; the
+  // speed/path slices live in FightReplay3D. Both use the same read-merge-write hook so neither
+  // clobbers the other's keys. initialPrefs is a one-time mount snapshot used only to seed below.
+  const { initialPrefs, persistPrefs } = useReplayPrefs();
+
+  // Local override to hide/show the floating name cards, toggled with the N key. ANDs with the
+  // incoming showActorNames prop so turning names off here always wins. Lets you declutter a
+  // crowd to see the player models, then bring identity back. Applies to every variant.
+  const [namesEnabled, setNamesEnabled] = useState(initialPrefs.showNames);
+
+  // Performance mode (off by default). When on, the player figures stop casting shadows — the
+  // shadow pass re-submits the full humanoid geometry for every figure (~75k tris at 23 players,
+  // scaling with actor count), so dropping it roughly halves the figure tri load and buys headroom
+  // for very large fights. Purely a fidelity/cost trade; button-only (P/T are already taken by the
+  // player-paths HUD and trails in FightReplay3D).
+  const [performanceMode, setPerformanceMode] = useState(initialPrefs.performanceMode);
 
   // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
   // so the DOM PlayerListPanel overlay — which renders the toggle controls — and the
@@ -140,6 +175,26 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       return next;
     });
   }, []);
+
+  // Per-player body-color overrides (actorId → hex), owned here for the same one-source-of-truth
+  // reason as playerVisibility: the DOM player panel sets them and the in-canvas figures read them.
+  // Empty by default → every player falls back to its role color. A null value clears the override
+  // (back to role). Changes only on a user action, so the re-render is rare and cheap.
+  const [playerColorOverrides, setPlayerColorOverrides] = useState<Map<number, string>>(new Map());
+  const handlePlayerColorChange = useCallback((actorId: number, color: string | null) => {
+    setPlayerColorOverrides((prev) => {
+      const next = new Map(prev);
+      if (color === null) next.delete(actorId);
+      else next.set(actorId, color);
+      return next;
+    });
+  }, []);
+
+  // Persist Arena3D's pref slice (names + performance) on change. Read-merge-write in the hook
+  // means this never clobbers the speed/path slice FightReplay3D persists.
+  useEffect(() => {
+    persistPrefs({ showNames: namesEnabled, performanceMode });
+  }, [persistPrefs, namesEnabled, performanceMode]);
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
@@ -325,6 +380,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         setShowKeyboardHelp((prev) => !prev);
         event.preventDefault();
       }
+
+      // N toggles the floating name cards on/off (declutter the crowd).
+      if (event.key.toLowerCase() === 'n') {
+        setNamesEnabled((prev) => !prev);
+        event.preventDefault();
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
@@ -426,13 +487,13 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     return `Actor ${followingActorId}`;
   }, [lookup, followingActorId, timeRef]);
 
-  const handleUnlockCamera = (): void => {
+  const handleUnlockCamera = useCallback((): void => {
     // Delegate to the owner (FightReplay3D), which clears both the ref and the mirrored
     // state. Also clear the ref directly so the synchronous render-loop read is correct
     // even if no onCameraUnlock handler was provided.
     followingActorIdRef.current = null;
     onCameraUnlock?.();
-  };
+  }, [followingActorIdRef, onCameraUnlock]);
 
   // Calculate initial camera target and position based on actor bounding box at fight start
   // MUST be before any early returns to comply with React Hooks rules
@@ -601,7 +662,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   return (
     <div
-      style={{ width: '100%', height: ARENA_HEIGHT, position: 'relative' }}
+      style={{
+        width: '100%',
+        // Fill the fullscreen container's height; otherwise the responsive 16:9-ish clamp.
+        height: isFullscreen ? '100%' : ARENA_HEIGHT,
+        position: 'relative',
+      }}
       role="img"
       aria-label="3D fight replay arena showing player positions over time"
     >
@@ -662,7 +728,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           <Arena3DScene
             timeRef={timeRef}
             lookup={lookup}
-            showActorNames={showActorNames}
+            showActorNames={showActorNames && namesEnabled}
             mapTimeline={mapTimeline}
             scrubbingMode={scrubbingMode}
             followingActorIdRef={followingActorIdRef}
@@ -672,11 +738,19 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onMarkerContextMenu={handleMarkerContextMenu}
             fight={fight}
             initialTarget={initialCameraTarget}
+            initialPosition={initialCameraPosition}
+            onUnfollow={handleUnlockCamera}
             selectedPlayerIds={selectedPlayerIds}
             showPlayerTrails={showPlayerTrails}
             playerVisibility={playerVisibility}
+            playerColorOverrides={playerColorOverrides}
+            performanceMode={performanceMode}
           />
         </Canvas>
+
+        {/* One-time "Ctrl + scroll to zoom" hint — surfaced the first time the user scrolls plainly
+            over the canvas (cooperative zoom: plain wheel scrolls the page, Ctrl/⌘+wheel zooms). */}
+        <ReplayZoomHint />
 
         {/* Boss health — DOM overlay (top-right), crisp + theme-styled. Always shown when
             bosses with health are present. */}
@@ -693,6 +767,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onPlayerSelectionChange={onPlayerSelectionChange}
             playerVisibility={playerVisibility}
             onPlayerVisibilityChange={handlePlayerVisibilityChange}
+            playerColorOverrides={playerColorOverrides}
+            onPlayerColorChange={handlePlayerColorChange}
+            reservedInset={reservedInset}
           />
         )}
 
@@ -826,7 +903,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         <Box
           sx={{
             position: 'absolute',
-            bottom: 16,
+            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
+            bottom: 104,
             right: 16,
             backgroundColor: 'rgba(0, 0, 0, 0.85)',
             borderRadius: 1,
@@ -834,39 +912,60 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             maxWidth: 280,
           }}
         >
-          <Typography variant="subtitle2" sx={{ color: 'white', mb: 1, fontWeight: 600 }}>
-            Camera Controls
+          <Typography variant="subtitle2" sx={{ color: 'white', mb: 0.5, fontWeight: 600 }}>
+            Camera
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>WASD:</strong> Move camera
+          {[
+            ['WASD', 'Move camera'],
+            ['Shift', 'Sprint'],
+            ['Drag', 'Rotate · Ctrl+scroll: Zoom'],
+            ['R', 'Reset view · G: Frame all'],
+          ].map(([k, label]) => (
+            <Typography
+              key={k}
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
+            >
+              <strong>{k}:</strong> {label}
+            </Typography>
+          ))}
+          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
+            Playback
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>Shift:</strong> Sprint (faster movement)
+          {[
+            ['Space', 'Play / pause'],
+            ['← →', 'Seek ±1s · Shift: ±10s'],
+            ['+ −', 'Speed up / down'],
+            [', .', 'Frame step'],
+            ['< >', 'Prev / next event'],
+            ['I O', 'Set loop in / out'],
+          ].map(([k, label]) => (
+            <Typography
+              key={k}
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
+            >
+              <strong>{k}:</strong> {label}
+            </Typography>
+          ))}
+          <Typography variant="subtitle2" sx={{ color: 'white', mt: 1, mb: 0.5, fontWeight: 600 }}>
+            View
           </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>Mouse:</strong> Rotate & zoom
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>P:</strong> Toggle player list
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
-          >
-            <strong>T:</strong> Toggle player trails
-          </Typography>
+          {[
+            ['P', 'Player list'],
+            ['T', 'Player trails'],
+            ['N', 'Name cards'],
+            ['F', 'Fullscreen'],
+            ['C', 'Collapse controls'],
+          ].map(([k, label]) => (
+            <Typography
+              key={k}
+              variant="caption"
+              sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.25 }}
+            >
+              <strong>{k}:</strong> {label}
+            </Typography>
+          ))}
           <Typography
             variant="caption"
             sx={{ color: 'rgba(255, 255, 255, 0.5)', display: 'block', mt: 1, fontSize: '0.7rem' }}
@@ -875,6 +974,84 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           </Typography>
         </Box>
       </Collapse>
+
+      {/* Fullscreen toggle — fullscreens the whole replay block (canvas + overlays + control bar).
+          Topmost in the bottom-right cluster; mirrors the F key. */}
+      {onToggleFullscreen && (
+        <Tooltip title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
+          <IconButton
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            aria-pressed={isFullscreen}
+            size="small"
+            onClick={onToggleFullscreen}
+            sx={{
+              position: 'absolute',
+              bottom: 248,
+              right: 16,
+              color: 'rgba(255, 255, 255, 0.7)',
+              backgroundColor: 'rgba(0, 0, 0, 0.85)',
+              '&:hover': {
+                backgroundColor: 'rgba(0, 0, 0, 0.95)',
+              },
+            }}
+          >
+            {isFullscreen ? <FullscreenExit fontSize="small" /> : <Fullscreen fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {/* Performance-mode toggle — drops player-figure shadows for extra headroom on very large
+          fights. Button-only (P/T are already bound to the player-paths HUD and trails). */}
+      <Tooltip
+        title={
+          performanceMode
+            ? 'Performance mode on — figure shadows off'
+            : 'Performance mode — drop figure shadows for large fights'
+        }
+      >
+        <IconButton
+          aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
+          aria-pressed={performanceMode}
+          size="small"
+          onClick={() => setPerformanceMode((prev) => !prev)}
+          sx={{
+            position: 'absolute',
+            // Raised to clear the docked control-bar overlay at the bottom of the canvas.
+            bottom: 200,
+            right: 16,
+            color: performanceMode ? '#fcd34d' : 'rgba(255, 255, 255, 0.55)',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            },
+          }}
+        >
+          <Bolt fontSize="small" />
+        </IconButton>
+      </Tooltip>
+
+      {/* Name-tag toggle - the on-screen affordance for the same state the N key flips, so the
+          declutter control is discoverable without knowing the shortcut. */}
+      <Tooltip title={namesEnabled ? 'Hide name tags (N)' : 'Show name tags (N)'}>
+        <IconButton
+          aria-label={namesEnabled ? 'Hide actor name tags' : 'Show actor name tags'}
+          aria-pressed={namesEnabled}
+          size="small"
+          onClick={() => setNamesEnabled((prev) => !prev)}
+          sx={{
+            position: 'absolute',
+            bottom: 152,
+            right: 16,
+            color: namesEnabled ? 'white' : 'rgba(255, 255, 255, 0.55)',
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            },
+          }}
+        >
+          {namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />}
+        </IconButton>
+      </Tooltip>
 
       {/* Persistent help affordance - re-opens the keyboard help panel once it auto-hides */}
       {!showKeyboardHelp && (
@@ -885,7 +1062,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onClick={() => setShowKeyboardHelp(true)}
             sx={{
               position: 'absolute',
-              bottom: 16,
+              bottom: 104,
               right: 16,
               color: 'white',
               backgroundColor: 'rgba(0, 0, 0, 0.85)',

@@ -42,6 +42,8 @@ export interface TimestampPositionLookup {
   positionsByTimestamp: Record<number, Record<number, ActorPosition>>;
   /** Sorted array of all unique timestamps for binary search */
   sortedTimestamps: number[];
+  /** Sorted actor IDs present in this lookup, avoiding render-time scans across all timestamps */
+  actorIds?: number[];
   /** Fight duration for bounds checking */
   fightDuration: number;
   /** Fight start time for calculations */
@@ -58,6 +60,49 @@ export interface FightEvents {
   death: DeathEvent[];
   resource: ResourceChangeEvent[];
   cast: CastEvent[];
+}
+
+function getClosestTimestamp(
+  lookup: TimestampPositionLookup,
+  targetTimestamp: number,
+): number | null {
+  if (lookup.sortedTimestamps.length === 0) return null;
+
+  // Use O(1) mathematical calculation for regular intervals
+  if (lookup.hasRegularIntervals && lookup.sampleInterval > 0) {
+    const intervalMs = lookup.sampleInterval;
+    const closestIndex = Math.round(targetTimestamp / intervalMs);
+    const boundedIndex = Math.max(0, Math.min(closestIndex, lookup.sortedTimestamps.length - 1));
+    return lookup.sortedTimestamps[boundedIndex];
+  }
+
+  // Fallback to binary search for irregular intervals
+  let left = 0;
+  let right = lookup.sortedTimestamps.length - 1;
+  let closest = lookup.sortedTimestamps[0];
+  let minDiff = Math.abs(targetTimestamp - closest);
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const current = lookup.sortedTimestamps[mid];
+    const diff = Math.abs(targetTimestamp - current);
+
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = current;
+    }
+
+    if (current === targetTimestamp) {
+      closest = current;
+      break;
+    } else if (current < targetTimestamp) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  return closest;
 }
 
 export interface ActorPositionsCalculationTask {
@@ -77,46 +122,21 @@ export function getActorPositionAtClosestTimestamp(
   actorId: number,
   targetTimestamp: number,
 ): ActorPosition | null {
-  if (lookup.sortedTimestamps.length === 0) return null;
-
-  let closest: number;
-
-  // Use O(1) mathematical calculation for regular intervals
-  if (lookup.hasRegularIntervals && lookup.sampleInterval > 0) {
-    const intervalMs = lookup.sampleInterval;
-    const closestIndex = Math.round(targetTimestamp / intervalMs);
-    const boundedIndex = Math.max(0, Math.min(closestIndex, lookup.sortedTimestamps.length - 1));
-    closest = lookup.sortedTimestamps[boundedIndex];
-  } else {
-    // Fallback to binary search for irregular intervals
-    let left = 0;
-    let right = lookup.sortedTimestamps.length - 1;
-    closest = lookup.sortedTimestamps[0];
-    let minDiff = Math.abs(targetTimestamp - closest);
-
-    while (left <= right) {
-      const mid = Math.floor((left + right) / 2);
-      const current = lookup.sortedTimestamps[mid];
-      const diff = Math.abs(targetTimestamp - current);
-
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = current;
-      }
-
-      if (current === targetTimestamp) {
-        closest = current;
-        break;
-      } else if (current < targetTimestamp) {
-        left = mid + 1;
-      } else {
-        right = mid - 1;
-      }
-    }
-  }
+  const closest = getClosestTimestamp(lookup, targetTimestamp);
+  if (closest === null) return null;
 
   const positionsAtTimestamp = lookup.positionsByTimestamp[closest];
   return positionsAtTimestamp?.[actorId] || null;
+}
+
+export function getActorPositionsByIdAtClosestTimestamp(
+  lookup: TimestampPositionLookup,
+  targetTimestamp: number,
+): Record<number, ActorPosition> | null {
+  const closest = getClosestTimestamp(lookup, targetTimestamp);
+  if (closest === null) return null;
+
+  return lookup.positionsByTimestamp[closest] || null;
 }
 
 /**
@@ -127,45 +147,7 @@ export function getAllActorPositionsAtTimestamp(
   lookup: TimestampPositionLookup,
   targetTimestamp: number,
 ): ActorPosition[] {
-  if (lookup.sortedTimestamps.length === 0) return [];
-
-  let closest: number;
-
-  // Use O(1) mathematical calculation for regular intervals
-  if (lookup.hasRegularIntervals && lookup.sampleInterval > 0) {
-    const intervalMs = lookup.sampleInterval;
-    const closestIndex = Math.round(targetTimestamp / intervalMs);
-    const boundedIndex = Math.max(0, Math.min(closestIndex, lookup.sortedTimestamps.length - 1));
-    closest = lookup.sortedTimestamps[boundedIndex];
-  } else {
-    // Fallback to binary search for irregular intervals
-    let left = 0;
-    let right = lookup.sortedTimestamps.length - 1;
-    closest = lookup.sortedTimestamps[0];
-    let minDiff = Math.abs(targetTimestamp - closest);
-
-    while (left <= right) {
-      const mid = Math.floor((left + right) / 2);
-      const current = lookup.sortedTimestamps[mid];
-      const diff = Math.abs(targetTimestamp - current);
-
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = current;
-      }
-
-      if (current === targetTimestamp) {
-        closest = current;
-        break;
-      } else if (current < targetTimestamp) {
-        left = mid + 1;
-      } else {
-        right = mid - 1;
-      }
-    }
-  }
-
-  const positionsAtTimestamp = lookup.positionsByTimestamp[closest];
+  const positionsAtTimestamp = getActorPositionsByIdAtClosestTimestamp(lookup, targetTimestamp);
   return positionsAtTimestamp ? Object.values(positionsAtTimestamp) : [];
 }
 
@@ -445,6 +427,7 @@ export function calculateActorPositions(
     return {
       positionsByTimestamp: {},
       sortedTimestamps: [],
+      actorIds: [],
       fightDuration: 0,
       fightStartTime: 0,
       sampleInterval: SAMPLE_INTERVAL_MS,
@@ -661,6 +644,7 @@ export function calculateActorPositions(
       );
     }
   });
+  allActorIds.sort((a, b) => a - b);
 
   let processedActors = 0;
   const totalActors = allActorIds.length;
@@ -977,6 +961,7 @@ export function calculateActorPositions(
   return {
     positionsByTimestamp,
     sortedTimestamps: [...timestamps].sort((a, b) => a - b),
+    actorIds: allActorIds,
     fightDuration,
     fightStartTime,
     sampleInterval: adjustedInterval,
