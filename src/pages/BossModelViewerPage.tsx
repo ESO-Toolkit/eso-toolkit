@@ -219,11 +219,14 @@ const GlbModel: React.FC<{ url: string; color: string; skinTint?: string }> = ({
         // skinTint multiplies the diffuse — used to approximate a missing variant
         // (Lokkestiiz shares Yolnahkriin's gold skin but should read frost-blue).
         mat.color.set(skinTint ?? '#ffffff');
-        // ESO dragon diffuse is dark; a faint self-illum from the same map keeps the
-        // shadowed scales/wings from crushing to black without washing out the skin.
-        mat.emissiveMap = mat.map;
-        mat.emissive = new THREE.Color(skinTint ?? '#ffffff');
-        mat.emissiveIntensity = 0.35;
+        // The Sunspire dragon diffuse is unusually dark and needs a strong self-illum
+        // lift; properly-textured creatures don't and would wash out at 0.35, so the
+        // big emissive boost is gated to the tinted dragons only.
+        if (skinTint) {
+          mat.emissiveMap = mat.map;
+          mat.emissive = new THREE.Color(skinTint);
+          mat.emissiveIntensity = 0.35;
+        }
         mat.needsUpdate = true;
       } else {
         // Untextured mesh: tint by species so it reads, not flat grey.
