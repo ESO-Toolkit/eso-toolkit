@@ -12,6 +12,7 @@ import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import { TRANSPORT_IDLE_MS, TRANSPORT_RESERVED, HAIRLINE_H } from '../constants/replayDesign';
+import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
 import { MapMarkersState } from '../types/mapMarkers';
 import { clampReplayTime } from '../utils/replayTime';
 
@@ -338,10 +339,34 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setFollowingActor(null);
   }, [setFollowingActor]);
 
+  // Mobile detection — the single seam every mobile-only branch gates on. Desktop = false, so all
+  // the mobile paths below are dead on desktop and behavior is byte-identical to before.
+  const isMobile = useIsMobileReplay();
+
   // Fullscreen the whole replay block (canvas + overlays + the docked control bar, all of which live
   // inside replayContainerRef). Toggled by the button in Arena3D's cluster and the `f` key.
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Mobile "immersive" mode is a CSS PSEUDO-fullscreen (a position:fixed overlay), NOT the native
+  // Fullscreen API: iOS Safari cannot requestFullscreen() a non-video element, so the native path
+  // silently no-ops on iPhone. We keep this as separate state from isFullscreen because the native
+  // `&:fullscreen` CSS pseudo-class and the fullscreenchange listener only ever fire under the real
+  // API — on mobile we drive the overlay purely from this boolean.
+  const [mobilePseudoFullscreen, setMobilePseudoFullscreen] = useState(false);
+
+  // The single "is the replay filling the screen?" signal everything downstream keys off (fill-height
+  // layout, cinema auto-hide, reserved transport inset). On desktop it equals isFullscreen; on mobile
+  // it's the pseudo-fullscreen overlay. Unifying them here means the transport, overlays, and
+  // auto-hide work inside the mobile overlay for free, with no extra wiring.
+  const isImmersive = isFullscreen || mobilePseudoFullscreen;
+
   const toggleFullscreen = useCallback(() => {
+    // Mobile: flip the CSS pseudo-fullscreen overlay (the native API can't fullscreen a div on iOS).
+    if (isMobile) {
+      setMobilePseudoFullscreen((v) => !v);
+      return;
+    }
+    // Desktop: the native Fullscreen API on the whole replay block (unchanged).
     const el = replayContainerRef.current;
     if (!el) return;
     if (document.fullscreenElement) {
@@ -349,7 +374,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     } else {
       void el.requestFullscreen?.();
     }
-  }, []);
+  }, [isMobile]);
   useEffect(() => {
     // Track real fullscreen state (covers Esc / browser-driven exit, not just our button).
     const onChange = (): void =>
@@ -381,7 +406,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   //     guarded so it never hides mid-scrub/drag.
   const idleTimerRef = useRef<number | null>(null);
   useEffect(() => {
-    if (!isFullscreen) return;
+    if (!isImmersive) return;
     const el = replayContainerRef.current;
     if (!el) return;
 
@@ -414,18 +439,18 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
       idleTimerRef.current = null;
     };
-  }, [isFullscreen, isDragging, isScrubbingMode]);
+  }, [isImmersive, isDragging, isScrubbingMode]);
 
   // When the user LEAVES fullscreen (not on mount), restore the bar — exiting into an
   // auto-hidden bar would be disorienting. Tracks the previous fullscreen state so the persisted
   // barCollapsed seed isn't clobbered on the initial render.
-  const wasFullscreenRef = useRef(isFullscreen);
+  const wasFullscreenRef = useRef(isImmersive);
   useEffect(() => {
-    if (wasFullscreenRef.current && !isFullscreen) {
+    if (wasFullscreenRef.current && !isImmersive) {
       setBarVisible(true);
     }
-    wasFullscreenRef.current = isFullscreen;
-  }, [isFullscreen]);
+    wasFullscreenRef.current = isImmersive;
+  }, [isImmersive]);
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
   // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need
@@ -564,7 +589,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       <Paper elevation={2} sx={{ overflow: 'hidden' }}>
         <Arena3D
           timeRef={animationTimeRef.timeRef}
-          isFullscreen={isFullscreen}
+          isFullscreen={isImmersive}
           onToggleFullscreen={toggleFullscreen}
           showActorNames={showActorNames}
           mapTimeline={mapTimeline}
@@ -583,7 +608,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           showPlayerTrails={showPlayerTrails}
           // When the bar is hidden in fullscreen, only the hairline occludes the bottom, so the
           // overlay panels can grow nearly full-height; otherwise reserve the full bar band.
-          reservedInset={isFullscreen && !barVisible ? HAIRLINE_H + 4 : TRANSPORT_RESERVED}
+          reservedInset={isImmersive && !barVisible ? HAIRLINE_H + 4 : TRANSPORT_RESERVED}
         />
       </Paper>
       {/* Playback controls — docked as a translucent overlay at the bottom of the canvas. The outer
@@ -624,7 +649,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           loopStart={loopStart}
           loopEnd={loopEnd}
           onClearLoop={clearLoop}
-          isFullscreen={isFullscreen}
+          isFullscreen={isImmersive}
           barVisible={barVisible}
           onToggleCollapse={toggleBar}
           progressPct={
