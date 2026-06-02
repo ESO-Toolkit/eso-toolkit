@@ -727,8 +727,20 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
   // The gear menu only lists sections relevant to this role, so a healer never sees "Top abilities".
   const menuSections = onSectionsChange ? SECTION_DEFS.filter((s) => s.roles.includes(role)) : [];
 
-  // The tank caveat only makes sense when at least one of its referenced sections is showing.
-  const showTankCaveat = role === 'tank' && (visible.hero || visible.dr);
+  // Tank caveat — built from ONLY the clauses whose section is actually showing, so compacting the
+  // panel never leaves a disclaimer referencing a stat that isn't on screen (e.g. the DR sentence
+  // must not appear when the DR line is toggled off).
+  const tankCaveat =
+    role === 'tank'
+      ? [
+          visible.hero ? 'Damage taken & deaths are measured.' : null,
+          visible.dr
+            ? 'DR % is a modeled resistance estimate (excludes Protection, block & shields).'
+            : null,
+        ]
+          .filter(Boolean)
+          .join(' ')
+      : '';
 
   return (
     <Box
@@ -847,10 +859,9 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         />
       )}
 
-      {showTankCaveat && (
+      {tankCaveat && (
         <Typography sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}>
-          Damage taken &amp; deaths are measured; DR % is a modeled resistance estimate (excludes
-          Protection, block &amp; shields).
+          {tankCaveat}
         </Typography>
       )}
 
