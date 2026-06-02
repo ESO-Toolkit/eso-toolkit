@@ -33,6 +33,7 @@ import { getVisiblePlayerIds } from '../utils/pathUtils';
 
 import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { BossHealthPanel } from './BossHealthPanel';
+import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerSpritePreview } from './MarkerSpritePreview';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
@@ -755,6 +756,15 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         {/* Boss health — DOM overlay (top-right), crisp + theme-styled. Always shown when
             bosses with health are present. */}
         <BossHealthPanel lookup={lookup} timeRef={timeRef} />
+
+        {/* Locked-player stats — DOM overlay (bottom-left), shown only while following a player.
+            Role-aware whole-fight readout (DPS / healer / tank), reusing the fight-insights calcs.
+            Renders nothing when not following or when locked onto a non-player. */}
+        <LockedPlayerStatsPanel
+          followingActorId={followingActorId}
+          lookup={lookup}
+          fightDurationMs={fight.endTime - fight.startTime}
+        />
 
         {/* Player list — DOM overlay (top-left), shown when the player-paths HUD is toggled
             on (P key). Real scroll region so every player is reachable. */}
