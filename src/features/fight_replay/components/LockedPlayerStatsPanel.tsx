@@ -35,8 +35,9 @@
  */
 
 import { Box, Typography, useTheme, alpha } from '@mui/material';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useReportMasterData } from '../../../hooks';
 import { useCombatantInfoRecord } from '../../../hooks/events/useCombatantInfoRecord';
 import { useDamageEvents } from '../../../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../../../hooks/events/useDeathEvents';
@@ -44,6 +45,7 @@ import { useHealingEvents } from '../../../hooks/events/useHealingEvents';
 import { usePlayerData } from '../../../hooks/usePlayerData';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
+import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 import {
   calculateDynamicDamageReductionAtTimestamp,
   calculateStaticResistanceValue,
@@ -53,6 +55,7 @@ import {
   type TimestampPositionLookup,
   getActorPositionAtClosestTimestamp,
 } from '../../../workers/calculations/CalculateActorPositions';
+import { IMPORTANT_BUFF_ABILITIES } from '../../report_details/insights/BuffUptimesPanel';
 import { getReplayActorResolvedAccentColor } from '../utils/actorVisualState';
 import {
   type LiveLockedStats,
@@ -300,6 +303,128 @@ const TankDamageReduction: React.FC<{
   );
 };
 
+/** How often the (O(n)) buff-uptime recompute runs while scrubbing. */
+const UPTIME_THROTTLE_MS = 280;
+/** How many buffs to surface — kept short so the panel stays glanceable. */
+const UPTIME_TOP_N = 4;
+
+interface UptimeRow {
+  key: string;
+  name: string;
+  pct: number;
+}
+
+/**
+ * Buff-uptime list — the important raid buffs the locked player currently HAS, up to the playhead.
+ * Reuses the insights' curated IMPORTANT_BUFF_ABILITIES set and computeBuffUptimes (targetIds =
+ * the locked player, so the averaging path resolves to exactly that player's uptime). Window-scoped
+ * to [fightStart, playhead] so the % is live as you scrub.
+ *
+ * computeBuffUptimes is O(n) over intervals, so — unlike the scalar path — this can't run per frame.
+ * It lives in its OWN sub-component and recomputes on a ~3-4Hz throttle, setState-ing only when the
+ * rounded rows change. As a memo'd-leaf child its re-render can't reconcile Arena3D; it's isolated
+ * from the scalar component so that one still renders exactly once on lock.
+ */
+const BuffUptimeList: React.FC<{
+  playerId: number;
+  fightStartTime: number;
+  timeRef: React.RefObject<number> | { current: number };
+}> = ({ playerId, fightStartTime, timeRef }) => {
+  const { buffLookupData } = useBuffLookupTask();
+  const { reportMasterData } = useReportMasterData();
+
+  const targetIds = useMemo(() => new Set<number>([playerId]), [playerId]);
+  const abilitiesById = reportMasterData?.abilitiesById ?? {};
+
+  const [rows, setRows] = useState<UptimeRow[]>([]);
+  // Signature of the last-pushed rows, so we only setState when the visible list actually changes.
+  const lastSigRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!buffLookupData) {
+      if (rows.length) setRows([]);
+      lastSigRef.current = '';
+      return;
+    }
+    let raf = 0;
+    let lastRun = -Infinity;
+    const tick = (now: number): void => {
+      if (now - lastRun >= UPTIME_THROTTLE_MS) {
+        lastRun = now;
+        const playheadMs = timeRef.current ?? 0;
+        const fightEndTime = fightStartTime + playheadMs;
+        const uptimes = computeBuffUptimes(buffLookupData, {
+          abilityIds: IMPORTANT_BUFF_ABILITIES,
+          targetIds,
+          fightStartTime,
+          fightEndTime,
+          fightDuration: playheadMs,
+          abilitiesById,
+          isDebuff: false,
+          hostilityType: 0,
+        });
+        const next: UptimeRow[] = uptimes.slice(0, UPTIME_TOP_N).map((u) => ({
+          key: u.uniqueKey,
+          name: u.abilityName,
+          pct: u.uptimePercentage,
+        }));
+        let sig = '';
+        for (const r of next) sig += `${r.key}:${Math.round(r.pct)};`;
+        if (sig !== lastSigRef.current) {
+          lastSigRef.current = sig;
+          setRows(next);
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+    // rows.length intentionally excluded — the loop owns its dirty check via lastSigRef.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buffLookupData, targetIds, fightStartTime, timeRef, abilitiesById]);
+
+  if (!buffLookupData || rows.length === 0) return null;
+
+  return (
+    <Box sx={{ mt: 1 }}>
+      <Typography
+        sx={{
+          fontSize: '0.58rem',
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          color: 'text.secondary',
+          mb: 0.25,
+        }}
+      >
+        BUFF UPTIME
+      </Typography>
+      {rows.map((r) => (
+        <Box
+          key={r.key}
+          sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 1 }}
+        >
+          <Typography
+            noWrap
+            sx={{ fontSize: '0.72rem', color: 'text.primary', minWidth: 0, flex: 1 }}
+          >
+            {r.name}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              fontVariantNumeric: 'tabular-nums',
+              color: 'text.secondary',
+            }}
+          >
+            {r.pct.toFixed(0)}%
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
 const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = ({
   followingActorId,
   lookup,
@@ -391,19 +516,24 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
       />
 
       {role === 'tank' && (
-        <>
-          <TankDamageReduction
-            playerId={followingActorId}
-            fightStartTime={fightStartTime}
-            timeRef={timeRef}
-          />
-          <Typography
-            sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}
-          >
-            Damage taken &amp; deaths are measured; DR % is a modeled resistance estimate (excludes
-            Protection, block &amp; shields).
-          </Typography>
-        </>
+        <TankDamageReduction
+          playerId={followingActorId}
+          fightStartTime={fightStartTime}
+          timeRef={timeRef}
+        />
+      )}
+
+      <BuffUptimeList
+        playerId={followingActorId}
+        fightStartTime={fightStartTime}
+        timeRef={timeRef}
+      />
+
+      {role === 'tank' && (
+        <Typography sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}>
+          Damage taken &amp; deaths are measured; DR % is a modeled resistance estimate (excludes
+          Protection, block &amp; shields).
+        </Typography>
       )}
     </Box>
   );
