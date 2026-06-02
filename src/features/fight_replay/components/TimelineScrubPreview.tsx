@@ -71,6 +71,14 @@ const TimelineScrubPreviewComponent: React.FC<TimelineScrubPreviewProps> = ({
     const handleMove = (e: PointerEvent): void => {
       const rect = rail.getBoundingClientRect();
       if (rect.width <= 0) return;
+      // Suppress the skim-preview while the cursor is over an event marker: the marker has its own
+      // richer MUI tooltip ("…at 0:57 / Killed by: …"), so showing both is a redundant, colliding
+      // double tooltip. The bubble is for the EMPTY track between markers; the marker owns its own.
+      const target = e.target as Element | null;
+      if (target && target.closest('[role="button"]')) {
+        setHover(null);
+        return;
+      }
       const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
       setHover({ ratio, timeMs: ratio * duration });
     };
