@@ -771,13 +771,21 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
       if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
       const el = rootRef.current;
       if (!el) return;
-      el.setPointerCapture(e.pointerId);
+      // Record the drag origin FIRST so the gesture is live even if capture can't be acquired —
+      // pointer capture is a robustness boost (keeps tracking if the thumb slides off the small
+      // header), not a requirement. setPointerCapture throws if the id isn't an active pointer
+      // (e.g. synthetic events in tests), so guard it; the bubbled move/up events still drive the drag.
       dragRef.current = {
         startX: e.clientX,
         startY: e.clientY,
         baseX: offsetRef.current.x,
         baseY: offsetRef.current.y,
       };
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* pointer capture unavailable — the drag still works via bubbled pointer events */
+      }
     },
     [isMobile],
   );
