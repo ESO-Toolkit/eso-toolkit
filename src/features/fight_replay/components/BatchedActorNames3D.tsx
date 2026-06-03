@@ -170,6 +170,11 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
   const lastCamQuat = useRef(new THREE.Quaternion(NaN, NaN, NaN, NaN));
   const lastTime = useRef(NaN);
   const lastSize = useRef({ w: 0, h: 0 });
+  // Selection also gates the pass: lock-on usually starts the follow-camera lerp (camera moves →
+  // the gate fires anyway), but a selection change while the camera and playhead are static would
+  // otherwise be skipped, leaving the newly-followed name faded. The whole promise of the feature
+  // is "the followed name is always legible", so the gate must react to selection directly.
+  const lastSelected = useRef<number | null | undefined>(undefined);
 
   // Scratch objects reused every frame (no per-frame allocation in the hot loop).
   const scratchWorld = useRef(new THREE.Vector3());
@@ -181,20 +186,21 @@ export const BatchedActorNames3D: React.FC<BatchedActorNames3DProps> = ({
     if (!lookup || handles.size === 0) return;
 
     const currentTime = timeRef ? timeRef.current : 0;
+    const selectedActorId = selectedActorRef ? selectedActorRef.current : null;
 
     // --- Idle gate ---------------------------------------------------------------------------
     const camMoved =
       !lastCamPos.current.equals(camera.position) || !lastCamQuat.current.equals(camera.quaternion);
     const timeMoved = lastTime.current !== currentTime;
     const sizeChanged = lastSize.current.w !== size.width || lastSize.current.h !== size.height;
-    if (!camMoved && !timeMoved && !sizeChanged) return;
+    const selectionChanged = lastSelected.current !== selectedActorId;
+    if (!camMoved && !timeMoved && !sizeChanged && !selectionChanged) return;
     lastCamPos.current.copy(camera.position);
     lastCamQuat.current.copy(camera.quaternion);
     lastTime.current = currentTime;
     lastSize.current.w = size.width;
     lastSize.current.h = size.height;
-
-    const selectedActorId = selectedActorRef ? selectedActorRef.current : null;
+    lastSelected.current = selectedActorId;
 
     // --- Pass 1: position / orient / scale / text every name; collect on-screen rectangles ----
     const items = screenItems.current;
