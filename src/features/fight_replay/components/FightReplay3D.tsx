@@ -472,6 +472,17 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     wasFullscreenRef.current = isImmersive;
   }, [isImmersive]);
 
+  // Safety net: if the viewport ever stops being "mobile" while the pseudo-fullscreen overlay is open
+  // (e.g. an unusual rotation/resize that crosses the breakpoint), tear the overlay down. Without this
+  // the mobile-only controls (incl. the Close button) would unmount while the fixed overlay + body
+  // lock persist, stranding the user. The hook is orientation-robust so this rarely fires, but it
+  // guarantees there's no state where the overlay is up with no way out.
+  useEffect(() => {
+    if (!isMobile && mobilePseudoFullscreen) {
+      setMobilePseudoFullscreen(false);
+    }
+  }, [isMobile, mobilePseudoFullscreen]);
+
   // Lock body scroll while the mobile pseudo-fullscreen overlay is open. The overlay is a fixed
   // element over the page; without this the page behind it can still scroll/rubber-band under the
   // touch gestures. Keyed ONLY on mobilePseudoFullscreen, so the effect body never runs on desktop

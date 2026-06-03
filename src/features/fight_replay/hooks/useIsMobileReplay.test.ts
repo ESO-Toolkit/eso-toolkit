@@ -7,14 +7,13 @@ import { useIsMobileReplay } from './useIsMobileReplay';
 type Listener = (event: MediaQueryListEvent) => void;
 
 /**
- * Mock `window.matchMedia` so MUI's `useMediaQuery` resolves to a known value. MUI builds the
- * query string from `theme.breakpoints.down('sm')` and passes it to `matchMedia`; we ignore the
- * exact string and force every query to the supplied `matches` so the test exercises the hook's
- * contract (true below the breakpoint, false above) without depending on jsdom's media engine.
+ * Mock `window.matchMedia` so MUI's `useMediaQuery` resolves to known values. The hook fires TWO
+ * queries — the `down('sm')` width query and a `(pointer: coarse) and (max-height: 600px)`
+ * landscape-phone query — so the mock matches per-query via a predicate keyed on the query string.
  */
-function mockMatchMedia(matches: boolean): void {
+function mockMatchMedia(matches: (query: string) => boolean): void {
   const matchMedia = jest.fn().mockImplementation((query: string) => ({
-    matches,
+    matches: matches(query),
     media: query,
     onchange: null,
     addEventListener: (_type: string, _cb: Listener) => undefined,
@@ -29,6 +28,9 @@ function mockMatchMedia(matches: boolean): void {
     value: matchMedia,
   });
 }
+
+const isCoarse = (q: string): boolean => q.includes('pointer: coarse');
+const isWidth = (q: string): boolean => q.includes('width');
 
 const theme = createTheme();
 const wrapper = ({ children }: { children: React.ReactNode }): React.ReactElement =>
@@ -45,14 +47,24 @@ describe('useIsMobileReplay', () => {
     });
   });
 
-  it('returns true when the viewport is below the sm breakpoint (mobile)', () => {
-    mockMatchMedia(true);
+  it('returns true on a narrow (portrait phone) viewport', () => {
+    // width query matches, pointer/height query does not — portrait phone.
+    mockMatchMedia((q) => isWidth(q));
     const { result } = renderHook(() => useIsMobileReplay(), { wrapper });
     expect(result.current).toBe(true);
   });
 
-  it('returns false on a desktop-width viewport', () => {
-    mockMatchMedia(false);
+  it('returns true on a LANDSCAPE phone (wide but coarse pointer + short height)', () => {
+    // The regression guard: width query is FALSE (landscape is ≥667px wide) but the
+    // coarse-pointer + max-height query is TRUE, so the hook still classifies it as mobile —
+    // otherwise rotating mid-session would strand the user in the body-locked overlay.
+    mockMatchMedia((q) => isCoarse(q));
+    const { result } = renderHook(() => useIsMobileReplay(), { wrapper });
+    expect(result.current).toBe(true);
+  });
+
+  it('returns false on a desktop viewport (wide, fine pointer)', () => {
+    mockMatchMedia(() => false);
     const { result } = renderHook(() => useIsMobileReplay(), { wrapper });
     expect(result.current).toBe(false);
   });

@@ -6,19 +6,24 @@ import { useMediaQuery, useTheme } from '@mui/material';
  * The 3D replay is desktop-keyboard-first; the mobile experience is a separate layout
  * (inline scroll-safe preview → CSS pseudo-fullscreen interactive mode). EVERY mobile-only
  * branch in the replay tree gates on this one hook, so desktop is guaranteed untouched: the
- * hook returns `false` above the breakpoint and all mobile code paths become dead.
+ * hook returns `false` on a wide pointer-fine viewport and all mobile code paths become dead.
  *
- * Uses the same MUI `breakpoints.down('sm')` query the replay already relies on for its other
- * responsive collapses (SpeedSelector, MapMarkersModal), so dev-tools narrowing and the real
- * phone breakpoint stay identical. MUI's `useMediaQuery` handles SSR (returns the
- * `noSsr`-default of false until mounted) and live viewport changes internally.
+ * Two ways to qualify as mobile, OR'd together:
+ *  1. A narrow viewport (`breakpoints.down('sm')`, ≈<600px wide) — the same query the replay's
+ *     other responsive collapses use (SpeedSelector, MapMarkersModal), so a narrow DESKTOP window
+ *     still previews the mobile layout for dev/testing.
+ *  2. A touch device whose SHORT side is phone-sized (`(pointer: coarse) and (max-height: 600px)`).
+ *     This is the LANDSCAPE-PHONE case: rotated, a phone is wide (≥667px) so #1 alone would flip to
+ *     `false` mid-session — which previously unmounted the overlay's controls and stranded the user
+ *     in a body-locked pseudo-fullscreen with no Close. A phone's short side stays ≤ ~430px in
+ *     either orientation, so gating on `max-height` (the short side in landscape) keeps a phone
+ *     classified as mobile through rotation. A large touch tablet (short side > 600px) stays desktop.
  *
- * Note: this keys off WIDTH, not `pointer: coarse` — a deliberate match to the existing
- * precedent so a narrow desktop window previews the mobile layout. If a future need arises to
- * distinguish a true touch phone from a narrow desktop, AND-in `'(pointer: coarse)'` here; the
- * single seam means that change lands in exactly one place.
+ * MUI's `useMediaQuery` handles SSR (false until mounted) and live viewport/orientation changes.
  */
 export function useIsMobileReplay(): boolean {
   const theme = useTheme();
-  return useMediaQuery(theme.breakpoints.down('sm'));
+  const narrow = useMediaQuery(theme.breakpoints.down('sm'));
+  const landscapePhone = useMediaQuery('(pointer: coarse) and (max-height: 600px)');
+  return narrow || landscapePhone;
 }
