@@ -12,6 +12,7 @@ import { MapMarkersState } from '../types/mapMarkers';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
+import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { CameraFollower } from './CameraFollower';
 import { CameraResetControls } from './CameraResetControls';
@@ -238,6 +239,12 @@ export interface Arena3DSceneProps {
   playerColorOverrides?: Map<number, string>;
   /** When true, player figures stop casting shadows (perf headroom for large fights). */
   performanceMode?: boolean;
+  /**
+   * True when the replay is a mobile device inside the pseudo-fullscreen overlay. Drives the touch
+   * gesture policy: OrbitControls pan is disabled so two fingers are exclusively pinch-zoom
+   * (CanvasWheelZoom), leaving one-finger rotate clean. Desktop passes false (pan stays on).
+   */
+  mobileImmersive?: boolean;
 }
 
 /**
@@ -265,7 +272,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   playerVisibility = EMPTY_VISIBILITY,
   playerColorOverrides = EMPTY_COLOR_OVERRIDES,
   performanceMode = false,
+  mobileImmersive = false,
 }) => {
+  // Touch-gesture policy for OrbitControls. `mobileImmersive` already folds in (mobile && immersive),
+  // so the second arg is true; the helper returns enablePan=false there to free two fingers for
+  // CanvasWheelZoom's pinch, and enablePan=true everywhere else (desktop). See touchPolicy.ts.
+  const touchPolicy = resolveTouchPolicy(mobileImmersive, true);
+
   // Shared render budget for the on-demand RenderLoop. Refilled on every React commit of
   // this scene (effect below, intentionally no deps) so state-driven mutations — markers,
   // trails, player visibility, HUD toggles, prop changes — always repaint, even while
@@ -584,11 +597,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           (cooperative wheel: plain wheel scrolls the page through the canvas, Ctrl/⌘+wheel or
           fullscreen zooms) instead of OrbitControls' built-in wheel zoom, which preventDefault()s
           every wheel event and traps page scroll over the canvas. enableZoom=false also governs the
-          touch pinch, which CanvasWheelZoom re-implements minimally so mobile pinch is preserved. */}
+          touch pinch, which CanvasWheelZoom re-implements minimally so mobile pinch is preserved.
+          enablePan is gated by the touch policy: off on mobile-immersive so the two-finger gesture is
+          pinch-only (no OrbitControls pan colliding with CanvasWheelZoom on the same touchmove). */}
       <OrbitControls
-        enablePan={true}
+        enablePan={touchPolicy.enablePan}
         enableZoom={false}
-        enableRotate={true}
+        enableRotate={touchPolicy.enableRotate}
         minDistance={cameraSettings.minDistance}
         maxDistance={cameraSettings.maxDistance}
         maxPolarAngle={Math.PI / 2 - 0.1} // Prevent camera from going below ground (slightly above horizon)

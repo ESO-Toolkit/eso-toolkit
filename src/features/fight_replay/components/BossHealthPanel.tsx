@@ -29,6 +29,12 @@ import {
 interface BossHealthPanelProps {
   lookup: TimestampPositionLookup | null;
   timeRef: React.RefObject<number> | { current: number };
+  /**
+   * True inside the mobile pseudo-fullscreen overlay. The panel then drops below the overlay's
+   * top-right Close button (which shares the top-right corner) and respects the top/right safe-area
+   * insets, instead of sitting at the desktop top:16 right:16 where it would collide with Close.
+   */
+  isMobile?: boolean;
 }
 
 const MAX_BOSSES = 4;
@@ -51,7 +57,26 @@ function healthColor(theme: Theme, pct: number): string {
   return theme.palette.error.main;
 }
 
-export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRef }) => {
+/**
+ * Format a boss HP value for the readout. Desktop shows the exact number with grouping commas
+ * (e.g. "181,632,304"); mobile abbreviates to compact notation (e.g. "182M") so the full
+ * "100.0% · 182M / 182M" readout fits on one line inside the narrow ~210px pill instead of
+ * overflowing/clipping the 18px track (the worst case: a 9-digit max at 100% HP).
+ */
+function fmtHp(n: number, compact: boolean): string {
+  const rounded = Math.round(n);
+  if (!compact) return rounded.toLocaleString();
+  return new Intl.NumberFormat(undefined, {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(rounded);
+}
+
+export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
+  lookup,
+  timeRef,
+  isMobile = false,
+}) => {
   const theme = useTheme();
 
   // The boss SET (identity + names). Only changes when a boss appears or dies, so this drives
@@ -105,7 +130,7 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRe
         if (refs.readout) {
           refs.readout.textContent = boss.isDead
             ? 'DEAD'
-            : `${pct.toFixed(1)}%  ·  ${Math.round(boss.health.current).toLocaleString()} / ${Math.round(boss.health.max).toLocaleString()}`;
+            : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, isMobile)} / ${fmtHp(boss.health.max, isMobile)}`;
         }
       }
 
@@ -115,9 +140,10 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRe
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // `bosses.length` intentionally excluded — the loop manages its own dirty check; we only
-    // (re)start it when the data source changes.
+    // (re)start it when the data source changes. isMobile is included so the readout formatter
+    // flips between exact (desktop) and compact (mobile) if the layout changes underneath.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lookup, timeRef, theme]);
+  }, [lookup, timeRef, theme, isMobile]);
 
   // Stable callback-ref factory per boss id.
   const setBarRef = useMemo(() => {
@@ -144,22 +170,32 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRe
     <Box
       sx={{
         position: 'absolute',
-        top: 16,
-        right: 16,
+        // Mobile overlay: drop below the top-right Close button. Plain-px offsets (NOT env()) — the
+        // overlay container already pads for the safe area, so adding env() here would double-count
+        // and push the panel too far inboard. Desktop keeps the original top:16 right:16.
+        top: isMobile ? 64 : 16,
+        right: isMobile ? 8 : 16,
         width: { xs: 220, sm: 280 },
-        maxWidth: 'calc(100% - 32px)',
+        maxWidth: isMobile ? 'calc(100% - 16px)' : 'calc(100% - 32px)',
+        // Mobile: a defensive height cap so a multi-boss stack (up to MAX_BOSSES=4) can't run down
+        // into the control cluster / transport in the short landscape viewport. The per-pill
+        // footprint reduction below is the primary fix; this is the hard safety bound.
+        ...(isMobile
+          ? { maxHeight: 'calc(100vh - 64px - 96px - 44px)', overflow: 'hidden' }
+          : null),
         pointerEvents: 'none',
         zIndex: 3,
       }}
     >
-      <Stack spacing={1}>
+      <Stack spacing={isMobile ? 0.75 : 1}>
         {bosses.map((boss) => (
           <Box
             key={boss.id}
             sx={{
               borderRadius: 2,
               px: 1.5,
-              py: 1,
+              // Tighter vertical padding on mobile so a multi-boss stack fits the short viewport.
+              py: isMobile ? 0.5 : 1,
               backgroundColor: 'rgba(15, 23, 42, 0.82)',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
@@ -172,20 +208,20 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRe
               sx={{
                 fontFamily: '"Space Grotesk", Inter, system-ui, sans-serif',
                 fontWeight: 700,
-                fontSize: { xs: '0.9rem', sm: '1rem' },
+                fontSize: isMobile ? '0.8rem' : { xs: '0.9rem', sm: '1rem' },
                 lineHeight: 1.2,
                 color: theme.palette.text.primary,
-                mb: 0.75,
+                mb: isMobile ? 0.25 : 0.75,
               }}
             >
               {boss.name}
             </Typography>
 
-            {/* Track */}
+            {/* Track — keep 16px on mobile (not 14) so the nowrap compact readout never vertically clips. */}
             <Box
               sx={{
                 position: 'relative',
-                height: 18,
+                height: isMobile ? 16 : 18,
                 borderRadius: '999px',
                 backgroundColor: 'rgba(2, 6, 23, 0.85)',
                 border: `1px solid ${theme.palette.primary.main}29`,
@@ -216,10 +252,16 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRe
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  // Never wrap — the readout is a single line; wrapping would clip it in the short track.
+                  whiteSpace: 'nowrap',
                   fontSize: '0.7rem',
                   fontWeight: 700,
                   color: theme.palette.text.primary,
-                  textShadow: '0 1px 2px rgba(2,6,23,0.9)',
+                  // Mobile: a symmetric 0-blur halo (surrounds each glyph) so light text stays legible
+                  // over the bright green/orange fill, not just a bottom-only drop shadow.
+                  textShadow: isMobile
+                    ? '0 0 3px rgba(2,6,23,0.95), 0 1px 2px rgba(2,6,23,0.95)'
+                    : '0 1px 2px rgba(2,6,23,0.9)',
                 }}
               />
             </Box>

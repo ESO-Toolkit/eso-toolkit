@@ -90,6 +90,12 @@ interface PlayerListPanelProps {
    * hidden (fullscreen cinema mode) so the panel reclaims that space.
    */
   reservedInset?: number;
+  /**
+   * True inside the mobile pseudo-fullscreen overlay. The panel then honors the top/left safe-area
+   * insets and reserves extra bottom space for the touch control cluster (which docks above the
+   * transport), so a long roster's scroll region stops above the cluster instead of behind it.
+   */
+  isMobile?: boolean;
 }
 
 interface PlayerRowInfo {
@@ -120,7 +126,12 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   playerColorOverrides,
   onPlayerColorChange,
   reservedInset = TRANSPORT_RESERVED,
+  isMobile = false,
 }) => {
+  // On mobile the touch control cluster docks above the transport, so the panel must stop higher.
+  // Fold that extra band into the reserve used by the height caps below (desktop unchanged).
+  const MOBILE_CLUSTER_BAND = 72;
+  const effectiveReserved = isMobile ? reservedInset + MOBILE_CLUSTER_BAND : reservedInset;
   const theme = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -200,13 +211,16 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
     <Box
       sx={{
         position: 'absolute',
-        top: 16,
-        left: 16,
+        // Plain px (NOT env()) on mobile — the overlay container already pads for the safe area, so
+        // adding env() here too would double-count and push the panel too far inboard.
+        top: isMobile ? 8 : 16,
+        left: isMobile ? 8 : 16,
         width: 232,
         maxWidth: 'calc(100% - 32px)',
-        // Cap to the arena viewport MINUS the top margin and the reserved transport band, so the
-        // scroll region — not the page — absorbs overflow AND the panel stops above the bar.
-        maxHeight: `calc(100% - ${16 + reservedInset}px)`,
+        // Cap to the arena viewport MINUS the top margin and the reserved transport band (plus the
+        // mobile control-cluster band), so the scroll region — not the page — absorbs overflow AND
+        // the panel stops above the bar (and, on mobile, above the cluster).
+        maxHeight: `calc(100% - ${16 + effectiveReserved}px)`,
         display: 'flex',
         flexDirection: 'column',
         borderRadius: 2,
@@ -270,7 +284,11 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
             // plunges into the bar. This inner cap (pinned to raw ARENA_HEIGHT) is the real
             // overrun — the outer % cap alone doesn't bound it. The core fix vs. the old
             // fixed-height canvas that silently clipped players past row 12.
-            maxHeight: `calc(${ARENA_HEIGHT} - 56px - ${reservedInset}px)`,
+            // On mobile the panel lives in a full-viewport overlay (not the ARENA_HEIGHT clamp), so
+            // cap the inner scroll region to viewport height there; desktop keeps the arena clamp.
+            maxHeight: isMobile
+              ? `calc(100vh - 96px - ${effectiveReserved}px)`
+              : `calc(${ARENA_HEIGHT} - 56px - ${reservedInset}px)`,
             // Slim, theme-tinted scrollbar.
             '&::-webkit-scrollbar': { width: 6 },
             '&::-webkit-scrollbar-thumb': {

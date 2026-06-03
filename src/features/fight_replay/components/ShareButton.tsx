@@ -151,24 +151,27 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
           startIcon={<Share sx={{ fontSize: '1.05rem' }} />}
           disableElevation
           sx={(theme) => ({
-            // Match the bold proto's share pill exactly: soft cyan-tinted fill, cyan-glass
-            // border, cyan text, 11px radius, 34px tall to line up with the speed chips.
+            // Desktop: the bold proto's share pill — soft cyan-tinted fill, cyan-glass border, cyan
+            // text, 11px radius, 34px tall to line up with the speed chips.
+            // Mobile (xs): the label is hidden, so a bordered icon-pill read as a stray box next to
+            // the ghost transport buttons + collapse chevron. There, drop the border/fill/min-width so
+            // Share becomes a quiet ghost icon like the rest of the row.
             height: 34,
             borderRadius: '11px',
-            px: '13px',
             fontSize: '13px',
             fontWeight: 600,
             textTransform: 'none',
             color: 'primary.main',
-            border: '1px solid',
-            borderColor: `${theme.palette.primary.main}47`, // ~0.28 alpha
-            backgroundColor: `${theme.palette.primary.main}0f`, // ~0.06 alpha
+            borderColor: `${theme.palette.primary.main}47`, // ~0.28 alpha (only visible at sm+)
+            minWidth: { xs: 0, sm: 64 },
+            px: { xs: '8px', sm: '13px' },
+            border: { xs: 'none', sm: '1px solid' },
+            backgroundColor: { xs: 'transparent', sm: `${theme.palette.primary.main}0f` }, // ~0.06 alpha
             transition: `background-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}, border-color ${TRANSPORT_MOTION.tap} ${TRANSPORT_MOTION.ease}`,
             '&:hover': {
-              backgroundColor: `${theme.palette.primary.main}1f`,
+              backgroundColor: { xs: 'action.hover', sm: `${theme.palette.primary.main}1f` },
               borderColor: `${theme.palette.primary.main}80`,
             },
-            // Hide the word on very narrow screens; the icon + tooltip + aria-label carry it.
             '& .MuiButton-startIcon': { mr: { xs: 0, sm: 0.75 } },
             '& .share-label': { display: { xs: 'none', sm: 'inline' } },
           })}

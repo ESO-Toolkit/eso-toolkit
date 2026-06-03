@@ -62,6 +62,16 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
     '& .MuiSvgIcon-root': { fontSize: compact ? '1.15rem' : '1.4rem' },
   } as const;
 
+  // Skip-to-start / skip-to-end are the redundant outer buttons on a touch phone: the full-width
+  // scrub rail already covers "seek anywhere", and at ~390px they pushed the cluster wide enough to
+  // collide with the speed pill (left) and share (right). Hide them only on COARSE pointers (touch),
+  // gated by media query — NOT by `compact`, because the DESKTOP overlay transport is also compact and
+  // must keep ⏮/⏭ for mouse users.
+  const endStopSx = {
+    ...ghostSx,
+    '@media (pointer: coarse)': { display: 'none' },
+  } as const;
+
   return (
     <Box
       sx={{
@@ -69,10 +79,12 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 0.75,
-        // On touch devices, enforce a 44x44 minimum tap target and a little more
-        // spacing so the playback controls are comfortable to use on mobile.
+        // On touch devices, enforce a 44x44 minimum tap target so the controls are comfortable.
+        // In the compact mobile transport the cluster is just ±10 + orb (skip-to-start/end are
+        // dropped), so keep the gap tight — a wide gap pushed the outer buttons into the speed/share
+        // controls flanking the row. The non-compact (desktop touch, e.g. tablet) keeps the roomier gap.
         '@media (pointer: coarse)': {
-          gap: 1.25,
+          gap: compact ? 0.5 : 1.25,
           '& .MuiIconButton-root': {
             minWidth: 44,
             minHeight: 44,
@@ -80,8 +92,9 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
         },
       }}
     >
+      {/* Skip-to-start — hidden on touch (endStopSx), kept on desktop/mouse. See endStopSx note. */}
       <Tooltip title="Jump to start">
-        <IconButton onClick={onSkipToStart} size="small" aria-label="Skip to start" sx={ghostSx}>
+        <IconButton onClick={onSkipToStart} size="small" aria-label="Skip to start" sx={endStopSx}>
           <SkipPrevious />
         </IconButton>
       </Tooltip>
@@ -154,8 +167,9 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
         </IconButton>
       </Tooltip>
 
+      {/* Skip-to-end — hidden on touch (endStopSx), kept on desktop/mouse. */}
       <Tooltip title="Jump to end">
-        <IconButton onClick={onSkipToEnd} size="small" aria-label="Skip to end" sx={ghostSx}>
+        <IconButton onClick={onSkipToEnd} size="small" aria-label="Skip to end" sx={endStopSx}>
           <SkipNext />
         </IconButton>
       </Tooltip>

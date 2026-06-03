@@ -178,7 +178,11 @@ export const SpeedSelector: React.FC<SpeedSelectorProps> = ({
             },
           }}
         >
-          <SpeedIcon sx={{ fontSize: '1.05rem' }} />
+          {/* On the compact (mobile) bar the trigger is the whole speed control and always shows the
+              current speed as text, so the speedometer glyph is redundant clutter — drop it there and
+              let "1×" stand alone. Desktop (where the trigger sits beside the segmented chips as a
+              "more speeds" affordance) keeps the glyph. */}
+          {!compact && <SpeedIcon sx={{ fontSize: '1.05rem' }} />}
           {triggerLabel}
         </ToggleButton>
       </Tooltip>

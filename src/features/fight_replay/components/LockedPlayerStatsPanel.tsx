@@ -43,10 +43,11 @@ import {
   Popover,
   Tooltip,
   Typography,
+  useMediaQuery,
   useTheme,
   alpha,
 } from '@mui/material';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useReportMasterData } from '../../../hooks';
 import { useCombatantInfoRecord } from '../../../hooks/events/useCombatantInfoRecord';
@@ -90,6 +91,16 @@ import { getPlayerInfo } from '../utils/pathUtils';
 
 type Role = 'tank' | 'healer' | 'dps';
 
+// Mobile layout: the panel is bottom-LEFT and now only has to clear the docked TRANSPORT bar at the
+// bottom edge (the old 7-button toggle cluster that used to sit above the transport was moved into a
+// bottom-RIGHT tools sheet, so there's no cluster band on the left anymore). Reserve the transport
+// band height plus a small clearance. (The tools button lives bottom-right and never overlaps the
+// left side, so it isn't in this calc.)
+const MOBILE_TRANSPORT_BAND_PX = 96;
+const MOBILE_PANEL_CLEARANCE_PX = 16;
+// Resting distance of the panel's bottom edge from the viewport bottom on mobile (clears the transport).
+const MOBILE_PANEL_BOTTOM_PX = MOBILE_TRANSPORT_BAND_PX + MOBILE_PANEL_CLEARANCE_PX; // 112
+
 interface LockedPlayerStatsPanelProps {
   /** The currently-followed actor id, or null when not following. */
   followingActorId: number | null;
@@ -105,6 +116,12 @@ interface LockedPlayerStatsPanelProps {
   sections?: StatsPanelSections;
   /** Persist a sections change (from the panel's gear menu). Omitted → the gear menu is hidden. */
   onSectionsChange?: (next: StatsPanelSections) => void;
+  /**
+   * True inside the mobile pseudo-fullscreen overlay. The panel then lifts above the touch control
+   * cluster (which docks above the transport) and caps its width/height to the narrow viewport,
+   * instead of the desktop bottom:112 / maxWidth:340 that would overlap the cluster on a phone.
+   */
+  isMobile?: boolean;
 }
 
 /** A section the gear menu can toggle, paired with the roles it's relevant to. */
@@ -695,11 +712,119 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
   fightStartTime,
   sections,
   onSectionsChange,
+  isMobile = false,
 }) => {
   const theme = useTheme();
 
   // Gear-menu anchor (the per-section toggle popover). Local UI state; doesn't affect playback.
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+
+  // Landscape-phone (short viewport): the vertical axis is scarce (~390px), so the body height cap
+  // SHRINKS rather than grows. Matches useIsMobileReplay's landscape clause.
+  const shortViewport = useMediaQuery('(pointer: coarse) and (max-height: 600px)');
+
+  // --- Mobile thumb-drag (imperative; zero React render per move, preserving the perf contract) ---
+  // The panel root is pointerEvents:none (click-through); only the HEADER opts into pointer events as
+  // a drag handle. On pointer-down we capture the pointer to the root so a fast drag that leaves the
+  // small header keeps moving the panel instead of falling through to OrbitControls (camera rotate).
+  // The committed offset lives in a ref and is written straight to root.style.transform.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const offsetRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(
+    null,
+  );
+
+  // Clamp the committed offset so the panel's rect stays fully on-screen given its bottom-left anchor.
+  // Reserves the top band (Close + boss panel) and the bottom band (the docked transport bar).
+  const clampOffset = useCallback((x: number, y: number): { x: number; y: number } => {
+    const el = rootRef.current;
+    if (!el) return { x, y };
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // Current on-screen position of the element's top-left WITHOUT the proposed offset delta.
+    const baseLeft = rect.left - offsetRef.current.x;
+    const baseTop = rect.top - offsetRef.current.y;
+    const TOP_RESERVE = 72; // clear the top-right Close / boss stack band
+    const BOTTOM_RESERVE = MOBILE_TRANSPORT_BAND_PX; // clear the docked transport bar
+    const minX = 8 - baseLeft;
+    const maxX = vw - 8 - rect.width - baseLeft;
+    const minY = TOP_RESERVE - baseTop;
+    const maxY = vh - BOTTOM_RESERVE - rect.height - baseTop;
+    return {
+      x: Math.max(minX, Math.min(maxX, x)),
+      y: Math.max(minY, Math.min(maxY, y)),
+    };
+  }, []);
+
+  const applyOffset = useCallback((x: number, y: number) => {
+    const el = rootRef.current;
+    offsetRef.current = { x, y };
+    if (el) el.style.transform = `translate(${x}px, ${y}px)`;
+  }, []);
+
+  const handleDragStart = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!isMobile) return;
+      // Don't start a drag from the gear button — it has its own tap (open the Choose-stats popover).
+      if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
+      // Record the drag origin FIRST so the gesture is live even if capture can't be acquired —
+      // pointer capture is a robustness boost (keeps tracking if the thumb slides off the small
+      // header), not a requirement. setPointerCapture throws if the id isn't an active pointer
+      // (e.g. synthetic events in tests), so guard it; the bubbled move/up events still drive the drag.
+      dragRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        baseX: offsetRef.current.x,
+        baseY: offsetRef.current.y,
+      };
+      try {
+        // Capture on e.currentTarget (the HEADER — where onPointerMove/onPointerUp are attached), NOT
+        // the root. When capture succeeds the browser retargets subsequent pointer events to the
+        // capture element and they no longer fire on a different child, so capturing the root would
+        // starve the header handlers and the drag would stall after the first move.
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* pointer capture unavailable — the drag still works via bubbled pointer events */
+      }
+    },
+    [isMobile],
+  );
+
+  const handleDragMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const d = dragRef.current;
+      if (!d) return;
+      const next = clampOffset(d.baseX + (e.clientX - d.startX), d.baseY + (e.clientY - d.startY));
+      applyOffset(next.x, next.y);
+    },
+    [clampOffset, applyOffset],
+  );
+
+  const handleDragEnd = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    // Release on the same element the capture was taken on (the header = e.currentTarget).
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }, []);
+
+  // Re-clamp the committed offset on resize / orientation change — a portrait-valid offset can shove
+  // the panel off-screen in landscape (844×390).
+  useEffect(() => {
+    if (!isMobile) return;
+    const onResize = (): void => {
+      const c = clampOffset(offsetRef.current.x, offsetRef.current.y);
+      applyOffset(c.x, c.y);
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, [isMobile, clampOffset, applyOffset]);
 
   // Resolve the locked actor's identity from the lookup (same id-space as playersById — the lookup
   // is built by indexing playersById[actorId], so followingActorId is a valid player key).
@@ -747,30 +872,51 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
 
   return (
     <Box
+      ref={rootRef}
       sx={{
         position: 'absolute',
         // Bottom-left, lifted clear of the transport bar (~95px) — opposite corner from the
-        // boss-health panel (top-right) and below the player-list panel (top-left).
-        left: 16,
-        bottom: 112,
+        // boss-health panel (top-right) and below the player-list panel (top-left). On mobile it
+        // lifts higher to clear BOTH the transport and the touch control cluster docked above it.
+        // Plain-px offsets (NOT env()) — the overlay container already pads for the safe area, so
+        // adding env() here would double-count and push the panel too far inboard. The bottom is
+        // DERIVED from the cluster geometry so the two can't drift into a collision.
+        left: isMobile ? 8 : 16,
+        bottom: isMobile ? MOBILE_PANEL_BOTTOM_PX : 112,
         zIndex: 3,
         px: 1.75,
         py: 1.25,
-        minWidth: 220,
-        maxWidth: 340,
+        minWidth: isMobile ? 0 : 220,
+        // Mobile: a corner CARD, never a half-screen sheet. 78vw of 844 (landscape) clamps to 320px;
+        // 78vw of 390 (portrait) ≈ 304px — both read as a card, not a panel that eats the short side.
+        maxWidth: isMobile ? 'min(78vw, 320px)' : 340,
         borderRadius: 2,
         backgroundColor: alpha(theme.palette.background.paper, 0.82),
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: `1px solid ${alpha(accent, 0.45)}`,
         boxShadow: `0 8px 26px rgba(0,0,0,0.5), 0 0 14px ${alpha(accent, 0.22)}`,
-        // The panel itself is click-through (so it doesn't block canvas drag); only the gear
-        // button + its popover opt back into pointer events.
+        // The panel ROOT stays click-through on every form factor (so its empty margins never block a
+        // canvas drag); only the header (drag handle) and the gear button opt back into pointer events.
         pointerEvents: 'none',
       }}
     >
-      {/* Header: role pill + name + (optional) gear menu for choosing which sections show. */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
+      {/* Header: role pill + name + (optional) gear menu. On mobile it's also the DRAG HANDLE —
+          pointerEvents:auto + touchAction:none so a thumb-drag moves the panel (and, via pointer
+          capture, doesn't fall through to rotate the camera). Desktop header stays inert. */}
+      <Box
+        onPointerDown={isMobile ? handleDragStart : undefined}
+        onPointerMove={isMobile ? handleDragMove : undefined}
+        onPointerUp={isMobile ? handleDragEnd : undefined}
+        onPointerCancel={isMobile ? handleDragEnd : undefined}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.75,
+          mb: 1,
+          ...(isMobile ? { pointerEvents: 'auto', touchAction: 'none', cursor: 'grab' } : null),
+        }}
+      >
         <Box
           component="span"
           sx={{
@@ -805,6 +951,9 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
             <IconButton
               aria-label="Choose which stats to show"
               size="small"
+              // data-no-drag: on mobile the header is a drag handle; pointer-down here must NOT start
+              // a drag, so the drag handler bails when the target is inside this button.
+              data-no-drag
               onClick={(e) => setMenuAnchor(e.currentTarget)}
               sx={{
                 pointerEvents: 'auto',
@@ -819,54 +968,83 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         )}
       </Box>
 
-      {visible.hero && (
-        <PlayerStatsContent
-          playerId={followingActorId}
-          role={role}
-          fightStartTime={fightStartTime}
-          accent={accent}
-          timeRef={timeRef}
-        />
-      )}
+      {/* Body — on mobile a scrollable region (pan-y) so a long DPS panel (hero+DR+buffs+debuffs+
+          abilities+caveat) is reachable without the panel running off-screen. The height cap lives
+          HERE (not on the root, which must stay click-through) and SHRINKS in landscape where the
+          vertical axis is scarce. Desktop renders the body bare — no wrapper styling, no cap. */}
+      <Box
+        sx={
+          isMobile
+            ? {
+                pointerEvents: 'auto',
+                overflowY: 'auto',
+                touchAction: 'pan-y',
+                WebkitOverflowScrolling: 'touch',
+                // Portrait: cap to a comfortable fraction; landscape (short viewport): tighter so the
+                // card never exceeds the ~390px short side. Both leave the header always visible.
+                // Landscape (short viewport): the panel rests at bottom:MOBILE_PANEL_BOTTOM_PX and
+                // must also clear the top band, so the body cap is derived from the actually-available
+                // vertical space (≈ 100vh − rest-bottom − top-reserve − header/padding) — NOT a flat
+                // fraction, which let the panel exceed the 390px short side and clip off the top.
+                // Portrait has ample height, so a comfortable 40vh fraction is fine there.
+                maxHeight: shortViewport
+                  ? `calc(100vh - ${MOBILE_PANEL_BOTTOM_PX + 72 + 64}px)`
+                  : '40vh',
+              }
+            : undefined
+        }
+      >
+        {visible.hero && (
+          <PlayerStatsContent
+            playerId={followingActorId}
+            role={role}
+            fightStartTime={fightStartTime}
+            accent={accent}
+            timeRef={timeRef}
+          />
+        )}
 
-      {role === 'tank' && visible.dr && (
-        <TankDamageReduction
-          playerId={followingActorId}
-          fightStartTime={fightStartTime}
-          timeRef={timeRef}
-        />
-      )}
+        {role === 'tank' && visible.dr && (
+          <TankDamageReduction
+            playerId={followingActorId}
+            fightStartTime={fightStartTime}
+            timeRef={timeRef}
+          />
+        )}
 
-      {visible.buffs && (
-        <BuffUptimeList
-          playerId={followingActorId}
-          fightStartTime={fightStartTime}
-          timeRef={timeRef}
-        />
-      )}
+        {visible.buffs && (
+          <BuffUptimeList
+            playerId={followingActorId}
+            fightStartTime={fightStartTime}
+            timeRef={timeRef}
+          />
+        )}
 
-      {visible.debuffs && (
-        <DebuffUptimeList
-          playerId={followingActorId}
-          fightStartTime={fightStartTime}
-          timeRef={timeRef}
-        />
-      )}
+        {visible.debuffs && (
+          <DebuffUptimeList
+            playerId={followingActorId}
+            fightStartTime={fightStartTime}
+            timeRef={timeRef}
+          />
+        )}
 
-      {role === 'dps' && visible.abilities && (
-        <AbilityBreakdownList
-          playerId={followingActorId}
-          fightStartTime={fightStartTime}
-          timeRef={timeRef}
-          accent={accent}
-        />
-      )}
+        {role === 'dps' && visible.abilities && (
+          <AbilityBreakdownList
+            playerId={followingActorId}
+            fightStartTime={fightStartTime}
+            timeRef={timeRef}
+            accent={accent}
+          />
+        )}
 
-      {tankCaveat && (
-        <Typography sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}>
-          {tankCaveat}
-        </Typography>
-      )}
+        {tankCaveat && (
+          <Typography
+            sx={{ mt: 0.75, fontSize: '0.58rem', color: 'text.disabled', lineHeight: 1.2 }}
+          >
+            {tankCaveat}
+          </Typography>
+        )}
+      </Box>
 
       {onSectionsChange && (
         <Popover
