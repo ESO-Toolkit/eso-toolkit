@@ -979,7 +979,14 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
                 WebkitOverflowScrolling: 'touch',
                 // Portrait: cap to a comfortable fraction; landscape (short viewport): tighter so the
                 // card never exceeds the ~390px short side. Both leave the header always visible.
-                maxHeight: shortViewport ? 'calc(100vh - 152px)' : '40vh',
+                // Landscape (short viewport): the panel rests at bottom:MOBILE_PANEL_BOTTOM_PX and
+                // must also clear the top band, so the body cap is derived from the actually-available
+                // vertical space (≈ 100vh − rest-bottom − top-reserve − header/padding) — NOT a flat
+                // fraction, which let the panel exceed the 390px short side and clip off the top.
+                // Portrait has ample height, so a comfortable 40vh fraction is fine there.
+                maxHeight: shortViewport
+                  ? `calc(100vh - ${MOBILE_PANEL_BOTTOM_PX + 72 + 64}px)`
+                  : '40vh',
               }
             : undefined
         }
