@@ -86,14 +86,21 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // initialPrefs/storedPrefs are a one-time mount snapshot used only to seed the state below.
   const { initialPrefs, storedPrefs, persistPrefs } = useReplayPrefs();
 
+  // Mobile detection — the single seam every mobile-only branch gates on. Desktop = false, so all
+  // the mobile paths are dead on desktop and behavior is byte-identical to before.
+  const isMobile = useIsMobileReplay();
+
   // Player path visualization state
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<number>>(
     new Set(initialSelectedPlayerIds),
   );
   // Seed from the stored pref when present, else the showPlayerPaths prop (the feature default).
   // `?? prop` (not initialPrefs) so an explicit prop still wins when the user has never toggled.
+  // On mobile the player list starts CLOSED regardless: it's a wide power-user overlay that would
+  // otherwise dominate the narrow immersive view on open (the user can toggle it on from the mobile
+  // control cluster). Desktop is unaffected.
   const [showPlayerPathsHUD, setShowPlayerPathsHUD] = useState(
-    storedPrefs.showPlayerPaths ?? showPlayerPaths,
+    isMobile ? false : (storedPrefs.showPlayerPaths ?? showPlayerPaths),
   );
   const [showPlayerTrails, setShowPlayerTrails] = useState(
     storedPrefs.showTrails ?? showPlayerPaths,
@@ -339,10 +346,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setFollowingActor(null);
   }, [setFollowingActor]);
 
-  // Mobile detection — the single seam every mobile-only branch gates on. Desktop = false, so all
-  // the mobile paths below are dead on desktop and behavior is byte-identical to before.
-  const isMobile = useIsMobileReplay();
-
   // Fullscreen the whole replay block (canvas + overlays + the docked control bar, all of which live
   // inside replayContainerRef). Toggled by the button in Arena3D's cluster and the `f` key.
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -390,14 +393,22 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Persist FightReplay3D's pref slice (speed + path/trail toggles + bar-collapsed) whenever it
   // changes. The hook does a read-merge-write so this never clobbers the names/performance slice
   // Arena3D persists.
+  //
+  // On mobile we DON'T persist the path/trail/bar toggles: those are seeded for the mobile session
+  // (player list forced closed, etc.) and writing them back would clobber the user's desktop prefs.
+  // Speed is fine to share across form factors, so it's always persisted.
   useEffect(() => {
-    persistPrefs({
-      playbackSpeed,
-      showPlayerPaths: showPlayerPathsHUD,
-      showTrails: showPlayerTrails,
-      barCollapsed: !barVisible,
-    });
-  }, [persistPrefs, playbackSpeed, showPlayerPathsHUD, showPlayerTrails, barVisible]);
+    persistPrefs(
+      isMobile
+        ? { playbackSpeed }
+        : {
+            playbackSpeed,
+            showPlayerPaths: showPlayerPathsHUD,
+            showTrails: showPlayerTrails,
+            barCollapsed: !barVisible,
+          },
+    );
+  }, [persistPrefs, isMobile, playbackSpeed, showPlayerPathsHUD, showPlayerTrails, barVisible]);
 
   // Manual collapse toggle (C key + the bar's chevron / restore caret). Works in any mode.
   const toggleBar = useCallback(() => setBarVisible((v) => !v), []);
