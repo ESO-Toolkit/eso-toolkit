@@ -247,17 +247,25 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         />
 
         {/* Row 2: a short control row — timecode + speed (left) · transport (center) ·
-            share + collapse (right). Small controls so the whole bar stays thin. */}
+            share + collapse (right). Small controls so the whole bar stays thin. On very narrow
+            phones the left group (timecode + speed) was wide enough to push the centered transport
+            cluster into the speed pill, so tighten the inner gaps and shrink the "/ total" readout
+            there to give the centered orb room. */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             gap: TRANSPORT_SPACING.sectionGapCompact,
             minHeight: 44,
+            '@media (max-width: 430px)': {
+              '& .transport-side': { gap: 0.5 },
+              '& .transport-total-time': { display: 'none' },
+            },
           }}
         >
           {/* Left: timecode + speed */}
           <Box
+            className="transport-side"
             sx={{ flex: '1 1 0', display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}
           >
             <Box
@@ -277,6 +285,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               </Box>
               <Box
                 component="span"
+                className="transport-total-time"
                 sx={{ fontSize: '0.72rem', color: 'text.secondary', fontWeight: 500 }}
               >
                 / {formatTime(duration)}
@@ -304,6 +313,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
 
           {/* Right: share + collapse chevron */}
           <Box
+            className="transport-side"
             sx={{
               flex: '1 1 0',
               display: 'flex',
