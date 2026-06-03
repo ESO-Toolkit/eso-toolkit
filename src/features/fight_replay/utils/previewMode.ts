@@ -20,7 +20,10 @@ export type ReplayPreviewMode = 'static' | 'animated';
  * Reduced-motion ALWAYS wins (accessibility) and the low tier falls back to static (perf); only a
  * capable device with motion allowed gets the animated preview.
  */
-export function decidePreviewMode(tier: PerfTier, prefersReducedMotion: boolean): ReplayPreviewMode {
+export function decidePreviewMode(
+  tier: PerfTier,
+  prefersReducedMotion: boolean,
+): ReplayPreviewMode {
   if (prefersReducedMotion) return 'static';
   if (tier === 'low') return 'static';
   return 'animated';
