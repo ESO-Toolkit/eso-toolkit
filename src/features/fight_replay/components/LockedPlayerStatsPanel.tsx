@@ -768,8 +768,6 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
       if (!isMobile) return;
       // Don't start a drag from the gear button — it has its own tap (open the Choose-stats popover).
       if ((e.target as HTMLElement).closest('[data-no-drag]')) return;
-      const el = rootRef.current;
-      if (!el) return;
       // Record the drag origin FIRST so the gesture is live even if capture can't be acquired —
       // pointer capture is a robustness boost (keeps tracking if the thumb slides off the small
       // header), not a requirement. setPointerCapture throws if the id isn't an active pointer
@@ -781,7 +779,11 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         baseY: offsetRef.current.y,
       };
       try {
-        el.setPointerCapture(e.pointerId);
+        // Capture on e.currentTarget (the HEADER — where onPointerMove/onPointerUp are attached), NOT
+        // the root. When capture succeeds the browser retargets subsequent pointer events to the
+        // capture element and they no longer fire on a different child, so capturing the root would
+        // starve the header handlers and the drag would stall after the first move.
+        e.currentTarget.setPointerCapture(e.pointerId);
       } catch {
         /* pointer capture unavailable — the drag still works via bubbled pointer events */
       }
@@ -802,8 +804,10 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
   const handleDragEnd = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragRef.current) return;
     dragRef.current = null;
-    const el = rootRef.current;
-    if (el && el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    // Release on the same element the capture was taken on (the header = e.currentTarget).
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
   }, []);
 
   // Re-clamp the committed offset on resize / orientation change — a portrait-valid offset can shove
