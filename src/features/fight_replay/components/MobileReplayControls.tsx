@@ -7,18 +7,20 @@ import LabelOff from '@mui/icons-material/LabelOff';
 import People from '@mui/icons-material/People';
 import RestartAlt from '@mui/icons-material/RestartAlt';
 import Route from '@mui/icons-material/Route';
-import { Box, IconButton, Tooltip } from '@mui/material';
-import type { SystemStyleObject, Theme } from '@mui/system';
-import React from 'react';
+import Tune from '@mui/icons-material/Tune';
+import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import React, { useState } from 'react';
 
 /**
- * Touch control cluster for the mobile pseudo-fullscreen replay overlay.
+ * Touch controls for the mobile pseudo-fullscreen replay overlay.
  *
  * The desktop replay drives almost everything from the keyboard (WASD/R/G/P/T/N/J/H/F/C) plus a
- * right-edge icon stack that's laid out for a wide viewport. On a 390px phone that stack collides
- * with the transport, and the keyboard shortcuts have no touch path at all (WASD/R/G especially —
- * camera move/reset/frame-all are keydown-only). This component is the touch home for the controls
- * that actually matter on a phone, shown ONLY inside the immersive overlay (where there's room).
+ * right-edge icon stack laid out for a wide viewport — none of which works on a phone. On mobile we
+ * surface just the controls that matter, but DON'T cram them into the bottom: a 7-button strip docked
+ * right above the transport made the bottom of the overlay read as a squished pile of bands. Instead a
+ * single bottom-corner "tools" button opens a sheet of toggles, leaving the bottom edge as clean
+ * playback (scrub rail + transport). Shown ONLY inside the immersive overlay.
  *
  * Camera reset (R) and frame-all (G) have no callable handle — they live as window keydown handlers
  * in CameraResetControls (they need the in-Canvas three camera). We bridge to them by dispatching a
@@ -50,15 +52,16 @@ export interface MobileReplayControlsProps {
   onToggleStats: () => void;
 }
 
-/** Shared sx for the round glass toggle buttons so the row reads as one control cluster. */
-const toggleSx = (active: boolean): SystemStyleObject<Theme> => ({
-  color: active ? 'white' : 'rgba(255,255,255,0.6)',
-  backgroundColor: active ? 'rgba(20,30,68,0.92)' : 'rgba(0,0,0,0.6)',
-  border: active ? '1px solid rgba(148,210,255,0.5)' : '1px solid rgba(255,255,255,0.12)',
-  width: 44,
-  height: 44,
-  '&:hover': { backgroundColor: 'rgba(20,30,68,0.98)' },
-});
+/** A row in the tools sheet. `closesOnTap` items open another on-screen panel, so the sheet dismisses
+ *  itself after the tap (otherwise it would sit on top of the panel it just opened). */
+interface ToolItem {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  active: boolean;
+  onTap: () => void;
+  closesOnTap?: boolean;
+}
 
 export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
   onClose,
@@ -74,6 +77,78 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
   statsPanelEnabled,
   onToggleStats,
 }) => {
+  // The tools sheet anchor — null = closed.
+  const [toolsAnchor, setToolsAnchor] = useState<HTMLElement | null>(null);
+  const toolsOpen = Boolean(toolsAnchor);
+
+  // The toggles, in sheet order. Players (top-left list) and Stats (bottom-left panel) open other
+  // surfaces, so tapping them dismisses the sheet so it doesn't cover what it opened.
+  const items: ToolItem[] = [
+    {
+      key: 'players',
+      label: showPlayerList ? 'Hide players' : 'Show players',
+      icon: <People fontSize="small" />,
+      active: showPlayerList,
+      onTap: onTogglePlayerList,
+      closesOnTap: true,
+    },
+    {
+      key: 'trails',
+      label: showTrails ? 'Hide trails' : 'Show trails',
+      icon: <Route fontSize="small" />,
+      active: showTrails,
+      onTap: onToggleTrails,
+    },
+    {
+      key: 'names',
+      label: namesEnabled ? 'Hide name tags' : 'Show name tags',
+      icon: namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />,
+      active: namesEnabled,
+      onTap: onToggleNames,
+    },
+    {
+      key: 'reset',
+      label: 'Reset view',
+      icon: <RestartAlt fontSize="small" />,
+      active: false,
+      onTap: () => pressKey('r'),
+      closesOnTap: true,
+    },
+    {
+      key: 'frame',
+      label: 'Frame all',
+      icon: <CenterFocusStrong fontSize="small" />,
+      active: false,
+      onTap: () => pressKey('g'),
+      closesOnTap: true,
+    },
+    // Stats only while following a player (mirrors the desktop J-key button condition).
+    ...(following
+      ? [
+          {
+            key: 'stats',
+            label: statsPanelEnabled ? 'Hide player stats' : 'Show player stats',
+            icon: <Insights fontSize="small" />,
+            active: statsPanelEnabled,
+            onTap: onToggleStats,
+            closesOnTap: true,
+          } as ToolItem,
+        ]
+      : []),
+    {
+      key: 'perf',
+      label: performanceMode ? 'Performance mode on' : 'Performance mode',
+      icon: <Bolt fontSize="small" />,
+      active: performanceMode,
+      onTap: onTogglePerformance,
+    },
+  ];
+
+  const handleTap = (item: ToolItem): void => {
+    item.onTap();
+    if (item.closesOnTap) setToolsAnchor(null);
+  };
+
   return (
     <>
       {/* Prominent Close — top-right, thumb-reachable. iOS Safari has no Escape key and the desktop
@@ -100,109 +175,71 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
         </IconButton>
       </Tooltip>
 
-      {/* Toggle row — a single horizontally-scrollable strip sitting ABOVE the transport (which docks
-          at the very bottom). Raised to clear the transport band + the home-indicator safe area. The
-          frame is pointer-events:none so its gaps never steal a camera drag; only the buttons take input. */}
-      <Box
-        sx={{
-          position: 'absolute',
-          // Plain px (NOT env()) — the overlay container already pads for the safe area. bottom:96
-          // matches MOBILE_CLUSTER_BOTTOM_PX in LockedPlayerStatsPanel (the stats panel derives its
-          // resting offset from this so the two never collide).
-          left: 8,
-          right: 8,
-          bottom: 96,
-          display: 'flex',
-          gap: 1,
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-          pointerEvents: 'none',
-          '& > *': { pointerEvents: 'auto' },
+      {/* Tools button — a single bottom-RIGHT affordance (thumb zone, clear of the bottom-left stats
+          panel and the contested top). Opens the toggles sheet. Sits ABOVE the transport so the bottom
+          edge stays clean playback. The active-toggle count is conveyed by the sheet, not the button. */}
+      <Tooltip title="Tools">
+        <IconButton
+          aria-label="Replay tools"
+          aria-haspopup="true"
+          aria-expanded={toolsOpen}
+          onClick={(e) => setToolsAnchor(e.currentTarget)}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            bottom: 96,
+            zIndex: 2,
+            width: 48,
+            height: 48,
+            color: toolsOpen ? 'white' : 'rgba(255,255,255,0.85)',
+            backgroundColor: toolsOpen ? 'rgba(20,30,68,0.95)' : 'rgba(0,0,0,0.65)',
+            border: '1px solid rgba(148,210,255,0.35)',
+            '&:hover': { backgroundColor: 'rgba(20,30,68,0.98)' },
+          }}
+        >
+          <Tune />
+        </IconButton>
+      </Tooltip>
+
+      {/* Toggles sheet — a compact menu anchored to the tools button. Each row is a ≥44px tap target. */}
+      <Menu
+        anchorEl={toolsAnchor}
+        open={toolsOpen}
+        onClose={() => setToolsAnchor(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: (theme) => ({
+              minWidth: 200,
+              backgroundColor: alpha(theme.palette.background.paper, 0.96),
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(148,210,255,0.25)',
+            }),
+          },
         }}
       >
-        <Tooltip title={showPlayerList ? 'Hide players' : 'Show players'}>
-          <IconButton
-            aria-label={showPlayerList ? 'Hide player list' : 'Show player list'}
-            aria-pressed={showPlayerList}
-            onClick={onTogglePlayerList}
-            sx={toggleSx(showPlayerList)}
+        {items.map((item) => (
+          <MenuItem
+            key={item.key}
+            onClick={() => handleTap(item)}
+            aria-pressed={item.active}
+            sx={{
+              minHeight: 44,
+              color: item.active ? 'primary.main' : 'text.primary',
+            }}
           >
-            <People fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={showTrails ? 'Hide trails' : 'Show trails'}>
-          <IconButton
-            aria-label={showTrails ? 'Hide player trails' : 'Show player trails'}
-            aria-pressed={showTrails}
-            onClick={onToggleTrails}
-            sx={toggleSx(showTrails)}
-          >
-            <Route fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title={namesEnabled ? 'Hide names' : 'Show names'}>
-          <IconButton
-            aria-label={namesEnabled ? 'Hide name tags' : 'Show name tags'}
-            aria-pressed={namesEnabled}
-            onClick={onToggleNames}
-            sx={toggleSx(namesEnabled)}
-          >
-            {namesEnabled ? <Label fontSize="small" /> : <LabelOff fontSize="small" />}
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Reset view">
-          <IconButton
-            aria-label="Reset camera view"
-            onClick={() => pressKey('r')}
-            sx={toggleSx(false)}
-          >
-            <RestartAlt fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        <Tooltip title="Frame all">
-          <IconButton
-            aria-label="Frame all actors"
-            onClick={() => pressKey('g')}
-            sx={toggleSx(false)}
-          >
-            <CenterFocusStrong fontSize="small" />
-          </IconButton>
-        </Tooltip>
-
-        {/* Stats toggle — only while following a player (mirrors the desktop J-key button condition). */}
-        {following && (
-          <Tooltip title={statsPanelEnabled ? 'Hide player stats' : 'Show player stats'}>
-            <IconButton
-              aria-label={
-                statsPanelEnabled ? 'Hide locked-player stats' : 'Show locked-player stats'
-              }
-              aria-pressed={statsPanelEnabled}
-              onClick={onToggleStats}
-              sx={toggleSx(statsPanelEnabled)}
+            <ListItemIcon
+              sx={{ color: item.active ? 'primary.main' : 'text.secondary', minWidth: 36 }}
             >
-              <Insights fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-
-        <Tooltip title={performanceMode ? 'Performance mode on' : 'Performance mode'}>
-          <IconButton
-            aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
-            aria-pressed={performanceMode}
-            onClick={onTogglePerformance}
-            sx={[
-              toggleSx(performanceMode),
-              { color: performanceMode ? '#fcd34d' : 'rgba(255,255,255,0.6)' },
-            ]}
-          >
-            <Bolt fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText slotProps={{ primary: { sx: { fontSize: '0.9rem' } } }}>
+              {item.label}
+            </ListItemText>
+          </MenuItem>
+        ))}
+      </Menu>
     </>
   );
 };

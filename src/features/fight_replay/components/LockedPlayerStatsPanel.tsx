@@ -91,16 +91,15 @@ import { getPlayerInfo } from '../utils/pathUtils';
 
 type Role = 'tank' | 'healer' | 'dps';
 
-// Mobile layout constants, shared so the panel's resting bottom offset is DERIVED from the control
-// cluster's geometry (not a hand-tuned magic number that drifts apart from it). The cluster docks at
-// `bottom: MOBILE_CLUSTER_BOTTOM_PX` and its buttons are `MOBILE_CLUSTER_HEIGHT_PX` tall; the panel
-// sits a clearance above that. Mirror MobileReplayControls if those change.
-const MOBILE_CLUSTER_BOTTOM_PX = 96;
-const MOBILE_CLUSTER_HEIGHT_PX = 44;
-const MOBILE_PANEL_CLEARANCE_PX = 24;
-// Resting distance of the panel's bottom edge from the viewport bottom on mobile (clears the cluster).
-const MOBILE_PANEL_BOTTOM_PX =
-  MOBILE_CLUSTER_BOTTOM_PX + MOBILE_CLUSTER_HEIGHT_PX + MOBILE_PANEL_CLEARANCE_PX; // 164
+// Mobile layout: the panel is bottom-LEFT and now only has to clear the docked TRANSPORT bar at the
+// bottom edge (the old 7-button toggle cluster that used to sit above the transport was moved into a
+// bottom-RIGHT tools sheet, so there's no cluster band on the left anymore). Reserve the transport
+// band height plus a small clearance. (The tools button lives bottom-right and never overlaps the
+// left side, so it isn't in this calc.)
+const MOBILE_TRANSPORT_BAND_PX = 96;
+const MOBILE_PANEL_CLEARANCE_PX = 16;
+// Resting distance of the panel's bottom edge from the viewport bottom on mobile (clears the transport).
+const MOBILE_PANEL_BOTTOM_PX = MOBILE_TRANSPORT_BAND_PX + MOBILE_PANEL_CLEARANCE_PX; // 112
 
 interface LockedPlayerStatsPanelProps {
   /** The currently-followed actor id, or null when not following. */
@@ -736,7 +735,7 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
   );
 
   // Clamp the committed offset so the panel's rect stays fully on-screen given its bottom-left anchor.
-  // Reserves the top band (Close + boss panel) and the bottom band (control cluster + transport).
+  // Reserves the top band (Close + boss panel) and the bottom band (the docked transport bar).
   const clampOffset = useCallback((x: number, y: number): { x: number; y: number } => {
     const el = rootRef.current;
     if (!el) return { x, y };
@@ -747,7 +746,7 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
     const baseLeft = rect.left - offsetRef.current.x;
     const baseTop = rect.top - offsetRef.current.y;
     const TOP_RESERVE = 72; // clear the top-right Close / boss stack band
-    const BOTTOM_RESERVE = MOBILE_CLUSTER_BOTTOM_PX; // clear the control cluster + transport
+    const BOTTOM_RESERVE = MOBILE_TRANSPORT_BAND_PX; // clear the docked transport bar
     const minX = 8 - baseLeft;
     const maxX = vw - 8 - rect.width - baseLeft;
     const minY = TOP_RESERVE - baseTop;
