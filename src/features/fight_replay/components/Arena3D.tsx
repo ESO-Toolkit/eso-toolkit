@@ -1264,25 +1264,50 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             label={
               <Box
                 component="span"
-                sx={{ display: 'inline-flex', alignItems: 'baseline', gap: 0.5 }}
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: 0.5,
+                  minWidth: 0,
+                  overflow: 'hidden',
+                }}
               >
-                <Box component="span" sx={{ color: 'rgba(226,232,240,0.7)', fontSize: '0.7rem' }}>
+                <Box
+                  component="span"
+                  sx={{ color: 'rgba(226,232,240,0.7)', fontSize: '0.7rem', flexShrink: 0 }}
+                >
                   Following
                 </Box>
-                <Box component="span" sx={{ fontWeight: 700 }}>
+                <Box
+                  component="span"
+                  sx={{
+                    fontWeight: 700,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    minWidth: 0,
+                  }}
+                >
                   {followingActorName}
                 </Box>
               </Box>
             }
             aria-label="Unlock camera from actor"
             onDelete={handleUnlockCamera}
+            // On mobile the whole pill unlocks on tap (a 44px touch target beats the tiny delete glyph).
+            // handleUnlockCamera is idempotent, so a body tap + the delete-icon tap can't conflict.
+            onClick={mobileImmersive ? handleUnlockCamera : undefined}
             deleteIcon={<LockOpen />}
             sx={(theme) => ({
               position: 'absolute',
               top: 16,
               left: '50%',
               transform: 'translateX(-50%)',
-              height: 32,
+              // Mobile: 44px tall (touch minimum) and capped wide enough to clear the top-right Close
+              // button (~56px in from the right), with the name ellipsizing instead of overflowing.
+              height: mobileImmersive ? 44 : 32,
+              maxWidth: mobileImmersive ? 'calc(100vw - 120px)' : 'none',
+              zIndex: mobileImmersive ? 3 : undefined,
               color: '#e2e8f0',
               backgroundColor: 'rgba(13, 20, 48, 0.82)',
               backdropFilter: 'blur(10px)',
@@ -1294,7 +1319,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
               '& .MuiChip-icon': { color: theme.palette.primary.main, ml: 0.75 },
               '& .MuiChip-deleteIcon': {
                 color: 'rgba(226,232,240,0.6)',
-                fontSize: '1.05rem',
+                fontSize: mobileImmersive ? '1.4rem' : '1.05rem',
+                ...(mobileImmersive ? { padding: '6px', marginRight: '4px' } : null),
                 '&:hover': { color: theme.palette.primary.main },
               },
             })}

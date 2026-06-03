@@ -211,8 +211,10 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
     <Box
       sx={{
         position: 'absolute',
-        top: isMobile ? 'calc(env(safe-area-inset-top) + 8px)' : 16,
-        left: isMobile ? 'calc(env(safe-area-inset-left) + 8px)' : 16,
+        // Plain px (NOT env()) on mobile — the overlay container already pads for the safe area, so
+        // adding env() here too would double-count and push the panel too far inboard.
+        top: isMobile ? 8 : 16,
+        left: isMobile ? 8 : 16,
         width: 232,
         maxWidth: 'calc(100% - 32px)',
         // Cap to the arena viewport MINUS the top margin and the reserved transport band (plus the

@@ -84,8 +84,10 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
           onClick={onClose}
           sx={{
             position: 'absolute',
-            top: 'calc(env(safe-area-inset-top) + 8px)',
-            right: 'calc(env(safe-area-inset-right) + 8px)',
+            // Plain px (NOT env()) — the overlay container already pads for the safe area; adding
+            // env() here too would double-count and push the button too far inboard.
+            top: 8,
+            right: 8,
             zIndex: 2,
             color: 'white',
             backgroundColor: 'rgba(0,0,0,0.65)',
@@ -104,9 +106,12 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
       <Box
         sx={{
           position: 'absolute',
-          left: 'calc(env(safe-area-inset-left) + 8px)',
-          right: 'calc(env(safe-area-inset-right) + 8px)',
-          bottom: 'calc(env(safe-area-inset-bottom) + 96px)',
+          // Plain px (NOT env()) — the overlay container already pads for the safe area. bottom:96
+          // matches MOBILE_CLUSTER_BOTTOM_PX in LockedPlayerStatsPanel (the stats panel derives its
+          // resting offset from this so the two never collide).
+          left: 8,
+          right: 8,
+          bottom: 96,
           display: 'flex',
           gap: 1,
           justifyContent: 'center',
