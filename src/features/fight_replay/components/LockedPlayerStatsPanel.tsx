@@ -105,6 +105,12 @@ interface LockedPlayerStatsPanelProps {
   sections?: StatsPanelSections;
   /** Persist a sections change (from the panel's gear menu). Omitted → the gear menu is hidden. */
   onSectionsChange?: (next: StatsPanelSections) => void;
+  /**
+   * True inside the mobile pseudo-fullscreen overlay. The panel then lifts above the touch control
+   * cluster (which docks above the transport) and caps its width/height to the narrow viewport,
+   * instead of the desktop bottom:112 / maxWidth:340 that would overlap the cluster on a phone.
+   */
+  isMobile?: boolean;
 }
 
 /** A section the gear menu can toggle, paired with the roles it's relevant to. */
@@ -695,6 +701,7 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
   fightStartTime,
   sections,
   onSectionsChange,
+  isMobile = false,
 }) => {
   const theme = useTheme();
 
@@ -750,14 +757,18 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
       sx={{
         position: 'absolute',
         // Bottom-left, lifted clear of the transport bar (~95px) — opposite corner from the
-        // boss-health panel (top-right) and below the player-list panel (top-left).
-        left: 16,
-        bottom: 112,
+        // boss-health panel (top-right) and below the player-list panel (top-left). On mobile it
+        // lifts higher to clear BOTH the transport and the touch control cluster docked above it,
+        // honors the bottom/left safe-area insets, and caps its width to the narrow viewport.
+        left: isMobile ? 'calc(env(safe-area-inset-left) + 8px)' : 16,
+        bottom: isMobile ? 'calc(env(safe-area-inset-bottom) + 152px)' : 112,
         zIndex: 3,
         px: 1.75,
         py: 1.25,
-        minWidth: 220,
-        maxWidth: 340,
+        minWidth: isMobile ? 0 : 220,
+        maxWidth: isMobile ? 'calc(100vw - 16px)' : 340,
+        maxHeight: isMobile ? '40vh' : undefined,
+        overflowY: isMobile ? 'auto' : undefined,
         borderRadius: 2,
         backgroundColor: alpha(theme.palette.background.paper, 0.82),
         backdropFilter: 'blur(10px)',

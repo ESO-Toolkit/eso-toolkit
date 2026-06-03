@@ -402,6 +402,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Manual collapse toggle (C key + the bar's chevron / restore caret). Works in any mode.
   const toggleBar = useCallback(() => setBarVisible((v) => !v), []);
 
+  // Stable toggles for the mobile control cluster (mirror the P / T keyboard shortcuts). Memoized so
+  // they don't break Arena3D's React.memo on every render.
+  const togglePlayerPathsHUD = useCallback(() => setShowPlayerPathsHUD((prev) => !prev), []);
+  const toggleTrails = useCallback(() => setShowPlayerTrails((prev) => !prev), []);
+
   // Fullscreen cinema auto-hide. Two halves:
   //  1. Reveal on pointer/touch activity over the OUTER container (replayContainerRef — it is
   //     pointer-events:auto; the inner positioning frame is pointer-events:none so a listener
@@ -650,6 +655,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onPlayerSelectionChange={setSelectedPlayerIds}
           showPlayerPathsHUD={showPlayerPathsHUD}
           showPlayerTrails={showPlayerTrails}
+          onTogglePlayerPathsHUD={togglePlayerPathsHUD}
+          onToggleTrails={toggleTrails}
           // When the bar is hidden in fullscreen, only the hairline occludes the bottom, so the
           // overlay panels can grow nearly full-height; otherwise reserve the full bar band.
           reservedInset={isImmersive && !barVisible ? HAIRLINE_H + 4 : TRANSPORT_RESERVED}

@@ -42,6 +42,7 @@ import { BossHealthPanel } from './BossHealthPanel';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
 import { MarkerSpritePreview } from './MarkerSpritePreview';
+import { MobileReplayControls } from './MobileReplayControls';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
 import { ReplayErrorBoundary } from './ReplayErrorBoundary';
@@ -116,6 +117,10 @@ interface Arena3DProps {
   showPlayerPathsHUD?: boolean;
   /** Whether to show player trail paths */
   showPlayerTrails?: boolean;
+  /** Toggle the player-paths HUD (the P key on desktop) — used by the mobile control cluster. */
+  onTogglePlayerPathsHUD?: () => void;
+  /** Toggle player trails (the T key on desktop) — used by the mobile control cluster. */
+  onToggleTrails?: () => void;
   /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
   isFullscreen?: boolean;
   /** Toggle fullscreen of the whole replay block (owned by FightReplay3D, which holds the target ref). */
@@ -156,6 +161,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onPlayerSelectionChange,
   showPlayerPathsHUD = false,
   showPlayerTrails = false,
+  onTogglePlayerPathsHUD,
+  onToggleTrails,
   reservedInset,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
@@ -865,7 +872,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         {/* Boss health — DOM overlay (top-right), crisp + theme-styled. Always shown when
             bosses with health are present. Hidden in the mobile inline preview (the teaser stays
             uncluttered); it returns inside the pseudo-fullscreen interactive mode. */}
-        {!mobilePreview && <BossHealthPanel lookup={lookup} timeRef={timeRef} />}
+        {!mobilePreview && (
+          <BossHealthPanel lookup={lookup} timeRef={timeRef} isMobile={mobileImmersive} />
+        )}
 
         {/* Locked-player stats — DOM overlay (bottom-left), shown only while following a player.
             Role-aware up-to-playhead readout (DPS / healer / tank), reusing the fight-insights
@@ -882,6 +891,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             fightDurationMs={fight.endTime - fight.startTime}
             sections={statsPanelSections}
             onSectionsChange={setStatsPanelSections}
+            isMobile={mobileImmersive}
           />
         )}
 
@@ -900,6 +910,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             playerColorOverrides={playerColorOverrides}
             onPlayerColorChange={handlePlayerColorChange}
             reservedInset={reservedInset}
+            isMobile={mobileImmersive}
           />
         )}
 
@@ -1289,6 +1300,26 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             })}
           />
         </Tooltip>
+      )}
+
+      {/* Mobile touch control cluster — only inside the immersive overlay, where there's room. Gives
+          the keyboard-only controls (P/T/N/R/G/J + perf) a touch home and the only way out (Close),
+          since the desktop right-edge stack and the F-key are unavailable on a phone. */}
+      {mobileImmersive && (
+        <MobileReplayControls
+          onClose={() => onToggleFullscreen?.()}
+          showPlayerList={showPlayerPathsHUD}
+          onTogglePlayerList={() => onTogglePlayerPathsHUD?.()}
+          showTrails={showPlayerTrails}
+          onToggleTrails={() => onToggleTrails?.()}
+          namesEnabled={namesEnabled}
+          onToggleNames={() => setNamesEnabled((prev) => !prev)}
+          performanceMode={performanceMode}
+          onTogglePerformance={() => setPerformanceMode((prev) => !prev)}
+          following={followingActorId != null}
+          statsPanelEnabled={statsPanelEnabled}
+          onToggleStats={() => setStatsPanelEnabled((prev) => !prev)}
+        />
       )}
     </div>
   );

@@ -29,6 +29,12 @@ import {
 interface BossHealthPanelProps {
   lookup: TimestampPositionLookup | null;
   timeRef: React.RefObject<number> | { current: number };
+  /**
+   * True inside the mobile pseudo-fullscreen overlay. The panel then drops below the overlay's
+   * top-right Close button (which shares the top-right corner) and respects the top/right safe-area
+   * insets, instead of sitting at the desktop top:16 right:16 where it would collide with Close.
+   */
+  isMobile?: boolean;
 }
 
 const MAX_BOSSES = 4;
@@ -51,7 +57,11 @@ function healthColor(theme: Theme, pct: number): string {
   return theme.palette.error.main;
 }
 
-export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRef }) => {
+export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
+  lookup,
+  timeRef,
+  isMobile = false,
+}) => {
   const theme = useTheme();
 
   // The boss SET (identity + names). Only changes when a boss appears or dies, so this drives
@@ -144,10 +154,12 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({ lookup, timeRe
     <Box
       sx={{
         position: 'absolute',
-        top: 16,
-        right: 16,
+        // Mobile overlay: drop below the top-right Close button and honor the safe-area insets so the
+        // panel never sits under the notch or behind Close. Desktop keeps the original top:16 right:16.
+        top: isMobile ? 'calc(env(safe-area-inset-top) + 64px)' : 16,
+        right: isMobile ? 'calc(env(safe-area-inset-right) + 8px)' : 16,
         width: { xs: 220, sm: 280 },
-        maxWidth: 'calc(100% - 32px)',
+        maxWidth: isMobile ? 'calc(100% - 16px)' : 'calc(100% - 32px)',
         pointerEvents: 'none',
         zIndex: 3,
       }}
