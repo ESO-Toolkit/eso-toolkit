@@ -70,6 +70,38 @@ const HIDDEN_Y = -10000;
 const HIDDEN_SCALE = 0.0001;
 const MAX_ACTOR_HOVER_DISTANCE = 1000;
 
+// Click/touch hit-proxy. Selection used to raycast the thin VISUAL geometry — the humanoid figure /
+// capsule body is only ≈0.11 world-unit radius, so the hit target is a sliver and a finger almost
+// always misses (the "tricky and hard to select" report). Instead, every actor gets an INVISIBLE
+// fat cylinder spanning ground→over-head that is the sole click/hover target; the visual layers no
+// longer carry pointer handlers. The proxy must be invisible-but-raycastable: R3F's event layer
+// filters `visible:false` meshes OUT of the pointer path, so it uses colorWrite off (draws nothing)
+// + depthWrite off (no depth contribution → no z-fighting with the visual layers) + opacity 0.
+// The ground Alt+RightClick context menu still works because the proxy registers ONLY onClick
+// (left-click/tap); the context menu is onPointerDown with button===2, and a right-click never fires
+// onClick, so with no onPointerDown handler the proxy never stopPropagation()s the right-click and it
+// reaches the ground plane behind it. (Do NOT add an onPointerDown to the proxy without re-checking
+// this — it would swallow the context menu.) Radius is generous so a fat-finger tap lands; height
+// covers head-to-toe so a tap anywhere on the column selects. In-plane separation down to ~0.1 world
+// units stays individually selectable (verify-hit-proxy.mjs Test 5); only true camera-axis stacking
+// occludes a back actor — never cleanly selectable anyway, and resolved by rotating the camera.
+const HIT_PROXY_RADIUS = 0.42; // world units; ~4× the body capsule radius for an easy touch target
+const HIT_PROXY_HEIGHT = 1.4; // world units; spans a player's full height with headroom for the glyph
+// Threat (boss/enemy) figures stand larger (THREAT_SCALE), so their proxy is scaled up to match.
+const HIT_PROXY_THREAT_MULT = 1.8;
+// Coplanar-cap tie tolerance for proxy click resolution. The proxy cylinders have FLAT top caps at
+// the same world-Y, so a near-top-down ray (the camera can tilt to ~84°, maxPolarAngle = π/2−0.1)
+// into a stacked melee pile strikes two overlapping caps at an IDENTICAL distance. three.js then
+// reports whichever instance has the lower index — selecting the wrong actor. When the nearest
+// intersections tie within this epsilon, we break the tie by which proxy CENTER is closest to the
+// click point in the horizontal (XZ) plane, i.e. the actor the tap actually landed on. The window is
+// kept tiny so it fires ONLY on a true coplanar tie and never reorders genuine front/back hits (whose
+// distances differ by far more than this), keeping clean depth-separated selection byte-identical.
+// Proven offline in .scratch/verify-tiebreak.mjs (fixes the 80–84° stacked case; non-regression on
+// distinct-depth hits). R3F keeps both tied instances in event.intersections because its dedup key
+// includes instanceId.
+const HIT_PROXY_TIE_EPS = 1e-4;
+
 // Threat (boss/enemy) figures stand large; players stay short/slim so the crowd doesn't wall off
 // the view.
 const THREAT_SCALE = 1.55;
@@ -293,6 +325,7 @@ interface FigureGeometries {
   anchorRing: THREE.RingGeometry;
   selectionRing: THREE.RingGeometry;
   tauntRing: THREE.RingGeometry;
+  hitProxy: THREE.CylinderGeometry;
 }
 
 function createFigureGeometries(scale: number, bodyHeight: number): FigureGeometries {
@@ -305,6 +338,10 @@ function createFigureGeometries(scale: number, bodyHeight: number): FigureGeomet
     anchorRing: new THREE.RingGeometry(r * 0.8, r * 1.2, 40),
     selectionRing: new THREE.RingGeometry(r * 1.6, r * 2.0, 48),
     tauntRing: new THREE.RingGeometry(r * 1.1, r * 1.4, 40),
+    // Invisible fat click/touch target. Built at unit scale (radius/height in world units, scaled
+    // and re-positioned per instance in the loop) so the proxy doesn't track `scale` — it's a
+    // generous fixed-size target, not a visual element. 8 radial segments keep its raycast cheap.
+    hitProxy: new THREE.CylinderGeometry(HIT_PROXY_RADIUS, HIT_PROXY_RADIUS, HIT_PROXY_HEIGHT, 8),
   };
 }
 
@@ -506,6 +543,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     Array.from({ length: POSE_COUNT }, () => null),
   );
   const visionRef = useRef<THREE.InstancedMesh>(null);
+  // Invisible fat click/touch target, one instance per actor; the sole hit layer (visual layers no
+  // longer carry pointer handlers). instanceId → actorId is uniform with every other layer.
+  const hitProxyRef = useRef<THREE.InstancedMesh>(null);
   const anchorRingRef = useRef<THREE.InstancedMesh>(null);
   const selectionRingRef = useRef<THREE.InstancedMesh>(null);
   const tauntRingRef = useRef<THREE.InstancedMesh>(null);
@@ -616,6 +656,22 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         toneMapped: false,
         side: THREE.DoubleSide,
       }),
+      // Invisible-but-raycastable click/touch proxy material. `visible:false` would skip raycasting
+      // in three.js, so instead we draw nothing (colorWrite off) and keep it out of the depth buffer
+      // (depthWrite off) — the mesh contributes zero pixels yet still receives pointer events. The
+      // tiny colorWrite-off draw is negligible (one extra instanced layer, 8-segment cylinders).
+      // DoubleSide is load-bearing: the camera can zoom INSIDE a proxy cylinder (minDistance drops to
+      // 0.5, and large threat/scaled proxies are several units across), and a FrontSide mesh raycasts
+      // only from the outside — a ray originating inside hits the far wall's back faces, which
+      // FrontSide culls, so the actor becomes unselectable at close zoom. DoubleSide keeps the inside
+      // wall hittable. It draws nothing extra (colorWrite is off), so the only cost is raycasting.
+      hitProxy: new THREE.MeshBasicMaterial({
+        colorWrite: false,
+        depthWrite: false,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+      }),
     }),
     [],
   );
@@ -706,6 +762,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
     o.anchorRing = setup(anchorRingRef.current, 10, true);
     o.vision = setup(visionRef.current, 11, true);
+    // The hit proxy draws nothing (colorWrite off), so it needs no per-instance opacity attribute;
+    // it just needs dynamic matrices and frustum culling off (instances move off-screen to hide).
+    setup(hitProxyRef.current, 9, false);
     o.body = setup(bodyRef.current, 12, true);
     // Every pose layer is wired identically and at the same render order as the capsule body.
     o.pose = poseRefs.current.map((mesh) => setup(mesh, 12, true));
@@ -815,6 +874,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           poseRefs.current.forEach((mesh) => hideInstance(mesh, index));
           hideInstance(capRef.current, index);
           hideInstance(visionRef.current, index);
+          hideInstance(hitProxyRef.current, index);
           hideInstance(anchorRingRef.current, index);
           hideInstance(selectionRingRef.current, index);
           hideInstance(tauntRingRef.current, index);
@@ -1006,6 +1066,26 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       obj.updateMatrix();
       visionRef.current?.setMatrixAt(index, obj.matrix);
 
+      // Invisible fat click/touch proxy — the sole hit target. A vertical cylinder centered at half
+      // its height so it spans ground→over-head; threat actors (boss/enemy) get a larger column to
+      // match their bigger figure. The unit-scale geometry is in world units. We scale it by the
+      // threat multiplier (decoupled from groupScale — the proxy is a fixed generous target, NOT tied
+      // to the player/threat visual ratio) AND by a GROW-ONLY floor on the map `scale` prop. The
+      // capsule visual geometry bakes `scale` in (0.11*scale radius, 0.55*scale body), so on small
+      // maps `scale` climbs to 4.0 and the visual capsule would outgrow a fixed proxy, leaving its
+      // upper body unclickable. `Math.max(scale, 1)` grows the proxy to cover those large figures
+      // while NEVER shrinking it below today's generous size when `scale` < 1 (default 0.8) — a raw
+      // `* scale` would shrink the target on large maps and bring back the original "impossible to
+      // click" bug. Verified in .scratch/verify-proxy-coverage.mjs. Covers humanoid players, capsule
+      // enemies, AND the boss model. Dead actors stay selectable (inspect a corpse); the loop only
+      // reaches here when visible.
+      const proxyMult = (isThreat ? HIT_PROXY_THREAT_MULT : 1) * Math.max(scale, 1);
+      obj.position.set(x, y + GROUND_LEVEL + (HIT_PROXY_HEIGHT * proxyMult) / 2, z);
+      obj.rotation.set(0, 0, 0);
+      obj.scale.setScalar(proxyMult);
+      obj.updateMatrix();
+      hitProxyRef.current?.setMatrixAt(index, obj.matrix);
+
       // Selection / taunt rings: shown only when active.
       if (selected) {
         obj.position.set(x, y + GROUND_LEVEL + 0.016, z);
@@ -1152,6 +1232,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       ...poseRefs.current,
       capRef.current,
       visionRef.current,
+      hitProxyRef.current,
       anchorRingRef.current,
       selectionRingRef.current,
       tauntRingRef.current,
@@ -1190,14 +1271,63 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   }, RenderPriority.ACTORS);
 
   // ---- Interaction (instanceId → actorId) ----
+  // Reusable scratch for the proxy tie-break (allocated once; never per click).
+  const pickScratch = useRef({ mat: new THREE.Matrix4(), center: new THREE.Vector3() });
+  // Resolve which proxy instance a pointer event selected. Normally this is just the nearest hit
+  // (event.instanceId). But flat coplanar proxy caps make a near-top-down ray into a stacked pile
+  // tie EXACTLY in distance, where three.js arbitrarily returns the lower-index instance (see
+  // HIT_PROXY_TIE_EPS). When the nearest intersections tie, pick the proxy whose center is closest to
+  // the click point in the XZ plane — the actor actually under the tap. Reads event.intersections,
+  // which R3F populates with every tied instance of this mesh (its dedup key includes instanceId).
+  const resolveProxyInstanceId = useCallback(
+    (event: {
+      instanceId?: number;
+      intersections?: ThreeEvent<PointerEvent>['intersections'];
+    }): number | undefined => {
+      const intersections = event.intersections;
+      const proxy = hitProxyRef.current;
+      if (!intersections || intersections.length === 0 || !proxy) return event.instanceId;
+      // Restrict to this proxy mesh's hits that carry an instanceId, sorted nearest-first (R3F
+      // already sorts by distance ascending).
+      const proxyHits = intersections.filter(
+        (h) => h.object === proxy && typeof h.instanceId === 'number',
+      );
+      if (proxyHits.length <= 1) return event.instanceId;
+      const nearest = proxyHits[0];
+      const tied = proxyHits.filter((h) => h.distance - nearest.distance <= HIT_PROXY_TIE_EPS);
+      if (tied.length <= 1) return nearest.instanceId;
+      const point = nearest.point;
+      const { mat, center } = pickScratch.current;
+      let bestId = tied[0].instanceId;
+      let bestDistSq = Infinity;
+      for (const hit of tied) {
+        const id = hit.instanceId;
+        if (typeof id !== 'number') continue;
+        proxy.getMatrixAt(id, mat);
+        center.setFromMatrixPosition(mat);
+        const dx = center.x - point.x;
+        const dz = center.z - point.z;
+        const distSq = dx * dx + dz * dz;
+        if (distSq < bestDistSq) {
+          bestDistSq = distSq;
+          bestId = id;
+        }
+      }
+      return bestId;
+    },
+    [],
+  );
   const getActorIdFromEvent = useCallback(
-    (event: { instanceId?: number }): number | null => {
-      const id = event.instanceId;
+    (event: {
+      instanceId?: number;
+      intersections?: ThreeEvent<PointerEvent>['intersections'];
+    }): number | null => {
+      const id = resolveProxyInstanceId(event);
       if (typeof id !== 'number' || id < 0 || id >= actorIds.length) return null;
       if (cacheRef.current[id]?.visible === false) return null;
       return actorIds[id];
     },
-    [actorIds],
+    [actorIds, resolveProxyInstanceId],
   );
   const handleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
@@ -1221,9 +1351,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     document.body.style.cursor = 'auto';
   }, []);
 
-  // The boss mesh is not instanced (no instanceId), so it selects/hovers via the tracked boss actor
-  // id instead of getActorIdFromEvent. Mirrors the capsule body's click/hover so clicking the model
-  // still follows the boss.
+  // The boss model is non-instanced (no instanceId), so it selects/hovers via the tracked boss actor
+  // id. The boss ALSO gets a fat instanced hit proxy at its actor index (the proxy loop runs for every
+  // visible actor, boss included), so it's covered twice: nearest-hit wins and both routes resolve to
+  // the same actor. Keeping the GLB handlers is belt-and-suspenders — the boss model can be visually
+  // wider than its proxy cylinder, so this guarantees no boss-selection regression.
   const handleBossClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
       const actorId = bossActorIdRef.current;
@@ -1245,21 +1377,27 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
   return (
     <>
+      {/* Invisible fat click/touch proxy — the SOLE hit target for actor selection. The visual
+          layers (body, poses, cap, anchor ring, boss model) no longer carry pointer handlers; this
+          generous cylinder per actor is what raycasts catch, so a finger no longer has to land on the
+          thin figure. instanceId → actorId is uniform with every layer, so handleClick/handleOver
+          (which read event.instanceId) resolve the right actor. */}
       <instancedMesh
-        ref={anchorRingRef}
-        args={[geometries.anchorRing, materials.anchorRing, instanceCount]}
+        ref={hitProxyRef}
+        args={[geometries.hitProxy, materials.hitProxy, instanceCount]}
         onClick={handleClick}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
+      />
+      <instancedMesh
+        ref={anchorRingRef}
+        args={[geometries.anchorRing, materials.anchorRing, instanceCount]}
       />
       <instancedMesh ref={visionRef} args={[geometries.vision, materials.vision, instanceCount]} />
       <instancedMesh
         ref={bodyRef}
         args={[geometries.body, materials.body, instanceCount]}
         castShadow
-        onClick={handleClick}
-        onPointerOver={handleOver}
-        onPointerOut={handleOut}
       />
       {poseGeometries?.map((geo, p) => (
         <instancedMesh
@@ -1269,9 +1407,6 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           }}
           args={[geo, materials.humanoid, instanceCount]}
           castShadow={!performanceMode}
-          onClick={handleClick}
-          onPointerOver={handleOver}
-          onPointerOut={handleOut}
         />
       ))}
       {/* Boss model: a single non-instanced mesh whose world matrix is written each frame in the
@@ -1291,13 +1426,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           onPointerOut={handleOut}
         />
       )}
-      <instancedMesh
-        ref={capRef}
-        args={[geometries.cap, materials.cap, instanceCount]}
-        onClick={handleClick}
-        onPointerOver={handleOver}
-        onPointerOut={handleOut}
-      />
+      <instancedMesh ref={capRef} args={[geometries.cap, materials.cap, instanceCount]} />
       <instancedMesh
         ref={selectionRingRef}
         args={[geometries.selectionRing, materials.selectionRing, instanceCount]}
