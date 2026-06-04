@@ -660,11 +660,17 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       // in three.js, so instead we draw nothing (colorWrite off) and keep it out of the depth buffer
       // (depthWrite off) — the mesh contributes zero pixels yet still receives pointer events. The
       // tiny colorWrite-off draw is negligible (one extra instanced layer, 8-segment cylinders).
+      // DoubleSide is load-bearing: the camera can zoom INSIDE a proxy cylinder (minDistance drops to
+      // 0.5, and large threat/scaled proxies are several units across), and a FrontSide mesh raycasts
+      // only from the outside — a ray originating inside hits the far wall's back faces, which
+      // FrontSide culls, so the actor becomes unselectable at close zoom. DoubleSide keeps the inside
+      // wall hittable. It draws nothing extra (colorWrite is off), so the only cost is raycasting.
       hitProxy: new THREE.MeshBasicMaterial({
         colorWrite: false,
         depthWrite: false,
         transparent: true,
         opacity: 0,
+        side: THREE.DoubleSide,
       }),
     }),
     [],
@@ -1062,12 +1068,18 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
       // Invisible fat click/touch proxy — the sole hit target. A vertical cylinder centered at half
       // its height so it spans ground→over-head; threat actors (boss/enemy) get a larger column to
-      // match their bigger figure. The unit-scale geometry is in world units, so we scale it by the
-      // threat multiplier only (NOT groupScale — the proxy is a fixed generous target, decoupled from
-      // the visual scale). Covers humanoid players, capsule enemies, AND the boss model: a tap
-      // anywhere on the column selects the actor. Hidden for dead actors? No — dead actors stay
-      // selectable (you may want to inspect a corpse), and the loop only reaches here when visible.
-      const proxyMult = isThreat ? HIT_PROXY_THREAT_MULT : 1;
+      // match their bigger figure. The unit-scale geometry is in world units. We scale it by the
+      // threat multiplier (decoupled from groupScale — the proxy is a fixed generous target, NOT tied
+      // to the player/threat visual ratio) AND by a GROW-ONLY floor on the map `scale` prop. The
+      // capsule visual geometry bakes `scale` in (0.11*scale radius, 0.55*scale body), so on small
+      // maps `scale` climbs to 4.0 and the visual capsule would outgrow a fixed proxy, leaving its
+      // upper body unclickable. `Math.max(scale, 1)` grows the proxy to cover those large figures
+      // while NEVER shrinking it below today's generous size when `scale` < 1 (default 0.8) — a raw
+      // `* scale` would shrink the target on large maps and bring back the original "impossible to
+      // click" bug. Verified in .scratch/verify-proxy-coverage.mjs. Covers humanoid players, capsule
+      // enemies, AND the boss model. Dead actors stay selectable (inspect a corpse); the loop only
+      // reaches here when visible.
+      const proxyMult = (isThreat ? HIT_PROXY_THREAT_MULT : 1) * Math.max(scale, 1);
       obj.position.set(x, y + GROUND_LEVEL + (HIT_PROXY_HEIGHT * proxyMult) / 2, z);
       obj.rotation.set(0, 0, 0);
       obj.scale.setScalar(proxyMult);
