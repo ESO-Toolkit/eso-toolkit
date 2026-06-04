@@ -70,6 +70,26 @@ const HIDDEN_Y = -10000;
 const HIDDEN_SCALE = 0.0001;
 const MAX_ACTOR_HOVER_DISTANCE = 1000;
 
+// Click/touch hit-proxy. Selection used to raycast the thin VISUAL geometry — the humanoid figure /
+// capsule body is only ≈0.11 world-unit radius, so the hit target is a sliver and a finger almost
+// always misses (the "tricky and hard to select" report). Instead, every actor gets an INVISIBLE
+// fat cylinder spanning ground→over-head that is the sole click/hover target; the visual layers no
+// longer carry pointer handlers. The proxy must be invisible-but-raycastable: R3F's event layer
+// filters `visible:false` meshes OUT of the pointer path, so it uses colorWrite off (draws nothing)
+// + depthWrite off (no depth contribution → no z-fighting with the visual layers) + opacity 0.
+// The ground Alt+RightClick context menu still works because the proxy registers ONLY onClick
+// (left-click/tap); the context menu is onPointerDown with button===2, and a right-click never fires
+// onClick, so with no onPointerDown handler the proxy never stopPropagation()s the right-click and it
+// reaches the ground plane behind it. (Do NOT add an onPointerDown to the proxy without re-checking
+// this — it would swallow the context menu.) Radius is generous so a fat-finger tap lands; height
+// covers head-to-toe so a tap anywhere on the column selects. In-plane separation down to ~0.1 world
+// units stays individually selectable (verify-hit-proxy.mjs Test 5); only true camera-axis stacking
+// occludes a back actor — never cleanly selectable anyway, and resolved by rotating the camera.
+const HIT_PROXY_RADIUS = 0.42; // world units; ~4× the body capsule radius for an easy touch target
+const HIT_PROXY_HEIGHT = 1.4; // world units; spans a player's full height with headroom for the glyph
+// Threat (boss/enemy) figures stand larger (THREAT_SCALE), so their proxy is scaled up to match.
+const HIT_PROXY_THREAT_MULT = 1.8;
+
 // Threat (boss/enemy) figures stand large; players stay short/slim so the crowd doesn't wall off
 // the view.
 const THREAT_SCALE = 1.55;
@@ -293,6 +313,7 @@ interface FigureGeometries {
   anchorRing: THREE.RingGeometry;
   selectionRing: THREE.RingGeometry;
   tauntRing: THREE.RingGeometry;
+  hitProxy: THREE.CylinderGeometry;
 }
 
 function createFigureGeometries(scale: number, bodyHeight: number): FigureGeometries {
@@ -305,6 +326,10 @@ function createFigureGeometries(scale: number, bodyHeight: number): FigureGeomet
     anchorRing: new THREE.RingGeometry(r * 0.8, r * 1.2, 40),
     selectionRing: new THREE.RingGeometry(r * 1.6, r * 2.0, 48),
     tauntRing: new THREE.RingGeometry(r * 1.1, r * 1.4, 40),
+    // Invisible fat click/touch target. Built at unit scale (radius/height in world units, scaled
+    // and re-positioned per instance in the loop) so the proxy doesn't track `scale` — it's a
+    // generous fixed-size target, not a visual element. 8 radial segments keep its raycast cheap.
+    hitProxy: new THREE.CylinderGeometry(HIT_PROXY_RADIUS, HIT_PROXY_RADIUS, HIT_PROXY_HEIGHT, 8),
   };
 }
 
@@ -506,6 +531,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     Array.from({ length: POSE_COUNT }, () => null),
   );
   const visionRef = useRef<THREE.InstancedMesh>(null);
+  // Invisible fat click/touch target, one instance per actor; the sole hit layer (visual layers no
+  // longer carry pointer handlers). instanceId → actorId is uniform with every other layer.
+  const hitProxyRef = useRef<THREE.InstancedMesh>(null);
   const anchorRingRef = useRef<THREE.InstancedMesh>(null);
   const selectionRingRef = useRef<THREE.InstancedMesh>(null);
   const tauntRingRef = useRef<THREE.InstancedMesh>(null);
@@ -616,6 +644,16 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         toneMapped: false,
         side: THREE.DoubleSide,
       }),
+      // Invisible-but-raycastable click/touch proxy material. `visible:false` would skip raycasting
+      // in three.js, so instead we draw nothing (colorWrite off) and keep it out of the depth buffer
+      // (depthWrite off) — the mesh contributes zero pixels yet still receives pointer events. The
+      // tiny colorWrite-off draw is negligible (one extra instanced layer, 8-segment cylinders).
+      hitProxy: new THREE.MeshBasicMaterial({
+        colorWrite: false,
+        depthWrite: false,
+        transparent: true,
+        opacity: 0,
+      }),
     }),
     [],
   );
@@ -706,6 +744,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
     o.anchorRing = setup(anchorRingRef.current, 10, true);
     o.vision = setup(visionRef.current, 11, true);
+    // The hit proxy draws nothing (colorWrite off), so it needs no per-instance opacity attribute;
+    // it just needs dynamic matrices and frustum culling off (instances move off-screen to hide).
+    setup(hitProxyRef.current, 9, false);
     o.body = setup(bodyRef.current, 12, true);
     // Every pose layer is wired identically and at the same render order as the capsule body.
     o.pose = poseRefs.current.map((mesh) => setup(mesh, 12, true));
@@ -815,6 +856,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           poseRefs.current.forEach((mesh) => hideInstance(mesh, index));
           hideInstance(capRef.current, index);
           hideInstance(visionRef.current, index);
+          hideInstance(hitProxyRef.current, index);
           hideInstance(anchorRingRef.current, index);
           hideInstance(selectionRingRef.current, index);
           hideInstance(tauntRingRef.current, index);
@@ -1006,6 +1048,20 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       obj.updateMatrix();
       visionRef.current?.setMatrixAt(index, obj.matrix);
 
+      // Invisible fat click/touch proxy — the sole hit target. A vertical cylinder centered at half
+      // its height so it spans ground→over-head; threat actors (boss/enemy) get a larger column to
+      // match their bigger figure. The unit-scale geometry is in world units, so we scale it by the
+      // threat multiplier only (NOT groupScale — the proxy is a fixed generous target, decoupled from
+      // the visual scale). Covers humanoid players, capsule enemies, AND the boss model: a tap
+      // anywhere on the column selects the actor. Hidden for dead actors? No — dead actors stay
+      // selectable (you may want to inspect a corpse), and the loop only reaches here when visible.
+      const proxyMult = isThreat ? HIT_PROXY_THREAT_MULT : 1;
+      obj.position.set(x, y + GROUND_LEVEL + (HIT_PROXY_HEIGHT * proxyMult) / 2, z);
+      obj.rotation.set(0, 0, 0);
+      obj.scale.setScalar(proxyMult);
+      obj.updateMatrix();
+      hitProxyRef.current?.setMatrixAt(index, obj.matrix);
+
       // Selection / taunt rings: shown only when active.
       if (selected) {
         obj.position.set(x, y + GROUND_LEVEL + 0.016, z);
@@ -1152,6 +1208,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       ...poseRefs.current,
       capRef.current,
       visionRef.current,
+      hitProxyRef.current,
       anchorRingRef.current,
       selectionRingRef.current,
       tauntRingRef.current,
@@ -1221,9 +1278,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
     document.body.style.cursor = 'auto';
   }, []);
 
-  // The boss mesh is not instanced (no instanceId), so it selects/hovers via the tracked boss actor
-  // id instead of getActorIdFromEvent. Mirrors the capsule body's click/hover so clicking the model
-  // still follows the boss.
+  // The boss model is non-instanced (no instanceId), so it selects/hovers via the tracked boss actor
+  // id. The boss ALSO gets a fat instanced hit proxy at its actor index (the proxy loop runs for every
+  // visible actor, boss included), so it's covered twice: nearest-hit wins and both routes resolve to
+  // the same actor. Keeping the GLB handlers is belt-and-suspenders — the boss model can be visually
+  // wider than its proxy cylinder, so this guarantees no boss-selection regression.
   const handleBossClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
       const actorId = bossActorIdRef.current;
@@ -1245,21 +1304,27 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
 
   return (
     <>
+      {/* Invisible fat click/touch proxy — the SOLE hit target for actor selection. The visual
+          layers (body, poses, cap, anchor ring, boss model) no longer carry pointer handlers; this
+          generous cylinder per actor is what raycasts catch, so a finger no longer has to land on the
+          thin figure. instanceId → actorId is uniform with every layer, so handleClick/handleOver
+          (which read event.instanceId) resolve the right actor. */}
       <instancedMesh
-        ref={anchorRingRef}
-        args={[geometries.anchorRing, materials.anchorRing, instanceCount]}
+        ref={hitProxyRef}
+        args={[geometries.hitProxy, materials.hitProxy, instanceCount]}
         onClick={handleClick}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
+      />
+      <instancedMesh
+        ref={anchorRingRef}
+        args={[geometries.anchorRing, materials.anchorRing, instanceCount]}
       />
       <instancedMesh ref={visionRef} args={[geometries.vision, materials.vision, instanceCount]} />
       <instancedMesh
         ref={bodyRef}
         args={[geometries.body, materials.body, instanceCount]}
         castShadow
-        onClick={handleClick}
-        onPointerOver={handleOver}
-        onPointerOut={handleOut}
       />
       {poseGeometries?.map((geo, p) => (
         <instancedMesh
@@ -1269,9 +1334,6 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           }}
           args={[geo, materials.humanoid, instanceCount]}
           castShadow={!performanceMode}
-          onClick={handleClick}
-          onPointerOver={handleOver}
-          onPointerOut={handleOut}
         />
       ))}
       {/* Boss model: a single non-instanced mesh whose world matrix is written each frame in the
@@ -1291,13 +1353,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           onPointerOut={handleOut}
         />
       )}
-      <instancedMesh
-        ref={capRef}
-        args={[geometries.cap, materials.cap, instanceCount]}
-        onClick={handleClick}
-        onPointerOver={handleOver}
-        onPointerOut={handleOut}
-      />
+      <instancedMesh ref={capRef} args={[geometries.cap, materials.cap, instanceCount]} />
       <instancedMesh
         ref={selectionRingRef}
         args={[geometries.selectionRing, materials.selectionRing, instanceCount]}
