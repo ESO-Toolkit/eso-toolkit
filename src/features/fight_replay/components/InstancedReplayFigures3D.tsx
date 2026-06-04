@@ -89,6 +89,18 @@ const HIT_PROXY_RADIUS = 0.42; // world units; ~4× the body capsule radius for 
 const HIT_PROXY_HEIGHT = 1.4; // world units; spans a player's full height with headroom for the glyph
 // Threat (boss/enemy) figures stand larger (THREAT_SCALE), so their proxy is scaled up to match.
 const HIT_PROXY_THREAT_MULT = 1.8;
+// Coplanar-cap tie tolerance for proxy click resolution. The proxy cylinders have FLAT top caps at
+// the same world-Y, so a near-top-down ray (the camera can tilt to ~84°, maxPolarAngle = π/2−0.1)
+// into a stacked melee pile strikes two overlapping caps at an IDENTICAL distance. three.js then
+// reports whichever instance has the lower index — selecting the wrong actor. When the nearest
+// intersections tie within this epsilon, we break the tie by which proxy CENTER is closest to the
+// click point in the horizontal (XZ) plane, i.e. the actor the tap actually landed on. The window is
+// kept tiny so it fires ONLY on a true coplanar tie and never reorders genuine front/back hits (whose
+// distances differ by far more than this), keeping clean depth-separated selection byte-identical.
+// Proven offline in .scratch/verify-tiebreak.mjs (fixes the 80–84° stacked case; non-regression on
+// distinct-depth hits). R3F keeps both tied instances in event.intersections because its dedup key
+// includes instanceId.
+const HIT_PROXY_TIE_EPS = 1e-4;
 
 // Threat (boss/enemy) figures stand large; players stay short/slim so the crowd doesn't wall off
 // the view.
@@ -1247,14 +1259,63 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   }, RenderPriority.ACTORS);
 
   // ---- Interaction (instanceId → actorId) ----
+  // Reusable scratch for the proxy tie-break (allocated once; never per click).
+  const pickScratch = useRef({ mat: new THREE.Matrix4(), center: new THREE.Vector3() });
+  // Resolve which proxy instance a pointer event selected. Normally this is just the nearest hit
+  // (event.instanceId). But flat coplanar proxy caps make a near-top-down ray into a stacked pile
+  // tie EXACTLY in distance, where three.js arbitrarily returns the lower-index instance (see
+  // HIT_PROXY_TIE_EPS). When the nearest intersections tie, pick the proxy whose center is closest to
+  // the click point in the XZ plane — the actor actually under the tap. Reads event.intersections,
+  // which R3F populates with every tied instance of this mesh (its dedup key includes instanceId).
+  const resolveProxyInstanceId = useCallback(
+    (event: {
+      instanceId?: number;
+      intersections?: ThreeEvent<PointerEvent>['intersections'];
+    }): number | undefined => {
+      const intersections = event.intersections;
+      const proxy = hitProxyRef.current;
+      if (!intersections || intersections.length === 0 || !proxy) return event.instanceId;
+      // Restrict to this proxy mesh's hits that carry an instanceId, sorted nearest-first (R3F
+      // already sorts by distance ascending).
+      const proxyHits = intersections.filter(
+        (h) => h.object === proxy && typeof h.instanceId === 'number',
+      );
+      if (proxyHits.length <= 1) return event.instanceId;
+      const nearest = proxyHits[0];
+      const tied = proxyHits.filter((h) => h.distance - nearest.distance <= HIT_PROXY_TIE_EPS);
+      if (tied.length <= 1) return nearest.instanceId;
+      const point = nearest.point;
+      const { mat, center } = pickScratch.current;
+      let bestId = tied[0].instanceId;
+      let bestDistSq = Infinity;
+      for (const hit of tied) {
+        const id = hit.instanceId;
+        if (typeof id !== 'number') continue;
+        proxy.getMatrixAt(id, mat);
+        center.setFromMatrixPosition(mat);
+        const dx = center.x - point.x;
+        const dz = center.z - point.z;
+        const distSq = dx * dx + dz * dz;
+        if (distSq < bestDistSq) {
+          bestDistSq = distSq;
+          bestId = id;
+        }
+      }
+      return bestId;
+    },
+    [],
+  );
   const getActorIdFromEvent = useCallback(
-    (event: { instanceId?: number }): number | null => {
-      const id = event.instanceId;
+    (event: {
+      instanceId?: number;
+      intersections?: ThreeEvent<PointerEvent>['intersections'];
+    }): number | null => {
+      const id = resolveProxyInstanceId(event);
       if (typeof id !== 'number' || id < 0 || id >= actorIds.length) return null;
       if (cacheRef.current[id]?.visible === false) return null;
       return actorIds[id];
     },
-    [actorIds],
+    [actorIds, resolveProxyInstanceId],
   );
   const handleClick = useCallback(
     (event: ThreeEvent<MouseEvent>) => {
