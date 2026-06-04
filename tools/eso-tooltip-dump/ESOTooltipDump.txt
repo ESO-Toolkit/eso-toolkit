@@ -1,0 +1,11 @@
+## Title: ESO Tooltip Dump
+## Author: ESO Log Aggregator
+## Version: 1.0.0
+## AddOnVersion: 100
+## APIVersion: 101050
+## Description: Dumps skill ability and gear set tooltip data to SavedVariables for offline processing.
+## SavedVariables: ESOTooltipDumpSV
+## OptionalDependsOn: LibSets
+## IsLibrary: false
+
+ESOTooltipDump.lua
