@@ -27,14 +27,19 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const SCAN_DIRS = ['src', 'public'];
+// Scan shipped source AND the build/codegen surface — the generators are where a
+// removed reference would silently regenerate (the original guard missed exactly that).
+const SCAN_DIRS = ['src', 'public', 'scripts', 'tools'];
 
-// Files allowed to mention ESO-Hub (functional format references, not attribution).
+// Files allowed to mention ESO-Hub.
 const ALLOWLIST = new Set(
   [
+    // Functional build-share format parser — "ESO-Hub export code" names a format.
     'src/features/build-editor/utils/cspsImport.ts',
     'src/features/build-editor/utils/cspsExportCodeParser.ts',
     'src/features/build-editor/utils/__tests__/cspsExportCodeParser.test.ts',
+    // This guard itself contains the token in its patterns/allowlist/comments.
+    'scripts/check-no-esohub.cjs',
   ].map((p) => p.replace(/\//g, path.sep)),
 );
 

@@ -1,10 +1,10 @@
 /**
  * Convert SkillsetData to SkillLineData Format
- * 
+ *
  * This script converts class and weapon skill files from the nested SkillsetData format
  * to the flat SkillLineData format (like guild skills use), and populates real ability IDs
  * from abilities.json.
- * 
+ *
  * Usage: node scripts/convert-skills-to-flat-format.mjs
  */
 
@@ -28,14 +28,14 @@ async function loadAbilitiesMapping() {
   console.log('📖 Loading abilities.json...');
   const data = await fs.readFile(ABILITIES_JSON, 'utf-8');
   const abilities = JSON.parse(data);
-  
+
   const nameToIdMap = new Map();
   for (const [id, ability] of Object.entries(abilities)) {
     if (ability.name && ability.name.trim()) {
       nameToIdMap.set(ability.name.trim(), parseInt(id, 10));
     }
   }
-  
+
   console.log(`   Loaded ${nameToIdMap.size.toLocaleString()} abilities with names`);
   return nameToIdMap;
 }
@@ -48,17 +48,17 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
   let foundCount = 0;
   let notFoundCount = 0;
   const notFoundSkills = [];
-  
+
   // Process each skill line in the skillset
   for (const [skillLineKey, skillLine] of Object.entries(skillsetData.skillLines)) {
     const skillLineName = skillLine.name;
     const category = className;
-    
+
     // Process ultimates
     if (skillLine.ultimates) {
       for (const [key, ultimate] of Object.entries(skillLine.ultimates)) {
         if (!ultimate || !ultimate.name) continue;
-        
+
         const abilityId = nameToIdMap.get(ultimate.name) || 0;
         if (abilityId === 0) {
           notFoundCount++;
@@ -66,7 +66,7 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
         } else {
           foundCount++;
         }
-        
+
         allSkills.push({
           id: abilityId,
           name: ultimate.name,
@@ -76,12 +76,12 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
           skillLine: skillLineName,
           category: category,
         });
-        
+
         // Process morphs
         if (ultimate.morphs) {
           for (const morph of Object.values(ultimate.morphs)) {
             if (!morph || !morph.name) continue;
-            
+
             const morphId = nameToIdMap.get(morph.name) || 0;
             if (morphId === 0) {
               notFoundCount++;
@@ -89,7 +89,7 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
             } else {
               foundCount++;
             }
-            
+
             allSkills.push({
               id: morphId,
               name: morph.name,
@@ -103,12 +103,12 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
         }
       }
     }
-    
+
     // Process active abilities
     if (skillLine.activeAbilities) {
       for (const [key, ability] of Object.entries(skillLine.activeAbilities)) {
         if (!ability || !ability.name) continue;
-        
+
         const abilityId = nameToIdMap.get(ability.name) || 0;
         if (abilityId === 0) {
           notFoundCount++;
@@ -116,7 +116,7 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
         } else {
           foundCount++;
         }
-        
+
         allSkills.push({
           id: abilityId,
           name: ability.name,
@@ -126,12 +126,12 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
           skillLine: skillLineName,
           category: category,
         });
-        
+
         // Process morphs
         if (ability.morphs) {
           for (const morph of Object.values(ability.morphs)) {
             if (!morph || !morph.name) continue;
-            
+
             const morphId = nameToIdMap.get(morph.name) || 0;
             if (morphId === 0) {
               notFoundCount++;
@@ -139,7 +139,7 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
             } else {
               foundCount++;
             }
-            
+
             allSkills.push({
               id: morphId,
               name: morph.name,
@@ -153,12 +153,12 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
         }
       }
     }
-    
+
     // Process passive abilities
     if (skillLine.passiveAbilities) {
       for (const [key, passive] of Object.entries(skillLine.passiveAbilities)) {
         if (!passive || !passive.name) continue;
-        
+
         const passiveId = nameToIdMap.get(passive.name) || 0;
         if (passiveId === 0) {
           notFoundCount++;
@@ -166,7 +166,7 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
         } else {
           foundCount++;
         }
-        
+
         allSkills.push({
           id: passiveId,
           name: passive.name,
@@ -179,7 +179,7 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
       }
     }
   }
-  
+
   return { allSkills, foundCount, notFoundCount, notFoundSkills };
 }
 
@@ -189,23 +189,23 @@ function convertSkillsetToSkillLine(skillsetData, nameToIdMap, className) {
 function generateSkillLineFile(skillLineData, className, fileName) {
   const skillLineId = fileName.replace('.ts', '');
   const iconMap = {
-    'arcanist': 'https://eso-hub.com/storage/icons/arcanist.png',
-    'dragonknight': 'https://eso-hub.com/storage/icons/class_001.png',
-    'necromancer': 'https://eso-hub.com/storage/icons/necromancer.png',
-    'nightblade': 'https://eso-hub.com/storage/icons/class_002.png',
-    'sorcerer': 'https://eso-hub.com/storage/icons/class_004.png',
-    'templar': 'https://eso-hub.com/storage/icons/class_005.png',
-    'warden': 'https://eso-hub.com/storage/icons/warden.png',
-    'bow': 'https://eso-hub.com/storage/icons/weapon_bow.png',
-    'destructionStaff': 'https://eso-hub.com/storage/icons/weapon_destruction_staff.png',
-    'dualWield': 'https://eso-hub.com/storage/icons/weapon_dual_wield.png',
-    'oneHand': 'https://eso-hub.com/storage/icons/weapon_one_hand_and_shield.png',
-    'restoration': 'https://eso-hub.com/storage/icons/weapon_restoration_staff.png',
-    'twoHanded': 'https://eso-hub.com/storage/icons/weapon_two_handed.png',
+    arcanist: 'https://assets.rpglogs.com/img/eso/abilities/arcanist.png',
+    dragonknight: 'https://assets.rpglogs.com/img/eso/abilities/class_001.png',
+    necromancer: 'https://assets.rpglogs.com/img/eso/abilities/necromancer.png',
+    nightblade: 'https://assets.rpglogs.com/img/eso/abilities/class_002.png',
+    sorcerer: 'https://assets.rpglogs.com/img/eso/abilities/class_004.png',
+    templar: 'https://assets.rpglogs.com/img/eso/abilities/class_005.png',
+    warden: 'https://assets.rpglogs.com/img/eso/abilities/warden.png',
+    bow: 'https://assets.rpglogs.com/img/eso/abilities/weapon_bow.png',
+    destructionStaff: 'https://assets.rpglogs.com/img/eso/abilities/weapon_destruction_staff.png',
+    dualWield: 'https://assets.rpglogs.com/img/eso/abilities/weapon_dual_wield.png',
+    oneHand: 'https://assets.rpglogs.com/img/eso/abilities/weapon_one_hand_and_shield.png',
+    restoration: 'https://assets.rpglogs.com/img/eso/abilities/weapon_restoration_staff.png',
+    twoHanded: 'https://assets.rpglogs.com/img/eso/abilities/weapon_two_handed.png',
   };
-  
+
   const icon = iconMap[skillLineId] || '';
-  
+
   let content = `import type { SkillLineData } from '../../types/skill-line-types';\n\n`;
   content += `export const ${skillLineId}Data: SkillLineData = {\n`;
   content += `  id: '${skillLineId}',\n`;
@@ -214,7 +214,7 @@ function generateSkillLineFile(skillLineData, className, fileName) {
   content += `  category: 'class',\n`;
   content += `  icon: '${icon}',\n`;
   content += `  skills: [\n`;
-  
+
   for (const skill of skillLineData.allSkills) {
     content += `    {\n`;
     content += `      id: ${skill.id},\n`;
@@ -225,10 +225,10 @@ function generateSkillLineFile(skillLineData, className, fileName) {
     content += `      description: \`${skill.description.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/'/g, "\\'")}\`,\n`;
     content += `    },\n`;
   }
-  
+
   content += `  ],\n`;
   content += `};\n`;
-  
+
   return content;
 }
 
@@ -238,16 +238,16 @@ function generateSkillLineFile(skillLineData, className, fileName) {
 async function processFile(filePath, nameToIdMap, outputDir) {
   const fileName = path.basename(filePath);
   console.log(`\n📄 Processing ${fileName}...`);
-  
+
   const content = await fs.readFile(filePath, 'utf-8');
-  
+
   // Import and parse the file (this is a simplified approach)
   // In reality, we'd need to properly parse the TypeScript
   // For now, let's just check if it's worth converting
-  
+
   console.log(`   ⚠️  Manual conversion needed - file uses nested SkillsetData format`);
   console.log(`   💡 Recommendation: Convert to SkillLineData format like guild skills`);
-  
+
   return { converted: false };
 }
 
@@ -266,10 +266,10 @@ async function main() {
   console.log('   2. Use abilities.json to populate IDs');
   console.log('   3. Delete duplicate skillsets/ directory');
   console.log('   4. Simplify skillLineSkills.ts to only handle one format\n');
-  
+
   try {
     const nameToIdMap = await loadAbilitiesMapping();
-    
+
     console.log('\n' + '='.repeat(60));
     console.log('📊 RECOMMENDATION');
     console.log('='.repeat(60));
@@ -278,7 +278,6 @@ async function main() {
     console.log('2. Enhance runtime processing to use abilities.json');
     console.log('3. Delete duplicate directories');
     console.log('4. Document that class/weapon skills use nested format\n');
-    
   } catch (error) {
     console.error('❌ Error:', error.message);
     process.exit(1);

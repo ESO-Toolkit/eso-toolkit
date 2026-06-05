@@ -146,13 +146,11 @@ After that, compliant AI agents should pick up the new skill automatically from 
 | Folder | Purpose |
 |--------|---------|
 | `auth/` | OAuth token generation and browser injection |
-| `class-skill-regen/` | Refresh class skill descriptions/icons from ESO-Hub |
 | `create-pr/` | PR creation with PowerShell-safe `--body-file` pattern |
 | `create-skill/` | This skill — creating new skills |
 | `debug-ci-failure/` | End-to-end CI failure debugging |
 | `fix-lint/` | Diagnose and fix ESLint errors |
 | `fix-types/` | Diagnose and fix TypeScript type errors |
-| `gear-data-regen/` | Gear set bonus/tooltip data from ESO-Hub |
 | `git/` | Branch management (twig with plain git fallbacks) |
 | `github-actions-logs/` | Parse and analyze GitHub Actions logs |
 | `jira/` | Jira ticket management via MCP tools or acli |

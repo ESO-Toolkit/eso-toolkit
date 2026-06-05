@@ -479,7 +479,6 @@ const penData = {
           <strong>Target:</strong> Self • <em>Dark Magic</em> • <strong>Cost:</strong> 2295
           <div class="tt-head"><strong>Skill description</strong></div>
           Encase your weapon in dark crystals for 6 seconds, causing your next two Light or Heavy Attacks to deal additional damage and reduce the target's Armor by <strong>1000</strong> for 5 seconds. The first hit deals <strong>2091 Physical Damage</strong> and the second deals <strong>836 Physical Damage</strong>. After casting, your next non-Ultimate ability used within 3 seconds costs 10% less.
-</div>
         `,
     },
     {
@@ -531,7 +530,6 @@ const penData = {
             <li>(4 items) Adds <strong>129</strong> Weapon and Spell Damage</li>
             <li>(5 items) Adds <strong>3460</strong> Offensive Penetration</li>
           </ul>
-</div>
         `,
     },
     // New entries
@@ -608,7 +606,6 @@ const penData = {
             <li>(1 item) Adds <strong>129</strong> Weapon and Spell Damage</li>
             <li>(2 items) Attacking an enemy with a fully-charged Heavy Attack throws an axe at your enemy, dealing <strong>1572 Physical Damage</strong> and reducing their Armor by <strong>400</strong> for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage. The axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.</li>
           </ul>
-</div>
         `,
     },
     {
