@@ -59,10 +59,22 @@ export function stripMarkup(raw) {
   s = s.replace(/\^[a-zA-Z]/g, '');
   // Any stray leftover pipe-escapes.
   s = s.replace(/\|\|/g, '|');
-  // Strip the in-game dynamic "Current <bonus|amount|duration|penalty>: ..." readout
-  // (and everything after it — it's always trailing). Captured from the dumping char's
-  // live state (e.g. "Current bonus: 0%" on a naked reference char); not static data.
-  s = s.replace(/\n+\s*Current (?:bonus|amount|duration|penalty)\s*:[\s\S]*$/i, '');
+  // Strip in-game dynamic "Current <bonus|amount|duration|penalty>: ..." readouts —
+  // the live state of the dumping char (e.g. "Current bonus: 0%" on a naked reference
+  // char), not static data. A readout runs from "Current <word>:" to the next blank-line
+  // paragraph break (or end). Repeat to catch multiple, and PRESERVE any static clause
+  // that follows the readout (e.g. Constitution's second effect after its Current line).
+  {
+    let prev;
+    do {
+      prev = s;
+      s = s.replace(
+        /\n*\s*Current (?:bonus|amount|duration|penalty)\s*:[^\n]*(?:\n(?!\n)[^\n]*)*(\n\n|$)/i,
+        (_m, tail) => (tail === '\n\n' ? '\n\n' : ''),
+      );
+    } while (s !== prev);
+    s = s.replace(/\n{3,}/g, '\n\n');
+  }
   // Tidy whitespace.
   s = s.replace(/[ \t]{2,}/g, ' ').trim();
   return s;

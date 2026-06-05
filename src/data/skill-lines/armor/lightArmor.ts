@@ -60,7 +60,7 @@ export const lightArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.GRACE,
       description:
-        'Reduces the effectiveness of snares applied to you by 4% for each piece of Light Armor worn.',
+        'Reduces the effectiveness of snares applied to you by 4% for each piece of Light Armor worn.\n\nReduces the cost of Sprint by 3% for each piece of Light Armor worn.',
     },
     {
       id: AbilityId.EVOCATION,
@@ -69,7 +69,8 @@ export const lightArmor: SkillLineData = {
       name: 'Evocation',
       type: 'passive',
       baseAbilityId: AbilityId.EVOCATION,
-      description: 'Increases your Magicka Recovery by 4% for each piece of Light Armor equipped.',
+      description:
+        'Increases your Magicka Recovery by 4% for each piece of Light Armor equipped.\n\nReduces the Magicka cost of your abilities by 2% for each piece of Light Armor equipped.',
     },
     {
       id: AbilityId.SPELL_WARDING,
