@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Blacksmithing Craft Skills
- * Source: https://eso-hub.com/en/skills/craft/blacksmithing
  */
 export const blacksmithing: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const blacksmithing: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_smith_001',
-  sourceUrl: 'https://eso-hub.com/en/skills/craft/blacksmithing',
   skills: [
     {
       id: AbilityId.METALWORKING,

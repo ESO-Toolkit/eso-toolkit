@@ -1,6 +1,5 @@
 /**
  * Assassination — Nightblade Skill Line
- * Source: https://eso-hub.com/en/skills/nightblade/assassination
  * Regenerated: 2025-11-14T20:33:08.826Z
  */
 
@@ -13,7 +12,6 @@ export const assassination: SkillLineData = {
   class: 'Nightblade',
   category: 'class',
   icon: 'ability_nightblade_007',
-  sourceUrl: 'https://eso-hub.com/en/skills/nightblade/assassination',
   skills: [
     {
       id: ClassSkillId.NIGHTBLADE_DEATH_STROKE,

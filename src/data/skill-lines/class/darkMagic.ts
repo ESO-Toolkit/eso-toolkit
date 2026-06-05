@@ -1,6 +1,5 @@
 /**
  * Dark Magic — Sorcerer Skill Line
- * Source: https://eso-hub.com/en/skills/sorcerer/dark-magic
  * Regenerated: 2025-11-14T20:33:08.843Z
  */
 
@@ -13,7 +12,6 @@ export const darkMagic: SkillLineData = {
   class: 'Sorcerer',
   category: 'class',
   icon: 'ability_sorcerer_monsoon',
-  sourceUrl: 'https://eso-hub.com/en/skills/sorcerer/dark-magic',
   skills: [
     {
       id: ClassSkillId.SORCERER_NEGATE_MAGIC,

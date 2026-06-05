@@ -7,7 +7,6 @@ export const mediumArmor: SkillLineData = {
   class: 'armor',
   category: 'armor',
   icon: 'ability_armor_002',
-  sourceUrl: 'https://eso-hub.com/en/skills/armor/medium-armor',
   skills: [
     // Active Abilities
     {

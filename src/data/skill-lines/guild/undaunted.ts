@@ -7,7 +7,6 @@ export const undaunted: SkillLineData = {
   class: 'guild',
   category: 'guild',
   icon: 'ability_undaunted_001',
-  sourceUrl: 'https://eso-hub.com/en/skills/guild/undaunted',
   skills: [
     // Active Abilities
     {

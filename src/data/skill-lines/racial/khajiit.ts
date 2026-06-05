@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Khajiit Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/khajiit-skills
  */
 export const khajiit: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const khajiit: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_armor_010',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/khajiit',
   skills: [
     {
       id: AbilityId.CUTPURSE,

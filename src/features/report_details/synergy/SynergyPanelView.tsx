@@ -673,7 +673,7 @@ const PlayerSynergyCard: React.FC<{
             >
               {info.abilityIcon && (
                 <Avatar
-                  src={`https://assets.eso-hub.com/abilities/${info.abilityIcon}.webp`}
+                  src={`https://assets.rpglogs.com/img/eso/abilities/${info.abilityIcon}.png`}
                   alt=""
                   sx={{
                     width: 20,
@@ -784,7 +784,7 @@ const AbilityCard: React.FC<{
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.25 }}>
         {ability.abilityIcon ? (
           <Avatar
-            src={`https://assets.eso-hub.com/abilities/${ability.abilityIcon}.webp`}
+            src={`https://assets.rpglogs.com/img/eso/abilities/${ability.abilityIcon}.png`}
             alt=""
             variant="rounded"
             sx={{
@@ -1084,7 +1084,7 @@ const ActivationTimeline: React.FC<{
               {activation.abilityIcon && (
                 <Tooltip title={activation.abilityName ?? ''} arrow placement="top">
                   <Avatar
-                    src={`https://assets.eso-hub.com/abilities/${activation.abilityIcon}.webp`}
+                    src={`https://assets.rpglogs.com/img/eso/abilities/${activation.abilityIcon}.png`}
                     alt=""
                     variant="rounded"
                     sx={{

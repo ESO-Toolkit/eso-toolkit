@@ -1,7 +1,6 @@
 /**
  * Two Handed Weapon Skill Line Data
  *
- * Data source: https://eso-hub.com/en/skills/weapon/two-handed
  * Last updated: 2026 (U49)
  *
  * The Two-Handed skill-line is part of the "Weapons" category in the Elder Scrolls Online.
@@ -19,7 +18,6 @@ export const twoHandedSkillLine: SkillLineData = {
   class: 'Weapon',
   category: 'weapon',
   icon: 'ability_2handed_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/weapon/two-handed',
   skills: [
     // Ultimate Abilities
     {

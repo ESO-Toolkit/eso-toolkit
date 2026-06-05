@@ -1,6 +1,5 @@
 /**
  * Living Death — Necromancer Skill Line
- * Source: https://eso-hub.com/en/skills/necromancer/living-death
  * Regenerated: 2025-11-14T20:33:08.818Z
  */
 
@@ -13,7 +12,6 @@ export const livingDeath: SkillLineData = {
   class: 'Necromancer',
   category: 'class',
   icon: 'ability_necromancer_018',
-  sourceUrl: 'https://eso-hub.com/en/skills/necromancer/living-death',
   skills: [
     {
       id: ClassSkillId.NECROMANCER_REANIMATE,

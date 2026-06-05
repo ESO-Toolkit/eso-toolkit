@@ -1,6 +1,5 @@
 /**
  * Draconic Power — Dragonknight Skill Line
- * Source: https://eso-hub.com/en/skills/dragonknight/draconic-power
  * Regenerated: 2026-03-09T00:00:00.000Z
  */
 
@@ -13,7 +12,6 @@ export const draconicPower: SkillLineData = {
   class: 'Dragonknight',
   category: 'class',
   icon: 'ability_dragonknight_009',
-  sourceUrl: 'https://eso-hub.com/en/skills/dragonknight/draconic-power',
   skills: [
     {
       id: ClassSkillId.DRAGONKNIGHT_DRAGON_LEAP,

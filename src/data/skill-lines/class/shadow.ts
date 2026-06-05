@@ -1,6 +1,5 @@
 /**
  * Shadow — Nightblade Skill Line
- * Source: https://eso-hub.com/en/skills/nightblade/shadow
  * Regenerated: 2025-11-14T20:33:08.833Z
  */
 
@@ -13,7 +12,6 @@ export const shadow: SkillLineData = {
   class: 'Nightblade',
   category: 'class',
   icon: 'ability_nightblade_015',
-  sourceUrl: 'https://eso-hub.com/en/skills/nightblade/shadow',
   skills: [
     {
       id: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,

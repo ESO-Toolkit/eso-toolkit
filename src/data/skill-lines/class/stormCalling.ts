@@ -1,6 +1,5 @@
 /**
  * Storm Calling — Sorcerer Skill Line
- * Source: https://eso-hub.com/en/skills/sorcerer/storm-calling
  * Regenerated: 2025-11-14T20:33:08.849Z
  */
 
@@ -13,7 +12,6 @@ export const stormCalling: SkillLineData = {
   class: 'Sorcerer',
   category: 'class',
   icon: 'ability_sorcerer_overload',
-  sourceUrl: 'https://eso-hub.com/en/skills/sorcerer/storm-calling',
   skills: [
     {
       id: ClassSkillId.SORCERER_OVERLOAD,

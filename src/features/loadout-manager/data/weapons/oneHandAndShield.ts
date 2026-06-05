@@ -1,6 +1,5 @@
 /**
  * One Hand and Shield Weapon Skill Line
- * Data sourced from: https://eso-hub.com/en/skills/weapon/one-hand-and-shield
  */
 
 import { SkillData } from '../types';

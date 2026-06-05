@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Breton Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/breton-skills
  */
 export const breton: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const breton: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_sorcerer_010',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/breton',
   skills: [
     {
       id: AbilityId.OPPORTUNIST,

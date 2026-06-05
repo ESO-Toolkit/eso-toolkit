@@ -1,6 +1,5 @@
 /**
  * Dawn's Wrath — Templar Skill Line
- * Source: https://eso-hub.com/en/skills/templar/dawn-s-wrath
  * Regenerated: 2025-11-14T20:33:08.864Z
  */
 
@@ -13,7 +12,6 @@ export const dawnsWrath: SkillLineData = {
   class: 'Templar',
   category: 'class',
   icon: 'ability_templar_nova',
-  sourceUrl: 'https://eso-hub.com/en/skills/templar/dawn-s-wrath',
   skills: [
     {
       id: ClassSkillId.TEMPLAR_NOVA,

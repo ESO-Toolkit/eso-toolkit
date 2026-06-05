@@ -1,6 +1,5 @@
 /**
  * Herald of the Tome — Arcanist Skill Line
- * Source: https://eso-hub.com/en/skills/arcanist/herald-of-the-tome
  * Regenerated: 2025-11-14T20:33:08.637Z
  */
 
@@ -13,7 +12,6 @@ export const heraldOfTheTome: SkillLineData = {
   class: 'Arcanist',
   category: 'class',
   icon: 'ability_arcanist_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/arcanist/herald-of-the-tome',
   skills: [
     {
       id: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,

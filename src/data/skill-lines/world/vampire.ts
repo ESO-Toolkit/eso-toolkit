@@ -7,7 +7,6 @@ export const vampire: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'ability_u26_vampire_06',
-  sourceUrl: 'https://eso-hub.com/en/skills/world/vampire',
   skills: [
     // Ultimate abilities
     {

@@ -1,7 +1,6 @@
 /**
  * Restoring Light Skill Line
  * Class: Templar
- * Source: https://eso-hub.com/en/skills/templar/restoring-light
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

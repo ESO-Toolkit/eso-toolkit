@@ -7,7 +7,6 @@ export const support: SkillLineData = {
   class: 'alliance-war',
   category: 'alliance',
   icon: 'ability_ava_005',
-  sourceUrl: 'https://eso-hub.com/en/skills/alliance-war/support',
   skills: [
     // Ultimate abilities
     {

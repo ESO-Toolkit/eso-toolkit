@@ -1,6 +1,5 @@
 /**
  * Two-Handed Weapon Skill Line
- * Data sourced from: https://eso-hub.com/en/skills/weapon/two-handed
  */
 
 import { SkillData } from '../types';

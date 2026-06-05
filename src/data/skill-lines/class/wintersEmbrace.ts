@@ -1,6 +1,5 @@
 /**
  * Winter's Embrace — Warden Skill Line
- * Source: https://eso-hub.com/en/skills/warden/winter-s-embrace
  * Regenerated: 2025-11-14T20:33:08.883Z
  */
 
@@ -13,7 +12,6 @@ export const wintersEmbrace: SkillLineData = {
   class: 'Warden',
   category: 'class',
   icon: 'ability_warden_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/warden/winter-s-embrace',
   skills: [
     {
       id: ClassSkillId.WARDEN_SLEET_STORM,

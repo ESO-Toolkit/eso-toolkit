@@ -6,12 +6,7 @@
  * Stores KnownSetIDs (numbers).
  */
 
-import {
-  Add as AddIcon,
-  Close as CloseIcon,
-  OpenInNew as OpenInNewIcon,
-  Search as SearchIcon,
-} from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
@@ -39,7 +34,6 @@ import {
   FLEXIBLE_5PIECE_SETS,
   FLEXIBLE_MONSTER_SETS,
 } from '@/types/roster';
-import { getEsoHubSetUrl } from '@/utils/esoHubLinks';
 import { getSetDisplayName } from '@/utils/setNameUtils';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -153,7 +147,6 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
             borderColor: `${color}88`,
           },
           '&:hover .set-clear': { opacity: 1 },
-          '&:hover .set-esohub-link': { opacity: 1 },
         }}
       >
         {/* Category dot */}
@@ -183,29 +176,6 @@ const SetTile: React.FC<SetTileProps> = ({ setId, onRemove }) => {
         >
           {name}
         </Typography>
-        {/* ESO-Hub attribution link */}
-        <Box
-          component="a"
-          href={getEsoHubSetUrl(name)}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
-          aria-label={`${name} on ESO-Hub`}
-          title="View on ESO-Hub"
-          className="set-esohub-link"
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            color: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.28)',
-            flexShrink: 0,
-            lineHeight: 0,
-            opacity: 0,
-            transition: 'opacity 150ms',
-            '&:hover': { color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' },
-          }}
-        >
-          <OpenInNewIcon sx={{ fontSize: 11 }} />
-        </Box>
         {/* Remove button */}
         <ButtonBase
           className="set-clear"

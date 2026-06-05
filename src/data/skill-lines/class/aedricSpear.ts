@@ -1,6 +1,5 @@
 /**
  * Aedric Spear — Templar Skill Line
- * Source: https://eso-hub.com/en/skills/templar/aedric-spear
  * Regenerated: 2025-11-14T20:33:08.859Z
  */
 
@@ -13,7 +12,6 @@ export const aedricSpear: SkillLineData = {
   class: 'Templar',
   category: 'class',
   icon: 'ability_templar_radial_sweep',
-  sourceUrl: 'https://eso-hub.com/en/skills/templar/aedric-spear',
   skills: [
     {
       id: ClassSkillId.TEMPLAR_RADIAL_SWEEP,

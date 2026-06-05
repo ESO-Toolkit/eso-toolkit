@@ -1,6 +1,5 @@
 /**
  * Restoring Light — Templar Skill Line
- * Source: https://eso-hub.com/en/skills/templar/restoring-light
  * Regenerated: 2025-11-14T20:33:08.869Z
  */
 
@@ -13,7 +12,6 @@ export const restoringLight: SkillLineData = {
   class: 'Templar',
   category: 'class',
   icon: 'ability_templar_rite_of_passage',
-  sourceUrl: 'https://eso-hub.com/en/skills/templar/restoring-light',
   skills: [
     {
       id: ClassSkillId.TEMPLAR_RITE_OF_PASSAGE,

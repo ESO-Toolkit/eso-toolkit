@@ -1,6 +1,5 @@
 /**
  * Daedric Summoning — Sorcerer Skill Line
- * Source: https://eso-hub.com/en/skills/sorcerer/daedric-summoning
  * Regenerated: 2025-11-14T20:33:08.854Z
  */
 
@@ -13,7 +12,6 @@ export const daedricSummoning: SkillLineData = {
   class: 'Sorcerer',
   category: 'class',
   icon: 'ability_sorcerer_storm_atronach',
-  sourceUrl: 'https://eso-hub.com/en/skills/sorcerer/daedric-summoning',
   skills: [
     {
       id: ClassSkillId.SORCERER_SUMMON_STORM_ATRONACH,

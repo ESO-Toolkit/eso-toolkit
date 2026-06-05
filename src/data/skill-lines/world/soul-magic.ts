@@ -7,7 +7,6 @@ export const soulMagic: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'ability_otherclass_002',
-  sourceUrl: 'https://eso-hub.com/en/skills/world/soul-magic',
   skills: [
     {
       id: AbilityId.SOUL_STRIKE,

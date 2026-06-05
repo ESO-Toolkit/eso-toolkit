@@ -1,6 +1,5 @@
 /**
  * Green Balance — Warden Skill Line
- * Source: https://eso-hub.com/en/skills/warden/green-balance
  * Regenerated: 2025-11-14T20:33:08.879Z
  */
 
@@ -13,7 +12,6 @@ export const greenBalance: SkillLineData = {
   class: 'Warden',
   category: 'class',
   icon: 'ability_warden_012',
-  sourceUrl: 'https://eso-hub.com/en/skills/warden/green-balance',
   skills: [
     {
       id: ClassSkillId.WARDEN_SECLUDED_GROVE,

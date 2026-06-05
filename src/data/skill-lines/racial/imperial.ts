@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Imperial Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/imperial-skills
  */
 export const imperial: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const imperial: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_templar_027',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/imperial',
   skills: [
     {
       id: AbilityId.DIPLOMAT,

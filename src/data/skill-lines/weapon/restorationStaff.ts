@@ -7,7 +7,6 @@ export const restorationStaff: SkillLineData = {
   class: 'Weapon',
   category: 'weapon',
   icon: 'ability_restorationstaff_002',
-  sourceUrl: 'https://eso-hub.com/en/skills/weapon/restoration-staff',
   skills: [
     // Ultimate abilities
     {

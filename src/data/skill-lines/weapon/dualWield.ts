@@ -7,7 +7,6 @@ export const dualWieldSkillLine: SkillLineData = {
   class: 'Weapon',
   category: 'weapon',
   icon: 'ability_mage_065',
-  sourceUrl: 'https://eso-hub.com/en/skills/weapon/dual-wield',
   skills: [
     // Ultimate Abilities
     {

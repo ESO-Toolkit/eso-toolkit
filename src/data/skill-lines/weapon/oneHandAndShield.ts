@@ -7,7 +7,6 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
   class: 'Weapon',
   category: 'weapon',
   icon: 'ability_1handed_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/weapon/one-hand-and-shield',
   skills: [
     // Ultimate abilities
     {

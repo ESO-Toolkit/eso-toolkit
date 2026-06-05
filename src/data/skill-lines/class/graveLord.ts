@@ -1,6 +1,5 @@
 /**
  * Grave Lord — Necromancer Skill Line
- * Source: https://eso-hub.com/en/skills/necromancer/grave-lord
  * Regenerated: 2025-11-14T20:33:08.804Z
  */
 
@@ -13,7 +12,6 @@ export const graveLord: SkillLineData = {
   class: 'Necromancer',
   category: 'class',
   icon: 'ability_necromancer_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/necromancer/grave-lord',
   skills: [
     {
       id: ClassSkillId.NECROMANCER_FROZEN_COLOSSUS,

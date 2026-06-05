@@ -13,7 +13,6 @@ export const excavation: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'u26_ability_digging_01',
-  sourceUrl: 'https://eso-hub.com/en/skills/world/excavation',
   skills: [
     {
       id: AbilityId.HAND_BRUSH,

@@ -1,6 +1,5 @@
 /**
  * Earthen Heart — Dragonknight Skill Line
- * Source: https://eso-hub.com/en/skills/dragonknight/earthen-heart
  * Regenerated: 2026-03-10T00:00:00.000Z
  */
 
@@ -13,7 +12,6 @@ export const earthenHeart: SkillLineData = {
   class: 'Dragonknight',
   category: 'class',
   icon: 'ability_dragonknight_018',
-  sourceUrl: 'https://eso-hub.com/en/skills/dragonknight/earthen-heart',
   skills: [
     {
       id: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,

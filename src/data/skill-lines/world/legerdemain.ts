@@ -17,7 +17,6 @@ export const legerdemain: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'ability_legerdemain_lockpick',
-  sourceUrl: 'https://eso-hub.com/en/skills/world/legerdemain',
   skills: [
     // Passive Skill 1: Improved Hiding - Stealth efficiency
     {

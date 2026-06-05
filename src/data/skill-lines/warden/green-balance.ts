@@ -1,6 +1,5 @@
 /**
  * Green Balance - Warden Class Skill Line
- * Source: https://eso-hub.com/en/skills/warden/green-balance
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

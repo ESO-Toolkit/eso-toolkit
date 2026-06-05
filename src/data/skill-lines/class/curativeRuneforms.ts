@@ -1,6 +1,5 @@
 /**
  * Curative Runeforms — Arcanist Skill Line
- * Source: https://eso-hub.com/en/skills/arcanist/curative-runeforms
  * Regenerated: 2025-11-14T20:33:08.767Z
  */
 
@@ -13,7 +12,6 @@ export const curativeRuneforms: SkillLineData = {
   class: 'Arcanist',
   category: 'class',
   icon: 'ability_mage_065',
-  sourceUrl: 'https://eso-hub.com/en/skills/arcanist/curative-runeforms',
   skills: [
     {
       id: ClassSkillId.ARCANIST_VITALIZING_GLYPHIC,

@@ -18,7 +18,6 @@ export const heavyArmor: SkillLineData = {
   class: 'armor',
   category: 'armor',
   icon: 'ability_armor_001',
-  sourceUrl: 'https://eso-hub.com/en/skills/armor/heavy-armor',
   skills: [
     {
       id: AbilityId.UNSTOPPABLE,

@@ -1,6 +1,5 @@
 /**
  * Siphoning — Nightblade Skill Line
- * Source: https://eso-hub.com/en/skills/nightblade/siphoning
  * Regenerated: 2025-11-14T20:33:08.838Z
  */
 
@@ -13,7 +12,6 @@ export const siphoning: SkillLineData = {
   class: 'Nightblade',
   category: 'class',
   icon: 'ability_nightblade_018',
-  sourceUrl: 'https://eso-hub.com/en/skills/nightblade/siphoning',
   skills: [
     {
       id: ClassSkillId.NIGHTBLADE_SOUL_SHRED,

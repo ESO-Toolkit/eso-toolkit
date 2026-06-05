@@ -1,6 +1,5 @@
 /**
  * Bone Tyrant — Necromancer Skill Line
- * Source: https://eso-hub.com/en/skills/necromancer/bone-tyrant
  * Regenerated: 2025-11-14T20:33:08.812Z
  */
 
@@ -13,7 +12,6 @@ export const boneTyrant: SkillLineData = {
   class: 'Necromancer',
   category: 'class',
   icon: 'ability_necromancer_012',
-  sourceUrl: 'https://eso-hub.com/en/skills/necromancer/bone-tyrant',
   skills: [
     {
       id: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,

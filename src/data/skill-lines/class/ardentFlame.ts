@@ -1,6 +1,5 @@
 /**
  * Ardent Flame — Dragonknight Skill Line
- * Source: https://eso-hub.com/en/skills/dragonknight/ardent-flame
  * Regenerated: 2026-03-09T00:00:00.000Z
  */
 
@@ -13,7 +12,6 @@ export const ardentFlame: SkillLineData = {
   class: 'Dragonknight',
   category: 'class',
   icon: 'ability_dragonknight_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/dragonknight/ardent-flame',
   skills: [
     {
       id: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,

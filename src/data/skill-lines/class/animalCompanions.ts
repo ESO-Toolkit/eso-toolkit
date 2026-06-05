@@ -1,6 +1,5 @@
 /**
  * Animal Companions — Warden Skill Line
- * Source: https://eso-hub.com/en/skills/warden/animal-companions
  * Regenerated: 2025-11-14T20:33:08.874Z
  */
 
@@ -13,7 +12,6 @@ export const animalCompanions: SkillLineData = {
   class: 'Warden',
   category: 'class',
   icon: 'ability_warden_018',
-  sourceUrl: 'https://eso-hub.com/en/skills/warden/animal-companions',
   skills: [
     {
       id: ClassSkillId.WARDEN_FERAL_GUARDIAN,

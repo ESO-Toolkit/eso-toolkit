@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Dark Elf Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/dark-elf-skills
  */
 export const dunmer: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const dunmer: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_weapon_016',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/dark-elf',
   skills: [
     {
       id: AbilityId.ASHLANDER,
