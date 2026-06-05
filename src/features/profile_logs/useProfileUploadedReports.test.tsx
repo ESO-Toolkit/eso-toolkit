@@ -70,6 +70,19 @@ describe('parseEsoLogsUserId', () => {
     expect(parseEsoLogsUserId('-5')).toBeNull();
     expect(parseEsoLogsUserId('3.5')).toBeNull();
   });
+
+  it('rejects lenient Number() forms (hex, scientific, signed, whitespace)', () => {
+    expect(parseEsoLogsUserId('0x10')).toBeNull();
+    expect(parseEsoLogsUserId('1e10')).toBeNull();
+    expect(parseEsoLogsUserId('+5')).toBeNull();
+    expect(parseEsoLogsUserId(' 123 ')).toBeNull();
+    expect(parseEsoLogsUserId('123abc')).toBeNull();
+    expect(parseEsoLogsUserId('Infinity')).toBeNull();
+  });
+
+  it('rejects digit strings beyond MAX_SAFE_INTEGER (would lose precision / overflow Int)', () => {
+    expect(parseEsoLogsUserId('99999999999999999999')).toBeNull();
+  });
 });
 
 // ─── Hook behaviour ──────────────────────────────────────────────────────────
@@ -157,5 +170,34 @@ describe('useProfileUploadedReports', () => {
 
     expect(result.current.reports).toEqual([]);
     expect(result.current.error).toBeNull();
+  });
+
+  it('drops a stale response when the keyed user changes mid-flight', async () => {
+    // User A's request resolves AFTER we re-key to user B. The combined
+    // defenses (the keyed-user reset effect + the post-await requestSeq guard)
+    // must discard A's data so it never contaminates B's list.
+    let resolveA: (v: unknown) => void = () => {};
+    const aPending = new Promise((res) => {
+      resolveA = res;
+    });
+    mockClient.query
+      .mockReturnValueOnce(aPending) // user A (in-flight)
+      .mockResolvedValueOnce(pageResult([makeReport('B-ONLY')])); // user B
+
+    const { result, rerender } = renderHook(({ id }) => useProfileUploadedReports(id), {
+      initialProps: { id: '111' },
+    });
+
+    // Re-key to user B before A resolves.
+    rerender({ id: '222' });
+    await waitFor(() => expect(result.current.reports.map((r) => r.code)).toEqual(['B-ONLY']));
+
+    // Now resolve A late — it must be ignored.
+    resolveA(pageResult([makeReport('A-STALE')]));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(result.current.reports.map((r) => r.code)).toEqual(['B-ONLY']);
+    expect(result.current.reports.map((r) => r.code)).not.toContain('A-STALE');
   });
 });

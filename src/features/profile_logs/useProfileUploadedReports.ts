@@ -17,15 +17,18 @@ const PAGE_SIZE = 12;
  * ID, == author_id) into a valid `userID` argument, or null when it is missing
  * or non-numeric.
  *
- * `author_id` is usually numeric, but some rows use synthetic ids (e.g. the
- * leaderboard's `system:eso-1`). `Number('system:eso-1')` is `NaN` and
- * `Number('')` is `0`; both are invalid as an ESO Logs `userID: Int!`, so we
- * reject anything that is not a positive integer.
+ * `author_id` is a plain decimal string for real accounts (`String(user.id)`),
+ * but some rows use synthetic ids (e.g. the leaderboard's `system:eso-1`). We
+ * require a run of ASCII digits and a positive value — this rejects
+ * `system:eso-1`, the empty string, and also avoids `Number()`'s lenient
+ * parsing of hex (`0x10`), scientific (`1e10`), signed (`+5`), and whitespace-
+ * padded forms, none of which are valid as an ESO Logs `userID: Int!`.
  */
 export function parseEsoLogsUserId(raw: string | null | undefined): number | null {
-  if (raw == null || raw === '') return null;
+  if (raw == null) return null;
+  if (!/^\d+$/.test(raw)) return null;
   const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : null;
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
 export interface UseProfileUploadedReportsResult {

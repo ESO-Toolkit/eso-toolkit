@@ -3,11 +3,11 @@ import { gql } from '@apollo/client';
 /**
  * GraphQL for public ESO Logs shown on a user's profile page.
  *
- * The operation name MUST stay `getProfileUploadedReports` — the Cloudflare
- * Worker proxy whitelists requests by operation name (it routes via the
- * `?query=` URL param the Apollo link appends), and the canonical document
- * lives in `src/graphql/profile-logs.graphql` for codegen. Keep all three in
- * sync.
+ * This inline `gql` document is the single source of truth (the same pattern as
+ * `userReportsQueries.ts` — there is no `.graphql`/codegen counterpart). The
+ * operation name MUST stay `getProfileUploadedReports`: the Cloudflare Worker
+ * proxy whitelists requests by operation name, matched against the `?query=`
+ * URL param the Apollo link appends.
  *
  * This query routes through the client-credentials proxy, so only PUBLIC
  * reports are ever returned; the hook additionally filters on visibility.

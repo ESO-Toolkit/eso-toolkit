@@ -111,29 +111,20 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
   const title = report.title?.trim() || zoneName;
 
   return (
+    // Container is a plain positioned wrapper (NOT interactive). The whole-row
+    // in-app navigation is a full-bleed <button> overlay; the external ESO Logs
+    // <a> is a sibling layered above it. This avoids nesting one interactive
+    // element inside another (invalid ARIA + double tab-stop) — same pattern as
+    // BuildCard/RosterCard.
     <Box
-      role="link"
-      tabIndex={0}
-      aria-label={`Open log: ${title}`}
-      onClick={openInApp}
-      onKeyDown={(e) => {
-        // Only act on keyboard activation of the row itself. Without this guard,
-        // pressing Enter/Space while focused on a nested interactive element
-        // (the "Open on ESO Logs" anchor) bubbles here and hijacks its action.
-        if (e.target !== e.currentTarget) return;
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openInApp();
-        }
-      }}
       sx={{
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         gap: 1.5,
         px: 2,
         py: 1.5,
         borderRadius: '12px',
-        cursor: 'pointer',
         border: isDarkMode ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.06)',
         background: isDarkMode
           ? 'linear-gradient(160deg, rgba(56,189,248,0.04) 0%, rgba(11,18,32,0.35) 100%)'
@@ -146,13 +137,37 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
           boxShadow: `0 0 16px ${accent}1f`,
           transform: 'translateY(-1px)',
         },
-        '&:focus-visible': {
+        // Focus ring follows the overlay button's focus.
+        '&:focus-within': {
           outline: `2px solid ${accent}aa`,
           outlineOffset: '2px',
         },
       }}
     >
-      <Box sx={{ minWidth: 0, flex: 1 }}>
+      {/* Full-bleed primary action: opens the in-app report viewer. */}
+      <Box
+        component="button"
+        type="button"
+        onClick={openInApp}
+        aria-label={`Open log: ${title}`}
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          m: 0,
+          p: 0,
+          border: 0,
+          background: 'transparent',
+          cursor: 'pointer',
+          borderRadius: '12px',
+          // The button's own focus ring is handled by the container's
+          // :focus-within above, so suppress the default to avoid a double ring.
+          '&:focus-visible': { outline: 'none' },
+        }}
+      />
+
+      <Box sx={{ minWidth: 0, flex: 1, position: 'relative', pointerEvents: 'none' }}>
         <Typography
           sx={{
             fontWeight: 600,
@@ -197,6 +212,8 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
         </Box>
       </Box>
 
+      {/* External link — layered above the overlay button so it stays clickable
+          and is a sibling (not a descendant) of any interactive element. */}
       <Tooltip title="Open on ESO Logs" arrow>
         <Box
           component="a"
@@ -204,8 +221,9 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Open on ESO Logs"
-          onClick={(e) => e.stopPropagation()}
           sx={{
+            position: 'relative',
+            zIndex: 1,
             display: 'inline-flex',
             alignItems: 'center',
             color: theme.palette.text.disabled,
@@ -216,7 +234,9 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
           <OpenInNewIcon sx={{ fontSize: '1rem' }} />
         </Box>
       </Tooltip>
-      <ChevronRightIcon sx={{ fontSize: '1.2rem', color: theme.palette.text.disabled }} />
+      <ChevronRightIcon
+        sx={{ fontSize: '1.2rem', color: theme.palette.text.disabled, pointerEvents: 'none' }}
+      />
     </Box>
   );
 };
@@ -225,8 +245,12 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
 
 /**
  * Shows the PUBLIC ESO Logs reports a user has uploaded, on their profile page.
- * Renders nothing structural when there is no usable ESO Logs id and no logs —
- * profiles without linked logs simply don't get the section.
+ *
+ * Renders nothing at all only when there is no usable ESO Logs id (`unavailable`)
+ * — i.e. the profile's author_id isn't a numeric ESO Logs user id (e.g. the
+ * synthetic `system:eso-1`). For a real account with zero public uploads, the
+ * section still renders with a "No public logs uploaded yet" empty state, so the
+ * heading stays consistent with the Builds/Rosters sections above it.
  */
 export const ProfileLogsPanel: React.FC<ProfileLogsPanelProps> = ({ esoLogsUserId, username }) => {
   const theme = useTheme();

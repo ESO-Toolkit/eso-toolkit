@@ -79,40 +79,26 @@ describe('ProfileLogsPanel', () => {
   it('renders a row per report and navigates to the in-app viewer on click', () => {
     renderPanel({ reports: [makeReport('ABC123')], total: 1 });
 
-    const row = screen.getByRole('link', { name: /open log: my abc123 run/i });
-    expect(row).toBeInTheDocument();
+    // The primary in-app action is a real <button> (not a nested role="link"),
+    // so its keyboard activation is native — no custom handler to hijack.
+    const open = screen.getByRole('button', { name: /open log: my abc123 run/i });
+    expect(open).toBeInTheDocument();
     expect(screen.getByText('My ABC123 run')).toBeInTheDocument();
 
-    fireEvent.click(row);
+    fireEvent.click(open);
     expect(mockNavigate).toHaveBeenCalledWith('/report/ABC123', { vtType: 'forward' });
   });
 
-  it('exposes an external ESO Logs link per row without triggering in-app nav', () => {
+  it('renders the external ESO Logs link as a sibling that does not trigger in-app nav', () => {
     renderPanel({ reports: [makeReport('ABC123')], total: 1 });
 
     const external = screen.getByRole('link', { name: /open on eso logs/i });
     expect(external).toHaveAttribute('href', 'https://www.esologs.com/reports/ABC123');
+    // It must NOT be nested inside the in-app button (invalid nested interactive).
+    const openBtn = screen.getByRole('button', { name: /open log: my abc123 run/i });
+    expect(openBtn).not.toContainElement(external);
 
     fireEvent.click(external);
-    expect(mockNavigate).not.toHaveBeenCalled();
-  });
-
-  it('navigates in-app when the row itself is activated via keyboard', () => {
-    renderPanel({ reports: [makeReport('ABC123')], total: 1 });
-
-    const row = screen.getByRole('link', { name: /open log: my abc123 run/i });
-    fireEvent.keyDown(row, { key: 'Enter' });
-    expect(mockNavigate).toHaveBeenCalledWith('/report/ABC123', { vtType: 'forward' });
-  });
-
-  it('does not hijack the external link when it is activated via keyboard', () => {
-    renderPanel({ reports: [makeReport('ABC123')], total: 1 });
-
-    // Enter/Space on the nested external anchor must NOT bubble into the row's
-    // in-app navigation handler.
-    const external = screen.getByRole('link', { name: /open on eso logs/i });
-    fireEvent.keyDown(external, { key: 'Enter' });
-    fireEvent.keyDown(external, { key: ' ' });
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
