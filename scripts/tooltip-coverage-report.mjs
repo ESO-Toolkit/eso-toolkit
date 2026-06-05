@@ -69,7 +69,10 @@ for (const f of skillFiles) {
   // Cap is generous to span long multiline `alternateIds` arrays (e.g. Devour ~130 ids).
   // Require the `id` to be indented >2 spaces: top-level SkillLineData header `id`/`name`
   // sit at 2-space indent and describe the LINE, not a skill — exclude them.
-  const re = /^ {3,}\bid:\s*([A-Za-z0-9_.]+)\s*,([\s\S]{0,2000}?)\bname:\s*['"]([^'"]+)['"]/gm;
+  // Name capture is quote-style-matched (group 3 = the quote char, group 4 = body) so
+  // double-quoted names containing apostrophes (e.g. "Hircine's Bounty") parse correctly.
+  const re =
+    /^ {3,}\bid:\s*([A-Za-z0-9_.]+)\s*,([\s\S]{0,2000}?)\bname:\s*(['"])((?:[^\\]|\\.)*?)\3/gm;
   let m;
   while ((m = re.exec(txt))) {
     const id = resolveId(m[1]);
@@ -80,7 +83,8 @@ for (const f of skillFiles) {
         const v = Number(n.trim());
         if (v) altIds.push(v);
       }
-    committed.push({ id, altIds, name: m[3], file: path.relative(ROOT, f), rawId: m[1] });
+    const name = m[4].replace(/\\(['"])/g, '$1');
+    committed.push({ id, altIds, name, file: path.relative(ROOT, f), rawId: m[1] });
   }
 }
 
