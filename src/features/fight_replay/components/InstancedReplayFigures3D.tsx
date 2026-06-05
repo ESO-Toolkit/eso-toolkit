@@ -1452,6 +1452,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           scale={scale}
           actorIds={actorIds}
           playerVisibility={playerVisibility}
+          selectedActorRef={selectedActorRef}
         />
       )}
     </>
