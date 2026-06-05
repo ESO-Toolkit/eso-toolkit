@@ -18,7 +18,7 @@ export const vampire: SkillLineData = {
       isUltimate: true,
       maxRank: 4,
       description:
-        '|ce60000CRIMINAL ACT Transform into a monstrous creature of the night, instantly healing to full Health. While transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls.',
+        'Transform into a monstrous creature of the night, instantly healing to full Health.\n\nWhile transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls.',
     },
     {
       id: 38931, // Morph of Blood Scion
@@ -28,7 +28,7 @@ export const vampire: SkillLineData = {
       isUltimate: true,
       maxRank: 4,
       description:
-        'Transform into a monstrous creature of the night, instantly healing to full Health. While transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls. You also ascend to Vampire Stage 5, which grants all the benefits of Vampire Stage 4 with none of the drawbacks. You ascend to Vampire Stage 5.',
+        'Transform into a monstrous creature of the night, instantly healing to full Health.\n\nWhile transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls. \n\nYou also ascend to Vampire Stage 5, which grants all the benefits of Vampire Stage 4 with none of the drawbacks.',
     },
     {
       id: 38932, // Morph of Blood Scion
@@ -38,7 +38,7 @@ export const vampire: SkillLineData = {
       isUltimate: true,
       maxRank: 4,
       description:
-        'Transform into a monstrous creature of the night, instantly healing to full Health. While transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls. Bats also swarm around you and shred enemies that come close, dealing 870 Magic Damage every 1 second. Bats swarm around you and deal damage to enemies that come close.',
+        'Transform into a monstrous creature of the night, instantly healing to full Health.\n\nWhile transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls. \n\nBats also swarm around you and shred enemies that come close, dealing 843 Magic Damage every 1 second.',
     },
 
     // Active abilities - Eviscerate
@@ -50,7 +50,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Rend an enemy, dealing 2323 Magic Damage and applying the Hemorrhaging status effect. Deals up to 33% more damage based on your missing Health.',
+        'Rend an enemy, dealing 2249 Magic Damage and applying the Hemorrhaging status effect.\n\nDeals up to 33% more damage based on your missing Health.',
     },
     {
       id: 38956, // Morph of Eviscerate
@@ -60,7 +60,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Rend an enemy, dealing 2399 Magic Damage and applying the Hemorrhaging status effect. Deals up to 33% more damage based on your missing Health. If you use this ability while you are under 50% Health, it will always be a Critical Strike. Will always be a Critical Strike if you cast it while under half Health.',
+        'Rend an enemy, dealing 2323 Magic Damage and applying the Hemorrhaging status effect.\n\nDeals up to 33% more damage based on your missing Health.\n\nIf you use this ability while you are under 50% Health, it will always be a Critical Strike.',
     },
     {
       id: 38949, // Morph of Eviscerate
@@ -70,7 +70,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Rend an enemy, dealing 2323 Magic Damage and applying the Hemorrhaging status effect. Deals up to 75% more damage based on your missing Health. After you cast this ability, you cannot be healed by allies for 3 seconds. Costs Health to cast, but greatly increases the execute scaling. After casting the ability, you cannot be healed by allies for a short duration.',
+        'Rend an enemy, dealing 2323 Magic Damage and applying the Hemorrhaging status effect.\n\nDeals up to 60% more damage based on your missing Health.\n\nAfter you cast this ability, you cannot be healed by allies for 3 seconds.',
     },
 
     // Active abilities - Blood Frenzy
@@ -82,7 +82,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        '|ce60000CRIMINAL ACT Allow your monstrous appetites to take hold, increasing your Weapon and Spell Damage by 60 every 2 seconds, up to 5 times. While toggled on, the Health cost of this ability increases by 360 per stack and you cannot be healed by anyone but yourself, your pets, or your Companions.',
+        'Allow your monstrous appetites to take hold, increasing your Weapon and Spell Damage by 57 every 2 seconds, up to 5 times.\n\nWhile toggled on, the Health cost of this ability increases by 360 per stack and you cannot be healed by anyone but yourself, your pets, or your Companions.',
     },
     {
       id: 135841, // Morph of Blood Frenzy
@@ -92,7 +92,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Allow your monstrous appetites to take hold, increasing your Weapon and Spell Damage by 60 every 2 seconds, up to 5 times. While toggled on, the Health cost of this ability increases by 300 per stack and you cannot be healed by anyone but yourself, your pets, or your Companions. When toggled off, you heal for 33% of the total Health cost you spent while active. Reduces the ramping Health cost and when you toggle the ability off, you heal for a portion of the Health cost you spent.',
+        'Allow your monstrous appetites to take hold, increasing your Weapon and Spell Damage by 60 every 2 seconds, up to 5 times.\n\nWhile toggled on, the Health cost of this ability increases by 300 per stack and you cannot be healed by anyone but yourself, your pets, or your Companions.\n\nWhen toggled off, you heal for 30% of the total Health cost you spent while active.',
     },
     {
       id: 134160, // Morph of Blood Frenzy
@@ -102,7 +102,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Allow your monstrous appetites to take hold, increasing your Weapon and Spell Damage by 80 every 2 seconds, up to 5 times. While toggled on, the Health cost of this ability increases by 360 per stack and you cannot be healed by anyone but yourself, your pets, or your Companions. Increases the Weapon and Spell Damage granted per stack.',
+        'Allow your monstrous appetites to take hold, increasing your Weapon and Spell Damage by 77 every 2 seconds, up to 5 times.\n\nWhile toggled on, the Health cost of this ability increases by 360 per stack and you cannot be healed by anyone but yourself, your pets, or your Companions.',
     },
 
     // Active abilities - Vampiric Drain
@@ -147,7 +147,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Subdue enemies in front of you with your baleful gaze, stunning them for 5 seconds if they are facing your direction. This stun cannot be blocked.',
+        'Subdue enemies in front of you with your baleful gaze, stunning them for 5 seconds if they are facing your direction.\n\nThis stun cannot be blocked.',
     },
     {
       id: 137861, // Morph of Mesmerize
@@ -157,7 +157,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Subdue enemies around you with your baleful gaze, stunning them for 5 seconds if they are facing your direction. This stun cannot be blocked. Affects all enemies around you.',
+        'Subdue enemies around you with your baleful gaze, stunning them for 5 seconds if they are facing your direction.\n\nThis stun cannot be blocked.',
     },
     {
       id: 138097, // Morph of Mesmerize
@@ -167,7 +167,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Subdue enemies in front of you with your baleful gaze, stunning them for 5 seconds if they are facing your direction. This stun cannot be blocked. After the stun ends they remain stupefied, reducing their Movement Speed by 53% for 5 seconds. Enemies are snared after the stun ends.',
+        'Subdue enemies in front of you with your baleful gaze, stunning them for 5 seconds if they are facing your direction.\n\nThis stun cannot be blocked.\n\nAfter the stun ends they remain stupefied, reducing their Movement Speed by 50% for 5 seconds.',
     },
 
     // Active abilities - Mist Form
@@ -179,7 +179,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        '|ce60000CRIMINAL ACT Disperse into a dark mist, causing the next 3 projectiles to deal no damage to you for 1 second while you dash forward and reappear at your target location after a short duration. Casting again within 4 seconds costs 33% more Magicka.',
+        'Disperse into a dark mist, causing the next 3 projectiles to deal no damage to you for 1 second while you dash forward and reappear at your target location after a short duration.\n\nCasting again within 4 seconds costs 33% more Magicka.',
     },
     {
       id: 38965, // Morph of Mist Form
@@ -189,7 +189,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Dissolve into a bloody mist, causing the next 3 projectiles to deal no damage to you for 1 second while you dash forward and reappear at your target location after a short duration. Upon activation you drain the blood of those around you for 20 seconds, dealing 435 Magic Damage every 2 seconds to enemies and healing you for 45% of the damage caused. Casting again within 4 seconds costs 33% more Magicka. Deals damage to enemies around you and heals for a portion of the damage caused for a duration after casting.',
+        'Dissolve into a bloody mist, causing the next 3 projectiles to deal no damage to you for 1 second while you dash forward and reappear at your target location after a short duration.\n\nUpon activation you drain the blood of those around you for 20 seconds, dealing 422 Magic Damage every 2 seconds to enemies and healing you for 45% of the damage caused.\n\nCasting again within 4 seconds costs 33% more Magicka.',
     },
     {
       id: 38963, // Morph of Mist Form
@@ -199,7 +199,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        'Disperse into a dark mist, causing the next 3 projectiles to deal no damage to you for 1 second while you dash forward and reappear at your target location after a short duration. You gain Major Expedition and Major Evasion for 4 seconds after reappearing, increasing your Movement Speed by 30% and reducing damage from area attacks by 20%. Casting again within 4 seconds costs 33% more Magicka. Grants you Major Expedition and Major Evasion after reappearing.',
+        'Disperse into a dark mist, causing the next 3 projectiles to deal no damage to you for 1 second while you dash forward and reappear at your target location after a short duration.\n\nYou gain Major Expedition and Major Evasion for 2 seconds after reappearing, increasing your Movement Speed by 30% and reducing damage from area attacks by 20%.\n\nCasting again within 4 seconds costs 33% more Magicka.',
     },
 
     // Passive abilities
@@ -231,7 +231,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'Ignore the Movement Speed penalty of Sneak. Decreases the time it takes to enter Sneak by 50%.',
+        'Ignore the Movement Speed penalty of Sneak.\n\nDecreases the time it takes to enter Sneak by 25%.',
     },
     {
       id: AbilityId.STRIKE_FROM_THE_SHADOWS,
@@ -242,7 +242,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'While you are at Vampire Stage 2 or higher When you leave Sneak, invisibility, or Mist Form your Weapon and Spell Damage is increased by 300 for 6 seconds.',
+        'When you leave Sneak, invisibility, or Mist Form your Weapon and Spell Damage is increased by 150 for 6 seconds.',
     },
     {
       id: AbilityId.BLOOD_RITUAL,
@@ -252,7 +252,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 1,
       description:
-        'Allows you to infect another player with Noxiphilic Sanguivoria once every week by returning to the Vampire ritual site. Players already infected with Lycanthropy cannot be infected with Noxiphilic Sanguivoria.',
+        'Allows you to infect another player with Noxiphilic Sanguivoria once every week by returning to the Vampire ritual site. \n\nPlayers already infected with Lycanthropy cannot be infected with Noxiphilic Sanguivoria.',
     },
     {
       id: AbilityId.UNDEATH,
@@ -263,7 +263,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'While you are at Vampire Stage 3 or higher Reduces your damage taken by up to 15% based on your missing Health.',
+        'Reduces your damage taken by up to 15% based on your missing Health.\n\nCurrent bonus: 1%',
     },
     {
       id: AbilityId.UNNATURAL_MOVEMENT,

@@ -61,35 +61,35 @@ export const assault: SkillLineData = {
       id: 40211, // Morph of Rapid Maneuver
       name: 'Retreating Maneuver',
       description:
-        'Mobilize your forces, granting Major Expedition to you and your group, increasing your Movement Speed by 30% for 8 seconds. Attacks from behind deal 15% less damage while this effect persists.',
+        'Mobilize your forces, granting Major Expedition to you and your group, increasing your Movement Speed by 30% for 8 seconds. Attacks from behind deal 12% less damage while this effect persists.',
       maxRank: 4,
     },
     {
       id: AbilityId.VIGOR,
       name: 'Vigor',
       description:
-        'Let loose a battle cry, instilling yourself and nearby allies with resolve and healing them for 3480 Health over 10 seconds.',
+        'Let loose a battle cry, instilling yourself and nearby allies with resolve and healing them for 3372 Health over 10 seconds.',
       maxRank: 4,
     },
     {
       id: 61505, // Morph of Vigor
       name: 'Echoing Vigor',
       description:
-        'Let loose a battle cry, instilling you and your allies with resolve and healing for 3480 Health over 16 seconds.',
+        'Let loose a battle cry, instilling you and your allies with resolve and healing for 5220 Health over 10 seconds.',
       maxRank: 4,
     },
     {
       id: 61507, // Morph of Vigor
       name: 'Resolving Vigor',
       description:
-        'Let loose a battle cry, instilling yourself with resolve and healing for 5388 Health over 5 seconds. After casting you gain Minor Resolve, increasing your Physical and Spell Resistance by 2974, for 20 seconds.',
+        'Let loose a battle cry, instilling yourself with resolve and healing for 5220 Health over 5 seconds.\n\nAfter casting you gain Minor Resolve, increasing your Physical and Spell Resistance by 2974, for 20 seconds.',
       maxRank: 4,
     },
     {
       id: AbilityId.CALTROPS,
       name: 'Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 280 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 272 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.',
       maxRank: 4,
       alternateIds: [33376],
     },
@@ -97,14 +97,14 @@ export const assault: SkillLineData = {
       id: 40255, // Morph of Caltrops
       name: 'Anti-Cavalry Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%. The caltrops also drain the Mount Stamina of any enemy in the area.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nThe caltrops also drain the Mount Stamina of any enemy in the area.',
       maxRank: 4,
     },
     {
       id: 40242, // Morph of Caltrops
       name: 'Razor Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%. Enemies who take damage from the caltrops have Major Breach applied to them, reducing their Physical and Spell Resistance by 5948 for 4.1 seconds.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nEnemies who take damage from the caltrops have Major Breach applied to them, reducing their Physical and Spell Resistance by 5948 for 1.1 seconds.',
       maxRank: 4,
     },
     {
@@ -135,7 +135,7 @@ export const assault: SkillLineData = {
       alternateIds: [39248, 39249, 39250, 39251, 45614, 45615, 45616, 45617],
       name: 'Continuous Attack',
       description:
-        'Increases your Weapon and Spell Damage by 10% and Health, Magicka, and Stamina Recovery by 20% for 10 minutes after you capture a Lumber Mill, Farm, Mine, or Keep. Gain Gallop at all times, increasing your Mount Speed by 15%.',
+        'Increases your Weapon and Spell Damage by 5% and Health, Magicka, and Stamina Recovery by 10% for 10 minutes after you capture a Lumber Mill, Farm, Mine, or Keep.\n\nGain Gallop at all times, increasing your Mount Speed by 15%.',
       isPassive: true,
       maxRank: 1,
     },
@@ -145,7 +145,7 @@ export const assault: SkillLineData = {
       alternateIds: [39254, 45621, 109844],
       name: 'Reach',
       description:
-        'Increases the range of long-range abilities by 5 meters while near a keep or outpost. Any ability with a range greater than 28 meters is affected.',
+        'Increases the range of long-range abilities by 2 meters while near a keep or outpost.\n\nAny ability with a range greater than 28 meters is affected.',
       isPassive: true,
       maxRank: 1,
     },
@@ -154,7 +154,7 @@ export const assault: SkillLineData = {
       icon: 'ability_weapon_023',
       alternateIds: [39252, 39253, 45619, 45620],
       name: 'Combat Frenzy',
-      description: 'You generate 20 Ultimate when you kill an enemy player.',
+      description: 'You generate 10 Ultimate when you kill an enemy player.',
       isPassive: true,
       maxRank: 1,
     },

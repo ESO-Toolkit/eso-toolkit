@@ -15,7 +15,7 @@ export const werewolf: SkillLineData = {
       name: 'Werewolf Transformation',
       icon: 'ability_werewolf_001',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, your Max Stamina is increased by 30%. While slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds. \n\nWhile transformed, your Max Stamina is increased by 30%.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -25,7 +25,7 @@ export const werewolf: SkillLineData = {
       name: 'Pack Leader',
       icon: 'ability_werewolf_001_a',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, your Max Stamina is increased by 30%, you take 10% less damage, and you summon two direwolves. You also grant yourself and nearby group members Minor Courage, increasing their Weapon and Spell Damage by 215. While slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds. \n\nWhile transformed, your Max Stamina is increased by 30%, you take 10% less damage, and you summon two direwolves. You also grant yourself and nearby group members Minor Courage, increasing their Weapon and Spell Damage by 215.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -35,7 +35,7 @@ export const werewolf: SkillLineData = {
       name: 'Werewolf Berserker',
       icon: 'ability_werewolf_001_b',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, your Light Attacks apply a bleed for 3716 Bleed Damage over 4 seconds, your Heavy Attacks deal their damage in an area, and your Max Stamina is increased by 30%. While slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds. \n\nWhile transformed, your Light Attacks apply a bleed for 3600 Bleed Damage over 4 seconds, your Heavy Attacks deal their damage in an area, and your Max Stamina is increased by 30%.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -46,7 +46,7 @@ export const werewolf: SkillLineData = {
       name: 'Pounce',
       icon: 'ability_werewolf_002',
       description:
-        'Pounce on an enemy with primal fury, dealing 1742 Bleed Damage and applying the Hemorrhaging status effect. Activating the ability again within the next 5 seconds causes you to rip into an enemy and deal 1296 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health.',
+        'Pounce on an enemy with primal fury, dealing 1687 Bleed Damage and applying the Hemorrhaging status effect.\n\nActivating the ability again within the next 5 seconds causes you to rip into an enemy and deal 1260 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -56,7 +56,7 @@ export const werewolf: SkillLineData = {
       name: 'Brutal Pounce',
       icon: 'ability_werewolf_002_b',
       description:
-        'Pounce on an enemy with primal fury, dealing 1799 Bleed Damage and applying the Hemorrhaging status effect to all nearby enemies. Activating the ability again within the next 5 seconds causes you to rip into all enemies in front of you to deal 1302 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health. Increases your Weapon and Spell Damage by 100 for each enemy hit, up to 6 times.',
+        'Pounce on an enemy with primal fury, dealing 1742 Bleed Damage and applying the Hemorrhaging status effect to all nearby enemies.\n\nActivating the ability again within the next 5 seconds causes you to rip into all enemies in front of you to deal 1302 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health. Increases your Weapon and Spell Damage by 85 for each enemy hit, up to 6 times.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -66,7 +66,7 @@ export const werewolf: SkillLineData = {
       name: 'Feral Pounce',
       icon: 'ability_werewolf_002_a',
       description:
-        'Pounce on an enemy with primal fury, dealing 1742 Bleed Damage and applying the Hemorrhaging status effect. Activating the ability again within the next 5 seconds causes you to rip into an enemy and deal 1302 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health. Dealing damage with either attack restores 100 Stamina and extends your Werewolf Transformation by 1 second.',
+        'Pounce on an enemy with primal fury, dealing 1742 Bleed Damage and applying the Hemorrhaging status effect.\n\nActivating the ability again within the next 5 seconds causes you to rip into an enemy and deal 1302 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health.\n\nDealing damage with either attack restores 85 Stamina and extends your Werewolf Transformation by 1 second.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -108,7 +108,7 @@ export const werewolf: SkillLineData = {
       name: 'Roar',
       icon: 'ability_werewolf_003',
       description:
-        'Roar with bloodlust to fear nearby enemies for 4 seconds, setting them Off Balance for 7 seconds, and making them Terrified for 10 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+        'Roar with bloodlust to fear nearby enemies for 3 seconds, setting them Off Balance for 7 seconds, and making them Terrified for 10 seconds.\n\nWhile slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -118,7 +118,7 @@ export const werewolf: SkillLineData = {
       name: 'Deafening Roar',
       icon: 'ability_werewolf_003_a',
       description:
-        'Roar with bloodlust to fear nearby enemies for 4 seconds and setting them Off Balance for 7 seconds. Your roar also leaves enemies dazed, applying Major Breach and Minor Maim, reducing their Physical and Spell Resistance by 5948 and damage done by 5% for 10 seconds. While slotted you gain Major Protection and your Heavy Attacks taunt enemies for 15 seconds.',
+        'Roar with bloodlust to fear nearby enemies for 4 seconds and setting them Off Balance for 7 seconds.\n\nYour roar also leaves enemies dazed, applying Major Breach and Minor Maim, reducing their Physical and Spell Resistance by 5948 and damage done by 5% for 7 seconds.\n\nWhile slotted you gain Major Protection and your Heavy Attacks taunt enemies for 15 seconds.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -128,7 +128,7 @@ export const werewolf: SkillLineData = {
       name: 'Ferocious Roar',
       icon: 'ability_werewolf_003_b',
       description:
-        'Roar with bloodlust to fear nearby enemies for 4 seconds, setting them Off Balance for 7 seconds, and making them Terrified for 10 seconds. Your Heavy Attacks also are 33% faster for 10 seconds after casting. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+        'Roar with bloodlust to fear nearby enemies for 4 seconds, setting them Off Balance for 7 seconds, and making them Terrified for 10 seconds.\n\nYour Heavy Attacks also are 33% faster for 7 seconds after casting.\n\nWhile slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -139,7 +139,7 @@ export const werewolf: SkillLineData = {
       name: 'Piercing Howl',
       icon: 'ability_werewolf_005_a',
       description:
-        'Crush an enemy with a deafening howl, dealing 2904 Physical Damage. Deals 10% more damage to enemies that are Terrified.',
+        'Crush an enemy with a deafening howl, dealing 2812 Physical Damage.\n\nDeals 10% more damage to enemies that are Terrified.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -149,7 +149,7 @@ export const werewolf: SkillLineData = {
       name: 'Howl of Agony',
       icon: 'ability_werewolf_005_c',
       description:
-        'Crush an enemy with a deafening howl, dealing 2904 Physical Damage. Deals 10% more damage to enemies that are Terrified and 10% more to enemies that are Off Balance.',
+        'Crush an enemy with a deafening howl, dealing 2904 Physical Damage.\n\nDeals 10% more damage to enemies that are Terrified and 10% more to enemies that are Off Balance.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -159,7 +159,7 @@ export const werewolf: SkillLineData = {
       name: 'Howl of Despair',
       icon: 'ability_werewolf_005_b',
       description:
-        'Crush an enemy with a deafening howl, dealing 2999 Physical Damage. Enemies who are Terrified take 10% more damage from this attack. You or an ally targeting the enemy can activate the Feeding Frenzy synergy, which grants them Empower and Minor Force for 20 seconds, increasing their damage done with Heavy Attacks against monsters by 70% and their Critical Damage by 10%.',
+        'Crush an enemy with a deafening howl, dealing 2904 Physical Damage.\n\nEnemies who are Terrified take 10% more damage from this attack.\n\nYou or an ally targeting the enemy can activate the Feeding Frenzy synergy, which grants them Empower and Minor Force for 20 seconds, increasing their damage done with Heavy Attacks against monsters by 70% and their Critical Damage by 10%.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -170,7 +170,7 @@ export const werewolf: SkillLineData = {
       name: 'Infectious Claws',
       icon: 'ability_mage_065',
       description:
-        'Shred enemies in front of you with your tainted claws, dealing 2178 Disease Damage and an additional 3620 Disease Damage over 20 seconds. Enemies hit by the initial hit are afflicted with the Diseased status effect.',
+        'Shred enemies in front of you with your tainted claws, dealing 2109 Disease Damage and an additional 3510 Disease Damage over 20 seconds.\n\nEnemies hit by the initial hit are afflicted with the Diseased status effect.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -180,7 +180,7 @@ export const werewolf: SkillLineData = {
       name: 'Claws of Anguish',
       icon: 'ability_werewolf_006_b',
       description:
-        'Shred enemies in front of you with your tainted claws, dealing 2178 Disease Damage and an additional 3620 Disease Damage over 20 seconds. Afflicts enemies with Major Defile for 4 seconds, reducing their healing received and damage shield strength by 12%. Enemies hit by any part of the ability are afflicted with the Diseased status effect.',
+        'Shred enemies in front of you with your tainted claws, dealing 2178 Disease Damage and an additional 3620 Disease Damage over 20 seconds.\n\nAfflicts enemies with Major Defile for 2 seconds, reducing their healing received and damage shield strength by 12%.\n\nEnemies hit by any part of the ability are afflicted with the Diseased status effect.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -190,7 +190,7 @@ export const werewolf: SkillLineData = {
       name: 'Claws of Life',
       icon: 'ability_werewolf_006_c',
       description:
-        'Shred enemies in front of you with your tainted claws, dealing 2249 Disease Damage and an additional 3620 Disease Damage over 20 seconds. You are healed for 66% of the damage over time caused. Enemies hit by the initial hit are afflicted with the Diseased status effect.',
+        'Shred enemies in front of you with your tainted claws, dealing 2178 Disease Damage and an additional 3620 Disease Damage over 20 seconds. You are healed for 63% of the damage over time caused.\n\nEnemies hit by the initial hit are afflicted with the Diseased status effect.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -225,7 +225,7 @@ export const werewolf: SkillLineData = {
       name: 'Pursuit',
       icon: 'ability_werewolf_010',
       description:
-        'Increases your Movement Speed by 30%. Increases the Stamina your Heavy Attacks restore by 50%.',
+        'Increases your Movement Speed by 15%.\n\nIncreases the Stamina your Heavy Attacks restore by 25%.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
@@ -251,7 +251,7 @@ export const werewolf: SkillLineData = {
       name: 'Bloodmoon',
       icon: 'ability_werewolf_008',
       description:
-        'Allows you to infect another player with Lycanthropy once every week by returning to the Werewolf ritual site. Players already infected with Noxiphilic Sanguivoria cannot be infected with Lycanthropy.',
+        'Allows you to infect another player with Lycanthropy once every week by returning to the Werewolf ritual site. \n\nPlayers already infected with Noxiphilic Sanguivoria cannot be infected with Lycanthropy.',
       maxRank: 1,
       isUltimate: false,
       isPassive: true,

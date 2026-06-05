@@ -13,7 +13,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_STRIKE,
       name: 'Soul Strike',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 14808 Magic Damage over 5 seconds. While channeling this ability, you gain immunity to all disabling effects. Enemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility. This ability is considered direct damage.',
+        'Burn an enemy from the inside with soulfire, dealing 14340 Magic Damage over 5 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002',
       isUltimate: true,
       isPassive: false,
@@ -23,7 +23,7 @@ export const soulMagic: SkillLineData = {
       id: 40415, // Morph of Soul Strike
       name: 'Shatter Soul',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 14814 Magic Damage over 5 seconds. Upon completion, the soulfire overflows and explodes from the enemy, dealing 2399 Magic Damage to all enemies near them. While channeling this ability, you gain immunity to all disabling effects. Enemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility. This ability is considered direct damage. Upon completion, deals damage to all enemies near your target.',
+        'Burn an enemy from the inside with soulfire, dealing 14814 Magic Damage over 5 seconds. Upon completion, the soulfire overflows and explodes from the enemy, dealing 2323 Magic Damage to all enemies near them.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002_a',
       isUltimate: true,
       isPassive: false,
@@ -33,7 +33,7 @@ export const soulMagic: SkillLineData = {
       id: 40420, // Morph of Soul Strike
       name: 'Soul Assault',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 20400 Magic Damage over 6 seconds. While channeling this ability, you gain immunity to all disabling effects. Enemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility. This ability is considered direct damage. Increases the duration of the channel and number of ticks.',
+        'Burn an enemy from the inside with soulfire, dealing 19752 Magic Damage over 6 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002_b',
       isUltimate: true,
       isPassive: false,
@@ -81,7 +81,7 @@ export const soulMagic: SkillLineData = {
       id: 40329, // Morph of Soul Trap
       name: 'Soul Splitting Trap',
       description:
-        'Lay claim to enemy souls, dealing 2316 Magic Damage to your target and any other nearby enemies over 10 seconds. Fills an empty Soul Gem if an affected enemy dies. Affects additional enemies near your initial target, but for a shorter duration. Reduces the cost as the ability ranks up.',
+        'Lay claim to enemy souls, dealing 2316 Magic Damage to your target and any other nearby enemies over 10 seconds.\n\nFills an empty Soul Gem if an affected enemy dies.',
       icon: 'ability_mage_065',
       isUltimate: false,
       isPassive: false,
@@ -120,7 +120,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_LOCK,
       alternateIds: [39263, 39264, 45580, 45582],
       name: 'Soul Lock',
-      description: 'Killing an enemy has a 10% chance of automatically filling an empty Soul Gem.',
+      description: 'Killing an enemy has a 5% chance of automatically filling an empty Soul Gem.',
       icon: 'ability_sorcerer_043',
       isUltimate: false,
       isPassive: true,

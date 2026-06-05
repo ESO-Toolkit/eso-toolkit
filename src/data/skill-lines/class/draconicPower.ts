@@ -21,7 +21,7 @@ export const draconicPower: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_009',
       description:
-        'Launch yourself at an enemy, dealing 3574 Flame Damage to all enemies in the area, knocking players back 4 meters and stunning them for 2 seconds. If the target is a monster they are instead knocked into the air and stunned for 3 seconds.',
+        'Launch yourself at an enemy, dealing 3460 Flame Damage to all enemies in the area, knocking players back 4 meters and stunning them for 2 seconds. If the target is a monster they are instead knocked into the air and stunned for 3 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGON_LEAP,
     },
@@ -31,7 +31,7 @@ export const draconicPower: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_009_a',
       description:
-        'Launch yourself at an enemy, dealing 3574 Flame Damage to all enemies in the area, knocking players back 4 meters and stunning them for 2 seconds. If the target is a monster they are instead knocked into the air and stunned for 3 seconds. Upon activation you gain a damage shield that absorbs 17173 damage for 10 seconds. This portion of the ability scales with your Max Health.',
+        'Launch yourself at an enemy, dealing 3574 Flame Damage to all enemies in the area, knocking players back 4 meters and stunning them for 2 seconds. If the target is a monster they are instead knocked into the air and stunned for 3 seconds.\n\nUpon activation you gain a damage shield that absorbs 16625 damage for 10 seconds. This portion of the ability scales with your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGON_LEAP,
     },
@@ -51,7 +51,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_004',
       description:
-        'Exhale a blast of draconic fire in front of you, dealing 1742 Flame Damage and an additional 2900 Flame Damage over 10 seconds to enemies in your path.',
+        'Exhale a blast of draconic fire in front of you, dealing 1687 Flame Damage and an additional 2810 Flame Damage over 10 seconds to enemies in your path.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
     },
     {
@@ -60,7 +60,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_004_a',
       description:
-        'Exhale a blast of draconic fire in front of you, dealing 1799 Flame Damage, applying the Burning status effect, and an additional 2995 Flame Damage over 10 seconds to enemies in your path. The initial hit liquifies the armor of your enemies, applying Major Breach to enemies for the duration, reducing Physical and Spell Resistance by 5948.',
+        'Exhale a blast of draconic fire in front of you, dealing 1742 Flame Damage, applying the Burning status effect, and an additional 2900 Flame Damage over 10 seconds to enemies in your path.\n\nThe initial hit liquifies the armor of your enemies, applying Major Breach to enemies for the duration, reducing Physical and Spell Resistance by 5948.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
     },
     {
@@ -69,7 +69,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_004_b',
       description:
-        'Breathe forth an unending torrent of draconic fire, dealing 1386 Flame Damage every 0.5 seconds in a channeled attack over 4.8 seconds. Each tick increases the damage dealt by 5%, up to a maximum of 50%. While Take Flight is active you always deal maximum damage. This ability is considered direct damage.',
+        'Breathe forth an unending torrent of draconic fire, dealing 1342 Flame Damage every 0.5 seconds in a channeled attack over 4.8 seconds.\n\nEach tick increases the damage dealt by 5%, up to a maximum of 50%. While Take Flight is active you always deal maximum damage.\n\nThis ability is considered direct damage.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_BREATH,
     },
     {
@@ -78,7 +78,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_005',
       description:
-        'Lash out with a flaming chain, pulling an enemy to you. The searing metal deals 1392 Flame Damage, applies the Burning status effect, and taunts them for 15 seconds if they are not already taunted. This attack cannot be dodged or reflected. Also inflicts Major Cowardice on the enemy, reducing Weapon and Spell Damage by 430 for 10 seconds.',
+        'Lash out with a flaming chain, pulling an enemy to you. The searing metal deals 1348 Flame Damage, applies the Burning status effect, and taunts them for 15 seconds if they are not already taunted.\n\nThis attack cannot be dodged or reflected.\n\nAlso inflicts Major Cowardice on the enemy, reducing Weapon and Spell Damage by 430 for 10 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
     },
     {
@@ -96,7 +96,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_005_b',
       description:
-        'Lash out with a chain bound in jagged links, pulling yourself to an enemy. The searing metal deals 1438 Flame Damage and applies the Burning status effect. This attack cannot be dodged or reflected. Hitting the target grants you Major Berserk for 6 seconds and Major Evasion for 10 seconds, increasing damage done by 10% reducing damage taken from area attacks by 20%.',
+        'Lash out with a chain bound in jagged links, pulling yourself to an enemy. The searing metal deals 1393 Flame Damage and applies the Burning status effect.\n\nThis attack cannot be dodged or reflected.\n\nHitting the target grants you Major Berserk for 6 seconds and Major Evasion for 10 seconds, increasing damage done by 10% reducing damage taken from area attacks by 20%.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
     },
     {
@@ -105,7 +105,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_010',
       description:
-        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you and immobilizing them for 4 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
+        'Call forth talons from the ground, dealing 1687 Flame Damage to enemies near you and immobilizing them for 4 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DARK_TALONS,
     },
     {
@@ -114,7 +114,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_010_b',
       description:
-        'Call forth talons from the ground, dealing 1799 Flame Damage to enemies near you, an additional 1635 Flame Damage over 5 seconds, and immobilizing them for 4 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
+        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you, an additional 1585 Flame Damage over 5 seconds, and immobilizing them for 4 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DARK_TALONS,
     },
     {
@@ -123,7 +123,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_010_a',
       description:
-        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you and immobilizing them for 4 seconds. Enemies hit are afflicted with Minor Maim, reducing damage done by 5% for 20 seconds. An ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
+        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you and immobilizing them for 4 seconds. \n\nEnemies hit are afflicted with Minor Maim, reducing damage done by 5% for 17 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DARK_TALONS,
     },
     {
@@ -132,7 +132,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_011',
       description:
-        'Draw on your draconic blood to heal for 4132 Health, increasing by up to 50% additional healing based on your missing Health. This ability scales off your Max Health. You also gain Major Fortitude, increasing your Health Recovery by 30% for 20 seconds.',
+        'Draw on your draconic blood to heal for 4000 Health, increasing by up to 50% additional healing based on your missing Health. This ability scales off your Max Health.\n\nYou also gain Major Fortitude, increasing your Health Recovery by 30% for 20 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGON_BLOOD,
     },
     {
@@ -141,7 +141,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_011_b',
       description:
-        'Draw on your draconic blood to heal for 4131 Health, increasing by up to 50% additional healing based on your missing Health. Heals for an additional 2555 Health over 5 seconds. This ability scales off your Max Health. You also gain Major Endurance and Fortitude and Minor Vitality, increasing Health and Stamina Recovery by 30% and increasing healing received and damage shield strength by 6% for 20 seconds.',
+        'Draw on your draconic blood to heal for 4131 Health, increasing by up to 50% additional healing based on your missing Health. Heals for an additional 2475 Health over 5 seconds. This ability scales off your Max Health.\n\nYou also gain Major Endurance and Fortitude and Minor Vitality, increasing Health and Stamina Recovery by 30% and increasing healing received and damage shield strength by 6% for 20 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGON_BLOOD,
     },
     {
@@ -150,7 +150,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_011_a',
       description:
-        'Draw on your draconic blood to heal yourself for 2999 and nearby allies for 1998 Health, increasing by up to 50% additional healing based on missing Health. Healed targets gain Major Fortitude and Minor Courage, increasing Health Recovery by 30% and Weapon and Spell Damage by 215 for 20 seconds.',
+        'Draw on your draconic blood to heal yourself for 2904 and nearby allies for 1935 Health, increasing by up to 50% additional healing based on missing Health. \n\nHealed targets gain Major Fortitude and Minor Courage, increasing Health Recovery by 30% and Weapon and Spell Damage by 215 for 20 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGON_BLOOD,
     },
     {
@@ -159,7 +159,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_008',
       description:
-        'Unfurl draconic wings to knock back enemies around you 4 meters and stun them for 1.8 seconds. The winds from your buffet swirl around you, reducing your damage taken from projectiles by 50% for 6 seconds, while granting you Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
+        'Unfurl draconic wings to knock back enemies around you 4 meters and stun them for 1.8 seconds.\n\nThe winds from your buffet swirl around you, reducing your damage taken from projectiles by 50% for 6 seconds, while granting you Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PROTECTIVE_SCALE,
     },
     {
@@ -168,7 +168,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_008_a',
       description:
-        'Unfurl draconic wings to safeguard you and nearby group members for 6 seconds, reducing damage taken from projectiles by 50% for you and 25% for group members. You and your brood gain Minor Protection for 20 seconds, reducing damage taken by 5%. You gain Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
+        'Unfurl draconic wings to safeguard you and nearby group members for 6 seconds, reducing damage taken from projectiles by 50% for you and 25% for group members.\n\nYou and your brood gain Minor Protection for 20 seconds, reducing damage taken by 5%. You gain Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PROTECTIVE_SCALE,
     },
     {
@@ -177,7 +177,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_008_b',
       description:
-        'Unfurl draconic wings to knock back enemies around you 4 meters and stun them for 1.8 seconds. The enchanted winds summoned by your wings coalesce around you, reducing your damage taken from projectiles by 50% for 6 seconds, while granting you immunity to snares and immobilizations and Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
+        'Unfurl draconic wings to knock back enemies around you 4 meters and stun them for 1.8 seconds. \n\nThe enchanted winds summoned by your wings coalesce around you, reducing your damage taken from projectiles by 50% for 6 seconds, while granting you immunity to snares and immobilizations and Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PROTECTIVE_SCALE,
     },
     {
@@ -187,7 +187,7 @@ export const draconicPower: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_025',
       description:
-        'The eldest Dragons are forces of nature. As are you. Activating a Draconic Power ability grants you and group members Minor Brutality for 20 seconds, increasing Weapon Damage by 10%. Increases your Health Recovery by up to 700, based on your missing Health. Current amount: 0',
+        'The eldest Dragons are forces of nature. As are you.\n\nActivating a Draconic Power ability grants you and group members Minor Brutality for 20 seconds, increasing Weapon Damage by 10%.\n\nIncreases your Health Recovery by up to 350, based on your missing Health.\nCurrent amount: 0',
       isPassive: true,
     },
     {
@@ -196,7 +196,7 @@ export const draconicPower: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_031',
       description:
-        'The syllables of that ancient tongue live in the mouth of every Dragonknight. When you cast an Ultimate ability, you restore 16 Health 16 Magicka, and 16 Stamina for each point of the Ultimate spent. Each Dragonknight ability slotted increases this value by 6. Current amount: 16 Health 16 Magicka 16 Stamina',
+        'Given time, the smallest rock on the mountain can cascade into pure devastation.\n\nWhenever you deal damage you gain a stack of Landslide which increases your damage done by 1% per stack, up to 10 times. This effect can occur once every 10 seconds.\n\nEvery 2 seconds you do not deal damage, you lose a stack.',
       isPassive: true,
     },
     {
@@ -206,7 +206,7 @@ export const draconicPower: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_010',
       description:
-        'Dragons leave naught but ash and ruin in their wake. Increases your damage done with area and over time attacks by 7%.',
+        'The will to survive burns bright in your chest.\n\nIncreases your Healing Taken by 4%.',
       isPassive: true,
     },
     {

@@ -17,7 +17,7 @@ export const scrying: SkillLineData = {
       isUltimate: false,
       isPassive: true,
       description:
-        'Adds the selected contiguous group of facets to your area of control. Consumes 1 turn.',
+        'Adds the selected contiguous group of facets to your area of control.\n\nConsumes 1 turn.',
       skillStyles: [],
     },
     {
@@ -28,7 +28,7 @@ export const scrying: SkillLineData = {
       maxRank: 10,
       isUltimate: false,
       isPassive: true,
-      description: 'Allows you to scry for Antiquities of up to Ultimate difficulty.',
+      description: 'Allows you to scry for Antiquities of up to Simple difficulty.',
       skillStyles: [],
     },
     {
@@ -61,7 +61,7 @@ export const scrying: SkillLineData = {
       maxRank: 4,
       isUltimate: false,
       isPassive: true,
-      description: 'Grants you two additional Magicka Charges for use in Scrying.',
+      description: 'Grants you an additional Magicka Charge for use in Scrying.',
       skillStyles: [],
     },
     {
@@ -73,7 +73,7 @@ export const scrying: SkillLineData = {
       isUltimate: false,
       isPassive: true,
       description:
-        'Claim all facets of the selected type that touch your area of control, as well as matching facets directly adjacent. New Effect: Dilation now claims ALL contiguous facets of the same type. Consumes 1 Magicka Charge.',
+        'Claim all facets of the selected type that touch your area of control, as well as matching facets directly adjacent.\n\nConsumes 1 Magicka Charge.',
       skillStyles: [],
     },
     {
@@ -85,7 +85,7 @@ export const scrying: SkillLineData = {
       isUltimate: false,
       isPassive: true,
       description:
-        'Claim a line of facets, stretching out from your area of control. New Effect: Range increased from 4 facets to 6. Consumes 1 Magicka Charge.',
+        'Claim a line of facets, stretching out from your area of control.\n\nConsumes 1 Magicka Charge.',
       skillStyles: [],
     },
     {

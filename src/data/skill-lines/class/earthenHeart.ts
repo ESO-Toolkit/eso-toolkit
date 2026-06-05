@@ -21,7 +21,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018',
       description:
-        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds. While active, you cannot generate Ultimate.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 12 seconds.\n\nWhile active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -31,7 +31,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018_a',
       description:
-        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds. When activated, nearby allies gain a damage shield for 133% of their Max Health for 10 seconds. While active, you cannot generate Ultimate.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds.\n\nWhen activated, nearby allies gain a damage shield for 130% of their Max Health for 10 seconds.\n\nWhile active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -41,7 +41,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018_b',
       description:
-        'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1619 Flame Damage to nearby enemies each second for 10 seconds. While active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1568 Flame Damage to nearby enemies each second for 10 seconds. \n\nWhile active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -105,7 +105,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_017',
       description:
-        'Call the earth to your defense, granting a damage shield for you and nearby allies that absorbs 1321 damage. This portion of the ability scales off your Max Health. You also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
+        'Call the earth to your defense, granting a damage shield for you and nearby allies that absorbs 1279 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -123,7 +123,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_017b',
       description:
-        'Call the earth to your defense, granting a damage shield for nearby allies that absorbs 1322 damage. Your own damage shield absorbs 3824 damage. This portion of the ability scales off your Max Health. You also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
+        'Call the earth to your defense, granting a damage shield for nearby allies that absorbs 1322 damage. Your own damage shield absorbs 3702 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -159,7 +159,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_016',
       description:
-        'Summon a scorching cloud of ash at the target location for 15 seconds, reducing enemy Movement Speed by 70% and healing you and your allies for 434 Health every 1 second.',
+        'Throw out a kindled flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 421 Health every 1 second.\n\nHealed targets gain Minor Fortitude and Minor Heroism while inside, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -168,7 +168,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_016a',
       description:
-        'Summon a scorching cloud of ash at the target location for 15 seconds, reducing enemy Movement Speed by 70% and healing you and your allies for 674 every 1 second.',
+        'Throw out a purifying flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 435 Health every 1 second. This healing increases by 50% if you are in the area.\n\nHealed targets gain Minor Fortitude and Minor Heroism for 15 seconds, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -187,7 +187,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_007',
       description:
-        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.',
+        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 17 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_EARTHSPIKE_MANTLE,
     },
     {
@@ -196,7 +196,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_007_a',
       description:
-        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds. As the armor forms you blast foes around you with shattered obsidian, causing them to take 4785 Flame Damage over 20 seconds. When this effect deals damage you gain a stack of Landslide, up to once every 10 seconds.',
+        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.\n\nAs the armor forms you blast foes around you with shattered obsidian, causing them to take 4642 Flame Damage over 20 seconds. When this effect deals damage you gain a stack of Landslide, up to once every 10 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_EARTHSPIKE_MANTLE,
     },
     {
@@ -205,7 +205,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_007_b',
       description:
-        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds. Power drawn from the heart of a volcano forms a damage shield around you that absorbs up to 5121 damage for 6 seconds, scaling off your Max Health.',
+        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.\n\nPower drawn from the heart of a volcano forms a damage shield around you that absorbs up to 4958 damage for 6 seconds, scaling off your Max Health.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_EARTHSPIKE_MANTLE,
     },
     {
@@ -214,7 +214,7 @@ export const earthenHeart: SkillLineData = {
       type: 'passive',
       icon: 'ability_weapon_005',
       description:
-        'Given time, the smallest rock on the mountain can cascade into pure devastation. Whenever you deal damage you gain a stack of Landslide which increases your damage done by 1% per stack, up to 10 times. This effect can occur once every 5 seconds. Every 2 seconds you do not deal damage, you lose a stack.',
+        'Given time, the smallest rock on the mountain can cascade into pure devastation.\n\nWhenever you deal damage you gain a stack of Landslide which increases your damage done by 1% per stack, up to 10 times. This effect can occur once every 10 seconds.\n\nEvery 2 seconds you do not deal damage, you lose a stack.',
       isPassive: true,
     },
     {
@@ -223,7 +223,8 @@ export const earthenHeart: SkillLineData = {
       name: 'Eternal Mountain',
       type: 'passive',
       icon: 'ability_dragonknight_023',
-      description: 'Increases duration of your Earthen Heart abilities by 20%.',
+      description:
+        'Rock and stone shield your heart, turning aside sharp blades and barbed words.\n\nIncreases your Armor by 1487.',
       isPassive: true,
     },
     {
@@ -232,7 +233,7 @@ export const earthenHeart: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_024',
       description:
-        'Where earth meets sky is a wellspring of power you can tap at will. When you cast or deal damage with an Earthen Heart ability in combat you generate 3 Ultimate. This effect can occur once every 6 seconds. Increases your Critical Damage by 10%.',
+        'Where earth meets sky is a wellspring of power you can tap at will.\n\nWhen you cast or deal damage with an Earthen Heart ability in combat you generate 1 Ultimate. This effect can occur once every 6 seconds.\n\nIncreases your Critical Damage by 5%.',
       isPassive: true,
     },
     {
@@ -241,7 +242,7 @@ export const earthenHeart: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_034',
       description:
-        'The strength of mountains fuels your mightiest blows. Dealing damage with a fully-charged Heavy Attack also applies Off Balance to the target and restores 1430 Stamina. The Stamina restore can occur once every 0.5 seconds.',
+        'The strength of mountains fuels your mightiest blows.\n\nDealing damage with a fully-charged Heavy Attack also applies Off Balance to the target.',
       isPassive: true,
     },
     // Heart of Stone passive (U49) — ID pending from ESO data sources

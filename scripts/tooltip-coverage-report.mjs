@@ -1,0 +1,113 @@
+#!/usr/bin/env node
+/**
+ * tooltip-coverage-report.mjs
+ *
+ * Decides go/no-go for a description refresh from the tooltip dump.
+ * Matches committed skill entries to dump abilities BY RESOLVED ABILITY ID
+ * (not by name — names drift across patches, e.g. staff element variants).
+ *
+ * Reports: how many committed skills resolve to a numeric id, how many of those
+ * are present in the dump by id, and lists the unmatched (which would keep their
+ * current text under a keyed update).
+ *
+ * Usage: node scripts/tooltip-coverage-report.mjs
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
+
+const ROOT = process.cwd();
+
+// --- Load enum maps (NAME -> number) -------------------------------------
+function loadEnumMap(file) {
+  const txt = fs.readFileSync(file, 'utf8');
+  const map = new Map();
+  const re = /^\s*([A-Z0-9_]+)\s*=\s*(\d+)/gm;
+  let m;
+  while ((m = re.exec(txt))) map.set(m[1], Number(m[2]));
+  return map;
+}
+
+const enums = {};
+const enumFiles = {
+  ClassSkillId: 'src/features/loadout-manager/data/classSkillIds.ts',
+  AbilityId: 'src/data/skill-lines/ability-ids.ts',
+};
+for (const [name, rel] of Object.entries(enumFiles)) {
+  const f = path.join(ROOT, rel);
+  if (fs.existsSync(f)) enums[name] = loadEnumMap(f);
+}
+
+// Resolve an `id:` RHS token to a number: either a literal, or EnumName.CONST.
+function resolveId(token) {
+  token = token.trim().replace(/,$/, '');
+  if (/^\d+$/.test(token)) return Number(token);
+  const m = token.match(/^([A-Za-z0-9_]+)\.([A-Z0-9_]+)$/);
+  if (m && enums[m[1]]) return enums[m[1]].get(m[2]) ?? null;
+  return null;
+}
+
+// --- Collect committed skill entries (id + name) -------------------------
+const skillFiles = execSync('find src/data/skill-lines -name "*.ts"', { encoding: 'utf8' })
+  .trim()
+  .split(/\r?\n/)
+  .filter((f) => !/ability-ids\.ts$|index\.ts$|calculator-data\.ts$/.test(f));
+
+const committed = []; // { id, name, file }
+for (const f of skillFiles) {
+  const txt = fs.readFileSync(f, 'utf8');
+  // Match `id: <token>,` followed (within the same object) by `name: '...'`
+  const re = /\bid:\s*([A-Za-z0-9_.]+)\s*,[\s\S]{0,200}?\bname:\s*['"]([^'"]+)['"]/g;
+  let m;
+  while ((m = re.exec(txt))) {
+    const id = resolveId(m[1]);
+    committed.push({ id, name: m[2], file: path.relative(ROOT, f), rawId: m[1] });
+  }
+}
+
+// --- Collect dump ability ids --------------------------------------------
+const dump = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tooltip-dump.json'), 'utf8'));
+const dumpIds = new Set();
+const dumpById = new Map();
+for (const line of dump.skillLines) {
+  for (const sk of line.skills) {
+    for (const ab of sk.morphs) {
+      if (ab.id != null) {
+        dumpIds.add(ab.id);
+        if (!dumpById.has(ab.id)) dumpById.set(ab.id, ab);
+      }
+    }
+  }
+}
+
+// --- Report ---------------------------------------------------------------
+const resolved = committed.filter((c) => c.id != null);
+const unresolved = committed.filter((c) => c.id == null);
+const matched = resolved.filter((c) => dumpIds.has(c.id));
+const unmatched = resolved.filter((c) => !dumpIds.has(c.id));
+
+console.log('=== Tooltip refresh coverage (match by resolved ability ID) ===');
+console.log(`Enum maps loaded:        ${Object.entries(enums).map(([k, v]) => `${k}=${v.size}`).join(', ')}`);
+console.log(`Dump abilities (by id):  ${dumpIds.size}`);
+console.log(`Committed skill entries: ${committed.length}`);
+console.log(`  id resolved:           ${resolved.length}`);
+console.log(`  id UNresolved:         ${unresolved.length} (enum const not found / non-id token)`);
+console.log(`Matched in dump by id:   ${matched.length} / ${resolved.length} (${(100 * matched.length / resolved.length).toFixed(1)}%)`);
+console.log(`Unmatched (keep current):${unmatched.length}`);
+
+if (unmatched.length) {
+  console.log('\n--- Unmatched sample (first 25, would retain existing text) ---');
+  for (const c of unmatched.slice(0, 25)) {
+    console.log(`  ${String(c.id).padEnd(8)} ${c.name}   [${c.file}]`);
+  }
+}
+if (unresolved.length) {
+  console.log('\n--- Unresolved id tokens sample (first 15) ---');
+  for (const c of unresolved.slice(0, 15)) {
+    console.log(`  ${c.rawId.padEnd(40)} ${c.name}   [${c.file}]`);
+  }
+}
+
+const rate = matched.length / resolved.length;
+console.log(`\nVERDICT: ${rate >= 0.9 ? 'HIGH coverage — safe to refresh descriptions (unmatched keep current).' : rate >= 0.7 ? 'MODERATE — investigate unmatched before refresh (possible ID drift).' : 'LOW — likely ID drift; do NOT bulk-refresh.'}`);

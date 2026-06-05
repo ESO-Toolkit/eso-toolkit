@@ -24,7 +24,7 @@ export const thievesGuild: SkillLineData = {
       alternateIds: [76454, 76455, 76456, 76457, 77331, 77332, 77333],
       name: 'Swiftly Forgotten',
       description:
-        'Bounty is decreased by 115 after 3 minutes. Heat is decreased by 64 after 3 seconds.',
+        'Bounty is decreased by 46 after 3 minutes.\nHeat is decreased by 36 after 3 seconds.',
       icon: 'ability_thievesguild_passive_005',
       type: 'passive',
       isPassive: true,
@@ -34,7 +34,7 @@ export const thievesGuild: SkillLineData = {
       id: AbilityId.HAGGLING,
       alternateIds: [76458, 76459, 76460, 76461],
       name: 'Haggling',
-      description: 'Stolen items sold at a fence are worth 10% more. Does not apply to Laundering.',
+      description: 'Stolen items sold at a fence are worth 2% more. Does not apply to Laundering.',
       icon: 'ability_thievesguild_passive_006',
       type: 'passive',
       isPassive: true,

@@ -78,7 +78,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CIRCLE_OF_PROTECTION,
       description:
-        'Brand the earth at your location with a rune of protection for 20 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing your damage taken by 5% and increasing your Stamina Recovery by 15%.',
+        'Brand the earth at your location with a rune of protection for 17 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing your damage taken by 5% and increasing your Stamina Recovery by 15%.',
     },
     {
       id: 40169,
@@ -86,7 +86,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CIRCLE_OF_PROTECTION,
       description:
-        'Brand the earth at your location with a rune of protection for 10 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing damage taken by 5% and increasing Stamina Recovery by 15%, and are healed for 435 Health every 1 second.',
+        'Brand the earth at your location with a rune of protection for 10 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing damage taken by 5% and increasing Stamina Recovery by 15%, and are healed for 422 Health every 1 second.',
     },
     {
       id: 40181,
@@ -94,7 +94,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CIRCLE_OF_PROTECTION,
       description:
-        'Brand the earth at your location with a rune of protection for 20 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing your damage taken by 5% and increasing your Stamina Recovery by 15%. Upon activation, enemies in the area are feared for 4 seconds.',
+        'Brand the earth at your location with a rune of protection for 20 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing your damage taken by 5% and increasing your Stamina Recovery by 15%.\n\nUpon activation, enemies in the area are feared for 2 seconds.',
     },
 
     // Active abilities - Expert Hunter family
@@ -104,7 +104,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EXPERT_HUNTER,
       description:
-        'Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+        'Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
     },
     {
       id: 40195,
@@ -120,7 +120,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EXPERT_HUNTER,
       description:
-        'Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While active, increases the damage of your Stamina costing Fighters Guild abilities by 25%. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+        'Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. \n\nWhile active, increases the damage of your Stamina costing Fighters Guild abilities by 22%.\n\nWhile slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
     },
 
     // Active abilities - Trap Beast family
@@ -130,7 +130,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TRAP_BEAST,
       description:
-        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds. When triggered, the trap deals 1161 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration. Enemies who activate the trap are immobilized for 2 seconds.',
+        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds. \n\nWhen triggered, the trap deals 1124 Bleed Damage, an additional 3360 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
     },
     {
       id: 40382,
@@ -138,7 +138,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TRAP_BEAST,
       description:
-        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds. When triggered, the trap deals 1438 Bleed Damage, an additional 3580 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration. Enemies hit by the initial hit are afflicted with the Hemorrhaging status effect. Enemies who activate the trap are immobilized for 2 seconds.',
+        'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 1393 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies hit by the initial hit are afflicted with the Hemorrhaging status effect.\n\n Enemies who activate the trap are immobilized for 2 seconds.',
     },
     {
       id: 40372,
@@ -147,7 +147,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TRAP_BEAST,
       description:
-        'Launch a sharpened blade trap at a target location, which takes 1.5 seconds to arm and lasts for 20 seconds. When triggered, the trap deals 1161 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration. Enemies who activate the trap are immobilized for 2 seconds.',
+        'Launch a sharpened blade trap at a target location, which takes 1.5 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the trap deals 1161 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration.\n\nEnemies who activate the trap are immobilized for 2 seconds.',
     },
 
     // Passive abilities
@@ -158,7 +158,7 @@ export const fightersGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.INTIMIDATING_PRESENCE,
       description:
-        'Allows you to Intimidate NPCs in conversation. Reduces the Stamina cost of your Fighters Guild abilities by 15%.',
+        'Allows you to Intimidate NPCs in conversation.\n\nReduces the Stamina cost of your Fighters Guild abilities by 15%.',
     },
     {
       id: AbilityId.SLAYER,
@@ -168,7 +168,7 @@ export const fightersGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.SLAYER,
       description:
-        'Increases your Weapon and Spell Damage by 3% for each Fighters Guild ability slotted.',
+        'Increases your Weapon and Spell Damage by 1% for each Fighters Guild ability slotted.\n\nCurrent bonus: 0%.',
     },
     {
       id: AbilityId.BANISH_THE_WICKED,
@@ -177,8 +177,7 @@ export const fightersGuild: SkillLineData = {
       name: 'Banish the Wicked',
       type: 'passive',
       baseAbilityId: AbilityId.BANISH_THE_WICKED,
-      description:
-        'WITH A FIGHTERS GUILD ABILITY SLOTTED You generate 3 Ultimate whenever you kill an enemy.',
+      description: 'You generate 1 Ultimate whenever you kill an enemy.',
     },
     {
       id: AbilityId.SKILLED_TRACKER,

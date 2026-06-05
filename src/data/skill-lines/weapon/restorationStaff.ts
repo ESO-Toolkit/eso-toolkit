@@ -16,7 +16,7 @@ export const restorationStaff: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.PANACEA,
       description:
-        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 2904 Health every 1 second for 5 seconds.',
+        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 2812 Health every 1 second for 5 seconds.',
     },
     {
       id: 83558, // Life Giver (morph)
@@ -24,7 +24,7 @@ export const restorationStaff: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.PANACEA,
       description:
-        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 2999 Health every 1 second for 5 seconds. When you activate this ability you automatically cast Regeneration, Blessing of Protection, and Steadfast Ward at no cost. These will update based on which morph of each ability you have taken.',
+        'Release the rejuvenating energies of your staff to swirl around you, healing you or an ally for 2904 Health every 1 second for 5 seconds.\n\nWhen you activate this ability you automatically cast Regeneration, Blessing of Protection, and Steadfast Ward at no cost. These will update based on which morph of each ability you have taken.',
     },
     {
       id: 83563, // Light's Champion (morph)
@@ -49,7 +49,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4631 Health over 10 seconds.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4488 Health over 10 seconds.',
     },
     {
       id: 40060, // Healing Springs (morph)
@@ -57,7 +57,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4642 Health over 10 seconds. Increases your Magicka Recovery by 15 for each target affected, stacking up to 20 times.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4642 Health over 10 seconds. \n\nIncreases your Magicka Recovery by 12 for each target affected, stacking up to 20 times.',
     },
     {
       id: 40058, // Illustrious Healing (morph)
@@ -65,7 +65,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 5486 Health over 15 seconds.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 5486 Health over 12 seconds.',
     },
     // Active abilities - Regeneration family
     {
@@ -188,8 +188,7 @@ export const restorationStaff: SkillLineData = {
       name: 'Restoration Expert',
       type: 'passive',
       baseAbilityId: AbilityId.RESTORATION_EXPERT,
-      description:
-        'WITH RESTORATION STAFF EQUIPPED Increases your healing by 15% on allies under 30% Health.',
+      description: 'Increases your healing by 8% on allies under 30% Health.',
     },
     {
       id: AbilityId.CYCLE_OF_LIFE,
@@ -198,8 +197,7 @@ export const restorationStaff: SkillLineData = {
       name: 'Cycle of Life',
       type: 'passive',
       baseAbilityId: AbilityId.CYCLE_OF_LIFE,
-      description:
-        'WITH RESTORATION STAFF EQUIPPED Your fully-charged Heavy Attacks restore 30% more Magicka.',
+      description: 'Your fully-charged Heavy Attacks restore 15% more Magicka.',
     },
     {
       id: AbilityId.ABSORB,
@@ -228,8 +226,7 @@ export const restorationStaff: SkillLineData = {
       name: 'Restoration Master',
       type: 'passive',
       baseAbilityId: AbilityId.RESTORATION_MASTER,
-      description:
-        'WITH RESTORATION STAFF EQUIPPED Increases healing with Restoration Staff spells by 5%.',
+      description: 'Increases healing with Restoration Staff spells by 3%.',
     },
   ],
 };

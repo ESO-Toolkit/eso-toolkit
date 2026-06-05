@@ -16,7 +16,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.RAPID_FIRE,
       description:
-        'Unleash a barrage of arrows at an enemy, dealing 17415 Physical Damage over 4 seconds. You can move at full speed and are immune to all disabling effects while channeling this attack. This ability is considered direct damage.',
+        'Unleash a barrage of arrows at an enemy, dealing 16866 Physical Damage over 4 seconds. \n\nYou can move at full speed and are immune to all disabling effects while channeling this attack.\n\nThis ability is considered direct damage.',
     },
     {
       id: 83484, // Ballista (morph)
@@ -24,7 +24,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.RAPID_FIRE,
       description:
-        'Create a turret to unleash a barrage of arrows at an enemy, dealing 15587 Physical Damage over 5 seconds. Create a turret to channel the attack for you, but for less damage.',
+        'Create a turret to unleash a barrage of arrows at an enemy, dealing 15093 Physical Damage over 5 seconds.',
       alternateIds: [68205, 85451, 85458, 85462, 86615, 86616, 86618, 86619, 86621, 86622, 179702],
     },
     {
@@ -33,7 +33,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.RAPID_FIRE,
       description:
-        'Unleash a barrage of arrows at an enemy, dealing 17415 Poison Damage over 4 seconds. After dealing damage you poison the enemy, dealing an additional 9990 Poison Damage over 8 seconds after a 1 second delay. You can move at full speed and are immune to all disabling effects while channeling this attack. This ability is considered direct damage.',
+        'Unleash a barrage of arrows at an enemy, dealing 17415 Poison Damage over 4 seconds. \n\nAfter dealing damage you poison the enemy, dealing an additional 9675 Poison Damage over 8 seconds after a 1 second delay. \n\nYou can move at full speed and are immune to all disabling effects while channeling this attack.\n\nThis ability is considered direct damage.',
     },
 
     // Scribing abilities
@@ -77,7 +77,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.VOLLEY,
       description:
-        'Launch a multitude of arrows into the sky to rain down, dealing 342 Physical Damage to enemies in the target area every 1 second for 8 seconds, after a 2 second delay.',
+        'Launch a multitude of arrows into the sky to rain down, dealing 332 Physical Damage to enemies in the target area every 1 second for 8 seconds, after a 2 second delay.',
     },
     {
       id: 38695, // Arrow Barrage (morph)
@@ -85,7 +85,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.VOLLEY,
       description:
-        'Launch a multitude of arrows into the sky to rain down, dealing 460 Physical Damage to enemies in the target area every 1 second for 8 seconds, after a 2 second delay.',
+        'Launch a multitude of arrows into the sky to rain down, dealing 446 Physical Damage to enemies in the target area every 1 second for 8 seconds, after a 2 second delay.',
     },
     {
       id: 38692, // Endless Hail (morph)
@@ -93,7 +93,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.VOLLEY,
       description:
-        'Launch a multitude of arrows into the sky to rain down, dealing 343 Physical Damage to enemies in the target area every 1 second for 13 seconds, after a 2 second delay.',
+        'Launch a multitude of arrows into the sky to rain down, dealing 343 Physical Damage to enemies in the target area every 1 second for 10 seconds, after a 2 second delay.',
       alternateIds: [38689],
     },
     {
@@ -102,7 +102,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SCATTER_SHOT,
       description:
-        'Blast an enemy with an explosive arrow, dealing 1392 Physical Damage, knocking them back 8 meters.',
+        'Blast an enemy with an explosive arrow, dealing 1348 Physical Damage, knocking them back 8 meters.',
     },
     {
       id: 38669, // Draining Shot (morph)
@@ -110,7 +110,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SCATTER_SHOT,
       description:
-        'Blast an enemy with an enchanted arrow, dealing 1393 Physical Damage and reducing their Movement Speed by 60% for 3 seconds. If the enemy is hit, you heal for 2399.',
+        'Blast an enemy with an enchanted arrow, dealing 1393 Physical Damage and reducing their Movement Speed by 60% for 3 seconds.\n\nIf the enemy is hit, you heal for 2323.',
     },
     {
       id: 38672, // Magnum Shot (morph)
@@ -118,7 +118,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SCATTER_SHOT,
       description:
-        'Blast an enemy with an explosive arrow, dealing 1727 Physical Damage and knocking them back 8 meters.',
+        'Blast an enemy with an explosive arrow, dealing 1672 Physical Damage and knocking them back 8 meters.',
     },
     {
       id: AbilityId.ARROW_SPRAY,
@@ -126,7 +126,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ARROW_SPRAY,
       description:
-        'Fire a burst of arrows in one shot, dealing 1742 Physical Damage to enemies in front of you.',
+        'Fire a burst of arrows in one shot, dealing 1687 Physical Damage to enemies in front of you.',
     },
     {
       id: 38705, // Acid Spray (morph)
@@ -134,7 +134,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ARROW_SPRAY,
       description:
-        'Fire a burst of arrows in one shot, dealing 1742 Poison Damage to enemies in front of you, and dealing an additional 1635 Poison Damage over 5 seconds.',
+        'Fire a burst of arrows in one shot, dealing 1742 Physical Damage to enemies in front of you. \n\nEnemies hit are immobilized for 4 seconds.',
     },
     {
       id: 38701, // Bombard (morph)
@@ -142,7 +142,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ARROW_SPRAY,
       description:
-        'Fire a burst of arrows in one shot, dealing 1742 Physical Damage to enemies in front of you. Enemies hit are immobilized for 4 seconds.',
+        'Fire a burst of arrows in one shot, dealing 1742 Poison Damage to enemies in front of you, and dealing an additional 1585 Poison Damage over 5 seconds.',
     },
     {
       id: AbilityId.POISON_ARROW,
@@ -150,7 +150,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POISON_ARROW,
       description:
-        'Shoot an arrow coated in Baandari poison at an enemy, dealing 1161 Poison Damage and an additional 3470 Poison Damage over 20 seconds.',
+        'Shoot an arrow coated in Baandari poison at an enemy, dealing 1124 Poison Damage and an additional 3360 Poison Damage over 20 seconds.',
     },
     {
       id: 38660, // Poison Injection (morph)
@@ -158,7 +158,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POISON_ARROW,
       description:
-        'Shoot an arrow coated in Baandari poison at an enemy, dealing 1161 Poison Damage and an additional 3470 Poison Damage over 20 seconds. Deals up to 120% more damage to enemies under 50% Health.',
+        'Shoot an arrow coated in Baandari poison at an enemy, dealing 1161 Poison Damage and an additional 3470 Poison Damage over 20 seconds.\n\nDeals up to 105% more damage to enemies under 50% Health.',
     },
     {
       id: 38645, // Venom Arrow (morph)
@@ -166,7 +166,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POISON_ARROW,
       description:
-        'Shoot an arrow coated in Shadowscale poison at an enemy, dealing 1161 Poison Damage and an additional 3470 Poison Damage over 20 seconds. If the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds. After casting you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage for 20 seconds.',
+        'Shoot an arrow coated in Shadowscale poison at an enemy, dealing 1161 Poison Damage and an additional 3470 Poison Damage over 20 seconds.\n\nIf the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nAfter casting you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage for 20 seconds.',
     },
 
     // Passive abilities
@@ -178,7 +178,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.VINEDUSK_TRAINING,
       description:
-        'WITH BOW EQUIPPED Increases your damage done by 5% against enemies 15 meters or closer. Increases your Critical Chance rating by 1314 against enemies further than 15 meters.',
+        'Increases your damage done by 2% against enemies 15 meters or closer.\n\nIncreases your Critical Chance rating by 657 against enemies further than 15 meters.',
     },
     {
       id: AbilityId.ACCURACY,
@@ -187,7 +187,7 @@ export const bowSkillLine: SkillLineData = {
       name: 'Accuracy',
       type: 'passive',
       baseAbilityId: AbilityId.ACCURACY,
-      description: 'WITH BOW EQUIPPED Increases your Critical Chance rating by 1314.',
+      description: 'Increases your Critical Chance rating by 657.',
     },
     {
       id: AbilityId.RANGER,
@@ -196,7 +196,7 @@ export const bowSkillLine: SkillLineData = {
       name: 'Ranger',
       type: 'passive',
       baseAbilityId: AbilityId.RANGER,
-      description: 'WITH BOW EQUIPPED Reduces the Stamina cost of Bow abilities by 15%.',
+      description: 'Reduces the Stamina cost of Bow abilities by 7%.',
     },
     {
       id: AbilityId.HAWK_EYE,
@@ -206,7 +206,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.HAWK_EYE,
       description:
-        'WITH BOW EQUIPPED Dealing damage with a Light or Heavy Attack increases the damage of your Bow abilities by 5% for 5 seconds, stacking up to 5 times.',
+        'Dealing damage with a Light or Heavy Attack increases the damage of your Bow abilities by 2% for 5 seconds, stacking up to 5 times.',
     },
     {
       id: AbilityId.HASTY_RETREAT,
@@ -216,7 +216,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.HASTY_RETREAT,
       description:
-        'WITH BOW EQUIPPED Grants you Major Expedition for 4 seconds after you use Roll Dodge. Major Expedition increases your Movement Speed by 30%.',
+        'Grants you Major Expedition for 2 seconds after you use Roll Dodge.\n\nMajor Expedition increases your Movement Speed by 30%.',
     },
   ],
 };
