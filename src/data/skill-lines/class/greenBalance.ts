@@ -185,7 +185,7 @@ export const greenBalance: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_008',
       description:
-        'When you heal yourself or an ally under 40% Health with a Green Balance ability you gain Major Mending, increasing your healing done by 16% for 2 seconds.',
+        'When you heal yourself or an ally under 40% Health with a Green Balance ability you gain Major Mending, increasing your healing done by 16% for 4 seconds.',
       isPassive: true,
     },
     {
@@ -195,7 +195,7 @@ export const greenBalance: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_005',
       description:
-        'Increase your healing done with Green Balance abilities by 2% for each Green Balance ability slotted.\n\nCurrent Bonus: 0%.',
+        'Increases your healing done with Green Balance abilities by 5% for each Green Balance ability slotted.\n\nCurrent Bonus: 0%.',
       isPassive: true,
     },
     {
@@ -205,7 +205,7 @@ export const greenBalance: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_007',
       description:
-        'When you activate a heal on yourself or an ally you grant the target Minor Toughness, increasing their Max Health by 10% for 10 seconds.',
+        'When you activate a heal on yourself or an ally you grant the target Minor Toughness, increasing their Max Health by 10% for 20 seconds.',
       isPassive: true,
     },
     {
@@ -214,7 +214,7 @@ export const greenBalance: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_006',
       description:
-        'When you heal an ally with a Green Balance ability, you gain 277 Magicka or 277 Stamina, whichever resource pool is lower. This effect can occur once every 1 second.',
+        'When you heal an ally with a Green Balance ability, you gain 138 Magicka or 138 Stamina, whichever resource pool is lower. Each effect can occur once every 1 second.',
       isPassive: true,
     },
   ],

@@ -49,7 +49,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_013',
       description:
-        "Roil the air around you or an ally, granting a damage shield that absorbs up to 4958 for 6 seconds. This ability scales off the higher of your Max Magicka or Stamina and is capped at 50% of the target's Max Health.",
+        "Roil the air around you or an ally, granting a damage shield that absorbs up to 4958 for 6 seconds.\n\nThis ability scales off the higher of your Max Magicka or Stamina and is capped at 50% of the target's Max Health.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SUPERHEATED_WARD,
     },
     {
@@ -58,7 +58,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_013_a',
       description:
-        "Draw forth magma from below to hurl at an enemy, dealing 2399 Flame Damage while applying a stack of Heat Shock, which increases the enemy's damage taken by 66 for 7 seconds per stack, up to 3 times. Hitting an enemy at max stacks of Heat Shock with this ability increases the damage done of the next cast of this ability within 6 seconds by 66%, up to once every 6 seconds.",
+        "Draw forth magma from below to hurl at an enemy, dealing 2399 Flame Damage while applying a stack of Heat Shock, which increases the enemy's damage taken by 66 for 7 seconds per stack, up to 3 times.\n\nHitting an enemy at max stacks of Heat Shock with this ability increases the damage done of the next cast of this ability within 6 seconds by 66%, up to once every 6 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SUPERHEATED_WARD,
     },
     {
@@ -67,7 +67,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_013_b',
       description:
-        "Roil the air around you or an ally, granting a damage shield that absorbs up to 4958 for 6 seconds and reducing the next instance of damage taken by 10%. When the shield ends the latent heat warms the target, healing them for 1766 Health. This ability scales off the higher of your Max Magicka or Stamina and the shield is capped at 50% of the target's Max Health.",
+        "Roil the air around you or an ally, granting a damage shield that absorbs up to 4958 for 6 seconds and reducing the next instance of damage taken by 10%. When the shield ends the latent heat warms the target, healing them for 1766 Health.\n\nThis ability scales off the higher of your Max Magicka or Stamina and the shield is capped at 50% of the target's Max Health.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SUPERHEATED_WARD,
     },
     {
@@ -76,7 +76,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_015',
       description:
-        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.\n\nWhile active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -85,7 +85,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_015_a',
       description:
-        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 1 minute. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 1 minute.\n\nWhile active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 2 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -94,7 +94,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_015_b',
       description:
-        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds. While active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 1.5 seconds. You also gain Empower for the duration, increasing the damage of your Heavy Attacks against monsters by 70%.",
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.\n\nWhile active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 1.5 seconds.\n\nYou also gain Empower for the duration, increasing the damage of your Heavy Attacks against monsters by 70%.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {
@@ -112,7 +112,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_017a',
       description:
-        "Call the earth to your defense, creating a damage shield for you and nearby allies that absorbs 2400 damage. This portion of the ability scales off the higher of your Max Magicka or Stamina and is capped at 31% of the target's Max Health. You also gain Major Mending, increasing your healing done by 16% for 6 seconds.",
+        "Call the earth to your defense, creating a damage shield for you and nearby allies that absorbs 2400 damage. This portion of the ability scales off the higher of your Max Magicka or Stamina and is capped at 31% of the target's Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 6 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -130,7 +130,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_014',
       description:
-        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
+        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters.\n\nThis stun cannot be blocked.\n\nThe molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -139,7 +139,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_014_a',
       description:
-        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. Immobilizes the target for 4 seconds after the stun ends. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach and Minor Vulnerability for 20 seconds, reducing Armor by 2974 and increasing damage taken by 5%.",
+        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. Immobilizes the target for 4 seconds after the stun ends.\n\nThis stun cannot be blocked.\n\nThe molten rock melts through the enemy's armor and applies Minor Breach and Minor Vulnerability for 20 seconds, reducing Armor by 2974 and increasing damage taken by 5%.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -148,7 +148,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_014b',
       description:
-        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. After the stun ends, the target takes 1379 Flame Damage and you heal for 2760 Health. This stun cannot be blocked. The molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
+        "Encase an enemy in molten rock, reducing their movement speed by 50% for 1 second. Upon completion, the target is stunned for 4 seconds, or 8 seconds against monsters. After the stun ends, the target takes 1379 Flame Damage and you heal for 2760 Health.\n\nThis stun cannot be blocked.\n\nThe molten rock melts through the enemy's armor and applies Minor Breach for 10 seconds, reducing Armor by 2974.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PETRIFY,
     },
     {
@@ -222,7 +222,7 @@ export const earthenHeart: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_023',
       description:
-        'Rock and stone shield your heart, turning aside sharp blades and barbed words.\n\nIncreases your Armor by 1487.',
+        'Rock and stone shield your heart, turning aside sharp blades and barbed words.\n\nIncreases your Armor by 2974.',
       isPassive: true,
     },
     {

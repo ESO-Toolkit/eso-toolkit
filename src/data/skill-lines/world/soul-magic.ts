@@ -60,7 +60,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_TRAP,
       name: 'Soul Trap',
       description:
-        "Lay claim to an enemy's soul, dealing 4631 Magic Damage over 20 seconds. Fills an empty Soul Gem if an affected enemy dies.",
+        "Lay claim to an enemy's soul, dealing 4631 Magic Damage over 20 seconds.\n\nFills an empty Soul Gem if an affected enemy dies.",
       icon: 'ability_otherclass_001',
       isUltimate: false,
       isPassive: false,
@@ -70,7 +70,7 @@ export const soulMagic: SkillLineData = {
       id: 40319, // Morph of Soul Trap
       name: 'Consuming Trap',
       description:
-        "Lay claim to an enemy's soul, dealing 4642 Magic Damage over 20 seconds. If an affected enemy dies, you fill an empty Soul Gem, heal for 3200 Health, and restore 2400 Magicka and 2400 Stamina. This portion of the ability scales off your Max Health, Magicka, and Stamina. Also restore Health, Magicka, and Stamina if enemy dies while affected.",
+        "Lay claim to an enemy's soul, dealing 4642 Magic Damage over 20 seconds.\n\nIf an affected enemy dies, you fill an empty Soul Gem, heal for 3200 Health, and restore 2400 Magicka and 2400 Stamina. This portion of the ability scales off your Max Health, Magicka, and Stamina.",
       icon: 'ability_mage_065',
       isUltimate: false,
       isPassive: false,
@@ -94,7 +94,7 @@ export const soulMagic: SkillLineData = {
       ],
       name: 'Soul Shatter',
       description:
-        'WHEN SOUL ABILITY IS SLOTTED When your Health drops below 20% your soul explodes, dealing 1600 Magic Damage to enemies within 8 meters of you. This effect can occur once every 2 minutes and scales off your Max Health.',
+        'When your Health drops below 20% your soul explodes, dealing 1600 Magic Damage to enemies within 8 meters of you.\n\nThis effect can occur once every 2 minutes and scales off your Max Health.',
       icon: 'ability_sorcerer_065',
       isUltimate: false,
       isPassive: true,
@@ -119,7 +119,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_LOCK,
       alternateIds: [39263, 39264, 45580, 45582],
       name: 'Soul Lock',
-      description: 'Killing an enemy has a 5% chance of automatically filling an empty Soul Gem.',
+      description: 'Killing an enemy has a 10% chance of automatically filling an empty Soul Gem.',
       icon: 'ability_sorcerer_043',
       isUltimate: false,
       isPassive: true,

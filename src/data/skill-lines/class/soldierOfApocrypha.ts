@@ -188,7 +188,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_05',
       description:
-        'Form a secret soldier within your mind, a defense against arcane forces without. While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 1636.',
+        'Form a secret soldier within your mind, a defense against arcane forces without. While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
       isPassive: true,
     },
     {
@@ -198,7 +198,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_06',
       description:
-        'Casting an Arcanist ability warps the weave of fate around you, granting you and your group members Minor Evasion for 10 seconds and reducing damage from area attacks by 10%. This effect can occur once every 5 seconds.',
+        'Casting an Arcanist ability warps the weave of fate around you, granting you and your group members Minor Evasion for 20 seconds and reducing damage from area attacks by 10%. This effect can occur once every 5 seconds.',
       isPassive: true,
     },
     {
@@ -208,7 +208,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_08',
       description:
-        'The will of an Arcanist is absolute. When you consume Crux, gain 2 Ultimate. This effect can occur once every 8 seconds.',
+        'The will of an Arcanist is absolute. When you consume Crux, gain 4 Ultimate. This effect can occur once every 8 seconds.',
       isPassive: true,
     },
     {
@@ -218,7 +218,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_07',
       description:
-        'Apocryphal knowledge bubbles up from the depths of your psyche, increasing your Health, Magicka, and Stamina Recovery by 40 for each Soldier of Apocrypha ability slotted.\n\nCurrent bonus: 0.',
+        'Apocryphal knowledge bubbles up from the depths of your psyche, increasing your Health, Magicka, and Stamina Recovery by 81 for each Soldier of Apocrypha ability slotted.\n\nCurrent bonus: 0.',
       isPassive: true,
     },
   ],

@@ -58,7 +58,7 @@ export const daedricSummoning: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_unstable_clannfear',
       description:
-        "Command the powers of Oblivion to send a Daedric clannfear to fight at your side. The clannfear's headbutt deals 358 Physical Damage, while its tail spike hits nearby enemies for 358 Physical Damage after 1 second.  \n\nOnce summoned, you can activate the clannfear's special ability for 4320 Magicka, healing you for 5121 and the clannfear for 2560.\n\nThe clannfear remains until killed or unsummoned.",
+        "Command the powers of Oblivion to send a Daedric clannfear to fight at your side. The clannfear's headbutt deals 358 Physical Damage, while its tail spike hits nearby enemies for 358 Physical Damage after 1 second. \n\nOnce summoned, you can activate the clannfear's special ability for 4320 Magicka, healing you for 5121 and the clannfear for 2560.\n\nThe clannfear remains until killed or unsummoned.",
       baseSkillId: ClassSkillId.SORCERER_SUMMON_UNSTABLE_FAMILIAR,
     },
     {
@@ -187,7 +187,7 @@ export const daedricSummoning: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_022',
       description:
-        'Reduce your damage taken by 2% while you have a Daedric Summoning ability active.',
+        'Reduce your damage taken by 5% while you have a Daedric Summoning ability active.',
       isPassive: true,
     },
     {
@@ -197,7 +197,7 @@ export const daedricSummoning: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_019',
       description:
-        'Increases your Magicka and Stamina by 2%.\n\nIncreases your Max Health 2% if you have a permanent pet active.',
+        'Increases your Magicka and Stamina by 5%.\n\nIncreases your Max Health by 5% if you have a permanent pet active.',
       isPassive: true,
     },
     {
@@ -206,7 +206,7 @@ export const daedricSummoning: SkillLineData = {
       name: 'Power Stone',
       type: 'passive',
       icon: 'ability_sorcerer_057',
-      description: 'Reduces the cost of your Ultimate abilities by 8%.',
+      description: 'Reduces the cost of your Ultimate abilities by 15%.',
       isPassive: true,
     },
     {

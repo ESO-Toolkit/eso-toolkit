@@ -197,7 +197,7 @@ export const graveLord: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_003',
       description:
-        'While a Grave Lord ability is active, your Spell and Physical Penetration are increased by 1635.',
+        'While a Grave Lord ability is active, your Spell and Physical Penetration are increased by 3271.',
       isPassive: true,
     },
     {
@@ -206,7 +206,7 @@ export const graveLord: SkillLineData = {
       name: 'Rapid Rot',
       type: 'passive',
       icon: 'passive_necromancer_004',
-      description: 'Increases your damage done with damage over time effects by 5%.',
+      description: 'Increases your damage done with damage over time effects by 10%.',
       isPassive: true,
     },
     {
@@ -216,7 +216,7 @@ export const graveLord: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_001',
       description:
-        'When your Sacrificial Bones, Skeletal Mage, or Spirit Mender dies, the cost of your next Sacrificial Bones, Skeletal Mage, or Spirit Mender is reduced by 33%.',
+        'When your Sacrificial Bones, Skeletal Mage, or Spirit Mender dies, the cost of your next Sacrificial Bones, Skeletal Mage, or Spirit Mender is reduced by 66%.',
       isPassive: true,
     },
   ],

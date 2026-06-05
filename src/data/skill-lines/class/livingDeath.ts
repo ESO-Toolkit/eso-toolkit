@@ -185,7 +185,7 @@ export const livingDeath: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_011',
       description:
-        'When you consume a corpse, you generate 5 Ultimate. This effect can occur once every 16 seconds.',
+        'When you consume a corpse, you generate 10 Ultimate. This effect can occur once every 16 seconds.',
       isPassive: true,
     },
     {
@@ -194,7 +194,8 @@ export const livingDeath: SkillLineData = {
       name: 'Curative Curse',
       type: 'passive',
       icon: 'passive_necromancer_009',
-      description: 'While you have a negative effect on you, your healing done is increased by 6%.',
+      description:
+        'While you have a negative effect on you, your healing done is increased by 12%.',
       isPassive: true,
     },
     {
@@ -214,7 +215,7 @@ export const livingDeath: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_012',
       description:
-        'While you have a Sacrificial Bones, Skeletal Mage, or Spirit Mender active, your Health, Magicka, and Stamina Recovery is increased by 77.',
+        'While you have a Sacrificial Bones, Skeletal Mage, or Spirit Mender active, your Health, Magicka, and Stamina Recovery is increased by 155.',
       isPassive: true,
     },
   ],

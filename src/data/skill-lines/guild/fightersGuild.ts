@@ -31,7 +31,7 @@ export const fightersGuild: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.DAWNBREAKER,
       description:
-        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 2904 Physical Damage to enemies in front of you and an additional 3483 Physical Damage over 6 seconds. After activating, your Weapon and Spell Damage is increased by 300 for 20 seconds.",
+        "Arm yourself with Meridia's sacred sword and dispense her retribution, dealing 2904 Physical Damage to enemies in front of you and an additional 3483 Physical Damage over 6 seconds.\n\nAfter activating, your Weapon and Spell Damage is increased by 300 for 20 seconds.",
     },
 
     // Scribing abilities
@@ -67,7 +67,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SILVER_BOLTS,
       description:
-        "Fire an augmented Dawnguard Vampire Hunter's crossbow bolt to strike an enemy, dealing 2091 Physical Damage. Fires additional bolts at other enemies near the initial target for 22% less damage.",
+        "Fire an augmented Dawnguard Vampire Hunter's crossbow bolt to strike an enemy, dealing 2091 Physical Damage.\n\nFires additional bolts at other enemies near the initial target for 22% less damage.",
     },
 
     // Active abilities - Circle of Protection family
@@ -111,7 +111,7 @@ export const fightersGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EXPERT_HUNTER,
       description:
-        "Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629. You also gain Minor Berserk for 5 seconds after dealing Critical Damage from an enemy's flank.",
+        "Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629. You also gain Minor Berserk for 5 seconds after dealing Critical Damage from an enemy's flank.",
     },
     {
       id: 40194,
@@ -167,7 +167,7 @@ export const fightersGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.SLAYER,
       description:
-        'Increases your Weapon and Spell Damage by 1% for each Fighters Guild ability slotted.\n\nCurrent bonus: 0%.',
+        'Increases your Weapon and Spell Damage by 3% for each Fighters Guild ability slotted.\n\nCurrent bonus: 0%.',
     },
     {
       id: AbilityId.BANISH_THE_WICKED,
@@ -176,7 +176,7 @@ export const fightersGuild: SkillLineData = {
       name: 'Banish the Wicked',
       type: 'passive',
       baseAbilityId: AbilityId.BANISH_THE_WICKED,
-      description: 'You generate 1 Ultimate whenever you kill an enemy.',
+      description: 'You generate 3 Ultimate whenever you kill an enemy.',
     },
     {
       id: AbilityId.SKILLED_TRACKER,

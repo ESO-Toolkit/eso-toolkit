@@ -27,9 +27,9 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-// Scan shipped source AND the build/codegen surface — the generators are where a
-// removed reference would silently regenerate (the original guard missed exactly that).
-const SCAN_DIRS = ['src', 'public', 'scripts', 'tools'];
+// Scan shipped source, the build/codegen surface (generators can silently regenerate a
+// removed reference), and committed data/ (runtime-imported JSON like scribing data).
+const SCAN_DIRS = ['src', 'public', 'scripts', 'tools', 'data'];
 
 // Files allowed to mention ESO-Hub.
 const ALLOWLIST = new Set(

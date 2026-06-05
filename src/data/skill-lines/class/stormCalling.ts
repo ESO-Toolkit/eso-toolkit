@@ -190,7 +190,7 @@ export const stormCalling: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_049',
       description:
-        'Increases your damage done against enemies by 1% for every 20% current Health they have.',
+        'Increases your damage done against enemies by 1% for every 10% current Health they have.',
       isPassive: true,
     },
     {
@@ -199,7 +199,7 @@ export const stormCalling: SkillLineData = {
       name: 'Capacitor',
       type: 'passive',
       icon: 'ability_sorcerer_013',
-      description: 'Increases your Health, Magicka, and Stamina Recovery by 70.',
+      description: 'Increases your Health, Magicka, and Stamina Recovery by 141.',
       isPassive: true,
     },
     {
@@ -208,7 +208,7 @@ export const stormCalling: SkillLineData = {
       name: 'Energized',
       type: 'passive',
       icon: 'ability_sorcerer_015',
-      description: 'Increases your Physical and Shock Damage by 3%.',
+      description: 'Increases your Physical and Shock Damage by 5%.',
       isPassive: true,
     },
     {
@@ -218,7 +218,7 @@ export const stormCalling: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_044',
       description:
-        'Increases your Weapon and Spell Damage by 54 for each Sorcerer ability slotted.\n\nCurrent bonus: 0.',
+        'Increases your Weapon and Spell Damage by 108 for each Sorcerer ability slotted.\n\nCurrent bonus: 0.',
       isPassive: true,
     },
   ],

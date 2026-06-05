@@ -39,7 +39,7 @@ export const draconicPower: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_009_b',
       description:
-        "Launch yourself at an enemy, dealing 4106 Flame Damage to all enemies in the area, knocking them back 4 meters, and stunning them for 2 seconds. If the target is a monster they are instead knocked into the air and stunned for 3 seconds. Upon activation you are filled with draconic fury for 15 seconds, increasing your damage done by 10%. This effect's potency doubles against monsters.",
+        "Launch yourself at an enemy, dealing 4106 Flame Damage to all enemies in the area, knocking them back 4 meters, and stunning them for 2 seconds. If the target is a monster they are instead knocked into the air and stunned for 3 seconds.\n\nUpon activation you are filled with draconic fury for 15 seconds, increasing your damage done by 10%. This effect's potency doubles against monsters.",
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGON_LEAP,
     },
@@ -85,7 +85,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_005_a',
       description:
-        "Lash out with a chain bound in Draconic runes, pulling an enemy to you. The enchanted metal deals 1393 Flame Damage, applies the Burning status effect, and taunts them for 15 seconds if they are not already taunted. If the target cannot be pulled, you restore the ability's Magicka cost. This attack cannot be dodged or reflected. Also inflicts Major Cowardice on the enemy, reducing Weapon and Spell Damage by 430 for 15 seconds.",
+        "Lash out with a chain bound in Draconic runes, pulling an enemy to you. The enchanted metal deals 1393 Flame Damage, applies the Burning status effect, and taunts them for 15 seconds if they are not already taunted. If the target cannot be pulled, you restore the ability's Magicka cost.\n\nThis attack cannot be dodged or reflected.\n\nAlso inflicts Major Cowardice on the enemy, reducing Weapon and Spell Damage by 430 for 15 seconds.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_FIERY_GRIP,
     },
     {
@@ -185,7 +185,7 @@ export const draconicPower: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_025',
       description:
-        'The eldest Dragons are forces of nature. As are you.\n\nActivating a Draconic Power ability grants you and group members Minor Brutality for 20 seconds, increasing Weapon Damage by 10%.\n\nIncreases your Health Recovery by up to 350, based on your missing Health.\nCurrent amount: 0',
+        'The eldest Dragons are forces of nature. As are you.\n\nActivating a Draconic Power ability grants you and group members Minor Brutality for 20 seconds, increasing Weapon Damage by 10%.\n\nIncreases your Health Recovery by up to 700, based on your missing Health.\nCurrent amount: 0',
       isPassive: true,
     },
     {
@@ -204,7 +204,7 @@ export const draconicPower: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_010',
       description:
-        'The will to survive burns bright in your chest.\n\nIncreases your Healing Taken by 4%.',
+        'The will to survive burns bright in your chest.\n\nIncreases your Healing Taken by 8%.',
       isPassive: true,
     },
     {
@@ -213,7 +213,7 @@ export const draconicPower: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_020',
       description:
-        "A Dragon's scales will turn aside arrow, fire, and blade. Increases the amount of damage you block by 10%.",
+        "A Dragon's scales will turn aside arrow, fire, and blade.\n\nIncreases the amount of damage you block by 4%.",
       isPassive: true,
     },
   ],

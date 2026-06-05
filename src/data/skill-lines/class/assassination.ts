@@ -105,7 +105,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_014',
       description:
-        "Expose an enemy's weaknesses to afflict them with Major Breach, reducing their Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health.\n\nYou can only have one Mark Target active at a time.",
+        "Expose an enemy's weaknesses by applying Major Breach to them, reducing Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health.\n\nYou can only have one Mark Target active at a time.",
       baseSkillId: ClassSkillId.NIGHTBLADE_MARK_TARGET,
     },
     {
@@ -114,7 +114,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_014_a',
       description:
-        "Expose an enemy's weaknesses to afflict them with Major Breach, reducing their Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health and gain Major Berserk, increasing your damage done by 10% for 10 seconds.\n\nYou can only have one Reaper's Mark active at a time.",
+        "Expose an enemy's weaknesses by applying Major Breach to them, reducing Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health and gain Major Berserk, increasing your damage done by 10% for 10 seconds.\n\nYou can only have one Reaper's Mark active at a time.",
       baseSkillId: ClassSkillId.NIGHTBLADE_MARK_TARGET,
     },
     {
@@ -123,7 +123,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_014_b',
       description:
-        "Expose an enemy's weaknesses to afflict them with Major Breach, reducing their Physical Resistance and Spell Resistance by 5948 for 1 minute.\n\nYou can detect marked enemies even if they use stealth or invisibility for 3 seconds. When a marked enemy dies, you heal to full Health.\n\nYou can only have one Piercing Mark active at a time.",
+        "Expose an enemy's weaknesses by applying Major Breach to them, reducing Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nYou can detect marked enemies even if they use stealth or invisibility for 3 seconds. When a marked enemy dies, you heal to full Health.\n\nYou can only have one Piercing Mark active at a time.",
       baseSkillId: ClassSkillId.NIGHTBLADE_MARK_TARGET,
     },
     {
@@ -190,7 +190,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_018',
       description:
-        'When an enemy dies within 2 seconds of being damaged by you, you restore 1000 Magicka and Stamina.',
+        'Shift your grip and cut deep, dealing 1161 Bleed Damage to your foe. Deals up to 400% more damage to enemies with less than 50% Health.',
       isPassive: true,
     },
     {
@@ -214,7 +214,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_026',
       description:
-        'Increases your Critical Chance rating against enemies you are flanking by 724, increasing your chance to critically strike by |3.3%.',
+        'Increases your Critical Chance rating against enemies you are flanking by 1448, increasing your chance to critically strike by |6.6%.',
       isPassive: true,
     },
     {
@@ -224,7 +224,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_015',
       description:
-        'Increases your Critical Chance rating by 274 for each Assassination ability slotted, increasing your chance to critically strike by 1.25% per ability.\n\nCurrent bonus: 0.',
+        'Increases your Critical Chance rating by 548 for each Assassination ability slotted, increasing your chance to critically strike by 2.5% per ability.\n\nCurrent bonus: 0.',
       isPassive: true,
     },
   ],

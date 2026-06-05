@@ -69,7 +69,7 @@ export const heavyArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.RESOLVE,
       description:
-        'Increases your Physical and Spell Resistance by 343 for each piece of Heavy Armor equipped.',
+        'Increases your Physical and Spell Resistance by 343 for each piece of Heavy Armor equipped.\n\nCurrent bonus: 0.',
     },
     {
       id: AbilityId.CONSTITUTION,
@@ -82,7 +82,7 @@ export const heavyArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.CONSTITUTION,
       description:
-        'Increases your Health Recovery by 4% for each piece of Heavy Armor equipped. You restore 108 Magicka and Stamina when you take damage for each piece of Heavy Armor equipped. This effect can occur once every 4 seconds.',
+        'Increases your Health Recovery by 4% for each piece of Heavy Armor equipped. \n\nCurrent bonus: 0%.\n\nYou restore 108 Magicka and Stamina when you take damage for each piece of Heavy Armor equipped. This effect can occur once every 4 seconds. \n\nCurrent bonus: 0.',
     },
     {
       id: AbilityId.JUGGERNAUT,
@@ -92,7 +92,7 @@ export const heavyArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.JUGGERNAUT,
       description:
-        'Increases your Max Health by 1% for each piece of Heavy Armor equipped. \n\nCurrent bonus: 0%.',
+        'Increases your Max Health by 2% for each piece of Heavy Armor equipped. \n\nCurrent bonus: 0%.',
     },
     {
       id: AbilityId.REVITALIZE,
@@ -102,7 +102,7 @@ export const heavyArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.REVITALIZE,
       description:
-        'Increases the Magicka or Stamina your Heavy Attacks restore by 2% for each piece of Heavy Armor worn.\n\nCurrent bonus: 0%',
+        'Increases the Magicka or Stamina your Heavy Attacks restore by 4% for each piece of Heavy Armor worn.\n\nCurrent bonus: 0%',
     },
     {
       id: AbilityId.RAPID_MENDING,
@@ -112,7 +112,7 @@ export const heavyArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.RAPID_MENDING,
       description:
-        'Increases your healing received by 1% for every 2 pieces of Heavy Armor worn.\n\nCurrent bonus: 0%',
+        'Increases your healing received by 1% for each piece of Heavy Armor worn.\n\nCurrent bonus: 0%',
     },
   ],
 };

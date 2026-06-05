@@ -25,11 +25,12 @@ const WRITE = process.argv.includes('--write');
 // --- dump indexes ---------------------------------------------------------
 const dump = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tooltip-dump.json'), 'utf8'));
 const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-const dumpById = new Map();
-const dumpByName = new Map();
-// Keep the HIGHEST rank per id/name: a skill's tooltip values scale by rank, and the
-// shipped data should reflect the max-rank (level-50) numbers players actually see.
-// The dump lists ranks 1..4 in order, so without this we'd keep rank 1 (lowest).
+const dumpById = new Map(); // id -> highest-rank dump entry SHARING that exact id
+const dumpByName = new Map(); // normalized name -> highest-rank dump entry of that name
+// Keep the HIGHEST rank: tooltip values scale by rank, and shipped data should reflect
+// the max-rank (level-50) numbers players actually see. The dump lists ranks 1..4 in
+// order. NOTE: some abilities split each rank into a DISTINCT id; for those, a single id
+// only sees its own rank, so the matcher below also resolves across `alternateIds`.
 const keepHigherRank = (map, key, ab) => {
   const cur = map.get(key);
   if (!cur || (ab.rank ?? 0) > (cur.rank ?? 0)) map.set(key, ab);
@@ -92,27 +93,62 @@ let unchanged = 0;
 let unmatched = 0;
 const perFile = [];
 
-// Matches one skill object's id + name, then captures the description value
-// (single- or multi-line, single-quoted with escaped quotes inside).
+// Pick the highest-rank dump entry across a set of candidate ids (the skill's `id`
+// plus any `alternateIds` — abilities that split each rank into a distinct id).
+function bestByIds(ids) {
+  let best;
+  for (const id of ids) {
+    const ab = dumpById.get(id);
+    if (ab && ab.description && (!best || (ab.rank ?? 0) > (best.rank ?? 0))) best = ab;
+  }
+  return best;
+}
+
+// Matches one skill object: id + name + (optional alternateIds) + description.
+// Both name and description may be single- OR double-quoted (names with apostrophes
+// use double quotes); descriptions can be multi-line. Capture groups:
+//   1 head (everything up to and including `description:`)
+//   2 idTok   3 quote-char-of-name  4 nameBody
+//   5 alternateIds raw (optional)   6 full description literal (with its quotes)
 const SKILL_RE =
-  /(\bid:\s*([\w.]+)\s*,[\s\S]{0,120}?\bname:\s*'((?:[^'\\]|\\.)*)'[\s\S]{0,160}?\bdescription:\s*)('(?:[^'\\]|\\.)*')/g;
+  /(\bid:\s*([\w.]+)\s*,[\s\S]{0,200}?\bname:\s*(['"])((?:[^\\]|\\.)*?)\3[\s\S]{0,240}?\bdescription:\s*)((['"])(?:[^\\]|\\.)*?\6)/g;
+
+// Pull alternateIds out of the matched skill chunk (between name and description).
+const ALT_RE = /\balternateIds:\s*\[([0-9,\s]*)\]/;
 
 for (const file of files) {
   const original = fs.readFileSync(file, 'utf8');
   let fileUpdated = 0;
   let fileUnmatched = 0;
 
-  const next = original.replace(SKILL_RE, (full, head, idTok, nameRaw, oldDesc) => {
+  const next = original.replace(SKILL_RE, (full, head, idTok, _nq, nameRaw, oldDesc) => {
     totalSkills++;
     const id = resolveId(idTok);
-    let hit = id != null ? dumpById.get(id) : undefined;
-    if (!hit) hit = dumpByName.get(norm(nameRaw.replace(/\\'/g, "'")));
+    // Candidate ids = primary id ∪ alternateIds (rank-split siblings).
+    const ids = new Set();
+    if (id != null) ids.add(id);
+    const altM = head.match(ALT_RE);
+    if (altM)
+      for (const n of altM[1].split(',')) {
+        const v = Number(n.trim());
+        if (v) ids.add(v);
+      }
+
+    let hit = bestByIds(ids);
+    if (!hit) hit = dumpByName.get(norm(nameRaw.replace(/\\(['"])/g, '$1')));
     if (!hit || !hit.description) {
       unmatched++;
       fileUnmatched++;
       return full; // keep current
     }
-    const newDesc = toSingleQuoted(hit.description);
+    // Preserve the original quote style of the description literal.
+    const quote = oldDesc[0];
+    const newDesc =
+      quote === '"'
+        ? '"' +
+          hit.description.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n') +
+          '"'
+        : toSingleQuoted(hit.description);
     if (newDesc === oldDesc) {
       unchanged++;
       return full;

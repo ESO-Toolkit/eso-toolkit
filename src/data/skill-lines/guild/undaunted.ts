@@ -67,7 +67,7 @@ export const undaunted: SkillLineData = {
       id: AbilityId.INNER_FIRE,
       name: 'Inner Fire',
       description:
-        "Ignite the fires of hate in an enemy's heart, dealing 1045 Flame Damage and taunting them to attack you for 15 seconds. An ally targeting the taunted enemy can activate the Radiate synergy, dealing 1344 Flame Damage to them over 3 seconds then an additional 2249 Flame Damage to them and other nearby enemies.",
+        "Ignite the fires of hate in an enemy's heart, dealing 1045 Flame Damage and taunting them to attack you for 15 seconds.\n\nAn ally targeting the taunted enemy can activate the Radiate synergy, dealing 1344 Flame Damage to them over 3 seconds then an additional 2249 Flame Damage to them and other nearby enemies.",
       type: 'active',
       isPassive: false,
       isUltimate: false,
@@ -76,7 +76,7 @@ export const undaunted: SkillLineData = {
       id: 42060, // Inner Beast (morph)
       name: 'Inner Beast',
       description:
-        "Ignite the fires of hate in an enemy's heart, dealing 2160 Physical Damage, taunting them to attack you, and applying Minor Maim and Minor Vulnerability for 15 seconds, reducing their damage done and increasing their damage taken by 5%. An ally targeting the enemy can activate the Radiate synergy, dealing 1344 Flame Damage to them over 3 seconds then an additional 2249 Flame Damage to them and other nearby enemies. Converts into a Stamina ability and deals increased Physical Damage. Applies Minor Vulnerability and Maim to the enemy.",
+        "Ignite the fires of hate in an enemy's heart, dealing 2160 Physical Damage, taunting them to attack you, and applying Minor Maim and Minor Vulnerability for 15 seconds, reducing their damage done and increasing their damage taken by 5%.\n\nAn ally targeting the enemy can activate the Radiate synergy, dealing 1344 Flame Damage to them over 3 seconds then an additional 2249 Flame Damage to them and other nearby enemies.",
       type: 'active',
       isPassive: false,
       isUltimate: false,
@@ -85,7 +85,7 @@ export const undaunted: SkillLineData = {
       id: 42056, // Inner Rage (morph)
       name: 'Inner Rage',
       description:
-        "Ignite the fires of hate in an enemy's heart, dealing 1079 Flame Damage and taunting them to attack you for 15 seconds. Up to 3 allies targeting the taunted enemy can activate the Radiate synergy, dealing 1344 Flame Damage to them over 3 seconds then an additional 2249 Flame Damage to them and other nearby enemies. The synergy can now be activated by up to 3 allies.",
+        "Ignite the fires of hate in an enemy's heart, dealing 1079 Flame Damage and taunting them to attack you for 15 seconds.\n\nUp to 3 allies targeting the taunted enemy can activate the Radiate synergy, dealing 1344 Flame Damage to them over 3 seconds then an additional 2249 Flame Damage to them and other nearby enemies.",
       type: 'active',
       isPassive: false,
       isUltimate: false,
@@ -151,7 +151,7 @@ export const undaunted: SkillLineData = {
       alternateIds: [55584, 55606, 55676, 55677],
       name: 'Undaunted Command',
       description:
-        'Activating a synergy restores 2% of your Max Health, Stamina, and Magicka.\n\nCurrent Bonus: 320 Health, 240 Stamina, and 240 Magicka.',
+        'Activating a synergy restores 4% of your Max Health, Stamina, and Magicka.\n\nCurrent Bonus: 640 Health, 480 Stamina, and 480 Magicka.',
       type: 'passive',
       isPassive: true,
       isUltimate: false,
@@ -162,7 +162,7 @@ export const undaunted: SkillLineData = {
       alternateIds: [55366, 55384, 55385, 55386, 55388, 55389],
       name: 'Undaunted Mettle',
       description:
-        'Increases your Max Health, Stamina, and Magicka by 1% per type of Armor (Heavy, Medium, Light) that you have equipped. \n\nCurrent bonus: 0%.',
+        'Increases your Max Health, Stamina, and Magicka by 2% per type of Armor (Heavy, Medium, Light) that you have equipped. \n\nCurrent bonus: 0%.',
       type: 'passive',
       isPassive: true,
       isUltimate: false,

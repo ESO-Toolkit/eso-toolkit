@@ -113,7 +113,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        "|ce60000CRIMINAL ACT Siphon away your enemies' vitality, dealing 870 Magic Damage and healing you for 25% of your missing Health every 1 second for 3 seconds. This ability is considered direct damage.",
+        "Siphon away your enemies' vitality, dealing 870 Magic Damage and healing you for 25% of your missing Health every 1 second for 3 seconds.\n\nThis ability is considered direct damage.",
       alternateIds: [134583],
     },
     {
@@ -124,7 +124,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        "Siphon away your enemies' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and restoring 10% of your missing Stamina every 1 second for 3 seconds. This ability is considered direct damage. Restores a portion of your missing Stamina.",
+        "Siphon away your enemies' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and restoring 10% of your missing Stamina every 1 second for 3 seconds.\n\nThis ability is considered direct damage.",
     },
     {
       id: 137259, // Morph of Vampiric Drain
@@ -134,7 +134,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 4,
       description:
-        "Siphon away your enemies' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and generating 5 Ultimate every 1 second for 3 seconds. This ability is considered direct damage. Generates Ultimate.",
+        "Siphon away your enemies' vitality, dealing 870 Magic Damage, healing you for 25% of your missing Health, and generating 5 Ultimate every 1 second for 3 seconds.\n\nThis ability is considered direct damage.",
     },
 
     // Active abilities - Mesmerize
@@ -230,7 +230,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'Ignore the Movement Speed penalty of Sneak.\n\nDecreases the time it takes to enter Sneak by 25%.',
+        'Ignore the Movement Speed penalty of Sneak.\n\nDecreases the time it takes to enter Sneak by 50%.',
     },
     {
       id: AbilityId.STRIKE_FROM_THE_SHADOWS,
@@ -241,7 +241,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'When you leave Sneak, invisibility, or Mist Form your Weapon and Spell Damage is increased by 150 for 6 seconds.',
+        'When you leave Sneak, invisibility, or Mist Form your Weapon and Spell Damage is increased by 300 for 6 seconds.',
     },
     {
       id: AbilityId.BLOOD_RITUAL,

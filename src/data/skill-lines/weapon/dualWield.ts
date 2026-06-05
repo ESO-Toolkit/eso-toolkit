@@ -186,8 +186,7 @@ export const dualWieldSkillLine: SkillLineData = {
       name: 'Dual Wield Expert',
       type: 'passive',
       baseAbilityId: AbilityId.DUAL_WIELD_EXPERT,
-      description:
-        "WHILE DUAL WIELDING Increases Weapon and Spell Damage by 6% of off-hand weapon's damage.",
+      description: "Increases Weapon and Spell Damage by 6% of off-hand weapon's damage.",
     },
     {
       id: AbilityId.CONTROLLED_FURY,

@@ -234,7 +234,7 @@ export const ardentFlame: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_024',
       description:
-        'The will to survive burns bright in your chest.\n\nIncreases your Healing Taken by 4%.',
+        'The will to survive burns bright in your chest.\n\nIncreases your Healing Taken by 8%.',
       isPassive: true,
     },
   ],

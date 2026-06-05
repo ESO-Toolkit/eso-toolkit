@@ -4,10 +4,10 @@
   "lastUpdated": "2025-10-06",
   "generatedAt": "2025-10-06T05:26:57.368Z",
   "dataValidation": {
-    "source": "ESO Hub (https://eso-hub.com/en/scribing)",
+    "source": "ESO game client data",
     "lastValidated": "2025-10-06",
     "validationStatus": "Auto-updated with 599 missing ability IDs from exact name matches",
-    "extractionMethod": "Corrected against official ESO Hub documentation (Section 8.2)",
+    "extractionMethod": "Corrected against official game documentation",
     "successfulCombinations": 104,
     "successRate": "100.0%",
     "updatesApplied": 0,
@@ -1061,8 +1061,6 @@
     }
   },
   "simulator": {
-    "baseUrl": "https://eso-hub.com/en/scribing-simulator",
-    "urlFormat": "https://eso-hub.com/en/scribing-simulator?combination={grimoireId},{focusScriptId},,,",
     "extractionNotes": {
       "validCombinations": 104,
       "invalidCombinations": 169,

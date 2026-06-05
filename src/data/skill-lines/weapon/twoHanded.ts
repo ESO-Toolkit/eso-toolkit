@@ -26,7 +26,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.BERSERKER_STRIKE,
       description:
-        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Physical Resistance, and grants you Physical and Spell Resistance equal to the amount ignored from the initial target for 12 seconds.",
+        "Strike at an enemy with a vicious blow, dealing 3486 Physical Damage to them and all nearby enemies.\n\nThis attack ignores the target's Physical Resistance, and grants you Physical and Spell Resistance equal to the amount ignored from the initial target for 12 seconds.",
     },
     {
       id: 83238, // Berserker Rage (morph)
@@ -34,7 +34,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.BERSERKER_STRIKE,
       description:
-        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Resistance and grants you Physical and Spell Resistance equal to the amount ignored from the initial target for 12 seconds. You are immune to all disabling, snare, and immobilization effects for the duration.",
+        "Strike at an enemy with a vicious blow, dealing 3600 Physical Damage to them and all nearby enemies.\n\nThis attack ignores the target's Resistance and grants you Physical and Spell Resistance equal to the amount ignored from the initial target for 12 seconds.\n\nYou are immune to all disabling, snare, and immobilization effects for the duration.",
     },
     {
       id: 83229, // Onslaught (morph)
@@ -42,7 +42,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.BERSERKER_STRIKE,
       description:
-        "Strike at an enemy with a vicious blow, dealing Physical Damage to them and all nearby enemies. This attack ignores the target's Resistance and grants you Physical and Spell Penetration for direct damage attacks equal to 100% of the amount ignored from the initial target and if Battle Spirit is inactive you gain 100% Critical Chance for 8 seconds.",
+        "Strike at an enemy with a vicious blow, dealing 3485 Physical Damage to them and all nearby enemies.\n\nThis attack ignores the target's Resistance and grants you Physical and Spell Penetration for direct damage attacks equal to 100% of the amount ignored from the initial target and if Battle Spirit is inactive you gain 100% Critical Chance for 8 seconds.",
     },
 
     // Scribing Abilities
@@ -116,7 +116,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CLEAVE,
       description:
-        "Focus your strength into a mighty swing, dealing Physical Damage to enemies in front of you. You also gain a damage shield that absorbs damage. Each enemy hit increases the damage shield's strength.",
+        'Focus your strength into a mighty swing, dealing 1742 Bleed Damage to enemies in front of you, and causing them to bleed for an additional 2868 Bleed Damage over 12 seconds. \n\nHitting a target that is already bleeding from this ability extends the duration by 10 seconds, up to a maximum of 32.\n\nYou also gain a damage shield that absorbs 1742 damage for 6 seconds.',
     },
     {
       id: 38754, // Carve (morph)
@@ -124,7 +124,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CLEAVE,
       description:
-        "Focus your strength into a mighty swing, dealing 1742 Physical Damage to enemies in front of you.\n\nYou also gain a damage shield that absorbs 1742 damage for 6 seconds. Each enemy hit increases the damage shield's strength by 50%, up to 300%.",
+        "Focus your strength into a mighty swing, dealing 1742 Physical Damage to enemies in front of you.\n\nYou also gain a damage shield that absorbs 1799 damage for 6 seconds. Each enemy hit increases the damage shield's strength by 50%, up to 300%.",
     },
     {
       id: AbilityId.REVERSE_SLASH,
@@ -184,7 +184,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.FORCEFUL,
       description:
-        'Your Light and Heavy Attacks damage up to 3 other nearby enemies for 50% of the damage inflicted to the primary target.',
+        'Your Light and Heavy Attacks damage up to 3 other nearby enemies for 100% of the damage inflicted to the primary target.',
     },
     {
       id: AbilityId.HEAVY_WEAPONS,
@@ -194,7 +194,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.HEAVY_WEAPONS,
       description:
-        'Grants a bonus based on the type of weapon equipped:\n\nSwords increase your Weapon and Spell Damage by 129.\n\nAxes increase your Critical Damage done by 6%.\n\nMaces increase your Offensive Penetration by 1487.',
+        'Grants a bonus based on the type of weapon equipped:\n\nSwords increase your Weapon and Spell Damage by 258.\n\nAxes increase your Critical Damage done by 12%.\n\nMaces increase your Offensive Penetration by 2974.',
     },
     {
       id: AbilityId.BALANCED_BLADE,
@@ -203,7 +203,7 @@ export const twoHandedSkillLine: SkillLineData = {
       name: 'Balanced Blade',
       type: 'passive',
       baseAbilityId: AbilityId.BALANCED_BLADE,
-      description: 'Reduces the Stamina cost of your Two-Handed abilities by 7%.',
+      description: 'Reduces the Stamina cost of your Two-Handed abilities by 15%.',
     },
     {
       id: AbilityId.FOLLOW_UP,
@@ -213,7 +213,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.FOLLOW_UP,
       description:
-        'When you complete a fully-charged Heavy Attack, your damage done with Two Handed attacks increases by 5% for 4 seconds.',
+        'When you complete a fully-charged Heavy Attack, your damage done with Two Handed attacks increases by 10% for 4 seconds.',
     },
     {
       id: AbilityId.BATTLE_RUSH,
@@ -222,7 +222,7 @@ export const twoHandedSkillLine: SkillLineData = {
       name: 'Battle Rush',
       type: 'passive',
       baseAbilityId: AbilityId.BATTLE_RUSH,
-      description: 'Increases your Stamina Recovery by 15% for 10 seconds after killing a target.',
+      description: 'Increases your Stamina Recovery by 30% for 10 seconds after killing a target.',
     },
   ],
 };

@@ -132,7 +132,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_014',
       description:
-        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, dealing 4631 Magic Damage over 20 seconds.  \n\nThe fetcherflies rip through the enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.",
+        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, dealing 4631 Magic Damage over 20 seconds. \n\nThe fetcherflies rip through the enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.",
       baseSkillId: ClassSkillId.WARDEN_SWARM,
     },
     {
@@ -187,7 +187,7 @@ export const animalCompanions: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_011',
       description:
-        'Increases your Critical Damage by 2% for each Animal Companion ability slotted.\n\nCurrent Bonus: 0%.',
+        'Increases your Critical Damage by 5% for each Animal Companion ability slotted.\n\nCurrent Bonus: 0%.',
       isPassive: true,
     },
     {
@@ -197,7 +197,7 @@ export const animalCompanions: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_010',
       description:
-        'Anytime one of your Animal Companion skills end, you are healed for 765 Health.',
+        'Anytime one of your Animal Companion skills end, you are healed for 1530 Health.',
       isPassive: true,
     },
     {
@@ -206,7 +206,7 @@ export const animalCompanions: SkillLineData = {
       name: 'Flourish',
       type: 'passive',
       icon: 'passive_warden_012',
-      description: 'Increases your Magicka and Stamina recovery by 10%.',
+      description: 'Increases your Magicka and Stamina recovery by 20%.',
       isPassive: true,
     },
     {
@@ -216,7 +216,7 @@ export const animalCompanions: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_009',
       description:
-        'Casting an Animal Companions ability while are in combat generates 2 Ultimate. This effect can occur once every 8 seconds.',
+        'Casting an Animal Companions ability while are in combat generates 4 Ultimate. This effect can occur once every 8 seconds.',
       isPassive: true,
     },
   ],

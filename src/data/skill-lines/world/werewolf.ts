@@ -76,7 +76,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Bounty",
       icon: 'ability_werewolf_004_a',
       description:
-        "Invoke the Huntsman's blessing, healing you for 6198 Health. This ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina. While slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you for 6198 Health. This ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina.\n\nWhile slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -86,7 +86,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Fortitude",
       icon: 'ability_werewolf_004_c',
       description:
-        "Invoke the Huntsman's blessing, healing you for 8002 Health. This portion of the ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina. You also gain Minor Endurance and Minor Fortitude, increasing your Health and Stamina Recovery by 15% for 20 seconds. While slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you for 8002 Health. This portion of the ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina.\n\nYou also gain Minor Endurance and Minor Fortitude, increasing your Health and Stamina Recovery by 15% for 20 seconds.\n\nWhile slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -96,7 +96,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Rage",
       icon: 'ability_werewolf_004_b',
       description:
-        "Invoke the Huntsman's blessing, healing you for 6197 Health. This portion of the ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina and gain Major Berserk, increasing your damage done by 10% for 10 seconds, but you also take 5% more damage. While slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you for 6197 Health. This portion of the ability scales off your Max Health. \n\nIf you are at full Health you instead restore 3000 Stamina and gain Major Berserk, increasing your damage done by 10% for 10 seconds, but you also take 5% more damage.\n\nWhile slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -224,7 +224,7 @@ export const werewolf: SkillLineData = {
       name: 'Pursuit',
       icon: 'ability_werewolf_010',
       description:
-        'Increases your Movement Speed by 15%.\n\nIncreases the Stamina your Heavy Attacks restore by 25%.',
+        'Increases your Movement Speed by 30%.\n\nIncreases the Stamina your Heavy Attacks restore by 50%.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
@@ -264,7 +264,7 @@ export const werewolf: SkillLineData = {
       name: 'Savage Strength',
       icon: 'ability_werewolf_009',
       description:
-        'Increases your Weapon and Spell Damage by 18%. Grants you Major Resolve, increasing your Physical and Spell Resistance by 5948.',
+        'Increases your Weapon and Spell Damage by 18%.\n\nGrants you Major Resolve, increasing your Physical and Spell Resistance by 5948.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,

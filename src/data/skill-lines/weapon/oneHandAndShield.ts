@@ -131,7 +131,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SHIELD_CHARGE,
       description:
-        "Strike an enemy full-force with your shield, dealing 1161 Physical Damage and stunning them for 2 seconds.\n\nAfter the stun ends, the enemy takes an additional 1161 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 1161 Physical Damage and stunning them for 3 seconds.\n\nAfter the stun ends, the enemy takes an additional 1161 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38452, // Shielded Assault (morph)
@@ -139,7 +139,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SHIELD_CHARGE,
       description:
-        "Strike an enemy full-force with your shield, dealing 2323 Physical Damage.\n\nWhile slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 47%.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 2399 Physical Damage.\n\nWhile slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: AbilityId.POWER_BASH,
@@ -147,7 +147,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        "Strike an enemy full-force with your shield, dealing 2323 Physical Damage. This ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 2323 Physical Damage. \n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38382, // Power Slam (morph)
@@ -155,7 +155,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        "Strike an enemy full-force with your shield, dealing 2399 Physical Damage. While slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%. This ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 2399 Physical Damage.\n\nWhile slotted, blocking any attack grants you Resentment, which reduces the cost of your next Power Slam cast within 10 seconds by 50%.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38386, // Reverberating Bash (morph)
@@ -163,7 +163,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        "Strike an enemy full-force with your shield, dealing 1161 Physical Damage and stunning them for 3 seconds. After the stun ends, the enemy takes an additional 1161 Physical Damage. This ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 1161 Physical Damage and stunning them for 3 seconds.\n\nAfter the stun ends, the enemy takes an additional 1161 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
 
     // Passive abilities
@@ -175,7 +175,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.FORTRESS,
       description:
-        'Reduces the Stamina cost of your One Hand and Shield abilities by 7% and reduces the cost of blocking by 18%.',
+        'Reduces the Stamina cost of your One Hand and Shield abilities by 15% and reduces the cost of blocking by 36%.',
     },
     {
       id: AbilityId.SWORD_AND_BOARD,
@@ -185,7 +185,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.SWORD_AND_BOARD,
       description:
-        'Increases your Weapon and Spell Damage by 3% and the amount of damage you can block by 10%.',
+        'Increases your Weapon and Spell Damage by 5% and the amount of damage you can block by 20%.',
     },
     {
       id: AbilityId.DEADLY_BASH,
@@ -195,7 +195,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.DEADLY_BASH,
       description:
-        'Improves your standard Bash attacks, causing them to deal 250 more damage and cost 25% less Stamina.',
+        'Improves your standard Bash attacks, causing them to deal 500 more damage and cost 50% less Stamina.',
     },
     {
       id: AbilityId.DEFLECT_BOLTS,
@@ -205,7 +205,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.DEFLECT_BOLTS,
       description:
-        'Increases the amount of damage you can block from projectiles and ranged attacks by 6%.',
+        'Increases the amount of damage you can block from projectiles and ranged attacks by 14%.',
     },
     {
       id: AbilityId.BATTLEFIELD_MOBILITY,
@@ -214,7 +214,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       name: 'Battlefield Mobility',
       type: 'passive',
       baseAbilityId: AbilityId.BATTLEFIELD_MOBILITY,
-      description: 'Reduces the Movement Speed penalty of Bracing.\n\nCurrent penalty: 48%',
+      description: 'Reduces the Movement Speed penalty of Bracing.\n\nCurrent penalty: 36%',
     },
   ],
 };

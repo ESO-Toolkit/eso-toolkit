@@ -186,7 +186,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_001',
       description:
-        "Increases your Physical and Spell Resistance by 1240 for each Winter's Embrace ability slotted.",
+        "Increases your Physical and Spell Resistance by 1240 for each Winter's Embrace ability slotted.\n\nCurrent Bonus: 0.",
       isPassive: true,
     },
     {
@@ -196,7 +196,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_002',
       description:
-        'Increases your chance to apply the Chilled status effect by 125% and increases its damage done by 52. The damage increasing effect scales off the higher of your Weapon or Spell Damage.',
+        'Increases your chance to apply the Chilled status effect by 250% and increases its damage by 105. The damage increasing effect scales off the higher of your Weapon or Spell Damage.',
       isPassive: true,
     },
     {
@@ -206,7 +206,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_003',
       description:
-        'When you take direct damage from an enemy in melee range, you apply a stack of Bite of Winter to them for 1.5 seconds, up to 5 stacks max. Attackers at max stacks are afflicted with Major Maim for 1.5 seconds, reducing their damage done by 10%.',
+        'When you take direct damage from an enemy in melee range, you apply a stack of Bite of Winter to them for 3 seconds, up to 5 stacks max. Attackers at max stacks are afflicted with Major Maim for 3 seconds, reducing their damage done by 10%.',
       isPassive: true,
     },
     {
@@ -216,7 +216,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_004',
       description:
-        'Increases the amount of damage you block by 4% and increases your Frost Damage by 7%.',
+        'Increases the amount of damage you block by 8% and increases your Frost Damage by 15%.',
       isPassive: true,
     },
   ],

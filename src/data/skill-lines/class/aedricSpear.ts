@@ -184,7 +184,7 @@ export const aedricSpear: SkillLineData = {
       name: 'Balanced Warrior',
       type: 'passive',
       icon: 'ability_templar_032',
-      description: 'Increases your Weapon Damage, Spell Damage, and Armor by 3%.',
+      description: 'Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
       isPassive: true,
     },
     {
@@ -206,7 +206,7 @@ export const aedricSpear: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_022',
       description:
-        'Increases your Critical Damage by 6%.\n\nIncreases your damage done to blocking players by 6%.',
+        'Increases your Critical Damage by 12%. \n\nIncreases your damage done to blocking players by 12%.',
       isPassive: true,
     },
     {
@@ -216,7 +216,7 @@ export const aedricSpear: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_027',
       description:
-        'Gain Minor Berserk and Minor Protection for 3 seconds, increasing damage done and reducing damage taken by 5%.',
+        'Gain Minor Berserk and Minor Protection for 6 seconds, increasing damage done and reducing damage taken by 5%.',
       isPassive: true,
     },
   ],

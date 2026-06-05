@@ -185,7 +185,7 @@ export const dawnsWrath: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_020',
       description:
-        'Increases the duration of your Sun Fire, Eclipse, Solar Flare, and Nova abilities by 1 second.',
+        'Increases the duration of your Sun Fire, Eclipse, Solar Flare, and Nova abilities by 2 seconds.',
       isPassive: true,
     },
     {
@@ -215,7 +215,7 @@ export const dawnsWrath: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_014',
       description:
-        'Reduces the Health, Magicka, Stamina, and Ultimate costs of your abilities by 2%.',
+        'Reduces the Health, Magicka, Stamina, and Ultimate costs of your abilities by 5%.',
       isPassive: true,
     },
   ],

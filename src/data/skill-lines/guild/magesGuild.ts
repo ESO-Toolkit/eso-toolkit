@@ -163,7 +163,7 @@ export const magesGuild: SkillLineData = {
       name: 'Mage Adept',
       type: 'passive',
       baseAbilityId: AbilityId.MAGE_ADEPT,
-      description: 'Reduces the Magicka and Health cost of your Mages Guild abilities by 8%.',
+      description: 'Reduces the Magicka and Health cost of your Mages Guild abilities by 15%.',
     },
     {
       id: AbilityId.EVERLASTING_MAGIC,
@@ -172,7 +172,7 @@ export const magesGuild: SkillLineData = {
       name: 'Everlasting Magic',
       type: 'passive',
       baseAbilityId: AbilityId.EVERLASTING_MAGIC,
-      description: 'Increases the duration of your Mages Guild abilities by 1 second.',
+      description: 'Increases the duration of your Mages Guild abilities by 2 seconds.',
     },
     {
       id: AbilityId.MAGICKA_CONTROLLER,
@@ -182,7 +182,7 @@ export const magesGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.MAGICKA_CONTROLLER,
       description:
-        'Increases your Max Magicka and Magicka Recovery by 1% for each Mages Guild ability slotted.\n\nCurrent bonus: 0%.',
+        'Increases your Max Magicka and Magicka Recovery by 2% for each Mages Guild ability slotted.\n\nCurrent bonus: 0%.',
     },
     {
       id: AbilityId.MIGHT_OF_THE_GUILD,
@@ -192,7 +192,7 @@ export const magesGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.MIGHT_OF_THE_GUILD,
       description:
-        'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 5 seconds.',
+        'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 10 seconds.',
     },
   ],
 };

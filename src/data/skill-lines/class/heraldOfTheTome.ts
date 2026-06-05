@@ -19,7 +19,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_006',
       description:
-        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 6 seconds and deals 1115 Magic Damage to enemies within 5 meters every 0.5 seconds. The scion's beam can be repositioned by recasting The Unblinking Eye.",
+        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 6 seconds and deals 1115 Magic Damage to enemies within 5 meters every 0.5 seconds.\n\nThe scion's beam can be repositioned by recasting The Unblinking Eye.",
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
     },
@@ -187,7 +187,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_04',
       description:
-        'Warp fate when you generate or consume Crux, increasing your Critical Damage and Critical Healing by 6% for 7 seconds.',
+        'Warp fate when you generate or consume Crux, increasing your Critical Damage and Critical Healing by 12% for 7 seconds.',
       isPassive: true,
     },
     {
@@ -197,7 +197,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_02',
       description:
-        'You master the warp and weft of your very soul. When you are restored Magicka or Stamina, increase your Weapon and Spell Damage by 142 for 10 seconds.',
+        'You master the warp and weft of your very soul. When you are restored Magicka or Stamina, increase your Weapon and Spell Damage by 284 for 10 seconds.',
       isPassive: true,
     },
     {
@@ -207,7 +207,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_03',
       description:
-        'Your attacks wound the mind with heretical knowledge, increasing damage dealt by Status Effects by 7% and Status Effect Chance by 27%.',
+        'Your attacks wound the mind with heretical knowledge, increasing damage dealt by Status Effects by 15% and Status Effect Chance by 55%.',
       isPassive: true,
     },
     {
@@ -217,7 +217,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_01',
       description:
-        "What they don't know can kill them. Increase your Physical and Spell Penetration by 1240 per Herald of the Tome ability slotted.",
+        "What they don't know can kill them. Increase your Physical and Spell Penetration by 1240 per Herald of the Tome ability slotted.\n\nCurrent bonus: 0.",
       isPassive: true,
     },
   ],

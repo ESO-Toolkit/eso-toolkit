@@ -139,7 +139,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_007_a',
       description:
-        "Slice into your enemy's life force, dealing 1742 Magic Damage.  \n\nYou heal for 2400 Health for the first enemy hit, and an additional 800 for each additional enemy, up to five times. After dealing damage, you heal for 991 Health every 2 seconds over 10 seconds. The healing of this ability scales off your Max Health.",
+        "Slice into your enemy's life force, dealing 1742 Magic Damage. \n\nYou heal for 2400 Health for the first enemy hit, and an additional 800 for each additional enemy, up to five times. After dealing damage, you heal for 991 Health every 2 seconds over 10 seconds. The healing of this ability scales off your Max Health.",
       baseSkillId: ClassSkillId.NECROMANCER_DEATH_SCYTHE,
     },
     {
@@ -185,7 +185,7 @@ export const boneTyrant: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_005',
       description:
-        'Whenever an enemy you are in combat with dies within 28 meters of you, restore 333 Magicka and Stamina.',
+        'Whenever an enemy you are in combat with dies within 28 meters of you, restore 666 Magicka and Stamina.',
       isPassive: true,
     },
     {
@@ -195,7 +195,7 @@ export const boneTyrant: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_006',
       description:
-        'Reduce the damage you take from damage over time abilities by 7% while you have a Bone Tyrant ability active.',
+        'Reduce the damage you take from damage over time abilities by 15% while you have a Bone Tyrant ability active.',
       isPassive: true,
     },
     {
@@ -205,7 +205,7 @@ export const boneTyrant: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_007',
       description:
-        'Increase your Healing Received by 1% for each Bone Tyrant ability slotted.\n\nCurrent bonus: 0%.',
+        'Increase your Healing Received by 3% for each Bone Tyrant ability slotted.\n\nCurrent bonus: 0%.',
       isPassive: true,
     },
     {
@@ -214,7 +214,7 @@ export const boneTyrant: SkillLineData = {
       name: 'Last Gasp',
       type: 'passive',
       icon: 'passive_necromancer_008',
-      description: 'Increases your Max Health by 1206.',
+      description: 'Increase your Max Health by 2412.',
       isPassive: true,
     },
   ],

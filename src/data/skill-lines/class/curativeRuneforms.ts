@@ -114,7 +114,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015_a',
       description:
-        "Carve the Fate Crone's runes to create spinning mystical discs and generate Crux. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3160 damage for 6 seconds. \n\nRecasting on a target already shielded grants a new shield that is 30% stronger.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
+        "Carve the Fate Crone's runes to create spinning mystical discs and generate Crux. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3068 damage for 6 seconds. \n\nRecasting on a target already shielded grants a new shield that is 30% stronger.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
     },
     {
@@ -123,7 +123,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015_b',
       description:
-        "Carve the Baron of Breakers' runes to create spinning discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3264 damage for 6 seconds.\n\nConsume Crux to cause the shields to heal for 33% of the shield's remaining strength every 1 second per Crux spent.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
+        "Carve the Baron of Breakers' runes to create spinning discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3169 damage for 6 seconds.\n\nConsume Crux to cause the shields to heal for 33% of the shield's remaining strength every 1 second per Crux spent.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
     },
     {
@@ -187,7 +187,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_11',
       description:
-        'Knowledge is power. Your excessive scholarship increases your Magicka and Stamina Recovery by 9%.',
+        'Knowledge is power. Your excessive scholarship increases your Magicka and Stamina Recovery by 18%.',
       isPassive: true,
     },
     {
@@ -197,7 +197,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_09',
       description:
-        'Your mastery of weaving fate and abyssal water increases your healing done by 2% for each active Crux.',
+        'Your mastery of weaving fate and abyssal water increases your healing done by 4% for each active Crux.',
       isPassive: true,
     },
     {
@@ -217,7 +217,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_12',
       description:
-        'Your status as illuminatus reduces the cost and increases the strength of your damage shields by 5%.',
+        'Your status as illuminatus reduces the cost and increases the strength of your damage shields by 10%.',
       isPassive: true,
     },
   ],

@@ -184,7 +184,7 @@ export const restoringLight: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_012',
       description:
-        'When you heal an ally under 50% Health with a Restoring Light ability, you grant them 1 Ultimate.\n\nActivating an ability with a cast or channel time while in combat causes you to automatically block all attacks at no cost for 2 seconds, up to once every 30 seconds.',
+        'When you heal an ally under 50% Health with a Restoring Light ability, you grant them 2 Ultimate.\n\nActivating an ability with a cast or channel time while in combat causes you to automatically block all attacks at no cost for 2 seconds, up to once every 15 seconds.',
       isPassive: true,
     },
     {
@@ -194,7 +194,7 @@ export const restoringLight: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_026',
       description:
-        'Increases resurrection speed by 10%. \n\nResurrected allies return with 50% more Health. \n\nGives you a 50% chance to fill an empty Soul Gem after each successful resurrection.',
+        'Increases resurrection speed by 20%. \n\nResurrected allies return with 100% more Health. \n\nGives you a 50% chance to fill an empty Soul Gem after each successful resurrection.',
       isPassive: true,
     },
     {
@@ -214,7 +214,7 @@ export const restoringLight: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_014',
       description:
-        'While standing in your own Cleansing Ritual, Rune Focus, or Rite of Passage areas of effect and for up to 2 seconds after leaving them you gain Minor Mending, increasing your healing done by 8%.\n\nAlso increases the amount of damage you can block by 10% for the duration.',
+        'While standing in your own Cleansing Ritual, Rune Focus, or Rite of Passage area effects and for up to 4 seconds after leaving them you gain Minor Mending, increasing your healing done by 8%.\n\nAlso increases the amount of damage you can block by 10% for the duration.',
       isPassive: true,
     },
   ],

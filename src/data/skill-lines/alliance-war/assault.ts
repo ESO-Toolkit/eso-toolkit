@@ -21,7 +21,7 @@ export const assault: SkillLineData = {
       id: 40223, // Morph of War Horn
       name: 'Aggressive Horn',
       description:
-        "Sound a war horn to rally your forces, increasing you and your group's Max Magicka and Max Stamina by 10% for 30 seconds. You and your allies gain Major Force, increasing your Critical Damage by 20% for 10 seconds.",
+        "Sound a war horn to rally your forces, increasing you and your group's Max Magicka and Max Stamina by 10% for 30 seconds.\n\nYou and your allies gain Major Force, increasing your Critical Damage by 20% for 10 seconds.",
       isUltimate: true,
       maxRank: 4,
     },
@@ -29,7 +29,7 @@ export const assault: SkillLineData = {
       id: 40220, // Morph of War Horn
       name: 'Sturdy Horn',
       description:
-        "Sound a war horn to rally your forces, increasing you and your group's Max Magicka and Max Stamina by 10% for 30 seconds. You and your allies gain 1320 Critical Resistance for 10 seconds, reducing incoming Critical Damage by 20%.",
+        "Sound a war horn to rally your forces, increasing you and your group's Max Magicka and Max Stamina by 10% for 30 seconds.\n\nYou and your allies gain 1320 Critical Resistance for 10 seconds, reducing incoming Critical Damage by 20%.",
       isUltimate: true,
       maxRank: 4,
     },
@@ -110,21 +110,21 @@ export const assault: SkillLineData = {
       id: AbilityId.MAGICKA_DETONATION,
       name: 'Magicka Detonation',
       description:
-        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 434 Magic Damage to all enemies in the area. Each enemy within the bomb's radius increases the damage by 100%, including the original target.",
+        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 434 Magic Damage to all enemies in the area.\n\nEach enemy within the bomb's radius increases the damage by 100%, including the original target.",
       maxRank: 4,
     },
     {
       id: 61491, // Morph of Magicka Detonation
       name: 'Inevitable Detonation',
       description:
-        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 449 Magic Damage to all enemies in the area. If the bomb is dispelled or removed early, the explosion is triggered immediately. Each enemy within the bomb's radius increases the damage by 100%.",
+        "Curse an enemy with a magical bomb that explodes after 4 seconds, dealing 449 Magic Damage to all enemies in the area.\n\nIf the bomb is dispelled or removed early, the explosion is triggered immediately.\n\nEach enemy within the bomb's radius increases the damage by 100%.",
       maxRank: 4,
     },
     {
       id: 61500, // Morph of Magicka Detonation
       name: 'Proximity Detonation',
       description:
-        "Activate a magical bomb on yourself that explodes after 8 seconds, dealing 449 Magic Damage to all enemies in the area. Each enemy within the bomb's radius increases the damage by 100%, including the original target.",
+        "Activate a magical bomb on yourself that explodes after 8 seconds, dealing 449 Magic Damage to all enemies in the area.\n\nEach enemy within the bomb's radius increases the damage by 100%, including the original target.",
       maxRank: 4,
     },
     // Passive abilities
@@ -134,7 +134,7 @@ export const assault: SkillLineData = {
       alternateIds: [39248, 39249, 39250, 39251, 45614, 45615, 45616, 45617],
       name: 'Continuous Attack',
       description:
-        'Increases your Weapon and Spell Damage by 5% and Health, Magicka, and Stamina Recovery by 10% for 10 minutes after you capture a Lumber Mill, Farm, Mine, or Keep.\n\nGain Gallop at all times, increasing your Mount Speed by 15%.',
+        'Increases your Weapon and Spell Damage by 10% and Health, Magicka, and Stamina Recovery by 20% for 10 minutes after you capture a Lumber Mill, Farm, Mine, or Keep.\n\nGain Gallop at all times, increasing your Mount Speed by 15%.',
       isPassive: true,
       maxRank: 1,
     },
@@ -144,7 +144,7 @@ export const assault: SkillLineData = {
       alternateIds: [39254, 45621, 109844],
       name: 'Reach',
       description:
-        'Increases the range of long-range abilities by 2 meters while near a keep or outpost.\n\nAny ability with a range greater than 28 meters is affected.',
+        'Increases the range of long-range abilities by 5 meters while near a keep or outpost.\n\nAny ability with a range greater than 28 meters is affected.',
       isPassive: true,
       maxRank: 1,
     },
@@ -153,7 +153,7 @@ export const assault: SkillLineData = {
       icon: 'ability_weapon_023',
       alternateIds: [39252, 39253, 45619, 45620],
       name: 'Combat Frenzy',
-      description: 'You generate 10 Ultimate when you kill an enemy player.',
+      description: 'You generate 20 Ultimate when you kill an enemy player.',
       isPassive: true,
       maxRank: 1,
     },

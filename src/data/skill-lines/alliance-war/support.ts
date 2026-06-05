@@ -68,7 +68,7 @@ export const support: SkillLineData = {
       id: 40229, // Morph of Siege Shield
       name: 'Siege Weapon Shield',
       description:
-        "Create a protective sphere over your location that reduces damage taken from siege weapons by 50% for you and nearby allies. The sphere also protects you and your allies' siege weapons, reducing damage from enemy siege weapons by 75%.",
+        "Create a protective sphere over your location that reduces damage taken from siege weapons by 50% for you and nearby allies.\n\nThe sphere also protects you and your allies' siege weapons, reducing damage from enemy siege weapons by 75%.",
       isUltimate: false,
       isPassive: false,
       maxRank: 4,
@@ -161,7 +161,7 @@ export const support: SkillLineData = {
       alternateIds: [39255, 45622],
       name: 'Magicka Aid',
       description:
-        'Increases your Magicka Recovery by 5% for each Support ability slotted.\n\nCurrent bonus: 0%.',
+        'Increases your Magicka Recovery by 10% for each Support ability slotted.\n\nCurrent bonus: 0%.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -171,7 +171,7 @@ export const support: SkillLineData = {
       icon: 'ability_sorcerer_045',
       alternateIds: [39259, 45624],
       name: 'Combat Medic',
-      description: 'Increases your healing done by 10% when you are near a Keep.',
+      description: 'Increases your healing done by 20% when you are near a Keep.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -182,7 +182,7 @@ export const support: SkillLineData = {
       alternateIds: [39261, 45625],
       name: 'Battle Resurrection',
       description:
-        'Reduces the time it takes you to resurrect another player by 15% while you are in a PvP area.',
+        'Reduces the time it takes you to resurrect another player by 30% while you are in a PvP area.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,

@@ -185,7 +185,7 @@ export const darkMagic: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_045',
       description:
-        'Reduces the Health, Magicka, and Stamina costs of your non Core Combat abilities by 3%.',
+        'Reduces the Health, Magicka, and Stamina costs of your non Core Combat abilities by 6%.',
       isPassive: true,
     },
     {
@@ -195,7 +195,7 @@ export const darkMagic: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_026',
       description:
-        'When you cast a Dark Magic ability with a cost, you heal for 800 Health if you are not at full Health. This portion of the ability scales off your Max Health.\n\nIf your Health is full, the higher of your Max Magicka or Stamina is increased by 5% for 10 seconds.',
+        'When you cast a Dark Magic ability with a cost, you heal for 1600 Health if you are not at full Health. This portion of the ability scales off your Max Health.\n\nIf your Health is full, the higher of your Max Magicka or Stamina is increased by 10% for 10 seconds.',
       isPassive: true,
     },
     {
@@ -205,7 +205,7 @@ export const darkMagic: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_054',
       description:
-        'After blocking an attack, your next Health, Magicka, or Stamina ability costs 9% less.',
+        'After blocking an attack, your next Health, Magicka, or Stamina ability costs 18% less.',
       isPassive: true,
     },
     {
@@ -215,7 +215,7 @@ export const darkMagic: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_039',
       description:
-        'When you cast a Dark Magic ability you grant Minor Prophecy to you and your group, increasing your Spell Critical rating by 1314 for 10 seconds.',
+        'When you cast a Dark Magic ability you grant Minor Prophecy to you and your group, increasing your Spell Critical rating by 1314 for 20 seconds.',
       isPassive: true,
     },
   ],

@@ -170,7 +170,7 @@ export const psijicOrder: SkillLineData = {
       ],
       name: 'Spell Orb',
       description:
-        'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 1124 Magic Damage. This effect scales off your highest offensive stats.',
+        'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 1124 Magic Damage.\n\nThis effect scales off your highest offensive stats.',
       type: 'passive',
       isPassive: true,
       maxRank: 1,

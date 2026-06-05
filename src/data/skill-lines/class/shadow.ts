@@ -185,7 +185,7 @@ export const shadow: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_036',
       description:
-        'Increases the duration of your Shadow abilities by 1 second.\n\nDoes not apply to Shadow Cloak or its morphs.',
+        'Increases the duration of your Shadow abilities by 2 seconds.\n\nDoes not apply to Shadow Cloak or its morphs.',
       isPassive: true,
     },
     {
@@ -195,7 +195,7 @@ export const shadow: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_044',
       description:
-        'Increases your Max Health by 2% for each Shadow ability slotted.\n\nCurrent bonus: 0%.',
+        'Increases your Max Health by 5% for each Shadow ability slotted.\n\nCurrent bonus: 0%.',
       isPassive: true,
     },
     {
@@ -204,7 +204,7 @@ export const shadow: SkillLineData = {
       name: 'Refreshing Shadows',
       type: 'passive',
       icon: 'ability_sorcerer_038',
-      description: 'Increases your Health, Stamina, and Magicka Recovery by 7%.',
+      description: 'Increases your Health, Stamina, and Magicka Recovery by 15%.',
       isPassive: true,
     },
     {
@@ -214,7 +214,7 @@ export const shadow: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_022',
       description:
-        'Casting a Shadow ability grants you Major Resolve for 6 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.\n\nCurrent duration: 6 seconds.',
+        'Casting a Shadow ability grants you Major Resolve for 12 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.\n\nCurrent duration: 12 seconds',
       isPassive: true,
     },
   ],

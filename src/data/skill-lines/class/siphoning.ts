@@ -184,7 +184,7 @@ export const siphoning: SkillLineData = {
       name: 'Catalyst',
       type: 'passive',
       icon: 'passive_sorcerer_046',
-      description: 'After drinking a potion you gain 11 Ultimate.',
+      description: 'After drinking a potion you gain 22 Ultimate.',
       isPassive: true,
     },
     {
@@ -193,7 +193,7 @@ export const siphoning: SkillLineData = {
       name: 'Magicka Flood',
       type: 'passive',
       icon: 'passive_sorcerer_008',
-      description: 'Increases your Max Magicka and Stamina by 3%.',
+      description: 'Increases your Max Magicka and Stamina by 6%.',
       isPassive: true,
     },
     {
@@ -203,7 +203,7 @@ export const siphoning: SkillLineData = {
       type: 'passive',
       icon: 'passive_sorcerer_036',
       description:
-        'Increases your healing done by 1% for each Siphoning ability slotted. \n\nCurrent bonus: 0%.',
+        'Increases your healing done by 3% for each Siphoning ability slotted. \n\nCurrent bonus: 0%.',
       isPassive: true,
     },
     {
@@ -213,7 +213,7 @@ export const siphoning: SkillLineData = {
       type: 'passive',
       icon: 'passive_sorcerer_002',
       description:
-        'Casting a Siphoning ability while in combat generates 1 Ultimate. This effect can occur once every 4 seconds.',
+        'Casting a Siphoning ability while in combat generates 2 Ultimate. This effect can occur once every 4 seconds.',
       isPassive: true,
     },
   ],
