@@ -194,8 +194,7 @@ export const shadow: SkillLineData = {
       name: 'Dark Vigor',
       type: 'passive',
       icon: 'ability_sorcerer_044',
-      description:
-        'Increases your Max Health by 5% for each Shadow ability slotted.\n\nCurrent bonus: 0%.',
+      description: 'Increases your Max Health by 5% for each Shadow ability slotted.',
       isPassive: true,
     },
     {
@@ -214,7 +213,7 @@ export const shadow: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_022',
       description:
-        'Casting a Shadow ability grants you Major Resolve for 12 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.\n\nCurrent duration: 12 seconds',
+        'Casting a Shadow ability grants you Major Resolve for 12 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.',
       isPassive: true,
     },
   ],

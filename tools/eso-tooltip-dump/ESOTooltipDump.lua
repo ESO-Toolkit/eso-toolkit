@@ -270,9 +270,11 @@ local function buildReferenceItemLink(setId)
     if ok and type(itemIds) == "table" then itemId = next(itemIds) end
   end
   if not itemId then return nil end
-  -- LibSets.buildItemLink handles the reference quality/level itself.
+  -- Pass Legendary (gold) quality subtype 370 so the reference link yields CP160 gold
+  -- set-bonus values; LibSets.buildItemLink otherwise defaults to Normal (366).
   if LibSets.buildItemLink then
-    local ok, link = pcall(LibSets.buildItemLink, itemId)
+    local LEGENDARY_QUALITY_SUBTYPE = 370
+    local ok, link = pcall(LibSets.buildItemLink, itemId, LEGENDARY_QUALITY_SUBTYPE)
     if ok and link and link ~= "" then return link end
   end
   return nil

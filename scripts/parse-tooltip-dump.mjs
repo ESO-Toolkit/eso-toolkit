@@ -44,6 +44,8 @@ const SKILL_TYPE_CATEGORY = {
  * Removes ESO inline string markup, leaving clean plain text.
  *  - |cRRGGBB ... |r   color spans (keep inner text, drop the codes)
  *  - ^M/^F/^n/^p ...   gender/number grammar carets appended to words
+ *  - trailing "Current bonus/amount/duration/penalty: ..." dynamic readouts
+ *    (these reflect the dumping character's live state, not static skill data)
  *  - collapses doubled whitespace introduced by removals
  */
 export function stripMarkup(raw) {
@@ -57,6 +59,10 @@ export function stripMarkup(raw) {
   s = s.replace(/\^[a-zA-Z]/g, '');
   // Any stray leftover pipe-escapes.
   s = s.replace(/\|\|/g, '|');
+  // Strip the in-game dynamic "Current <bonus|amount|duration|penalty>: ..." readout
+  // (and everything after it — it's always trailing). Captured from the dumping char's
+  // live state (e.g. "Current bonus: 0%" on a naked reference char); not static data.
+  s = s.replace(/\n+\s*Current (?:bonus|amount|duration|penalty)\s*:[\s\S]*$/i, '');
   // Tidy whitespace.
   s = s.replace(/[ \t]{2,}/g, ' ').trim();
   return s;
@@ -363,7 +369,9 @@ function main() {
 
   if (!fs.existsSync(inputPath)) {
     console.error(`Input not found: ${inputPath}`);
-    console.error('Run the ESOTooltipDump addon in-game (see tools/eso-tooltip-dump/RUN-CHECKLIST.md).');
+    console.error(
+      'Run the ESOTooltipDump addon in-game (see tools/eso-tooltip-dump/RUN-CHECKLIST.md).',
+    );
     process.exit(1);
   }
 
@@ -381,5 +389,8 @@ function main() {
 }
 
 // Run only when invoked directly (allows importing stripMarkup/parseLuaTable in tests).
-const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const invokedDirectly =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) ===
+    path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 if (invokedDirectly) main();

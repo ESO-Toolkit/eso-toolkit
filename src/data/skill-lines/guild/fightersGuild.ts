@@ -167,7 +167,7 @@ export const fightersGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.SLAYER,
       description:
-        'Increases your Weapon and Spell Damage by 3% for each Fighters Guild ability slotted.\n\nCurrent bonus: 0%.',
+        'Increases your Weapon and Spell Damage by 3% for each Fighters Guild ability slotted.',
     },
     {
       id: AbilityId.BANISH_THE_WICKED,

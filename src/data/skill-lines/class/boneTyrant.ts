@@ -204,8 +204,7 @@ export const boneTyrant: SkillLineData = {
       name: 'Health Avarice',
       type: 'passive',
       icon: 'passive_necromancer_007',
-      description:
-        'Increase your Healing Received by 3% for each Bone Tyrant ability slotted.\n\nCurrent bonus: 0%.',
+      description: 'Increase your Healing Received by 3% for each Bone Tyrant ability slotted.',
       isPassive: true,
     },
     {

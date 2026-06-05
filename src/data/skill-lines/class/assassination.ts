@@ -224,7 +224,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_015',
       description:
-        'Increases your Critical Chance rating by 548 for each Assassination ability slotted, increasing your chance to critically strike by 2.5% per ability.\n\nCurrent bonus: 0.',
+        'Increases your Critical Chance rating by 548 for each Assassination ability slotted, increasing your chance to critically strike by 2.5% per ability.',
       isPassive: true,
     },
   ],

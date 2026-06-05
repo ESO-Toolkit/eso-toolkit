@@ -218,7 +218,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'passive',
       icon: 'passive_arcanist_07',
       description:
-        'Apocryphal knowledge bubbles up from the depths of your psyche, increasing your Health, Magicka, and Stamina Recovery by 81 for each Soldier of Apocrypha ability slotted.\n\nCurrent bonus: 0.',
+        'Apocryphal knowledge bubbles up from the depths of your psyche, increasing your Health, Magicka, and Stamina Recovery by 81 for each Soldier of Apocrypha ability slotted.',
       isPassive: true,
     },
   ],

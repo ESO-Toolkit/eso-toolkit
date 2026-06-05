@@ -202,8 +202,7 @@ export const siphoning: SkillLineData = {
       name: 'Soul Siphoner',
       type: 'passive',
       icon: 'passive_sorcerer_036',
-      description:
-        'Increases your healing done by 3% for each Siphoning ability slotted. \n\nCurrent bonus: 0%.',
+      description: 'Increases your healing done by 3% for each Siphoning ability slotted.',
       isPassive: true,
     },
     {

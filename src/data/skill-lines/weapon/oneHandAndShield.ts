@@ -214,7 +214,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       name: 'Battlefield Mobility',
       type: 'passive',
       baseAbilityId: AbilityId.BATTLEFIELD_MOBILITY,
-      description: 'Reduces the Movement Speed penalty of Bracing.\n\nCurrent penalty: 36%',
+      description: 'Reduces the Movement Speed penalty of Bracing.',
     },
   ],
 };

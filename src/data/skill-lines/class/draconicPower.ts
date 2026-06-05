@@ -185,7 +185,7 @@ export const draconicPower: SkillLineData = {
       type: 'passive',
       icon: 'ability_dragonknight_025',
       description:
-        'The eldest Dragons are forces of nature. As are you.\n\nActivating a Draconic Power ability grants you and group members Minor Brutality for 20 seconds, increasing Weapon Damage by 10%.\n\nIncreases your Health Recovery by up to 700, based on your missing Health.\nCurrent amount: 0',
+        'The eldest Dragons are forces of nature. As are you.\n\nActivating a Draconic Power ability grants you and group members Minor Brutality for 20 seconds, increasing Weapon Damage by 10%.\n\nIncreases your Health Recovery by up to 700, based on your missing Health.',
       isPassive: true,
     },
     {

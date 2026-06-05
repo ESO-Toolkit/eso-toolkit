@@ -187,7 +187,7 @@ export const animalCompanions: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_011',
       description:
-        'Increases your Critical Damage by 5% for each Animal Companion ability slotted.\n\nCurrent Bonus: 0%.',
+        'Increases your Critical Damage by 5% for each Animal Companion ability slotted.',
       isPassive: true,
     },
     {

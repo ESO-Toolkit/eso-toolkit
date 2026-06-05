@@ -218,7 +218,7 @@ export const stormCalling: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_044',
       description:
-        'Increases your Weapon and Spell Damage by 108 for each Sorcerer ability slotted.\n\nCurrent bonus: 0.',
+        'Increases your Weapon and Spell Damage by 108 for each Sorcerer ability slotted.',
       isPassive: true,
     },
   ],

@@ -261,8 +261,7 @@ export const vampire: SkillLineData = {
       isPassive: true,
       isUltimate: false,
       maxRank: 2,
-      description:
-        'Reduces your damage taken by up to 15% based on your missing Health.\n\nCurrent bonus: 1%',
+      description: 'Reduces your damage taken by up to 15% based on your missing Health.',
     },
     {
       id: AbilityId.UNNATURAL_MOVEMENT,

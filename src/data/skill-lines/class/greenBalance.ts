@@ -195,7 +195,7 @@ export const greenBalance: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_005',
       description:
-        'Increases your healing done with Green Balance abilities by 5% for each Green Balance ability slotted.\n\nCurrent Bonus: 0%.',
+        'Increases your healing done with Green Balance abilities by 5% for each Green Balance ability slotted.',
       isPassive: true,
     },
     {

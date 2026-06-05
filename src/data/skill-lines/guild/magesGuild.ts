@@ -182,7 +182,7 @@ export const magesGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.MAGICKA_CONTROLLER,
       description:
-        'Increases your Max Magicka and Magicka Recovery by 2% for each Mages Guild ability slotted.\n\nCurrent bonus: 0%.',
+        'Increases your Max Magicka and Magicka Recovery by 2% for each Mages Guild ability slotted.',
     },
     {
       id: AbilityId.MIGHT_OF_THE_GUILD,

@@ -186,7 +186,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_001',
       description:
-        "Increases your Physical and Spell Resistance by 1240 for each Winter's Embrace ability slotted.\n\nCurrent Bonus: 0.",
+        "Increases your Physical and Spell Resistance by 1240 for each Winter's Embrace ability slotted.",
       isPassive: true,
     },
     {

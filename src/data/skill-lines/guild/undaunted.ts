@@ -150,8 +150,7 @@ export const undaunted: SkillLineData = {
       icon: 'ability_templar_003',
       alternateIds: [55584, 55606, 55676, 55677],
       name: 'Undaunted Command',
-      description:
-        'Activating a synergy restores 4% of your Max Health, Stamina, and Magicka.\n\nCurrent Bonus: 640 Health, 480 Stamina, and 480 Magicka.',
+      description: 'Activating a synergy restores 4% of your Max Health, Stamina, and Magicka.',
       type: 'passive',
       isPassive: true,
       isUltimate: false,
@@ -162,7 +161,7 @@ export const undaunted: SkillLineData = {
       alternateIds: [55366, 55384, 55385, 55386, 55388, 55389],
       name: 'Undaunted Mettle',
       description:
-        'Increases your Max Health, Stamina, and Magicka by 2% per type of Armor (Heavy, Medium, Light) that you have equipped. \n\nCurrent bonus: 0%.',
+        'Increases your Max Health, Stamina, and Magicka by 2% per type of Armor (Heavy, Medium, Light) that you have equipped.',
       type: 'passive',
       isPassive: true,
       isUltimate: false,

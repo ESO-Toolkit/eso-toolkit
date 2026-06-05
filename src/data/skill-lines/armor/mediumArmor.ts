@@ -52,7 +52,7 @@ export const mediumArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.DEXTERITY,
       description:
-        'Increases your Critical Damage and Healing done rating by 2% for every piece of Medium Armor equipped.\n\nCurrent bonus: 0%.',
+        'Increases your Critical Damage and Healing done rating by 2% for every piece of Medium Armor equipped.',
     },
     {
       id: AbilityId.WIND_WALKER,
@@ -61,8 +61,7 @@ export const mediumArmor: SkillLineData = {
       name: 'Wind Walker',
       type: 'passive',
       baseAbilityId: AbilityId.WIND_WALKER,
-      description:
-        'Increases your Stamina Recovery by 4% per piece of Medium Armor equipped. \n\nCurrent bonus: 0%.\n\nReduces the Stamina cost of your abilities by 2% per piece of Medium Armor equipped. \n\nCurrent bonus: 0%.',
+      description: 'Increases your Stamina Recovery by 4% per piece of Medium Armor equipped.',
     },
     {
       id: AbilityId.IMPROVED_SNEAK,
@@ -71,8 +70,7 @@ export const mediumArmor: SkillLineData = {
       name: 'Improved Sneak',
       type: 'passive',
       baseAbilityId: AbilityId.IMPROVED_SNEAK,
-      description:
-        'Reduces the cost of Sneak by 7% for each piece of Medium Armor equipped. \n\nCurrent bonus: 0%.\n\nReduces the size of your detection area while Sneaking by 5% for each piece of Medium Armor equipped. \n\nCurrent bonus: 0%.',
+      description: 'Reduces the cost of Sneak by 7% for each piece of Medium Armor equipped.',
     },
     {
       id: AbilityId.AGILITY,
@@ -82,7 +80,7 @@ export const mediumArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.AGILITY,
       description:
-        'Increases your Weapon and Spell Damage by 2% for each piece of Medium Armor worn.\n\nCurrent bonus: 0%.',
+        'Increases your Weapon and Spell Damage by 2% for each piece of Medium Armor worn.',
     },
     {
       id: AbilityId.ATHLETICS,
@@ -92,7 +90,7 @@ export const mediumArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.ATHLETICS,
       description:
-        'Increases the Movement Speed bonus of Sprint by 3% for each piece of Medium Armor equipped.\n\nCurrent bonus: 0%.\n\nReduces the cost of Roll Dodge by 4% for each piece of Medium Armor equipped.\n\nCurrent bonus: 0%.',
+        'Increases the Movement Speed bonus of Sprint by 3% for each piece of Medium Armor equipped.',
     },
   ],
 };

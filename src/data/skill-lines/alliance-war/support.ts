@@ -160,8 +160,7 @@ export const support: SkillLineData = {
       icon: 'ability_sorcerer_038',
       alternateIds: [39255, 45622],
       name: 'Magicka Aid',
-      description:
-        'Increases your Magicka Recovery by 10% for each Support ability slotted.\n\nCurrent bonus: 0%.',
+      description: 'Increases your Magicka Recovery by 10% for each Support ability slotted.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
