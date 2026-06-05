@@ -135,6 +135,16 @@ export interface UserProfile {
   roster_count: number;
   builds: ProfileBuildSummary[];
   rosters: ProfileRosterSummary[];
+  /**
+   * The user's ESO Logs numeric user ID (as a string, == author_id), used to
+   * fetch the public reports they have uploaded. Null when it cannot be
+   * resolved. Optional so older API responses (pre-feature) still type-check.
+   */
+  eso_logs_user_id?: string | null;
+  /** ESO Logs NA-server account display name, if linked. */
+  na_display_name?: string | null;
+  /** ESO Logs EU-server account display name, if linked. */
+  eu_display_name?: string | null;
 }
 
 export interface UserProfileResponse {

@@ -42,6 +42,7 @@ import { useAuth } from '../features/auth/AuthContext';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { ROLE_ACCENT } from '../features/build-hub/types/build-hub.types';
+import { ProfileLogsPanel } from '../features/profile_logs/ProfileLogsPanel';
 import { rosterHubApi } from '../features/roster-hub/api/roster-hub-api';
 import {
   TRIAL_ACCENT,
@@ -1683,6 +1684,12 @@ export const PublicProfilePage: React.FC = () => {
           />
         )}
       </Box>
+
+      {/* ── Recent Logs (uploaded to ESO Logs) ─────────────────────────── */}
+      <ProfileLogsPanel
+        esoLogsUserId={profile.eso_logs_user_id ?? null}
+        username={profile.username}
+      />
 
       {/* ── Bio edit dialog ────────────────────────────────────────────── */}
       <BioDialog
