@@ -590,10 +590,7 @@ export async function toggleBuildVote(
     .first<{ cnt: number }>();
   const voteCount = countRow?.cnt ?? 0;
 
-  await db
-    .prepare('UPDATE builds SET vote_count = ? WHERE id = ?')
-    .bind(voteCount, buildId)
-    .run();
+  await db.prepare('UPDATE builds SET vote_count = ? WHERE id = ?').bind(voteCount, buildId).run();
 
   return { voted, voteCount };
 }
@@ -710,7 +707,9 @@ export async function recordRateLimitEvent(
   action: string,
 ): Promise<void> {
   await db
-    .prepare("INSERT INTO rate_limit_events (user_id, action, created_at) VALUES (?, ?, datetime('now'))")
+    .prepare(
+      "INSERT INTO rate_limit_events (user_id, action, created_at) VALUES (?, ?, datetime('now'))",
+    )
     .bind(userId, action)
     .run();
 }
@@ -935,8 +934,16 @@ export async function checkImageUploadRateLimit(db: D1Database, userId: string):
 
 const PROFILE_PAGE_SIZE = 12;
 
-type BuildSummaryRow = BuildSummary & { tags_concat: string | null; author_name: string };
-type RosterSummaryRow = RosterSummary & { tags_concat: string | null; author_name: string };
+type BuildSummaryRow = BuildSummary & {
+  tags_concat: string | null;
+  author_name: string;
+  author_id: string;
+};
+type RosterSummaryRow = RosterSummary & {
+  tags_concat: string | null;
+  author_name: string;
+  author_id: string;
+};
 
 export async function getUserProfile(
   db: D1Database,
@@ -953,7 +960,7 @@ export async function getUserProfile(
 
       db
         .prepare(
-          `SELECT b.id, b.author_name, b.title, b.description, b.eso_class, b.role, b.game_mode,
+          `SELECT b.id, b.author_id, b.author_name, b.title, b.description, b.eso_class, b.role, b.game_mode,
                   b.vote_count, b.created_at, GROUP_CONCAT(DISTINCT bt.tag) AS tags_concat
            FROM builds b
            LEFT JOIN build_tags bt ON bt.build_id = b.id
@@ -967,7 +974,7 @@ export async function getUserProfile(
 
       db
         .prepare(
-          `SELECT r.id, r.author_name, r.title, r.description, r.trial_id,
+          `SELECT r.id, r.author_id, r.author_name, r.title, r.description, r.trial_id,
                   r.vote_count, r.created_at, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
            FROM rosters r
            LEFT JOIN roster_tags rt ON rt.roster_id = r.id
@@ -1006,6 +1013,15 @@ export async function getUserProfile(
     profileRow?.author_name ??
     username;
 
+  // The ESO Logs user ID is the author_id (auth.ts derives it from the ESO Logs
+  // currentUser.id). Prefer the profile row, then any content row, so uploaded
+  // logs resolve even when a profile has content but no profile row yet.
+  const esoLogsUserId =
+    profileRow?.author_id ??
+    buildsResult.results[0]?.author_id ??
+    rostersResult.results[0]?.author_id ??
+    null;
+
   return {
     username: displayName,
     bio: profileRow?.bio ?? '',
@@ -1013,6 +1029,9 @@ export async function getUserProfile(
     avatar_thumb_url: profileRow?.avatar_thumb_url ?? null,
     build_count: buildCountRow?.cnt ?? 0,
     roster_count: rosterCountRow?.cnt ?? 0,
+    eso_logs_user_id: esoLogsUserId,
+    na_display_name: profileRow?.na_display_name ?? null,
+    eu_display_name: profileRow?.eu_display_name ?? null,
     builds: buildsResult.results.map((b) => ({
       id: b.id,
       title: b.title,
@@ -1102,10 +1121,7 @@ export async function deleteUserAvatar(
 }
 
 /** Retrieve the current avatar's ImgBB delete URL (used before overwriting). */
-export async function getAvatarDeleteUrl(
-  db: D1Database,
-  authorId: string,
-): Promise<string | null> {
+export async function getAvatarDeleteUrl(db: D1Database, authorId: string): Promise<string | null> {
   const row = await db
     .prepare('SELECT avatar_delete_url FROM user_profiles WHERE author_id = ?')
     .bind(authorId)

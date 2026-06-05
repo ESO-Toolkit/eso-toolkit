@@ -52,6 +52,9 @@ async function getCachedClientToken(env: Env): Promise<string> {
 // ─── Response caching ────────────────────────────────────────────────────────
 
 // Event data queries are immutable once a report is uploaded; safe to cache.
+// Profile log lists are mutable (a user can upload new logs) but tolerate the
+// short CACHE_TTL_SECONDS staleness in exchange for far less upstream pressure
+// on popular profiles.
 const CACHEABLE_OPERATIONS = new Set([
   'getBuffEvents',
   'getDebuffEvents',
@@ -64,6 +67,7 @@ const CACHEABLE_OPERATIONS = new Set([
   'getPlayersForReport',
   'getReportByCode',
   'getReportMasterData',
+  'getProfileUploadedReports',
 ]);
 
 const CACHE_TTL_SECONDS = 600; // 10 minutes
@@ -101,6 +105,7 @@ const ALLOWED_OPERATIONS = new Set([
   'getReportDamageEvents',
   'getReportDeathEvents',
   'getReportHealingEvents',
+  'getProfileUploadedReports',
 ]);
 
 const MAX_BODY_BYTES = 100_000; // 100 KB

@@ -227,4 +227,15 @@ export interface UserProfileResponse {
   roster_count: number;
   builds: BuildSummary[];
   rosters: RosterSummary[];
+  /**
+   * The user's ESO Logs numeric user ID (as a string), used to fetch the
+   * reports they have uploaded. Equal to `author_id`, which the auth layer
+   * derives from the ESO Logs `currentUser.id`. Null if it cannot be
+   * resolved (e.g. a profile with no content and no profile row).
+   */
+  eso_logs_user_id: string | null;
+  /** ESO Logs NA-server account display name, if the user linked one. */
+  na_display_name: string | null;
+  /** ESO Logs EU-server account display name, if the user linked one. */
+  eu_display_name: string | null;
 }
