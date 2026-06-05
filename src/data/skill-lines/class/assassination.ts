@@ -204,7 +204,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_017',
       description:
-        'Increases your Critical Damage by 10%. Dealing Critical Damage grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
+        'Increases your Critical Damage by 10%. \n\nDealing Critical Damage grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
       isPassive: true,
     },
     {

@@ -197,7 +197,7 @@ export const ardentFlame: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_011',
       description:
-        'To you, flame is fuel. When you apply Burning to an enemy, you restore 225 Magicka and Stamina. This effect can occur once every 1 second.',
+        'To you, flame is fuel. \n\nWhen you apply Burning to an enemy, you restore 225 Magicka and Stamina. This effect can occur once every 1 second.',
       isPassive: true,
     },
     {

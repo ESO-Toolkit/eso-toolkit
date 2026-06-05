@@ -216,7 +216,7 @@ export const restorationStaff: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.ABSORB,
       description:
-        'WITH RESTORATION STAFF EQUIPPED Restores 600 Magicka whenever you block an attack. This effect can occur once every .25 seconds.',
+        'Restores 600 Magicka whenever you block an attack. This effect can occur once every .25 seconds.',
     },
     {
       id: AbilityId.RESTORATION_MASTER,

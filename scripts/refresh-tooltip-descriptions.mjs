@@ -110,8 +110,11 @@ function bestByIds(ids) {
 //   1 head (everything up to and including `description:`)
 //   2 idTok   3 quote-char-of-name  4 nameBody
 //   5 alternateIds raw (optional)   6 full description literal (with its quotes)
+// The id→name gap can be large when `alternateIds` is a long multiline array (e.g.
+// Devour has ~130 ids). Cap is generous; the lazy quantifier still binds to the nearest
+// `name:`/`description:`, so it won't bleed across skill objects.
 const SKILL_RE =
-  /(\bid:\s*([\w.]+)\s*,[\s\S]{0,200}?\bname:\s*(['"])((?:[^\\]|\\.)*?)\3[\s\S]{0,240}?\bdescription:\s*)((['"])(?:[^\\]|\\.)*?\6)/g;
+  /(\bid:\s*([\w.]+)\s*,[\s\S]{0,2000}?\bname:\s*(['"])((?:[^\\]|\\.)*?)\3[\s\S]{0,400}?\bdescription:\s*)((['"])(?:[^\\]|\\.)*?\6)/g;
 
 // Pull alternateIds out of the matched skill chunk (between name and description).
 const ALT_RE = /\balternateIds:\s*\[([0-9,\s]*)\]/;

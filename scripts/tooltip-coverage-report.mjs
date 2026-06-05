@@ -66,7 +66,8 @@ const committed = []; // { id, altIds, name, file }
 for (const f of skillFiles) {
   const txt = fs.readFileSync(f, 'utf8');
   // Match `id: <token>,` ... `name: '...'`, capturing the chunk between (for alternateIds).
-  const re = /\bid:\s*([A-Za-z0-9_.]+)\s*,([\s\S]{0,260}?)\bname:\s*['"]([^'"]+)['"]/g;
+  // Cap is generous to span long multiline `alternateIds` arrays (e.g. Devour ~130 ids).
+  const re = /\bid:\s*([A-Za-z0-9_.]+)\s*,([\s\S]{0,2000}?)\bname:\s*['"]([^'"]+)['"]/g;
   let m;
   while ((m = re.exec(txt))) {
     const id = resolveId(m[1]);

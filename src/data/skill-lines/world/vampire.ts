@@ -219,7 +219,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 1,
       description:
-        'Allows you to feed on an unsuspecting target, killing them and increasing your Vampire Stage. Higher Stages make you a stronger Vampire at the cost of your humanity. Stages decrease over long periods of time. Stage 1/2/3/4 Health Recovery: -10%/-30%/-60%/-100% Flame Damage Taken: +5%/+8%/+13%/+20% Regular Ability Costs: +3%/+5%/+8%/+12% Vampire Ability Costs: -6%/-10%/-16%/-24%',
+        'Allows you to feed on an unsuspecting target, killing them and increasing your Vampire Stage. Higher Stages make you a stronger Vampire at the cost of your humanity. Stages decrease over long periods of time. \n\nStage 1/2/3/4\n\nHealth Recovery: -10%/-30%/-60%/-100%\nFlame Damage Taken: +5%/+8%/+13%/+20%\nRegular Ability Costs: +3%/+5%/+8%/+12%\nVampire Ability Costs: -6%/-10%/-16%/-24%',
     },
     {
       id: AbilityId.DARK_STALKER,
@@ -276,7 +276,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'While you are at Vampire Stage 4 Reduces the cost of Sprint by 50%. If you continuously Sprint for 3 seconds you automatically become invisible.',
+        'Reduces the cost of Sprint by 50%.\n\nIf you continuously Sprint for 3 seconds you automatically become invisible.',
     },
   ],
 };

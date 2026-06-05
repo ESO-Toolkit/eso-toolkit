@@ -185,7 +185,7 @@ export const psijicOrder: SkillLineData = {
       ],
       name: 'Concentrated Barrier',
       description:
-        'While you have a Psijic Order ability slotted and are Bracing, you gain a damage shield that absorbs 5000 damage. This damage shield recharges back to full strength after you spend 10 seconds not Bracing.',
+        'While you have a Psijic Order ability slotted and are Bracing, you gain a damage shield that absorbs 5000 damage. \n\nThis damage shield recharges back to full strength after you spend 10 seconds not Bracing.',
       type: 'passive',
       isPassive: true,
       maxRank: 1,
