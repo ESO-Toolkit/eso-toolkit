@@ -97,6 +97,25 @@ describe('ProfileLogsPanel', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it('navigates in-app when the row itself is activated via keyboard', () => {
+    renderPanel({ reports: [makeReport('ABC123')], total: 1 });
+
+    const row = screen.getByRole('link', { name: /open log: my abc123 run/i });
+    fireEvent.keyDown(row, { key: 'Enter' });
+    expect(mockNavigate).toHaveBeenCalledWith('/report/ABC123', { vtType: 'forward' });
+  });
+
+  it('does not hijack the external link when it is activated via keyboard', () => {
+    renderPanel({ reports: [makeReport('ABC123')], total: 1 });
+
+    // Enter/Space on the nested external anchor must NOT bubble into the row's
+    // in-app navigation handler.
+    const external = screen.getByRole('link', { name: /open on eso logs/i });
+    fireEvent.keyDown(external, { key: 'Enter' });
+    fireEvent.keyDown(external, { key: ' ' });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it('shows a "Show more" button when more pages exist and calls loadMore', () => {
     const loadMore = jest.fn();
     renderPanel({ reports: [makeReport('ABC123')], total: 20, hasMore: true, loadMore });

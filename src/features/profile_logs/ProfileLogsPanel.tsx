@@ -117,6 +117,10 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
       aria-label={`Open log: ${title}`}
       onClick={openInApp}
       onKeyDown={(e) => {
+        // Only act on keyboard activation of the row itself. Without this guard,
+        // pressing Enter/Space while focused on a nested interactive element
+        // (the "Open on ESO Logs" anchor) bubbles here and hijacks its action.
+        if (e.target !== e.currentTarget) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           openInApp();
