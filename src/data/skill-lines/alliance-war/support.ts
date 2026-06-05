@@ -13,7 +13,7 @@ export const support: SkillLineData = {
       id: AbilityId.BARRIER,
       name: 'Barrier',
       description:
-        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11250 damage for 30 seconds.',
+        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11621 damage for 30 seconds.',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,
@@ -22,7 +22,7 @@ export const support: SkillLineData = {
       id: 40239, // Morph of Barrier
       name: 'Replenishing Barrier',
       description:
-        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage. \n\nEach time a ward dissolves, you restore 1200 Magicka.',
+        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage. \n\nEach time a ward dissolves, you restore 1500 Magicka.',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,
@@ -31,7 +31,7 @@ export const support: SkillLineData = {
       id: 40237, // Morph of Barrier
       name: 'Reviving Barrier',
       description:
-        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage for 30 seconds.\n\nThe wards also heal you and your group members for 5205 Health over 15 seconds.',
+        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage for 30 seconds.\n\nThe wards also heal you and your group members for 5370 Health over 15 seconds.',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,
@@ -59,7 +59,7 @@ export const support: SkillLineData = {
       id: 40226, // Morph of Siege Shield
       name: 'Propelling Shield',
       description:
-        'Create a protective sphere over your location that reduces damage taken from siege weapons by 50% for you and nearby allies.\n\nAlso increases the range of abilities with a range greater than 28 meters by 4 meters. Does not affect Leap, Move Position, and Pull abilities.',
+        'Create a protective sphere over your location that reduces damage taken from siege weapons by 50% for you and nearby allies.\n\nAlso increases the range of abilities with a range greater than 28 meters by 7 meters. Does not affect Leap, Move Position, and Pull abilities.',
       isUltimate: false,
       isPassive: false,
       maxRank: 4,
@@ -86,7 +86,7 @@ export const support: SkillLineData = {
       id: 40234, // Morph of Purge
       name: 'Cleanse',
       description:
-        'Cleanse yourself and your group, removing 3 negative effects immediately. \n\nFor every negative effect removed, the target is healed for 2% of their Max Health.',
+        'Cleanse yourself and your group, removing 3 negative effects immediately. \n\nFor every negative effect removed, the target is healed for 5% of their Max Health.',
       isUltimate: false,
       isPassive: false,
       maxRank: 4,
@@ -140,7 +140,7 @@ export const support: SkillLineData = {
       id: 61524, // Morph of Revealing Flare
       name: 'Blinding Flare',
       description:
-        'Launch a blinding flare, revealing stealthed and invisible enemies in the target area for 5 seconds. Exposed enemies are stunned for 2 seconds, and cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Protection, reducing your damage taken by 10%.',
+        'Launch a blinding flare, revealing stealthed and invisible enemies in the target area for 5 seconds. Exposed enemies are stunned for 4 seconds, and cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Protection, reducing your damage taken by 10%.',
       isUltimate: false,
       isPassive: false,
       maxRank: 4,
@@ -149,7 +149,7 @@ export const support: SkillLineData = {
       id: 61519, // Morph of Revealing Flare
       name: 'Lingering Flare',
       description:
-        'Launch a blinding flare, revealing stealthed and invisible enemies in the target area for 7 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Protection, reducing your damage taken by 10%.',
+        'Launch a blinding flare, revealing stealthed and invisible enemies in the target area for 10 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Protection, reducing your damage taken by 10%.',
       isUltimate: false,
       isPassive: false,
       maxRank: 4,

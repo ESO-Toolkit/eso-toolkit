@@ -19,7 +19,7 @@ export const graveLord: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_006',
       description:
-        'Unleash a frostbitten Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 2998 Frost Damage with each smash.\n\nDealing damage applies Major Vulnerability to any enemy hit for 12 seconds, increasing their damage taken by 10%.',
+        'Unleash a frostbitten Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 3096 Frost Damage with each smash.\n\nDealing damage applies Major Vulnerability to any enemy hit for 12 seconds, increasing their damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_FROZEN_COLOSSUS,
     },
@@ -29,7 +29,7 @@ export const graveLord: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_006_a',
       description:
-        'Unleash a frostbitten Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 3098 Frost Damage with each smash. The final smash stuns all enemies hit for 3 seconds.\n\nDealing damage applies Major Vulnerability to any enemy hit for 17 seconds, increasing their damage taken by 10%.',
+        'Unleash a frostbitten Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 3098 Frost Damage with each smash. The final smash stuns all enemies hit for 4 seconds.\n\nDealing damage applies Major Vulnerability to any enemy hit for 17 seconds, increasing their damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_FROZEN_COLOSSUS,
     },
@@ -39,7 +39,7 @@ export const graveLord: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_006_b',
       description:
-        'Unleash a pestilent Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 3098, 3253, and 3416 Disease Damage with the first, second, and third smash.\n\nDealing damage applies the Diseased status effect and Major Vulnerability to any enemy hit for 12 seconds, increasing their damage taken by 10%.',
+        'Unleash a pestilent Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 3200, 3360, and 3528 Disease Damage with the first, second, and third smash.\n\nDealing damage applies the Diseased status effect and Major Vulnerability to any enemy hit for 12 seconds, increasing their damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_FROZEN_COLOSSUS,
     },
@@ -49,7 +49,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_002',
       description:
-        'Summon a skeleton from the ground after 2.5 seconds. The skeleton leaps to you, sacrificing the fallen soul within and enhancing your necromantic energies for 7 seconds, increasing your damage done with Necromancer abilities and damage over time effects by 15%.\n\nCreates a corpse on death if you are in combat.',
+        'Summon a skeleton from the ground after 2.5 seconds. The skeleton leaps to you, sacrificing the fallen soul within and enhancing your necromantic energies for 10 seconds, increasing your damage done with Necromancer abilities and damage over time effects by 15%.\n\nCreates a corpse on death if you are in combat.',
       baseSkillId: ClassSkillId.NECROMANCER_SACRIFICIAL_BONES,
     },
     {
@@ -58,7 +58,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_002_a',
       description:
-        'Summon a decaying skeleton from the ground after 2.5 seconds. The skeleton runs after the target and explodes when it gets close to them, dealing 3485 Disease Damage to all enemies nearby and applying the Diseased status effect and Major Defile to them for 4 seconds, reducing their healing received and damage shield strength by 12%.\n\nCreates a corpse on death.',
+        'Summon a decaying skeleton from the ground after 2.5 seconds. The skeleton runs after the target and explodes when it gets close to them, dealing 3600 Disease Damage to all enemies nearby and applying the Diseased status effect and Major Defile to them for 4 seconds, reducing their healing received and damage shield strength by 12%.\n\nCreates a corpse on death.',
       baseSkillId: ClassSkillId.NECROMANCER_SACRIFICIAL_BONES,
     },
     {
@@ -76,7 +76,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_001',
       description:
-        'Lob an explosive skull at an enemy, dealing 2024 Flame Damage.\n\nEvery third cast of this ability deals 50% increased damage and creates a corpse near the enemy.',
+        'Lob an explosive skull at an enemy, dealing 2090 Flame Damage.\n\nEvery third cast of this ability deals 50% increased damage and creates a corpse near the enemy.',
       baseSkillId: ClassSkillId.NECROMANCER_FLAME_SKULL,
     },
     {
@@ -85,7 +85,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_001_b',
       description:
-        'Lob an explosive skull at an enemy, dealing 2091 Flame Damage.\n\nEvery third cast of this ability deals 50% increased damage, creates a corpse near the initial enemy, and will bounce up to 2 times to other nearby enemies.',
+        'Lob an explosive skull at an enemy, dealing 2160 Flame Damage.\n\nEvery third cast of this ability deals 50% increased damage, creates a corpse near the initial enemy, and will bounce up to 2 times to other nearby enemies.',
       baseSkillId: ClassSkillId.NECROMANCER_FLAME_SKULL,
     },
     {
@@ -94,7 +94,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_001_a',
       description:
-        'Lob an explosive skull at an enemy, dealing 2091 Poison Damage.\n\nEvery third cast of this ability deals 50% increased damage and creates a corpse near the enemy, up to once every 3 seconds.\n\nWhile slotted, casting any Necromancer ability while you are in combat will count towards the third cast.',
+        'Lob an explosive skull at an enemy, dealing 2160 Poison Damage.\n\nEvery third cast of this ability deals 50% increased damage and creates a corpse near the enemy, up to once every 3 seconds.\n\nWhile slotted, casting any Necromancer ability while you are in combat will count towards the third cast.',
       baseSkillId: ClassSkillId.NECROMANCER_FLAME_SKULL,
     },
     {
@@ -103,7 +103,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_004',
       description:
-        'Desecrate the ground at the target location, dealing 2992 Frost Damage over 10 seconds to enemies inside and applying Minor Vulnerability, increasing their damage taken by 5%.\n\nConsumes a corpse on cast to deal 30% more damage.\n\nAn ally in the area can activate the Grave Robber synergy, dealing 2249 Frost Damage to nearby enemies and healing for the damage done.',
+        'Desecrate the ground at the target location, dealing 3080 Frost Damage over 10 seconds to enemies inside and applying Minor Vulnerability, increasing their damage taken by 5%.\n\nConsumes a corpse on cast to deal 30% more damage.\n\nAn ally in the area can activate the Grave Robber synergy, dealing 2249 Frost Damage to nearby enemies and healing for the damage done.',
       baseSkillId: ClassSkillId.NECROMANCER_BONEYARD,
     },
     {
@@ -112,7 +112,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_004_b',
       description:
-        'Desecrate the ground at the target location, dealing 3091 Frost Damage over 10 seconds to enemies inside and applying Minor Vulnerability, increasing their damage taken by 5%.\n\nConsumes a corpse on cast to deal 30% more damage.\n\nYou or an ally in the area can activate the Grave Robber synergy, dealing 2249 Frost Damage to enemies and healing for the damage done.',
+        'Desecrate the ground at the target location, dealing 3190 Frost Damage over 10 seconds to enemies inside and applying Minor Vulnerability, increasing their damage taken by 5%.\n\nConsumes a corpse on cast to deal 30% more damage.\n\nYou or an ally in the area can activate the Grave Robber synergy, dealing 2249 Frost Damage to enemies and healing for the damage done.',
       baseSkillId: ClassSkillId.NECROMANCER_BONEYARD,
     },
     {
@@ -121,7 +121,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_004_a',
       description:
-        'Desecrate the ground at the target location, dealing 3091 Frost Damage over 10 seconds to enemies inside and applying Major Breach and Minor Vulnerability, reducing Physical and Spell Resistance by 5948 and increasing damage taken by 5% for 4.1 seconds each tick.\n\nConsumes a corpse on cast to deal 30% more damage.\n\nAn ally in the area can activate the Grave Robber synergy, dealing 2249 Frost Damage to nearby enemies and healing for the damage done.',
+        'Desecrate the ground at the target location, dealing 3190 Frost Damage over 10 seconds to enemies inside and applying Major Breach and Minor Vulnerability, reducing Physical and Spell Resistance by 5948 and increasing damage taken by 5% for 4.1 seconds each tick.\n\nConsumes a corpse on cast to deal 30% more damage.\n\nAn ally in the area can activate the Grave Robber synergy, dealing 2249 Frost Damage to nearby enemies and healing for the damage done.',
       baseSkillId: ClassSkillId.NECROMANCER_BONEYARD,
     },
     {
@@ -130,7 +130,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_003',
       description:
-        'Unearth a skeletal mage from the dirt to fight by your side for 20 seconds, while granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%. The mage attacks the closest enemy every 2 seconds, dealing 448 Shock Damage.\n\nCreates a corpse on death if you are in combat.',
+        'Unearth a skeletal mage from the dirt to fight by your side for 20 seconds, while granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%. The mage attacks the closest enemy every 2 seconds, dealing 462 Shock Damage.\n\nCreates a corpse on death if you are in combat.',
       baseSkillId: ClassSkillId.NECROMANCER_SKELETAL_MAGE,
     },
     {
@@ -139,7 +139,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_003_b',
       description:
-        'Unearth a skeletal mage from the dirt to fight by your side for 20 seconds, while granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%. The mage attacks the closest enemy every 2 seconds, dealing 463 Shock Damage to them and all other enemies nearby.\n\nCreates a corpse on death if you are in combat.',
+        'Unearth a skeletal mage from the dirt to fight by your side for 20 seconds, while granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%. The mage attacks the closest enemy every 2 seconds, dealing 478 Shock Damage to them and all other enemies nearby.\n\nCreates a corpse on death if you are in combat.',
       baseSkillId: ClassSkillId.NECROMANCER_SKELETAL_MAGE,
     },
     {
@@ -148,7 +148,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_003_a',
       description:
-        'Unearth a skeletal archer from the dirt to fight by your side for 20 seconds, while granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%. The archer attacks the closest enemy every 2 seconds, dealing 463 Physical Damage.\n\nEach time the archer deals damage, it deals 12% more damage than the previous attack.\n\nCreates a corpse on death if you are in combat.',
+        'Unearth a skeletal archer from the dirt to fight by your side for 20 seconds, while granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%. The archer attacks the closest enemy every 2 seconds, dealing 463 Physical Damage.\n\nEach time the archer deals damage, it deals 15% more damage than the previous attack.\n\nCreates a corpse on death if you are in combat.',
       baseSkillId: ClassSkillId.NECROMANCER_SKELETAL_MAGE,
     },
     {
@@ -157,7 +157,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_005',
       description:
-        'Violently drain the last spark of life from a corpse, dealing 5970 Shock Damage over 20 seconds to all enemies around the corpse and between you and the corpse. You also gain Major Savagery and Prophecy for 20 seconds, increasing your Weapon and Spell Critical rating by 2629.\n\nWhile slotted, your damage done is increased by 3%.',
+        'Violently drain the last spark of life from a corpse, dealing 6150 Shock Damage over 20 seconds to all enemies around the corpse and between you and the corpse. You also gain Major Savagery and Prophecy for 20 seconds, increasing your Weapon and Spell Critical rating by 2629.\n\nWhile slotted, your damage done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_SHOCKING_SIPHON,
     },
     {
@@ -166,7 +166,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_005_b',
       description:
-        'Violently drain the last spark of life from a corpse, dealing 6180 Disease Damage over 20 seconds to all enemies around the corpse and between you and the corpse. You also gain Major Savagery and Prophecy for 20 seconds, increasing your Weapon and Spell Critical rating by 2629.\n\nWhen the siphon ends the corpse explodes, dealing an additional 1742 Disease Damage to all enemies nearby.\n\nWhile slotted, your damage done is increased by 3%.',
+        'Violently drain the last spark of life from a corpse, dealing 6180 Disease Damage over 20 seconds to all enemies around the corpse and between you and the corpse. You also gain Major Savagery and Prophecy for 20 seconds, increasing your Weapon and Spell Critical rating by 2629.\n\nWhen the siphon ends the corpse explodes, dealing an additional 1799 Disease Damage to all enemies nearby.\n\nWhile slotted, your damage done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_SHOCKING_SIPHON,
     },
     {
@@ -175,7 +175,7 @@ export const graveLord: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_005_a',
       description:
-        'Violently drain the last spark of life from a corpse, dealing 6180 Shock Damage over 20 seconds to all enemies around the corpse and between you and the corpse. You also gain Major Savagery and Prophecy for 20 seconds, increasing your Weapon and Spell Critical rating by 2629.\n\nWhile siphoning the corpse you gain 120 Health, Magicka, and Stamina Recovery.\n\nWhile slotted, your damage done is increased by 3%.',
+        'Violently drain the last spark of life from a corpse, dealing 6180 Shock Damage over 20 seconds to all enemies around the corpse and between you and the corpse. You also gain Major Savagery and Prophecy for 20 seconds, increasing your Weapon and Spell Critical rating by 2629.\n\nWhile siphoning the corpse you gain 150 Health, Magicka, and Stamina Recovery.\n\nWhile slotted, your damage done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_SHOCKING_SIPHON,
     },
     {

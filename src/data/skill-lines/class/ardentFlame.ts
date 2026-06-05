@@ -19,7 +19,7 @@ export const ardentFlame: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_006',
       description:
-        'Call down a battle standard for 15 seconds, rallying you and allies inside the area, increasing Weapon and Spell Damage by 270 and reducing damage taken by 7%.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
+        'Call down a battle standard for 15 seconds, rallying you and allies inside the area, increasing Weapon and Spell Damage by 300 and reducing damage taken by 10%.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -29,7 +29,7 @@ export const ardentFlame: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_006_a',
       description:
-        'Call down a battle standard, dealing 870 Flame Damage every 1 second for 25 seconds to enemies and applying Major Defile to them, reducing their healing received and damage shield strength by 12%. \n\nActivating this ability again allows you to move the standard to your location.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
+        'Call down a battle standard, dealing 898 Flame Damage every 1 second for 25 seconds to enemies and applying Major Defile to them, reducing their healing received and damage shield strength by 12%. \n\nActivating this ability again allows you to move the standard to your location.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -49,7 +49,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_003',
       description:
-        'Slash your foe with a fiery claw, dealing 1124 Flame Damage and an additional 3365 Flame Damage over 10 seconds.\n\nThe initial hit always applies the Burning status effect.',
+        'Slash your foe with a fiery claw, dealing 1161 Flame Damage and an additional 3475 Flame Damage over 10 seconds.\n\nThe initial hit always applies the Burning status effect.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
     },
     {
@@ -67,7 +67,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_003_b',
       description:
-        'Slash your foe with a fiery claw, dealing 1161 Flame Damage and an additional 3480 Flame Damage over 10 seconds.\n\nYou heal for 3305 Health from the initial hit and 495 Health each subsequent tick, scaling off your Max Health.\n\nThe initial hit always applies the Burning status effect.',
+        'Slash your foe with a fiery claw, dealing 1161 Flame Damage and an additional 3480 Flame Damage over 10 seconds.\n\nYou heal for 3414 Health from the initial hit and 511 Health each subsequent tick, scaling off your Max Health.\n\nThe initial hit always applies the Burning status effect.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_SEARING_STRIKE,
     },
     {
@@ -76,7 +76,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_012',
       description:
-        'Let the fire within draw heat to your core, restoring 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 1939 Flame Damage to nearby enemies.',
+        'Let the fire within draw heat to your core, restoring 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2002 Flame Damage to nearby enemies.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
     },
     {
@@ -85,7 +85,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_012_b',
       description:
-        'Let the fire within draw heat to your heart, restoring 12% of your missing Health and 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2004 Flame Damage to nearby enemies.',
+        'Let the fire within draw heat to your heart, restoring 15% of your missing Health and 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2004 Flame Damage to nearby enemies.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
     },
     {
@@ -94,7 +94,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_012_a',
       description:
-        'Let the fire within draw heat to your soul, restoring 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nMuch of this heat is drawn from enemies around you. Those that are casting are interrupted, set Off Balance, and stunned for 2 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2672 Flame Damage to nearby enemies.',
+        'Let the fire within draw heat to your soul, restoring 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nMuch of this heat is drawn from enemies around you. Those that are casting are interrupted, set Off Balance, and stunned for 2 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2760 Flame Damage to nearby enemies.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
     },
     {
@@ -103,7 +103,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_016',
       description:
-        'Throw out a kindled flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 421 Health every 1 second.\n\nHealed targets gain Minor Fortitude and Minor Heroism while inside, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
+        'Throw out a kindled flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 434 Health every 1 second.\n\nHealed targets gain Minor Fortitude and Minor Heroism while inside, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -112,7 +112,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_016a',
       description:
-        'Throw out a purifying flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 435 Health every 1 second. This healing increases by 50% if you are in the area.\n\nHealed targets gain Minor Fortitude and Minor Heroism for 15 seconds, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
+        'Throw out a purifying flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 449 Health every 1 second. This healing increases by 50% if you are in the area.\n\nHealed targets gain Minor Fortitude and Minor Heroism for 15 seconds, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -130,7 +130,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_001',
       description:
-        'Lash an enemy with flame, dealing 2249 Flame Damage.\n\nHitting an Off Balance enemy grants 5 stacks of Volcanic Whip for 20 seconds, up to once every 20 seconds.\n\nVolcanic Whip replaces this ability and consumes a stack to instead deal 4200 Flame Damage to your target and all nearby enemies.',
+        'Lash an enemy with flame, dealing 2323 Flame Damage.\n\nHitting an Off Balance enemy grants 5 stacks of Volcanic Whip for 20 seconds, up to once every 20 seconds.\n\nVolcanic Whip replaces this ability and consumes a stack to instead deal 4338 Flame Damage to your target and all nearby enemies.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {
@@ -139,7 +139,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_001_b',
       description:
-        'Lash an enemy with flame, dealing 2323 Flame Damage.\n\nActivating a different Dragonknight ability while in combat grants a stack of Seething Fury up to 3 times, increasing the damage of your next Molten Whip by 33% and your damage done by 5%, or 2% against players, for 10 seconds. The damage done only activates if you are a Dragonknight.',
+        'Lash an enemy with flame, dealing 2399 Flame Damage.\n\nActivating a different Dragonknight ability while in combat grants a stack of Seething Fury up to 3 times, increasing the damage of your next Molten Whip by 33% and your damage done by 5%, or 2% against players, for 10 seconds. The damage done only activates if you are a Dragonknight.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {
@@ -148,7 +148,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_001_a',
       description:
-        'Lash an enemy with flame, dealing 2249 Flame Damage and healing for 774 Health.\n\nHitting an Off Balance enemy grants 5 stacks of Power Lash for 20 seconds, up to once every 20 seconds.\n\nActivating again consumes a stack to deal 4337 Flame Damage to your target and all nearby enemies and heals for 3098 Health. Consuming all stacks as a Dragonknight increases your damage done by 7%, double against monsters, for 45 seconds.',
+        'Lash an enemy with flame, dealing 2323 Flame Damage and healing for 799 Health.\n\nHitting an Off Balance enemy grants 5 stacks of Power Lash for 20 seconds, up to once every 20 seconds.\n\nActivating again consumes a stack to deal 4337 Flame Damage to your target and all nearby enemies and heals for 3200 Health. Consuming all stacks as a Dragonknight increases your damage done by 7%, double against monsters, for 45 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {
@@ -157,7 +157,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_002',
       description:
-        'Activate an aura of flames which launches a wave of flame around you every 5 seconds, dealing 1687 Flame Damage to enemies inside.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
+        'Activate an aura of flames which launches a wave of flame around you every 5 seconds, dealing 1742 Flame Damage to enemies inside.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
     },
     {
@@ -166,7 +166,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_002_a',
       description:
-        'Activate an aura of flames which launches a wave of flames every 5 seconds, dealing 1916 Flame Damage to enemies inside.\n\nEach hit has a 15% chance of applying Burning.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
+        'Activate an aura of flames which launches a wave of flames every 5 seconds, dealing 1979 Flame Damage to enemies inside.\n\nEach hit has a 15% chance of applying Burning.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
     },
     {
@@ -175,7 +175,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_002_b',
       description:
-        'Activate an aura of embers which cauterizes the wounds of you or up to 6 nearby allies every 3 seconds, healing for 1161 Health.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
+        'Activate an aura of embers which cauterizes the wounds of you or up to 6 nearby allies every 3 seconds, healing for 1199 Health.\n\nWhile slotted on either bar, you gain Major Prophecy and Savagery, increasing your Spell and Weapon Critical rating by 2629.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INFERNO,
     },
     {

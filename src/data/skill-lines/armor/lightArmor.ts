@@ -15,7 +15,7 @@ export const lightArmor: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ANNULMENT,
       description:
-        'Convert a portion of your Magicka into a protective ward, gaining a damage shield that absorbs 3600 damage for 6 seconds. Damage shield strength capped at 50% of your Max Health.',
+        'Convert a portion of your Magicka into a protective ward, gaining a damage shield that absorbs 3718 damage for 6 seconds. Damage shield strength capped at 50% of your Max Health.',
     },
     {
       id: 39186, // Dampen Magic (morph)
@@ -23,7 +23,7 @@ export const lightArmor: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ANNULMENT,
       description:
-        'Convert a portion of your Magicka into a protective ward, gaining a damage shield that absorbs 3718 damage for 6 seconds. Damage shield strength capped at 60% of your Max Health.\n\nEach piece of Light Armor worn increases the amount of damage absorbed by 3%.',
+        'Convert a portion of your Magicka into a protective ward, gaining a damage shield that absorbs 3718 damage for 6 seconds. Damage shield strength capped at 60% of your Max Health.\n\nEach piece of Light Armor worn increases the amount of damage absorbed by 6%.',
     },
     {
       id: 39182, // Harness Magicka (morph)
@@ -31,7 +31,7 @@ export const lightArmor: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ANNULMENT,
       description:
-        'Convert a portion of your Magicka into a protective ward, gaining a damage shield that absorbs 3718 damage for 6 seconds. Damage shield strength capped at 50% of your Max Health.\n\nWhile active, whenever the shield absorbs damage, you restore 229 Magicka. Each piece of Light Armor worn increases the Magicka restored by 30%. This effect can occur up to 3 times.',
+        'Convert a portion of your Magicka into a protective ward, gaining a damage shield that absorbs 3718 damage for 6 seconds. Damage shield strength capped at 50% of your Max Health.\n\nWhile active, whenever the shield absorbs damage, you restore 229 Magicka. Each piece of Light Armor worn increases the Magicka restored by 33%. This effect can occur up to 3 times.',
     },
     // Passive Abilities
     {

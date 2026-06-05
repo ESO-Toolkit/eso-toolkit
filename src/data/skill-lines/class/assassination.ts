@@ -19,7 +19,7 @@ export const assassination: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_007',
       description:
-        'Ravage an enemy with a swift strike, dealing 3598 Magic Damage and causing them to take 20% more damage from your attacks for 8 seconds.',
+        'Ravage an enemy with a swift strike, dealing 3716 Magic Damage and causing them to take 20% more damage from your attacks for 8 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_DEATH_STROKE,
     },
@@ -29,7 +29,7 @@ export const assassination: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_007_a',
       description:
-        'Ravage an enemy with a swift strike, dealing 3718 Disease Damage and causing them to take 20% more damage from your attacks for 8 seconds.\n\nIf cast with 120 or more Ultimate, you instead deal 4089 Disease Damage, stun the enemy for 3 seconds, and increase the duration of the damage taken effect to 12 seconds.',
+        'Ravage an enemy with a swift strike, dealing 3840 Disease Damage and causing them to take 20% more damage from your attacks for 8 seconds.\n\nIf cast with 120 or more Ultimate, you instead deal 4223 Disease Damage, stun the enemy for 3 seconds, and increase the duration of the damage taken effect to 12 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_DEATH_STROKE,
       alternateIds: [113105],
@@ -40,7 +40,7 @@ export const assassination: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_007_b',
       description:
-        'Ravage an enemy with a spinning attack, dealing 3718 Magic Damage and increasing your damage against them by 20% for 8 seconds.\n\nAlso afflicts the enemy with Major Defile, reducing their healing received and damage shield strength by 12%.\n\nWhile slotted on either bar, any time you kill an enemy you gain 7 Ultimate.',
+        'Ravage an enemy with a spinning attack, dealing 3718 Magic Damage and increasing your damage against them by 20% for 8 seconds.\n\nAlso afflicts the enemy with Major Defile, reducing their healing received and damage shield strength by 12%.\n\nWhile slotted on either bar, any time you kill an enemy you gain 10 Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_DEATH_STROKE,
     },
@@ -78,7 +78,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_008',
       description:
-        'Flash through the shadows and ambush an enemy, dealing 1551 Magic Damage and afflicting them with Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.',
+        'Flash through the shadows and ambush an enemy, dealing 1602 Magic Damage and afflicting them with Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_TELEPORT_STRIKE,
     },
     {
@@ -87,7 +87,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_008_b',
       description:
-        'Flash through the shadows and ambush an enemy, dealing 1603 Physical Damage and afflicting them with Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.\n\nAlso grants you Empower and Minor Berserk for 10 seconds, increasing the damage of your Heavy Attacks against monsters by 70% and your damage done by 5%.',
+        'Flash through the shadows and ambush an enemy, dealing 1655 Physical Damage and afflicting them with Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.\n\nAlso grants you Empower and Minor Berserk for 10 seconds, increasing the damage of your Heavy Attacks against monsters by 70% and your damage done by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_TELEPORT_STRIKE,
     },
     {
@@ -96,7 +96,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_008_a',
       description:
-        'Flash through the shadows and ambush an enemy while unleashing a fan of knives, dealing 1603 Magic Damage to them and enemies around you.\n\nAll enemies hit take an additional 1985 Magic Damage over 5 seconds and are afflicted with Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.',
+        'Flash through the shadows and ambush an enemy while unleashing a fan of knives, dealing 1603 Magic Damage to them and enemies around you.\n\nAll enemies hit take an additional 2050 Magic Damage over 5 seconds and are afflicted with Minor Vulnerability for 10 seconds, increasing their damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_TELEPORT_STRIKE,
     },
     {
@@ -132,7 +132,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_002',
       description:
-        'Slash an enemy, dealing 2249 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.',
+        'Slash an enemy, dealing 2323 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.',
       baseSkillId: ClassSkillId.NIGHTBLADE_VEILED_STRIKE,
     },
     {
@@ -141,7 +141,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_002_a',
       description:
-        'Slash an enemy, dealing 2323 Physical Damage and applying the Sundered status effect.\n\nIf you strike an enemy from their flank you set them Off Balance. This attack will also be guaranteed to be a Critical Strike, up to once every 3 seconds.',
+        'Slash an enemy, dealing 2399 Physical Damage and applying the Sundered status effect.\n\nIf you strike an enemy from their flank you set them Off Balance. This attack will also be guaranteed to be a Critical Strike, up to once every 3 seconds.',
       baseSkillId: ClassSkillId.NIGHTBLADE_VEILED_STRIKE,
     },
     {
@@ -150,7 +150,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_002_b',
       description:
-        'Slash an enemy, dealing 2556 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.\n\nWhen you leave Sneak or invisibility while in combat, increase your damage done with this ability by 10% for 12 seconds.\n\nWhile slotted on either bar, you gain Minor Expedition, increasing your Movement Speed by 15%.',
+        'Slash an enemy, dealing 2556 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.\n\nWhen you leave Sneak or invisibility while in combat, increase your damage done with this ability by 10% for 15 seconds.\n\nWhile slotted on either bar, you gain Minor Expedition, increasing your Movement Speed by 15%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_VEILED_STRIKE,
     },
     {
@@ -159,7 +159,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_005',
       description:
-        'When slotted on either bar, you gain Major Prophecy and Major Savagery, increasing your Spell and Weapon Critical rating by 2629.\n\nYour Light and Heavy Attacks now generate a stack of Grim Focus, up to 10 times. Fully-charged Heavy Attacks grant two stacks.\n\nWhen at 5 or more stacks, you can consume 5 to fire a spectral arrow to deal 4049 Magic Damage and heal for 33% of the damage dealt, if you are in melee range.',
+        'When slotted on either bar, you gain Major Prophecy and Major Savagery, increasing your Spell and Weapon Critical rating by 2629.\n\nYour Light and Heavy Attacks now generate a stack of Grim Focus, up to 10 times. Fully-charged Heavy Attacks grant two stacks.\n\nWhen at 5 or more stacks, you can consume 5 to fire a spectral arrow to deal 4182 Magic Damage and heal for 33% of the damage dealt, if you are in melee range.',
       baseSkillId: ClassSkillId.NIGHTBLADE_GRIM_FOCUS,
     },
     {
@@ -168,7 +168,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_005_b',
       description:
-        'When slotted on either bar, you gain Major Prophecy and Major Savagery, increasing your Spell and Weapon Critical rating by 2629.\n\nYour Light and Heavy Attacks now generate a stack of Merciless Resolve, up to 10 times. Fully-charged Heavy Attacks grant two stacks.\n\nWhen at 5 or more stacks, you can consume 5 to fire a spectral arrow to deal 4601 Magic Damage and heal for 50% of the damage dealt, if you are in melee range.',
+        'When slotted on either bar, you gain Major Prophecy and Major Savagery, increasing your Spell and Weapon Critical rating by 2629.\n\nYour Light and Heavy Attacks now generate a stack of Merciless Resolve, up to 10 times. Fully-charged Heavy Attacks grant two stacks.\n\nWhen at 5 or more stacks, you can consume 5 to fire a spectral arrow to deal 4752 Magic Damage and heal for 50% of the damage dealt, if you are in melee range.',
       baseSkillId: ClassSkillId.NIGHTBLADE_GRIM_FOCUS,
     },
     {

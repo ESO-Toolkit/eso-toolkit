@@ -19,7 +19,7 @@ export const boneTyrant: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_012',
       description:
-        'Become a horrific Bone Goliath, increasing your Max Health by 30000 for 17 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health.',
+        'Become a horrific Bone Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -29,7 +29,7 @@ export const boneTyrant: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_012_a',
       description:
-        'Become a destructive Pummeling Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health. \n\nYour Bash attacks can hit multiple targets in front of you and deal 1742 Physical Damage.',
+        'Become a destructive Pummeling Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health. \n\nYour Bash attacks can hit multiple targets in front of you and deal 1799 Physical Damage.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -39,7 +39,7 @@ export const boneTyrant: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_012_b',
       description:
-        'Become a horrific Ravenous Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. You deal 800 Magic Damage to nearby enemies every second and heal for that amount. These abilities scale off your Max Health.',
+        'Become a horrific Ravenous Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. You deal 826 Magic Damage to nearby enemies every second and heal for that amount. These abilities scale off your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -49,7 +49,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_008',
       description:
-        'Wrap yourself in hardened bone, granting you Major Resolve and Minor Resolve for 17 seconds, increasing your Physical Resistance and Spell Resistance by 5948 and 2974.\n\nIf cast during combat, you can cast a corpse consuming ability on yourself. This effect can occur once every 10 seconds.',
+        'Wrap yourself in hardened bone, granting you Major Resolve and Minor Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948 and 2974.\n\nIf cast during combat, you can cast a corpse consuming ability on yourself. This effect can occur once every 10 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_ARMOR,
     },
     {
@@ -76,7 +76,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_011',
       description:
-        'Sap the lingering life from fresh corpses, granting you 2 Ultimate and healing 639 Health every 1 second for 2 seconds per corpse consumed. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
+        'Sap the lingering life from fresh corpses, granting you 2 Ultimate and healing 660 Health every 1 second for 2 seconds per corpse consumed. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_BITTER_HARVEST,
     },
     {
@@ -85,7 +85,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_011_a',
       description:
-        'Sap the lingering life from fresh corpses, granting you 2 Ultimate and healing 661 Health every 1 second for 4 seconds per corpse consumed. While you have the heal effect, you gain Major Protection, reducing the damage you take by 10%. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
+        'Sap the lingering life from fresh corpses, granting you 2 Ultimate and healing 682 Health every 1 second for 4 seconds per corpse consumed. While you have the heal effect, you gain Major Protection, reducing the damage you take by 10%. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_BITTER_HARVEST,
     },
     {
@@ -94,7 +94,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_011_b',
       description:
-        'Sap the lingering life from fresh corpses, granting you 6 Ultimate and healing 661 Health every 1 second for 2 seconds per additional corpse. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
+        'Sap the lingering life from fresh corpses, granting you 6 Ultimate and healing 682 Health every 1 second for 2 seconds per additional corpse. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_BITTER_HARVEST,
     },
     {
@@ -112,7 +112,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_010_b',
       description:
-        'Summon an effigy of bone at your feet for 11 seconds that grants Minor Protection to you and your allies, reducing damage taken by 5%. Enemies in the area are afflicted with Major Cowardice.\n\nAfter 2 seconds, the totem begins fearing nearby enemies every 2 seconds, causing them to cower in place for 4 seconds.\n\nAllies can activate the Pure Agony synergy, dealing 2100 Magic Damage over 5 seconds to enemies.',
+        'Summon an effigy of bone at your feet for 13 seconds that grants Minor Protection to you and your allies, reducing damage taken by 5%. Enemies in the area are afflicted with Major Cowardice.\n\nAfter 2 seconds, the totem begins fearing nearby enemies every 2 seconds, causing them to cower in place for 4 seconds.\n\nAllies can activate the Pure Agony synergy, dealing 2100 Magic Damage over 5 seconds to enemies.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_TOTEM,
     },
     {
@@ -157,7 +157,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_009',
       description:
-        'Summon three patches of skeletal claws from the ground in front of you. Enemies in the first area are snared by 30% for 3.5 seconds, immobilized in the second area for 3 seconds, and stunned in the final area for 2 seconds.\n\nEach patch applies Minor Maim to enemies hit for 7 seconds, reducing their damage done by 5%.',
+        'Summon three patches of skeletal claws from the ground in front of you. Enemies in the first area are snared by 30% for 5 seconds, immobilized in the second area for 4 seconds, and stunned in the final area for 3 seconds.\n\nEach patch applies Minor Maim to enemies hit for 10 seconds, reducing their damage done by 5%.',
       baseSkillId: ClassSkillId.NECROMANCER_GRAVE_GRASP,
     },
     {
@@ -175,7 +175,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_009_b',
       description:
-        'Summon three patches of skeletal claws from the ground in front of you, each dealing 870 Frost Damage.\n\nThe first area applies the Chilled status effect, the second area deals an additional 1585 Frost Damage over 5 seconds, and the final area creates a corpse if at least one enemy was hit.',
+        'Summon three patches of skeletal claws from the ground in front of you, each dealing 898 Frost Damage.\n\nThe first area applies the Chilled status effect, the second area deals an additional 1635 Frost Damage over 5 seconds, and the final area creates a corpse if at least one enemy was hit.',
       baseSkillId: ClassSkillId.NECROMANCER_GRAVE_GRASP,
     },
     {

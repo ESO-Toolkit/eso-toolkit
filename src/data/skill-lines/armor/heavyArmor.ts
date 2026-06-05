@@ -25,7 +25,7 @@ export const heavyArmor: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.UNSTOPPABLE,
       description:
-        'Intensify your physical presence to gain Major Resolve, increasing your Physical and Spell Resistance by 5948 for 17 seconds.\n\nAlso grants you immunity to knockback and disabling effects for 6 seconds, but reduces your Movement Speed by 65% for the duration.',
+        'Intensify your physical presence to gain Major Resolve, increasing your Physical and Spell Resistance by 5948 for 20 seconds.\n\nAlso grants you immunity to knockback and disabling effects for 6 seconds, but reduces your Movement Speed by 65% for the duration.',
     },
     {
       id: 39197, // Immovable (morph)
@@ -33,7 +33,7 @@ export const heavyArmor: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.UNSTOPPABLE,
       description:
-        'Intensify your physical presence to gain Major Resolve, increasing your Physical and Spell Resistance by 5948 for 20 seconds. \n\nAlso grants you immunity to knockback and disabling effects for 6 seconds, but reduces your Movement Speed by 65% for the duration.\n\nEach piece of Heavy Armor worn increases the amount of damage you block and the potency of the snare by 5%.',
+        'Intensify your physical presence to gain Major Resolve, increasing your Physical and Spell Resistance by 5948 for 23 seconds. \n\nAlso grants you immunity to knockback and disabling effects for 6 seconds, but reduces your Movement Speed by 65% for the duration.\n\nEach piece of Heavy Armor worn increases the amount of damage you block and the potency of the snare by 5%.',
     },
     {
       id: 39205, // Unstoppable Brute (morph)

@@ -15,7 +15,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.ELEMENTAL_STORM,
       description:
-        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 1687 Magic Damage every 1 second for 7 seconds.',
+        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 1742 Magic Damage every 1 second for 7 seconds.',
       alternateIds: [83628], // Ice Storm (element-specific version)
     },
     {
@@ -24,7 +24,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.ELEMENTAL_STORM,
       description:
-        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 2178 Magic Damage every 1 second for 7 seconds.\n\nFiery Rage increases the damage by 15%.\n\nIcy Rage immobilizes enemies hit for 3 seconds.\n\nThunderous Rage increases the duration by 2 seconds.',
+        'Create a cataclysmic storm at the target location that builds for 2 seconds then lays waste to all enemies in the area, dealing 2249 Magic Damage every 1 second for 7 seconds.\n\nFiery Rage increases the damage by 15%.\n\nIcy Rage immobilizes enemies hit for 3 seconds.\n\nThunderous Rage increases the duration by 2 seconds.',
       alternateIds: [84434, 85126], // Elemental Rage (alt rank) and Fiery Rage variants
     },
     {
@@ -33,7 +33,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.ELEMENTAL_STORM,
       description:
-        'Create a cataclysmic storm above you that builds for 2 seconds then lays waste to all enemies nearby, dealing 1742 Magic Damage every 1 second for 7 seconds.',
+        'Create a cataclysmic storm above you that builds for 2 seconds then lays waste to all enemies nearby, dealing 1799 Magic Damage every 1 second for 7 seconds.',
     },
 
     // Scribing ability
@@ -53,7 +53,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SHOCK,
       description:
-        'Focus all the elemental energies with your staff and blast an enemy for 673 Flame Damage, 673 Frost Damage, and 673 Shock Damage.',
+        'Focus all the elemental energies with your staff and blast an enemy for 695 Flame Damage, 695 Frost Damage, and 695 Shock Damage.',
     },
     {
       id: 46348, // Crushing Shock (morph)
@@ -69,7 +69,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SHOCK,
       description:
-        'Focus all the elemental energies with your staff and blast an enemy for 696 Flame Damage, 696 Frost Damage, and 696 Shock Damage. \n\nUp to 2 nearby enemies will take \n2323 Magic Damage if they were already afflicted with a status effect.',
+        'Focus all the elemental energies with your staff and blast an enemy for 696 Flame Damage, 696 Frost Damage, and 696 Shock Damage. \n\nUp to 2 nearby enemies will take \n2399 Magic Damage if they were already afflicted with a status effect.',
     },
     {
       id: AbilityId.WALL_OF_ELEMENTS,
@@ -77,7 +77,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WALL_OF_ELEMENTS,
       description:
-        'Slam your staff down to create an elemental barrier in front of you, dealing 272 Magic Damage to enemies in the target area every 1 second.\n\nWall of Fire deals additional damage to Burning enemies.\n\nWall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nWall of Storms sets Concussed enemies Off Balance.',
+        'Slam your staff down to create an elemental barrier in front of you, dealing 280 Magic Damage to enemies in the target area every 1 second.\n\nWall of Fire deals additional damage to Burning enemies.\n\nWall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nWall of Storms sets Concussed enemies Off Balance.',
     },
     {
       id: 39011, // Elemental Blockade (morph)
@@ -119,7 +119,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WALL_OF_ELEMENTS,
       description:
-        'Create an unstable elemental barrier in front of you, dealing 281 Magic Damage to enemies in the target area every 1 second before exploding for an additional 1161 Magic Damage.\n\nUnstable Wall of Fire deals additional damage to Burning enemies.\n\nUnstable Wall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nUnstable Wall of Storms sets Concussed enemies Off Balance.',
+        'Create an unstable elemental barrier in front of you, dealing 281 Magic Damage to enemies in the target area every 1 second before exploding for an additional 1199 Magic Damage.\n\nUnstable Wall of Fire deals additional damage to Burning enemies.\n\nUnstable Wall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields.\n\nUnstable Wall of Storms sets Concussed enemies Off Balance.',
     },
     {
       id: 39061, // Unstable Blockade of Fire

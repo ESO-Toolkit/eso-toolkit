@@ -15,7 +15,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.LACERATE,
       description:
-        'Slash enemies in front of you, causing them to bleed for 6740 Bleed Damage over 8 seconds and healing you for 50% of the damage done.\n\nEach tick applies the Hemorrhaging status effect.',
+        'Slash enemies in front of you, causing them to bleed for 6960 Bleed Damage over 8 seconds and healing you for 50% of the damage done.\n\nEach tick applies the Hemorrhaging status effect.',
     },
     {
       id: 83600, // Rend (morph)
@@ -23,7 +23,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.LACERATE,
       description:
-        'Slash enemies in front of you, causing them to bleed for 6740 Bleed Damage over 8 seconds and healing you for 50% of the damage done.\n\nEach tick applies the Hemorrhaging status effect.',
+        'Slash enemies in front of you, causing them to bleed for 6960 Bleed Damage over 8 seconds and healing you for 50% of the damage done.\n\nEach tick applies the Hemorrhaging status effect.',
     },
     {
       id: 83625, // Thrive in Chaos (morph)
@@ -31,7 +31,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.LACERATE,
       description:
-        'Slash enemies in front of you, causing them to bleed for 6965 Bleed Damage over 8 seconds and healing you for 50% of the damage done.\n\nEach enemy hit increases your damage done by 3% for 15 seconds. This effect can stack up to 6 times.\n\nEach tick applies the Hemorrhaging status effect.',
+        'Slash enemies in front of you, causing them to bleed for 6965 Bleed Damage over 8 seconds and healing you for 50% of the damage done.\n\nEach enemy hit increases your damage done by 6% for 15 seconds. This effect can stack up to 6 times.\n\nEach tick applies the Hemorrhaging status effect.',
     },
 
     // Scribing Abilities
@@ -51,7 +51,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FLURRY,
       description:
-        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 646 Physical Damage.',
+        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 667 Physical Damage.',
     },
     {
       id: 38846, // Bloodthirst (morph)
@@ -59,7 +59,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FLURRY,
       description:
-        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 667 Bleed Damage and heal you for 33% of the damage caused.',
+        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 689 Bleed Damage and heal you for 33% of the damage caused.',
     },
     {
       id: 38857, // Rapid Strikes (morph)
@@ -67,7 +67,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FLURRY,
       description:
-        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 667 Physical Damage.\n\nEach hit increases the damage of the subsequent hit by 5%.',
+        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 689 Physical Damage.\n\nEach hit increases the damage of the subsequent hit by 5%.',
     },
     {
       id: AbilityId.TWIN_SLASHES,
@@ -75,7 +75,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TWIN_SLASHES,
       description:
-        'Slice an enemy with both weapons to cause deep lacerations, dealing 562 Bleed Damage with each weapon and causing them to bleed for an additional 3360 Bleed Damage over 20 seconds.',
+        'Slice an enemy with both weapons to cause deep lacerations, dealing 580 Bleed Damage with each weapon and causing them to bleed for an additional 3470 Bleed Damage over 20 seconds.',
     },
     {
       id: 38845, // Blood Craze (morph)
@@ -83,7 +83,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TWIN_SLASHES,
       description:
-        'Slice an enemy with both weapons to cause deep lacerations, dealing 580 Bleed Damage with each weapon and causing them to bleed for an additional 3470 Bleed Damage over 20 seconds.\n\nYou heal for 347 Health anytime this ability deals damage.',
+        'Slice an enemy with both weapons to cause deep lacerations, dealing 580 Bleed Damage with each weapon and causing them to bleed for an additional 3470 Bleed Damage over 20 seconds.\n\nYou heal for 358 Health anytime this ability deals damage.',
     },
     {
       id: 38842, // Rending Slashes (morph)
@@ -91,7 +91,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.TWIN_SLASHES,
       description:
-        'Slice an enemy with both weapons to cause deep lacerations, dealing 696 Bleed Damage with each weapon and causing them to bleed for an additional 3470 Bleed Damage over 20 seconds.\n\nEnemies hit by the initial hit are afflicted with the Hemorrhaging status effect.\n\nYou also reduce their Movement Speed by 30% for 4 seconds.',
+        'Slice an enemy with both weapons to cause deep lacerations, dealing 718 Bleed Damage with each weapon and causing them to bleed for an additional 3470 Bleed Damage over 20 seconds.\n\nEnemies hit by the initial hit are afflicted with the Hemorrhaging status effect.\n\nYou also reduce their Movement Speed by 30% for 4 seconds.',
     },
     {
       id: AbilityId.WHIRLWIND,
@@ -99,7 +99,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WHIRLWIND,
       description:
-        'Launch yourself into a lethal spin, dealing 1687 Physical Damage to nearby enemies. Deals up to 33% more damage to enemies with less than 50% Health.',
+        'Launch yourself into a lethal spin, dealing 1742 Physical Damage to nearby enemies. Deals up to 33% more damage to enemies with less than 50% Health.',
       alternateIds: [28591],
     },
     {
@@ -108,7 +108,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WHIRLWIND,
       description:
-        'Launch yourself into a lethal spin, dealing 1742 Physical Damage to nearby enemies. Deals up to 100% more damage to enemies with less than 50% Health.',
+        'Launch yourself into a lethal spin, dealing 1799 Physical Damage to nearby enemies. Deals up to 100% more damage to enemies with less than 50% Health.',
     },
     {
       id: 38901, // Whirling Blades (morph)
@@ -116,7 +116,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WHIRLWIND,
       description:
-        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 24 seconds, reducing damage from area attacks by 20%. \n\nEvery 2 seconds the shrapnel will pulse, dealing 422 Physical Damage to all enemies within 5 meters.\n\nYou also gain Major Expedition for 4 seconds, increasing your Movement Speed by 30%.',
+        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 30 seconds, reducing damage from area attacks by 20%. \n\nEvery 2 seconds the shrapnel will pulse, dealing 422 Physical Damage to all enemies within 5 meters.\n\nYou also gain Major Expedition for 4 seconds, increasing your Movement Speed by 30%.',
     },
     {
       id: AbilityId.BLADE_CLOAK,
@@ -124,7 +124,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLADE_CLOAK,
       description:
-        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 20 seconds, reducing damage from area attacks by 20%. \n\nEvery 2 seconds the shrapnel will pulse, dealing 408 Physical Damage to all enemies within 5 meters.',
+        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 20 seconds, reducing damage from area attacks by 20%. \n\nEvery 2 seconds the shrapnel will pulse, dealing 421 Physical Damage to all enemies within 5 meters.',
     },
     {
       id: 38910, // Deadly Cloak (morph)
@@ -132,7 +132,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLADE_CLOAK,
       description:
-        'Fire a secret dagger from your sleeve at an enemy, dealing 1393 Physical Damage and marking them for 5 seconds.\n\nIf the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nReactivating this ability on them allows you to jump to a marked enemy free of cost, dealing 2091 Physical Damage.\n\nCasting grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 40 seconds.',
+        'Fire a secret dagger from your sleeve at an enemy, dealing 1438 Physical Damage and marking them for 5 seconds.\n\nIf the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nReactivating this ability on them allows you to jump to a marked enemy free of cost, dealing 2160 Physical Damage.\n\nCasting grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 40 seconds.',
       alternateIds: [38906],
     },
     {
@@ -141,7 +141,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLADE_CLOAK,
       description:
-        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1742 Physical Damage per hit. \n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
+        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1799 Physical Damage per hit. \n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
     },
     {
       id: AbilityId.HIDDEN_BLADE,
@@ -149,7 +149,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.HIDDEN_BLADE,
       description:
-        'Fire a secret dagger from your sleeve at an enemy, dealing 1348 Physical Damage and granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.\n\nIf the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds.',
+        'Fire a secret dagger from your sleeve at an enemy, dealing 1392 Physical Damage and granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.\n\nIf the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds.',
     },
     {
       id: 38944, // Flying Blade (morph)
@@ -157,7 +157,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.HIDDEN_BLADE,
       description:
-        'Fire a secret dagger from your sleeve at an enemy, dealing 1393 Physical Damage and marking them for 5 seconds.\n\nIf the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nReactivating this ability on them allows you to jump to a marked enemy free of cost, dealing 2091 Physical Damage.\n\nCasting grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 40 seconds.',
+        'Fire a secret dagger from your sleeve at an enemy, dealing 1438 Physical Damage and marking them for 5 seconds.\n\nIf the enemy hit is casting an ability they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nReactivating this ability on them allows you to jump to a marked enemy free of cost, dealing 2160 Physical Damage.\n\nCasting grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 40 seconds.',
     },
     {
       id: 38948, // Shrouded Daggers (morph)
@@ -165,7 +165,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.HIDDEN_BLADE,
       description:
-        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1742 Physical Damage per hit. \n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
+        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1799 Physical Damage per hit. \n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
     },
 
     // Passive Abilities

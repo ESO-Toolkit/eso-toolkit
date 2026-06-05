@@ -60,35 +60,35 @@ export const assault: SkillLineData = {
       id: 40211, // Morph of Rapid Maneuver
       name: 'Retreating Maneuver',
       description:
-        'Mobilize your forces, granting Major Expedition to you and your group, increasing your Movement Speed by 30% for 8 seconds. Attacks from behind deal 12% less damage while this effect persists.',
+        'Mobilize your forces, granting Major Expedition to you and your group, increasing your Movement Speed by 30% for 8 seconds. Attacks from behind deal 15% less damage while this effect persists.',
       maxRank: 4,
     },
     {
       id: AbilityId.VIGOR,
       name: 'Vigor',
       description:
-        'Let loose a battle cry, instilling yourself and nearby allies with resolve and healing them for 3372 Health over 10 seconds.',
+        'Let loose a battle cry, instilling yourself and nearby allies with resolve and healing them for 3480 Health over 10 seconds.',
       maxRank: 4,
     },
     {
       id: 61505, // Morph of Vigor
       name: 'Echoing Vigor',
       description:
-        'Let loose a battle cry, instilling you and your allies with resolve and healing for 5220 Health over 10 seconds.',
+        'Let loose a battle cry, instilling you and your allies with resolve and healing for 5220 Health over 16 seconds.',
       maxRank: 4,
     },
     {
       id: 61507, // Morph of Vigor
       name: 'Resolving Vigor',
       description:
-        'Let loose a battle cry, instilling yourself with resolve and healing for 5220 Health over 5 seconds.\n\nAfter casting you gain Minor Resolve, increasing your Physical and Spell Resistance by 2974, for 20 seconds.',
+        'Let loose a battle cry, instilling yourself with resolve and healing for 5388 Health over 5 seconds.\n\nAfter casting you gain Minor Resolve, increasing your Physical and Spell Resistance by 2974, for 20 seconds.',
       maxRank: 4,
     },
     {
       id: AbilityId.CALTROPS,
       name: 'Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 272 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 280 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.',
       maxRank: 4,
       alternateIds: [33376],
     },
@@ -103,7 +103,7 @@ export const assault: SkillLineData = {
       id: 40242, // Morph of Caltrops
       name: 'Razor Caltrops',
       description:
-        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nEnemies who take damage from the caltrops have Major Breach applied to them, reducing their Physical and Spell Resistance by 5948 for 1.1 seconds.',
+        'Hurl a ball of caltrops that scatter over the target area, dealing 281 Physical Damage every 1 second to enemies inside, and reducing their Movement Speed by 50%.\n\nEnemies who take damage from the caltrops have Major Breach applied to them, reducing their Physical and Spell Resistance by 5948 for 4.1 seconds.',
       maxRank: 4,
     },
     {

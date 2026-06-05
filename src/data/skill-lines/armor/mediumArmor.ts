@@ -15,7 +15,7 @@ export const mediumArmor: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EVASION,
       description:
-        'Shroud yourself in mist to gain Major Evasion, reducing damage taken from area attacks by 20% for 17 seconds.',
+        'Shroud yourself in mist to gain Major Evasion, reducing damage taken from area attacks by 20% for 20 seconds.',
     },
     {
       id: 39192, // Elude (morph)

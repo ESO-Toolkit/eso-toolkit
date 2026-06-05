@@ -50,7 +50,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_017_a',
       description:
-        'Call a betty netch to your side, which grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 19 seconds.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds.',
+        'Call a betty netch to your side, which grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 22 seconds.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds.',
       baseSkillId: ClassSkillId.WARDEN_BETTY_NETCH,
     },
     {
@@ -59,7 +59,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_017',
       description:
-        'Call a betty netch to your side, which restores 4416 Magicka to you over 22 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds.',
+        'Call a betty netch to your side, which restores 4416 Magicka to you over 25 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds.',
       baseSkillId: ClassSkillId.WARDEN_BETTY_NETCH,
     },
     {
@@ -68,7 +68,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_017_b',
       description:
-        'Call a bull netch to your side, which restores 4992 Stamina to you over 22 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds',
+        'Call a bull netch to your side, which restores 4992 Stamina to you over 25 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds',
       baseSkillId: ClassSkillId.WARDEN_BETTY_NETCH,
     },
     {
@@ -77,7 +77,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_013',
       description:
-        'Command a cliff racer to dive bomb an enemy, dealing 2024 Magic Damage.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.',
+        'Command a cliff racer to dive bomb an enemy, dealing 2090 Magic Damage.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.',
       baseSkillId: ClassSkillId.WARDEN_DIVE,
     },
     {
@@ -86,7 +86,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_013_a',
       description:
-        'Command a cliff racer to dive bomb an enemy, dealing 2091 Magic Damage.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.\n\nAfter dealing damage you increase your Weapon and Spell Damage by 100 for 10 seconds, which quadruples after damaging Off Balance enemies.',
+        'Command a cliff racer to dive bomb an enemy, dealing 2160 Magic Damage.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.\n\nAfter dealing damage you increase your Weapon and Spell Damage by 100 for 10 seconds, which quadruples after damaging Off Balance enemies.',
       baseSkillId: ClassSkillId.WARDEN_DIVE,
     },
     {
@@ -95,7 +95,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_013_b',
       description:
-        'Command a cliff racer to dive bomb an enemy, dealing 2091 Bleed Damage immediately and then causing them to bleed for 2080 Bleed Damage over 10 seconds.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.',
+        'Command a cliff racer to dive bomb an enemy, dealing 2091 Bleed Damage immediately and then causing them to bleed for 2140 Bleed Damage over 10 seconds.\n\nIf you are more than 7 meters away from the target, you set them Off Balance for 7 seconds.',
       baseSkillId: ClassSkillId.WARDEN_DIVE,
     },
     {
@@ -104,7 +104,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_015',
       description:
-        'Stir a group of shalk that attack after 3 seconds, dealing 2429 Magic Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 6 seconds and then resurface again, dealing 3375 Magic Damage to enemies in front of you.',
+        'Stir a group of shalk that attack after 3 seconds, dealing 2509 Magic Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 6 seconds and then resurface again, dealing 3486 Magic Damage to enemies in front of you.',
       baseSkillId: ClassSkillId.WARDEN_SCORCH,
     },
     {
@@ -113,7 +113,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_015_a',
       description:
-        'Stir a group of shalk that attack after 3 seconds, dealing 2509 Magic Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 6 seconds and then resurface again, dealing 3485 Magic Damage to enemies in front of you.\n\nEnemies damaged are afflicted with Major and Minor Breach, reducing their Physical and Spell Resistance by 5948 and 2974 for 10 seconds.',
+        'Stir a group of shalk that attack after 3 seconds, dealing 2591 Magic Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 6 seconds and then resurface again, dealing 3600 Magic Damage to enemies in front of you.\n\nEnemies damaged are afflicted with Major and Minor Breach, reducing their Physical and Spell Resistance by 5948 and 2974 for 10 seconds.',
       baseSkillId: ClassSkillId.WARDEN_SCORCH,
     },
     {
@@ -122,7 +122,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_015_b',
       description:
-        'Stir a group of shalk that attack after 3 seconds, dealing 2509 Poison Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 3 seconds and then resurface again, dealing 2509 Poison Damage to enemies in front of you.',
+        'Stir a group of shalk that attack after 3 seconds, dealing 2591 Poison Damage to enemies in front of you.\n\nAfter the shalk complete their attack, they burrow underground for 3 seconds and then resurface again, dealing 2591 Poison Damage to enemies in front of you.',
       baseSkillId: ClassSkillId.WARDEN_SCORCH,
       alternateIds: [86019],
     },

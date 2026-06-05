@@ -12,7 +12,7 @@ export const emperor: SkillLineData = {
       id: AbilityId.MONARCH,
       name: 'Monarch',
       description:
-        'Increases your healing received while in your campaign, depending on how many Home Keeps you own.\n\n1 or less Keep: 25%\n2 Keeps: 30%\n3 Keeps: 35%\n4 Keeps: 40%\n5 Keeps: 45%\n6 Keeps: 50%',
+        'Increases your Max Health, Magicka, and Stamina while in your campaign, depending on how many Home Keeps you own.\n\n1 or less Keep: 38%\n2 Keeps: 45%\n3 Keeps: 53%\n4 Keeps: 60%\n5 Keeps: 68%\n6 Keeps: 75%',
       icon: 'ability_sorcerer_060',
       isPassive: true,
       maxRank: 1,

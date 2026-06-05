@@ -60,7 +60,7 @@ export const twoHandedSkillLine: SkillLineData = {
       name: 'Uppercut',
       type: 'active',
       baseAbilityId: AbilityId.UPPERCUT,
-      description: 'Slam an enemy with an upward swing, dealing 2587 Physical Damage.',
+      description: 'Slam an enemy with an upward swing, dealing 2672 Physical Damage.',
     },
     {
       id: 38814, // Dizzying Swing (morph)
@@ -68,7 +68,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.UPPERCUT,
       description:
-        'Slam an enemy with an upward swing, dealing 2672 Physical Damage and setting them Off Balance for 7 seconds. \n\nHitting an enemy that is already Off Balance stuns them for 2 seconds.\n\nTargets that are immune to Off Balance are snared by 40% for 2 seconds.',
+        'Slam an enemy with an upward swing, dealing 2760 Physical Damage and setting them Off Balance for 7 seconds. \n\nHitting an enemy that is already Off Balance stuns them for 2 seconds.\n\nTargets that are immune to Off Balance are snared by 40% for 2 seconds.',
     },
     {
       id: 38807, // Wrecking Blow (morph)
@@ -76,7 +76,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.UPPERCUT,
       description:
-        'Slam an enemy with an upward swing, dealing 2672 Physical Damage.\n\nGrants you Major Berserk and Empower for 3 seconds, increasing damage done by 10% and increasing damage done with Heavy Attacks against monsters by 70%.',
+        'Slam an enemy with an upward swing, dealing 2760 Physical Damage.\n\nGrants you Major Berserk and Empower for 3 seconds, increasing damage done by 10% and increasing damage done with Heavy Attacks against monsters by 70%.',
     },
     {
       id: AbilityId.CRITICAL_CHARGE,
@@ -84,7 +84,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CRITICAL_CHARGE,
       description:
-        'Launch across the earth and smash an enemy, dealing 1348 Physical Damage. \n\nThis attack is always a Critical Strike.',
+        'Launch across the earth and smash an enemy, dealing 1392 Physical Damage. \n\nThis attack is always a Critical Strike.',
     },
     {
       id: 38788, // Critical Rush (morph)
@@ -92,7 +92,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CRITICAL_CHARGE,
       description:
-        'Launch across the earth and smash an enemy, dealing 1393 Physical Damage to them and all nearby enemies. This attack is always a Critical Strike.\n\nAfter reaching your target, you sunder the ground beneath you, dealing 309 Physical Damage to all enemies in the area every 1 second for 15 seconds.',
+        'Launch across the earth and smash an enemy, dealing 1393 Physical Damage to them and all nearby enemies. This attack is always a Critical Strike.\n\nAfter reaching your target, you sunder the ground beneath you, dealing 319 Physical Damage to all enemies in the area every 1 second for 15 seconds.',
     },
     {
       id: 38794, // Stampede (morph)
@@ -108,7 +108,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CLEAVE,
       description:
-        'Focus your strength into a mighty swing, dealing 1687 Physical Damage to enemies in front of you.\n\nYou also gain a damage shield that absorbs 1687 damage for 6 seconds.',
+        'Focus your strength into a mighty swing, dealing 1742 Physical Damage to enemies in front of you.\n\nYou also gain a damage shield that absorbs 1742 damage for 6 seconds.',
     },
     {
       id: 38745, // Brawler (morph)
@@ -132,7 +132,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.REVERSE_SLASH,
       description:
-        'Shift your grip and strike an enemy down, dealing 1124 Physical Damage. Deals up to 300% more damage to enemies with less than 50% Health.',
+        'Shift your grip and strike an enemy down, dealing 1161 Physical Damage. Deals up to 300% more damage to enemies with less than 50% Health.',
     },
     {
       id: 38846, // Executioner (morph)
@@ -140,7 +140,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.REVERSE_SLASH,
       description:
-        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 667 Bleed Damage and heal you for 33% of the damage caused.',
+        'Flood an enemy with steel, battering them with four consecutive attacks that each deal 689 Bleed Damage and heal you for 33% of the damage caused.',
     },
     {
       id: 38839, // Reverse Slice (morph)
@@ -148,7 +148,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.REVERSE_SLASH,
       description:
-        'Slice an enemy with both weapons to cause deep lacerations, dealing 696 Bleed Damage with each weapon and causing them to bleed for an additional 3470 Bleed Damage over 20 seconds.\n\nEnemies hit by the initial hit are afflicted with the Hemorrhaging status effect.\n\nYou also reduce their Movement Speed by 30% for 4 seconds.',
+        'Slice an enemy with both weapons to cause deep lacerations, dealing 718 Bleed Damage with each weapon and causing them to bleed for an additional 3470 Bleed Damage over 20 seconds.\n\nEnemies hit by the initial hit are afflicted with the Hemorrhaging status effect.\n\nYou also reduce their Movement Speed by 30% for 4 seconds.',
     },
     {
       id: AbilityId.MOMENTUM,
@@ -156,7 +156,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.MOMENTUM,
       description:
-        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%, as well as gaining Minor Endurance, increasing your Stamina Recovery by 15% for 27 seconds.',
+        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%, as well as gaining Minor Endurance, increasing your Stamina Recovery by 15% for 30 seconds.',
     },
     {
       id: 38794, // Forward Momentum (morph)
@@ -172,7 +172,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.MOMENTUM,
       description:
-        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%, as well as gaining Minor Endurance, increasing your Stamina Recovery by 15% for 30 seconds.\n\nYou heal for 1742 Health when Rally ends. The final heal is increased by 20% every 2 seconds, up to a maximum of 200%.',
+        'Focus your strength and resolve to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%, as well as gaining Minor Endurance, increasing your Stamina Recovery by 15% for 30 seconds.\n\nYou heal for 1799 Health when Rally ends. The final heal is increased by 20% every 2 seconds, up to a maximum of 200%.',
     },
 
     // Passive Abilities

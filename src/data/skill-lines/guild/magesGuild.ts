@@ -15,7 +15,7 @@ export const magesGuild: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.METEOR,
       description:
-        'Call a comet down from the constellations to blast an enemy, dealing 3936 Flame Damage to all enemies in the area, knocking them down, and stunning them for 2 seconds.\n\nAfter impact, enemies in the target area take 1124 Flame Damage every 1 second for 11 seconds.',
+        'Call a comet down from the constellations to blast an enemy, dealing 4065 Flame Damage to all enemies in the area, knocking them down, and stunning them for 2 seconds.\n\nAfter impact, enemies in the target area take 1161 Flame Damage every 1 second for 11 seconds.',
     },
     {
       id: 40489, // Ice Comet (morph)
@@ -23,7 +23,7 @@ export const magesGuild: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.METEOR,
       description:
-        'Call a comet down from the constellations to blast an enemy, dealing 4473 Frost Damage to all enemies in the area, knocking them down, stunning them for 2 seconds, and reducing their Movement Speed by 50% for 5 seconds. \n\nAfter impact, enemies in the target area take 1277 Frost Damage every 1 second for 11 seconds.',
+        'Call a comet down from the constellations to blast an enemy, dealing 4620 Frost Damage to all enemies in the area, knocking them down, stunning them for 2 seconds, and reducing their Movement Speed by 50% for 5 seconds. \n\nAfter impact, enemies in the target area take 1319 Frost Damage every 1 second for 11 seconds.',
     },
     {
       id: 40493, // Shooting Star (morph)
@@ -59,7 +59,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.MAGELIGHT,
       description:
-        'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629 and your Max Magicka is increased by 2%.',
+        'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds.\n\nWhile slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629 and your Max Magicka is increased by 5%.',
     },
     {
       id: 40483, // Radiant Magelight (morph)
@@ -76,7 +76,7 @@ export const magesGuild: SkillLineData = {
       name: 'Entropy',
       type: 'active',
       baseAbilityId: AbilityId.ENTROPY,
-      description: 'Bind an enemy with chaotic magic, dealing 4488 Magic Damage over 20 seconds.',
+      description: 'Bind an enemy with chaotic magic, dealing 4631 Magic Damage over 20 seconds.',
     },
     {
       id: 40457, // Degeneration (morph)
@@ -92,7 +92,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ENTROPY,
       description:
-        'Bind an enemy with chaotic magic, dealing 4642 Magic Damage over 20 seconds, and healing you for 422 every 2 seconds.',
+        'Bind an enemy with chaotic magic, dealing 4642 Magic Damage over 20 seconds, and healing you for 435 every 2 seconds.',
     },
 
     // Active abilities - Fire Rune
@@ -102,7 +102,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FIRE_RUNE,
       description:
-        'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the rune blasts all enemies in the target area for 2249 Flame Damage.',
+        'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the rune blasts all enemies in the target area for 2323 Flame Damage.',
     },
     {
       id: 40465, // Scalding Rune (morph)
@@ -110,7 +110,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FIRE_RUNE,
       description:
-        'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the rune blasts all enemies in the target area for 2323 Flame Damage and an additional 2783 Flame Damage over 22 seconds.',
+        'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds.\n\nWhen triggered, the rune blasts all enemies in the target area for 2323 Flame Damage and an additional 2871 Flame Damage over 22 seconds.',
     },
     {
       id: 40470, // Volcanic Rune (morph)
@@ -128,7 +128,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EQUILIBRIUM,
       description:
-        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 2700 Magicka.\n\nThe exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
+        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka.\n\nThe exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
     },
     {
       id: 40441, // Balance (morph)
@@ -136,7 +136,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EQUILIBRIUM,
       description:
-        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka.\n\nAfter the exchange is complete, you gain Major Resolve for 27 seconds, increasing your Physical and Spell Resistance by 5948.\n\nThe exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
+        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka.\n\nAfter the exchange is complete, you gain Major Resolve for 30 seconds, increasing your Physical and Spell Resistance by 5948.\n\nThe exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
     },
     {
       id: 40445, // Spell Symmetry (morph)
@@ -144,7 +144,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EQUILIBRIUM,
       description:
-        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka.\n\nAfter the exchange is complete, the cost of your next Magicka ability is reduced by 30% for 5 seconds.\n\nThe exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
+        'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka.\n\nAfter the exchange is complete, the cost of your next Magicka ability is reduced by 33% for 5 seconds.\n\nThe exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
     },
 
     // Passive abilities

@@ -39,7 +39,7 @@ export const siphoning: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_018_b',
       description:
-        'Sanctify your soul and the souls of nearby allies with a night rune, healing for 3485 Health and an additional 9088 Health over 4 seconds.\n\nYou and your allies will also receive Major Vitality, increasing your healing received and damage shield strength by 12% for 4 seconds.\n\nAn ally can target a nearby enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.',
+        'Sanctify your soul and the souls of nearby allies with a night rune, healing for 3600 Health and an additional 9384 Health over 4 seconds.\n\nYou and your allies will also receive Major Vitality, increasing your healing received and damage shield strength by 12% for 4 seconds.\n\nAn ally can target a nearby enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -103,7 +103,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_003',
       description:
-        'Channel a portion of your soul to convert Health to 1700 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 950 Health, up to once every 1 second.',
+        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1250 Health, up to once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -112,7 +112,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_003_a',
       description:
-        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1500 Health and reduces the cost of your next Leeching Strikes by 10%, stacking up to 10 times. This effect can occur once every 1 second.',
+        'Channel a portion of your soul to convert Health to 2000 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1800 Health and reduces the cost of your next Leeching Strikes by 10%, stacking up to 10 times. This effect can occur once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -121,7 +121,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_003_b',
       description:
-        'Channel a portion of your soul to convert Health to 2600 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1250 Health and restores 170 Magicka and Stamina, up to once every 1 second.',
+        'Channel a portion of your soul to convert Health to 2600 Magicka and Stamina.\n\nWhile slotted on either bar, your soul yearns for the warmth of life. All damage you deal heals you for 1250 Health and restores 200 Magicka and Stamina, up to once every 1 second.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SIPHONING_STRIKES,
     },
     {
@@ -157,7 +157,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_011',
       description:
-        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3375 Health, while draining 1080 Health from yourself over 3 seconds.',
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3486 Health, while draining 1080 Health from yourself over 3 seconds.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {
@@ -166,7 +166,7 @@ export const siphoning: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_011_a',
       description:
-        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3485 Health, while draining 1080 Health from yourself over 3 seconds.\n\nAfter casting, gain Minor Mending for 10 seconds, increasing your healing done by 8%.',
+        'Pour out your lifesblood and channel the arcane, healing yourself or an ally in front of you for 3600 Health, while draining 1080 Health from yourself over 3 seconds.\n\nAfter casting, gain Minor Mending for 10 seconds, increasing your healing done by 8%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_MALEVOLENT_OFFERING,
     },
     {

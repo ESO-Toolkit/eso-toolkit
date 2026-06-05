@@ -22,7 +22,7 @@ export const soulMagic: SkillLineData = {
       id: 40415, // Morph of Soul Strike
       name: 'Shatter Soul',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 14814 Magic Damage over 5 seconds. Upon completion, the soulfire overflows and explodes from the enemy, dealing 2323 Magic Damage to all enemies near them.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
+        'Burn an enemy from the inside with soulfire, dealing 14814 Magic Damage over 5 seconds. Upon completion, the soulfire overflows and explodes from the enemy, dealing 2399 Magic Damage to all enemies near them.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002_a',
       isUltimate: true,
       isPassive: false,
@@ -32,7 +32,7 @@ export const soulMagic: SkillLineData = {
       id: 40420, // Morph of Soul Strike
       name: 'Soul Assault',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 19752 Magic Damage over 6 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
+        'Burn an enemy from the inside with soulfire, dealing 20400 Magic Damage over 6 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002_b',
       isUltimate: true,
       isPassive: false,

@@ -19,7 +19,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018',
       description:
-        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 12 seconds.\n\nWhile active, you cannot generate Ultimate.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds.\n\nWhile active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -29,7 +29,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018_a',
       description:
-        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds.\n\nWhen activated, nearby allies gain a damage shield for 130% of their Max Health for 10 seconds.\n\nWhile active, you cannot generate Ultimate.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 3% of your Max Health for 15 seconds.\n\nWhen activated, nearby allies gain a damage shield for 133% of their Max Health for 10 seconds.\n\nWhile active, you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -39,7 +39,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018_b',
       description:
-        'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1568 Flame Damage to nearby enemies each second for 10 seconds. \n\nWhile active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1619 Flame Damage to nearby enemies each second for 10 seconds. \n\nWhile active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },
@@ -103,7 +103,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_017',
       description:
-        'Call the earth to your defense, granting a damage shield for you and nearby allies that absorbs 1279 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
+        'Call the earth to your defense, granting a damage shield for you and nearby allies that absorbs 1321 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -121,7 +121,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_017b',
       description:
-        'Call the earth to your defense, granting a damage shield for nearby allies that absorbs 1322 damage. Your own damage shield absorbs 3702 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
+        'Call the earth to your defense, granting a damage shield for nearby allies that absorbs 1322 damage. Your own damage shield absorbs 3824 damage. This portion of the ability scales off your Max Health.\n\nYou also gain Major Mending, increasing your healing done by 16% for 4 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_OBSIDIAN_SHIELD,
     },
     {
@@ -157,7 +157,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_016',
       description:
-        'Throw out a kindled flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 421 Health every 1 second.\n\nHealed targets gain Minor Fortitude and Minor Heroism while inside, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
+        'Throw out a kindled flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 434 Health every 1 second.\n\nHealed targets gain Minor Fortitude and Minor Heroism while inside, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -166,7 +166,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_016a',
       description:
-        'Throw out a purifying flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 435 Health every 1 second. This healing increases by 50% if you are in the area.\n\nHealed targets gain Minor Fortitude and Minor Heroism for 15 seconds, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
+        'Throw out a purifying flame, filling a large area with warmth for 15 seconds. This fire heals you and your allies at the target location for 449 Health every 1 second. This healing increases by 50% if you are in the area.\n\nHealed targets gain Minor Fortitude and Minor Heroism for 15 seconds, increasing Health Recovery by 15% and generating 1 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_ASH_CLOUD,
     },
     {
@@ -185,7 +185,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_007',
       description:
-        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 17 seconds.',
+        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_EARTHSPIKE_MANTLE,
     },
     {
@@ -194,7 +194,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_007_a',
       description:
-        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.\n\nAs the armor forms you blast foes around you with shattered obsidian, causing them to take 4642 Flame Damage over 20 seconds. When this effect deals damage you gain a stack of Landslide, up to once every 10 seconds.',
+        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.\n\nAs the armor forms you blast foes around you with shattered obsidian, causing them to take 4785 Flame Damage over 20 seconds. When this effect deals damage you gain a stack of Landslide, up to once every 10 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_EARTHSPIKE_MANTLE,
     },
     {
@@ -203,7 +203,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_007_b',
       description:
-        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.\n\nPower drawn from the heart of a volcano forms a damage shield around you that absorbs up to 4958 damage for 6 seconds, scaling off your Max Health.',
+        'Envelop your body in molten spikes to increase your damage done by 100 and gain Major Resolve, increasing Physical and Spell Resistance by 5948 for 20 seconds.\n\nPower drawn from the heart of a volcano forms a damage shield around you that absorbs up to 5121 damage for 6 seconds, scaling off your Max Health.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_EARTHSPIKE_MANTLE,
     },
     {

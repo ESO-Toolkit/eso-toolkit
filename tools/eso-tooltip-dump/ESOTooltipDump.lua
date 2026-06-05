@@ -249,21 +249,31 @@ local function getAllSetIds()
   return list, "scan"
 end
 
--- Build a reference CP160 itemLink for a set so bonus text comes back with computed
--- numbers (the setId form of GetItemSetBonusInfo returns TEMPLATES with <<n>> tokens).
--- This mirrors how LibSets gets build-independent computed text.
--- LibSets exposes the canonical reference itemId per set; fall back gracefully if absent.
+-- Build a reference (gold/CP160) itemLink for a set so bonus text comes back with
+-- computed numbers via GetItemLinkSetBonusInfo. Uses LibSets' own API:
+--   LibSets.GetSetItemId(setId) -> a representative itemId for the set
+--   LibSets.buildItemLink(itemId, qualitySubType) -> the itemLink
+-- Returns nil if LibSets is absent; captureSet then falls back to the setId form.
+-- NOTE: at the current client the setId form (GetItemSetBonusInfo) already returns
+-- resolved values, so the fallback is not lossy — the itemLink path is preferred only
+-- as a hardening against future API changes.
 local function buildReferenceItemLink(setId)
-  if LibSets and LibSets.GetSetItemIds then
+  if not LibSets then return nil end
+  -- Prefer the singular GetSetItemId; fall back to the plural table form.
+  local itemId
+  if LibSets.GetSetItemId then
+    local ok, id = pcall(LibSets.GetSetItemId, setId)
+    if ok then itemId = id end
+  end
+  if not itemId and LibSets.GetSetItemIds then
     local ok, itemIds = pcall(LibSets.GetSetItemIds, setId)
-    if ok and type(itemIds) == "table" then
-      local itemId = next(itemIds)               -- any piece in the set works for bonus text
-      if itemId and GetItemLinkFromItemId then
-        -- quality 5 (legendary/gold), CP160 level. Signature per ESOUIDocumentation.
-        local lok, link = pcall(GetItemLinkFromItemId, itemId, ITEM_QUALITY_LEGENDARY or 5)
-        if lok and link and link ~= "" then return link end
-      end
-    end
+    if ok and type(itemIds) == "table" then itemId = next(itemIds) end
+  end
+  if not itemId then return nil end
+  -- LibSets.buildItemLink handles the reference quality/level itself.
+  if LibSets.buildItemLink then
+    local ok, link = pcall(LibSets.buildItemLink, itemId)
+    if ok and link and link ~= "" then return link end
   end
   return nil
 end

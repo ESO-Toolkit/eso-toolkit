@@ -15,7 +15,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.SHIELD_WALL,
       description:
-        'Reinforce your shield, allowing you to automatically block all attacks at no cost for 5 seconds.',
+        'Reinforce your shield, allowing you to automatically block all attacks at no cost for 6 seconds.',
     },
     {
       id: 83283, // Shield Discipline (morph)
@@ -23,7 +23,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.SHIELD_WALL,
       description:
-        'Reinforce your shield, allowing you to automatically block all attacks at no cost for 6 seconds.\n\nYour One Hand and Shield non-Ultimate abilities cost nothing while this effect persists.',
+        'Reinforce your shield, allowing you to automatically block all attacks at no cost for 8 seconds.\n\nYour One Hand and Shield non-Ultimate abilities cost nothing while this effect persists.',
     },
     {
       id: 83295, // Spell Wall (morph)
@@ -31,7 +31,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.SHIELD_WALL,
       description:
-        'Reinforce your shield, allowing you to automatically block all attacks at no cost and reflect all projectiles cast at you for 6 seconds.',
+        'Reinforce your shield, allowing you to automatically block all attacks at no cost and reflect all projectiles cast at you for 7 seconds.',
       alternateIds: [83292],
     },
 
@@ -51,7 +51,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.PUNCTURE,
       description:
-        'Thrust your weapon with disciplined precision at an enemy, dealing 1124 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.',
+        'Thrust your weapon with disciplined precision at an enemy, dealing 1161 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.',
     },
     {
       id: 38250, // Pierce Armor (morph)
@@ -59,7 +59,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.PUNCTURE,
       description:
-        'Thrust your weapon with disciplined precision at an enemy, dealing 1161 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Minor Breach and Major Breach on the enemy, reducing their Physical Resistance and Spell Resistance by 2974 and 5948 for 15 seconds.',
+        'Thrust your weapon with disciplined precision at an enemy, dealing 1199 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Minor Breach and Major Breach on the enemy, reducing their Physical Resistance and Spell Resistance by 2974 and 5948 for 15 seconds.',
     },
     {
       id: 38254, // Ransack (morph)
@@ -67,7 +67,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.PUNCTURE,
       description:
-        'Thrust your weapon with disciplined precision at an enemy, dealing 1161 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.\n\nYou also gain Minor Protection, reducing your damage taken by 5% for 15 seconds.',
+        'Thrust your weapon with disciplined precision at an enemy, dealing 1199 Physical Damage and taunting them to attack you for 15 seconds.\n\nAlso inflicts Major Breach on the enemy, reducing their Physical and Spell Resistance by 5948 for 15 seconds.\n\nYou also gain Minor Protection, reducing your damage taken by 5% for 15 seconds.',
     },
     {
       id: AbilityId.LOW_SLASH,
@@ -75,7 +75,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.LOW_SLASH,
       description:
-        'Surprise an enemy with a deep lunge, dealing 1348 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.',
+        'Surprise an enemy with a deep lunge, dealing 1392 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.',
     },
     {
       id: 38268, // Deep Slash (morph)
@@ -83,7 +83,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.LOW_SLASH,
       description:
-        'Surprise an enemy with a sweeping lunge, dealing 1742 Physical Damage to them and other nearby enemies, afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.\n\nEnemies hit also have their Movement Speed reduced by 30% for 4 seconds.',
+        'Surprise an enemy with a sweeping lunge, dealing 1799 Physical Damage to them and other nearby enemies, afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.\n\nEnemies hit also have their Movement Speed reduced by 30% for 4 seconds.',
     },
     {
       id: 38264, // Heroic Slash (morph)
@@ -91,7 +91,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.LOW_SLASH,
       description:
-        'Surprise an enemy with a deep lunge, dealing 1393 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds. \n\nYou gain Minor Heroism, granting you 1 Ultimate every 1.5 seconds for 15 seconds.',
+        'Surprise an enemy with a deep lunge, dealing 1438 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds. \n\nYou gain Minor Heroism, granting you 1 Ultimate every 1.5 seconds for 15 seconds.',
     },
     {
       id: AbilityId.DEFENSIVE_POSTURE,
@@ -99,7 +99,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DEFENSIVE_POSTURE,
       description:
-        'Bolster your defenses, gaining a damage shield that absorbs up to 4800 damage for 6 seconds. This portion of the ability scales off your Max Health.\n\nYou reflect the next harmful direct damage projectile cast at you. This effect can occur once per cast.',
+        'Bolster your defenses, gaining a damage shield that absorbs up to 4958 damage for 6 seconds. This portion of the ability scales off your Max Health.\n\nYou reflect the next harmful direct damage projectile cast at you. This effect can occur once per cast.',
     },
     {
       id: 38401, // Absorb Missile (morph)
@@ -107,7 +107,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DEFENSIVE_POSTURE,
       description:
-        'Rush an enemy and ram them, dealing 1393 Physical Damage and stunning them for 3 seconds.\n\nYou gain a damage shield after the attack, absorbing 4958 damage for 6 seconds. This portion of the ability scales off your Max Health.',
+        'Rush an enemy and ram them, dealing 1393 Physical Damage and stunning them for 3 seconds.\n\nYou gain a damage shield after the attack, absorbing 5121 damage for 6 seconds. This portion of the ability scales off your Max Health.',
     },
     {
       id: 38405, // Defensive Stance (morph)
@@ -115,7 +115,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DEFENSIVE_POSTURE,
       description:
-        'Rush an enemy and ram them, dealing 1393 Physical Damage and stunning them for 3 seconds.\n\nStuns up to 50% longer based on the distance traveled.',
+        'Rush an enemy and ram them, dealing 1393 Physical Damage and stunning them for 4 seconds.\n\nStuns up to 50% longer based on the distance traveled.',
     },
     {
       id: AbilityId.SHIELD_CHARGE,
@@ -123,7 +123,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.SHIELD_CHARGE,
       description:
-        'Rush an enemy and ram them, dealing 1348 Physical Damage and stunning them for 3 seconds.',
+        'Rush an enemy and ram them, dealing 1392 Physical Damage and stunning them for 3 seconds.',
     },
     {
       id: 38455, // Invasion (morph)

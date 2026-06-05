@@ -15,7 +15,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
 
 const ROOT = process.cwd();
 
@@ -49,10 +48,18 @@ function resolveId(token) {
 }
 
 // --- Collect committed skill entries (id + name) -------------------------
-const skillFiles = execSync('find src/data/skill-lines -name "*.ts"', { encoding: 'utf8' })
-  .trim()
-  .split(/\r?\n/)
-  .filter((f) => !/ability-ids\.ts$|index\.ts$|calculator-data\.ts$/.test(f));
+// Portable recursive .ts walk (POSIX `find` is unavailable on Windows/PowerShell).
+function walkTs(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) walkTs(full, out);
+    else if (entry.name.endsWith('.ts')) out.push(full);
+  }
+  return out;
+}
+const skillFiles = walkTs(path.join(ROOT, 'src/data/skill-lines')).filter(
+  (f) => !/ability-ids\.ts$|index\.ts$|calculator-data\.ts$/.test(f),
+);
 
 const committed = []; // { id, name, file }
 for (const f of skillFiles) {
@@ -88,12 +95,18 @@ const matched = resolved.filter((c) => dumpIds.has(c.id));
 const unmatched = resolved.filter((c) => !dumpIds.has(c.id));
 
 console.log('=== Tooltip refresh coverage (match by resolved ability ID) ===');
-console.log(`Enum maps loaded:        ${Object.entries(enums).map(([k, v]) => `${k}=${v.size}`).join(', ')}`);
+console.log(
+  `Enum maps loaded:        ${Object.entries(enums)
+    .map(([k, v]) => `${k}=${v.size}`)
+    .join(', ')}`,
+);
 console.log(`Dump abilities (by id):  ${dumpIds.size}`);
 console.log(`Committed skill entries: ${committed.length}`);
 console.log(`  id resolved:           ${resolved.length}`);
 console.log(`  id UNresolved:         ${unresolved.length} (enum const not found / non-id token)`);
-console.log(`Matched in dump by id:   ${matched.length} / ${resolved.length} (${(100 * matched.length / resolved.length).toFixed(1)}%)`);
+console.log(
+  `Matched in dump by id:   ${matched.length} / ${resolved.length} (${((100 * matched.length) / resolved.length).toFixed(1)}%)`,
+);
 console.log(`Unmatched (keep current):${unmatched.length}`);
 
 if (unmatched.length) {
@@ -110,4 +123,6 @@ if (unresolved.length) {
 }
 
 const rate = matched.length / resolved.length;
-console.log(`\nVERDICT: ${rate >= 0.9 ? 'HIGH coverage — safe to refresh descriptions (unmatched keep current).' : rate >= 0.7 ? 'MODERATE — investigate unmatched before refresh (possible ID drift).' : 'LOW — likely ID drift; do NOT bulk-refresh.'}`);
+console.log(
+  `\nVERDICT: ${rate >= 0.9 ? 'HIGH coverage — safe to refresh descriptions (unmatched keep current).' : rate >= 0.7 ? 'MODERATE — investigate unmatched before refresh (possible ID drift).' : 'LOW — likely ID drift; do NOT bulk-refresh.'}`,
+);

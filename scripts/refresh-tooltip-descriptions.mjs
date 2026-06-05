@@ -18,7 +18,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
 
 const ROOT = process.cwd();
 const WRITE = process.argv.includes('--write');
@@ -28,12 +27,19 @@ const dump = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tooltip-dump.json'
 const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const dumpById = new Map();
 const dumpByName = new Map();
+// Keep the HIGHEST rank per id/name: a skill's tooltip values scale by rank, and the
+// shipped data should reflect the max-rank (level-50) numbers players actually see.
+// The dump lists ranks 1..4 in order, so without this we'd keep rank 1 (lowest).
+const keepHigherRank = (map, key, ab) => {
+  const cur = map.get(key);
+  if (!cur || (ab.rank ?? 0) > (cur.rank ?? 0)) map.set(key, ab);
+};
 for (const line of dump.skillLines) {
   for (const sk of line.skills) {
     for (const ab of sk.morphs || []) {
-      if (ab.id != null && ab.description && !dumpById.has(ab.id)) dumpById.set(ab.id, ab);
+      if (ab.id != null && ab.description) keepHigherRank(dumpById, ab.id, ab);
       const k = norm(ab.name);
-      if (k && ab.description && !dumpByName.has(k)) dumpByName.set(k, ab);
+      if (k && ab.description) keepHigherRank(dumpByName, k, ab);
     }
   }
 }
@@ -67,10 +73,18 @@ function toSingleQuoted(s) {
 }
 
 // --- per-file rewrite -----------------------------------------------------
-const files = execSync('find src/data/skill-lines -name "*.ts"', { encoding: 'utf8' })
-  .trim()
-  .split(/\r?\n/)
-  .filter((f) => !/ability-ids\.ts$|index\.ts$|calculator-data\.ts$/.test(f));
+// Portable recursive .ts walk (POSIX `find` is unavailable on Windows/PowerShell).
+function walkTs(dir, out = []) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) walkTs(full, out);
+    else if (entry.name.endsWith('.ts')) out.push(full);
+  }
+  return out;
+}
+const files = walkTs(path.join(ROOT, 'src/data/skill-lines')).filter(
+  (f) => !/ability-ids\.ts$|index\.ts$|calculator-data\.ts$/.test(f),
+);
 
 let totalSkills = 0;
 let updated = 0;
@@ -109,7 +123,11 @@ for (const file of files) {
   });
 
   if (fileUpdated > 0) {
-    perFile.push({ file: path.relative(ROOT, file), updated: fileUpdated, unmatched: fileUnmatched });
+    perFile.push({
+      file: path.relative(ROOT, file),
+      updated: fileUpdated,
+      unmatched: fileUnmatched,
+    });
     if (WRITE) fs.writeFileSync(file, next);
   }
 }
