@@ -44,8 +44,9 @@ const ALLOWLIST = new Set(
 );
 
 // Any occurrence of the eso-hub token is a violation outside the allowlist.
-// (Attribution, links, CDN hosts, and source headers all contain it.)
-const VIOLATION = /eso-?hub/i;
+// (Attribution, links, CDN hosts, and source headers all contain it.) Matches the
+// hyphenated, concatenated, AND space-separated forms: "eso-hub", "esohub", "ESO Hub".
+const VIOLATION = /eso[\s-]?hub/i;
 
 const SKIP_DIRS = new Set(['node_modules', '.git', 'build', 'dist', 'coverage']);
 const TEXT_EXT = new Set([

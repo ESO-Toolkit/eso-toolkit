@@ -61,38 +61,50 @@ const skillFiles = walkTs(path.join(ROOT, 'src/data/skill-lines')).filter(
   (f) => !/ability-ids\.ts$|index\.ts$|calculator-data\.ts$/.test(f),
 );
 
-const committed = []; // { id, name, file }
+const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const committed = []; // { id, altIds, name, file }
 for (const f of skillFiles) {
   const txt = fs.readFileSync(f, 'utf8');
-  // Match `id: <token>,` followed (within the same object) by `name: '...'`
-  const re = /\bid:\s*([A-Za-z0-9_.]+)\s*,[\s\S]{0,200}?\bname:\s*['"]([^'"]+)['"]/g;
+  // Match `id: <token>,` ... `name: '...'`, capturing the chunk between (for alternateIds).
+  const re = /\bid:\s*([A-Za-z0-9_.]+)\s*,([\s\S]{0,260}?)\bname:\s*['"]([^'"]+)['"]/g;
   let m;
   while ((m = re.exec(txt))) {
     const id = resolveId(m[1]);
-    committed.push({ id, name: m[2], file: path.relative(ROOT, f), rawId: m[1] });
+    const altIds = [];
+    const alt = m[2].match(/alternateIds:\s*\[([0-9,\s]*)\]/);
+    if (alt)
+      for (const n of alt[1].split(',')) {
+        const v = Number(n.trim());
+        if (v) altIds.push(v);
+      }
+    committed.push({ id, altIds, name: m[3], file: path.relative(ROOT, f), rawId: m[1] });
   }
 }
 
 // --- Collect dump ability ids --------------------------------------------
 const dump = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tooltip-dump.json'), 'utf8'));
 const dumpIds = new Set();
-const dumpById = new Map();
+const dumpNames = new Set();
 for (const line of dump.skillLines) {
   for (const sk of line.skills) {
     for (const ab of sk.morphs) {
-      if (ab.id != null) {
-        dumpIds.add(ab.id);
-        if (!dumpById.has(ab.id)) dumpById.set(ab.id, ab);
-      }
+      if (ab.id != null) dumpIds.add(ab.id);
+      if (ab.name) dumpNames.add(norm(ab.name));
     }
   }
 }
 
 // --- Report ---------------------------------------------------------------
+// A skill is "matched" if its primary id, ANY alternateId, or its name is in the dump
+// (the refresh resolves across the same id-group + name fallback).
+const isMatched = (c) =>
+  (c.id != null && dumpIds.has(c.id)) ||
+  c.altIds.some((a) => dumpIds.has(a)) ||
+  dumpNames.has(norm(c.name));
 const resolved = committed.filter((c) => c.id != null);
 const unresolved = committed.filter((c) => c.id == null);
-const matched = resolved.filter((c) => dumpIds.has(c.id));
-const unmatched = resolved.filter((c) => !dumpIds.has(c.id));
+const matched = resolved.filter(isMatched);
+const unmatched = resolved.filter((c) => !isMatched(c));
 
 console.log('=== Tooltip refresh coverage (match by resolved ability ID) ===');
 console.log(

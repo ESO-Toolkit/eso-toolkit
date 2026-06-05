@@ -22,7 +22,7 @@ Only **non-light** mythic armor pieces need entries. Light mythics (e.g. Cryptca
 | Corrections table | `src/utils/armorUtils.ts` | `ARMOR_TYPE_CORRECTIONS` — edit this |
 | Tests | `src/utils/armorUtils.test.ts` | Must add a test case for each new correction |
 
-If `tmp/libsets-data/` does not exist or is stale, follow the `skill-data-regen` skill to regenerate it, or manually download a fresh LibSets SavedVariables file.
+If `tmp/libsets-data/` does not exist or is stale, manually download a fresh LibSets SavedVariables file.
 
 ## Step-by-Step: Add a New Mythic Armor Correction
 

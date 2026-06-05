@@ -162,7 +162,6 @@ After that, compliant AI agents should pick up the new skill automatically from 
 | `reports/` | ESO Logs report data debugging |
 | `rollbar/` | Production error triage via Rollbar |
 | `scratch-dir/` | Gitignored directory for ad-hoc output files |
-| `skill-data-regen/` | ESO skill line TypeScript data files |
 | `testing/` | Dev server, unit tests, format/lint/build |
 | `troubleshoot/` | Quick-reference fixes for common dev issues |
 | `uesp-data/` | Item icon database management |
