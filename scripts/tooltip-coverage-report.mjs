@@ -67,7 +67,9 @@ for (const f of skillFiles) {
   const txt = fs.readFileSync(f, 'utf8');
   // Match `id: <token>,` ... `name: '...'`, capturing the chunk between (for alternateIds).
   // Cap is generous to span long multiline `alternateIds` arrays (e.g. Devour ~130 ids).
-  const re = /\bid:\s*([A-Za-z0-9_.]+)\s*,([\s\S]{0,2000}?)\bname:\s*['"]([^'"]+)['"]/g;
+  // Require the `id` to be indented >2 spaces: top-level SkillLineData header `id`/`name`
+  // sit at 2-space indent and describe the LINE, not a skill — exclude them.
+  const re = /^ {3,}\bid:\s*([A-Za-z0-9_.]+)\s*,([\s\S]{0,2000}?)\bname:\s*['"]([^'"]+)['"]/gm;
   let m;
   while ((m = re.exec(txt))) {
     const id = resolveId(m[1]);
