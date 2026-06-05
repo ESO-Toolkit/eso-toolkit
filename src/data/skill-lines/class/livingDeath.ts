@@ -130,7 +130,7 @@ export const livingDeath: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_017',
       description:
-        'Siphon the last remnants of life from a corpse, healing for 5544 Health over 12 seconds to yourself and all allies between you and the corpse. \n\nWhile slotted, your healing done is increased by 3%.',
+        'Siphon the last remnants of life from a corpse, healing for 5544 Health over 12 seconds to yourself and all allies between you and the corpse.\n\nWhile slotted, your healing done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_RESTORING_TETHER,
     },
     {
@@ -139,7 +139,7 @@ export const livingDeath: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_017_a',
       description:
-        'Siphon the last remnants of life from a corpse, healing for 5742 Health over 12 seconds to yourself, all allies around you, and all allies between you and the corpse. \n\nWhile slotted, your healing done is increased by 3%.',
+        'Siphon the last remnants of life from a corpse, healing for 5742 Health over 12 seconds to yourself, all allies around you, and all allies between you and the corpse.\n\nWhile slotted, your healing done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_RESTORING_TETHER,
     },
     {
@@ -148,7 +148,7 @@ export const livingDeath: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_017_b',
       description:
-        'Siphon the last remnants of life from a corpse, healing for 5562 Health over 12 seconds to yourself and all allies between you and the corpse. \n\nYou also restore 170 Magicka and Stamina every 2 seconds while siphoning the corpse.\n\nWhile slotted, your healing done is increased by 3%.',
+        'Siphon the last remnants of life from a corpse, healing for 5562 Health over 12 seconds to yourself and all allies between you and the corpse.\n\nYou also restore 170 Magicka and Stamina every 2 seconds while siphoning the corpse.\n\nWhile slotted, your healing done is increased by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_RESTORING_TETHER,
     },
     {

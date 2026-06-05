@@ -19,7 +19,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_warden_006',
       description:
-        'Twist a violent storm around you, dealing 1161 Frost Damage every 1 second for 8 seconds to enemies around you and reducing their Movement Speed by 40%. \n\nYou and nearby allies gain Major Protection, reducing your damage taken by 10%.',
+        'Twist a violent storm around you, dealing 1161 Frost Damage every 1 second for 8 seconds to enemies around you and reducing their Movement Speed by 40%.\n\nYou and nearby allies gain Major Protection, reducing your damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_SLEET_STORM,
     },
@@ -77,7 +77,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_002',
       description:
-        'Spin a shield of ice around you, absorbing up to 16528 damage from 3 projectiles. \n\nEach time you absorb a projectile you gain 2 Ultimate.',
+        'Spin a shield of ice around you, absorbing up to 16528 damage from 3 projectiles.\n\nEach time you absorb a projectile you gain 2 Ultimate.',
       baseSkillId: ClassSkillId.WARDEN_CRYSTALLIZED_SHIELD,
     },
     {
@@ -86,7 +86,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_002_a',
       description:
-        'Spin a shield of ice around you, absorbing up to 24791 damage from 3 projectiles. \n\nEach time you absorb a projectile you launch an icy bolt back at the enemy, dealing 1199 Frost Damage and stunning them for 3 seconds.',
+        'Spin a shield of ice around you, absorbing up to 24791 damage from 3 projectiles.\n\nEach time you absorb a projectile you launch an icy bolt back at the enemy, dealing 1199 Frost Damage and stunning them for 3 seconds.',
       baseSkillId: ClassSkillId.WARDEN_CRYSTALLIZED_SHIELD,
     },
     {
@@ -95,7 +95,7 @@ export const wintersEmbrace: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_002_b',
       description:
-        'Spin a shield of ice around you, absorbing up to 16527 damage from 3 projectiles. \n\nEach time you absorb a projectile you gain 2 Ultimate and gain Major Heroism for 6 seconds, granting you 3 Ultimate every 1.5 seconds.',
+        'Spin a shield of ice around you, absorbing up to 16527 damage from 3 projectiles.\n\nEach time you absorb a projectile you gain 2 Ultimate and gain Major Heroism for 6 seconds, granting you 3 Ultimate every 1.5 seconds.',
       baseSkillId: ClassSkillId.WARDEN_CRYSTALLIZED_SHIELD,
     },
     {

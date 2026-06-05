@@ -67,7 +67,7 @@ export const restoringLight: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_honor_the_dead',
       description:
-        "Beacon your inner light, healing yourself or a wounded ally in front of you for 3485 Health. \n\nHealing anyone who is below 75% Health restores 18% of the ability's cost every 2 seconds over 6 seconds as Magicka.",
+        "Beacon your inner light, healing yourself or a wounded ally in front of you for 3485 Health.\n\nHealing anyone who is below 75% Health restores 18% of the ability's cost every 2 seconds over 6 seconds as Magicka.",
       baseSkillId: ClassSkillId.TEMPLAR_RUSHED_CEREMONY,
     },
     {
@@ -129,7 +129,7 @@ export const restoringLight: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_rune_focus',
       description:
-        'Create a rune of celestial protection and gain Major Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948. \n\nWhile the rune is active you heal for 319 Health every 1 second, scaling off your Max Health. Standing within the rune increases the healing done by 200%.',
+        'Create a rune of celestial protection and gain Major Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948.\n\nWhile the rune is active you heal for 319 Health every 1 second, scaling off your Max Health. Standing within the rune increases the healing done by 200%.',
       baseSkillId: ClassSkillId.TEMPLAR_RUNE_FOCUS,
     },
     {
@@ -174,7 +174,7 @@ export const restoringLight: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_purifying_ritual',
       description:
-        'Exalt in the sacred light of the Aedra, cleansing up to 2 harmful effects from yourself immediately. While in the area, enemies take 435 Magic Damage every 2 seconds for 20 seconds which increases by 12% per tick. \n\nAllies in the area can activate the Purify synergy, cleansing all harmful effects from themselves and healing for 1912 Health.',
+        'Exalt in the sacred light of the Aedra, cleansing up to 2 harmful effects from yourself immediately. While in the area, enemies take 435 Magic Damage every 2 seconds for 20 seconds which increases by 12% per tick.\n\nAllies in the area can activate the Purify synergy, cleansing all harmful effects from themselves and healing for 1912 Health.',
       baseSkillId: ClassSkillId.TEMPLAR_CLEANSING_RITUAL,
     },
     {
@@ -194,7 +194,7 @@ export const restoringLight: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_026',
       description:
-        'Increases resurrection speed by 20%. \n\nResurrected allies return with 100% more Health. \n\nGives you a 50% chance to fill an empty Soul Gem after each successful resurrection.',
+        'Increases resurrection speed by 20%.\n\nResurrected allies return with 100% more Health.\n\nGives you a 50% chance to fill an empty Soul Gem after each successful resurrection.',
       isPassive: true,
     },
     {

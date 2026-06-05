@@ -175,7 +175,7 @@ export const aedricSpear: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_double_tipped_charge',
       description:
-        'Charge with your divine lance to impale all enemies in the area, dealing 1799 Magic Damage while taunting the first enemy hit to attack you for 15 seconds. Any enemy hit that was casting is interrupted, set Off Balance, and stunned for 3 seconds.\n\n You also gain Major Protection for 15 seconds, reducing your damage taken by 10%.',
+        'Charge with your divine lance to impale all enemies in the area, dealing 1799 Magic Damage while taunting the first enemy hit to attack you for 15 seconds. Any enemy hit that was casting is interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Protection for 15 seconds, reducing your damage taken by 10%.',
       baseSkillId: ClassSkillId.TEMPLAR_FOCUSED_CHARGE,
     },
     {
@@ -206,7 +206,7 @@ export const aedricSpear: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_022',
       description:
-        'Increases your Critical Damage by 12%. \n\nIncreases your damage done to blocking players by 12%.',
+        'Increases your Critical Damage by 12%.\n\nIncreases your damage done to blocking players by 12%.',
       isPassive: true,
     },
     {

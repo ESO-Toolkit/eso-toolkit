@@ -56,7 +56,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4642 Health over 10 seconds. \n\nIncreases your Magicka Recovery by 15 for each target affected, stacking up to 20 times.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 4642 Health over 10 seconds.\n\nIncreases your Magicka Recovery by 15 for each target affected, stacking up to 20 times.',
     },
     {
       id: 40058, // Illustrious Healing (morph)
@@ -131,7 +131,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.STEADFAST_WARD,
       description:
-        "Call on your staff's strength to protect you or the lowest health ally around you with a damage shield that absorbs 2399 damage.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds. \n\nWhile the shield persists, the target is healed for 33% of the shield's remaining strength every second.",
+        "Call on your staff's strength to protect you or the lowest health ally around you with a damage shield that absorbs 2399 damage.\n\nThe shield's strength is increased by up to 100%, depending on the severity of the target's wounds.\n\nWhile the shield persists, the target is healed for 33% of the shield's remaining strength every second.",
     },
     {
       id: 40130, // Ward Ally (morph)

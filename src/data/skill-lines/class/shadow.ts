@@ -39,7 +39,7 @@ export const shadow: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_015_b',
       description:
-        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70%, dealing 1438 Magic Damage to them every 1 second, and granting you and your allies Major Protection, reducing your damage taken by 10%. \n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70%, dealing 1438 Magic Damage to them every 1 second, and granting you and your allies Major Protection, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -130,7 +130,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001',
       description:
-        "Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds. \n\nThe shade slashes at an enemy, dealing 462 Magic Damage once every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.",
+        "Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade slashes at an enemy, dealing 462 Magic Damage once every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -139,7 +139,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001_a',
       description:
-        'Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds. \n\nThe shade attacks nearby enemies within 9 meters of it, dealing 623 Magic Damage once every 2 seconds and afflicting them with Minor Maim for 4 seconds, reducing their damage done by 5%.',
+        'Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade attacks nearby enemies within 9 meters of it, dealing 623 Magic Damage once every 2 seconds and afflicting them with Minor Maim for 4 seconds, reducing their damage done by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -148,7 +148,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001_b',
       description:
-        "Summon a shade version of yourself to stay in place and attack an enemy from range for 20 seconds. \n\nThe shade shoots at an enemy, dealing 478 Magic Damage every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.\n\nWhile the shade is summoned, you can activate this ability again for no cost to teleport to the shade's location.",
+        "Summon a shade version of yourself to stay in place and attack an enemy from range for 20 seconds.\n\nThe shade shoots at an enemy, dealing 478 Magic Damage every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.\n\nWhile the shade is summoned, you can activate this ability again for no cost to teleport to the shade's location.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {

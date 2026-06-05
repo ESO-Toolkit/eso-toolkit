@@ -27,7 +27,7 @@ export const vampire: SkillLineData = {
       isUltimate: true,
       maxRank: 4,
       description:
-        'Transform into a monstrous creature of the night, instantly healing to full Health.\n\nWhile transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls. \n\nYou also ascend to Vampire Stage 5, which grants all the benefits of Vampire Stage 4 with none of the drawbacks.',
+        'Transform into a monstrous creature of the night, instantly healing to full Health.\n\nWhile transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls.\n\nYou also ascend to Vampire Stage 5, which grants all the benefits of Vampire Stage 4 with none of the drawbacks.',
     },
     {
       id: 38932, // Morph of Blood Scion
@@ -37,7 +37,7 @@ export const vampire: SkillLineData = {
       isUltimate: true,
       maxRank: 4,
       description:
-        'Transform into a monstrous creature of the night, instantly healing to full Health.\n\nWhile transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls. \n\nBats also swarm around you and shred enemies that come close, dealing 870 Magic Damage every 1 second.',
+        'Transform into a monstrous creature of the night, instantly healing to full Health.\n\nWhile transformed, your Max Health, Magicka, and Stamina are increased by 10000, you heal for 15% of all damage you deal, and you can see enemies through walls.\n\nBats also swarm around you and shred enemies that come close, dealing 870 Magic Damage every 1 second.',
     },
 
     // Active abilities - Eviscerate
@@ -219,7 +219,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 1,
       description:
-        'Allows you to feed on an unsuspecting target, killing them and increasing your Vampire Stage. Higher Stages make you a stronger Vampire at the cost of your humanity. Stages decrease over long periods of time. \n\nStage 1/2/3/4\n\nHealth Recovery: -10%/-30%/-60%/-100%\nFlame Damage Taken: +5%/+8%/+13%/+20%\nRegular Ability Costs: +3%/+5%/+8%/+12%\nVampire Ability Costs: -6%/-10%/-16%/-24%',
+        'Allows you to feed on an unsuspecting target, killing them and increasing your Vampire Stage. Higher Stages make you a stronger Vampire at the cost of your humanity. Stages decrease over long periods of time.\n\nStage 1/2/3/4\n\nHealth Recovery: -10%/-30%/-60%/-100%\nFlame Damage Taken: +5%/+8%/+13%/+20%\nRegular Ability Costs: +3%/+5%/+8%/+12%\nVampire Ability Costs: -6%/-10%/-16%/-24%',
     },
     {
       id: AbilityId.DARK_STALKER,
@@ -251,7 +251,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 1,
       description:
-        'Allows you to infect another player with Noxiphilic Sanguivoria once every week by returning to the Vampire ritual site. \n\nPlayers already infected with Lycanthropy cannot be infected with Noxiphilic Sanguivoria.',
+        'Allows you to infect another player with Noxiphilic Sanguivoria once every week by returning to the Vampire ritual site.\n\nPlayers already infected with Lycanthropy cannot be infected with Noxiphilic Sanguivoria.',
     },
     {
       id: AbilityId.UNDEATH,

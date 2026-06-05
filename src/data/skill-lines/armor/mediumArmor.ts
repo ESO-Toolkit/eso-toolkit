@@ -23,7 +23,7 @@ export const mediumArmor: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.EVASION,
       description:
-        'Shroud yourself in mist to gain Major Evasion, reducing damage taken from area attacks by 20% for 16 seconds.\n\nWhile this effect is active, when you take damage from a direct area of effect attack you gain Major Expedition for 0 seconds, increasing your Movement Speed by 30%. \n\nEach piece of Medium Armor worn increases the duration of this ability.',
+        'Shroud yourself in mist to gain Major Evasion, reducing damage taken from area attacks by 20% for 16 seconds.\n\nWhile this effect is active, when you take damage from a direct area of effect attack you gain Major Expedition for 0 seconds, increasing your Movement Speed by 30%.\n\nEach piece of Medium Armor worn increases the duration of this ability.',
     },
     {
       id: 39195, // Shuffle (morph)

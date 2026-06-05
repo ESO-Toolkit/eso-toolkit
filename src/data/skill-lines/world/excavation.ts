@@ -31,7 +31,7 @@ export const excavation: SkillLineData = {
       name: 'Augur',
       icon: 'u26_ability_digging_04',
       description:
-        "Indicates how near the Antiquity is to the selected location. \n\nCan only be used a limited number of times, based on the Antiquity's Difficulty.\n\nWorks on the lowest six layers of dirt and rocks. Cannot detect Bonus Loot.\n\nUsing Augur does not consume a turn.",
+        "Indicates how near the Antiquity is to the selected location.\n\nCan only be used a limited number of times, based on the Antiquity's Difficulty.\n\nWorks on the lowest six layers of dirt and rocks. Cannot detect Bonus Loot.\n\nUsing Augur does not consume a turn.",
       isUltimate: false,
       isPassive: true,
       maxRank: 1,

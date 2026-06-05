@@ -39,7 +39,7 @@ export const daedricSummoning: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_sorcerer_endless_atronachs',
       description:
-        'Summon an immobile storm atronach at the target location. Its arrival deals 2323 Shock Damage and stuns enemies for 3 seconds. The atronach calls upon a lightning storm every 2 seconds, dealing 2323 Shock Damage to enemies around it. \n\nEnemies hit are afflicted with the Concussion status effect.\n\nAn ally near the atronach can activate the Charged Lightning synergy, granting nearby allies Major Berserk for 10 seconds, increasing their damage done by 10%.',
+        'Summon an immobile storm atronach at the target location. Its arrival deals 2323 Shock Damage and stuns enemies for 3 seconds. The atronach calls upon a lightning storm every 2 seconds, dealing 2323 Shock Damage to enemies around it.\n\nEnemies hit are afflicted with the Concussion status effect.\n\nAn ally near the atronach can activate the Charged Lightning synergy, granting nearby allies Major Berserk for 10 seconds, increasing their damage done by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.SORCERER_SUMMON_STORM_ATRONACH,
     },
@@ -58,7 +58,7 @@ export const daedricSummoning: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_unstable_clannfear',
       description:
-        "Command the powers of Oblivion to send a Daedric clannfear to fight at your side. The clannfear's headbutt deals 358 Physical Damage, while its tail spike hits nearby enemies for 358 Physical Damage after 1 second. \n\nOnce summoned, you can activate the clannfear's special ability for 4320 Magicka, healing you for 5121 and the clannfear for 2560.\n\nThe clannfear remains until killed or unsummoned.",
+        "Command the powers of Oblivion to send a Daedric clannfear to fight at your side. The clannfear's headbutt deals 358 Physical Damage, while its tail spike hits nearby enemies for 358 Physical Damage after 1 second.\n\nOnce summoned, you can activate the clannfear's special ability for 4320 Magicka, healing you for 5121 and the clannfear for 2560.\n\nThe clannfear remains until killed or unsummoned.",
       baseSkillId: ClassSkillId.SORCERER_SUMMON_UNSTABLE_FAMILIAR,
     },
     {

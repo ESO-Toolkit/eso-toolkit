@@ -19,7 +19,7 @@ export const siphoning: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_018',
       description:
-        "Ravage nearby enemies' souls with a night rune, dealing 3486 Magic Damage and stunning them for 4 seconds. \n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
+        "Ravage nearby enemies' souls with a night rune, dealing 3486 Magic Damage and stunning them for 4 seconds.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },
@@ -29,7 +29,7 @@ export const siphoning: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_018_a',
       description:
-        "Ravage nearby enemies' souls with a night rune, dealing 3600 Magic Damage, healing for half the damage, and stunning them for 4 seconds. \n\nRavaged enemies are tethered to you for 8 seconds, and while they remain within 10 meters, you siphon 627 Health from them every second.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
+        "Ravage nearby enemies' souls with a night rune, dealing 3600 Magic Damage, healing for half the damage, and stunning them for 4 seconds.\n\nRavaged enemies are tethered to you for 8 seconds, and while they remain within 10 meters, you siphon 627 Health from them every second.\n\nAn ally can target a ravaged enemy and activate the Soul Leech synergy, dealing 3122 Magic Damage to them and healing for the damage caused.",
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_SOUL_SHRED,
     },

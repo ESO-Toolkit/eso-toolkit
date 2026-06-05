@@ -91,7 +91,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.LOW_SLASH,
       description:
-        'Surprise an enemy with a deep lunge, dealing 1438 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds. \n\nYou gain Minor Heroism, granting you 1 Ultimate every 1.5 seconds for 15 seconds.',
+        'Surprise an enemy with a deep lunge, dealing 1438 Physical Damage and afflicting them with Minor Maim, reducing their damage done by 5% for 15 seconds.\n\nYou gain Minor Heroism, granting you 1 Ultimate every 1.5 seconds for 15 seconds.',
     },
     {
       id: AbilityId.DEFENSIVE_POSTURE,
@@ -147,7 +147,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.POWER_BASH,
       description:
-        "Strike an enemy full-force with your shield, dealing 2323 Physical Damage. \n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
+        "Strike an enemy full-force with your shield, dealing 2323 Physical Damage.\n\nThis ability's damage is considered Bash damage and interrupts the enemy if they are casting.",
     },
     {
       id: 38382, // Power Slam (morph)

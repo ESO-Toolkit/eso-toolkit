@@ -132,7 +132,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_002',
       description:
-        'Slash an enemy, dealing 2323 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.',
+        'Slash an enemy, dealing 2323 Magic Damage.\n\nIf you strike an enemy from their flank you set them Off Balance.',
       baseSkillId: ClassSkillId.NIGHTBLADE_VEILED_STRIKE,
     },
     {
@@ -150,7 +150,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_002_b',
       description:
-        'Slash an enemy, dealing 2556 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.\n\nWhen you leave Sneak or invisibility while in combat, increase your damage done with this ability by 10% for 15 seconds.\n\nWhile slotted on either bar, you gain Minor Expedition, increasing your Movement Speed by 15%.',
+        'Slash an enemy, dealing 2556 Magic Damage.\n\nIf you strike an enemy from their flank you set them Off Balance.\n\nWhen you leave Sneak or invisibility while in combat, increase your damage done with this ability by 10% for 15 seconds.\n\nWhile slotted on either bar, you gain Minor Expedition, increasing your Movement Speed by 15%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_VEILED_STRIKE,
     },
     {
@@ -204,7 +204,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_017',
       description:
-        'Increases your Critical Damage by 10%. \n\nDealing Critical Damage grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
+        'Increases your Critical Damage by 10%.\n\nDealing Critical Damage grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
       isPassive: true,
     },
     {

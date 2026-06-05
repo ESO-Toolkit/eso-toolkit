@@ -24,7 +24,7 @@ export const werewolf: SkillLineData = {
       name: 'Pack Leader',
       icon: 'ability_werewolf_001_a',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. \n\nWhile transformed, your Max Stamina is increased by 30%, you take 10% less damage, and you summon two direwolves. You also grant yourself and nearby group members Minor Courage, increasing their Weapon and Spell Damage by 215.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds.\n\nWhile transformed, your Max Stamina is increased by 30%, you take 10% less damage, and you summon two direwolves. You also grant yourself and nearby group members Minor Courage, increasing their Weapon and Spell Damage by 215.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -34,7 +34,7 @@ export const werewolf: SkillLineData = {
       name: 'Werewolf Berserker',
       icon: 'ability_werewolf_001_b',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. \n\nWhile transformed, your Light Attacks apply a bleed for 3716 Bleed Damage over 4 seconds, your Heavy Attacks deal their damage in an area, and your Max Stamina is increased by 30%.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds.\n\nWhile transformed, your Light Attacks apply a bleed for 3716 Bleed Damage over 4 seconds, your Heavy Attacks deal their damage in an area, and your Max Stamina is increased by 30%.\n\nWhile slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -96,7 +96,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Rage",
       icon: 'ability_werewolf_004_b',
       description:
-        "Invoke the Huntsman's blessing, healing you for 6197 Health. This portion of the ability scales off your Max Health. \n\nIf you are at full Health you instead restore 3000 Stamina and gain Major Berserk, increasing your damage done by 10% for 10 seconds, but you also take 5% more damage.\n\nWhile slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you for 6197 Health. This portion of the ability scales off your Max Health.\n\nIf you are at full Health you instead restore 3000 Stamina and gain Major Berserk, increasing your damage done by 10% for 10 seconds, but you also take 5% more damage.\n\nWhile slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -250,7 +250,7 @@ export const werewolf: SkillLineData = {
       name: 'Bloodmoon',
       icon: 'ability_werewolf_008',
       description:
-        'Allows you to infect another player with Lycanthropy once every week by returning to the Werewolf ritual site. \n\nPlayers already infected with Noxiphilic Sanguivoria cannot be infected with Lycanthropy.',
+        'Allows you to infect another player with Lycanthropy once every week by returning to the Werewolf ritual site.\n\nPlayers already infected with Noxiphilic Sanguivoria cannot be infected with Lycanthropy.',
       maxRank: 1,
       isUltimate: false,
       isPassive: true,

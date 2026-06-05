@@ -121,7 +121,7 @@ export const undaunted: SkillLineData = {
       id: AbilityId.NECROTIC_ORB,
       name: 'Necrotic Orb',
       description:
-        'Project a globe of annihilation that slowly floats forward for 10 seconds, dealing 316 Magic Damage every 1 second to nearby enemies. \n\nAn ally near the globe can activate the Combustion synergy, causing the orb to explode for 2249 Magic Damage to nearby enemies and restore 3960 Magicka or Stamina to the ally, whichever maximum is higher.',
+        'Project a globe of annihilation that slowly floats forward for 10 seconds, dealing 316 Magic Damage every 1 second to nearby enemies.\n\nAn ally near the globe can activate the Combustion synergy, causing the orb to explode for 2249 Magic Damage to nearby enemies and restore 3960 Magicka or Stamina to the ally, whichever maximum is higher.',
       type: 'active',
       isPassive: false,
       isUltimate: false,
@@ -139,7 +139,7 @@ export const undaunted: SkillLineData = {
       id: 42028, // Mystic Orb (morph)
       name: 'Mystic Orb',
       description:
-        'Project a globe of annihilation that slowly floats forward, dealing 326 Magic Damage every 1 second to nearby enemies. \n\nWhile the orb is active you gain 100 Health, Magicka, and Stamina Recovery.\n\nAn ally near the globe can activate the Combustion synergy, causing the orb to explode for 2249 Magic Damage to nearby enemies and restore 3960 Magicka or Stamina to the ally, whichever maximum is higher.',
+        'Project a globe of annihilation that slowly floats forward, dealing 326 Magic Damage every 1 second to nearby enemies.\n\nWhile the orb is active you gain 100 Health, Magicka, and Stamina Recovery.\n\nAn ally near the globe can activate the Combustion synergy, causing the orb to explode for 2249 Magic Damage to nearby enemies and restore 3960 Magicka or Stamina to the ally, whichever maximum is higher.',
       type: 'active',
       isPassive: false,
       isUltimate: false,

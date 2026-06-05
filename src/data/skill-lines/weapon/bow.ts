@@ -15,7 +15,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.RAPID_FIRE,
       description:
-        'Unleash a barrage of arrows at an enemy, dealing 17415 Physical Damage over 4 seconds. \n\nYou can move at full speed and are immune to all disabling effects while channeling this attack.\n\nThis ability is considered direct damage.',
+        'Unleash a barrage of arrows at an enemy, dealing 17415 Physical Damage over 4 seconds.\n\nYou can move at full speed and are immune to all disabling effects while channeling this attack.\n\nThis ability is considered direct damage.',
     },
     {
       id: 83484, // Ballista (morph)
@@ -32,7 +32,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'ultimate',
       baseAbilityId: AbilityId.RAPID_FIRE,
       description:
-        'Unleash a barrage of arrows at an enemy, dealing 17415 Poison Damage over 4 seconds. \n\nAfter dealing damage you poison the enemy, dealing an additional 9990 Poison Damage over 8 seconds after a 1 second delay. \n\nYou can move at full speed and are immune to all disabling effects while channeling this attack.\n\nThis ability is considered direct damage.',
+        'Unleash a barrage of arrows at an enemy, dealing 17415 Poison Damage over 4 seconds.\n\nAfter dealing damage you poison the enemy, dealing an additional 9990 Poison Damage over 8 seconds after a 1 second delay.\n\nYou can move at full speed and are immune to all disabling effects while channeling this attack.\n\nThis ability is considered direct damage.',
     },
 
     // Scribing abilities
@@ -133,7 +133,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ARROW_SPRAY,
       description:
-        'Fire a burst of arrows in one shot, dealing 1742 Physical Damage to enemies in front of you. \n\nEnemies hit are immobilized for 4 seconds.',
+        'Fire a burst of arrows in one shot, dealing 1742 Physical Damage to enemies in front of you.\n\nEnemies hit are immobilized for 4 seconds.',
     },
     {
       id: 38701, // Bombard (morph)

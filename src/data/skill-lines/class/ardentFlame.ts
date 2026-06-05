@@ -29,7 +29,7 @@ export const ardentFlame: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_006_a',
       description:
-        'Call down a battle standard, dealing 898 Flame Damage every 1 second for 25 seconds to enemies and applying Major Defile to them, reducing their healing received and damage shield strength by 12%. \n\nActivating this ability again allows you to move the standard to your location.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
+        'Call down a battle standard, dealing 898 Flame Damage every 1 second for 25 seconds to enemies and applying Major Defile to them, reducing their healing received and damage shield strength by 12%.\n\nActivating this ability again allows you to move the standard to your location.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -197,7 +197,7 @@ export const ardentFlame: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_011',
       description:
-        'To you, flame is fuel. \n\nWhen you apply Burning to an enemy, you restore 225 Magicka and Stamina. This effect can occur once every 1 second.',
+        'To you, flame is fuel.\n\nWhen you apply Burning to an enemy, you restore 225 Magicka and Stamina. This effect can occur once every 1 second.',
       isPassive: true,
     },
     {

@@ -69,7 +69,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.FORCE_SHOCK,
       description:
-        'Focus all the elemental energies with your staff and blast an enemy for 696 Flame Damage, 696 Frost Damage, and 696 Shock Damage. \n\nUp to 2 nearby enemies will take \n2399 Magic Damage if they were already afflicted with a status effect.',
+        'Focus all the elemental energies with your staff and blast an enemy for 696 Flame Damage, 696 Frost Damage, and 696 Shock Damage.\n\nUp to 2 nearby enemies will take\n2399 Magic Damage if they were already afflicted with a status effect.',
     },
     {
       id: AbilityId.WALL_OF_ELEMENTS,
@@ -152,7 +152,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.DESTRUCTIVE_TOUCH,
       description:
-        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds. \n\nThe initial hit always applies the element's status effect.",
+        "Devastate an enemy with an enhanced charge from your staff, dealing 1161 Magic Damage and an additional 3470 Magic Damage over 20 seconds.\n\nThe initial hit always applies the element's status effect.",
     },
     {
       id: 38984, // Destructive Clench (morph)

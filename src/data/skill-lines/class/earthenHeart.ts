@@ -39,7 +39,7 @@ export const earthenHeart: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_018_b',
       description:
-        'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1619 Flame Damage to nearby enemies each second for 10 seconds. \n\nWhile active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
+        'Ignite the molten lava in your veins, limiting incoming damage to 6% of your Max Health and dealing 1619 Flame Damage to nearby enemies each second for 10 seconds.\n\nWhile active your direct damage attacks ignore enemy Physical and Spell Resistance but you cannot generate Ultimate.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MAGMA_ARMOR,
     },

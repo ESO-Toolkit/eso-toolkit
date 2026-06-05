@@ -59,24 +59,28 @@ export function stripMarkup(raw) {
   s = s.replace(/\^[a-zA-Z]/g, '');
   // Any stray leftover pipe-escapes.
   s = s.replace(/\|\|/g, '|');
-  // Strip in-game dynamic "Current <bonus|amount|duration|penalty>: ..." readouts —
-  // the live state of the dumping char (e.g. "Current bonus: 0%" on a naked reference
-  // char), not static data. A readout runs from "Current <word>:" to the next blank-line
-  // paragraph break (or end). Repeat to catch multiple, and PRESERVE any static clause
-  // that follows the readout (e.g. Constitution's second effect after its Current line).
+  // Strip in-game dynamic "Current ..." readouts — the live state of the dumping char,
+  // not static data. Both skills ("Current bonus: 0%") and sets ("Current value: 0%",
+  // "Current 174 Weapon and Spell Damage", "Current Durations\n...") use free-form
+  // phrasings, so match any "Current ..." segment that begins right after a line/para
+  // break, running to the next blank-line paragraph break (or end). Case-sensitive on the
+  // capital C so real prose ("based on your current Health") is untouched. Repeat for
+  // multiple readouts; PRESERVE any static clause that follows one.
   {
     let prev;
     do {
       prev = s;
-      s = s.replace(
-        /\n*\s*Current (?:bonus|amount|duration|penalty)\s*:[^\n]*(?:\n(?!\n)[^\n]*)*(\n\n|$)/i,
-        (_m, tail) => (tail === '\n\n' ? '\n\n' : ''),
+      s = s.replace(/\n+\s*Current [^\n]*(?:\n(?!\n)[^\n]*)*(\n\n|$)/, (_m, tail) =>
+        tail === '\n\n' ? '\n\n' : '',
       );
     } while (s !== prev);
     s = s.replace(/\n{3,}/g, '\n\n');
   }
-  // Tidy whitespace.
-  s = s.replace(/[ \t]{2,}/g, ' ').trim();
+  // Tidy whitespace: collapse runs of spaces/tabs, drop spaces hugging a newline
+  // (ESO tooltips often carry a trailing space before a paragraph break), then trim.
+  s = s.replace(/[ \t]{2,}/g, ' ');
+  s = s.replace(/[ \t]+\n/g, '\n').replace(/\n[ \t]+/g, '\n');
+  s = s.trim();
   return s;
 }
 

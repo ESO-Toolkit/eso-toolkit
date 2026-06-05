@@ -103,7 +103,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_010',
       description:
-        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you and immobilizing them for 4 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
+        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you and immobilizing them for 4 seconds.\n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DARK_TALONS,
     },
     {
@@ -112,7 +112,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_010_b',
       description:
-        'Call forth talons from the ground, dealing 1799 Flame Damage to enemies near you, an additional 1635 Flame Damage over 5 seconds, and immobilizing them for 4 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
+        'Call forth talons from the ground, dealing 1799 Flame Damage to enemies near you, an additional 1635 Flame Damage over 5 seconds, and immobilizing them for 4 seconds.\n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DARK_TALONS,
     },
     {
@@ -121,7 +121,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_010_a',
       description:
-        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you and immobilizing them for 4 seconds. \n\nEnemies hit are afflicted with Minor Maim, reducing damage done by 5% for 20 seconds. \n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
+        'Call forth talons from the ground, dealing 1742 Flame Damage to enemies near you and immobilizing them for 4 seconds.\n\nEnemies hit are afflicted with Minor Maim, reducing damage done by 5% for 20 seconds.\n\nAn ally near the talons can activate the Ignite synergy, dealing 2812 Flame Damage to all enemies held within them.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DARK_TALONS,
     },
     {
@@ -148,7 +148,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_011_a',
       description:
-        'Draw on your draconic blood to heal yourself for 2999 and nearby allies for 1998 Health, increasing by up to 50% additional healing based on missing Health. \n\nHealed targets gain Major Fortitude and Minor Courage, increasing Health Recovery by 30% and Weapon and Spell Damage by 215 for 20 seconds.',
+        'Draw on your draconic blood to heal yourself for 2999 and nearby allies for 1998 Health, increasing by up to 50% additional healing based on missing Health.\n\nHealed targets gain Major Fortitude and Minor Courage, increasing Health Recovery by 30% and Weapon and Spell Damage by 215 for 20 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGON_BLOOD,
     },
     {
@@ -175,7 +175,7 @@ export const draconicPower: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_008_b',
       description:
-        'Unfurl draconic wings to knock back enemies around you 4 meters and stun them for 1.8 seconds. \n\nThe enchanted winds summoned by your wings coalesce around you, reducing your damage taken from projectiles by 50% for 6 seconds, while granting you immunity to snares and immobilizations and Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
+        'Unfurl draconic wings to knock back enemies around you 4 meters and stun them for 1.8 seconds.\n\nThe enchanted winds summoned by your wings coalesce around you, reducing your damage taken from projectiles by 50% for 6 seconds, while granting you immunity to snares and immobilizations and Major Expedition for 4 seconds, increasing Movement Speed by 30%.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_PROTECTIVE_SCALE,
     },
     {

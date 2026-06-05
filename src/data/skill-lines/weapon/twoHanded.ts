@@ -68,7 +68,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.UPPERCUT,
       description:
-        'Slam an enemy with an upward swing, dealing 2760 Physical Damage and setting them Off Balance for 7 seconds. \n\nHitting an enemy that is already Off Balance stuns them for 2 seconds.\n\nTargets that are immune to Off Balance are snared by 40% for 2 seconds.',
+        'Slam an enemy with an upward swing, dealing 2760 Physical Damage and setting them Off Balance for 7 seconds.\n\nHitting an enemy that is already Off Balance stuns them for 2 seconds.\n\nTargets that are immune to Off Balance are snared by 40% for 2 seconds.',
     },
     {
       id: 38807, // Wrecking Blow (morph)
@@ -84,7 +84,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CRITICAL_CHARGE,
       description:
-        'Launch across the earth and smash an enemy, dealing 1392 Physical Damage. \n\nThis attack is always a Critical Strike.',
+        'Launch across the earth and smash an enemy, dealing 1392 Physical Damage.\n\nThis attack is always a Critical Strike.',
     },
     {
       id: 38788, // Critical Rush (morph)
@@ -116,7 +116,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CLEAVE,
       description:
-        'Focus your strength into a mighty swing, dealing 1742 Bleed Damage to enemies in front of you, and causing them to bleed for an additional 2868 Bleed Damage over 12 seconds. \n\nHitting a target that is already bleeding from this ability extends the duration by 10 seconds, up to a maximum of 32.\n\nYou also gain a damage shield that absorbs 1742 damage for 6 seconds.',
+        'Focus your strength into a mighty swing, dealing 1742 Bleed Damage to enemies in front of you, and causing them to bleed for an additional 2868 Bleed Damage over 12 seconds.\n\nHitting a target that is already bleeding from this ability extends the duration by 10 seconds, up to a maximum of 32.\n\nYou also gain a damage shield that absorbs 1742 damage for 6 seconds.',
     },
     {
       id: 38754, // Carve (morph)

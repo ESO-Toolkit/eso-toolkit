@@ -39,7 +39,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_006_a',
       description:
-        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 8 seconds that deals 1151 Magic Damage to enemies within 5 meters every 0.5 seconds. \n\nThe scion's beam automatically follows the initial target, and hunts for a new one within 8 meters if it is slain.",
+        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 8 seconds that deals 1151 Magic Damage to enemies within 5 meters every 0.5 seconds.\n\nThe scion's beam automatically follows the initial target, and hunts for a new one within 8 meters if it is slain.",
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
     },
@@ -95,7 +95,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_001_a',
       description:
-        'Craft a series of Apocryphal runes before launching them at a foe, dealing 718 Magic Damage three times and generating Crux. \n\nThis ability gains between 1095 and 2191 Weapon and Spell Critical rating and deals 3% increased damage for each active Crux when cast.',
+        'Craft a series of Apocryphal runes before launching them at a foe, dealing 718 Magic Damage three times and generating Crux.\n\nThis ability gains between 1095 and 2191 Weapon and Spell Critical rating and deals 3% increased damage for each active Crux when cast.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEBLADES,
     },
     {

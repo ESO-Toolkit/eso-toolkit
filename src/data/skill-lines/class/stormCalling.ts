@@ -19,7 +19,7 @@ export const stormCalling: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_sorcerer_overload',
       description:
-        'Charge your fists with the power of the storm, replacing your Light and Heavy Attacks with new, stronger abilities.\n\nLight Attacks become lightning bolts, dealing 2323 Shock Damage to an enemy up to 28 meters away. \n\nHeavy Attacks blast enemies in a 4 x 6 area for 2090 Shock Damage.\n\nAttacks deplete Ultimate until you run out, or the ability is toggled off.',
+        'Charge your fists with the power of the storm, replacing your Light and Heavy Attacks with new, stronger abilities.\n\nLight Attacks become lightning bolts, dealing 2323 Shock Damage to an enemy up to 28 meters away.\n\nHeavy Attacks blast enemies in a 4 x 6 area for 2090 Shock Damage.\n\nAttacks deplete Ultimate until you run out, or the ability is toggled off.',
       isUltimate: true,
       baseSkillId: ClassSkillId.SORCERER_OVERLOAD,
     },
@@ -76,7 +76,7 @@ export const stormCalling: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_lightning_form',
       description:
-        'Manifest yourself as pure lightning, zapping nearby enemies with electricity dealing 462 Shock Damage every 2 seconds for 20 seconds. \n\nWhile in this form you also gain Major Resolve, increasing your Physical Resistance and Spell Resistance by 5948.',
+        'Manifest yourself as pure lightning, zapping nearby enemies with electricity dealing 462 Shock Damage every 2 seconds for 20 seconds.\n\nWhile in this form you also gain Major Resolve, increasing your Physical Resistance and Spell Resistance by 5948.',
       baseSkillId: ClassSkillId.SORCERER_LIGHTNING_FORM,
     },
     {
@@ -108,7 +108,7 @@ export const stormCalling: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_lightning_splash',
       description:
-        'Create a nexus of storm energy at the target location, dealing 308 Shock Damage to enemies in the area every 1 second for 10 seconds.\n \nYou or an ally standing within the nexus can activate the Conduit synergy, dealing 2698 Shock Damage to enemies around them.',
+        'Create a nexus of storm energy at the target location, dealing 308 Shock Damage to enemies in the area every 1 second for 10 seconds.\n\nYou or an ally standing within the nexus can activate the Conduit synergy, dealing 2698 Shock Damage to enemies around them.',
       baseSkillId: ClassSkillId.SORCERER_LIGHTNING_SPLASH,
     },
     {
@@ -117,7 +117,7 @@ export const stormCalling: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_lightning_flood',
       description:
-        'Create a nexus of storm energy at the target location, dealing 415 Shock Damage to enemies in the area every 1 second for 10 seconds.\n \nYou or an ally standing within the nexus can activate the Conduit synergy, dealing 2698 Shock Damage to enemies around them.',
+        'Create a nexus of storm energy at the target location, dealing 415 Shock Damage to enemies in the area every 1 second for 10 seconds.\n\nYou or an ally standing within the nexus can activate the Conduit synergy, dealing 2698 Shock Damage to enemies around them.',
       baseSkillId: ClassSkillId.SORCERER_LIGHTNING_SPLASH,
     },
     {
@@ -126,7 +126,7 @@ export const stormCalling: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_liquid_lightning',
       description:
-        'Create a nexus of storm energy at the target location, dealing 309 Shock Damage to enemies in the area every 1 second for 15 seconds.\n \nYou or an ally standing within the nexus can activate the Conduit synergy, dealing 2698 Shock Damage to enemies around them.',
+        'Create a nexus of storm energy at the target location, dealing 309 Shock Damage to enemies in the area every 1 second for 15 seconds.\n\nYou or an ally standing within the nexus can activate the Conduit synergy, dealing 2698 Shock Damage to enemies around them.',
       baseSkillId: ClassSkillId.SORCERER_LIGHTNING_SPLASH,
     },
     {
@@ -162,7 +162,7 @@ export const stormCalling: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_bolt_escape',
       description:
-        'Transform yourself into pure energy and flash forward, stunning enemies near your final location for 3 seconds. \n\nThis effect cannot be blocked.\n\nCasting again within 4 seconds costs 33% more Magicka.',
+        'Transform yourself into pure energy and flash forward, stunning enemies near your final location for 3 seconds.\n\nThis effect cannot be blocked.\n\nCasting again within 4 seconds costs 33% more Magicka.',
       baseSkillId: ClassSkillId.SORCERER_BOLT_ESCAPE,
     },
     {

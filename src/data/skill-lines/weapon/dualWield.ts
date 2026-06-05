@@ -116,7 +116,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.WHIRLWIND,
       description:
-        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 30 seconds, reducing damage from area attacks by 20%. \n\nEvery 2 seconds the shrapnel will pulse, dealing 422 Physical Damage to all enemies within 5 meters.\n\nYou also gain Major Expedition for 4 seconds, increasing your Movement Speed by 30%.',
+        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 30 seconds, reducing damage from area attacks by 20%.\n\nEvery 2 seconds the shrapnel will pulse, dealing 422 Physical Damage to all enemies within 5 meters.\n\nYou also gain Major Expedition for 4 seconds, increasing your Movement Speed by 30%.',
     },
     {
       id: AbilityId.BLADE_CLOAK,
@@ -124,7 +124,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLADE_CLOAK,
       description:
-        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 20 seconds, reducing damage from area attacks by 20%. \n\nEvery 2 seconds the shrapnel will pulse, dealing 421 Physical Damage to all enemies within 5 meters.',
+        'Envelop yourself in a protective cloak of razors, gaining Major Evasion for 20 seconds, reducing damage from area attacks by 20%.\n\nEvery 2 seconds the shrapnel will pulse, dealing 421 Physical Damage to all enemies within 5 meters.',
     },
     {
       id: 38910, // Deadly Cloak (morph)
@@ -141,7 +141,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.BLADE_CLOAK,
       description:
-        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1799 Physical Damage per hit. \n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
+        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1799 Physical Damage per hit.\n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
     },
     {
       id: AbilityId.HIDDEN_BLADE,
@@ -165,7 +165,7 @@ export const dualWieldSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.HIDDEN_BLADE,
       description:
-        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1799 Physical Damage per hit. \n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
+        'Fire a secret dagger from your sleeve that bounces up to 3 times to nearby enemies, dealing 1799 Physical Damage per hit.\n\nIf enemies hit are casting they are interrupted, set Off Balance, and stunned for 3 seconds.\n\nYou also gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.',
     },
 
     // Passive Abilities

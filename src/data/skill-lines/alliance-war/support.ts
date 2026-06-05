@@ -22,7 +22,7 @@ export const support: SkillLineData = {
       id: 40239, // Morph of Barrier
       name: 'Replenishing Barrier',
       description:
-        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage. \n\nEach time a ward dissolves, you restore 1500 Magicka.',
+        'Invoke defensive tactics to protect yourself and nearby group members with wards that each absorb up to 11620 damage.\n\nEach time a ward dissolves, you restore 1500 Magicka.',
       isUltimate: true,
       isPassive: false,
       maxRank: 4,
@@ -86,7 +86,7 @@ export const support: SkillLineData = {
       id: 40234, // Morph of Purge
       name: 'Cleanse',
       description:
-        'Cleanse yourself and your group, removing 3 negative effects immediately. \n\nFor every negative effect removed, the target is healed for 5% of their Max Health.',
+        'Cleanse yourself and your group, removing 3 negative effects immediately.\n\nFor every negative effect removed, the target is healed for 5% of their Max Health.',
       isUltimate: false,
       isPassive: false,
       maxRank: 4,
