@@ -292,6 +292,11 @@ function transform(sv) {
     })),
   }));
 
+  // ID-driven pass: abilities captured directly by id (scribing grimoires/morphs
+  // and the AbilityId enum) that the skill-tree walk cannot enumerate. Same shape
+  // as a morph entry; consumed by the refresh by id.
+  const abilitiesById = asArray(sv.abilitiesById).map(cleanAbility);
+
   return {
     meta: {
       formatVersion: sv.formatVersion,
@@ -301,6 +306,7 @@ function transform(sv) {
     },
     skillLines: [...linesMap.values()],
     sets,
+    abilitiesById,
   };
 }
 
@@ -331,6 +337,14 @@ function report(result) {
     }
   }
 
+  const byId = result.abilitiesById ?? [];
+  let byIdWithDesc = 0;
+  let byIdTokenLeak = 0;
+  for (const ab of byId) {
+    if (ab.description) byIdWithDesc++;
+    if (ab.description && /<<\d|\|c[0-9a-f]{6}/i.test(ab.description)) byIdTokenLeak++;
+  }
+
   const byCategory = {};
   for (const line of lines) byCategory[line.category] = (byCategory[line.category] ?? 0) + 1;
 
@@ -344,11 +358,15 @@ function report(result) {
   console.log(`Sets:               ${result.sets.length}`);
   console.log(`  set bonuses:      ${setBonuses}`);
   console.log(`  markup leak:      ${setTokenLeak} ${setTokenLeak ? '  <-- WARNING' : 'OK'}`);
+  console.log(`Abilities by id:    ${byId.length}`);
+  console.log(`  with description: ${byIdWithDesc}`);
+  console.log(`  markup leak:      ${byIdTokenLeak} ${byIdTokenLeak ? '  <-- WARNING' : 'OK'}`);
 
   const problems = [];
   if (abilities === 0) problems.push('no abilities parsed');
   if (withDesc < abilities * 0.95) problems.push('many abilities missing descriptions');
-  if (tokenLeak > 0 || setTokenLeak > 0) problems.push('markup leaked into output');
+  if (tokenLeak > 0 || setTokenLeak > 0 || byIdTokenLeak > 0)
+    problems.push('markup leaked into output');
   if (result.sets.length === 0) problems.push('no sets parsed');
   if (problems.length) {
     console.log(`\n!! ISSUES: ${problems.join('; ')}`);

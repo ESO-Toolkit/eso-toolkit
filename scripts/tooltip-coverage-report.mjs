@@ -100,6 +100,11 @@ for (const line of dump.skillLines) {
     }
   }
 }
+// Include the ID-driven pass (scribing + enum ids) so coverage accounts for them.
+for (const ab of dump.abilitiesById || []) {
+  if (ab.id != null) dumpIds.add(ab.id);
+  if (ab.name) dumpNames.add(norm(ab.name));
+}
 
 // --- Report ---------------------------------------------------------------
 // A skill is "matched" if its primary id, ANY alternateId, or its name is in the dump

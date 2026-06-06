@@ -44,6 +44,13 @@ for (const line of dump.skillLines) {
     }
   }
 }
+// ID-driven pass: scribing grimoires/morphs + enum ids the skill-tree walk can't
+// enumerate. Index them the same way so the keyed refresh reaches scribing skills.
+for (const ab of dump.abilitiesById || []) {
+  if (ab.id != null && ab.description) keepHigherRank(dumpById, ab.id, ab);
+  const k = norm(ab.name);
+  if (k && ab.description) keepHigherRank(dumpByName, k, ab);
+}
 
 // --- enum resolution ------------------------------------------------------
 function loadEnum(file) {
