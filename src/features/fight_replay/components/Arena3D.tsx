@@ -525,11 +525,18 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
     const rangeX = arenaMaxX - arenaMinX;
     const rangeZ = arenaMaxZ - arenaMinZ;
-    const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    // Cap the close-zoom bound so an outlier-inflated whole-fight diagonal can't force the fallback
-    // initial framing absurdly far out (mirrors the cap in Arena3DScene, which owns the live clamp).
+    // Clamp the diagonal to the real arena scale before deriving camera bounds. The actor
+    // coordinate system maps into the fixed ~100-unit arena, so a real diagonal is ≤ ~141 units;
+    // an outlier boundingBox coordinate can otherwise inflate it to thousands, which inverts the
+    // min/max clamp (minDistance > maxDistance) and pins/zooms the camera absurdly far out. The
+    // sibling cameraSettings in Arena3DScene applies the same guard (it owns OrbitControls' bounds).
+    const ARENA_DIAGONAL = 100 * Math.SQRT2; // ~141
+    const diagonal = Math.min(Math.sqrt(rangeX * rangeX + rangeZ * rangeZ), ARENA_DIAGONAL);
+    // Cap the close-zoom bound at 12 so the fallback initial framing can't be forced absurdly far
+    // out (mirrors the cap in Arena3DScene, which owns the live clamp); the maxDistance is floored
+    // strictly above minDistance so the clamp can never invert.
     const minDistance = Math.min(Math.max(5, diagonal * 0.3), 12);
-    const maxDistance = Math.min(500, Math.max(50, diagonal * 3));
+    const maxDistance = Math.max(minDistance + 1, Math.min(500, Math.max(50, diagonal * 3)));
 
     return {
       target: [centerX, 0, centerZ] as [number, number, number],
