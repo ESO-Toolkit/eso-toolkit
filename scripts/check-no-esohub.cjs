@@ -40,6 +40,8 @@ const ALLOWLIST = new Set(
     'src/features/build-editor/utils/__tests__/cspsExportCodeParser.test.ts',
     // This guard itself contains the token in its patterns/allowlist/comments.
     'scripts/check-no-esohub.cjs',
+    // Companion provenance guard: names this guard in its header comment.
+    'scripts/check-tooltip-provenance.mjs',
   ].map((p) => p.replace(/\//g, path.sep)),
 );
 

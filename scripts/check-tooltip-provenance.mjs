@@ -2,10 +2,11 @@
 /**
  * check-tooltip-provenance.mjs
  *
- * POSITIVE provenance gate. The no-esohub guard only proves the string "esohub"
- * is absent — it cannot prove that rendered tooltip prose actually came from the
- * game. This guard does the opposite: it verifies that every rendered tooltip
- * description traces to an entry in the in-game dump (data/tooltip-dump.json).
+ * POSITIVE provenance gate. The companion banned-string guard (scripts/
+ * check-no-esohub.cjs) only proves a forbidden third-party token is absent — it
+ * cannot prove that rendered tooltip prose actually came from the game. This
+ * guard does the opposite: it verifies that every rendered tooltip description
+ * traces to an entry in the in-game dump (data/tooltip-dump.json).
  *
  * Why: prose transcribed from a third party but stripped of attribution passes
  * the string guard yet is NOT provenance-clean. And absent data (e.g. scribing
@@ -81,7 +82,9 @@ if (fs.existsSync(FP_PATH)) {
     if (list.length) dumpSetBonusesSrc.set(norm(s.name), list);
   }
 } else {
-  console.error('No provenance source: need data/tooltip-provenance.json (committed) or data/tooltip-dump.json.');
+  console.error(
+    'No provenance source: need data/tooltip-provenance.json (committed) or data/tooltip-dump.json.',
+  );
   process.exit(1);
 }
 

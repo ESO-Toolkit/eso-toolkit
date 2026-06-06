@@ -57,7 +57,7 @@ export const aeriesCry: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done with Animal Companion abilities by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time.",
+    '(5 items) Dealing damage with a Light Attack applies Eagle\'s Mark to your target for 12 seconds. Eagle\'s Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle\'s Mark grants you Aerie\'s Call for 12 seconds, increasing your damage done with Animal Companion abilities by 10% against enemies with Eagle\'s Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle\'s Mark. You can have one Eagle\'s Mark active at a time.',
   ],
 };
 
@@ -118,7 +118,7 @@ export const alessiasBulwark: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1487 Armor',
-    "(5 items) When you take damage from a Martial melee attack, you reduce the attacker's Weapon and Spell Damage by 300 for 5 seconds.",
+    '(5 items) When you take damage from a Martial melee attack, you reduce the attacker\'s Weapon and Spell Damage by 300 for 5 seconds.',
   ],
 };
 
@@ -373,7 +373,7 @@ export const baronZaudrus: GearSetData = {
     '(1 item) Adds 548 Maximum Stamina',
     '(1 item) Adds 548 Maximum Magicka',
     '(1 item) Adds 603 Maximum Health',
-    "(2 items) Applying a status effect to an enemy grants you a stack of Zaudrus's Ambition for 10 seconds, up to 3 stacks max. When you gain 3 stacks, the stacks are removed and you gain 4 Ultimate. On gaining Ultimate, you cannot gain additional stacks of Zaudrus's Ambition for 1 second.",
+    '(2 items) Applying a status effect to an enemy grants you a stack of Zaudrus\'s Ambition for 10 seconds, up to 3 stacks max. When you gain 3 stacks, the stacks are removed and you gain 4 Ultimate. On gaining Ultimate, you cannot gain additional stacks of Zaudrus\'s Ambition for 1 second.',
   ],
 };
 
@@ -492,7 +492,7 @@ export const blackGemMonstrosity: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
-    "(2 items) While in combat, casting a Soul Magic ability consumes a Soul Gem and gives you a Black Gemsplitter for 10 seconds. This effect can occur once every 6 seconds. Dealing Light or Heavy Attack damage fires the Black Gemsplitter at your target, dealing 17.1% of your target's Max Health as Magic Damage, up to 17100 Magic Damage.",
+    '(2 items) While in combat, casting a Soul Magic ability consumes a Soul Gem and gives you a Black Gemsplitter for 10 seconds. This effect can occur once every 6 seconds. Dealing Light or Heavy Attack damage fires the Black Gemsplitter at your target, dealing 17.1% of your target\'s Max Health as Magic Damage, up to 17100 Magic Damage.',
   ],
 };
 
@@ -658,7 +658,7 @@ export const coldharbourSFavorite: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Healing yourself or a group member summons Coldharbour's Favorite, who after 2 seconds, begins healing you and group members near him for 4648 Health over 6 seconds based on the higher of your Max Magicka or Stamina.\n\nDealing damage summons Coldharbour's Favorite, who after 2 seconds, explodes, damaging enemies near him for 2352 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage.\n\nColdharbour's Favorite can only be summoned once every 10 seconds.",
+    '(5 items) Healing yourself or a group member summons Coldharbour\'s Favorite, who after 2 seconds, begins healing you and group members near him for 4648 Health over 6 seconds based on the higher of your Max Magicka or Stamina.\n\nDealing damage summons Coldharbour\'s Favorite, who after 2 seconds, explodes, damaging enemies near him for 2352 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage.\n\nColdharbour\'s Favorite can only be summoned once every 10 seconds.',
   ],
 };
 
@@ -872,7 +872,7 @@ export const dragonSAppetite: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Stamina Recovery',
-    "(5 items) Increase your damage done to Bleeding enemies by 225. Dealing non-Bleed damage to Bleeding enemies generates a stack of Dragon's Appetite for 5 seconds, up to once per half second. After 10 stacks you consume Dragon's Appetite and heal for 4415 Health. The heal effect scales off the higher of your Max Magicka or Stamina.",
+    '(5 items) Increase your damage done to Bleeding enemies by 225. Dealing non-Bleed damage to Bleeding enemies generates a stack of Dragon\'s Appetite for 5 seconds, up to once per half second. After 10 stacks you consume Dragon\'s Appetite and heal for 4415 Health. The heal effect scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -1021,7 +1021,7 @@ export const encratisSBehemoth: GearSetData = {
   setType: 'PvP',
   bonuses: [
     '(1 item) Adds 1096 Maximum Magicka',
-    "(2 items) Dealing Flame Damage to an enemy grants you Behemoth's Aura for 12 seconds that reaches up to 12 meters. You and up to 11 group members in the aura reduce Flame Damage taken by 5%. Enemies in the aura increase their Flame Damage taken by 5%. This effect can occur once every 15 seconds.",
+    '(2 items) Dealing Flame Damage to an enemy grants you Behemoth\'s Aura for 12 seconds that reaches up to 12 meters. You and up to 11 group members in the aura reduce Flame Damage taken by 5%. Enemies in the aura increase their Flame Damage taken by 5%. This effect can occur once every 15 seconds.',
   ],
 };
 
@@ -1391,7 +1391,7 @@ export const havenOfUrsus: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 4% Healing Taken',
     '(4 items) Adds 1206 Maximum Health',
-    "(5 items) When you take damage while you are under 50% Health, summon Ursus's spirit for 6 seconds at a random group member. You or a group member can activate a synergy on Ursus to grant a shield that protects up to 6 group members within a 28 meter radius from 13967 damage for 6 seconds. This effect can occur once every 10 seconds.",
+    '(5 items) When you take damage while you are under 50% Health, summon Ursus\'s spirit for 6 seconds at a random group member. You or a group member can activate a synergy on Ursus to grant a shield that protects up to 6 group members within a 28 meter radius from 13967 damage for 6 seconds. This effect can occur once every 10 seconds.',
   ],
 };
 
@@ -1441,7 +1441,7 @@ export const highlandSentinel: GearSetData = {
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 986 Critical Chance',
-    "(5 items) While in combat, each second you stand still grants you a stack of Sentinel's Eye, increasing your Critical Chance by 443 per stack, stacking up to 3 times. Each second you move, one stack is removed. Using charge and teleport abilities does not remove stacks, and exiting combat will remove all stacks of Sentinel's Eye.",
+    '(5 items) While in combat, each second you stand still grants you a stack of Sentinel\'s Eye, increasing your Critical Chance by 443 per stack, stacking up to 3 times. Each second you move, one stack is removed. Using charge and teleport abilities does not remove stacks, and exiting combat will remove all stacks of Sentinel\'s Eye.',
   ],
 };
 
@@ -1684,7 +1684,7 @@ export const kjalnarSNightmare: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    "(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds.\n\nAt 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 2221 Magic Damage if they cannot be stunned. Enemies then become immune to Kjalnar's Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.",
+    '(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds.\n\nAt 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 2221 Magic Damage if they cannot be stunned. Enemies then become immune to Kjalnar\'s Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1763,7 +1763,7 @@ export const ladyThorn: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    "(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 2879 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.",
+    '(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 2879 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator\'s Max Health.',
   ],
 };
 
@@ -1890,7 +1890,7 @@ export const magnusGift: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you cast a Magicka ability, you have a 15% chance to negate that ability's cost.",
+    '(5 items) When you cast a Magicka ability, you have a 15% chance to negate that ability\'s cost.',
   ],
 };
 
@@ -1924,7 +1924,7 @@ export const mawOfTheInfernal: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    "(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth's attacks deal 599 Flame Damage every 2 seconds.\n\nThe Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.",
+    '(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth\'s attacks deal 599 Flame Damage every 2 seconds.\n\nThe Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1961,7 +1961,7 @@ export const meridiaSBlessedArmor: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 1487 Armor',
-    "(5 items) When you Block, you gain Meridia's Blessed Armor for 5 seconds, causing you to dodge all incoming attacks. This effect can occur once every 25 seconds.",
+    '(5 items) When you Block, you gain Meridia\'s Blessed Armor for 5 seconds, causing you to dodge all incoming attacks. This effect can occur once every 25 seconds.',
   ],
 };
 
@@ -2020,7 +2020,7 @@ export const monolithOfStorms: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 680 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds.",
+    '(5 items) Dealing damage with a Storm Calling ability\'s initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 680 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds.',
   ],
 };
 
@@ -2032,7 +2032,7 @@ export const morkuldin: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon's basic attacks deal 422 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.",
+    '(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon\'s basic attacks deal 422 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2167,7 +2167,7 @@ export const nikulasHeavyArmor: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1206 Maximum Health',
-    "(5 items) When you Block, you gain a stack of Nikulas' Resolve for 5 seconds, up to once every half second. After 8 stacks you consume Nikulas' Resolve and deflect the next direct damaging attack made against you within 5 seconds, avoiding it completely.",
+    '(5 items) When you Block, you gain a stack of Nikulas\' Resolve for 5 seconds, up to once every half second. After 8 stacks you consume Nikulas\' Resolve and deflect the next direct damaging attack made against you within 5 seconds, avoiding it completely.',
   ],
 };
 
@@ -2179,7 +2179,7 @@ export const nobilityInDecay: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 4% Healing Taken',
     '(4 items) Adds 1206 Maximum Health',
-    "(5 items) Casting a Bone Tyrant ability while in combat grants you Beautiful Corpse and Death's Favor for 16 seconds. Death's Favor increases your healing received and reduces damage taken by up to 12% based on your missing Health. This can occur once every 20 seconds, and is reduced by 2 seconds for each slotted Bone Tyrant ability.\n\nCasting a corpse consumer ability consumes Beautiful Corpse, treating you as a corpse.",
+    '(5 items) Casting a Bone Tyrant ability while in combat grants you Beautiful Corpse and Death\'s Favor for 16 seconds. Death\'s Favor increases your healing received and reduces damage taken by up to 12% based on your missing Health. This can occur once every 20 seconds, and is reduced by 2 seconds for each slotted Bone Tyrant ability.\n\nCasting a corpse consumer ability consumes Beautiful Corpse, treating you as a corpse.',
   ],
 };
 
@@ -2226,7 +2226,7 @@ export const oblivionSFoe: GearSetData = {
     '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with Soul Magic, you mark the target's soul dealing 1875 Magic Damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.",
+    '(5 items) When you deal damage with Soul Magic, you mark the target\'s soul dealing 1875 Magic Damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2286,7 +2286,7 @@ export const orpheonTheTactician: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    "(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target's location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 229 Physical Damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 1429 Physical Damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.",
+    '(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target\'s location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 229 Physical Damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 1429 Physical Damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2522,7 +2522,7 @@ export const ravager: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Each time you attempt to reduce the target's Physical or Spell Resistance, you gain a stack of Ravager for 5 seconds, increasing your Weapon and Spell Damage by 146. You can gain a stack every 1 second. At 4 stacks, the duration doubles but cannot be refreshed.",
+    '(5 items) Each time you attempt to reduce the target\'s Physical or Spell Resistance, you gain a stack of Ravager for 5 seconds, increasing your Weapon and Spell Damage by 146. You can gain a stack every 1 second. At 4 stacks, the duration doubles but cannot be refreshed.',
   ],
 };
 
@@ -2675,7 +2675,7 @@ export const senchalDefender: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Magicka',
-    "(5 items) Dealing direct damage with a non-Heavy Attack grants you one persistent stack of Senchal's Duty, up to 10 stacks. After completing a fully-charged Heavy Attack, restore 757 Stamina and Magicka for each stack of Senchal's Duty and consume them. You can only gain one stack of Senchal's Duty every 1 second.",
+    '(5 items) Dealing direct damage with a non-Heavy Attack grants you one persistent stack of Senchal\'s Duty, up to 10 stacks. After completing a fully-charged Heavy Attack, restore 757 Stamina and Magicka for each stack of Senchal\'s Duty and consume them. You can only gain one stack of Senchal\'s Duty every 1 second.',
   ],
 };
 
@@ -2709,7 +2709,7 @@ export const sergeantSMail: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Health Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Heavy Attack, you gain a stack of Sergeant's Focus for 5 seconds, increasing the damage of your Heavy Attacks by 645 per stack. This effect can occur once every second and stacks up to 4 times.",
+    '(5 items) When you deal damage with a Heavy Attack, you gain a stack of Sergeant\'s Focus for 5 seconds, increasing the damage of your Heavy Attacks by 645 per stack. This effect can occur once every second and stacks up to 4 times.',
   ],
 };
 
@@ -2756,7 +2756,7 @@ export const shadowrend: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(1 item) Adds 129 Magicka Recovery',
-    "(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear's attacks deal 615 Magic Damage and apply Minor Maim, reducing the target's damage done by 5% for 2 seconds.\n\nThe Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.",
+    '(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear\'s attacks deal 615 Magic Damage and apply Minor Maim, reducing the target\'s damage done by 5% for 2 seconds.\n\nThe Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.',
   ],
 };
 
@@ -2863,7 +2863,7 @@ export const sloadSSemblance: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Damaging an enemy has a 10% chance to fire a Shadow Pearl at them, dealing 3% of the target's Max Health as Oblivion Damage every 1 second for 6 seconds. The Shadow Pearl cannot be reflected. Effect can occur every 6 seconds.\n\nThis can deal a maximum of 3000 Oblivion Damage per tick.",
+    '(5 items) Damaging an enemy has a 10% chance to fire a Shadow Pearl at them, dealing 3% of the target\'s Max Health as Oblivion Damage every 1 second for 6 seconds. The Shadow Pearl cannot be reflected. Effect can occur every 6 seconds.\n\nThis can deal a maximum of 3000 Oblivion Damage per tick.',
   ],
 };
 
@@ -3068,7 +3068,7 @@ export const symphonyOfBlades: GearSetData = {
   setType: 'Mythic',
   bonuses: [
     '(1 item) Adds 4% Healing Done',
-    "(2 items) When you heal a group member who is under 50% of their primary resource, grant them Meridia's Favor, which restores 570 Magicka or Stamina every 1 second for 6 seconds. This effect can occur every 18 seconds per target.\n\nThis effect cannot target yourself, and the resource returned is based off the target's highest maximum resource.",
+    '(2 items) When you heal a group member who is under 50% of their primary resource, grant them Meridia\'s Favor, which restores 570 Magicka or Stamina every 1 second for 6 seconds. This effect can occur every 18 seconds per target.\n\nThis effect cannot target yourself, and the resource returned is based off the target\'s highest maximum resource.',
   ],
 };
 
@@ -3080,7 +3080,7 @@ export const systresScowl: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Stamina',
-    "(5 items) When you Bash an enemy, place Systres' Scowl on them for 15 seconds. When hit by a Light Attack, a target with Systres' Scowl takes 1973 Frost Damage, up to once every second.",
+    '(5 items) When you Bash an enemy, place Systres\' Scowl on them for 15 seconds. When hit by a Light Attack, a target with Systres\' Scowl takes 1973 Frost Damage, up to once every second.',
   ],
 };
 
@@ -3537,7 +3537,7 @@ export const vykosa: GearSetData = {
   setType: 'PvP',
   bonuses: [
     '(1 item) Adds 4% Healing Taken',
-    "(2 items) When you Bash an enemy you've taunted, you frighten them with a deafening howl, applying Major Cowardice to them, lowering their Weapon and Spell Damage by 430 for 8 seconds. This effect can occur once every 15 seconds.",
+    '(2 items) When you Bash an enemy you\'ve taunted, you frighten them with a deafening howl, applying Major Cowardice to them, lowering their Weapon and Spell Damage by 430 for 8 seconds. This effect can occur once every 15 seconds.',
   ],
 };
 
@@ -3623,7 +3623,7 @@ export const wrathsun: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 40 stacks max and gain 12 Magicka Recovery per stack. When at max stacks, your Dawn's Wrath abilities deal 25% bonus damage and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
+    '(5 items) When you deal damage with a Dawn\'s Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 40 stacks max and gain 12 Magicka Recovery per stack. When at max stacks, your Dawn\'s Wrath abilities deal 25% bonus damage and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.',
   ],
 };
 

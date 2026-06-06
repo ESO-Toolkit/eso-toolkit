@@ -28,7 +28,6 @@ import React, { useMemo, useState } from 'react';
 
 import * as arenaSets from '../data/Gear Sets/arena';
 import * as heavySets from '../data/Gear Sets/heavy';
-import { arenaSpecialGearSets, monsterGearSets } from '../data/Gear Sets/legacyAdapters';
 import * as lightSets from '../data/Gear Sets/light';
 import * as mediumSets from '../data/Gear Sets/medium';
 import * as mythicSets from '../data/Gear Sets/mythics';
@@ -54,9 +53,7 @@ const ALL_GEAR_SETS: GearSetData[] = (() => {
   addSets(lightSets as Record<string, unknown>);
   addSets(heavySets as Record<string, unknown>);
   addSets(mediumSets as Record<string, unknown>);
-  addSets(monsterGearSets as Record<string, unknown>);
   addSets(mythicSets as Record<string, unknown>);
-  addSets(arenaSpecialGearSets as Record<string, unknown>);
   addSets(arenaSets as Record<string, unknown>);
   addSets(sharedSets as Record<string, unknown>);
   return Array.from(registry.values()).sort((a, b) => a.name.localeCompare(b.name));
