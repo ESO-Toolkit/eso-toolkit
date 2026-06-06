@@ -36,9 +36,10 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const LIST = process.argv.includes('--list');
 
-// Coverage floor. Below this the gate FAILS. Set from the measured baseline so
-// any regression (new un-sourced prose) trips it. Raise as arena/monster land.
-const THRESHOLD = 0.97;
+// Coverage floor. Every rendered entry must either trace to the dump or be
+// explicitly allowlisted-with-reason, so the floor is 1.0 — any NEW un-sourced
+// prose (not exact-traced, not allowlisted) trips the gate.
+const THRESHOLD = 1.0;
 
 const norm = (s) =>
   (s || '')
@@ -92,20 +93,30 @@ if (fs.existsSync(FP_PATH)) {
 // rendered text (or vice versa) even if a leading "(N items)" differs slightly.
 const dumpArr = [...dumpNorm];
 
-function tracesToDump(text) {
+// Returns a match kind: 'exact' | 'prefix' | 'contained' | null.
+//  exact     — normalized rendered text equals a dump entry.
+//  prefix    — equal after stripping a leading "(N items)" piece-count prefix.
+//  contained — a dump entry CONTAINS the full rendered text (handles whitespace/
+//              prefix variance where the dump phrasing is a superset). This is the
+//              only sound substring direction. The reverse (rendered text contains
+//              a dump entry) is NOT used: a short generic dump phrase is a substring
+//              of countless longer rendered strings and would pass anything.
+function traceKind(text) {
   const n = norm(text);
-  if (!n) return true; // empty isn't a provenance claim
-  if (dumpNorm.has(n)) return true;
-  // strip a leading "(n items)" / "(n perfected items)" then retry exact
+  if (!n) return 'exact'; // empty isn't a provenance claim
+  if (dumpNorm.has(n)) return 'exact';
   const stripped = n.replace(/^\d+ (?:perfected )?items? /, '');
-  if (dumpNorm.has(stripped)) return true;
-  // substring fallback (only for non-trivial length to avoid false positives)
-  if (n.length >= 30) {
+  if (dumpNorm.has(stripped)) return 'prefix';
+  // Require a substantial length so "contained" can't pass on a trivial fragment.
+  if (stripped.length >= 40) {
     for (const d of dumpArr) {
-      if (d.includes(stripped) || stripped.includes(d)) return true;
+      if (d.includes(stripped)) return 'contained';
     }
   }
-  return false;
+  return null;
+}
+function tracesToDump(text) {
+  return traceKind(text) != null;
 }
 
 // --- allowlist: entries with no possible dump source, with reasons --------
@@ -126,6 +137,63 @@ const ALLOW_SETS = new Set(
     "Prophet's", // truncated/legacy app name; no matching dump set
   ].map(norm),
 );
+
+// --- allowlist: SKILL descriptions with no exact dump entry, each with a reason
+// tying it to an ability that IS sourced. These are equip-conditional morph forms
+// (the game only emits the element/item-specific text when that gear is worn) or
+// runtime-composed scribing — NOT third-party prose. Matched by a distinctive
+// normalized substring of the rendered text.
+const ALLOW_SKILLS = [
+  // Destruction-staff Blockade morphs: element-specific names only enumerate with
+  // a flame/frost/lightning staff equipped. The generic base "Elemental Blockade"
+  // / "Wall of Elements" / "Unstable Wall of Elements" ARE in the dump.
+  {
+    needle: 'flaming barrier in front of you',
+    reason: 'Blockade of Fire — flame-staff morph of Elemental Blockade (base in dump)',
+  },
+  {
+    needle: 'frozen barrier in front of you',
+    reason: 'Blockade of Frost — frost-staff morph of Elemental Blockade (base in dump)',
+  },
+  {
+    needle: 'shocking barrier in front of you',
+    reason: 'Blockade of Storms — lightning-staff morph of Elemental Blockade (base in dump)',
+  },
+  {
+    needle: 'unstable flaming barrier',
+    reason:
+      'Unstable Blockade of Fire — flame-staff morph (base Unstable Wall of Elements in dump)',
+  },
+  {
+    needle: 'unstable frozen barrier',
+    reason: 'Unstable Blockade of Frost — frost-staff morph (base in dump)',
+  },
+  {
+    needle: 'unstable shocking barrier',
+    reason: 'Unstable Blockade of Storms — lightning-staff morph (base in dump)',
+  },
+  // Cryptcanon mythic ability: only enumerates with the mythic equipped.
+  {
+    needle: 'channel accursed power from cryptcanon vestments',
+    reason: 'Crypt Transfer — granted by Cryptcanon Vestments mythic; enumerates only when worn',
+  },
+  // Scribing grimoire ability: composed at runtime from grimoire+scripts, no
+  // standalone dump description (established scribing finding).
+  {
+    needle: 'twirl and throw an enchanted dagger',
+    reason: 'Traveling Knife — scribing grimoire ability; tooltip composed at runtime',
+  },
+  // Ash Cloud third morph: base skill is sourced (Ash Cloud/Cinder Storm trace to
+  // current Hearthfire/Fire Keeper); this damage morph has no current dump text.
+  {
+    needle: 'summon a scorching cloud of ash at the target location',
+    reason: 'Eruption — Ash Cloud damage morph; base sourced (Hearthfire/Fire Keeper in dump)',
+  },
+];
+const skillAllowed = (text) => {
+  const n = norm(text);
+  return ALLOW_SKILLS.some((a) => n.includes(norm(a.needle)));
+};
 
 // --- walk target files ----------------------------------------------------
 function walkTs(dir, out = []) {
@@ -175,14 +243,22 @@ for (const f of ['heavy.ts', 'light.ts', 'medium.ts', 'mythics.ts', 'arena.ts'])
 // --- evaluate -------------------------------------------------------------
 let covered = 0;
 let allowed = 0;
+const kinds = { exact: 0, prefix: 0, contained: 0 };
 const misses = [];
 for (const c of checked) {
   if (c.kind === 'gear' && c.set && ALLOW_SETS.has(norm(c.set))) {
     allowed++;
     continue;
   }
-  if (tracesToDump(c.text)) covered++;
-  else misses.push(c);
+  if (c.kind === 'skill' && skillAllowed(c.text)) {
+    allowed++;
+    continue;
+  }
+  const k = traceKind(c.text);
+  if (k) {
+    covered++;
+    kinds[k]++;
+  } else misses.push(c);
 }
 
 const denom = checked.length - allowed;
@@ -216,8 +292,11 @@ for (const [k, dumpSet] of dumpSetBonuses) {
 console.log('=== Tooltip provenance gate (rendered text -> game dump) ===');
 console.log(`Dump descriptions (normalized): ${dumpNorm.size}`);
 console.log(`Rendered entries checked:       ${checked.length}`);
-console.log(`  allowed (removed-from-game):  ${allowed}`);
+console.log(`  allowed (removed/equip-gated): ${allowed}`);
 console.log(`  traced to dump:               ${covered} / ${denom} (${(100 * rate).toFixed(2)}%)`);
+console.log(`    exact:                      ${kinds.exact}`);
+console.log(`    prefix ((N items) strip):   ${kinds.prefix}`);
+console.log(`    contained (dump superset):  ${kinds.contained}`);
 console.log(`  NOT traced:                   ${misses.length}`);
 
 if (misses.length && (LIST || misses.length <= 60)) {
