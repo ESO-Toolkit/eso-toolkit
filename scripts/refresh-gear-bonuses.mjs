@@ -57,7 +57,9 @@ for (const set of dump.sets) {
 }
 
 // --- target files (GearSetData shape only) --------------------------------
-const files = ['heavy', 'light', 'medium', 'mythics'].map((f) =>
+// arena.ts is GearSetData (enchant-named arena sets: Crushing Wall, etc.).
+// arena-specials.ts/monster.ts are SkillsetData (separate conversion).
+const files = ['heavy', 'light', 'medium', 'mythics', 'arena'].map((f) =>
   path.join(ROOT, 'src/data/Gear Sets', `${f}.ts`),
 );
 

@@ -156,7 +156,7 @@ const SET_RE =
 // Bonus string literals are single- OR double-quoted (entries with apostrophes,
 // e.g. "Death's Favor", use double quotes).
 const BONUS_RE = /(['"])((?:[^\\]|\\.)*?)\1/g;
-for (const f of ['heavy.ts', 'light.ts', 'medium.ts', 'mythics.ts']) {
+for (const f of ['heavy.ts', 'light.ts', 'medium.ts', 'mythics.ts', 'arena.ts']) {
   const full = path.join(GEAR_DIR, f);
   if (!fs.existsSync(full)) continue;
   const txt = fs.readFileSync(full, 'utf8');
