@@ -23,7 +23,7 @@ export const cryptcanonVestments: GearSetData = {
   icon: 'Cryptcanon Vestments',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) You can no longer cast Ultimate abilities. Instead, casting an Ultimate ability transfers your Ultimate resource to your living group members, divided equally among them. Gain Minor Heroism while you are in combat.',
+    '(1 item) You can no longer cast Ultimate abilities. Instead, casting an Ultimate ability transfers your Ultimate resource to your living group members, divided equally among them.\n\nGain Minor Heroism while you are in combat.',
   ],
 };
 
@@ -41,7 +41,7 @@ export const dovRhaSabatons: GearSetData = {
   icon: 'Dov-Rha Sabatons',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While Sprinting gain a stack of Draconic Scales every 0.5 seconds, granting you 660 Armor, up to 20 stacks max. Upon stopping you deal 0 Physical damage per stack in an 8 meter shockwave, gain a damage shield equal to damage dealt, and retain Draconic Scales for 10 seconds but cannot gain new stacks. At 20 stacks, this damage will also stun for 3 seconds. The damage scales off the higher of your Physical or Spell Resistance.',
+    '(1 item) While Sprinting gain a stack of Draconic Scales every 0.5 seconds, granting you 660 Armor, up to 20 stacks max. Upon stopping you deal 0 Physical Damage per stack in an 8 meter shockwave, gain a damage shield equal to damage dealt, and retain Draconic Scales for 10 seconds but cannot gain new stacks. At 20 stacks, this damage will also stun for 3 seconds. The damage scales off the higher of your Physical or Spell Resistance.',
   ],
 };
 
@@ -67,9 +67,7 @@ export const gazeOfSithis: GearSetData = {
   name: 'Gaze of Sithis',
   icon: 'Gaze of Sithis',
   setType: 'Mythic',
-  bonuses: [
-    '(1 item) Adds 3276 Maximum Health, Adds 1025 Health Recovery, Adds 4000 Armor, Reduces your Block Mitigation to 0.',
-  ],
+  bonuses: ['(1 item) Reduces your Block Mitigation to 0.'],
 };
 
 export const harpoonersWadingKilt: GearSetData = {
@@ -131,7 +129,7 @@ export const monomythReforged: GearSetData = {
   icon: 'Monomyth Reforged',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While in combat and on your Primary Weapon gain Major Force, Minor Berserk, and Minor Vulnerability. While in combat and on your Secondary Weapon gain Major Protection, Minor Vitality, and Minor Timidity.',
+    '(1 item) While in combat and on your Primary Weapon gain Major Force, Minor Berserk, and Minor Vulnerability.\n\nWhile in combat and on your Secondary Weapon gain Major Protection, Minor Vitality, and Minor Timidity.',
   ],
 };
 
@@ -194,7 +192,7 @@ export const rourkenSteamguards: GearSetData = {
   icon: 'Rourken Steamguards',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While actively Bracing, you gain Steam Guardian for 0.5 seconds, reducing your damage taken by 90%. This effect activates only upon the start of Bracing and can occur once every 10 seconds. Blocking any attack while Steam Guardian is active reduces its cooldown by 5 seconds, up to once per application of the effect.',
+    '(1 item) While actively Bracing, you gain Steam Guardian for 0.5 seconds, reducing your damage taken by 90%. This effect activates only upon the start of Bracing and can occur once every 10 seconds.\n\nBlocking any attack while Steam Guardian is active reduces its cooldown by 5 seconds, up to once per application of the effect.',
   ],
 };
 
@@ -221,7 +219,7 @@ export const shatteredPathsSignet: GearSetData = {
   icon: 'Shattered Paths Signet',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Increase your damage done with status effects by 1% for every 1 Ultimate you have, up to 170%. Both the current and maximum damage done is halved against Players. While you have 170 or more Ultimate, your Light and Heavy Attacks apply a random status effect, up to once every 4 seconds. Applies Minor Timidity to you, consuming 1 Ultimate every 1.5 seconds while in combat.',
+    '(1 item) Increase your damage done with status effects by 1% for every 1 Ultimate you have, up to 170%. Both the current and maximum damage done is halved against Players.\n\nWhile you have 170 or more Ultimate, your Light and Heavy Attacks apply a random status effect, up to once every 4 seconds.\n\nApplies Minor Timidity to you, consuming 1 Ultimate every 1.5 seconds while in combat.',
   ],
 };
 
@@ -266,7 +264,7 @@ export const theSaintAndTheSeducer: GearSetData = {
   icon: 'The Saint and the Seducer',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While in combat, you gain one of five random Major buffs which changes every 10 seconds. Enemies within 12 meters of you gain one of five random Minor debuffs depending on which buff you have. The available effects are: Major Berserk and Minor Maim Major Resolve and Minor Breach Major Force and Minor Brittle Major Evasion and Minor Vulnerability Major Courage and Minor Cowardice',
+    '(1 item) While in combat, you gain one of five random Major buffs which changes every 10 seconds. Enemies within 12 meters of you gain one of five random Minor debuffs depending on which buff you have. The available effects are:\n\nMajor Berserk and Minor Maim\nMajor Resolve and Minor Breach\nMajor Force and Minor Brittle\nMajor Evasion and Minor Vulnerability\nMajor Courage and Minor Cowardice',
   ],
 };
 
@@ -302,7 +300,7 @@ export const torcOfTheLastAyleidKing: GearSetData = {
   icon: 'Torc of the Last Ayleid King',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Reduce your damage taken by 15%. Adds 1337 Weapon and Spell Damage. Adds 500 Magicka and Stamina Recovery. Disable all other item set bonuses.',
+    '(1 item) Reduce your damage taken by 15%.\nAdds 1337 Weapon and Spell Damage.\nAdds 500 Magicka and Stamina Recovery.\nDisable all other item set bonuses.',
   ],
 };
 
