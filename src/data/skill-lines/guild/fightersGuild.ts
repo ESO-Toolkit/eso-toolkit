@@ -167,7 +167,7 @@ export const fightersGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.SLAYER,
       description:
-        'Increases your Weapon and Spell Damage by 3% for each Fighters Guild ability slotted.',
+        'Increases your Weapon and Spell Damage by 1% for each Fighters Guild ability slotted.',
     },
     {
       id: AbilityId.BANISH_THE_WICKED,
@@ -176,7 +176,7 @@ export const fightersGuild: SkillLineData = {
       name: 'Banish the Wicked',
       type: 'passive',
       baseAbilityId: AbilityId.BANISH_THE_WICKED,
-      description: 'You generate 3 Ultimate whenever you kill an enemy.',
+      description: 'You generate 1 Ultimate whenever you kill an enemy.',
     },
     {
       id: AbilityId.SKILLED_TRACKER,

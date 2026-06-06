@@ -175,7 +175,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.FORTRESS,
       description:
-        'Reduces the Stamina cost of your One Hand and Shield abilities by 15% and reduces the cost of blocking by 36%.',
+        'Reduces the Stamina cost of your One Hand and Shield abilities by 7% and reduces the cost of blocking by 18%.',
     },
     {
       id: AbilityId.SWORD_AND_BOARD,
@@ -185,7 +185,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.SWORD_AND_BOARD,
       description:
-        'Increases your Weapon and Spell Damage by 5% and the amount of damage you can block by 20%.',
+        'Increases your Weapon and Spell Damage by 3% and the amount of damage you can block by 10%.',
     },
     {
       id: AbilityId.DEADLY_BASH,
@@ -195,7 +195,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.DEADLY_BASH,
       description:
-        'Improves your standard Bash attacks, causing them to deal 500 more damage and cost 50% less Stamina.',
+        'Improves your standard Bash attacks, causing them to deal 250 more damage and cost 25% less Stamina.',
     },
     {
       id: AbilityId.DEFLECT_BOLTS,
@@ -205,7 +205,7 @@ export const oneHandAndShieldSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.DEFLECT_BOLTS,
       description:
-        'Increases the amount of damage you can block from projectiles and ranged attacks by 14%.',
+        'Increases the amount of damage you can block from projectiles and ranged attacks by 6%.',
     },
     {
       id: AbilityId.BATTLEFIELD_MOBILITY,

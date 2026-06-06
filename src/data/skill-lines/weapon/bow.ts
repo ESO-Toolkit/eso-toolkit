@@ -177,7 +177,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.VINEDUSK_TRAINING,
       description:
-        'Increases your damage done by 5% against enemies 15 meters or closer.\n\nIncreases your Critical Chance rating by 1314 against enemies further than 15 meters.',
+        'Increases your damage done by 2% against enemies 15 meters or closer.\n\nIncreases your Critical Chance rating by 657 against enemies further than 15 meters.',
     },
     {
       id: AbilityId.ACCURACY,
@@ -186,7 +186,7 @@ export const bowSkillLine: SkillLineData = {
       name: 'Accuracy',
       type: 'passive',
       baseAbilityId: AbilityId.ACCURACY,
-      description: 'Increases your Critical Chance rating by 1314.',
+      description: 'Increases your Critical Chance rating by 657.',
     },
     {
       id: AbilityId.RANGER,
@@ -195,7 +195,7 @@ export const bowSkillLine: SkillLineData = {
       name: 'Ranger',
       type: 'passive',
       baseAbilityId: AbilityId.RANGER,
-      description: 'Reduces the Stamina cost of Bow abilities by 15%.',
+      description: 'Reduces the Stamina cost of Bow abilities by 7%.',
     },
     {
       id: AbilityId.HAWK_EYE,
@@ -205,7 +205,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.HAWK_EYE,
       description:
-        'Dealing damage with a Light or Heavy Attack increases the damage of your Bow abilities by 5% for 5 seconds, stacking up to 5 times.',
+        'Dealing damage with a Light or Heavy Attack increases the damage of your Bow abilities by 2% for 5 seconds, stacking up to 5 times.',
     },
     {
       id: AbilityId.HASTY_RETREAT,
@@ -215,7 +215,7 @@ export const bowSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.HASTY_RETREAT,
       description:
-        'Grants you Major Expedition for 4 seconds after you use Roll Dodge.\n\nMajor Expedition increases your Movement Speed by 30%.',
+        'Grants you Major Expedition for 2 seconds after you use Roll Dodge.\n\nMajor Expedition increases your Movement Speed by 30%.',
     },
   ],
 };

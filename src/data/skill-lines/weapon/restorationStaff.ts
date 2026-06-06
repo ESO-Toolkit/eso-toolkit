@@ -64,7 +64,7 @@ export const restorationStaff: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.GRAND_HEALING,
       description:
-        'Summon restoring spirits with your staff, healing you and your allies in the target area for 5486 Health over 15 seconds.',
+        'Summon restoring spirits with your staff, healing you and your allies in the target area for 6752 Health over 15 seconds.',
     },
     // Active abilities - Regeneration family
     {
@@ -178,7 +178,7 @@ export const restorationStaff: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.ESSENCE_DRAIN,
       description:
-        'You gain Major Mending for 4 seconds after completing a fully-charged Heavy Attack, increasing your healing done by 16%.\n\nYou also heal yourself or an ally within 12 meters of the target for 50% of the damage inflicted by the final hit of a fully-charged Heavy Attack.',
+        'You gain Major Mending for 2 seconds after completing a fully-charged Heavy Attack, increasing your healing done by 16%.\n\nYou also heal yourself or an ally within 12 meters of the target for 25% of the damage inflicted by the final hit of a fully-charged Heavy Attack.',
     },
     {
       id: AbilityId.RESTORATION_EXPERT,
@@ -187,7 +187,7 @@ export const restorationStaff: SkillLineData = {
       name: 'Restoration Expert',
       type: 'passive',
       baseAbilityId: AbilityId.RESTORATION_EXPERT,
-      description: 'Increases your healing by 15% on allies under 30% Health.',
+      description: 'Increases your healing by 8% on allies under 30% Health.',
     },
     {
       id: AbilityId.CYCLE_OF_LIFE,
@@ -196,7 +196,7 @@ export const restorationStaff: SkillLineData = {
       name: 'Cycle of Life',
       type: 'passive',
       baseAbilityId: AbilityId.CYCLE_OF_LIFE,
-      description: 'Your fully-charged Heavy Attacks restore 30% more Magicka.',
+      description: 'Your fully-charged Heavy Attacks restore 15% more Magicka.',
     },
     {
       id: AbilityId.ABSORB,
@@ -225,7 +225,7 @@ export const restorationStaff: SkillLineData = {
       name: 'Restoration Master',
       type: 'passive',
       baseAbilityId: AbilityId.RESTORATION_MASTER,
-      description: 'Increases healing with Restoration Staff spells by 5%.',
+      description: 'Increases healing with Restoration Staff spells by 3%.',
     },
   ],
 };

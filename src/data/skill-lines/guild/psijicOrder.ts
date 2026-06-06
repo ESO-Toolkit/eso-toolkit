@@ -156,7 +156,7 @@ export const psijicOrder: SkillLineData = {
         98194, 103809, 103811, 109283, 109301,
       ],
       name: 'Clairvoyance',
-      description: 'Reduces the cost of your Psijic Order abilities by 15%.',
+      description: 'Reduces the cost of your Psijic Order abilities by 8%.',
       type: 'passive',
       isPassive: true,
       maxRank: 1,
@@ -170,7 +170,7 @@ export const psijicOrder: SkillLineData = {
       ],
       name: 'Spell Orb',
       description:
-        'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 1124 Magic Damage.\n\nThis effect scales off your highest offensive stats.',
+        'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 562 Magic Damage.\n\nThis effect scales off your highest offensive stats.',
       type: 'passive',
       isPassive: true,
       maxRank: 1,
@@ -185,7 +185,7 @@ export const psijicOrder: SkillLineData = {
       ],
       name: 'Concentrated Barrier',
       description:
-        'While you have a Psijic Order ability slotted and are Bracing, you gain a damage shield that absorbs 5000 damage.\n\nThis damage shield recharges back to full strength after you spend 10 seconds not Bracing.',
+        'While you have a Psijic Order ability slotted and are Bracing, you gain a damage shield that absorbs 2500 damage.\n\nThis damage shield recharges back to full strength after you spend 10 seconds not Bracing.',
       type: 'passive',
       isPassive: true,
       maxRank: 1,

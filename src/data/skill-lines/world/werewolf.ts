@@ -224,7 +224,7 @@ export const werewolf: SkillLineData = {
       name: 'Pursuit',
       icon: 'ability_werewolf_010',
       description:
-        'Increases your Movement Speed by 30%.\n\nIncreases the Stamina your Heavy Attacks restore by 50%.',
+        'Increases your Movement Speed by 15%.\n\nIncreases the Stamina your Heavy Attacks restore by 25%.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
@@ -240,7 +240,7 @@ export const werewolf: SkillLineData = {
       name: 'Blood Rage',
       icon: 'ability_werewolf_004',
       description:
-        'When you deal damage, the duration of your Werewolf Transformation is increased by 4 seconds. This effect can occur once every 5 seconds.',
+        'When you deal damage, the duration of your Werewolf Transformation is increased by 2 seconds. This effect can occur once every 5 seconds.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
@@ -264,7 +264,7 @@ export const werewolf: SkillLineData = {
       name: 'Savage Strength',
       icon: 'ability_werewolf_009',
       description:
-        'Increases your Weapon and Spell Damage by 18%.\n\nGrants you Major Resolve, increasing your Physical and Spell Resistance by 5948.',
+        'Increases your Weapon and Spell Damage by 9%.\n\nGrants you Major Resolve, increasing your Physical and Spell Resistance by 5948.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
@@ -278,7 +278,7 @@ export const werewolf: SkillLineData = {
       name: 'Call of the Pack',
       icon: 'ability_werewolf_006',
       description:
-        'Reduces the cost of remaining in your Werewolf Transformation by 20% for each transformed werewolf or direwolf in your group, including yourself, up to a maximum of 80%.',
+        'Reduces the cost of remaining in your Werewolf Transformation by 10% for each transformed werewolf or direwolf in your group, including yourself, up to a maximum of 40%.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,

@@ -160,7 +160,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_008',
       description:
-        'Like the rune knights of old, summon a shield that absorbs 4800 damage for 6 seconds, scaling off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 446 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself for 1600 Health, scaling off your Max Health, per Crux spent.',
+        'Like the rune knights of old, summon a shield that absorbs 4800 damage for 6 seconds, scaling off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 0 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself for 1600 Health, scaling off your Max Health, per Crux spent.',
       baseSkillId: ClassSkillId.ARCANIST_RUNESPITE_WARD,
     },
     {
@@ -169,7 +169,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_008_b',
       description:
-        'Like the rune knights of old, summon a shield that absorbs 9916 damage for 1 second, and then 2203 damage for 5 seconds if the first shield persists. Both shields scale off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 446 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself for 1600 Health, scaling off your Max Health, per Crux spent.',
+        'Like the rune knights of old, summon a shield that absorbs 9916 damage for 1 second, and then 2203 damage for 5 seconds if the first shield persists. Both shields scale off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 0 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself for 1600 Health, scaling off your Max Health, per Crux spent.',
       baseSkillId: ClassSkillId.ARCANIST_RUNESPITE_WARD,
     },
     {
@@ -178,7 +178,7 @@ export const soldierOfApocrypha: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_008_a',
       description:
-        'Like the rune knights of old, summon a shield that absorbs 4800 damage for 6 seconds, scaling off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 446 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself 1600 Health, scaling off your Max Health, and refund 30% of Spiteward of the Lucid Mind cost per Crux spent.',
+        'Like the rune knights of old, summon a shield that absorbs 4800 damage for 6 seconds, scaling off your Max Health.\n\nThe first time you take direct damage, the shield retaliates and deals 0 Magic Damage to the attacker, scaling off your Armor.\n\nConsume Crux to heal yourself 1600 Health, scaling off your Max Health, and refund 30% of Spiteward of the Lucid Mind cost per Crux spent.',
       baseSkillId: ClassSkillId.ARCANIST_RUNESPITE_WARD,
     },
     {

@@ -134,7 +134,7 @@ export const assault: SkillLineData = {
       alternateIds: [39248, 39249, 39250, 39251, 45614, 45615, 45616, 45617],
       name: 'Continuous Attack',
       description:
-        'Increases your Weapon and Spell Damage by 10% and Health, Magicka, and Stamina Recovery by 20% for 10 minutes after you capture a Lumber Mill, Farm, Mine, or Keep.\n\nGain Gallop at all times, increasing your Mount Speed by 15%.',
+        'Increases your Weapon and Spell Damage by 5% and Health, Magicka, and Stamina Recovery by 10% for 10 minutes after you capture a Lumber Mill, Farm, Mine, or Keep.\n\nGain Gallop at all times, increasing your Mount Speed by 15%.',
       isPassive: true,
       maxRank: 1,
     },
@@ -144,7 +144,7 @@ export const assault: SkillLineData = {
       alternateIds: [39254, 45621, 109844],
       name: 'Reach',
       description:
-        'Increases the range of long-range abilities by 5 meters while near a keep or outpost.\n\nAny ability with a range greater than 28 meters is affected.',
+        'Increases the range of long-range abilities by 2 meters while near a keep or outpost.\n\nAny ability with a range greater than 28 meters is affected.',
       isPassive: true,
       maxRank: 1,
     },
@@ -153,7 +153,7 @@ export const assault: SkillLineData = {
       icon: 'ability_weapon_023',
       alternateIds: [39252, 39253, 45619, 45620],
       name: 'Combat Frenzy',
-      description: 'You generate 20 Ultimate when you kill an enemy player.',
+      description: 'You generate 10 Ultimate when you kill an enemy player.',
       isPassive: true,
       maxRank: 1,
     },

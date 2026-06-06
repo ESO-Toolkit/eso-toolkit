@@ -230,7 +230,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'Ignore the Movement Speed penalty of Sneak.\n\nDecreases the time it takes to enter Sneak by 50%.',
+        'Ignore the Movement Speed penalty of Sneak.\n\nDecreases the time it takes to enter Sneak by 25%.',
     },
     {
       id: AbilityId.STRIKE_FROM_THE_SHADOWS,
@@ -241,7 +241,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'When you leave Sneak, invisibility, or Mist Form your Weapon and Spell Damage is increased by 300 for 6 seconds.',
+        'When you leave Sneak, invisibility, or Mist Form your Weapon and Spell Damage is increased by 150 for 6 seconds.',
     },
     {
       id: AbilityId.BLOOD_RITUAL,
@@ -275,7 +275,7 @@ export const vampire: SkillLineData = {
       isUltimate: false,
       maxRank: 2,
       description:
-        'Reduces the cost of Sprint by 50%.\n\nIf you continuously Sprint for 3 seconds you automatically become invisible.',
+        'Reduces the cost of Sprint by 25%.\n\nIf you continuously Sprint for 6 seconds you automatically become invisible.',
     },
   ],
 };

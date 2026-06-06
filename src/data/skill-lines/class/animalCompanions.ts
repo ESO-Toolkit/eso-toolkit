@@ -216,7 +216,7 @@ export const animalCompanions: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_009',
       description:
-        'Casting an Animal Companions ability while are in combat generates 4 Ultimate. This effect can occur once every 8 seconds.',
+        'Casting an Animal Companions ability while are in combat generates 2 Ultimate. This effect can occur once every 8 seconds.',
       isPassive: true,
     },
   ],

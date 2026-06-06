@@ -41,7 +41,7 @@ export const magesGuild: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.ULFSILD_CONTINGENCY,
       description:
-        'Imbue yourself with the magical runes of Ulfsild. These runes trigger when you cast an ability with a cost, causing a burst of magic around you.',
+        'Imbue yourself with the magical runes of Ulfsild for 20 seconds. These runes trigger when you cast an ability with a cost, causing a burst of magic around you.',
     },
 
     // Active abilities - Magelight
@@ -163,7 +163,7 @@ export const magesGuild: SkillLineData = {
       name: 'Mage Adept',
       type: 'passive',
       baseAbilityId: AbilityId.MAGE_ADEPT,
-      description: 'Reduces the Magicka and Health cost of your Mages Guild abilities by 15%.',
+      description: 'Reduces the Magicka and Health cost of your Mages Guild abilities by 8%.',
     },
     {
       id: AbilityId.EVERLASTING_MAGIC,
@@ -172,7 +172,7 @@ export const magesGuild: SkillLineData = {
       name: 'Everlasting Magic',
       type: 'passive',
       baseAbilityId: AbilityId.EVERLASTING_MAGIC,
-      description: 'Increases the duration of your Mages Guild abilities by 2 seconds.',
+      description: 'Increases the duration of your Mages Guild abilities by 1 second.',
     },
     {
       id: AbilityId.MAGICKA_CONTROLLER,
@@ -182,7 +182,7 @@ export const magesGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.MAGICKA_CONTROLLER,
       description:
-        'Increases your Max Magicka and Magicka Recovery by 2% for each Mages Guild ability slotted.',
+        'Increases your Max Magicka and Magicka Recovery by 1% for each Mages Guild ability slotted.',
     },
     {
       id: AbilityId.MIGHT_OF_THE_GUILD,
@@ -192,7 +192,7 @@ export const magesGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.MIGHT_OF_THE_GUILD,
       description:
-        'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 10 seconds.',
+        'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 5 seconds.',
     },
   ],
 };

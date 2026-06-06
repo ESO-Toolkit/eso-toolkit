@@ -184,7 +184,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.FORCEFUL,
       description:
-        'Your Light and Heavy Attacks damage up to 3 other nearby enemies for 100% of the damage inflicted to the primary target.',
+        'Your Light and Heavy Attacks damage up to 3 other nearby enemies for 50% of the damage inflicted to the primary target.',
     },
     {
       id: AbilityId.HEAVY_WEAPONS,
@@ -194,7 +194,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.HEAVY_WEAPONS,
       description:
-        'Grants a bonus based on the type of weapon equipped:\n\nSwords increase your Weapon and Spell Damage by 258.\n\nAxes increase your Critical Damage done by 12%.\n\nMaces increase your Offensive Penetration by 2974.',
+        'Grants a bonus based on the type of weapon equipped:\n\nSwords increase your Weapon and Spell Damage by 129.\n\nAxes increase your Critical Damage done by 6%.\n\nMaces increase your Offensive Penetration by 1487.',
     },
     {
       id: AbilityId.BALANCED_BLADE,
@@ -203,7 +203,7 @@ export const twoHandedSkillLine: SkillLineData = {
       name: 'Balanced Blade',
       type: 'passive',
       baseAbilityId: AbilityId.BALANCED_BLADE,
-      description: 'Reduces the Stamina cost of your Two-Handed abilities by 15%.',
+      description: 'Reduces the Stamina cost of your Two-Handed abilities by 7%.',
     },
     {
       id: AbilityId.FOLLOW_UP,
@@ -213,7 +213,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.FOLLOW_UP,
       description:
-        'When you complete a fully-charged Heavy Attack, your damage done with Two Handed attacks increases by 10% for 4 seconds.',
+        'When you complete a fully-charged Heavy Attack, your damage done with Two Handed attacks increases by 5% for 4 seconds.',
     },
     {
       id: AbilityId.BATTLE_RUSH,
@@ -222,7 +222,7 @@ export const twoHandedSkillLine: SkillLineData = {
       name: 'Battle Rush',
       type: 'passive',
       baseAbilityId: AbilityId.BATTLE_RUSH,
-      description: 'Increases your Stamina Recovery by 30% for 10 seconds after killing a target.',
+      description: 'Increases your Stamina Recovery by 15% for 10 seconds after killing a target.',
     },
   ],
 };

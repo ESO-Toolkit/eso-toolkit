@@ -25,7 +25,7 @@ export const darkBrotherhood: SkillLineData = {
       alternateIds: [77392, 77394, 77395, 79275, 79865, 79866],
       name: 'Scales of Pitiless Justice',
       description:
-        'Bounty and Heat resulting from a witnessed Murder or Assault is reduced by 50%.',
+        'Bounty and Heat resulting from a witnessed Murder or Assault is reduced by 20%.',
       type: 'passive',
       icon: 'ability_darkbrotherhood_passive_002',
       maxRank: 1,
@@ -35,7 +35,7 @@ export const darkBrotherhood: SkillLineData = {
       alternateIds: [77397, 77398, 77399, 79868, 80393],
       name: 'Padomaic Sprint',
       description:
-        'Grants Major Expedition, increasing your Movement Speed by 30% for 12 seconds after killing an enemy with Blade of Woe.',
+        'Grants Major Expedition, increasing your Movement Speed by 30% for 6 seconds after killing an enemy with Blade of Woe.',
       type: 'passive',
       icon: 'ability_darkbrotherhood_passive_004',
       maxRank: 1,

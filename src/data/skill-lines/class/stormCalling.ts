@@ -208,7 +208,7 @@ export const stormCalling: SkillLineData = {
       name: 'Energized',
       type: 'passive',
       icon: 'ability_sorcerer_015',
-      description: 'Increases your Physical and Shock Damage by 5%.',
+      description: 'Increases your Physical and Shock Damage by 3%.',
       isPassive: true,
     },
     {
@@ -218,7 +218,7 @@ export const stormCalling: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_044',
       description:
-        'Increases your Weapon and Spell Damage by 108 for each Sorcerer ability slotted.',
+        'Increases your Weapon and Spell Damage by 54 for each Sorcerer ability slotted.',
       isPassive: true,
     },
   ],

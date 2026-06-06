@@ -234,7 +234,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.TRI_FOCUS,
       description:
-        'Fully-charged Inferno Staff Heavy Attacks deal an additional 4480 Flame Damage over 20 seconds.\n\nFully-charged Lightning Staff Heavy Attacks damage nearby enemies for 100% of the damage done.\n\nFully-charged Ice Staff Heavy Attacks grant you a damage shield that absorbs 5280 damage. This effect scales off your Max Health.\n\nWhile an Ice Staff is equipped, blocking costs Magicka instead of Stamina.',
+        'Fully-charged Inferno Staff Heavy Attacks deal an additional 2230 Flame Damage over 20 seconds.\n\nFully-charged Lightning Staff Heavy Attacks damage nearby enemies for 50% of the damage done.\n\nFully-charged Ice Staff Heavy Attacks grant you a damage shield that absorbs 2640 damage. This effect scales off your Max Health.\n\nWhile an Ice Staff is equipped, blocking costs Magicka instead of Stamina.',
     },
     {
       id: AbilityId.PENETRATING_MAGIC,
@@ -243,7 +243,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       name: 'Penetrating Magic',
       type: 'passive',
       baseAbilityId: AbilityId.PENETRATING_MAGIC,
-      description: "Your Destruction Staff abilities ignore 2974 of the enemy's Spell Resistance.",
+      description: "Your Destruction Staff abilities ignore 1487 of the enemy's Spell Resistance.",
     },
     {
       id: AbilityId.ELEMENTAL_FORCE,
@@ -252,7 +252,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       name: 'Elemental Force',
       type: 'passive',
       baseAbilityId: AbilityId.ELEMENTAL_FORCE,
-      description: 'Increases your chance to apply status effects by 100%.',
+      description: 'Increases your chance to apply status effects by 50%.',
     },
     {
       id: AbilityId.ANCIENT_KNOWLEDGE,
@@ -262,7 +262,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.ANCIENT_KNOWLEDGE,
       description:
-        'Inferno Staves increases your damage done with damage over time and Status Effects by 12%.\n\nLightning Staves increases your damage done with direct damage and channeled effects by 12%.\n\nEquipping an Ice Staff reduces the cost of blocking by 36% and increases the amount of damage you block by 20%.',
+        'Inferno Staves increases your damage done with damage over time and Status Effects by 6%.\n\nLightning Staves increases your damage done with direct damage and channeled effects by 6%.\n\nIce Staves reduce the cost of blocking by 18% and increases the amount of damage you block by 10%.',
     },
     {
       id: AbilityId.DESTRUCTION_EXPERT,
@@ -272,7 +272,7 @@ export const destructionStaffSkillLine: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.DESTRUCTION_EXPERT,
       description:
-        'When you kill an enemy with a Destruction Staff ability, you restore 3600 Magicka.\n\nWhen you absorb damage using a Destruction Staff Damage Shield, you restore 1800 Magicka. This effect can occur once every 10 seconds.',
+        'When you kill an enemy with a Destruction Staff ability, you restore 1800 Magicka.\n\nWhen you absorb damage using a Destruction Staff Damage Shield, you restore 900 Magicka. This effect can occur once every 10 seconds.',
     },
   ],
 };

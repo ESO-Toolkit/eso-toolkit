@@ -60,7 +60,7 @@ export const lightArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.GRACE,
       description:
-        'Reduces the effectiveness of snares applied to you by 4% for each piece of Light Armor worn.\n\nReduces the cost of Sprint by 3% for each piece of Light Armor worn.',
+        'Reduces the effectiveness of snares applied to you by 1% for each piece of Light Armor worn.\n\nReduces the cost of Sprint by 1% for each piece of Light Armor worn.',
     },
     {
       id: AbilityId.EVOCATION,
@@ -70,7 +70,7 @@ export const lightArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.EVOCATION,
       description:
-        'Increases your Magicka Recovery by 4% for each piece of Light Armor equipped.\n\nReduces the Magicka cost of your abilities by 2% for each piece of Light Armor equipped.',
+        'Increases your Magicka Recovery by 2% for each piece of Light Armor equipped.\n\nReduces the Magicka cost of your abilities by 1% for each piece of Light Armor equipped.',
     },
     {
       id: AbilityId.SPELL_WARDING,
@@ -79,7 +79,7 @@ export const lightArmor: SkillLineData = {
       name: 'Spell Warding',
       type: 'passive',
       baseAbilityId: AbilityId.SPELL_WARDING,
-      description: 'Increases your Spell Resistance by 726 for each piece of Light Armor equipped.',
+      description: 'Increases your Spell Resistance by 363 for each piece of Light Armor equipped.',
     },
     {
       id: AbilityId.PRODIGY,
@@ -89,7 +89,7 @@ export const lightArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.PRODIGY,
       description:
-        'Increases your Weapon and Spell Critical rating by 219 for each piece of Light Armor equipped.',
+        'Increases your Weapon and Spell Critical rating by 109 for each piece of Light Armor equipped.',
     },
     {
       id: AbilityId.CONCENTRATION,
@@ -99,7 +99,7 @@ export const lightArmor: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.CONCENTRATION,
       description:
-        'Increases your Physical and Spell Penetration by 939 for each piece of Light Armor worn.',
+        'Increases your Physical and Spell Penetration by 469 for each piece of Light Armor worn.',
     },
   ],
 };
