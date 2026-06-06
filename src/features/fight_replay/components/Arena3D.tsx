@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import * as THREE from 'three';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePerfTier } from '../../../hooks/usePerfTier';
@@ -746,6 +747,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           onContextMenu={handleCanvasContextMenu}
           onCreated={(state) => {
             const { gl } = state;
+            // Tone mapping: R3F defaults to ACESFilmic, which desaturates bright highlights — it
+            // washes out the colourful ESO map art we just colour-corrected (sRGB). Khronos PBR
+            // Neutral preserves saturation and hue far better while still gracefully rolling off
+            // highlights, so the parchment/terrain/water read vivid (the look chosen from the audit
+            // panels). The small exposure bump compensates for the slight darkening that correct
+            // sRGB colour management introduces. Applies scene-wide (floor + figures cohere).
+            gl.toneMapping = THREE.NeutralToneMapping;
+            gl.toneMappingExposure = 1.15;
             // Dev-only: expose the renderer/scene/camera for perf probing (e.g.
             // gl.info.render.frame, toggling gl.shadowMap.autoUpdate, timing gl.render).
             // R3F keeps these in its own reconciler, unreachable through the main React

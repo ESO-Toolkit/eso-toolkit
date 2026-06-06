@@ -1,6 +1,8 @@
-import { Grid, OrbitControls } from '@react-three/drei';
+import { Environment, Grid, Lightformer, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import React, { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
+import * as THREE from 'three';
+import type { DirectionalLight, Object3D } from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
@@ -192,6 +194,141 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   }, 999); // Very low priority to render after all updates
 
   return null;
+};
+
+interface ArenaLightingProps {
+  centerX: number;
+  centerZ: number;
+  size: number;
+  /** When false (performance mode), the key light stops casting shadows (drops the shadow pass). */
+  castShadows: boolean;
+}
+
+/**
+ * Scene lighting + the single directional "sun" that casts actor contact shadows onto the map.
+ *
+ * The shadow frustum and light target are derived from the live arena center/size so they actually
+ * enclose the play area. The previous static `<directionalLight position={[10,10,5]}>` aimed at the
+ * default target (0,0,0) with the default ±5 orthographic shadow frustum — which could not contain
+ * an arena centered near (50,50) at size ~100, so figures cast no (or clipped) shadows. Grounding
+ * the actors on the map starts here.
+ *
+ * Cost note: the shadow map regenerates inside the on-demand `gl.render` (RenderLoop), so it adds no
+ * per-frame work while the scene is idle/paused — it repaints only when the scene is already dirty.
+ */
+const ArenaLighting: React.FC<ArenaLightingProps> = ({ centerX, centerZ, size, castShadows }) => {
+  const lightRef = useRef<DirectionalLight>(null);
+  const targetRef = useRef<Object3D>(null);
+
+  // Point the light at arena center and size the ortho shadow camera to wrap the arena (+margin),
+  // then refresh the projection. Re-runs only when the arena geometry or shadow toggle changes.
+  useEffect(() => {
+    const light = lightRef.current;
+    const target = targetRef.current;
+    if (!light || !target) {
+      return;
+    }
+    light.target = target;
+    const half = size * 0.62; // a little past the arena edge so corner figures aren't clipped
+    const cam = light.shadow.camera;
+    cam.left = -half;
+    cam.right = half;
+    cam.top = half;
+    cam.bottom = -half;
+    cam.near = 1;
+    cam.far = size * 2.5;
+    cam.updateProjectionMatrix();
+    // Soften shadow acne on the near-flat floor without detaching the contact edge.
+    light.shadow.bias = -0.0004;
+    light.shadow.normalBias = 0.02;
+  }, [centerX, centerZ, size, castShadows]);
+
+  // Elevated to the south-west of arena center (matches the default fitted camera offset), high
+  // enough that figures throw a readable shadow across the map rather than straight down.
+  const lightPos: [number, number, number] = [
+    centerX - size * 0.3,
+    size * 0.8,
+    centerZ + size * 0.25,
+  ];
+
+  return (
+    <>
+      <ambientLight intensity={0.45} />
+      {/* A cool fill from the opposite side lifts shadowed figure backs off the floor (soft, no
+          shadow) so they don't read as flat silhouettes — pure static paint, gate-friendly. */}
+      <directionalLight
+        position={[centerX + size * 0.35, size * 0.5, centerZ - size * 0.35]}
+        intensity={0.22}
+        color="#9fc2ff"
+      />
+      <directionalLight
+        ref={lightRef}
+        position={lightPos}
+        intensity={0.95}
+        castShadow={castShadows}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+      />
+      <object3D ref={targetRef} position={[centerX, 0, centerZ]} />
+    </>
+  );
+};
+
+/**
+ * Build the radial vignette texture once: transparent over the central play area, ramping to opaque
+ * dark toward the edges. The clear core is generous (~62% radius) so it never dims the actors; the
+ * ramp lives in the outer rim where it frames the arena and hides the plane edge. Guarded for jsdom
+ * (no 2D context) so unit envs still get a valid texture.
+ */
+function createFloorVignetteTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  const px = 256;
+  canvas.width = px;
+  canvas.height = px;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const c = px / 2;
+    // The vignette plane is 1.15× the arena, so the arena edge sits at radius ≈ px*0.5/1.15 ≈ 0.43.
+    // Keep the clear core out PAST that (start at 0.48) so actors anywhere on the actual play surface
+    // — including the cardinal mid-edges — stay fully lit; the darkening only ramps in the outer ring
+    // beyond the map, where it feathers the hard plane edge into the background. (An earlier, tighter
+    // core dimmed peripheral actors — caught by a live look.) Rim ≈0.7, not opaque, so it frames
+    // rather than crushes. The gradient is largest at the diagonal corners, which are off-map anyway.
+    const grad = ctx.createRadialGradient(c, c, px * 0.48, c, c, px * 0.5);
+    grad.addColorStop(0, 'rgba(7, 9, 14, 0)');
+    grad.addColorStop(0.6, 'rgba(7, 9, 14, 0.18)');
+    grad.addColorStop(1, 'rgba(7, 9, 14, 0.7)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, px, px);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+interface FloorVignetteProps {
+  centerX: number;
+  centerZ: number;
+  size: number;
+}
+
+/**
+ * A flat, slightly-oversized plane just above the floor carrying the radial vignette texture. Sits
+ * above the map/grid but below the actors' ground rings; transparent + depthWrite off so it darkens
+ * the floor by alpha without occluding anything. One static mesh, zero per-frame cost.
+ */
+const FloorVignette: React.FC<FloorVignetteProps> = ({ centerX, centerZ, size }) => {
+  const texture = useMemo(() => createFloorVignetteTexture(), []);
+  useEffect(() => () => texture.dispose(), [texture]);
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[centerX, 0.03, centerZ]} renderOrder={1}>
+      {/* 1.15× the arena so the dark rim extends a little past the map edge and feathers it out. */}
+      <planeGeometry args={[size * 1.15, size * 1.15]} />
+      <meshBasicMaterial map={texture} transparent depthWrite={false} toneMapped={false} />
+    </mesh>
+  );
 };
 
 /**
@@ -490,15 +627,30 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       )}
       {/* Keyboard camera controls (WASD) - disabled when following an actor */}
       <KeyboardCameraControls enabled={!followingActorIdRef.current} />
-      {/* Lighting */}
-      <ambientLight intensity={0.4} />
-      <directionalLight
-        position={[10, 10, 5]}
-        intensity={0.8}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+      {/* Lighting + the directional shadow caster, sized to the arena. Extracted so the shadow
+          frustum and light target track the real arena center/size — the old fixed light at
+          [10,10,5] aimed at the origin (0,0,0) with the default ±5 ortho frustum, which entirely
+          missed the arena centered near (50,50) at size ~100, so player figures cast no shadow and
+          never read as standing ON the map. */}
+      <ArenaLighting
+        centerX={arenaDimensions.centerX}
+        centerZ={arenaDimensions.centerZ}
+        size={arenaDimensions.size}
+        castShadows={!performanceMode}
       />
+      {/* Procedural image-based lighting for the actor figures. The body/cap materials are
+          MeshStandard with metalness 0.1–0.2, so without an environment they reflect pure black and
+          read flat/plasticky; a couple of soft Lightformer panels give them gentle directional
+          reflections and lift them off the floor. PROCEDURAL (Lightformer children) — NOT an
+          `Environment preset`, which would fetch an HDR from a CDN. The env cube renders ONCE at
+          mount (no per-frame cost, so it respects the on-demand RenderLoop), and `background={false}`
+          keeps it off the visible backdrop — it only lights the figures. Dropped in performance mode. */}
+      {!performanceMode && (
+        <Environment resolution={64} frames={1} background={false}>
+          <Lightformer intensity={1.6} position={[0, 6, 4]} scale={[12, 12, 1]} color="#fbf3e0" />
+          <Lightformer intensity={0.7} position={[-6, 3, -4]} scale={[8, 8, 1]} color="#9fc2ff" />
+        </Environment>
+      )}
       {/* Map Texture - Arena floor background with dynamic phase-based switching */}
       <Suspense
         fallback={
@@ -508,7 +660,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
             receiveShadow
           >
             <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
-            <meshPhongMaterial color="#2a2a2a" transparent opacity={0.8} />
+            {/* Opaque to match the live floor (no dark-bg bleed-through while the CDN map loads). */}
+            <meshPhongMaterial color="#2a2a2a" />
           </mesh>
         }
       >
@@ -520,20 +673,33 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           onTextureChange={markSceneDirty}
         />
       </Suspense>
-      {/* Arena Grid - Dynamically sized based on fight area */}
+      {/* Arena Grid — dialed back so the now-vivid map leads and the grid stays a quiet coordinate
+          aid rather than a second visual system competing with the photographic floor (the audit
+          flagged the old near-full-strength grid as fighting the map). Dimmer colors + thinner lines
+          + a stronger fade let it read as faint scaffolding under the map, not over it. */}
       <Grid
         args={[arenaDimensions.size, arenaDimensions.size]}
         position={[arenaDimensions.centerX, -0.01, arenaDimensions.centerZ]}
         cellSize={Math.max(5, arenaDimensions.size / 10)}
-        cellThickness={0.5}
-        cellColor="#6f6f6f"
+        cellThickness={0.4}
+        cellColor="#3f4654"
         sectionSize={arenaDimensions.size / 2}
-        sectionThickness={1.5}
-        sectionColor="#9d9d9d"
-        fadeDistance={arenaDimensions.size * 1.5}
-        fadeStrength={1}
+        sectionThickness={1}
+        sectionColor="#566173"
+        fadeDistance={arenaDimensions.size * 1.3}
+        fadeStrength={1.5}
         followCamera={false}
         infiniteGrid={false}
+      />
+      {/* Edge-fade vignette — a flat ring just above the floor whose radial-gradient alpha is clear
+          over the play area and darkens toward the rim. It frames the arena like a viewfinder and
+          dissolves the hard square plane edge into the background so the map no longer reads as a
+          pasted swatch. Pure static paint (one transparent mesh, no per-frame work) → gate-friendly.
+          Sized to the arena so the clear center always covers where the actors are. */}
+      <FloorVignette
+        centerX={arenaDimensions.centerX}
+        centerZ={arenaDimensions.centerZ}
+        size={arenaDimensions.size}
       />
       {/* Direct useFrame Actors - Each actor uses useFrame independently */}
       <AnimationFrameSceneActors

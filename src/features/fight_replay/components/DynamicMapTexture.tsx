@@ -1,10 +1,11 @@
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
 import { useLogger } from '@/contexts/LoggerContext';
 
 import { useCurrentFight } from '../../../hooks/useCurrentFight';
+import { usePerfTier } from '../../../hooks/usePerfTier';
 import { fightTimeToTimestamp } from '../../../utils/fightTimeUtils';
 import { getMapAtTimestamp, MapTimeline } from '../../../utils/mapTimelineUtils';
 import { RenderPriority } from '../constants/renderPriorities';
@@ -77,6 +78,10 @@ export function generateFallbackTexture(): THREE.CanvasTexture {
   texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
+  // Color-manage the fallback too so it matches the sRGB-tagged CDN maps and the actor textures
+  // (every actor texture sets this). Without it the grid renders darker/desaturated under R3F's
+  // default ACES + sRGB-output pipeline — the same washed-out bug the real map had.
+  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
@@ -121,6 +126,19 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
 
   const { fight } = useCurrentFight();
 
+  // Max hardware anisotropy for crisp floor sampling at grazing camera angles. The floor plane is
+  // heavily foreshortened at the oblique replay view (OrbitControls allows down to minPolarAngle
+  // 0.1), where plain trilinear filtering smears high-frequency map detail toward the horizon.
+  // Capped per perf tier so low-end GPUs don't pay the full 16× sample cost. A renderer capability,
+  // read once. (Actor textures already set anisotropy; the map never did — that was the smear bug.)
+  const { gl } = useThree();
+  const perfTier = usePerfTier();
+  const maxAnisotropy = useMemo(() => {
+    const hw = gl.capabilities.getMaxAnisotropy();
+    const tierCap = perfTier === 'low' ? 4 : 16;
+    return Math.min(hw, tierCap);
+  }, [gl, perfTier]);
+
   // Create geometry
   const geometry = useMemo(() => new THREE.PlaneGeometry(size, size), [size]);
 
@@ -145,8 +163,16 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
           (texture) => {
             texture.wrapS = THREE.ClampToEdgeWrapping;
             texture.wrapT = THREE.ClampToEdgeWrapping;
-            texture.minFilter = THREE.LinearFilter;
+            // Keep the default mipmap chain (LinearMipmapLinearFilter + generateMipmaps): a
+            // foreshortened floor needs mip sampling to avoid shimmer/aliasing when viewed from
+            // a distance. The previous LinearFilter override disabled mips and was the aliasing
+            // source. magFilter stays Linear for smooth up-close sampling.
             texture.magFilter = THREE.LinearFilter;
+            texture.anisotropy = maxAnisotropy;
+            // sRGB so the JPG renders with correct gamma under R3F's default ACES tone-mapping +
+            // sRGB output. Untagged textures are sampled as linear → dark + desaturated. Every
+            // actor texture sets this; the map never did — the single biggest floor-quality bug.
+            texture.colorSpace = THREE.SRGBColorSpace;
             texture.flipY = false;
 
             // Cache the texture
@@ -161,7 +187,7 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
         );
       });
     };
-  }, [logger]);
+  }, [logger, maxAnisotropy]);
 
   // High-frequency map updates via useFrame
   // Use priority 2 for map updates (lower priority than camera and actor updates)
@@ -235,13 +261,19 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
       geometry={geometry}
       rotation={[-Math.PI / 2, 0, 0]}
       position={position}
+      // COORDINATE CONTRACT: this X-mirror (-1) cancels the X-flip in
+      // convertCoordinatesWithBottomLeft (`x3D = 100 - x/100`, src/utils/coordinateUtils.ts) so the
+      // map image aligns with actor/marker positions. The two flips are load-bearing as a PAIR:
+      // changing either one alone silently mirrors the map relative to the actors with no error.
+      // Pinned by mapCoordinateAlignment.test.ts — keep them in sync.
       scale={[-1, 1, 1]}
       receiveShadow
     >
       <meshPhongMaterial
         ref={materialRef}
-        transparent
-        opacity={0.8}
+        // Opaque: at 0.8 over the dark #1a1a1a canvas background the map blended toward black,
+        // muting every pixel. Brightness/legibility are controlled via the sRGB texture + renderer
+        // exposure now, not via alpha. Opaque also drops the transparency-sort cost.
         color={mapTimeline.entries.length > 0 ? '#ffffff' : '#2a2a2a'}
       />
     </mesh>
