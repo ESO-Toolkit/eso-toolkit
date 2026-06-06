@@ -8,6 +8,7 @@
 --   /dumptooltips skills  dump skills only
 --   /dumptooltips sets    dump sets only
 --   /dumptooltips state   print the current reference-state stat snapshot (no dump)
+--   /dumptooltips probe   test whether locked (e.g. scribing) abilities return text (no dump)
 --
 -- The dump records a snapshot of the player's derived stats so the numbers are traceable
 -- to the exact character state they were produced at. Run at a consistent reference state
@@ -412,8 +413,61 @@ local function initDumpHeader()
   ESOTooltipDumpSV.statSnapshot = captureStatSnapshot()
 end
 
+-- ---------------------------------------------------------------------------
+-- Probe: do GetAbilityName/GetAbilityDescription return real text for abilities
+-- the character has NOT unlocked (e.g. scribing grimoires/morphs)? If yes, the
+-- ID-driven capture path can re-source them with no in-game unlocking. These ids
+-- are scribing grimoire + morph abilities (from scribing-complete.json).
+-- ---------------------------------------------------------------------------
+
+local PROBE_IDS = {
+  { id = 217699, label = "Banner Bearer (grimoire)" },
+  { id = 217704, label = "Sundering Banner (morph)" },
+  { id = 217228, label = "Elemental Explosion (grimoire)" },
+  { id = 229600, label = "Sundering Explosion (morph)" },
+  { id = 220549, label = "Mender's Bond (grimoire)" },
+  { id = 217285, label = "Magical Bond (morph)" },
+  { id = 216973, label = "Sundering Throw (morph)" },
+  { id = 217178, label = "Sundering Smash (morph)" },
+}
+
+local function runProbe()
+  d(string.format("[%s] PROBE: testing %d locked-ability ids. 'desc=YES' means ID-driven capture works without unlocking.",
+    ADDON_NAME, #PROBE_IDS))
+  local withDesc = 0
+  for _, p in ipairs(PROBE_IDS) do
+    local name, desc = "", ""
+    if GetAbilityName then
+      local ok, n = pcall(GetAbilityName, p.id, CASTER)
+      if ok and n then name = n end
+    end
+    if GetAbilityDescription then
+      local ok, dsc = pcall(GetAbilityDescription, p.id, nil, CASTER)
+      if ok and dsc then desc = dsc end
+    end
+    local hasDesc = desc ~= nil and desc ~= ""
+    if hasDesc then withDesc = withDesc + 1 end
+    d(string.format("  %d  name=%q desc=%s  [%s]",
+      p.id, name, hasDesc and "YES" or "no", p.label))
+  end
+  d(string.format("[%s] PROBE RESULT: %d / %d returned description text.",
+    ADDON_NAME, withDesc, #PROBE_IDS))
+  if withDesc == #PROBE_IDS then
+    d(string.format("|c00ff00[%s] ALL returned text -> ID-driven capture will re-source scribing WITHOUT unlocking. Proceed.|r", ADDON_NAME))
+  elseif withDesc > 0 then
+    d(string.format("|cffaa00[%s] PARTIAL (%d/%d). Some ids resolve; report this exact count.|r", ADDON_NAME, withDesc, #PROBE_IDS))
+  else
+    d(string.format("|cff0000[%s] NONE returned text -> locked abilities are gated; grimoires must be unlocked in-game before dumping.|r", ADDON_NAME))
+  end
+end
+
 local function handleSlash(args)
   args = (args or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+
+  if args == "probe" then
+    runProbe()
+    return
+  end
 
   if args == "state" then
     local s = captureStatSnapshot()
