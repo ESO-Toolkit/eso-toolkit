@@ -313,13 +313,22 @@ describe('ESO-398: Map Timeline Switching Flow', () => {
 
     it('falls back to the PRIMARY map (not even distribution) without buff events or transitions', () => {
       // Regression: `fight.maps` is the set of maps the pull touched, NOT a time-ordered traversal.
-      // The old fallback split the fight evenly across all maps, fabricating a mid-fight area change
-      // for single-arena bosses that merely list a second zone map (e.g. Lylanar → flipped to the
-      // beach map at the midpoint). With no phase/buff signal there's no honest way to time multiple
-      // maps, so the whole fight now shows the single primary (first) map.
+      // The old fallback split the fight evenly across all maps, fabricating a mid-fight area change.
+      // Two distinct real-world shapes produce a multi-map / no-phase fight, and primary-map is the
+      // right answer for BOTH (verified against real DSR + Sanity's Edge reports):
+      //   1. Single-arena roomed boss whose pull merely grazes an adjacent zone map (spatial noise).
+      //      e.g. Lylanar (encounterID 52) → maps [dsr_boss1_map (arena), dsr_beach_01 (noise)].
+      //      The old fallback flipped to the beach map at the midpoint — a teleport that never happened.
+      //   2. A roaming mini-boss that spawns anywhere in the trash routes between bosses and is killed
+      //      wherever the group drags it. e.g. Spiral Descender (encounterID 144592) and Bow Breaker
+      //      (encounterID 137012) — note the 6-digit non-roomed encounter IDs vs. roomed bosses' small
+      //      ones. There is no fixed arena, so maps[0] (the open trash area where it roams, NOT the
+      //      adjacent boss-room map it lists second) is the only honest, non-teleporting choice.
+      // In every case maps[0] is the place the fight actually happens, so the whole fight shows the
+      // single primary (first) map and never invents a switch.
       const maps = [
-        { id: 1, file: 'map1.png', name: 'Arena' },
-        { id: 2, file: 'map2.png', name: 'Beach (touched but not traversed)' },
+        { id: 1, file: 'map1.png', name: 'Arena / roam area' },
+        { id: 2, file: 'map2.png', name: 'Adjacent map (touched but not traversed)' },
       ];
       const fight = createMockFight(maps); // No phase transitions
 
