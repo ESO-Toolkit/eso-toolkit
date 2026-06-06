@@ -418,8 +418,51 @@ function main() {
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
   console.log(`Wrote: ${outPath} (${(fs.statSync(outPath).size / 1e6).toFixed(2)} MB)`);
 
+  // Emit a compact provenance fingerprint (normalized descriptions + per-set bonus
+  // lists) that the CI provenance gate reads. The full dump is a gitignored build
+  // intermediate; this fingerprint is committed so the gate runs without it.
+  const fpPath = path.join(path.dirname(outPath), 'tooltip-provenance.json');
+  writeProvenanceFingerprint(result, fpPath);
+  console.log(`Wrote: ${fpPath} (${(fs.statSync(fpPath).size / 1e6).toFixed(2)} MB)`);
+
   const ok = report(result);
   process.exit(ok ? 0 : 2);
+}
+
+// Normalization shared with the provenance gate (must stay in sync with
+// scripts/check-tooltip-provenance.mjs `norm`).
+export function normForProvenance(s) {
+  return (s || '')
+    .toLowerCase()
+    .replace(/\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9 ]/g, '')
+    .trim();
+}
+
+function writeProvenanceFingerprint(result, outPath) {
+  const descriptions = new Set();
+  for (const line of result.skillLines)
+    for (const sk of line.skills)
+      for (const ab of sk.morphs || []) {
+        const n = normForProvenance(ab.description);
+        if (n) descriptions.add(n);
+      }
+  for (const ab of result.abilitiesById || []) {
+    const n = normForProvenance(ab.description);
+    if (n) descriptions.add(n);
+  }
+  const setBonuses = {};
+  for (const s of result.sets) {
+    const list = s.bonuses
+      .filter((b) => !b.perfected && b.description)
+      .map((b) => normForProvenance(b.description));
+    if (list.length) setBonuses[normForProvenance(s.name)] = list;
+  }
+  fs.writeFileSync(
+    outPath,
+    JSON.stringify({ descriptions: [...descriptions], setBonuses }),
+  );
 }
 
 // Run only when invoked directly (allows importing stripMarkup/parseLuaTable in tests).

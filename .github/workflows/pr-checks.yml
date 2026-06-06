@@ -144,6 +144,8 @@ jobs:
         run: npm run typecheck
       - name: Check no ESO-Hub references
         run: npm run check:no-esohub
+      - name: Check tooltip provenance
+        run: npm run check:provenance
 
   build-storybook:
     runs-on: ubuntu-latest
