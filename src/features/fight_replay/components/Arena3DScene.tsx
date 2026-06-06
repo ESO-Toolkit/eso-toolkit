@@ -488,14 +488,26 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     const rangeX = arenaMaxX - arenaMinX;
     const rangeZ = arenaMaxZ - arenaMinZ;
 
-    // Set camera distances based on fight area size
-    // Minimum: Allow very close zoom for detailed inspection of actors
-    // With adaptable actor scale (0.8-1.1x), users need to zoom in closer
-    const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    const minDistance = Math.max(0.5, diagonal * 0.05); // Reduced from 1 and 0.1
+    // Set camera distances based on fight area size.
+    //
+    // The actor coordinate system always maps into the fixed ~100×100 arena floor, so a real
+    // fight diagonal is at most ~141 units (100·√2). A single outlier boundingBox coordinate
+    // (a stray/teleported actor position far off-map) can blow the raw diagonal up to tens of
+    // thousands of units, which made minDistance (5% of diagonal) exceed the 500-cap maxDistance —
+    // an INVERTED clamp that pins OrbitControls' distance and freezes all zoom (wheel, pinch,
+    // buttons). Clamp the diagonal to the real arena scale first so outliers can't invert the
+    // bounds, then derive min/max from the sane value.
+    const rawDiagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+    const ARENA_DIAGONAL = arenaDimensions.size * Math.SQRT2; // ~141 for the 100-unit arena
+    const diagonal = Math.min(rawDiagonal, ARENA_DIAGONAL);
 
-    // Maximum: 3x the diagonal for good overview, capped at reasonable bounds
-    const maxDistance = Math.min(500, Math.max(50, diagonal * 3));
+    // Minimum: allow very close zoom for detailed actor inspection.
+    const minDistance = Math.max(0.5, diagonal * 0.05);
+
+    // Maximum: 3× the diagonal for a good overview, floored at 50, capped at 500. Also forced to
+    // stay strictly above minDistance as a final guard so the clamp can never invert even if the
+    // constants are later retuned.
+    const maxDistance = Math.max(minDistance + 1, Math.min(500, Math.max(50, diagonal * 3)));
 
     return {
       // Always use initialTarget if provided (calculated from actor positions)
@@ -504,7 +516,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       minDistance,
       maxDistance,
     };
-  }, [fight.boundingBox, initialTarget, arenaDimensions.centerX, arenaDimensions.centerZ]);
+  }, [
+    fight.boundingBox,
+    initialTarget,
+    arenaDimensions.centerX,
+    arenaDimensions.centerZ,
+    arenaDimensions.size,
+  ]);
 
   // Calculate actor scale based on map dimensions so actors keep a consistent real-world footprint
   const actorScale = useMemo(() => {
