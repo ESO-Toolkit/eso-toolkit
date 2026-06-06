@@ -1,4 +1,4 @@
-import { wardenData } from '../data/skill-lines/class/warden';
+import { wintersEmbrace } from '../data/skill-lines/class/wintersEmbrace';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
@@ -6,6 +6,7 @@ import { ArmorType, GearSlot, GearTrait, PlayerGear, WeaponType } from '../types
 
 import { resolveArmorType } from './armorUtils';
 import { BuffLookupData, isBuffActiveOnTarget } from './BuffLookupUtils';
+import { skillLineAbilityNames } from './skillLineNames';
 import { ItemQuality } from './gearUtilities';
 
 // Variant map: abilities where rank 1 and rank 2 produce different aura IDs in combatantInfo
@@ -572,13 +573,10 @@ function countHeavyArmorPieces(combatantInfo: CombatantInfoEvent | null): number
 function countWintersEmbraceAbilities(playerData: PlayerDetailsWithRole): number {
   if (!playerData) return 0;
 
-  const wardenAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
-    Object.values(wardenData.skillLines.wintersEmbrace.activeAbilities || {})
-      .flatMap((ability) => {
-        return [ability, ...Object.values(ability.morphs ?? {})];
-      })
-      .some((a) => a?.name === t.name),
-  );
+  const wintersEmbraceNames = skillLineAbilityNames(wintersEmbrace);
+  const wardenAbilities = playerData.combatantInfo.talents
+    .slice(0, 6)
+    .filter((t) => wintersEmbraceNames.has(t.name));
   return wardenAbilities.length;
 }
 

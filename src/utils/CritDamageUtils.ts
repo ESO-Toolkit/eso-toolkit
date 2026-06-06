@@ -1,10 +1,11 @@
-import { wardenData } from '../data/skill-lines/class/warden';
+import { animalCompanions } from '../data/skill-lines/class/animalCompanions';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { ArmorType } from '../types/playerDetails';
 
 import { resolveArmorType } from './armorUtils';
+import { skillLineAbilityNames } from './skillLineNames';
 import {
   BuffLookupData,
   isBuffActive as checkBuffActiveAtTimestamp,
@@ -646,13 +647,10 @@ export function getCritDamageFromComputedSource(
     case ComputedCriticalDamageSources.ADVANCED_SPECIES: {
       // Count Animal Companions abilities on front bar
       if (!playerData) return 0;
-      const animalCompanionAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
-        Object.values(wardenData.skillLines.animalCompanions.activeAbilities || {})
-          .flatMap((ability) => {
-            return [ability, ...Object.values(ability.morphs ?? {})];
-          })
-          .some((a) => a?.name === t.name),
-      );
+      const animalCompanionNames = skillLineAbilityNames(animalCompanions);
+      const animalCompanionAbilities = playerData.combatantInfo.talents
+        .slice(0, 6)
+        .filter((t) => animalCompanionNames.has(t.name));
       // Rank II (86069) grants 5% per ability; Rank I (86068) grants 2% per ability
       const hasRank2 = combatantInfo.auras.some(
         (aura) => aura.ability === KnownAbilities.ADVANCED_SPECIES,

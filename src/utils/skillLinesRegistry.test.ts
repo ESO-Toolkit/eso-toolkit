@@ -131,62 +131,6 @@ jest.mock('../data/skill-lines/alliance-war/support', () => ({
   },
 }));
 
-jest.mock('../data/skill-lines/class/arcanist', () => ({
-  arcanistData: {
-    class: 'Arcanist',
-    skillLines: {
-      heraldOfTheTome: {
-        name: 'Herald of the Tome',
-        ultimates: [
-          {
-            name: 'The Imperfect Ring',
-            description: 'Arcanist ultimate',
-            cost: '200',
-          },
-        ],
-        activeAbilities: [
-          {
-            name: 'Runic Jolt',
-            description: 'Arcanist ability',
-            cost: '75',
-            morphs: {
-              morph1: { name: 'Runic Sunder', description: 'Morph 1' },
-              morph2: { name: 'Runic Embrace', description: 'Morph 2' },
-            },
-          },
-        ],
-        passives: [],
-      },
-    },
-  },
-}));
-
-jest.mock('../data/skill-lines/class/dragonknight', () => ({
-  dragonknightData: {
-    class: 'Dragonknight',
-    skillLines: {
-      ardentFlame: {
-        name: 'Ardent Flame',
-        ultimates: [
-          {
-            name: 'Dragonknight Standard',
-            description: 'Ultimate ability',
-            cost: '250',
-          },
-        ],
-        actives: [
-          {
-            name: 'Lava Whip',
-            description: 'Active ability',
-            cost: '100',
-          },
-        ],
-        passives: [],
-      },
-    },
-  },
-}));
-
 jest.mock('../data/skill-lines/weapon/bow', () => ({
   bowSkillLine: {
     id: 'weapon.bow',
