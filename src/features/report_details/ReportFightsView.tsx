@@ -96,14 +96,15 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
 /**
  * Smoothly interpolates a wipe color based on boss health % remaining.
  * 100% health remaining (players died fast) → red
- * 0% health remaining (almost killed boss) → green
- * Uses HSL so the transition is continuous through orange → yellow → lime,
- * but returns a hex string so existing `${color}30`-style alpha concatenation
- * (borders, shadows, hover tints) keeps producing valid CSS.
+ * 0% health remaining (almost killed boss) → blue ("so close")
+ * The transition runs red → magenta → blue so it never passes through green,
+ * which is reserved exclusively for kills (green = complete). Returns a hex
+ * string so existing `${color}30`-style alpha concatenation (borders, shadows,
+ * hover tints) keeps producing valid CSS.
  */
 function getWipeHealthGradientColor(percentage: number): string {
   const clamped = Math.max(0, Math.min(100, percentage));
-  const hue = ((100 - clamped) / 100) * 120; // 100% → 0 (red), 0% → 120 (green)
+  const hue = (240 + (clamped / 100) * 120) % 360; // 0% → 240 (blue), 100% → 360/0 (red)
   return hslToHex(hue, 80, 55);
 }
 
@@ -127,7 +128,7 @@ function hslToHex(h: number, s: number, l: number): string {
  */
 function getWipeHealthGradientBackground(percentage: number, darkMode: boolean): string {
   const clamped = Math.max(0, Math.min(100, percentage));
-  const hue = ((100 - clamped) / 100) * 120;
+  const hue = (240 + (clamped / 100) * 120) % 360; // 0% → blue, 100% → red (via magenta)
   if (darkMode) {
     return `linear-gradient(135deg, hsla(${hue}, 80%, 55%, 0.7) 0%, hsla(${hue}, 75%, 38%, 0.55) 100%)`;
   }
@@ -477,8 +478,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     if (darkMode) {
       return {
         // Dark mode fight card colors — tuned for glass background
+        // Kills use a green gradient (green = complete).
         killGradient:
-          'linear-gradient(135deg, rgba(56, 189, 248, 0.7) 0%, rgba(34, 211, 238, 0.5) 50%, rgba(16, 185, 129, 0.6) 100%)',
+          'linear-gradient(135deg, rgba(74, 222, 128, 0.7) 0%, rgba(34, 197, 94, 0.5) 50%, rgba(16, 185, 129, 0.6) 100%)',
         killShadow: 'none',
         trashGradient:
           'linear-gradient(135deg, rgba(100, 116, 139, 0.3) 0%, rgba(71, 85, 105, 0.2) 100%)',
@@ -504,8 +506,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     } else {
       return {
         // Light mode fight card colors — subtle tints, let accent bar carry color
+        // Kills use a pale green tint (green = complete).
         killGradient:
-          'linear-gradient(135deg, rgba(224, 247, 250, 0.8) 0%, rgba(224, 242, 241, 0.6) 100%)',
+          'linear-gradient(135deg, rgba(220, 252, 231, 0.8) 0%, rgba(209, 250, 229, 0.6) 100%)',
         killShadow: 'none',
         trashGradient:
           'linear-gradient(135deg, rgba(236, 239, 243, 0.6) 0%, rgba(241, 243, 245, 0.4) 100%)',
@@ -858,7 +861,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
     }
 
-    // Accent bar color — smooth gradient by boss health % for wipes
+    // Accent bar color — smooth gradient by boss health % for wipes,
+    // green for kills (green = complete).
     const accentBarColor = isWipe
       ? getWipeHealthGradientColor(bossHealthPercent)
       : isFalsePositive
@@ -866,8 +870,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           ? '#64748b'
           : '#94a3b8'
         : darkMode
-          ? '#38bdf8'
-          : '#06b6d4';
+          ? '#4ade80'
+          : '#10b981';
 
     const accentGlow = accentBarColor + '66';
 
@@ -889,7 +893,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         ? 'rgba(255, 60, 60, 0.06)'
         : isFalsePositive
           ? 'rgba(100, 116, 139, 0.06)'
-          : 'rgba(56, 189, 248, 0.06)'
+          : 'rgba(74, 222, 128, 0.06)'
       : 'rgba(255, 255, 255, 0.6)';
 
     const borderColor = darkMode ? `${accentBarColor}30` : `${accentBarColor}20`;
