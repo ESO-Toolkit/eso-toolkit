@@ -111,8 +111,14 @@ export function createMapTimeline(
     }
   }
 
-  // Strategy 3: Fallback to even distribution
-  return createTimelineFromEvenDistribution(fight, availableMaps);
+  // Strategy 3: No reliable phase signal. Do NOT fabricate map switches by splitting the fight
+  // evenly across the available maps — `fight.maps` is the set of maps the pull *touched*, NOT a
+  // time-ordered traversal, so even-distribution invents an area change that never happened (e.g.
+  // Lylanar, a single-arena boss with no phases but two zone maps, would flip to the beach map at
+  // the exact midpoint). Without phase timing or per-map spatial bounds (the report's map ids don't
+  // resolve to zoneScaleData), there's no honest way to time multiple maps, so fall back to the
+  // single PRIMARY map for the whole fight. ESO Logs lists the primary fight map first.
+  return createTimelineFromPrimaryMap(fight, availableMaps);
 }
 
 /**
@@ -125,7 +131,7 @@ function createTimelineFromPhaseTransitions(
   const phaseTransitions = fight.phaseTransitions;
 
   if (!phaseTransitions || phaseTransitions.length === 0) {
-    return createTimelineFromEvenDistribution(fight, availableMaps);
+    return createTimelineFromPrimaryMap(fight, availableMaps);
   }
 
   // Debug logging
@@ -180,54 +186,50 @@ function createTimelineFromPhaseTransitions(
 }
 
 /**
- * Creates timeline using even distribution (fallback method)
+ * Fallback for when a multi-map fight has no reliable phase timing: show the single PRIMARY map
+ * (the first available) for the entire fight.
+ *
+ * This deliberately replaces the previous "even distribution" fallback, which split the fight evenly
+ * across `fight.maps` and so fabricated an area change at the midpoint for any fight that lists more
+ * than one map but never actually traverses them in time (the canonical case being a single-arena
+ * boss with no phase transitions — e.g. Lylanar — whose pull happens to touch a second zone map).
+ * `fight.maps` is an unordered set of maps the pull touched, not a timeline; without phase timing or
+ * resolvable per-map spatial bounds there is no honest way to time multiple maps, and showing the
+ * primary map throughout is correct for every single-area fight and never invents a switch. A
+ * genuinely multi-area fight that lacks phase data will show only its primary map — an acceptable,
+ * non-misleading degradation versus a wrong mid-fight flip.
  */
-function createTimelineFromEvenDistribution(
+function createTimelineFromPrimaryMap(
   fight: FightFragment,
   availableMaps: NonNullable<FightFragment['maps']>[number][],
 ): MapTimeline {
-  const fightDuration = fight.endTime - fight.startTime;
-  const phaseLength = fightDuration / availableMaps.length;
+  const primary = availableMaps[0];
+  if (!primary) {
+    return { entries: [], totalMaps: 0 };
+  }
 
-  const entries: MapTimelineEntry[] = availableMaps.map((map, index) => {
-    if (!map) {
-      throw new Error(`No map available for index ${index}`);
-    }
-
-    return {
-      startTime: fight.startTime + index * phaseLength,
-      endTime: fight.startTime + (index + 1) * phaseLength,
-      mapId: map.id,
-      mapFile: map.file,
-      mapName: map.name,
-      phaseIndex: index,
-    };
-  });
-
-  // Debug logging for timeline creation
   if (process.env.NODE_ENV === 'development') {
-    logger.debug('Even distribution timeline entries created', {
-      fightStartTime: fight.startTime,
-      fightEndTime: fight.endTime,
-      fightDuration,
-      phaseLength,
-      entries: entries.map((entry) => ({
-        mapName: entry.mapName,
-        mapFile: entry.mapFile,
-        startTime: entry.startTime,
-        endTime: entry.endTime,
-        duration: entry.endTime - entry.startTime,
-        phaseIndex: entry.phaseIndex,
-      })),
+    logger.debug('No reliable phase timing — using primary map for the whole fight', {
+      primaryMap: primary.file,
+      otherMapsIgnored: availableMaps.slice(1).map((m) => m?.file),
     });
   }
 
-  // Ensure the last phase ends exactly at fight end
-  if (entries.length > 0) {
-    entries[entries.length - 1].endTime = fight.endTime;
-  }
-
-  return { entries, totalMaps: availableMaps.length };
+  return {
+    entries: [
+      {
+        startTime: fight.startTime,
+        endTime: fight.endTime,
+        mapId: primary.id,
+        mapFile: primary.file,
+        mapName: primary.name,
+        phaseIndex: 0,
+      },
+    ],
+    // Report the true count of maps the pull touched (UI/diagnostics may surface it); the timeline
+    // itself intentionally only renders the primary one.
+    totalMaps: availableMaps.length,
+  };
 }
 
 /**

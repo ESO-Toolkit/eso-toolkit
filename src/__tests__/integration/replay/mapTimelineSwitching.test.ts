@@ -311,19 +311,27 @@ describe('ESO-398: Map Timeline Switching Flow', () => {
       expect(timeline.totalMaps).toBeGreaterThan(0);
     });
 
-    it('should fallback to even distribution without buff events or transitions', () => {
+    it('falls back to the PRIMARY map (not even distribution) without buff events or transitions', () => {
+      // Regression: `fight.maps` is the set of maps the pull touched, NOT a time-ordered traversal.
+      // The old fallback split the fight evenly across all maps, fabricating a mid-fight area change
+      // for single-arena bosses that merely list a second zone map (e.g. Lylanar → flipped to the
+      // beach map at the midpoint). With no phase/buff signal there's no honest way to time multiple
+      // maps, so the whole fight now shows the single primary (first) map.
       const maps = [
-        { id: 1, file: 'map1.png', name: 'Phase 1' },
-        { id: 2, file: 'map2.png', name: 'Phase 2' },
+        { id: 1, file: 'map1.png', name: 'Arena' },
+        { id: 2, file: 'map2.png', name: 'Beach (touched but not traversed)' },
       ];
       const fight = createMockFight(maps); // No phase transitions
 
       const timeline = createMapTimeline(fight, undefined, undefined);
 
-      // Should distribute maps evenly across fight duration
-      expect(timeline.entries).toHaveLength(2);
+      // One entry, the primary map, spanning the whole fight — no fabricated switch.
+      expect(timeline.entries).toHaveLength(1);
+      expect(timeline.entries[0].mapId).toBe(1);
       expect(timeline.entries[0].startTime).toBe(FIGHT_START);
-      expect(timeline.entries[1].endTime).toBe(FIGHT_END);
+      expect(timeline.entries[0].endTime).toBe(FIGHT_END);
+      // totalMaps still reports the true count of maps the pull touched.
+      expect(timeline.totalMaps).toBe(2);
     });
   });
 

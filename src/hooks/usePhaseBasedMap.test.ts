@@ -5,29 +5,34 @@ import { createMapTimeline, getMapAtTimestamp } from '../utils/mapTimelineUtils'
 
 import type { FightFragment } from '../graphql/gql/graphql';
 
-// Mock fight data for testing
+// Mock fight data for testing. phaseTransitions is optional: a multi-map timeline is only built
+// from explicit phase timing (or detected phases) — without it, the fight resolves to its single
+// primary map (maps alone are an unordered set, not a time-ordered traversal).
 const createMockFight = (
   maps: Array<{ id: number; file?: string; name?: string }>,
-): FightFragment => ({
-  __typename: 'ReportFight',
-  id: 1,
-  name: 'Test Fight',
-  difficulty: 1,
-  startTime: 0,
-  endTime: 300000, // 5 minutes
-  kill: true,
-  encounterID: 123,
-  originalEncounterID: 123,
-  friendlyPlayers: [1, 2, 3],
-  enemyPlayers: [],
-  bossPercentage: 100,
-  boundingBox: null,
-  friendlyNPCs: [],
-  enemyNPCs: [],
-  maps,
-  gameZone: null,
-  dungeonPulls: [],
-});
+  phaseTransitions?: Array<{ id: number; startTime: number }>,
+): FightFragment =>
+  ({
+    __typename: 'ReportFight',
+    id: 1,
+    name: 'Test Fight',
+    difficulty: 1,
+    startTime: 0,
+    endTime: 300000, // 5 minutes
+    kill: true,
+    encounterID: 123,
+    originalEncounterID: 123,
+    friendlyPlayers: [1, 2, 3],
+    enemyPlayers: [],
+    bossPercentage: 100,
+    boundingBox: null,
+    friendlyNPCs: [],
+    enemyNPCs: [],
+    maps,
+    phaseTransitions,
+    gameZone: null,
+    dungeonPulls: [],
+  }) as FightFragment;
 
 describe('usePhaseBasedMap', () => {
   it('should return empty timeline when no fight is provided', () => {
@@ -63,12 +68,19 @@ describe('usePhaseBasedMap', () => {
     });
   });
 
-  it('should create timeline with multiple maps distributed evenly', () => {
-    const fight = createMockFight([
-      { id: 1, file: 'map1.jpg', name: 'Phase 1' },
-      { id: 2, file: 'map2.jpg', name: 'Phase 2' },
-      { id: 3, file: 'map3.jpg', name: 'Phase 3' },
-    ]);
+  it('should create a multi-map timeline from explicit phase transitions', () => {
+    const fight = createMockFight(
+      [
+        { id: 1, file: 'map1.jpg', name: 'Phase 1' },
+        { id: 2, file: 'map2.jpg', name: 'Phase 2' },
+        { id: 3, file: 'map3.jpg', name: 'Phase 3' },
+      ],
+      [
+        { id: 1, startTime: 0 },
+        { id: 2, startTime: 100000 },
+        { id: 3, startTime: 200000 },
+      ],
+    );
 
     const { result } = renderHook(() =>
       usePhaseBasedMap({
@@ -125,14 +137,41 @@ describe('createMapTimeline', () => {
     expect(timeline.entries).toEqual([]);
     expect(timeline.totalMaps).toBe(0);
   });
+
+  it('uses only the PRIMARY map for a multi-map fight with no phase transitions (Lylanar regression)', () => {
+    // A single-arena boss (no phases) whose pull merely touched a second zone map must NOT flip maps
+    // mid-fight. `fight.maps` is an unordered set, not a traversal, so with no phase signal the whole
+    // fight shows the first (primary) map.
+    const fight = createMockFight([
+      { id: 1, file: 'systres/dsr_boss1_map', name: 'Boss Arena' },
+      { id: 2, file: 'systres/dsr_beach_01', name: 'Beach (touched, not traversed)' },
+    ]); // no phaseTransitions
+
+    const timeline = createMapTimeline(fight);
+
+    expect(timeline.entries).toHaveLength(1);
+    expect(timeline.entries[0].mapId).toBe(1);
+    expect(timeline.entries[0].startTime).toBe(0);
+    expect(timeline.entries[0].endTime).toBe(300000);
+    // The playhead never resolves to the second map at any time.
+    expect(getMapAtTimestamp(timeline, 0)?.mapId).toBe(1);
+    expect(getMapAtTimestamp(timeline, 150000)?.mapId).toBe(1);
+    expect(getMapAtTimestamp(timeline, 299999)?.mapId).toBe(1);
+  });
 });
 
 describe('getMapAtTimestamp', () => {
   it('should return correct map for given timestamp', () => {
-    const fight = createMockFight([
-      { id: 1, file: 'map1.jpg', name: 'Phase 1' },
-      { id: 2, file: 'map2.jpg', name: 'Phase 2' },
-    ]);
+    const fight = createMockFight(
+      [
+        { id: 1, file: 'map1.jpg', name: 'Phase 1' },
+        { id: 2, file: 'map2.jpg', name: 'Phase 2' },
+      ],
+      [
+        { id: 1, startTime: 0 },
+        { id: 2, startTime: 150000 },
+      ],
+    );
 
     const timeline = createMapTimeline(fight);
 
@@ -146,7 +185,7 @@ describe('getMapAtTimestamp', () => {
     expect(map2?.mapId).toBe(2);
     expect(map2?.mapName).toBe('Phase 2');
 
-    // Test boundary
+    // Test boundary (phase 2 starts at 150000)
     const mapAtBoundary = getMapAtTimestamp(timeline, 150000);
     expect(mapAtBoundary?.mapId).toBe(2);
   });
@@ -159,10 +198,16 @@ describe('getMapAtTimestamp', () => {
   });
 
   it('should return last map for timestamp beyond fight end', () => {
-    const fight = createMockFight([
-      { id: 1, file: 'map1.jpg', name: 'Phase 1' },
-      { id: 2, file: 'map2.jpg', name: 'Phase 2' },
-    ]);
+    const fight = createMockFight(
+      [
+        { id: 1, file: 'map1.jpg', name: 'Phase 1' },
+        { id: 2, file: 'map2.jpg', name: 'Phase 2' },
+      ],
+      [
+        { id: 1, startTime: 0 },
+        { id: 2, startTime: 150000 },
+      ],
+    );
 
     const timeline = createMapTimeline(fight);
     const map = getMapAtTimestamp(timeline, 400000); // Beyond fight end
