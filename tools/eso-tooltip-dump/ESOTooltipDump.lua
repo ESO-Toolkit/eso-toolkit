@@ -7,6 +7,7 @@
 --   /dumptooltips         run the full dump (skills + sets), then /reloadui to flush to disk
 --   /dumptooltips skills  dump skills only
 --   /dumptooltips sets    dump sets only
+--   /dumptooltips ids     ID-driven pass only (scribing + enum ids, from CaptureIds.lua)
 --   /dumptooltips state   print the current reference-state stat snapshot (no dump)
 --   /dumptooltips probe   test whether locked (e.g. scribing) abilities return text (no dump)
 --
@@ -316,6 +317,33 @@ local function captureSet(setId)
 end
 
 -- ---------------------------------------------------------------------------
+-- ID-driven ability capture: call captureAbility directly over an explicit id
+-- list (CaptureIds.lua), independent of the skill-tree walk. This re-sources
+-- progression-gated abilities (scribing grimoires/morphs) the tree never
+-- enumerates. Rank-aware: morph/transformation abilities can return empty at a
+-- nil rank but real text at an explicit rank, so we try ranks 1-4 and keep the
+-- highest rank that yields a non-empty description.
+-- ---------------------------------------------------------------------------
+
+local function captureAbilityById(abilityId)
+  if not abilityId or abilityId == 0 then return nil end
+  local best
+  for rank = 1, 4 do
+    local ability = captureAbility(abilityId, rank)
+    if ability and ability.description and ability.description ~= "" then
+      -- keep the highest rank with text (later ranks overwrite earlier)
+      best = ability
+    end
+  end
+  -- Fall back to a nil-rank capture so an entry still exists even with no ranked
+  -- description (records name/icon; description may be empty).
+  if not best then
+    best = captureAbility(abilityId, nil)
+  end
+  return best
+end
+
+-- ---------------------------------------------------------------------------
 -- Chunked runner: drains a work list across frames within FRAME_BUDGET_MS
 -- ---------------------------------------------------------------------------
 
@@ -405,6 +433,27 @@ local function dumpSets(onDone)
   end)
 end
 
+local function dumpAbilitiesById(onDone)
+  local ids = ESOTooltipDumpCaptureIds
+  if type(ids) ~= "table" or #ids == 0 then
+    d(string.format("|cffaa00[%s] ids: CaptureIds.lua missing/empty — skipping ID-driven pass.|r", ADDON_NAME))
+    if onDone then onDone() end
+    return
+  end
+  runChunked("ids", ids, captureAbilityById, function(list)
+    ESOTooltipDumpSV.abilitiesById = list
+    ESOTooltipDumpSV.abilitiesByIdCount = #list
+    local withDesc = 0
+    for _, ab in ipairs(list) do
+      if ab.description and ab.description ~= "" then withDesc = withDesc + 1 end
+    end
+    ESOTooltipDumpSV.abilitiesByIdWithDescriptionCount = withDesc
+    d(string.format("[%s] ids: %d captured, %d WITH description text (of %d requested).",
+      ADDON_NAME, #list, withDesc, #ids))
+    if onDone then onDone() end
+  end)
+end
+
 local function initDumpHeader()
   ESOTooltipDumpSV = ESOTooltipDumpSV or {}
   ESOTooltipDumpSV.formatVersion = DUMP_FORMAT_VERSION
@@ -489,12 +538,19 @@ local function handleSlash(args)
     dumpSets(function()
       d(string.format("[%s] Sets complete. Run /reloadui to write the file.", ADDON_NAME))
     end)
+  elseif args == "ids" then
+    dumpAbilitiesById(function()
+      d(string.format("[%s] ID-driven pass complete. Run /reloadui to write the file.", ADDON_NAME))
+    end)
   else
-    -- Full dump: skills, then sets.
+    -- Full dump: skills, then sets, then the ID-driven pass (scribing + enum).
     dumpSkills(function()
       dumpSets(function()
-        d(string.format("[%s] FULL dump complete (%d skills, %d sets). Run /reloadui to write the file.",
-          ADDON_NAME, ESOTooltipDumpSV.skillCount or 0, ESOTooltipDumpSV.setCount or 0))
+        dumpAbilitiesById(function()
+          d(string.format("[%s] FULL dump complete (%d skills, %d sets, %d by-id). Run /reloadui to write the file.",
+            ADDON_NAME, ESOTooltipDumpSV.skillCount or 0, ESOTooltipDumpSV.setCount or 0,
+            ESOTooltipDumpSV.abilitiesByIdCount or 0))
+        end)
       end)
     end)
   end

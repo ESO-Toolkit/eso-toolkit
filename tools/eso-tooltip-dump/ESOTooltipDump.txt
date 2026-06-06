@@ -8,4 +8,5 @@
 ## OptionalDependsOn: LibSets
 ## IsLibrary: false
 
+CaptureIds.lua
 ESOTooltipDump.lua
