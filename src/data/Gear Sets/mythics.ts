@@ -5,7 +5,7 @@ export const belharzasBand: GearSetData = {
   icon: "Belharza's Band",
   setType: 'Mythic',
   bonuses: [
-    "(1 item) Increase the damage of your Light Attacks by 900. When you deal damage with consecutive melee Light Attacks, gain a stack of Belharza's Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza's Temper and after 1 second, deal 1471 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.",
+    "(1 item) Increase the damage of your Light Attacks by 900.\n\nWhen you deal damage with consecutive melee Light Attacks, gain a stack of Belharza's Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza's Temper and after 1 second, deal 1471 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -59,7 +59,7 @@ export const faunsLarkCladding: GearSetData = {
   icon: "Faun's Lark Cladding",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) If you continuously Sprint for 1 second, you gain the ability to pass through enemies. Enemies you pass through become Charmed for 4 seconds, removing their ability to attack or cast abilities as they move toward you. Charming an enemy this way restores 678 Stamina and Magicka to you, and heals you for 678 Health. Charming an enemy removes you from Stealth.',
+    '(1 item) If you continuously Sprint for 1 second, you gain the ability to pass through enemies. Enemies you pass through become Charmed for 4 seconds, removing their ability to attack or cast abilities as they move toward you. Charming an enemy this way restores 678 Stamina and Magicka to you, and heals you for 678 Health.\n\nCharming an enemy removes you from Stealth.',
   ],
 };
 
@@ -67,7 +67,12 @@ export const gazeOfSithis: GearSetData = {
   name: 'Gaze of Sithis',
   icon: 'Gaze of Sithis',
   setType: 'Mythic',
-  bonuses: ['(1 item) Reduces your Block Mitigation to 0.'],
+  bonuses: [
+    '(1 item) Adds 3276 Maximum Health',
+    '(1 item) Adds 1025 Health Recovery',
+    '(1 item) Adds 4000 Armor',
+    '(1 item) Reduces your Block Mitigation to 0.',
+  ],
 };
 
 export const harpoonersWadingKilt: GearSetData = {
@@ -75,7 +80,7 @@ export const harpoonersWadingKilt: GearSetData = {
   icon: "Harpooner's Wading Kilt",
   setType: 'Mythic',
   bonuses: [
-    "(1 item) Dealing direct damage grants you a stack of Hunter's Focus for 20 seconds, up to 10 stacks max. You can only gain 1 stack of Hunter's Focus per second. Each stack of Hunter's Focus increases your Critical Chance by 110 and your Critical Damage by 1%. Taking direct damage removes 5 stacks of Hunter's Focus, up to once per second. Removing Harpooner's Wading Kilt removes all stacks of Hunter's Focus.",
+    "(1 item) Dealing direct damage grants you a stack of Hunter's Focus for 20 seconds, up to 10 stacks max. You can only gain 1 stack of Hunter's Focus per second. Each stack of Hunter's Focus increases your Critical Chance by 110 and your Critical Damage by 1%.\n\nTaking direct damage removes 5 stacks of Hunter's Focus, up to once per second. Removing Harpooner's Wading Kilt removes all stacks of Hunter's Focus.",
   ],
 };
 
@@ -102,7 +107,7 @@ export const madGodsDancingShoes: GearSetData = {
   icon: "Mad God's Dancing Shoes",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While in combat, roll dodging creates a random effect. This effect can occur once every 3 seconds. Effects: -Create a cheese wheel under an enemy within 15 meters that deals 1249 Magic damage to enemies in 3 meters after 1 second. -Deal 1000 Physical damage to enemies facing you after 1.5 seconds. -Deal 1394 Magic damage to the nearest enemy. -Gain Major Expedition for 4.5 seconds. -Restore 1172 Stamina. -Reduce the cost of your next non-Ultimate ability by 14%. -Gain 7 Ultimate.',
+    '(1 item) While in combat, roll dodging creates a random effect. This effect can occur once every 3 seconds. Effects:\n\n-Create a cheese wheel under an enemy within 15 meters that deals 1249 Magic Damage to enemies in 3 meters after 1 second.\n-Deal 1000 Physical Damage to enemies facing you after 1.5 seconds.\n-Deal 1394 Magic Damage to the nearest enemy.\n-Gain Major Expedition for 4.5 seconds.\n-Restore 1172 Stamina.\n-Reduce the cost of your next non-Ultimate ability by 14%.\n-Gain 7 Ultimate.',
   ],
 };
 
@@ -165,7 +170,7 @@ export const rakkhatsVoidmantle: GearSetData = {
   icon: "Rakkhat's Voidmantle",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Increases your damage done with non-Ultimate Heavy Attacks and decreases your damage done with Light Attacks by 50% each. Dealing damage with a Light Attack restores 431 Magicka or Stamina, depending on your equipped weapon type. This resource restore is treated as a Heavy Attack resource restore for bonuses and penalties. Your Heavy Attacks no longer restore resources.',
+    '(1 item) Increases your damage done with non-Ultimate Heavy Attacks and decreases your damage done with Light Attacks by 50% each.\n\nDealing damage with a Light Attack restores 431 Magicka or Stamina, depending on your equipped weapon type. This resource restore is treated as a Heavy Attack resource restore for bonuses and penalties. Your Heavy Attacks no longer restore resources.',
   ],
 };
 
@@ -201,7 +206,7 @@ export const seaSerpentsCoil: GearSetData = {
   icon: "Sea-Serpent's Coil",
   setType: 'Mythic',
   bonuses: [
-    "(1 item) While at full Health, you gain 40% damage reduction. After taking damage while at full Health in combat, you gain Serpent's Rebuke for 10 seconds, snaring yourself by 40% and gaining Major Berserk and Major Courage, increasing your damage done by 10% and Weapon and Spell Damage by 430. The damage resistance does not apply while Serpent's Rebuke is active.",
+    "(1 item) While at full Health, you gain 40% damage reduction. After taking damage while at full Health in combat, you gain Serpent's Rebuke for 10 seconds, snaring yourself by 40% and gaining Major Berserk and Major Courage, increasing your damage done by 10% and Weapon and Spell Damage by 430.\n\nThe damage resistance does not apply while Serpent's Rebuke is active.",
   ],
 };
 
@@ -246,7 +251,8 @@ export const stormweaversCavort: GearSetData = {
   icon: "Stormweaver's Cavort",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Adds 300 Magicka Recovery, Sprint, Roll Dodge, Bash, Break Free, Sneak, and Block now consume Magicka instead of Stamina. You reduce your Magicka Recovery to 0 while Blocking, Sneaking, or Sprinting. You no longer reduce your Stamina Recovery to 0 while Blocking, Sneaking or Sprinting.',
+    '(1 item) Adds 300 Magicka Recovery',
+    '(1 item) Sprint, Roll Dodge, Bash, Break Free, Sneak, and Block now consume Magicka instead of Stamina. You reduce your Magicka Recovery to 0 while Blocking, Sneaking, or Sprinting. You no longer reduce your Stamina Recovery to 0 while Blocking, Sneaking or Sprinting.',
   ],
 };
 
@@ -273,7 +279,7 @@ export const theShadowQueensCowl: GearSetData = {
   icon: "The Shadow Queen's Cowl",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While crouched, you can see Witnesses and Guards through walls. Successfully pickpocketing a Witness or Guard applies Distracted to them for 10 seconds, stunning them and decreasing their Stealth detection radius by 30 meters for the duration.',
+    '(1 item) While crouched, you can see Witnesses and Guards through walls.\n\nSuccessfully pickpocketing a Witness or Guard applies Distracted to them for 10 seconds, stunning them and decreasing their Stealth detection radius by 30 meters for the duration.',
   ],
 };
 
@@ -282,7 +288,7 @@ export const thrassianStranglers: GearSetData = {
   icon: 'Thrassian Stranglers',
   setType: 'Mythic',
   bonuses: [
-    "(1 item) Killing an enemy grants you a stack of Sload's Call for 1 hour, up to a maximum of 50 stacks. Each stack increases your Weapon and Spell Damage by 23, reduces your Maximum Health by 120, and reduces effectiveness of your damage shields by 1%. Sload's Call is lost if you remove Thrassian Stranglers, go invisible, or crouch.",
+    "(1 item) Killing an enemy grants you a stack of Sload's Call for 1 hour, up to a maximum of 50 stacks. Each stack increases your Weapon and Spell Damage by 23, reduces your Maximum Health by 120, and reduces effectiveness of your damage shields by 1%.\n\nSload's Call is lost if you remove Thrassian Stranglers, go invisible, or crouch.",
   ],
 };
 
@@ -309,6 +315,7 @@ export const velothiUrMagesAmulet: GearSetData = {
   icon: "Velothi Ur-Mage's Amulet",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Adds 1650 Offensive Penetration, Increase your damage done to monsters by 15%, gain Minor Force at all times, increasing your Critical Damage done by 10%, and reduce your Light and Heavy Attack damage by 99%.',
+    '(1 item) Adds 1650 Offensive Penetration',
+    '(1 item) Increase your damage done to monsters by 15%, gain Minor Force at all times, increasing your Critical Damage done by 10%, and reduce your Light and Heavy Attack damage by 99%.',
   ],
 };
