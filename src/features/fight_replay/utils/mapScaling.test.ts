@@ -2,7 +2,9 @@ import { ZoneScaleData } from '../../../types/zoneScaleData';
 
 import {
   DEFAULT_ACTOR_SCALE,
+  MIN_FRAME_DIAGONAL_UNITS,
   computeActorScaleFromMapData,
+  computeInitialViewDistance,
   computeUnitsPerMeter,
 } from './mapScaling';
 
@@ -91,5 +93,44 @@ describe('DEFAULT_ACTOR_SCALE', () => {
   it('is a sane default within the supported scale range', () => {
     expect(DEFAULT_ACTOR_SCALE).toBeGreaterThanOrEqual(0.05);
     expect(DEFAULT_ACTOR_SCALE).toBeLessThanOrEqual(4.0);
+  });
+});
+
+describe('computeInitialViewDistance', () => {
+  // Distance for a diagonal exactly at the floor — the value every small fight collapses to.
+  const floorDistance = computeInitialViewDistance(MIN_FRAME_DIAGONAL_UNITS);
+
+  it('floors tiny fights at the minimum framing window (RG Xalvakka ≈ 18-unit diagonal)', () => {
+    // A tiny fight diagonal is clamped UP to MIN_FRAME_DIAGONAL_UNITS, so it frames the same window
+    // as a fight exactly at the floor — this is the fix for "too small / zoomed-in".
+    expect(computeInitialViewDistance(18.1)).toBeCloseTo(floorDistance, 5);
+  });
+
+  it('treats a zero/degenerate diagonal as the minimum window (never zero distance)', () => {
+    expect(computeInitialViewDistance(0)).toBeCloseTo(floorDistance, 5);
+    expect(computeInitialViewDistance(Number.NaN)).toBeCloseTo(floorDistance, 5);
+    expect(computeInitialViewDistance(-50)).toBeCloseTo(floorDistance, 5);
+  });
+
+  it('scales the distance up for large fights above the floor (DSR Taleria ≈ 74-unit diagonal)', () => {
+    // A genuinely large fight is NOT clamped — it frames its real (bigger) area, so it pulls the
+    // camera farther out than the floor. This is why large fights are unaffected by the fix.
+    expect(computeInitialViewDistance(73.6)).toBeGreaterThan(floorDistance);
+  });
+
+  it('is monotonic in the diagonal once above the floor', () => {
+    const d40 = computeInitialViewDistance(40);
+    const d80 = computeInitialViewDistance(80);
+    const d160 = computeInitialViewDistance(160);
+    expect(d80).toBeGreaterThan(d40);
+    expect(d160).toBeGreaterThan(d80);
+  });
+
+  it('returns a positive finite distance for all inputs', () => {
+    for (const diag of [0, 1, 18.1, 35, 73.6, 141, 1000]) {
+      const d = computeInitialViewDistance(diag);
+      expect(Number.isFinite(d)).toBe(true);
+      expect(d).toBeGreaterThan(0);
+    }
   });
 });

@@ -33,7 +33,11 @@ import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { portalToFullscreen } from '../utils/fullscreenPortal';
-import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
+import {
+  DEFAULT_ACTOR_SCALE,
+  computeActorScaleFromMapData,
+  computeInitialViewDistance,
+} from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
 
@@ -675,22 +679,22 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     // The diagonal of the (outlier-trimmed) XZ extent — the size measure for the distance calc.
     const boundingBoxDiagonal = framing.diagonalXZ;
 
-    // Calculate camera distance to fit all actors in view
-    // Use the bounding box diagonal to determine appropriate distance
-    // Camera FOV is 30 degrees, so we need to account for that
-    const fov = 30; // degrees
-    const fovRadians = (fov * Math.PI) / 180;
+    // Distance needed to frame the fight. computeInitialViewDistance floors the diagonal at
+    // MIN_FRAME_DIAGONAL_UNITS so a tiny fight (e.g. a ~14×11 m Rockgrove boss) still frames a
+    // sensible window of surrounding map instead of pinning the camera onto the cluster and
+    // magnifying a blurry map patch — the "too small / zoomed-in" report. Large fights whose real
+    // diagonal exceeds the floor are unaffected.
+    const fitDistance = computeInitialViewDistance(boundingBoxDiagonal);
 
-    // Calculate distance needed to fit the bounding box in view
-    // Use a tight framing multiplier for a closer initial view
-    const requiredDistance = (boundingBoxDiagonal / 2 / Math.tan(fovRadians / 2)) * 0.5;
-
-    // Use our calculated distance, but ensure it's reasonable
-    // Don't use cameraSettings.minDistance as it can be too large for initial view
-    const viewDistance = Math.max(
-      2, // Absolute minimum of 2 units (very close)
-      Math.min(requiredDistance, cameraSettings.maxDistance * 0.3),
-    );
+    // The original "don't start too far out" cap was maxDistance × 0.3. For a TINY fight,
+    // maxDistance is itself small (it tracks the fight size), so that cap (≈16 units for Rockgrove)
+    // sat BELOW the minimum framing distance and silently re-cramped the very view we just widened.
+    // Floor the cap at the minimum framing distance so it can still pull a huge fight in but can
+    // never undercut the floor — large fights (DSR) keep their existing capped framing exactly,
+    // small fights (RG) get the wider window. computeInitialViewDistance(0) is the floor distance.
+    const minFrameDistance = computeInitialViewDistance(0);
+    const startCap = Math.max(cameraSettings.maxDistance * 0.3, minFrameDistance);
+    const viewDistance = Math.min(fitDistance, startCap);
 
     // Position camera: southwest of target, elevated for good viewing angle
     const cameraOffset = [-viewDistance * 0.6, viewDistance * 0.5, viewDistance * 0.6];
