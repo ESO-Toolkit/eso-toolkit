@@ -9,6 +9,7 @@ import { usePerfTier } from '../../../hooks/usePerfTier';
 import { fightTimeToTimestamp } from '../../../utils/fightTimeUtils';
 import { getMapAtTimestamp, MapTimeline } from '../../../utils/mapTimelineUtils';
 import { RenderPriority } from '../constants/renderPriorities';
+import { getMapTextureUrl } from '../utils/mapTextureSource';
 
 interface DynamicMapTextureProps {
   mapTimeline: MapTimeline;
@@ -159,7 +160,7 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
 
       return new Promise((resolve, reject) => {
         loader.load(
-          `https://assets.rpglogs.com/img/eso/maps/${mapFile}.jpg`,
+          getMapTextureUrl(mapFile),
           (texture) => {
             texture.wrapS = THREE.ClampToEdgeWrapping;
             texture.wrapT = THREE.ClampToEdgeWrapping;
