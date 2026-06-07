@@ -3,6 +3,7 @@ import { ZoneScaleData } from '../../../types/zoneScaleData';
 import {
   DEFAULT_ACTOR_SCALE,
   MIN_FRAME_DIAGONAL_UNITS,
+  computeActorScaleFromFightArea,
   computeActorScaleFromMapData,
   computeInitialViewDistance,
   computeUnitsPerMeter,
@@ -93,6 +94,60 @@ describe('DEFAULT_ACTOR_SCALE', () => {
   it('is a sane default within the supported scale range', () => {
     expect(DEFAULT_ACTOR_SCALE).toBeGreaterThanOrEqual(0.05);
     expect(DEFAULT_ACTOR_SCALE).toBeLessThanOrEqual(4.0);
+  });
+});
+
+describe('computeActorScaleFromFightArea', () => {
+  // Real bounding boxes (raw ESO cm) from the two reference fights used to tune the scale.
+  const RG_XALVAKKA = { minX: 4555, maxX: 5957, minY: 4070, maxY: 5220 }; // ~18-unit diagonal
+  const DSR_TALERIA = { minX: 3241, maxX: 7752, minY: 2038, maxY: 7857 }; // ~74-unit diagonal
+
+  it('returns null for missing or degenerate bounding boxes', () => {
+    expect(computeActorScaleFromFightArea(null)).toBeNull();
+    expect(computeActorScaleFromFightArea(undefined)).toBeNull();
+    expect(computeActorScaleFromFightArea({ minX: 50, maxX: 50, minY: 50, maxY: 50 })).toBeNull();
+    expect(
+      computeActorScaleFromFightArea({
+        minX: Number.NaN,
+        maxX: 1,
+        minY: 0,
+        maxY: 1,
+      }),
+    ).toBeNull();
+  });
+
+  it('scales a small-arena fight (Rockgrove) DOWN relative to a large one (Dreadsail Reef)', () => {
+    const rg = computeActorScaleFromFightArea(RG_XALVAKKA);
+    const dsr = computeActorScaleFromFightArea(DSR_TALERIA);
+    expect(rg).not.toBeNull();
+    expect(dsr).not.toBeNull();
+    // The whole point of the fix: the tiny arena's figures are smaller than the big arena's.
+    expect(rg as number).toBeLessThan(dsr as number);
+  });
+
+  it('keeps a large fight near its established figure scale (~1.25 for Taleria)', () => {
+    const dsr = computeActorScaleFromFightArea(DSR_TALERIA) as number;
+    expect(dsr).toBeGreaterThan(1.1);
+    expect(dsr).toBeLessThan(1.4);
+  });
+
+  it('clamps every result into the supported [0.55, 1.4] range', () => {
+    const boxes = [
+      RG_XALVAKKA,
+      DSR_TALERIA,
+      { minX: 0, maxX: 100, minY: 0, maxY: 100 }, // tiny → floor
+      { minX: 0, maxX: 5_000_000, minY: 0, maxY: 5_000_000 }, // huge → ceiling
+    ];
+    for (const box of boxes) {
+      const s = computeActorScaleFromFightArea(box) as number;
+      expect(s).toBeGreaterThanOrEqual(0.55);
+      expect(s).toBeLessThanOrEqual(1.4);
+    }
+  });
+
+  it('floors a very small fight at the minimum scale so figures stay visible/clickable', () => {
+    // A 1×1 m fight would scale to ~0 without the floor.
+    expect(computeActorScaleFromFightArea({ minX: 0, maxX: 100, minY: 0, maxY: 100 })).toBe(0.55);
   });
 });
 

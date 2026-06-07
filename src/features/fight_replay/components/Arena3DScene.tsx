@@ -6,13 +6,12 @@ import type { DirectionalLight, Object3D } from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
-import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
 import { MapMarkersState } from '../types/mapMarkers';
 import { LongPressTracker } from '../utils/longPress';
-import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
+import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
@@ -680,75 +679,31 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     arenaDimensions.size,
   ]);
 
-  // Calculate actor scale based on map dimensions so actors keep a consistent real-world footprint
+  // Actor figure scale, driven by the fight's OWN actor area so figures are a consistent fraction of
+  // the play area in every fight. The previous basis was a zone-map lookup
+  // (getMapScaleData + computeActorScaleFromMapData), but the report's map id resolves into
+  // zoneScaleData only by a numeric collision (e.g. a Rockgrove boss matched the unrelated "Xanmeer
+  // Corridors" entry), so a small-arena fight was sized as if it were a large map and the figures
+  // read oversized next to the same fight on a big arena (Taleria). fight.boundingBox is the real,
+  // per-fight play area, so deriving scale from it makes a tiny Rockgrove arena get proportionally
+  // smaller figures while a sprawling Dreadsail Reef fight keeps roughly its established size.
   const actorScale = useMemo(() => {
-    const zoneId = fight.gameZone?.id;
-    const mapId = fight.maps?.[0]?.id;
-
-    if (!zoneId || !mapId) {
-      logger.warn('Missing zoneId or mapId for map-based actor scaling', { zoneId, mapId });
-      return DEFAULT_ACTOR_SCALE;
-    }
-
-    const mapData = getMapScaleData(zoneId, mapId);
-    if (!mapData) {
-      logger.warn('No map scale data found for map-based actor scaling', { zoneId, mapId });
-      return DEFAULT_ACTOR_SCALE;
-    }
-
-    const mapScale = computeActorScaleFromMapData(mapData);
-    if (mapScale) {
-      logger.info('Actor scale calculation (map-based)', {
+    const fightAreaScale = computeActorScaleFromFightArea(fight.boundingBox);
+    if (fightAreaScale) {
+      logger.info('Actor scale calculation (fight-area-based)', {
         fightId: fight.id,
-        mapName: mapData.name,
-        zoneId,
-        mapId,
-        actorScale: mapScale.toFixed(3),
+        actorScale: fightAreaScale.toFixed(3),
       });
-
-      return mapScale;
+      return fightAreaScale;
     }
 
-    logger.warn('Map data produced invalid actor scale, falling back to default', {
-      fightId: fight.id,
-      mapName: mapData.name,
-    });
-
-    // Fallback: use fight bounding box if available, otherwise default constant
-    const boundingBox = fight.boundingBox;
-    if (boundingBox) {
-      const { minX, maxX, minY, maxY } = boundingBox;
-      const hasBounds = [minX, maxX, minY, maxY].every(
-        (value) => typeof value === 'number' && Number.isFinite(value),
-      );
-
-      if (hasBounds) {
-        const rangeX = ((maxX as number) - (minX as number)) / 100;
-        const rangeZ = ((maxY as number) - (minY as number)) / 100;
-        const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-
-        if (diagonal > 0) {
-          const relativeFightSize = Math.min(1, diagonal / 141.42);
-          const fallbackScale = 0.5 + relativeFightSize * 0.3; // Keep within visibility bounds
-
-          logger.warn('Using bounding-box fallback for actor scale', {
-            fightId: fight.id,
-            diagonal: diagonal.toFixed(2),
-            fallbackScale: fallbackScale.toFixed(3),
-          });
-
-          return fallbackScale;
-        }
-      }
-    }
-
-    logger.warn('Unable to derive actor scale, using default constant', {
+    logger.warn('No usable fight bounding box for actor scaling, using default constant', {
       fightId: fight.id,
       defaultScale: DEFAULT_ACTOR_SCALE,
     });
 
     return DEFAULT_ACTOR_SCALE;
-  }, [fight.boundingBox, fight.gameZone?.id, fight.id, fight.maps]);
+  }, [fight.boundingBox, fight.id]);
 
   // Process player paths for visualization
   const playerPaths = useMemo(() => {

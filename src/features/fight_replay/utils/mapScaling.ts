@@ -61,6 +61,68 @@ export function computeInitialViewDistance(boundingBoxDiagonalUnits: number): nu
 }
 
 /**
+ * Bounding box of the fight's actors, in raw ESO world centimeters (matches GraphQL
+ * `fight.boundingBox`). The actor coordinate transform divides these by 100 to reach arena units.
+ */
+export interface FightBoundingBoxCm {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+/**
+ * Figure scale per unit of fight-area diagonal (arena units = meters). Tuned so the play area's
+ * size, not a zone lookup, drives how big the actor figures read: a large arena (e.g. Dreadsail
+ * Reef's Taleria, ~74-unit diagonal) keeps roughly its established figure size, while a tiny arena
+ * (e.g. a Rockgrove boss, ~18-unit diagonal) gets proportionally smaller figures so the crowd reads
+ * at the SAME fraction of the play area in every fight instead of looking oversized in a small one.
+ *
+ * Anchored on Taleria, which looked right at the previous map-based scale ≈1.25 for its ≈74-unit
+ * diagonal → ≈0.017 scale per unit. Tuned live against the real RG/DSR fights (see .scratch shots).
+ */
+const ACTOR_SCALE_PER_FIGHT_DIAGONAL = 0.017;
+
+/**
+ * Clamp range for the fight-area-derived actor scale. The lower bound keeps figures on a very small
+ * fight big enough to see and click; the upper bound stops a sprawling fight (or an outlier
+ * coordinate that inflates the bounding box) from ballooning the figures.
+ */
+const MIN_FIGHT_AREA_ACTOR_SCALE = 0.55;
+const MAX_FIGHT_AREA_ACTOR_SCALE = 1.4;
+
+/**
+ * Compute the actor figure scale from the fight's own actor bounding box so figures are a consistent
+ * fraction of the play area across fights — the principled replacement for deriving scale from a
+ * zone-map lookup (which mis-resolved for some zones via a numeric map-id collision and so sized a
+ * small-arena fight's figures as if it were a large map, making them read oversized).
+ *
+ * Returns null when the bounding box is missing or degenerate so the caller can fall back.
+ */
+export function computeActorScaleFromFightArea(
+  boundingBox: FightBoundingBoxCm | null | undefined,
+): number | null {
+  if (!boundingBox) {
+    return null;
+  }
+  const { minX, maxX, minY, maxY } = boundingBox;
+  if (![minX, maxX, minY, maxY].every((v) => typeof v === 'number' && Number.isFinite(v))) {
+    return null;
+  }
+
+  // Arena units (= meters): the actor transform is world-cm ÷ 100.
+  const rangeX = (maxX - minX) / CENTIMETERS_PER_METER;
+  const rangeZ = (maxY - minY) / CENTIMETERS_PER_METER;
+  const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+  if (!(diagonal > 0)) {
+    return null;
+  }
+
+  const rawScale = diagonal * ACTOR_SCALE_PER_FIGHT_DIAGONAL;
+  return Math.max(MIN_FIGHT_AREA_ACTOR_SCALE, Math.min(MAX_FIGHT_AREA_ACTOR_SCALE, rawScale));
+}
+
+/**
  * Calculates the number of arena units that represent one real-world meter for a given map.
  * Returns null when map bounds are invalid.
  */

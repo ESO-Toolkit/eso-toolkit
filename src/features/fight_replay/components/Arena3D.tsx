@@ -25,7 +25,6 @@ import { usePerfTier } from '../../../hooks/usePerfTier';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
-import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
@@ -35,7 +34,7 @@ import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { portalToFullscreen } from '../utils/fullscreenPortal';
 import {
   DEFAULT_ACTOR_SCALE,
-  computeActorScaleFromMapData,
+  computeActorScaleFromFightArea,
   computeInitialViewDistance,
 } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
@@ -578,36 +577,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // Calculate initial camera target and position based on actor bounding box at fight start
   // MUST be before any early returns to comply with React Hooks rules
   const { initialCameraTarget, initialCameraPosition } = useMemo(() => {
-    // Calculate actor scale based on fight size (same logic as Arena3DScene)
-    let actorScale = DEFAULT_ACTOR_SCALE;
-
-    if (fight) {
-      const zoneId = fight.gameZone?.id;
-      const mapId = fight.maps?.[0]?.id;
-
-      if (zoneId && mapId) {
-        const mapData = getMapScaleData(zoneId, mapId);
-        const mapScale = mapData ? computeActorScaleFromMapData(mapData) : null;
-
-        if (mapScale) {
-          actorScale = mapScale;
-        }
-      }
-
-      if ((!fight.gameZone?.id || !fight.maps?.[0]?.id) && fight.boundingBox) {
-        const { minX, maxX, minY, maxY } = fight.boundingBox;
-        if (minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
-          const rangeX = (maxX - minX) / 100;
-          const rangeZ = (maxY - minY) / 100;
-          const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-
-          if (diagonal > 0) {
-            const relativeFightSize = Math.min(1, diagonal / 141.42);
-            actorScale = 0.5 + relativeFightSize * 0.3;
-          }
-        }
-      }
-    }
+    // Actor scale from the fight's own play area (same basis as Arena3DScene's figures). Only used
+    // by the computeDefaultCameraPosition fallback below when there's no actor lookup to fit to.
+    const actorScale = computeActorScaleFromFightArea(fight?.boundingBox) ?? DEFAULT_ACTOR_SCALE;
 
     // Use arena dimensions center as fallback
     const defaultTarget: [number, number, number] = [
