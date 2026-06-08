@@ -105,15 +105,17 @@ ESOTK is unusually well-positioned because the integration surfaces already exis
 |---|---|
 | **Player cards** (the headline ask) | CP allocation, final stats (crit/pen/recovery), mundus, food, attribute split — shown inline. |
 | **Loadout Manager** | Already imports Lua SavedVariables. Add an `ESOTKCompanion` format alongside Wizard's Wardrobe. |
-| **Build Hub** | "Get Addons" deep-link to **Kalpa** addon manager already exists — ship the companion as a Kalpa pack so install is one click. |
+| **Build Hub** | "Get Addons" deep-link to **Kalpa** addon manager already exists (now an *optional* convenience tier — see §9). Primary install is the standard Minion/manual route every ESO addon uses. |
 | **Roster Hub** | `recommended_addons` column already exists; the companion becomes a recommended/required raid add-on, and roster build-checks validate against captured CP/stats. |
 | **Fight Replay** | Lock-on stats panel can show the *real* build behind an actor. |
 | **Scribing detection** | Cross-check detected scripts against authoritatively-reported slotted scripts. |
 
-The **Kalpa** addon manager + deep-link (`GetAddonsButton`) is the distribution
-channel and is the natural place to **automate the upload**: Kalpa already manages the
-SavedVariables directory, so it can read `ESOTKCompanion.lua` and POST it to ESOTK
-without the user hand-uploading a file. That closes the "no HTTP from Lua" gap cleanly.
+> **Distribution note (revised):** the original draft leaned on the **Kalpa** addon
+> manager to auto-upload SavedVariables. That's still a valid *optional* convenience,
+> but it should **not** be required — asking users to install a separate desktop app
+> they don't trust is the single biggest adoption killer (it's exactly the friction
+> that makes the ESO Logs Electron uploader a barrier). The transport strategy is now
+> **no-install-first**; see §9–§11. Kalpa becomes one opt-in tier, not the front door.
 
 ---
 
@@ -135,8 +137,10 @@ without the user hand-uploading a file. That closes the "no HTTP from Lua" gap c
 5. **Whole-group capture via LibGroupBroadcast** — the raid logger's single upload
    carries all 12 builds. This is what turns it from "nice for me" into "the group
    tool". Mirror the Hodor/LibGroupCombatStats model.
-6. **Kalpa auto-upload** — Kalpa reads the SV file and posts to ESOTK; zero manual
-   steps. Optionally a clipboard build-code as the no-Kalpa fallback.
+6. **No-install browser folder-sync (the UVP)** — ESOTK uses the **File System Access
+   API** to read the SavedVariables (and optionally `Logs/Encounter.log`) folder
+   directly from the browser after a one-time permission grant. No desktop app. See
+   §9–§11. Kalpa auto-upload and a copy/paste build-code are fallback tiers.
 7. **Build-correctness flags on player cards** — derive issues from captured data
    (no food, low penetration for the content, wrong mundus, unspent CP/attributes,
    under-quality gear). ESOTK already has `detectBuildIssues` — feed it real data.
@@ -213,6 +217,110 @@ builds on the same schema and matcher.
 
 ---
 
+## 9. Getting data in **without** trusted desktop software (the real problem)
+
+ESO Lua **cannot make outbound HTTP requests** — by design. So *something* has to carry
+the SavedVariables data from disk to ESOTK. The market has only ever used three
+mechanisms, and the whole adoption question is which one we lead with.
+
+### How the market actually does it
+
+| Tool | Transport | Friction |
+|---|---|---|
+| **ESO Logs** (combat logs) | **Electron desktop uploader** ("Companion") that tails `Encounter.log` and POSTs it | Must download + trust a native app. *This is the friction we're avoiding.* |
+| **ESO-Database** | Desktop **client** *or* **manual file upload** on their site | Client = trust friction; manual = works but tedious |
+| **CombatMetrics → ESO-Hub** | In-game **copy/paste build code** into the Build Editor | Zero install; proven and popular |
+| **UESP uespLog**, **TTC**, etc. | Manual SavedVariables upload / separate client | Mixed |
+| **Wizard's Wardrobe → ESOTK** | Manual `.lua` upload (already shipped here) | Zero install |
+
+**Verdict:** every "frictionless and trusted" success story is **either copy/paste a
+code, or upload the file through the browser**. The desktop-uploader path is exactly
+what users resist. So we don't ship a desktop app — we make the **browser** the
+ingestion engine.
+
+### The tiered, no-install transport ladder
+
+> Lead with the lowest-friction option each browser supports; degrade gracefully.
+
+**Tier 1 — File System Access API folder-sync (hero path, Chromium).**
+ESOTK calls `showDirectoryPicker()` once; the user points it at
+`Documents/Elder Scrolls Online/live/`. We store the directory handle in **IndexedDB**,
+so on every later visit a **single click** (`requestPermission`) re-reads
+`SavedVariables/ESOTKCompanion.lua` — and, if granted, `Logs/Encounter.log` too. No
+download, nothing to trust beyond the browser's own permission prompt. This is the
+**unique value proposition**: *ESO Logs needs an Electron app to read your log folder;
+ESOTK does it from the tab you already have open.*
+- Works in **Chrome / Edge / Opera / Brave 86+** (the majority of desktop, and ESO
+  add-on users are PC/desktop by definition).
+- **Not** in Firefox or Safari — Mozilla and Apple have declined the local-disk
+  pickers permanently. Those users fall to Tier 2/3.
+
+**Tier 2 — Copy/paste build code (universal, proven).**
+The add-on renders a compressed, encoded build string in an in-game **edit box**; the
+user selects-all + Ctrl+C and pastes it into ESOTK. This is precisely the
+CombatMetrics → ESO-Hub flow, so ESO players already understand it.
+- **Constraint:** ESO's direct clipboard write is a *protected/illegal call* — we
+  cannot auto-copy; the user must Ctrl+C from the editbox. And a single copy is capped
+  near **~1023 characters**, so the payload must be compressed (one player's
+  CP+stats+attributes fits comfortably; a 12-person raid needs chunking or Tier 1/3).
+
+**Tier 3 — Manual `.lua` upload (works everywhere, already built).**
+Drag-drop the SavedVariables file into ESOTK. Firefox/Safari fallback and the
+universal safety net. ESOTK's existing `luaParser.ts` already does this for Wizard's
+Wardrobe; we extend it to the `ESOTKCompanion` format.
+
+**Tier 4 — Kalpa auto-upload (optional power-user convenience, not required).**
+For users who already run Kalpa, it can POST the SV file automatically. Strictly
+opt-in; never the on-ramp.
+
+---
+
+## 10. Piggyback before you ask for a new install
+
+The cheapest trust is **no new addon at all**. A large share of the target audience
+already runs **CombatMetrics**, **Hodor Reflexes**, and **Wizard's Wardrobe** — all of
+which write SavedVariables that ESOTK can read via the same Tier 1/3 transport.
+
+- **CombatMetrics** already records per-fight data and can export a build (gear/skills/
+  CP) — ESOTK can ingest its SV directly.
+- **Wizard's Wardrobe** — already parsed here today.
+- **Hodor / LibGroupCombatStats** — already aggregates *group* DPS/HPS/Ult.
+
+**Strategy:** ESOTK should **read what users already have first**, and the
+purpose-built ESOTK Companion add-on only needs to fill the residual gaps those tools
+*don't* persist — chiefly **full CP allocation, final derived stats, and group-wide
+build aggregation in one file**. This reframes the companion from "install our thing"
+to "we already work with your existing addons; install ours only for the extra 20%."
+That is a materially easier adoption pitch.
+
+---
+
+## 11. Unique value proposition — what only ESOTK can deliver
+
+The build-sharing space is crowded (ESO-Hub Build Editor, Alcast, Arzyel, Hack the
+Minotaur). But **every one of them shares a *static, hand-made* build**. None of them
+tie a build to **what actually happened in a logged fight**. That gap is ours:
+
+1. **Build ↔ log correlation on the player card.** ESO-Hub shows a build; ESOTK shows
+   *the build the player was actually running when they pulled 92k on this boss*,
+   stitched onto the ESO Logs report. Nobody else does this.
+2. **Whole-group truth from one source.** Via LibGroupBroadcast, one logger's single
+   file yields all 12 members' real builds, auto-attached to the report — a raid-lead
+   superpower, not a personal toy.
+3. **No desktop uploader.** The only browser-native ingestion in the ESO space: grant a
+   folder once, done. Direct contrast with ESO Logs' required Electron app.
+4. **Diagnostics the log can't compute.** "Top DPS but no food", "0 penetration into a
+   resistant boss", "unspent CP", "wrong mundus for the role" — derived from data ESO
+   Logs structurally never sees, surfaced inline. Feeds the existing
+   `detectBuildIssues`.
+5. **Closed loop.** Design a loadout in ESOTK → play it → log it → ESOTK confirms you
+   ran what you planned and shows the result. Build sites are open-loop; we close it.
+
+**Positioning one-liner:** *Other sites show you a build. ESOTK shows you the build that
+won the parse — for your whole raid — with nothing to install.*
+
+---
+
 ## Sources
 
 - [ESO Logs — Getting Started](https://www.esologs.com/help/start)
@@ -227,5 +335,11 @@ builds on the same schema and matcher.
 - [Champion Point Import add-on](https://esoui.com/downloads/info3421-ChampionPointImport.html)
 - [Dynamic CP (Champion Points 2.0)](https://www.esoui.com/downloads/info2952-DynamicCPChampionPoints2.0.html)
 - [Fix for LibGroupBroadcast — ESO Forums (2026)](https://forums.elderscrollsonline.com/en-gb/discussion/679406/fix-for-libgroupbroadcast)
+- [ESO Logs Uploader (Electron app) — Archon](https://www.archon.gg/eso/articles/help/uploader)
+- [ESO-Database Export AddOn](https://www.esoui.com/downloads/info916-ESO-Database.comExportAddOn.html) · [Manual data upload](https://www.eso-database.com/en/manual-data-upload/)
+- [File System Access API — Chrome for Developers](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access) · [Persistent permissions](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api) · [caniuse browser support](https://caniuse.com/native-filesystem-api)
+- [browser-fs-access (legacy fallback helper)](https://github.com/GoogleChromeLabs/browser-fs-access)
+- [Chat2Clipboard (in-game copy pattern)](https://www.esoui.com/downloads/info553-Chat2Clipboard.html) · [Illegal Call CopyAllTextToClipboard — ESOUI](https://www.esoui.com/forums/showthread.php?t=6012)
+- [ESO-Hub Build Editor (import/export, CombatMetrics integration)](https://eso-hub.com/en/build-editor)
 </content>
 </invoke>
