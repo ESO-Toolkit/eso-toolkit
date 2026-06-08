@@ -115,8 +115,9 @@ export function setupFloorSharpen(
   const clamped = Math.max(0, Math.min(MAX_SHARPEN_STRENGTH, strength));
 
   // If already wired, just update the live uniform — no recompile.
-  const existing = (material as unknown as { userData: { floorSharpenUniform?: { value: number } } })
-    .userData?.floorSharpenUniform;
+  const existing = (
+    material as unknown as { userData: { floorSharpenUniform?: { value: number } } }
+  ).userData?.floorSharpenUniform;
   if (existing) {
     existing.value = clamped;
     return;

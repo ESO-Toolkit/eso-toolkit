@@ -34,7 +34,10 @@ describe('setupFloorSharpen', () => {
     const mat = new THREE.MeshPhongMaterial();
     setupFloorSharpen(mat, 1.0);
     // Simulate three calling the hook with a shader carrying the stock include.
-    const shader = { uniforms: {} as Record<string, unknown>, fragmentShader: 'a\n#include <map_fragment>\nb' };
+    const shader = {
+      uniforms: {} as Record<string, unknown>,
+      fragmentShader: 'a\n#include <map_fragment>\nb',
+    };
     (mat.onBeforeCompile as (s: typeof shader) => void)(shader);
     expect(shader.fragmentShader).not.toContain('#include <map_fragment>');
     // The uniform must be DECLARED in the GLSL (not just added to shader.uniforms), or the shader
@@ -50,7 +53,10 @@ describe('setupFloorSharpen', () => {
     const mat = new THREE.MeshPhongMaterial();
     setupFloorSharpen(mat, 1.0);
     const firstHook = mat.onBeforeCompile;
-    const shader = { uniforms: {} as Record<string, unknown>, fragmentShader: '#include <map_fragment>' };
+    const shader = {
+      uniforms: {} as Record<string, unknown>,
+      fragmentShader: '#include <map_fragment>',
+    };
     (mat.onBeforeCompile as (s: typeof shader) => void)(shader);
 
     setupFloorSharpen(mat, 0.3); // second call after compile
@@ -61,7 +67,10 @@ describe('setupFloorSharpen', () => {
   it('clamps strength to a sane ceiling and floor', () => {
     const mat = new THREE.MeshPhongMaterial();
     setupFloorSharpen(mat, 99);
-    const shader = { uniforms: {} as Record<string, unknown>, fragmentShader: '#include <map_fragment>' };
+    const shader = {
+      uniforms: {} as Record<string, unknown>,
+      fragmentShader: '#include <map_fragment>',
+    };
     (mat.onBeforeCompile as (s: typeof shader) => void)(shader);
     expect((shader.uniforms.uFloorSharpen as { value: number }).value).toBeLessThanOrEqual(1.5);
 

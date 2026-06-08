@@ -159,8 +159,20 @@ const SECUNDA: MoonSpec = {
 // coloured to its god's iconography so the bright point reads as THAT deity watching the sky:
 //  Akatosh = eye of the Warrior (Dragon of Time, gold); Julianos = the Mage (wisdom, sapphire);
 //  Arkay = the Thief (life & death — life-green core halo + a death-violet outer rim).
-const AKATOSH: PlanetEyeSpec = { name: 'Akatosh', core: '#ffffff', halo: '#ffcf7a', azimuth: -0.6, elevation: 0.16 };
-const JULIANOS: PlanetEyeSpec = { name: 'Julianos', core: '#ffffff', halo: '#acc6ff', azimuth: 2.4, elevation: 0.15 };
+const AKATOSH: PlanetEyeSpec = {
+  name: 'Akatosh',
+  core: '#ffffff',
+  halo: '#ffcf7a',
+  azimuth: -0.6,
+  elevation: 0.16,
+};
+const JULIANOS: PlanetEyeSpec = {
+  name: 'Julianos',
+  core: '#ffffff',
+  halo: '#acc6ff',
+  azimuth: 2.4,
+  elevation: 0.15,
+};
 const ARKAY: PlanetEyeSpec = {
   name: 'Arkay',
   core: '#ffffff',
@@ -223,7 +235,15 @@ const VARIANTS: Record<CosmicVariant, VariantSpec> = {
     sunDirection: SUN,
     // One sullen ember-sun low on the horizon (Dagon's burning astronomy).
     moons: [
-      { name: 'Ember Sun', color: '#c23a1e', glow: '#7a2010', r: 0.36, azimuth: Math.PI * 0.5, elevation: 0.12, litFraction: 1 },
+      {
+        name: 'Ember Sun',
+        color: '#c23a1e',
+        glow: '#7a2010',
+        r: 0.36,
+        azimuth: Math.PI * 0.5,
+        elevation: 0.12,
+        litFraction: 1,
+      },
     ],
     planetEyes: [ARKAY],
     serpent: true,
@@ -354,7 +374,9 @@ function bakeNebulaTexture(
   });
 
   // Pad the palette to 3 colours so the shader always has c0/c1/c2.
-  const cols = [0, 1, 2].map((i) => new THREE.Color(palette[i % palette.length] ?? palette[0] ?? '#222'));
+  const cols = [0, 1, 2].map(
+    (i) => new THREE.Color(palette[i % palette.length] ?? palette[0] ?? '#222'),
+  );
 
   const scene = new THREE.Scene();
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -739,7 +761,10 @@ const Moon: React.FC<{
   domeDist: number;
   sunDir: [number, number, number];
 }> = ({ spec, size, center, domeDist, sunDir }) => {
-  const surface = useMemo(() => makeMoonSurfaceTexture(spec.color, spec.glow), [spec.color, spec.glow]);
+  const surface = useMemo(
+    () => makeMoonSurfaceTexture(spec.color, spec.glow),
+    [spec.color, spec.glow],
+  );
   const material = useMemo(
     // hdrGain >1 pushes the sunlit face past the bloom threshold so the moon glows (not a flat decal).
     () => makeMoonMaterial(surface, new THREE.Vector3(...sunDir), '#ffffff', 1.9),
@@ -810,7 +835,14 @@ const Constellation: React.FC<{
   domeDist: number;
 }> = ({ spec, size, center, domeDist }) => {
   const texture = useMemo(
-    () => makeConstellationTexture(spec.dots, spec.lines, spec.dotColor, spec.lineColor, spec.lineOpacity),
+    () =>
+      makeConstellationTexture(
+        spec.dots,
+        spec.lines,
+        spec.dotColor,
+        spec.lineColor,
+        spec.lineOpacity,
+      ),
     [spec.dots, spec.lines, spec.dotColor, spec.lineColor, spec.lineOpacity],
   );
   useEffect(() => () => texture.dispose(), [texture]);
@@ -970,7 +1002,12 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
           structured, filamentary veil reads as real nebulosity from every orbit angle; baked once under
           the gate, sampled per-frame as a trivial texture lookup. Kept dim (peak well under the bloom
           threshold) so it stays an atmospheric wash, not a hot blob. */}
-      <NebulaShell radius={radius * 0.85} center={center} palette={spec.nebula} intensity={spec.nebulaOpacity} />
+      <NebulaShell
+        radius={radius * 0.85}
+        center={center}
+        palette={spec.nebula}
+        intensity={spec.nebulaOpacity}
+      />
 
       {/* The two moons (or the Deadlands ember-sun) — lit spheres shaded from the shared Magnus sun. */}
       {spec.moons.map((m) => (
@@ -993,7 +1030,9 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
       {spec.tower && <Constellation spec={TOWER} size={size} center={center} domeDist={domeDist} />}
 
       {/* The Serpent — the wandering 13th, a shallow green S of dim un-stars (light, not void). */}
-      {spec.serpent && <Constellation spec={SERPENT} size={size} center={center} domeDist={domeDist} />}
+      {spec.serpent && (
+        <Constellation spec={SERPENT} size={size} center={center} domeDist={domeDist} />
+      )}
 
       {/* Mnemoli, the Blue Star — the one named Magna-Ge, a lone off-hue point with a dark gap around it. */}
       {spec.mnemoli && (
@@ -1017,7 +1056,10 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
             opacity={0.1}
           />
           {MAGNA_GE_POINTS.map((p, i) => (
-            <mesh key={`magnage-${i}`} position={placeOnDome(-2.0 + p.daz, 0.12 + p.del, domeDist, center)}>
+            <mesh
+              key={`magnage-${i}`}
+              position={placeOnDome(-2.0 + p.daz, 0.12 + p.del, domeDist, center)}
+            >
               <circleGeometry args={[size * (0.004 + 0.003 * p.b), 12]} />
               <meshBasicMaterial color="#ece6da" toneMapped={false} depthWrite={false} />
             </mesh>
