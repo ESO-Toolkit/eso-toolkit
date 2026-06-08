@@ -416,12 +416,25 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
   }
 }
 
-/** Derive a stable, collision-resistant lock key from a direct-publish payload. */
+/**
+ * Derive a stable, collision-resistant lock key from a direct-publish payload.
+ * Includes every field that distinguishes one publish from another, so a rapid
+ * double-click (identical payload) contends on the lock, while genuinely
+ * different submissions — e.g. the same roster scheduled for two event times —
+ * don't falsely block each other. guildId is already in the KV key prefix;
+ * ownerUserId is intentionally excluded so two users submitting identical
+ * content still de-dupe. Fields are NUL-joined so values can't bleed across
+ * boundaries.
+ */
 async function contentLockKey(req: DirectPublishRequest): Promise<string> {
   const material = [
     req.title,
+    req.description ?? '',
+    req.trial_id ?? '',
+    (req.tags ?? []).join(','),
     req.channelNameOverride ?? '',
     req.categoryId ?? '',
+    req.eventTime ?? '',
     req.roster_data,
   ].join(' ');
   const bytes = new TextEncoder().encode(material);
