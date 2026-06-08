@@ -365,15 +365,21 @@ function createFloorVignetteTexture(): THREE.CanvasTexture {
     // Keep the clear core out PAST that (start at 0.48) so actors anywhere on the actual play surface
     // — including the cardinal mid-edges — stay fully lit; the darkening only ramps in the outer ring
     // beyond the map, where it feathers the hard plane edge into the background. (An earlier, tighter
-    // core dimmed peripheral actors — caught by a live look.) The outer rim now ramps to NEAR-OPAQUE so
-    // the map DISSOLVES into the void instead of ending on a hard, visible plane edge — the extra alpha
-    // lives entirely past the play surface so actors are untouched. The gradient is largest at the
-    // diagonal corners, which are off-map anyway.
-    const grad = ctx.createRadialGradient(c, c, px * 0.48, c, c, px * 0.5);
+    // core dimmed peripheral actors — caught by a live look.)
+    //
+    // The rim is a GENTLE feather, NOT a near-opaque ring. An earlier pass ramped the rim to ~0.97 to
+    // "dissolve" the map edge — that reads fine looking straight down, but this vignette is a FLAT plane,
+    // and at a low/grazing orbit angle (which the user can freely rotate to, and which mobile portrait
+    // frames a lot of) the dark ramp region BEYOND the map edge lies flat toward/away from the camera and
+    // foreshortens into a wide, hard dark BAND arcing across the foreground — read live on mobile as a
+    // "weird circular shadow around the map" (the radial gradient is circular; the map is square). Capping
+    // the rim well below opaque and shortening the ramp keeps a soft edge feather from above while making
+    // that grazing-angle band faint instead of a hard ring. Verified live at both a top-down and a near-
+    // horizon orbit. The gradient is largest at the diagonal corners, which are off-map anyway.
+    const grad = ctx.createRadialGradient(c, c, px * 0.46, c, c, px * 0.5);
     grad.addColorStop(0, 'rgba(7, 9, 14, 0)');
-    grad.addColorStop(0.5, 'rgba(7, 9, 14, 0.16)');
-    grad.addColorStop(0.8, 'rgba(7, 9, 14, 0.55)');
-    grad.addColorStop(1, 'rgba(7, 9, 14, 0.97)');
+    grad.addColorStop(0.6, 'rgba(7, 9, 14, 0.12)');
+    grad.addColorStop(1, 'rgba(7, 9, 14, 0.42)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, px, px);
   }
