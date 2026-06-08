@@ -16,6 +16,7 @@ import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
+import { ArenaEnvironmentShell, type CosmicVariant } from './ArenaEnvironmentShell';
 import { CameraFollower } from './CameraFollower';
 import { CameraResetControls } from './CameraResetControls';
 import { CanvasWheelZoom } from './CanvasWheelZoom';
@@ -587,6 +588,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     };
   }, [groundLongPress]);
 
+  // Cosmic backdrop variant. 'tamriel' (Nirn night sky under the two moons) is the canonical default
+  // for all current fights; the other variants exist for future per-zone selection.
+  const cosmicVariant: CosmicVariant = 'tamriel';
+
   // Player visibility is now owned by Arena3D and passed in as a prop, so the DOM
   // PlayerListPanel overlay (which renders the toggle controls) and these in-canvas actors
   // share one source of truth.
@@ -780,6 +785,18 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           <Lightformer intensity={0.7} position={[-6, 3, -4]} scale={[8, 8, 1]} color="#9fc2ff" />
         </Environment>
       )}
+      {/* Cosmic environment shell — the arena floats in a star-filled void (sky dome + starfield +
+          moons + nebula + fog). Lives entirely OUTSIDE/ABOVE the play footprint (never touches actor
+          X/Z or the coordinate contract). Static backdrop is free under the on-demand RenderLoop; the
+          drei starfield's slow drift advances only while the scene paints. Dropped in performance
+          mode. See ArenaEnvironmentShell + .scratch/3D-WORLD-PLAN.md. */}
+      <ArenaEnvironmentShell
+        size={arenaDimensions.size}
+        centerX={arenaDimensions.centerX}
+        centerZ={arenaDimensions.centerZ}
+        performanceMode={performanceMode}
+        variant={cosmicVariant}
+      />
       {/* Map Texture - Arena floor background with dynamic phase-based switching */}
       <Suspense
         fallback={
