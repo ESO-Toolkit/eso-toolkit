@@ -51,6 +51,23 @@ describe('trialConfigs', () => {
       expect(dungeonBossNames).not.toContain("Z'Maja");
       expect(dungeonBossNames).not.toContain('Lord Falgravn');
     });
+
+    // Locks in the achievement-verified full boss enumerations so they can't be
+    // silently trimmed back to "headline bosses only" by a later edit.
+    it.each([
+      ['FG1', 5, 'Tazkad the Packmaster'],
+      ['ICP', 6, 'The Overfiend'],
+      ['VOM', 8, 'The Cursed One'],
+      ['BRF', 6, 'Mathgamain'],
+      ['FH', 5, 'Deathlord Bjarfrud Skjoralmor'],
+      ['FL', 6, 'Orryn the Black'],
+      ['UG', 5, 'The Eternal Aegis'],
+      ['TC', 4, 'Molten Guardian'],
+    ])('%s lists its full achievement roster (%i bosses incl. %s)', (id, count, mustInclude) => {
+      const dungeon = getTrialById(id);
+      expect(dungeon?.bosses).toHaveLength(count);
+      expect(dungeon?.bosses.map((b) => b.name)).toContain(mustInclude);
+    });
   });
 
   describe('getActivityKindLabel', () => {
