@@ -506,6 +506,84 @@ into the concrete platform above and confirms nobody else occupies the space.
 
 ---
 
+## 15. Data plane & the matching algorithm (the two expensive-to-change pieces)
+
+### Where the companion data lives
+
+The ESO Logs API v2 is **OAuth + an hourly points quota** (the RPGLogs platform; WCL's
+sibling API is ~3,600 points/hr, ESO Logs is comparable) and it is **read-oriented** —
+combat logs are uploaded through the Companion app, and there is **no public endpoint to
+write build data into someone's report.** So companion data cannot live *inside* ESO
+Logs. It lives in **ESOTK's own backend**, keyed by `reportCode` + actor, and is
+**overlaid client-side** when ESOTK renders a report. Practical rules:
+
+- Cache report metadata; **one API fetch per report**, then reuse — respect the points
+  quota (ESOTK already proxies the API today).
+- The companion payload is ESOTK's data, under ESOTK's retention/privacy rules — not
+  ESO Logs'. Clean separation, and it means **the feature works even on reports ESOTK
+  doesn't own**, as long as we can match an actor.
+
+### Matching a snapshot to a report/fight/actor
+
+Inputs available:
+- **Report:** absolute `startTime`, and per-fight `startTime`/`endTime` as **ms offsets
+  from report start**, plus `size`, `isKill`, `name`, and `masterData.actors`
+  (player name + server + type/role).
+- **Companion snapshot:** character name, `@account`, zone, and **absolute UTC
+  timestamp** per fight/pull (we control this format).
+
+Algorithm (tiered, fuzzy by design):
+1. **Direct key** — if the user supplied both (e.g. pasted the `reportCode` when
+   uploading the snapshot), bind directly.
+2. **Actor + time + zone** — match `masterData.actors` name + server to the snapshot's
+   character/server, require the snapshot UTC to fall within `report.start … report.end`
+   (and zone to agree), and attach to the nearest fight by offset.
+3. **Manual fallback** — present unmatched snapshots in ESOTK with an "attach to this
+   player" picker.
+
+**Gotchas that must be designed for from day one:**
+- **Anonymised reports** — ESO Logs can hide player names ("Random 1"), which breaks
+  name matching entirely → tier-2 fails, fall to manual (tier 3) or require the direct
+  key (tier 1).
+- **`@displayName` may not be exposed** by the API for privacy → match on character
+  name + server, keep `@account` only inside the snapshot.
+- **Name collisions / multiple chars per account / mid-session swaps** → disambiguate by
+  time window + role, and keep the manual override.
+- **Multiple snapshots per session** → snapshot per-fight (or on meaningful change) and
+  pick the one nearest each fight, so re-slots between pulls are captured (§5 P2 #11).
+
+These two — **the snapshot schema and this matcher** — are the parts most expensive to
+change later (§6). Version the schema explicitly and build the manual-attach fallback
+before any of the fancier features.
+
+---
+
+## 16. Sustainability & positioning (free add-on, premium web)
+
+ZeniMax's policy is unambiguous: **add-ons may not be monetised** — only donations are
+permitted, and in practice donations are negligible. That isn't a problem; it *defines*
+the model:
+
+- **The add-on is free, lean, and ideally open-source.** That's mandatory (ToS) and also
+  optimal for adoption and trust — the same posture that makes Hodor and LUIE widely
+  installed. Its job is **reach**: get into as many raids as possible and be the data
+  source + live layer.
+- **ESOTK (the website) is not an add-on**, so it can carry a **premium tier** — exactly
+  the ESO Logs / Warcraft Logs model (free core analysis, paid subscription for the
+  deeper extras). Revenue candidates: extended build/history retention, advanced stat
+  coaching, larger guild rosters, officer/attendance analytics, private guild spaces.
+- **Division of labour:** the free add-on drives the funnel and the network effect (the
+  more raiders run it, the better every dashboard gets); the web tier captures value.
+  Never paywall the in-game compliance basics — that would throttle the adoption the
+  whole platform depends on.
+
+This also reinforces the §14 moat: a competitor would need *both* a trusted free add-on
+*and* a web analytics business to copy it, and the add-on side can never be monetised to
+fund the web side directly — so the only durable path is exactly ESOTK's: build the web
+product first (already done) and let a free add-on feed it.
+
+---
+
 ## Sources
 
 - [ESO Logs — Getting Started](https://www.esologs.com/help/start)
@@ -538,5 +616,8 @@ into the concrete platform above and confirms nobody else occupies the space.
 - [Group Synergy Tracker](https://esoui.com/downloads/info2429-GroupSynergyTracker.html)
 - [RaidTools (beta — ready check, buff/food checker)](https://www.esoui.com/downloads/info1969-RaidTools.html) · [RaidLead Essentials (discontinued)](https://www.esoui.com/downloads/info1201-RaidLeadEssentials.html)
 - [ESO-Database Game Data & Leaderboards API](https://game-data.eso-database.com/)
+- [ESO Logs API documentation — Archon](https://www.archon.gg/eso/articles/help/API-documentation) · [ESO Logs Python (rate-limit/points)](https://esologs-python.readthedocs.io/)
+- [ESO Logs report/fights schema (startTime offsets, masterData)](https://articles.esologs.com/help/intro-to-scripts)
+- [Add-on monetisation forbidden by ZOS — donations only (ESO Forums)](https://forums.elderscrollsonline.com/en/discussion/370469/do-add-on-devs-mod-programmers-get-compensated-in-any-way)
 </content>
 </invoke>
