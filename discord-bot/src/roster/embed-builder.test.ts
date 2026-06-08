@@ -216,6 +216,30 @@ describe('buildRolePingLine', () => {
     expect(result?.content).not.toContain(`<@&${HEALER}>`);
   });
 
+  it('pings based on composition even when slots are unfilled (blank roster)', () => {
+    // The encoder only stores filled slots, so a "seeking signups" roster has
+    // empty arrays but a full composition — pings must still fire.
+    const blank: DecodedRoster = {
+      composition: { tanks: 2, healers: 2, dps: 8 },
+      tanks: [],
+      healers: [],
+      dps: [],
+    };
+    const result = buildRolePingLine(blank, { tank: TANK, healer: HEALER, dd: DD });
+    expect(result?.roleIds).toEqual([TANK, HEALER, DD]);
+  });
+
+  it('honors a composition that excludes a role (e.g. no healers)', () => {
+    const noHealers: DecodedRoster = {
+      composition: { tanks: 2, healers: 0, dps: 8 },
+      tanks: [],
+      healers: [],
+      dps: [],
+    };
+    const result = buildRolePingLine(noHealers, { tank: TANK, healer: HEALER, dd: DD });
+    expect(result?.roleIds).toEqual([TANK, DD]);
+  });
+
   it('de-duplicates when the same role is configured for multiple types', () => {
     const result = buildRolePingLine(mockDecoded, { tank: TANK, healer: TANK, dd: DD });
     expect(result?.roleIds).toEqual([TANK, DD]);

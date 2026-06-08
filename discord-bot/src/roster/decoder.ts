@@ -120,10 +120,21 @@ interface CompactTrialOverrides { ti: string; }
 
 interface CompactRoster {
   v: number; n?: string; no?: string;
+  /** Composition tuple [tanks, healers, dps] (v3 only). Omitted when default 2/2/8. */
+  co?: [number, number, number];
   ts?: CompactTank[]; hs?: CompactHealer[]; dp?: CompactDPS[];
   to?: CompactTrialOverrides;
   t1?: CompactTank; t2?: CompactTank; h1?: CompactHealer; h2?: CompactHealer;
 }
+
+// Composition defaults/clamps — mirror the frontend's rosterEncoding.ts so the
+// ping logic knows how many slots a roster *wants*, not just how many are filled.
+const DEFAULT_COMPOSITION = { tanks: 2, healers: 2, dps: 8 } as const;
+const MAX_TANKS = 4;
+const MAX_HEALERS = 4;
+const MAX_DPS = 24;
+
+const clampCount = (n: number, max: number): number => Math.min(Math.max(0, n), max);
 
 // ── Decode helpers ──────────────────────────────────────────────────────────
 
@@ -279,10 +290,22 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
     if (compact.dp) dps.push(...compact.dp.map(decodeDPS));
   }
 
+  // Composition reflects the slots the roster *asks for*. v3 carries it in `co`
+  // (default 2/2/8 when omitted); v2 is always the legacy 2/2/8 trial layout.
+  const composition =
+    compact.v === 3 && compact.co
+      ? {
+          tanks: clampCount(compact.co[0] ?? 0, MAX_TANKS),
+          healers: clampCount(compact.co[1] ?? 0, MAX_HEALERS),
+          dps: clampCount(compact.co[2] ?? 0, MAX_DPS),
+        }
+      : { ...DEFAULT_COMPOSITION };
+
   return {
     name: compact.n,
     trialId: compact.to?.ti || undefined,
     notes: compact.no,
+    composition,
     tanks,
     healers,
     dps,
