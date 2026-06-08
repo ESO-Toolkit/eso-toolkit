@@ -340,5 +340,18 @@ export function getMapTextureUrl(mapFile: string): string {
     const base = getEnvVar('BASE_URL') ?? '/';
     return `${base}${HIRES_MAP_DIR}/${mapFile}.jpg`;
   }
+  return getMapTextureFallbackUrl(mapFile);
+}
+
+/**
+ * The always-available RPGLogs CDN URL for a `mapFile`, independent of the hi-res registry. This is the
+ * universal fallback: a registered hi-res tile only EXISTS once it has been deployed (the tiles are
+ * gitignored and live in R2, not the bundle), so a build without {@link hiresMapBase} configured — a
+ * dev-preview, or production before the R2 bucket is provisioned — resolves {@link getMapTextureUrl} to
+ * an app-relative `public/maps-hires` path that 404s, blanking the floor. The texture loader retries
+ * with THIS url on a hi-res load error so the map degrades to the original CDN art instead of a blank
+ * plane. Returns the same string `getMapTextureUrl` returns for an UNregistered map, by construction.
+ */
+export function getMapTextureFallbackUrl(mapFile: string): string {
   return `${RPGLOGS_MAP_BASE}/${mapFile}.jpg`;
 }

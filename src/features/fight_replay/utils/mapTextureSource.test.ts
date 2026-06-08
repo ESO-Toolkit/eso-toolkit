@@ -1,6 +1,6 @@
 import * as envUtils from '../../../utils/envUtils';
 
-import { HIRES_MAP_FILES, getMapTextureUrl } from './mapTextureSource';
+import { HIRES_MAP_FILES, getMapTextureFallbackUrl, getMapTextureUrl } from './mapTextureSource';
 
 // envUtils wraps import.meta.env (unparseable by Jest); mock it so we can drive the flags.
 jest.mock('../../../utils/envUtils');
@@ -88,5 +88,36 @@ describe('getMapTextureUrl', () => {
     expect(getMapTextureUrl('dungeons/osscage_section1map002')).toBe(
       'https://assets.rpglogs.com/img/eso/maps/dungeons/osscage_section1map002.jpg',
     );
+  });
+});
+
+describe('getMapTextureFallbackUrl', () => {
+  const getEnvVarMock = envUtils.getEnvVar as jest.MockedFunction<typeof envUtils.getEnvVar>;
+  const HIRES_MAP = 'blackwood/u30_rg_map_outside_002';
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('always returns the RPGLogs CDN url, even for a registered hi-res map', () => {
+    // No env flags: the loader uses this as the recovery url when a hi-res tile 404s.
+    expect(getMapTextureFallbackUrl(HIRES_MAP)).toBe(
+      'https://assets.rpglogs.com/img/eso/maps/blackwood/u30_rg_map_outside_002.jpg',
+    );
+  });
+
+  it('is independent of VITE_HIRES_MAP_BASE (the fallback is never the R2 tile)', () => {
+    getEnvVarMock.mockImplementation((key: string) =>
+      key === 'VITE_HIRES_MAP_BASE' ? 'https://maps.esotk.com' : undefined,
+    );
+    expect(getMapTextureFallbackUrl(HIRES_MAP)).toBe(
+      'https://assets.rpglogs.com/img/eso/maps/blackwood/u30_rg_map_outside_002.jpg',
+    );
+  });
+
+  it('equals getMapTextureUrl for an UNregistered map (same CDN source by construction)', () => {
+    getEnvVarMock.mockImplementation((key: string) => (key === 'BASE_URL' ? '/' : undefined));
+    const plain = 'dungeons/osscage_section1map002';
+    expect(getMapTextureFallbackUrl(plain)).toBe(getMapTextureUrl(plain));
   });
 });

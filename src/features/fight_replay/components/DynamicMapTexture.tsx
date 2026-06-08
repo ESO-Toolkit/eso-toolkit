@@ -10,7 +10,7 @@ import { fightTimeToTimestamp } from '../../../utils/fightTimeUtils';
 import { getMapAtTimestamp, MapTimeline } from '../../../utils/mapTimelineUtils';
 import { RenderPriority } from '../constants/renderPriorities';
 import { setupFloorSharpen, sharpenStrengthForTier } from '../utils/floorSharpen';
-import { getMapTextureUrl } from '../utils/mapTextureSource';
+import { getMapTextureFallbackUrl, getMapTextureUrl } from '../utils/mapTextureSource';
 
 interface DynamicMapTextureProps {
   mapTimeline: MapTimeline;
@@ -170,6 +170,36 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   const loadTexture = useMemo(() => {
     const loader = new THREE.TextureLoader();
 
+    // Texture sampling/colour config applied IDENTICALLY to whichever source loads. flipY=false and
+    // sRGB are NOT cosmetic: flipY=false is half of the actor/marker coordinate-alignment contract (a
+    // flipped map silently registers actors on the wrong region), and sRGB is the correct-gamma fix.
+    // The fallback path MUST apply the same config, or a recovered map would be flipped/dark.
+    const configureTexture = (texture: THREE.Texture): void => {
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      // Keep the default mipmap chain (LinearMipmapLinearFilter + generateMipmaps): a foreshortened
+      // floor needs mip sampling to avoid shimmer/aliasing when viewed from a distance. The previous
+      // LinearFilter override disabled mips and was the aliasing source. magFilter stays Linear for
+      // smooth up-close sampling.
+      texture.magFilter = THREE.LinearFilter;
+      texture.anisotropy = maxAnisotropy;
+      // sRGB so the JPG renders with correct gamma under R3F's default ACES tone-mapping + sRGB
+      // output. Untagged textures are sampled as linear → dark + desaturated. Every actor texture sets
+      // this; the map never did — the single biggest floor-quality bug.
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.flipY = false;
+    };
+
+    const loadFrom = (url: string): Promise<THREE.Texture> =>
+      new Promise((resolve, reject) => {
+        loader.load(
+          url,
+          (texture) => resolve(texture),
+          undefined,
+          (error) => reject(error),
+        );
+      });
+
     return (mapFile: string): Promise<THREE.Texture> => {
       // Check cache first
       const cached = textureCache.get(mapFile);
@@ -177,35 +207,34 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
         return Promise.resolve(cached);
       }
 
-      return new Promise((resolve, reject) => {
-        loader.load(
-          getMapTextureUrl(mapFile),
-          (texture) => {
-            texture.wrapS = THREE.ClampToEdgeWrapping;
-            texture.wrapT = THREE.ClampToEdgeWrapping;
-            // Keep the default mipmap chain (LinearMipmapLinearFilter + generateMipmaps): a
-            // foreshortened floor needs mip sampling to avoid shimmer/aliasing when viewed from
-            // a distance. The previous LinearFilter override disabled mips and was the aliasing
-            // source. magFilter stays Linear for smooth up-close sampling.
-            texture.magFilter = THREE.LinearFilter;
-            texture.anisotropy = maxAnisotropy;
-            // sRGB so the JPG renders with correct gamma under R3F's default ACES tone-mapping +
-            // sRGB output. Untagged textures are sampled as linear → dark + desaturated. Every
-            // actor texture sets this; the map never did — the single biggest floor-quality bug.
-            texture.colorSpace = THREE.SRGBColorSpace;
-            texture.flipY = false;
+      const primaryUrl = getMapTextureUrl(mapFile);
+      const fallbackUrl = getMapTextureFallbackUrl(mapFile);
 
-            // Cache the texture
-            textureCache.set(mapFile, texture);
-            resolve(texture);
-          },
-          undefined,
-          (error) => {
-            logger.warn(`Failed to load map texture: ${mapFile}`, error);
-            reject(error);
-          },
-        );
-      });
+      // Hi-res tiles only EXIST once deployed (gitignored → absent from a build with no
+      // VITE_HIRES_MAP_BASE: dev-previews, or prod before R2 is provisioned). When the primary url is a
+      // self-hosted tile that 404s, fall back to the always-available RPGLogs CDN so the floor shows the
+      // original map instead of going blank. Only reject if BOTH fail. A failed attempt is never cached.
+      const load =
+        primaryUrl === fallbackUrl
+          ? loadFrom(primaryUrl)
+          : loadFrom(primaryUrl).catch((error) => {
+              logger.warn(
+                `Hi-res map tile failed for ${mapFile}; falling back to the RPGLogs CDN`,
+                error,
+              );
+              return loadFrom(fallbackUrl);
+            });
+
+      return load
+        .then((texture) => {
+          configureTexture(texture);
+          textureCache.set(mapFile, texture);
+          return texture;
+        })
+        .catch((error) => {
+          logger.warn(`Failed to load map texture: ${mapFile}`, error);
+          throw error;
+        });
     };
   }, [logger, maxAnisotropy]);
 
