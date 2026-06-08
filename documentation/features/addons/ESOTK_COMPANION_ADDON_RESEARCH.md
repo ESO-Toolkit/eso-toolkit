@@ -680,6 +680,83 @@ The two fields that must never break without a version bump: `ts` + `char`/`serv
 
 ---
 
+## 20. Capture methodology & data accuracy (get this right or the coaching lies)
+
+`GetPlayerStat` returns the **current, live** value — it *includes* whatever buffs are
+active at the instant you read it (food, mundus, CP, **and** group buffs like Major
+Courage / Major Slayer in combat). So *when* we snapshot changes the numbers, and naïve
+capture produces misleading coaching. Standardise it:
+
+- **Capture a canonical "baseline" snapshot out of combat, self-buffed** (food + mundus
+  + CP, no group buffs). This is the apples-to-apples build value to compare against
+  caps and across players. Trigger on `EVENT_PLAYER_COMBAT_STATE` (combat end) or a
+  manual "snapshot now," not mid-pull.
+- Optionally also capture an **in-combat** reading to show buffed peaks — but label it
+  distinctly; never feed buffed numbers into "are you at the pen cap" math.
+- **Penetration/crit caps are content-aware.** The 18,200 cap is the PvE
+  trial/dungeon-boss resist; **PvP targets have their own (much higher, variable)
+  resistances**, so the coaching engine must branch on PvE vs PvP and, ideally, the
+  specific encounter. Don't hard-code 18,200 everywhere.
+- **Match on IDs, not names.** Ability/set/food names are localised per client language;
+  store ability IDs, set IDs, food item IDs, mundus IDs — resolve to display names in
+  ESOTK (which already maintains that data). Keeps non-English clients working.
+- **Stamp validity.** Each snapshot carries its season/patch (§17 `season`) so coaching
+  uses the right caps and set data for that point in time.
+
+## 21. Beyond trials — PvP & organized-group audiences
+
+Build capture + compliance isn't only a PvE-trial play:
+
+- ESO Logs, **CombatMetrics**, and **Easy Stalking** already log **Cyrodiil, Imperial
+  City and Battlegrounds**, and **PvpMeter** shows the appetite for PvP performance
+  tracking — so logged PvP data exists to enrich.
+- **Organized PvP groups are *more* build-prescriptive than PvE**: Cyrodiil ball/bomb
+  groups run tightly-specified sets, resistances, and synergies. A role-aware compliance
+  check ("everyone on the prescribed proc set / resist threshold / purge build") maps
+  directly onto how these groups already operate — arguably a stronger fit than PvE.
+- This widens the audience well past the hardcore trial niche (reinforced by Overland
+  Difficulty in 2026, §17) without building anything new — the same capture + ruleset
+  engine, with content-aware caps (§20).
+
+## 22. Privacy, consent & staying ToS-safe
+
+Builds are semi-personal and competitive, and the live layer shares them — so consent is
+a first-class design concern, not an afterthought:
+
+- **Broadcasting is opt-in**, with a clear in-game toggle (LibAddonMenu) and a visible
+  indicator of what's shared. Mirror the reason Hodor is perceived as benign:
+  transparent, read-only, user-controlled.
+- **Granularity** — let players share only a compliance verdict (pass/fail bits) without
+  exposing exact stats/gear, for groups that want enforcement without doxxing builds.
+- **ESOTK-side retention/redaction** — companion data is ESOTK's (§15); honour
+  delete/anonymise requests and don't surface a player's build on reports they didn't
+  consent to. Respect ESO Logs' own anonymisation (don't de-anonymise via the companion).
+- **ToS line stays bright:** read state, evaluate, display, broadcast opt-in summaries —
+  **no input automation, no combat decision-making.** This is the same posture that
+  keeps CombatMetrics/Hodor sanctioned, and it must never be crossed for a "convenience"
+  feature.
+
+## 23. Maintenance, dependencies & risk
+
+- **ESO breaks add-ons every major update** — and with the 2026 **Seasonal cadence
+  (every 3–6 months)** that's more often. The API version bumps, ability/set IDs shift,
+  and CP trees change. Budget a **per-season maintenance pass**: bump the API version,
+  re-run `gear-data-regen`/`class-skill-regen`, refresh caps/ruleset presets, validate
+  the schema migration (LibSavedVars).
+- **Third-party lib fragility** — the live layer leans on LibGroupBroadcast /
+  LibGroupCombatStats, which themselves break on patches (there was a *"Fix for
+  LibGroupBroadcast"* thread in 2026). Treat the live layer as the volatile part and the
+  SavedVariables capture as the stable core, so a broken broadcast lib never blocks the
+  deep web value.
+- **Adoption dependency** — group features scale with how many members run it; the
+  free/OSS posture (§16) and piggybacking on existing add-ons (§10) are the mitigations.
+- **Single-maintainer bus risk** — LibGroupCombatStats/Hodor are largely one author
+  (m00nyONE). Vendoring or contributing upstream reduces exposure if that stalls.
+- **Scope risk** — §12's full platform is large. Ship the §8 vertical slice first; treat
+  the dashboard, ruleset engine, and ecosystem hooks as sequenced phases, not v1.
+
+---
+
 ## Sources
 
 - [ESO Logs — Getting Started](https://www.esologs.com/help/start)
@@ -719,5 +796,7 @@ The two fields that must never break without a version bump: `ts` + `char`/`serv
 - [ESO 2026 Class Identity Refresh & subclassing / Class Mastery Passives](https://hacktheminotaur.com/eso-guides/eso-class-updates-2026-the-class-identity-refresh/)
 - [Console can't access /encounterlog files (ESO Forums)](https://forums.elderscrollsonline.com/en/discussion/679575/problem-consoles-cannot-access-logs-generated-by-encounterlog) · [Console add-ons guide](https://alcasthq.com/eso-addons-console-guide/)
 - [LibSavedVars (scoped + migration)](https://github.com/silvereyes333/LibSavedVars) · [LibAddonMenu-2.0](https://www.esoui.com/downloads/info7-LibAddonMenu.html)
+- [GetPlayerStat (UESP function reference)](https://esodata.uesp.net/100010/data/g/e/t/GetPlayerStat.html) · [Character sheet & advanced stats explained](https://www.eso-u.com/articles/player_character_sheet_and_advanced_stats_ui_explained)
+- [Easy Stalking — auto-log Cyrodiil/IC/BG](https://www.esoui.com/downloads/info2332-EasyStalking-Encounterlog.html) · [PvpMeter](https://forums.elderscrollsonline.com/en/discussion/387159/addon-pvpmeter-graphical-tracker-for-your-kill-death-in-pvp-and-history-of-your-bg-duel-played) · [PvP addons guide — NirnStorm](https://nirnstorm.com/eso/guides/pvp-addons-guide/)
 </content>
 </invoke>
