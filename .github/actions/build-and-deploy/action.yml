@@ -20,6 +20,10 @@ inputs:
     description: 'Roster Hub API URL for the build'
     required: false
     default: 'https://roster-hub-api.eso-toolkit.workers.dev'
+  vite_hires_map_base:
+    description: 'Base URL for the AI-upscaled fight-replay map tiles (R2 bucket public URL)'
+    required: false
+    default: 'https://pub-87ec3d93bfd4456faec17c57e05093d9.r2.dev'
 outputs:
   deployment-url:
     description: 'URL where the site was deployed'
@@ -51,6 +55,7 @@ runs:
         VITE_GA_MEASUREMENT_ID: ${{ inputs.vite_ga_measurement_id }}
         VITE_DISCORD_CLIENT_ID: ${{ inputs.vite_discord_client_id }}
         VITE_ROSTER_HUB_API_URL: ${{ inputs.vite_roster_hub_api_url }}
+        VITE_HIRES_MAP_BASE: ${{ inputs.vite_hires_map_base }}
 
     - name: Build Storybook
       shell: bash
