@@ -7,8 +7,10 @@ jest.mock('../../../utils/envUtils');
 
 describe('getMapTextureUrl', () => {
   const getEnvVarMock = envUtils.getEnvVar as jest.MockedFunction<typeof envUtils.getEnvVar>;
-  // A map that is NOT in the hi-res set, for the default-path tests.
-  const PLAIN_MAP = 'systres/dsr_b3_map';
+  // A map that is NOT in the hi-res set, for the default-path tests. The Ossein Cage dungeon maps are
+  // deliberately excluded (RPGLogs already serves them at native 1024 px), so this stays a stable
+  // not-hi-res example even as the hi-res set grows.
+  const PLAIN_MAP = 'dungeons/osscage_section1map002';
   // A map that IS registered as hi-res (asserted below so the test fails loudly if the set changes).
   const HIRES_MAP = 'blackwood/u30_rg_map_outside_002';
 
@@ -27,7 +29,7 @@ describe('getMapTextureUrl', () => {
 
   it('defaults to the RPGLogs CDN for a map with no hi-res tile', () => {
     expect(getMapTextureUrl(PLAIN_MAP)).toBe(
-      'https://assets.rpglogs.com/img/eso/maps/systres/dsr_b3_map.jpg',
+      'https://assets.rpglogs.com/img/eso/maps/dungeons/osscage_section1map002.jpg',
     );
   });
 
@@ -41,6 +43,33 @@ describe('getMapTextureUrl', () => {
     );
     expect(getMapTextureUrl(HIRES_MAP)).toBe(
       '/preview/maps-hires/blackwood/u30_rg_map_outside_002.jpg',
+    );
+  });
+
+  it('serves a registered map from the R2/CDN base when VITE_HIRES_MAP_BASE is set', () => {
+    getEnvVarMock.mockImplementation((key: string) =>
+      key === 'VITE_HIRES_MAP_BASE' ? 'https://maps.esotk.com' : undefined,
+    );
+    expect(getMapTextureUrl(HIRES_MAP)).toBe(
+      'https://maps.esotk.com/blackwood/u30_rg_map_outside_002.jpg',
+    );
+  });
+
+  it('trims a trailing slash on VITE_HIRES_MAP_BASE', () => {
+    getEnvVarMock.mockImplementation((key: string) =>
+      key === 'VITE_HIRES_MAP_BASE' ? 'https://maps.esotk.com/' : undefined,
+    );
+    expect(getMapTextureUrl(HIRES_MAP)).toBe(
+      'https://maps.esotk.com/blackwood/u30_rg_map_outside_002.jpg',
+    );
+  });
+
+  it('CDN base does not affect a non-registered map (still RPGLogs)', () => {
+    getEnvVarMock.mockImplementation((key: string) =>
+      key === 'VITE_HIRES_MAP_BASE' ? 'https://maps.esotk.com' : undefined,
+    );
+    expect(getMapTextureUrl(PLAIN_MAP)).toBe(
+      'https://assets.rpglogs.com/img/eso/maps/dungeons/osscage_section1map002.jpg',
     );
   });
 
