@@ -912,6 +912,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onPlayerColorChange={handlePlayerColorChange}
             reservedInset={reservedInset}
             isMobile={mobileImmersive}
+            onClose={onTogglePlayerPathsHUD}
           />
         )}
 

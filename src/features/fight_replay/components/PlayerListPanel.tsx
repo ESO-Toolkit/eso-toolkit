@@ -18,6 +18,7 @@
  * its own re-renders never touch the 3D scene tree.
  */
 
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TimelineIcon from '@mui/icons-material/Timeline';
@@ -96,6 +97,8 @@ interface PlayerListPanelProps {
    * transport), so a long roster's scroll region stops above the cluster instead of behind it.
    */
   isMobile?: boolean;
+  /** Dismiss the panel (mobile bottom sheet gets an explicit close button wired to this). */
+  onClose?: () => void;
 }
 
 interface PlayerRowInfo {
@@ -127,6 +130,7 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
   onPlayerColorChange,
   reservedInset = TRANSPORT_RESERVED,
   isMobile = false,
+  onClose,
 }) => {
   // On mobile the touch control cluster docks above the transport, so the panel must stop higher.
   // Fold that extra band into the reserve used by the height caps below (desktop unchanged).
@@ -211,20 +215,30 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
     <Box
       sx={{
         position: 'absolute',
-        // Plain px (NOT env()) on mobile — the overlay container already pads for the safe area, so
-        // adding env() here too would double-count and push the panel too far inboard.
-        top: isMobile ? 8 : 16,
-        left: isMobile ? 8 : 16,
-        width: 232,
-        maxWidth: 'calc(100% - 32px)',
-        // Cap to the arena viewport MINUS the top margin and the reserved transport band (plus the
-        // mobile control-cluster band), so the scroll region — not the page — absorbs overflow AND
-        // the panel stops above the bar (and, on mobile, above the cluster).
-        maxHeight: `calc(100% - ${16 + effectiveReserved}px)`,
+        // Mobile = a bottom sheet (full-width, docked just above the transport) so it stops fighting
+        // the top-left chrome and reads as one clean surface. Desktop keeps the top-left panel.
+        // Plain px (NOT env()) on mobile — the overlay container already pads for the safe area.
+        ...(isMobile
+          ? {
+              left: 8,
+              right: 8,
+              bottom: reservedInset + 8,
+              maxHeight: '46vh',
+              borderRadius: 3,
+            }
+          : {
+              top: 16,
+              left: 16,
+              width: 232,
+              maxWidth: 'calc(100% - 32px)',
+              // Cap to the arena viewport minus the top margin + reserved transport band so the
+              // scroll region — not the page — absorbs overflow and the panel stops above the bar.
+              maxHeight: `calc(100% - ${16 + effectiveReserved}px)`,
+              borderRadius: 2,
+            }),
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 2,
-        backgroundColor: 'rgba(15, 23, 42, 0.82)',
+        backgroundColor: 'rgba(15, 23, 42, 0.92)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: `1px solid ${theme.palette.primary.main}29`,
@@ -233,46 +247,87 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
         zIndex: 3,
       }}
     >
-      {/* Header */}
-      <Box
-        component="button"
-        onClick={() => setCollapsed((c) => !c)}
-        aria-expanded={!collapsed}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 1,
-          width: '100%',
-          px: 1.25,
-          py: 0.75,
-          border: 'none',
-          cursor: 'pointer',
-          backgroundColor: 'rgba(2, 6, 23, 0.6)',
-          color: theme.palette.text.secondary,
-          '&:hover': { color: theme.palette.text.primary },
-          '&:focus-visible': {
-            outline: `2px solid ${theme.palette.primary.main}`,
-            outlineOffset: -2,
-          },
-        }}
-      >
-        <Typography
-          component="span"
+      {/* Header — a collapse toggle on desktop; on the mobile bottom sheet it's a static title with a
+          dedicated close button (the toggle that opened it is hidden behind the sheet). */}
+      {isMobile ? (
+        <Box
           sx={{
-            fontSize: '0.7rem',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            px: 1.5,
+            py: 1,
+            backgroundColor: 'rgba(2, 6, 23, 0.6)',
+            color: theme.palette.text.secondary,
           }}
         >
-          Players
-          <Box component="span" sx={{ ml: 0.75, opacity: 0.6, fontWeight: 500 }}>
-            {players.length}
-          </Box>
-        </Typography>
-        {collapsed ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
-      </Box>
+          <Typography
+            component="span"
+            sx={{
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Players
+            <Box component="span" sx={{ ml: 0.75, opacity: 0.6, fontWeight: 500 }}>
+              {players.length}
+            </Box>
+          </Typography>
+          {onClose && (
+            <IconButton
+              aria-label="Close player list"
+              size="small"
+              onClick={onClose}
+              sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
+            >
+              <CloseRoundedIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      ) : (
+        <Box
+          component="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-expanded={!collapsed}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            width: '100%',
+            px: 1.25,
+            py: 0.75,
+            border: 'none',
+            cursor: 'pointer',
+            backgroundColor: 'rgba(2, 6, 23, 0.6)',
+            color: theme.palette.text.secondary,
+            '&:hover': { color: theme.palette.text.primary },
+            '&:focus-visible': {
+              outline: `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: -2,
+            },
+          }}
+        >
+          <Typography
+            component="span"
+            sx={{
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Players
+            <Box component="span" sx={{ ml: 0.75, opacity: 0.6, fontWeight: 500 }}>
+              {players.length}
+            </Box>
+          </Typography>
+          {collapsed ? <ExpandMoreIcon fontSize="small" /> : <ExpandLessIcon fontSize="small" />}
+        </Box>
+      )}
 
       <Collapse in={!collapsed} sx={{ minHeight: 0, overflow: 'hidden' }}>
         <Box
@@ -287,7 +342,8 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
             // On mobile the panel lives in a full-viewport overlay (not the ARENA_HEIGHT clamp), so
             // cap the inner scroll region to viewport height there; desktop keeps the arena clamp.
             maxHeight: isMobile
-              ? `calc(100vh - 96px - ${effectiveReserved}px)`
+              ? // Bottom sheet: fit the scroll region inside the 46vh sheet, minus its header.
+                'calc(46vh - 48px)'
               : `calc(${ARENA_HEIGHT} - 56px - ${reservedInset}px)`,
             // Slim, theme-tinted scrollbar.
             '&::-webkit-scrollbar': { width: 6 },
