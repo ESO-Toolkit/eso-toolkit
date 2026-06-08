@@ -432,7 +432,9 @@ async function handleRefresh(
     scopeGuildId = guildId;
   }
 
-  const result = await refreshRoster(env, rosterId, scopeGuildId);
+  // Webhook (server-to-server) refreshes must not resurrect channels that staff
+  // deleted on purpose; user-initiated HTTP refreshes may recreate.
+  const result = await refreshRoster(env, rosterId, scopeGuildId, { allowRecreate: !isWebhook });
   if (!result.ok) {
     return jsonResponse({ error: result.error }, 400);
   }

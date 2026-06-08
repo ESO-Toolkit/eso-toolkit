@@ -192,6 +192,26 @@ async function handleSetRolePings(
   const healer = options.find((o) => o.name === 'healer-role')?.value as string | undefined;
   const dd = options.find((o) => o.name === 'dd-role')?.value as string | undefined;
 
+  // Defense-in-depth: option values come from Discord role pickers (already
+  // snowflakes), but reject anything malformed so we never store junk that
+  // would later be skipped silently at ping time.
+  const snowflake = /^\d{17,20}$/;
+  for (const [label, value] of [
+    ['tank', tank],
+    ['healer', healer],
+    ['dd', dd],
+  ] as const) {
+    if (value !== undefined && !snowflake.test(value)) {
+      return {
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `❌ Invalid ${label} role. Please pick a role from the list.`,
+          flags: MessageFlags.EPHEMERAL,
+        },
+      };
+    }
+  }
+
   const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
   config.rolePingIds = {
     ...config.rolePingIds,

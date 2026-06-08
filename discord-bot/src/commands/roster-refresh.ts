@@ -7,7 +7,12 @@
 
 import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
-import { listMappingsForGuild, getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
+import {
+  listMappingsForGuild,
+  getGuildConfig,
+  getDefaultGuildConfig,
+  checkRosterRateLimit,
+} from '../roster/kv.js';
 import { refreshRoster } from '../roster/publish.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -45,6 +50,18 @@ export async function handleRosterRefresh(
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content: '❌ Could not determine channel.',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  const userId = interaction.member?.user?.id ?? 'unknown';
+  const allowed = await checkRosterRateLimit(env, `refresh:${guildId}:${userId}`, 10, 60);
+  if (!allowed) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: "⏳ You're refreshing too quickly. Please wait a minute and try again.",
         flags: MessageFlags.EPHEMERAL,
       },
     };

@@ -297,6 +297,15 @@ export interface RefreshResult {
   refreshedCount?: number | undefined;
 }
 
+export interface RefreshOptions {
+  /**
+   * When a roster's channel/messages are gone, recreate the channel. Defaults
+   * to true for user-initiated refreshes. The hub webhook passes false so an
+   * automatic re-sync never resurrects a channel staff deliberately deleted.
+   */
+  allowRecreate?: boolean;
+}
+
 /**
  * Refresh all Discord channels linked to a roster across all guilds.
  * Called by the webhook from roster-hub-api and by /roster refresh.
@@ -305,7 +314,9 @@ export async function refreshRoster(
   env: Env,
   rosterId: string,
   scopeGuildId?: string,
+  opts: RefreshOptions = {},
 ): Promise<RefreshResult> {
+  const allowRecreate = opts.allowRecreate ?? true;
   // Fetch the latest snapshot — hub API for normal IDs, KV for direct-publish
   const fetchResult = await fetchRosterSnapshot(env, rosterId);
   let snapshot = fetchResult.status === 'ok' ? fetchResult.snapshot : null;
@@ -377,6 +388,8 @@ export async function refreshRoster(
       decoded,
       channelName,
       mapping.categoryId,
+      undefined,
+      allowRecreate,
     );
 
     if (result.ok) {
@@ -578,6 +591,7 @@ async function refreshExistingMapping(
   channelName: string,
   categoryId?: string,
   eventTime?: string,
+  allowRecreate = true,
 ): Promise<InternalRefreshResult> {
   const text = buildRosterText(snapshot, decoded, eventTime);
   const chunks = splitMessages(text);
@@ -613,7 +627,14 @@ async function refreshExistingMapping(
     const messageIds = await sendRosterMessages(env, mapping.channelId, chunks, components);
     return { ok: true, channelId: mapping.channelId, messageId: messageIds };
   } catch (err) {
-    console.warn('[refresh] re-post to existing channel failed, recreating:', err);
+    console.warn('[refresh] re-post to existing channel failed:', err);
+  }
+
+  // The channel/messages are gone. Only recreate for user-initiated refreshes —
+  // an automatic (webhook) re-sync must not resurrect a channel staff deleted on
+  // purpose. The mapping is left intact so a transient failure can recover later.
+  if (!allowRecreate) {
+    return { ok: false, error: 'Channel no longer exists; skipping automatic recreate.' };
   }
 
   // Channel was deleted — recreate

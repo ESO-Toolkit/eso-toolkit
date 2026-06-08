@@ -7,7 +7,7 @@
 
 import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
-import { getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
+import { getGuildConfig, getDefaultGuildConfig, checkRosterRateLimit } from '../roster/kv.js';
 import { publishRoster } from '../roster/publish.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -54,9 +54,21 @@ export async function handleRosterPublish(
     };
   }
 
+  // Throttle channel/ping creation per publisher (5 / minute).
+  const userId = interaction.member?.user?.id ?? 'unknown';
+  const allowed = await checkRosterRateLimit(env, `publish:${guildId}:${userId}`, 5, 60);
+  if (!allowed) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: "⏳ You're publishing too quickly. Please wait a minute and try again.",
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
   ctx.waitUntil(
     (async () => {
-      const userId = interaction.member?.user?.id ?? '';
       const result = await publishRoster(env, {
         guildId,
         rosterId,
