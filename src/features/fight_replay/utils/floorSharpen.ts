@@ -87,7 +87,11 @@ export function setupFloorSharpen(
   material.defines = { ...(material.defines ?? {}), FLOOR_SHARPEN: '' };
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uFloorSharpen = { value: clamped };
-    shader.fragmentShader = shader.fragmentShader.replace(
+    // Custom uniforms added via onBeforeCompile are NOT auto-declared in the GLSL — three only
+    // injects declarations for uniforms it knows about. Prepend the declaration ourselves, or the
+    // SHARPEN_MAP_FRAGMENT chunk references an undeclared identifier and the fragment shader fails to
+    // compile (→ a blank floor). Declared outside the #ifdef so it's always valid GLSL.
+    shader.fragmentShader = `uniform float uFloorSharpen;\n${shader.fragmentShader}`.replace(
       '#include <map_fragment>',
       SHARPEN_MAP_FRAGMENT,
     );

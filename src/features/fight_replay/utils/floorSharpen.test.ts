@@ -37,7 +37,10 @@ describe('setupFloorSharpen', () => {
     const shader = { uniforms: {} as Record<string, unknown>, fragmentShader: 'a\n#include <map_fragment>\nb' };
     (mat.onBeforeCompile as (s: typeof shader) => void)(shader);
     expect(shader.fragmentShader).not.toContain('#include <map_fragment>');
-    expect(shader.fragmentShader).toContain('uFloorSharpen');
+    // The uniform must be DECLARED in the GLSL (not just added to shader.uniforms), or the shader
+    // fails to compile with an undeclared-identifier error → blank floor. This guards that bug.
+    expect(shader.fragmentShader).toContain('uniform float uFloorSharpen;');
+    expect(shader.fragmentShader).toContain('uFloorSharpen >');
     expect((shader.uniforms.uFloorSharpen as { value: number }).value).toBeCloseTo(1.0);
     // The uniform is stashed for later live updates.
     expect(mat.userData.floorSharpenUniform).toBe(shader.uniforms.uFloorSharpen);
