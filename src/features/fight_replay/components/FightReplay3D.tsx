@@ -1,4 +1,6 @@
-import { Box, Paper } from '@mui/material';
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
+import { Box, IconButton, Paper, Typography } from '@mui/material';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
@@ -211,6 +213,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Seeded from the persisted barCollapsed pref so a user who prefers the collapsed cinema state
   // keeps it across reloads.
   const [barVisible, setBarVisible] = useState(!storedPrefs.barCollapsed);
+
+  // The trial timeline / continuous controls collapse independently of the transport, starting
+  // collapsed on mobile (where the full bar is too cluttered). A small chip re-expands them.
+  const [trialBarExpanded, setTrialBarExpanded] = useState(!isMobile);
+  const toggleTrialBar = useCallback(() => setTrialBarExpanded((v) => !v), []);
 
   // High-performance time reference for 3D updates
   const animationTimeRef = useAnimationTimeRef({
@@ -826,41 +833,93 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             '& > *': { pointerEvents: 'auto' },
           }}
         >
-          {showTrialBar && trialNav && (
-            <Box
-              sx={(theme) => ({
-                mx: { xs: 1, sm: 2 },
-                mb: 0.5,
-                px: { xs: 1, sm: 1.5 },
-                py: { xs: 0.75, sm: 1 },
-                borderRadius: 2,
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                backgroundColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(13, 18, 30, 0.72)'
-                    : 'rgba(255, 255, 255, 0.78)',
-                border: `1px solid ${theme.palette.divider}`,
-              })}
-            >
-              <ContinuousReplayBar
-                timeline={trialNav.timeline}
-                currentFightId={trialNav.currentFightId}
-                currentLocalMs={currentTime}
-                onSeek={handleTrialSeek}
-                continuousEnabled={trialNav.continuousEnabled}
-                onToggleContinuous={trialNav.onToggleContinuous}
-                includeTrash={trialNav.includeTrash}
-                onToggleIncludeTrash={trialNav.onToggleIncludeTrash}
-                hasTrash={trialNav.hasTrash}
-                runName={trialNav.runName}
-                runIndex={trialNav.runIndex}
-                runCount={trialNav.runCount}
-                nextUpLabel={trialNextUpLabel}
-                compact={isMobile}
-              />
-            </Box>
-          )}
+          {showTrialBar &&
+            trialNav &&
+            (trialBarExpanded ? (
+              <Box
+                sx={(theme) => ({
+                  position: 'relative',
+                  mx: { xs: 1, sm: 2 },
+                  mb: 0.5,
+                  px: { xs: 1, sm: 1.5 },
+                  py: { xs: 0.75, sm: 1 },
+                  pr: { xs: 4, sm: 4.5 },
+                  borderRadius: 2,
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(13, 18, 30, 0.72)'
+                      : 'rgba(255, 255, 255, 0.78)',
+                  border: `1px solid ${theme.palette.divider}`,
+                })}
+              >
+                <IconButton
+                  size="small"
+                  onClick={toggleTrialBar}
+                  aria-label="Hide trial timeline"
+                  sx={{ position: 'absolute', top: 2, right: 2 }}
+                >
+                  <KeyboardArrowDownRoundedIcon fontSize="small" />
+                </IconButton>
+                <ContinuousReplayBar
+                  timeline={trialNav.timeline}
+                  currentFightId={trialNav.currentFightId}
+                  currentLocalMs={currentTime}
+                  onSeek={handleTrialSeek}
+                  continuousEnabled={trialNav.continuousEnabled}
+                  onToggleContinuous={trialNav.onToggleContinuous}
+                  includeTrash={trialNav.includeTrash}
+                  onToggleIncludeTrash={trialNav.onToggleIncludeTrash}
+                  hasTrash={trialNav.hasTrash}
+                  runName={trialNav.runName}
+                  runIndex={trialNav.runIndex}
+                  runCount={trialNav.runCount}
+                  nextUpLabel={trialNextUpLabel}
+                  compact={isMobile}
+                />
+              </Box>
+            ) : (
+              // Collapsed: a small chip so the trial scrubber doesn't clutter the (mobile) view.
+              <Box
+                component="button"
+                type="button"
+                onClick={toggleTrialBar}
+                aria-label="Show trial timeline"
+                sx={(theme) => ({
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  ml: { xs: 1, sm: 2 },
+                  mb: 0.5,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 999,
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  font: 'inherit',
+                  color: 'text.primary',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(13, 18, 30, 0.72)'
+                      : 'rgba(255, 255, 255, 0.82)',
+                  border: `1px solid ${theme.palette.divider}`,
+                  '&:focus-visible': {
+                    outline: `2px solid ${theme.palette.primary.main}`,
+                    outlineOffset: 2,
+                  },
+                })}
+              >
+                <TimelineRoundedIcon fontSize="small" color="primary" />
+                <Typography variant="caption" sx={{ fontWeight: 700 }} noWrap>
+                  {trialNav.runCount > 1
+                    ? `${trialNav.runName} · ${trialNav.runIndex + 1}/${trialNav.runCount}`
+                    : 'Trial timeline'}
+                </Typography>
+              </Box>
+            ))}
           <PlaybackControls
             currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}

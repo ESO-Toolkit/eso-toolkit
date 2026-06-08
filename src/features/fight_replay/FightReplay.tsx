@@ -23,6 +23,7 @@ import { ChapterRail } from './components/ChapterRail';
 import { FightReplay3D, type TrialReplayNav } from './components/FightReplay3D';
 import { MapMarkersModal } from './components/MapMarkersModal';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
+import { useIsMobileReplay } from './hooks/useIsMobileReplay';
 import { buildTrialTimeline } from './trial_chapters/trialTimeline';
 import type { TrialChapter } from './trial_chapters/types';
 import { useReplayNavigation } from './trial_chapters/useReplayNavigation';
@@ -259,10 +260,15 @@ export const FightReplay: React.FC = () => {
   // Warm the adjacent bosses' events once the current fight is interactive, so the next
   // skip starts without waiting on the network (positions still compute on arrival, but a
   // previously-viewed fight returns instantly from the worker's LRU result cache).
+  //
+  // Disabled on mobile: phones are memory-constrained, and holding several fights' event sets
+  // in the store adds pressure (a likely contributor to mobile tab reloads); the marginal speed-up
+  // isn't worth it there.
+  const isMobileReplay = useIsMobileReplay();
   useReplayPrefetch(
     trialChapters.nextBoss,
     trialChapters.prevBoss,
-    Boolean(lookup) && !isActorPositionsLoading,
+    !isMobileReplay && Boolean(lookup) && !isActorPositionsLoading,
   );
 
   // Switching fights in-place leaves the actor-position result slot holding the previous
@@ -420,7 +426,10 @@ export const FightReplay: React.FC = () => {
   // FightReplay3D stays mounted through transitions (it shows its own overlay) so fullscreen and
   // continuous play are never interrupted. ReplayStatePanel reserves the arena's height.
   const renderArena = (): React.ReactNode => {
-    if (actorPositionsError) {
+    // Surface a hard error only when we're NOT mid-switch. A transient worker abort/error during a
+    // fight switch must not swap out FightReplay3D — that would unmount it and drop fullscreen (the
+    // "page refresh" on mobile). Genuine errors still render here once the switch settles.
+    if (actorPositionsError && !isSwitchingFight) {
       return (
         <ReplayStatePanel
           kind="error"
