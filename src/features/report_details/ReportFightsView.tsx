@@ -29,6 +29,15 @@ import {
 } from '../../utils/trialClassification';
 
 import { BossAvatar } from './BossAvatar';
+import {
+  bossHealthRemaining,
+  buildRunEncounters,
+  groupFightsIntoRuns,
+  isBossFight,
+  uncategorizedTrash,
+  wasKill,
+  type RunEncounter,
+} from './fightGrouping';
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -230,14 +239,6 @@ interface ReportFightsViewProps {
   reportData: ReportFragment | null | undefined;
 }
 
-interface Encounter {
-  id: string;
-  name: string;
-  bossFights: FightFragment[];
-  preTrash: FightFragment[];
-  postTrash: FightFragment[];
-}
-
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   fights,
   loading,
@@ -324,214 +325,51 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   );
 
   const encounters = React.useMemo(() => {
-    if (!fights) return [];
+    // Group fights into trial/dungeon runs using authoritative API data
+    // (per-fight gameZone + encounterID). See ./fightGrouping.
+    const runs = groupFightsIntoRuns(fights, reportData);
 
-    // First, filter and sort all valid fights by start time
-    const validFights = fights
-      .filter((fight) => fight.startTime && fight.endTime && fight.endTime > fight.startTime)
-      .sort((a, b) => a.startTime - b.startTime);
+    return runs.map((run) => {
+      const runEncounters = buildRunEncounters(run);
+      const leftover = uncategorizedTrash(run, runEncounters);
 
-    // Separate boss fights and trash fights
-    const bossFights = validFights.filter((fight) => fight.difficulty != null);
-    const trashFights = validFights.filter((fight) => fight.difficulty == null);
-
-    // Track boss progression to detect trial resets
-    const bossProgressionOrder: string[] = [];
-    const bossInstancesSeen: Set<string> = new Set();
-    let currentRunNumber = 1;
-
-    // Group bosses by zone and detect trial runs
-    const trialRuns: Array<{
-      id: string;
-      name: string;
-      encounters: Encounter[];
-      startTime: number;
-      endTime: number;
-      difficulty: number | null;
-      difficultyLabel: string | null;
-      fights: FightFragment[];
-      trialName: string;
-      isComplete: boolean;
-    }> = [];
-
-    // Process each fight
-    const trialNamesByRun: Record<number, string> = {};
-
-    for (let i = 0; i < bossFights.length; i++) {
-      const currentBoss = bossFights[i];
-      const nextBoss = bossFights[i + 1];
-      const bossName = currentBoss.name || 'Unknown Boss';
-      // Instance count should only be used for encounter IDs, not for determining resets
-      const bossProgressionKey = bossName; // Just the boss name, not including instance count
-
-      // Determine trial name from boss name
-      const trialName = getTrialNameFromBoss(bossName, reportData);
-
-      // SIMPLIFIED APPROACH: Don't try to separate trial instances
-      // Just group all bosses from the same trial together
-      // This avoids all the complex edge cases and false separations
-      let shouldStartNewRun = false;
-
-      // Only separate if this is a completely different trial
-      const currentRunTrialName = trialNamesByRun[currentRunNumber];
-      if (currentRunTrialName && currentRunTrialName !== trialName) {
-        shouldStartNewRun = true;
-      }
-
-      if (shouldStartNewRun) {
-        // Reset progression tracking
-        currentRunNumber++;
-        bossInstancesSeen.clear();
-        bossProgressionOrder.length = 0;
-      }
-
-      // Track boss progression and trial name for this run
-      bossProgressionOrder.push(bossProgressionKey);
-      bossInstancesSeen.add(bossProgressionKey);
-
-      // Set the trial name for this run
-      trialNamesByRun[currentRunNumber] = trialName;
-
-      const trialRunId = `${trialName}-run-${currentRunNumber}`;
-      const trialRunName = `${trialName}`;
-
-      // Find or create the trial run
-      let currentTrialRun = trialRuns.find((run) => run.id === trialRunId);
-
-      if (!currentTrialRun) {
-        // For now, use the current boss difficulty as initial difficulty
-        // This will be updated later when we finalize the trial run
-        const initialDifficulty = currentBoss.difficulty ?? 0;
-        const initialDifficultyLabel = getDifficultyLabel(initialDifficulty, trialName);
-
-        const nameWithDifficulty = initialDifficultyLabel
-          ? `${trialRunName} (${initialDifficultyLabel})`
-          : trialRunName;
-
-        const newTrialRun = {
-          id: trialRunId,
-          name: nameWithDifficulty,
-          startTime: currentBoss.startTime,
-          endTime: currentBoss.endTime,
-          difficulty: initialDifficulty,
-          difficultyLabel: initialDifficultyLabel,
-          fights: [currentBoss],
-          trialName: trialName,
-          isComplete: false,
-          encounters: [],
-        };
-
-        trialRuns.push(newTrialRun);
-        currentTrialRun = newTrialRun;
-      }
-
-      // Find trash before this boss (after previous boss or from start)
-      const prevBossEnd = i > 0 ? bossFights[i - 1].endTime : 0;
-      const preTrash = trashFights.filter(
-        (trash) => trash.startTime >= prevBossEnd && trash.startTime < currentBoss.startTime,
-      );
-
-      // Find trash after this boss (before next boss or until end)
-      const nextBossStart = nextBoss ? nextBoss.startTime : Number.MAX_SAFE_INTEGER;
-      const postTrash = trashFights.filter(
-        (trash) => trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart,
-      );
-
-      // Ensure currentTrialRun is defined before proceeding
-      if (!currentTrialRun) {
-        // Skip to next boss if no trial run is available
-        continue;
-      }
-
-      // Group all attempts of the same boss into one encounter
-      // Use only boss name (without instance count) for encounter grouping
-      const encounterKey = `${trialRunId}-${bossName.replace(/\s+/g, '-').toLowerCase()}`;
-      let bossEncounter = currentTrialRun.encounters.find((enc) => enc.id === encounterKey);
-
-      if (!bossEncounter) {
-        // Create display name without instance numbers
-        const displayName = bossName;
-
-        const newEncounter: Encounter = {
-          id: encounterKey,
-          name: displayName,
-          bossFights: [],
-          preTrash: [],
-          postTrash: [],
-        };
-        currentTrialRun.encounters.push(newEncounter);
-        bossEncounter = newEncounter;
-      }
-
-      // Add boss and pre-trash to the encounter
-      bossEncounter.bossFights.push(currentBoss);
-      bossEncounter.preTrash.push(...preTrash);
-
-      // Update the trial run's fights array to include all bosses
-      if (!currentTrialRun.fights.some((f) => f.id === currentBoss.id)) {
-        currentTrialRun.fights.push(currentBoss);
-      }
-
-      // Only add post-trash if there's a next boss (not the final boss)
-      if (nextBoss) {
-        bossEncounter.postTrash.push(...postTrash);
-      }
-    }
-
-    // Handle any remaining trash that doesn't fit near bosses
-    const allCategorizedTrash = trialRuns.flatMap((run) =>
-      run.encounters.flatMap((enc) => [...enc.preTrash, ...enc.postTrash]),
-    );
-    const uncategorizedTrash = trashFights.filter(
-      (trash) => !allCategorizedTrash.some((cat) => cat.id === trash.id),
-    );
-
-    if (uncategorizedTrash.length > 0) {
-      trialRuns.push({
-        id: 'misc-trash',
-        name: 'Miscellaneous Trash',
-        startTime: uncategorizedTrash[0]?.startTime || 0,
-        endTime: uncategorizedTrash[uncategorizedTrash.length - 1]?.endTime || 0,
-        difficulty: null,
-        difficultyLabel: null,
-        fights: [],
-        trialName: 'Miscellaneous',
-        isComplete: true,
-        encounters: [
-          {
-            id: 'misc-trash-encounter',
-            name: 'Miscellaneous Trash',
+      // Surface trash that isn't tied to a boss (e.g. trailing trash, or a
+      // trash-only segment) so it stays reachable via the trash toggle.
+      const encountersForRun: RunEncounter[] = [...runEncounters];
+      if (leftover.length > 0) {
+        if (encountersForRun.length === 0) {
+          encountersForRun.push({
+            id: `${run.id}-misc-trash`,
+            name: 'Trash',
             bossFights: [],
-            preTrash: uncategorizedTrash,
+            preTrash: leftover,
             postTrash: [],
-          },
-        ],
-      });
-    }
+          });
+        } else {
+          const last = encountersForRun.length - 1;
+          encountersForRun[last] = {
+            ...encountersForRun[last],
+            postTrash: [...encountersForRun[last].postTrash, ...leftover],
+          };
+        }
+      }
 
-    // Update trial run names to remove any existing run numbers
-    const updatedTrialRuns = trialRuns?.map((run) => {
-      const baseName = run.name.replace(/#\d+$/, '');
-
-      return {
-        ...run,
-        name: baseName,
-      };
-    });
-
-    // Calculate trial difficulty for each individual run based on its own fights
-    const finalizedTrialRuns = updatedTrialRuns.map((run, _index) => {
-      const baseName = run.name.replace(/#\d+/, '').trim(); // Remove run number for calculation
-      const trialDifficulty = calculateTrialDifficulty(run.fights, baseName);
+      const hasBosses = runEncounters.length > 0;
+      const trialDifficulty = hasBosses
+        ? calculateTrialDifficulty(run.fights, run.zone.name)
+        : { difficulty: 0, label: null as string | null };
 
       return {
-        ...run,
+        id: run.id,
+        name: run.zone.name,
+        trialName: run.zone.name,
+        contentType: run.zone.type,
+        expectedBossCount: run.zone.expectedBossCount,
         difficulty: trialDifficulty.difficulty,
         difficultyLabel: trialDifficulty.label,
+        encounters: encountersForRun,
       };
     });
-
-    return finalizedTrialRuns;
   }, [fights, reportData]);
 
   const [showTrashForEncounter, setShowTrashForEncounter] = React.useState<Set<string>>(new Set());
@@ -620,43 +458,33 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   }
 
   const renderFightCard = (fight: FightFragment, idx: number): React.ReactNode => {
-    // Handle both boss fights and trash fights
-    const isBossFight = fight.difficulty != null;
+    // Handle both boss fights and trash fights (encounterID-based, see fightGrouping.isBossFight)
+    const fightIsBoss = isBossFight(fight);
 
     let bossWasKilled: boolean;
-    let rawIsWipe: boolean;
     let isFalsePositive: boolean;
     let isWipe: boolean;
     let bossHealthPercent: number;
     let backgroundFillPercent: number;
 
-    if (isBossFight) {
-      // Boss fight logic - consider anything <= 1% as a kill (not just 0.01%)
-      bossWasKilled =
-        fight.bossPercentage !== null &&
-        fight.bossPercentage !== undefined &&
-        fight.bossPercentage <= 1.0;
-      rawIsWipe =
-        fight.bossPercentage !== null &&
-        fight.bossPercentage !== undefined &&
-        fight.bossPercentage > 1.0;
-      isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-      isWipe = rawIsWipe && !isFalsePositive;
-      bossHealthPercent =
-        fight.bossPercentage !== null && fight.bossPercentage !== undefined
-          ? Math.round(fight.bossPercentage)
-          : 0;
+    if (fightIsBoss) {
+      // Boss fight logic — use the API's authoritative `kill` flag (see fightGrouping.wasKill).
+      // This replaces the old `bossPercentage`-based heuristic + false-positive detection.
+      bossWasKilled = wasKill(fight);
+      isFalsePositive = false;
+      isWipe = !bossWasKilled;
+      const remaining = bossHealthRemaining(fight);
+      bossHealthPercent = remaining != null ? Math.round(remaining) : 0;
 
       // Fill represents progress (damage dealt): kills = full, wipes = 100 - health remaining
-      backgroundFillPercent = bossWasKilled ? 100 : isWipe ? 100 - bossHealthPercent : 100;
+      backgroundFillPercent = bossWasKilled ? 100 : 100 - bossHealthPercent;
     } else {
       // Trash fight logic - use the kill field to determine success/wipe
       // kill === true means success, kill === false means wipe, kill === null means unknown (treat as successful)
       const wasKilled = fight.kill === true || fight.kill === null;
       bossWasKilled = false; // Trash fights don't have a "boss"
-      rawIsWipe = fight.kill === false;
       isFalsePositive = false; // No false positive detection for trash
-      isWipe = rawIsWipe;
+      isWipe = fight.kill === false;
       bossHealthPercent = 0;
       backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
     }
@@ -839,7 +667,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 #{idx + 1}
               </Typography>
               {/* Status badge — hidden for false positives */}
-              {isBossFight && !isFalsePositive && (
+              {fightIsBoss && !isFalsePositive && (
                 <Box
                   sx={{
                     display: 'inline-flex',
@@ -1131,28 +959,14 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     }}
                   >
                     {(() => {
-                      // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
+                      // Count killed encounters using the authoritative kill detection.
                       const killedBosses = trialRun.encounters.reduce((count, encounter) => {
-                        const hasKill = encounter.bossFights.some((fight) => {
-                          // Use the same kill logic as individual fight cards
-                          const isBossFight = fight.difficulty != null;
-                          if (isBossFight) {
-                            const bossWasKilled =
-                              fight.bossPercentage !== null &&
-                              fight.bossPercentage !== undefined &&
-                              fight.bossPercentage <= 1.0;
-                            const rawIsWipe =
-                              fight.bossPercentage !== null &&
-                              fight.bossPercentage !== undefined &&
-                              fight.bossPercentage > 1.0;
-                            const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-                            return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
-                          } else {
-                            // For trash fights, use the kill field to determine success
-                            // kill === true means success, kill === null means unknown (treat as successful)
-                            return fight.kill === true || fight.kill === null;
-                          }
-                        });
+                        const hasKill = encounter.bossFights.some((fight) =>
+                          isBossFight(fight)
+                            ? wasKill(fight)
+                            : // Trash: kill === null means unknown (treat as successful)
+                              fight.kill === true || fight.kill === null,
+                        );
                         return count + (hasKill ? 1 : 0);
                       }, 0);
 
