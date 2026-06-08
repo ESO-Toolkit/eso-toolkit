@@ -365,12 +365,15 @@ function createFloorVignetteTexture(): THREE.CanvasTexture {
     // Keep the clear core out PAST that (start at 0.48) so actors anywhere on the actual play surface
     // — including the cardinal mid-edges — stay fully lit; the darkening only ramps in the outer ring
     // beyond the map, where it feathers the hard plane edge into the background. (An earlier, tighter
-    // core dimmed peripheral actors — caught by a live look.) Rim ≈0.7, not opaque, so it frames
-    // rather than crushes. The gradient is largest at the diagonal corners, which are off-map anyway.
+    // core dimmed peripheral actors — caught by a live look.) The outer rim now ramps to NEAR-OPAQUE so
+    // the map DISSOLVES into the void instead of ending on a hard, visible plane edge — the extra alpha
+    // lives entirely past the play surface so actors are untouched. The gradient is largest at the
+    // diagonal corners, which are off-map anyway.
     const grad = ctx.createRadialGradient(c, c, px * 0.48, c, c, px * 0.5);
     grad.addColorStop(0, 'rgba(7, 9, 14, 0)');
-    grad.addColorStop(0.6, 'rgba(7, 9, 14, 0.18)');
-    grad.addColorStop(1, 'rgba(7, 9, 14, 0.7)');
+    grad.addColorStop(0.5, 'rgba(7, 9, 14, 0.16)');
+    grad.addColorStop(0.8, 'rgba(7, 9, 14, 0.55)');
+    grad.addColorStop(1, 'rgba(7, 9, 14, 0.97)');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, px, px);
   }
