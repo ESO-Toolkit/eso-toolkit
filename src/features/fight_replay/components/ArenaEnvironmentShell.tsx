@@ -249,28 +249,47 @@ const VARIANTS: Record<CosmicVariant, VariantSpec> = {
   },
 };
 
-/** Vertical-gradient sky dome, BackSide, toneMapped off. Static. */
+/**
+ * Vertical-gradient sky dome, BackSide, toneMapped off. The gradient is computed PER-FRAGMENT (not
+ * per-vertex) and dithered with a tiny ordered-noise term: a big smooth two-colour gradient quantises
+ * to visible bands at 8-bit, so a sub-LSB dither breaks the banding into imperceptible noise. Static —
+ * renders once under the on-demand gate.
+ */
 function useSkyDome(
   radius: number,
   sky: [string, string],
-): { geometry: THREE.IcosahedronGeometry; material: THREE.MeshBasicMaterial } {
+): { geometry: THREE.IcosahedronGeometry; material: THREE.ShaderMaterial } {
   return useMemo(() => {
     const geometry = new THREE.IcosahedronGeometry(radius, 4);
-    const pos = geometry.getAttribute('position');
-    const colors = new Float32Array(pos.count * 3);
-    const horizon = new THREE.Color(sky[0]);
-    const crown = new THREE.Color(sky[1]);
-    const c = new THREE.Color();
-    for (let i = 0; i < pos.count; i++) {
-      const t = THREE.MathUtils.clamp((pos.getY(i) / radius) * 0.5 + 0.5, 0, 1);
-      c.copy(horizon).lerp(crown, t * t);
-      colors[i * 3] = c.r;
-      colors[i * 3 + 1] = c.g;
-      colors[i * 3 + 2] = c.b;
-    }
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    const material = new THREE.MeshBasicMaterial({
-      vertexColors: true,
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uHorizon: { value: new THREE.Color(sky[0]) },
+        uCrown: { value: new THREE.Color(sky[1]) },
+        uRadius: { value: radius },
+      },
+      vertexShader: /* glsl */ `
+        varying vec3 vLocal;
+        void main() {
+          vLocal = position;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: /* glsl */ `
+        uniform vec3 uHorizon;
+        uniform vec3 uCrown;
+        uniform float uRadius;
+        varying vec3 vLocal;
+        // cheap ordered-ish hash dither in [-0.5,0.5], scaled to ~1 LSB
+        float dither(vec2 p) {
+          return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
+        }
+        void main() {
+          float t = clamp((vLocal.y / uRadius) * 0.5 + 0.5, 0.0, 1.0);
+          vec3 col = mix(uHorizon, uCrown, t * t);
+          col += dither(gl_FragCoord.xy) * (1.5 / 255.0);
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `,
       side: THREE.BackSide,
       toneMapped: false,
       depthWrite: false,
