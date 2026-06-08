@@ -69,8 +69,8 @@ export async function handleRosterRefresh(
       let lastError: string | undefined;
       for (const mapping of mappings) {
         const result = await refreshRoster(env, mapping.rosterId, guildId);
-        if (result.ok) okCount++;
-        else lastError = result.error;
+        if (result.ok && (result.refreshedCount ?? 0) > 0) okCount++;
+        else if (!result.ok) lastError = result.error;
       }
 
       if (okCount > 0) {
@@ -79,9 +79,14 @@ export async function handleRosterRefresh(
           content: `✅ Roster refreshed from ESO Toolkit!${suffix}`,
           flags: MessageFlags.EPHEMERAL,
         });
+      } else if (lastError) {
+        await sendFollowup(env, interaction.token, {
+          content: `❌ Refresh failed: ${lastError}`,
+          flags: MessageFlags.EPHEMERAL,
+        });
       } else {
         await sendFollowup(env, interaction.token, {
-          content: `❌ Refresh failed: ${lastError ?? 'Unknown error'}`,
+          content: '⚠️ Nothing to refresh — this channel has no live roster posts anymore.',
           flags: MessageFlags.EPHEMERAL,
         });
       }

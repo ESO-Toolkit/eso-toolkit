@@ -73,9 +73,17 @@ export async function handleRosterRefreshButton(
       }
 
       const result = await refreshRoster(env, rosterId, guildId);
-      if (result.ok) {
+      if (result.ok && (result.refreshedCount ?? 0) > 0) {
         await sendFollowup(env, interaction.token, {
           content: '✅ Roster refreshed!',
+          flags: MessageFlags.EPHEMERAL,
+        });
+      } else if (result.ok) {
+        // ok but nothing refreshed → this roster has no live post in this server
+        // (mapping removed/expired). Don't claim success.
+        await sendFollowup(env, interaction.token, {
+          content:
+            "⚠️ Couldn't find this roster's post to refresh — it may have been removed. Try re-publishing it.",
           flags: MessageFlags.EPHEMERAL,
         });
       } else {
