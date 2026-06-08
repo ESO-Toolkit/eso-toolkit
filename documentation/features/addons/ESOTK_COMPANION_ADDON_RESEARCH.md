@@ -335,6 +335,117 @@ the only place that tells your whole raid whether the build was actually any goo
 
 ---
 
+## 12. The bigger vision — an in-game raid-command layer, two-way synced with ESOTK
+
+> **Reframe.** Sections 1–11 treat the add-on as a *passive capture pipe* → web. The
+> larger opportunity is a **two-way platform**: ESOTK is the brain (define rosters,
+> rules, assignments, analytics on the web), the add-on is the **eyes and hands in the
+> raid** (enforce and surface them live, in-game), and data flows **both directions**.
+> This is the part that has no real competitor — ESO Logs is read-only post-hoc,
+> build sites are open-loop, and no tool connects a web raid-planner to a live in-game
+> HUD. Below is what's possible *and* what the engine constraints actually allow.
+
+### 12.1 The one constraint that shapes everything: 32 bytes/second
+
+Group data sharing (LibGroupBroadcast, the bus Hodor rides) is hard-capped by ESO at
+**~32 bytes per second per add-on**, riding the map-ping channel. That is far too little
+to stream full builds for 12 people. It is the reason Hodor only shares tiny DPS/Ult
+numbers. **So we do not stream builds — we split the system into two layers:**
+
+| Layer | Runs where | Carries | Channel | Limit |
+|---|---|---|---|---|
+| **Live layer** | In-game, real-time | A compact **compliance verdict** + a few key live stats per player | LibGroupBroadcast | 32 B/s — fine for bitfields |
+| **Deep layer** | Web, post-hoc | The **full** build: CP allocation, exact stats, gear, history | SavedVariables file → ESOTK | none |
+
+**Edge-compute is the trick.** Every player's add-on already knows *their own* full
+build and the shared ruleset, so **each client evaluates itself locally** and
+broadcasts only the verdict — e.g. a 1-byte bitfield (`food✓ mundus✓ pen✓ sets✓ CP✓`)
+plus one or two bucketed stats. The raid lead's add-on aggregates those few-byte
+messages into a live dashboard. No bandwidth problem, because the heavy lifting never
+goes over the wire.
+
+### 12.2 The criteria / ruleset engine (the centrepiece)
+
+This is the user's "flag criteria you set" idea, made concrete and role-aware:
+
+- **Define on ESOTK (web):** per **role** and per **encounter**, a ruleset — *DPS must
+  hit ≥18,200 pen, run [required set], be fed, slot [CP stars]; healers must run
+  [sets], maintain ≥X recovery and Major Courage; tanks must hold taunt uptime and run
+  [sets]*. ESOTK already has roster-hub role composition and `detectBuildIssues` to
+  build this on.
+- **Sync down to the game.** Three viable bridges (no desktop app needed):
+  1. **FSA API write-mode** — ESOTK writes the ruleset into the SavedVariables folder
+     (`requestPermission({mode:'readwrite'})`); the add-on loads it on `/reloadui`.
+     Genuinely bidirectional, browser-only.
+  2. **Import code** — ESOTK emits a ruleset code; raid lead pastes it into the add-on.
+  3. **Broadcast** — only the raid lead needs it configured; it streams to the group's
+     add-ons out of combat (slow at 32 B/s, but a one-time ~10–30s pre-pull sync).
+- **Evaluate live, in-game.** Each client checks itself; the raid lead sees who passes.
+- **Report back up.** Compliance + the full capture flow to ESOTK for the post-fight
+  report, player cards, and roster history.
+
+### 12.3 In-game raid-lead dashboard (mirror the web dashboard, live)
+
+ESOTK already has a raid-lead dashboard on the site; mirror it **in-game** so the lead
+never alt-tabs. Using the group APIs (`GetGroupUnitTagByIndex`,
+`GetGroupMemberSelectedRole`, …) the add-on renders a live grid of all 12 members with
+red/green compliance dots, missing-requirement callouts, and live DPS/HPS/Ult from the
+LibGroupCombatStats bus it already shares with Hodor. **A pre-pull "ready check"**
+posts *"3 not ready: @x no food, @y wrong mundus, @z 2,400 under pen cap"* to the lead
+(or group chat) — something no tool does today.
+
+### 12.4 Ecosystem integration (don't rebuild — plug in)
+
+The user is right that the win is integrating with what raids already run:
+
+- **Hodor / LibGroupCombatStats** — *the* group combat-data bus. Publish our compliance
+  data alongside Hodor's DPS so the whole ecosystem can read it; ride the same join.
+- **LUI Extended (LUIE)** — MIT-licensed, provides class/role-colored Group/Raid frames
+  and buff/debuff tracking. Integrate by **annotating its frames** with compliance
+  state (or learn from its frame code). Open source makes this tractable.
+- **Bandits UI / custom raid frames** — same pattern: overlay a compliance dot per
+  member on whichever frames the raid uses, rather than forcing ours.
+- **Wizard's Wardrobe** — already parsed here. The add-on can **verify the equipped
+  setup matches the assignment** and prompt an auto-equip if not.
+- **RaidNotifier / Code's Combat Alerts** — tie ESOTK roster **assignments** (who
+  interrupts, who takes which portal/sync) to on-screen reminders.
+
+### 12.5 Expanded idea catalogue (beyond build capture)
+
+- **Auto-roster from the live group** — read current members + roles and **populate
+  ESOTK's roster-hub automatically**, killing manual entry. (Huge, underrated.)
+- **Assignment overlays** — push portal/interrupt/taunt/sync assignments from the web
+  roster to in-game prompts keyed to each player.
+- **Live self-HUD** — turn ESOTK's `CalculatePenetration`/`CalculateCriticalDamage`
+  estimates into a real-time personal readout: *"1,300 under pen cap right now."*
+- **Instant debrief** — on a wipe, the add-on snapshots who died first / who broke
+  compliance and syncs it to the ESOTK report.
+- **Attendance & progression tracking** — pull counts, wipe reasons, who showed,
+  auto-logged to roster-hub over a prog night.
+- **Consumable/repair pre-check** — flag low gear durability, missing poisons, empty
+  quickslot before the pull.
+- **Buff-assignment uptime** — assign Major Breach / Z'en / Slayer to players and track
+  whether they actually maintain it (cross-checked against the log).
+
+### 12.6 Honest limits on the live layer
+
+- **32 B/s** means live data is *verdicts and a few stats*, never full builds — design
+  for it (§12.1). Don't promise live gear/CP streaming.
+- **You can't read another player's build** directly — they must run the add-on and
+  opt in to broadcast. Value scales with raid adoption (lean on raid-lead mandate).
+- **No in-combat automation / no input** — read, evaluate, display only. Stays ToS-safe
+  like Hodor/CombatMetrics.
+- **PC-only** (no console add-ons); console raids get the web/log-only experience.
+- **FSA write-mode is Chromium-only** — import-code/broadcast are the cross-browser
+  fallbacks for ruleset sync.
+
+**Vision one-liner:** *Plan the raid on ESOTK, and the add-on becomes its live enforcer
+in-game — every player self-checks against your rules, the raid lead sees green/red at a
+glance, and the whole night flows back to the web as build-correlated history. The web
+is the brain; the add-on is the raid's nervous system.*
+
+---
+
 ## Sources
 
 - [ESO Logs — Getting Started](https://www.esologs.com/help/start)
@@ -357,5 +468,8 @@ the only place that tells your whole raid whether the build was actually any goo
 - [ESO-Hub Build Editor (import/export, CombatMetrics integration)](https://eso-hub.com/en/build-editor)
 - [ESO penetration & the 18,200 cap (over-penetration is wasted)](https://hyperioxes.com/eso/tools/penetration-calculator)
 - [ESO critical damage 125% hard cap / crit rating ÷ 21,918](https://eso-hub.com/en/guides/critical-damage) · [UESP: Critical Damage](https://en.uesp.net/wiki/Online:Critical_Damage)
+- [LibGroupBroadcast — 32 bytes/sec group data limit](https://www.esoui.com/downloads/info1337-LibGroupSocket.html) · [LibGroupSocket source](https://github.com/ESOUIMods/LibGroupSocket/blob/master/LibGroupSocket.lua/)
+- [LUI Extended (MIT, custom group/raid frames)](https://www.esoui.com/downloads/info818-LuiExtended.html) · [GitHub](https://github.com/DakJaniels/LuiExtended)
+- [ESOUI Wiki — UnitTag / group APIs](https://wiki.esoui.com/UnitTag)
 </content>
 </invoke>
