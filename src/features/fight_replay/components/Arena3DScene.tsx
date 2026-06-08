@@ -995,7 +995,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         target={cameraSettings.target as [number, number, number]}
         makeDefault
       />
-      <CanvasWheelZoom />
+      <CanvasWheelZoom followingActorIdRef={followingActorIdRef} />
     </>
   );
 };
