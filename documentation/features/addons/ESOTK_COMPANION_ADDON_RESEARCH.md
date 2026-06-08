@@ -584,6 +584,102 @@ product first (already done) and let a free add-on feed it.
 
 ---
 
+## 17. Why now — the 2026 meta makes the build gap bigger
+
+ESO's 2026 shift to a **Seasonal model** (3–6 month content blocks replacing the annual
+Chapter; Season 1 ships with **Update 50 on 8 June 2026** — *today* — including the
+**Crimson Veldt** trial) directly increases the value of build capture:
+
+- **Subclassing + Class Mastery Passives (the big one).** The 2026 Class Identity
+  Refresh lets players **mix skill lines across classes**, and adds **Class Mastery
+  Passives** that *only pure-class builds* can slot (pick 2 of 5; auto-refunded the
+  moment you subclass). This explodes build variety and creates a **fresh capture gap**:
+  the log's ability IDs reveal *which* skills are slotted, but **whether a player is
+  pure-class (and which Mastery Passives) vs. subclassed, and which three skill lines
+  they chose**, is new build state worth capturing — and a new axis for compliance
+  rules ("this fight wants the pure-class Mastery Passive build"). Nothing surfaces this
+  yet.
+- **Seasonal itemisation churn.** New sets (Night Market, new Thieves Guild mythic) and
+  balance every season mean rulesets and set/CP data need a **per-season cadence**. The
+  schema must carry a season/patch tag, and ESOTK's existing data-regen skills
+  (`gear-data-regen`, `class-skill-regen`) should run each season.
+- **Overland Difficulty (Seasoned/Master)** makes builds matter outside trials too,
+  widening the audience for stat coaching beyond the hardcore raid niche.
+
+**Implication:** ship capture of **CP allocation + subclass lines + Class Mastery
+Passives + final stats** as the v1 payload — it's both the user's ask *and* the freshest
+gap the 2026 systems opened. Tag every snapshot and ruleset with the season/patch.
+
+## 18. Platform reality (and a console-only opportunity)
+
+The web pipeline is **hard PC-only**, more strictly than first stated:
+
+- Console (PS5 / Xbox) **got add-ons in Update 46 (June 2025) but only UI-focused
+  ones** — no gameplay/combat scripts.
+- Console can run `/encounterlog`, **but the platform security model blocks access to
+  the log files and SavedVariables entirely** — there is *no* way to export either, even
+  via the add-on API. So console has **no ESO Logs and no way to upload to ESOTK**.
+
+Therefore: ESOTK + companion capture/upload is PC-only; console reports simply don't
+exist to enrich. **But** that same gap is an opening: console raiders have *no* combat
+analysis at all. A **purely in-game, web-free live layer** (the §12 compliance dashboard
++ ready-check, sharing compact verdicts over LibGroupBroadcast) could be uniquely
+valuable on console — *if* it qualifies as a "UI add-on" and the group-data libs are
+permitted there. **Unverified and likely later-phase**, but it's a genuine
+blue-ocean angle no PC-centric competitor is chasing. Flag it as a research spike, not a
+v1 commitment.
+
+## 19. Recommended add-on tech stack & a concrete SavedVariables schema
+
+**Libraries (all standard, well-maintained):**
+
+- **`GetTimeStamp()`** → UNIX seconds in server time — the exact key for matching to ESO
+  Logs' absolute report `startTime` (§15). Stamp every snapshot with it.
+- **LibSavedVars** — scoped (server/account/character) saved vars **with migration**;
+  use it to version the schema so per-season changes don't corrupt old data.
+- **LibAddonMenu-2.0** — the settings panel (toggles for broadcast opt-in, ruleset sync,
+  what to capture).
+- **LibGroupBroadcast** + **LibGroupCombatStats** — the live layer bus (§12, §13).
+- **LibCombat** — combat data feed (what CombatMetrics/Hodor build on) if we compute
+  any live combat metrics ourselves.
+
+**Draft schema (`ESOTKCompanionSV`)** — illustrative, versioned, per-fight snapshots:
+
+```lua
+ESOTKCompanionSV = { ["Default"] = { ["@account"] = { ["$AccountWide"] = {
+  schemaVersion = 1,
+  season        = "U50",                 -- per-season/patch tag (§17)
+  snapshots = { [1] = {
+    ts      = 1749384000,                -- GetTimeStamp() — UTC match key (§15)
+    char    = "Charname", server = "NA", -- match key vs masterData.actors
+    zoneId  = 1196, zone = "Crimson Veldt",
+    classId = 6, raceId = 4, role = "dps",
+    -- gaps the log can't see:
+    cp = { warfare = { [starId]=pts }, fitness = {…}, craft = {…},
+           slotted = { [1]=starId, …, [12]=starId } },
+    masteryPassives = { id, id },         -- 2026 pure-class passives (§17)
+    subclassLines   = { lineId, lineId, lineId }, -- 2026 subclassing (§17)
+    attrs  = { magicka=0, health=64, stamina=0 },
+    mundus = "The Lover",
+    food   = { id=12345, name="Bewitched Sugar Skulls" },
+    stats  = { maxMag=, maxStam=, maxHealth=, spellDmg=, weaponDmg=,
+               critRating=, critDmg=, penPhys=, penSpell=,
+               recovMag=, recovStam=, recovHealth=, resistPhys=, resistSpell= },
+    -- redundant with the log (optional / verification only):
+    bars = { front={…}, back={…} }, gear = { [slot]={link,trait,enchant,quality,setId} },
+    -- live-layer output:
+    rulesetId  = "vCR-dps-v3",
+    compliance = { food=true, mundus=true, pen=false, sets=true, cp=true },
+  } },
+  rulesets = {},                          -- inbound from ESOTK (FSA write / import code)
+} } } }
+```
+
+The two fields that must never break without a version bump: `ts` + `char`/`server`
+(the matcher's keys) and `schemaVersion`. Everything else is additive.
+
+---
+
 ## Sources
 
 - [ESO Logs — Getting Started](https://www.esologs.com/help/start)
@@ -619,5 +715,9 @@ product first (already done) and let a free add-on feed it.
 - [ESO Logs API documentation — Archon](https://www.archon.gg/eso/articles/help/API-documentation) · [ESO Logs Python (rate-limit/points)](https://esologs-python.readthedocs.io/)
 - [ESO Logs report/fights schema (startTime offsets, masterData)](https://articles.esologs.com/help/intro-to-scripts)
 - [Add-on monetisation forbidden by ZOS — donations only (ESO Forums)](https://forums.elderscrollsonline.com/en/discussion/370469/do-add-on-devs-mod-programmers-get-compensated-in-any-way)
+- [ESO 2026 roadmap & Seasons](https://hacktheminotaur.com/eso-guides/eso-2026-roadmap-seasons-updates/) · [Update 50 guide (Crimson Veldt, Werewolf, Class Mastery)](https://arzyelbuilds.com/eso-update-50/)
+- [ESO 2026 Class Identity Refresh & subclassing / Class Mastery Passives](https://hacktheminotaur.com/eso-guides/eso-class-updates-2026-the-class-identity-refresh/)
+- [Console can't access /encounterlog files (ESO Forums)](https://forums.elderscrollsonline.com/en/discussion/679575/problem-consoles-cannot-access-logs-generated-by-encounterlog) · [Console add-ons guide](https://alcasthq.com/eso-addons-console-guide/)
+- [LibSavedVars (scoped + migration)](https://github.com/silvereyes333/LibSavedVars) · [LibAddonMenu-2.0](https://www.esoui.com/downloads/info7-LibAddonMenu.html)
 </content>
 </invoke>
