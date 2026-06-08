@@ -17,6 +17,7 @@ import { getPlayerPathColor } from '../utils/playerColors';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
 import { ArenaEnvironmentShell, type CosmicVariant } from './ArenaEnvironmentShell';
+import { BloomComposer, type BloomComposerHandle } from './BloomComposer';
 import { CameraFollower } from './CameraFollower';
 import { CameraResetControls } from './CameraResetControls';
 import { CanvasWheelZoom } from './CanvasWheelZoom';
@@ -180,6 +181,11 @@ interface RenderLoopProps {
    * refills it from per-frame signals (time, camera, follow) below.
    */
   renderBudgetRef: React.RefObject<number>;
+  /**
+   * Optional bloom composer. When present (non-performance mode) the gated render goes through the
+   * composer (RenderPass → bloom → OutputPass) so bright celestials glow; otherwise a plain gl.render.
+   */
+  composerRef: React.RefObject<BloomComposerHandle | null>;
 }
 
 /**
@@ -202,6 +208,7 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   timeRef,
   followingActorIdRef,
   renderBudgetRef,
+  composerRef,
 }) => {
   const { gl, scene, camera, controls } = useThree();
 
@@ -249,7 +256,12 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     if (renderBudgetRef.current > 0) {
       renderBudgetRef.current -= 1;
       lastRenderedTimeRef.current = currentTime;
-      gl.render(scene, camera);
+      const composer = composerRef.current;
+      if (composer) {
+        composer.render();
+      } else {
+        gl.render(scene, camera);
+      }
     }
   }, 999); // Very low priority to render after all updates
 
@@ -491,6 +503,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   useEffect(() => {
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
   });
+
+  // Bloom composer handle, published by <BloomComposer> and consumed by RenderLoop. Null in
+  // performance mode (no composer mounted → RenderLoop falls back to a plain gl.render).
+  const composerRef = useRef<BloomComposerHandle | null>(null);
 
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
   // any React commit, time change, camera move, or follow) tell the RenderLoop to repaint —
@@ -739,11 +755,15 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         slowFrameThreshold={33}
         maxSlowFrameLogsPerMinute={10}
       />
+      {/* Bloom post-processing (skipped in performance mode). Publishes its render handle to
+          composerRef; RenderLoop routes the gated render through it so bright celestials glow. */}
+      {!performanceMode && <BloomComposer composerRef={composerRef} />}
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
         timeRef={timeRef}
         followingActorIdRef={followingActorIdRef}
         renderBudgetRef={renderBudgetRef}
+        composerRef={composerRef}
       />
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
