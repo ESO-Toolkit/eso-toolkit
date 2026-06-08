@@ -385,6 +385,7 @@ export const TRIALS: TrialConfig[] = [
     bosses: [
       { name: 'Ibelgast', trashPacksBefore: 1 },
       { name: 'Ruzozuzalpamaz', trashPacksBefore: 1 },
+      { name: 'Chamber Guardian', trashPacksBefore: 1 },
       { name: 'The Ilambris Amalgam', trashPacksBefore: 1 },
       { name: 'Mezeluth', trashPacksBefore: 1 },
       { name: "Nerien'eth", trashPacksBefore: 1 },
@@ -395,8 +396,8 @@ export const TRIALS: TrialConfig[] = [
     name: 'City of Ash I',
     type: 'dungeon',
     bosses: [
-      { name: 'Golor the Banekin Handler', trashPacksBefore: 1 },
       { name: 'Infernal Guardian', trashPacksBefore: 1 },
+      { name: 'Golor the Banekin Handler', trashPacksBefore: 1 },
       { name: 'Warden of the Shrine', trashPacksBefore: 1 },
       { name: 'Dark Ember', trashPacksBefore: 1 },
       { name: 'Rothariel Flameheart', trashPacksBefore: 1 },
@@ -510,8 +511,11 @@ export const TRIALS: TrialConfig[] = [
     name: 'Imperial City Prison',
     type: 'dungeon',
     bosses: [
+      { name: 'The Overfiend', trashPacksBefore: 1 },
       { name: 'Ibomez the Flesh Sculptor', trashPacksBefore: 1 },
+      { name: 'Gravelight Sentry', trashPacksBefore: 1 },
       { name: 'Flesh Abomination', trashPacksBefore: 1 },
+      { name: "Lord Warden's Council", trashPacksBefore: 1 },
       { name: 'Lord Warden Dusk', trashPacksBefore: 1 },
     ],
   },
@@ -521,6 +525,7 @@ export const TRIALS: TrialConfig[] = [
     type: 'dungeon',
     bosses: [
       { name: 'The Adjudicator', trashPacksBefore: 1 },
+      { name: "Empress Regent's Guard", trashPacksBefore: 1 },
       { name: 'The Planar Inhibitor', trashPacksBefore: 1 },
       { name: 'Molag Kena', trashPacksBefore: 1 },
     ],
@@ -858,7 +863,7 @@ export const TRIALS: TrialConfig[] = [
     type: 'dungeon',
     bosses: [
       { name: 'Poxito', trashPacksBefore: 1 },
-      { name: 'Voskrona Stonehulk', trashPacksBefore: 1 },
+      { name: 'Voskrona Stonehulk Poxito', trashPacksBefore: 1 },
       { name: 'Talen-Lah & Bar-Sakka', trashPacksBefore: 1 },
     ],
   },
