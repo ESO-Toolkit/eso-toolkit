@@ -128,9 +128,13 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
           refs.fill.style.backgroundColor = healthColor(theme, pct);
         }
         if (refs.readout) {
+          // Mobile keeps it to the percentage only — the exact HP numbers are noise on a phone and
+          // make the bar read as cluttered. Desktop shows the full "pct · cur / max".
           refs.readout.textContent = boss.isDead
             ? 'DEAD'
-            : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, isMobile)} / ${fmtHp(boss.health.max, isMobile)}`;
+            : isMobile
+              ? `${pct.toFixed(1)}%`
+              : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, isMobile)} / ${fmtHp(boss.health.max, isMobile)}`;
         }
       }
 

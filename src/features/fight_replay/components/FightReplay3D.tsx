@@ -216,8 +216,20 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
   // The trial timeline / continuous controls collapse independently of the transport, starting
   // collapsed on mobile (where the full bar is too cluttered). A small chip re-expands them.
-  const [trialBarExpanded, setTrialBarExpanded] = useState(!isMobile);
-  const toggleTrialBar = useCallback(() => setTrialBarExpanded((v) => !v), []);
+  // Trial scrubber expand/collapse. Default: collapsed (a small chip) on mobile, expanded on
+  // desktop. `isMobile` (useMediaQuery) is `false` on the very first render before it resolves, so
+  // we DON'T seed from it (that started mobile expanded — the reported clutter). Instead follow the
+  // resolved value until the user makes a choice, after which their toggle sticks.
+  const [trialBarExpanded, setTrialBarExpanded] = useState(false);
+  const userToggledTrialBarRef = useRef(false);
+  useEffect(() => {
+    if (userToggledTrialBarRef.current) return;
+    setTrialBarExpanded(!isMobile);
+  }, [isMobile]);
+  const toggleTrialBar = useCallback(() => {
+    userToggledTrialBarRef.current = true;
+    setTrialBarExpanded((v) => !v);
+  }, []);
 
   // High-performance time reference for 3D updates
   const animationTimeRef = useAnimationTimeRef({

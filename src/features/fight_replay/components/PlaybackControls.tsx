@@ -9,7 +9,7 @@
 
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
-import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import { Box, Divider, IconButton, Popover, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 
@@ -163,6 +163,14 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   // Get timeline markers (phase transitions, death events)
   const { markers } = useTimelineMarkers();
 
+  // On mobile the dense death/custom pins make the thin rail unreadable. Keep only the structural
+  // beats — phase transitions + clustered bursts — so the rail stays clean (deaths remain reachable
+  // via clusters and the chapter rail). Desktop shows everything.
+  const railMarkers = React.useMemo(
+    () => (isMobile ? markers.filter((m) => m.type === 'phase' || m.type === 'cluster') : markers),
+    [isMobile, markers],
+  );
+
   // Handle marker click (jump to timestamp)
   const handleMarkerClick = React.useCallback(
     (timestamp: number) => {
@@ -249,7 +257,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           onSliderChange={handleSliderChange}
           onSliderChangeEnd={handleSliderChangeEnd}
           onSliderChangeStart={handleSliderChangeStart}
-          markers={markers}
+          markers={railMarkers}
           onMarkerClick={handleMarkerClick}
           replayContext={replayContext}
           loopStart={loopStart}
@@ -351,7 +359,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
                     '&:hover': { color: 'text.primary' },
                   }}
                 >
-                  <TuneRoundedIcon fontSize="small" />
+                  <MoreHorizRoundedIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
             ) : (
