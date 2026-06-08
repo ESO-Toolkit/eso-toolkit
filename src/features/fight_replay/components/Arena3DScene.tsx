@@ -6,6 +6,7 @@ import type { DirectionalLight, Object3D } from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
+import { usePerfTier } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
@@ -508,6 +509,11 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   // performance mode (no composer mounted → RenderLoop falls back to a plain gl.render).
   const composerRef = useRef<BloomComposerHandle | null>(null);
 
+  // MSAA sample count for the composer's HDR target, scaled by perf tier (high 4 / medium 2 / low 0).
+  // Without this the composer target is single-sampled and bloom-on tiers would render aliased edges.
+  const perfTier = usePerfTier();
+  const bloomSamples = perfTier === 'high' ? 4 : perfTier === 'medium' ? 2 : 0;
+
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
   // any React commit, time change, camera move, or follow) tell the RenderLoop to repaint —
   // otherwise that mutation would be invisible while paused until the next unrelated dirty
@@ -757,7 +763,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       />
       {/* Bloom post-processing (skipped in performance mode). Publishes its render handle to
           composerRef; RenderLoop routes the gated render through it so bright celestials glow. */}
-      {!performanceMode && <BloomComposer composerRef={composerRef} />}
+      {!performanceMode && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
         timeRef={timeRef}

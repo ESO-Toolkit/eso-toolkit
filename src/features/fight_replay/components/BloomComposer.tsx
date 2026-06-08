@@ -20,6 +20,12 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
  * left crisp) → OutputPass (carries tone mapping + sRGB, replacing the renderer's own output conversion
  * which the composer bypasses). The renderer keeps NeutralToneMapping + exposure so colours match the
  * non-bloom path.
+ *
+ * MSAA: three's default EffectComposer target (`new EffectComposer(gl)`) is single-sampled, so routing
+ * the scene through the composer would render geometry edges ALIASED — worse than the plain `gl.render`
+ * path on the `antialias:true` canvas. We pass an explicit multisampled HalfFloat target so the premium
+ * bloom-on tiers keep real edge AA on the boss GLB, selection rings, and figures. The multisample resolve
+ * is paid only on already-painting frames (gate-friendly); `samples:0` on the low tier keeps it mobile-safe.
  */
 export interface BloomComposerHandle {
   render: () => void;
@@ -28,6 +34,8 @@ export interface BloomComposerHandle {
 
 interface BloomComposerProps {
   composerRef: React.MutableRefObject<BloomComposerHandle | null>;
+  /** MSAA sample count for the HDR composer target (0 = none). Threaded from the perf tier. */
+  samples?: number;
   strength?: number;
   radius?: number;
   threshold?: number;
@@ -35,6 +43,7 @@ interface BloomComposerProps {
 
 export const BloomComposer: React.FC<BloomComposerProps> = ({
   composerRef,
+  samples = 4,
   strength = 0.85,
   radius = 0.5,
   // Threshold sits above the brightest the tone-mapped map floor can reach (incl. bright snow/white
@@ -45,7 +54,16 @@ export const BloomComposer: React.FC<BloomComposerProps> = ({
   const { gl, scene, camera, size } = useThree();
 
   const { composer, bloomPass } = useMemo(() => {
-    const c = new EffectComposer(gl);
+    // Explicit multisampled HDR target (vs three's single-sampled default) — clamp to the GPU's max.
+    const maxSamples = gl.capabilities.maxSamples ?? 0;
+    const pr = gl.getPixelRatio();
+    const target = new THREE.WebGLRenderTarget(
+      Math.max(1, Math.floor(size.width * pr)),
+      Math.max(1, Math.floor(size.height * pr)),
+      { type: THREE.HalfFloatType, samples: Math.min(samples, maxSamples) },
+    );
+    const c = new EffectComposer(gl, target);
+    c.setPixelRatio(pr);
     c.addPass(new RenderPass(scene, camera));
     const bloom = new UnrealBloomPass(
       new THREE.Vector2(size.width, size.height),
@@ -58,7 +76,7 @@ export const BloomComposer: React.FC<BloomComposerProps> = ({
     // target and would otherwise output un-tonemapped/linear colour).
     c.addPass(new OutputPass());
     return { composer: c, bloomPass: bloom };
-  }, [gl, scene, camera]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [gl, scene, camera, samples]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep bloom params live-tunable without rebuilding the composer.
   useEffect(() => {
