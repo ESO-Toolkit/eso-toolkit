@@ -111,10 +111,6 @@ interface VariantSpec {
 // moons read as gibbous/crescent rather than flat-lit, and consistently with each other.
 const SUN = [0.72, 0.32, 0.62] as [number, number, number];
 
-// The replay camera rests looking across the map at azimuth ≈ −0.79 rad (−45°). Backdrop features are
-// anchored to this so something interesting greets the default view, then spread around the full dome.
-const RESTING_LOOK_AZ = -0.79;
-const NEBULA_RING_COUNT = 7;
 // Where the Sun-hole Magnus leaks its warm-gold light — a clear quadrant away from the moons.
 const MAGNUS_LEAK_AZ = 1.57;
 // The torn Gate's Deadlands stain — far horizon, true opposite of the resting look (brooding behind you).
@@ -320,6 +316,175 @@ function useSkyDome(
     return { geometry, material };
   }, [radius, sky, horizonTint, horizonStrength]);
 }
+
+/**
+ * Procedural nebula baked once into a render target, then sampled on an inner dome shell — replacing
+ * the ring of flat radial-gradient sprites with a single continuous, structured cloud field.
+ *
+ * WHY a baked fBm shell over sprites: the sprite ring is N identical isotropic blobs; from the
+ * near-flat replay camera they read as obvious soft discs pinned around the horizon. Real nebulae are
+ * a continuous, filamentary, multi-scale field. fBm (summed octaves of value noise) gives the
+ * multi-scale structure; a domain-warp (offsetting the sample point by another fBm) bends the
+ * filaments into the curdled, wispy look a bare fBm lacks. Baking it ONCE to a texture means the
+ * expensive many-octave warp is paid a single time (in an effect, under the gate), and the dome shell
+ * that samples it every frame is a trivial texture lookup.
+ *
+ * Tileable: the noise hashes a point wrapped modulo a period, so u=0 and u=1 sample the same lattice
+ * and the equirectangular seam behind the camera is invisible.
+ *
+ * Under bloom: the shell is toneMapped:false, so its raw rgb is what UnrealBloomPass thresholds at
+ * 0.9. The bake multiplies the field DOWN (peak ≈0.42) so even the brightest knot stays well under
+ * threshold — the nebula reads as a dim atmospheric wash, never blooming into a mushy hot blob.
+ */
+function bakeNebulaTexture(
+  gl: THREE.WebGLRenderer,
+  palette: string[],
+  intensity: number,
+): THREE.WebGLRenderTarget {
+  const W = 1024;
+  const H = 512;
+  const rt = new THREE.WebGLRenderTarget(W, H, {
+    type: THREE.HalfFloatType, // keep the sub-1.0 field smooth (8-bit would band the soft gradients)
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    wrapS: THREE.RepeatWrapping, // tileable across the equirectangular seam
+    wrapT: THREE.ClampToEdgeWrapping,
+    depthBuffer: false,
+    stencilBuffer: false,
+  });
+
+  // Pad the palette to 3 colours so the shader always has c0/c1/c2.
+  const cols = [0, 1, 2].map((i) => new THREE.Color(palette[i % palette.length] ?? palette[0] ?? '#222'));
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const quad = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({
+      uniforms: {
+        uC0: { value: cols[0] },
+        uC1: { value: cols[1] },
+        uC2: { value: cols[2] },
+        uIntensity: { value: intensity },
+      },
+      vertexShader: /* glsl */ `
+        varying vec2 vUv;
+        void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
+      `,
+      fragmentShader: /* glsl */ `
+        precision highp float;
+        varying vec2 vUv;
+        uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uC2;
+        uniform float uIntensity;
+        const float PERIOD = 6.0; // integer → the lattice repeats, so u wraps seamlessly at 0/1
+
+        // Hash a lattice point, wrapped to PERIOD on x so the field tiles horizontally.
+        float hash(vec2 p) {
+          p = vec2(mod(p.x, PERIOD), p.y);
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+        }
+        // Value noise with a wrapped lattice (smooth interpolation of hashed corners).
+        float vnoise(vec2 p) {
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          float a = hash(i + vec2(0.0, 0.0));
+          float b = hash(i + vec2(1.0, 0.0));
+          float c = hash(i + vec2(0.0, 1.0));
+          float d = hash(i + vec2(1.0, 1.0));
+          return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+        }
+        // fBm: summed octaves; freq doubles, amp halves. Frequencies stay integer multiples of the
+        // base so every octave shares the PERIOD wrap → the whole sum tiles.
+        float fbm(vec2 p) {
+          float v = 0.0, a = 0.5;
+          for (int i = 0; i < 5; i++) {
+            v += a * vnoise(p);
+            p *= 2.0; a *= 0.5;
+          }
+          return v;
+        }
+        void main() {
+          // sample space: x spans one PERIOD across u (tileable), y a softer vertical band
+          vec2 p = vec2(vUv.x * PERIOD, vUv.y * (PERIOD * 0.5));
+          // domain warp: offset the fBm lookup by another fBm → curdled filaments, not round blobs
+          vec2 warp = vec2(fbm(p + vec2(1.7, 9.2)), fbm(p + vec2(8.3, 2.8)));
+          float n = fbm(p + 2.2 * warp);
+          // a second, larger-scale field carves voids so the cloud has gaps (not a uniform haze)
+          float voids = fbm(p * 0.5 + 7.0);
+          float density = clamp(n * smoothstep(0.35, 0.75, voids), 0.0, 1.0);
+          // tint: blend the palette by the warp/noise so hue varies across the field
+          vec3 col = mix(uC0, uC1, clamp(warp.x, 0.0, 1.0));
+          col = mix(col, uC2, clamp(n * 0.8, 0.0, 1.0));
+          // sharpen the density curve so faint haze fades out and only the filaments carry colour
+          float a = pow(density, 1.8) * uIntensity;
+          gl_FragColor = vec4(col * a, a);
+        }
+      `,
+      depthTest: false,
+      depthWrite: false,
+    }),
+  );
+  scene.add(quad);
+
+  const prevTarget = gl.getRenderTarget();
+  gl.setRenderTarget(rt);
+  gl.render(scene, cam);
+  gl.setRenderTarget(prevTarget); // ALWAYS restore — a dangling RT binding corrupts the next composer.render()
+
+  quad.geometry.dispose();
+  (quad.material as THREE.Material).dispose();
+  return rt;
+}
+
+/**
+ * The nebula dome shell: an inner sphere (just inside the starfield) that samples the baked nebula RT
+ * equirectangularly. BackSide so it's seen from within; NormalBlending + per-fragment alpha so the
+ * cloud reads as a tinted veil over the sky gradient; toneMapped:false so its (sub-threshold) colour
+ * reaches bloom un-tonemapped, matching the other celestials.
+ */
+const NebulaShell: React.FC<{
+  radius: number;
+  center: [number, number, number];
+  palette: string[];
+  intensity: number;
+}> = ({ radius, center, palette, intensity }) => {
+  const { gl, invalidate } = useThree();
+  const [rt, setRt] = React.useState<THREE.WebGLRenderTarget | null>(null);
+
+  // Bake in an effect (NOT useMemo) — needs the live renderer, and useMemo must stay side-effect-free.
+  useEffect(() => {
+    const baked = bakeNebulaTexture(gl, palette, intensity);
+    setRt(baked);
+    // The on-demand gate won't repaint on its own after an async state set → force one frame so the
+    // freshly-baked shell actually shows (else it looks broken on a paused/idle frame).
+    invalidate();
+    return () => {
+      baked.dispose();
+    };
+    // palette is a stable per-variant array; re-bake only if the variant's palette identity changes.
+  }, [gl, palette, intensity, invalidate]);
+
+  const geometry = useMemo(() => new THREE.SphereGeometry(radius, 48, 32), [radius]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  if (!rt) {
+    return null;
+  }
+  return (
+    <mesh geometry={geometry} position={center} renderOrder={-2}>
+      <meshBasicMaterial
+        map={rt.texture}
+        side={THREE.BackSide}
+        transparent
+        blending={THREE.NormalBlending}
+        depthWrite={false}
+        depthTest={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+};
 
 /** Soft isotropic radial glow texture (nebula clouds / halos). */
 function makeRadialTexture(color: string): THREE.CanvasTexture {
@@ -800,25 +965,12 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
           );
         })}
 
-      {/* Nebula / atmosphere clouds — distinct-hue drifts ringed densely around the dome at the upper
-          edge of the visible band, so a colored cloud is always in view as the user orbits. Anchored so
-          one sits near the resting look direction (≈−0.79 rad). Normal blend so the hue reads against
-          the dome rather than just brightening it. */}
-      {Array.from({ length: NEBULA_RING_COUNT }).map((_, i) => {
-        const color = spec.nebula[i % spec.nebula.length];
-        const az = RESTING_LOOK_AZ + (i / NEBULA_RING_COUNT) * Math.PI * 2;
-        const pos = placeOnDome(az, 0.1 + (i % 3) * 0.04, domeDist, center);
-        return (
-          <GlowSprite
-            key={`neb-${i}`}
-            color={color}
-            position={pos}
-            scale={size * (2.8 + 0.4 * (i % 3))}
-            opacity={spec.nebulaOpacity}
-            blending={THREE.NormalBlending}
-          />
-        );
-      })}
+      {/* Nebula — one continuous procedural cloud field (domain-warped fBm baked to a texture) sampled
+          on an inner dome shell, replacing the old ring of flat radial-gradient sprite blobs. A single
+          structured, filamentary veil reads as real nebulosity from every orbit angle; baked once under
+          the gate, sampled per-frame as a trivial texture lookup. Kept dim (peak well under the bloom
+          threshold) so it stays an atmospheric wash, not a hot blob. */}
+      <NebulaShell radius={radius * 0.85} center={center} palette={spec.nebula} intensity={spec.nebulaOpacity} />
 
       {/* The two moons (or the Deadlands ember-sun) — lit spheres shaded from the shared Magnus sun. */}
       {spec.moons.map((m) => (
