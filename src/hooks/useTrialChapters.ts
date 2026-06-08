@@ -28,6 +28,12 @@ export interface UseTrialChaptersResult {
   runs: TrialChapterRun[];
   /** The run containing the active fight (by membership, else by time span), or null. */
   currentRun: TrialChapterRun | null;
+  /** Index of the current run within `runs`, or -1. */
+  runIndex: number;
+  /** Total number of runs in the report (trials / dungeons). */
+  runCount: number;
+  /** The next run after the current one (e.g. a second trial in the log), or null. */
+  nextRun: TrialChapterRun | null;
   /** All segments (bosses + trash) of the current run, in play order. */
   segments: TrialChapter[];
   /** Boss chapters of the current run — the primary skip targets. */
@@ -88,6 +94,8 @@ export function useTrialChapters(): UseTrialChaptersResult {
     const match = findRunForFight(runs, fightId, fightStartTime);
 
     const currentRun = match?.run ?? null;
+    const runIndex = currentRun ? runs.indexOf(currentRun) : -1;
+    const nextRun = runIndex >= 0 ? (runs[runIndex + 1] ?? null) : null;
     const segments = currentRun?.segments ?? [];
     const bossChapters = currentRun?.bossChapters ?? [];
     const currentSegmentIndex = match?.segmentIndex ?? -1;
@@ -122,6 +130,9 @@ export function useTrialChapters(): UseTrialChaptersResult {
     return {
       runs,
       currentRun,
+      runIndex,
+      runCount: runs.length,
+      nextRun,
       segments,
       bossChapters,
       currentSegment,

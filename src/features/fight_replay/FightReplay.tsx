@@ -16,12 +16,14 @@ import { detectMapFromCoordinates } from '@/utils/mapMarkersUtils';
 import { useFriendlyBuffEvents } from '../../hooks/events/useFriendlyBuffEvents';
 import { useHostileBuffEvents } from '../../hooks/events/useHostileBuffEvents';
 import { useMarkerStats } from '../../hooks/useMarkerStats';
+import { useReplayPrefs } from '../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
 
 import { ChapterRail } from './components/ChapterRail';
-import { FightReplay3D } from './components/FightReplay3D';
+import { FightReplay3D, type TrialReplayNav } from './components/FightReplay3D';
 import { MapMarkersModal } from './components/MapMarkersModal';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
+import { buildTrialTimeline } from './trial_chapters/trialTimeline';
 import type { TrialChapter } from './trial_chapters/types';
 import { useReplayNavigation } from './trial_chapters/useReplayNavigation';
 import { useReplayPrefetch } from './trial_chapters/useReplayPrefetch';
@@ -325,6 +327,47 @@ export const FightReplay: React.FC = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, [nextBoss, prevBoss, goToFight]);
 
+  // Continuous "play the whole trial" preferences (persisted). The shell owns these (it drives
+  // navigation); FightReplay3D renders the controls so they're reachable in fullscreen.
+  const { initialPrefs, persistPrefs } = useReplayPrefs();
+  const [continuousPlay, setContinuousPlay] = useState(initialPrefs.continuousPlay);
+  const [includeTrash, setIncludeTrash] = useState(initialPrefs.continuousIncludeTrash);
+  useEffect(() => {
+    persistPrefs({ continuousPlay, continuousIncludeTrash: includeTrash });
+  }, [persistPrefs, continuousPlay, includeTrash]);
+
+  const handleToggleContinuous = useCallback(() => setContinuousPlay((v) => !v), []);
+  const handleToggleIncludeTrash = useCallback(() => setIncludeTrash((v) => !v), []);
+
+  // Auto-advance / cross-segment scrub navigation. Replaces the history entry so the continuous
+  // flow doesn't pile up Back steps (manual chapter clicks still push a history entry).
+  const handleAdvanceToFight = useCallback(
+    (targetFightId: string) => {
+      if (targetFightId === fightId) return;
+      goToFight(targetFightId, { replace: true });
+    },
+    [goToFight, fightId],
+  );
+
+  const hasTrash = useMemo(
+    () => trialChapters.segments.some((s) => s.kind === 'trash'),
+    [trialChapters.segments],
+  );
+
+  // The continuous trial timeline (one gapless axis for the whole run), filtered by the trash
+  // toggle. Drives both the unified scrubber and continuous auto-advance.
+  const trialTimeline = useMemo(
+    () => buildTrialTimeline(trialChapters.segments, includeTrash),
+    [trialChapters.segments, includeTrash],
+  );
+
+  // Keep FightReplay3D mounted once the arena has rendered, so fullscreen and the continuous
+  // transition overlay survive fight switches (it shows its own loading state in place).
+  const hasRenderedArenaRef = useRef(false);
+  useEffect(() => {
+    if (lookup && fight) hasRenderedArenaRef.current = true;
+  }, [lookup, fight]);
+
   // Compute marker statistics
   const markerStats = useMarkerStats(markersState ?? undefined, fight || ({} as FightFragment));
 
@@ -349,9 +392,33 @@ export const FightReplay: React.FC = () => {
   // flight, or the current fight's positions are computing.
   const isArenaLoading = isInitialLoading || isSwitchingFight || isActorPositionsLoading;
 
-  // The arena swaps between loading / error / empty / the live 3D view, while the page
-  // shell (header + chapter rail) stays mounted across fight switches. ReplayStatePanel
-  // reserves the arena's height, so the layout doesn't reflow during transitions.
+  // Continuous trial-replay bundle handed to FightReplay3D — present only for a multi-segment
+  // run, so a single isolated fight behaves exactly as before. The label shown while entering a
+  // fight is the segment/fight name (the new fight resolves from report data before its positions).
+  const enteringLabel = trialChapters.currentSegment?.name ?? fight?.name ?? null;
+  const trialNav: TrialReplayNav | undefined =
+    trialChapters.currentRun && trialTimeline.entries.length > 1
+      ? {
+          timeline: trialTimeline,
+          currentFightId: fightId,
+          continuousEnabled: continuousPlay,
+          includeTrash,
+          hasTrash,
+          runName: trialChapters.currentRun.trialName,
+          runIndex: trialChapters.runIndex,
+          runCount: trialChapters.runCount,
+          isFightDataLoading: isArenaLoading,
+          enteringLabel,
+          onAdvanceToFight: handleAdvanceToFight,
+          onToggleContinuous: handleToggleContinuous,
+          onToggleIncludeTrash: handleToggleIncludeTrash,
+        }
+      : undefined;
+
+  // The arena swaps between loading / error / empty / the live 3D view, while the page shell
+  // (header + chapter rail) stays mounted across fight switches. Once the arena has rendered once,
+  // FightReplay3D stays mounted through transitions (it shows its own overlay) so fullscreen and
+  // continuous play are never interrupted. ReplayStatePanel reserves the arena's height.
   const renderArena = (): React.ReactNode => {
     if (actorPositionsError) {
       return (
@@ -381,7 +448,10 @@ export const FightReplay: React.FC = () => {
       );
     }
 
-    if (!lookup) {
+    // Before the very first successful render, keep the cohesive full panel (FightReplay3D not yet
+    // mounted). After that, FightReplay3D stays mounted across switches and handles its own
+    // loading/transition overlay — so we never unmount it (which would drop fullscreen).
+    if (!lookup && !hasRenderedArenaRef.current) {
       return isArenaLoading ? (
         <ReplayStatePanel
           kind="loading"
@@ -398,11 +468,8 @@ export const FightReplay: React.FC = () => {
       );
     }
 
-    // Keyed on the fight id so playback state (time, play/pause, A–B loop) resets cleanly
-    // when skipping to another boss/trash — the shell + rail above stay mounted.
     return (
       <FightReplay3D
-        key={fight.id}
         selectedFight={fight}
         allBuffEvents={allBuffEvents}
         showActorNames={true}
@@ -411,6 +478,7 @@ export const FightReplay: React.FC = () => {
         onRemoveMarker={handleRemoveMarker}
         showPlayerPaths={true}
         initialSelectedPlayerIds={[]} // Empty initially, user can select via HUD
+        trialNav={trialNav}
       />
     );
   };

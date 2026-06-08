@@ -13,16 +13,56 @@ import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
 import { TRANSPORT_IDLE_MS, TRANSPORT_RESERVED, HAIRLINE_H } from '../constants/replayDesign';
 import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
+import {
+  entryForFight,
+  type TrialTimeline as TrialTimelineModel,
+} from '../trial_chapters/trialTimeline';
 import { MapMarkersState } from '../types/mapMarkers';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
+import { ContinuousReplayBar } from './ContinuousReplayBar';
 import { PlaybackControls, PLAYBACK_SPEEDS } from './PlaybackControls';
+import { ReplayTransitionOverlay } from './ReplayTransitionOverlay';
+import type { TrialTimelineSeekTarget } from './TrialTimeline';
 
 // Frame-step increment for the ,/. keys. The raw position sample interval (~4.7ms at 240Hz) is
 // imperceptible as a step, so we nudge by a usable 100ms — one React-state sync tick — which lets
 // an analyst inch through a moment frame-by-frame. Distinct from the ±1s arrow seek (Item 5).
 const FRAME_STEP_MS = 100;
+
+/**
+ * Continuous trial-replay wiring. When present (a multi-segment run), the transport
+ * gains the trial-wide scrubber + "play whole trial" controls, and playback can
+ * auto-advance from one fight into the next without leaving (or exiting) the replay.
+ */
+export interface TrialReplayNav {
+  /** The current run's continuous timeline (already filtered by include-trash). */
+  timeline: TrialTimelineModel;
+  /** The fight currently loaded. */
+  currentFightId: string | undefined;
+  /** Whether auto-advance ("play whole trial") is on. */
+  continuousEnabled: boolean;
+  /** Whether continuous play walks the trash between bosses. */
+  includeTrash: boolean;
+  /** Whether the run has any trash (to show the trash toggle). */
+  hasTrash: boolean;
+  /** Display name of the current run. */
+  runName: string;
+  /** 0-based index of the current run, and the total run count (for multi-trial logs). */
+  runIndex: number;
+  runCount: number;
+  /** True while the loaded fight's data isn't ready yet (drives the transition overlay). */
+  isFightDataLoading: boolean;
+  /** Name of the fight being entered, for the transition overlay. */
+  enteringLabel: string | null;
+  /** Navigate the replay to another fight (auto-advance or cross-segment scrub). */
+  onAdvanceToFight: (fightId: string, options?: { localMs?: number }) => void;
+  /** Toggle auto-advance. */
+  onToggleContinuous: () => void;
+  /** Toggle whether trash is included in continuous play / the trial scrubber. */
+  onToggleIncludeTrash: () => void;
+}
 
 interface FightReplay3DProps {
   selectedFight: FightFragment;
@@ -35,6 +75,8 @@ interface FightReplay3DProps {
   showPlayerPaths?: boolean;
   /** Initial selected player IDs for path visualization */
   initialSelectedPlayerIds?: number[];
+  /** Continuous trial-replay navigation (omitted when there's no multi-segment run). */
+  trialNav?: TrialReplayNav;
 }
 
 export const FightReplay3D: React.FC<FightReplay3DProps> = ({
@@ -46,6 +88,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   onRemoveMarker,
   showPlayerPaths = false,
   initialSelectedPlayerIds = [],
+  trialNav,
 }) => {
   // Parse URL parameters for actor initialization
   const [searchParams] = useSearchParams();
@@ -176,6 +219,26 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     updateInterval: 500, // Update React state every 500ms
   });
 
+  // Latest continuous-nav props in a ref, so the playback-end / advance callbacks can read them
+  // without re-creating (which would rebuild the animation loop). Updated every render.
+  const trialNavRef = useRef(trialNav);
+  trialNavRef.current = trialNav;
+
+  // When playback reaches the end: in continuous mode, advance into the next timeline entry
+  // (the reset-on-fight-change effect resumes playback once its data is ready); otherwise stop.
+  const handlePlaybackEnd = useCallback(() => {
+    const nav = trialNavRef.current;
+    if (nav?.continuousEnabled) {
+      const match = entryForFight(nav.timeline, nav.currentFightId);
+      const nextEntry = match ? nav.timeline.entries[match.index + 1] : undefined;
+      if (nextEntry) {
+        nav.onAdvanceToFight(nextEntry.chapter.fightId);
+        return;
+      }
+    }
+    setIsPlaying(false);
+  }, []);
+
   // Playback animation for smooth time updates
   usePlaybackAnimation({
     timeRef: animationTimeRef.timeRef,
@@ -183,7 +246,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     playbackSpeed,
     duration: selectedFight.endTime - selectedFight.startTime,
     onTimeUpdate: setCurrentTime,
-    onEnd: () => setIsPlaying(false),
+    onEnd: handlePlaybackEnd,
     loopStart,
     loopEnd,
   });
@@ -217,6 +280,48 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       animationTimeRef.setTime(time);
     },
     [animationTimeRef],
+  );
+
+  // Continuous trial replay: when the loaded fight changes in place (auto-advance, a chapter
+  // jump, or a cross-segment scrub), the component stays mounted (so fullscreen persists and the
+  // scene rebuilds underneath) — but playback state must reset for the new fight. We also remember
+  // to resume playing once the new fight's data is ready when "play whole trial" is on.
+  const [pendingAutoplay, setPendingAutoplay] = useState(false);
+  const prevFightIdRef = useRef(selectedFight.id);
+  useEffect(() => {
+    if (prevFightIdRef.current === selectedFight.id) return;
+    prevFightIdRef.current = selectedFight.id;
+    setCurrentTime(0);
+    animationTimeRef.setTime(0);
+    setLoopStart(null);
+    setLoopEnd(null);
+    setIsPlaying(false);
+    setFollowingActor(null);
+    setSelectedPlayerIds(new Set());
+    setPendingAutoplay(trialNavRef.current?.continuousEnabled ?? false);
+  }, [selectedFight.id, animationTimeRef, setFollowingActor]);
+
+  // Resume playback once the freshly-loaded fight is ready (continuous auto-advance).
+  const isFightDataLoading = trialNav?.isFightDataLoading ?? false;
+  useEffect(() => {
+    if (pendingAutoplay && !isFightDataLoading) {
+      setIsPlaying(true);
+      setPendingAutoplay(false);
+    }
+  }, [pendingAutoplay, isFightDataLoading]);
+
+  // Seek from the trial scrubber: stay-in-fight seeks are instant; crossing into another segment
+  // advances to that fight (which loads + starts at its beginning).
+  const handleTrialSeek = useCallback(
+    (target: TrialTimelineSeekTarget) => {
+      if (target.sameFight) {
+        const dur = selectedFight.endTime - selectedFight.startTime;
+        seekTo(Math.max(0, Math.min(target.localMs, dur)));
+      } else {
+        trialNavRef.current?.onAdvanceToFight(target.fightId);
+      }
+    },
+    [seekTo, selectedFight.endTime, selectedFight.startTime],
   );
 
   const handleTimeChange = useCallback(
@@ -610,6 +715,19 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     toggleBar,
   ]);
 
+  // The fight that continuous play will flow into next (for the "up next" hint).
+  const trialNextUpLabel = React.useMemo(() => {
+    if (!trialNav) return null;
+    const match = entryForFight(trialNav.timeline, trialNav.currentFightId);
+    const next = match ? trialNav.timeline.entries[match.index + 1] : undefined;
+    return next?.chapter.name ?? null;
+  }, [trialNav]);
+
+  // The trial scrubber + "play whole trial" controls show for a multi-segment run, alongside the
+  // transport (so they're available in fullscreen), and hide with the bar / on the mobile teaser.
+  const showTrialBar =
+    !mobilePreview && barVisible && trialNav != null && trialNav.timeline.entries.length > 1;
+
   return (
     // Relative wrapper holds the canvas (Paper) and the playback bar as SIBLINGS so the bar can dock
     // as a bottom overlay over the canvas — the controls stay on screen without scrolling down to play,
@@ -684,6 +802,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           reservedInset={isImmersive && !barVisible ? HAIRLINE_H + 4 : TRANSPORT_RESERVED}
         />
       </Paper>
+
+      {/* Continuous-play transition — covers the brief reload + collapsed travel gap while the next
+          fight loads, keeping fullscreen intact (it renders inside this persistent container). */}
+      <ReplayTransitionOverlay
+        visible={trialNav?.isFightDataLoading ?? false}
+        label={trialNav?.enteringLabel ?? null}
+      />
+
       {/* Playback controls — docked as a translucent overlay at the bottom of the canvas. The outer
           Box is a positioning frame only (pointer-events:none) so its transparent area never steals
           OrbitControls drags / actor clicks from the canvas beneath; PlaybackControls re-enables
@@ -700,6 +826,41 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             '& > *': { pointerEvents: 'auto' },
           }}
         >
+          {showTrialBar && trialNav && (
+            <Box
+              sx={(theme) => ({
+                mx: { xs: 1, sm: 2 },
+                mb: 0.5,
+                px: { xs: 1, sm: 1.5 },
+                py: { xs: 0.75, sm: 1 },
+                borderRadius: 2,
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(13, 18, 30, 0.72)'
+                    : 'rgba(255, 255, 255, 0.78)',
+                border: `1px solid ${theme.palette.divider}`,
+              })}
+            >
+              <ContinuousReplayBar
+                timeline={trialNav.timeline}
+                currentFightId={trialNav.currentFightId}
+                currentLocalMs={currentTime}
+                onSeek={handleTrialSeek}
+                continuousEnabled={trialNav.continuousEnabled}
+                onToggleContinuous={trialNav.onToggleContinuous}
+                includeTrash={trialNav.includeTrash}
+                onToggleIncludeTrash={trialNav.onToggleIncludeTrash}
+                hasTrash={trialNav.hasTrash}
+                runName={trialNav.runName}
+                runIndex={trialNav.runIndex}
+                runCount={trialNav.runCount}
+                nextUpLabel={trialNextUpLabel}
+                compact={isMobile}
+              />
+            </Box>
+          )}
           <PlaybackControls
             currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}

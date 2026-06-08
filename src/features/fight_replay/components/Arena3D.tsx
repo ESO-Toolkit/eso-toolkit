@@ -696,13 +696,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     return { initialCameraTarget: target, initialCameraPosition: position };
   }, [lookup, fight, arenaDimensions.centerX, arenaDimensions.centerZ, cameraSettings]);
 
-  // Don't render until data is loaded
+  // Don't render until data is loaded. Fill the fullscreen container's height (so the backdrop
+  // doesn't collapse to the windowed clamp during an in-fullscreen fight transition).
   if (isActorPositionsLoading || !lookup) {
     return (
       <div
         style={{
           width: '100%',
-          height: ARENA_HEIGHT,
+          height: isFullscreen ? '100%' : ARENA_HEIGHT,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
