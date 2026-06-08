@@ -580,6 +580,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'Ruins of Mazzatun',
     type: 'dungeon',
     bosses: [
+      { name: 'Zatzu the Spine-Breaker', trashPacksBefore: 1 },
       { name: 'Mighty Chudan', trashPacksBefore: 1 },
       { name: 'Xal-Nur the Slaver', trashPacksBefore: 1 },
       { name: 'Tree-Minder Na-Kesh', trashPacksBefore: 1 },
@@ -590,7 +591,9 @@ export const TRIALS: TrialConfig[] = [
     name: 'Cradle of Shadows',
     type: 'dungeon',
     bosses: [
+      { name: 'Sithera', trashPacksBefore: 1 },
       { name: 'Khephidaen', trashPacksBefore: 1 },
+      { name: 'The Votary of Velidreth', trashPacksBefore: 1 },
       { name: 'Dranos Velador', trashPacksBefore: 1 },
       { name: 'Velidreth', trashPacksBefore: 1 },
     ],
@@ -600,8 +603,11 @@ export const TRIALS: TrialConfig[] = [
     name: 'Bloodroot Forge',
     type: 'dungeon',
     bosses: [
+      { name: 'Mathgamain', trashPacksBefore: 1 },
       { name: 'Caillaoife', trashPacksBefore: 1 },
+      { name: 'Stoneheart', trashPacksBefore: 1 },
       { name: 'Galchobhar', trashPacksBefore: 1 },
+      { name: 'Gherig Bullblood', trashPacksBefore: 1 },
       { name: 'Earthgore Amalgam', trashPacksBefore: 1 },
     ],
   },
@@ -610,8 +616,10 @@ export const TRIALS: TrialConfig[] = [
     name: 'Falkreath Hold',
     type: 'dungeon',
     bosses: [
+      { name: 'Morrigh Bullblood', trashPacksBefore: 1 },
       { name: 'Siege Mammoth', trashPacksBefore: 1 },
       { name: 'Cernunnon', trashPacksBefore: 1 },
+      { name: 'Deathlord Bjarfrud Skjoralmor', trashPacksBefore: 1 },
       { name: 'Domihaus the Bloody-Horned', trashPacksBefore: 1 },
     ],
   },
@@ -621,9 +629,10 @@ export const TRIALS: TrialConfig[] = [
     type: 'dungeon',
     bosses: [
       { name: 'Lizabet Charnis', trashPacksBefore: 1 },
-      { name: 'Cadaverous Menagerie', trashPacksBefore: 1 },
+      { name: 'The Cadaverous Menagerie', trashPacksBefore: 1 },
       { name: 'Caluurion', trashPacksBefore: 1 },
-      { name: 'Ulfnor & Orryn the Black', trashPacksBefore: 1 },
+      { name: 'Ulfnor and Sabina Cedus', trashPacksBefore: 1 },
+      { name: 'Orryn the Black', trashPacksBefore: 1 },
       { name: 'Thurvokun', trashPacksBefore: 1 },
     ],
   },
@@ -632,7 +641,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'Scalecaller Peak',
     type: 'dungeon',
     bosses: [
-      { name: 'Orzun the Foul-Smelling & Rinaerus the Rancid', trashPacksBefore: 1 },
+      { name: 'Rinaerus the Rancid & Orzun the Foul-Smelling', trashPacksBefore: 1 },
       { name: 'Doylemish Ironheart', trashPacksBefore: 1 },
       { name: 'Matriarch Aldis', trashPacksBefore: 1 },
       { name: 'Plague Concocter Mortieu', trashPacksBefore: 1 },
@@ -647,7 +656,7 @@ export const TRIALS: TrialConfig[] = [
       { name: 'Jailer Melitus', trashPacksBefore: 1 },
       { name: 'Hedge Maze Guardian', trashPacksBefore: 1 },
       { name: 'Mylenne Moon-Caller', trashPacksBefore: 1 },
-      { name: 'Archivist Ernade', trashPacksBefore: 1 },
+      { name: 'Archivist Ernarde', trashPacksBefore: 1 },
       { name: 'Vykosa the Ascendant', trashPacksBefore: 1 },
     ],
   },
@@ -656,7 +665,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'March of Sacrifices',
     type: 'dungeon',
     bosses: [
-      { name: 'The Wyresses', trashPacksBefore: 1 },
+      { name: 'Wyrd Sisters', trashPacksBefore: 1 },
       { name: 'Aghaedh of the Solstice', trashPacksBefore: 1 },
       { name: 'Dagrund the Bulky', trashPacksBefore: 1 },
       { name: 'Tarcyr', trashPacksBefore: 1 },
@@ -668,6 +677,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'Frostvault',
     type: 'dungeon',
     bosses: [
+      { name: 'Icestalker', trashPacksBefore: 1 },
       { name: 'Warlord Tzogvin', trashPacksBefore: 1 },
       { name: 'Vault Protector', trashPacksBefore: 1 },
       { name: 'Rizzuk Bonechill', trashPacksBefore: 1 },
@@ -691,6 +701,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'Moongrave Fane',
     type: 'dungeon',
     bosses: [
+      { name: 'The Risen Ruins', trashPacksBefore: 1 },
       { name: "Dro'zakar", trashPacksBefore: 1 },
       { name: 'Kujo Kethba', trashPacksBefore: 1 },
       { name: 'Nisaazda', trashPacksBefore: 1 },
@@ -703,6 +714,7 @@ export const TRIALS: TrialConfig[] = [
     type: 'dungeon',
     bosses: [
       { name: 'Selene', trashPacksBefore: 1 },
+      { name: 'Maarselok (in flight)', trashPacksBefore: 1 },
       { name: 'Azureblight Cancroid', trashPacksBefore: 1 },
       { name: 'Maarselok', trashPacksBefore: 1 },
     ],
@@ -726,6 +738,7 @@ export const TRIALS: TrialConfig[] = [
     bosses: [
       { name: 'Hakgrym the Howler', trashPacksBefore: 1 },
       { name: 'Keeper of the Kiln', trashPacksBefore: 1 },
+      { name: 'The Eternal Aegis', trashPacksBefore: 1 },
       { name: 'Ondagore the Mad', trashPacksBefore: 1 },
       { name: 'Kjalnar Tombskald', trashPacksBefore: 1 },
     ],
@@ -769,6 +782,7 @@ export const TRIALS: TrialConfig[] = [
     bosses: [
       { name: 'Oxblood the Depraved', trashPacksBefore: 1 },
       { name: 'Taskmaster Viccia', trashPacksBefore: 1 },
+      { name: 'Molten Guardian', trashPacksBefore: 1 },
       { name: 'Baron Zaudrus', trashPacksBefore: 1 },
     ],
   },
@@ -778,7 +792,7 @@ export const TRIALS: TrialConfig[] = [
     type: 'dungeon',
     bosses: [
       { name: 'Rogerain the Sly', trashPacksBefore: 1 },
-      { name: 'Eliam Merric', trashPacksBefore: 1 },
+      { name: 'The Artifact Bearers', trashPacksBefore: 1 },
       { name: 'Prior Thierric Sarazen', trashPacksBefore: 1 },
     ],
   },
@@ -847,7 +861,7 @@ export const TRIALS: TrialConfig[] = [
     name: "Scrivener's Hall",
     type: 'dungeon',
     bosses: [
-      { name: 'Ritemaster Naqri', trashPacksBefore: 1 },
+      { name: 'Riftmaster Naqri', trashPacksBefore: 1 },
       { name: 'Ozezan the Inferno', trashPacksBefore: 1 },
       { name: 'Valinna', trashPacksBefore: 1 },
     ],
