@@ -1,10 +1,12 @@
 /**
  * useTrialChapters
  *
- * Resolves the trial's boss chapters for the currently-loaded fight so the
- * fight-replay chapter rail can let a viewer skip between bosses without leaving
- * the replay. Single source of truth for cross-fight navigation: it builds the
- * chapter list from the report and locates the active fight within it.
+ * Resolves the trial's navigable segments (boss encounters + trash) for the
+ * currently-loaded fight so the fight-replay chapter rail can let a viewer move
+ * through a whole trial run without leaving the replay. Single source of truth
+ * for cross-fight navigation: it builds the segment list from the report and
+ * locates the active fight within it, exposing both boss-level skips (the
+ * primary "jump to boss" targets) and fine segment-level stepping (incl. trash).
  *
  * @module hooks/useTrialChapters
  */
@@ -22,56 +24,116 @@ import { useReportData } from './useReportData';
 import { useReportFightParams } from './useReportFightParams';
 
 export interface UseTrialChaptersResult {
-  /** Every trial run in the report (each with its ordered boss chapters). */
+  /** Every trial run in the report (each with its ordered segments + boss view). */
   runs: TrialChapterRun[];
   /** The run containing the active fight (by membership, else by time span), or null. */
   currentRun: TrialChapterRun | null;
-  /** Boss chapters for the current run (empty when none resolved). */
-  chapters: TrialChapter[];
-  /** Index of the active fight within `chapters`, or -1 (e.g. the active fight is trash). */
-  currentIndex: number;
-  /** The active chapter, or null when the active fight isn't a boss chapter. */
-  currentChapter: TrialChapter | null;
-  /** The next boss chapter to skip to, or null at the end of the run. */
-  nextChapter: TrialChapter | null;
-  /** The previous boss chapter to skip to, or null at the start of the run. */
-  prevChapter: TrialChapter | null;
+  /** All segments (bosses + trash) of the current run, in play order. */
+  segments: TrialChapter[];
+  /** Boss chapters of the current run — the primary skip targets. */
+  bossChapters: TrialChapter[];
+  /** The active segment (boss or trash) for the loaded fight, or null. */
+  currentSegment: TrialChapter | null;
+  /** Index of the active fight within `segments`, or -1. */
+  currentSegmentIndex: number;
+  /** Index of the active fight within `bossChapters`, or -1 (active fight is trash / not found). */
+  currentBossIndex: number;
+  /** True when the active fight is a boss encounter. */
+  isOnBoss: boolean;
+  /** True when the active fight is trash within a run. */
+  isOnTrash: boolean;
+  /** The next boss to skip to (relative to the active fight, incl. from trash), or null. */
+  nextBoss: TrialChapter | null;
+  /** The previous boss to skip to (relative to the active fight, incl. from trash), or null. */
+  prevBoss: TrialChapter | null;
+  /** The next segment (boss or trash) for fine stepping, or null at the run's end. */
+  nextSegment: TrialChapter | null;
+  /** The previous segment (boss or trash) for fine stepping, or null at the run's start. */
+  prevSegment: TrialChapter | null;
   /** True while the underlying report data is still loading. */
   isLoading: boolean;
 }
 
+/** Find the first boss whose start time is strictly after `time`. */
+function firstBossAfter(bosses: TrialChapter[], time: number): TrialChapter | null {
+  for (const boss of bosses) {
+    if (boss.startTime > time) return boss;
+  }
+  return null;
+}
+
+/** Find the last boss whose start time is strictly before `time`. */
+function lastBossBefore(bosses: TrialChapter[], time: number): TrialChapter | null {
+  for (let i = bosses.length - 1; i >= 0; i--) {
+    if (bosses[i].startTime < time) return bosses[i];
+  }
+  return null;
+}
+
 /**
- * Hook returning the trial chapter list plus the active fight's position within
- * it. Pure derivation over report data — no dispatch — so it's safe to call
- * alongside the replay's heavier worker-task hooks.
+ * Hook returning the trial's navigable segments plus the active fight's position
+ * within them. Pure derivation over report data (no dispatch), so it's safe to
+ * call alongside the replay's heavier worker-task hooks.
  */
 export function useTrialChapters(): UseTrialChaptersResult {
   const { reportData, isReportLoading } = useReportData();
   const { fightId } = useReportFightParams();
   const { fight } = useCurrentFight();
 
+  // `fight` can be a fresh object each report render; depend on the stable id + time.
+  const fightStartTime = fight?.startTime ?? null;
+
   return useMemo(() => {
     const runs = buildTrialChapters(reportData?.fights ?? null, reportData);
-    const match = findRunForFight(runs, fightId, fight?.startTime ?? null);
+    const match = findRunForFight(runs, fightId, fightStartTime);
 
     const currentRun = match?.run ?? null;
-    const chapters = currentRun?.chapters ?? [];
-    const currentIndex = match?.index ?? -1;
+    const segments = currentRun?.segments ?? [];
+    const bossChapters = currentRun?.bossChapters ?? [];
+    const currentSegmentIndex = match?.segmentIndex ?? -1;
+    const currentBossIndex = match?.bossIndex ?? -1;
 
-    const currentChapter = currentIndex >= 0 ? (chapters[currentIndex] ?? null) : null;
-    const nextChapter =
-      currentIndex >= 0 && currentIndex < chapters.length - 1 ? chapters[currentIndex + 1] : null;
-    const prevChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
+    const currentSegment =
+      currentSegmentIndex >= 0 ? (segments[currentSegmentIndex] ?? null) : null;
+    const isOnBoss = currentSegment?.kind === 'boss';
+    const isOnTrash = currentSegment?.kind === 'trash';
+
+    // Boss skips: direct neighbours when on a boss; the surrounding bosses by time
+    // when on trash (or when the active fight isn't a known segment but the run is
+    // resolved by time span).
+    let nextBoss: TrialChapter | null = null;
+    let prevBoss: TrialChapter | null = null;
+    if (isOnBoss && currentBossIndex >= 0) {
+      nextBoss = bossChapters[currentBossIndex + 1] ?? null;
+      prevBoss = bossChapters[currentBossIndex - 1] ?? null;
+    } else {
+      // Anchor by the active fight's start time (or the run start when unknown).
+      const anchor = currentSegment?.startTime ?? fightStartTime ?? segments[0]?.startTime ?? 0;
+      nextBoss = firstBossAfter(bossChapters, anchor);
+      prevBoss = lastBossBefore(bossChapters, anchor);
+    }
+
+    const nextSegment =
+      currentSegmentIndex >= 0 && currentSegmentIndex < segments.length - 1
+        ? segments[currentSegmentIndex + 1]
+        : null;
+    const prevSegment = currentSegmentIndex > 0 ? segments[currentSegmentIndex - 1] : null;
 
     return {
       runs,
       currentRun,
-      chapters,
-      currentIndex,
-      currentChapter,
-      nextChapter,
-      prevChapter,
+      segments,
+      bossChapters,
+      currentSegment,
+      currentSegmentIndex,
+      currentBossIndex,
+      isOnBoss,
+      isOnTrash,
+      nextBoss,
+      prevBoss,
+      nextSegment,
+      prevSegment,
       isLoading: isReportLoading,
     };
-  }, [reportData, fightId, fight?.startTime, isReportLoading]);
+  }, [reportData, fightId, fightStartTime, isReportLoading]);
 }

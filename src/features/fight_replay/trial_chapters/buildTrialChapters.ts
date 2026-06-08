@@ -1,13 +1,17 @@
 /**
  * Build the trial chapter list consumed by the fight-replay chapter rail.
  *
- * Takes a report's fights and groups the boss encounters into ordered trial
- * runs, reusing the shared trial-classification helpers so the boss-name tables
- * and kill/wipe heuristics stay in one place (see {@link module:utils/trialClassification}).
+ * Groups a report's fights into ordered trial runs of navigable segments — boss
+ * encounters plus the trash between them — reusing the shared trial-classification
+ * helpers so the boss-name tables and kill/wipe heuristics stay in one place
+ * (see {@link module:utils/trialClassification}).
  *
- * Trash fights are intentionally excluded: chapters are the boss beats a viewer
- * skips between. A new run is started whenever the resolved trial name changes,
- * mirroring the report fight-list grouping.
+ * Bosses are the primary skip targets; trash segments are included so a viewer
+ * can follow the run-up into a boss and see the map transitions along the way.
+ * A new run starts whenever the resolved trial name changes (mirroring the
+ * report fight-list grouping). Trash that precedes a run's first boss is folded
+ * into that run as its lead-in; trash with no following boss becomes a
+ * standalone trash run so it stays navigable.
  *
  * @module features/fight_replay/trial_chapters/buildTrialChapters
  */
@@ -19,14 +23,58 @@ import {
   getTrialNameFromBoss,
 } from '../../../utils/trialClassification';
 
-import type { TrialChapterRun } from './types';
+import type { TrialChapter, TrialChapterRun, TrialSegmentKind } from './types';
+
+/** Result of locating a fight within the built runs. */
+export interface RunMatch {
+  /** The run that owns the fight. */
+  run: TrialChapterRun;
+  /** Index of the fight within `run.segments`, or -1 when matched only by time span. */
+  segmentIndex: number;
+  /** Index of the fight within `run.bossChapters`, or -1 when the fight is trash. */
+  bossIndex: number;
+}
+
+/** Append a fight to a run as a segment, keeping `segments` and `bossChapters` in sync. */
+function pushSegment(
+  run: TrialChapterRun,
+  fight: FightFragment,
+  kind: TrialSegmentKind,
+  trialName: string,
+  attempt: number,
+): void {
+  const outcome = getFightOutcome(fight);
+  const chapter: TrialChapter = {
+    fightId: String(fight.id),
+    fightNumericId: fight.id,
+    name: fight.name || (kind === 'boss' ? 'Unknown Boss' : 'Trash'),
+    kind,
+    trialName,
+    difficulty: fight.difficulty ?? null,
+    difficultyLabel:
+      kind === 'boss' ? getDifficultyLabel(fight.difficulty ?? null, trialName) : null,
+    isKill: outcome.isKill,
+    isWipe: outcome.isWipe,
+    bossPercentage: outcome.bossPercentage,
+    startTime: fight.startTime,
+    endTime: fight.endTime,
+    durationMs: fight.endTime - fight.startTime,
+    index: run.segments.length,
+    bossIndex: kind === 'boss' ? run.bossChapters.length : -1,
+    attempt,
+  };
+  run.segments.push(chapter);
+  if (kind === 'boss') {
+    run.bossChapters.push(chapter);
+  }
+}
 
 /**
- * Group a report's boss fights into ordered trial runs of chapters.
+ * Group a report's fights into ordered trial runs of segments (bosses + trash).
  *
- * @param fights - All fights from the report (boss + trash). Trash is filtered out.
+ * @param fights - All fights from the report. Null entries and zero-length fights are skipped.
  * @param reportData - The report (used for zone-name fallback in trial resolution).
- * @returns Ordered runs, each with its boss chapters in start-time order.
+ * @returns Ordered runs, each with its segments (and a boss-only view) in start-time order.
  */
 export function buildTrialChapters(
   fights: ReadonlyArray<FightFragment | null> | null | undefined,
@@ -36,12 +84,11 @@ export function buildTrialChapters(
     return [];
   }
 
-  // Boss fights only (difficulty != null), valid time window, in start order.
-  const bossFights = fights
+  // Every renderable fight (boss + trash), with a valid time window, in play order.
+  const validFights = fights
     .filter(
       (fight): fight is FightFragment =>
         fight != null &&
-        fight.difficulty != null &&
         fight.startTime != null &&
         fight.endTime != null &&
         fight.endTime > fight.startTime,
@@ -49,82 +96,98 @@ export function buildTrialChapters(
     .sort((a, b) => a.startTime - b.startTime);
 
   const runs: TrialChapterRun[] = [];
-  let runNumber = 1;
+  let runNumber = 0;
   let runTrialName: string | null = null;
   let currentRun: TrialChapterRun | null = null;
-  // Per-run count of each boss name, so repeated pulls get an attempt number.
   let attemptsByBoss = new Map<string, number>();
+  // Trash seen before the current run's first boss — folded in as the lead-in once
+  // the boss (and thus the trial name) is known.
+  let leadingTrash: FightFragment[] = [];
 
-  for (const boss of bossFights) {
-    const bossName = boss.name || 'Unknown Boss';
-    const trialName = getTrialNameFromBoss(bossName, reportData);
+  for (const fight of validFights) {
+    const isBoss = fight.difficulty != null;
 
-    // Start a new run only when the trial actually changes.
-    if (runTrialName !== null && runTrialName !== trialName) {
-      runNumber += 1;
-      currentRun = null;
-      attemptsByBoss = new Map<string, number>();
+    if (isBoss) {
+      const bossName = fight.name || 'Unknown Boss';
+      const trialName = getTrialNameFromBoss(bossName, reportData);
+
+      // Start a new run when there is no run yet, or the trial actually changes.
+      if (currentRun === null || runTrialName !== trialName) {
+        runNumber += 1;
+        runTrialName = trialName;
+        attemptsByBoss = new Map<string, number>();
+        currentRun = {
+          id: `${trialName}-run-${runNumber}`,
+          trialName,
+          segments: [],
+          bossChapters: [],
+        };
+        runs.push(currentRun);
+        // The buffered trash was this boss's run-up — attach it as the lead-in.
+        for (const trash of leadingTrash) {
+          pushSegment(currentRun, trash, 'trash', trialName, 1);
+        }
+        leadingTrash = [];
+      }
+
+      const attempt = (attemptsByBoss.get(bossName) ?? 0) + 1;
+      attemptsByBoss.set(bossName, attempt);
+      pushSegment(currentRun, fight, 'boss', trialName, attempt);
+    } else if (currentRun === null) {
+      // Trash before any boss — buffer it until the next boss reveals the trial.
+      leadingTrash.push(fight);
+    } else {
+      // Trash within / after a run — belongs to the currently-active run.
+      pushSegment(currentRun, fight, 'trash', currentRun.trialName, 1);
     }
-    runTrialName = trialName;
+  }
 
-    const runId = `${trialName}-run-${runNumber}`;
-    if (!currentRun || currentRun.id !== runId) {
-      currentRun = { id: runId, trialName, chapters: [] };
-      runs.push(currentRun);
-    }
-
-    const attempt = (attemptsByBoss.get(bossName) ?? 0) + 1;
-    attemptsByBoss.set(bossName, attempt);
-
-    const outcome = getFightOutcome(boss);
-
-    currentRun.chapters.push({
-      fightId: String(boss.id),
-      fightNumericId: boss.id,
-      name: bossName,
+  // Trailing trash with no following boss (e.g. a trash-only log) — keep it
+  // navigable as a standalone run so the replay still has a chapter context.
+  if (leadingTrash.length > 0) {
+    runNumber += 1;
+    const trialName = reportData?.zone?.name || 'Trash';
+    const run: TrialChapterRun = {
+      id: `Trash-run-${runNumber}`,
       trialName,
-      difficulty: boss.difficulty ?? null,
-      difficultyLabel: getDifficultyLabel(boss.difficulty ?? null, trialName),
-      isKill: outcome.isKill,
-      isWipe: outcome.isWipe,
-      bossPercentage: outcome.bossPercentage,
-      startTime: boss.startTime,
-      endTime: boss.endTime,
-      durationMs: boss.endTime - boss.startTime,
-      index: currentRun.chapters.length,
-      attempt,
-    });
+      segments: [],
+      bossChapters: [],
+    };
+    for (const trash of leadingTrash) {
+      pushSegment(run, trash, 'trash', trialName, 1);
+    }
+    runs.push(run);
   }
 
   return runs;
 }
 
 /**
- * Find the run that owns a given fight: first by chapter membership (the fight is
- * a boss in the run), then by time span (e.g. the current fight is trash that
- * falls within a run's first→last boss window). Returns null when no run matches.
+ * Locate the run that owns a fight: first by segment membership (the exact fight
+ * is in the run), then by time span (e.g. a fight that wasn't grouped but falls
+ * within a run's window). Returns null when nothing matches.
  */
 export function findRunForFight(
   runs: TrialChapterRun[],
   fightId: string | undefined,
   fightStartTime: number | null | undefined,
-): { run: TrialChapterRun; index: number } | null {
+): RunMatch | null {
   if (fightId !== undefined) {
     for (const run of runs) {
-      const index = run.chapters.findIndex((chapter) => chapter.fightId === fightId);
-      if (index !== -1) {
-        return { run, index };
+      const segmentIndex = run.segments.findIndex((segment) => segment.fightId === fightId);
+      if (segmentIndex !== -1) {
+        return { run, segmentIndex, bossIndex: run.segments[segmentIndex].bossIndex };
       }
     }
   }
 
-  // The active fight isn't a boss chapter (e.g. trash) — locate it by time span.
+  // The active fight isn't a known segment — locate it by time span.
   if (fightStartTime != null) {
     for (const run of runs) {
-      const first = run.chapters[0];
-      const last = run.chapters[run.chapters.length - 1];
+      const first = run.segments[0];
+      const last = run.segments[run.segments.length - 1];
       if (first && last && fightStartTime >= first.startTime && fightStartTime <= last.endTime) {
-        return { run, index: -1 };
+        return { run, segmentIndex: -1, bossIndex: -1 };
       }
     }
   }
