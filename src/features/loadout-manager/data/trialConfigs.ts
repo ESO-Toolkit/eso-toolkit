@@ -232,11 +232,13 @@ export const TRIALS: TrialConfig[] = [
   },
 
   // ─── Group Dungeons ──────────────────────────────────────────────
-  // Main bosses listed in encounter order (final boss last). Boss names and
-  // ordering verified June 2026 against UESP / ESO-Hub / dungeon guides.
-  // Optional/secret side-bosses are omitted; trash counts are approximate
-  // planning aids (one pack before each boss), mirroring the trial configs.
-  // IDs follow common community/Wizard's Wardrobe acronyms for import parity.
+  // Every boss counted by the dungeon's completion (Conqueror) achievement,
+  // listed in encounter order (final boss last) — including opening and
+  // mid-dungeon mini-bosses. Names/order verified June 2026 against UESP
+  // achievement pages and dungeon guides. Optional/secret side-bosses are
+  // omitted; trash counts are approximate planning aids (one pack before each
+  // boss). IDs follow common community / Wizard's Wardrobe acronyms for import
+  // parity (The Dread Cellar uses DRC to avoid clashing with Darkshade DC1/DC2).
 
   // Base-game dungeons (I/II pairs)
   {
@@ -244,7 +246,10 @@ export const TRIALS: TrialConfig[] = [
     name: 'Fungal Grotto I',
     type: 'dungeon',
     bosses: [
+      { name: 'Tazkad the Packmaster', trashPacksBefore: 1 },
       { name: 'War Chief Ozozai', trashPacksBefore: 1 },
+      { name: 'Broodbirther', trashPacksBefore: 1 },
+      { name: 'Clatterclaw', trashPacksBefore: 1 },
       { name: "Kra'gh the Dreugh King", trashPacksBefore: 1 },
     ],
   },
@@ -253,7 +258,10 @@ export const TRIALS: TrialConfig[] = [
     name: 'Fungal Grotto II',
     type: 'dungeon',
     bosses: [
+      { name: "Mephala's Fang", trashPacksBefore: 1 },
       { name: 'Gamyne Bandu', trashPacksBefore: 1 },
+      { name: 'Ciirenas the Shepherd', trashPacksBefore: 1 },
+      { name: 'Reggr Dark-Dawn', trashPacksBefore: 1 },
       { name: 'Spawn of Mephala', trashPacksBefore: 1 },
       { name: 'Vila Theran', trashPacksBefore: 1 },
     ],
@@ -263,8 +271,10 @@ export const TRIALS: TrialConfig[] = [
     name: 'Spindleclutch I',
     type: 'dungeon',
     bosses: [
+      { name: 'Spindlekin', trashPacksBefore: 1 },
       { name: 'Swarm Mother', trashPacksBefore: 1 },
       { name: 'Cerise the Widow-Maker', trashPacksBefore: 1 },
+      { name: 'Big Rabbu', trashPacksBefore: 1 },
       { name: 'The Whisperer', trashPacksBefore: 1 },
     ],
   },
@@ -274,8 +284,9 @@ export const TRIALS: TrialConfig[] = [
     type: 'dungeon',
     bosses: [
       { name: 'Mad Mortine', trashPacksBefore: 1 },
-      { name: 'Bloodspawn', trashPacksBefore: 1 },
+      { name: 'Blood Spawn', trashPacksBefore: 1 },
       { name: 'Praxin Douare', trashPacksBefore: 1 },
+      { name: 'Flesh Atronach Trio', trashPacksBefore: 1 },
       { name: 'Urvan Veleth', trashPacksBefore: 1 },
       { name: 'Vorenor Winterbourne', trashPacksBefore: 1 },
     ],
@@ -285,7 +296,10 @@ export const TRIALS: TrialConfig[] = [
     name: 'The Banished Cells I',
     type: 'dungeon',
     bosses: [
+      { name: 'Cell Haunter', trashPacksBefore: 1 },
       { name: 'Shadowrend', trashPacksBefore: 1 },
+      { name: 'Angata the Clannfear Handler', trashPacksBefore: 1 },
+      { name: 'Skeletal Destroyer', trashPacksBefore: 1 },
       { name: 'High Kinlord Rilis', trashPacksBefore: 1 },
     ],
   },
@@ -298,6 +312,7 @@ export const TRIALS: TrialConfig[] = [
       { name: 'Maw of the Infernal', trashPacksBefore: 1 },
       { name: 'Keeper Voranil', trashPacksBefore: 1 },
       { name: 'Keeper Imiril', trashPacksBefore: 1 },
+      { name: 'Sister Sihna & Sister Vera', trashPacksBefore: 1 },
       { name: 'High Kinlord Rilis', trashPacksBefore: 1 },
     ],
   },
@@ -316,8 +331,11 @@ export const TRIALS: TrialConfig[] = [
     name: 'Darkshade Caverns II',
     type: 'dungeon',
     bosses: [
+      { name: 'The Fallen Foreman', trashPacksBefore: 1 },
       { name: 'Transmuted Hive Lord', trashPacksBefore: 1 },
+      { name: 'Transmuted Alit', trashPacksBefore: 1 },
       { name: 'Grobull the Transmuted', trashPacksBefore: 1 },
+      { name: 'Engine Garrison', trashPacksBefore: 1 },
       { name: 'The Engine Guardian', trashPacksBefore: 1 },
     ],
   },
@@ -327,7 +345,9 @@ export const TRIALS: TrialConfig[] = [
     type: 'dungeon',
     bosses: [
       { name: 'Akash gra-Mal', trashPacksBefore: 1 },
+      { name: 'Ancient Spriggan', trashPacksBefore: 1 },
       { name: 'Chokethorn', trashPacksBefore: 1 },
+      { name: 'Leafseether', trashPacksBefore: 1 },
       { name: 'Nenesh gro-Mal', trashPacksBefore: 1 },
       { name: 'Canonreeve Oraneth', trashPacksBefore: 1 },
     ],
@@ -337,8 +357,11 @@ export const TRIALS: TrialConfig[] = [
     name: 'Elden Hollow II',
     type: 'dungeon',
     bosses: [
+      { name: 'Dubroze the Infestor', trashPacksBefore: 1 },
       { name: 'Dark Root', trashPacksBefore: 1 },
+      { name: 'Azara the Frightener', trashPacksBefore: 1 },
       { name: 'Murklight', trashPacksBefore: 1 },
+      { name: 'Shadow Guard', trashPacksBefore: 1 },
       { name: 'Bogdan the Nightflame', trashPacksBefore: 1 },
     ],
   },
@@ -349,6 +372,7 @@ export const TRIALS: TrialConfig[] = [
     bosses: [
       { name: 'Slimecraw', trashPacksBefore: 1 },
       { name: 'Investigator Garron', trashPacksBefore: 1 },
+      { name: 'The Rat Whisperer', trashPacksBefore: 1 },
       { name: 'Uulgarg the Hungry', trashPacksBefore: 1 },
       { name: 'Varaine Pellingare', trashPacksBefore: 1 },
       { name: 'Allene Pellingare', trashPacksBefore: 1 },
@@ -361,7 +385,9 @@ export const TRIALS: TrialConfig[] = [
     bosses: [
       { name: 'Malubeth the Scourger', trashPacksBefore: 1 },
       { name: 'Uulgarg the Risen', trashPacksBefore: 1 },
+      { name: 'Skull Reaper', trashPacksBefore: 1 },
       { name: 'Garron the Returned', trashPacksBefore: 1 },
+      { name: 'The Forgotten One', trashPacksBefore: 1 },
       { name: 'Varaine & Allene Pellingare', trashPacksBefore: 1 },
     ],
   },
@@ -409,6 +435,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'City of Ash II',
     type: 'dungeon',
     bosses: [
+      { name: 'Rukhan', trashPacksBefore: 1 },
       { name: 'Urata the Legion', trashPacksBefore: 1 },
       { name: 'Horvantud the Fire Maw', trashPacksBefore: 1 },
       { name: 'Ash Titan', trashPacksBefore: 1 },
@@ -426,6 +453,7 @@ export const TRIALS: TrialConfig[] = [
       { name: 'Ganakton the Tempest', trashPacksBefore: 1 },
       { name: 'Sliklenia the Songstress', trashPacksBefore: 1 },
       { name: 'Matron Ixniaa', trashPacksBefore: 1 },
+      { name: 'The Ancient Lurcher', trashPacksBefore: 1 },
       { name: 'Sellistrix the Lamia Queen', trashPacksBefore: 1 },
     ],
   },
@@ -434,6 +462,7 @@ export const TRIALS: TrialConfig[] = [
     name: 'Blessed Crucible',
     type: 'dungeon',
     bosses: [
+      { name: 'Grunt the Clever', trashPacksBefore: 1 },
       { name: 'The Pack', trashPacksBefore: 1 },
       { name: 'Teranya the Faceless', trashPacksBefore: 1 },
       { name: 'The Troll King', trashPacksBefore: 1 },
@@ -446,8 +475,11 @@ export const TRIALS: TrialConfig[] = [
     name: 'Blackheart Haven',
     type: 'dungeon',
     bosses: [
+      { name: 'Iron-Heel', trashPacksBefore: 1 },
       { name: 'Atarus', trashPacksBefore: 1 },
+      { name: 'First Mate Wavecutter', trashPacksBefore: 1 },
       { name: 'The Roost Mother', trashPacksBefore: 1 },
+      { name: 'Hollow Heart', trashPacksBefore: 1 },
       { name: 'Captain Blackheart', trashPacksBefore: 1 },
     ],
   },
@@ -456,7 +488,10 @@ export const TRIALS: TrialConfig[] = [
     name: 'Direfrost Keep',
     type: 'dungeon',
     bosses: [
+      { name: 'Teethnasher the Frostbound', trashPacksBefore: 1 },
       { name: 'Guardian of the Flame', trashPacksBefore: 1 },
+      { name: "Drodda's Apprentice", trashPacksBefore: 1 },
+      { name: "Drodda's Dreadlord", trashPacksBefore: 1 },
       { name: 'Iceheart', trashPacksBefore: 1 },
       { name: 'Drodda of Icereach', trashPacksBefore: 1 },
     ],
@@ -466,8 +501,10 @@ export const TRIALS: TrialConfig[] = [
     name: "Selene's Web",
     type: 'dungeon',
     bosses: [
+      { name: 'Treethane Kerninn', trashPacksBefore: 1 },
       { name: 'Longclaw', trashPacksBefore: 1 },
       { name: 'Queen Aklayah', trashPacksBefore: 1 },
+      { name: 'Foulhide', trashPacksBefore: 1 },
       { name: 'Mennir Many-Legs', trashPacksBefore: 1 },
       { name: 'Selene', trashPacksBefore: 1 },
     ],
@@ -477,7 +514,9 @@ export const TRIALS: TrialConfig[] = [
     name: 'Tempest Island',
     type: 'dungeon',
     bosses: [
+      { name: 'Sonolia the Matriarch', trashPacksBefore: 1 },
       { name: 'Valaran Stormcaller', trashPacksBefore: 1 },
+      { name: 'Yalorasse the Speaker', trashPacksBefore: 1 },
       { name: 'Stormfist', trashPacksBefore: 1 },
       { name: 'Commodore Ohmanil', trashPacksBefore: 1 },
       { name: 'Stormreeve Neidir', trashPacksBefore: 1 },
@@ -488,9 +527,11 @@ export const TRIALS: TrialConfig[] = [
     name: 'Volenfell',
     type: 'dungeon',
     bosses: [
+      { name: 'Desert Lion', trashPacksBefore: 1 },
       { name: 'Quintus Verres', trashPacksBefore: 1 },
       { name: 'Boilbite', trashPacksBefore: 1 },
       { name: 'Tremorscale', trashPacksBefore: 1 },
+      { name: 'Unstable Construct', trashPacksBefore: 1 },
       { name: 'The Guardian Council', trashPacksBefore: 1 },
     ],
   },
@@ -499,8 +540,12 @@ export const TRIALS: TrialConfig[] = [
     name: 'Vaults of Madness',
     type: 'dungeon',
     bosses: [
+      { name: 'The Cursed One', trashPacksBefore: 1 },
       { name: 'Ulguna Soul-Reaver', trashPacksBefore: 1 },
+      { name: "Death's Head", trashPacksBefore: 1 },
       { name: 'Grothdarr', trashPacksBefore: 1 },
+      { name: 'Achaeraizur', trashPacksBefore: 1 },
+      { name: 'The Ancient One', trashPacksBefore: 1 },
       { name: 'Iskra the Omen', trashPacksBefore: 1 },
       { name: 'The Mad Architect', trashPacksBefore: 1 },
     ],
