@@ -20,7 +20,8 @@ surfaces · 5. Ranked ideas (P0–P2) · 6. Phased architecture · 7. Risks & op
 17. Why now — the 2026 meta · 18. Platform reality & a console-only opportunity ·
 19. Tech stack & SavedVariables schema · 20. Capture methodology & accuracy ·
 21. Beyond trials — PvP audiences · 22. Privacy, consent & ToS · 23. Maintenance & risk
-· 24. Consolidated roadmap · 25. Group-share transport (how to broadcast it).
+· 24. Consolidated roadmap · 25. Group-share transport (how to broadcast it) ·
+26. Ruleset / criteria schema (the compliance engine).
 
 ---
 
@@ -896,6 +897,94 @@ only later, as a convenience, if users want full builds visible in-game without 
 - Bulk transfer is **out-of-combat only** (and courteous on the shared channel).
 - Everyone who should appear must run the add-on and opt in (§12.6) — verdicts/builds
   come from each player's own client, never from inspection.
+
+---
+
+## 26. Ruleset / criteria schema (the compliance engine, concretely)
+
+§12.2 introduced the role-aware ruleset; here is the actual model, because it's the
+centrepiece and the self-vs-effective split (§11.1.1) makes a naïve "list of thresholds"
+wrong.
+
+### The rule model
+
+A **ruleset** targets a role (and optionally an encounter/content) and holds rules.
+Each **rule** is a small, declarative assertion plus — crucially — **where it can be
+evaluated**:
+
+```jsonc
+{
+  "id": "vCR-dps", "version": 3, "season": "U50",
+  "label": "Crimson Veldt — DPS", "role": "dps", "content": "vCrimsonVeldt",
+  "rules": [
+    // --- evaluable in-game by the player's own client (live, pre-pull) ---
+    { "id": "food",    "field": "food.active",      "op": "eq",  "value": true,
+      "severity": "error", "eval": "client", "label": "Eat food" },
+    { "id": "mundus",  "field": "mundus.id",        "op": "in",  "value": [13984, 13975],
+      "severity": "warn",  "eval": "client", "label": "Lover / Thief mundus" },
+    { "id": "critdmg", "field": "crit.damagePct",   "op": "lte", "value": 125,
+      "severity": "warn",  "eval": "client", "label": "Crit damage ≤ 125% cap" },
+    { "id": "attrs",   "field": "attrs.stamina",    "op": "gte", "value": 64,
+      "severity": "info",  "eval": "client", "label": "All attributes in Stamina" },
+    { "id": "sets",    "field": "gear.setIds",      "op": "containsAll", "value": [<deadly>, <sulxan>],
+      "severity": "warn",  "eval": "client", "label": "Deadly + Sul-Xan" },
+    // --- needs the uploaded log to be exact (post-hoc) ---
+    { "id": "pen",     "field": "penetration.effective", "op": "between", "value": [18000, 18400],
+      "severity": "error", "eval": "log", "liveApprox": { "field": "penetration.self",
+        "op": "gte", "assumedGroupPen": 11030 },
+      "label": "≈18.2k effective pen, no over-pen" },
+    { "id": "breach",  "field": "log.targetDebuffUptime.MajorBreach", "op": "gte", "value": 95,
+      "severity": "info",  "eval": "log", "scope": "group", "label": "Major Breach ≥95%" }
+  ]
+}
+```
+
+Operators: `eq | in | gte | lte | between | containsAll | containsAny`. Severity:
+`error | warn | info` (drives card colour + whether it blocks a ready-check).
+
+### Two evaluation contexts (this is the important part)
+
+- **`eval: "client"`** — the player's own client has the data about *itself* (self
+  stats, CP allocation, attributes, mundus, food, **its own gear/sets**). It evaluates
+  these live and broadcasts only the resulting bits (§25). Works **pre-pull**, in-game.
+- **`eval: "log"`** — needs the uploaded report (effective penetration via the boss's
+  debuffs, buff/debuff uptimes, group-scope checks). **ESOTK** evaluates these post-hoc
+  by combining the snapshot with the log.
+- **`liveApprox`** — bridges the two for penetration. Effective pen can't be known
+  before the pull (depends on the group's debuffs on the boss), so the live check uses
+  `self-pen ≥ 18,200 − assumedGroupPen`. A standard tank kit supplies ≈**11,030** (Major
+  + Minor Breach + gold Crusher), so a DPS needs ≈**7,170** self-pen to be on track; the
+  exact verdict is recomputed from the log afterwards. The ruleset carries the
+  assumption so the live light is meaningful without pretending to be exact.
+
+### Compile → sync → evaluate → report
+
+1. **Author on the web.** Raid lead builds/edits the ruleset in ESOTK (defaults shipped
+   per content/season; reuse `detectBuildIssues`). Human-readable JSON lives server-side.
+2. **Compile to a compact "rule program."** Strip to the `eval: "client"` rules, map
+   each `id` → a fixed **bit index**, and encode `{fieldId, op, value}` into a small
+   blob. The client never needs the prose — just the field/op/value tuples.
+3. **Sync down** (§12.2): FSA write-mode file, import code, or broadcast.
+4. **Evaluate client-side** → produce the compliance **bitfield** (bit *i* = rule *i*
+   pass/fail) → broadcast over LibGroupBroadcast (§25).
+5. **Aggregate + complete on the web.** The raid-lead dashboard shows the live bits; on
+   upload, ESOTK evaluates the `eval: "log"` rules and merges, producing the final
+   per-player, per-fight compliance — including exact effective pen.
+
+### Versioning & safety
+
+- A compliance bitfield is meaningless without its **ruleset id + version** — broadcast
+  them together and handshake; mismatched versions degrade to "unknown," never to a
+  wrong green.
+- Ship **presets** (e.g. a sane default: food required, mundus sensible, self-pen on
+  track, crit-dmg ≤ cap, attributes spent) so a lead gets value with zero authoring; let
+  them override per content.
+- Rules reference IDs (set/mundus/food/ability), never localised names (§20).
+
+> Net: the ruleset is one declarative document, but it **runs in two places** — the
+> client checks what it can see about itself before the pull, and ESOTK finishes the
+> log-dependent checks after. The `eval` tag is what keeps "is everyone ready?" honest
+> in-game and "was everyone actually optimal?" exact on the web.
 
 ---
 
