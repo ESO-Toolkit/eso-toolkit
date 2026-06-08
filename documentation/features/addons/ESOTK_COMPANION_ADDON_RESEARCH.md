@@ -1,9 +1,26 @@
 # ESOTK Companion Add-on — Research & Strategy (June 2026)
 
 > Research brief for the in-game ESO add-on that pairs with ESO Toolkit (ESOTK).
-> Goal: capture the build/character data that ESO Logs **cannot** see, and feed it
-> back into ESOTK so player cards, build-hub, roster-hub and fight-replay show a
-> complete picture.
+> Goal: capture the build/character data that ESO Logs **cannot** see, feed it back into
+> ESOTK, and grow into a two-way raid-command platform (plan on web → enforce in game →
+> analyse on web).
+>
+> **Scope note:** this doc evolved over several research passes. §1–§11 cover the core
+> capture-and-coaching product; §12+ expand to the live in-game platform, integration,
+> competitive positioning, data/transport plumbing, business model, the 2026 meta,
+> methodology, and risk. The consolidated roadmap is in **§24**.
+
+### Contents
+1. The core thesis · 2. Gap analysis · 3. ESO Lua API toolbox · 4. ESOTK integration
+surfaces · 5. Ranked ideas (P0–P2) · 6. Phased architecture · 7. Risks & open questions
+· 8. First milestone · 9. Transport is plumbing · 10. Read existing add-ons first ·
+11. The real UVPs (stat-aware coaching) · 12. The in-game raid-command layer ·
+13. Integration feasibility matrix · 14. Competitive landscape & white space ·
+15. Data plane & matching algorithm · 16. Sustainability (free add-on, premium web) ·
+17. Why now — the 2026 meta · 18. Platform reality & a console-only opportunity ·
+19. Tech stack & SavedVariables schema · 20. Capture methodology & accuracy ·
+21. Beyond trials — PvP audiences · 22. Privacy, consent & ToS · 23. Maintenance & risk
+· 24. Consolidated roadmap.
 
 ---
 
@@ -504,6 +521,14 @@ into the concrete platform above and confirms nobody else occupies the space.
 > → analyse on web. A pure add-on (no web brain) or a pure web tool (no in-game hands)
 > can't close it. ESOTK already has both halves.
 
+**One more structural advantage:** ESO has **no native gear/build inspection** — ZOS
+deliberately disabled it to curb toxicity, and the API won't expose another player's
+gear. So the *only* way to see a teammate's full build in-game is if they **opt in to
+broadcast it** — which is exactly our model. No direct competitor shares full builds
+(stats/CP), and even the community's standard answer to "how do I see someone's build?"
+is "check esologs" — which only has gear, not the stats/CP/attributes we capture. We're
+filling a gap the base game intentionally left open *and* nobody else fills.
+
 ---
 
 ## 15. Data plane & the matching algorithm (the two expensive-to-change pieces)
@@ -725,7 +750,9 @@ a first-class design concern, not an afterthought:
 
 - **Broadcasting is opt-in**, with a clear in-game toggle (LibAddonMenu) and a visible
   indicator of what's shared. Mirror the reason Hodor is perceived as benign:
-  transparent, read-only, user-controlled.
+  transparent, read-only, user-controlled. This **aligns with ZOS's own design intent**
+  — they disabled native inspection precisely to prevent unwanted build-snooping, so a
+  consent-first, opt-in share is the only model that respects that line (§14).
 - **Granularity** — let players share only a compliance verdict (pass/fail bits) without
   exposing exact stats/gear, for groups that want enforcement without doxxing builds.
 - **ESOTK-side retention/redaction** — companion data is ESOTK's (§15); honour
@@ -754,6 +781,34 @@ a first-class design concern, not an afterthought:
   (m00nyONE). Vendoring or contributing upstream reduces exposure if that stalls.
 - **Scope risk** — §12's full platform is large. Ship the §8 vertical slice first; treat
   the dashboard, ruleset engine, and ecosystem hooks as sequenced phases, not v1.
+
+---
+
+## 24. Consolidated roadmap
+
+Pulling the scattered phasing into one sequence. Each phase is independently shippable
+and builds on the prior schema + matcher.
+
+| Phase | Deliverable | Why this order | Key refs |
+|---|---|---|---|
+| **0 — Foundations** | Versioned `ESOTKCompanionSV` schema + the report↔snapshot matcher (incl. manual-attach fallback) | Most expensive to change later; everything depends on it | §15, §19 |
+| **1 — Vertical slice** | Add-on captures local player's **CP allocation + final stats + mundus + food + subclass/mastery**; ESOTK renders it on the player card with the **pen-vs-cap coaching** insight | Delivers the headline ask *and* one genuinely useful, non-redundant insight on day one | §8, §11.1, §17 |
+| **2 — Effortless ingest** | Manual `.lua` upload (extend `luaParser.ts`); optional FSA folder-sync / copy-paste code | Transport is plumbing — make it painless, don't over-build | §9 |
+| **3 — Read existing add-ons** | Ingest CombatMetrics / Wizard's Wardrobe SavedVariables | Lowers the adoption ask before requiring our add-on | §10 |
+| **4 — Whole-group capture** | LibGroupBroadcast/LibGroupCombatStats group snapshots → one logger covers the raid | Turns a personal tool into a raid tool; the network effect | §12.1, §13 |
+| **5 — Compliance engine** | Role-aware rulesets defined on ESOTK → synced to game → client-side eval → results on web | The raid-lead value; feeds `detectBuildIssues` | §11.3, §12.2 |
+| **6 — In-game dashboard** | Live raid-lead grid + pre-pull ready-check, in-client | Mirrors the web dashboard where the lead actually is | §12.3 |
+| **7 — Ecosystem hooks** | LibGroupCombatStats category, LUIE frame annotation, Wizard's Wardrobe verify, RaidNotifier assignments | Plug into what raids already run | §12.4, §13 |
+| **8 — Longitudinal + reach** | Build-vs-performance history; PvP content-aware caps; console live-layer spike | Compounding value + audience expansion | §11.4, §21, §18 |
+
+**Cross-cutting, every phase:** opt-in consent (§22), ID-not-name matching + canonical
+baseline snapshot (§20), per-season maintenance pass (§23), free add-on / premium web
+(§16).
+
+**If you do only three things:** (1) lock the schema + matcher, (2) ship CP + stats +
+pen-cap coaching on the player card, (3) make group capture work via LibGroupCombatStats.
+That sequence proves the headline ask, the unique insight, and the network effect — the
+three things the whole platform rests on.
 
 ---
 
@@ -798,5 +853,6 @@ a first-class design concern, not an afterthought:
 - [LibSavedVars (scoped + migration)](https://github.com/silvereyes333/LibSavedVars) · [LibAddonMenu-2.0](https://www.esoui.com/downloads/info7-LibAddonMenu.html)
 - [GetPlayerStat (UESP function reference)](https://esodata.uesp.net/100010/data/g/e/t/GetPlayerStat.html) · [Character sheet & advanced stats explained](https://www.eso-u.com/articles/player_character_sheet_and_advanced_stats_ui_explained)
 - [Easy Stalking — auto-log Cyrodiil/IC/BG](https://www.esoui.com/downloads/info2332-EasyStalking-Encounterlog.html) · [PvpMeter](https://forums.elderscrollsonline.com/en/discussion/387159/addon-pvpmeter-graphical-tracker-for-your-kill-death-in-pvp-and-history-of-your-bg-duel-played) · [PvP addons guide — NirnStorm](https://nirnstorm.com/eso/guides/pvp-addons-guide/)
+- [No native gear inspection in ESO (ZOS design, anti-toxicity)](https://forums.elderscrollsonline.com/en/discussion/619375/ability-to-inspect-players-in-eso) · [Why you can't inspect other players](https://forums.elderscrollsonline.com/en/discussion/566890/why-cant-i-inspect-other-players-noob-question)
 </content>
 </invoke>
