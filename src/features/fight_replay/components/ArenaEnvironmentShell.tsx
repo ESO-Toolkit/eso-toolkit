@@ -493,24 +493,35 @@ const GlowSprite: React.FC<{
 };
 
 /**
- * Self-contained lit-moon shader: lambertian shading from a fixed sun direction with a soft wrap term,
- * a faint ambient/earthshine floor so the dark side is never pure black, and gentle limb-darkening.
- * Self-lit (does not use scene lights, so it never touches actor lighting); toneMapped off so colours
- * stay true. A real sphere means a physically correct terminator that holds from every orbit angle.
+ * Self-contained lit-moon shader. Oren-Nayar diffuse (roughness ~0.85) models a rough, dusty rocky body
+ * far better than Lambertian — the terminator stays bright further toward the limb the way a real moon
+ * does, instead of falling off too fast. A faint earthshine floor keeps the night side from going pure
+ * black. The sunlit face is driven to HDR (>1) so the existing thresholded bloom makes the moon glow
+ * rather than reading as a flat decal. Self-lit (no scene lights → actor lighting untouched), toneMapped
+ * off so the colour reaches bloom pre-tonemap. A real sphere → a correct terminator from every orbit angle.
  */
-function makeMoonMaterial(surface: THREE.Texture, sunDir: THREE.Vector3, tint: string): THREE.ShaderMaterial {
+function makeMoonMaterial(
+  surface: THREE.Texture,
+  sunDir: THREE.Vector3,
+  tint: string,
+  hdrGain: number,
+): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: {
       uMap: { value: surface },
       uSun: { value: sunDir.clone().normalize() },
       uTint: { value: new THREE.Color(tint) },
+      uHdrGain: { value: hdrGain },
     },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
       varying vec3 vNormalW;
+      varying vec3 vViewW;
       void main() {
         vUv = uv;
         vNormalW = normalize(mat3(modelMatrix) * normal);
+        vec4 worldPos = modelMatrix * vec4(position, 1.0);
+        vViewW = cameraPosition - worldPos.xyz; // cameraPosition is a built-in ShaderMaterial uniform
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -518,16 +529,35 @@ function makeMoonMaterial(surface: THREE.Texture, sunDir: THREE.Vector3, tint: s
       uniform sampler2D uMap;
       uniform vec3 uSun;
       uniform vec3 uTint;
+      uniform float uHdrGain;
       varying vec2 vUv;
       varying vec3 vNormalW;
+      varying vec3 vViewW;
       void main() {
         vec3 albedo = texture2D(uMap, vUv).rgb * uTint;
-        float ndl = dot(normalize(vNormalW), normalize(uSun));
-        // soft wrap so the terminator is a gradient, not a hard line
-        float lit = clamp((ndl + 0.18) / 1.18, 0.0, 1.0);
-        lit = smoothstep(0.0, 1.0, lit);
-        // faint earthshine on the night side + a touch of ambient
-        float shade = mix(0.06, 1.12, lit);
+        vec3 N = normalize(vNormalW);
+        vec3 L = normalize(uSun);
+        vec3 V = normalize(vViewW);
+        float ndl = dot(N, L);
+        float ndv = dot(N, V);
+        // Oren-Nayar diffuse (rough rocky body). roughness 0.85 → sigma^2 in A/B terms.
+        float sigma2 = 0.85 * 0.85;
+        float A = 1.0 - 0.5 * sigma2 / (sigma2 + 0.33);
+        float B = 0.45 * sigma2 / (sigma2 + 0.09);
+        float ti = acos(clamp(ndl, -1.0, 1.0));
+        float tr = acos(clamp(ndv, -1.0, 1.0));
+        float alpha = max(ti, tr);
+        float beta = min(ti, tr);
+        // azimuth difference between light and view projected onto the surface
+        vec3 Lp = normalize(L - N * ndl);
+        vec3 Vp = normalize(V - N * ndv);
+        float cosPhi = max(0.0, dot(Lp, Vp));
+        float on = max(0.0, ndl) * (A + B * cosPhi * sin(alpha) * tan(beta));
+        // soft wrap on the cosine term keeps the terminator a smooth gradient, not a hard line
+        float wrap = clamp((ndl + 0.18) / 1.18, 0.0, 1.0);
+        float lit = on * smoothstep(0.0, 1.0, wrap);
+        // earthshine floor on the night side + HDR-driven sunlit face (>1 feeds bloom)
+        float shade = mix(0.06, uHdrGain, clamp(lit, 0.0, 1.0));
         gl_FragColor = vec4(albedo * shade, 1.0);
       }
     `,
@@ -546,7 +576,8 @@ const Moon: React.FC<{
 }> = ({ spec, size, center, domeDist, sunDir }) => {
   const surface = useMemo(() => makeMoonSurfaceTexture(spec.color, spec.glow), [spec.color, spec.glow]);
   const material = useMemo(
-    () => makeMoonMaterial(surface, new THREE.Vector3(...sunDir), '#ffffff'),
+    // hdrGain >1 pushes the sunlit face past the bloom threshold so the moon glows (not a flat decal).
+    () => makeMoonMaterial(surface, new THREE.Vector3(...sunDir), '#ffffff', 1.9),
     [surface, sunDir],
   );
   useEffect(
