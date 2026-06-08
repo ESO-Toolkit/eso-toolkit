@@ -287,12 +287,18 @@ export const FightReplay: React.FC = () => {
 
   useEffect(() => {
     if (prevFightIdRef.current !== fightId) {
-      dispatch(actorPositionsActions.resetTask());
+      // Free the previous fight's positions on switch. On mobile, FULLY clear the worker's LRU
+      // result cache (clearResult) so several fights' large position datasets can't accumulate and
+      // OOM-reload the tab (the "whole page refresh"); on desktop, resetTask keeps the cache so a
+      // revisit stays instant.
+      dispatch(
+        isMobileReplay ? actorPositionsActions.clearResult() : actorPositionsActions.resetTask(),
+      );
       prevFightIdRef.current = fightId;
       loadingSeenRef.current = false;
       setIsSwitchingFight(true);
     }
-  }, [fightId, dispatch]);
+  }, [fightId, dispatch, isMobileReplay]);
 
   useEffect(() => {
     if (!isSwitchingFight) return;
