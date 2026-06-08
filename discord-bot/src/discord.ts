@@ -253,6 +253,8 @@ export interface DiscordRole {
   id: string;
   name: string;
   permissions: string;
+  color?: number;
+  managed?: boolean;
 }
 
 export function getGuildRoles(env: Env, guildId: string): Promise<DiscordRole[]> {

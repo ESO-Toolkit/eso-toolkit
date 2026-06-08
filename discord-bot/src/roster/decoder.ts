@@ -205,7 +205,7 @@ function decodeDPS(d: CompactDPS): DecodedRosterSlot {
   // Prefer structured set fields; fall back to legacy gs array
   let sets: string[];
   if (d.s1 != null || d.s2 != null || d.ms != null) {
-    sets = collectSets([d.s1, d.s2, d.ms], d.as);
+    sets = collectSets([d.s1, d.s2, d.ms], d.as) ?? [];
   } else if (d.gs?.length) {
     sets = d.gs.map((id) => getSetName(id)).filter(Boolean);
   } else {

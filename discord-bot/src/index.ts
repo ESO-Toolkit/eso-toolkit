@@ -528,10 +528,8 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
     const roles = await getGuildRoles(env, guildId);
     // Filter out @everyone (id === guildId) and managed/bot roles
     const filtered = roles
-      .filter(
-        (r) => r.id !== guildId && !('managed' in r && (r as Record<string, unknown>).managed),
-      )
-      .map((r) => ({ id: r.id, name: r.name, color: (r as Record<string, unknown>).color ?? 0 }));
+      .filter((r) => r.id !== guildId && !r.managed)
+      .map((r) => ({ id: r.id, name: r.name, color: r.color ?? 0 }));
     return jsonResponse({ roles: filtered });
   }
 

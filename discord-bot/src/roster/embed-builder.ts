@@ -217,6 +217,48 @@ export function splitMessages(text: string): string[] {
   return chunks;
 }
 
+// ── Role Pings ──────────────────────────────────────────────────────────────
+
+/** Discord snowflake (17–20 digits). Guards against malformed/injected IDs. */
+const SNOWFLAKE_RE = /^\d{17,20}$/;
+
+export interface RolePingResult {
+  /** Message content with role mentions. */
+  content: string;
+  /** Role IDs to allow in `allowed_mentions.roles` (de-duplicated, validated). */
+  roleIds: string[];
+}
+
+/**
+ * Build a one-off "@role a new run is up" ping for the roles configured in the
+ * guild config. Only pings a role type (tank/healer/dd) when that role is both
+ * configured *and* present in the roster, so members aren't pinged for slots
+ * the roster doesn't contain.
+ *
+ * Returns `null` when there is nothing to ping — callers should skip sending.
+ */
+export function buildRolePingLine(
+  decoded: DecodedRoster,
+  rolePingIds?: { tank?: string | undefined; healer?: string | undefined; dd?: string | undefined },
+): RolePingResult | null {
+  if (!rolePingIds) return null;
+
+  const mentions: string[] = [];
+  const roleIds: string[] = [];
+  const add = (id: string | undefined, present: boolean) => {
+    if (!id || !present || !SNOWFLAKE_RE.test(id) || roleIds.includes(id)) return;
+    roleIds.push(id);
+    mentions.push(`<@&${id}>`);
+  };
+
+  add(rolePingIds.tank, decoded.tanks.length > 0);
+  add(rolePingIds.healer, decoded.healers.length > 0);
+  add(rolePingIds.dd, decoded.dps.length > 0);
+
+  if (roleIds.length === 0) return null;
+  return { content: `📢 A new roster is up — ${mentions.join(' ')}`, roleIds };
+}
+
 // ── Action Rows ─────────────────────────────────────────────────────────────
 
 export function buildRosterActionRows(rosterId: string): DiscordComponent[] {

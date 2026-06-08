@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildRosterText, splitMessages, buildRosterActionRows } from './embed-builder';
+import {
+  buildRosterText,
+  splitMessages,
+  buildRosterActionRows,
+  buildRolePingLine,
+} from './embed-builder';
 import type { DecodedRoster, RosterSnapshot } from './types';
 
 const mockSnapshot: RosterSnapshot = {
@@ -179,5 +184,50 @@ describe('buildRosterActionRows', () => {
     const rows = buildRosterActionRows('abc-xyz');
     const buttons = rows[0].components ?? [];
     expect(buttons[0].custom_id).toContain('abc-xyz');
+  });
+});
+
+describe('buildRolePingLine', () => {
+  const TANK = '100000000000000001';
+  const HEALER = '100000000000000002';
+  const DD = '100000000000000003';
+
+  it('returns null when no ping config is provided', () => {
+    expect(buildRolePingLine(mockDecoded, undefined)).toBeNull();
+  });
+
+  it('returns null when config has no usable role IDs', () => {
+    expect(buildRolePingLine(mockDecoded, {})).toBeNull();
+  });
+
+  it('pings configured roles that are present in the roster', () => {
+    const result = buildRolePingLine(mockDecoded, { tank: TANK, healer: HEALER, dd: DD });
+    expect(result).not.toBeNull();
+    expect(result?.roleIds).toEqual([TANK, HEALER, DD]);
+    expect(result?.content).toContain(`<@&${TANK}>`);
+    expect(result?.content).toContain(`<@&${HEALER}>`);
+    expect(result?.content).toContain(`<@&${DD}>`);
+  });
+
+  it('skips role types that are absent from the roster', () => {
+    const tanksOnly: DecodedRoster = { tanks: mockDecoded.tanks, healers: [], dps: [] };
+    const result = buildRolePingLine(tanksOnly, { tank: TANK, healer: HEALER, dd: DD });
+    expect(result?.roleIds).toEqual([TANK]);
+    expect(result?.content).not.toContain(`<@&${HEALER}>`);
+  });
+
+  it('de-duplicates when the same role is configured for multiple types', () => {
+    const result = buildRolePingLine(mockDecoded, { tank: TANK, healer: TANK, dd: DD });
+    expect(result?.roleIds).toEqual([TANK, DD]);
+  });
+
+  it('ignores malformed (non-snowflake) role IDs', () => {
+    const result = buildRolePingLine(mockDecoded, { tank: '@everyone', healer: HEALER, dd: 'abc' });
+    expect(result?.roleIds).toEqual([HEALER]);
+  });
+
+  it('returns null when configured roles map to empty role sections', () => {
+    const empty: DecodedRoster = { tanks: [], healers: [], dps: mockDecoded.dps };
+    expect(buildRolePingLine(empty, { tank: TANK, healer: HEALER })).toBeNull();
   });
 });

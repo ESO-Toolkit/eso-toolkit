@@ -117,13 +117,25 @@ async function handleSetNamePattern(
   guildId: string,
   options: DiscordInteractionOption[],
 ): Promise<InteractionResponse> {
-  const pattern = options.find((o) => o.name === 'pattern')?.value as string | undefined;
+  const rawPattern = options.find((o) => o.name === 'pattern')?.value as string | undefined;
+  const pattern = rawPattern?.trim();
   if (!pattern) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content:
           '❌ Please provide a pattern. Tokens: `{day-short}`, `{day}`, `{time}`, `{trial}`, `{difficulty}`',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  // Match the HTTP API's cap (Discord channel names are capped at 100 chars).
+  if (pattern.length > 100) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ Pattern is too long. Keep it to 100 characters or fewer.',
         flags: MessageFlags.EPHEMERAL,
       },
     };

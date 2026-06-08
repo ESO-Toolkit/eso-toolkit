@@ -18,7 +18,12 @@ import type { DiscordComponent, Env } from '../types.js';
 import { fetchRosterSnapshot } from './api.js';
 import { resolveChannelName } from './channel-name.js';
 import { decodeRosterData } from './decoder.js';
-import { buildRosterText, splitMessages, buildRosterActionRows } from './embed-builder.js';
+import {
+  buildRosterText,
+  splitMessages,
+  buildRosterActionRows,
+  buildRolePingLine,
+} from './embed-builder.js';
 import {
   findMappingsForRoster,
   getMappingByRosterId,
@@ -29,7 +34,13 @@ import {
   releasePublishLock,
   KV_PREFIX,
 } from './kv.js';
-import type { ChannelNameContext, DecodedRoster, RosterMapping, RosterSnapshot } from './types.js';
+import type {
+  ChannelNameContext,
+  DecodedRoster,
+  GuildConfig,
+  RosterMapping,
+  RosterSnapshot,
+} from './types.js';
 
 // ── Snapshot → Channel Name Context ────────────────────────────────────────
 
@@ -221,6 +232,7 @@ async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishRe
       snapshot,
       decoded,
       req.eventTime,
+      config.rolePingIds,
     );
     if (!created.ok) return created;
     channelId = created.channelId!;
@@ -387,18 +399,37 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     .slice(0, 6);
   const syntheticId = `direct-${Date.now().toString(36)}-${suffix}`;
 
-  // Acquire lock using the synthetic ID (unique, so no contention here —
-  // but guards against rapid double-clicks sending the same request twice)
-  const locked = await acquirePublishLock(env, req.guildId, syntheticId);
+  // Acquire lock keyed on the *content* (not the random synthetic ID): a rapid
+  // double-click sends two identical requests that would each mint a different
+  // synthetic ID, so locking on the ID would never collide and both would
+  // create a channel. Hashing the payload makes duplicate submissions contend.
+  const lockKey = await contentLockKey(req);
+  const locked = await acquirePublishLock(env, req.guildId, lockKey);
   if (!locked) {
-    return { ok: false, error: 'A publish is already in progress. Please wait.' };
+    return { ok: false, error: 'A publish is already in progress for this roster. Please wait.' };
   }
 
   try {
     return await doPublishDirect(env, req, syntheticId);
   } finally {
-    await releasePublishLock(env, req.guildId, syntheticId);
+    await releasePublishLock(env, req.guildId, lockKey);
   }
+}
+
+/** Derive a stable, collision-resistant lock key from a direct-publish payload. */
+async function contentLockKey(req: DirectPublishRequest): Promise<string> {
+  const material = [
+    req.title,
+    req.channelNameOverride ?? '',
+    req.categoryId ?? '',
+    req.roster_data,
+  ].join(' ');
+  const bytes = new TextEncoder().encode(material);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const hex = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `dedupe-${hex.slice(0, 32)}`;
 }
 
 async function doPublishDirect(
@@ -446,6 +477,7 @@ async function doPublishDirect(
     snapshot,
     decoded,
     req.eventTime,
+    config.rolePingIds,
   );
 
   if (!result.ok) return result;
@@ -580,6 +612,7 @@ async function createNewRosterChannel(
   snapshot: RosterSnapshot,
   decoded: Awaited<ReturnType<typeof decodeRosterData>>,
   eventTime?: string,
+  rolePingIds?: GuildConfig['rolePingIds'],
 ): Promise<InternalRefreshResult> {
   const channelOptions: Parameters<typeof createChannel>[2] = {
     name: channelName,
@@ -603,6 +636,20 @@ async function createNewRosterChannel(
   }
 
   try {
+    // Best-effort role ping (opt-in via guild config). Sent as its own message
+    // so it's never re-sent on refresh and a ping failure can't block the post.
+    const ping = buildRolePingLine(decoded, rolePingIds);
+    if (ping) {
+      try {
+        await sendMessage(env, channel.id, {
+          content: ping.content,
+          allowed_mentions: { parse: [], roles: ping.roleIds },
+        });
+      } catch (pingErr) {
+        console.warn('[publish] role ping failed (non-fatal):', pingErr);
+      }
+    }
+
     const text = buildRosterText(snapshot, decoded, eventTime);
     const chunks = splitMessages(text);
     const components = buildRosterActionRows(snapshot.id);
