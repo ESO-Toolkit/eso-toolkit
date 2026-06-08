@@ -47,6 +47,8 @@ export interface CompanionStats {
   weaponDamage?: number;
   spellCrit?: number;
   weaponCrit?: number;
+  /** Crit damage as a percent bonus (base 50). Optional — derived, no single STAT_ constant. */
+  critDamage?: number;
   spellPen?: number;
   physicalPen?: number;
   magickaRegen?: number;
@@ -182,7 +184,7 @@ function normalizeStats(v: LuaValue | undefined): CompanionStats | undefined {
   if (!isRecord(v)) return undefined;
   const keys: (keyof CompanionStats)[] = [
     'maxMagicka', 'maxHealth', 'maxStamina', 'spellDamage', 'weaponDamage',
-    'spellCrit', 'weaponCrit', 'spellPen', 'physicalPen', 'magickaRegen',
+    'spellCrit', 'weaponCrit', 'critDamage', 'spellPen', 'physicalPen', 'magickaRegen',
     'staminaRegen', 'healthRegen', 'physicalResist', 'spellResist', 'critResist',
   ];
   const out: CompanionStats = {};
