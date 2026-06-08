@@ -805,8 +805,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onTogglePlayerPathsHUD={togglePlayerPathsHUD}
           onToggleTrails={toggleTrails}
           // When the bar is hidden in fullscreen, only the hairline occludes the bottom, so the
-          // overlay panels can grow nearly full-height; otherwise reserve the full bar band.
-          reservedInset={isImmersive && !barVisible ? HAIRLINE_H + 4 : TRANSPORT_RESERVED}
+          // overlay panels can grow nearly full-height; otherwise reserve the full bar band PLUS the
+          // trial chip/bar that docks above it (so the player panel, boss-health, and control cluster
+          // clear the taller transport instead of overlapping it).
+          reservedInset={
+            isImmersive && !barVisible
+              ? HAIRLINE_H + 4
+              : TRANSPORT_RESERVED + (showTrialBar ? (trialBarExpanded ? 104 : 44) : 0)
+          }
         />
       </Paper>
 

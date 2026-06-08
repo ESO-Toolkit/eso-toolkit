@@ -10,7 +10,7 @@
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import { Box, Collapse, IconButton, Tooltip } from '@mui/material';
+import { Box, Divider, IconButton, Popover, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
@@ -137,9 +137,10 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   progressPct = 0,
   isMobile = false,
 }) => {
-  // Mobile "more" disclosure — reveals Speed + Share in a secondary row so the default transport
-  // row stays minimal (timecode · play · more · collapse).
-  const [moreOpen, setMoreOpen] = React.useState(false);
+  // Mobile "more" disclosure — Speed + Share live in a floating popover so opening them never
+  // grows the transport (which would overlap the player panel / boss-health / control cluster).
+  const [moreAnchor, setMoreAnchor] = React.useState<HTMLElement | null>(null);
+  const moreOpen = Boolean(moreAnchor);
 
   // Use optimized timeline scrubbing for better performance
   const {
@@ -339,12 +340,12 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           >
             {/* Desktop keeps Share inline; mobile folds Speed + Share into a "more" row. */}
             {isMobile ? (
-              <Tooltip title={moreOpen ? 'Hide options' : 'More options'}>
+              <Tooltip title="Speed & share">
                 <IconButton
-                  aria-label="More options"
+                  aria-label="Speed and share options"
                   aria-expanded={moreOpen}
                   size="small"
-                  onClick={() => setMoreOpen((v) => !v)}
+                  onClick={(e) => setMoreAnchor(e.currentTarget)}
                   sx={{
                     color: moreOpen ? 'primary.main' : 'text.secondary',
                     '&:hover': { color: 'text.primary' },
@@ -376,37 +377,69 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             )}
           </Box>
         </Box>
-
-        {/* Mobile "more" row — Speed + Share revealed on demand so the default transport stays
-            minimal. Desktop never renders this (its Speed/Share live inline above). */}
-        {isMobile && (
-          <Collapse in={moreOpen} unmountOnExit>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 2,
-                pt: 0.5,
-                pb: 0.25,
-              }}
-            >
-              <SpeedSelector
-                playbackSpeed={playbackSpeed}
-                onSpeedChange={onSpeedChange}
-                speeds={PLAYBACK_SPEEDS}
-              />
-              <ShareButton
-                reportId={reportId}
-                fightId={fightId}
-                currentTime={currentTime}
-                selectedActorIdRef={selectedActorIdRef}
-                timeRef={timeRef}
-              />
-            </Box>
-          </Collapse>
-        )}
       </Box>
+
+      {/* Mobile "more" popover — Speed (chips) + Share. Floats above the button (portal), so the
+          docked transport keeps a fixed height and never overlaps the panels above it. */}
+      {isMobile && (
+        <Popover
+          open={moreOpen}
+          anchorEl={moreAnchor}
+          onClose={() => setMoreAnchor(null)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          slotProps={{ paper: { sx: { p: 1.25, maxWidth: 260 } } }}
+        >
+          <Typography variant="overline" sx={{ color: 'text.secondary', px: 0.5 }}>
+            Speed
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.25 }}>
+            {PLAYBACK_SPEEDS.map((speed) => {
+              const active = speed === playbackSpeed;
+              return (
+                <Box
+                  key={speed}
+                  component="button"
+                  type="button"
+                  onClick={() => onSpeedChange(speed)}
+                  aria-pressed={active}
+                  sx={(t) => ({
+                    appearance: 'none',
+                    font: 'inherit',
+                    cursor: 'pointer',
+                    px: 1,
+                    py: 0.5,
+                    minWidth: 44,
+                    borderRadius: 1.5,
+                    border: '1px solid',
+                    borderColor: active ? 'primary.main' : 'divider',
+                    backgroundColor: active ? 'action.selected' : 'transparent',
+                    color: active ? 'primary.main' : 'text.primary',
+                    fontWeight: active ? 700 : 500,
+                    fontVariantNumeric: 'tabular-nums',
+                    '&:hover': { borderColor: t.palette.primary.main },
+                  })}
+                >
+                  {speed}×
+                </Box>
+              );
+            })}
+          </Box>
+          <Divider sx={{ my: 1 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ShareButton
+              reportId={reportId}
+              fightId={fightId}
+              currentTime={currentTime}
+              selectedActorIdRef={selectedActorIdRef}
+              timeRef={timeRef}
+            />
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Share view
+            </Typography>
+          </Box>
+        </Popover>
+      )}
     </Box>
   );
 };
