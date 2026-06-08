@@ -426,6 +426,12 @@ The user is right that the win is integrating with what raids already run:
   quickslot before the pull.
 - **Buff-assignment uptime** — assign Major Breach / Z'en / Slayer to players and track
   whether they actually maintain it (cross-checked against the log).
+- **Trial score & leaderboard capture** — read the live trial score (time + deaths +
+  hardmode) and leaderboard placement, attach to the report, and trend it per prog
+  night in roster-hub. (No combat log carries the score.)
+- **Tank/healer-specific compliance** — taunt uptime (cf. the *Untaunted* addon),
+  debuff coverage (Major Breach/Vuln), synergy throughput (cf. *Group Synergy
+  Tracker*) — role checks that go beyond "is the build legal".
 
 ### 12.6 Honest limits on the live layer
 
@@ -443,6 +449,60 @@ The user is right that the win is integrating with what raids already run:
 in-game — every player self-checks against your rules, the raid lead sees green/red at a
 glance, and the whole night flows back to the web as build-correlated history. The web
 is the brain; the add-on is the raid's nervous system.*
+
+---
+
+## 13. Integration feasibility matrix (verified per add-on)
+
+The §12.4 "plug in, don't rebuild" claim, checked against each target's actual hook.
+Legend: ✅ documented/public · ⚠️ open-source but no formal API (integratable, more
+fragile) · 🔲 no API (overlay only).
+
+| Target | Integration hook | Status | What the ESOTK Companion does | Effort |
+|---|---|---|---|---|
+| **LibGroupCombatStats** | Public dev API: `RegisterAddon(name, {"DPS","HPS","ULT"})`, observable data, callbacks `(unitTag, data)` | ✅ | Consume live DPS/HPS/ULT for the dashboard; ride its group join + broadcast infra; **propose a build/compliance category upstream** so the whole ecosystem benefits | Low |
+| **Hodor Reflexes** | Built on LibGroupCombatStats; same group session | ✅ | Coexist on one data bus; render alongside Hodor numbers (no separate join) | Low |
+| **LibGroupBroadcast** | Serialize/queue API within the 32 B/s budget | ✅ | Our own compact compliance-verdict protocol | Medium |
+| **LUI Extended** | MIT source; custom Player/Group/Raid/Boss frames, class/role colouring, aura tracking | ✅ source | Annotate its raid frames with compliance dots, or reuse its frame code | Medium |
+| **Wizard's Wardrobe** | SavedVariables schema (already parsed here) + auto-equip | ✅ | Verify the equipped setup matches the assignment; offer one-click correct setup | Low–Med |
+| **CombatMetrics** | SavedVariables + build export code | ✅ | Read existing SV so users needn't run our add-on for basics (§10) | Low |
+| **RaidNotifier** | Open source; `StartCountdown()` / `AddAnnouncement()` | ⚠️ | Tie roster assignments (interrupt/portal/sync) to on-screen announcements | Medium |
+| **Untaunted** | Open-source taunt/debuff tracker | ⚠️ | Source taunt-uptime for tank compliance (integrate or reimplement the read) | Medium |
+| **Bandits UI** | Group frames + buff/timer + combat notifications | 🔲 | Overlay compliance on its frames; **must not double-notify** (BUI + RaidNotifier already conflict) | Med–High |
+
+**Takeaway:** the spine is **LibGroupCombatStats** — it already solved group join,
+broadcast queuing, and a clean callback API, and its author (m00nyONE) maintains the
+companion libs (LibCustomNames/Icons). Build on it rather than rolling our own bus, and
+the Hodor user base is reachable on day one.
+
+---
+
+## 14. Competitive landscape & white space
+
+What exists today, and the gap we'd own:
+
+| Tool / category | What it does | What it can't do |
+|---|---|---|
+| **ESO Logs** | Authoritative post-hoc combat analysis | Read-only, after the fact; no build truth (stats/CP), no live layer, no roster rules |
+| **Build sites** (ESO-Hub, Alcast, Arzyel) | Static, hand-made build display & sharing | Open-loop — never tied to a real fight or a live group |
+| **Hodor / LibGroupCombatStats** | Live group DPS/HPS/ULT share | Combat numbers only — no build, no compliance, no web link |
+| **CombatMetrics** | Personal combat + build export code | Personal, not group; no rules; not roster-aware |
+| **RaidNotifier / BUI** | Mechanic alerts, frames, timers | No build compliance, no web roster, no analytics |
+| **RaidLead Essentials** | Ready-check + simple planner | **Discontinued** |
+| **RaidTools** (beta) | Ready-check + buff/food checker | Beta/niche; not role-aware; not web-connected |
+
+**The unclaimed quadrant:** a **web-roster-driven, role-aware, live build-compliance
+system that also produces post-hoc build-correlated analytics.** Every competitor sits
+on one axis (live *or* post-hoc; combat *or* build; personal *or* group; in-game *or*
+web). ESOTK is the only project positioned to join all of them, because it already owns
+the web roster-hub, the log analytics, and `detectBuildIssues`. Notably, ESOTK's
+in-development companion is *already publicly described* as "roster validation, group
+management, and gear inspection inside the ESO client" — this research sharpens that
+into the concrete platform above and confirms nobody else occupies the space.
+
+> The moat isn't any single feature — it's the **loop**: plan on web → enforce in game
+> → analyse on web. A pure add-on (no web brain) or a pure web tool (no in-game hands)
+> can't close it. ESOTK already has both halves.
 
 ---
 
@@ -471,5 +531,12 @@ is the brain; the add-on is the raid's nervous system.*
 - [LibGroupBroadcast — 32 bytes/sec group data limit](https://www.esoui.com/downloads/info1337-LibGroupSocket.html) · [LibGroupSocket source](https://github.com/ESOUIMods/LibGroupSocket/blob/master/LibGroupSocket.lua/)
 - [LUI Extended (MIT, custom group/raid frames)](https://www.esoui.com/downloads/info818-LuiExtended.html) · [GitHub](https://github.com/DakJaniels/LuiExtended)
 - [ESOUI Wiki — UnitTag / group APIs](https://wiki.esoui.com/UnitTag)
+- [LibGroupCombatStats — developer API (RegisterAddon, callbacks)](https://github.com/m00nyONE/LibGroupCombatStats)
+- [RaidNotifier (open source, StartCountdown/AddAnnouncement)](https://github.com/kyoma/ESO-RaidNotifier)
+- [Bandits User Interface](https://esoui.com/downloads/info1643-BanditsUserInterface.html)
+- [Untaunted — taunt/debuff tracker (open source)](https://github.com/Solinur/Untaunted)
+- [Group Synergy Tracker](https://esoui.com/downloads/info2429-GroupSynergyTracker.html)
+- [RaidTools (beta — ready check, buff/food checker)](https://www.esoui.com/downloads/info1969-RaidTools.html) · [RaidLead Essentials (discontinued)](https://www.esoui.com/downloads/info1201-RaidLeadEssentials.html)
+- [ESO-Database Game Data & Leaderboards API](https://game-data.eso-database.com/)
 </content>
 </invoke>
