@@ -80,6 +80,9 @@ function placeOnDome(
 
 interface VariantSpec {
   sky: [string, string]; // [horizon, crown]
+  /** Analytic single-scatter horizon band: a tint concentrated low on the dome. */
+  horizonTint: string;
+  horizonStrength: number;
   fog: string;
   nebula: string[];
   nebulaOpacity: number;
@@ -175,6 +178,8 @@ const VARIANTS: Record<CosmicVariant, VariantSpec> = {
   // Nirn night sky under the two moons — the canonical default.
   tamriel: {
     sky: ['#0f1830', '#243465'], // deep night-blue horizon → richer blue crown
+    horizonTint: '#3a5a8c', // cool airy blue scatter low on the dome
+    horizonStrength: 0.16,
     fog: '#0f1830',
     nebula: ['#4a5fc0', '#6a3fb0', '#2f8ca0'], // blue, violet, teal drifts
     nebulaOpacity: 0.55,
@@ -193,6 +198,8 @@ const VARIANTS: Record<CosmicVariant, VariantSpec> = {
   // The radiant light-realm — bright crown, dark horizon floor so the map stays legible.
   aetherius: {
     sky: ['#5a5a52', '#f4ecd2'],
+    horizonTint: '#e8c98a', // warm gold scatter at the radiant horizon
+    horizonStrength: 0.12,
     fog: '#cdbf9a',
     nebula: ['#e8d9a8', '#f5ead0'],
     nebulaOpacity: 0.4,
@@ -211,6 +218,8 @@ const VARIANTS: Record<CosmicVariant, VariantSpec> = {
   // Mehrunes Dagon's Deadlands — perpetual burning-red storm void.
   deadlands: {
     sky: ['#1a0604', '#3a0d06'],
+    horizonTint: '#8a2410', // burning ember scatter along the Deadlands horizon
+    horizonStrength: 0.22,
     fog: '#1a0604',
     nebula: ['#5a1208', '#7a2a10', '#3a0d22'],
     nebulaOpacity: 0.32,
@@ -232,6 +241,8 @@ const VARIANTS: Record<CosmicVariant, VariantSpec> = {
   // The Void Nights — a moonless sky (4E 98–100). Era easter egg, not canon for ESO's 2E 582.
   'void-nights': {
     sky: ['#070a14', '#0e1226'],
+    horizonTint: '#1c2c4a', // faint cold scatter — a colder, dimmer night than tamriel
+    horizonStrength: 0.1,
     fog: '#070a14',
     nebula: ['#1c2438', '#2a2342'],
     nebulaOpacity: 0.2,
@@ -258,6 +269,8 @@ const VARIANTS: Record<CosmicVariant, VariantSpec> = {
 function useSkyDome(
   radius: number,
   sky: [string, string],
+  horizonTint: string,
+  horizonStrength: number,
 ): { geometry: THREE.IcosahedronGeometry; material: THREE.ShaderMaterial } {
   return useMemo(() => {
     const geometry = new THREE.IcosahedronGeometry(radius, 4);
@@ -266,6 +279,8 @@ function useSkyDome(
         uHorizon: { value: new THREE.Color(sky[0]) },
         uCrown: { value: new THREE.Color(sky[1]) },
         uRadius: { value: radius },
+        uHorizonTint: { value: new THREE.Color(horizonTint) },
+        uHorizonStrength: { value: horizonStrength },
       },
       vertexShader: /* glsl */ `
         varying vec3 vLocal;
@@ -278,6 +293,8 @@ function useSkyDome(
         uniform vec3 uHorizon;
         uniform vec3 uCrown;
         uniform float uRadius;
+        uniform vec3 uHorizonTint;
+        uniform float uHorizonStrength;
         varying vec3 vLocal;
         // cheap ordered-ish hash dither in [-0.5,0.5], scaled to ~1 LSB
         float dither(vec2 p) {
@@ -286,6 +303,12 @@ function useSkyDome(
         void main() {
           float t = clamp((vLocal.y / uRadius) * 0.5 + 0.5, 0.0, 1.0);
           vec3 col = mix(uHorizon, uCrown, t * t);
+          // Analytic single-scatter horizon band: a warm/cool tint concentrated low on the dome
+          // (where the air mass is thickest), falling off cubically toward the crown — the stylized
+          // stand-in for atmospheric scattering (no night-sky radiance model exists). Added BEFORE
+          // the dither so the dither still kills banding on the combined gradient.
+          float h = pow(1.0 - t, 3.0);
+          col += uHorizonTint * (h * uHorizonStrength);
           col += dither(gl_FragCoord.xy) * (1.5 / 255.0);
           gl_FragColor = vec4(col, 1.0);
         }
@@ -295,7 +318,7 @@ function useSkyDome(
       depthWrite: false,
     });
     return { geometry, material };
-  }, [radius, sky]);
+  }, [radius, sky, horizonTint, horizonStrength]);
 }
 
 /** Soft isotropic radial glow texture (nebula clouds / halos). */
@@ -678,7 +701,7 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
 }) => {
   const spec = VARIANTS[variant];
   const radius = size * 2.4;
-  const sky = useSkyDome(radius, spec.sky);
+  const sky = useSkyDome(radius, spec.sky, spec.horizonTint, spec.horizonStrength);
 
   useEffect(() => {
     const { geometry, material } = sky;
