@@ -136,6 +136,27 @@ async function detectOpenRunsCategory(env: Env, guildId: string): Promise<string
   }
 }
 
+// ── Publish target resolution ───────────────────────────────────────────────
+
+export type PublishTarget = { mode: 'existing'; channelId: string } | { mode: 'create' };
+
+const CHANNEL_SNOWFLAKE = /^\d{17,20}$/;
+
+/**
+ * Decide where a roster should be published:
+ *   - into the guild's configured default channel (when set to a valid
+ *     snowflake) — posting alongside other rosters, no channel created; or
+ *   - a freshly created per-roster channel (the default behaviour).
+ *
+ * Exported for unit testing.
+ */
+export function resolvePublishTarget(config: GuildConfig): PublishTarget {
+  if (config.defaultChannelId && CHANNEL_SNOWFLAKE.test(config.defaultChannelId)) {
+    return { mode: 'existing', channelId: config.defaultChannelId };
+  }
+  return { mode: 'create' };
+}
+
 // ── Publish Request/Response ────────────────────────────────────────────────
 
 export interface PublishRequest {
@@ -223,17 +244,28 @@ async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishRe
     channelId = refreshed.channelId!;
     messageId = refreshed.messageId!;
   } else {
-    // Create new channel + message
-    const created = await createNewRosterChannel(
-      env,
-      req.guildId,
-      channelName,
-      categoryId,
-      snapshot,
-      decoded,
-      req.eventTime,
-      config.rolePingIds,
-    );
+    // Post into the configured default channel, or create a new channel.
+    const target = resolvePublishTarget(config);
+    const created =
+      target.mode === 'existing'
+        ? await postRosterToDefaultChannel(
+            env,
+            target.channelId,
+            snapshot,
+            decoded,
+            req.eventTime,
+            config.rolePingIds,
+          )
+        : await createNewRosterChannel(
+            env,
+            req.guildId,
+            channelName,
+            categoryId,
+            snapshot,
+            decoded,
+            req.eventTime,
+            config.rolePingIds,
+          );
     if (!created.ok) return created;
     channelId = created.channelId!;
     messageId = created.messageId!;
@@ -482,16 +514,27 @@ async function doPublishDirect(
   const categoryId =
     req.categoryId ?? config.defaultCategoryId ?? (await detectOpenRunsCategory(env, req.guildId));
 
-  const result = await createNewRosterChannel(
-    env,
-    req.guildId,
-    channelName,
-    categoryId,
-    snapshot,
-    decoded,
-    req.eventTime,
-    config.rolePingIds,
-  );
+  const target = resolvePublishTarget(config);
+  const result =
+    target.mode === 'existing'
+      ? await postRosterToDefaultChannel(
+          env,
+          target.channelId,
+          snapshot,
+          decoded,
+          req.eventTime,
+          config.rolePingIds,
+        )
+      : await createNewRosterChannel(
+          env,
+          req.guildId,
+          channelName,
+          categoryId,
+          snapshot,
+          decoded,
+          req.eventTime,
+          config.rolePingIds,
+        );
 
   if (!result.ok) return result;
 
@@ -615,6 +658,74 @@ async function sendRosterMessages(
   return ids.join(',');
 }
 
+// ── Post roster into an existing channel ────────────────────────────────────
+
+/**
+ * Send the role ping (best-effort) + roster messages into an existing channel.
+ * Used both after creating a fresh channel and when posting into a configured
+ * default channel. Does not create or delete channels.
+ */
+async function sendRosterToChannel(
+  env: Env,
+  channelId: string,
+  snapshot: RosterSnapshot,
+  decoded: Awaited<ReturnType<typeof decodeRosterData>>,
+  eventTime?: string,
+  rolePingIds?: GuildConfig['rolePingIds'],
+): Promise<string> {
+  // Best-effort role ping (opt-in via guild config). Sent as its own message
+  // so it's never re-sent on refresh and a ping failure can't block the post.
+  const ping = buildRolePingLine(decoded, rolePingIds);
+  if (ping) {
+    try {
+      await sendMessage(env, channelId, {
+        content: ping.content,
+        allowed_mentions: { parse: [], roles: ping.roleIds },
+      });
+    } catch (pingErr) {
+      console.warn('[publish] role ping failed (non-fatal):', pingErr);
+    }
+  }
+
+  const text = buildRosterText(snapshot, decoded, eventTime);
+  const chunks = splitMessages(text);
+  const components = buildRosterActionRows(snapshot.id);
+  return sendRosterMessages(env, channelId, chunks, components);
+}
+
+/**
+ * Post a roster into the guild's configured default channel (no channel
+ * creation). Returns an error result if the channel rejects the message
+ * (e.g. it was deleted or the bot lost access) — unlike the create path, we
+ * never created the channel so there's nothing to clean up.
+ */
+async function postRosterToDefaultChannel(
+  env: Env,
+  channelId: string,
+  snapshot: RosterSnapshot,
+  decoded: Awaited<ReturnType<typeof decodeRosterData>>,
+  eventTime?: string,
+  rolePingIds?: GuildConfig['rolePingIds'],
+): Promise<InternalRefreshResult> {
+  try {
+    const messageId = await sendRosterToChannel(
+      env,
+      channelId,
+      snapshot,
+      decoded,
+      eventTime,
+      rolePingIds,
+    );
+    return { ok: true, channelId, messageId };
+  } catch (err) {
+    console.error('[publish] post to default channel failed:', err);
+    return {
+      ok: false,
+      error: 'Failed to post into the configured default channel. Check the bot has access to it.',
+    };
+  }
+}
+
 // ── Create a new channel + post roster ──────────────────────────────────────
 
 async function createNewRosterChannel(
@@ -649,25 +760,14 @@ async function createNewRosterChannel(
   }
 
   try {
-    // Best-effort role ping (opt-in via guild config). Sent as its own message
-    // so it's never re-sent on refresh and a ping failure can't block the post.
-    const ping = buildRolePingLine(decoded, rolePingIds);
-    if (ping) {
-      try {
-        await sendMessage(env, channel.id, {
-          content: ping.content,
-          allowed_mentions: { parse: [], roles: ping.roleIds },
-        });
-      } catch (pingErr) {
-        console.warn('[publish] role ping failed (non-fatal):', pingErr);
-      }
-    }
-
-    const text = buildRosterText(snapshot, decoded, eventTime);
-    const chunks = splitMessages(text);
-    const components = buildRosterActionRows(snapshot.id);
-    const messageIds = await sendRosterMessages(env, channel.id, chunks, components);
-
+    const messageIds = await sendRosterToChannel(
+      env,
+      channel.id,
+      snapshot,
+      decoded,
+      eventTime,
+      rolePingIds,
+    );
     return { ok: true, channelId: channel.id, messageId: messageIds };
   } catch (err) {
     console.error('[publish] send message failed, cleaning up orphaned channel:', err);

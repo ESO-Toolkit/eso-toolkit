@@ -550,7 +550,8 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
     const updated = {
       ...existing,
       guildId,
-      ...(typeof body.defaultChannelId === 'string' && { defaultChannelId: body.defaultChannelId }),
+      ...(typeof body.defaultChannelId === 'string' &&
+        /^\d{17,20}$/.test(body.defaultChannelId) && { defaultChannelId: body.defaultChannelId }),
       ...(typeof body.defaultCategoryId === 'string' && {
         defaultCategoryId: body.defaultCategoryId,
       }),
@@ -581,6 +582,9 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
           }
         })() && { timezone: body.timezone }),
     };
+
+    // An explicit empty string clears the default posting channel.
+    if (body.defaultChannelId === '') delete (updated as GuildConfig).defaultChannelId;
 
     await upsertGuildConfig(env, updated);
     return jsonResponse({ ok: true, config: updated });

@@ -7,7 +7,7 @@
 
 import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
-import { getMappingByChannelId, getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
+import { listMappingsForGuild, getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
 import { refreshRoster } from '../roster/publish.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -52,8 +52,12 @@ export async function handleRosterRefresh(
 
   ctx.waitUntil(
     (async () => {
-      const mapping = await getMappingByChannelId(env, channelId);
-      if (!mapping) {
+      // A channel may host more than one roster (when a default posting channel
+      // is configured), so refresh every roster mapped to this channel.
+      const mappings = (await listMappingsForGuild(env, guildId)).filter(
+        (m) => m.channelId === channelId,
+      );
+      if (mappings.length === 0) {
         await sendFollowup(env, interaction.token, {
           content: '❌ No roster is linked to this channel. Use `/roster link` first.',
           flags: MessageFlags.EPHEMERAL,
@@ -61,15 +65,23 @@ export async function handleRosterRefresh(
         return;
       }
 
-      const result = await refreshRoster(env, mapping.rosterId);
-      if (result.ok) {
+      let okCount = 0;
+      let lastError: string | undefined;
+      for (const mapping of mappings) {
+        const result = await refreshRoster(env, mapping.rosterId, guildId);
+        if (result.ok) okCount++;
+        else lastError = result.error;
+      }
+
+      if (okCount > 0) {
+        const suffix = mappings.length > 1 ? ` (${okCount}/${mappings.length})` : '';
         await sendFollowup(env, interaction.token, {
-          content: '✅ Roster refreshed from ESO Toolkit!',
+          content: `✅ Roster refreshed from ESO Toolkit!${suffix}`,
           flags: MessageFlags.EPHEMERAL,
         });
       } else {
         await sendFollowup(env, interaction.token, {
-          content: `❌ Refresh failed: ${result.error}`,
+          content: `❌ Refresh failed: ${lastError ?? 'Unknown error'}`,
           flags: MessageFlags.EPHEMERAL,
         });
       }

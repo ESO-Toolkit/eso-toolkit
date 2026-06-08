@@ -521,7 +521,8 @@ export const DiscordServerConfigPage: React.FC = () => {
 
     try {
       const body: Record<string, unknown> = {
-        defaultChannelId: defaultChannelId || undefined,
+        // Always send a string: '' explicitly clears the default posting channel.
+        defaultChannelId,
         defaultCategoryId: defaultCategoryId || undefined,
         namePattern,
         allowedRoleIds: allowedRoleIds.map((r) => r.id),
@@ -558,7 +559,8 @@ export const DiscordServerConfigPage: React.FC = () => {
 
   // Get text channels grouped by category
   const categories = channels.filter((c) => c.type === 4);
-  // textChannels removed — category-based auto-create is the primary flow
+  // Text channels (type 0) — used by the optional "default posting channel" picker
+  const textChannels = channels.filter((c) => c.type === 0);
 
   // Filter guilds by search
   const filteredGuilds = useMemo(() => {
@@ -1010,6 +1012,60 @@ export const DiscordServerConfigPage: React.FC = () => {
                 </Alert>
               </Collapse>
             )}
+
+            {/* Default Posting Channel */}
+            <ConfigSection
+              icon={<TagIcon sx={{ color: '#5865F2', fontSize: 18 }} />}
+              title="Default Posting Channel"
+              description="Optionally post every roster into one existing channel instead of creating a new channel per roster."
+              isDark={isDark}
+              badge={
+                <Chip
+                  label="Optional"
+                  size="small"
+                  sx={{
+                    fontSize: '0.65rem',
+                    height: 18,
+                    background: isDark
+                      ? 'linear-gradient(135deg, rgba(88,101,242,0.15), rgba(88,101,242,0.08))'
+                      : 'rgba(88,101,242,0.08)',
+                    color: '#5865F2',
+                    border: '1px solid rgba(88,101,242,0.15)',
+                  }}
+                />
+              }
+            >
+              <FormControl fullWidth size="small">
+                <InputLabel>Channel</InputLabel>
+                <Select
+                  value={defaultChannelId}
+                  label="Channel"
+                  onChange={(e: SelectChangeEvent) => setDefaultChannelId(e.target.value)}
+                >
+                  <MenuItem value="">
+                    <em>Auto-create a channel per roster</em>
+                  </MenuItem>
+                  {textChannels.map((ch) => (
+                    <MenuItem key={ch.id} value={ch.id}>
+                      # {ch.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  mt: 1,
+                  color: isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)',
+                  fontSize: '0.68rem',
+                }}
+              >
+                When set, all rosters are posted here and the category &amp; channel-name settings
+                below are ignored. Leave on &ldquo;Auto-create&rdquo; for a dedicated channel per
+                roster.
+              </Typography>
+            </ConfigSection>
 
             {/* Default Category */}
             <ConfigSection

@@ -9,7 +9,7 @@ import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
 import { getMappingByChannelId, getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
 import { refreshRoster } from '../roster/publish.js';
-import { InteractionResponseType, MessageFlags } from '../types.js';
+import { InteractionResponseType, MessageFlags, RosterButtonId } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
 export async function handleRosterRefreshButton(
@@ -50,18 +50,29 @@ export async function handleRosterRefreshButton(
     };
   }
 
+  // The button encodes its own roster ID (roster_refresh:<rosterId>), so refresh
+  // that exact roster even when several rosters share one channel. Fall back to
+  // the channel→roster lookup for any older buttons without an encoded ID.
+  const customId = interaction.data?.custom_id ?? '';
+  const prefix = `${RosterButtonId.REFRESH}:`;
+  const encodedRosterId = customId.startsWith(prefix) ? customId.slice(prefix.length) : '';
+
   ctx.waitUntil(
     (async () => {
-      const mapping = await getMappingByChannelId(env, channelId);
-      if (!mapping) {
-        await sendFollowup(env, interaction.token, {
-          content: '❌ No roster is linked to this channel.',
-          flags: MessageFlags.EPHEMERAL,
-        });
-        return;
+      let rosterId = encodedRosterId;
+      if (!rosterId) {
+        const mapping = await getMappingByChannelId(env, channelId);
+        if (!mapping) {
+          await sendFollowup(env, interaction.token, {
+            content: '❌ No roster is linked to this channel.',
+            flags: MessageFlags.EPHEMERAL,
+          });
+          return;
+        }
+        rosterId = mapping.rosterId;
       }
 
-      const result = await refreshRoster(env, mapping.rosterId);
+      const result = await refreshRoster(env, rosterId, guildId);
       if (result.ok) {
         await sendFollowup(env, interaction.token, {
           content: '✅ Roster refreshed!',
