@@ -16,28 +16,35 @@ import { getEnvVar } from '../../../utils/envUtils';
  */
 
 /**
- * Per-`mapFile` overrides pointing at self-hosted high-res tiles. Keyed by the exact
- * `fight.maps[].file` value (e.g. `blackwood/u30_rg_map_outside_002`). Empty until the one-map spike
- * (scope doc P1) proves a tile is higher-res than 768 px AND aligns; entries are added one verified
- * map at a time.
+ * Set of `mapFile` values (exact `fight.maps[].file`, e.g. `blackwood/u30_rg_map_outside_002`) for
+ * which a self-hosted AI-upscaled tile exists under {@link HIRES_MAP_DIR}. Entries are added one
+ * verified map at a time. The native ESO map for these is 768 px (confirmed byte-identical to the
+ * RPGLogs CDN), so the upscaled tile is an illustration-model super-resolution, not a re-extract —
+ * see .scratch/MAP-REHOST-SCOPE.md §0b.
  */
-export const MAP_TILE_OVERRIDES: Record<string, string> = {
-  // 'blackwood/u30_rg_map_outside_002': 'https://maps.esotk.com/blackwood/u30_rg_map_outside_002.webp',
-};
+export const HIRES_MAP_FILES: ReadonlySet<string> = new Set<string>([
+  'blackwood/u30_rg_map_outside_002', // RG Xalvakka — first map under test
+]);
+
+/**
+ * Directory (relative to the app base) where self-hosted hi-res tiles live, as `<dir>/<mapFile>.jpg`.
+ * Served from public/ in dev; would be an R2/CDN base in production.
+ */
+const HIRES_MAP_DIR = 'maps-hires';
 
 const RPGLOGS_MAP_BASE = 'https://assets.rpglogs.com/img/eso/maps';
 
 /**
- * Returns the texture URL for a given `mapFile`: a self-hosted override when one is registered (and
+ * Returns the texture URL for a given `mapFile`: a self-hosted hi-res tile when one is registered (and
  * not explicitly disabled via `VITE_SELF_HOSTED_MAPS=false`, the kill switch for instant rollback),
  * otherwise the RPGLogs CDN default. Pure and deterministic per `mapFile`, so the caller's
  * `mapFile`-keyed texture cache stays correct. Env access goes through `getEnvVar` (the project's
  * `import.meta.env` wrapper) so this stays testable under Jest, which can't parse `import.meta`.
  */
 export function getMapTextureUrl(mapFile: string): string {
-  const override = MAP_TILE_OVERRIDES[mapFile];
-  if (override && getEnvVar('VITE_SELF_HOSTED_MAPS') !== 'false') {
-    return override;
+  if (HIRES_MAP_FILES.has(mapFile) && getEnvVar('VITE_SELF_HOSTED_MAPS') !== 'false') {
+    const base = getEnvVar('BASE_URL') ?? '/';
+    return `${base}${HIRES_MAP_DIR}/${mapFile}.jpg`;
   }
   return `${RPGLOGS_MAP_BASE}/${mapFile}.jpg`;
 }

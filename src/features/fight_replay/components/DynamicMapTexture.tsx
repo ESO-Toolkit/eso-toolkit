@@ -9,6 +9,7 @@ import { usePerfTier } from '../../../hooks/usePerfTier';
 import { fightTimeToTimestamp } from '../../../utils/fightTimeUtils';
 import { getMapAtTimestamp, MapTimeline } from '../../../utils/mapTimelineUtils';
 import { RenderPriority } from '../constants/renderPriorities';
+import { setupFloorSharpen, sharpenStrengthForTier } from '../utils/floorSharpen';
 import { getMapTextureUrl } from '../utils/mapTextureSource';
 
 interface DynamicMapTextureProps {
@@ -140,12 +141,30 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
     return Math.min(hw, tierCap);
   }, [gl, perfTier]);
 
+  // Texture-space sharpen for the foreshortened floor map, scaled by perf tier (low tier = off).
+  // Injected into the material's fragment shader (floorSharpen util) so it runs inside the scene's
+  // on-demand gl.render — no per-frame cost, no post-processing pass. Re-applied when the tier
+  // changes; setupFloorSharpen only recompiles once, then just updates the live strength uniform.
+  const sharpenStrength = sharpenStrengthForTier(perfTier);
+  useEffect(() => {
+    setupFloorSharpen(materialRef.current, sharpenStrength);
+    // The shader recompile/uniform change happens outside any render trigger, so nudge the
+    // on-demand RenderLoop to repaint (mirrors the texture-swap contract).
+    onTextureChange?.();
+  }, [sharpenStrength, onTextureChange]);
+
   // Create geometry
   const geometry = useMemo(() => new THREE.PlaneGeometry(size, size), [size]);
 
   // Per-instance procedural fallback (grid) texture, applied when a CDN map texture fails
   // to load. Memoized so it's generated once per mount and disposed in cleanup below.
-  const fallbackTexture = useMemo(() => generateFallbackTexture(), []);
+  // Anisotropy is applied here (not in the generator, which has no renderer handle) so the grid
+  // matches the real map's grazing-angle sampling — consistency only paints on a CDN failure.
+  const fallbackTexture = useMemo(() => {
+    const tex = generateFallbackTexture();
+    tex.anisotropy = maxAnisotropy;
+    return tex;
+  }, [maxAnisotropy]);
 
   // Load texture with caching
   const loadTexture = useMemo(() => {

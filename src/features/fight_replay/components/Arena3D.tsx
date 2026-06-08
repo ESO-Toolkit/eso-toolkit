@@ -723,6 +723,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
           key={`canvas-${fight.id}`} // Stable key prevents unnecessary recreation
+          // Render resolution scaled by perf tier. R3F's default is already min(devicePixelRatio, 2),
+          // so [1, 2] just makes that explicit for medium/high (HiDPI gets a crisp 2×); low tier is
+          // pinned to 1 as cheap perf insurance on weak GPUs. Reactive — changes apply without a
+          // remount. (Verified against the R3F source: this is a perf lever, not a sharpness fix —
+          // HiDPI already renders at 2×; the crispness win comes from the floor unsharp mask.)
+          dpr={perfTier === 'low' ? 1 : [1, 2]}
           camera={{
             position: initialCameraPosition,
             fov: 30,
