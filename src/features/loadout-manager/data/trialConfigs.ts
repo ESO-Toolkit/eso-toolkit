@@ -238,6 +238,53 @@ export function getTrialById(id: string): TrialConfig | undefined {
   return TRIALS.find((trial) => trial.id === id);
 }
 
+/** Human-readable label for an activity type, used in the selector UI. */
+export function getActivityKindLabel(type: TrialConfig['type']): string {
+  switch (type) {
+    case 'trial':
+      return 'Trial';
+    case 'dungeon':
+      return 'Dungeon';
+    case 'arena':
+      return 'Arena';
+    case 'substitute':
+      return 'Substitute';
+    case 'general':
+    default:
+      return 'General';
+  }
+}
+
+/** Display order and section headings for activity groups in the selector. */
+const ACTIVITY_GROUPS: { type: TrialConfig['type']; label: string }[] = [
+  { type: 'general', label: 'General' },
+  { type: 'trial', label: 'Trials' },
+  { type: 'dungeon', label: 'Dungeons' },
+  { type: 'arena', label: 'Arenas' },
+  { type: 'substitute', label: 'Substitutes' },
+];
+
+export interface TrialGroup {
+  type: TrialConfig['type'];
+  label: string;
+  trials: TrialConfig[];
+}
+
+/**
+ * Group the activities by type for sectioned rendering in the selector.
+ * Groups are returned in {@link ACTIVITY_GROUPS} order; empty groups are omitted.
+ * Within trials and dungeons, entries are sorted alphabetically by name.
+ */
+export function getGroupedTrials(): TrialGroup[] {
+  return ACTIVITY_GROUPS.map(({ type, label }) => {
+    const trials = TRIALS.filter((trial) => trial.type === type);
+    if (type === 'trial' || type === 'dungeon') {
+      trials.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return { type, label, trials };
+  }).filter((group) => group.trials.length > 0);
+}
+
 /**
  * Helper function to get all boss names for a trial
  */
