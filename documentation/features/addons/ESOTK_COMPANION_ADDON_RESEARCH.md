@@ -314,6 +314,38 @@ With the companion's exact stats we can compute, per player, against hard ESO ca
 These read like a coach sitting next to the parse. **This is the headline UVP**, far
 more useful than "here's a build."
 
+#### 11.1.1 "Self" vs "effective" — how penetration & crit get to 100% accuracy
+
+ESOTK estimates pen/crit from the log's gear today; the companion replaces the guess.
+But two of these stats split into a **self** part (on your character sheet) and an
+**effective** part (depends on the target/buffs), and being precise about that split is
+what makes the coaching trustworthy:
+
+| Stat | Self part (add-on, exact) | Effective part (not on your sheet) | How ESOTK gets 100% |
+|---|---|---|---|
+| **Penetration** | `GetPlayerStat(STAT_*_PENETRATION)` = gear/traits (Sharpened), sets (Spriggan), CP (Piercing), Lover mundus, light-armour passives — **exact** | **Group armour debuffs on the boss** (Major/Minor Breach, Crusher, Alkosh, Crimson Oath, Runic Sunder) reduce the *target's* resist, so they're **not in your stat** | add-on's exact self-pen **+ the log's debuff uptime on the boss** = exact effective pen vs the 18,200 cap |
+| **Crit chance** | crit rating ÷ 21,918 — exact **at the moment read** | Temporary buffs (Major/Minor Savagery/Prophecy from potions/sets) fluctuate | snapshot a **self-buffed baseline** (canonical) ± an in-combat read for buffed peaks |
+| **Crit damage** | base 50% + Shadow mundus, Backstabber, medium-armour, set sources — readable/derivable | Temporary **Major/Minor Force**; Backstabber is positional | same: baseline vs in-combat, and Backstabber is conditional |
+
+**The key correction to "we're just guessing":**
+- Your **personal/self** penetration and crit become **100% exact** — `GetPlayerStat` is
+  the game's own number, not an estimate. That alone removes the guesswork ESOTK does now.
+- The **effective** numbers depend on things the character sheet never holds —
+  **target debuffs** (for pen) and **temporary buffs** (for crit). Penetration's missing
+  half is **exactly what the combat log records** (debuff auras on the boss), so the
+  add-on + log together are exact where neither is alone. (An add-on *can* also compute
+  "pen on target" live by scanning the boss's debuffs — what CombatMetrics / Dynamic
+  Stats / Meterskull already do — but for a logged fight, combining with the log is the
+  clean split.)
+- **Snapshot timing matters** (see §20): read the canonical baseline **out of combat,
+  self-buffed**, so cross-player comparisons are apples-to-apples; optionally add an
+  in-combat read for buffed values. Never feed a buffed in-combat reading into the
+  "are you at the cap" math without accounting for what was up.
+
+> Restated as the moat: the add-on supplies the half the log can't see (your tuning),
+> the log supplies the half the add-on can't see (what's on the boss), and ESOTK is the
+> only place the two combine into an exact effective number.
+
 ### 11.2 Champion Point allocation audit
 
 Full per-star allocation (invisible to the log) checked against the content: unspent
@@ -889,6 +921,8 @@ only later, as a convenience, if users want full builds visible in-game without 
 - [ESO-Hub Build Editor (import/export, CombatMetrics integration)](https://eso-hub.com/en/build-editor)
 - [ESO penetration & the 18,200 cap (over-penetration is wasted)](https://hyperioxes.com/eso/tools/penetration-calculator)
 - [ESO critical damage 125% hard cap / crit rating ÷ 21,918](https://eso-hub.com/en/guides/critical-damage) · [UESP: Critical Damage](https://en.uesp.net/wiki/Online:Critical_Damage)
+- [Penetration = personal sources vs group armour debuffs on the target (Breach/Crusher/Alkosh)](https://forums.elderscrollsonline.com/en/discussion/477907/penetration-calculation-and-how-it-works) · [Penetration overview — TerminalESO](https://terminaleso.wordpress.com/penetration/)
+- [Add-ons computing live pen-on-target by scanning boss debuffs — Dynamic Stats](https://esoui.com/downloads/info3917-Dynamicstats.html) · [Meterskull](https://www.esoui.com/downloads/info3941-MeterskullArmorPowerCriticalPenetrationMeter.html)
 - [LibGroupBroadcast — 32 bytes/sec group data limit](https://www.esoui.com/downloads/info1337-LibGroupSocket.html) · [LibGroupSocket source](https://github.com/ESOUIMods/LibGroupSocket/blob/master/LibGroupSocket.lua/)
 - [LUI Extended (MIT, custom group/raid frames)](https://www.esoui.com/downloads/info818-LuiExtended.html) · [GitHub](https://github.com/DakJaniels/LuiExtended)
 - [ESOUI Wiki — UnitTag / group APIs](https://wiki.esoui.com/UnitTag)
