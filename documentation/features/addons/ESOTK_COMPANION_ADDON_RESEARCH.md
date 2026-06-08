@@ -20,7 +20,7 @@ surfaces · 5. Ranked ideas (P0–P2) · 6. Phased architecture · 7. Risks & op
 17. Why now — the 2026 meta · 18. Platform reality & a console-only opportunity ·
 19. Tech stack & SavedVariables schema · 20. Capture methodology & accuracy ·
 21. Beyond trials — PvP audiences · 22. Privacy, consent & ToS · 23. Maintenance & risk
-· 24. Consolidated roadmap.
+· 24. Consolidated roadmap · 25. Group-share transport (how to broadcast it).
 
 ---
 
@@ -477,7 +477,7 @@ fragile) · 🔲 no API (overlay only).
 
 | Target | Integration hook | Status | What the ESOTK Companion does | Effort |
 |---|---|---|---|---|
-| **LibGroupCombatStats** | Public dev API: `RegisterAddon(name, {"DPS","HPS","ULT"})`, observable data, callbacks `(unitTag, data)` | ✅ | Consume live DPS/HPS/ULT for the dashboard; ride its group join + broadcast infra; **propose a build/compliance category upstream** so the whole ecosystem benefits | Low |
+| **LibGroupCombatStats** | Public dev API: `RegisterAddon(name, {"DPS","HPS","ULT"})`, observable data, callbacks `(unitTag, data)` | ✅ | **Consume** live DPS/HPS/ULT for the dashboard. Its categories are fixed (DPS/HPS/ULT) — our own build/compliance data rides **LibGroupBroadcast** directly instead (§25) | Low |
 | **Hodor Reflexes** | Built on LibGroupCombatStats; same group session | ✅ | Coexist on one data bus; render alongside Hodor numbers (no separate join) | Low |
 | **LibGroupBroadcast** | Serialize/queue API within the 32 B/s budget | ✅ | Our own compact compliance-verdict protocol | Medium |
 | **LUI Extended** | MIT source; custom Player/Group/Raid/Boss frames, class/role colouring, aura tracking | ✅ source | Annotate its raid frames with compliance dots, or reuse its frame code | Medium |
@@ -507,6 +507,16 @@ What exists today, and the gap we'd own:
 | **RaidNotifier / BUI** | Mechanic alerts, frames, timers | No build compliance, no web roster, no analytics |
 | **RaidLead Essentials** | Ready-check + simple planner | **Discontinued** |
 | **RaidTools** (beta) | Ready-check + buff/food checker | Beta/niche; not role-aware; not web-connected |
+| **RdK Group Tool** | **Guild-admin *query* of group members' equipment, CP, stats, mundus, skills** (opt-in, off by default; PvP-focused) | In-game only; no ESO Logs correlation, no web analytics/history, no cap-aware coaching; a query tool, not a platform |
+| **Taos Group Tools / GroupSpy** | Group ult frames, buff-food indicators, group info | Coordination widgets, not build compliance or analytics |
+
+> **Correction (important).** An earlier draft of this doc claimed "no competitor shares
+> full builds." That is **wrong**: **RdK Group Tool already shares equipment, CP, stats
+> and mundus across the group** (admin-gated, opt-in, over map pins — see §25). So the
+> capability is *not* novel. What remains genuinely unclaimed is the **combination**: a
+> web-roster-driven, role-aware, **log-correlated** compliance + analytics platform.
+> RdK proves the in-game transport works; it just stops at an in-game PvP query tool with
+> no web brain, no ESO Logs link, and no coaching/history.
 
 **The unclaimed quadrant:** a **web-roster-driven, role-aware, live build-compliance
 system that also produces post-hoc build-correlated analytics.** Every competitor sits
@@ -515,7 +525,7 @@ web). ESOTK is the only project positioned to join all of them, because it alrea
 the web roster-hub, the log analytics, and `detectBuildIssues`. Notably, ESOTK's
 in-development companion is *already publicly described* as "roster validation, group
 management, and gear inspection inside the ESO client" — this research sharpens that
-into the concrete platform above and confirms nobody else occupies the space.
+into the concrete platform above.
 
 > The moat isn't any single feature — it's the **loop**: plan on web → enforce in game
 > → analyse on web. A pure add-on (no web brain) or a pure web tool (no in-game hands)
@@ -523,11 +533,10 @@ into the concrete platform above and confirms nobody else occupies the space.
 
 **One more structural advantage:** ESO has **no native gear/build inspection** — ZOS
 deliberately disabled it to curb toxicity, and the API won't expose another player's
-gear. So the *only* way to see a teammate's full build in-game is if they **opt in to
-broadcast it** — which is exactly our model. No direct competitor shares full builds
-(stats/CP), and even the community's standard answer to "how do I see someone's build?"
-is "check esologs" — which only has gear, not the stats/CP/attributes we capture. We're
-filling a gap the base game intentionally left open *and* nobody else fills.
+gear/stats (`GetPlayerStat` is self-only; there is no `GetUnitStat`). So the *only* way
+to see a teammate's full build is if they **opt in to broadcast it** from their own
+client — which is exactly our model, and the model RdK already uses. The base game left
+this gap open on purpose; our edge is wiring it to logs + web, not the sharing itself.
 
 ---
 
@@ -812,6 +821,52 @@ three things the whole platform rests on.
 
 ---
 
+## 25. Group-share transport — how to actually broadcast it
+
+Now that opt-in group sharing is accepted, here's the concrete "how", grounded in the
+real libraries and an existing precedent (RdK Group Tool).
+
+### Two libraries, two jobs
+- **LibGroupCombatStats** — *consume only*. Clean callback API, but its categories are
+  fixed (DPS/HPS/ULT). Use it to pull live combat numbers into the dashboard; it is **not**
+  where custom build/compliance data goes.
+- **LibGroupBroadcast 2.0** (sirinsidiator) — *the vehicle for our own data*. It exposes
+  a real custom-protocol API: `DeclareProtocol(id, name)` (id/name must be globally
+  unique, reserved on the ESOUI wiki), then `AddField(...)` built from `CreateFlagField`
+  (booleans → single bits), `CreateNumericField` (range-limited ints — declare min/max so
+  it uses the fewest bits), enum/array/reserved fields. The library bit-packs to the
+  minimum and fairly shares the **~32 B/s** group budget across all add-ons.
+
+### Two payload tiers (driven by the byte budget)
+1. **Live compliance verdict** — what we broadcast in/around combat. A handful of
+   `FlagField`s (`food`, `mundus`, `pen`, `sets`, `cp`, `roleOK`) plus maybe one or two
+   small bucketed numerics. That's a few **bits**, trivially within budget. Each client
+   self-evaluates against the synced ruleset (§12.2) and broadcasts only this verdict;
+   the raid lead aggregates into the dashboard.
+2. **Full build** (CP allocation + exact stats + gear) — far too big for the live
+   trickle. Two ways to move it, neither needs a desktop app:
+   - **Per-member SavedVariables upload (recommended for the website).** Each player
+     uploads their own file; ESOTK matches and assembles the group. No byte budget at
+     all, exact data. Simplest and most reliable.
+   - **In-game bulk query over map pins** — the **RdK Group Tool precedent**: a guild
+     admin can already *query* members' equipment/CP/stats/mundus, transferred over map
+     pins, opt-in and off by default. Proves full-build P2P transfer works; it's just
+     slow, so do it **out of combat / pre-pull**, on demand.
+
+### Recommendation
+Live **verdicts via LibGroupBroadcast** for the in-game dashboard; **full builds via
+per-member SavedVariables upload** for the website. Add RdK-style in-game bulk query
+only later, as a convenience, if users want full builds visible in-game without uploading.
+
+### Constraints to design in now
+- Reserve a unique protocol id+name on the ESOUI wiki; **version the protocol** and
+  handshake so mismatched add-on versions degrade cleanly.
+- Bulk transfer is **out-of-combat only** (and courteous on the shared channel).
+- Everyone who should appear must run the add-on and opt in (§12.6) — verdicts/builds
+  come from each player's own client, never from inspection.
+
+---
+
 ## Sources
 
 - [ESO Logs — Getting Started](https://www.esologs.com/help/start)
@@ -854,5 +909,8 @@ three things the whole platform rests on.
 - [GetPlayerStat (UESP function reference)](https://esodata.uesp.net/100010/data/g/e/t/GetPlayerStat.html) · [Character sheet & advanced stats explained](https://www.eso-u.com/articles/player_character_sheet_and_advanced_stats_ui_explained)
 - [Easy Stalking — auto-log Cyrodiil/IC/BG](https://www.esoui.com/downloads/info2332-EasyStalking-Encounterlog.html) · [PvpMeter](https://forums.elderscrollsonline.com/en/discussion/387159/addon-pvpmeter-graphical-tracker-for-your-kill-death-in-pvp-and-history-of-your-bg-duel-played) · [PvP addons guide — NirnStorm](https://nirnstorm.com/eso/guides/pvp-addons-guide/)
 - [No native gear inspection in ESO (ZOS design, anti-toxicity)](https://forums.elderscrollsonline.com/en/discussion/619375/ability-to-inspect-players-in-eso) · [Why you can't inspect other players](https://forums.elderscrollsonline.com/en/discussion/566890/why-cant-i-inspect-other-players-noob-question)
+- [GetUnitPower (current/max for any unitTag)](https://esoapi.uesp.net/100020/data/g/e/t/GetUnitPower.html) · [GetUnitBuffInfo (group buffs)](https://esodata.uesp.net/100016/data/g/e/t/GetUnitBuffInfo.html) · [UnitTag reference](https://wiki.esoui.com/UnitTag)
+- [LibGroupBroadcast custom-protocol API (DeclareProtocol/AddField/NumericField/ArrayField)](https://github.com/sirinsidiator/ESO-LibGroupBroadcast) · [Broadcasting API thread](https://www.esoui.com/forums/showthread.php?p=51019)
+- [RdK Group Tool — group query of equipment/CP/stats/mundus over map pins](https://www.esoui.com/downloads/info2475-RdKGroupTool.html) · [Taos Group Tools](https://esoui.com/downloads/info1962-TaosGroupTools.html)
 </content>
 </invoke>
