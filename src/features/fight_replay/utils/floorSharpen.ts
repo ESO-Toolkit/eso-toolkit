@@ -27,10 +27,10 @@ export function sharpenStrengthForTier(tier: 'low' | 'medium' | 'high'): number 
     case 'low':
       return 0;
     case 'medium':
-      return 0.6;
+      return 0.5;
     case 'high':
     default:
-      return 1.0;
+      return 0.8;
   }
 }
 
