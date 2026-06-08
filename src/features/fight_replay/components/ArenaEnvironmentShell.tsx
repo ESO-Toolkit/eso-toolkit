@@ -733,14 +733,15 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
           const anchor = MAGNUS_LEAK_AZ;
           const az = anchor + k * 0.26;
           const falloff = Math.exp(-(k * k) / 4); // gaussian about the anchor
-          const pos = placeOnDome(az, 0.05 + 0.05 * falloff, domeDist, center);
+          const pos = placeOnDome(az, 0.04 + 0.04 * falloff, domeDist, center);
           return (
             <GlowSprite
               key={`band-${k}`}
               color="#e8c888"
+              // Kept low: it's additive and bloom amplifies it, so a higher opacity washes the sky gold.
               position={pos}
-              scale={size * (2.2 + 0.8 * falloff)}
-              opacity={0.12 + 0.2 * falloff}
+              scale={size * (2.0 + 0.7 * falloff)}
+              opacity={0.05 + 0.1 * falloff}
             />
           );
         })}

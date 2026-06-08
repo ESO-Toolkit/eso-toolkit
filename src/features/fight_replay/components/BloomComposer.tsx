@@ -35,9 +35,12 @@ interface BloomComposerProps {
 
 export const BloomComposer: React.FC<BloomComposerProps> = ({
   composerRef,
-  strength = 0.8,
+  strength = 0.85,
   radius = 0.5,
-  threshold = 0.85,
+  // Threshold sits above the brightest the tone-mapped map floor can reach (incl. bright snow/white
+  // zones), so only the un-tonemapped celestials (stars, lit moon faces, additive glows) bloom and the
+  // floor never blooms to mush regardless of which map this ships to.
+  threshold = 0.9,
 }) => {
   const { gl, scene, camera, size } = useThree();
 
