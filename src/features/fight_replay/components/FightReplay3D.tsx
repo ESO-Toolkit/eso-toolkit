@@ -953,6 +953,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
                 : 0
             }
             overlay
+            isMobile={isMobile}
           />
         </Box>
       )}

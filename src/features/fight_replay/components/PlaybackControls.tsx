@@ -9,7 +9,8 @@
 
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
-import { Box, IconButton, Tooltip } from '@mui/material';
+import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import { Box, Collapse, IconButton, Tooltip } from '@mui/material';
 import React from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
@@ -75,6 +76,11 @@ interface PlaybackControlsProps {
   onToggleCollapse?: () => void;
   /** Fraction elapsed (0–100) for the progress hairline shown while the bar is hidden. */
   progressPct?: number;
+  /**
+   * Mobile layout: collapses the control row to the essentials (timecode · play cluster · more)
+   * and tucks Speed + Share behind a "more" toggle, so the transport stays uncluttered on a phone.
+   */
+  isMobile?: boolean;
 }
 
 /**
@@ -129,7 +135,12 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   barVisible = true,
   onToggleCollapse,
   progressPct = 0,
+  isMobile = false,
 }) => {
+  // Mobile "more" disclosure — reveals Speed + Share in a secondary row so the default transport
+  // row stays minimal (timecode · play · more · collapse).
+  const [moreOpen, setMoreOpen] = React.useState(false);
+
   // Use optimized timeline scrubbing for better performance
   const {
     displayTime,
@@ -291,11 +302,14 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
                 / {formatTime(duration)}
               </Box>
             </Box>
-            <SpeedSelector
-              playbackSpeed={playbackSpeed}
-              onSpeedChange={onSpeedChange}
-              speeds={PLAYBACK_SPEEDS}
-            />
+            {/* Speed lives inline on desktop; on mobile it moves into the "more" row below. */}
+            {!isMobile && (
+              <SpeedSelector
+                playbackSpeed={playbackSpeed}
+                onSpeedChange={onSpeedChange}
+                speeds={PLAYBACK_SPEEDS}
+              />
+            )}
           </Box>
 
           {/* Center: transport cluster (compact orb) */}
@@ -323,13 +337,31 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               minWidth: 0,
             }}
           >
-            <ShareButton
-              reportId={reportId}
-              fightId={fightId}
-              currentTime={currentTime}
-              selectedActorIdRef={selectedActorIdRef}
-              timeRef={timeRef}
-            />
+            {/* Desktop keeps Share inline; mobile folds Speed + Share into a "more" row. */}
+            {isMobile ? (
+              <Tooltip title={moreOpen ? 'Hide options' : 'More options'}>
+                <IconButton
+                  aria-label="More options"
+                  aria-expanded={moreOpen}
+                  size="small"
+                  onClick={() => setMoreOpen((v) => !v)}
+                  sx={{
+                    color: moreOpen ? 'primary.main' : 'text.secondary',
+                    '&:hover': { color: 'text.primary' },
+                  }}
+                >
+                  <TuneRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <ShareButton
+                reportId={reportId}
+                fightId={fightId}
+                currentTime={currentTime}
+                selectedActorIdRef={selectedActorIdRef}
+                timeRef={timeRef}
+              />
+            )}
             {onToggleCollapse && (
               <Tooltip title="Collapse controls (C)">
                 <IconButton
@@ -344,6 +376,36 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             )}
           </Box>
         </Box>
+
+        {/* Mobile "more" row — Speed + Share revealed on demand so the default transport stays
+            minimal. Desktop never renders this (its Speed/Share live inline above). */}
+        {isMobile && (
+          <Collapse in={moreOpen} unmountOnExit>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 2,
+                pt: 0.5,
+                pb: 0.25,
+              }}
+            >
+              <SpeedSelector
+                playbackSpeed={playbackSpeed}
+                onSpeedChange={onSpeedChange}
+                speeds={PLAYBACK_SPEEDS}
+              />
+              <ShareButton
+                reportId={reportId}
+                fightId={fightId}
+                currentTime={currentTime}
+                selectedActorIdRef={selectedActorIdRef}
+                timeRef={timeRef}
+              />
+            </Box>
+          </Collapse>
+        )}
       </Box>
     </Box>
   );
