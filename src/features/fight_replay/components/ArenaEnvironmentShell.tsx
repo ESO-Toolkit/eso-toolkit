@@ -104,7 +104,9 @@ interface VariantSpec {
   sparkles: boolean;
 }
 
-const SUN = [0.6, -0.4, 0.7] as [number, number, number];
+// Shared sun (Magnus) direction that lights the moons' terminators. Comes from the upper-right so both
+// moons read as gibbous/crescent rather than flat-lit, and consistently with each other.
+const SUN = [0.72, 0.32, 0.62] as [number, number, number];
 
 // The replay camera rests looking across the map at azimuth ≈ −0.79 rad (−45°). Backdrop features are
 // anchored to this so something interesting greets the default view, then spread around the full dome.
@@ -300,59 +302,52 @@ function makeRadialTexture(color: string): THREE.CanvasTexture {
 }
 
 /**
- * A moon face: base color, soft darker maria blotches (dead-flesh reading), and a terminator gradient
- * shading toward the unlit side per the shared sun direction. Baked once into a CanvasTexture.
+ * An equirectangular moon SURFACE map (base colour + soft maria patches), for wrapping on a sphere.
+ * No baked terminator or limb-darkening — a real lit sphere computes those from the sun direction, so
+ * the moon shades correctly from every orbit angle instead of foreshortening like a flat disc.
  */
-function makeMoonTexture(baseColor: string, glowColor: string, litFraction: number): THREE.CanvasTexture {
-  const px = 256;
+function makeMoonSurfaceTexture(baseColor: string, glowColor: string): THREE.CanvasTexture {
+  const w = 512;
+  const h = 256;
   const canvas = document.createElement('canvas');
-  canvas.width = px;
-  canvas.height = px;
+  canvas.width = w;
+  canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (ctx) {
     const base = new THREE.Color(baseColor);
-    const dark = new THREE.Color(glowColor).multiplyScalar(0.5);
+    const dark = new THREE.Color(glowColor).multiplyScalar(0.55);
     const hex = (c: THREE.Color): string =>
       `rgb(${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)})`;
-    // base disc
     ctx.fillStyle = hex(base);
-    ctx.beginPath();
-    ctx.arc(px / 2, px / 2, px / 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.save();
-    ctx.clip();
-    // subtle limb-darkening so the disc reads as a sphere, not a flat coin
-    const sphere = ctx.createRadialGradient(px * 0.42, px * 0.42, px * 0.05, px / 2, px / 2, px / 2);
-    sphere.addColorStop(0, 'rgba(255,255,255,0.12)');
-    sphere.addColorStop(0.7, 'rgba(0,0,0,0)');
-    sphere.addColorStop(1, 'rgba(0,0,0,0.35)');
-    ctx.fillStyle = sphere;
-    ctx.fillRect(0, 0, px, px);
-    // maria: many small, soft, varied dark patches (deterministic — bakes identically every time)
+    ctx.fillRect(0, 0, w, h);
     const seed = (n: number): number => {
       const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
       return x - Math.floor(x);
     };
+    // maria: many small, soft, varied dark patches, denser near the equator (deterministic)
     ctx.fillStyle = hex(dark);
-    for (let i = 0; i < 26; i++) {
-      const bx = seed(i + 1);
-      const by = seed(i + 50);
-      const br = (0.03 + seed(i + 99) * 0.07) * px;
-      ctx.globalAlpha = 0.12 + seed(i + 7) * 0.22;
+    for (let i = 0; i < 70; i++) {
+      const bx = seed(i + 1) * w;
+      const by = (0.2 + seed(i + 50) * 0.6) * h;
+      const br = (0.015 + seed(i + 99) * 0.05) * w;
+      ctx.globalAlpha = 0.1 + seed(i + 7) * 0.22;
       ctx.beginPath();
-      ctx.arc(bx * px, by * px, br, 0, Math.PI * 2);
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // a few brighter highland flecks for surface variation
+    const light = new THREE.Color(baseColor).lerp(new THREE.Color('#ffffff'), 0.25);
+    ctx.fillStyle = hex(light);
+    for (let i = 0; i < 40; i++) {
+      const bx = seed(i + 200) * w;
+      const by = seed(i + 250) * h;
+      const br = (0.008 + seed(i + 299) * 0.02) * w;
+      ctx.globalAlpha = 0.08 + seed(i + 27) * 0.12;
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
-    // terminator: darken the unlit side. litFraction 1 = fully lit, 0.35 = thin crescent.
-    const shadeStart = litFraction; // 0..1 across the disc width
-    const grad = ctx.createLinearGradient(0, 0, px, 0);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(Math.min(0.99, shadeStart), 'rgba(0,0,0,0)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.92)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, px, px);
-    ctx.restore();
   }
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -455,31 +450,78 @@ const GlowSprite: React.FC<{
   );
 };
 
-/** A moon with a baked face (maria + terminator) and a soft glow halo. */
+/**
+ * Self-contained lit-moon shader: lambertian shading from a fixed sun direction with a soft wrap term,
+ * a faint ambient/earthshine floor so the dark side is never pure black, and gentle limb-darkening.
+ * Self-lit (does not use scene lights, so it never touches actor lighting); toneMapped off so colours
+ * stay true. A real sphere means a physically correct terminator that holds from every orbit angle.
+ */
+function makeMoonMaterial(surface: THREE.Texture, sunDir: THREE.Vector3, tint: string): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uMap: { value: surface },
+      uSun: { value: sunDir.clone().normalize() },
+      uTint: { value: new THREE.Color(tint) },
+    },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv;
+      varying vec3 vNormalW;
+      void main() {
+        vUv = uv;
+        vNormalW = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D uMap;
+      uniform vec3 uSun;
+      uniform vec3 uTint;
+      varying vec2 vUv;
+      varying vec3 vNormalW;
+      void main() {
+        vec3 albedo = texture2D(uMap, vUv).rgb * uTint;
+        float ndl = dot(normalize(vNormalW), normalize(uSun));
+        // soft wrap so the terminator is a gradient, not a hard line
+        float lit = clamp((ndl + 0.18) / 1.18, 0.0, 1.0);
+        lit = smoothstep(0.0, 1.0, lit);
+        // faint earthshine on the night side + a touch of ambient
+        float shade = mix(0.06, 1.12, lit);
+        gl_FragColor = vec4(albedo * shade, 1.0);
+      }
+    `,
+    toneMapped: false,
+    depthWrite: false,
+  });
+}
+
+/** A moon as a real lit sphere (maria surface + sun-driven terminator) with a soft glow halo. */
 const Moon: React.FC<{
   spec: MoonSpec;
   size: number;
   center: [number, number, number];
   domeDist: number;
-}> = ({ spec, size, center, domeDist }) => {
-  const texture = useMemo(
-    () => makeMoonTexture(spec.color, spec.glow, spec.litFraction),
-    [spec.color, spec.glow, spec.litFraction],
+  sunDir: [number, number, number];
+}> = ({ spec, size, center, domeDist, sunDir }) => {
+  const surface = useMemo(() => makeMoonSurfaceTexture(spec.color, spec.glow), [spec.color, spec.glow]);
+  const material = useMemo(
+    () => makeMoonMaterial(surface, new THREE.Vector3(...sunDir), '#ffffff'),
+    [surface, sunDir],
   );
-  useEffect(() => () => texture.dispose(), [texture]);
+  useEffect(
+    () => () => {
+      surface.dispose();
+      material.dispose();
+    },
+    [surface, material],
+  );
   const radius = size * spec.r;
   const position = placeOnDome(spec.azimuth, spec.elevation, domeDist, center);
   return (
     <group position={position}>
-      <GlowSprite color={spec.glow} position={[0, 0, -0.1]} scale={radius * 4} opacity={0.4} />
-      {/* Billboard so the disc always faces the camera — a flat circle viewed at a grazing azimuth
-          would otherwise foreshorten into an ellipse as the user orbits. */}
-      <Billboard>
-        <mesh>
-          <circleGeometry args={[radius, 48]} />
-          <meshBasicMaterial map={texture} toneMapped={false} depthWrite={false} transparent />
-        </mesh>
-      </Billboard>
+      <GlowSprite color={spec.glow} position={[0, 0, 0]} scale={radius * 4.5} opacity={0.35} />
+      <mesh material={material}>
+        <sphereGeometry args={[radius, 48, 32]} />
+      </mesh>
     </group>
   );
 };
@@ -704,9 +746,16 @@ export const ArenaEnvironmentShell: React.FC<ArenaEnvironmentShellProps> = ({
         );
       })}
 
-      {/* The two moons (or the Deadlands ember-sun). */}
+      {/* The two moons (or the Deadlands ember-sun) — lit spheres shaded from the shared Magnus sun. */}
       {spec.moons.map((m) => (
-        <Moon key={m.name} spec={m} size={size} center={center} domeDist={domeDist} />
+        <Moon
+          key={m.name}
+          spec={m}
+          size={size}
+          center={center}
+          domeDist={domeDist}
+          sunDir={spec.sunDirection}
+        />
       ))}
 
       {/* Aedra planet-eyes (the planets are the gods). */}
