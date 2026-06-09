@@ -256,6 +256,9 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
               backgroundColor: alpha(theme.palette.background.paper, 0.96),
               backdropFilter: 'blur(12px)',
               border: '1px solid rgba(148,210,255,0.25)',
+              // iOS: keep long-presses from text-selecting the sheet rows.
+              userSelect: 'none',
+              WebkitTouchCallout: 'none',
             }),
           },
         }}

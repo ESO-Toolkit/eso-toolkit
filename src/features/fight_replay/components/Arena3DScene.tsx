@@ -66,6 +66,28 @@ export interface GroundContextMenuPayload {
 }
 
 /**
+ * iOS Safari fires its NATIVE long-press behaviors (text-selection loupe, Copy/Look Up
+ * callout, image sheet) for touches on the canvas, hijacking the marker long-press and
+ * cancelling drags mid-gesture. CSS `touch-action`/`user-select` don't fully cover this —
+ * the supported escape hatch is preventDefault on a NON-passive touchstart. Pointer events
+ * (which drive all replay interaction, camera and pinch included) are unaffected. Mounted
+ * only inside the mobile immersive overlay, so desktop and the inline preview keep stock
+ * browser behavior.
+ */
+const SuppressNativeTouchDefaults: React.FC = () => {
+  const { gl } = useThree();
+
+  useEffect(() => {
+    const dom = gl.domElement;
+    const prevent = (event: TouchEvent): void => event.preventDefault();
+    dom.addEventListener('touchstart', prevent, { passive: false });
+    return () => dom.removeEventListener('touchstart', prevent);
+  }, [gl]);
+
+  return null;
+};
+
+/**
  * Actor renderer. Each actor is a standing figure (capsule body + role-glyph cap) with a
  * ground anchor ring, facing wedge, and state rings; bosses/enemies stand larger so they
  * read above the player crowd. Name cards float above and can be toggled off (N key).
@@ -694,6 +716,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           touch pinch, which CanvasWheelZoom re-implements minimally so mobile pinch is preserved.
           enablePan is gated by the touch policy: off on mobile-immersive so the two-finger gesture is
           pinch-only (no OrbitControls pan colliding with CanvasWheelZoom on the same touchmove). */}
+      {mobileImmersive && <SuppressNativeTouchDefaults />}
       <OrbitControls
         enablePan={touchPolicy.enablePan}
         enableZoom={false}

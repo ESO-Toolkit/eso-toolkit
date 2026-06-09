@@ -384,6 +384,15 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // transport is hidden (the canvas is a non-interactive teaser); it returns once the user expands.
   const mobilePreview = isMobile && !isImmersive;
 
+  // Marker editing needs the interactive overlay — the inline mobile preview is a
+  // pointer-events:none teaser, so enabling edit mode from the page toolbar would otherwise
+  // look broken (holds select page text, drags do nothing). Auto-expand instead.
+  useEffect(() => {
+    if (markersEditMode && isMobile) {
+      setMobilePseudoFullscreen(true);
+    }
+  }, [markersEditMode, isMobile]);
+
   const toggleFullscreen = useCallback(() => {
     // Mobile: flip the CSS pseudo-fullscreen overlay (the native API can't fullscreen a div on iOS).
     if (isMobile) {
@@ -668,6 +677,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
               paddingLeft: 'env(safe-area-inset-left)',
               paddingRight: 'env(safe-area-inset-right)',
               boxSizing: 'border-box',
+              // iOS: the overlay is an app surface, not a document — suppress the OS
+              // long-press text-selection/callout that hijacks marker gestures.
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none',
               '& > .MuiPaper-root': { height: '100%', borderRadius: 0 },
             }
           : null),

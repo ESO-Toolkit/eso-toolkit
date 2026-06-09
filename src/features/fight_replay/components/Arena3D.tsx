@@ -748,6 +748,16 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         // Fill the fullscreen container's height; otherwise the responsive 16:9-ish clamp.
         height: isFullscreen ? '100%' : ARENA_HEIGHT,
         position: 'relative',
+        // Mobile: suppress the OS long-press behaviors (text-selection loupe, Copy/Look Up
+        // callout) across the whole replay block — they hijack the marker long-press/drag
+        // gestures on iOS Safari and select the HUD chrome's text.
+        ...(isMobile
+          ? {
+              userSelect: 'none' as const,
+              WebkitUserSelect: 'none' as const,
+              WebkitTouchCallout: 'none' as const,
+            }
+          : null),
       }}
       role="img"
       aria-label="3D fight replay arena showing player positions over time"
@@ -966,6 +976,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
                       event.stopPropagation();
                     },
                   },
+                  // Portaled past the replay container, so it needs its own selection
+                  // suppression: iOS otherwise text-selects the menu items the long-press
+                  // gesture lands on and covers them with the Copy/Look Up callout.
+                  paper: {
+                    sx: { userSelect: 'none', WebkitTouchCallout: 'none' },
+                  },
                 }}
                 onContextMenu={(event) => {
                   event.preventDefault();
@@ -1037,7 +1053,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
                   },
                   paper: {
                     onMouseLeave: handleGroupMouseLeave,
-                    sx: { pointerEvents: 'auto' },
+                    sx: { pointerEvents: 'auto', userSelect: 'none', WebkitTouchCallout: 'none' },
                   },
                   root: {
                     sx: { pointerEvents: 'none' },
