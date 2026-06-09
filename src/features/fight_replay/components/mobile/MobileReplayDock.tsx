@@ -367,155 +367,168 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         </Box>
       </Box>
 
-      {/* Chapters sheet — the trial scrubber + play-trial controls */}
+      {/* Chapters sheet — the trial scrubber + play-trial controls. The body is rendered ONLY while
+          the sheet is open: it gets `currentLocalMs` (the 10Hz playback tick), and keeping the full
+          trial timeline mounted while closed re-reconciled it 10×/sec behind the arena, stealing main-
+          thread time from the 60fps render loop. */}
       {hasChapters && trialNav && (
         <MobileSheet
           open={sheet === 'chapters'}
           title="Trial chapters"
           onClose={() => setSheet(null)}
         >
-          <ContinuousReplayBar
-            timeline={trialNav.timeline}
-            currentFightId={trialNav.currentFightId}
-            currentLocalMs={currentTime}
-            onSeek={onTrialSeek ?? (() => {})}
-            continuousEnabled={trialNav.continuousEnabled}
-            onToggleContinuous={trialNav.onToggleContinuous}
-            includeTrash={trialNav.includeTrash}
-            onToggleIncludeTrash={trialNav.onToggleIncludeTrash}
-            hasTrash={trialNav.hasTrash}
-            runName={trialNav.runName}
-            runIndex={trialNav.runIndex}
-            runCount={trialNav.runCount}
-            nextUpLabel={trialNextUpLabel ?? null}
-            compact
-          />
+          {sheet === 'chapters' && (
+            <ContinuousReplayBar
+              timeline={trialNav.timeline}
+              currentFightId={trialNav.currentFightId}
+              currentLocalMs={currentTime}
+              onSeek={onTrialSeek ?? (() => {})}
+              continuousEnabled={trialNav.continuousEnabled}
+              onToggleContinuous={trialNav.onToggleContinuous}
+              includeTrash={trialNav.includeTrash}
+              onToggleIncludeTrash={trialNav.onToggleIncludeTrash}
+              hasTrash={trialNav.hasTrash}
+              runName={trialNav.runName}
+              runIndex={trialNav.runIndex}
+              runCount={trialNav.runCount}
+              nextUpLabel={trialNextUpLabel ?? null}
+              compact
+            />
+          )}
         </MobileSheet>
       )}
 
-      {/* Settings sheet — playback speed · display toggles · share */}
+      {/* Settings sheet — playback speed · display toggles · share. Body rendered only while open
+          (same reason as above: its ShareButton takes `currentTime`, so a mounted-but-closed sheet
+          reconciled at the playback tick). */}
       <MobileSheet open={sheet === 'settings'} title="Settings" onClose={() => setSheet(null)}>
-        <Typography
-          variant="overline"
-          sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
-        >
-          Playback speed
-        </Typography>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(5, 1fr)',
-            gap: 0.75,
-            mt: 1,
-            mb: 2.5,
-          }}
-        >
-          {PLAYBACK_SPEEDS.map((sp) => {
-            const active = sp === playbackSpeed;
-            return (
-              <Box
-                key={sp}
-                component="button"
-                type="button"
-                onClick={() => onSpeedChange(sp)}
-                aria-pressed={active}
-                sx={(theme) => ({
-                  appearance: 'none',
-                  cursor: 'pointer',
-                  height: 44,
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: active ? 'primary.main' : 'divider',
-                  backgroundColor: active ? alpha(theme.palette.primary.main, 0.16) : 'transparent',
-                  color: active ? 'primary.main' : 'text.primary',
-                  fontWeight: active ? 700 : 600,
-                  fontSize: '0.82rem',
-                  fontVariantNumeric: 'tabular-nums',
-                  transition: 'background-color 120ms ease, border-color 120ms ease',
-                })}
-              >
-                {sp}×
+        {sheet === 'settings' && (
+          <>
+            <Typography
+              variant="overline"
+              sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+            >
+              Playback speed
+            </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr)',
+                gap: 0.75,
+                mt: 1,
+                mb: 2.5,
+              }}
+            >
+              {PLAYBACK_SPEEDS.map((sp) => {
+                const active = sp === playbackSpeed;
+                return (
+                  <Box
+                    key={sp}
+                    component="button"
+                    type="button"
+                    onClick={() => onSpeedChange(sp)}
+                    aria-pressed={active}
+                    sx={(theme) => ({
+                      appearance: 'none',
+                      cursor: 'pointer',
+                      height: 44,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: active ? 'primary.main' : 'divider',
+                      backgroundColor: active
+                        ? alpha(theme.palette.primary.main, 0.16)
+                        : 'transparent',
+                      color: active ? 'primary.main' : 'text.primary',
+                      fontWeight: active ? 700 : 600,
+                      fontSize: '0.82rem',
+                      fontVariantNumeric: 'tabular-nums',
+                      transition: 'background-color 120ms ease, border-color 120ms ease',
+                    })}
+                  >
+                    {sp}×
+                  </Box>
+                );
+              })}
+            </Box>
+
+            <Typography
+              variant="overline"
+              sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+            >
+              Display
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
+              <SettingRow
+                icon={<LabelRoundedIcon fontSize="small" />}
+                label="Name tags"
+                description="Floating player & boss labels"
+                active={namesEnabled}
+                control={<Switch checked={namesEnabled} onChange={onToggleNames} />}
+              />
+              <SettingRow
+                icon={<RouteRoundedIcon fontSize="small" />}
+                label="Player trails"
+                description="Movement paths over time"
+                active={showTrails}
+                control={<Switch checked={showTrails} onChange={onToggleTrails} />}
+              />
+              {following && (
+                <SettingRow
+                  icon={<InsightsRoundedIcon fontSize="small" />}
+                  label="Player stats"
+                  description="Live readout for the followed player"
+                  active={statsPanelEnabled}
+                  control={<Switch checked={statsPanelEnabled} onChange={onToggleStats} />}
+                />
+              )}
+              <SettingRow
+                icon={<BoltRoundedIcon fontSize="small" />}
+                label="Performance mode"
+                description="Drop shadows for smoother large fights"
+                active={performanceMode}
+                control={<Switch checked={performanceMode} onChange={onTogglePerformance} />}
+              />
+            </Box>
+
+            <Typography
+              variant="overline"
+              sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+            >
+              Share
+            </Typography>
+            <Box
+              sx={(theme) => ({
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1.5,
+                mt: 1,
+                px: 1.5,
+                py: 1,
+                minHeight: 56,
+                borderRadius: 2.5,
+                backgroundColor:
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+              })}
+            >
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.25 }}>
+                  Share this view
+                </Typography>
+                <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary', lineHeight: 1.3 }}>
+                  Copies a link to the current moment
+                </Typography>
               </Box>
-            );
-          })}
-        </Box>
-
-        <Typography
-          variant="overline"
-          sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
-        >
-          Display
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
-          <SettingRow
-            icon={<LabelRoundedIcon fontSize="small" />}
-            label="Name tags"
-            description="Floating player & boss labels"
-            active={namesEnabled}
-            control={<Switch checked={namesEnabled} onChange={onToggleNames} />}
-          />
-          <SettingRow
-            icon={<RouteRoundedIcon fontSize="small" />}
-            label="Player trails"
-            description="Movement paths over time"
-            active={showTrails}
-            control={<Switch checked={showTrails} onChange={onToggleTrails} />}
-          />
-          {following && (
-            <SettingRow
-              icon={<InsightsRoundedIcon fontSize="small" />}
-              label="Player stats"
-              description="Live readout for the followed player"
-              active={statsPanelEnabled}
-              control={<Switch checked={statsPanelEnabled} onChange={onToggleStats} />}
-            />
-          )}
-          <SettingRow
-            icon={<BoltRoundedIcon fontSize="small" />}
-            label="Performance mode"
-            description="Drop shadows for smoother large fights"
-            active={performanceMode}
-            control={<Switch checked={performanceMode} onChange={onTogglePerformance} />}
-          />
-        </Box>
-
-        <Typography
-          variant="overline"
-          sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
-        >
-          Share
-        </Typography>
-        <Box
-          sx={(theme) => ({
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 1.5,
-            mt: 1,
-            px: 1.5,
-            py: 1,
-            minHeight: 56,
-            borderRadius: 2.5,
-            backgroundColor:
-              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-          })}
-        >
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.25 }}>
-              Share this view
-            </Typography>
-            <Typography sx={{ fontSize: '0.72rem', color: 'text.secondary', lineHeight: 1.3 }}>
-              Copies a link to the current moment
-            </Typography>
-          </Box>
-          <ShareButton
-            reportId={reportId}
-            fightId={fightId}
-            currentTime={currentTime}
-            selectedActorIdRef={selectedActorIdRef}
-            timeRef={timeRef}
-          />
-        </Box>
+              <ShareButton
+                reportId={reportId}
+                fightId={fightId}
+                currentTime={currentTime}
+                selectedActorIdRef={selectedActorIdRef}
+                timeRef={timeRef}
+              />
+            </Box>
+          </>
+        )}
       </MobileSheet>
     </Box>
   );
