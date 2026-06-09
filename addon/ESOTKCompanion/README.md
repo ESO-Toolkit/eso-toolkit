@@ -65,6 +65,23 @@ ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
 } } } }
 ```
 
+## API verification status
+
+Verified against real add-on source / API references (not guessed):
+
+| Call | Status | Source |
+|---|---|---|
+| `GetNumPointsSpentOnChampionSkill(skillId)` — **single arg** | ✅ verified | DynamicCP `src/API.lua` |
+| `GetChampionSkillName(skillId)` — single arg | ✅ verified | DynamicCP `src/API.lua` |
+| Slotted stars: `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12 (Craft 1-4 / Warfare 5-8 / Fitness 9-12) | ✅ verified | DynamicCP `OFFSETS` |
+| `GetAttributeSpentPoints(attributeType)` → points | ✅ verified | eso-api dump |
+| `GetItemLinkSetInfo(link, equipped)` → hasSet,…,numEquipped,maxEquipped,setId · `GetItemLink(BAG_WORN, slot)` | ✅ verified | ESOUI wiki / forums |
+| Mundus = buff-based via `GetUnitBuffInfo` ability id (no direct getter) | ✅ verified | ESOUI |
+| Potion: `GetSlotItemLink(quickslot)` | ✅ verified | ESOUI |
+| `GetUnitPower(unitTag, powerType)` → current,max,effectiveMax | ✅ verified | UESP |
+| **Discipline enumeration**: `GetNumChampionDisciplines` / `GetChampionDisciplineId` / `GetNumChampionDisciplineSkills` / `GetChampionSkillId` | ⏳ **pending in-game** — standard CP2.0 API but not cross-checked (DynamicCP hardcodes trees). Guarded: wrong name → empty allocation, not a crash | — |
+| `STAT_*` constants (spell/weapon dmg, pen, crit) | ⏳ pending — nil-guarded | — |
+
 ## Notes for maintainers
 
 - **Per-season pass:** bump `## APIVersion` in the manifest and `ADDON.season` in the
@@ -72,8 +89,6 @@ ESOTKCompanionSV = { Default = { ["@account"] = { ["$AccountWide"] = {
 - **Robustness:** every capture runs under `pcall` and every global constant is
   nil-guarded, so an API rename degrades one field instead of crashing — but check the
   chat for `[ESOTK] capture '…' failed` lines after a patch and fix the offending call.
-- **Verify against live API** (couldn't be run here): the champion slotted-star read
-  (`GetSlotBoundId` + `HOTBAR_CATEGORY_CHAMPION`), `GetNumPointsSpentInChampionDiscipline`,
-  and the `STAT_*` constants for spell/weapon damage. The allocation read
-  (`GetNumPointsSpentOnChampionSkill` per discipline/skill) is the core and should be
-  confirmed first.
+- **Confirm the ⏳ rows in-game first** (allocation enumeration + `STAT_*` names). If the
+  enumeration names differ, the fallback is to iterate a bundled list of championSkillIds
+  and call the verified `GetNumPointsSpentOnChampionSkill(skillId)` on each.

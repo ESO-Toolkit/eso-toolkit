@@ -59,6 +59,16 @@ end
 -- ----------------------------------------------------------------------------
 
 -- THE headline gap: full champion point allocation + slotted stars + total.
+-- VERIFIED against the DynamicCP add-on source (Kyzderp/DynamicCP, src/API.lua):
+--   * GetNumPointsSpentOnChampionSkill(skillId) — ONE arg (championSkillId is globally unique)
+--   * GetChampionSkillName(skillId)             — ONE arg
+--   * slotted stars: GetSlotBoundId(slotIndex, HOTBAR_CATEGORY_CHAMPION), slots 1..12
+--     (Craft/Green = 1-4, Warfare/Blue = 5-8, Fitness/Red = 9-12 per DynamicCP OFFSETS)
+-- PENDING final in-game confirmation (standard CP2.0 enumeration; DynamicCP hardcodes the
+-- three trees so it couldn't cross-check these names): GetNumChampionDisciplines /
+-- GetChampionDisciplineId / GetNumChampionDisciplineSkills / GetChampionSkillId. They're
+-- guarded, so a wrong name yields an empty allocation (slotted + total still captured)
+-- rather than an error.
 local function captureChampionPoints()
   local cp = { total = call("GetUnitChampionPoints", "player"), disciplines = {}, slotted = {} }
 
@@ -66,27 +76,28 @@ local function captureChampionPoints()
   for di = 1, numDisciplines do
     local disciplineId = call("GetChampionDisciplineId", di)
     if disciplineId then
-      local disc = {
-        id = disciplineId,
-        type = call("GetChampionDisciplineType", disciplineId),
-        spent = call("GetNumPointsSpentInChampionDiscipline", disciplineId),
-        skills = {},
-      }
+      local skills, spent = {}, 0
       local numSkills = call("GetNumChampionDisciplineSkills", disciplineId) or 0
       for si = 1, numSkills do
         local skillId = call("GetChampionSkillId", disciplineId, si)
         if skillId then
-          local spent = call("GetNumPointsSpentOnChampionSkill", disciplineId, skillId)
-          if spent and spent > 0 then
-            disc.skills[skillId] = spent  -- key by skillId so ESOTK can name it
+          local points = call("GetNumPointsSpentOnChampionSkill", skillId) -- single arg (verified)
+          if points and points > 0 then
+            skills[skillId] = points -- key by skillId so ESOTK can name it
+            spent = spent + points
           end
         end
       end
-      cp.disciplines[disciplineId] = disc
+      cp.disciplines[disciplineId] = {
+        id = disciplineId,
+        type = call("GetChampionDisciplineType", disciplineId),
+        spent = spent, -- summed from skills (avoids an unconfirmed per-discipline call)
+        skills = skills,
+      }
     end
   end
 
-  -- 12 slotted stars (4 per discipline) via the champion hotbar category.
+  -- Slotted stars (verified): slots 1..12 via the champion hotbar category.
   local champCat = _G["HOTBAR_CATEGORY_CHAMPION"]
   if champCat ~= nil then
     for slot = 1, 12 do
