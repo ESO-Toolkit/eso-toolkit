@@ -1,7 +1,9 @@
 import type { CompanionSnapshot } from '../esotkCompanionParser';
 import { matchCompanionSnapshots, type MatchableReport } from '../esotkCompanionMatcher';
 
-function snap(partial: Partial<CompanionSnapshot> & { ts: number; char: string }): CompanionSnapshot {
+function snap(
+  partial: Partial<CompanionSnapshot> & { ts: number; char: string },
+): CompanionSnapshot {
   return { ...partial };
 }
 

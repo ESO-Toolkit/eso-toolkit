@@ -48,7 +48,9 @@ export interface ChampionPointsViewModel {
 }
 
 function treeForStar(id: number): ChampionTreeKey {
-  return CHAMPION_POINT_ABILITIES[id as keyof typeof CHAMPION_POINT_ABILITIES]?.tree ?? UNKNOWN_TREE;
+  return (
+    CHAMPION_POINT_ABILITIES[id as keyof typeof CHAMPION_POINT_ABILITIES]?.tree ?? UNKNOWN_TREE
+  );
 }
 
 function emptyByTree(): Record<ChampionTreeKey, AllocatedStar[]> {

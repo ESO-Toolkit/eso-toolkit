@@ -1,7 +1,4 @@
-import {
-  isESOTKCompanionFormat,
-  parseESOTKCompanionSavedVariables,
-} from '../esotkCompanionParser';
+import { isESOTKCompanionFormat, parseESOTKCompanionSavedVariables } from '../esotkCompanionParser';
 
 const SAMPLE = `
 ESOTKCompanionSV =

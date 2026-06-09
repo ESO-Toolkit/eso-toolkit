@@ -13,7 +13,10 @@ import type {
   ChampionTreeKey,
 } from '@/features/loadout-manager/utils/esotkCompanionChampionPoints';
 import { UNKNOWN_TREE } from '@/features/loadout-manager/utils/esotkCompanionChampionPoints';
-import type { CoachingInsight, CoachingSeverity } from '@/features/loadout-manager/utils/esotkCompanionCoaching';
+import type {
+  CoachingInsight,
+  CoachingSeverity,
+} from '@/features/loadout-manager/utils/esotkCompanionCoaching';
 import { ChampionPointTree } from '@/types/champion-points';
 import { buildVariantSx } from '@/utils/playerCardStyleUtils';
 
@@ -102,8 +105,13 @@ export const CompanionBuildPanel: React.FC<CompanionBuildPanelProps> = ({
           <Typography variant="body2" sx={SECTION_TITLE_SX}>
             Champion Points
             {championPoints.total !== undefined && (
-              <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
-                {championPoints.total.toLocaleString()} CP · {championPoints.totalAllocated.toLocaleString()} allocated
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{ ml: 1, color: 'text.secondary' }}
+              >
+                {championPoints.total.toLocaleString()} CP ·{' '}
+                {championPoints.totalAllocated.toLocaleString()} allocated
               </Typography>
             )}
           </Typography>

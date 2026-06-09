@@ -183,9 +183,22 @@ function normalizeChampionPoints(v: LuaValue | undefined): CompanionChampionPoin
 function normalizeStats(v: LuaValue | undefined): CompanionStats | undefined {
   if (!isRecord(v)) return undefined;
   const keys: (keyof CompanionStats)[] = [
-    'maxMagicka', 'maxHealth', 'maxStamina', 'spellDamage', 'weaponDamage',
-    'spellCrit', 'weaponCrit', 'critDamage', 'spellPen', 'physicalPen', 'magickaRegen',
-    'staminaRegen', 'healthRegen', 'physicalResist', 'spellResist', 'critResist',
+    'maxMagicka',
+    'maxHealth',
+    'maxStamina',
+    'spellDamage',
+    'weaponDamage',
+    'spellCrit',
+    'weaponCrit',
+    'critDamage',
+    'spellPen',
+    'physicalPen',
+    'magickaRegen',
+    'staminaRegen',
+    'healthRegen',
+    'physicalResist',
+    'spellResist',
+    'critResist',
   ];
   const out: CompanionStats = {};
   for (const key of keys) {
