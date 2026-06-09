@@ -76,9 +76,10 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
           right: 0,
           bottom: 0,
           zIndex: theme.zIndex.modal + 21,
-          maxHeight: '72%',
-          display: 'flex',
-          flexDirection: 'column',
+          // Auto height (header + content) — the SCROLL CAP lives on the content box below, not here.
+          // A percentage max-height on this flex column made the overflow:auto child collapse to ~0
+          // (an indefinite-height flex container zeroes an auto-basis scroll item), so the sheet is
+          // sized by its content and the content scrolls within its own cap instead.
           backgroundColor: theme.palette.mode === 'dark' ? 'rgba(13,18,30,0.98)' : '#fff',
           borderTopLeftRadius: 16,
           borderTopRightRadius: 16,
@@ -124,8 +125,20 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
             </IconButton>
           </Box>
         </Box>
-        {/* Scrollable content */}
-        <Box sx={{ overflowY: 'auto', px: 2, pb: 2, minHeight: 0 }}>{children}</Box>
+        {/* Scrollable content — its OWN max-height is the sheet's effective cap (see note above).
+            Use dvh so the mobile browser's dynamic toolbar can't push the sheet off-screen. */}
+        <Box
+          sx={{
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            px: 2,
+            pb: 2,
+            maxHeight: 'min(60dvh, 520px)',
+          }}
+        >
+          {children}
+        </Box>
       </Box>
     </>
   );

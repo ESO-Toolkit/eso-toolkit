@@ -121,6 +121,19 @@ interface Arena3DProps {
   onTogglePlayerPathsHUD?: () => void;
   /** Toggle player trails (the T key on desktop) — used by the mobile control cluster. */
   onToggleTrails?: () => void;
+  /**
+   * Display settings, controlled by FightReplay3D so the mobile shell's Settings sheet shares one
+   * source of truth with the in-canvas/desktop toggles. Optional: when omitted (defensive — Arena3D
+   * is only rendered by FightReplay3D, which always supplies them) they fall back to internal state.
+   * Name tags (N key), performance mode (drop figure shadows), and the locked-player stats panel
+   * (J key) respectively.
+   */
+  namesEnabled?: boolean;
+  onToggleNames?: () => void;
+  performanceMode?: boolean;
+  onTogglePerformance?: () => void;
+  statsPanelEnabled?: boolean;
+  onToggleStats?: () => void;
   /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
   isFullscreen?: boolean;
   /** Toggle fullscreen of the whole replay block (owned by FightReplay3D, which holds the target ref). */
@@ -168,6 +181,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   showPlayerTrails = false,
   onTogglePlayerPathsHUD,
   onToggleTrails,
+  namesEnabled: namesEnabledProp,
+  onToggleNames,
+  performanceMode: performanceModeProp,
+  onTogglePerformance,
+  statsPanelEnabled: statsPanelEnabledProp,
+  onToggleStats,
   reservedInset,
   hideMobileControls = false,
 }) => {
@@ -191,22 +210,38 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // clobbers the other's keys. initialPrefs is a one-time mount snapshot used only to seed below.
   const { initialPrefs, persistPrefs } = useReplayPrefs();
 
-  // Local override to hide/show the floating name cards, toggled with the N key. ANDs with the
-  // incoming showActorNames prop so turning names off here always wins. Lets you declutter a
-  // crowd to see the player models, then bring identity back. Applies to every variant.
-  const [namesEnabled, setNamesEnabled] = useState(initialPrefs.showNames);
+  // Display settings (name tags, performance mode, stats-panel master) are now CONTROLLED by
+  // FightReplay3D so the mobile Settings sheet shares one source of truth with the in-canvas/desktop
+  // toggles. We keep an internal fallback for the (defensive) uncontrolled case and resolve each to
+  // the prop when supplied. Toggles route to the parent handler when controlled.
+  //  - namesEnabled ANDs with the showActorNames prop so turning names off here always wins (declutter
+  //    a crowd to see the models, then bring identity back). Applies to every variant.
+  //  - performanceMode (off by default): the player figures stop casting shadows — the shadow pass
+  //    re-submits the full humanoid geometry per figure (~75k tris at 23 players), so dropping it
+  //    roughly halves the figure tri load and buys headroom for very large fights.
+  const [namesEnabledLocal, setNamesEnabledLocal] = useState(initialPrefs.showNames);
+  const [performanceModeLocal, setPerformanceModeLocal] = useState(initialPrefs.performanceMode);
+  const [statsPanelEnabledLocal, setStatsPanelEnabledLocal] = useState(
+    initialPrefs.statsPanelEnabled,
+  );
+  const namesEnabled = namesEnabledProp ?? namesEnabledLocal;
+  const performanceMode = performanceModeProp ?? performanceModeLocal;
+  const statsPanelEnabled = statsPanelEnabledProp ?? statsPanelEnabledLocal;
+  const toggleNames = useMemo(
+    () => onToggleNames ?? (() => setNamesEnabledLocal((v) => !v)),
+    [onToggleNames],
+  );
+  const togglePerformance = useMemo(
+    () => onTogglePerformance ?? (() => setPerformanceModeLocal((v) => !v)),
+    [onTogglePerformance],
+  );
+  const toggleStats = useMemo(
+    () => onToggleStats ?? (() => setStatsPanelEnabledLocal((v) => !v)),
+    [onToggleStats],
+  );
 
-  // Performance mode (off by default). When on, the player figures stop casting shadows — the
-  // shadow pass re-submits the full humanoid geometry for every figure (~75k tris at 23 players,
-  // scaling with actor count), so dropping it roughly halves the figure tri load and buys headroom
-  // for very large fights. Purely a fidelity/cost trade; button-only (P/T are already taken by the
-  // player-paths HUD and trails in FightReplay3D).
-  const [performanceMode, setPerformanceMode] = useState(initialPrefs.performanceMode);
-
-  // Locked-player stats panel: master on/off (J key + button) and which sections show (the panel's
-  // gear menu). Owned here because the panel mounts here and this mirrors the names/perf slices.
-  // Disabling unmounts the panel entirely, which stops its inner rAF loops — a real cost saving.
-  const [statsPanelEnabled, setStatsPanelEnabled] = useState(initialPrefs.statsPanelEnabled);
+  // The stats-panel section checklist (the panel's gear menu) stays owned here — it's the panel's own
+  // local config and not surfaced in the mobile Settings sheet.
   const [statsPanelSections, setStatsPanelSections] = useState(initialPrefs.statsPanelSections);
 
   // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
@@ -237,16 +272,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     });
   }, []);
 
-  // Persist Arena3D's pref slice (names + performance + stats-panel) on change. Read-merge-write in
-  // the hook means this never clobbers the speed/path slice FightReplay3D persists.
+  // Persist only the stats-panel section checklist — Arena3D's remaining own slice. The names /
+  // performance / stats-master prefs are now persisted by FightReplay3D (which owns that state).
+  // Read-merge-write in the hook means this never clobbers the slices the other consumers persist.
   useEffect(() => {
-    persistPrefs({
-      showNames: namesEnabled,
-      performanceMode,
-      statsPanelEnabled,
-      statsPanelSections,
-    });
-  }, [persistPrefs, namesEnabled, performanceMode, statsPanelEnabled, statsPanelSections]);
+    persistPrefs({ statsPanelSections });
+  }, [persistPrefs, statsPanelSections]);
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
@@ -435,23 +466,23 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
       // N toggles the floating name cards on/off (declutter the crowd).
       if (event.key.toLowerCase() === 'n') {
-        setNamesEnabled((prev) => !prev);
+        toggleNames();
         event.preventDefault();
       }
 
       // J toggles the locked-player stats panel on/off. Gated on actually following someone (read
-      // via the always-current ref, since this effect's deps are []) so the key mirrors the on-screen
-      // button, which only appears while following — no flipping a hidden pref with zero feedback.
+      // via the always-current ref) so the key mirrors the on-screen button, which only appears
+      // while following — no flipping a hidden pref with zero feedback.
       if (event.key.toLowerCase() === 'j' && followingActorIdRef.current != null) {
-        setStatsPanelEnabled((prev) => !prev);
+        toggleStats();
         event.preventDefault();
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-    // followingActorIdRef is a stable ref; listed to satisfy exhaustive-deps without re-binding.
-  }, [followingActorIdRef]);
+    // followingActorIdRef is a stable ref; the toggles are stable when controlled by the parent.
+  }, [followingActorIdRef, toggleNames, toggleStats]);
 
   // Calculate arena dimensions based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -1135,7 +1166,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-label={statsPanelEnabled ? 'Hide locked-player stats' : 'Show locked-player stats'}
             aria-pressed={statsPanelEnabled}
             size="small"
-            onClick={() => setStatsPanelEnabled((prev) => !prev)}
+            onClick={toggleStats}
             sx={{
               position: 'absolute',
               bottom: 296,
@@ -1193,7 +1224,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
             aria-pressed={performanceMode}
             size="small"
-            onClick={() => setPerformanceMode((prev) => !prev)}
+            onClick={togglePerformance}
             sx={{
               position: 'absolute',
               // Raised to clear the docked control-bar overlay at the bottom of the canvas.
@@ -1219,7 +1250,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-label={namesEnabled ? 'Hide actor name tags' : 'Show actor name tags'}
             aria-pressed={namesEnabled}
             size="small"
-            onClick={() => setNamesEnabled((prev) => !prev)}
+            onClick={toggleNames}
             sx={{
               position: 'absolute',
               bottom: 152,
@@ -1347,12 +1378,12 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           showTrails={showPlayerTrails}
           onToggleTrails={() => onToggleTrails?.()}
           namesEnabled={namesEnabled}
-          onToggleNames={() => setNamesEnabled((prev) => !prev)}
+          onToggleNames={toggleNames}
           performanceMode={performanceMode}
-          onTogglePerformance={() => setPerformanceMode((prev) => !prev)}
+          onTogglePerformance={togglePerformance}
           following={followingActorId != null}
           statsPanelEnabled={statsPanelEnabled}
-          onToggleStats={() => setStatsPanelEnabled((prev) => !prev)}
+          onToggleStats={toggleStats}
         />
       )}
     </div>

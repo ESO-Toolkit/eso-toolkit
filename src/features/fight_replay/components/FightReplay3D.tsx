@@ -2,6 +2,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
 import { Box, IconButton, Paper, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
@@ -152,6 +153,17 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [showPlayerTrails, setShowPlayerTrails] = useState(
     storedPrefs.showTrails ?? showPlayerPaths,
   );
+
+  // Display settings lifted here from Arena3D so the mobile shell's Settings sheet can surface them
+  // (name tags, performance mode, the locked-player stats panel) alongside the rest of the controls.
+  // Arena3D still consumes + toggles these — they're passed down as controlled props — but the single
+  // source of truth lives here, so the bottom dock and the in-canvas/desktop UI stay in lockstep.
+  const [namesEnabled, setNamesEnabled] = useState(initialPrefs.showNames);
+  const [performanceMode, setPerformanceMode] = useState(initialPrefs.performanceMode);
+  const [statsPanelEnabled, setStatsPanelEnabled] = useState(initialPrefs.statsPanelEnabled);
+  const toggleNames = useCallback(() => setNamesEnabled((v) => !v), []);
+  const togglePerformance = useCallback(() => setPerformanceMode((v) => !v), []);
+  const toggleStats = useCallback(() => setStatsPanelEnabled((v) => !v), []);
 
   // Compact contextual badges for the transport bar (encounter · difficulty · outcome).
   // The encounter name is shortened to its trailing word(s) so it complements — rather than
@@ -526,18 +538,34 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // On mobile we DON'T persist the path/trail/bar toggles: those are seeded for the mobile session
   // (player list forced closed, etc.) and writing them back would clobber the user's desktop prefs.
   // Speed is fine to share across form factors, so it's always persisted.
+  // The display-settings slice (names / performance / stats) is form-factor-agnostic — the same
+  // toggles desktop exposes — so it's persisted on every form factor (unlike the path/trail/bar
+  // toggles, which are session-seeded on mobile and would clobber the user's desktop prefs).
   useEffect(() => {
     persistPrefs(
       isMobile
-        ? { playbackSpeed }
+        ? { playbackSpeed, showNames: namesEnabled, performanceMode, statsPanelEnabled }
         : {
             playbackSpeed,
             showPlayerPaths: showPlayerPathsHUD,
             showTrails: showPlayerTrails,
             barCollapsed: !barVisible,
+            showNames: namesEnabled,
+            performanceMode,
+            statsPanelEnabled,
           },
     );
-  }, [persistPrefs, isMobile, playbackSpeed, showPlayerPathsHUD, showPlayerTrails, barVisible]);
+  }, [
+    persistPrefs,
+    isMobile,
+    playbackSpeed,
+    showPlayerPathsHUD,
+    showPlayerTrails,
+    barVisible,
+    namesEnabled,
+    performanceMode,
+    statsPanelEnabled,
+  ]);
 
   // Manual collapse toggle (C key + the bar's chevron / restore caret). Works in any mode.
   const toggleBar = useCallback(() => setBarVisible((v) => !v), []);
@@ -913,6 +941,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           showPlayerTrails={showPlayerTrails}
           onTogglePlayerPathsHUD={togglePlayerPathsHUD}
           onToggleTrails={toggleTrails}
+          // Controlled display settings (owned here so the mobile Settings sheet shares the state).
+          namesEnabled={namesEnabled}
+          onToggleNames={toggleNames}
+          performanceMode={performanceMode}
+          onTogglePerformance={togglePerformance}
+          statsPanelEnabled={statsPanelEnabled}
+          onToggleStats={toggleStats}
           // On mobile immersive the dedicated shell owns the close + all controls, so suppress
           // Arena3D's in-canvas mobile control cluster (its close + tools button).
           hideMobileControls={mobileImmersive}
@@ -955,25 +990,51 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 1,
-            px: 1,
-            pt: 'calc(env(safe-area-inset-top) + 4px)',
-            pb: 0.5,
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)',
+            px: 1.25,
+            pt: 'calc(env(safe-area-inset-top) + 8px)',
+            pb: 1.5,
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.32) 55%, rgba(0,0,0,0) 100%)',
             pointerEvents: 'none',
             '& > *': { pointerEvents: 'auto' },
           }}
         >
-          <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
-            <Typography variant="subtitle1" noWrap sx={{ color: '#fff', fontWeight: 700 }}>
+          <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Typography
+              variant="subtitle1"
+              noWrap
+              sx={{
+                color: '#fff',
+                fontWeight: 700,
+                letterSpacing: '-0.01em',
+                textShadow: '0 1px 6px rgba(0,0,0,0.6)',
+                minWidth: 0,
+              }}
+            >
               {selectedFight.maps?.[0]?.name || selectedFight.name}
             </Typography>
             {replayContext?.difficultyTag && (
-              <Typography variant="caption" sx={{ color: 'secondary.main', fontWeight: 700 }}>
+              <Box
+                component="span"
+                sx={(theme) => ({
+                  flex: '0 0 auto',
+                  px: 0.75,
+                  py: 0.25,
+                  borderRadius: 1,
+                  fontSize: '0.64rem',
+                  fontWeight: 800,
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  color: theme.palette.secondary.light,
+                  backgroundColor: alpha(theme.palette.secondary.main, 0.22),
+                  border: `1px solid ${alpha(theme.palette.secondary.main, 0.5)}`,
+                })}
+              >
                 {replayContext.difficultyTag}
-              </Typography>
+              </Box>
             )}
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '0 0 auto' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flex: '0 0 auto' }}>
             {/* Following an actor (tap-to-lock the camera) — the only way to release it on the shell,
                 since the old in-canvas tools cluster is suppressed on mobile. */}
             {followingActorId != null && (
@@ -982,22 +1043,24 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
                 type="button"
                 onClick={handleCameraUnlock}
                 aria-label="Stop following"
-                sx={{
+                sx={(theme) => ({
                   appearance: 'none',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 0.5,
-                  px: 1,
-                  py: 0.5,
+                  height: 36,
+                  px: 1.25,
                   borderRadius: 999,
                   border: '1px solid',
-                  borderColor: 'primary.main',
-                  backgroundColor: 'rgba(0,0,0,0.55)',
+                  borderColor: alpha(theme.palette.primary.main, 0.7),
+                  backgroundColor: 'rgba(8,11,20,0.7)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)',
                   color: '#fff',
                   fontSize: '0.72rem',
                   fontWeight: 700,
-                }}
+                })}
               >
                 Following ✕
               </Box>
@@ -1005,7 +1068,16 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             <IconButton
               aria-label="Close replay"
               onClick={toggleFullscreen}
-              sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.55)' }}
+              sx={{
+                color: '#fff',
+                width: 40,
+                height: 40,
+                backgroundColor: 'rgba(8,11,20,0.7)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.14)',
+                '&:hover': { backgroundColor: 'rgba(8,11,20,0.88)' },
+              }}
             >
               <CloseRoundedIcon />
             </IconButton>
@@ -1043,6 +1115,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onTogglePlayers={togglePlayerPathsHUD}
             showTrails={showPlayerTrails}
             onToggleTrails={toggleTrails}
+            namesEnabled={namesEnabled}
+            onToggleNames={toggleNames}
+            performanceMode={performanceMode}
+            onTogglePerformance={togglePerformance}
+            statsPanelEnabled={statsPanelEnabled}
+            onToggleStats={toggleStats}
+            following={followingActorId != null}
           />
         </Box>
       )}
