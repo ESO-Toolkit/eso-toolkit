@@ -81,7 +81,10 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
   const [rgb, setRgb] = useState<[number, number, number]>([1, 1, 1]);
   const [size, setSize] = useState(1);
 
-  // Seed the form whenever a (different) marker opens the dialog.
+  // Seed the form whenever a (different) marker opens the dialog. Size is seeded UNclamped:
+  // imported M0R markers can legitimately sit outside the slider range (e.g. 0.3 or 33.5),
+  // and a label-only edit must not silently rewrite them. Only the slider track display is
+  // clamped; the value submits as-is unless the user actually drags the slider.
   useEffect(() => {
     if (!marker) {
       return;
@@ -89,7 +92,7 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
     setIconKey(marker.elmsIconKey);
     setText(marker.text ?? '');
     setRgb([marker.colour[0], marker.colour[1], marker.colour[2]]);
-    setSize(Math.min(MAX_SIZE_METERS, Math.max(MIN_SIZE_METERS, marker.size)));
+    setSize(marker.size);
   }, [marker]);
 
   // Picking an icon previews its template values in the form; the user can then override them.
@@ -253,7 +256,9 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
             Size: {size.toFixed(2)}m
           </Typography>
           <Slider
-            value={size}
+            // Display clamps an out-of-range size to the track edge; `size` itself stays
+            // untouched until the user drags, so Save preserves the original value.
+            value={Math.min(MAX_SIZE_METERS, Math.max(MIN_SIZE_METERS, size))}
             onChange={(_event, value) => setSize(value as number)}
             min={MIN_SIZE_METERS}
             max={MAX_SIZE_METERS}

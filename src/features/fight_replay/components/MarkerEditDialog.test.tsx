@@ -99,3 +99,25 @@ describe('MarkerEditDialog', () => {
     expect(onClose).toHaveBeenCalled();
   });
 });
+
+describe('MarkerEditDialog — out-of-range sizes', () => {
+  it('preserves a size outside the slider range on a label-only edit', () => {
+    const onApply = jest.fn();
+    render(
+      <MarkerEditDialog
+        marker={marker({ size: 33.5, elmsIconKey: undefined })}
+        onClose={noop}
+        onApply={onApply}
+        onDelete={noop}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('Label'), { target: { value: 'big AoE' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onApply).toHaveBeenCalledWith(
+      'm1',
+      expect.objectContaining({ text: 'big AoE', size: 33.5 }),
+    );
+  });
+});
