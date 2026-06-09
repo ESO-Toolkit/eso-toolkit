@@ -1547,9 +1547,12 @@ export const RosterBuilderPage: React.FC = () => {
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
             {/* ── Right side: Copy pill + Publish/Save pill ── */}
+            {/* Stack the two pills on mobile so the Publish pill (Hub · Discord ·
+                Save) gets full width instead of overflowing off-screen. */}
             <Box
               sx={{
                 display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
                 alignItems: 'stretch',
                 gap: 1,
                 width: { xs: '100%', md: 'auto' },
