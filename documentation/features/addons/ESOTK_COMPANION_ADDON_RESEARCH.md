@@ -1017,20 +1017,22 @@ Every readiness check below was confirmed against real add-on source / API refer
 
 | Requirement | Confirmed read | Source |
 |---|---|---|
-| **Champion points** (allocation) | `GetNumPointsSpentOnChampionSkill(skillId)` (single arg) over enumerated skills | DynamicCP `src/API.lua` |
+| **Champion points** (enumerate) | `GetNumChampionDisciplines()`, `GetChampionDisciplineId(index)`, `GetNumChampionDisciplineSkills(index)`, `GetChampionSkillId(index, index)` | esoui `championdatamanager.lua` |
+| **Champion points** (allocation) | `GetNumPointsSpentOnChampionSkill(skillId)` — single arg | DynamicCP `src/API.lua` |
 | **Champion points** (slotted) | `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12 | DynamicCP `OFFSETS` |
 | **Gear set** | `GetItemLink(BAG_WORN, slot)` → `GetItemLinkSetInfo(link, true)` → `setId`, `numEquipped` | ESOUI |
 | **Food** | active buff via `GetUnitBuffInfo("player", i)` ability id | ESOUI |
 | **Mundus** | active buff id (no direct getter — match a known mundus boon id list) | ESOUI |
 | **Potion** | `GetSlotItemLink(quickslotIndex)` | ESOUI |
 | **Attributes** | `GetAttributeSpentPoints(attributeType)` → points | eso-api dump |
-| **Self penetration / crit** | `GetPlayerStat(STAT_*)` (constants nil-guarded) | UESP |
+| **Self penetration / crit** | `GetPlayerStat(STAT_*)` — `STAT_SPELL_POWER/STAT_WEAPON_POWER/STAT_CRITICAL_STRIKE/STAT_SPELL_CRITICAL/STAT_PHYSICAL_PENETRATION/STAT_SPELL_PENETRATION/…` | esoui API constants |
 
-> **Still pending live confirmation (flagged, not assumed):** the CP discipline-
-> enumeration function names (`GetNumChampionDisciplines` etc.) and the exact `STAT_*`
-> constant names. Both are guarded so a wrong name degrades one field instead of
-> crashing; the fallback for enumeration is a bundled championSkillId list iterated with
-> the verified single-arg `GetNumPointsSpentOnChampionSkill`.
+> **Index-vs-id gotcha (confirmed from ZOS source).** `GetNumChampionDisciplineSkills`
+> and `GetChampionSkillId` take the discipline **index**; `GetChampionDisciplineType`
+> takes the discipline **id**; `GetNumPointsSpentOnChampionSkill` takes the **skillId**.
+> Mixing them returns wrong/empty data — a real bug caught during verification. Only
+> step left is a one-time in-game run to confirm captured values match the character
+> sheet; the function names and arities are now source-verified.
 
 ---
 
@@ -1082,6 +1084,7 @@ Every readiness check below was confirmed against real add-on source / API refer
 - [LibGroupBroadcast custom-protocol API (DeclareProtocol/AddField/NumericField/ArrayField)](https://github.com/sirinsidiator/ESO-LibGroupBroadcast) · [Broadcasting API thread](https://www.esoui.com/forums/showthread.php?p=51019)
 - [RdK Group Tool — group query of equipment/CP/stats/mundus over map pins](https://www.esoui.com/downloads/info2475-RdKGroupTool.html) · [Taos Group Tools](https://esoui.com/downloads/info1962-TaosGroupTools.html)
 - [DynamicCP source — verified champion-point API (single-arg `GetNumPointsSpentOnChampionSkill`, slot OFFSETS)](https://github.com/Kyzderp/DynamicCP)
+- [Official ZOS source — champion enumeration (`GetNumChampionDisciplines`/`GetChampionDisciplineId`/`GetNumChampionDisciplineSkills`/`GetChampionSkillId`, index-vs-id)](https://github.com/esoui/esoui/blob/master/esoui/ingame/champion/championdatamanager.lua) · [ESOUIDocumentation.txt (STAT_* constants)](https://github.com/esoui/esoui/blob/master/ESOUIDocumentation.txt)
 - [GetItemLinkSetInfo (numEquipped/setId) — ESOUI wiki](https://wiki.esoui.com/GetItemLink) · [GetItemLink](https://wiki.esoui.com/GetItemLink)
 - [Mundus detection is buff-id-based via GetUnitBuffInfo (no direct getter)](https://www.esoui.com/forums/showthread.php?t=2225) · [Quickslot read GetSlotItemLink](https://www.esoui.com/forums/showthread.php?t=6286)
 </content>

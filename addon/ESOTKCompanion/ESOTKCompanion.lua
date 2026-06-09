@@ -59,29 +59,28 @@ end
 -- ----------------------------------------------------------------------------
 
 -- THE headline gap: full champion point allocation + slotted stars + total.
--- VERIFIED against the DynamicCP add-on source (Kyzderp/DynamicCP, src/API.lua):
---   * GetNumPointsSpentOnChampionSkill(skillId) — ONE arg (championSkillId is globally unique)
---   * GetChampionSkillName(skillId)             — ONE arg
---   * slotted stars: GetSlotBoundId(slotIndex, HOTBAR_CATEGORY_CHAMPION), slots 1..12
---     (Craft/Green = 1-4, Warfare/Blue = 5-8, Fitness/Red = 9-12 per DynamicCP OFFSETS)
--- PENDING final in-game confirmation (standard CP2.0 enumeration; DynamicCP hardcodes the
--- three trees so it couldn't cross-check these names): GetNumChampionDisciplines /
--- GetChampionDisciplineId / GetNumChampionDisciplineSkills / GetChampionSkillId. They're
--- guarded, so a wrong name yields an empty allocation (slotted + total still captured)
--- rather than an error.
+-- VERIFIED against official ZOS source (esoui championdatamanager.lua) + DynamicCP:
+--   for disciplineIndex = 1, GetNumChampionDisciplines() do
+--     disciplineId = GetChampionDisciplineId(disciplineIndex)
+--     GetNumChampionDisciplineSkills(disciplineIndex)   -- takes the INDEX, not the id
+--     GetChampionSkillId(disciplineIndex, skillIndex)    -- takes the INDEX, not the id
+--     GetChampionDisciplineType(disciplineId)            -- takes the id
+--   GetNumPointsSpentOnChampionSkill(skillId)            -- ONE arg (skillId globally unique)
+--   slotted: GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION), slots 1..12
+--            (Craft 1-4 / Warfare 5-8 / Fitness 9-12 per DynamicCP OFFSETS)
 local function captureChampionPoints()
   local cp = { total = call("GetUnitChampionPoints", "player"), disciplines = {}, slotted = {} }
 
   local numDisciplines = call("GetNumChampionDisciplines") or 0
-  for di = 1, numDisciplines do
-    local disciplineId = call("GetChampionDisciplineId", di)
+  for disciplineIndex = 1, numDisciplines do
+    local disciplineId = call("GetChampionDisciplineId", disciplineIndex)
     if disciplineId then
       local skills, spent = {}, 0
-      local numSkills = call("GetNumChampionDisciplineSkills", disciplineId) or 0
-      for si = 1, numSkills do
-        local skillId = call("GetChampionSkillId", disciplineId, si)
+      local numSkills = call("GetNumChampionDisciplineSkills", disciplineIndex) or 0 -- index
+      for skillIndex = 1, numSkills do
+        local skillId = call("GetChampionSkillId", disciplineIndex, skillIndex) -- (index, index)
         if skillId then
-          local points = call("GetNumPointsSpentOnChampionSkill", skillId) -- single arg (verified)
+          local points = call("GetNumPointsSpentOnChampionSkill", skillId) -- single arg
           if points and points > 0 then
             skills[skillId] = points -- key by skillId so ESOTK can name it
             spent = spent + points
@@ -90,8 +89,8 @@ local function captureChampionPoints()
       end
       cp.disciplines[disciplineId] = {
         id = disciplineId,
-        type = call("GetChampionDisciplineType", disciplineId),
-        spent = spent, -- summed from skills (avoids an unconfirmed per-discipline call)
+        type = call("GetChampionDisciplineType", disciplineId), -- takes the id
+        spent = spent, -- summed from skills
         skills = skills,
       }
     end

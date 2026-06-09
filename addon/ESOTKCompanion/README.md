@@ -79,8 +79,12 @@ Verified against real add-on source / API references (not guessed):
 | Mundus = buff-based via `GetUnitBuffInfo` ability id (no direct getter) | ✅ verified | ESOUI |
 | Potion: `GetSlotItemLink(quickslot)` | ✅ verified | ESOUI |
 | `GetUnitPower(unitTag, powerType)` → current,max,effectiveMax | ✅ verified | UESP |
-| **Discipline enumeration**: `GetNumChampionDisciplines` / `GetChampionDisciplineId` / `GetNumChampionDisciplineSkills` / `GetChampionSkillId` | ⏳ **pending in-game** — standard CP2.0 API but not cross-checked (DynamicCP hardcodes trees). Guarded: wrong name → empty allocation, not a crash | — |
-| `STAT_*` constants (spell/weapon dmg, pen, crit) | ⏳ pending — nil-guarded | — |
+| **Discipline enumeration**: `GetNumChampionDisciplines()`, `GetChampionDisciplineId(index)`, `GetNumChampionDisciplineSkills(index)`, `GetChampionSkillId(index, index)`, `GetChampionDisciplineType(id)` | ✅ verified — **note index vs id** | esoui `championdatamanager.lua` |
+| `STAT_*` constants (spell/weapon dmg, crit, pen, regen, resist, max) | ✅ verified (names) | esoui API constants |
+
+> **Gotcha confirmed from source:** `GetNumChampionDisciplineSkills` and
+> `GetChampionSkillId` take the discipline **index**, while `GetChampionDisciplineType`
+> takes the discipline **id**. Mixing them silently returns wrong/no data.
 
 ## Notes for maintainers
 
@@ -89,6 +93,6 @@ Verified against real add-on source / API references (not guessed):
 - **Robustness:** every capture runs under `pcall` and every global constant is
   nil-guarded, so an API rename degrades one field instead of crashing — but check the
   chat for `[ESOTK] capture '…' failed` lines after a patch and fix the offending call.
-- **Confirm the ⏳ rows in-game first** (allocation enumeration + `STAT_*` names). If the
-  enumeration names differ, the fallback is to iterate a bundled list of championSkillIds
-  and call the verified `GetNumPointsSpentOnChampionSkill(skillId)` on each.
+- **Last thing to validate live:** run it once in-game to confirm the captured numbers
+  match the in-game character sheet / CP screen for a known build (the function names are
+  source-verified; this just confirms the values land correctly).
