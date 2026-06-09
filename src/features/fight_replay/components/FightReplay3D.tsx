@@ -31,6 +31,12 @@ interface FightReplay3DProps {
   markersState?: MapMarkersState | null;
   onAddMarker?: (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => void;
   onRemoveMarker?: (markerId: string) => void;
+  /** Marker edit mode: plain right-click context menus + draggable markers (no Alt chord). */
+  markersEditMode?: boolean;
+  /** Drag-to-move commit for a marker (arena-space coordinates). */
+  onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
+  onEditMarker?: (markerId: string) => void;
   /** Whether to show player paths toolkit */
   showPlayerPaths?: boolean;
   /** Initial selected player IDs for path visualization */
@@ -44,6 +50,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   markersState,
   onAddMarker,
   onRemoveMarker,
+  markersEditMode = false,
+  onMarkerMove,
+  onEditMarker,
   showPlayerPaths = false,
   initialSelectedPlayerIds = [],
 }) => {
@@ -672,6 +681,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           markersState={markersState}
           onAddMarker={onAddMarker}
           onRemoveMarker={onRemoveMarker}
+          markersEditMode={markersEditMode}
+          onMarkerMove={onMarkerMove}
+          onEditMarker={onEditMarker}
           fight={selectedFight}
           selectedPlayerIds={selectedPlayerIds}
           onPlayerSelectionChange={setSelectedPlayerIds}

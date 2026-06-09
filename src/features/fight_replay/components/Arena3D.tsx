@@ -107,6 +107,12 @@ interface Arena3DProps {
   markersState?: MapMarkersState | null;
   onAddMarker?: (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => void;
   onRemoveMarker?: (markerId: string) => void;
+  /** Marker edit mode: plain right-click context menus + draggable markers (no Alt chord). */
+  markersEditMode?: boolean;
+  /** Drag-to-move commit for a marker (arena-space coordinates). */
+  onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
+  onEditMarker?: (markerId: string) => void;
   /** Fight data for zone/map information (required for map markers coordinate transformation) */
   fight: FightFragment;
   /** Selected player IDs for path visualization */
@@ -156,6 +162,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   markersState,
   onAddMarker,
   onRemoveMarker,
+  markersEditMode = false,
+  onMarkerMove,
+  onEditMarker,
   fight,
   selectedPlayerIds,
   onPlayerSelectionChange,
@@ -278,7 +287,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   const handleMarkerContextMenu = useCallback(
     (payload: MarkerContextMenuPayload) => {
-      if (!onRemoveMarker) {
+      if (!onRemoveMarker && !onEditMarker) {
         return;
       }
 
@@ -289,7 +298,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         markerId: payload.markerId,
       });
     },
-    [onRemoveMarker],
+    [onRemoveMarker, onEditMarker],
   );
 
   const handleCloseContextMenu = useCallback(() => {
@@ -352,6 +361,15 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     onRemoveMarker(contextMenu.markerId);
     setContextMenu(null);
   }, [contextMenu, onRemoveMarker]);
+
+  const handleEditMarkerClick = useCallback(() => {
+    if (!contextMenu || contextMenu.type !== 'marker' || !onEditMarker) {
+      return;
+    }
+
+    onEditMarker(contextMenu.markerId);
+    setContextMenu(null);
+  }, [contextMenu, onEditMarker]);
 
   const markerForMenu =
     contextMenu?.type === 'marker' ? (markerLookup.get(contextMenu.markerId) ?? null) : null;
@@ -795,6 +813,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             markersState={markersState}
             onGroundContextMenu={handleGroundContextMenu}
             onMarkerContextMenu={handleMarkerContextMenu}
+            markersEditMode={markersEditMode}
+            onMarkerMove={onMarkerMove}
             fight={fight}
             initialTarget={initialCameraTarget}
             initialPosition={initialCameraPosition}
@@ -974,6 +994,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
                       <ChevronRightIcon fontSize="small" />
                     </MenuItem>
                   ))}
+                {contextMenu?.type === 'marker' && onEditMarker && (
+                  <MenuItem onClick={handleEditMarkerClick}>Edit marker…</MenuItem>
+                )}
                 {contextMenu?.type === 'marker' && (
                   <MenuItem onClick={handleRemoveMarkerClick} disabled={!onRemoveMarker}>
                     {markerRemoveLabel}

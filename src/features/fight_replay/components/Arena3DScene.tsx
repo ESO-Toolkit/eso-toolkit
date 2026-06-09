@@ -213,6 +213,10 @@ export interface Arena3DSceneProps {
   markersState?: MapMarkersState | null;
   onGroundContextMenu?: (payload: GroundContextMenuPayload) => void;
   onMarkerContextMenu?: (payload: MarkerContextMenuPayload) => void;
+  /** Marker edit mode: plain right-click context menus + draggable markers (no Alt chord). */
+  markersEditMode?: boolean;
+  /** Drag-to-move commit for a marker (arena-space coordinates). */
+  onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
   fight: FightFragment;
   initialTarget?: [number, number, number];
   /**
@@ -263,6 +267,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
   markersState,
   onGroundContextMenu,
   onMarkerContextMenu,
+  markersEditMode = false,
+  onMarkerMove,
   fight,
   initialTarget,
   initialPosition,
@@ -558,6 +564,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           markersState={markersState}
           fight={fight}
           onMarkerContextMenu={onMarkerContextMenu}
+          editable={markersEditMode}
+          onMarkerMove={onMarkerMove}
+          markDirty={markSceneDirty}
         />
       )}
       {/* Player Path Trails - Animated trails for selected players */}
@@ -571,12 +580,17 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           visible={showPlayerTrails}
         />
       )}
-      {/* Interaction plane for context menu support (Alt + Right Click) */}
+      {/* Interaction plane for context menu support (Alt + Right Click, or plain Right Click in
+          marker edit mode) */}
       <mesh
         position={[arenaDimensions.centerX, -0.019, arenaDimensions.centerZ]}
         rotation={[-Math.PI / 2, 0, 0]}
         onPointerDown={(event) => {
-          if (event.button === 2 && event.nativeEvent.altKey && onGroundContextMenu) {
+          if (
+            event.button === 2 &&
+            (event.nativeEvent.altKey || markersEditMode) &&
+            onGroundContextMenu
+          ) {
             event.stopPropagation();
             event.nativeEvent.preventDefault();
 

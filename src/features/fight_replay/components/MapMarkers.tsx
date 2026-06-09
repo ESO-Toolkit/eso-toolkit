@@ -25,6 +25,12 @@ interface MapMarkersProps {
   scale?: number;
   /** Callback when a marker context menu is requested */
   onMarkerContextMenu?: (payload: MarkerContextMenuPayload) => void;
+  /** Edit mode: markers become draggable and context menus open without the Alt chord */
+  editable?: boolean;
+  /** Drag-to-move commit (arena-space coordinates) */
+  onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Repaint signal for the on-demand render loop (drag mutates the scene outside React commits) */
+  markDirty?: () => void;
 }
 
 export const MapMarkers: React.FC<MapMarkersProps> = ({
@@ -32,6 +38,9 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
   fight,
   scale = 1,
   onMarkerContextMenu,
+  editable = false,
+  onMarkerMove,
+  markDirty,
 }) => {
   const resolvedMarkers = useMemo<MapMarkersState | null>(() => {
     if (!markersState || markersState.markers.length === 0) {
@@ -253,6 +262,9 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({
           markerId={marker.id}
           scale={effectiveScale}
           onContextMenu={onMarkerContextMenu}
+          editable={editable}
+          onMove={onMarkerMove}
+          markDirty={markDirty}
         />
       ))}
     </group>
