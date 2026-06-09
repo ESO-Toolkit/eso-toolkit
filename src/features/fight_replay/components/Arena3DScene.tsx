@@ -35,6 +35,13 @@ import { PlayerPathTrail3D } from './PlayerPathTrail3D';
 const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
 const EMPTY_COLOR_OVERRIDES: Map<number, string> = new Map();
 
+// Stable empty timeline for when the `mapTimeline` prop is absent. DynamicMapTexture's mapless-floor
+// effect lists `mapTimeline` in its deps and calls onTextureChange (which refills the on-demand render
+// budget) whenever it re-runs; a fresh `{ entries: [], totalMaps: 0 }` literal in the fallback would
+// change identity every render and repaint a paused mapless fight continuously. A frozen singleton
+// keeps the reference stable so the effect fires once.
+const EMPTY_MAP_TIMELINE: MapTimeline = Object.freeze({ entries: [], totalMaps: 0 });
+
 // Create logger instance for Arena3DScene
 const logger = new Logger({
   level: LogLevel.INFO,
@@ -847,7 +854,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         }
       >
         <DynamicMapTexture
-          mapTimeline={mapTimeline || { entries: [], totalMaps: 0 }}
+          mapTimeline={mapTimeline || EMPTY_MAP_TIMELINE}
           timeRef={timeRef}
           size={arenaDimensions.size}
           position={[arenaDimensions.centerX, -0.02, arenaDimensions.centerZ]}
