@@ -412,9 +412,7 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                   borderRadius: 2,
                   border: '1px solid',
                   borderColor: active ? 'primary.main' : 'divider',
-                  backgroundColor: active
-                    ? alpha(theme.palette.primary.main, 0.16)
-                    : 'transparent',
+                  backgroundColor: active ? alpha(theme.palette.primary.main, 0.16) : 'transparent',
                   color: active ? 'primary.main' : 'text.primary',
                   fontWeight: active ? 700 : 600,
                   fontSize: '0.82rem',
