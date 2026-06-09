@@ -1019,6 +1019,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               height: 6,
               borderTop: `1px solid ${accentBarColor}60`,
               borderLeft: `1px solid ${accentBarColor}60`,
+              borderTopLeftRadius: '3px',
               zIndex: 3,
               pointerEvents: 'none',
             }}
@@ -1033,6 +1034,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               height: 6,
               borderBottom: `1px solid ${accentBarColor}40`,
               borderRight: `1px solid ${accentBarColor}40`,
+              borderBottomRightRadius: '3px',
               zIndex: 3,
               pointerEvents: 'none',
             }}
