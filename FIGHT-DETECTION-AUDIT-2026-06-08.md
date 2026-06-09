@@ -179,6 +179,37 @@ This also lays the groundwork for trifecta reasoning (Veteran HM + speed +
 no-death). Per-boss badges are unchanged (a mini still correctly shows
 "Veteran").
 
+### 11. Normal-mode trials mislabeled as "Veteran"; arenas called "dungeons" — _Medium_
+
+Difficulty codes are Normal ≤ 120, Veteran 121, Veteran HM 122 (+1/+2/+3 →
+123–125). The code only treated `< 10` as Normal, so a Normal clear (code ~120)
+fell through to "Veteran". Arenas (Maelstrom, Vateshran, Dragonstar, Blackrose)
+were also lumped in as "dungeons".
+
+**Fix:** Normal is now `0 < code < 121` in both the run label and the per-boss
+badge; `classifyUnknownZone()` tags the four arenas as `type: 'arena'`.
+
+### Full edge-case matrix (now covered by tests)
+
+`fightGrouping.test.ts` + `runDifficulty.test.ts` exercise: single trial; two
+different trials; **three** distinct trials in order; **A → B → A** re-entry
+(three runs); trial → dungeon; same-zone re-clears (one run by default, opt-in
+split); 5+ / 45+ attempt encounters with reset detection; inter-zone trash with
+no `gameZone`; out-of-order input; legacy logs with **no `gameZone`** (boss-name
+resolution); **arenas**; **Normal** difficulty; demoted (`encounterID 0`) fights;
+trash-only runs; empty/null input; zero-duration/invalid fights; per-boss vs
+final-boss-only vs Cloudrest/Asylum +N HM; mini-boss HM exclusion; and two
+**real** reports end-to-end.
+
+### Maps — intentionally untouched
+
+The fight-replay map/coordinate system (`zoneScaleData`, `mapScaling`,
+`mapMarkersUtils`) only has data for the 15 trials, so dungeons/arenas lack
+replay map scaling. That area is being actively reworked in several open PRs
+(#1192 map scaling, #1189 mid-fight map switching, #1194 continuous replay), so
+to avoid conflicts this PR does **not** modify it. Extending map coverage to
+dungeons/arenas should be a follow-up coordinated with those PRs.
+
 ---
 
 ## Deferred / future work
@@ -199,7 +230,7 @@ no-death). Per-boss badges are unchanged (a mini still correctly shows
 
 - `npm run validate` (typecheck + lint + format) — clean.
 - `npx jest src/features/report_details src/store/report/reportSelectors.test.ts`
-  — 175 passed, 14 snapshots passed.
+  — 184 passed, 14 snapshots passed.
 - `fightGrouping.test.ts` (26) + `runDifficulty.test.ts` (10) include
   **end-to-end checks against the two real committed reports**: the DSR farm
   resolves to one run with multi-kill grouped encounters; the VSE log resolves to

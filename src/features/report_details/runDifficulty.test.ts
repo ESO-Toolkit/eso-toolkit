@@ -102,6 +102,17 @@ describe('determineRunDifficulty', () => {
     const encounters = [enc('Trash', [])];
     expect(determineRunDifficulty(encounters, 'Dreadsail Reef').label).toBeNull();
   });
+
+  it('labels a Normal-mode trial (code ≤ 120) as Normal, not Veteran', () => {
+    const perBoss = [enc('Tideborn Taleria', [bossFight({ difficulty: 120, kill: true })])];
+    expect(determineRunDifficulty(perBoss, 'Dreadsail Reef').label).toBe('Normal');
+
+    const finalBossOnly = [enc('The Mage', [bossFight({ difficulty: 120, kill: true })])];
+    expect(determineRunDifficulty(finalBossOnly, 'Aetherian Archive').label).toBe('Normal');
+
+    const special = [enc("Z'Maja", [bossFight({ difficulty: 120, kill: true })])];
+    expect(determineRunDifficulty(special, 'Cloudrest').label).toBe('Normal');
+  });
 });
 
 // End-to-end: the two real reports should both read as Veteran HM (mains on HM,

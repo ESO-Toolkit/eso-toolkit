@@ -204,10 +204,11 @@ export function getTrialNameFromBoss(
  *
  * Cloudrest and Asylum Sanctorium use the +1/+2/+3 hard-mode ladder (difficulty
  * codes 123-125); every other trial uses the standard Normal/Veteran/Veteran HM
- * mapping (codes <10 / 121 / 122).
+ * mapping (codes ≤120 / 121 / 122).
  */
 export function getDifficultyLabel(difficulty: number | null, trialName: string): string | null {
-  if (!difficulty || difficulty < 10) {
+  // Difficulty codes: Normal ≤ 120, Veteran 121, Veteran HM 122 (+1/+2/+3 = 123/124/125).
+  if (!difficulty || difficulty < 121) {
     return 'Normal';
   }
 
