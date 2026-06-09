@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 import type { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 
 import {
@@ -5,7 +8,9 @@ import {
   effectiveEncounterId,
   groupFightsIntoRuns,
   isBossFight,
+  isResetPull,
   resolveFightZone,
+  summarizeEncounter,
   trialNameFromBossName,
   uncategorizedTrash,
   wasKill,
@@ -48,10 +53,12 @@ describe('boss vs trash classification', () => {
     expect(isBossFight(makeFight({ encounterID: 0, difficulty: null }))).toBe(false);
   });
 
-  it('treats a boss demoted to trash (originalEncounterID) as a boss', () => {
+  it('treats a fight ESO Logs demoted to trash (encounterID 0) as trash', () => {
+    // Demoted fights are post-kill / instant-reset noise, not phantom attempts.
     expect(
       isBossFight(makeFight({ encounterID: 0, originalEncounterID: 21, difficulty: null })),
-    ).toBe(true);
+    ).toBe(false);
+    // The original id is still recoverable for callers that need it.
     expect(effectiveEncounterId(makeFight({ encounterID: 0, originalEncounterID: 21 }))).toBe(21);
   });
 
@@ -161,7 +168,7 @@ describe('groupFightsIntoRuns', () => {
     expect(runs[1].zone.type).toBe('dungeon');
   });
 
-  it('starts a new run when a killed boss is re-cleared in the same zone', () => {
+  it('keeps same-zone re-clears in one run by default (farm/reset logs)', () => {
     const fights = [
       makeFight({
         startTime: 0,
@@ -178,8 +185,27 @@ describe('groupFightsIntoRuns', () => {
         gameZone: { id: ZONE_SUNSPIRE, name: 'Sunspire' },
       }),
     ];
-    const runs = groupFightsIntoRuns(fights, reportData);
-    expect(runs).toHaveLength(2);
+    expect(groupFightsIntoRuns(fights, reportData)).toHaveLength(1);
+  });
+
+  it('splits re-clears into separate runs only when splitReclears is set', () => {
+    const fights = [
+      makeFight({
+        startTime: 0,
+        endTime: 1000,
+        encounterID: 21,
+        kill: true,
+        gameZone: { id: ZONE_SUNSPIRE, name: 'Sunspire' },
+      }),
+      makeFight({
+        startTime: 2000,
+        endTime: 3000,
+        encounterID: 21,
+        kill: true,
+        gameZone: { id: ZONE_SUNSPIRE, name: 'Sunspire' },
+      }),
+    ];
+    expect(groupFightsIntoRuns(fights, reportData, { splitReclears: true })).toHaveLength(2);
   });
 
   it('keeps multiple wipe attempts on the same boss in one run', () => {
@@ -255,5 +281,116 @@ describe('buildRunEncounters', () => {
     expect(encounters[0].bossFights).toHaveLength(2); // two attempts on Boss A
     expect(encounters[0].preTrash).toHaveLength(1);
     expect(uncategorizedTrash(run, encounters)).toHaveLength(0);
+  });
+});
+
+describe('isResetPull', () => {
+  it('flags a short pull that barely dented the boss as a reset', () => {
+    expect(
+      isResetPull(makeFight({ startTime: 0, endTime: 8_000, kill: false, bossPercentage: 99 })),
+    ).toBe(true);
+  });
+
+  it('does not flag a long, deep wipe as a reset', () => {
+    expect(
+      isResetPull(makeFight({ startTime: 0, endTime: 120_000, kill: false, bossPercentage: 20 })),
+    ).toBe(false);
+  });
+
+  it('never flags a kill as a reset', () => {
+    expect(
+      isResetPull(makeFight({ startTime: 0, endTime: 5_000, kill: true, bossPercentage: 0 })),
+    ).toBe(false);
+  });
+});
+
+describe('summarizeEncounter', () => {
+  it('summarises attempts, kills, resets and best pull', () => {
+    const encounter = {
+      id: 'e',
+      name: 'Boss',
+      preTrash: [],
+      postTrash: [],
+      bossFights: [
+        makeFight({ startTime: 0, endTime: 6_000, kill: false, bossPercentage: 99 }), // reset
+        makeFight({ startTime: 0, endTime: 90_000, kill: false, bossPercentage: 40 }), // wipe
+        makeFight({ startTime: 0, endTime: 90_000, kill: false, bossPercentage: 12 }), // closer wipe
+        makeFight({ startTime: 0, endTime: 90_000, kill: true, bossPercentage: 0 }), // kill
+      ],
+    };
+    const s = summarizeEncounter(encounter);
+    expect(s.attempts).toBe(4);
+    expect(s.resets).toBe(1);
+    expect(s.realAttempts).toBe(3);
+    expect(s.kills).toBe(1);
+    expect(s.killed).toBe(true);
+    expect(s.bestPercent).toBe(0); // killed
+  });
+
+  it('reports best pull when the boss was never killed', () => {
+    const encounter = {
+      id: 'e',
+      name: 'Boss',
+      preTrash: [],
+      postTrash: [],
+      bossFights: [
+        makeFight({ startTime: 0, endTime: 90_000, kill: false, bossPercentage: 55 }),
+        makeFight({ startTime: 0, endTime: 90_000, kill: false, bossPercentage: 18 }),
+      ],
+    };
+    const s = summarizeEncounter(encounter);
+    expect(s.killed).toBe(false);
+    expect(s.bestPercent).toBe(18);
+  });
+});
+
+// ── End-to-end checks against real committed ESO Logs reports ──────────────
+function loadSampleReport(code: string): { report: ReportFragment; fights: FightFragment[] } {
+  const file = path.resolve(process.cwd(), 'public/sample-reports', code, 'report.json');
+  const raw = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
+  const json = JSON.parse(raw);
+  const report = (json?.reportData?.report ?? json?.data?.reportData?.report) as ReportFragment;
+  const fights = ((report as unknown as { fights?: FightFragment[] })?.fights ??
+    []) as FightFragment[];
+  return { report, fights };
+}
+
+describe('integration: real sample reports', () => {
+  it('DSR reset farm → one Dreadsail Reef run with grouped, multi-kill encounters', () => {
+    const { report, fights } = loadSampleReport('F4f2bMwWtgVKxjB9');
+    const runs = groupFightsIntoRuns(fights, report);
+
+    // 57 fights of the same group resetting the trial all stay in ONE run.
+    expect(runs).toHaveLength(1);
+    expect(runs[0].zone.name).toBe('Dreadsail Reef');
+    expect(runs[0].zone.type).toBe('trial');
+
+    const encounters = buildRunEncounters(runs[0]);
+    const lylanar = encounters.find((e) => e.name.includes('Lylanar'));
+    expect(lylanar).toBeDefined();
+    const s = summarizeEncounter(lylanar!);
+    expect(s.attempts).toBeGreaterThanOrEqual(5); // farmed many times
+    expect(s.kills).toBeGreaterThanOrEqual(2); // killed on multiple resets
+    expect(s.killed).toBe(true);
+
+    // Demoted (encounterID 0) post-kill fights must not appear as boss attempts.
+    expect(lylanar!.bossFights.every((f) => (f.encounterID ?? 0) !== 0)).toBe(true);
+  });
+
+  it('VSE progression → one run; 30+ Yaseyla attempts incl. resets, eventual kill', () => {
+    const { report, fights } = loadSampleReport('YArFDbq7BdhwL691');
+    const runs = groupFightsIntoRuns(fights, report);
+
+    expect(runs).toHaveLength(1);
+    expect(runs[0].zone.name).toBe("Sanity's Edge");
+
+    const encounters = buildRunEncounters(runs[0]);
+    const yaseyla = encounters.find((e) => e.name.includes('Yaseyla'));
+    expect(yaseyla).toBeDefined();
+    const s = summarizeEncounter(yaseyla!);
+    expect(s.attempts).toBeGreaterThan(30); // long prog boss
+    expect(s.resets).toBeGreaterThan(0); // quick re-pulls detected
+    expect(s.realAttempts).toBeLessThan(s.attempts);
+    expect(s.killed).toBe(true);
   });
 });

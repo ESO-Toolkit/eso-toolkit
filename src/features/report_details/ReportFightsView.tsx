@@ -29,6 +29,8 @@ import {
   buildRunEncounters,
   groupFightsIntoRuns,
   isBossFight,
+  isResetPull,
+  summarizeEncounter,
   uncategorizedTrash,
   wasKill,
   type RunEncounter,
@@ -380,6 +382,95 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       }
       return newSet;
     });
+  };
+
+  // Attempt organisation: on farm/progression logs an encounter can have dozens
+  // of attempts (real logs show 45+ on a single boss). When "Group attempts" is
+  // on, those collapse to the kills + best pull, with the rest behind a toggle.
+  const [groupAttempts, setGroupAttempts] = React.useState(true);
+  const [expandedAttempts, setExpandedAttempts] = React.useState<Set<string>>(new Set());
+
+  const toggleExpandedAttempts = (encounterId: string): void => {
+    setExpandedAttempts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(encounterId)) {
+        newSet.delete(encounterId);
+      } else {
+        newSet.add(encounterId);
+      }
+      return newSet;
+    });
+  };
+
+  // Boss-fight grid styling, shared between grouped and ungrouped rendering.
+  const bossGridSx = {
+    display: 'grid',
+    gridTemplateColumns: {
+      xs: 'repeat(auto-fill, minmax(100px, 1fr))',
+      sm: 'repeat(auto-fill, minmax(120px, 1fr))',
+      md: 'repeat(auto-fill, minmax(140px, 1fr))',
+      lg: 'repeat(auto-fill, minmax(160px, 1fr))',
+    },
+    gap: { xs: 0.5, sm: 1 },
+    overflow: 'visible',
+  } as const;
+
+  // Encounters with more than this many attempts get collapsed when grouping.
+  const ATTEMPT_GROUP_THRESHOLD = 4;
+
+  const renderBossAttempts = (encounter: RunEncounter): React.ReactNode => {
+    const fights = encounter.bossFights;
+    // Stable attempt numbers (#1, #2, …) by chronological order.
+    const attemptIndex = new Map(fights.map((f, i) => [f.id, i]));
+
+    const useGrouping = groupAttempts && fights.length > ATTEMPT_GROUP_THRESHOLD;
+    if (!useGrouping) {
+      return (
+        <List sx={bossGridSx}>
+          {fights.map((fight) => renderFightCard(fight, attemptIndex.get(fight.id) ?? 0))}
+        </List>
+      );
+    }
+
+    // Pin the kill(s) and the single best non-reset wipe; collapse the rest.
+    const killIds = new Set(fights.filter((f) => wasKill(f)).map((f) => f.id));
+    const measurableWipes = fights.filter(
+      (f) => !wasKill(f) && !isResetPull(f) && bossHealthRemaining(f) != null,
+    );
+    const bestWipeId = measurableWipes.length
+      ? measurableWipes.reduce((a, b) =>
+          (bossHealthRemaining(a) ?? 100) <= (bossHealthRemaining(b) ?? 100) ? a : b,
+        ).id
+      : null;
+    const isHighlight = (f: FightFragment): boolean => killIds.has(f.id) || f.id === bestWipeId;
+
+    const highlight = fights.filter(isHighlight);
+    const rest = fights.filter((f) => !isHighlight(f));
+    const expanded = expandedAttempts.has(encounter.id);
+
+    return (
+      <>
+        <List sx={bossGridSx}>
+          {highlight.map((fight) => renderFightCard(fight, attemptIndex.get(fight.id) ?? 0))}
+        </List>
+        {rest.length > 0 && (
+          <>
+            <Button
+              size="small"
+              onClick={() => toggleExpandedAttempts(encounter.id)}
+              sx={{ textTransform: 'none', mt: 0.5 }}
+            >
+              {expanded ? 'Show fewer' : `Show all ${fights.length} attempts`}
+            </Button>
+            <Collapse in={expanded}>
+              <List sx={{ ...bossGridSx, mt: 0.5 }}>
+                {rest.map((fight) => renderFightCard(fight, attemptIndex.get(fight.id) ?? 0))}
+              </List>
+            </Collapse>
+          </>
+        )}
+      </>
+    );
   };
 
   if (loading) {
@@ -824,6 +915,24 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           }}
         >
           {encounters.length === 0 && <Typography> No Fights Found </Typography>}
+          {encounters.some((run) =>
+            run.encounters.some((e) => e.bossFights.length > ATTEMPT_GROUP_THRESHOLD),
+          ) && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={groupAttempts}
+                    onChange={(e) => setGroupAttempts(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label="Group attempts"
+                slotProps={{ typography: { variant: 'body2', sx: { color: 'text.secondary' } } }}
+                data-testid="group-attempts-toggle"
+              />
+            </Box>
+          )}
           <Box data-testid="fight-list">
             {encounters.map((trialRun) => (
               <Box
@@ -1109,6 +1218,50 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                               ({encounter.bossFights.length})
                             </Box>
                           </Typography>
+                          {(() => {
+                            // Aggregate attempt summary — only meaningful with >1 attempt.
+                            const summary = summarizeEncounter(encounter);
+                            if (summary.attempts <= 1) return null;
+                            const chips: Array<{ label: string; color: string }> = [];
+                            if (summary.kills > 1) {
+                              chips.push({
+                                label: `${summary.kills} kills`,
+                                color: getThemeColors.circleGreen,
+                              });
+                            }
+                            if (!summary.killed && summary.bestPercent != null) {
+                              chips.push({
+                                label: `Best ${Math.round(summary.bestPercent)}%`,
+                                color: getThemeColors.circleOrange,
+                              });
+                            }
+                            if (summary.resets > 0) {
+                              chips.push({
+                                label: `${summary.resets} reset${summary.resets > 1 ? 's' : ''}`,
+                                color: darkMode ? '#94a3b8' : '#64748b',
+                              });
+                            }
+                            if (chips.length === 0) return null;
+                            return (
+                              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                {chips.map((chip) => (
+                                  <Chip
+                                    key={chip.label}
+                                    label={chip.label}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{
+                                      height: 18,
+                                      fontSize: '0.62rem',
+                                      color: chip.color,
+                                      borderColor: `${chip.color}66`,
+                                      '& .MuiChip-label': { px: 0.75 },
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                            );
+                          })()}
                         </Box>
                         {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
                           <FormControlLabel
@@ -1171,22 +1324,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         </Box>
                       </Collapse>
 
-                      {/* Boss fights */}
-                      <List
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: {
-                            xs: 'repeat(auto-fill, minmax(100px, 1fr))',
-                            sm: 'repeat(auto-fill, minmax(120px, 1fr))',
-                            md: 'repeat(auto-fill, minmax(140px, 1fr))',
-                            lg: 'repeat(auto-fill, minmax(160px, 1fr))',
-                          },
-                          gap: { xs: 0.5, sm: 1 },
-                          overflow: 'visible',
-                        }}
-                      >
-                        {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
-                      </List>
+                      {/* Boss fights (grouped/collapsed for attempt-heavy encounters) */}
+                      {renderBossAttempts(encounter)}
 
                       {/* Post-encounter trash */}
                       <Collapse
