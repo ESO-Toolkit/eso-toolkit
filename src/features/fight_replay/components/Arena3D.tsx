@@ -551,7 +551,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     const rangeX = arenaMaxX - arenaMinX;
     const rangeZ = arenaMaxZ - arenaMinZ;
     const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    const minDistance = Math.max(5, diagonal * 0.3);
+    // Cap the close-zoom bound so an outlier-inflated whole-fight diagonal can't force the fallback
+    // initial framing absurdly far out (mirrors the cap in Arena3DScene, which owns the live clamp).
+    const minDistance = Math.min(Math.max(5, diagonal * 0.3), 12);
     const maxDistance = Math.min(500, Math.max(50, diagonal * 3));
 
     return {
