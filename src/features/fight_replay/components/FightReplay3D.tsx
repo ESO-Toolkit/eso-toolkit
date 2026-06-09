@@ -14,6 +14,7 @@ import { BuffEvent } from '../../../types/combatlogEvents';
 import { TRANSPORT_IDLE_MS, TRANSPORT_RESERVED, HAIRLINE_H } from '../constants/replayDesign';
 import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
 import { MapMarkersState } from '../types/mapMarkers';
+import { lockDocumentSelection } from '../utils/documentSelectionLock';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
@@ -524,6 +525,16 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       body.style.overflow = prevOverflow;
       body.style.overscrollBehavior = prevOverscroll;
     };
+  }, [mobilePseudoFullscreen]);
+
+  // Document-WIDE selection lock while the overlay is open. iOS Safari's long-press selection
+  // hit-test is not confined to the touched element: with the overlay unselectable, WebKit
+  // selects the nearest selectable text — i.e. the PAGE BEHIND the overlay (field-reported on
+  // iPhone). Scoped CSS can't fix that, so every element goes unselectable for the overlay's
+  // lifetime (text inputs stay editable — see documentSelectionLock).
+  useEffect(() => {
+    if (!mobilePseudoFullscreen) return;
+    return lockDocumentSelection();
   }, [mobilePseudoFullscreen]);
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,

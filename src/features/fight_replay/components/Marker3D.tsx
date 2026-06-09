@@ -321,9 +321,17 @@ export const Marker3D: React.FC<Marker3DProps> = ({
           releaseDragRef.current(false);
         };
 
+        // While a touch drag is live, claim the gesture outright: without this Safari can
+        // reinterpret the touch as scroll/selection mid-drag and fire pointercancel.
+        const onWindowTouchMove =
+          pointerType !== 'mouse' ? (ev: TouchEvent): void => ev.preventDefault() : null;
+
         window.addEventListener('pointermove', onWindowMove);
         window.addEventListener('pointerup', onWindowUp);
         window.addEventListener('pointercancel', onWindowCancel);
+        if (onWindowTouchMove) {
+          window.addEventListener('touchmove', onWindowTouchMove, { passive: false });
+        }
 
         // Drag along the horizontal plane at the marker's height so the marker tracks the
         // pointer ray without jumping vertically. Plane: y = markerY → constant = -markerY.
@@ -338,6 +346,9 @@ export const Marker3D: React.FC<Marker3DProps> = ({
             window.removeEventListener('pointermove', onWindowMove);
             window.removeEventListener('pointerup', onWindowUp);
             window.removeEventListener('pointercancel', onWindowCancel);
+            if (onWindowTouchMove) {
+              window.removeEventListener('touchmove', onWindowTouchMove);
+            }
           },
         };
 
