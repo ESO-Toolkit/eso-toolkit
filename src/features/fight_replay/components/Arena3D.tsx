@@ -139,6 +139,11 @@ interface Arena3DProps {
    * visibility); when the bar is hidden in fullscreen it passes a tiny value so the panels grow.
    */
   reservedInset?: number;
+  /**
+   * When true, suppress Arena3D's in-canvas mobile control cluster (close + tools). Set by the
+   * dedicated mobile shell, which owns the close button and all controls itself.
+   */
+  hideMobileControls?: boolean;
 }
 
 const Arena3DComponent: React.FC<Arena3DProps> = ({
@@ -164,6 +169,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onTogglePlayerPathsHUD,
   onToggleTrails,
   reservedInset,
+  hideMobileControls = false,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
 
@@ -1333,7 +1339,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       {/* Mobile touch control cluster — only inside the immersive overlay, where there's room. Gives
           the keyboard-only controls (P/T/N/R/G/J + perf) a touch home and the only way out (Close),
           since the desktop right-edge stack and the F-key are unavailable on a phone. */}
-      {mobileImmersive && (
+      {mobileImmersive && !hideMobileControls && (
         <MobileReplayControls
           onClose={() => onToggleFullscreen?.()}
           showPlayerList={showPlayerPathsHUD}

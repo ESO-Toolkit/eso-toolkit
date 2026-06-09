@@ -1,3 +1,4 @@
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
 import { Box, IconButton, Paper, Typography } from '@mui/material';
@@ -24,6 +25,7 @@ import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
 import { ContinuousReplayBar } from './ContinuousReplayBar';
+import { MobileReplayDock } from './mobile/MobileReplayDock';
 import { PlaybackControls, PLAYBACK_SPEEDS } from './PlaybackControls';
 import { ReplayTransitionOverlay } from './ReplayTransitionOverlay';
 import type { TrialTimelineSeekTarget } from './TrialTimeline';
@@ -490,6 +492,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // The mobile inline preview = narrow viewport, not yet expanded into the overlay. In this state the
   // transport is hidden (the canvas is a non-interactive teaser); it returns once the user expands.
   const mobilePreview = isMobile && !isImmersive;
+  // Mobile immersive = the live pseudo-fullscreen overlay. This drives the dedicated mobile shell
+  // (top bar · arena · bottom dock) that replaces the desktop overlay soup on a phone.
+  const mobileImmersive = isMobile && isImmersive;
 
   const toggleFullscreen = useCallback(() => {
     // Mobile: flip the CSS pseudo-fullscreen overlay (the native API can't fullscreen a div on iOS).
@@ -908,16 +913,18 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           showPlayerTrails={showPlayerTrails}
           onTogglePlayerPathsHUD={togglePlayerPathsHUD}
           onToggleTrails={toggleTrails}
-          // When the bar is hidden in fullscreen, only the hairline occludes the bottom, so the
-          // overlay panels can grow nearly full-height; otherwise reserve the full bar band PLUS the
-          // trial chip/bar that docks above it (so the player panel, boss-health, and control cluster
-          // clear the taller transport instead of overlapping it).
+          // On mobile immersive the dedicated shell owns the close + all controls, so suppress
+          // Arena3D's in-canvas mobile control cluster (its close + tools button).
+          hideMobileControls={mobileImmersive}
+          // Reserve space at the bottom so overlays (the player sheet, boss health) clear whatever
+          // docks there: the mobile dock (~100px), else the desktop transport band (+ trial bar).
           reservedInset={
-            isImmersive && !barVisible
-              ? HAIRLINE_H + 4
-              : // On mobile the trial bar moves to the top, so the bottom is just the transport; on
-                // desktop it docks above the transport, so reserve extra for it there.
-                TRANSPORT_RESERVED + (!isMobile && showTrialBar ? (trialBarExpanded ? 104 : 44) : 0)
+            mobileImmersive
+              ? 100
+              : isImmersive && !barVisible
+                ? HAIRLINE_H + 4
+                : TRANSPORT_RESERVED +
+                  (!isMobile && showTrialBar ? (trialBarExpanded ? 104 : 44) : 0)
           }
         />
       </Paper>
@@ -934,28 +941,83 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           OrbitControls drags / actor clicks from the canvas beneath; PlaybackControls re-enables
           pointer-events on its own glass surface. Hidden in the mobile inline preview — the teaser has
           no transport; it returns inside the pseudo-fullscreen interactive mode. */}
-      {/* Mobile: the trial nav lives at the TOP (top-left, clear of the close button) so the bottom
-          stays a single clean transport row and the player bottom-sheet has room. The top-left is
-          free because the player list is a bottom sheet on mobile. */}
-      {isMobile && !mobilePreview && trialBarContent && (
+      {/* Mobile shell — TOP BAR: encounter context on the left, close on the right. A slim, solid
+          strip so it never competes with the arena; boss health renders just below it (Arena3D). */}
+      {mobileImmersive && (
         <Box
           sx={{
             position: 'absolute',
-            top: 8,
-            left: 8,
-            right: 60,
-            zIndex: 4,
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 6,
             display: 'flex',
-            justifyContent: 'flex-start',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            px: 1,
+            pt: 'calc(env(safe-area-inset-top) + 4px)',
+            pb: 0.5,
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)',
             pointerEvents: 'none',
             '& > *': { pointerEvents: 'auto' },
           }}
         >
-          {trialBarContent}
+          <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
+            <Typography variant="subtitle1" noWrap sx={{ color: '#fff', fontWeight: 700 }}>
+              {selectedFight.maps?.[0]?.name || selectedFight.name}
+            </Typography>
+            {replayContext?.difficultyTag && (
+              <Typography variant="caption" sx={{ color: 'secondary.main', fontWeight: 700 }}>
+                {replayContext.difficultyTag}
+              </Typography>
+            )}
+          </Box>
+          <IconButton
+            aria-label="Close replay"
+            onClick={toggleFullscreen}
+            sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.55)', flex: '0 0 auto' }}
+          >
+            <CloseRoundedIcon />
+          </IconButton>
         </Box>
       )}
 
-      {!mobilePreview && (
+      {/* Mobile shell — BOTTOM DOCK: scrub rail + play cluster + Players/Chapters/Settings sheets.
+          Replaces the desktop transport + the floating trial chip + the tools button entirely. */}
+      {mobileImmersive && (
+        <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 6 }}>
+          <MobileReplayDock
+            currentTime={currentTime}
+            duration={selectedFight.endTime - selectedFight.startTime}
+            isPlaying={isPlaying}
+            playbackSpeed={playbackSpeed}
+            onTimeChange={handleTimeChange}
+            onPlayPause={handlePlayPause}
+            onSpeedChange={handleSpeedChange}
+            onSkipToStart={handleSkipToStart}
+            onSkipToEnd={handleSkipToEnd}
+            onSkipBackward10={handleSkipBackward10}
+            onSkipForward10={handleSkipForward10}
+            onPlayingChange={handlePlayingChange}
+            onScrubbingModeChange={handleScrubbingModeChange}
+            onDraggingChange={handleDraggingChange}
+            timeRef={animationTimeRef.timeRef}
+            reportId={params.reportId}
+            fightId={params.fightId}
+            selectedActorIdRef={followingActorIdRef}
+            trialNav={trialNav}
+            onTrialSeek={handleTrialSeek}
+            trialNextUpLabel={trialNextUpLabel}
+            playersOpen={showPlayerPathsHUD}
+            onTogglePlayers={togglePlayerPathsHUD}
+            showTrails={showPlayerTrails}
+            onToggleTrails={toggleTrails}
+          />
+        </Box>
+      )}
+
+      {!mobileImmersive && !mobilePreview && (
         <Box
           sx={{
             position: 'absolute',
@@ -966,7 +1028,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             '& > *': { pointerEvents: 'auto' },
           }}
         >
-          {/* Desktop docks the trial bar above the transport; mobile renders it at the top instead. */}
+          {/* Desktop docks the trial bar above the transport. */}
           {!isMobile && trialBarContent}
           <PlaybackControls
             currentTime={currentTime}
