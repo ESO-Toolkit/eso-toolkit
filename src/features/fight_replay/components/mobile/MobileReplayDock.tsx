@@ -267,11 +267,14 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         flex: '0 0 auto',
         px: { xs: 1.25, sm: 2 },
         pt: 0.75,
-        pb: 'calc(env(safe-area-inset-bottom) + 8px)',
+        // Extra bottom clearance so the glowing play orb never crowds the home indicator / viewport
+        // edge (the orb's halo ring extends ~8px past its box).
+        pb: 'calc(env(safe-area-inset-bottom) + 18px)',
+        // Solid (NOT a backdrop blur): a blur layer over the live WebGL canvas forces a full-screen
+        // readback + re-blur on every animation frame, which tanks scrolling/tap latency on iOS.
+        // A near-opaque fill reads the same over the dark arena and composites for free.
         backgroundColor:
-          theme.palette.mode === 'dark' ? 'rgba(8,11,20,0.94)' : 'rgba(255,255,255,0.95)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+          theme.palette.mode === 'dark' ? 'rgba(8,11,20,0.96)' : 'rgba(255,255,255,0.97)',
         borderTop: `1px solid ${theme.palette.divider}`,
       })}
     >

@@ -200,11 +200,19 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
               px: 1.5,
               // Tighter vertical padding on mobile so a multi-boss stack fits the short viewport.
               py: isMobile ? 0.5 : 1,
-              backgroundColor: 'rgba(15, 23, 42, 0.82)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `1px solid ${theme.palette.primary.main}29`,
-              boxShadow: '0 8px 26px rgba(0,0,0,0.5)',
+              backgroundColor: isMobile ? 'rgba(12, 18, 32, 0.94)' : 'rgba(15, 23, 42, 0.82)',
+              // Mobile drops the backdrop blur (each pill is a separate blur layer over the live
+              // WebGL canvas — up to 4 of them re-rasterizing every frame, a major iOS perf cost) and
+              // the wide drop shadow (the dark halo that read as "darkness around the frame"). A solid
+              // fill + hairline border gives the same legible card far more cheaply.
+              ...(isMobile
+                ? { border: `1px solid ${theme.palette.primary.main}33` }
+                : {
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: `1px solid ${theme.palette.primary.main}29`,
+                    boxShadow: '0 8px 26px rgba(0,0,0,0.5)',
+                  }),
             }}
           >
             <Typography

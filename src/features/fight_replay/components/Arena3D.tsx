@@ -1295,8 +1295,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           doesn't overlap the top-left PlayerListPanel DOM overlay. Styled to
           match the elevated transport: dark cyan-glass with a glowing accent border + a
           videocam glyph, so it reads as part of the same designed surface over the 3D scene.
-          Suppressed in the mobile inline preview (it returns in the immersive overlay). */}
-      {!mobilePreview && followingActorId && followingActorName && (
+          Suppressed in the mobile inline preview, AND in the mobile immersive overlay — there the
+          dedicated shell's top bar already shows a "Following ✕" chip, so this would duplicate it
+          (and add another backdrop-blur layer over the canvas). Desktop/immersive keeps it. */}
+      {!mobilePreview && !mobileImmersive && followingActorId && followingActorName && (
         <Tooltip title="Unlock camera from actor">
           <Chip
             icon={<Videocam sx={{ fontSize: '1rem' }} />}

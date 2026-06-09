@@ -1054,9 +1054,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
                   borderRadius: 999,
                   border: '1px solid',
                   borderColor: alpha(theme.palette.primary.main, 0.7),
-                  backgroundColor: 'rgba(8,11,20,0.7)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
+                  // Solid fill (no backdrop blur) — a blur layer over the animating canvas is a real
+                  // iOS compositing cost for a control this small.
+                  backgroundColor: 'rgba(8,11,20,0.86)',
                   color: '#fff',
                   fontSize: '0.72rem',
                   fontWeight: 700,
@@ -1072,11 +1072,9 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
                 color: '#fff',
                 width: 40,
                 height: 40,
-                backgroundColor: 'rgba(8,11,20,0.7)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
+                backgroundColor: 'rgba(8,11,20,0.86)',
                 border: '1px solid rgba(255,255,255,0.14)',
-                '&:hover': { backgroundColor: 'rgba(8,11,20,0.88)' },
+                '&:hover': { backgroundColor: 'rgba(8,11,20,0.95)' },
               }}
             >
               <CloseRoundedIcon />

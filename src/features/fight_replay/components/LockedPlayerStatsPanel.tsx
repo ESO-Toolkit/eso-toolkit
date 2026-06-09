@@ -891,11 +891,17 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         // 78vw of 390 (portrait) ≈ 304px — both read as a card, not a panel that eats the short side.
         maxWidth: isMobile ? 'min(78vw, 320px)' : 340,
         borderRadius: 2,
-        backgroundColor: alpha(theme.palette.background.paper, 0.82),
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        // Mobile: solid fill instead of a backdrop blur — this panel is up during the common
+        // "follow one player" flow, and a blur layer over the live WebGL canvas re-rasterizes every
+        // frame (a major iOS cost). Desktop keeps the glass.
+        backgroundColor: isMobile
+          ? alpha(theme.palette.background.paper, 0.96)
+          : alpha(theme.palette.background.paper, 0.82),
+        ...(isMobile ? null : { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }),
         border: `1px solid ${alpha(accent, 0.45)}`,
-        boxShadow: `0 8px 26px rgba(0,0,0,0.5), 0 0 14px ${alpha(accent, 0.22)}`,
+        boxShadow: isMobile
+          ? 'none'
+          : `0 8px 26px rgba(0,0,0,0.5), 0 0 14px ${alpha(accent, 0.22)}`,
         // The panel ROOT stays click-through on every form factor (so its empty margins never block a
         // canvas drag); only the header (drag handle) and the gear button opt back into pointer events.
         pointerEvents: 'none',
