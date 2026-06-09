@@ -12,8 +12,6 @@ import {
   Collapse,
   Switch,
   FormControlLabel,
-  ToggleButton,
-  ToggleButtonGroup,
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
@@ -95,16 +93,6 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   return false;
 }
 
-export type WipeColorScheme = 'slate-cyan' | 'ember' | 'periwinkle';
-
-export const WIPE_SCHEME_OPTIONS: Array<{ value: WipeColorScheme; label: string }> = [
-  { value: 'slate-cyan', label: 'Slate → Cyan' },
-  { value: 'ember', label: 'Ember' },
-  { value: 'periwinkle', label: 'Periwinkle' },
-];
-
-const WIPE_SCHEME_STORAGE_KEY = 'esoToolkit.wipeColorScheme';
-
 type RGB = [number, number, number];
 
 function mixRgb(from: RGB, to: RGB, t: number): RGB {
@@ -122,34 +110,22 @@ function rgbToHex([r, g, b]: RGB): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-// Three anchors per scheme: far (boss HP high, died fast) → mid (~50%) → close
-// (boss almost dead). No scheme produces green — green is reserved exclusively
-// for kills (green = complete).
-const WIPE_SCHEME_ANCHORS: Record<WipeColorScheme, [RGB, RGB, RGB]> = {
-  'slate-cyan': [
-    [226, 85, 85], // red
-    [100, 116, 139], // slate
-    [56, 189, 248], // cyan
-  ],
-  ember: [
-    [239, 68, 68], // red
-    [249, 115, 22], // orange
-    [251, 191, 36], // gold
-  ],
-  periwinkle: [
-    [226, 85, 85], // red
-    [165, 180, 252], // periwinkle
-    [99, 102, 241], // blue
-  ],
-};
+// Wipe accent anchors: far (boss HP high, died fast) → mid (~50%) → close (boss
+// almost dead). Runs red → periwinkle → indigo and never produces green, which
+// is reserved exclusively for kills (green = complete).
+const WIPE_ANCHORS: [RGB, RGB, RGB] = [
+  [226, 85, 85], // red
+  [165, 180, 252], // periwinkle
+  [99, 102, 241], // indigo
+];
 
 /**
- * Maps boss health % remaining to a wipe accent RGB for the selected scheme.
- * High % (players died fast) → "far" anchor; low % (almost killed) → "close" anchor.
+ * Maps boss health % remaining to a wipe accent RGB.
+ * High % (players died fast) → red; low % (almost killed) → indigo.
  */
-function getWipeRgb(percentage: number, scheme: WipeColorScheme): RGB {
+function getWipeRgb(percentage: number): RGB {
   const clamped = Math.max(0, Math.min(100, percentage));
-  const [far, mid, close] = WIPE_SCHEME_ANCHORS[scheme];
+  const [far, mid, close] = WIPE_ANCHORS;
   if (clamped >= 50) {
     return mixRgb(far, mid, (100 - clamped) / 50);
   }
@@ -157,25 +133,20 @@ function getWipeRgb(percentage: number, scheme: WipeColorScheme): RGB {
 }
 
 /**
- * Wipe accent color (hex) for the selected scheme. Returns a hex string so
- * existing `${color}30`-style alpha concatenation (borders, shadows, hover
- * tints) keeps producing valid CSS.
+ * Wipe accent color (hex). Returns a hex string so existing `${color}30`-style
+ * alpha concatenation (borders, shadows, hover tints) keeps producing valid CSS.
  */
-function getWipeHealthGradientColor(percentage: number, scheme: WipeColorScheme): string {
-  return rgbToHex(getWipeRgb(percentage, scheme));
+function getWipeHealthGradientColor(percentage: number): string {
+  return rgbToHex(getWipeRgb(percentage));
 }
 
 /**
- * Two-stop wipe background gradient that matches the accent color tone for the
- * selected scheme. Dark mode keeps the saturated color (slightly darkened on the
- * second stop); light mode blends toward white for a soft pastel fill.
+ * Two-stop wipe background gradient that matches the accent color tone. Dark
+ * mode keeps the saturated color (slightly darkened on the second stop); light
+ * mode blends toward white for a soft pastel fill.
  */
-function getWipeHealthGradientBackground(
-  percentage: number,
-  darkMode: boolean,
-  scheme: WipeColorScheme,
-): string {
-  const rgb = getWipeRgb(percentage, scheme);
+function getWipeHealthGradientBackground(percentage: number, darkMode: boolean): string {
+  const rgb = getWipeRgb(percentage);
   if (darkMode) {
     const [r, g, b] = rgb;
     const [dr, dg, db] = mixRgb(rgb, [0, 0, 0], 0.28);
@@ -811,28 +782,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   const [showTrashForEncounter, setShowTrashForEncounter] = React.useState<Set<string>>(new Set());
 
-  // Preview toggle for the wipe color scheme — lets us compare schemes on real
-  // pull data before committing to one. Persisted so the choice survives reloads.
-  const [wipeScheme, setWipeScheme] = React.useState<WipeColorScheme>(() => {
-    try {
-      const saved = window.localStorage.getItem(WIPE_SCHEME_STORAGE_KEY);
-      if (saved === 'slate-cyan' || saved === 'ember' || saved === 'periwinkle') {
-        return saved;
-      }
-    } catch {
-      // localStorage unavailable — fall back to default
-    }
-    return 'slate-cyan';
-  });
-
-  React.useEffect(() => {
-    try {
-      window.localStorage.setItem(WIPE_SCHEME_STORAGE_KEY, wipeScheme);
-    } catch {
-      // ignore persistence failures
-    }
-  }, [wipeScheme]);
-
   const toggleTrashForEncounter = (encounterId: string): void => {
     setShowTrashForEncounter((prev) => {
       const newSet = new Set(prev);
@@ -937,7 +886,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // Accent bar color — smooth gradient by boss health % for wipes,
     // green for kills (green = complete).
     const accentBarColor = isWipe
-      ? getWipeHealthGradientColor(bossHealthPercent, wipeScheme)
+      ? getWipeHealthGradientColor(bossHealthPercent)
       : isFalsePositive
         ? darkMode
           ? '#64748b'
@@ -951,7 +900,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // Status color — for wipes, match the smooth accent gradient so the %
     // text gradually shifts from red (high boss HP left) to green (almost killed)
     const statusColor = isWipe
-      ? getWipeHealthGradientColor(bossHealthPercent, wipeScheme)
+      ? getWipeHealthGradientColor(bossHealthPercent)
       : isFalsePositive
         ? darkMode
           ? '#64748b'
@@ -1039,7 +988,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               bottom: 0,
               right: `${100 - backgroundFillPercent}%`,
               background: isWipe
-                ? getWipeHealthGradientBackground(bossHealthPercent, darkMode, wipeScheme)
+                ? getWipeHealthGradientBackground(bossHealthPercent, darkMode)
                 : fight.difficulty == null || isFalsePositive
                   ? getThemeColors.trashGradient
                   : getThemeColors.killGradient,
@@ -1297,42 +1246,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             position: 'relative',
           }}
         >
-          {/* Wipe color scheme preview toggle — temporary, for comparing schemes */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              flexWrap: 'wrap',
-              gap: 1,
-              mb: 2,
-            }}
-          >
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Wipe colors (preview)
-            </Typography>
-            <ToggleButtonGroup
-              size="small"
-              exclusive
-              value={wipeScheme}
-              onChange={(_event, value: WipeColorScheme | null) => {
-                if (value) {
-                  setWipeScheme(value);
-                }
-              }}
-              aria-label="Wipe color scheme"
-            >
-              {WIPE_SCHEME_OPTIONS.map((option) => (
-                <ToggleButton
-                  key={option.value}
-                  value={option.value}
-                  sx={{ textTransform: 'none', py: 0.25, px: 1.25, fontSize: '0.75rem' }}
-                >
-                  {option.label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </Box>
           {encounters.length === 0 && <Typography> No Fights Found </Typography>}
           <Box data-testid="fight-list">
             {encounters.map((trialRun) => (
