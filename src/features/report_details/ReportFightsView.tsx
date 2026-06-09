@@ -93,45 +93,67 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   return false;
 }
 
+type RGB = [number, number, number];
+
+function mixRgb(from: RGB, to: RGB, t: number): RGB {
+  const clampedT = Math.max(0, Math.min(1, t));
+  return [
+    Math.round(from[0] + (to[0] - from[0]) * clampedT),
+    Math.round(from[1] + (to[1] - from[1]) * clampedT),
+    Math.round(from[2] + (to[2] - from[2]) * clampedT),
+  ];
+}
+
+function rgbToHex([r, g, b]: RGB): string {
+  const toHex = (v: number): string => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+// Wipe accent anchors: far (boss HP high, died fast) → mid (~50%) → close (boss
+// almost dead). Runs red → periwinkle → indigo and never produces green, which
+// is reserved exclusively for kills (green = complete).
+const WIPE_ANCHORS: [RGB, RGB, RGB] = [
+  [226, 85, 85], // red
+  [165, 180, 252], // periwinkle
+  [99, 102, 241], // indigo
+];
+
 /**
- * Smoothly interpolates a wipe color based on boss health % remaining.
- * 100% health remaining (players died fast) → red
- * 0% health remaining (almost killed boss) → green
- * Uses HSL so the transition is continuous through orange → yellow → lime,
- * but returns a hex string so existing `${color}30`-style alpha concatenation
- * (borders, shadows, hover tints) keeps producing valid CSS.
+ * Maps boss health % remaining to a wipe accent RGB.
+ * High % (players died fast) → red; low % (almost killed) → indigo.
+ */
+function getWipeRgb(percentage: number): RGB {
+  const clamped = Math.max(0, Math.min(100, percentage));
+  const [far, mid, close] = WIPE_ANCHORS;
+  if (clamped >= 50) {
+    return mixRgb(far, mid, (100 - clamped) / 50);
+  }
+  return mixRgb(mid, close, (50 - clamped) / 50);
+}
+
+/**
+ * Wipe accent color (hex). Returns a hex string so existing `${color}30`-style
+ * alpha concatenation (borders, shadows, hover tints) keeps producing valid CSS.
  */
 function getWipeHealthGradientColor(percentage: number): string {
-  const clamped = Math.max(0, Math.min(100, percentage));
-  const hue = ((100 - clamped) / 100) * 120; // 100% → 0 (red), 0% → 120 (green)
-  return hslToHex(hue, 80, 55);
-}
-
-function hslToHex(h: number, s: number, l: number): string {
-  const sNorm = s / 100;
-  const lNorm = l / 100;
-  const a = sNorm * Math.min(lNorm, 1 - lNorm);
-  const channel = (n: number): string => {
-    const k = (n + h / 30) % 12;
-    const value = lNorm - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
-    return Math.round(255 * value)
-      .toString(16)
-      .padStart(2, '0');
-  };
-  return `#${channel(0)}${channel(8)}${channel(4)}`;
+  return rgbToHex(getWipeRgb(percentage));
 }
 
 /**
- * Smoothly interpolates a wipe background gradient based on boss health % remaining.
- * Returns a two-stop linear-gradient that matches the accent color tone.
+ * Two-stop wipe background gradient that matches the accent color tone. Dark
+ * mode keeps the saturated color (slightly darkened on the second stop); light
+ * mode blends toward white for a soft pastel fill.
  */
 function getWipeHealthGradientBackground(percentage: number, darkMode: boolean): string {
-  const clamped = Math.max(0, Math.min(100, percentage));
-  const hue = ((100 - clamped) / 100) * 120;
+  const rgb = getWipeRgb(percentage);
   if (darkMode) {
-    return `linear-gradient(135deg, hsla(${hue}, 80%, 55%, 0.7) 0%, hsla(${hue}, 75%, 38%, 0.55) 100%)`;
+    const [r, g, b] = rgb;
+    const [dr, dg, db] = mixRgb(rgb, [0, 0, 0], 0.28);
+    return `linear-gradient(135deg, rgba(${r}, ${g}, ${b}, 0.7) 0%, rgba(${dr}, ${dg}, ${db}, 0.55) 100%)`;
   }
-  return `linear-gradient(135deg, hsla(${hue}, 85%, 93%, 0.8) 0%, hsla(${hue}, 85%, 88%, 0.6) 100%)`;
+  const [lr, lg, lb] = mixRgb(rgb, [255, 255, 255], 0.78);
+  const [lr2, lg2, lb2] = mixRgb(rgb, [255, 255, 255], 0.68);
+  return `linear-gradient(135deg, rgba(${lr}, ${lg}, ${lb}, 0.85) 0%, rgba(${lr2}, ${lg2}, ${lb2}, 0.65) 100%)`;
 }
 
 function getTrialNameFromBoss(
@@ -477,8 +499,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     if (darkMode) {
       return {
         // Dark mode fight card colors — tuned for glass background
+        // Kills use a green gradient (green = complete).
         killGradient:
-          'linear-gradient(135deg, rgba(56, 189, 248, 0.7) 0%, rgba(34, 211, 238, 0.5) 50%, rgba(16, 185, 129, 0.6) 100%)',
+          'linear-gradient(135deg, rgba(74, 222, 128, 0.7) 0%, rgba(34, 197, 94, 0.5) 50%, rgba(16, 185, 129, 0.6) 100%)',
         killShadow: 'none',
         trashGradient:
           'linear-gradient(135deg, rgba(100, 116, 139, 0.3) 0%, rgba(71, 85, 105, 0.2) 100%)',
@@ -504,8 +527,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     } else {
       return {
         // Light mode fight card colors — subtle tints, let accent bar carry color
+        // Kills use a pale green tint (green = complete).
         killGradient:
-          'linear-gradient(135deg, rgba(224, 247, 250, 0.8) 0%, rgba(224, 242, 241, 0.6) 100%)',
+          'linear-gradient(135deg, rgba(220, 252, 231, 0.8) 0%, rgba(209, 250, 229, 0.6) 100%)',
         killShadow: 'none',
         trashGradient:
           'linear-gradient(135deg, rgba(236, 239, 243, 0.6) 0%, rgba(241, 243, 245, 0.4) 100%)',
@@ -858,7 +882,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
     }
 
-    // Accent bar color — smooth gradient by boss health % for wipes
+    // Accent bar color — smooth gradient by boss health % for wipes,
+    // green for kills (green = complete).
     const accentBarColor = isWipe
       ? getWipeHealthGradientColor(bossHealthPercent)
       : isFalsePositive
@@ -866,8 +891,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           ? '#64748b'
           : '#94a3b8'
         : darkMode
-          ? '#38bdf8'
-          : '#06b6d4';
+          ? '#4ade80'
+          : '#10b981';
 
     const accentGlow = accentBarColor + '66';
 
@@ -889,7 +914,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         ? 'rgba(255, 60, 60, 0.06)'
         : isFalsePositive
           ? 'rgba(100, 116, 139, 0.06)'
-          : 'rgba(56, 189, 248, 0.06)'
+          : 'rgba(74, 222, 128, 0.06)'
       : 'rgba(255, 255, 255, 0.6)';
 
     const borderColor = darkMode ? `${accentBarColor}30` : `${accentBarColor}20`;
