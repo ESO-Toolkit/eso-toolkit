@@ -201,12 +201,19 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
               // Tighter vertical padding on mobile so a multi-boss stack fits the short viewport.
               py: isMobile ? 0.5 : 1,
               backgroundColor: isMobile ? 'rgba(12, 18, 32, 0.94)' : 'rgba(15, 23, 42, 0.82)',
-              // Mobile drops the backdrop blur (each pill is a separate blur layer over the live
-              // WebGL canvas — up to 4 of them re-rasterizing every frame, a major iOS perf cost) and
-              // the wide drop shadow (the dark halo that read as "darkness around the frame"). A solid
-              // fill + hairline border gives the same legible card far more cheaply.
+              // Mobile drops the backdrop blur (the dark drop-shadow halo that read as "darkness
+              // around the frame", and a costly full-screen blur) BUT keeps the element on its own
+              // GPU compositing layer via `translateZ(0)`. That layer is the important part: this
+              // pill's fill mutates `width`/`backgroundColor` every frame (rAF loop below), and
+              // without a layer those per-frame paints recomposite the translucent pill against the
+              // live WebGL canvas underneath — which is what tanked the iOS frame rate. Desktop gets
+              // the same layer for free from its backdrop-filter, which is why it stayed smooth.
               ...(isMobile
-                ? { border: `1px solid ${theme.palette.primary.main}33` }
+                ? {
+                    border: `1px solid ${theme.palette.primary.main}33`,
+                    transform: 'translateZ(0)',
+                    willChange: 'transform',
+                  }
                 : {
                     backdropFilter: 'blur(10px)',
                     WebkitBackdropFilter: 'blur(10px)',

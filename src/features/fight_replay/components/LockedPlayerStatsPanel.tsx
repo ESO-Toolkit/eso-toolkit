@@ -891,13 +891,16 @@ const LockedPlayerStatsPanelComponent: React.FC<LockedPlayerStatsPanelProps> = (
         // 78vw of 390 (portrait) ≈ 304px — both read as a card, not a panel that eats the short side.
         maxWidth: isMobile ? 'min(78vw, 320px)' : 340,
         borderRadius: 2,
-        // Mobile: solid fill instead of a backdrop blur — this panel is up during the common
-        // "follow one player" flow, and a blur layer over the live WebGL canvas re-rasterizes every
-        // frame (a major iOS cost). Desktop keeps the glass.
+        // Mobile: solid fill instead of a backdrop blur, but KEEP a GPU layer (translateZ) — this
+        // panel is up during the common "follow one player" flow and writes live stats to the DOM
+        // every frame; without a layer those paints recomposite against the live WebGL canvas (a
+        // major iOS cost). Desktop keeps the glass, which layers it for free.
         backgroundColor: isMobile
           ? alpha(theme.palette.background.paper, 0.96)
           : alpha(theme.palette.background.paper, 0.82),
-        ...(isMobile ? null : { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }),
+        ...(isMobile
+          ? { transform: 'translateZ(0)' }
+          : { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }),
         border: `1px solid ${alpha(accent, 0.45)}`,
         boxShadow: isMobile
           ? 'none'

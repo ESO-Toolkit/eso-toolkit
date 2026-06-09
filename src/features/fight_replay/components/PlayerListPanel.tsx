@@ -238,10 +238,13 @@ export const PlayerListPanel: React.FC<PlayerListPanelProps> = ({
             }),
         display: 'flex',
         flexDirection: 'column',
-        // Mobile: solid fill (no backdrop blur) — a blur layer over the live WebGL canvas
-        // re-rasterizes every animation frame, a real iOS perf cost. Desktop keeps the glass.
+        // Mobile: solid fill instead of a backdrop blur, but KEEP the element on its own GPU layer
+        // (translateZ) — its per-row health bars mutate every frame (rAF), so without a layer those
+        // paints recomposite against the live WebGL canvas. Desktop keeps the glass (which layers it).
         backgroundColor: isMobile ? 'rgba(12, 18, 32, 0.97)' : 'rgba(15, 23, 42, 0.92)',
-        ...(isMobile ? null : { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }),
+        ...(isMobile
+          ? { transform: 'translateZ(0)' }
+          : { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }),
         border: `1px solid ${theme.palette.primary.main}29`,
         boxShadow: isMobile ? 'none' : '0 8px 26px rgba(0,0,0,0.5)',
         overflow: 'hidden',

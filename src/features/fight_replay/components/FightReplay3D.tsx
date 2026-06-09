@@ -952,10 +952,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           // Arena3D's in-canvas mobile control cluster (its close + tools button).
           hideMobileControls={mobileImmersive}
           // Reserve space at the bottom so overlays (the player sheet, boss health) clear whatever
-          // docks there: the mobile dock (~100px), else the desktop transport band (+ trial bar).
+          // docks there: the mobile dock (~3 rows ≈ 132px), else the desktop transport band (+ trial bar).
           reservedInset={
             mobileImmersive
-              ? 100
+              ? 132
               : isImmersive && !barVisible
                 ? HAIRLINE_H + 4
                 : TRANSPORT_RESERVED +
@@ -995,6 +995,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             pb: 1.5,
             background:
               'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.32) 55%, rgba(0,0,0,0) 100%)',
+            // Own GPU layer so this translucent strip doesn't recomposite the canvas beneath it.
+            transform: 'translateZ(0)',
             pointerEvents: 'none',
             '& > *': { pointerEvents: 'auto' },
           }}

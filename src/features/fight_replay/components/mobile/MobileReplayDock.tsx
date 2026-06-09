@@ -156,6 +156,46 @@ const SettingRow: React.FC<{
   </Box>
 );
 
+/**
+ * A bottom-dock tool button (icon over a tiny label). Module-scope so its component identity is
+ * stable across the dock's per-tick re-renders — defining it inside the dock body made it a new
+ * type every render, remounting all three buttons each tick.
+ */
+const DockButton: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}> = ({ icon, label, active, onClick }) => (
+  <Box
+    component="button"
+    type="button"
+    onClick={onClick}
+    aria-label={label}
+    aria-pressed={active}
+    sx={(theme) => ({
+      appearance: 'none',
+      border: 'none',
+      background: active ? alpha(theme.palette.primary.main, 0.14) : 'transparent',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 0.25,
+      minWidth: 56,
+      height: 46,
+      borderRadius: 2,
+      color: active ? 'primary.main' : 'text.secondary',
+      transition: 'background-color 120ms ease, color 120ms ease',
+      '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
+    })}
+  >
+    {icon}
+    <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</Typography>
+  </Box>
+);
+
 const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   currentTime,
   duration,
@@ -226,56 +266,21 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
 
   const hasChapters = Boolean(trialNav && trialNav.timeline.entries.length > 1);
 
-  const DockButton: React.FC<{
-    icon: React.ReactNode;
-    label: string;
-    active?: boolean;
-    onClick: () => void;
-  }> = ({ icon, label, active, onClick }) => (
-    <Box
-      component="button"
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      aria-pressed={active}
-      sx={(theme) => ({
-        appearance: 'none',
-        border: 'none',
-        background: active ? alpha(theme.palette.primary.main, 0.14) : 'transparent',
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 0.25,
-        width: 56,
-        height: 48,
-        borderRadius: 2,
-        color: active ? 'primary.main' : 'text.secondary',
-        transition: 'background-color 120ms ease, color 120ms ease',
-        '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
-      })}
-    >
-      {icon}
-      <Typography sx={{ fontSize: '0.6rem', fontWeight: 700, lineHeight: 1 }}>{label}</Typography>
-    </Box>
-  );
-
   return (
     <Box
       sx={(theme) => ({
         flex: '0 0 auto',
         px: { xs: 1.25, sm: 2 },
         pt: 0.75,
-        // Extra bottom clearance so the glowing play orb never crowds the home indicator / viewport
-        // edge (the orb's halo ring extends ~8px past its box).
-        pb: 'calc(env(safe-area-inset-bottom) + 18px)',
+        pb: 'calc(env(safe-area-inset-bottom) + 10px)',
         // Solid (NOT a backdrop blur): a blur layer over the live WebGL canvas forces a full-screen
-        // readback + re-blur on every animation frame, which tanks scrolling/tap latency on iOS.
-        // A near-opaque fill reads the same over the dark arena and composites for free.
+        // readback + re-blur on every animation frame, which tanks tap latency on iOS. A near-opaque
+        // fill reads the same over the dark arena. translateZ promotes the dock to its own GPU layer
+        // so its repaints never recomposite the canvas beneath it.
         backgroundColor:
           theme.palette.mode === 'dark' ? 'rgba(8,11,20,0.96)' : 'rgba(255,255,255,0.97)',
         borderTop: `1px solid ${theme.palette.divider}`,
+        transform: 'translateZ(0)',
       })}
     >
       <TimelineSlider
@@ -292,13 +297,29 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         density="compact"
       />
 
+      {/* Transport — its OWN centered row so the play orb sits dead-center horizontally (it can't be
+          centered on a row it shares with the asymmetric timecode + tool buttons) and clear of the
+          bottom edge. */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 0.25 }}>
+        <PlaybackButtons
+          isPlaying={isPlaying}
+          onPlayPause={onPlayPause}
+          onSkipToStart={onSkipToStart}
+          onSkipToEnd={onSkipToEnd}
+          onSkipBackward10={onSkipBackward10}
+          onSkipForward10={onSkipForward10}
+          compact
+        />
+      </Box>
+
+      {/* Tools row — timecode (left) + the sheet buttons (right). */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 1.5,
-          mt: 0.5,
+          gap: 1,
+          mt: 0.25,
         }}
       >
         <Typography
@@ -321,16 +342,6 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
             {formatTime(duration)}
           </Box>
         </Typography>
-
-        <PlaybackButtons
-          isPlaying={isPlaying}
-          onPlayPause={onPlayPause}
-          onSkipToStart={onSkipToStart}
-          onSkipToEnd={onSkipToEnd}
-          onSkipBackward10={onSkipBackward10}
-          onSkipForward10={onSkipForward10}
-          compact
-        />
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flex: '0 0 auto' }}>
           <DockButton
