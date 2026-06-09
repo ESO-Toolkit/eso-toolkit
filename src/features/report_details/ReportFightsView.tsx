@@ -104,7 +104,8 @@ function getWipeHealthGradientBackground(percentage: number, darkMode: boolean):
 }
 
 function getDifficultyLabel(difficulty: number | null, trialName: string): string | null {
-  if (!difficulty || difficulty < 10) {
+  // Difficulty codes: Normal ≤ 120, Veteran 121, Veteran HM 122 (+1/+2/+3 = 123/124/125).
+  if (!difficulty || difficulty < 121) {
     return 'Normal';
   }
 

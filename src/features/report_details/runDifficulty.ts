@@ -19,9 +19,15 @@
 import type { RunEncounter } from './fightGrouping';
 import { isBossFight, wasKill } from './fightGrouping';
 
-// ESO Logs difficulty codes for trials.
+// ESO Logs difficulty codes for trials: Normal ≤ 120, Veteran 121,
+// Veteran Hard Mode 122 (Cloudrest/Asylum go 123/124/125 for +1/+2/+3).
 const VETERAN = 121;
 const VETERAN_HM = 122; // +0; Cloudrest/Asylum go 123/124/125 for +1/+2/+3.
+
+/** A positive difficulty code below Veteran (e.g. 120) is a Normal clear. */
+function isNormalCode(d: number): boolean {
+  return d > 0 && d < VETERAN;
+}
 
 /**
  * Lowercased name fragments for bosses that have **no Hard Mode option** —
@@ -136,7 +142,7 @@ export function determineRunDifficulty(
 
   const hm = results.filter((d) => d >= VETERAN_HM).length;
   const vet = results.filter((d) => d === VETERAN).length;
-  const normal = results.filter((d) => d > 0 && d < 10).length;
+  const normal = results.filter((d) => isNormalCode(d)).length;
 
   if (hmType === 'final-boss-only') {
     // Older trials: HM lives only on the final boss, so any HM-capable HM kill

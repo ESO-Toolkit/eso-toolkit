@@ -204,6 +204,20 @@ const UNKNOWN_ZONE: ResolvedZone = {
   type: 'unknown',
 };
 
+/** Lowercased name fragments for the solo/group arenas (not trials or dungeons). */
+const ARENA_NAME_TOKENS: readonly string[] = [
+  'maelstrom arena',
+  'vateshran hollows',
+  'dragonstar arena',
+  'blackrose prison',
+];
+
+/** Classify an unrecognised (non-trial) zone as an arena or a dungeon by name. */
+function classifyUnknownZone(name: string | null | undefined): ContentType {
+  const n = (name ?? '').toLowerCase();
+  return ARENA_NAME_TOKENS.some((token) => n.includes(token)) ? 'arena' : 'dungeon';
+}
+
 /**
  * Resolve which trial/dungeon a fight belongs to, in priority order:
  *   1. `gameZone.id` matched against the canonical content table (most reliable).
@@ -247,17 +261,23 @@ export function resolveFightZone(
     }
   }
 
-  // 3. Raw gameZone — an unrecognised zone (typically a dungeon). Group by its id.
+  // 3. Raw gameZone — an unrecognised zone (a dungeon, or a solo/group arena).
+  //    Group by its id; classify arenas by name so they aren't called dungeons.
   if (gz?.id) {
     return {
       key: `zone:${gz.id}`,
       zoneId: gz.id,
       name: gz.name || reportData?.zone?.name || 'Unknown Zone',
-      type: 'dungeon',
+      type: classifyUnknownZone(gz.name),
     };
   }
   if (gz?.name) {
-    return { key: `name:${gz.name.toLowerCase()}`, zoneId: null, name: gz.name, type: 'dungeon' };
+    return {
+      key: `name:${gz.name.toLowerCase()}`,
+      zoneId: null,
+      name: gz.name,
+      type: classifyUnknownZone(gz.name),
+    };
   }
 
   // 4. Report-level zone name.

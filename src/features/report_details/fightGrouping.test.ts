@@ -20,6 +20,8 @@ import {
 const ZONE_SUNSPIRE = 1121;
 const ZONE_CLOUDREST = 1051;
 const ZONE_KYNES_AEGIS = 1196;
+const ZONE_HRC = 636;
+const ZONE_AA = 638;
 const ZONE_DUNGEON = 999999; // not a known trial → treated as dungeon
 
 let nextId = 1;
@@ -341,6 +343,116 @@ describe('summarizeEncounter', () => {
     const s = summarizeEncounter(encounter);
     expect(s.killed).toBe(false);
     expect(s.bestPercent).toBe(18);
+  });
+});
+
+describe('edge cases', () => {
+  it('separates three distinct trials in one log, in order', () => {
+    const fights = [
+      makeFight({ startTime: 0, endTime: 1000, gameZone: { id: ZONE_AA, name: 'AA' } }),
+      makeFight({ startTime: 2000, endTime: 3000, gameZone: { id: ZONE_HRC, name: 'HRC' } }),
+      makeFight({ startTime: 4000, endTime: 5000, gameZone: { id: ZONE_SUNSPIRE, name: 'SS' } }),
+    ];
+    const runs = groupFightsIntoRuns(fights, reportData);
+    expect(runs.map((r) => r.zone.name)).toEqual([
+      'Aetherian Archive',
+      'Hel Ra Citadel',
+      'Sunspire',
+    ]);
+  });
+
+  it('treats returning to an earlier zone (A → B → A) as three separate runs', () => {
+    const fights = [
+      makeFight({ startTime: 0, endTime: 1000, gameZone: { id: ZONE_SUNSPIRE, name: 'SS' } }),
+      makeFight({ startTime: 2000, endTime: 3000, gameZone: { id: ZONE_CLOUDREST, name: 'CR' } }),
+      makeFight({ startTime: 4000, endTime: 5000, gameZone: { id: ZONE_SUNSPIRE, name: 'SS' } }),
+    ];
+    const runs = groupFightsIntoRuns(fights, reportData);
+    expect(runs.map((r) => r.zone.name)).toEqual(['Sunspire', 'Cloudrest', 'Sunspire']);
+  });
+
+  it('is order-independent (sorts by start time)', () => {
+    const fights = [
+      makeFight({
+        startTime: 4000,
+        endTime: 5000,
+        encounterID: 22,
+        gameZone: { id: ZONE_SUNSPIRE, name: 'SS' },
+      }),
+      makeFight({
+        startTime: 0,
+        endTime: 1000,
+        encounterID: 21,
+        gameZone: { id: ZONE_SUNSPIRE, name: 'SS' },
+      }),
+    ];
+    const runs = groupFightsIntoRuns(fights, reportData);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].fights.map((f) => f.startTime)).toEqual([0, 4000]);
+  });
+
+  it('classifies known arenas as arenas, not dungeons', () => {
+    const zone = resolveFightZone(
+      makeFight({ gameZone: { id: 1234567, name: 'Maelstrom Arena' }, encounterID: 900 }),
+    );
+    expect(zone.type).toBe('arena');
+    expect(zone.name).toBe('Maelstrom Arena');
+  });
+
+  it('resolves a full no-gameZone (legacy) log via boss names', () => {
+    const fights = [
+      makeFight({
+        startTime: 0,
+        endTime: 1000,
+        encounterID: 21,
+        gameZone: null,
+        name: 'Yolnahkriin',
+      }),
+      makeFight({
+        startTime: 2000,
+        endTime: 3000,
+        encounterID: 23,
+        gameZone: null,
+        name: 'Nahviintaas',
+      }),
+    ];
+    const runs = groupFightsIntoRuns(fights, { zone: { name: 'Sunspire' } } as ReportFragment);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].zone.name).toBe('Sunspire');
+  });
+
+  it('returns a single bossless run for a trash-only log', () => {
+    const fights = [
+      makeFight({ startTime: 0, endTime: 1000, encounterID: 0, difficulty: null, name: 'Trash A' }),
+      makeFight({
+        startTime: 2000,
+        endTime: 3000,
+        encounterID: 0,
+        difficulty: null,
+        name: 'Trash B',
+      }),
+    ];
+    const [run] = groupFightsIntoRuns(fights, reportData);
+    const encounters = buildRunEncounters(run);
+    expect(encounters).toHaveLength(0);
+    expect(uncategorizedTrash(run, encounters)).toHaveLength(2);
+  });
+
+  it('returns [] for empty / null input', () => {
+    expect(groupFightsIntoRuns([], reportData)).toEqual([]);
+    expect(groupFightsIntoRuns(null, reportData)).toEqual([]);
+    expect(groupFightsIntoRuns(undefined, reportData)).toEqual([]);
+  });
+
+  it('drops zero-duration / invalid fights', () => {
+    const fights = [
+      makeFight({ startTime: 1000, endTime: 1000 }), // zero duration
+      makeFight({ startTime: 2000, endTime: 1500 }), // negative
+      makeFight({ startTime: 0, endTime: 1000, encounterID: 21 }), // valid
+    ];
+    const runs = groupFightsIntoRuns(fights, reportData);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].fights).toHaveLength(1);
   });
 });
 
