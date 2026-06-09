@@ -105,8 +105,7 @@ function mixRgb(from: RGB, to: RGB, t: number): RGB {
 }
 
 function rgbToHex([r, g, b]: RGB): string {
-  const toHex = (v: number): string =>
-    Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
+  const toHex = (v: number): string => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
