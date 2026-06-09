@@ -160,6 +160,25 @@ About half are quick "reset" re-pulls (very short, boss left near full health).
   "Show all N attempts" expander, and the header shows summary chips
   (`3 kills` / `Best 12%` / `20 resets`).
 
+### 10. Mini-bosses wrongly downgraded HM clears to "Partial Veteran HM" — _High_
+
+ESO mini-bosses (Spiral Descender, Bow Breaker, Sail Ripper, Haj Mota, …) **have
+no Hard Mode** — they are always Veteran. The old `calculateTrialDifficulty`
+counted every fight at difficulty 121 (including those minis, and including
+_wipes_) as a "Veteran boss", so a full-HM clear showed as **"Partial Veteran
+HM"** (confirmed on both real logs). HM status is also a kill property, not a
+wipe property — wiping a boss on Veteran then killing it on HM is an HM kill.
+
+**Fix:** new `runDifficulty.ts` (`determineRunDifficulty`) judges HM only on
+**HM-capable bosses** (minis excluded via `isHmCapableBoss`) and only on the
+**kill** difficulty (highest difficulty among kills; falls back to best attempt
+for in-progress runs). Linear trials use per-boss / final-boss-only rules;
+Cloudrest & Asylum (the "skip to the final boss" trials) use the +0..+3 codes
+(122–125) from the final-boss kill. Both real logs now read **"Veteran HM"**.
+This also lays the groundwork for trifecta reasoning (Veteran HM + speed +
+no-death). Per-boss badges are unchanged (a mini still correctly shows
+"Veteran").
+
 ---
 
 ## Deferred / future work
@@ -180,8 +199,12 @@ About half are quick "reset" re-pulls (very short, boss left near full health).
 
 - `npm run validate` (typecheck + lint + format) — clean.
 - `npx jest src/features/report_details src/store/report/reportSelectors.test.ts`
-  — 165 passed, 14 snapshots passed.
-- `fightGrouping.test.ts` — 26 passed, including **end-to-end checks against the
-  two real committed reports**: the DSR farm resolves to one run with multi-kill
-  grouped encounters, and the VSE log resolves to one run with 30+ Yaseyla
-  attempts (resets detected, eventual kill).
+  — 175 passed, 14 snapshots passed.
+- `fightGrouping.test.ts` (26) + `runDifficulty.test.ts` (10) include
+  **end-to-end checks against the two real committed reports**: the DSR farm
+  resolves to one run with multi-kill grouped encounters; the VSE log resolves to
+  one run with 30+ Yaseyla attempts (resets detected, eventual kill); and both
+  read as **Veteran HM** (mini-bosses no longer force "Partial").
+- **Rendered in headless Chromium** against both real reports: grouped
+  attempt-heavy encounters with "Show all N attempts", the "Group attempts"
+  toggle, and correct "Veteran HM" headers.

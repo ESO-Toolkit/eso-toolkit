@@ -35,6 +35,7 @@ import {
   wasKill,
   type RunEncounter,
 } from './fightGrouping';
+import { determineRunDifficulty } from './runDifficulty';
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -102,32 +103,6 @@ function getWipeHealthGradientBackground(percentage: number, darkMode: boolean):
   return `linear-gradient(135deg, hsla(${hue}, 85%, 93%, 0.8) 0%, hsla(${hue}, 85%, 88%, 0.6) 100%)`;
 }
 
-// Helper function to determine if a trial has per-boss HM or final-boss-only HM
-function getTrialHMType(trialName: string): 'per-boss' | 'final-boss-only' | 'special' {
-  const perBossHMTrials = [
-    'Sunspire',
-    "Kyne's Aegis",
-    'Rockgrove',
-    'Dreadsail Reef',
-    "Sanity's Edge",
-    'Lucent Citadel',
-    'Ossein Cage',
-    'Opulent Ordeal',
-  ];
-
-  const specialTrials = ['Cloudrest', 'Asylum'];
-
-  if (specialTrials.some((trial) => trialName.includes(trial))) {
-    return 'special';
-  }
-
-  if (perBossHMTrials.some((trial) => trialName.includes(trial))) {
-    return 'per-boss';
-  }
-
-  return 'final-boss-only';
-}
-
 function getDifficultyLabel(difficulty: number | null, trialName: string): string | null {
   if (!difficulty || difficulty < 10) {
     return 'Normal';
@@ -151,83 +126,6 @@ function getDifficultyLabel(difficulty: number | null, trialName: string): strin
   if (difficulty === 121) return 'Veteran';
 
   return 'Veteran';
-}
-
-function calculateTrialDifficulty(
-  fights: FightFragment[],
-  trialName: string,
-): { difficulty: number; label: string } {
-  // Get HM type for this trial
-  const hmType = getTrialHMType(trialName);
-  const nonHMBosses = ['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'];
-
-  if (hmType === 'per-boss') {
-    // For per-boss HM trials, analyze all HM-capable bosses in this run
-    const hmCapableFights = fights.filter((fight) => !nonHMBosses.includes(fight.name));
-
-    if (hmCapableFights.length === 0) {
-      return { difficulty: 121, label: 'Veteran' };
-    }
-
-    const hmBosses = hmCapableFights.filter((fight) => fight.difficulty === 122);
-    const vetBosses = hmCapableFights.filter((fight) => fight.difficulty === 121);
-    const normalBosses = hmCapableFights.filter((fight) => (fight.difficulty ?? 0) < 10);
-
-    // Determine difficulty pattern for this run
-    if (normalBosses.length > 0 && hmBosses.length === 0 && vetBosses.length === 0) {
-      return { difficulty: 0, label: 'Normal' };
-    } else if (hmBosses.length > 0 && vetBosses.length === 0) {
-      return { difficulty: 122, label: 'Veteran HM' };
-    } else if (hmBosses.length === 0 && vetBosses.length > 0) {
-      return { difficulty: 121, label: 'Veteran' };
-    } else if (hmBosses.length > 0 && vetBosses.length > 0) {
-      return { difficulty: 122, label: 'Partial Veteran HM' };
-    } else {
-      // Mixed with normal - default to veteran
-      return { difficulty: 121, label: 'Veteran' };
-    }
-  } else if (hmType === 'final-boss-only') {
-    // For final-boss-only HM trials, check if ANY boss in this run was HM
-    // This handles cases where the final boss was done in HM
-    const hasHM = fights.some((fight) => fight.difficulty === 122);
-    const hasVet = fights.some((fight) => fight.difficulty === 121);
-    const hasNormal = fights.some((fight) => (fight.difficulty ?? 0) < 10);
-
-    if (hasHM) {
-      return { difficulty: 122, label: 'Veteran HM' };
-    } else if (hasVet) {
-      return { difficulty: 121, label: 'Veteran' };
-    } else if (hasNormal) {
-      return { difficulty: 0, label: 'Normal' };
-    } else {
-      return { difficulty: 121, label: 'Veteran' };
-    }
-  } else if (hmType === 'special') {
-    // For Cloudrest and Asylum Sanctorium, use difficulty codes for HM detection
-    // Difficulty codes: 121=Veteran, 122=Standard HM, 123=+1, 124=+2, 125=+3
-    const difficulties = fights.map((fight) => fight.difficulty ?? 0).filter((d) => d > 0);
-    const maxDifficulty = Math.max(...difficulties, 0);
-    const hasNormal = fights.some((fight) => (fight.difficulty ?? 0) < 10);
-
-    if (maxDifficulty >= 125) {
-      return { difficulty: 125, label: 'Veteran HM +3' };
-    } else if (maxDifficulty >= 124) {
-      return { difficulty: 124, label: 'Veteran HM +2' };
-    } else if (maxDifficulty >= 123) {
-      return { difficulty: 123, label: 'Veteran HM +1' };
-    } else if (maxDifficulty >= 122) {
-      return { difficulty: 122, label: 'Veteran HM' };
-    } else if (maxDifficulty >= 121) {
-      return { difficulty: 121, label: 'Veteran' };
-    } else if (hasNormal) {
-      return { difficulty: 0, label: 'Normal' };
-    } else {
-      return { difficulty: 121, label: 'Veteran' };
-    }
-  } else {
-    // Fallback for any unhandled trial types
-    return { difficulty: 121, label: 'Veteran' };
-  }
 }
 
 interface ReportFightsViewProps {
@@ -354,7 +252,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
       const hasBosses = runEncounters.length > 0;
       const trialDifficulty = hasBosses
-        ? calculateTrialDifficulty(run.fights, run.zone.name)
+        ? determineRunDifficulty(encountersForRun, run.zone.name)
         : { difficulty: 0, label: null as string | null };
 
       return {
