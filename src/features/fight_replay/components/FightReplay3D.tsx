@@ -657,6 +657,27 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     };
   }, [mobilePseudoFullscreen]);
 
+  // Suppress iOS Safari's PAGE pinch-zoom while the immersive overlay is up, so a two-finger pinch
+  // dollies the 3D camera (CanvasWheelZoom owns the touch pinch) instead of scaling the whole page.
+  // Safari drives page zoom through the non-standard `gesture*` events, which `touch-action: none`
+  // and a touchmove preventDefault don't reliably stop — so without this the replay "wouldn't zoom"
+  // (the page zoomed under the gesture instead). These events are iOS-only; the listeners are inert
+  // elsewhere. Scoped to the pseudo-fullscreen overlay (which fills the screen), so normal page
+  // pinch-zoom is untouched everywhere else.
+  useEffect(() => {
+    if (!mobilePseudoFullscreen) return;
+    const prevent = (e: Event): void => e.preventDefault();
+    const opts = { passive: false } as const;
+    document.addEventListener('gesturestart', prevent, opts);
+    document.addEventListener('gesturechange', prevent, opts);
+    document.addEventListener('gestureend', prevent, opts);
+    return () => {
+      document.removeEventListener('gesturestart', prevent);
+      document.removeEventListener('gesturechange', prevent);
+      document.removeEventListener('gestureend', prevent);
+    };
+  }, [mobilePseudoFullscreen]);
+
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
   // g frame-all) live in-canvas (KeyboardCameraControls / CameraResetControls) because they need
   // the three.js camera handle; H/N live in Arena3D. This handler owns everything that mutates
@@ -995,8 +1016,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             pb: 1.5,
             background:
               'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.32) 55%, rgba(0,0,0,0) 100%)',
-            // Own GPU layer so this translucent strip doesn't recomposite the canvas beneath it.
-            transform: 'translateZ(0)',
             pointerEvents: 'none',
             '& > *': { pointerEvents: 'auto' },
           }}

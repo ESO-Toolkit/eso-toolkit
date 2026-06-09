@@ -275,12 +275,13 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
         pb: 'calc(env(safe-area-inset-bottom) + 10px)',
         // Solid (NOT a backdrop blur): a blur layer over the live WebGL canvas forces a full-screen
         // readback + re-blur on every animation frame, which tanks tap latency on iOS. A near-opaque
-        // fill reads the same over the dark arena. translateZ promotes the dock to its own GPU layer
-        // so its repaints never recomposite the canvas beneath it.
+        // fill reads the same over the dark arena and is cheap to composite. NOTE: deliberately NO
+        // `transform` here — the bottom sheets render as position:fixed children, and a transform on
+        // this ancestor would make IT their containing block (breaking their full-viewport sizing).
+        // The dock only repaints ~10Hz as the slider thumb moves, so it doesn't need its own layer.
         backgroundColor:
           theme.palette.mode === 'dark' ? 'rgba(8,11,20,0.96)' : 'rgba(255,255,255,0.97)',
         borderTop: `1px solid ${theme.palette.divider}`,
-        transform: 'translateZ(0)',
       })}
     >
       <TimelineSlider
