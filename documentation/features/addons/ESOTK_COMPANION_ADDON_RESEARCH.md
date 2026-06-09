@@ -21,7 +21,7 @@ surfaces · 5. Ranked ideas (P0–P2) · 6. Phased architecture · 7. Risks & op
 19. Tech stack & SavedVariables schema · 20. Capture methodology & accuracy ·
 21. Beyond trials — PvP audiences · 22. Privacy, consent & ToS · 23. Maintenance & risk
 · 24. Consolidated roadmap · 25. Group-share transport (how to broadcast it) ·
-26. Ruleset / criteria schema (the compliance engine).
+26. Ruleset / criteria schema (the compliance engine) — incl. 26.1 readiness flow & 26.2 verified checks.
 
 ---
 
@@ -986,6 +986,52 @@ Operators: `eq | in | gte | lte | between | containsAll | containsAny`. Severity
 > log-dependent checks after. The `eval` tag is what keeps "is everyone ready?" honest
 > in-game and "was everyone actually optimal?" exact on the web.
 
+### 26.1 Canonical in-game readiness flow (logs not required)
+
+The agreed live-compliance loop, and why it sidesteps the bandwidth limit entirely:
+
+1. **Raid lead authors a static ruleset on the web** (per role/content). It stays put
+   until they change it.
+2. **Synced into the add-on** once (file / import code / broadcast).
+3. **Each client checks *itself*** against the ruleset (it has full data about its own
+   character).
+4. **Each client broadcasts only a per-rule pass/fail bitfield** — ~2–4 bytes, re-sent
+   only when something changes. **You broadcast verdicts, never builds.**
+5. **Group frames show a red X** on anyone non-compliant.
+6. **Click → expands the exact failures**, *reconstructed locally* from each client's own
+   copy of the ruleset (bit *i* → rule *i* → "Wrong mundus — needs The Lover"). Zero
+   extra bandwidth for the detail.
+
+Logs never enter this loop (they aren't instant). The log is a **post-hoc bonus layer**
+for the one thing that needs it — exact *effective* penetration and buff/debuff uptimes.
+
+**Why the bandwidth objection dies here:** the only thing on the wire is a few-byte,
+static, on-change verdict — smaller than the DPS numbers Hodor already shares. The full
+build is never transmitted for this feature; the readable "what's missing" is rebuilt
+from local data.
+
+### 26.2 Verified client-side checks (API confirmed, not assumed)
+
+Every readiness check below was confirmed against real add-on source / API references
+(see Sources), so the add-on reads them from the player's *own* client with no inspection:
+
+| Requirement | Confirmed read | Source |
+|---|---|---|
+| **Champion points** (allocation) | `GetNumPointsSpentOnChampionSkill(skillId)` (single arg) over enumerated skills | DynamicCP `src/API.lua` |
+| **Champion points** (slotted) | `GetSlotBoundId(slot, HOTBAR_CATEGORY_CHAMPION)`, slots 1–12 | DynamicCP `OFFSETS` |
+| **Gear set** | `GetItemLink(BAG_WORN, slot)` → `GetItemLinkSetInfo(link, true)` → `setId`, `numEquipped` | ESOUI |
+| **Food** | active buff via `GetUnitBuffInfo("player", i)` ability id | ESOUI |
+| **Mundus** | active buff id (no direct getter — match a known mundus boon id list) | ESOUI |
+| **Potion** | `GetSlotItemLink(quickslotIndex)` | ESOUI |
+| **Attributes** | `GetAttributeSpentPoints(attributeType)` → points | eso-api dump |
+| **Self penetration / crit** | `GetPlayerStat(STAT_*)` (constants nil-guarded) | UESP |
+
+> **Still pending live confirmation (flagged, not assumed):** the CP discipline-
+> enumeration function names (`GetNumChampionDisciplines` etc.) and the exact `STAT_*`
+> constant names. Both are guarded so a wrong name degrades one field instead of
+> crashing; the fallback for enumeration is a bundled championSkillId list iterated with
+> the verified single-arg `GetNumPointsSpentOnChampionSkill`.
+
 ---
 
 ## Sources
@@ -1035,5 +1081,8 @@ Operators: `eq | in | gte | lte | between | containsAll | containsAny`. Severity
 - [GetUnitPower (current/max for any unitTag)](https://esoapi.uesp.net/100020/data/g/e/t/GetUnitPower.html) · [GetUnitBuffInfo (group buffs)](https://esodata.uesp.net/100016/data/g/e/t/GetUnitBuffInfo.html) · [UnitTag reference](https://wiki.esoui.com/UnitTag)
 - [LibGroupBroadcast custom-protocol API (DeclareProtocol/AddField/NumericField/ArrayField)](https://github.com/sirinsidiator/ESO-LibGroupBroadcast) · [Broadcasting API thread](https://www.esoui.com/forums/showthread.php?p=51019)
 - [RdK Group Tool — group query of equipment/CP/stats/mundus over map pins](https://www.esoui.com/downloads/info2475-RdKGroupTool.html) · [Taos Group Tools](https://esoui.com/downloads/info1962-TaosGroupTools.html)
+- [DynamicCP source — verified champion-point API (single-arg `GetNumPointsSpentOnChampionSkill`, slot OFFSETS)](https://github.com/Kyzderp/DynamicCP)
+- [GetItemLinkSetInfo (numEquipped/setId) — ESOUI wiki](https://wiki.esoui.com/GetItemLink) · [GetItemLink](https://wiki.esoui.com/GetItemLink)
+- [Mundus detection is buff-id-based via GetUnitBuffInfo (no direct getter)](https://www.esoui.com/forums/showthread.php?t=2225) · [Quickslot read GetSlotItemLink](https://www.esoui.com/forums/showthread.php?t=6286)
 </content>
 </invoke>
