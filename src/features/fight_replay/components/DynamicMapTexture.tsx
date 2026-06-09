@@ -88,6 +88,55 @@ export function generateFallbackTexture(): THREE.CanvasTexture {
 }
 
 /**
+ * Deliberate floor texture for a fight that ESO Logs ships NO map for — every trash pull
+ * (`encounterID === 0`: dungeon/trial trash, Cyrodiil/PvP) has an empty `fight.maps`, so the floor
+ * would otherwise be a bare dark plane that reads as broken ("the map is gone, just a grid"). This is
+ * NOT the load-error grid (that's `generateFallbackTexture`, a harsh white-on-grey grid for the rarer
+ * "a map exists but failed to fetch" case). Here there is no geography to depict, so we render an
+ * intentional, calm tactical surface: a soft slate radial vignette in the scene's grid palette
+ * (cell #3f4654 / section #566173), letting the arena `<Grid>` overlay read as the spatial reference
+ * on top. Crucially it makes NO geographic claim, so actors sit at correct relative positions with
+ * zero misregistration risk — the honest choice over deriving a zone map (which could land actors on
+ * the wrong spot, and on a huge zone like Cyrodiil would shrink the fight to an unreadable speck).
+ *
+ * Same jsdom guard as `generateFallbackTexture`: returns a valid CanvasTexture even with no 2D context.
+ */
+export function generateMaplessFloorTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  const size = 512;
+  canvas.width = size;
+  canvas.height = size;
+
+  const context = canvas.getContext('2d');
+  if (context) {
+    // Soft radial vignette: a touch lighter slate in the centre easing to a deep slate at the edges,
+    // so the plane reads as a lit tactical surface rather than a flat void. Tuned dark enough that the
+    // grid lines and the figures' contact shadows still pop.
+    const grad = context.createRadialGradient(
+      size / 2,
+      size / 2,
+      size * 0.05,
+      size / 2,
+      size / 2,
+      size * 0.62,
+    );
+    grad.addColorStop(0, '#2c333f');
+    grad.addColorStop(0.7, '#222834');
+    grad.addColorStop(1, '#1a1f29');
+    context.fillStyle = grad;
+    context.fillRect(0, 0, size, size);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+/**
  * Swap the floor material's texture and signal the on-demand RenderLoop to repaint.
  *
  * Centralizes the contract every async load callback (CDN success or failure→fallback)
@@ -162,6 +211,15 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
   // matches the real map's grazing-angle sampling — consistency only paints on a CDN failure.
   const fallbackTexture = useMemo(() => {
     const tex = generateFallbackTexture();
+    tex.anisotropy = maxAnisotropy;
+    return tex;
+  }, [maxAnisotropy]);
+
+  // Per-instance mapless floor texture, applied when the fight has NO map at all (empty timeline —
+  // trash pulls / Cyrodiil / PvP). Distinct from the error-grid above: a calm slate surface, not a
+  // failure state. Memoized once per mount, disposed in cleanup.
+  const maplessTexture = useMemo(() => {
+    const tex = generateMaplessFloorTexture();
     tex.anisotropy = maxAnisotropy;
     return tex;
   }, [maxAnisotropy]);
@@ -295,14 +353,29 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
     }
   }, [mapTimeline, loadTexture, fallbackTexture, onTextureChange]);
 
+  // Mapless fight (empty timeline): bind the deliberate slate floor instead of leaving a bare dark
+  // plane. Runs in an effect (NOT useFrame — the useFrame map updater early-returns on an empty
+  // timeline, so it never paints anything here). Guarded so the boss/real-map path is untouched: only
+  // fires when there are zero timeline entries. `applyFloorTexture` fires onTextureChange so the swap
+  // paints under the on-demand gate even while paused. Effects run AFTER the commit that mounts the
+  // mesh, so materialRef.current is populated by the time this runs on a real render (the jsdom-only
+  // null case is handled by applyFloorTexture's null-guard, not by any re-run).
+  useEffect(() => {
+    if (mapTimeline.entries.length === 0) {
+      currentMapFileRef.current = null;
+      applyFloorTexture(materialRef.current, maplessTexture, onTextureChange);
+    }
+  }, [mapTimeline, maplessTexture, onTextureChange]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       geometry.dispose();
       fallbackTexture.dispose();
+      maplessTexture.dispose();
       clearMapTextureCache();
     };
-  }, [geometry, fallbackTexture]);
+  }, [geometry, fallbackTexture, maplessTexture]);
 
   return (
     <mesh
@@ -323,7 +396,13 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
         // Opaque: at 0.8 over the dark #1a1a1a canvas background the map blended toward black,
         // muting every pixel. Brightness/legibility are controlled via the sRGB texture + renderer
         // exposure now, not via alpha. Opaque also drops the transparency-sort cost.
-        color={mapTimeline.entries.length > 0 ? '#ffffff' : '#2a2a2a'}
+        //
+        // White (full-brightness) in BOTH cases now: a non-empty timeline shows the real map, and an
+        // empty timeline shows the deliberate mapless slate texture (bound in the effect above) — both
+        // are sRGB textures that must not be multiplied down by a tinted base colour. (Previously the
+        // empty case had no texture and used a dark #2a2a2a tint to avoid a flat-white plane; the
+        // mapless texture replaces that.)
+        color="#ffffff"
       />
     </mesh>
   );
