@@ -98,11 +98,7 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
       author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
       is_anonymous: isAnon,
       tags: row.tags_concat ? row.tags_concat.split(',') : [],
-      trial_ids: row.trials_concat
-        ? row.trials_concat.split(',')
-        : row.trial_id
-          ? [row.trial_id]
-          : [],
+      trial_ids: orderTrialIds(row.trial_id, row.trials_concat ? row.trials_concat.split(',') : []),
       user_voted: opts.userId ? votedSet.has(row.id) : undefined,
     };
   });
@@ -137,14 +133,16 @@ export async function getRosterById(
 
   const isAnon = row.is_anonymous ? true : false;
   const isOwner = userId === row.author_id;
-  const trialIds = trialRows.results.map((t) => t.trial_id);
   return {
     ...row,
     author_id: isAnon && !isOwner ? '' : row.author_id,
     author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
     is_anonymous: isAnon,
     tags: tagRows.results.map((t) => t.tag),
-    trial_ids: trialIds.length > 0 ? trialIds : row.trial_id ? [row.trial_id] : [],
+    trial_ids: orderTrialIds(
+      row.trial_id,
+      trialRows.results.map((t) => t.trial_id),
+    ),
     user_voted: userId ? userVoted : undefined,
   };
 }
@@ -380,6 +378,16 @@ async function insertTags(db: D1Database, rosterId: string, tags: string[]): Pro
  * always including the primary trial_id so old single-trial behaviour is
  * preserved even when a caller omits trialIds.
  */
+/**
+ * Order a roster's trial ids so the primary trial_id comes first. SQLite gives
+ * no row order without ORDER BY, so without this the primary (trial_ids[0]) can
+ * drift when a multi-trial roster is edited and re-saved.
+ */
+function orderTrialIds(primary: string | null | undefined, ids: string[]): string[] {
+  const rest = ids.filter((t) => t !== primary);
+  return primary ? [primary, ...rest] : rest;
+}
+
 function resolveTrialIds(primary: string, trialIds?: string[]): string[] {
   const set = new Set<string>();
   if (primary) set.add(primary);
