@@ -973,13 +973,43 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
               </Typography>
             )}
           </Box>
-          <IconButton
-            aria-label="Close replay"
-            onClick={toggleFullscreen}
-            sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.55)', flex: '0 0 auto' }}
-          >
-            <CloseRoundedIcon />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: '0 0 auto' }}>
+            {/* Following an actor (tap-to-lock the camera) — the only way to release it on the shell,
+                since the old in-canvas tools cluster is suppressed on mobile. */}
+            {followingActorId != null && (
+              <Box
+                component="button"
+                type="button"
+                onClick={handleCameraUnlock}
+                aria-label="Stop following"
+                sx={{
+                  appearance: 'none',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 999,
+                  border: '1px solid',
+                  borderColor: 'primary.main',
+                  backgroundColor: 'rgba(0,0,0,0.55)',
+                  color: '#fff',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                }}
+              >
+                Following ✕
+              </Box>
+            )}
+            <IconButton
+              aria-label="Close replay"
+              onClick={toggleFullscreen}
+              sx={{ color: '#fff', backgroundColor: 'rgba(0,0,0,0.55)' }}
+            >
+              <CloseRoundedIcon />
+            </IconButton>
+          </Box>
         </Box>
       )}
 
