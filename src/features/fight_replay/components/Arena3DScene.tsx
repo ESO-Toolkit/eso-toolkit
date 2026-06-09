@@ -308,8 +308,11 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
 
   // Touch path for placing markers: press-and-hold on the ground (edit mode only) opens the
   // same add-marker menu desktop gets from right-click. The arena point is captured at
-  // pointer-down; any movement past the slop (drag/rotate/pinch) cancels the press.
+  // pointer-down; any movement past the slop (drag/rotate/pinch) cancels the press. The menu
+  // itself opens on RELEASE (deferred a tick) — opening it under a still-down finger would let
+  // the gesture's trailing click land on the menu backdrop and close it immediately.
   const groundPressPointRef = useRef<{ x: number; y: number; z: number } | null>(null);
+  const pendingGroundMenuRef = useRef<GroundContextMenuPayload | null>(null);
   const onGroundContextMenuRef = useRef(onGroundContextMenu);
   onGroundContextMenuRef.current = onGroundContextMenu;
   const groundLongPressRef = useRef<LongPressTracker | null>(null);
@@ -319,10 +322,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       if (!arenaPoint) {
         return;
       }
-      onGroundContextMenuRef.current?.({
+      pendingGroundMenuRef.current = {
         arenaPoint,
         screenPosition: { left: start.clientX, top: start.clientY },
-      });
+      };
+      // Subtle confirmation that the hold registered (no-op where unsupported).
+      navigator.vibrate?.(30);
     });
   }
   const groundLongPress = groundLongPressRef.current;
@@ -657,14 +662,27 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           });
         }}
         onPointerUp={(event) => {
-          groundLongPress.end({
+          const fired = groundLongPress.end({
             pointerId: event.pointerId,
             clientX: event.nativeEvent.clientX,
             clientY: event.nativeEvent.clientY,
           });
+
+          const payload = pendingGroundMenuRef.current;
+          pendingGroundMenuRef.current = null;
+          if (fired && payload) {
+            // After this gesture's trailing click has been dispatched.
+            setTimeout(() => onGroundContextMenuRef.current?.(payload), 0);
+          }
         }}
-        onPointerCancel={() => groundLongPress.cancel()}
-        onPointerLeave={() => groundLongPress.cancel()}
+        onPointerCancel={() => {
+          pendingGroundMenuRef.current = null;
+          groundLongPress.cancel();
+        }}
+        onPointerLeave={() => {
+          pendingGroundMenuRef.current = null;
+          groundLongPress.cancel();
+        }}
       >
         <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
         <meshBasicMaterial visible={false} transparent opacity={0} />

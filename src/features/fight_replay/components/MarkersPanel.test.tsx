@@ -49,9 +49,14 @@ function renderPanel(
 }
 
 describe('MarkersPanel', () => {
-  it('renders nothing with no markers and no history', () => {
-    const { container } = renderPanel(null);
+  it('renders nothing with no markers, no history, and edit mode off', () => {
+    const { container } = renderPanel(null, { editMode: false });
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('shows the empty-state guidance while edit mode is on', () => {
+    renderPanel(null, { editMode: true });
+    expect(screen.getByText(/no markers yet/i)).toBeInTheDocument();
   });
 
   it('lists markers with their label and position summary', () => {

@@ -58,8 +58,9 @@ interface Marker3DProps {
   markerId: string;
   onContextMenu?: (payload: MarkerContextMenuPayload) => void;
   /**
-   * Edit mode: left-drag moves the marker (commit via onMove) and the context menu opens on a
-   * plain right-click (no Alt chord). Off by default so playback interaction is unchanged.
+   * Edit mode: left-drag moves the marker (commit via onMove), the context menu opens on a
+   * plain right-click (no Alt chord), and press-and-hold opens it on touch. Off by default
+   * so playback interaction is unchanged.
    */
   editable?: boolean;
   /** Drag-to-move commit: final arena-space position after the pointer is released. */
@@ -69,21 +70,6 @@ interface Marker3DProps {
    * outside any React commit of the scene root — invisible while paused otherwise).
    */
   markDirty?: () => void;
-}
-
-interface DragState {
-  pointerId: number;
-  plane: THREE.Plane;
-  /** Last intersection point, committed on release. */
-  point: THREE.Vector3 | null;
-  /** Screen position at pointer-down — drags only engage beyond a slop from here. */
-  startClient: { x: number; y: number };
-  /** True once the pointer travelled past the slop: the gesture is a real drag, not a tap. */
-  engaged: boolean;
-  /** Arena point under the pointer at pointer-down (long-press menu payload). */
-  arenaStart: { x: number; y: number; z: number };
-  /** The element holding the pointer capture (needed to release outside an event handler). */
-  captureTarget: Element | null;
 }
 
 /**
@@ -98,12 +84,32 @@ interface ToggleableControls {
   enabled: boolean;
 }
 
+interface DragState {
+  pointerId: number;
+  /** Horizontal plane at the marker's height the pointer ray is intersected with. */
+  plane: THREE.Plane;
+  /** Last intersection point, committed on release. */
+  point: THREE.Vector3 | null;
+  /** Screen position at pointer-down — drags only engage beyond a slop from here. */
+  startClient: { x: number; y: number };
+  /** True once the pointer travelled past the slop: the gesture is a real drag, not a tap. */
+  engaged: boolean;
+  /** Arena point under the pointer at pointer-down (long-press menu payload). */
+  arenaStart: { x: number; y: number; z: number };
+  /** Removes the window listeners driving this drag. */
+  removeListeners: () => void;
+}
+
 /**
  * Renders a single marker in 3D space
  * - If orientation is undefined, marker is "floating" (billboard that always faces camera)
  * - If orientation is defined, marker is ground-facing with specific pitch/yaw
  *
  * NOTE: Expects coordinates in meters (already converted from centimeters by MapMarkers parent)
+ *
+ * Drag-to-move runs on WINDOW pointer listeners with a manual raycast (not R3F per-object
+ * events): once the pointer leaves the marker's tiny hit area mid-drag, object-scoped events
+ * stop arriving and DOM pointer capture is unreliable across browsers/synthetic pointers.
  */
 export const Marker3D: React.FC<Marker3DProps> = ({
   marker,
@@ -114,7 +120,7 @@ export const Marker3D: React.FC<Marker3DProps> = ({
   onMove,
   markDirty,
 }) => {
-  const { controls, gl } = useThree();
+  const { controls, gl, camera } = useThree();
 
   // Coordinates are already in meters and normalized to arena space
   const position: [number, number, number] = useMemo(
@@ -145,8 +151,8 @@ export const Marker3D: React.FC<Marker3DProps> = ({
         return;
       }
       dragRef.current = null;
+      drag.removeListeners();
 
-      drag.captureTarget?.releasePointerCapture?.(drag.pointerId);
       const orbit = controls as unknown as ToggleableControls | null;
       if (orbit) {
         orbit.enabled = true;
@@ -163,14 +169,19 @@ export const Marker3D: React.FC<Marker3DProps> = ({
     [controls, editable, markDirty, markerId, onMove, setCursor],
   );
 
-  // Latest-callback refs so the long-press tracker (created once) never goes stale.
+  // Latest-callback refs so the long-press tracker and window listeners never go stale.
   const releaseDragRef = useRef(releaseDrag);
   releaseDragRef.current = releaseDrag;
   const onContextMenuRef = useRef(onContextMenu);
   onContextMenuRef.current = onContextMenu;
+  const markDirtyRef = useRef(markDirty);
+  markDirtyRef.current = markDirty;
 
-  // Touch path to the context menu: press and hold without moving. Firing aborts the
-  // pending drag (no commit) and opens the same menu right-click opens on desktop.
+  // Touch path to the context menu: press and hold without moving. Firing neutralizes the
+  // pending drag (no commit, camera restored) but KEEPS the window listeners — the menu opens
+  // on RELEASE (deferred a tick), because opening it while the finger is still down would let
+  // this gesture's trailing click land on the menu backdrop and close it immediately.
+  const pendingMenuRef = useRef<MarkerContextMenuPayload | null>(null);
   const longPressRef = useRef<LongPressTracker | null>(null);
   if (longPressRef.current === null) {
     longPressRef.current = new LongPressTracker(
@@ -179,13 +190,18 @@ export const Marker3D: React.FC<Marker3DProps> = ({
         if (!drag || drag.pointerId !== start.pointerId) {
           return;
         }
-        const arenaPoint = drag.arenaStart;
-        releaseDragRef.current(false);
-        onContextMenuRef.current?.({
+        pendingMenuRef.current = {
           markerId,
           screenPosition: { left: start.clientX, top: start.clientY },
-          arenaPoint,
-        });
+          arenaPoint: drag.arenaStart,
+        };
+        // Neutralize the drag without tearing down the gesture's listeners.
+        drag.engaged = false;
+        drag.point = null;
+        setDragPosition(null);
+        markDirtyRef.current?.();
+        // Subtle confirmation that the hold registered (no-op where unsupported).
+        navigator.vibrate?.(30);
       },
       { slopPx: DRAG_SLOP_PX },
     );
@@ -194,6 +210,25 @@ export const Marker3D: React.FC<Marker3DProps> = ({
     const tracker = longPressRef.current;
     return () => tracker?.cancel();
   }, []);
+
+  /** Raycast the pointer's current screen position onto the drag plane. */
+  const raycastToPlane = useCallback(
+    (clientX: number, clientY: number, plane: THREE.Plane): THREE.Vector3 | null => {
+      const rect = gl.domElement.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        return null;
+      }
+      const ndc = new THREE.Vector2(
+        ((clientX - rect.left) / rect.width) * 2 - 1,
+        -((clientY - rect.top) / rect.height) * 2 + 1,
+      );
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(ndc, camera);
+      const hit = new THREE.Vector3();
+      return raycaster.ray.intersectPlane(plane, hit) ? hit : null;
+    },
+    [camera, gl],
+  );
 
   const handlePointerDown = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
@@ -218,24 +253,94 @@ export const Marker3D: React.FC<Marker3DProps> = ({
 
       // Primary press in edit mode: a drag candidate — and on touch, also a long-press
       // candidate. The slop disambiguates: move past it = drag; hold still = context menu.
-      if (event.button === 0 && editable && onMove) {
+      if (event.button === 0 && editable && onMove && !dragRef.current) {
         event.stopPropagation();
 
-        const { clientX, clientY, pointerType } = event.nativeEvent;
+        const { clientX, clientY, pointerType, pointerId } = event.nativeEvent;
+        const markerY = position[1];
+
+        const onWindowMove = (ev: PointerEvent): void => {
+          const drag = dragRef.current;
+          if (!drag || ev.pointerId !== drag.pointerId || pendingMenuRef.current) {
+            return;
+          }
+
+          longPressRef.current?.move({
+            pointerId: ev.pointerId,
+            clientX: ev.clientX,
+            clientY: ev.clientY,
+          });
+
+          if (!drag.engaged) {
+            const dx = ev.clientX - drag.startClient.x;
+            const dy = ev.clientY - drag.startClient.y;
+            if (dx * dx + dy * dy <= DRAG_SLOP_PX * DRAG_SLOP_PX) {
+              return; // still a tap/long-press candidate — don't move the marker yet
+            }
+            drag.engaged = true;
+          }
+
+          const hit = raycastToPlane(ev.clientX, ev.clientY, drag.plane);
+          if (hit) {
+            drag.point = hit;
+            setDragPosition([hit.x, markerY, hit.z]);
+            markDirtyRef.current?.();
+          }
+        };
+
+        const onWindowUp = (ev: PointerEvent): void => {
+          const drag = dragRef.current;
+          if (!drag || ev.pointerId !== drag.pointerId) {
+            return;
+          }
+
+          longPressRef.current?.end({
+            pointerId: ev.pointerId,
+            clientX: ev.clientX,
+            clientY: ev.clientY,
+          });
+
+          const payload = pendingMenuRef.current;
+          pendingMenuRef.current = null;
+          releaseDragRef.current(payload === null);
+
+          // Long-press: open the menu AFTER this gesture's trailing click has been
+          // dispatched, so it can't immediately close the menu via its backdrop.
+          if (payload) {
+            setTimeout(() => onContextMenuRef.current?.(payload), 0);
+          }
+        };
+
+        const onWindowCancel = (ev: PointerEvent): void => {
+          const drag = dragRef.current;
+          if (!drag || ev.pointerId !== drag.pointerId) {
+            return;
+          }
+          longPressRef.current?.cancel();
+          pendingMenuRef.current = null;
+          releaseDragRef.current(false);
+        };
+
+        window.addEventListener('pointermove', onWindowMove);
+        window.addEventListener('pointerup', onWindowUp);
+        window.addEventListener('pointercancel', onWindowCancel);
 
         // Drag along the horizontal plane at the marker's height so the marker tracks the
-        // pointer ray without jumping vertically. Plane: y = position[1] → constant = -y.
+        // pointer ray without jumping vertically. Plane: y = markerY → constant = -markerY.
         dragRef.current = {
-          pointerId: event.pointerId,
-          plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -position[1]),
+          pointerId,
+          plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -markerY),
           point: null,
           startClient: { x: clientX, y: clientY },
           engaged: false,
           arenaStart: { x: event.point.x, y: event.point.y, z: event.point.z },
-          captureTarget: event.target as Element | null,
+          removeListeners: () => {
+            window.removeEventListener('pointermove', onWindowMove);
+            window.removeEventListener('pointerup', onWindowUp);
+            window.removeEventListener('pointercancel', onWindowCancel);
+          },
         };
 
-        (event.target as Element | null)?.setPointerCapture?.(event.pointerId);
         const orbit = controls as unknown as ToggleableControls | null;
         if (orbit) {
           orbit.enabled = false;
@@ -243,68 +348,19 @@ export const Marker3D: React.FC<Marker3DProps> = ({
         setCursor('grabbing');
 
         if (pointerType !== 'mouse' && onContextMenu) {
-          longPressRef.current?.begin({ pointerId: event.pointerId, clientX, clientY });
+          longPressRef.current?.begin({ pointerId, clientX, clientY });
         }
       }
     },
-    [controls, editable, markerId, onContextMenu, onMove, position, setCursor],
+    [controls, editable, markerId, onContextMenu, onMove, position, raycastToPlane, setCursor],
   );
 
-  const handlePointerMove = useCallback(
-    (event: ThreeEvent<PointerEvent>) => {
-      const drag = dragRef.current;
-      if (!drag || drag.pointerId !== event.pointerId) {
-        return;
-      }
-
-      event.stopPropagation();
-
-      const { clientX, clientY } = event.nativeEvent;
-      longPressRef.current?.move({ pointerId: event.pointerId, clientX, clientY });
-
-      if (!drag.engaged) {
-        const dx = clientX - drag.startClient.x;
-        const dy = clientY - drag.startClient.y;
-        if (dx * dx + dy * dy <= DRAG_SLOP_PX * DRAG_SLOP_PX) {
-          return; // still a tap/long-press candidate — don't move the marker yet
-        }
-        drag.engaged = true;
-      }
-
-      const hit = new THREE.Vector3();
-      if (event.ray.intersectPlane(drag.plane, hit)) {
-        drag.point = hit;
-        setDragPosition([hit.x, position[1], hit.z]);
-        markDirty?.();
-      }
-    },
-    [markDirty, position],
-  );
-
-  const handlePointerUp = useCallback(
-    (event: ThreeEvent<PointerEvent>) => {
-      const { clientX, clientY } = event.nativeEvent;
-      longPressRef.current?.end({ pointerId: event.pointerId, clientX, clientY });
-
-      const drag = dragRef.current;
-      if (drag && drag.pointerId === event.pointerId) {
-        event.stopPropagation();
-        releaseDrag(true);
-      }
-    },
-    [releaseDrag],
-  );
-
-  const handlePointerCancel = useCallback(
-    (event: ThreeEvent<PointerEvent>) => {
-      longPressRef.current?.cancel();
-      const drag = dragRef.current;
-      if (drag && drag.pointerId === event.pointerId) {
-        releaseDrag(false);
-      }
-    },
-    [releaseDrag],
-  );
+  // Abort any in-flight drag on unmount (restores OrbitControls + removes window listeners).
+  useEffect(() => {
+    return () => {
+      releaseDragRef.current(false);
+    };
+  }, []);
 
   const handlePointerOver = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
@@ -352,6 +408,11 @@ export const Marker3D: React.FC<Marker3DProps> = ({
 
   const renderedPosition = dragPosition ?? position;
 
+  // Generous invisible grab target for edit mode. Markers are world-faithful (a 1m marker on a
+  // 1km map is a couple of pixels), which makes them impossible to grab precisely — especially
+  // on touch. The proxy disc never renders (opacity 0) but participates in raycasts.
+  const hitRadius = Math.max(markerSize * 0.8, 0.6);
+
   const content = (
     <>
       {/* Shape based on bgTexture (only if provided) */}
@@ -370,6 +431,14 @@ export const Marker3D: React.FC<Marker3DProps> = ({
           <spriteMaterial map={textTexture} transparent depthTest={false} />
         </sprite>
       )}
+
+      {/* Edit-mode grab proxy (invisible, raycast-only) */}
+      {editable && (
+        <mesh position={[0, 0, 0.02]}>
+          <circleGeometry args={[hitRadius, 16]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+      )}
     </>
   );
 
@@ -377,9 +446,6 @@ export const Marker3D: React.FC<Marker3DProps> = ({
     <group
       position={renderedPosition}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
       onPointerOver={handlePointerOver}
       onPointerOut={handlePointerOut}
     >

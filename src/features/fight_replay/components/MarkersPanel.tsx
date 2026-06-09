@@ -106,7 +106,9 @@ export const MarkersPanel: React.FC<MarkersPanelProps> = ({
 }) => {
   const markers = markersState?.markers ?? [];
 
-  if (markers.length === 0 && !canUndo && !canRedo) {
+  // Outside edit mode an empty panel is noise; in edit mode it carries the empty-state
+  // guidance ("right-click / long-press to place"), so it stays.
+  if (markers.length === 0 && !canUndo && !canRedo && !editMode) {
     return null;
   }
 
@@ -190,7 +192,7 @@ export const MarkersPanel: React.FC<MarkersPanelProps> = ({
 
         {markers.length === 0 && (
           <Typography variant="caption" color="text.secondary">
-            No markers yet. Right-click the map in edit mode to place one.
+            No markers yet. Right-click (or press and hold) the map to place one.
           </Typography>
         )}
       </AccordionDetails>
