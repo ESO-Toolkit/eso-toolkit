@@ -35,13 +35,16 @@ export function effectiveEncounterId(fight: FightFragment): number {
 /**
  * Whether a fight is a boss encounter (vs. trash).
  *
- * Authoritative signal is `encounterID !== 0`. `difficulty != null` is kept as a
- * union fallback so we never *drop* a boss that older logs only tag via
- * difficulty. (The schema guarantees `difficulty` is null for trash, so the union
- * cannot promote real trash to a boss.)
+ * Follows the *live* `encounterID` (0 = trash), which is what ESO Logs intends:
+ * when it demotes a boss fight to trash it sets `encounterID` to 0 (preserving
+ * the real id in `originalEncounterID`). Real logs show these demoted fights are
+ * post-kill / instant-reset noise, so they belong with trash — not as phantom
+ * boss attempts. `difficulty != null` is kept as a union fallback so a boss that
+ * older logs only tag via difficulty is never dropped. (The schema guarantees
+ * `difficulty` is null for trash, so the union cannot promote real trash.)
  */
 export function isBossFight(fight: FightFragment): boolean {
-  return effectiveEncounterId(fight) !== 0 || fight.difficulty != null;
+  return (fight.encounterID ?? 0) !== 0 || fight.difficulty != null;
 }
 
 /**
@@ -295,10 +298,17 @@ export interface ContentRun {
 
 /**
  * Group a report's fights into runs, correctly separating logs that mix several
- * trials/dungeons. A new run starts when:
- *   - the resolved zone changes, or
- *   - a boss encounter that was already *killed* in the current run reappears
- *     (a re-clear / second lockout of the same content).
+ * trials/dungeons.
+ *
+ * A new run always starts when the resolved **zone changes** — this is the key
+ * fix for logs that mix multiple trials/dungeons.
+ *
+ * Same-zone re-clears (farm/reset nights that kill the same bosses repeatedly)
+ * are kept in a **single run by default**, because real reset logs interleave
+ * kills and wipes in a way that makes per-clear splitting noisy and unhelpful —
+ * attempt grouping (see {@link buildRunEncounters} / {@link summarizeEncounter})
+ * organises those far better. Pass `{ splitReclears: true }` to opt into starting
+ * a new run each time a previously-killed boss is killed again.
  *
  * Fights with an unknown zone (e.g. inter-zone trash with no `gameZone`) attach
  * to the current run rather than forcing a split, and can "upgrade" a run whose
@@ -307,8 +317,10 @@ export interface ContentRun {
 export function groupFightsIntoRuns(
   fights: readonly FightFragment[] | null | undefined,
   reportData?: ReportFragment | null,
+  options?: { splitReclears?: boolean },
 ): ContentRun[] {
   if (!fights?.length) return [];
+  const splitReclears = options?.splitReclears ?? false;
 
   const valid = fights
     .filter((f) => f.startTime != null && f.endTime != null && f.endTime > f.startTime)
@@ -330,7 +342,10 @@ export function groupFightsIntoRuns(
 
     const zoneChanged =
       current != null && zoneKnown && currentKnown && zone.key !== current.zone.key;
-    const reclear = boss && encId !== 0 && killedBossEncounters.has(encId);
+    // Only treat a *kill* of an already-killed boss as a re-clear, and only when
+    // the caller opts in.
+    const reclear =
+      splitReclears && boss && encId !== 0 && wasKill(fight) && killedBossEncounters.has(encId);
 
     if (current == null || zoneChanged || reclear) {
       runSeq += 1;
@@ -427,4 +442,67 @@ export function uncategorizedTrash(run: ContentRun, encounters: RunEncounter[]):
     encounters.flatMap((e) => [...e.preTrash, ...e.postTrash]).map((f) => f.id),
   );
   return run.fights.filter((f) => !isBossFight(f) && !categorized.has(f.id));
+}
+
+/** Fight duration in milliseconds. */
+export function fightDurationMs(fight: FightFragment): number {
+  return Math.max(0, (fight.endTime ?? 0) - (fight.startTime ?? 0));
+}
+
+/**
+ * Whether a wipe is really a quick "reset" / re-pull rather than a genuine
+ * progression attempt. On prog nights, groups frequently pull, see the opener,
+ * and immediately reset — producing a very short fight that ends with the boss at
+ * near-full health. Real logs (e.g. a 45-attempt boss) are roughly half resets,
+ * so distinguishing them is what makes the attempt list legible.
+ */
+export function isResetPull(fight: FightFragment): boolean {
+  if (!isBossFight(fight) || wasKill(fight)) return false;
+  const remaining = bossHealthRemaining(fight);
+  if (remaining == null) return false;
+  return fightDurationMs(fight) < 30_000 && remaining >= 90;
+}
+
+/** Aggregate stats for one boss encounter (all of its attempts). */
+export interface EncounterSummary {
+  /** Total boss attempts. */
+  attempts: number;
+  /** Attempts excluding quick resets. */
+  realAttempts: number;
+  /** Quick reset / re-pull count. */
+  resets: number;
+  /** Number of kills (>1 on farm logs). */
+  kills: number;
+  killed: boolean;
+  /**
+   * Best boss health % remaining among genuine (non-reset) wipes — lower is
+   * closer to a kill. `0` when the boss was killed, `null` when there are no
+   * genuine wipes to measure.
+   */
+  bestPercent: number | null;
+  /** Distinct difficulty codes seen across attempts (e.g. `[121, 122]`). */
+  difficulties: number[];
+}
+
+/** Summarise an encounter's attempts for the organised / collapsed view. */
+export function summarizeEncounter(encounter: RunEncounter): EncounterSummary {
+  const bosses = encounter.bossFights.filter(isBossFight);
+  const kills = bosses.filter(wasKill);
+  const resets = bosses.filter(isResetPull);
+  const genuineWipes = bosses.filter((f) => !wasKill(f) && !isResetPull(f));
+  const wipePercents = genuineWipes.map(bossHealthRemaining).filter((p): p is number => p != null);
+  const killed = kills.length > 0;
+  const difficulties = Array.from(
+    new Set(bosses.map((f) => f.difficulty).filter((d): d is number => d != null)),
+  ).sort((a, b) => a - b);
+
+  return {
+    attempts: bosses.length,
+    realAttempts: bosses.length - resets.length,
+    resets: resets.length,
+    kills: kills.length,
+    killed,
+    bestPercent: killed ? 0 : wipePercents.length ? Math.min(...wipePercents) : null,
+    difficulties,
+  };
 }

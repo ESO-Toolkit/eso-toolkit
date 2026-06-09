@@ -36,8 +36,9 @@ is 0, the fight is considered a trash fight."_). It also exposes
 `originalEncounterID` for bosses that ESO Logs demotes to trash — which the old
 code could not represent at all.
 
-**Fix:** `isBossFight()` uses `effectiveEncounterId(fight) !== 0`, unioned with
-the old `difficulty` check as a safety net so no current boss is dropped.
+**Fix:** `isBossFight()` uses the live `encounterID !== 0`, unioned with the old
+`difficulty` check as a safety net so no current boss is dropped. (See finding 7
+for the demoted-fight refinement.)
 
 ### 2. Trial detection by boss-name string matching — _High_
 
@@ -115,6 +116,52 @@ No GraphQL schema or codegen changes were required — every field used
 
 ---
 
+## Validation against real logs (2026-06-09)
+
+Re-ran the detection over the two committed real ESO Logs reports in
+`public/sample-reports/` — both are **single-zone attempt farms**, which is
+exactly the hard case for grouping. They drove three follow-up corrections:
+
+### 7. Demoted fights were being counted as phantom boss attempts — _Medium_
+
+Real logs are full of `encounterID: 0, originalEncounterID: <boss>, kill: null`
+fights — post-kill cleanup and instant resets that ESO Logs deliberately
+demoted to trash. The first pass counted them as boss attempts (inflating
+attempt counts and adding empty cards).
+
+**Fix:** `isBossFight()` now follows the _live_ `encounterID` (demoted ⇒ trash),
+matching ESO Logs' intent. `originalEncounterID` is still recoverable via
+`effectiveEncounterId()`.
+
+### 8. Re-clear auto-split shattered farm/reset logs — _High (self-regression)_
+
+The DSR sample (`F4f2bMwWtgVKxjB9`, "DSR Day 34 Reef Resets") kills the same
+bosses repeatedly (Lylanar ×7 attempts / 3 kills, Bow Breaker ×4). The initial
+re-clear rule started a brand-new run on every repeat, fragmenting one farm
+night into ~6 messy runs.
+
+**Fix:** same-zone re-clears now stay in **one run by default**; per-clear
+splitting is opt-in via `groupFightsIntoRuns(…, { splitReclears: true })`.
+Zone-change splitting (the real mixed-log fix) is unchanged.
+
+### 9. Attempt-heavy encounters were unreadable — _High (UX)_
+
+The VSE sample (`YArFDbq7BdhwL691`, "FAST VSE HM") has **45 attempts on a single
+boss** (Exarchanic Yaseyla) before the kill — an unusable wall of 45 cards.
+About half are quick "reset" re-pulls (very short, boss left near full health).
+
+**Fix (the requested organisation toggle):**
+
+- `summarizeEncounter()` / `isResetPull()` derive per-encounter stats: attempts,
+  real attempts vs. resets, kill count, and best pull %.
+- `ReportFightsView` gained a **"Group attempts"** toggle (default on, shown only
+  when some encounter exceeds the threshold). When on, attempt-heavy encounters
+  collapse to the **kill(s) + best pull**, with the remaining attempts behind a
+  "Show all N attempts" expander, and the header shows summary chips
+  (`3 kills` / `Best 12%` / `20 resets`).
+
+---
+
 ## Deferred / future work
 
 - **Dungeon metadata** (expected boss counts, veteran-HM rules) — coordinate with
@@ -133,5 +180,8 @@ No GraphQL schema or codegen changes were required — every field used
 
 - `npm run validate` (typecheck + lint + format) — clean.
 - `npx jest src/features/report_details src/store/report/reportSelectors.test.ts`
-  — 157 passed, 14 snapshots passed.
-- New `fightGrouping.test.ts` — 18 passed.
+  — 165 passed, 14 snapshots passed.
+- `fightGrouping.test.ts` — 26 passed, including **end-to-end checks against the
+  two real committed reports**: the DSR farm resolves to one run with multi-kill
+  grouped encounters, and the VSE log resolves to one run with 30+ Yaseyla
+  attempts (resets detected, eventual kill).
