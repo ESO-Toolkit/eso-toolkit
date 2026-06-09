@@ -11,7 +11,11 @@ import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
 import { useViewTransitionNavigate } from '../../hooks/useViewTransitionNavigate';
-import { formatReportDateTime, formatReportDuration } from '../reports/reportFormatting';
+import {
+  formatReportDateTime,
+  formatReportDuration,
+  isReportEmpty,
+} from '../reports/reportFormatting';
 
 import type { ProfileReportSummary } from './profileLogsQueries';
 import { useProfileUploadedReports } from './useProfileUploadedReports';
@@ -168,18 +172,36 @@ const LogRow: React.FC<{ report: ProfileReportSummary }> = ({ report }) => {
       />
 
       <Box sx={{ minWidth: 0, flex: 1, position: 'relative', pointerEvents: 'none' }}>
-        <Typography
-          sx={{
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            color: theme.palette.text.primary,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {title}
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
+          <Typography
+            sx={{
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              color: theme.palette.text.primary,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {title}
+          </Typography>
+          {isReportEmpty(report) && (
+            <Tooltip
+              title="This log contains no combat data, likely due to an upload or parsing issue on ESO Logs"
+              arrow
+            >
+              {/* Re-enable pointer events (the parent disables them for the
+                  full-bleed row button) so the tooltip is reachable. */}
+              <Chip
+                label="Empty Log"
+                size="small"
+                color="warning"
+                variant="outlined"
+                sx={{ flexShrink: 0, fontSize: '0.65rem', height: 18, pointerEvents: 'auto' }}
+              />
+            </Tooltip>
+          )}
+        </Box>
         <Box
           sx={{
             display: 'flex',

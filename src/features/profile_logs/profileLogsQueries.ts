@@ -34,6 +34,7 @@ export const GET_PROFILE_UPLOADED_REPORTS = gql`
     startTime
     endTime
     visibility
+    segments
     zone {
       name
     }
@@ -51,6 +52,8 @@ export interface ProfileReportSummary {
   startTime: number;
   endTime: number;
   visibility: string;
+  /** Number of uploaded log segments; 0 means the log contains no data. */
+  segments: number;
   zone: { name: string } | null;
   owner: { id: number; name: string } | null;
 }

@@ -826,15 +826,39 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           </Box>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
             This log contains no fight data, likely due to an upload or parsing issue on ESO Logs.
+            Re-uploading the log on ESO Logs usually fixes it.
           </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => navigate(-1)}
-            sx={{ textTransform: 'none' }}
-          >
-            Go back
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => navigate(-1)}
+              sx={{ textTransform: 'none' }}
+            >
+              Go back
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => navigate('/latest-reports')}
+              sx={{ textTransform: 'none' }}
+            >
+              Browse latest reports
+            </Button>
+            {reportId && (
+              <Button
+                variant="text"
+                size="small"
+                component="a"
+                href={`https://www.esologs.com/reports/${reportId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ textTransform: 'none' }}
+              >
+                View on ESO Logs
+              </Button>
+            )}
+          </Box>
         </CardContent>
       </Card>
     );

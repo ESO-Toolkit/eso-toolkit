@@ -14,6 +14,7 @@ jest.mock('../../hooks/useViewTransitionNavigate', () => ({
 }));
 
 jest.mock('../reports/reportFormatting', () => ({
+  ...jest.requireActual('../reports/reportFormatting'),
   formatReportDateTime: () => 'Jan 01, 2024 10:00',
   formatReportDuration: () => '6m',
 }));
@@ -44,14 +45,19 @@ const renderPanel = (overrides: Partial<UseProfileUploadedReportsResult> = {}) =
   );
 };
 
-const makeReport = (code: string): ProfileReportSummary => ({
+const makeReport = (
+  code: string,
+  overrides: Partial<ProfileReportSummary> = {},
+): ProfileReportSummary => ({
   code,
   title: `My ${code} run`,
   startTime: 1_700_000_000_000,
   endTime: 1_700_000_360_000,
   visibility: 'public',
+  segments: 3,
   zone: { name: 'Rockgrove' },
   owner: { id: 42, name: 'Tester' },
+  ...overrides,
 });
 
 beforeEach(() => {
@@ -109,6 +115,18 @@ describe('ProfileLogsPanel', () => {
     const btn = screen.getByRole('button', { name: /show more logs/i });
     fireEvent.click(btn);
     expect(loadMore).toHaveBeenCalled();
+  });
+
+  it('flags logs with no combat data with an "Empty Log" chip', () => {
+    renderPanel({
+      reports: [makeReport('ABC123'), makeReport('EMPTY1', { segments: 0 })],
+      total: 2,
+    });
+
+    const chips = screen.getAllByText('Empty Log');
+    expect(chips).toHaveLength(1);
+    // The healthy log row must not be flagged.
+    expect(screen.getByText('My ABC123 run')).toBeInTheDocument();
   });
 
   it('shows an error state with a retry that calls reload', () => {

@@ -2,11 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
+import { isReportEmpty } from '../features/reports/reportFormatting';
 import {
   UserReportSummaryFragment,
   GetUserReportsQuery,
   GetUserReportsDocument,
 } from '../graphql/gql/graphql';
+
+// Fetch a handful of recent reports so we can skip over empty logs (failed
+// uploads/parses with no combat data) when picking the "latest report" link.
+const LATEST_REPORT_FETCH_LIMIT = 10;
 
 interface LatestReportState {
   report: UserReportSummaryFragment | null;
@@ -47,17 +52,23 @@ export const useLatestReport = (): LatestReportState & { refetch: () => Promise<
       const reportsResult: GetUserReportsQuery = await client.query({
         query: GetUserReportsDocument,
         variables: {
-          limit: 1, // Only fetch the latest report
+          limit: LATEST_REPORT_FETCH_LIMIT,
           page: 1,
           userID,
         },
       });
 
       const reportPagination = reportsResult.reportData?.reports;
-      const latestReport = reportPagination?.data?.[0] || null;
+      const candidates = (reportPagination?.data ?? []).filter(
+        (report): report is UserReportSummaryFragment => report !== null,
+      );
+      // Prefer the newest report that has combat data; if every recent report
+      // is empty, fall back to the newest one so the link still exists.
+      const latestReport = candidates.find((report) => !isReportEmpty(report)) ?? null;
+      const fallbackReport = candidates[0] ?? null;
 
       setState({
-        report: latestReport,
+        report: latestReport ?? fallbackReport,
         loading: false,
         error: null,
       });
