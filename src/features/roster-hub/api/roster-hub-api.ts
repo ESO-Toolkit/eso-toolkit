@@ -117,6 +117,7 @@ export const rosterHubApi = {
       title: string;
       description: string;
       trial_id: string;
+      trial_ids?: string[];
       roster_data: string;
       tags: string[];
       is_anonymous?: boolean;
@@ -137,6 +138,7 @@ export const rosterHubApi = {
       title: string;
       description: string;
       trial_id: string;
+      trial_ids?: string[];
       roster_data: string;
       tags: string[];
       is_anonymous?: boolean;

@@ -16,6 +16,7 @@ import type {
   RosterRow,
   RosterSummary,
   RosterTagRow,
+  RosterTrialRow,
   RosterWithMeta,
   UserProfileResponse,
   UserProfileRow,
@@ -41,8 +42,11 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
   const bindings: (string | number)[] = [];
 
   if (opts.trial) {
-    conditions.push('r.trial_id = ?');
-    bindings.push(opts.trial);
+    // Match the roster's primary trial OR any trial it's been tagged with.
+    conditions.push(
+      '(r.trial_id = ? OR EXISTS (SELECT 1 FROM roster_trials rtr2 WHERE rtr2.roster_id = r.id AND rtr2.trial_id = ?))',
+    );
+    bindings.push(opts.trial, opts.trial);
   }
   if (opts.tag) {
     conditions.push(
@@ -54,9 +58,12 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const sql = `
-    SELECT r.*, GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat
+    SELECT r.*,
+           GROUP_CONCAT(DISTINCT rt.tag) AS tags_concat,
+           GROUP_CONCAT(DISTINCT rtr.trial_id) AS trials_concat
     FROM rosters r
     LEFT JOIN roster_tags rt ON rt.roster_id = r.id
+    LEFT JOIN roster_trials rtr ON rtr.roster_id = r.id
     ${where}
     GROUP BY r.id
     ORDER BY ${orderBy}
@@ -66,7 +73,7 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
   const rows = await db
     .prepare(sql)
     .bind(...bindings)
-    .all<RosterRow & { tags_concat: string | null }>();
+    .all<RosterRow & { tags_concat: string | null; trials_concat: string | null }>();
 
   // Attach vote status if user is logged in
   let votedSet = new Set<string>();
@@ -91,6 +98,11 @@ export async function listRosters(db: D1Database, opts: ListOptions): Promise<Ro
       author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
       is_anonymous: isAnon,
       tags: row.tags_concat ? row.tags_concat.split(',') : [],
+      trial_ids: row.trials_concat
+        ? row.trials_concat.split(',')
+        : row.trial_id
+          ? [row.trial_id]
+          : [],
       user_voted: opts.userId ? votedSet.has(row.id) : undefined,
     };
   });
@@ -109,6 +121,11 @@ export async function getRosterById(
     .bind(id)
     .all<RosterTagRow>();
 
+  const trialRows = await db
+    .prepare('SELECT trial_id FROM roster_trials WHERE roster_id = ?')
+    .bind(id)
+    .all<RosterTrialRow>();
+
   let userVoted = false;
   if (userId) {
     const vote = await db
@@ -120,12 +137,14 @@ export async function getRosterById(
 
   const isAnon = row.is_anonymous ? true : false;
   const isOwner = userId === row.author_id;
+  const trialIds = trialRows.results.map((t) => t.trial_id);
   return {
     ...row,
     author_id: isAnon && !isOwner ? '' : row.author_id,
     author_name: isAnon && !isOwner ? 'Anonymous' : row.author_name,
     is_anonymous: isAnon,
     tags: tagRows.results.map((t) => t.tag),
+    trial_ids: trialIds.length > 0 ? trialIds : row.trial_id ? [row.trial_id] : [],
     user_voted: userId ? userVoted : undefined,
   };
 }
@@ -139,6 +158,7 @@ export async function createRoster(
     title: string;
     description: string;
     trialId: string;
+    trialIds?: string[];
     rosterData: string;
     tags: string[];
     isAnonymous: boolean;
@@ -165,6 +185,7 @@ export async function createRoster(
   if (data.tags.length > 0) {
     await insertTags(db, data.id, data.tags);
   }
+  await insertRosterTrials(db, data.id, resolveTrialIds(data.trialId, data.trialIds));
 }
 
 export async function updateRoster(
@@ -175,6 +196,7 @@ export async function updateRoster(
     title: string;
     description: string;
     trialId: string;
+    trialIds?: string[];
     rosterData: string;
     tags: string[];
     isAnonymous: boolean;
@@ -204,6 +226,10 @@ export async function updateRoster(
   if (data.tags.length > 0) {
     await insertTags(db, id, data.tags);
   }
+
+  // Replace trial associations
+  await db.prepare('DELETE FROM roster_trials WHERE roster_id = ?').bind(id).run();
+  await insertRosterTrials(db, id, resolveTrialIds(data.trialId, data.trialIds));
   return true;
 }
 
@@ -345,6 +371,36 @@ async function insertTags(db: D1Database, rosterId: string, tags: string[]): Pro
       db
         .prepare('INSERT OR IGNORE INTO roster_tags (roster_id, tag) VALUES (?, ?)')
         .bind(rosterId, tag.toLowerCase().trim()),
+    );
+  await db.batch(stmts);
+}
+
+/**
+ * Resolve the full set of trial ids for a roster: the supplied list (deduped),
+ * always including the primary trial_id so old single-trial behaviour is
+ * preserved even when a caller omits trialIds.
+ */
+function resolveTrialIds(primary: string, trialIds?: string[]): string[] {
+  const set = new Set<string>();
+  if (primary) set.add(primary);
+  for (const t of trialIds ?? []) {
+    if (t) set.add(t);
+  }
+  return [...set];
+}
+
+async function insertRosterTrials(
+  db: D1Database,
+  rosterId: string,
+  trialIds: string[],
+): Promise<void> {
+  if (trialIds.length === 0) return;
+  const stmts = trialIds
+    .slice(0, 10) // max 10 trials per roster
+    .map((trialId) =>
+      db
+        .prepare('INSERT OR IGNORE INTO roster_trials (roster_id, trial_id) VALUES (?, ?)')
+        .bind(rosterId, trialId),
     );
   await db.batch(stmts);
 }
@@ -1285,6 +1341,10 @@ export async function upsertSystemRoster(
       .bind(rosterId, tag)
       .run();
   }
+
+  // Keep the trial association in sync so system rosters are filterable too
+  await db.prepare('DELETE FROM roster_trials WHERE roster_id = ?').bind(rosterId).run();
+  await insertRosterTrials(db, rosterId, resolveTrialIds(opts.trialId));
 }
 
 // ─── Pack Hub queries ─────────────────────────────────────────────────────────

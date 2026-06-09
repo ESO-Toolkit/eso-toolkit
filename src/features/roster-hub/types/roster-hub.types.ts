@@ -29,6 +29,8 @@ export interface HubRoster {
   title: string;
   description: string;
   trial_id: string;
+  /** All trials this roster is tagged with (primary trial_id is trial_ids[0]). */
+  trial_ids?: string[];
   roster_data: string; // compact encoded roster (same as ?r= URL param)
   recommended_addons: RecommendedAddons | null;
   vote_count: number;

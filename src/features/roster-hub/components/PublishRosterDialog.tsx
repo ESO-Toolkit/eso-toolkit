@@ -21,14 +21,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   FormControlLabel,
   IconButton,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
-  type SelectChangeEvent,
   Stack,
   Switch,
   Tab,
@@ -62,12 +57,16 @@ interface PublishRosterDialogProps {
   onClose: () => void;
   onPublished: () => void;
   token: string;
+  /** Trials the roster is tagged with in the builder — pre-fills the trial picker. */
+  defaultTrials?: string[];
   /** When provided, the dialog operates in edit mode — updates the existing hub roster. */
   editingRoster?: HubRoster;
 }
 
 const HUB_TRIALS = TRIALS.filter((t) => t.type === 'trial');
+const HUB_TRIAL_NAME_BY_ID = new Map(HUB_TRIALS.map((t) => [t.id, t.name] as const));
 const MAX_TAGS = 5;
+const MAX_TRIALS = 10;
 
 type Difficulty = 'vet' | 'normal';
 const EXTRA_PRESET_TAGS = ['score-push', 'farm'] as const;
@@ -88,6 +87,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   onClose,
   onPublished,
   token,
+  defaultTrials,
   editingRoster,
 }) => {
   const theme = useTheme();
@@ -95,7 +95,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const isEditMode = !!editingRoster;
   const [title, setTitle] = React.useState('');
   const [description, setDescription] = React.useState('');
-  const [trialId, setTrialId] = React.useState('');
+  const [trialIds, setTrialIds] = React.useState<string[]>([]);
   const [difficulty, setDifficulty] = React.useState<Difficulty | null>(null);
   const [hmEnabled, setHmEnabled] = React.useState(false);
   const [extraTags, setExtraTags] = React.useState<string[]>([]);
@@ -137,10 +137,6 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   const [addonSearchQuery, setAddonSearchQuery] = React.useState('');
   const [addonSearchResults, setAddonSearchResults] = React.useState<EsouiAddonSearchResult[]>([]);
   const [addonSearchLoading, setAddonSearchLoading] = React.useState(false);
-
-  const handleTrialChange = (e: SelectChangeEvent): void => {
-    setTrialId(e.target.value);
-  };
 
   const handleDifficultyChange = (d: Difficulty): void => {
     setDifficulty((prev) => (prev === d ? null : d));
@@ -370,8 +366,8 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       setError('Please enter a title.');
       return;
     }
-    if (!trialId) {
-      setError('Please select a trial.');
+    if (trialIds.length === 0) {
+      setError('Please select at least one trial.');
       return;
     }
     setLoading(true);
@@ -380,7 +376,9 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       const payload = {
         title: title.trim(),
         description: description.trim(),
-        trial_id: trialId,
+        // First selected trial is the canonical/primary one for display + backward compat
+        trial_id: trialIds[0],
+        trial_ids: trialIds,
         roster_data: rosterData,
         tags: selectedTags,
         is_anonymous: isAnonymous,
@@ -406,6 +404,11 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
   // the parent passes a new object reference with the same roster.
   const prevEditingIdRef = React.useRef<string | null>(null);
 
+  // Latest builder-selected trials, read on open without retriggering the reset
+  // effect (roster.trials changes reference frequently as the roster is edited).
+  const defaultTrialsRef = React.useRef<string[]>([]);
+  defaultTrialsRef.current = defaultTrials ?? [];
+
   // Reset / pre-fill on open
   React.useEffect(() => {
     if (open) {
@@ -428,7 +431,15 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       if (editingRoster) {
         setTitle(editingRoster.title);
         setDescription(editingRoster.description ?? '');
-        setTrialId(editingRoster.trial_id ?? '');
+        // Prefer the multi-trial list; fall back to the single primary trial for
+        // rosters published before multi-trial support.
+        setTrialIds(
+          editingRoster.trial_ids && editingRoster.trial_ids.length > 0
+            ? editingRoster.trial_ids
+            : editingRoster.trial_id
+              ? [editingRoster.trial_id]
+              : [],
+        );
         // Hydrate difficulty/hm/extras from flat tags array
         const tags = editingRoster.tags ?? [];
         if (tags.includes('vet')) setDifficulty('vet');
@@ -453,7 +464,7 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
       } else {
         setTitle('');
         setDescription('');
-        setTrialId('');
+        setTrialIds(defaultTrialsRef.current.slice(0, MAX_TRIALS));
         setDifficulty(null);
         setHmEnabled(false);
         setExtraTags([]);
@@ -601,21 +612,27 @@ export const PublishRosterDialog: React.FC<PublishRosterDialogProps> = ({
           sx={inputSx}
         />
 
-        <FormControl size="small" required fullWidth error={!!error && !trialId} sx={inputSx}>
-          <InputLabel id="publish-trial-label">Trial</InputLabel>
-          <Select
-            labelId="publish-trial-label"
-            value={trialId}
-            label="Trial"
-            onChange={handleTrialChange}
-          >
-            {HUB_TRIALS.map((t) => (
-              <MenuItem key={t.id} value={t.id}>
-                {t.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Autocomplete
+          multiple
+          disableCloseOnSelect
+          size="small"
+          options={HUB_TRIALS.map((t) => t.id)}
+          value={trialIds}
+          onChange={(_e, value) => setTrialIds(value.slice(0, MAX_TRIALS))}
+          getOptionLabel={(id) => HUB_TRIAL_NAME_BY_ID.get(id) ?? id}
+          getOptionDisabled={() => trialIds.length >= MAX_TRIALS}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Trials"
+              required
+              placeholder={trialIds.length === 0 ? 'Select one or more trials…' : ''}
+              error={!!error && trialIds.length === 0}
+              helperText="The roster will be discoverable under each selected trial."
+              sx={inputSx}
+            />
+          )}
+        />
 
         {/* ── Tags Section ──────────────────────────────────────────────── */}
         <Box

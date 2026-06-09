@@ -54,9 +54,16 @@ export interface RosterTagRow {
   tag: string;
 }
 
+export interface RosterTrialRow {
+  roster_id: string;
+  trial_id: string;
+}
+
 export interface RosterWithMeta extends Omit<RosterRow, 'is_anonymous'> {
   is_anonymous: boolean;
   tags: string[];
+  /** All trials this roster is tagged with (primary trial_id is trial_ids[0]). */
+  trial_ids: string[];
   user_voted?: boolean;
   recommended_addons: string | null;
 }
