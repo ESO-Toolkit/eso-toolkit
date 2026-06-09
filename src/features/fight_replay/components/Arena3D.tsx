@@ -109,10 +109,15 @@ interface Arena3DProps {
   onRemoveMarker?: (markerId: string) => void;
   /** Marker edit mode: plain right-click context menus + draggable markers (no Alt chord). */
   markersEditMode?: boolean;
+  /** Toggle marker edit mode — surfaced in the mobile tools sheet (no page toolbar in immersive). */
+  onToggleMarkersEditMode?: () => void;
   /** Drag-to-move commit for a marker (arena-space coordinates). */
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
+  /** Marker undo (mobile tools sheet — Ctrl+Z has no touch equivalent). */
+  canUndoMarkers?: boolean;
+  onUndoMarkers?: () => void;
   /** Fight data for zone/map information (required for map markers coordinate transformation) */
   fight: FightFragment;
   /** Selected player IDs for path visualization */
@@ -163,8 +168,11 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onAddMarker,
   onRemoveMarker,
   markersEditMode = false,
+  onToggleMarkersEditMode,
   onMarkerMove,
   onEditMarker,
+  canUndoMarkers = false,
+  onUndoMarkers,
   fight,
   selectedPlayerIds,
   onPlayerSelectionChange,
@@ -1368,7 +1376,39 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           following={followingActorId != null}
           statsPanelEnabled={statsPanelEnabled}
           onToggleStats={() => setStatsPanelEnabled((prev) => !prev)}
+          markersEditMode={markersEditMode}
+          onToggleMarkersEditMode={onToggleMarkersEditMode}
+          canUndoMarkers={canUndoMarkers}
+          onUndoMarkers={onUndoMarkers}
         />
+      )}
+
+      {/* Marker edit-mode hint — touch gestures are invisible, so name them while the mode is on.
+          Top-center, clear of the Close (top-right) and the boss HUD; non-interactive. */}
+      {mobileImmersive && markersEditMode && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 12,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2,
+            pointerEvents: 'none',
+            px: 1.5,
+            py: 0.5,
+            borderRadius: '999px',
+            backgroundColor: 'rgba(13,20,48,0.85)',
+            border: '1px solid rgba(148,210,255,0.35)',
+            maxWidth: 'calc(100% - 140px)',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(226,232,240,0.92)', whiteSpace: 'nowrap', fontSize: '0.68rem' }}
+          >
+            Hold map: add · drag marker: move · hold marker: edit
+          </Typography>
+        </Box>
       )}
     </div>
   );

@@ -13,6 +13,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -71,6 +73,9 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
   onApply,
   onDelete,
 }) => {
+  const theme = useTheme();
+  // Full-screen on phones (same breakpoint as MapMarkersModal) — the icon grid needs the room.
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [iconKey, setIconKey] = useState<number | undefined>(undefined);
   const [text, setText] = useState('');
   const [rgb, setRgb] = useState<[number, number, number]>([1, 1, 1]);
@@ -124,7 +129,13 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
   }, [marker, onClose, onDelete]);
 
   return (
-    <Dialog open={Boolean(marker)} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={Boolean(marker)}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      fullScreen={fullScreen}
+    >
       <DialogTitle>Edit Marker</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
         {/* Icon picker */}
@@ -197,8 +208,9 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
                     aria-label={`Set colour ${swatch.label}`}
                     aria-pressed={selected}
                     sx={{
-                      width: 28,
-                      height: 28,
+                      // 36px hits the comfortable touch-target floor without crowding desktop.
+                      width: 36,
+                      height: 36,
                       borderRadius: '50%',
                       border: '2px solid',
                       borderColor: selected ? 'primary.main' : 'divider',
@@ -222,8 +234,8 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
               }}
               aria-label="Custom colour"
               sx={{
-                width: 36,
-                height: 28,
+                width: 48,
+                height: 36,
                 p: 0,
                 border: '1px solid',
                 borderColor: 'divider',

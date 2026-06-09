@@ -20,6 +20,7 @@ import { MapMarkersModal } from './components/MapMarkersModal';
 import { MarkerEditDialog } from './components/MarkerEditDialog';
 import { MarkersPanel } from './components/MarkersPanel';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
+import { useIsMobileReplay } from './hooks/useIsMobileReplay';
 import { useMapMarkersManager } from './hooks/useMapMarkersManager';
 import { encodeMarkersToElms, encodeMarkersToMor } from './utils/mapMarkerConverters';
 
@@ -78,7 +79,10 @@ export const FightReplay: React.FC = () => {
 
   // Marker edit mode: enables plain right-click placement, drag-to-move, and right-click editing
   // in the 3D arena (the Alt+right-click chords keep working regardless, for muscle memory).
+  // On touch the same mode maps to long-press gestures instead of right-clicks.
   const [markersEditMode, setMarkersEditMode] = useState(false);
+  const toggleMarkersEditMode = useCallback(() => setMarkersEditMode((prev) => !prev), []);
+  const isMobileReplay = useIsMobileReplay();
 
   // The marker currently open in the edit dialog (from the context menu or the panel list).
   const [editingMarkerId, setEditingMarkerId] = useState<string | null>(null);
@@ -328,7 +332,7 @@ export const FightReplay: React.FC = () => {
             variant={markersEditMode ? 'contained' : 'outlined'}
             color="secondary"
             startIcon={<EditLocationAltIcon />}
-            onClick={() => setMarkersEditMode((prev) => !prev)}
+            onClick={toggleMarkersEditMode}
             type="button"
             aria-pressed={markersEditMode}
           >
@@ -359,11 +363,13 @@ export const FightReplay: React.FC = () => {
           )}
         </Box>
 
-        {/* Edit-mode hint: surfaces the gestures, which are otherwise invisible. */}
+        {/* Edit-mode hint: surfaces the gestures, which are otherwise invisible. Touch and
+            mouse get their own wording — right-click and Ctrl+Z don't exist on a phone. */}
         {markersEditMode && (
           <Typography variant="caption" color="text.secondary">
-            Right-click the map to place a marker · drag a marker to move it · right-click a marker
-            to edit or remove it · Ctrl+Z to undo
+            {isMobileReplay
+              ? 'Press and hold the map to place a marker · drag a marker to move it · press and hold a marker to edit or remove it'
+              : 'Right-click the map to place a marker · drag a marker to move it · right-click a marker to edit or remove it · Ctrl+Z to undo'}
           </Typography>
         )}
 
@@ -435,8 +441,11 @@ export const FightReplay: React.FC = () => {
         onAddMarker={addMarkerAt}
         onRemoveMarker={removeMarker}
         markersEditMode={markersEditMode}
+        onToggleMarkersEditMode={toggleMarkersEditMode}
         onMarkerMove={moveMarker}
         onEditMarker={setEditingMarkerId}
+        canUndoMarkers={canUndo}
+        onUndoMarkers={undo}
         showPlayerPaths={true}
         initialSelectedPlayerIds={[]} // Empty initially, user can select via HUD
       />

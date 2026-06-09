@@ -33,10 +33,15 @@ interface FightReplay3DProps {
   onRemoveMarker?: (markerId: string) => void;
   /** Marker edit mode: plain right-click context menus + draggable markers (no Alt chord). */
   markersEditMode?: boolean;
+  /** Toggle marker edit mode — surfaced in the mobile tools sheet inside the immersive overlay. */
+  onToggleMarkersEditMode?: () => void;
   /** Drag-to-move commit for a marker (arena-space coordinates). */
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
+  /** Marker undo for the mobile tools sheet (Ctrl+Z has no touch equivalent). */
+  canUndoMarkers?: boolean;
+  onUndoMarkers?: () => void;
   /** Whether to show player paths toolkit */
   showPlayerPaths?: boolean;
   /** Initial selected player IDs for path visualization */
@@ -51,8 +56,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   onAddMarker,
   onRemoveMarker,
   markersEditMode = false,
+  onToggleMarkersEditMode,
   onMarkerMove,
   onEditMarker,
+  canUndoMarkers = false,
+  onUndoMarkers,
   showPlayerPaths = false,
   initialSelectedPlayerIds = [],
 }) => {
@@ -682,8 +690,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onAddMarker={onAddMarker}
           onRemoveMarker={onRemoveMarker}
           markersEditMode={markersEditMode}
+          onToggleMarkersEditMode={onToggleMarkersEditMode}
           onMarkerMove={onMarkerMove}
           onEditMarker={onEditMarker}
+          canUndoMarkers={canUndoMarkers}
+          onUndoMarkers={onUndoMarkers}
           fight={selectedFight}
           selectedPlayerIds={selectedPlayerIds}
           onPlayerSelectionChange={setSelectedPlayerIds}

@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three';
 
 import { MorMarker } from '../../../types/mapMarkers';
+import { LongPressTracker } from '../utils/longPress';
 
 import { MarkerShape } from './MarkerShape';
 
@@ -75,7 +76,22 @@ interface DragState {
   plane: THREE.Plane;
   /** Last intersection point, committed on release. */
   point: THREE.Vector3 | null;
+  /** Screen position at pointer-down — drags only engage beyond a slop from here. */
+  startClient: { x: number; y: number };
+  /** True once the pointer travelled past the slop: the gesture is a real drag, not a tap. */
+  engaged: boolean;
+  /** Arena point under the pointer at pointer-down (long-press menu payload). */
+  arenaStart: { x: number; y: number; z: number };
+  /** The element holding the pointer capture (needed to release outside an event handler). */
+  captureTarget: Element | null;
 }
+
+/**
+ * Pointer travel (px) before a press becomes a drag. Below this a touch is a long-press
+ * candidate and a mouse release is a click — either way the marker must not move, so a
+ * shaky tap never commits a position change.
+ */
+const DRAG_SLOP_PX = 8;
 
 /** Minimal shape of the default OrbitControls instance we toggle while dragging. */
 interface ToggleableControls {
@@ -122,22 +138,22 @@ export const Marker3D: React.FC<Marker3DProps> = ({
     [gl],
   );
 
-  const endDrag = useCallback(
-    (event: ThreeEvent<PointerEvent>, commit: boolean) => {
+  const releaseDrag = useCallback(
+    (commit: boolean) => {
       const drag = dragRef.current;
-      if (!drag || drag.pointerId !== event.pointerId) {
+      if (!drag) {
         return;
       }
       dragRef.current = null;
 
-      (event.target as Element | null)?.releasePointerCapture?.(event.pointerId);
+      drag.captureTarget?.releasePointerCapture?.(drag.pointerId);
       const orbit = controls as unknown as ToggleableControls | null;
       if (orbit) {
         orbit.enabled = true;
       }
       setCursor(editable ? 'grab' : 'auto');
 
-      if (commit && drag.point && onMove) {
+      if (commit && drag.engaged && drag.point && onMove) {
         onMove(markerId, { x: drag.point.x, z: drag.point.z });
       } else {
         setDragPosition(null);
@@ -146,6 +162,38 @@ export const Marker3D: React.FC<Marker3DProps> = ({
     },
     [controls, editable, markDirty, markerId, onMove, setCursor],
   );
+
+  // Latest-callback refs so the long-press tracker (created once) never goes stale.
+  const releaseDragRef = useRef(releaseDrag);
+  releaseDragRef.current = releaseDrag;
+  const onContextMenuRef = useRef(onContextMenu);
+  onContextMenuRef.current = onContextMenu;
+
+  // Touch path to the context menu: press and hold without moving. Firing aborts the
+  // pending drag (no commit) and opens the same menu right-click opens on desktop.
+  const longPressRef = useRef<LongPressTracker | null>(null);
+  if (longPressRef.current === null) {
+    longPressRef.current = new LongPressTracker(
+      (start) => {
+        const drag = dragRef.current;
+        if (!drag || drag.pointerId !== start.pointerId) {
+          return;
+        }
+        const arenaPoint = drag.arenaStart;
+        releaseDragRef.current(false);
+        onContextMenuRef.current?.({
+          markerId,
+          screenPosition: { left: start.clientX, top: start.clientY },
+          arenaPoint,
+        });
+      },
+      { slopPx: DRAG_SLOP_PX },
+    );
+  }
+  useEffect(() => {
+    const tracker = longPressRef.current;
+    return () => tracker?.cancel();
+  }, []);
 
   const handlePointerDown = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
@@ -168,9 +216,12 @@ export const Marker3D: React.FC<Marker3DProps> = ({
         return;
       }
 
-      // Left-drag to move (edit mode only).
+      // Primary press in edit mode: a drag candidate — and on touch, also a long-press
+      // candidate. The slop disambiguates: move past it = drag; hold still = context menu.
       if (event.button === 0 && editable && onMove) {
         event.stopPropagation();
+
+        const { clientX, clientY, pointerType } = event.nativeEvent;
 
         // Drag along the horizontal plane at the marker's height so the marker tracks the
         // pointer ray without jumping vertically. Plane: y = position[1] → constant = -y.
@@ -178,6 +229,10 @@ export const Marker3D: React.FC<Marker3DProps> = ({
           pointerId: event.pointerId,
           plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -position[1]),
           point: null,
+          startClient: { x: clientX, y: clientY },
+          engaged: false,
+          arenaStart: { x: event.point.x, y: event.point.y, z: event.point.z },
+          captureTarget: event.target as Element | null,
         };
 
         (event.target as Element | null)?.setPointerCapture?.(event.pointerId);
@@ -186,6 +241,10 @@ export const Marker3D: React.FC<Marker3DProps> = ({
           orbit.enabled = false;
         }
         setCursor('grabbing');
+
+        if (pointerType !== 'mouse' && onContextMenu) {
+          longPressRef.current?.begin({ pointerId: event.pointerId, clientX, clientY });
+        }
       }
     },
     [controls, editable, markerId, onContextMenu, onMove, position, setCursor],
@@ -200,6 +259,18 @@ export const Marker3D: React.FC<Marker3DProps> = ({
 
       event.stopPropagation();
 
+      const { clientX, clientY } = event.nativeEvent;
+      longPressRef.current?.move({ pointerId: event.pointerId, clientX, clientY });
+
+      if (!drag.engaged) {
+        const dx = clientX - drag.startClient.x;
+        const dy = clientY - drag.startClient.y;
+        if (dx * dx + dy * dy <= DRAG_SLOP_PX * DRAG_SLOP_PX) {
+          return; // still a tap/long-press candidate — don't move the marker yet
+        }
+        drag.engaged = true;
+      }
+
       const hit = new THREE.Vector3();
       if (event.ray.intersectPlane(drag.plane, hit)) {
         drag.point = hit;
@@ -212,19 +283,27 @@ export const Marker3D: React.FC<Marker3DProps> = ({
 
   const handlePointerUp = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
-      if (dragRef.current) {
+      const { clientX, clientY } = event.nativeEvent;
+      longPressRef.current?.end({ pointerId: event.pointerId, clientX, clientY });
+
+      const drag = dragRef.current;
+      if (drag && drag.pointerId === event.pointerId) {
         event.stopPropagation();
-        endDrag(event, true);
+        releaseDrag(true);
       }
     },
-    [endDrag],
+    [releaseDrag],
   );
 
   const handlePointerCancel = useCallback(
     (event: ThreeEvent<PointerEvent>) => {
-      endDrag(event, false);
+      longPressRef.current?.cancel();
+      const drag = dragRef.current;
+      if (drag && drag.pointerId === event.pointerId) {
+        releaseDrag(false);
+      }
     },
-    [endDrag],
+    [releaseDrag],
   );
 
   const handlePointerOver = useCallback(

@@ -9,6 +9,7 @@ import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
 import { MapMarkersState } from '../types/mapMarkers';
+import { LongPressTracker } from '../utils/longPress';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
@@ -305,6 +306,30 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
   }, []);
 
+  // Touch path for placing markers: press-and-hold on the ground (edit mode only) opens the
+  // same add-marker menu desktop gets from right-click. The arena point is captured at
+  // pointer-down; any movement past the slop (drag/rotate/pinch) cancels the press.
+  const groundPressPointRef = useRef<{ x: number; y: number; z: number } | null>(null);
+  const onGroundContextMenuRef = useRef(onGroundContextMenu);
+  onGroundContextMenuRef.current = onGroundContextMenu;
+  const groundLongPressRef = useRef<LongPressTracker | null>(null);
+  if (groundLongPressRef.current === null) {
+    groundLongPressRef.current = new LongPressTracker((start) => {
+      const arenaPoint = groundPressPointRef.current;
+      if (!arenaPoint) {
+        return;
+      }
+      onGroundContextMenuRef.current?.({
+        arenaPoint,
+        screenPosition: { left: start.clientX, top: start.clientY },
+      });
+    });
+  }
+  const groundLongPress = groundLongPressRef.current;
+  useEffect(() => {
+    return () => groundLongPress.cancel();
+  }, [groundLongPress]);
+
   // Player visibility is now owned by Arena3D and passed in as a prop, so the DOM
   // PlayerListPanel overlay (which renders the toggle controls) and these in-canvas actors
   // share one source of truth.
@@ -580,8 +605,8 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           visible={showPlayerTrails}
         />
       )}
-      {/* Interaction plane for context menu support (Alt + Right Click, or plain Right Click in
-          marker edit mode) */}
+      {/* Interaction plane for the add-marker context menu: Alt+Right-Click (always), plain
+          Right-Click in marker edit mode, and press-and-hold on touch in edit mode. */}
       <mesh
         position={[arenaDimensions.centerX, -0.019, arenaDimensions.centerZ]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -601,8 +626,45 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
                 top: event.nativeEvent.clientY,
               },
             });
+            return;
+          }
+
+          // Touch path: arm a long-press at the touched ground point. Camera rotate cancels it
+          // via the movement slop, so holding still is the only way it fires.
+          if (
+            event.button === 0 &&
+            event.nativeEvent.pointerType !== 'mouse' &&
+            markersEditMode &&
+            onGroundContextMenu
+          ) {
+            groundPressPointRef.current = {
+              x: event.point.x,
+              y: event.point.y,
+              z: event.point.z,
+            };
+            groundLongPress.begin({
+              pointerId: event.pointerId,
+              clientX: event.nativeEvent.clientX,
+              clientY: event.nativeEvent.clientY,
+            });
           }
         }}
+        onPointerMove={(event) => {
+          groundLongPress.move({
+            pointerId: event.pointerId,
+            clientX: event.nativeEvent.clientX,
+            clientY: event.nativeEvent.clientY,
+          });
+        }}
+        onPointerUp={(event) => {
+          groundLongPress.end({
+            pointerId: event.pointerId,
+            clientX: event.nativeEvent.clientX,
+            clientY: event.nativeEvent.clientY,
+          });
+        }}
+        onPointerCancel={() => groundLongPress.cancel()}
+        onPointerLeave={() => groundLongPress.cancel()}
       >
         <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
         <meshBasicMaterial visible={false} transparent opacity={0} />
