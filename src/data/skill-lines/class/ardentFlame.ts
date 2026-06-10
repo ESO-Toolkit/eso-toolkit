@@ -19,7 +19,7 @@ export const ardentFlame: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_006',
       description:
-        'Call down a battle standard for 15 seconds, rallying you and allies inside the area, increasing Weapon and Spell Damage by 300 and reducing damage taken by 10%.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
+        'Call down a battle standard for 15 seconds, rallying you and group members inside the area, increasing Weapon and Spell Damage by 300 and reducing damage taken by 10%.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -39,7 +39,7 @@ export const ardentFlame: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_dragonknight_006_b',
       description:
-        'Call down a battle standard for 15 seconds, rallying you and allies inside the area, increasing Weapon and Spell Damage by 300 and reducing damage taken by 10%. You gain an additional 15% damage done and reduced damage taken and 300 Weapon and Spell Damage.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
+        'Call down a battle standard for 15 seconds, rallying you and group members inside the area, increasing Weapon and Spell Damage by 300 and reducing damage taken by 10%. You gain an additional 15% damage done, 15% reduced damage taken, and 300 Weapon and Spell Damage.\n\nAn ally near the standard can activate the Shackle synergy, dealing 3375 Flame Damage to enemies in the area and immobilizing them for 5 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.DRAGONKNIGHT_DRAGONKNIGHT_STANDARD,
     },
@@ -85,7 +85,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_012_b',
       description:
-        'Let the fire within draw heat to your heart, restoring 15% of your Max Health and 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2004 Flame Damage to nearby enemies.',
+        'Let the fire within draw heat to your heart, restoring 15% of your missing Magicka and Stamina and healing 2560 Health every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2004 Flame Damage to nearby enemies.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
     },
     {
@@ -139,7 +139,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_001_b',
       description:
-        'Lash an enemy with flame, dealing 2399 Flame Damage.\n\nActivating a different Dragonknight ability while in combat grants a stack of Seething Fury up to 3 times, increasing the damage of your next Molten Whip by 33%.',
+        'Lash an enemy with flame, dealing 2399 Flame Damage.\n\nActivating a different Dragonknight ability while in combat grants a stack of Seething Fury up to 3 times, increasing the damage of your next Molten Whip by 33% within 10 seconds.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {

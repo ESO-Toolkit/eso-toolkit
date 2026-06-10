@@ -92,7 +92,13 @@ for (const file of files) {
 
   const next = original.replace(SET_RE, (full, _q, nameRaw, head, bonusesBody, close) => {
     setsSeen++;
-    const dumpSet = dumpByName.get(norm(unescape(nameRaw)));
+    // App names sometimes carry a leading "The " the game omits (e.g. app
+    // "The Prowler's Talisman" vs in-game "Prowler's Talisman") — try both ways.
+    const appName = norm(unescape(nameRaw));
+    const dumpSet =
+      dumpByName.get(appName) ??
+      dumpByName.get(appName.replace(/^the/, '')) ??
+      dumpByName.get('the' + appName);
     if (!dumpSet || dumpSet.list.length === 0) {
       unmatchedSets.push(unescape(nameRaw));
       return full;

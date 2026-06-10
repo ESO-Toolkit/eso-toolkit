@@ -74,6 +74,9 @@ export function stripMarkup(raw) {
         tail === '\n\n' ? '\n\n' : '',
       );
     } while (s !== prev);
+    // Same idea, different phrasing: Prowler's Talisman appends a live
+    // "Talisman upgrades: N" counter (the dumping char's progress, not set data).
+    s = s.replace(/\n+\s*Talisman upgrades: \d+\s*$/, '');
     s = s.replace(/\n{3,}/g, '\n\n');
   }
   // Tidy whitespace: collapse runs of spaces/tabs, drop spaces hugging a newline

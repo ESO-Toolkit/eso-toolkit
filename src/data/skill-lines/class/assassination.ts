@@ -204,7 +204,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_017',
       description:
-        'Increases your Critical Damage by 10%.\n\nDealing Critical Damage grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
+        'Increases your Critical Damage by 10%.\n\nCritically striking in any form grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
       isPassive: true,
     },
     {
@@ -224,7 +224,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_015',
       description:
-        'Increases your Critical Chance rating for each Nightblade ability slotted, increasing your chance to critically strike by 2% per ability.',
+        'Increases your Critical Chance rating by 438 for each Nightblade ability slotted, increasing your chance to critically strike by 2% per ability.',
       isPassive: true,
     },
   ],

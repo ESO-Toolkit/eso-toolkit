@@ -49,7 +49,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_008',
       description:
-        'Wrap yourself in hardened bone, granting you Major Resolve and Minor Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948 and 2974.\n\nIf cast during combat, you can cast a corpse consuming ability on yourself. This effect can occur once every 10 seconds.',
+        'Wrap yourself in hardened bone, granting you Major and Minor Resolve, increasing your Physical Resistance and Spell Resistance by 5948 and 2974 for 20 seconds.\n\nIf cast during combat, you can cast a corpse consuming ability on yourself. This effect can occur once every 10 seconds.',
       baseSkillId: ClassSkillId.NECROMANCER_BONE_ARMOR,
     },
     {
@@ -94,7 +94,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_011_b',
       description:
-        'Sap the lingering life from fresh corpses, granting you 6 Ultimate and healing 682 Health every 1 second for 2 seconds per additional corpse. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
+        'Sap the lingering life from fresh corpses, granting you 6 Ultimate and healing 682 Health every 1 second for 2 seconds per corpse consumed. This ability scales off your Max Health.\n\nWhile slotted, your damage taken is reduced by 3%.',
       baseSkillId: ClassSkillId.NECROMANCER_BITTER_HARVEST,
     },
     {

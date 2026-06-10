@@ -12,7 +12,7 @@ export const soulMagic: SkillLineData = {
       id: AbilityId.SOUL_STRIKE,
       name: 'Soul Strike',
       description:
-        'Burn an enemy from the inside with soulfire, dealing 14340 Magic Damage over 5 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
+        'Burn an enemy from the inside with soulfire, dealing 14808 Magic Damage over 5 seconds.\n\nWhile channeling this ability, you gain immunity to all disabling effects.\n\nEnemies affected by this ability are revealed for 3 seconds and may not enter stealth or invisibility.\n\nThis ability is considered direct damage.',
       icon: 'ability_otherclass_002',
       isUltimate: true,
       isPassive: false,
