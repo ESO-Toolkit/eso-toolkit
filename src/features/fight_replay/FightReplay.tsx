@@ -1,5 +1,7 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import EditLocationAltIcon from '@mui/icons-material/EditLocationAlt';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -9,8 +11,6 @@ import type { FightFragment } from '@/graphql/gql/graphql';
 import { useCurrentFight, useReportFightParams, useTrialChapters } from '@/hooks';
 import { useAppDispatch } from '@/store/useAppDispatch';
 import { actorPositionsActions } from '@/store/worker_results/taskSlices';
-import { ZONE_SCALE_DATA, ZoneScaleData } from '@/types/zoneScaleData';
-import { detectMapFromCoordinates } from '@/utils/mapMarkersUtils';
 
 import { useFriendlyBuffEvents } from '../../hooks/events/useFriendlyBuffEvents';
 import { useHostileBuffEvents } from '../../hooks/events/useHostileBuffEvents';
@@ -21,22 +21,17 @@ import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositions
 import { ChapterRail } from './components/ChapterRail';
 import { FightReplay3D, type TrialReplayNav } from './components/FightReplay3D';
 import { MapMarkersModal } from './components/MapMarkersModal';
+import { MarkerEditDialog } from './components/MarkerEditDialog';
+import { MarkersPanel } from './components/MarkersPanel';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
 import { useIsMobileReplay } from './hooks/useIsMobileReplay';
+import { useMapMarkersManager } from './hooks/useMapMarkersManager';
 import { chapterDisplayName } from './trial_chapters/chapterDisplay';
 import { buildTrialTimeline } from './trial_chapters/trialTimeline';
 import type { TrialChapter } from './trial_chapters/types';
 import { useReplayNavigation } from './trial_chapters/useReplayNavigation';
 import { useReplayPrefetch } from './trial_chapters/useReplayPrefetch';
-import { MapMarkersState } from './types/mapMarkers';
-import {
-  createMarkerFromElmsIcon,
-  encodeMarkersToElms,
-  encodeMarkersToMor,
-  parseMarkersInput,
-  withNewMarker,
-  withoutMarker,
-} from './utils/mapMarkerConverters';
+import { encodeMarkersToElms, encodeMarkersToMor } from './utils/mapMarkerConverters';
 
 function formatDuration(milliseconds: number): string {
   const totalSeconds = Math.floor(milliseconds / 1000);
@@ -45,38 +40,14 @@ function formatDuration(milliseconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-function resolveActiveMapData(
-  fight: FightFragment | null,
-  markersState: MapMarkersState | null,
-): ZoneScaleData | null {
-  if (!fight?.gameZone?.id) {
-    return null;
+/** True when the keydown target is a text-entry element (don't steal undo/redo from inputs). */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
   }
-
-  const zoneId = fight.gameZone.id;
-  const zoneMaps = ZONE_SCALE_DATA[zoneId];
-
-  if (!zoneMaps || zoneMaps.length === 0) {
-    return null;
-  }
-
-  const fightMapId = fight.maps?.[0]?.id;
-  if (fightMapId) {
-    const map = zoneMaps.find((candidate) => candidate.mapId === fightMapId);
-    if (map) {
-      return map;
-    }
-  }
-
-  const marker = markersState?.markers[0];
-  if (marker) {
-    const detected = detectMapFromCoordinates(zoneId, marker.x, marker.z);
-    if (detected) {
-      return detected;
-    }
-  }
-
-  return zoneMaps[0] ?? null;
+  return (
+    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true
+  );
 }
 
 export const FightReplay: React.FC = () => {
@@ -89,89 +60,89 @@ export const FightReplay: React.FC = () => {
     document.title = 'Fight Replay | ESO Toolkit';
   }, []);
 
-  // Map Markers state (M0R or Elms format)
-  const [markersState, setMarkersState] = useState<MapMarkersState | null>(null);
   const [markersModalOpen, setMarkersModalOpen] = useState(false);
   const [copySnackbar, setCopySnackbar] = useState<{
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'info';
     message: string;
   } | null>(null);
 
+  const handleMarkersError = useCallback((message: string) => {
+    setCopySnackbar({ type: 'error', message });
+  }, []);
+
+  // Map Markers (M0R or Elms format): CRUD + per-zone persistence + undo/redo. The hook owns the
+  // marker state, storage, map-scale resolution and history; the page just renders the controls.
+  const {
+    markersState,
+    restoredCount,
+    canUndo,
+    canRedo,
+    loadFromString,
+    clearMarkers,
+    addMarkerAt,
+    removeMarker,
+    moveMarker,
+    editMarker,
+    undo,
+    redo,
+  } = useMapMarkersManager({ fight, onError: handleMarkersError });
+
+  // Marker edit mode: enables plain right-click placement, drag-to-move, and right-click editing
+  // in the 3D arena (the Alt+right-click chords keep working regardless, for muscle memory).
+  // On touch the same mode maps to long-press gestures instead of right-clicks.
+  const [markersEditMode, setMarkersEditMode] = useState(false);
+  const toggleMarkersEditMode = useCallback(() => setMarkersEditMode((prev) => !prev), []);
+
+  // The marker currently open in the edit dialog (from the context menu or the panel list).
+  const [editingMarkerId, setEditingMarkerId] = useState<string | null>(null);
+  const editingMarker = useMemo(
+    () => markersState?.markers.find((marker) => marker.id === editingMarkerId) ?? null,
+    [markersState, editingMarkerId],
+  );
+
+  // Surface restored-from-storage marker sets so users know why markers appeared.
+  useEffect(() => {
+    if (restoredCount > 0) {
+      setCopySnackbar({
+        type: 'info',
+        message: `Restored ${restoredCount} saved marker${restoredCount === 1 ? '' : 's'} for this zone.`,
+      });
+    }
+  }, [restoredCount]);
+
+  // Undo/redo keyboard shortcuts while edit mode is on (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z or Ctrl+Y).
+  useEffect(() => {
+    if (!markersEditMode) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (!(event.ctrlKey || event.metaKey) || isTextEntryTarget(event.target)) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+      } else if ((key === 'z' && event.shiftKey) || key === 'y') {
+        event.preventDefault();
+        redo();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [markersEditMode, undo, redo]);
+
   // Handle loading markers from modal
-  const handleLoadMarkers = useCallback((markersString: string): void => {
-    const parsed = parseMarkersInput(markersString);
-    setMarkersState(parsed);
-    setMarkersModalOpen(false);
-  }, []);
-
-  // Handle clearing markers
-  const handleClearMarkers = useCallback((): void => {
-    setMarkersState(null);
-  }, []);
-
-  const activeMapData = useMemo(
-    () => resolveActiveMapData(fight ?? null, markersState),
-    [fight, markersState],
-  );
-
-  const handleAddMarkerAt = useCallback(
-    (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => {
-      if (!fight?.gameZone?.id) {
-        setCopySnackbar({ type: 'error', message: 'Fight zone information is unavailable.' });
-        return;
-      }
-
-      const mapData = activeMapData;
-      if (!mapData) {
-        setCopySnackbar({
-          type: 'error',
-          message: 'Map scale data is unavailable for this fight.',
-        });
-        return;
-      }
-
-      const zoneId = markersState?.zoneId ?? fight.gameZone.id;
-
-      const clamp = (value: number): number => Math.min(100, Math.max(0, value));
-      const clampedX = clamp(arenaPoint.x);
-      const clampedZ = clamp(arenaPoint.z);
-
-      const normalizedX = (100 - clampedX) / 100;
-      const normalizedZ = (100 - clampedZ) / 100;
-
-      const x = normalizedX * (mapData.maxX - mapData.minX) + mapData.minX;
-      const z = normalizedZ * (mapData.maxZ - mapData.minZ) + mapData.minZ;
-      const y = mapData.y ?? markersState?.markers[0]?.y ?? 0;
-
-      try {
-        const newMarker = createMarkerFromElmsIcon(iconKey, { x, y, z });
-
-        setMarkersState((prev) => {
-          const baseState: MapMarkersState = prev ?? {
-            format: 'elms',
-            zoneId,
-            markers: [],
-            originalEncodedString: undefined,
-          };
-
-          const adjustedState =
-            baseState.zoneId === zoneId ? baseState : { ...baseState, zoneId, markers: [] };
-
-          return withNewMarker(adjustedState, newMarker, 'elms');
-        });
-      } catch (error) {
-        setCopySnackbar({
-          type: 'error',
-          message: error instanceof Error ? error.message : 'Failed to add marker.',
-        });
-      }
+  const handleLoadMarkers = useCallback(
+    (markersString: string): void => {
+      loadFromString(markersString);
+      setMarkersModalOpen(false);
     },
-    [activeMapData, fight, markersState],
+    [loadFromString],
   );
-
-  const handleRemoveMarker = useCallback((markerId: string) => {
-    setMarkersState((prev) => (prev ? withoutMarker(prev, markerId) : prev));
-  }, []);
 
   const handleExportMarkers = useCallback(
     async (format: 'elms' | 'mor') => {
@@ -447,9 +418,9 @@ export const FightReplay: React.FC = () => {
       : undefined;
 
   // The arena swaps between loading / error / empty / the live 3D view, while the page shell
-  // (header + chapter rail) stays mounted across fight switches. Once the arena has rendered once,
-  // FightReplay3D stays mounted through transitions (it shows its own overlay) so fullscreen and
-  // continuous play are never interrupted. ReplayStatePanel reserves the arena's height.
+  // (header + chapter rail + marker tools) stays mounted across fight switches. Once the arena has
+  // rendered once, FightReplay3D stays mounted through transitions (it shows its own overlay) so
+  // fullscreen and continuous play are never interrupted. ReplayStatePanel reserves the height.
   const renderArena = (): React.ReactNode => {
     // Surface a hard error only when we're NOT mid-switch. A transient worker abort/error during a
     // fight switch must not swap out FightReplay3D — that would unmount it and drop fullscreen (the
@@ -508,8 +479,16 @@ export const FightReplay: React.FC = () => {
         allBuffEvents={allBuffEvents}
         showActorNames={true}
         markersState={markersState}
-        onAddMarker={handleAddMarkerAt}
-        onRemoveMarker={handleRemoveMarker}
+        onAddMarker={addMarkerAt}
+        onRemoveMarker={removeMarker}
+        markersEditMode={markersEditMode}
+        onToggleMarkersEditMode={toggleMarkersEditMode}
+        onMarkerMove={moveMarker}
+        onEditMarker={setEditingMarkerId}
+        canUndoMarkers={canUndo}
+        onUndoMarkers={undo}
+        canRedoMarkers={canRedo}
+        onRedoMarkers={redo}
         showPlayerPaths={true}
         initialSelectedPlayerIds={[]} // Empty initially, user can select via HUD
         trialNav={trialNav}
@@ -565,10 +544,9 @@ export const FightReplay: React.FC = () => {
       </Box>
 
       {/* Trial chapter rail — skip between bosses (and trash) without leaving the replay.
-          Stays mounted across fight switches so navigation feels continuous. The map-markers
-          tool lives in its header (a quiet outlined control — the arena is the page's hero, so
-          nothing above it gets contained-primary emphasis), and its title is suppressed when
-          the page header already states the same trial name. */}
+          Stays mounted across fight switches so navigation feels continuous. Its title is
+          suppressed when the page header already states the same trial name. The map-markers
+          tools live in their own quiet toolbar below, so the rail stays focused on navigation. */}
       {trialChapters.currentRun && (
         <ChapterRail
           segments={trialChapters.segments}
@@ -580,48 +558,106 @@ export const FightReplay: React.FC = () => {
           }
           includeTrash={includeTrash}
           onToggleIncludeTrash={handleToggleIncludeTrash}
-          headerActions={
-            fight ? (
-              <Button
-                size="small"
-                variant="outlined"
-                color="secondary"
-                startIcon={<PlaceIcon />}
-                onClick={() => setMarkersModalOpen(true)}
-                type="button"
-              >
-                {markersState && markersState.markers.length > 0
-                  ? `Markers · ${markersState.markers.length}`
-                  : 'Map markers'}
-              </Button>
-            ) : undefined
-          }
           onSelect={handleSelectChapter}
         />
       )}
 
-      {/* Map markers entry point for non-trial replays (no rail to host it). Exports + stats
-          live inside the modal. */}
-      {fight && !trialChapters.currentRun && (
-        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Button
-            size="small"
-            variant="outlined"
-            color="secondary"
-            startIcon={<PlaceIcon />}
-            onClick={() => setMarkersModalOpen(true)}
-            type="button"
-          >
-            {markersState && markersState.markers.length > 0
-              ? `Markers · ${markersState.markers.length}`
-              : 'Map markers'}
-          </Button>
-          {markersState && markerStats.success && markerStats.removed > 0 && (
-            <Chip
-              label={`${markerStats.removed} filtered out`}
-              color="warning"
-              size="small"
+      {/* Map markers toolbar — the single home for marker tools in both trial and isolated-fight
+          layouts. Kept as quiet outlined controls so it never competes with the arena (the page's
+          hero); the Edit Markers toggle flips to contained only to signal its active state. */}
+      {fight && (
+        <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
               variant="outlined"
+              color="secondary"
+              startIcon={<PlaceIcon />}
+              onClick={() => setMarkersModalOpen(true)}
+              type="button"
+            >
+              {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
+            </Button>
+
+            <Button
+              variant={markersEditMode ? 'contained' : 'outlined'}
+              color="secondary"
+              startIcon={<EditLocationAltIcon />}
+              onClick={toggleMarkersEditMode}
+              type="button"
+              aria-pressed={markersEditMode}
+            >
+              {markersEditMode ? 'Done Editing' : 'Edit Markers'}
+            </Button>
+
+            {markersState && markersState.markers.length > 0 && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<ContentCopyIcon />}
+                  onClick={() => handleExportMarkers('elms')}
+                  type="button"
+                >
+                  Copy Elms
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<ContentCopyIcon />}
+                  onClick={() => handleExportMarkers('mor')}
+                  type="button"
+                >
+                  Copy M0R
+                </Button>
+              </>
+            )}
+          </Box>
+
+          {/* Edit-mode hint: surfaces the gestures, which are otherwise invisible. Touch and
+              mouse get their own wording — right-click and Ctrl+Z don't exist on a phone. */}
+          {markersEditMode && (
+            <Typography variant="caption" color="text.secondary">
+              {isMobileReplay
+                ? 'Press and hold the map to place a marker · drag a marker to move it · press and hold a marker to edit or remove it'
+                : 'Right-click the map to place a marker · drag a marker to move it · right-click a marker to edit or remove it · Ctrl+Z to undo'}
+            </Typography>
+          )}
+
+          {/* Marker Statistics */}
+          {markersState && markerStats.success && (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Chip
+                label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
+                color="success"
+                size="small"
+                variant="outlined"
+              />
+              {markerStats.is3D && (
+                <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
+              )}
+              {markerStats.removed > 0 && (
+                <Chip
+                  label={`${markerStats.removed} filtered out`}
+                  color="warning"
+                  size="small"
+                  variant="outlined"
+                />
+              )}
+            </Box>
+          )}
+
+          {/* Marker management list: edit/delete each marker, undo/redo, clear all. */}
+          {(markersEditMode || (markersState && markersState.markers.length > 0)) && (
+            <MarkersPanel
+              markersState={markersState}
+              editMode={markersEditMode}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onUndo={undo}
+              onRedo={redo}
+              onEditMarker={setEditingMarkerId}
+              onRemoveMarker={removeMarker}
+              onClearMarkers={clearMarkers}
             />
           )}
         </Box>
@@ -635,11 +671,19 @@ export const FightReplay: React.FC = () => {
           fight={fight}
           markersState={markersState}
           onLoadMarkers={handleLoadMarkers}
-          onClearMarkers={handleClearMarkers}
+          onClearMarkers={clearMarkers}
           onExportElms={() => handleExportMarkers('elms')}
           onExportMor={() => handleExportMarkers('mor')}
         />
       )}
+
+      {/* Per-marker edit dialog (icon / label / colour / size, plus delete) */}
+      <MarkerEditDialog
+        marker={editingMarker}
+        onClose={() => setEditingMarkerId(null)}
+        onApply={editMarker}
+        onDelete={removeMarker}
+      />
 
       {/* 3D Arena (swaps state inline; the shell + rail persist). */}
       {renderArena()}

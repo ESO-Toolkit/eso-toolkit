@@ -30,6 +30,7 @@ import {
 } from '../trial_chapters/trialTimeline';
 import type { TrialChapter } from '../trial_chapters/types';
 import { MapMarkersState } from '../types/mapMarkers';
+import { lockDocumentSelection } from '../utils/documentSelectionLock';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
@@ -93,6 +94,19 @@ interface FightReplay3DProps {
   markersState?: MapMarkersState | null;
   onAddMarker?: (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => void;
   onRemoveMarker?: (markerId: string) => void;
+  /** Marker edit mode: plain right-click context menus + draggable markers (no Alt chord). */
+  markersEditMode?: boolean;
+  /** Toggle marker edit mode — surfaced in the mobile tools sheet inside the immersive overlay. */
+  onToggleMarkersEditMode?: () => void;
+  /** Drag-to-move commit for a marker (arena-space coordinates). */
+  onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
+  onEditMarker?: (markerId: string) => void;
+  /** Marker undo/redo for the mobile tools sheet (Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
+  canUndoMarkers?: boolean;
+  onUndoMarkers?: () => void;
+  canRedoMarkers?: boolean;
+  onRedoMarkers?: () => void;
   /** Whether to show player paths toolkit */
   showPlayerPaths?: boolean;
   /** Initial selected player IDs for path visualization */
@@ -108,6 +122,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   markersState,
   onAddMarker,
   onRemoveMarker,
+  markersEditMode = false,
+  onToggleMarkersEditMode,
+  onMarkerMove,
+  onEditMarker,
+  canUndoMarkers = false,
+  onUndoMarkers,
+  canRedoMarkers = false,
+  onRedoMarkers,
   showPlayerPaths = false,
   initialSelectedPlayerIds = [],
   trialNav,
@@ -633,6 +655,15 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // (top bar · arena · bottom dock) that replaces the desktop overlay soup on a phone.
   const mobileImmersive = isMobile && isImmersive;
 
+  // Marker editing needs the interactive overlay — the inline mobile preview is a
+  // pointer-events:none teaser, so enabling edit mode from the page toolbar would otherwise
+  // look broken (holds select page text, drags do nothing). Auto-expand instead.
+  useEffect(() => {
+    if (markersEditMode && isMobile) {
+      setMobilePseudoFullscreen(true);
+    }
+  }, [markersEditMode, isMobile]);
+
   const toggleFullscreen = useCallback(() => {
     // Mobile: flip the CSS pseudo-fullscreen overlay (the native API can't fullscreen a div on iOS).
     if (isMobile) {
@@ -884,6 +915,16 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       document.removeEventListener('gesturechange', prevent);
       document.removeEventListener('gestureend', prevent);
     };
+  }, [mobilePseudoFullscreen]);
+
+  // Document-WIDE selection lock while the overlay is open. iOS Safari's long-press selection
+  // hit-test is not confined to the touched element: with the overlay unselectable, WebKit
+  // selects the nearest selectable text — i.e. the PAGE BEHIND the overlay (field-reported on
+  // iPhone). Scoped CSS can't fix that, so every element goes unselectable for the overlay's
+  // lifetime (text inputs stay editable — see documentSelectionLock).
+  useEffect(() => {
+    if (!mobilePseudoFullscreen) return;
+    return lockDocumentSelection();
   }, [mobilePseudoFullscreen]);
 
   // Keyboard shortcuts: playback transport + player-path toggles. Camera keys (WASD, r reset,
@@ -1213,6 +1254,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
               paddingLeft: 'env(safe-area-inset-left)',
               paddingRight: 'env(safe-area-inset-right)',
               boxSizing: 'border-box',
+              // iOS: the overlay is an app surface, not a document — suppress the OS
+              // long-press text-selection/callout that hijacks marker gestures.
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              WebkitTouchCallout: 'none',
               '& > .MuiPaper-root': { height: '100%', borderRadius: 0 },
             }
           : null),
@@ -1234,6 +1280,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           markersState={markersState}
           onAddMarker={onAddMarker}
           onRemoveMarker={onRemoveMarker}
+          markersEditMode={markersEditMode}
+          onToggleMarkersEditMode={onToggleMarkersEditMode}
+          onMarkerMove={onMarkerMove}
+          onEditMarker={onEditMarker}
+          canUndoMarkers={canUndoMarkers}
+          onUndoMarkers={onUndoMarkers}
+          canRedoMarkers={canRedoMarkers}
+          onRedoMarkers={onRedoMarkers}
           fight={selectedFight}
           selectedPlayerIds={selectedPlayerIds}
           onPlayerSelectionChange={setSelectedPlayerIds}
