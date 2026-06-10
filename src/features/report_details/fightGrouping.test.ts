@@ -254,6 +254,103 @@ describe('groupFightsIntoRuns', () => {
     expect(runs).toHaveLength(1);
     expect(runs[0].fights).toHaveLength(3);
   });
+
+  it('keeps no-gameZone fights with an id-keyed dungeon run of the same name', () => {
+    // In a dungeon log the report-level zone name matches the dungeon, but the
+    // name-keyed fallback (`name:bal sunnar`) differs from the id key
+    // (`zone:1564`) — that mismatch must not split the run.
+    const dungeonReport = { zone: { name: 'Bal Sunnar' } } as ReportFragment;
+    const fights = [
+      makeFight({
+        startTime: 0,
+        endTime: 60_000,
+        encounterID: 71,
+        gameZone: { id: 1564, name: 'Bal Sunnar' },
+      }),
+      makeFight({
+        startTime: 61_000,
+        endTime: 62_000,
+        encounterID: 0,
+        difficulty: null,
+        gameZone: null,
+        name: 'Trash',
+      }),
+      makeFight({
+        startTime: 63_000,
+        endTime: 120_000,
+        encounterID: 72,
+        gameZone: { id: 1564, name: 'Bal Sunnar' },
+      }),
+    ];
+    const runs = groupFightsIntoRuns(fights, dungeonReport);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].fights).toHaveLength(3);
+    expect(runs[0].zone.zoneId).toBe(1564);
+  });
+
+  it('does not let the report-level zone fallback shatter another zone’s run (mixed log)', () => {
+    // Mixed log whose report-level zone is Dreadsail Reef. Mid-dungeon trash
+    // with no gameZone resolves to the report zone — that must NOT split the
+    // dungeon run (previously produced DSR → Bal Sunnar → DSR → Bal Sunnar).
+    const mixedReport = { zone: { name: 'Dreadsail Reef' } } as ReportFragment;
+    const fights = [
+      makeFight({
+        startTime: 0,
+        endTime: 60_000,
+        encounterID: 31,
+        gameZone: { id: 1344, name: 'Dreadsail Reef' },
+      }),
+      makeFight({
+        startTime: 100_000,
+        endTime: 160_000,
+        encounterID: 71,
+        gameZone: { id: 1564, name: 'Bal Sunnar' },
+      }),
+      makeFight({
+        startTime: 161_000,
+        endTime: 162_000,
+        encounterID: 0,
+        difficulty: null,
+        gameZone: null,
+        name: 'Trash',
+      }),
+      makeFight({
+        startTime: 163_000,
+        endTime: 220_000,
+        encounterID: 72,
+        gameZone: { id: 1564, name: 'Bal Sunnar' },
+      }),
+    ];
+    const runs = groupFightsIntoRuns(fights, mixedReport);
+    expect(runs).toHaveLength(2);
+    expect(runs[0].zone.name).toBe('Dreadsail Reef');
+    expect(runs[1].zone.name).toBe('Bal Sunnar');
+    expect(runs[1].fights).toHaveLength(3);
+  });
+
+  it('upgrades a run started from the name fallback once an id-keyed fight arrives', () => {
+    const dungeonReport = { zone: { name: 'Bal Sunnar' } } as ReportFragment;
+    const fights = [
+      makeFight({
+        startTime: 0,
+        endTime: 1000,
+        encounterID: 0,
+        difficulty: null,
+        gameZone: null,
+        name: 'Trash',
+      }),
+      makeFight({
+        startTime: 2000,
+        endTime: 60_000,
+        encounterID: 71,
+        gameZone: { id: 1564, name: 'Bal Sunnar' },
+      }),
+    ];
+    const runs = groupFightsIntoRuns(fights, dungeonReport);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].zone.zoneId).toBe(1564);
+    expect(runs[0].zone.key).toBe('zone:1564');
+  });
 });
 
 describe('buildRunEncounters', () => {

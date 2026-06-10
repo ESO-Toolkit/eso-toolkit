@@ -103,6 +103,20 @@ describe('determineRunDifficulty', () => {
     expect(determineRunDifficulty(encounters, 'Dreadsail Reef').label).toBeNull();
   });
 
+  it('returns a null label when no fight carries difficulty data (dungeons / legacy logs)', () => {
+    const perBoss = [enc('Some Dungeon Boss', [bossFight({ difficulty: null })])];
+    expect(determineRunDifficulty(perBoss, 'Bal Sunnar')).toEqual({ difficulty: 0, label: null });
+
+    const finalBossOnly = [enc('The Mage', [bossFight({ difficulty: null })])];
+    expect(determineRunDifficulty(finalBossOnly, 'Aetherian Archive')).toEqual({
+      difficulty: 0,
+      label: null,
+    });
+
+    const special = [enc("Z'Maja", [bossFight({ difficulty: null })])];
+    expect(determineRunDifficulty(special, 'Cloudrest')).toEqual({ difficulty: 0, label: null });
+  });
+
   it('labels a Normal-mode trial (code ≤ 120) as Normal, not Veteran', () => {
     const perBoss = [enc('Tideborn Taleria', [bossFight({ difficulty: 120, kill: true })])];
     expect(determineRunDifficulty(perBoss, 'Dreadsail Reef').label).toBe('Normal');

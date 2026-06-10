@@ -239,3 +239,61 @@ dungeons/arenas should be a follow-up coordinated with those PRs.
 - **Rendered in headless Chromium** against both real reports: grouped
   attempt-heavy encounters with "Show all N attempts", the "Group attempts"
   toggle, and correct "Veteran HM" headers.
+
+---
+
+## Follow-up audit (2026-06-09)
+
+A second review pass plus in-browser verification against a synthetic
+**chaotic mixed log** (DSR run → Bal Sunnar dungeon → Sanity's Edge → DSR
+re-entry, with no-`gameZone` trash sprinkled in) surfaced four more issues, all
+fixed and unit-tested:
+
+### 12. Report-level zone fallback shattered mixed-log runs — _High_
+
+`resolveFightZone` falls back to the **report-level** zone name for fights with
+no `gameZone`. That zone is report-wide, so in a mixed log it is wrong for every
+fight outside the "main" zone: a no-`gameZone` trash pull inside the Bal Sunnar
+segment of a Dreadsail-Reef-rooted report resolved to *Dreadsail Reef* and split
+the dungeon run in half (observed directly in the browser as
+`DSR → Bal Sunnar → DSR → Bal Sunnar`).
+
+**Fix:** report-fallback zones are now flagged (`fromReportFallback`) and treated
+as **weak evidence** in `groupFightsIntoRuns` — they can seed or label a run but
+never force a split away from one. A name-keyed fallback also no longer splits
+from an id-keyed run of the same content (`zone:1564` vs `name:bal sunnar`).
+
+### 13. Runs with no difficulty data were asserted as "Veteran" — _Medium_
+
+`determineRunDifficulty`'s final fallback returned **"Veteran"** when no fight
+carried a difficulty code — mislabeling dungeons (whose fights commonly have
+`difficulty: null`) and legacy logs. It now returns a **null label** (no badge)
+when there is no difficulty signal at all.
+
+### 14. Per-encounter difficulty badge used the *first* attempt, not the kill — _Medium_
+
+The boss-header badge took the difficulty of the first fight that had one, so a
+Veteran wipe followed by an HM kill displayed "(Veteran)". It now uses
+`encounterResultDifficulty` (highest difficulty among kills, falling back to
+best attempt) — consistent with the run-level HM logic.
+
+### 15. Chaotic-log headers were indistinguishable — _UX_
+
+With multiple runs of the same zone (re-entries, second lockouts) the headers
+were identical. Run headers now show:
+
+- a **time range** (wall-clock start–end of the run),
+- a **"Run N" badge** when the same zone appears more than once, and
+- a **"Dungeon" / "Arena" tag** for non-trial content.
+
+Dead `isFalsePositive` plumbing in `ReportFightsView` was also removed, and the
+kill-card background now keys off `isBossFight` rather than `difficulty != null`.
+
+### Verification (follow-up)
+
+- `npm run validate` — clean; full `report_details` suite green (40+ detection
+  tests including new regressions for findings 12–14).
+- **Chrome (CDP) end-to-end**: both real sample reports plus the synthetic mixed
+  chaos log render correctly in dark and light mode — correct run separation,
+  "Run 1/2" badges, dungeon tagging, attempt grouping/expansion, and reset
+  chips.

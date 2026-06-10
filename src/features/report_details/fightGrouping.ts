@@ -195,6 +195,13 @@ export interface ResolvedZone {
   type: ContentType;
   shortName?: string;
   expectedBossCount?: number;
+  /**
+   * True when the zone came from the report-level zone name rather than from
+   * the fight itself. The report zone is report-wide, so in a mixed log it is
+   * wrong for every fight outside the "main" zone — grouping must treat these
+   * as weak evidence (attach to the current run, never force a split).
+   */
+  fromReportFallback?: boolean;
 }
 
 const UNKNOWN_ZONE: ResolvedZone = {
@@ -280,7 +287,8 @@ export function resolveFightZone(
     };
   }
 
-  // 4. Report-level zone name.
+  // 4. Report-level zone name (weak: report-wide, so wrong for every fight
+  //    outside the main zone of a mixed log — see `fromReportFallback`).
   const reportZoneName = reportData?.zone?.name;
   if (reportZoneName) {
     const byName = ZONE_BY_NAME.get(reportZoneName.toLowerCase());
@@ -292,6 +300,7 @@ export function resolveFightZone(
         type: byName.type,
         shortName: byName.shortName,
         expectedBossCount: byName.expectedBossCount,
+        fromReportFallback: true,
       };
     }
     return {
@@ -299,6 +308,7 @@ export function resolveFightZone(
       zoneId: null,
       name: reportZoneName,
       type: 'unknown',
+      fromReportFallback: true,
     };
   }
 
@@ -356,12 +366,30 @@ export function groupFightsIntoRuns(
     const boss = isBossFight(fight);
     const encId = effectiveEncounterId(fight);
 
-    const zoneKnown = zone.zoneId != null || zone.key.startsWith('name:');
+    // Report-fallback zones are weak evidence (report-wide, wrong for every
+    // fight outside a mixed log's main zone): they can seed/label a run but
+    // never force a split away from one.
+    const zoneKnown =
+      !zone.fromReportFallback && (zone.zoneId != null || zone.key.startsWith('name:'));
     const currentKnown =
-      current != null && (current.zone.zoneId != null || current.zone.key.startsWith('name:'));
+      current != null &&
+      !current.zone.fromReportFallback &&
+      (current.zone.zoneId != null || current.zone.key.startsWith('name:'));
+
+    // A name-keyed fallback zone (e.g. a `gameZone` with a name but no id) must
+    // not split away from an id-keyed run of the same content — compare by
+    // display name when either side is name-keyed.
+    const sameContentByName =
+      current != null &&
+      zone.name.toLowerCase() === current.zone.name.toLowerCase() &&
+      (zone.key.startsWith('name:') || current.zone.key.startsWith('name:'));
 
     const zoneChanged =
-      current != null && zoneKnown && currentKnown && zone.key !== current.zone.key;
+      current != null &&
+      zoneKnown &&
+      currentKnown &&
+      zone.key !== current.zone.key &&
+      !sameContentByName;
     // Only treat a *kill* of an already-killed boss as a re-clear, and only when
     // the caller opts in.
     const reclear =
@@ -378,8 +406,12 @@ export function groupFightsIntoRuns(
       };
       runs.push(current);
       killedBossEncounters = new Set();
-    } else if (!currentKnown && zoneKnown) {
-      // Upgrade a run that started before its zone was identifiable.
+    } else if (
+      zoneKnown &&
+      (!currentKnown || (sameContentByName && current.zone.zoneId == null && zone.zoneId != null))
+    ) {
+      // Upgrade a run whose zone was not yet known, or that started from the
+      // name-keyed fallback, once an id-keyed fight identifies it precisely.
       current.zone = zone;
       current.id = `${zone.key}#${runSeq}`;
     }

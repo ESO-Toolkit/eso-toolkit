@@ -40,7 +40,7 @@ import {
   wasKill,
   type RunEncounter,
 } from './fightGrouping';
-import { determineRunDifficulty } from './runDifficulty';
+import { determineRunDifficulty, encounterResultDifficulty } from './runDifficulty';
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -162,8 +162,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         trashGradient:
           'linear-gradient(135deg, rgba(100, 116, 139, 0.3) 0%, rgba(71, 85, 105, 0.2) 100%)',
         trashShadow: 'none',
-        falsePositiveGradient:
-          'linear-gradient(135deg, rgba(251, 191, 36, 0.6) 0%, rgba(245, 158, 11, 0.45) 100%)',
         wipeShadow: 'none',
         hoverBg: 'rgba(255,255,255,0.08)',
         badgeBorder: '1px solid rgba(255,255,255,0.18)',
@@ -190,8 +188,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         trashGradient:
           'linear-gradient(135deg, rgba(236, 239, 243, 0.6) 0%, rgba(241, 243, 245, 0.4) 100%)',
         trashShadow: 'none',
-        falsePositiveGradient:
-          'linear-gradient(135deg, rgba(236, 239, 243, 0.6) 0%, rgba(241, 243, 245, 0.4) 100%)',
         wipeShadow: 'none',
         hoverBg: 'rgba(30, 41, 59, 0.04)',
         badgeBorder: '1px solid rgba(100, 116, 139, 0.4)',
@@ -229,6 +225,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // (per-fight gameZone + encounterID). See ./fightGrouping.
     const runs = groupFightsIntoRuns(fights, reportData);
 
+    // When the same zone appears as several separate runs (left and re-entered,
+    // or multiple instances in a chaotic log), number them so headers stay
+    // distinguishable: "Dreadsail Reef · Run 2".
+    const zoneRunTotals = new Map<string, number>();
+    for (const run of runs) {
+      zoneRunTotals.set(run.zone.name, (zoneRunTotals.get(run.zone.name) ?? 0) + 1);
+    }
+    const zoneRunSeen = new Map<string, number>();
+
     return runs.map((run) => {
       const runEncounters = buildRunEncounters(run);
       const leftover = uncategorizedTrash(run, runEncounters);
@@ -259,6 +264,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         ? determineRunDifficulty(encountersForRun, run.zone.name)
         : { difficulty: 0, label: null as string | null };
 
+      const ordinal = (zoneRunSeen.get(run.zone.name) ?? 0) + 1;
+      zoneRunSeen.set(run.zone.name, ordinal);
+
       return {
         id: run.id,
         name: run.zone.name,
@@ -268,6 +276,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         difficulty: trialDifficulty.difficulty,
         difficultyLabel: trialDifficulty.label,
         encounters: encountersForRun,
+        startTime: run.startTime,
+        endTime: run.endTime,
+        runLabel: (zoneRunTotals.get(run.zone.name) ?? 1) > 1 ? `Run ${ordinal}` : null,
       };
     });
   }, [fights, reportData]);
@@ -450,8 +461,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // Handle both boss fights and trash fights (encounterID-based, see fightGrouping.isBossFight)
     const fightIsBoss = isBossFight(fight);
 
-    let bossWasKilled: boolean;
-    let isFalsePositive: boolean;
     let isWipe: boolean;
     let bossHealthPercent: number;
     let backgroundFillPercent: number;
@@ -459,8 +468,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     if (fightIsBoss) {
       // Boss fight logic — use the API's authoritative `kill` flag (see fightGrouping.wasKill).
       // This replaces the old `bossPercentage`-based heuristic + false-positive detection.
-      bossWasKilled = wasKill(fight);
-      isFalsePositive = false;
+      const bossWasKilled = wasKill(fight);
       isWipe = !bossWasKilled;
       const remaining = bossHealthRemaining(fight);
       bossHealthPercent = remaining != null ? Math.round(remaining) : 0;
@@ -471,8 +479,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Trash fight logic - use the kill field to determine success/wipe
       // kill === true means success, kill === false means wipe, kill === null means unknown (treat as successful)
       const wasKilled = fight.kill === true || fight.kill === null;
-      bossWasKilled = false; // Trash fights don't have a "boss"
-      isFalsePositive = false; // No false positive detection for trash
       isWipe = fight.kill === false;
       bossHealthPercent = 0;
       backgroundFillPercent = wasKilled ? 100 : 0; // Full bar if successful, empty if wipe
@@ -482,35 +488,25 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // green for kills (green = complete).
     const accentBarColor = isWipe
       ? getWipeHealthGradientColor(bossHealthPercent)
-      : isFalsePositive
-        ? darkMode
-          ? '#64748b'
-          : '#94a3b8'
-        : darkMode
-          ? '#4ade80'
-          : '#10b981';
+      : darkMode
+        ? '#4ade80'
+        : '#10b981';
 
     const accentGlow = accentBarColor + '66';
 
     // Status color — for wipes, match the smooth accent gradient so the %
-    // text gradually shifts from red (high boss HP left) to green (almost killed)
+    // text gradually shifts with boss HP remaining
     const statusColor = isWipe
       ? getWipeHealthGradientColor(bossHealthPercent)
-      : isFalsePositive
-        ? darkMode
-          ? '#64748b'
-          : '#94a3b8'
-        : darkMode
-          ? '#4ade80'
-          : '#059669';
+      : darkMode
+        ? '#4ade80'
+        : '#059669';
 
     // Glass background tint based on status
     const glassBg = darkMode
       ? isWipe
         ? 'rgba(255, 60, 60, 0.06)'
-        : isFalsePositive
-          ? 'rgba(100, 116, 139, 0.06)'
-          : 'rgba(74, 222, 128, 0.06)'
+        : 'rgba(74, 222, 128, 0.06)'
       : 'rgba(255, 255, 255, 0.6)';
 
     const borderColor = darkMode ? `${accentBarColor}30` : `${accentBarColor}20`;
@@ -584,7 +580,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               right: `${100 - backgroundFillPercent}%`,
               background: isWipe
                 ? getWipeHealthGradientBackground(bossHealthPercent, darkMode)
-                : fight.difficulty == null || isFalsePositive
+                : !fightIsBoss
                   ? getThemeColors.trashGradient
                   : getThemeColors.killGradient,
               borderRadius: '8px',
@@ -655,8 +651,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               >
                 #{idx + 1}
               </Typography>
-              {/* Status badge — hidden for false positives */}
-              {fightIsBoss && !isFalsePositive && (
+              {/* Status badge — boss fights only */}
+              {fightIsBoss && (
                 <Box
                   sx={{
                     display: 'inline-flex',
@@ -952,10 +948,63 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                                 {difficultyLabel}
                               </Box>
                             )}
+                            {(trialRun.contentType === 'dungeon' ||
+                              trialRun.contentType === 'arena') && (
+                              <Box
+                                component="span"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: 'text.secondary',
+                                  border: (t: Theme) => `1px solid ${t.palette.divider}`,
+                                  px: 0.75,
+                                  py: 0.25,
+                                  borderRadius: 1,
+                                  fontSize: '0.7em',
+                                  letterSpacing: '0.06em',
+                                  textTransform: 'uppercase',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {trialRun.contentType === 'dungeon' ? 'Dungeon' : 'Arena'}
+                              </Box>
+                            )}
+                            {trialRun.runLabel && (
+                              <Box
+                                component="span"
+                                sx={{
+                                  fontWeight: 600,
+                                  color: 'text.secondary',
+                                  backgroundColor: (t: Theme) =>
+                                    t.palette.mode === 'dark'
+                                      ? 'rgba(255,255,255,0.08)'
+                                      : 'rgba(15,23,42,0.06)',
+                                  px: 0.75,
+                                  py: 0.25,
+                                  borderRadius: 1,
+                                  fontSize: '0.75em',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {trialRun.runLabel}
+                              </Box>
+                            )}
                           </>
                         );
                       })()}
                     </Typography>
+                    {reportStartTime != null && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                          letterSpacing: '0.03em',
+                        }}
+                      >
+                        {formatTimestamp(trialRun.startTime, reportStartTime)} –{' '}
+                        {formatTimestamp(trialRun.endTime, reportStartTime)}
+                      </Typography>
+                    )}
                   </Box>
                   <Box
                     sx={{
@@ -1099,14 +1148,14 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           >
                             {encounter.name}{' '}
                             {(() => {
-                              // Get difficulty from the first boss fight
-                              const bossFight = encounter.bossFights.find(
-                                (f) => f.difficulty != null,
-                              );
-                              if (bossFight && bossFight.difficulty != null) {
+                              // Difficulty this boss was completed at — the kill's
+                              // difficulty, not the first attempt's (a Veteran wipe
+                              // before an HM kill must still read "Veteran HM").
+                              const difficultyCode = encounterResultDifficulty(encounter);
+                              if (difficultyCode > 0) {
                                 const trialName = trialRun.trialName || '';
                                 const difficultyLabel = getDifficultyLabel(
-                                  bossFight.difficulty,
+                                  difficultyCode,
                                   trialName,
                                 );
                                 return (

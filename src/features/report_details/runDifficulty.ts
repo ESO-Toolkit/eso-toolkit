@@ -94,7 +94,7 @@ export interface RunDifficulty {
  * among its kills, or — if it was never killed — the highest difficulty it was
  * attempted at (so an in-progress HM prog still reads as HM).
  */
-function encounterResultDifficulty(encounter: RunEncounter): number {
+export function encounterResultDifficulty(encounter: RunEncounter): number {
   const bosses = encounter.bossFights.filter(isBossFight);
   const kills = bosses.filter(wasKill);
   const pool = kills.length > 0 ? kills : bosses;
@@ -132,7 +132,9 @@ export function determineRunDifficulty(
     if (code >= 123) return { difficulty: 123, label: 'Veteran HM +1' };
     if (code >= VETERAN_HM) return { difficulty: VETERAN_HM, label: 'Veteran HM' };
     if (code >= VETERAN) return { difficulty: VETERAN, label: 'Veteran' };
-    return { difficulty: 0, label: 'Normal' };
+    if (code > 0) return { difficulty: 0, label: 'Normal' };
+    // No difficulty data at all (dungeons / legacy logs) — claim nothing.
+    return { difficulty: 0, label: null };
   }
 
   // Per-boss and final-boss-only: only HM-capable bosses count toward HM status.
@@ -150,7 +152,8 @@ export function determineRunDifficulty(
     if (hm > 0) return { difficulty: VETERAN_HM, label: 'Veteran HM' };
     if (vet > 0) return { difficulty: VETERAN, label: 'Veteran' };
     if (normal > 0) return { difficulty: 0, label: 'Normal' };
-    return { difficulty: VETERAN, label: 'Veteran' };
+    // No difficulty data at all (dungeons / legacy logs) — claim nothing.
+    return { difficulty: 0, label: null };
   }
 
   // per-boss
@@ -158,5 +161,6 @@ export function determineRunDifficulty(
   if (hm > 0 && vet > 0) return { difficulty: VETERAN_HM, label: 'Partial Veteran HM' };
   if (vet > 0) return { difficulty: VETERAN, label: 'Veteran' };
   if (normal > 0) return { difficulty: 0, label: 'Normal' };
-  return { difficulty: VETERAN, label: 'Veteran' };
+  // No difficulty data at all (dungeons / legacy logs) — claim nothing.
+  return { difficulty: 0, label: null };
 }
