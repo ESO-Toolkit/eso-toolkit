@@ -32,6 +32,7 @@ import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
+import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { COMMON_MARKER_GROUPS, MarkerGroup, MarkerGroupKey } from '../utils/mapMarkerConverters';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
@@ -498,7 +499,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
     const { minX, maxX, minY, maxY } = fight.boundingBox;
 
-    if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined) {
+    if (![minX, maxX, minY, maxY].every((v) => Number.isFinite(v))) {
       return defaults;
     }
 
@@ -536,7 +537,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
     const { minX, maxX, minY, maxY } = fight.boundingBox;
 
-    if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined) {
+    if (![minX, maxX, minY, maxY].every((v) => Number.isFinite(v))) {
       return defaults;
     }
 
@@ -675,37 +676,23 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
-    // Calculate bounding box of all actors at fight start
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    let minZ = Infinity;
-    let maxZ = -Infinity;
+    // Frame the actors at fight start with OUTLIER REJECTION — a single stray position (a pet/add at
+    // the zone edge, a teleport, a glitched sample) must not dominate the initial view. Legitimately
+    // spread raids are kept intact. See computeRobustActorFraming.
+    const framing = computeRobustActorFraming(actors.map((actor) => actor.position));
+    if (!framing) {
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
+      return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
+    }
 
-    actors.forEach((actor) => {
-      const [x, y, z] = actor.position;
-      minX = Math.min(minX, x);
-      maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y);
-      minZ = Math.min(minZ, z);
-      maxZ = Math.max(maxZ, z);
-    });
+    const target: [number, number, number] = [framing.centerX, framing.centerY, framing.centerZ];
 
-    // Calculate the center of the bounding box
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    const centerZ = (minZ + maxZ) / 2;
-
-    const target: [number, number, number] = [centerX, centerY, centerZ];
-
-    // Calculate the dimensions of the bounding box
-    const rangeX = maxX - minX;
-    const rangeZ = maxZ - minZ;
-
-    // Calculate the diagonal distance of the bounding box in the XZ plane
-    const boundingBoxDiagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+    // The diagonal of the (outlier-trimmed) XZ extent — the size measure for the distance calc.
+    const boundingBoxDiagonal = framing.diagonalXZ;
 
     // Calculate camera distance to fit all actors in view
     // Use the bounding box diagonal to determine appropriate distance
@@ -727,9 +714,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     // Position camera: southwest of target, elevated for good viewing angle
     const cameraOffset = [-viewDistance * 0.6, viewDistance * 0.5, viewDistance * 0.6];
     const position: [number, number, number] = [
-      centerX + cameraOffset[0],
-      centerY + cameraOffset[1],
-      centerZ + cameraOffset[2],
+      target[0] + cameraOffset[0],
+      target[1] + cameraOffset[1],
+      target[2] + cameraOffset[2],
     ];
 
     return { initialCameraTarget: target, initialCameraPosition: position };

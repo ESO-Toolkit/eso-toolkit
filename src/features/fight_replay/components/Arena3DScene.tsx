@@ -332,8 +332,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
 
     const { minX, maxX, minY, maxY } = fight.boundingBox;
 
-    // Validate that all bounding box values exist
-    if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined) {
+    // Validate the bounding box: every edge must be a finite number. A missing or NaN/Infinity edge
+    // (seen on a few logs) would otherwise propagate into the camera distances and break the view.
+    if (![minX, maxX, minY, maxY].every((v) => Number.isFinite(v))) {
       return defaults;
     }
 
