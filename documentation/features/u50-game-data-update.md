@@ -74,12 +74,32 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
    "Piercing Howl"; their mining lags the patch). Re-run once `gameData.ability(id: 58405)`
    returns "Gnash". Re-run `node scripts/check-skill-line-icons.cjs` afterwards.
 2. **Class Mastery passives (35 new, 5 per class)**: new passive-only skill line per class for
-   non-subclassed characters (2 of 5 active via Class Mastery Points). Ability IDs not yet
-   published anywhere. Once mined (UESP esolog / LibSkillsFactory v26+), consider:
-   skill-line data entries, build-editor representation (interacts with subclassing — running
-   any subclass line disables Class Mastery), and buff tracking for the new group buff sources
-   (Lead From the Front: Major Berserk+Protection; Nature's Bounty: Major Heroism;
-   Ink-Scribe's Verve: Major Force; Tundra's Maw: Major Brittle via Chilled).
+   non-subclassed characters (2 of 5 active via Class Mastery Points). **IDs SELF-SOURCED
+   2026-06-10** from the U50 in-game tooltip dump (skill-tree walk enumerates them; exact names
+   + descriptions in `data/tooltip-dump.json`; ESO Logs `gameData.ability` still returns null
+   for them). Grouped by class:
+   - Dragonknight: 238232 Inexorable Descent, 240268 Booming Voice, 259224 Wildfire Embers,
+     263220 Resolute Defense, 263247 Lead from the Front
+   - Arcanist: 263316 Abyssal Emergence, 263398 Fate Realigned, 263410 Unbound Potential,
+     263412 Erudite's Rigor, 263416 Ink-Scribe's Verve
+   - Necromancer: 263448 Nothing Wasted, 263465 Malevolent Promise, 263509 Cycle Unending,
+     263549 Pound of Flesh, 263554 Veil's Forfeit
+   - Warden: 263519 Tundra's Maw, 263520 Wild Adaptation, 263521 Glacial Obstinance,
+     263522 Green-Keeper's Hide, 263523 Bountiful Harvest (patch notes called it
+     "Nature's Bounty")
+   - Templar: 263585 Bastion of Light, 263586 Devout Guardian, 263587 Bright Harbinger,
+     263588 Judgment's Brand, 263589 Steadfast Candescence
+   - Nightblade: 263603 Nocturnal Inspiration, 263604 An Eye for Exploitation,
+     263605 Above and Beyond, 263606 Cutthroat's Focus, 263607 Share the Spoils
+   - Sorcerer: 263870 Conservation of Energy, 263871 Font of Power, 263872 Static
+     Reverberation, 263873 Calculated Defense, 263874 Sphere of Influence
+
+   Remaining work is a FEATURE decision, no longer data-blocked: skill-line data entries,
+   build-editor representation (interacts with subclassing — running any subclass line
+   disables Class Mastery), and buff tracking for the group buff sources (Lead from the
+   Front: Major Berserk+Protection; Bountiful Harvest: Major Heroism; Ink-Scribe's Verve:
+   Major Force; Tundra's Maw: Major Brittle via Chilled — granted-buff effect IDs are the
+   existing tracked Major/Minor IDs; verify source attribution against a live U50 log).
 3. **The Prowler's Talisman set ID**: not yet in ESO Logs `gameData.item_sets`
    (scanned 2026-06-09). Add to `KnownSetIDs` when it appears (post-July 8).
 4. **Season One wave (July 8, 2026)**: Thieves Guild questline, Dynamic Encounters,
