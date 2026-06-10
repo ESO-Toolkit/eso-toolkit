@@ -128,9 +128,16 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
           refs.fill.style.backgroundColor = healthColor(theme, pct);
         }
         if (refs.readout) {
+          // Mobile keeps it to the percentage only — the exact HP numbers are noise on a phone and
+          // make the bar read as cluttered. Desktop shows "pct · cur / max", abbreviating once the
+          // numbers are big enough that the exact form ("145,368,051 / 181,632,304") would overflow
+          // the 280px pill and spill past the track.
+          const compact = isMobile || boss.health.max >= 10_000_000;
           refs.readout.textContent = boss.isDead
             ? 'DEAD'
-            : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, isMobile)} / ${fmtHp(boss.health.max, isMobile)}`;
+            : isMobile
+              ? `${pct.toFixed(1)}%`
+              : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, compact)} / ${fmtHp(boss.health.max, compact)}`;
         }
       }
 
@@ -196,11 +203,26 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
               px: 1.5,
               // Tighter vertical padding on mobile so a multi-boss stack fits the short viewport.
               py: isMobile ? 0.5 : 1,
-              backgroundColor: 'rgba(15, 23, 42, 0.82)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `1px solid ${theme.palette.primary.main}29`,
-              boxShadow: '0 8px 26px rgba(0,0,0,0.5)',
+              backgroundColor: isMobile ? 'rgba(12, 18, 32, 0.94)' : 'rgba(15, 23, 42, 0.82)',
+              // Mobile drops the backdrop blur (the dark drop-shadow halo that read as "darkness
+              // around the frame", and a costly full-screen blur) BUT keeps the element on its own
+              // GPU compositing layer via `translateZ(0)`. That layer is the important part: this
+              // pill's fill mutates `width`/`backgroundColor` every frame (rAF loop below), and
+              // without a layer those per-frame paints recomposite the translucent pill against the
+              // live WebGL canvas underneath — which is what tanked the iOS frame rate. Desktop gets
+              // the same layer for free from its backdrop-filter, which is why it stayed smooth.
+              ...(isMobile
+                ? {
+                    border: `1px solid ${theme.palette.primary.main}33`,
+                    transform: 'translateZ(0)',
+                    willChange: 'transform',
+                  }
+                : {
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    border: `1px solid ${theme.palette.primary.main}29`,
+                    boxShadow: '0 8px 26px rgba(0,0,0,0.5)',
+                  }),
             }}
           >
             <Typography

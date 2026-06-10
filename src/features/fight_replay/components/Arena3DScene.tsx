@@ -332,8 +332,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
 
     const { minX, maxX, minY, maxY } = fight.boundingBox;
 
-    // Validate that all bounding box values exist
-    if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined) {
+    // Validate the bounding box: every edge must be a finite number. A missing or NaN/Infinity edge
+    // (seen on a few logs) would otherwise propagate into the camera distances and break the view.
+    if (![minX, maxX, minY, maxY].every((v) => Number.isFinite(v))) {
       return defaults;
     }
 
@@ -355,7 +356,13 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     // Minimum: Allow very close zoom for detailed inspection of actors
     // With adaptable actor scale (0.8-1.1x), users need to zoom in closer
     const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    const minDistance = Math.max(0.5, diagonal * 0.05); // Reduced from 1 and 0.1
+    // CAP the close-zoom bound. `diagonal` is the WHOLE-FIGHT bounding box, so a single outlier
+    // position (a pet/add at the zone edge, a teleport, a stray sample) inflates it — and since
+    // OrbitControls clamps the camera to >= minDistance, a ballooned minDistance both forces the
+    // initial framing way out AND blocks dollying in ("really zoomed out, can't zoom in" on certain
+    // fights). No real arena needs a closest-distance above ~6 units to inspect an actor, so cap it
+    // there; normal fights (diagonal*0.05 < 6) are unaffected.
+    const minDistance = Math.max(0.5, Math.min(diagonal * 0.05, 6));
 
     // Maximum: 3x the diagonal for good overview, capped at reasonable bounds
     const maxDistance = Math.min(500, Math.max(50, diagonal * 3));

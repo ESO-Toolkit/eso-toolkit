@@ -1,24 +1,33 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { FightFragment } from '@/graphql/gql/graphql';
-import { useCurrentFight, useReportFightParams } from '@/hooks';
+import { useCurrentFight, useReportFightParams, useTrialChapters } from '@/hooks';
+import { useAppDispatch } from '@/store/useAppDispatch';
+import { actorPositionsActions } from '@/store/worker_results/taskSlices';
 import { ZONE_SCALE_DATA, ZoneScaleData } from '@/types/zoneScaleData';
 import { detectMapFromCoordinates } from '@/utils/mapMarkersUtils';
 
 import { useFriendlyBuffEvents } from '../../hooks/events/useFriendlyBuffEvents';
 import { useHostileBuffEvents } from '../../hooks/events/useHostileBuffEvents';
 import { useMarkerStats } from '../../hooks/useMarkerStats';
+import { useReplayPrefs } from '../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
 
-import { FightReplay3D } from './components/FightReplay3D';
+import { ChapterRail } from './components/ChapterRail';
+import { FightReplay3D, type TrialReplayNav } from './components/FightReplay3D';
 import { MapMarkersModal } from './components/MapMarkersModal';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
+import { useIsMobileReplay } from './hooks/useIsMobileReplay';
+import { chapterDisplayName } from './trial_chapters/chapterDisplay';
+import { buildTrialTimeline } from './trial_chapters/trialTimeline';
+import type { TrialChapter } from './trial_chapters/types';
+import { useReplayNavigation } from './trial_chapters/useReplayNavigation';
+import { useReplayPrefetch } from './trial_chapters/useReplayPrefetch';
 import { MapMarkersState } from './types/mapMarkers';
 import {
   createMarkerFromElmsIcon,
@@ -233,6 +242,149 @@ export const FightReplay: React.FC = () => {
   const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
   const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents();
 
+  // Trial chapter navigation — lets the viewer skip between bosses (and trash) without
+  // leaving the replay. The run/rail come from report data, so they're available even
+  // while a specific fight's positions are still computing.
+  const trialChapters = useTrialChapters();
+  const { goToFight } = useReplayNavigation();
+
+  const handleSelectChapter = useCallback(
+    (chapter: TrialChapter) => {
+      // Already on this fight — nothing to do (avoids a redundant history entry).
+      if (chapter.fightId === fightId) return;
+      goToFight(chapter.fightId);
+    },
+    [goToFight, fightId],
+  );
+
+  // Warm the adjacent bosses' events once the current fight is interactive, so the next
+  // skip starts without waiting on the network (positions still compute on arrival, but a
+  // previously-viewed fight returns instantly from the worker's LRU result cache).
+  //
+  // Disabled on mobile: phones are memory-constrained, and holding several fights' event sets
+  // in the store adds pressure (a likely contributor to mobile tab reloads); the marginal speed-up
+  // isn't worth it there.
+  const isMobileReplay = useIsMobileReplay();
+  useReplayPrefetch(
+    trialChapters.nextBoss,
+    trialChapters.prevBoss,
+    !isMobileReplay && Boolean(lookup) && !isActorPositionsLoading,
+  );
+
+  // Switching fights in-place leaves the actor-position result slot holding the previous
+  // fight's positions (it isn't cleared until the next compute resolves). Reset it on a
+  // fight change so the arena shows a loader rather than a frame of stale positions;
+  // resetTask preserves the LRU result cache, so a revisit is still instant.
+  //
+  // `isSwitchingFight` bridges the brief window between the fight change and the new
+  // fight's data pipeline engaging, so the arena never flashes the "no position data"
+  // empty state mid-transition. It clears once the new positions arrive, or once the
+  // pipeline has run and settled (covering a fight that genuinely has no position data).
+  const dispatch = useAppDispatch();
+  const prevFightIdRef = useRef(fightId);
+  const [isSwitchingFight, setIsSwitchingFight] = useState(false);
+  const loadingSeenRef = useRef(false);
+
+  useEffect(() => {
+    if (prevFightIdRef.current !== fightId) {
+      // Free the previous fight's positions on switch. On mobile, FULLY clear the worker's LRU
+      // result cache (clearResult) so several fights' large position datasets can't accumulate and
+      // OOM-reload the tab (the "whole page refresh"); on desktop, resetTask keeps the cache so a
+      // revisit stays instant.
+      dispatch(
+        isMobileReplay ? actorPositionsActions.clearResult() : actorPositionsActions.resetTask(),
+      );
+      prevFightIdRef.current = fightId;
+      loadingSeenRef.current = false;
+      setIsSwitchingFight(true);
+    }
+  }, [fightId, dispatch, isMobileReplay]);
+
+  useEffect(() => {
+    if (!isSwitchingFight) return;
+    if (lookup) {
+      // New fight's positions are ready.
+      loadingSeenRef.current = false;
+      setIsSwitchingFight(false);
+    } else if (isActorPositionsLoading) {
+      // Pipeline has engaged for the new fight.
+      loadingSeenRef.current = true;
+    } else if (loadingSeenRef.current) {
+      // Pipeline ran and settled without positions (fight has no position data).
+      loadingSeenRef.current = false;
+      setIsSwitchingFight(false);
+    }
+  }, [isSwitchingFight, lookup, isActorPositionsLoading]);
+
+  // Keyboard skip to the previous / next boss ( [ and ] ). Distinct from FightReplay3D's
+  // in-fight transport keys, so the two handlers never collide. Guards mirror the
+  // transport's: yield to focused widgets, ignore text inputs and OS/browser modifier chords.
+  const { nextBoss, prevBoss } = trialChapters;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.defaultPrevented) return;
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+      if (event.key === ']' && nextBoss) {
+        goToFight(nextBoss.fightId);
+        event.preventDefault();
+      } else if (event.key === '[' && prevBoss) {
+        goToFight(prevBoss.fightId);
+        event.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [nextBoss, prevBoss, goToFight]);
+
+  // Continuous "play the whole trial" preferences (persisted). The shell owns these (it drives
+  // navigation); FightReplay3D renders the controls so they're reachable in fullscreen.
+  const { initialPrefs, persistPrefs } = useReplayPrefs();
+  const [continuousPlay, setContinuousPlay] = useState(initialPrefs.continuousPlay);
+  const [includeTrash, setIncludeTrash] = useState(initialPrefs.continuousIncludeTrash);
+  useEffect(() => {
+    persistPrefs({ continuousPlay, continuousIncludeTrash: includeTrash });
+  }, [persistPrefs, continuousPlay, includeTrash]);
+
+  const handleToggleContinuous = useCallback(() => setContinuousPlay((v) => !v), []);
+  const handleToggleIncludeTrash = useCallback(() => setIncludeTrash((v) => !v), []);
+
+  // Auto-advance / cross-segment scrub navigation. Defaults to replacing the history entry so
+  // the continuous flow doesn't pile up Back steps; manual chapter jumps (popover rows, boss-skip
+  // buttons, the mobile chapter list) pass replace:false so Back returns to the previous fight,
+  // matching the page rail and the [ ] keys. A cross-fight scrub carries its dragged offset
+  // through as ?time= — refresh/share-safe, and FightReplay3D seeds playback from it so the seek
+  // lands at the promised moment, not 0:00.
+  const handleAdvanceToFight = useCallback(
+    (targetFightId: string, options?: { localMs?: number; replace?: boolean }) => {
+      if (targetFightId === fightId) return;
+      goToFight(targetFightId, { replace: options?.replace ?? true, time: options?.localMs });
+    },
+    [goToFight, fightId],
+  );
+
+  const hasTrash = useMemo(
+    () => trialChapters.segments.some((s) => s.kind === 'trash'),
+    [trialChapters.segments],
+  );
+
+  // The continuous trial timeline (one gapless axis for the whole run), filtered by the trash
+  // toggle. Drives both the unified scrubber and continuous auto-advance.
+  const trialTimeline = useMemo(
+    () => buildTrialTimeline(trialChapters.segments, includeTrash),
+    [trialChapters.segments, includeTrash],
+  );
+
+  // Keep FightReplay3D mounted once the arena has rendered, so fullscreen and the continuous
+  // transition overlay survive fight switches (it shows its own loading state in place).
+  const hasRenderedArenaRef = useRef(false);
+  useEffect(() => {
+    if (lookup && fight) hasRenderedArenaRef.current = true;
+  }, [lookup, fight]);
+
   // Compute marker statistics
   const markerStats = useMarkerStats(markersState ?? undefined, fight || ({} as FightFragment));
 
@@ -253,58 +405,117 @@ export const FightReplay: React.FC = () => {
   const stateBackAction =
     reportId && fightId ? { actionLabel: 'Back to Fight', onAction: handleBackToFight } : {};
 
-  // Non-render states share one cohesive panel (spinner / error / empty) wrapped in the
-  // same page padding so the chrome is consistent with the loaded view.
-  if (isInitialLoading) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <ReplayStatePanel
-          kind="loading"
-          title="Loading replay"
-          detail="Reconstructing actor positions and combat events for the 3D arena…"
-        />
-      </Box>
-    );
-  }
+  // The arena is busy whenever the report/fight is still resolving, a fight switch is in
+  // flight, or the current fight's positions are computing.
+  const isArenaLoading = isInitialLoading || isSwitchingFight || isActorPositionsLoading;
 
-  if (actorPositionsError) {
-    return (
-      <Box sx={{ p: 3 }}>
+  // Continuous trial-replay bundle handed to FightReplay3D — present only for a multi-segment
+  // run, so a single isolated fight behaves exactly as before. The label shown while entering a
+  // fight is the segment/fight name (the new fight resolves from report data before its
+  // positions), trash-disambiguated so "Entering Trash · X" can't read as a boss pull.
+  const enteringLabel = trialChapters.currentSegment
+    ? chapterDisplayName(trialChapters.currentSegment)
+    : (fight?.name ?? null);
+  const killedBosses = trialChapters.bossChapters.filter((b) => b.isKill).length;
+  // Gate on the UNFILTERED run size, not the filtered timeline: with the trash filter on, a
+  // 1-boss-plus-trash run collapses to a single timeline entry, and gating on that unmounted
+  // every trial surface — including the include-trash toggle itself — making the filter
+  // irreversible inside fullscreen / mobile immersive.
+  const trialNav: TrialReplayNav | undefined =
+    trialChapters.currentRun && trialChapters.segments.length > 1
+      ? {
+          timeline: trialTimeline,
+          currentFightId: fightId,
+          continuousEnabled: continuousPlay,
+          includeTrash,
+          hasTrash,
+          runName: trialChapters.currentRun.trialName,
+          runIndex: trialChapters.runIndex,
+          runCount: trialChapters.runCount,
+          bossSummary:
+            trialChapters.bossChapters.length > 0
+              ? `${killedBosses} / ${trialChapters.bossChapters.length} bosses`
+              : null,
+          prevBoss: trialChapters.prevBoss,
+          nextBoss: trialChapters.nextBoss,
+          isFightDataLoading: isArenaLoading,
+          enteringLabel,
+          onAdvanceToFight: handleAdvanceToFight,
+          onToggleContinuous: handleToggleContinuous,
+          onToggleIncludeTrash: handleToggleIncludeTrash,
+        }
+      : undefined;
+
+  // The arena swaps between loading / error / empty / the live 3D view, while the page shell
+  // (header + chapter rail) stays mounted across fight switches. Once the arena has rendered once,
+  // FightReplay3D stays mounted through transitions (it shows its own overlay) so fullscreen and
+  // continuous play are never interrupted. ReplayStatePanel reserves the arena's height.
+  const renderArena = (): React.ReactNode => {
+    // Surface a hard error only when we're NOT mid-switch. A transient worker abort/error during a
+    // fight switch must not swap out FightReplay3D — that would unmount it and drop fullscreen (the
+    // "page refresh" on mobile). Genuine errors still render here once the switch settles.
+    if (actorPositionsError && !isSwitchingFight) {
+      return (
         <ReplayStatePanel
           kind="error"
           title="Couldn't load the replay"
           detail={`Error loading actor positions: ${actorPositionsError}`}
           {...stateBackAction}
         />
-      </Box>
-    );
-  }
+      );
+    }
 
-  if (!fight) {
-    return (
-      <Box sx={{ p: 3 }}>
+    if (!fight) {
+      return isArenaLoading ? (
+        <ReplayStatePanel
+          kind="loading"
+          title="Loading replay"
+          detail="Reconstructing actor positions and combat events for the 3D arena…"
+        />
+      ) : (
         <ReplayStatePanel
           kind="empty"
           title="No fight selected"
           detail="Pick a fight from the report to watch its 3D replay."
           {...stateBackAction}
         />
-      </Box>
-    );
-  }
+      );
+    }
 
-  if (!lookup) {
-    return (
-      <Box sx={{ p: 3 }}>
+    // Before the very first successful render, keep the cohesive full panel (FightReplay3D not yet
+    // mounted). After that, FightReplay3D stays mounted across switches and handles its own
+    // loading/transition overlay — so we never unmount it (which would drop fullscreen).
+    if (!lookup && !hasRenderedArenaRef.current) {
+      return isArenaLoading ? (
+        <ReplayStatePanel
+          kind="loading"
+          title="Loading replay"
+          detail="Reconstructing actor positions and combat events for the 3D arena…"
+        />
+      ) : (
         <ReplayStatePanel
           kind="empty"
           title="No position data for this fight"
           detail="This fight doesn't have the actor-position data needed to render the 3D replay."
           {...stateBackAction}
         />
-      </Box>
+      );
+    }
+
+    return (
+      <FightReplay3D
+        selectedFight={fight}
+        allBuffEvents={allBuffEvents}
+        showActorNames={true}
+        markersState={markersState}
+        onAddMarker={handleAddMarkerAt}
+        onRemoveMarker={handleRemoveMarker}
+        showPlayerPaths={true}
+        initialSelectedPlayerIds={[]} // Empty initially, user can select via HUD
+        trialNav={trialNav}
+      />
     );
-  }
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -324,110 +535,114 @@ export const FightReplay: React.FC = () => {
           Back to Fight
         </Button>
 
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
-          {fight.maps?.[0]?.name || fight.name}
-        </Typography>
-
-        <Box sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-          {fight.maps?.[0]?.name && fight.name && fight.maps[0].name !== fight.name && (
-            <Typography variant="subtitle1" color="text.secondary">
-              {fight.name}
+        {fight ? (
+          <>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
+              {fight.maps?.[0]?.name || fight.name}
             </Typography>
-          )}
-          <Chip
-            label={formatDuration(fight.endTime - fight.startTime)}
-            size="small"
-            variant="outlined"
-            icon={<AccessTimeIcon />}
-          />
-        </Box>
+
+            <Box
+              sx={{ mt: 0.75, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}
+            >
+              {fight.maps?.[0]?.name && fight.name && fight.maps[0].name !== fight.name && (
+                <Typography variant="subtitle1" color="text.secondary">
+                  {fight.name}
+                </Typography>
+              )}
+              <Chip
+                label={formatDuration(fight.endTime - fight.startTime)}
+                size="small"
+                variant="outlined"
+                icon={<AccessTimeIcon />}
+              />
+            </Box>
+          </>
+        ) : (
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
+            Fight Replay
+          </Typography>
+        )}
       </Box>
 
-      {/* Map markers: a primary action grouped with its export buttons, and the
-          status chips on their own line so actions and read-outs don't compete. */}
-      <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* Trial chapter rail — skip between bosses (and trash) without leaving the replay.
+          Stays mounted across fight switches so navigation feels continuous. The map-markers
+          tool lives in its header (a quiet outlined control — the arena is the page's hero, so
+          nothing above it gets contained-primary emphasis), and its title is suppressed when
+          the page header already states the same trial name. */}
+      {trialChapters.currentRun && (
+        <ChapterRail
+          segments={trialChapters.segments}
+          bossChapters={trialChapters.bossChapters}
+          currentFightId={fightId}
+          trialName={trialChapters.currentRun.trialName}
+          hideTitle={
+            !!fight && trialChapters.currentRun.trialName === (fight.maps?.[0]?.name || fight.name)
+          }
+          includeTrash={includeTrash}
+          onToggleIncludeTrash={handleToggleIncludeTrash}
+          headerActions={
+            fight ? (
+              <Button
+                size="small"
+                variant="outlined"
+                color="secondary"
+                startIcon={<PlaceIcon />}
+                onClick={() => setMarkersModalOpen(true)}
+                type="button"
+              >
+                {markersState && markersState.markers.length > 0
+                  ? `Markers · ${markersState.markers.length}`
+                  : 'Map markers'}
+              </Button>
+            ) : undefined
+          }
+          onSelect={handleSelectChapter}
+        />
+      )}
+
+      {/* Map markers entry point for non-trial replays (no rail to host it). Exports + stats
+          live inside the modal. */}
+      {fight && !trialChapters.currentRun && (
+        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button
-            variant="contained"
-            color="primary"
+            size="small"
+            variant="outlined"
+            color="secondary"
             startIcon={<PlaceIcon />}
             onClick={() => setMarkersModalOpen(true)}
             type="button"
           >
-            {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
+            {markersState && markersState.markers.length > 0
+              ? `Markers · ${markersState.markers.length}`
+              : 'Map markers'}
           </Button>
-
-          {markersState && markersState.markers.length > 0 && (
-            <>
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<ContentCopyIcon />}
-                onClick={() => handleExportMarkers('elms')}
-                type="button"
-              >
-                Copy Elms
-              </Button>
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<ContentCopyIcon />}
-                onClick={() => handleExportMarkers('mor')}
-                type="button"
-              >
-                Copy M0R
-              </Button>
-            </>
-          )}
-        </Box>
-
-        {/* Marker Statistics */}
-        {markersState && markerStats.success && (
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          {markersState && markerStats.success && markerStats.removed > 0 && (
             <Chip
-              label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
-              color="success"
+              label={`${markerStats.removed} filtered out`}
+              color="warning"
               size="small"
               variant="outlined"
             />
-            {markerStats.is3D && (
-              <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
-            )}
-            {markerStats.removed > 0 && (
-              <Chip
-                label={`${markerStats.removed} filtered out`}
-                color="warning"
-                size="small"
-                variant="outlined"
-              />
-            )}
-          </Box>
-        )}
-      </Box>
+          )}
+        </Box>
+      )}
 
       {/* Map Markers Modal (M0R and Elms formats) */}
-      <MapMarkersModal
-        open={markersModalOpen}
-        onClose={() => setMarkersModalOpen(false)}
-        fight={fight || ({} as FightFragment)}
-        markersState={markersState}
-        onLoadMarkers={handleLoadMarkers}
-        onClearMarkers={handleClearMarkers}
-        onExportElms={() => handleExportMarkers('elms')}
-        onExportMor={() => handleExportMarkers('mor')}
-      />
+      {fight && (
+        <MapMarkersModal
+          open={markersModalOpen}
+          onClose={() => setMarkersModalOpen(false)}
+          fight={fight}
+          markersState={markersState}
+          onLoadMarkers={handleLoadMarkers}
+          onClearMarkers={handleClearMarkers}
+          onExportElms={() => handleExportMarkers('elms')}
+          onExportMor={() => handleExportMarkers('mor')}
+        />
+      )}
 
-      {/* 3D Arena */}
-      <FightReplay3D
-        selectedFight={fight}
-        allBuffEvents={allBuffEvents}
-        showActorNames={true}
-        markersState={markersState}
-        onAddMarker={handleAddMarkerAt}
-        onRemoveMarker={handleRemoveMarker}
-        showPlayerPaths={true}
-        initialSelectedPlayerIds={[]} // Empty initially, user can select via HUD
-      />
+      {/* 3D Arena (swaps state inline; the shell + rail persist). */}
+      {renderArena()}
 
       {copySnackbar && (
         <Snackbar

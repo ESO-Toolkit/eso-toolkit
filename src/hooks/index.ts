@@ -19,6 +19,8 @@ export * from './workerTasks';
 // Utility hooks
 export { useReportFightParams } from './useReportFightParams';
 export { useCurrentFight } from './useCurrentFight';
+export { useTrialChapters } from './useTrialChapters';
+export type { UseTrialChaptersResult } from './useTrialChapters';
 export { useSelectedTab, useSelectedTabId } from './useSelectedTab';
 export { useSelectedTargetIds } from './useSelectedTargetIds';
 export { useResolvedReportFightContext } from './useResolvedReportFightContext';
