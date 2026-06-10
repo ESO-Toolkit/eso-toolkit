@@ -99,6 +99,23 @@ export function globalToLocal(timeline: TrialTimeline, globalMs: number): Global
 }
 
 /**
+ * The entry continuous play should flow into AFTER the given fight. When the fight
+ * is on the timeline this is simply the following entry; when it is NOT on the
+ * timeline (a deep-linked trash blip below the segment threshold, or trash while
+ * trash is excluded), fall back to the first entry starting after the fight's
+ * real start time — so auto-advance never dead-stops on an excluded fight.
+ */
+export function nextEntryAfter(
+  timeline: TrialTimeline,
+  fightId: string | undefined,
+  fightStartTime: number,
+): TrialTimelineEntry | null {
+  const match = entryForFight(timeline, fightId);
+  if (match) return timeline.entries[match.index + 1] ?? null;
+  return timeline.entries.find((e) => e.chapter.startTime > fightStartTime) ?? null;
+}
+
+/**
  * Convert a per-fight position (fight id + local ms) to its global trial time.
  * Returns null when the fight isn't on this timeline (e.g. trash while trash is
  * excluded).

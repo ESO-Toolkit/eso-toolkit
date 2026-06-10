@@ -1,5 +1,11 @@
 import type { TrialChapter } from './types';
-import { buildTrialTimeline, entryForFight, globalToLocal, localToGlobal } from './trialTimeline';
+import {
+  buildTrialTimeline,
+  entryForFight,
+  globalToLocal,
+  localToGlobal,
+  nextEntryAfter,
+} from './trialTimeline';
 
 const seg = (overrides: Partial<TrialChapter>): TrialChapter => ({
   fightId: '1',
@@ -54,6 +60,38 @@ describe('buildTrialTimeline', () => {
     expect(tl.entries).toEqual([]);
     expect(tl.totalDurationMs).toBe(0);
     expect(globalToLocal(tl, 0)).toBeNull();
+  });
+});
+
+describe('nextEntryAfter', () => {
+  // Real start times so the off-timeline fallback has something to anchor on.
+  const timed: TrialChapter[] = [
+    seg({ fightId: 'a', name: 'Oaxiltso', startTime: 1000, durationMs: 60000 }),
+    seg({ fightId: 't', name: 'Trash', kind: 'trash', startTime: 70000, durationMs: 20000 }),
+    seg({ fightId: 'b', name: 'Xalvakka', startTime: 100000, durationMs: 100000 }),
+  ];
+
+  it('returns the following entry for a fight on the timeline', () => {
+    const tl = buildTrialTimeline(timed, true);
+    expect(nextEntryAfter(tl, 'a', 1000)?.chapter.fightId).toBe('t');
+  });
+
+  it('returns null at the end of the run', () => {
+    const tl = buildTrialTimeline(timed, true);
+    expect(nextEntryAfter(tl, 'b', 100000)).toBeNull();
+  });
+
+  it('falls back by start time for a fight EXCLUDED from the timeline', () => {
+    // Trash excluded: the current trash fight isn't an entry, but auto-advance
+    // must still flow into the next boss instead of dead-stopping.
+    const tl = buildTrialTimeline(timed, false);
+    expect(nextEntryAfter(tl, 't', 70000)?.chapter.fightId).toBe('b');
+  });
+
+  it('falls back for an unknown fight id between entries', () => {
+    const tl = buildTrialTimeline(timed, true);
+    // e.g. a sub-threshold trash blip at 65s that buildTrialChapters filtered out.
+    expect(nextEntryAfter(tl, 'zz', 65000)?.chapter.fightId).toBe('t');
   });
 });
 

@@ -25,7 +25,7 @@ import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
 import { chapterDisplayName } from '../trial_chapters/chapterDisplay';
 import {
-  entryForFight,
+  nextEntryAfter,
   type TrialTimeline as TrialTimelineModel,
 } from '../trial_chapters/trialTimeline';
 import type { TrialChapter } from '../trial_chapters/types';
@@ -265,13 +265,20 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // persisted autoplay preference stays on). Reset on fight change.
   const skipNextAdvanceRef = useRef(false);
 
+  // The resolved next timeline entry (computed below with a startTime fallback for fights that
+  // aren't ON the filtered timeline — e.g. a deep-linked trash blip below the segment threshold,
+  // or trash while includeTrash is off). Mirrored into a ref so handlePlaybackEnd can read it
+  // without re-creating (which would rebuild the animation loop).
+  const nextEntryRef = useRef<{ chapter: TrialChapter } | null>(null);
+
   // When playback reaches the end: in continuous mode, advance into the next timeline entry
   // (the reset-on-fight-change effect resumes playback once its data is ready); otherwise stop.
+  // Uses the SAME next-entry resolution as the Up-next UI, so a current fight that's excluded
+  // from the timeline still flows into the next included segment instead of dead-stopping.
   const handlePlaybackEnd = useCallback(() => {
     const nav = trialNavRef.current;
     if (nav?.continuousEnabled && !skipNextAdvanceRef.current) {
-      const match = entryForFight(nav.timeline, nav.currentFightId);
-      const nextEntry = match ? nav.timeline.entries[match.index + 1] : undefined;
+      const nextEntry = nextEntryRef.current;
       if (nextEntry) {
         nav.onAdvanceToFight(nextEntry.chapter.fightId);
         return;
@@ -341,11 +348,20 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     const pending = pendingSeekRef.current;
     pendingSeekRef.current = null;
     // Apply the pending offset only when the arriving fight is the one it was promised for
-    // (an interleaved chapter click must not inherit a stale offset).
-    const seedMs =
-      pending && pending.fightId === String(selectedFight.id)
-        ? Math.max(0, Math.min(pending.localMs, selectedFight.endTime - selectedFight.startTime))
-        : 0;
+    // (an interleaved chapter click must not inherit a stale offset). With no pending seek,
+    // fall back to the URL's ?time= — the component stays mounted across in-replay fight
+    // switches, so browser back/forward and pasted deep links change :fightId without a
+    // remount and would otherwise land at 0:00 despite the URL promising an offset.
+    const fightDur = selectedFight.endTime - selectedFight.startTime;
+    let seedMs = 0;
+    if (pending && pending.fightId === String(selectedFight.id)) {
+      seedMs = Math.max(0, Math.min(pending.localMs, fightDur));
+    } else {
+      const urlTime = Number(searchParams.get('time'));
+      if (!Number.isNaN(urlTime) && urlTime > 0) {
+        seedMs = clampReplayTime(urlTime, fightDur);
+      }
+    }
     setCurrentTime(seedMs);
     animationTimeRef.setTime(seedMs);
     setLoopStart(null);
@@ -361,6 +377,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     selectedFight.startTime,
     animationTimeRef,
     setFollowingActor,
+    searchParams,
   ]);
 
   // Resume playback once the freshly-loaded fight is ready (continuous auto-advance).
@@ -910,12 +927,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // (e.g. a deep-linked trash blip below the segment threshold).
   const nextEntry = React.useMemo(() => {
     if (!trialNav) return null;
-    const match = entryForFight(trialNav.timeline, trialNav.currentFightId);
-    if (match) return trialNav.timeline.entries[match.index + 1] ?? null;
-    return (
-      trialNav.timeline.entries.find((e) => e.chapter.startTime > selectedFight.startTime) ?? null
-    );
+    return nextEntryAfter(trialNav.timeline, trialNav.currentFightId, selectedFight.startTime);
   }, [trialNav, selectedFight.startTime]);
+  // Keep the playback-end handler's view of "what comes next" in lockstep (see nextEntryRef).
+  nextEntryRef.current = nextEntry;
 
   const trialNextUpLabel = nextEntry ? chapterDisplayName(nextEntry.chapter) : null;
 
@@ -962,8 +977,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const loopActive = loopStart != null && loopEnd != null && Math.abs(loopEnd - loopStart) >= 100;
   const [countdownCancelled, setCountdownCancelled] = useState(false);
   useEffect(() => {
-    // Re-arm the countdown when the fight changes or the playhead leaves the tail window.
-    if (duration - currentTime > 6000 && countdownCancelled) setCountdownCancelled(false);
+    // Re-arm BOTH halves of a cancel when the playhead leaves the tail window: the visible
+    // countdown state AND the advance-skip ref handlePlaybackEnd consults. Re-arming only the
+    // countdown would show "Up next" again while the stale ref silently swallowed the advance.
+    if (duration - currentTime > 6000 && countdownCancelled) {
+      setCountdownCancelled(false);
+      skipNextAdvanceRef.current = false;
+    }
   }, [currentTime, duration, countdownCancelled]);
 
   const upNextState: UpNextState | null = React.useMemo(() => {
