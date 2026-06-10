@@ -6,8 +6,8 @@ import { ArmorType, GearSlot, GearTrait, PlayerGear, WeaponType } from '../types
 
 import { resolveArmorType } from './armorUtils';
 import { BuffLookupData, isBuffActiveOnTarget } from './BuffLookupUtils';
-import { skillLineAbilityNames } from './skillLineNames';
 import { ItemQuality } from './gearUtilities';
+import { skillLineAbilityNames } from './skillLineNames';
 
 // Variant map: abilities where rank 1 and rank 2 produce different aura IDs in combatantInfo
 const AURA_VARIANTS: Partial<Record<KnownAbilities, KnownAbilities[]>> = {
