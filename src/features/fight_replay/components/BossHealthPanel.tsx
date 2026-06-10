@@ -129,12 +129,15 @@ export const BossHealthPanel: React.FC<BossHealthPanelProps> = ({
         }
         if (refs.readout) {
           // Mobile keeps it to the percentage only — the exact HP numbers are noise on a phone and
-          // make the bar read as cluttered. Desktop shows the full "pct · cur / max".
+          // make the bar read as cluttered. Desktop shows "pct · cur / max", abbreviating once the
+          // numbers are big enough that the exact form ("145,368,051 / 181,632,304") would overflow
+          // the 280px pill and spill past the track.
+          const compact = isMobile || boss.health.max >= 10_000_000;
           refs.readout.textContent = boss.isDead
             ? 'DEAD'
             : isMobile
               ? `${pct.toFixed(1)}%`
-              : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, isMobile)} / ${fmtHp(boss.health.max, isMobile)}`;
+              : `${pct.toFixed(1)}%  ·  ${fmtHp(boss.health.current, compact)} / ${fmtHp(boss.health.max, compact)}`;
         }
       }
 

@@ -13,9 +13,11 @@
  */
 
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
+import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import LabelRoundedIcon from '@mui/icons-material/LabelRounded';
+import PlaylistPlayRoundedIcon from '@mui/icons-material/PlaylistPlayRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
@@ -25,12 +27,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../../hooks/useOptimizedTimelineScrubbing';
 import { useTimelineMarkers } from '../../../../hooks/useTimelineMarkers';
-import { ContinuousReplayBar } from '../ContinuousReplayBar';
+import type { TrialChapter } from '../../trial_chapters/types';
+import { ChapterList } from '../ChapterList';
 import type { TrialReplayNav } from '../FightReplay3D';
 import { PlaybackButtons } from '../PlaybackButtons';
 import { ShareButton } from '../ShareButton';
 import { TimelineSlider } from '../TimelineSlider';
-import type { TrialTimelineSeekTarget } from '../TrialTimeline';
+import { TrialTimeline, type TrialTimelineSeekTarget } from '../TrialTimeline';
 
 import { MobileSheet } from './MobileSheet';
 
@@ -82,11 +85,18 @@ interface MobileReplayDockProps {
   onToggleStats: () => void;
   /** Whether the camera is locked onto a player (gates the stats-panel toggle, as on desktop). */
   following: boolean;
+  /** Reports whether a sheet is open (the host pauses chrome auto-hide while one is). */
+  onSheetOpenChange?: (open: boolean) => void;
 }
 
 type SheetId = 'chapters' | 'settings' | null;
 
-/** A settings row: leading icon + label/description, trailing control. Generous 56px tap target. */
+/**
+ * A settings row: leading icon + label/description, trailing control. Generous 56px tap target.
+ * Rendered as a <label> when it wraps a Switch (no onActivate), so tapping anywhere on the row
+ * toggles the control — the native settings-row convention. The switch itself still needs an
+ * aria-label at the call site (a wrapping label would fold the description into the name).
+ */
 const SettingRow: React.FC<{
   icon: React.ReactNode;
   label: string;
@@ -96,7 +106,7 @@ const SettingRow: React.FC<{
   active?: boolean;
 }> = ({ icon, label, description, control, onActivate, active }) => (
   <Box
-    component={onActivate ? 'button' : 'div'}
+    component={onActivate ? 'button' : 'label'}
     type={onActivate ? 'button' : undefined}
     onClick={onActivate}
     sx={(theme) => ({
@@ -104,7 +114,7 @@ const SettingRow: React.FC<{
       width: '100%',
       textAlign: 'left',
       font: 'inherit',
-      cursor: onActivate ? 'pointer' : 'default',
+      cursor: 'pointer',
       display: 'flex',
       alignItems: 'center',
       gap: 1.5,
@@ -166,13 +176,17 @@ const DockButton: React.FC<{
   label: string;
   active?: boolean;
   onClick: () => void;
-}> = ({ icon, label, active, onClick }) => (
+  /** True for buttons that open a bottom sheet (announced as a dialog launcher, not a toggle). */
+  opensSheet?: boolean;
+}> = ({ icon, label, active, onClick, opensSheet }) => (
   <Box
     component="button"
     type="button"
     onClick={onClick}
     aria-label={label}
-    aria-pressed={active}
+    aria-pressed={opensSheet ? undefined : active}
+    aria-haspopup={opensSheet ? 'dialog' : undefined}
+    aria-expanded={opensSheet ? active : undefined}
     sx={(theme) => ({
       appearance: 'none',
       border: 'none',
@@ -229,8 +243,34 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   statsPanelEnabled,
   onToggleStats,
   following,
+  onSheetOpenChange,
 }) => {
   const [sheet, setSheet] = useState<SheetId>(null);
+
+  // The host pauses the tap-to-toggle chrome auto-hide while a sheet is up.
+  useEffect(() => {
+    onSheetOpenChange?.(sheet !== null);
+  }, [sheet, onSheetOpenChange]);
+
+  // A chapter tap / cross-fight scrub commit closes the sheet so the "Entering <area>"
+  // transition lands in full view (same-fight seeks keep the sheet for fine-tuning).
+  const handleSheetTrialSeek = useCallback(
+    (target: TrialTimelineSeekTarget) => {
+      onTrialSeek?.(target);
+      if (!target.sameFight) setSheet(null);
+    },
+    [onTrialSeek],
+  );
+
+  const handleChapterSelect = useCallback(
+    (chapter: TrialChapter) => {
+      const sameFight = chapter.fightId === trialNav?.currentFightId;
+      onTrialSeek?.({ fightId: chapter.fightId, localMs: 0, sameFight });
+      // Close either way: a chapter tap is a navigation, not a fine-tuning scrub.
+      setSheet(null);
+    },
+    [onTrialSeek, trialNav?.currentFightId],
+  );
 
   const {
     displayTime,
@@ -356,6 +396,7 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
               icon={<TimelineRoundedIcon fontSize="small" />}
               label="Chapters"
               active={sheet === 'chapters'}
+              opensSheet
               onClick={() => setSheet((s) => (s === 'chapters' ? null : 'chapters'))}
             />
           )}
@@ -363,38 +404,98 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
             icon={<TuneRoundedIcon fontSize="small" />}
             label="Settings"
             active={sheet === 'settings'}
+            opensSheet
             onClick={() => setSheet((s) => (s === 'settings' ? null : 'settings'))}
           />
         </Box>
       </Box>
 
-      {/* Chapters sheet — the trial scrubber + play-trial controls. The body is rendered ONLY while
-          the sheet is open: it gets `currentLocalMs` (the 10Hz playback tick), and keeping the full
-          trial timeline mounted while closed re-reconciled it 10×/sec behind the arena, stealing main-
-          thread time from the 60fps render loop. */}
+      {/* Chapters sheet — autoplay controls, the trial scrubber, and a real tappable chapter
+          LIST (boss avatars, kill/wipe, duration — the Netflix episodes surface). The body is
+          rendered ONLY while the sheet is open: it gets `currentLocalMs` (the playback tick), and
+          keeping it mounted while closed re-reconciled it behind the arena, stealing main-thread
+          time from the 60fps render loop. */}
       {hasChapters && trialNav && (
         <MobileSheet
           open={sheet === 'chapters'}
-          title="Trial chapters"
+          title={
+            trialNav.runCount > 1
+              ? `${trialNav.runName} · ${trialNav.runIndex + 1}/${trialNav.runCount}`
+              : trialNav.runName
+          }
           onClose={() => setSheet(null)}
         >
           {sheet === 'chapters' && (
-            <ContinuousReplayBar
-              timeline={trialNav.timeline}
-              currentFightId={trialNav.currentFightId}
-              currentLocalMs={currentTime}
-              onSeek={onTrialSeek ?? (() => {})}
-              continuousEnabled={trialNav.continuousEnabled}
-              onToggleContinuous={trialNav.onToggleContinuous}
-              includeTrash={trialNav.includeTrash}
-              onToggleIncludeTrash={trialNav.onToggleIncludeTrash}
-              hasTrash={trialNav.hasTrash}
-              runName={trialNav.runName}
-              runIndex={trialNav.runIndex}
-              runCount={trialNav.runCount}
-              nextUpLabel={trialNextUpLabel ?? null}
-              compact
-            />
+            <>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 1.5 }}>
+                <SettingRow
+                  icon={<PlaylistPlayRoundedIcon fontSize="small" />}
+                  label="Autoplay"
+                  description="Continue into the next fight automatically"
+                  active={trialNav.continuousEnabled}
+                  control={
+                    <Switch
+                      checked={trialNav.continuousEnabled}
+                      onChange={trialNav.onToggleContinuous}
+                      slotProps={{ input: { 'aria-label': 'Autoplay the whole trial' } }}
+                    />
+                  }
+                />
+                {trialNav.hasTrash && (
+                  <SettingRow
+                    icon={<DeleteSweepRoundedIcon fontSize="small" />}
+                    label="Include trash"
+                    description="Walk the pulls between bosses too"
+                    active={trialNav.includeTrash}
+                    control={
+                      <Switch
+                        checked={trialNav.includeTrash}
+                        onChange={trialNav.onToggleIncludeTrash}
+                        slotProps={{ input: { 'aria-label': 'Include trash fights' } }}
+                      />
+                    }
+                  />
+                )}
+              </Box>
+
+              {trialNextUpLabel && trialNav.continuousEnabled && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}
+                  noWrap
+                >
+                  Up next:{' '}
+                  <Box component="span" sx={{ fontWeight: 700 }}>
+                    {trialNextUpLabel}
+                  </Box>
+                </Typography>
+              )}
+
+              {/* Whole-run scrubber — the tall touch variant (≥44px interactive band). */}
+              <Box sx={{ mb: 1.5 }}>
+                <TrialTimeline
+                  timeline={trialNav.timeline}
+                  currentFightId={trialNav.currentFightId}
+                  currentLocalMs={currentTime}
+                  onSeek={handleSheetTrialSeek}
+                  variant="sheet"
+                />
+              </Box>
+
+              <Typography
+                variant="overline"
+                sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+              >
+                Chapters
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>
+                <ChapterList
+                  chapters={trialNav.timeline.entries.map((e) => e.chapter)}
+                  currentFightId={trialNav.currentFightId}
+                  onSelect={handleChapterSelect}
+                />
+              </Box>
+            </>
           )}
         </MobileSheet>
       )}
@@ -464,14 +565,26 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 label="Name tags"
                 description="Floating player & boss labels"
                 active={namesEnabled}
-                control={<Switch checked={namesEnabled} onChange={onToggleNames} />}
+                control={
+                  <Switch
+                    checked={namesEnabled}
+                    onChange={onToggleNames}
+                    slotProps={{ input: { 'aria-label': 'Name tags' } }}
+                  />
+                }
               />
               <SettingRow
                 icon={<RouteRoundedIcon fontSize="small" />}
                 label="Player trails"
                 description="Movement paths over time"
                 active={showTrails}
-                control={<Switch checked={showTrails} onChange={onToggleTrails} />}
+                control={
+                  <Switch
+                    checked={showTrails}
+                    onChange={onToggleTrails}
+                    slotProps={{ input: { 'aria-label': 'Player trails' } }}
+                  />
+                }
               />
               {following && (
                 <SettingRow
@@ -479,7 +592,13 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                   label="Player stats"
                   description="Live readout for the followed player"
                   active={statsPanelEnabled}
-                  control={<Switch checked={statsPanelEnabled} onChange={onToggleStats} />}
+                  control={
+                    <Switch
+                      checked={statsPanelEnabled}
+                      onChange={onToggleStats}
+                      slotProps={{ input: { 'aria-label': 'Player stats' } }}
+                    />
+                  }
                 />
               )}
               <SettingRow
@@ -487,7 +606,13 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 label="Performance mode"
                 description="Drop shadows for smoother large fights"
                 active={performanceMode}
-                control={<Switch checked={performanceMode} onChange={onTogglePerformance} />}
+                control={
+                  <Switch
+                    checked={performanceMode}
+                    onChange={onTogglePerformance}
+                    slotProps={{ input: { 'aria-label': 'Performance mode' } }}
+                  />
+                }
               />
             </Box>
 

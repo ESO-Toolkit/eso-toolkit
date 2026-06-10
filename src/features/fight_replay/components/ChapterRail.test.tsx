@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import React, { useState } from 'react';
 
 import type { TrialChapter } from '../trial_chapters/types';
 
@@ -35,6 +36,26 @@ const trash = (overrides: Partial<TrialChapter> = {}): TrialChapter =>
     ...overrides,
   });
 
+/** Renders the rail with the include-trash preference as controlled state (as the page does). */
+const ControlledRail: React.FC<{
+  segments: TrialChapter[];
+  bossChapters: TrialChapter[];
+  currentFightId: string | undefined;
+  trialName?: string;
+  initialIncludeTrash?: boolean;
+  onSelect?: (chapter: TrialChapter) => void;
+}> = ({ initialIncludeTrash = false, onSelect = jest.fn(), ...props }) => {
+  const [includeTrash, setIncludeTrash] = useState(initialIncludeTrash);
+  return (
+    <ChapterRail
+      {...props}
+      includeTrash={includeTrash}
+      onToggleIncludeTrash={() => setIncludeTrash((v) => !v)}
+      onSelect={onSelect}
+    />
+  );
+};
+
 describe('ChapterRail', () => {
   it('renders a stop per boss with name, status and a boss-progress chip', () => {
     const bosses = [
@@ -42,12 +63,11 @@ describe('ChapterRail', () => {
       boss({ fightId: '2', name: 'Xalvakka', isKill: false, isWipe: true, bossPercentage: 35 }),
     ];
     render(
-      <ChapterRail
+      <ControlledRail
         segments={bosses}
         bossChapters={bosses}
         currentFightId="1"
         trialName="Rockgrove"
-        onSelect={jest.fn()}
       />,
     );
 
@@ -60,14 +80,7 @@ describe('ChapterRail', () => {
 
   it('marks the active stop with aria-current', () => {
     const bosses = [boss({ fightId: '1' }), boss({ fightId: '2', name: 'Xalvakka' })];
-    render(
-      <ChapterRail
-        segments={bosses}
-        bossChapters={bosses}
-        currentFightId="2"
-        onSelect={jest.fn()}
-      />,
-    );
+    render(<ControlledRail segments={bosses} bossChapters={bosses} currentFightId="2" />);
     const active = screen.getByRole('button', { name: /Xalvakka/ });
     expect(active).toHaveAttribute('aria-current', 'true');
   });
@@ -76,7 +89,7 @@ describe('ChapterRail', () => {
     const onSelect = jest.fn();
     const bosses = [boss({ fightId: '1' }), boss({ fightId: '2', name: 'Xalvakka' })];
     render(
-      <ChapterRail
+      <ControlledRail
         segments={bosses}
         bossChapters={bosses}
         currentFightId="1"
@@ -87,36 +100,32 @@ describe('ChapterRail', () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ fightId: '2' }));
   });
 
-  it('hides trash by default and reveals it via the toggle', () => {
+  it('hides trash while the preference is off and reveals it via the shared toggle', () => {
     const bosses = [boss({ fightId: '1' }), boss({ fightId: '2', name: 'Xalvakka' })];
     const segments = [bosses[0], trash({ fightId: '9', name: 'Add Pack', index: 1 }), bosses[1]];
-    render(
-      <ChapterRail
-        segments={segments}
-        bossChapters={bosses}
-        currentFightId="1"
-        onSelect={jest.fn()}
-      />,
-    );
+    render(<ControlledRail segments={segments} bossChapters={bosses} currentFightId="1" />);
 
     // Trash hidden initially.
     expect(screen.queryByText('Add Pack')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('switch', { name: /show trash/i }));
+    fireEvent.click(screen.getByRole('switch', { name: /include trash/i }));
     expect(screen.getByText('Add Pack')).toBeInTheDocument();
+  });
+
+  it('reveals trash when the active fight IS trash, without flipping the preference', () => {
+    const bosses = [boss({ fightId: '1' }), boss({ fightId: '2', name: 'Xalvakka' })];
+    const segments = [bosses[0], trash({ fightId: '9', name: 'Add Pack', index: 1 }), bosses[1]];
+    render(<ControlledRail segments={segments} bossChapters={bosses} currentFightId="9" />);
+
+    // Visible because it's the active fight — the switch itself stays off.
+    expect(screen.getByText('Add Pack')).toBeInTheDocument();
+    expect(screen.getByRole('switch', { name: /include trash/i })).not.toBeChecked();
   });
 
   it('shows no trash toggle when the run has no trash', () => {
     const bosses = [boss({ fightId: '1' })];
-    render(
-      <ChapterRail
-        segments={bosses}
-        bossChapters={bosses}
-        currentFightId="1"
-        onSelect={jest.fn()}
-      />,
-    );
-    expect(screen.queryByRole('switch', { name: /show trash/i })).not.toBeInTheDocument();
+    render(<ControlledRail segments={bosses} bossChapters={bosses} currentFightId="1" />);
+    expect(screen.queryByRole('switch', { name: /include trash/i })).not.toBeInTheDocument();
   });
 
   it('renders a trash-only run directly (no boss chip, no toggle)', () => {
@@ -125,28 +134,22 @@ describe('ChapterRail', () => {
       trash({ fightId: '2', name: 'Pack B', index: 1 }),
     ];
     render(
-      <ChapterRail
+      <ControlledRail
         segments={segments}
         bossChapters={[]}
         currentFightId="1"
         trialName="Some Dungeon"
-        onSelect={jest.fn()}
       />,
     );
     expect(screen.getByText('Pack A')).toBeInTheDocument();
     expect(screen.getByText('Pack B')).toBeInTheDocument();
     expect(screen.queryByText(/bosses/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('switch', { name: /show trash/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /include trash/i })).not.toBeInTheDocument();
   });
 
   it('renders nothing when there are no stops', () => {
     const { container } = render(
-      <ChapterRail
-        segments={[]}
-        bossChapters={[]}
-        currentFightId={undefined}
-        onSelect={jest.fn()}
-      />,
+      <ControlledRail segments={[]} bossChapters={[]} currentFightId={undefined} />,
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -156,14 +159,7 @@ describe('ChapterRail', () => {
       boss({ fightId: '1', name: 'Xalvakka', attempt: 1, isKill: false, isWipe: true }),
       boss({ fightId: '2', name: 'Xalvakka', attempt: 2 }),
     ];
-    render(
-      <ChapterRail
-        segments={bosses}
-        bossChapters={bosses}
-        currentFightId="2"
-        onSelect={jest.fn()}
-      />,
-    );
+    render(<ControlledRail segments={bosses} bossChapters={bosses} currentFightId="2" />);
     const second = screen.getByRole('button', { name: /pull 2/i });
     expect(within(second).getByText(/#2/)).toBeInTheDocument();
   });

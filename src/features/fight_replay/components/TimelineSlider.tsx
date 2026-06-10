@@ -64,7 +64,7 @@ interface TimelineSliderProps {
 }
 
 /** Small pill badge for the transport's contextual read-outs (encounter, outcome, %). */
-const ContextBadge: React.FC<{
+export const ContextBadge: React.FC<{
   children: React.ReactNode;
   tone?: 'default' | 'success' | 'warning';
 }> = ({ children, tone = 'default' }) => {
@@ -97,9 +97,9 @@ const ContextBadge: React.FC<{
 /**
  * A–B loop chip — shows the active loop span and clears it (mirrors the Following chip's delete
  * affordance). Visible once at least one point is set; reads as "looping" when both are. Extracted
- * so both the expanded badge row and the compact details peek render the identical chip.
+ * so both the expanded badge row and the compact control row render the identical chip.
  */
-const LoopChip: React.FC<{
+export const LoopChip: React.FC<{
   loopStart: number | null;
   loopEnd: number | null;
   onClearLoop?: () => void;

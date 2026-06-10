@@ -1,6 +1,5 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,6 +23,7 @@ import { FightReplay3D, type TrialReplayNav } from './components/FightReplay3D';
 import { MapMarkersModal } from './components/MapMarkersModal';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
 import { useIsMobileReplay } from './hooks/useIsMobileReplay';
+import { chapterDisplayName } from './trial_chapters/chapterDisplay';
 import { buildTrialTimeline } from './trial_chapters/trialTimeline';
 import type { TrialChapter } from './trial_chapters/types';
 import { useReplayNavigation } from './trial_chapters/useReplayNavigation';
@@ -318,10 +318,11 @@ export const FightReplay: React.FC = () => {
 
   // Keyboard skip to the previous / next boss ( [ and ] ). Distinct from FightReplay3D's
   // in-fight transport keys, so the two handlers never collide. Guards mirror the
-  // transport's: ignore text inputs and OS/browser modifier chords.
+  // transport's: yield to focused widgets, ignore text inputs and OS/browser modifier chords.
   const { nextBoss, prevBoss } = trialChapters;
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
+      if (event.defaultPrevented) return;
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -352,11 +353,13 @@ export const FightReplay: React.FC = () => {
   const handleToggleIncludeTrash = useCallback(() => setIncludeTrash((v) => !v), []);
 
   // Auto-advance / cross-segment scrub navigation. Replaces the history entry so the continuous
-  // flow doesn't pile up Back steps (manual chapter clicks still push a history entry).
+  // flow doesn't pile up Back steps (manual chapter clicks still push a history entry). A
+  // cross-fight scrub carries its dragged offset through as ?time= — refresh/share-safe, and
+  // FightReplay3D seeds playback from it so the seek lands at the promised moment, not 0:00.
   const handleAdvanceToFight = useCallback(
-    (targetFightId: string) => {
+    (targetFightId: string, options?: { localMs?: number }) => {
       if (targetFightId === fightId) return;
-      goToFight(targetFightId, { replace: true });
+      goToFight(targetFightId, { replace: true, time: options?.localMs });
     },
     [goToFight, fightId],
   );
@@ -406,8 +409,12 @@ export const FightReplay: React.FC = () => {
 
   // Continuous trial-replay bundle handed to FightReplay3D — present only for a multi-segment
   // run, so a single isolated fight behaves exactly as before. The label shown while entering a
-  // fight is the segment/fight name (the new fight resolves from report data before its positions).
-  const enteringLabel = trialChapters.currentSegment?.name ?? fight?.name ?? null;
+  // fight is the segment/fight name (the new fight resolves from report data before its
+  // positions), trash-disambiguated so "Entering Trash · X" can't read as a boss pull.
+  const enteringLabel = trialChapters.currentSegment
+    ? chapterDisplayName(trialChapters.currentSegment)
+    : (fight?.name ?? null);
+  const killedBosses = trialChapters.bossChapters.filter((b) => b.isKill).length;
   const trialNav: TrialReplayNav | undefined =
     trialChapters.currentRun && trialTimeline.entries.length > 1
       ? {
@@ -419,6 +426,12 @@ export const FightReplay: React.FC = () => {
           runName: trialChapters.currentRun.trialName,
           runIndex: trialChapters.runIndex,
           runCount: trialChapters.runCount,
+          bossSummary:
+            trialChapters.bossChapters.length > 0
+              ? `${killedBosses} / ${trialChapters.bossChapters.length} bosses`
+              : null,
+          prevBoss: trialChapters.prevBoss,
+          nextBoss: trialChapters.nextBoss,
           isFightDataLoading: isArenaLoading,
           enteringLabel,
           onAdvanceToFight: handleAdvanceToFight,
@@ -546,76 +559,64 @@ export const FightReplay: React.FC = () => {
       </Box>
 
       {/* Trial chapter rail — skip between bosses (and trash) without leaving the replay.
-          Stays mounted across fight switches so navigation feels continuous. */}
+          Stays mounted across fight switches so navigation feels continuous. The map-markers
+          tool lives in its header (a quiet outlined control — the arena is the page's hero, so
+          nothing above it gets contained-primary emphasis), and its title is suppressed when
+          the page header already states the same trial name. */}
       {trialChapters.currentRun && (
         <ChapterRail
           segments={trialChapters.segments}
           bossChapters={trialChapters.bossChapters}
           currentFightId={fightId}
           trialName={trialChapters.currentRun.trialName}
+          hideTitle={
+            !!fight && trialChapters.currentRun.trialName === (fight.maps?.[0]?.name || fight.name)
+          }
+          includeTrash={includeTrash}
+          onToggleIncludeTrash={handleToggleIncludeTrash}
+          headerActions={
+            fight ? (
+              <Button
+                size="small"
+                variant="outlined"
+                color="secondary"
+                startIcon={<PlaceIcon />}
+                onClick={() => setMarkersModalOpen(true)}
+                type="button"
+              >
+                {markersState && markersState.markers.length > 0
+                  ? `Markers · ${markersState.markers.length}`
+                  : 'Map markers'}
+              </Button>
+            ) : undefined
+          }
           onSelect={handleSelectChapter}
         />
       )}
 
-      {/* Map markers — only meaningful once a fight is loaded. */}
-      {fight && (
-        <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<PlaceIcon />}
-              onClick={() => setMarkersModalOpen(true)}
-              type="button"
-            >
-              {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
-            </Button>
-
-            {markersState && markersState.markers.length > 0 && (
-              <>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<ContentCopyIcon />}
-                  onClick={() => handleExportMarkers('elms')}
-                  type="button"
-                >
-                  Copy Elms
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<ContentCopyIcon />}
-                  onClick={() => handleExportMarkers('mor')}
-                  type="button"
-                >
-                  Copy M0R
-                </Button>
-              </>
-            )}
-          </Box>
-
-          {/* Marker Statistics */}
-          {markersState && markerStats.success && (
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Chip
-                label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
-                color="success"
-                size="small"
-                variant="outlined"
-              />
-              {markerStats.is3D && (
-                <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
-              )}
-              {markerStats.removed > 0 && (
-                <Chip
-                  label={`${markerStats.removed} filtered out`}
-                  color="warning"
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-            </Box>
+      {/* Map markers entry point for non-trial replays (no rail to host it). Exports + stats
+          live inside the modal. */}
+      {fight && !trialChapters.currentRun && (
+        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Button
+            size="small"
+            variant="outlined"
+            color="secondary"
+            startIcon={<PlaceIcon />}
+            onClick={() => setMarkersModalOpen(true)}
+            type="button"
+          >
+            {markersState && markersState.markers.length > 0
+              ? `Markers · ${markersState.markers.length}`
+              : 'Map markers'}
+          </Button>
+          {markersState && markerStats.success && markerStats.removed > 0 && (
+            <Chip
+              label={`${markerStats.removed} filtered out`}
+              color="warning"
+              size="small"
+              variant="outlined"
+            />
           )}
         </Box>
       )}

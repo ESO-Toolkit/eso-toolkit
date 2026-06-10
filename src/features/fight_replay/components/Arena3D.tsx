@@ -19,7 +19,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePerfTier } from '../../../hooks/usePerfTier';
@@ -282,6 +282,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
+  // Tap detection for the mobile preview teaser (tap expands; a drag scrolls the page).
+  const previewTapRef = useRef<{ x: number; y: number } | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [submenuState, setSubmenuState] = useState<{
     key: MarkerGroupKey;
@@ -837,17 +839,34 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
         {/* Mobile inline PREVIEW scrim — the report page shows a dimmed, non-interactive teaser of the
             3D scene with one clear way in. The scrim is a thin gradient (scene still reads through),
-            sits above the pointer-events:none canvas, and carries the single Expand affordance. Tapping
-            it opens the pseudo-fullscreen interactive mode (onToggleFullscreen → mobilePseudoFullscreen).
-            The scrim itself stays pointer-events:none so a plain drag still scrolls the page; only the
-            button is interactive. Rendered only on mobile while not immersive. */}
+            sits above the pointer-events:none canvas, and carries the Expand affordance. The WHOLE
+            teaser accepts a true tap (≤10px travel — the natural first gesture on a big inviting
+            canvas) while a drag still falls through as page scroll (no preventDefault, no
+            touch-action override: a real scroll fires pointercancel so the tap branch never runs).
+            The button stays the visible affordance + the keyboard/AT path. */}
         {mobilePreview && (
           <Box
             aria-hidden={false}
+            onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest('button')) return;
+              previewTapRef.current = { x: e.clientX, y: e.clientY };
+            }}
+            onPointerUp={(e) => {
+              const start = previewTapRef.current;
+              previewTapRef.current = null;
+              if (!start) return;
+              if ((e.target as HTMLElement).closest('button')) return;
+              if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) return;
+              onToggleFullscreen?.();
+            }}
+            onPointerCancel={() => {
+              previewTapRef.current = null;
+            }}
             sx={{
               position: 'absolute',
               inset: 0,
-              pointerEvents: 'none',
+              pointerEvents: 'auto',
+              cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -1108,7 +1127,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             ['+ −', 'Speed up / down'],
             [', .', 'Frame step'],
             ['< >', 'Prev / next event'],
-            ['I O', 'Set loop in / out'],
+            ['I O', 'Set loop in / out · U: Clear'],
+            ['[ ]', 'Prev / next boss'],
           ].map(([k, label]) => (
             <Typography
               key={k}

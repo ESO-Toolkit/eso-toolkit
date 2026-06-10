@@ -1,8 +1,7 @@
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
-import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
 import { Box, IconButton, Paper, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import { visuallyHidden } from '@mui/utils';
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
@@ -15,21 +14,30 @@ import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useTimelineMarkers } from '../../../hooks/useTimelineMarkers';
 import { BuffEvent } from '../../../types/combatlogEvents';
-import { TRANSPORT_IDLE_MS, TRANSPORT_RESERVED, HAIRLINE_H } from '../constants/replayDesign';
+import {
+  TRANSPORT_IDLE_MS,
+  TRANSPORT_RESERVED,
+  TRANSPORT_MOTION,
+  HAIRLINE_H,
+  transportHairline,
+} from '../constants/replayDesign';
+import { useDelayedFlag } from '../hooks/useDelayedFlag';
 import { useIsMobileReplay } from '../hooks/useIsMobileReplay';
+import { chapterDisplayName } from '../trial_chapters/chapterDisplay';
 import {
   entryForFight,
   type TrialTimeline as TrialTimelineModel,
 } from '../trial_chapters/trialTimeline';
+import type { TrialChapter } from '../trial_chapters/types';
 import { MapMarkersState } from '../types/mapMarkers';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
-import { ContinuousReplayBar } from './ContinuousReplayBar';
 import { MobileReplayDock } from './mobile/MobileReplayDock';
-import { PlaybackControls, PLAYBACK_SPEEDS } from './PlaybackControls';
+import { PlaybackControls, PLAYBACK_SPEEDS, type TransportTrial } from './PlaybackControls';
 import { ReplayTransitionOverlay } from './ReplayTransitionOverlay';
 import type { TrialTimelineSeekTarget } from './TrialTimeline';
+import { UpNextCard, type UpNextState } from './UpNextCard';
 
 // Frame-step increment for the ,/. keys. The raw position sample interval (~4.7ms at 240Hz) is
 // imperceptible as a step, so we nudge by a usable 100ms — one React-state sync tick — which lets
@@ -57,6 +65,11 @@ export interface TrialReplayNav {
   /** 0-based index of the current run, and the total run count (for multi-trial logs). */
   runIndex: number;
   runCount: number;
+  /** e.g. "9 / 12 bosses", or null when the run has no bosses. */
+  bossSummary: string | null;
+  /** Boss skip targets relative to the active fight (the [ / ] keys + transport buttons). */
+  prevBoss: TrialChapter | null;
+  nextBoss: TrialChapter | null;
   /** True while the loaded fight's data isn't ready yet (drives the transition overlay). */
   isFightDataLoading: boolean;
   /** Name of the fight being entered, for the transition overlay. */
@@ -228,21 +241,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // keeps it across reloads.
   const [barVisible, setBarVisible] = useState(!storedPrefs.barCollapsed);
 
-  // The trial timeline / continuous controls collapse independently of the transport, starting
-  // collapsed on mobile (where the full bar is too cluttered). A small chip re-expands them.
-  // Trial scrubber expand/collapse. Default: collapsed (a small chip) on mobile, expanded on
-  // desktop. `isMobile` (useMediaQuery) is `false` on the very first render before it resolves, so
-  // we DON'T seed from it (that started mobile expanded — the reported clutter). Instead follow the
-  // resolved value until the user makes a choice, after which their toggle sticks.
-  const [trialBarExpanded, setTrialBarExpanded] = useState(false);
-  const userToggledTrialBarRef = useRef(false);
-  useEffect(() => {
-    if (userToggledTrialBarRef.current) return;
-    setTrialBarExpanded(!isMobile);
-  }, [isMobile]);
-  const toggleTrialBar = useCallback(() => {
-    userToggledTrialBarRef.current = true;
-    setTrialBarExpanded((v) => !v);
+  // Strip drag state from the trial mini-map (separate from the fight rail's isDragging so it
+  // can't engage the 3D scrub-degradation path) — guards the fullscreen idle auto-hide so the
+  // bar can't unmount mid-drag under a held pointer.
+  const [isTrialDragging, setIsTrialDragging] = useState(false);
+  const handleTrialDraggingChange = useCallback((dragging: boolean) => {
+    setIsTrialDragging(dragging);
   }, []);
 
   // High-performance time reference for 3D updates
@@ -257,11 +261,15 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const trialNavRef = useRef(trialNav);
   trialNavRef.current = trialNav;
 
+  // "Cancel" on the Up-next countdown skips auto-advance for THIS fight boundary only (the
+  // persisted autoplay preference stays on). Reset on fight change.
+  const skipNextAdvanceRef = useRef(false);
+
   // When playback reaches the end: in continuous mode, advance into the next timeline entry
   // (the reset-on-fight-change effect resumes playback once its data is ready); otherwise stop.
   const handlePlaybackEnd = useCallback(() => {
     const nav = trialNavRef.current;
-    if (nav?.continuousEnabled) {
+    if (nav?.continuousEnabled && !skipNextAdvanceRef.current) {
       const match = entryForFight(nav.timeline, nav.currentFightId);
       const nextEntry = match ? nav.timeline.entries[match.index + 1] : undefined;
       if (nextEntry) {
@@ -269,6 +277,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         return;
       }
     }
+    skipNextAdvanceRef.current = false;
     setIsPlaying(false);
   }, []);
 
@@ -320,19 +329,39 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // scene rebuilds underneath) — but playback state must reset for the new fight. We also remember
   // to resume playing once the new fight's data is ready when "play whole trial" is on.
   const [pendingAutoplay, setPendingAutoplay] = useState(false);
+  // Cross-fight trial scrubs promise a specific moment ("Xalvakka · 2:45" in the preview
+  // bubble) — the dragged local offset is stashed here, keyed by the target fight, and
+  // consumed by the reset effect so the new fight opens AT that moment instead of 0:00.
+  // Auto-advance and chapter jumps never set it, so they still start at the top.
+  const pendingSeekRef = useRef<{ fightId: string; localMs: number } | null>(null);
   const prevFightIdRef = useRef(selectedFight.id);
   useEffect(() => {
     if (prevFightIdRef.current === selectedFight.id) return;
     prevFightIdRef.current = selectedFight.id;
-    setCurrentTime(0);
-    animationTimeRef.setTime(0);
+    const pending = pendingSeekRef.current;
+    pendingSeekRef.current = null;
+    // Apply the pending offset only when the arriving fight is the one it was promised for
+    // (an interleaved chapter click must not inherit a stale offset).
+    const seedMs =
+      pending && pending.fightId === String(selectedFight.id)
+        ? Math.max(0, Math.min(pending.localMs, selectedFight.endTime - selectedFight.startTime))
+        : 0;
+    setCurrentTime(seedMs);
+    animationTimeRef.setTime(seedMs);
     setLoopStart(null);
     setLoopEnd(null);
     setIsPlaying(false);
     setFollowingActor(null);
     setSelectedPlayerIds(new Set());
+    skipNextAdvanceRef.current = false;
     setPendingAutoplay(trialNavRef.current?.continuousEnabled ?? false);
-  }, [selectedFight.id, animationTimeRef, setFollowingActor]);
+  }, [
+    selectedFight.id,
+    selectedFight.endTime,
+    selectedFight.startTime,
+    animationTimeRef,
+    setFollowingActor,
+  ]);
 
   // Resume playback once the freshly-loaded fight is ready (continuous auto-advance).
   const isFightDataLoading = trialNav?.isFightDataLoading ?? false;
@@ -344,18 +373,25 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   }, [pendingAutoplay, isFightDataLoading]);
 
   // Seek from the trial scrubber: stay-in-fight seeks are instant; crossing into another segment
-  // advances to that fight (which loads + starts at its beginning).
+  // advances to that fight AND lands at the dragged offset (the reset effect consumes the
+  // pending seek), keeping the "one continuous video" promise.
   const handleTrialSeek = useCallback(
     (target: TrialTimelineSeekTarget) => {
       if (target.sameFight) {
         const dur = selectedFight.endTime - selectedFight.startTime;
         seekTo(Math.max(0, Math.min(target.localMs, dur)));
       } else {
-        trialNavRef.current?.onAdvanceToFight(target.fightId);
+        pendingSeekRef.current = { fightId: target.fightId, localMs: target.localMs };
+        trialNavRef.current?.onAdvanceToFight(target.fightId, { localMs: target.localMs });
       }
     },
     [seekTo, selectedFight.endTime, selectedFight.startTime],
   );
+
+  // Navigate to a chapter (popover rows, boss-skip buttons) — always from its start.
+  const handleSelectChapter = useCallback((chapter: TrialChapter) => {
+    trialNavRef.current?.onAdvanceToFight(chapter.fightId);
+  }, []);
 
   const handleTimeChange = useCallback(
     (time: number) => {
@@ -471,9 +507,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setLoopEnd(null);
   }, []);
 
+  // Timestamp of the last actor-lock tap — lets the mobile tap-to-toggle-chrome handler tell
+  // "tap selected an actor" apart from "tap on empty arena" (Arena3D's click runs first).
+  const actorTapRef = useRef(0);
+
   const handleActorClick = useCallback(
     (actorId: number) => {
       // Set camera to follow the clicked actor
+      actorTapRef.current = performance.now();
       setFollowingActor(actorId);
     },
     [setFollowingActor],
@@ -575,12 +616,21 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const togglePlayerPathsHUD = useCallback(() => setShowPlayerPathsHUD((prev) => !prev), []);
   const toggleTrails = useCallback(() => setShowPlayerTrails((prev) => !prev), []);
 
-  // Fullscreen cinema auto-hide. Two halves:
-  //  1. Reveal on pointer/touch activity over the OUTER container (replayContainerRef — it is
-  //     pointer-events:auto; the inner positioning frame is pointer-events:none so a listener
-  //     there would never fire). Only meaningful in fullscreen.
-  //  2. An idle timer that hides the bar after TRANSPORT_IDLE_MS, re-armed on every reveal, and
-  //     guarded so it never hides mid-scrub/drag.
+  // A mobile bottom sheet is open (Chapters / Settings) — chrome must never auto-hide
+  // out from under an open sheet.
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
+
+  // Cinema auto-hide.
+  //
+  // DESKTOP fullscreen: reveal on pointer activity over the OUTER container (replayContainerRef
+  // — it is pointer-events:auto; the inner positioning frame is pointer-events:none so a listener
+  // there would never fire), plus an idle timer that hides the bar after TRANSPORT_IDLE_MS,
+  // re-armed on every reveal, and guarded so it never hides mid-scrub/drag (either rail).
+  //
+  // MOBILE immersive: the standard video-player model instead — a TAP toggles the chrome (wired
+  // below via the container tap handler), and the same idle timer auto-hides it while playing.
+  // Pointer-move reveal is NOT attached on mobile: every camera drag would re-reveal and the
+  // chrome would never rest.
   const idleTimerRef = useRef<number | null>(null);
   useEffect(() => {
     if (!isImmersive) return;
@@ -590,8 +640,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     const armIdle = (): void => {
       if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
       idleTimerRef.current = window.setTimeout(() => {
-        // Never hide while the user is actively scrubbing/dragging the timeline.
-        if (isDragging || isScrubbingMode) {
+        // Never hide while the user is actively scrubbing/dragging a timeline, while a
+        // mobile sheet is open, or (on mobile) while paused — paused chrome is the resting UI.
+        if (isDragging || isScrubbingMode || isTrialDragging || mobileSheetOpen) {
+          armIdle();
+          return;
+        }
+        if (isMobile && !isPlaying) {
           armIdle();
           return;
         }
@@ -604,19 +659,70 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       armIdle();
     };
 
-    // Passive listeners (never preventDefault) so canvas pinch/OrbitControls are untouched.
-    el.addEventListener('pointermove', reveal, { passive: true });
-    el.addEventListener('touchstart', reveal, { passive: true });
-    el.addEventListener('touchmove', reveal, { passive: true });
+    if (!isMobile) {
+      // Passive listeners (never preventDefault) so canvas pinch/OrbitControls are untouched.
+      el.addEventListener('pointermove', reveal, { passive: true });
+      el.addEventListener('touchstart', reveal, { passive: true });
+      el.addEventListener('touchmove', reveal, { passive: true });
+    }
     armIdle(); // start the clock on entering fullscreen
     return () => {
-      el.removeEventListener('pointermove', reveal);
-      el.removeEventListener('touchstart', reveal);
-      el.removeEventListener('touchmove', reveal);
+      if (!isMobile) {
+        el.removeEventListener('pointermove', reveal);
+        el.removeEventListener('touchstart', reveal);
+        el.removeEventListener('touchmove', reveal);
+      }
       if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
       idleTimerRef.current = null;
     };
-  }, [isImmersive, isDragging, isScrubbingMode]);
+  }, [
+    isImmersive,
+    isMobile,
+    isPlaying,
+    isDragging,
+    isScrubbingMode,
+    isTrialDragging,
+    mobileSheetOpen,
+  ]);
+
+  // Mobile immersive: force the chrome back whenever playback pauses (pause = "I want the
+  // controls"), and seed it visible on entering the overlay regardless of the desktop-persisted
+  // collapse preference.
+  useEffect(() => {
+    if (mobileImmersive && !isPlaying) setBarVisible(true);
+  }, [mobileImmersive, isPlaying]);
+
+  // Mobile tap-to-toggle: a true tap (≤8px travel) on the EMPTY arena flips the chrome. Taps on
+  // controls (dock, top bar, sheets) and taps that locked onto an actor are ignored — Arena3D's
+  // actor click runs during the canvas's own pointerup (before this bubble listener), so a fresh
+  // actorTapRef timestamp means "this tap selected someone, leave the chrome alone".
+  const tapStartRef = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!mobileImmersive) return;
+    const el = replayContainerRef.current;
+    if (!el) return;
+
+    const onDown = (e: PointerEvent): void => {
+      tapStartRef.current = { x: e.clientX, y: e.clientY };
+    };
+    const onUp = (e: PointerEvent): void => {
+      const start = tapStartRef.current;
+      tapStartRef.current = null;
+      if (!start) return;
+      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) return;
+      const target = e.target as HTMLElement | null;
+      // Only bare-canvas taps toggle; anything interactive handles itself.
+      if (!target || target.tagName !== 'CANVAS') return;
+      if (performance.now() - actorTapRef.current < 80) return;
+      setBarVisible((v) => !v);
+    };
+    el.addEventListener('pointerdown', onDown, { passive: true });
+    el.addEventListener('pointerup', onUp, { passive: true });
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointerup', onUp);
+    };
+  }, [mobileImmersive]);
 
   // When the user LEAVES fullscreen (not on mount), restore the bar — exiting into an
   // auto-hidden bar would be disorienting. Tracks the previous fullscreen state so the persisted
@@ -684,6 +790,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // FightReplay3D's playback state.
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent): void => {
+      // A focused widget (chapter stop roving focus, the trial rail's slider keys) that consumed
+      // this key already called preventDefault() — yield, so one press can't both move widget
+      // focus AND scrub playback.
+      if (event.defaultPrevented) {
+        return;
+      }
       // Don't interfere with text input.
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
         return;
@@ -767,6 +879,10 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           setLoopOutPoint();
           event.preventDefault();
           break;
+        case 'u': // Clear the A–B loop (the keyboard escape from a looping range)
+          clearLoop();
+          event.preventDefault();
+          break;
         case 'c': // Collapse / restore the transport bar (cinema mode)
           toggleBar();
           event.preventDefault();
@@ -785,113 +901,154 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     jumpToEvent,
     setLoopInPoint,
     setLoopOutPoint,
+    clearLoop,
     toggleBar,
   ]);
 
-  // The fight that continuous play will flow into next (for the "up next" hint).
-  const trialNextUpLabel = React.useMemo(() => {
+  // The next timeline entry after the loaded fight (continuous-play flow target). Falls back to
+  // the first entry starting after the current fight when the fight itself isn't on the timeline
+  // (e.g. a deep-linked trash blip below the segment threshold).
+  const nextEntry = React.useMemo(() => {
     if (!trialNav) return null;
     const match = entryForFight(trialNav.timeline, trialNav.currentFightId);
-    const next = match ? trialNav.timeline.entries[match.index + 1] : undefined;
-    return next?.chapter.name ?? null;
-  }, [trialNav]);
+    if (match) return trialNav.timeline.entries[match.index + 1] ?? null;
+    return (
+      trialNav.timeline.entries.find((e) => e.chapter.startTime > selectedFight.startTime) ?? null
+    );
+  }, [trialNav, selectedFight.startTime]);
 
-  // The trial scrubber + "play whole trial" controls show for a multi-segment run, alongside the
-  // transport (so they're available in fullscreen), and hide with the bar / on the mobile teaser.
-  const showTrialBar =
-    !mobilePreview && barVisible && trialNav != null && trialNav.timeline.entries.length > 1;
+  const trialNextUpLabel = nextEntry ? chapterDisplayName(nextEntry.chapter) : null;
 
-  // The trial chip / expanded scrubber, rendered once and placed differently per form factor:
-  // docked above the transport on desktop, but at the TOP on mobile (the bottom is reserved for a
-  // clean single transport row + the player bottom-sheet).
-  const trialBarContent =
-    showTrialBar && trialNav ? (
-      trialBarExpanded ? (
-        <Box
-          sx={(theme) => ({
-            position: 'relative',
-            mx: { xs: 1, sm: 2 },
-            mb: 0.5,
-            px: { xs: 1, sm: 1.5 },
-            py: { xs: 0.75, sm: 1 },
-            pr: { xs: 4, sm: 4.5 },
-            borderRadius: 2,
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            backgroundColor:
-              theme.palette.mode === 'dark'
-                ? 'rgba(13, 18, 30, 0.72)'
-                : 'rgba(255, 255, 255, 0.78)',
-            border: `1px solid ${theme.palette.divider}`,
-          })}
-        >
-          <IconButton
-            size="small"
-            onClick={toggleTrialBar}
-            aria-label="Hide trial timeline"
-            sx={{ position: 'absolute', top: 2, right: 2 }}
-          >
-            <KeyboardArrowDownRoundedIcon fontSize="small" />
-          </IconButton>
-          <ContinuousReplayBar
-            timeline={trialNav.timeline}
-            currentFightId={trialNav.currentFightId}
-            currentLocalMs={currentTime}
-            onSeek={handleTrialSeek}
-            continuousEnabled={trialNav.continuousEnabled}
-            onToggleContinuous={trialNav.onToggleContinuous}
-            includeTrash={trialNav.includeTrash}
-            onToggleIncludeTrash={trialNav.onToggleIncludeTrash}
-            hasTrash={trialNav.hasTrash}
-            runName={trialNav.runName}
-            runIndex={trialNav.runIndex}
-            runCount={trialNav.runCount}
-            nextUpLabel={trialNextUpLabel}
-            compact={isMobile}
-          />
-        </Box>
-      ) : (
-        // Collapsed: a small chip so the trial scrubber doesn't clutter the view.
-        <Box
-          component="button"
-          type="button"
-          onClick={toggleTrialBar}
-          aria-label="Show trial timeline"
-          sx={(theme) => ({
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 0.5,
-            ml: { xs: 1, sm: 2 },
-            mb: 0.5,
-            px: 1,
-            py: 0.5,
-            borderRadius: 999,
-            cursor: 'pointer',
-            appearance: 'none',
-            font: 'inherit',
-            color: 'text.primary',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            backgroundColor:
-              theme.palette.mode === 'dark'
-                ? 'rgba(13, 18, 30, 0.72)'
-                : 'rgba(255, 255, 255, 0.82)',
-            border: `1px solid ${theme.palette.divider}`,
-            '&:focus-visible': {
-              outline: `2px solid ${theme.palette.primary.main}`,
-              outlineOffset: 2,
-            },
-          })}
-        >
-          <TimelineRoundedIcon fontSize="small" color="primary" />
-          <Typography variant="caption" sx={{ fontWeight: 700 }} noWrap>
-            {trialNav.runCount > 1
-              ? `${trialNav.runName} · ${trialNav.runIndex + 1}/${trialNav.runCount}`
-              : 'Trial timeline'}
-          </Typography>
-        </Box>
-      )
-    ) : null;
+  const hasTrialRun = trialNav != null && trialNav.timeline.entries.length > 1;
+
+  // Popover portal target — the fullscreen element, so the chapters list survives fullscreen.
+  const portalContainer = useCallback(() => replayContainerRef.current, []);
+
+  // The whole-trial layer the transport deck renders (mini-map strip, autoplay, boss skip,
+  // chapters popover). Memoized: it changes on fight switches / toggle flips, not playback ticks.
+  const transportTrial: TransportTrial | undefined = React.useMemo(() => {
+    if (!trialNav || !hasTrialRun) return undefined;
+    return {
+      timeline: trialNav.timeline,
+      currentFightId: trialNav.currentFightId,
+      onSeek: handleTrialSeek,
+      onDraggingChange: handleTrialDraggingChange,
+      autoplayEnabled: trialNav.continuousEnabled,
+      onToggleAutoplay: trialNav.onToggleContinuous,
+      includeTrash: trialNav.includeTrash,
+      onToggleIncludeTrash: trialNav.onToggleIncludeTrash,
+      hasTrash: trialNav.hasTrash,
+      runName: trialNav.runName,
+      runIndex: trialNav.runIndex,
+      runCount: trialNav.runCount,
+      bossSummary: trialNav.bossSummary,
+      prevBoss: trialNav.prevBoss,
+      nextBoss: trialNav.nextBoss,
+      onSelectChapter: handleSelectChapter,
+      portalContainer,
+    };
+  }, [
+    trialNav,
+    hasTrialRun,
+    handleTrialSeek,
+    handleTrialDraggingChange,
+    handleSelectChapter,
+    portalContainer,
+  ]);
+
+  // ——— End-of-fight affordances (Up next countdown / Play next / Run complete) ———
+  // Driven by the ~500ms currentTime state tick; mounts nothing outside the final seconds.
+  const playbackEnded = !isPlaying && duration > 0 && currentTime >= duration - 250;
+  const loopActive = loopStart != null && loopEnd != null && Math.abs(loopEnd - loopStart) >= 100;
+  const [countdownCancelled, setCountdownCancelled] = useState(false);
+  useEffect(() => {
+    // Re-arm the countdown when the fight changes or the playhead leaves the tail window.
+    if (duration - currentTime > 6000 && countdownCancelled) setCountdownCancelled(false);
+  }, [currentTime, duration, countdownCancelled]);
+
+  const upNextState: UpNextState | null = React.useMemo(() => {
+    if (!hasTrialRun || mobilePreview || trialNav?.isFightDataLoading) return null;
+    if (playbackEnded) {
+      if (!nextEntry) return { kind: 'run-complete' };
+      if (!trialNav?.continuousEnabled) {
+        return { kind: 'play-next', label: chapterDisplayName(nextEntry.chapter) };
+      }
+      return null;
+    }
+    if (
+      trialNav?.continuousEnabled &&
+      isPlaying &&
+      nextEntry &&
+      !loopActive &&
+      !countdownCancelled
+    ) {
+      const remainingRealMs = (duration - currentTime) / Math.max(0.25, playbackSpeed);
+      if (remainingRealMs <= 5000 && remainingRealMs > 0) {
+        return {
+          kind: 'countdown',
+          label: chapterDisplayName(nextEntry.chapter),
+          secondsLeft: Math.max(1, Math.ceil(remainingRealMs / 1000)),
+        };
+      }
+    }
+    return null;
+  }, [
+    hasTrialRun,
+    mobilePreview,
+    trialNav?.isFightDataLoading,
+    trialNav?.continuousEnabled,
+    playbackEnded,
+    nextEntry,
+    isPlaying,
+    loopActive,
+    countdownCancelled,
+    duration,
+    currentTime,
+    playbackSpeed,
+  ]);
+
+  const handleCancelAdvance = useCallback(() => {
+    skipNextAdvanceRef.current = true;
+    setCountdownCancelled(true);
+  }, []);
+  const handlePlayNext = useCallback(() => {
+    if (nextEntry) trialNavRef.current?.onAdvanceToFight(nextEntry.chapter.fightId);
+  }, [nextEntry]);
+  const handleReplayRun = useCallback(() => {
+    const first = trialNavRef.current?.timeline.entries[0];
+    if (!first) return;
+    if (first.chapter.fightId === trialNavRef.current?.currentFightId) {
+      seekTo(0);
+      setIsPlaying(true);
+    } else {
+      trialNavRef.current?.onAdvanceToFight(first.chapter.fightId);
+    }
+  }, [seekTo]);
+
+  // ——— Transition overlay + screen-reader announcements ———
+  // Hysteresis keeps the "Entering" veil from strobing on instant (cached) fight loads, and
+  // holds it long enough to read on fast ones.
+  const isFightDataLoadingRaw = trialNav?.isFightDataLoading ?? false;
+  const transitionVisible = useDelayedFlag(isFightDataLoadingRaw, {
+    showDelayMs: 150,
+    minVisibleMs: 450,
+  });
+  // Permanently-mounted polite live region (mounted empty; text injected after mount so SRs
+  // reliably announce fight transitions during continuous play).
+  const [announcement, setAnnouncement] = useState('');
+  const enteringLabelRef = useRef(trialNav?.enteringLabel ?? null);
+  enteringLabelRef.current = trialNav?.enteringLabel ?? null;
+  useEffect(() => {
+    if (isFightDataLoadingRaw && enteringLabelRef.current) {
+      setAnnouncement(`Entering ${enteringLabelRef.current}`);
+    }
+  }, [isFightDataLoadingRaw]);
+  useEffect(() => {
+    if (pendingAutoplay && !isFightDataLoading) {
+      setAnnouncement(`Now playing ${selectedFight.name ?? 'next fight'}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- announce only on the resume edge
+  }, [pendingAutoplay, isFightDataLoading]);
 
   return (
     // Relative wrapper holds the canvas (Paper) and the playback bar as SIBLINGS so the bar can dock
@@ -973,24 +1130,46 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           // Arena3D's in-canvas mobile control cluster (its close + tools button).
           hideMobileControls={mobileImmersive}
           // Reserve space at the bottom so overlays (the player sheet, boss health) clear whatever
-          // docks there: the mobile dock (~3 rows ≈ 132px), else the desktop transport band (+ trial bar).
+          // docks there: the mobile dock (~3 rows ≈ 132px), else the desktop transport band
+          // (+ the trial mini-map strip, which adds ~24px to the deck for multi-fight runs).
           reservedInset={
-            mobileImmersive
-              ? 132
-              : isImmersive && !barVisible
-                ? HAIRLINE_H + 4
-                : TRANSPORT_RESERVED +
-                  (!isMobile && showTrialBar ? (trialBarExpanded ? 104 : 44) : 0)
+            (mobileImmersive && !barVisible) || (isImmersive && !barVisible)
+              ? HAIRLINE_H + 4
+              : mobileImmersive
+                ? 132
+                : TRANSPORT_RESERVED + (!isMobile && hasTrialRun ? 24 : 0)
           }
         />
       </Paper>
 
       {/* Continuous-play transition — covers the brief reload + collapsed travel gap while the next
-          fight loads, keeping fullscreen intact (it renders inside this persistent container). */}
+          fight loads, keeping fullscreen intact (it renders inside this persistent container).
+          Hysteresis (useDelayedFlag) keeps it from strobing on instant cached loads. */}
       <ReplayTransitionOverlay
-        visible={trialNav?.isFightDataLoading ?? false}
+        visible={transitionVisible}
         label={trialNav?.enteringLabel ?? null}
       />
+
+      {/* Screen-reader narration of continuous play — mounted empty, text injected on fight
+          transitions ("Entering X" / "Now playing X") so the announcements actually fire. */}
+      <Box component="span" sx={visuallyHidden} role="status" aria-live="polite">
+        {announcement}
+      </Box>
+
+      {/* End-of-fight affordances: Up-next countdown (with Cancel), Play-next when autoplay is
+          off, Run-complete at the end of the run. Sits above the transport, inside the
+          persistent container so it survives fullscreen. */}
+      {upNextState && (
+        <UpNextCard
+          state={upNextState}
+          onCancel={handleCancelAdvance}
+          onPlayNext={handlePlayNext}
+          onReplayRun={handleReplayRun}
+          bottomInset={
+            mobileImmersive ? 148 : TRANSPORT_RESERVED + (!isMobile && hasTrialRun ? 32 : 8)
+          }
+        />
+      )}
 
       {/* Playback controls — docked as a translucent overlay at the bottom of the canvas. The outer
           Box is a positioning frame only (pointer-events:none) so its transparent area never steals
@@ -1016,8 +1195,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             pb: 1.5,
             background:
               'linear-gradient(180deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.32) 55%, rgba(0,0,0,0) 100%)',
+            // Tap-to-toggle chrome: fades with the dock (opacity only — a transform here would
+            // become the containing block for the dock's fixed-position sheets).
+            opacity: barVisible ? 1 : 0,
+            transition: `opacity ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
             pointerEvents: 'none',
-            '& > *': { pointerEvents: 'auto' },
+            '& > *': { pointerEvents: barVisible ? 'auto' : 'none' },
           }}
         >
           <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 0.75 }}>
@@ -1070,8 +1253,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 0.5,
-                  height: 36,
-                  px: 1.25,
+                  height: 44,
+                  px: 1.5,
                   borderRadius: 999,
                   border: '1px solid',
                   borderColor: alpha(theme.palette.primary.main, 0.7),
@@ -1091,8 +1274,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
               onClick={toggleFullscreen}
               sx={{
                 color: '#fff',
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 backgroundColor: 'rgba(8,11,20,0.86)',
                 border: '1px solid rgba(255,255,255,0.14)',
                 '&:hover': { backgroundColor: 'rgba(8,11,20,0.95)' },
@@ -1105,9 +1288,32 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       )}
 
       {/* Mobile shell — BOTTOM DOCK: scrub rail + play cluster + Players/Chapters/Settings sheets.
-          Replaces the desktop transport + the floating trial chip + the tools button entirely. */}
+          Replaces the desktop transport + the floating trial chip + the tools button entirely.
+          Fades with the tap-to-toggle chrome (opacity only — NO transform, the sheets inside are
+          position:fixed and a transformed ancestor would become their containing block). */}
+      {mobileImmersive && !barVisible && (
+        <Box
+          aria-hidden
+          sx={(t) => ({
+            ...transportHairline(t, duration > 0 ? (currentTime / duration) * 100 : 0),
+            position: 'absolute',
+            zIndex: 6,
+          })}
+        />
+      )}
       {mobileImmersive && (
-        <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 6 }}>
+        <Box
+          sx={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 6,
+            opacity: barVisible ? 1 : 0,
+            transition: `opacity ${TRANSPORT_MOTION.settle} ${TRANSPORT_MOTION.ease}`,
+            pointerEvents: barVisible ? 'auto' : 'none',
+          }}
+        >
           <MobileReplayDock
             currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}
@@ -1141,6 +1347,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             statsPanelEnabled={statsPanelEnabled}
             onToggleStats={toggleStats}
             following={followingActorId != null}
+            onSheetOpenChange={setMobileSheetOpen}
           />
         </Box>
       )}
@@ -1156,8 +1363,6 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             '& > *': { pointerEvents: 'auto' },
           }}
         >
-          {/* Desktop docks the trial bar above the transport. */}
-          {!isMobile && trialBarContent}
           <PlaybackControls
             currentTime={currentTime}
             duration={selectedFight.endTime - selectedFight.startTime}
@@ -1192,6 +1397,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             }
             overlay
             isMobile={isMobile}
+            trial={transportTrial}
           />
         </Box>
       )}

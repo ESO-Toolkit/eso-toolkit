@@ -1,16 +1,31 @@
 /**
  * PlaybackControls Component
  *
- * Main playback controls container for fight replay.
- * Orchestrates timeline, buttons, speed, and share sub-components.
+ * Main playback controls container for fight replay — one unified "control deck"
+ * on a single glass surface. For a multi-fight trial run the deck stacks, top to
+ * bottom: the trial mini-map strip (whole-run scrubber), the per-fight scrub
+ * rail, and the control row (timecode · outcome · speed | transport + boss skip
+ * | autoplay · chapters · share · collapse). For a single isolated fight the
+ * trial pieces simply don't render and the deck is byte-identical to before.
  *
  * @module PlaybackControls
  */
 
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardDoubleArrowLeftRounded from '@mui/icons-material/KeyboardDoubleArrowLeftRounded';
+import KeyboardDoubleArrowRightRounded from '@mui/icons-material/KeyboardDoubleArrowRightRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import { Box, Divider, IconButton, Popover, Tooltip, Typography } from '@mui/material';
+import {
+  Box,
+  Divider,
+  FormControlLabel,
+  IconButton,
+  Popover,
+  Switch,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import React from 'react';
 
 import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
@@ -22,11 +37,49 @@ import {
   transportSurface,
   transportHairline,
 } from '../constants/replayDesign';
+import type { TrialTimeline as TrialTimelineModel } from '../trial_chapters/trialTimeline';
+import type { TrialChapter } from '../trial_chapters/types';
 
+import { ChaptersPopoverButton } from './ChaptersPopoverButton';
 import { PlaybackButtons } from './PlaybackButtons';
 import { ShareButton } from './ShareButton';
 import { SpeedSelector } from './SpeedSelector';
-import { TimelineSlider } from './TimelineSlider';
+import { ContextBadge, LoopChip, TimelineSlider } from './TimelineSlider';
+import { TrialTimeline, type TrialTimelineSeekTarget } from './TrialTimeline';
+
+/**
+ * The trial-run bundle the deck needs to render the whole-run layer: the
+ * mini-map strip, the autoplay toggle, boss skip, and the chapters popover.
+ * Present only for multi-segment runs.
+ */
+export interface TransportTrial {
+  /** The run's continuous timeline (already filtered by include-trash). */
+  timeline: TrialTimelineModel;
+  currentFightId: string | undefined;
+  /** Commit a trial-wide seek (same-fight = instant; cross-fight = navigate). */
+  onSeek: (target: TrialTimelineSeekTarget) => void;
+  /** Reports strip drag state (guards the fullscreen idle auto-hide). */
+  onDraggingChange?: (dragging: boolean) => void;
+  /** Whether auto-advance ("autoplay the whole trial") is on. */
+  autoplayEnabled: boolean;
+  onToggleAutoplay: () => void;
+  includeTrash: boolean;
+  onToggleIncludeTrash: () => void;
+  hasTrash: boolean;
+  /** Run identity for the chapters popover. */
+  runName: string;
+  runIndex: number;
+  runCount: number;
+  /** e.g. "9 / 12 bosses", or null when the run has no bosses. */
+  bossSummary: string | null;
+  /** Boss skip targets relative to the active fight. */
+  prevBoss: TrialChapter | null;
+  nextBoss: TrialChapter | null;
+  /** Navigate to a chapter (popover rows + boss-skip buttons). */
+  onSelectChapter: (chapter: TrialChapter) => void;
+  /** Popover portal target so the chapters list survives native fullscreen. */
+  portalContainer?: () => HTMLElement | null;
+}
 
 interface PlaybackControlsProps {
   currentTime: number;
@@ -81,6 +134,8 @@ interface PlaybackControlsProps {
    * and tucks Speed + Share behind a "more" toggle, so the transport stays uncluttered on a phone.
    */
   isMobile?: boolean;
+  /** The whole-trial layer (mini-map, autoplay, chapters) for multi-segment runs. */
+  trial?: TransportTrial;
 }
 
 /**
@@ -100,11 +155,10 @@ const formatTime = (timeMs: number): string => {
 /**
  * PlaybackControls Component
  *
- * Main playback controls container that orchestrates:
+ * Orchestrates the deck's three rows:
+ * - Trial mini-map strip (multi-fight runs only)
  * - Timeline slider with scrubbing support
- * - Playback buttons (play/pause, skip)
- * - Speed selector
- * - Share button (optional, when reportId/fightId provided)
+ * - Control row: timecode/outcome/speed · transport + boss skip · trial toggles/share
  */
 export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   currentTime,
@@ -136,6 +190,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   onToggleCollapse,
   progressPct = 0,
   isMobile = false,
+  trial,
 }) => {
   // Mobile "more" disclosure — Speed + Share live in a floating popover so opening them never
   // grows the transport (which would overlap the player panel / boss-health / control cluster).
@@ -197,6 +252,8 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   // Reduced motion: skip the translate (keep the opacity swap, which the theme zeroes globally).
   const hideTransform = hidden && !prefersReducedMotion ? 'translateY(8px)' : 'none';
 
+  const showTrial = trial != null && trial.timeline.entries.length > 1;
+
   return (
     <Box sx={{ position: 'relative' }}>
       {/* Progress hairline — only while the fullscreen bar is hidden, so position stays legible. */}
@@ -225,10 +282,9 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
         </Tooltip>
       )}
 
-      {/* The compact transport bar — a thin YouTube-style overlay. TWO stacked rows inside the
-          glass surface: (1) the scrub rail FULL-WIDTH across the top so it's always usable, and
-          (2) a short control row beneath it. This is the fix for the broken single-row layout
-          where the rail collapsed to 0px fighting the controls for horizontal space. */}
+      {/* The compact transport bar — a thin YouTube-style overlay. Stacked rows inside ONE glass
+          surface: (0) the trial mini-map strip for multi-fight runs, (1) the per-fight scrub rail
+          FULL-WIDTH so it's always usable, and (2) a short control row beneath them. */}
       <Box
         sx={(t) => ({
           display: 'flex',
@@ -247,6 +303,19 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           ...transportSurface(t, overlay, true),
         })}
       >
+        {/* Row 0: trial mini-map — the whole run as one gapless strip, flush above the fight
+            rail so the two playheads share one x-axis and read as one system. */}
+        {showTrial && trial && (
+          <TrialTimeline
+            timeline={trial.timeline}
+            currentFightId={trial.currentFightId}
+            currentLocalMs={displayTime}
+            onSeek={trial.onSeek}
+            onDraggingChange={trial.onDraggingChange}
+            variant="deck"
+          />
+        )}
+
         {/* Row 1: scrub rail — full width, the primary control. density="compact" = rail only. */}
         <TimelineSlider
           displayTime={displayTime}
@@ -266,11 +335,11 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
           density="compact"
         />
 
-        {/* Row 2: a short control row — timecode + speed (left) · transport (center) ·
-            share + collapse (right). Small controls so the whole bar stays thin. On very narrow
-            phones the left group (timecode + speed) was wide enough to push the centered transport
-            cluster into the speed pill, so tighten the inner gaps and shrink the "/ total" readout
-            there to give the centered orb room. */}
+        {/* Row 2: a short control row — timecode + outcome + speed (left) · transport + boss skip
+            (center) · trial toggles + share + collapse (right). Small controls so the whole bar
+            stays thin. On very narrow phones the left group (timecode + speed) was wide enough to
+            push the centered transport cluster into the speed pill, so tighten the inner gaps and
+            shrink the "/ total" readout there to give the centered orb room. */}
         <Box
           sx={{
             display: 'flex',
@@ -280,10 +349,11 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             '@media (max-width: 430px)': {
               '& .transport-side': { gap: 0.5 },
               '& .transport-total-time': { display: 'none' },
+              '& .transport-outcome': { display: 'none' },
             },
           }}
         >
-          {/* Left: timecode + speed */}
+          {/* Left: timecode + outcome + speed */}
           <Box
             className="transport-side"
             sx={{ flex: '1 1 0', display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}
@@ -311,6 +381,14 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
                 / {formatTime(duration)}
               </Box>
             </Box>
+            {/* Outcome badge — the kill/wipe semantics every other chapter surface uses. */}
+            {replayContext?.isKill != null && (
+              <Box component="span" className="transport-outcome" sx={{ display: 'inline-flex' }}>
+                <ContextBadge tone={replayContext.isKill ? 'success' : 'warning'}>
+                  {replayContext.isKill ? 'Kill' : 'Wipe'}
+                </ContextBadge>
+              </Box>
+            )}
             {/* Speed lives inline on desktop; on mobile it moves into the "more" row below. */}
             {!isMobile && (
               <SpeedSelector
@@ -321,8 +399,33 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             )}
           </Box>
 
-          {/* Center: transport cluster (compact orb) */}
-          <Box sx={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
+          {/* Center: transport cluster (compact orb) flanked by boss-skip for trial runs. */}
+          <Box sx={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 0.25 }}>
+            {showTrial && trial && (
+              <Tooltip
+                title={
+                  trial.prevBoss ? `Previous boss: ${trial.prevBoss.name} ( [ )` : 'Previous boss'
+                }
+              >
+                <Box component="span" sx={{ display: 'inline-flex' }}>
+                  <IconButton
+                    aria-label={
+                      trial.prevBoss ? `Previous boss: ${trial.prevBoss.name}` : 'Previous boss'
+                    }
+                    size="small"
+                    disabled={!trial.prevBoss}
+                    onClick={() => trial.prevBoss && trial.onSelectChapter(trial.prevBoss)}
+                    sx={{
+                      color: 'text.secondary',
+                      '&:hover': { color: 'text.primary' },
+                      '@media (pointer: coarse)': { display: 'none' },
+                    }}
+                  >
+                    <KeyboardDoubleArrowLeftRounded fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Tooltip>
+            )}
             <PlaybackButtons
               isPlaying={isPlaying}
               onPlayPause={onPlayPause}
@@ -332,9 +435,30 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               onSkipForward10={onSkipForward10}
               compact
             />
+            {showTrial && trial && (
+              <Tooltip
+                title={trial.nextBoss ? `Next boss: ${trial.nextBoss.name} ( ] )` : 'Next boss'}
+              >
+                <Box component="span" sx={{ display: 'inline-flex' }}>
+                  <IconButton
+                    aria-label={trial.nextBoss ? `Next boss: ${trial.nextBoss.name}` : 'Next boss'}
+                    size="small"
+                    disabled={!trial.nextBoss}
+                    onClick={() => trial.nextBoss && trial.onSelectChapter(trial.nextBoss)}
+                    sx={{
+                      color: 'text.secondary',
+                      '&:hover': { color: 'text.primary' },
+                      '@media (pointer: coarse)': { display: 'none' },
+                    }}
+                  >
+                    <KeyboardDoubleArrowRightRounded fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Tooltip>
+            )}
           </Box>
 
-          {/* Right: share + collapse chevron */}
+          {/* Right: trial toggles + loop + share + collapse chevron */}
           <Box
             className="transport-side"
             sx={{
@@ -346,6 +470,57 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               minWidth: 0,
             }}
           >
+            {/* A–B loop chip — the only clear-loop affordance (i/o set, U or × clears). */}
+            {(loopStart != null || loopEnd != null) && (
+              <LoopChip
+                loopStart={loopStart}
+                loopEnd={loopEnd}
+                onClearLoop={onClearLoop}
+                formatTime={formatTime}
+              />
+            )}
+
+            {/* Autoplay — continue into the next fight when this one ends (YouTube semantics:
+                a mode, not a play action). Named + switch-shaped so it can't read as a second
+                play button. */}
+            {showTrial && trial && (
+              <Tooltip title="Autoplay — automatically continue into the next fight">
+                <FormControlLabel
+                  sx={{ m: 0, display: { xs: 'none', sm: 'inline-flex' } }}
+                  control={
+                    <Switch
+                      size="small"
+                      checked={trial.autoplayEnabled}
+                      onChange={trial.onToggleAutoplay}
+                      slotProps={{ input: { 'aria-label': 'Autoplay the whole trial' } }}
+                    />
+                  }
+                  label={
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                      Autoplay
+                    </Typography>
+                  }
+                />
+              </Tooltip>
+            )}
+
+            {/* Chapters — the fullscreen-reachable boss list. */}
+            {showTrial && trial && (
+              <ChaptersPopoverButton
+                chapters={trial.timeline.entries.map((e) => e.chapter)}
+                currentFightId={trial.currentFightId}
+                onSelectChapter={trial.onSelectChapter}
+                runName={trial.runName}
+                runIndex={trial.runIndex}
+                runCount={trial.runCount}
+                bossSummary={trial.bossSummary}
+                includeTrash={trial.includeTrash}
+                onToggleIncludeTrash={trial.onToggleIncludeTrash}
+                hasTrash={trial.hasTrash}
+                portalContainer={trial.portalContainer}
+              />
+            )}
+
             {/* Desktop keeps Share inline; mobile folds Speed + Share into a "more" row. */}
             {isMobile ? (
               <Tooltip title="Speed & share">

@@ -1,6 +1,6 @@
 import type { FightFragment, ReportFragment } from '../../../graphql/gql/graphql';
 
-import { buildTrialChapters, findRunForFight } from './buildTrialChapters';
+import { buildTrialChapters, findRunForFight, MIN_TRASH_SEGMENT_MS } from './buildTrialChapters';
 
 const makeFight = (overrides: Partial<FightFragment> = {}): FightFragment =>
   ({
@@ -32,6 +32,26 @@ describe('buildTrialChapters', () => {
       rockgrove,
     );
     expect(runs).toEqual([]);
+  });
+
+  it('drops degenerate trash blips but never bosses', () => {
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      // A 400ms stray-add "fight" — would render as a useless "Cleared 0:00" stop.
+      trash({ id: 2, startTime: 61000, endTime: 61400 }),
+      trash({ id: 3, startTime: 62000, endTime: 62000 + MIN_TRASH_SEGMENT_MS }),
+      // A 3s boss wipe is a real pull and must survive.
+      makeFight({
+        id: 4,
+        name: 'Xalvakka',
+        startTime: 70000,
+        endTime: 73000,
+        kill: false,
+        bossPercentage: 80,
+      }),
+    ];
+    const [run] = buildTrialChapters(fights, rockgrove);
+    expect(run.segments.map((s) => s.fightId)).toEqual(['1', '3', '4']);
   });
 
   it('orders boss chapters by start time and indexes them', () => {

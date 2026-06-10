@@ -25,6 +25,15 @@ import {
 
 import type { TrialChapter, TrialChapterRun, TrialSegmentKind } from './types';
 
+/**
+ * Trash pulls shorter than this are dropped from the chapter model entirely.
+ * ESO Logs records lots of sub-second / few-second "fights" (a single stray add
+ * dying mid-run) that render as useless "Cleared 0:00" stops on the rail and
+ * flash-through segments during continuous play. Bosses are never filtered —
+ * even a 3-second wipe is a real pull worth navigating to.
+ */
+export const MIN_TRASH_SEGMENT_MS = 5000;
+
 /** Result of locating a fight within the built runs. */
 export interface RunMatch {
   /** The run that owns the fight. */
@@ -85,13 +94,16 @@ export function buildTrialChapters(
   }
 
   // Every renderable fight (boss + trash), with a valid time window, in play order.
+  // Degenerate trash blips (< MIN_TRASH_SEGMENT_MS) are dropped here so they never
+  // become rail stops or timeline segments; bosses always survive the filter.
   const validFights = fights
     .filter(
       (fight): fight is FightFragment =>
         fight != null &&
         fight.startTime != null &&
         fight.endTime != null &&
-        fight.endTime > fight.startTime,
+        fight.endTime > fight.startTime &&
+        (fight.difficulty != null || fight.endTime - fight.startTime >= MIN_TRASH_SEGMENT_MS),
     )
     .sort((a, b) => a.startTime - b.startTime);
 
