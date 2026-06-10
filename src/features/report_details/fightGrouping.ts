@@ -14,7 +14,12 @@
  * All functions here are pure so they can be unit-tested without React.
  */
 
-import { CONTENT_ZONES, getContentZone, type ContentType } from '../../data/esoContentZones';
+import {
+  CONTENT_ZONES,
+  getContentZone,
+  getDungeonBossCount,
+  type ContentType,
+} from '../../data/esoContentZones';
 import type { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 
 /** Index of canonical display name → content zone, for the name-based fallback. */
@@ -256,12 +261,15 @@ export function resolveFightZone(
 
   // 2. Raw gameZone — an unrecognised zone (a dungeon, or a solo/group arena).
   //    Group by its id; classify arenas by name so they aren't called dungeons.
+  //    Dungeons get an expected boss count from the curated dungeon rosters.
   if (gz?.id) {
+    const type = classifyUnknownZone(gz.name);
     return {
       key: `zone:${gz.id}`,
       zoneId: gz.id,
       name: gz.name || reportData?.zone?.name || 'Unknown Zone',
-      type: classifyUnknownZone(gz.name),
+      type,
+      expectedBossCount: type === 'dungeon' ? getDungeonBossCount(gz.name) : undefined,
     };
   }
   if (gz?.name) {
@@ -277,11 +285,13 @@ export function resolveFightZone(
         expectedBossCount: byName.expectedBossCount,
       };
     }
+    const type = classifyUnknownZone(gz.name);
     return {
       key: `name:${gz.name.toLowerCase()}`,
       zoneId: null,
       name: gz.name,
-      type: classifyUnknownZone(gz.name),
+      type,
+      expectedBossCount: type === 'dungeon' ? getDungeonBossCount(gz.name) : undefined,
     };
   }
 

@@ -214,13 +214,20 @@ dungeons/arenas should be a follow-up coordinated with those PRs.
 
 ## Deferred / future work
 
-- **Dungeon metadata** (expected boss counts, veteran-HM rules) — coordinate with
-  PR #1193's dungeon data once merged; plug into `CONTENT_ZONES`.
+- ~~**Dungeon metadata** (expected boss counts) — coordinate with PR #1193's
+  dungeon data once merged; plug into `CONTENT_ZONES`.~~ **Done** — #1193's
+  curated dungeon rosters are merged into this branch and consumed by name
+  (`getDungeonBossCount`), giving dungeon runs an expected boss count for the
+  completion ring. Dungeon **HM rules** remain future work (dungeon fights
+  commonly carry `difficulty: null`, so no difficulty badge is shown).
 - **Completion-ring boss counts** in `ReportFightsView` are still the original
-  zone-name-keyed constants (kept to avoid regressing variable-boss trials like
-  Cloudrest/Asylum). Some look stale (e.g. Sanctum Ophidia listed as 5; it has 4
-  main bosses) and could be re-derived from `expectedBossCount` once
-  optional-boss semantics are encoded.
+  zone-name-keyed constants for trials (kept to avoid regressing variable-boss
+  trials like Cloudrest/Asylum). Some look stale (e.g. Sanctum Ophidia listed as
+  5; it has 4 main bosses) and could be re-derived from `expectedBossCount` once
+  optional-boss semantics are encoded. Dungeon counts come from the curated
+  rosters; note these enumerate *achievement* bosses, which may exceed what ESO
+  Logs tracks as encounters in some dungeons — the ring degrades to yellow, not
+  green, in that case.
 - **Arena detection** (Maelstrom / Vateshran / DSA / BRP) would benefit from
   adding `size` and `fightPercentage` to the `Fight` fragment.
 
@@ -289,11 +296,29 @@ were identical. Run headers now show:
 Dead `isFalsePositive` plumbing in `ReportFightsView` was also removed, and the
 kill-card background now keys off `isBossFight` rather than `difficulty != null`.
 
+### 16. Dungeon expected-boss-counts wired in from PR #1193 — _Enhancement_
+
+PR #1193's 58 curated, achievement-verified dungeon boss rosters
+(`loadout-manager/data/trialConfigs.ts`) are merged into this branch and
+consumed by `resolveFightZone` via `getDungeonBossCount` (name-keyed — the ESO
+Logs `gameZone` for dungeons gives a name but our canonical zone table only
+enumerates trials). Dungeon runs now get a real `expectedBossCount`, so the
+completion ring shows e.g. **2/3 yellow** for a partial Bal Sunnar clear
+instead of a misleading green "all encountered bosses killed". Lookups degrade
+gracefully: an unmatched dungeon name simply shows no expected count, exactly
+as before. The ring's colour thresholds were generalised to *all-killed =
+green, ≥half = yellow* (identical behaviour for the 3/4/5-boss trial cases it
+previously special-cased).
+
 ### Verification (follow-up)
 
 - `npm run validate` — clean; full `report_details` suite green (40+ detection
-  tests including new regressions for findings 12–14).
+  tests including new regressions for findings 12–14, plus dungeon boss-count
+  resolution tests for finding 16).
 - **Chrome (CDP) end-to-end**: both real sample reports plus the synthetic mixed
   chaos log render correctly in dark and light mode — correct run separation,
-  "Run 1/2" badges, dungeon tagging, attempt grouping/expansion, and reset
-  chips.
+  "Run 1/2" badges, dungeon tagging, attempt grouping/expansion, reset chips,
+  and the Bal Sunnar segment showing 2/3 expected bosses (yellow ring). The
+  loadout-manager activity selector (from #1193) was also verified: sectioned
+  General/Trials/Dungeons/Arenas/Substitutes headers with all 58 dungeons
+  alphabetised.

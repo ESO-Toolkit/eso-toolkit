@@ -1031,7 +1031,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       // Determine expected total bosses based on zone name
                       const zoneName = trialRun.name.replace(/#\d+/, '').trim();
 
-                      let expectedTotalBosses = encounteredBosses; // default fallback
+                      // Default: the resolved zone's expected count (covers
+                      // dungeons via the curated rosters), else what we saw.
+                      let expectedTotalBosses = trialRun.expectedBossCount ?? encounteredBosses;
 
                       // Known trial boss counts
                       if (zoneName.includes("Kyne's Aegis")) expectedTotalBosses = 3;
@@ -1064,14 +1066,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                       // Determine color based on completion against expected total
                       let color = getThemeColors.circleOrange; // orange - default for low completion
-                      if (killedBosses === expectedTotalBosses) {
+                      if (killedBosses >= expectedTotalBosses) {
                         color = getThemeColors.circleGreen; // green - ALL expected bosses killed
-                      } else if (expectedTotalBosses === 5 && killedBosses >= 3) {
-                        color = getThemeColors.circleYellow; // yellow - 3-4 kills in 5-boss trial
-                      } else if (expectedTotalBosses === 4 && killedBosses >= 2) {
-                        color = getThemeColors.circleYellow; // yellow - 2-3 kills in 4-boss trial
-                      } else if (expectedTotalBosses === 3 && killedBosses >= 2) {
-                        color = getThemeColors.circleYellow; // yellow - 2 kills in 3-boss trial
+                      } else if (killedBosses >= Math.ceil(expectedTotalBosses / 2)) {
+                        color = getThemeColors.circleYellow; // yellow - at least half cleared
                       }
 
                       return (

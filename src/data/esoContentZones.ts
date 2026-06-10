@@ -20,6 +20,7 @@
  * human-readable label — they simply have no `expectedBossCount`.
  */
 
+import { TRIALS } from '../features/loadout-manager/data/trialConfigs';
 import { TRIAL_ENCOUNTERS } from '../types/trial-encounters';
 import { ZONE_NAMES } from '../types/zoneScaleData';
 
@@ -93,4 +94,26 @@ export function getContentZone(zoneId: number | null | undefined): ContentZone |
 /** True when the zone ID is a known 12-player trial. */
 export function isTrialZone(zoneId: number | null | undefined): boolean {
   return getContentZone(zoneId)?.type === 'trial';
+}
+
+/**
+ * Dungeon metadata keyed by lowercased dungeon name, derived from the
+ * loadout-manager activity configs (the curated per-dungeon boss rosters).
+ *
+ * The ESO Logs API gives dungeons a per-fight `gameZone {id, name}` but our
+ * canonical zone table only enumerates trials, so dungeons are matched by
+ * *name*. Lookups degrade gracefully: an unmatched name simply has no
+ * `expectedBossCount`.
+ */
+const DUNGEON_BY_NAME = new Map(
+  TRIALS.filter((activity) => activity.type === 'dungeon').map((activity) => [
+    activity.name.toLowerCase(),
+    activity,
+  ]),
+);
+
+/** Expected boss count (completion-achievement bosses) for a dungeon name. */
+export function getDungeonBossCount(name: string | null | undefined): number | undefined {
+  if (!name) return undefined;
+  return DUNGEON_BY_NAME.get(name.toLowerCase())?.bosses.length;
 }

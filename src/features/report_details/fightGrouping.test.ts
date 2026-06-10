@@ -141,6 +141,23 @@ describe('resolveFightZone', () => {
     expect(zone.type).toBe('trial');
     expect(zone.zoneId).toBe(ZONE_SUNSPIRE);
   });
+
+  it('enriches a recognised dungeon with its expected boss count from the curated rosters', () => {
+    const zone = resolveFightZone(
+      makeFight({ gameZone: { id: ZONE_DUNGEON, name: 'Bal Sunnar' }, encounterID: 500 }),
+    );
+    expect(zone.type).toBe('dungeon');
+    // Kovan Giryon, Roksa the Warped, Matriarch Lladi Telvanni
+    expect(zone.expectedBossCount).toBe(3);
+  });
+
+  it('leaves expectedBossCount undefined for an unrecognised dungeon name', () => {
+    const zone = resolveFightZone(
+      makeFight({ gameZone: { id: ZONE_DUNGEON, name: 'Some Future Dungeon' }, encounterID: 500 }),
+    );
+    expect(zone.type).toBe('dungeon');
+    expect(zone.expectedBossCount).toBeUndefined();
+  });
 });
 
 describe('groupFightsIntoRuns', () => {
