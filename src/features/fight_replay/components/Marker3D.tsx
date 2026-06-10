@@ -75,9 +75,11 @@ interface Marker3DProps {
 /**
  * Pointer travel (px) before a press becomes a drag. Below this a touch is a long-press
  * candidate and a mouse release is a click — either way the marker must not move, so a
- * shaky tap never commits a position change.
+ * shaky tap never commits a position change. Touch gets a larger budget: a resting
+ * fingertip drifts several px, and an 8px threshold made real-device holds cancel.
  */
 const DRAG_SLOP_PX = 8;
+const TOUCH_SLOP_PX = 14;
 
 /** Minimal shape of the default OrbitControls instance we toggle while dragging. */
 interface ToggleableControls {
@@ -92,6 +94,8 @@ interface DragState {
   point: THREE.Vector3 | null;
   /** Screen position at pointer-down — drags only engage beyond a slop from here. */
   startClient: { x: number; y: number };
+  /** Pointer-type-dependent engagement slop (px) — touch gets a larger budget than mouse. */
+  slopPx: number;
   /** True once the pointer travelled past the slop: the gesture is a real drag, not a tap. */
   engaged: boolean;
   /** Arena point under the pointer at pointer-down (long-press menu payload). */
@@ -203,7 +207,8 @@ export const Marker3D: React.FC<Marker3DProps> = ({
         // Subtle confirmation that the hold registered (no-op where unsupported).
         navigator.vibrate?.(30);
       },
-      { slopPx: DRAG_SLOP_PX },
+      // The tracker only ever arms for touch/pen — use the finger-sized slop.
+      { slopPx: TOUCH_SLOP_PX },
     );
   }
   useEffect(() => {
@@ -274,7 +279,7 @@ export const Marker3D: React.FC<Marker3DProps> = ({
           if (!drag.engaged) {
             const dx = ev.clientX - drag.startClient.x;
             const dy = ev.clientY - drag.startClient.y;
-            if (dx * dx + dy * dy <= DRAG_SLOP_PX * DRAG_SLOP_PX) {
+            if (dx * dx + dy * dy <= drag.slopPx * drag.slopPx) {
               return; // still a tap/long-press candidate — don't move the marker yet
             }
             drag.engaged = true;
@@ -340,6 +345,7 @@ export const Marker3D: React.FC<Marker3DProps> = ({
           plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -markerY),
           point: null,
           startClient: { x: clientX, y: clientY },
+          slopPx: pointerType === 'mouse' ? DRAG_SLOP_PX : TOUCH_SLOP_PX,
           engaged: false,
           arenaStart: { x: event.point.x, y: event.point.y, z: event.point.z },
           removeListeners: () => {

@@ -37,7 +37,7 @@ import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapS
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
 
-import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
+import { ADD_MARKER_AT_CENTER_EVENT, Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { BossHealthPanel } from './BossHealthPanel';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
@@ -1394,6 +1394,11 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           onToggleStats={() => setStatsPanelEnabled((prev) => !prev)}
           markersEditMode={markersEditMode}
           onToggleMarkersEditMode={onToggleMarkersEditMode}
+          onAddMarkerAtCenter={
+            onAddMarker
+              ? () => window.dispatchEvent(new CustomEvent(ADD_MARKER_AT_CENTER_EVENT))
+              : undefined
+          }
           canUndoMarkers={canUndoMarkers}
           onUndoMarkers={onUndoMarkers}
         />

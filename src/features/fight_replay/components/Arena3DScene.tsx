@@ -1,6 +1,7 @@
 import { Grid, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import React, { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
+import * as THREE from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
@@ -64,6 +65,43 @@ export interface GroundContextMenuPayload {
   arenaPoint: { x: number; y: number; z: number };
   screenPosition: { left: number; top: number };
 }
+
+/**
+ * Event the mobile tools sheet dispatches to place a marker without any gesture: the
+ * in-canvas bridge below raycasts the SCREEN CENTER onto the arena floor and opens the
+ * add-marker menu there. Long-press is the fast path; this is the always-works path.
+ */
+export const ADD_MARKER_AT_CENTER_EVENT = 'replay:add-marker-at-center';
+
+const GROUND_PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.019);
+
+const CenterAddMarkerBridge: React.FC<{
+  onGroundContextMenu: (payload: GroundContextMenuPayload) => void;
+}> = ({ onGroundContextMenu }) => {
+  const { camera, gl } = useThree();
+  const callbackRef = useRef(onGroundContextMenu);
+  callbackRef.current = onGroundContextMenu;
+
+  useEffect(() => {
+    const handler = (): void => {
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const hit = new THREE.Vector3();
+      if (!raycaster.ray.intersectPlane(GROUND_PLANE, hit)) {
+        return;
+      }
+      const rect = gl.domElement.getBoundingClientRect();
+      callbackRef.current({
+        arenaPoint: { x: hit.x, y: hit.y, z: hit.z },
+        screenPosition: { left: rect.left + rect.width / 2, top: rect.top + rect.height / 2 },
+      });
+    };
+    window.addEventListener(ADD_MARKER_AT_CENTER_EVENT, handler);
+    return () => window.removeEventListener(ADD_MARKER_AT_CENTER_EVENT, handler);
+  }, [camera, gl]);
+
+  return null;
+};
 
 /**
  * iOS Safari fires its NATIVE long-press behaviors (text-selection loupe, Copy/Look Up
@@ -330,31 +368,88 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
 
   // Touch path for placing markers: press-and-hold on the ground (edit mode only) opens the
   // same add-marker menu desktop gets from right-click. The arena point is captured at
-  // pointer-down; any movement past the slop (drag/rotate/pinch) cancels the press. The menu
+  // pointer-down; movement past the slop (drag/rotate/pinch) cancels the press. The menu
   // itself opens on RELEASE (deferred a tick) — opening it under a still-down finger would let
-  // the gesture's trailing click land on the menu backdrop and close it immediately.
+  // the gesture's trailing click land on the menu backdrop and close it immediately. The
+  // gesture is tracked on WINDOW listeners (see the plane's onPointerDown for why).
   const groundPressPointRef = useRef<{ x: number; y: number; z: number } | null>(null);
   const pendingGroundMenuRef = useRef<GroundContextMenuPayload | null>(null);
   const onGroundContextMenuRef = useRef(onGroundContextMenu);
   onGroundContextMenuRef.current = onGroundContextMenu;
+  const groundGestureCleanupRef = useRef<(() => void) | null>(null);
   const groundLongPressRef = useRef<LongPressTracker | null>(null);
   if (groundLongPressRef.current === null) {
-    groundLongPressRef.current = new LongPressTracker((start) => {
-      const arenaPoint = groundPressPointRef.current;
-      if (!arenaPoint) {
-        return;
-      }
-      pendingGroundMenuRef.current = {
-        arenaPoint,
-        screenPosition: { left: start.clientX, top: start.clientY },
-      };
-      // Subtle confirmation that the hold registered (no-op where unsupported).
-      navigator.vibrate?.(30);
-    });
+    groundLongPressRef.current = new LongPressTracker(
+      (start) => {
+        const arenaPoint = groundPressPointRef.current;
+        if (!arenaPoint) {
+          return;
+        }
+        pendingGroundMenuRef.current = {
+          arenaPoint,
+          screenPosition: { left: start.clientX, top: start.clientY },
+        };
+        // Subtle confirmation that the hold registered (no-op where unsupported).
+        navigator.vibrate?.(30);
+      },
+      // A resting fingertip drifts more than a mouse — keep the hold forgiving (iOS's own
+      // long-press recognizer tolerates roughly this much travel).
+      { slopPx: 18 },
+    );
   }
   const groundLongPress = groundLongPressRef.current;
+
+  const beginGroundLongPress = useCallback(
+    (pointerId: number, clientX: number, clientY: number) => {
+      groundGestureCleanupRef.current?.();
+      groundLongPress.begin({ pointerId, clientX, clientY });
+
+      const onMove = (ev: PointerEvent): void => {
+        if (ev.pointerId !== pointerId) return;
+        groundLongPress.move({ pointerId: ev.pointerId, clientX: ev.clientX, clientY: ev.clientY });
+      };
+      const cleanup = (): void => {
+        groundGestureCleanupRef.current = null;
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onCancel);
+      };
+      const onUp = (ev: PointerEvent): void => {
+        if (ev.pointerId !== pointerId) return;
+        const fired = groundLongPress.end({
+          pointerId: ev.pointerId,
+          clientX: ev.clientX,
+          clientY: ev.clientY,
+        });
+        cleanup();
+
+        const payload = pendingGroundMenuRef.current;
+        pendingGroundMenuRef.current = null;
+        if (fired && payload) {
+          // After this gesture's trailing click has been dispatched.
+          setTimeout(() => onGroundContextMenuRef.current?.(payload), 0);
+        }
+      };
+      const onCancel = (ev: PointerEvent): void => {
+        if (ev.pointerId !== pointerId) return;
+        pendingGroundMenuRef.current = null;
+        groundLongPress.cancel();
+        cleanup();
+      };
+
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onCancel);
+      groundGestureCleanupRef.current = cleanup;
+    },
+    [groundLongPress],
+  );
+
   useEffect(() => {
-    return () => groundLongPress.cancel();
+    return () => {
+      groundGestureCleanupRef.current?.();
+      groundLongPress.cancel();
+    };
   }, [groundLongPress]);
 
   // Player visibility is now owned by Arena3D and passed in as a prop, so the DOM
@@ -656,8 +751,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
             return;
           }
 
-          // Touch path: arm a long-press at the touched ground point. Camera rotate cancels it
-          // via the movement slop, so holding still is the only way it fires.
+          // Touch path: arm a long-press at the touched ground point. The REST of the gesture
+          // is tracked on WINDOW listeners, not on this mesh: R3F only delivers move/up/leave
+          // to the plane while the ray still hits it un-occluded, and in edit mode every marker
+          // carries a fat invisible grab proxy — one pixel of finger jitter re-raycasts onto a
+          // proxy, fires pointerleave on the plane, and would silently cancel the hold
+          // (field-reported on iPhone as "nothing happens when I hold").
           if (
             event.button === 0 &&
             event.nativeEvent.pointerType !== 'mouse' &&
@@ -669,41 +768,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
               y: event.point.y,
               z: event.point.z,
             };
-            groundLongPress.begin({
-              pointerId: event.pointerId,
-              clientX: event.nativeEvent.clientX,
-              clientY: event.nativeEvent.clientY,
-            });
+            beginGroundLongPress(
+              event.pointerId,
+              event.nativeEvent.clientX,
+              event.nativeEvent.clientY,
+            );
           }
-        }}
-        onPointerMove={(event) => {
-          groundLongPress.move({
-            pointerId: event.pointerId,
-            clientX: event.nativeEvent.clientX,
-            clientY: event.nativeEvent.clientY,
-          });
-        }}
-        onPointerUp={(event) => {
-          const fired = groundLongPress.end({
-            pointerId: event.pointerId,
-            clientX: event.nativeEvent.clientX,
-            clientY: event.nativeEvent.clientY,
-          });
-
-          const payload = pendingGroundMenuRef.current;
-          pendingGroundMenuRef.current = null;
-          if (fired && payload) {
-            // After this gesture's trailing click has been dispatched.
-            setTimeout(() => onGroundContextMenuRef.current?.(payload), 0);
-          }
-        }}
-        onPointerCancel={() => {
-          pendingGroundMenuRef.current = null;
-          groundLongPress.cancel();
-        }}
-        onPointerLeave={() => {
-          pendingGroundMenuRef.current = null;
-          groundLongPress.cancel();
         }}
       >
         <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
@@ -717,6 +787,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
           enablePan is gated by the touch policy: off on mobile-immersive so the two-finger gesture is
           pinch-only (no OrbitControls pan colliding with CanvasWheelZoom on the same touchmove). */}
       {mobileImmersive && <SuppressNativeTouchDefaults />}
+      {markersEditMode && onGroundContextMenu && (
+        <CenterAddMarkerBridge onGroundContextMenu={onGroundContextMenu} />
+      )}
       <OrbitControls
         enablePan={touchPolicy.enablePan}
         enableZoom={false}

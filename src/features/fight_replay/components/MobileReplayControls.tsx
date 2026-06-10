@@ -1,3 +1,4 @@
+import AddLocationAlt from '@mui/icons-material/AddLocationAlt';
 import Bolt from '@mui/icons-material/Bolt';
 import CenterFocusStrong from '@mui/icons-material/CenterFocusStrong';
 import Close from '@mui/icons-material/Close';
@@ -55,6 +56,8 @@ export interface MobileReplayControlsProps {
   /** Marker edit mode (long-press to place/edit, drag to move). Omitted = no markers row. */
   markersEditMode?: boolean;
   onToggleMarkersEditMode?: () => void;
+  /** Gesture-free marker placement: opens the add-marker menu at the screen center. */
+  onAddMarkerAtCenter?: () => void;
   /** Undo the last marker change — only shown while edit mode is on. */
   canUndoMarkers?: boolean;
   onUndoMarkers?: () => void;
@@ -87,6 +90,7 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
   onToggleStats,
   markersEditMode = false,
   onToggleMarkersEditMode,
+  onAddMarkerAtCenter,
   canUndoMarkers = false,
   onUndoMarkers,
 }) => {
@@ -131,6 +135,19 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
             icon: <EditLocationAlt fontSize="small" />,
             active: markersEditMode,
             onTap: onToggleMarkersEditMode,
+            closesOnTap: true,
+          } as ToolItem,
+        ]
+      : []),
+    // Gesture-free placement: long-press is the fast path, this row always works.
+    ...(markersEditMode && onAddMarkerAtCenter
+      ? [
+          {
+            key: 'addMarker',
+            label: 'Add marker here',
+            icon: <AddLocationAlt fontSize="small" />,
+            active: false,
+            onTap: onAddMarkerAtCenter,
             closesOnTap: true,
           } as ToolItem,
         ]
