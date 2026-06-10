@@ -5,13 +5,13 @@ import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { ArmorType } from '../types/playerDetails';
 
 import { resolveArmorType } from './armorUtils';
-import { skillLineAbilityNames } from './skillLineNames';
 import {
   BuffLookupData,
   isBuffActive as checkBuffActiveAtTimestamp,
   isBuffActiveOnTarget,
 } from './BuffLookupUtils';
 import { getSetCount, countAxesInWeaponSlots, hasTwoHandedAxeEquipped } from './gearUtilities';
+import { skillLineAbilityNames } from './skillLineNames';
 
 const CRITICAL_DAMAGE_BUFF_VARIANTS: Partial<Record<KnownAbilities, KnownAbilities[]>> = {
   // Advanced Species has two passive ranks; either may appear in combatantInfo.auras

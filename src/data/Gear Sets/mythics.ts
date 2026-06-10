@@ -5,7 +5,7 @@ export const belharzasBand: GearSetData = {
   icon: "Belharza's Band",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Increase the damage of your Light Attacks by 900.\n\nWhen you deal damage with consecutive melee Light Attacks, gain a stack of Belharza\'s Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza\'s Temper and after 1 second, deal 1471 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    "(1 item) Increase the damage of your Light Attacks by 900.\n\nWhen you deal damage with consecutive melee Light Attacks, gain a stack of Belharza's Temper for 10 seconds, up to 5 stacks max. At 5 stacks, consume Belharza's Temper and after 1 second, deal 1471 Physical Damage to enemies in a line and stun them for 3 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -80,7 +80,7 @@ export const harpoonersWadingKilt: GearSetData = {
   icon: "Harpooner's Wading Kilt",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Dealing direct damage grants you a stack of Hunter\'s Focus for 20 seconds, up to 10 stacks max. You can only gain 1 stack of Hunter\'s Focus per second. Each stack of Hunter\'s Focus increases your Critical Chance by 110 and your Critical Damage by 1%.\n\nTaking direct damage removes 5 stacks of Hunter\'s Focus, up to once per second. Removing Harpooner\'s Wading Kilt removes all stacks of Hunter\'s Focus.',
+    "(1 item) Dealing direct damage grants you a stack of Hunter's Focus for 20 seconds, up to 10 stacks max. You can only gain 1 stack of Hunter's Focus per second. Each stack of Hunter's Focus increases your Critical Chance by 110 and your Critical Damage by 1%.\n\nTaking direct damage removes 5 stacks of Hunter's Focus, up to once per second. Removing Harpooner's Wading Kilt removes all stacks of Hunter's Focus.",
   ],
 };
 
@@ -143,7 +143,7 @@ export const morasWhispers: GearSetData = {
   icon: "Mora's Whispers",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Gain up to 1528 Critical Chance and 10% increased Inspiration, Alliance Rank, Alliance skill, and 15% monster kill experience based off how many books of Shalidor\'s Library have been collected.',
+    "(1 item) Gain up to 1528 Critical Chance and 10% increased Inspiration, Alliance Rank, Alliance skill, and 15% monster kill experience based off how many books of Shalidor's Library have been collected.",
   ],
 };
 
@@ -206,7 +206,7 @@ export const seaSerpentsCoil: GearSetData = {
   icon: "Sea-Serpent's Coil",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While at full Health, you gain 40% damage reduction. After taking damage while at full Health in combat, you gain Serpent\'s Rebuke for 10 seconds, snaring yourself by 40% and gaining Major Berserk and Major Courage, increasing your damage done by 10% and Weapon and Spell Damage by 430.\n\nThe damage resistance does not apply while Serpent\'s Rebuke is active.',
+    "(1 item) While at full Health, you gain 40% damage reduction. After taking damage while at full Health in combat, you gain Serpent's Rebuke for 10 seconds, snaring yourself by 40% and gaining Major Berserk and Major Courage, increasing your damage done by 10% and Weapon and Spell Damage by 430.\n\nThe damage resistance does not apply while Serpent's Rebuke is active.",
   ],
 };
 
@@ -288,7 +288,7 @@ export const thrassianStranglers: GearSetData = {
   icon: 'Thrassian Stranglers',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Killing an enemy grants you a stack of Sload\'s Call for 1 hour, up to a maximum of 50 stacks. Each stack increases your Weapon and Spell Damage by 23, reduces your Maximum Health by 120, and reduces effectiveness of your damage shields by 1%.\n\nSload\'s Call is lost if you remove Thrassian Stranglers, go invisible, or crouch.',
+    "(1 item) Killing an enemy grants you a stack of Sload's Call for 1 hour, up to a maximum of 50 stacks. Each stack increases your Weapon and Spell Damage by 23, reduces your Maximum Health by 120, and reduces effectiveness of your damage shields by 1%.\n\nSload's Call is lost if you remove Thrassian Stranglers, go invisible, or crouch.",
   ],
 };
 
