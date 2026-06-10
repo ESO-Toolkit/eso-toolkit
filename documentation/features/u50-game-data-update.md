@@ -70,9 +70,9 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
 ## Follow-ups (blocked on external data)
 
 1. **Re-fetch `data/abilities.json`** (`scripts/fetchAbilitiesToJson.ts`): ESO Logs still
-   served pre-U50 names for the renamed werewolf IDs as of 2026-06-09 (their mining lags the
-   patch). Re-run once `gameData.ability(id: 58405)` returns "Gnash". Re-run
-   `node scripts/check-skill-line-icons.cjs` afterwards.
+   served pre-U50 names for the renamed werewolf IDs as of 2026-06-10 (re-checked: 58405 =
+   "Piercing Howl"; their mining lags the patch). Re-run once `gameData.ability(id: 58405)`
+   returns "Gnash". Re-run `node scripts/check-skill-line-icons.cjs` afterwards.
 2. **Class Mastery passives (35 new, 5 per class)**: new passive-only skill line per class for
    non-subclassed characters (2 of 5 active via Class Mastery Points). Ability IDs not yet
    published anywhere. Once mined (UESP esolog / LibSkillsFactory v26+), consider:
@@ -85,12 +85,11 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
 4. **Season One wave (July 8, 2026)**: Thieves Guild questline, Dynamic Encounters,
    Prowler's Talisman upgrade tiers — expect another data pass, no API bump.
 5. **Tooltip dump addon**: already declares `## APIVersion: 101050` (correct for U50 — single
-   bump, confirmed via ESOUI dev thread). Run the in-game dump on the U50 client to replace
-   patch-note-derived descriptions with exact tooltip strings. The U50-changed entries are
-   pinned in `data/tooltip-provenance-pending.json` (81 entries, exact-text-pinned, generated
-   via `check-tooltip-provenance.mjs --emit-pending`) so the provenance gate stays at 100% with
-   the exceptions reported separately — **delete that file** after the U50 dump refresh; any
-   drift from the pinned text re-trips the gate until then.
+   bump, confirmed via ESOUI dev thread). **DONE 2026-06-10**: U50 in-game dump run (API
+   101050, 4350 abilities / 702 sets), parsed and applied via the refresh scripts — exact
+   tooltip strings replaced the patch-note-derived text (41 skills, 141 sets), and
+   `data/tooltip-provenance-pending.json` was deleted; the provenance gate passes pure at
+   100.00% exact with no pending allowlist.
 6. **Werewolf tank taunt**: Deafening Roar's slot taunt moved from Heavy Attacks to
    "Gnash cast while Bracing". The innate taunt debuff (38254) is unchanged, but verify
    role-detection taunt attribution against a live U50 werewolf-tank log.
