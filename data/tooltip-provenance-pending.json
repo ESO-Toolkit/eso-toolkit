@@ -1,0 +1,213 @@
+{
+  "reason": "ESO Update 50 (2026-06-08) changed this text per the official live patch notes; the committed dump/fingerprint is from the U49 client. Pending verbatim re-sourcing from a U50 in-game tooltip dump, then delete this file.",
+  "source": "https://forums.elderscrollsonline.com/en/discussion/693682/update-50-live-patch-notes-all-platforms",
+  "generatedAt": "2026-06-10T17:19:27.946Z",
+  "skills": [
+    "let the fire within draw heat to your heart restoring 15 of your max health and 15 of your missing magicka and stamina every 2 seconds over 4 seconds when this ability completes you release this heat as a blast of fire that deals 2004 flame damage to nearby enemies",
+    "flash through the shadows and ambush an enemy dealing 1655 physical damage and afflicting them with minor vulnerability for 10 seconds increasing their damage taken by 5 also grants you empower and minor berserk for 10 seconds increasing the damage of your heavy attacks against monsters by 150 and your damage done by 5",
+    "increases your critical chance rating for each nightblade ability slotted increasing your chance to critically strike by 2 per ability",
+    "summon three patches of skeletal claws from the ground in front of you enemies in the first area are snared by 30 for 5 seconds immobilized in the second area for 4 seconds and stunned in the final area for 3 seconds each area applies major maim to enemies and empower to your allies for 10 seconds reducing enemy damage done by 10 and allied heavy attack damage against monsters by 150",
+    "conjure a ball of solar energy to heave at an enemy dealing 2404 magic damage and increasing your damage done with class abilities by 5 for 10 seconds also grants you empower for 10 seconds increasing the damage of your heavy attacks against monsters by 150",
+    "conjure a ball of solar energy to heave at an enemy dealing 2483 magic damage and increasing your damage done with class abilities by 5 for 10 seconds afflicts the target and enemies within 8 meters with major defile reducing their healing received and damage shield strength by 12 for 4 seconds also grants you empower for 10 seconds increasing the damage of your heavy attacks against monsters by 150",
+    "conjure solar energy to blast enemies around you dealing 435 magic damage every 2 seconds and increasing your damage done with class abilities by 5 for 20 seconds while this ability is active you gain empower increasing the damage of your heavy attacks against monsters by 150",
+    "charge you and your grouped allies weapons with volcanic power to gain major brutality and sorcery increasing your weapon and spell damage by 20 for 30 seconds while active dealing damage with light and heavy attacks causes an additional 448 flame damage up to once every 15 seconds you also gain empower for the duration increasing the damage of your heavy attacks against monsters by 150",
+    "when you overheal any target with a green balance ability you restore 250 magicka and 250 stamina this effect can occur once every 1 second",
+    "tear open the fabric of the aurbis to summon a scion of hermaeus mora this being casts forth a beam that rends asunder reality for 6 seconds that deals 1115 magic damage to enemies within 5 meters every 05 seconds and snares them by 50 for 3 seconds every 05 seconds the beams damage increases by 7 up to 12 times additional languid eyes share the highest stack count the scions beam can be repositioned by recasting the languid eye",
+    "cloak yourself in shadow to become invisible when moving your magicka recovery is disabled and when not moving shadow cloak is half cost when shadow cloak begins or ends you gain born from shadow for 10 seconds increasing your damage done to monsters by 15 while slotted on either bar you gain minor protection reducing your damage taken by 5",
+    "cloak yourself in shadow to become invisible when moving your magicka recovery is disabled and when not moving shadowy disguise is half cost your next direct damage attack will critically strike when shadowy disguise begins or ends you gain born from shadow for 10 seconds increasing your damage done to monsters by 15 while slotted on either bar you gain minor protection reducing your damage taken by 5",
+    "twist a violent storm around you dealing 1199 frost damage every 1 second for 8 seconds to enemies around you and reducing their movement speed by 40 as the storm holds your damage done increases by 4 every 1 second for 12 seconds up to 9 stacks max this bonus is reduced to 1 per stack while battle spirit is active you and nearby allies gain major protection reducing your damage taken by 10",
+    "casting a mages guild ability grants you empower increasing the damage of your heavy attacks against monsters by 150 for 5 seconds",
+    "transform into a beast fearing nearby enemies for 3 seconds costs 100 ultimate to activate and drains 100 ultimate every 10 seconds while in combat you continue to generate ultimate while transformed activating werewolf abilities in combat builds fury at 1000 fury you can unleash rampage increasing your movement speed by 20 and your damage done by 15 and removing the cost of your werewolf abilities for 20 seconds while slotted your stamina recovery is increased by 15",
+    "transform into a beast fearing nearby enemies for 3 seconds while transformed you can block 30 more damage you gain major protection reducing your damage taken by 10 and you summon two direwolves you also grant yourself and nearby group members minor courage increasing their weapon and spell damage by 215 your rampage becomes enduring rampage also granting 4000 health recovery while slotted your stamina recovery is increased by 15",
+    "transform into a beast fearing nearby enemies for 3 seconds while transformed you gain major berserk increasing your damage done by 10 and your light and heavy attacks apply a bleed that stacks up to 5 times each tick of devouring a corpse also generates fury while slotted your stamina recovery is increased by 15",
+    "pounce on an enemy with primal fury dealing bleed damage and applying the hemorrhaging status effect while within 7 meters of your target this ability becomes carnage ripping into the enemy to deal bleed damage over 12 seconds dealing up to 450 more damage to enemies under 100 health",
+    "pounce on an enemy with primal fury dealing bleed damage and applying the hemorrhaging status effect to all enemies within 7 meters while within 7 meters of your target this ability becomes brutal carnage ripping into all enemies in front of you to deal bleed damage over 12 seconds dealing up to 450 more damage to enemies under 100 health the damage over time stacks up to 3 times each stack increasing its duration by 10 seconds",
+    "pounce on an enemy with primal fury dealing bleed damage and applying the hemorrhaging status effect while within 7 meters of your target this ability becomes feral carnage ripping into the enemy to deal bleed damage over 12 seconds dealing up to 450 more damage to enemies under 100 health dealing damage with either attack restores 200 stamina and generates fury up to once every 4 seconds",
+    "invoke the huntsmans blessing healing you based on your max health then restoring 10 of your max stamina increased by 1 for every 1 of your current health up to a maximum of 20 while slotted you gain major brutality and sorcery increasing your weapon and spell damage by 20",
+    "invoke the huntsmans blessing healing you based on your max health then restoring 12 of your max stamina increased by 1 for every 1 of your current health up to a maximum of 24 while slotted you gain major vitality increasing your healing received and damage shield strength by 12 and major brutality and sorcery increasing your weapon and spell damage by 20",
+    "invoke the huntsmans blessing healing you based on your weapon and spell damage then restoring 10 of your max stamina increased by 1 for every 1 of your current health up to a maximum of 20 you also increase your damage done and damage taken for 20 seconds by up to 12 based on your current health and generate double fury while slotted you gain minor berserk increasing your damage done by 5 and major brutality and sorcery increasing your weapon and spell damage by 20",
+    "roar with bloodlust to fear nearby enemies within 10 meters for 4 seconds and set them off balance for 7 seconds you gain a stack of blood hunger for 30 seconds up to 4 times empowering your gnash and claw fury exposes the feeding frenzy synergy granting nearby allies 6 increased damage done and minor force for 30 seconds while slotted you gain major savagery and prophecy increasing your weapon and spell critical rating by 2629",
+    "roar with bloodlust to fear nearby enemies within 10 meters for 4 seconds and set them off balance for 7 seconds your roar applies major maim and major cowardice reducing enemy damage done by 10 and weapon and spell damage by 430 for 15 seconds and grants you a stack of blood hunger casting gnash while bracing taunts the enemy exposes the feeding frenzy synergy granting nearby allies 6 increased damage done and minor force for 30 seconds while slotted you gain major evasion and minor protection",
+    "roar with bloodlust to fear nearby enemies within 10 meters for 4 seconds and set them off balance for 7 seconds you gain 2 stacks of blood hunger and grant yourself and up to 11 nearby group members major courage increasing their weapon and spell damage by 430 for 20 seconds exposes the feeding frenzy synergy which you can also activate yourself granting 6 increased damage done and minor force for 30 seconds while slotted you gain major savagery and prophecy increasing your weapon and spell critical rating by 2629",
+    "bare your fangs and bite an enemy within 7 meters twice dealing physical damage followed by bleed damage each hit with a 10 chance to apply the sundered or hemorrhaging status effect the second bite deals up to 125 more damage to enemies under 25 health consumes a stack of blood hunger if available to deal 25 more damage with the first bite",
+    "bare your fangs and bite an enemy within 7 meters twice dealing physical damage followed by bleed damage the first bite has a 10 chance to apply the sundered status effect and the second bite always applies the hemorrhaging status effect the second bite deals up to 200 more damage to enemies under 25 health consumes a stack of blood hunger if available to deal 25 more damage with the first bite with a 50 chance to not consume the stack",
+    "bare your fangs and bite an enemy within 7 meters twice dealing physical damage followed by bleed damage the first bite always applies the sundered status effect and inflicts major breach reducing their physical and spell resistance by 5948 for 15 seconds the second bite heals you based on your max health and deals up to 125 more damage to enemies under 25 health a stack of blood hunger if available is consumed to increase the healing by 25",
+    "shred up to 6 enemies in front of you with your claws dealing physical damage and an additional bleed damage over 10 seconds the initial hit has a 15 chance to apply the sundered status effect and the bleed has a 5 chance to apply the hemorrhaging status effect each tick",
+    "channel a flurry of slashes for 48 seconds striking up to 6 enemies in front of you up to 13 times dealing physical damage deals 25 more damage for each stack of blood hunger you hold and generates fury and a stack of blood hunger up to once per second while dealing damage all blood hunger stacks are removed when the channel ends",
+    "shred up to 6 enemies in front of you with your claws dealing physical damage and an additional bleed damage over 10 seconds you are healed for 40 of the initial hit damage done and the bleed heals you based on your max health when it damages an enemy the initial hit has a 15 chance to apply the sundered status effect and the bleed has a 5 chance to apply the hemorrhaging status effect each tick",
+    "allows you to devour corpses to restore your health and ultimate every second you spend devouring a corpse restores 20 of your max health and 15 ultimate and devouring disables the maintenance cost of your werewolf transformation for 12 seconds each corpse can be devoured for up to 4 seconds",
+    "increases your movement speed by 30 at rank 2 also increases the stamina your heavy attacks restore by 50",
+    "increases the fury you generate by 10 per source",
+    "increases your weapon and spell damage by 25 grants you major resolve increasing your physical and spell resistance by 5948",
+    "reduces the ultimate cost of maintaining your werewolf transformation by 16 plus an additional 16 for each transformed werewolf or direwolf in your group including yourself up to a maximum of 80"
+  ],
+  "gearBonuses": [
+    "5 items dealing damage with a light attack applies eagles mark to your target for 12 seconds eagles mark causes an eagle to attack your target every 3 seconds after a 3 second delay dealing 856 physical damage per attack applying eagles mark grants you aeries call for 12 seconds increasing your damage done by 10 against enemies with eagles mark this effect can occur every 3 seconds but cannot be applied to enemies who have eagles mark you can have one eagles mark active at a time and this effect can stack between multiple wearers",
+    "5 items dealing damage with burning light twice within 30 seconds creates a 5 meter area for 5 seconds this effect can occur once every 6 seconds while in the area dealing damage with an aedric spear ability launches a spear at your target dealing 1684 magic damage and applying sundered and increasing your weapon and spell damage by 300 for 10 seconds the damage scales off the higher of your weapon or spell damage and counts as a class ability",
+    "5 items while you have a permanent pet active gain 1840 health and 1980 armor while you do not have a permanent pet active increase your damage done and healing done by 15 this value is reduced to 7 while affected by battle spirit",
+    "5 items consuming a corpse causes the corpse to explode dealing 1298 disease damage to enemies within 5 meters and applying minor breach to them for 5 seconds reducing their physical and spell resistance by 2974 this effect can occur once every 05 seconds scales off the higher of your weapon or spell damage and deals 10 more damage for each grave lord ability slotted enemies hit are afflicted with the diseased status effect",
+    "5 items while in combat increases the duration of your flame damage over time abilities including dragonknight standard by 5 seconds this effect does not work with beam or channeled effects",
+    "5 items when you deal direct damage you have a 10 chance to create an area under the target that detonates after 1 second applying enervating aura for 10 seconds to enemies within 5 meters enervating aura lowers the health recovery magicka recovery and stamina recovery of enemy players by 129 per player hit this effect can occur once every 15 seconds enemies hit are also afflicted with minor enervation reducing their critical damage done by 10",
+    "5 items adds 986 critical resistance",
+    "5 items dealing damage with a storm calling abilitys initial hit or every 5th tick creates a monolith near the enemy for 10 seconds up to one every 1 second you may have up to 3 monoliths at a time monoliths link to your other monoliths within 28 meters of each other each link deals 935 shock damage scaling off of the higher of your weapon or spell damage every 2 seconds to enemies between and near them an enemy can only take damage from this set once every 2 seconds you gain 100 weapon and spell damage for each monolith active",
+    "5 items your light attacks deal 837 flame damage over 6 seconds your fullycharged heavy attacks consume up to 3 stacks of wildfire embers or pyrebrand to deal 637 flame damage in a 6 meter radius on the target dealing up to 200 more damage to enemies below 33 health the damage scales off the higher of your weapon or spell damage and is increased by 25 for each stack of wildfire embers on the target up to 300 this set can trigger wildfire embers once every 10 seconds",
+    "5 items while in combat strengthens your siphoning abilities at the cost of ultimate increases the damage and healing of siphoning abilities by 15 reduces the cost of siphoning abilities by 15 casting siphoning abilities drains you of 1 ultimate and increases your damage done by up to 12 based on your current health for 20 seconds",
+    "5 items dealing damage with an arcanist ability applies two random status effects to your target this effect can occur once every 7 seconds dealing damage with a herald of the tome ability reduces this cooldown by 05 seconds up to once every 1 second while worn your damage done with status effects is increased by 40 and triggering this effect generates a crux",
+    "5 items increase your direct damage done to monsters by 15",
+    "5 items when you deal damage with a dawns wrath ability you gain a stack of sunlight for 15 seconds once per attack you can have 30 stacks max and gain 21 magicka recovery per stack when at max stacks your damage done with templar skill line abilities is increased by 25 10 against players and a wrathful nova is cast on the enemy but you cannot refresh sunlight when sunlight expires at max stacks you lose 50 of your current magicka",
+    "5 items increases your damage done against monsters by up to 15 based on your missing magicka reaching the maximum at 50 magicka",
+    "5 items while you are casting or channeling an ability your damage taken is reduced by 15 when you are interrupted your next ability costs no health magicka or stamina",
+    "5 items when your healing critically strikes while battle spirit is active you and group members within 12 meters of you gain 986 critical resistance and 300 weapon and spell damage for 20 seconds each group member affected reduces the weapon and spell damage by 15 and critical resistance by 50 this effect can occur once every 15 seconds",
+    "5 items when you heal yourself or an ally with a healing over time ability grant them 1363 critical resistance for 4 seconds",
+    "5 items increases your damage done against monsters by 7 when you interrupt an enemy this bonus increases to 21 for 30 seconds",
+    "5 items when you take damage you generate 6 ultimate or 18 ultimate while in werewolf form this effect can occur once every 5 seconds",
+    "5 items your light attacks made within melee range rend flesh causing your enemy to bleed for 232 bleed damage instantly and additionally every 2 seconds for 4 seconds this effect scales off the higher of your weapon or spell damage while in werewolf form your damage done is increased by 6",
+    "1 item increase your damage done with status effects by 1 for every 1 ultimate you have up to 170 the current and maximum damage done is divided by 1 plus 1 if feral guardian or its morphs are active plus 1 if the target is a player while you have 170 or more ultimate your light and heavy attacks apply a random status effect up to once every 4 seconds applies minor timidity to you consuming 1 ultimate every 15 seconds while in combat",
+    "1 item while battle spirit is inactive bracing while crouching turns you invisible for 10 seconds this can occur once every 45 seconds increase your chances of successfully pickpocketing by 5 on dealing critical damage increase your max magicka and max stamina for 10 seconds up to 1900 at 10 stacks on dealing noncritical damage increase your health magicka and stamina recovery for 10 seconds up to 160 at 10 stacks either effect can occur up to once every 1 second"
+  ],
+  "replacedDumpBonuses": {
+    "hide of the werewolf": [
+      "5 items when you take damage you generate 6 ultimate this effect can occur once every 5 seconds"
+    ],
+    "elf bane": [
+      "2 items adds 1096 maximum magicka",
+      "5 items while in combat increases the duration of your flame damage over time abilities by 5 seconds this effect does not work with beam or channeled effects"
+    ],
+    "sentry": [
+      "2 items adds 1096 maximum stamina"
+    ],
+    "affliction": [
+      "3 items adds 1096 maximum stamina",
+      "4 items adds 129 stamina recovery"
+    ],
+    "light of cyrodiil": [
+      "3 items adds 1096 maximum magicka",
+      "4 items adds 1096 maximum magicka",
+      "5 items while you are casting or channeling an ability your damage taken is reduced by 15 when you are interrupted your next magicka ability will cost no magicka"
+    ],
+    "crest of cyrodiil": [
+      "2 items adds 129 stamina recovery"
+    ],
+    "shield breaker": [
+      "2 items adds 1096 maximum stamina",
+      "3 items adds 129 stamina recovery"
+    ],
+    "phoenix": [
+      "2 items adds 1096 maximum magicka",
+      "3 items adds 129 magicka recovery"
+    ],
+    "robes of transmutation": [
+      "2 items adds 129 magicka recovery",
+      "3 items adds 129 magicka recovery",
+      "5 items when you heal yourself or an ally with a healing over time ability grant them 1400 critical resistance for 5 seconds"
+    ],
+    "vicious death": [
+      "3 items adds 1096 maximum magicka"
+    ],
+    "lekis focus": [
+      "3 items adds 1096 maximum stamina",
+      "4 items adds 129 stamina recovery"
+    ],
+    "warriors fury": [
+      "3 items adds 1096 maximum stamina"
+    ],
+    "galerions revenge": [
+      "3 items adds 129 magicka recovery"
+    ],
+    "knight slayer": [
+      "2 items adds 1096 maximum magicka"
+    ],
+    "wizards riposte": [
+      "4 items adds 129 magicka recovery"
+    ],
+    "impregnable armor": [
+      "2 items adds 1206 maximum health",
+      "3 items adds 1096 maximum stamina",
+      "4 items adds 1096 maximum magicka",
+      "5 items adds 1650 critical resistance"
+    ],
+    "savage werewolf": [
+      "2 items adds 1096 maximum stamina",
+      "4 items adds 129 stamina recovery",
+      "5 items your light attacks made within melee range rend flesh causing your enemy to bleed for 232 bleed damage instantly and additionally every 2 seconds for 4 seconds this effect scales off the higher of your weapon or spell damage"
+    ],
+    "indomitable fury": [
+      "2 items adds 1096 maximum magicka",
+      "3 items adds 1096 maximum magicka"
+    ],
+    "spell strategist": [
+      "2 items adds 1096 maximum magicka"
+    ],
+    "bahseis mania": [
+      "5 items increases your damage done against monsters by up to 10 based on your missing magicka reaching the maximum at 50 magicka"
+    ],
+    "dark convergence": [
+      "2 items adds 1096 maximum magicka"
+    ],
+    "rallying cry": [
+      "3 items adds 1096 maximum magicka",
+      "4 items adds 657 critical chance",
+      "5 items when your healing critically strikes while battle spirit is active you and group members within 12 meters of you gain 1650 critical resistance and 300 weapon and spell damage for 20 seconds each group member affected reduces the weapon and spell damage by 15 and critical resistance by 83 this effect can occur once every 15 seconds"
+    ],
+    "hew and sunder": [
+      "2 items adds 1096 maximum stamina",
+      "3 items adds 1096 maximum stamina"
+    ],
+    "enervating aura": [
+      "5 items when you deal direct damage you have a 10 chance to create an area under the target that detonates after 1 second applying enervating aura for 10 seconds to enemies within 5 meters enervating aura lowers the health recovery magicka recovery and stamina recovery of enemy players by 129 per player hit this effect can occur once every 15 seconds"
+    ],
+    "ansuuls torment": [
+      "5 items increases your damage done against monsters by 7 when you interrupt an enemy you increase your damage done against monsters by an additional 7 for 10 seconds"
+    ],
+    "soulcleaver": [
+      "3 items adds 1096 maximum magicka",
+      "5 items while in combat strengthens your siphoning abilities at the cost of ultimate increases the damage and healing of siphoning abilities by 21 reduces the cost of siphoning abilities by 21 casting siphoning abilities drains you of 1 ultimate"
+    ],
+    "monolith of storms": [
+      "5 items dealing damage with a storm calling abilitys initial hit or every 5th tick creates a monolith near the enemy for 10 seconds up to one every 1 second you may have up to 3 monoliths at a time monoliths link to your other monoliths within 28 meters of each other each link deals 680 shock damage scaling off of the higher of your weapon or spell damage every 2 seconds to enemies between and near them an enemy can only take damage from this set once every 2 seconds"
+    ],
+    "wrathsun": [
+      "5 items when you deal damage with a dawns wrath ability you gain a stack of sunlight for 15 seconds once per attack you can have 40 stacks max and gain 12 magicka recovery per stack when at max stacks your dawns wrath abilities deal 25 bonus damage and a wrathful nova is cast on the enemy but you cannot refresh sunlight when sunlight expires at max stacks you lose 50 of your current magicka"
+    ],
+    "blunted blades": [
+      "3 items adds 1096 maximum stamina"
+    ],
+    "spattering disjunction": [
+      "5 items dealing damage with an arcanist ability applies two random status effects to your target this effect can occur once every 7 seconds dealing damage with a herald of the tome ability reduces this cooldown by 05 seconds up to once every 1 second"
+    ],
+    "pyrebrand": [
+      "5 items your light attacks deal 1220 flame damage over 6 seconds your fullycharged heavy attacks consume up to 3 of your damage over time effects to deal 862 flame damage in a 6 meter radius on the target dealing up to 200 more damage to enemies below 33 health the damage scales off the higher of your weapon or spell damage and is increased by 20 for each damage over time effect on the target up to 60"
+    ],
+    "corpseburster": [
+      "5 items consuming a corpse causes the corpse to explode dealing 1298 magic damage to enemies within 5 meters and applying minor breach to them for 5 seconds reducing their physical and spell resistance by 2974 this effect can occur once every 05 seconds scales off the higher of your weapon or spell damage and deals 10 more damage for each grave lord ability slotted"
+    ],
+    "beacon of oblivion": [
+      "5 items while you have a permanent pet active gain 1840 health and 1980 armor while you do not have a permanent pet active increase your damage done and healing done by 15 this value is reduced to 5 while affected by battle spirit"
+    ],
+    "aetheric lancer": [
+      "5 items dealing damage with burning light twice within 30 seconds creates a 5 meter area for 5 seconds this effect can occur once every 6 seconds while in the area dealing damage with an aedric spear ability launches a spear at your target dealing 1684 magic damage and applying sundered and increasing your weapon and spell damage by 300 for 6 seconds the damage scales off the higher of your weapon or spell damage"
+    ],
+    "aeries cry": [
+      "5 items dealing damage with a light attack applies eagles mark to your target for 12 seconds eagles mark causes an eagle to attack your target every 3 seconds after a 3 second delay dealing 856 physical damage per attack applying eagles mark grants you aeries call for 12 seconds increasing your damage done with animal companion abilities by 10 against enemies with eagles mark this effect can occur every 3 seconds but cannot be applied to enemies who have eagles mark you can have one eagles mark active at a time"
+    ],
+    "trackers lash": [
+      "3 items adds 1096 maximum magicka"
+    ],
+    "shared pain": [
+      "2 items adds 1096 maximum stamina",
+      "3 items adds 1096 maximum stamina"
+    ],
+    "siegemasters focus": [
+      "2 items adds 1096 maximum stamina"
+    ],
+    "farstrider": [
+      "3 items adds 1096 maximum stamina"
+    ],
+    "tideborn wildstalker": [
+      "5 items increase your direct damage done to monsters by 12"
+    ],
+    "shattered paths signet": [
+      "1 item increase your damage done with status effects by 1 for every 1 ultimate you have up to 170 both the current and maximum damage done is halved against players while you have 170 or more ultimate your light and heavy attacks apply a random status effect up to once every 4 seconds applies minor timidity to you consuming 1 ultimate every 15 seconds while in combat"
+    ]
+  }
+}

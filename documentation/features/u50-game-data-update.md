@@ -86,7 +86,11 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
    Prowler's Talisman upgrade tiers — expect another data pass, no API bump.
 5. **Tooltip dump addon**: already declares `## APIVersion: 101050` (correct for U50 — single
    bump, confirmed via ESOUI dev thread). Run the in-game dump on the U50 client to replace
-   patch-note-derived descriptions with exact tooltip strings.
+   patch-note-derived descriptions with exact tooltip strings. The U50-changed entries are
+   pinned in `data/tooltip-provenance-pending.json` (81 entries, exact-text-pinned, generated
+   via `check-tooltip-provenance.mjs --emit-pending`) so the provenance gate stays at 100% with
+   the exceptions reported separately — **delete that file** after the U50 dump refresh; any
+   drift from the pinned text re-trips the gate until then.
 6. **Werewolf tank taunt**: Deafening Roar's slot taunt moved from Heavy Attacks to
    "Gnash cast while Bracing". The innate taunt debuff (38254) is unchanged, but verify
    role-detection taunt attribution against a live U50 werewolf-tank log.
