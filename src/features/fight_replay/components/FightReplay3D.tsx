@@ -74,8 +74,12 @@ export interface TrialReplayNav {
   isFightDataLoading: boolean;
   /** Name of the fight being entered, for the transition overlay. */
   enteringLabel: string | null;
-  /** Navigate the replay to another fight (auto-advance or cross-segment scrub). */
-  onAdvanceToFight: (fightId: string, options?: { localMs?: number }) => void;
+  /**
+   * Navigate the replay to another fight. `localMs` seeds the arrival playhead (cross-fight
+   * scrubs); `replace` controls the history entry — defaults to replace (the continuous flow
+   * must not pile up Back steps), while manual chapter jumps pass false so Back steps back.
+   */
+  onAdvanceToFight: (fightId: string, options?: { localMs?: number; replace?: boolean }) => void;
   /** Toggle auto-advance. */
   onToggleContinuous: () => void;
   /** Toggle whether trash is included in continuous play / the trial scrubber. */
@@ -228,6 +232,20 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const [isScrubbingMode, setIsScrubbingMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // RENDER-PHASE pause on fight change (the canonical adjust-state-during-render pattern).
+  // This must commit in the SAME render that first carries the new fight: usePlaybackAnimation's
+  // effect re-runs on the new duration BEFORE the fight-change reset effect (hook order) and, if
+  // isPlaying were still true, would synchronously tick with the OLD fight's playhead — when the
+  // outgoing fight is longer than the incoming one that tick lands past the new duration, fires
+  // onEnd again, and silently SKIPS the fight that was just entered (or misroutes a chapter
+  // click made while playing). Pausing here closes that window for every switch path; the reset
+  // effect + pendingAutoplay then seed and resume as designed.
+  const [renderedFightId, setRenderedFightId] = useState(selectedFight.id);
+  if (renderedFightId !== selectedFight.id) {
+    setRenderedFightId(selectedFight.id);
+    setIsPlaying(false);
+  }
+
   // A–B loop in/out points (ms into the fight), set with i/o. Raw (unordered); the playback hook
   // normalizes lo/hi. Both set + a sane span → playback wraps within [A,B] until the chip clears.
   const [loopStart, setLoopStart] = useState<number | null>(null);
@@ -262,8 +280,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   trialNavRef.current = trialNav;
 
   // "Cancel" on the Up-next countdown skips auto-advance for THIS fight boundary only (the
-  // persisted autoplay preference stays on). Reset on fight change.
+  // persisted autoplay preference stays on). Two halves kept in lockstep: the ref consulted by
+  // handlePlaybackEnd and the state gating the countdown card. Both reset on fight change and
+  // when the playhead leaves the end-of-fight tail window.
   const skipNextAdvanceRef = useRef(false);
+  const [countdownCancelled, setCountdownCancelled] = useState(false);
 
   // The resolved next timeline entry (computed below with a startTime fallback for fights that
   // aren't ON the filtered timeline — e.g. a deep-linked trash blip below the segment threshold,
@@ -306,10 +327,27 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     isDragging,
   });
 
-  // Playback control handlers
+  const seekTo = useCallback(
+    (time: number) => {
+      setCurrentTime(time);
+      animationTimeRef.setTime(time);
+    },
+    [animationTimeRef],
+  );
+
+  // Playback control handlers. Pressing play while parked at the final frame restarts the
+  // fight from the top (the standard player convention) — without this, the loop's first tick
+  // immediately re-fired onEnd, which with autoplay on re-advanced past a boundary the user may
+  // have just cancelled.
   const handlePlayPause = useCallback(() => {
+    if (!isPlaying) {
+      const dur = selectedFight.endTime - selectedFight.startTime;
+      if (animationTimeRef.timeRef.current >= dur - 250) {
+        seekTo(0);
+      }
+    }
     setIsPlaying(!isPlaying);
-  }, [isPlaying]);
+  }, [isPlaying, selectedFight.endTime, selectedFight.startTime, animationTimeRef.timeRef, seekTo]);
 
   const handlePlayingChange = useCallback((playing: boolean) => {
     setIsPlaying(playing);
@@ -323,19 +361,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsDragging(dragging);
   }, []);
 
-  const seekTo = useCallback(
-    (time: number) => {
-      setCurrentTime(time);
-      animationTimeRef.setTime(time);
-    },
-    [animationTimeRef],
-  );
-
   // Continuous trial replay: when the loaded fight changes in place (auto-advance, a chapter
   // jump, or a cross-segment scrub), the component stays mounted (so fullscreen persists and the
   // scene rebuilds underneath) — but playback state must reset for the new fight. We also remember
   // to resume playing once the new fight's data is ready when "play whole trial" is on.
   const [pendingAutoplay, setPendingAutoplay] = useState(false);
+  // One-shot "start playing on arrival" for explicit play actions (the Play-next card, a
+  // cross-fight Replay-run) — these promise playback even when the autoplay preference is off.
+  const forceAutoplayRef = useRef(false);
   // Cross-fight trial scrubs promise a specific moment ("Xalvakka · 2:45" in the preview
   // bubble) — the dragged local offset is stashed here, keyed by the target fight, and
   // consumed by the reset effect so the new fight opens AT that moment instead of 0:00.
@@ -369,8 +402,15 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setIsPlaying(false);
     setFollowingActor(null);
     setSelectedPlayerIds(new Set());
+    // A new fight is a new boundary: clear BOTH halves of any Up-next cancel (a stale
+    // countdownCancelled would suppress the next fight's countdown — the only Cancel UI —
+    // while the cleared skip ref let it auto-advance silently).
     skipNextAdvanceRef.current = false;
-    setPendingAutoplay(trialNavRef.current?.continuousEnabled ?? false);
+    setCountdownCancelled(false);
+    setPendingAutoplay(
+      forceAutoplayRef.current || (trialNavRef.current?.continuousEnabled ?? false),
+    );
+    forceAutoplayRef.current = false;
   }, [
     selectedFight.id,
     selectedFight.endTime,
@@ -405,9 +445,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     [seekTo, selectedFight.endTime, selectedFight.startTime],
   );
 
-  // Navigate to a chapter (popover rows, boss-skip buttons) — always from its start.
+  // Navigate to a chapter (popover rows, boss-skip buttons, mobile chapter list) — always from
+  // its start, and as a history PUSH: manual chapter jumps must let Back return to the previous
+  // fight (matching the page rail and the [ ] keys), unlike auto-advance which replaces.
   const handleSelectChapter = useCallback((chapter: TrialChapter) => {
-    trialNavRef.current?.onAdvanceToFight(chapter.fightId);
+    trialNavRef.current?.onAdvanceToFight(chapter.fightId, { replace: false });
   }, []);
 
   const handleTimeChange = useCallback(
@@ -433,26 +475,35 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     seekTo(selectedFight.endTime - selectedFight.startTime);
   }, [selectedFight, seekTo]);
 
+  // The ±10s buttons read the LIVE playhead from the ref (always initialized at mount), not the
+  // 10Hz currentTime state — a currentTime dep gave these a fresh identity on every playback
+  // tick, defeating PlaybackButtons' React.memo at exactly the cadence it exists to block.
   const handleSkipBackward10 = useCallback(() => {
-    seekTo(Math.max(0, currentTime - 10000));
-  }, [currentTime, seekTo]);
+    seekTo(Math.max(0, animationTimeRef.timeRef.current - 10000));
+  }, [animationTimeRef.timeRef, seekTo]);
 
   const handleSkipForward10 = useCallback(() => {
-    seekTo(Math.min(selectedFight.endTime - selectedFight.startTime, currentTime + 10000));
-  }, [selectedFight, currentTime, seekTo]);
+    seekTo(
+      Math.min(
+        selectedFight.endTime - selectedFight.startTime,
+        animationTimeRef.timeRef.current + 10000,
+      ),
+    );
+  }, [selectedFight.endTime, selectedFight.startTime, animationTimeRef.timeRef, seekTo]);
 
   // Fight duration in ms — the upper bound every keyboard seek clamps to.
   const duration = selectedFight.endTime - selectedFight.startTime;
 
   // Relative seek that always reads the live time from the high-frequency ref (not the ~2Hz
   // currentTime state), so rapid arrow taps compound correctly instead of snapping back to a
-  // stale React value. Clamped to [0, duration].
+  // stale React value. Clamped to [0, duration]. No currentTime dep — that re-created this (and
+  // the window keydown listener downstream) at the 10Hz playback tick.
   const seekBy = useCallback(
     (deltaMs: number) => {
-      const base = animationTimeRef.timeRef.current ?? currentTime;
+      const base = animationTimeRef.timeRef.current;
       seekTo(Math.max(0, Math.min(duration, base + deltaMs)));
     },
-    [animationTimeRef.timeRef, currentTime, duration, seekTo],
+    [animationTimeRef.timeRef, duration, seekTo],
   );
 
   // +/- step through the same discrete speed ladder the on-screen SpeedSelector uses.
@@ -487,7 +538,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   const jumpToEvent = useCallback(
     (direction: 1 | -1) => {
       if (markers.length === 0) return;
-      const now = animationTimeRef.timeRef.current ?? currentTime;
+      const now = animationTimeRef.timeRef.current;
       const EPS = 1; // ms — step just past the current marker so repeats advance
       const sorted = markers.map((m) => m.timestamp).sort((a, b) => a - b);
       let targetTime: number | null = null;
@@ -505,19 +556,19 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         seekTo(Math.max(0, Math.min(duration, targetTime)));
       }
     },
-    [markers, animationTimeRef.timeRef, currentTime, duration, seekTo],
+    [markers, animationTimeRef.timeRef, duration, seekTo],
   );
 
   // A–B loop: set the in/out point to the LIVE playhead (ref, not the lagged currentTime state).
   const setLoopInPoint = useCallback(() => {
-    const t = animationTimeRef.timeRef.current ?? currentTime;
+    const t = animationTimeRef.timeRef.current;
     setLoopStart(Math.max(0, Math.min(duration, t)));
-  }, [animationTimeRef.timeRef, currentTime, duration]);
+  }, [animationTimeRef.timeRef, duration]);
 
   const setLoopOutPoint = useCallback(() => {
-    const t = animationTimeRef.timeRef.current ?? currentTime;
+    const t = animationTimeRef.timeRef.current;
     setLoopEnd(Math.max(0, Math.min(duration, t)));
-  }, [animationTimeRef.timeRef, currentTime, duration]);
+  }, [animationTimeRef.timeRef, duration]);
 
   const clearLoop = useCallback(() => {
     setLoopStart(null);
@@ -710,10 +761,14 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   }, [mobileImmersive, isPlaying]);
 
   // Mobile tap-to-toggle: a true tap (≤8px travel) on the EMPTY arena flips the chrome. Taps on
-  // controls (dock, top bar, sheets) and taps that locked onto an actor are ignored — Arena3D's
-  // actor click runs during the canvas's own pointerup (before this bubble listener), so a fresh
-  // actorTapRef timestamp means "this tap selected someone, leave the chrome alone".
+  // controls (dock, top bar, sheets) and taps that locked onto an actor are ignored. The toggle
+  // decision runs on the bubbling CLICK (not pointerup): R3F dispatches mesh onClick during the
+  // DOM click event, so by the time the click bubbles to the container, an actor hit has already
+  // stamped actorTapRef — a pointerup-phase check ran BEFORE the stamp and the guard was dead
+  // (every actor-lock tap also flipped the chrome). pointerdown/up only measure travel so a
+  // camera drag never counts as a tap.
   const tapStartRef = useRef<{ x: number; y: number } | null>(null);
+  const tapTravelOkRef = useRef(false);
   useEffect(() => {
     if (!mobileImmersive) return;
     const el = replayContainerRef.current;
@@ -721,23 +776,37 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
     const onDown = (e: PointerEvent): void => {
       tapStartRef.current = { x: e.clientX, y: e.clientY };
+      tapTravelOkRef.current = false;
     };
     const onUp = (e: PointerEvent): void => {
       const start = tapStartRef.current;
       tapStartRef.current = null;
       if (!start) return;
-      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) return;
+      tapTravelOkRef.current = Math.hypot(e.clientX - start.x, e.clientY - start.y) <= 8;
+    };
+    const onCancel = (): void => {
+      tapStartRef.current = null;
+      tapTravelOkRef.current = false;
+    };
+    const onClick = (e: MouseEvent): void => {
+      if (!tapTravelOkRef.current) return;
+      tapTravelOkRef.current = false;
       const target = e.target as HTMLElement | null;
       // Only bare-canvas taps toggle; anything interactive handles itself.
       if (!target || target.tagName !== 'CANVAS') return;
-      if (performance.now() - actorTapRef.current < 80) return;
+      // The canvas's own click handlers (R3F) ran first — a fresh stamp means an actor lock.
+      if (performance.now() - actorTapRef.current < 250) return;
       setBarVisible((v) => !v);
     };
     el.addEventListener('pointerdown', onDown, { passive: true });
     el.addEventListener('pointerup', onUp, { passive: true });
+    el.addEventListener('pointercancel', onCancel, { passive: true });
+    el.addEventListener('click', onClick);
     return () => {
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
+      el.removeEventListener('pointercancel', onCancel);
+      el.removeEventListener('click', onClick);
     };
   }, [mobileImmersive]);
 
@@ -934,7 +1003,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
 
   const trialNextUpLabel = nextEntry ? chapterDisplayName(nextEntry.chapter) : null;
 
-  const hasTrialRun = trialNav != null && trialNav.timeline.entries.length > 1;
+  // A trial run exists whenever the shell built trialNav (gated on the UNFILTERED run size).
+  // Deliberately NOT gated on the filtered timeline's entry count: turning "Include trash" off
+  // in a 1-boss run collapses the timeline to one entry, and gating here unmounted the entire
+  // trial cluster — including the very toggle the user just clicked, unrecoverable in fullscreen.
+  const hasTrialRun = trialNav != null;
 
   // Popover portal target — the fullscreen element, so the chapters list survives fullscreen.
   const portalContainer = useCallback(() => replayContainerRef.current, []);
@@ -942,10 +1015,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // The whole-trial layer the transport deck renders (mini-map strip, autoplay, boss skip,
   // chapters popover). Memoized: it changes on fight switches / toggle flips, not playback ticks.
   const transportTrial: TransportTrial | undefined = React.useMemo(() => {
-    if (!trialNav || !hasTrialRun) return undefined;
+    if (!trialNav) return undefined;
     return {
       timeline: trialNav.timeline,
       currentFightId: trialNav.currentFightId,
+      currentFightStartTime: selectedFight.startTime,
       onSeek: handleTrialSeek,
       onDraggingChange: handleTrialDraggingChange,
       autoplayEnabled: trialNav.continuousEnabled,
@@ -964,7 +1038,7 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     };
   }, [
     trialNav,
-    hasTrialRun,
+    selectedFight.startTime,
     handleTrialSeek,
     handleTrialDraggingChange,
     handleSelectChapter,
@@ -975,25 +1049,28 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Driven by the ~500ms currentTime state tick; mounts nothing outside the final seconds.
   const playbackEnded = !isPlaying && duration > 0 && currentTime >= duration - 250;
   const loopActive = loopStart != null && loopEnd != null && Math.abs(loopEnd - loopStart) >= 100;
-  const [countdownCancelled, setCountdownCancelled] = useState(false);
   useEffect(() => {
     // Re-arm BOTH halves of a cancel when the playhead leaves the tail window: the visible
     // countdown state AND the advance-skip ref handlePlaybackEnd consults. Re-arming only the
     // countdown would show "Up next" again while the stale ref silently swallowed the advance.
-    if (duration - currentTime > 6000 && countdownCancelled) {
+    // The threshold is in the SAME speed-scaled real-time units as the countdown's show window
+    // (which spans 5000×speed of fight time): comparing raw fight time here meant a Cancel
+    // pressed early in the countdown at >1.2× speed was instantly reverted — and then advanced.
+    const remainingRealMs = (duration - currentTime) / Math.max(0.25, playbackSpeed);
+    if (remainingRealMs > 6000 && countdownCancelled) {
       setCountdownCancelled(false);
       skipNextAdvanceRef.current = false;
     }
-  }, [currentTime, duration, countdownCancelled]);
+  }, [currentTime, duration, playbackSpeed, countdownCancelled]);
 
   const upNextState: UpNextState | null = React.useMemo(() => {
     if (!hasTrialRun || mobilePreview || trialNav?.isFightDataLoading) return null;
     if (playbackEnded) {
       if (!nextEntry) return { kind: 'run-complete' };
-      if (!trialNav?.continuousEnabled) {
-        return { kind: 'play-next', label: chapterDisplayName(nextEntry.chapter) };
-      }
-      return null;
+      // Parked at the end with a next fight available → offer it. With autoplay ON this state
+      // is only reachable when the advance was cancelled/skipped, so the card is the user's
+      // way back in — hiding it left a dead end where Play instantly re-advanced instead.
+      return { kind: 'play-next', label: chapterDisplayName(nextEntry.chapter) };
     }
     if (
       trialNav?.continuousEnabled &&
@@ -1032,8 +1109,16 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     setCountdownCancelled(true);
   }, []);
   const handlePlayNext = useCallback(() => {
-    if (nextEntry) trialNavRef.current?.onAdvanceToFight(nextEntry.chapter.fightId);
-  }, [nextEntry]);
+    if (!nextEntry) return;
+    // An explicit "play" promise: start on arrival even when the autoplay preference is off.
+    forceAutoplayRef.current = true;
+    // The countdown's "Now" accelerates an in-flight auto-advance (replace, like auto-advance
+    // itself); the parked "Play next" card is a manual jump and should push a history entry.
+    const accelerating = trialNavRef.current?.continuousEnabled && isPlaying;
+    trialNavRef.current?.onAdvanceToFight(nextEntry.chapter.fightId, {
+      replace: accelerating ? undefined : false,
+    });
+  }, [nextEntry, isPlaying]);
   const handleReplayRun = useCallback(() => {
     const first = trialNavRef.current?.timeline.entries[0];
     if (!first) return;
@@ -1041,7 +1126,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
       seekTo(0);
       setIsPlaying(true);
     } else {
-      trialNavRef.current?.onAdvanceToFight(first.chapter.fightId);
+      forceAutoplayRef.current = true;
+      trialNavRef.current?.onAdvanceToFight(first.chapter.fightId, { replace: false });
     }
   }, [seekTo]);
 
@@ -1186,7 +1272,12 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onPlayNext={handlePlayNext}
           onReplayRun={handleReplayRun}
           bottomInset={
-            mobileImmersive ? 148 : TRANSPORT_RESERVED + (!isMobile && hasTrialRun ? 32 : 8)
+            // Mobile: the dock's real height is its content + env(safe-area-inset-bottom), so
+            // the card's inset must carry the same term or the dock paints over Cancel/Now on
+            // home-indicator phones.
+            mobileImmersive
+              ? 'calc(148px + env(safe-area-inset-bottom))'
+              : TRANSPORT_RESERVED + (!isMobile && hasTrialRun ? 32 : 8)
           }
         />
       )}
@@ -1355,6 +1446,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             selectedActorIdRef={followingActorIdRef}
             trialNav={trialNav}
             onTrialSeek={handleTrialSeek}
+            onChapterSelect={handleSelectChapter}
+            currentFightStartTime={selectedFight.startTime}
             trialNextUpLabel={trialNextUpLabel}
             playersOpen={showPlayerPathsHUD}
             onTogglePlayers={togglePlayerPathsHUD}

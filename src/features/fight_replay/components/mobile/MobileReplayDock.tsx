@@ -70,6 +70,10 @@ interface MobileReplayDockProps {
   // Trial chapters
   trialNav?: TrialReplayNav;
   onTrialSeek?: (target: TrialTimelineSeekTarget) => void;
+  /** Manual chapter navigation (pushes a history entry, unlike the continuous-flow seek). */
+  onChapterSelect?: (chapter: TrialChapter) => void;
+  /** Real start time of the loaded fight (anchors the sheet scrubber when off-timeline). */
+  currentFightStartTime?: number;
   trialNextUpLabel?: string | null;
   // Players sheet (toggles the player list)
   playersOpen: boolean;
@@ -231,6 +235,8 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   selectedActorIdRef,
   trialNav,
   onTrialSeek,
+  onChapterSelect,
+  currentFightStartTime,
   trialNextUpLabel,
   playersOpen,
   onTogglePlayers,
@@ -247,9 +253,12 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
 }) => {
   const [sheet, setSheet] = useState<SheetId>(null);
 
-  // The host pauses the tap-to-toggle chrome auto-hide while a sheet is up.
+  // The host pauses the tap-to-toggle chrome auto-hide while a sheet is up. The cleanup
+  // matters: if the dock (or the sheet's host gate) unmounts while a sheet is open, the host
+  // would otherwise be stranded with sheetOpen=true and never auto-hide chrome again.
   useEffect(() => {
     onSheetOpenChange?.(sheet !== null);
+    return () => onSheetOpenChange?.(false);
   }, [sheet, onSheetOpenChange]);
 
   // A chapter tap / cross-fight scrub commit closes the sheet so the "Entering <area>"
@@ -265,11 +274,19 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   const handleChapterSelect = useCallback(
     (chapter: TrialChapter) => {
       const sameFight = chapter.fightId === trialNav?.currentFightId;
-      onTrialSeek?.({ fightId: chapter.fightId, localMs: 0, sameFight });
+      if (sameFight) {
+        // Restart the current chapter in place.
+        onTrialSeek?.({ fightId: chapter.fightId, localMs: 0, sameFight: true });
+      } else if (onChapterSelect) {
+        // Manual navigation — pushes a history entry so Back returns here.
+        onChapterSelect(chapter);
+      } else {
+        onTrialSeek?.({ fightId: chapter.fightId, localMs: 0, sameFight: false });
+      }
       // Close either way: a chapter tap is a navigation, not a fine-tuning scrub.
       setSheet(null);
     },
-    [onTrialSeek, trialNav?.currentFightId],
+    [onTrialSeek, onChapterSelect, trialNav?.currentFightId],
   );
 
   const {
@@ -304,7 +321,16 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   );
   const handleMarkerClick = useCallback((t: number) => onTimeChange(t), [onTimeChange]);
 
-  const hasChapters = Boolean(trialNav && trialNav.timeline.entries.length > 1);
+  // Chapters surfaces exist whenever a run exists — NOT gated on the filtered timeline's entry
+  // count, or toggling "Include trash" off inside the sheet could unmount the sheet (and the
+  // toggle) out from under the user's finger.
+  const hasChapters = Boolean(trialNav);
+
+  // Belt-and-braces: if the chapters surface does vanish while its sheet is open (run change,
+  // breakpoint flip), heal the sheet state instead of stranding it.
+  useEffect(() => {
+    if (!hasChapters && sheet === 'chapters') setSheet(null);
+  }, [hasChapters, sheet]);
 
   return (
     <Box
@@ -476,6 +502,7 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 <TrialTimeline
                   timeline={trialNav.timeline}
                   currentFightId={trialNav.currentFightId}
+                  currentFightStartTime={currentFightStartTime}
                   currentLocalMs={currentTime}
                   onSeek={handleSheetTrialSeek}
                   variant="sheet"

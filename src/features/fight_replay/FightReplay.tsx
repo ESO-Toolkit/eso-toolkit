@@ -352,14 +352,16 @@ export const FightReplay: React.FC = () => {
   const handleToggleContinuous = useCallback(() => setContinuousPlay((v) => !v), []);
   const handleToggleIncludeTrash = useCallback(() => setIncludeTrash((v) => !v), []);
 
-  // Auto-advance / cross-segment scrub navigation. Replaces the history entry so the continuous
-  // flow doesn't pile up Back steps (manual chapter clicks still push a history entry). A
-  // cross-fight scrub carries its dragged offset through as ?time= — refresh/share-safe, and
-  // FightReplay3D seeds playback from it so the seek lands at the promised moment, not 0:00.
+  // Auto-advance / cross-segment scrub navigation. Defaults to replacing the history entry so
+  // the continuous flow doesn't pile up Back steps; manual chapter jumps (popover rows, boss-skip
+  // buttons, the mobile chapter list) pass replace:false so Back returns to the previous fight,
+  // matching the page rail and the [ ] keys. A cross-fight scrub carries its dragged offset
+  // through as ?time= — refresh/share-safe, and FightReplay3D seeds playback from it so the seek
+  // lands at the promised moment, not 0:00.
   const handleAdvanceToFight = useCallback(
-    (targetFightId: string, options?: { localMs?: number }) => {
+    (targetFightId: string, options?: { localMs?: number; replace?: boolean }) => {
       if (targetFightId === fightId) return;
-      goToFight(targetFightId, { replace: true, time: options?.localMs });
+      goToFight(targetFightId, { replace: options?.replace ?? true, time: options?.localMs });
     },
     [goToFight, fightId],
   );
@@ -415,8 +417,12 @@ export const FightReplay: React.FC = () => {
     ? chapterDisplayName(trialChapters.currentSegment)
     : (fight?.name ?? null);
   const killedBosses = trialChapters.bossChapters.filter((b) => b.isKill).length;
+  // Gate on the UNFILTERED run size, not the filtered timeline: with the trash filter on, a
+  // 1-boss-plus-trash run collapses to a single timeline entry, and gating on that unmounted
+  // every trial surface — including the include-trash toggle itself — making the filter
+  // irreversible inside fullscreen / mobile immersive.
   const trialNav: TrialReplayNav | undefined =
-    trialChapters.currentRun && trialTimeline.entries.length > 1
+    trialChapters.currentRun && trialChapters.segments.length > 1
       ? {
           timeline: trialTimeline,
           currentFightId: fightId,

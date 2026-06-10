@@ -37,8 +37,11 @@ interface UpNextCardProps {
   onPlayNext: () => void;
   /** Restart the run from its first fight (run-complete state). */
   onReplayRun: () => void;
-  /** Lifted above the transport (px). */
-  bottomInset: number;
+  /**
+   * Lifted above the transport — px, or a CSS length (the mobile dock's height includes
+   * env(safe-area-inset-bottom), so its inset must too).
+   */
+  bottomInset: number | string;
 }
 
 const surfaceSx = (compactPad = false): Record<string, unknown> => ({

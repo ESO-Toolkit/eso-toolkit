@@ -56,6 +56,8 @@ export interface TransportTrial {
   /** The run's continuous timeline (already filtered by include-trash). */
   timeline: TrialTimelineModel;
   currentFightId: string | undefined;
+  /** Real start time of the loaded fight (anchors the strip when the fight is off-timeline). */
+  currentFightStartTime: number;
   /** Commit a trial-wide seek (same-fight = instant; cross-fight = navigate). */
   onSeek: (target: TrialTimelineSeekTarget) => void;
   /** Reports strip drag state (guards the fullscreen idle auto-hide). */
@@ -252,7 +254,12 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   // Reduced motion: skip the translate (keep the opacity swap, which the theme zeroes globally).
   const hideTransform = hidden && !prefersReducedMotion ? 'translateY(8px)' : 'none';
 
-  const showTrial = trial != null && trial.timeline.entries.length > 1;
+  // The trial cluster (autoplay, chapters popover with its include-trash switch, boss skip)
+  // renders whenever a run exists — NOT gated on the filtered timeline's entry count, or
+  // toggling trash off in a small run would unmount the toggle itself. The mini-map strip
+  // alone hides when the filtered timeline has nothing to scrub.
+  const showTrial = trial != null;
+  const showTrialStrip = trial != null && trial.timeline.entries.length > 0;
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -305,10 +312,11 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
       >
         {/* Row 0: trial mini-map — the whole run as one gapless strip, flush above the fight
             rail so the two playheads share one x-axis and read as one system. */}
-        {showTrial && trial && (
+        {showTrialStrip && trial && (
           <TrialTimeline
             timeline={trial.timeline}
             currentFightId={trial.currentFightId}
+            currentFightStartTime={trial.currentFightStartTime}
             currentLocalMs={displayTime}
             onSeek={trial.onSeek}
             onDraggingChange={trial.onDraggingChange}

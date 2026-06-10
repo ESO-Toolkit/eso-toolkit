@@ -42,6 +42,12 @@ interface TrialTimelineProps {
   timeline: TrialTimelineModel;
   /** The fight currently loaded in the replay. */
   currentFightId: string | undefined;
+  /**
+   * Real start time of the loaded fight — anchors the playhead when the fight is NOT on the
+   * filtered timeline (trash while include-trash is off, or a sub-threshold blip). Without it
+   * the playhead fell back to 0 and a keyboard step committed a jump back to the run's start.
+   */
+  currentFightStartTime?: number;
   /** Current playhead position within the loaded fight (ms). */
   currentLocalMs: number;
   /** Commit a seek to a (possibly different) fight + local offset. */
@@ -154,6 +160,7 @@ const TrialHoverPreview: React.FC<{
 const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
   timeline,
   currentFightId,
+  currentFightStartTime,
   currentLocalMs,
   onSeek,
   onDraggingChange,
@@ -169,6 +176,20 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
   // Cross-fight keyboard steps preview first and commit after a quiet period, so a held
   // arrow key can't thrash fight loads at every segment boundary.
   const kbCommitTimer = useRef<number | null>(null);
+  const clearKbCommit = useCallback(() => {
+    if (kbCommitTimer.current !== null) {
+      window.clearTimeout(kbCommitTimer.current);
+      kbCommitTimer.current = null;
+    }
+  }, []);
+
+  // Any fight change — from THIS rail or any other navigation surface — invalidates a pending
+  // keyboard commit and its preview: a 350ms timer left armed across a navigation re-fired a
+  // stale seek that overrode the user's newer action (or double-navigated).
+  useEffect(() => {
+    clearKbCommit();
+    setDragFraction((f) => (draggingRef.current ? f : null));
+  }, [currentFightId, clearKbCommit]);
 
   // Hover preview only makes sense for fine pointers; touch keeps the press/drag bubble.
   const [hasHover, setHasHover] = useState(false);
@@ -192,12 +213,19 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
   );
 
   // Live global playhead position (fraction of the whole run), from the loaded fight + local time.
+  // A fight that's NOT on the filtered timeline anchors at the boundary where it would sit (by
+  // real start time) instead of snapping to 0 — keyboard steps then move relative to the viewer's
+  // actual position in the run rather than committing a jump back to chapter 1.
   const playheadFraction = useMemo(() => {
     if (total <= 0) return 0;
     const global = localToGlobal(timeline, currentFightId, currentLocalMs);
-    if (global == null) return 0;
+    if (global == null) {
+      if (currentFightStartTime == null) return 0;
+      const after = timeline.entries.find((e) => e.chapter.startTime > currentFightStartTime);
+      return Math.max(0, Math.min(1, (after?.globalStart ?? total) / total));
+    }
     return Math.max(0, Math.min(1, global / total));
-  }, [timeline, currentFightId, currentLocalMs, total]);
+  }, [timeline, currentFightId, currentFightStartTime, currentLocalMs, total]);
 
   const shownFraction = dragFraction ?? playheadFraction;
 
@@ -235,6 +263,9 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
   const onPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (total <= 0) return;
+      // The pointer takes over: a pending deferred keyboard commit must not fire mid-drag
+      // (it would navigate under the held pointer / override the upcoming release).
+      clearKbCommit();
       try {
         event.currentTarget.setPointerCapture?.(event.pointerId);
       } catch {
@@ -243,7 +274,7 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
       setDragging(true);
       setDragFraction(fractionFromClientX(event.clientX));
     },
-    [fractionFromClientX, total, setDragging],
+    [fractionFromClientX, total, setDragging, clearKbCommit],
   );
 
   const onPointerMove = useCallback(
@@ -275,10 +306,11 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
   // the rail wedges in preview mode and later hovers "scrub" it. lostpointercapture also fires
   // after every normal release; by then dragging is already false, so this harmlessly no-ops.
   const onPointerCancel = useCallback(() => {
+    clearKbCommit();
     if (!draggingRef.current && dragFraction == null) return;
     setDragging(false);
     setDragFraction(null);
-  }, [dragFraction, setDragging]);
+  }, [dragFraction, setDragging, clearKbCommit]);
 
   // Keyboard: arrows nudge global time (Shift for a big step), PageUp/Down jump chapters,
   // Home/End the run's ends. Same-fight steps commit instantly; a step landing in a DIFFERENT
@@ -289,31 +321,23 @@ const TrialTimelineComponent: React.FC<TrialTimelineProps> = ({
       const pos = globalToLocal(timeline, fraction * total);
       if (!pos) return;
       if (pos.chapter.fightId === currentFightId) {
-        if (kbCommitTimer.current !== null) {
-          window.clearTimeout(kbCommitTimer.current);
-          kbCommitTimer.current = null;
-        }
+        clearKbCommit();
         setDragFraction(null);
         commitSeek(fraction);
         return;
       }
       setDragFraction(fraction);
-      if (kbCommitTimer.current !== null) window.clearTimeout(kbCommitTimer.current);
+      clearKbCommit();
       kbCommitTimer.current = window.setTimeout(() => {
         kbCommitTimer.current = null;
         setDragFraction(null);
         commitSeek(fraction);
       }, 350);
     },
-    [timeline, total, currentFightId, commitSeek],
+    [timeline, total, currentFightId, commitSeek, clearKbCommit],
   );
 
-  useEffect(
-    () => () => {
-      if (kbCommitTimer.current !== null) window.clearTimeout(kbCommitTimer.current);
-    },
-    [],
-  );
+  useEffect(() => clearKbCommit, [clearKbCommit]);
 
   const onKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
