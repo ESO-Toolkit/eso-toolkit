@@ -1024,17 +1024,17 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               pointerEvents: 'none',
             }}
           />
-          {/* HUD corner accents — bottom-right */}
+          {/* HUD corner accents — top-right */}
           <Box
             sx={{
               position: 'absolute',
-              bottom: 3,
+              top: 3,
               right: 5,
               width: 6,
               height: 6,
-              borderBottom: `1px solid ${accentBarColor}40`,
+              borderTop: `1px solid ${accentBarColor}40`,
               borderRight: `1px solid ${accentBarColor}40`,
-              borderBottomRightRadius: '3px',
+              borderTopRightRadius: '3px',
               zIndex: 3,
               pointerEvents: 'none',
             }}
