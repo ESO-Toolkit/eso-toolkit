@@ -177,7 +177,7 @@ export const twoHandedData: SkillsetData = {
               target: 'Enemy',
               maxRange: '7 meters',
               description:
-                'Slam an enemy with an upward swing, dealing 2760 Physical Damage. Grants you Empower and Major Berserk for 3 seconds, increasing the damage of your Heavy Attacks against monsters by 70% and your damage done by 10%.',
+                'Slam an enemy with an upward swing, dealing 2760 Physical Damage. Grants you Empower and Major Berserk for 3 seconds, increasing the damage of your Heavy Attacks against monsters by 150% and your damage done by 10%.',
             },
           ],
         },

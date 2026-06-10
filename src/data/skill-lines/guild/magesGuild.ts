@@ -193,7 +193,7 @@ export const magesGuild: SkillLineData = {
       type: 'passive',
       baseAbilityId: AbilityId.MIGHT_OF_THE_GUILD,
       description:
-        'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 10 seconds.',
+        'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 150% for 10 seconds.',
     },
   ],
 };

@@ -168,7 +168,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_009_a',
       description:
-        'Summon three patches of skeletal claws from the ground in front of you. Enemies in the first area are snared by 30% for 5 seconds, immobilized in the second area for 4 seconds, and stunned in the final area for 3 seconds.\n\nEach area applies Major Maim to enemies and Empower to your allies for 10 seconds, reducing enemy damage done by 10% and allied Heavy Attack Damage against monsters by 70%.',
+        'Summon three patches of skeletal claws from the ground in front of you. Enemies in the first area are snared by 30% for 5 seconds, immobilized in the second area for 4 seconds, and stunned in the final area for 3 seconds.\n\nEach area applies Major Maim to enemies and Empower to your allies for 10 seconds, reducing enemy damage done by 10% and allied Heavy Attack Damage against monsters by 150%.',
       baseSkillId: ClassSkillId.NECROMANCER_GRAVE_GRASP,
     },
     {
