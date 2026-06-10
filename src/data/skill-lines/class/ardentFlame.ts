@@ -85,7 +85,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_012_b',
       description:
-        'Let the fire within draw heat to your heart, restoring 15% of your missing Health and 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2004 Flame Damage to nearby enemies.',
+        'Let the fire within draw heat to your heart, restoring 15% of your Max Health and 15% of your missing Magicka and Stamina every 2 seconds over 4 seconds.\n\nWhen this ability completes, you release this heat as a blast of fire that deals 2004 Flame Damage to nearby enemies.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_INHALE,
     },
     {
@@ -139,7 +139,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_001_b',
       description:
-        'Lash an enemy with flame, dealing 2399 Flame Damage.\n\nActivating a different Dragonknight ability while in combat grants a stack of Seething Fury up to 3 times, increasing the damage of your next Molten Whip by 33% and your damage done by 5%, or 2% against players, for 10 seconds. The damage done only activates if you are a Dragonknight.',
+        'Lash an enemy with flame, dealing 2399 Flame Damage.\n\nActivating a different Dragonknight ability while in combat grants a stack of Seething Fury up to 3 times, increasing the damage of your next Molten Whip by 33%.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {
@@ -148,7 +148,7 @@ export const ardentFlame: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_001_a',
       description:
-        'Lash an enemy with flame, dealing 2323 Flame Damage and healing for 799 Health.\n\nHitting an Off Balance enemy grants 5 stacks of Power Lash for 20 seconds, up to once every 20 seconds.\n\nActivating again consumes a stack to deal 4337 Flame Damage to your target and all nearby enemies and heals for 3200 Health. Consuming all stacks as a Dragonknight increases your damage done by 7%, double against monsters, for 45 seconds.',
+        'Lash an enemy with flame, dealing 2323 Flame Damage and healing for 799 Health.\n\nHitting an Off Balance enemy grants 5 stacks of Power Lash for 20 seconds, up to once every 20 seconds.\n\nActivating again consumes a stack to deal 4337 Flame Damage to your target and all nearby enemies and heals for 3200 Health.',
       baseSkillId: ClassSkillId.DRAGONKNIGHT_LAVA_WHIP,
     },
     {

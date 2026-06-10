@@ -94,7 +94,7 @@ export const earthenHeart: SkillLineData = {
       type: 'active',
       icon: 'ability_dragonknight_015_b',
       description:
-        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.\n\nWhile active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 1.5 seconds.\n\nYou also gain Empower for the duration, increasing the damage of your Heavy Attacks against monsters by 70%.",
+        "Charge you and your grouped allies' weapons with volcanic power to gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 30 seconds.\n\nWhile active, dealing damage with Light and Heavy Attacks causes an additional 448 Flame Damage, up to once every 1.5 seconds.\n\nYou also gain Empower for the duration, increasing the damage of your Heavy Attacks against monsters by 150%.",
       baseSkillId: ClassSkillId.DRAGONKNIGHT_MOLTEN_WEAPONS,
     },
     {

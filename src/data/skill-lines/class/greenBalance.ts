@@ -214,7 +214,7 @@ export const greenBalance: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_006',
       description:
-        'When you heal an ally with a Green Balance ability, you gain 138 Magicka or 138 Stamina, whichever resource pool is lower. Each effect can occur once every 1 second.',
+        'When you overheal any target with a Green Balance ability, you restore 250 Magicka and 250 Stamina. This effect can occur once every 1 second.',
       isPassive: true,
     },
   ],

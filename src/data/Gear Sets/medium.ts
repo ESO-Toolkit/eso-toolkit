@@ -32,7 +32,7 @@ export const aeriesCry: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done with Animal Companion abilities by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time.",
+    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time, and this effect can stack between multiple wearers.",
   ],
 };
 
@@ -56,7 +56,7 @@ export const ansuulsTorment: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Increases your damage done against monsters by 7%. When you interrupt an enemy, you increase your damage done against monsters by an additional 7% for 10 seconds.',
+    '(5 items) Increases your damage done against monsters by 7%. When you interrupt an enemy, this bonus increases to 21% for 30 seconds.',
   ],
 };
 
@@ -90,7 +90,7 @@ export const aethericLancer: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 6 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 10 seconds. The damage scales off the higher of your Weapon or Spell Damage and counts as a class ability.',
   ],
 };
 export const alessiasBulwark: GearSetData = {
@@ -246,7 +246,7 @@ export const beaconOfOblivion: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) While you have a permanent pet active, gain 1840 Health and 1980 Armor.\n\nWhile you do not have a permanent pet active, increase your Damage Done and Healing Done by 15%. This value is reduced to 5% while affected by Battle Spirit.',
+    '(5 items) While you have a permanent pet active, gain 1840 Health and 1980 Armor.\n\nWhile you do not have a permanent pet active, increase your Damage Done and Healing Done by 15%. This value is reduced to 7% while affected by Battle Spirit.',
   ],
 };
 
@@ -378,7 +378,7 @@ export const corpseburster: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Magic Damage to enemies within 5 meters and applying Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted.',
+    '(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Disease Damage to enemies within 5 meters and applying Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted. Enemies hit are afflicted with the Diseased status effect.',
   ],
 };
 
@@ -800,7 +800,7 @@ export const hideOfTheWerewolf: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you take damage, you generate 6 Ultimate. This effect can occur once every 5 seconds.',
+    '(5 items) When you take damage, you generate 6 Ultimate, or 18 Ultimate while in Werewolf form. This effect can occur once every 5 seconds.',
   ],
 };
 
@@ -1070,7 +1070,7 @@ export const monolithOfStorms: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 680 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds.",
+    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 935 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds. You gain 100 Weapon and Spell Damage for each Monolith active.",
   ],
 };
 
@@ -1433,7 +1433,7 @@ export const pyrebrand: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Your Light Attacks deal 1220 Flame Damage over 6 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 of your damage over time effects to deal 862 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage and is increased by 20% for each damage over time effect on the target, up to 60%.',
+    '(5 items) Your Light Attacks deal 837 Flame Damage over 6 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 stacks of Wildfire Embers or Pyrebrand to deal 637 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage and is increased by 25% for each stack of Wildfire Embers on the target, up to 300%. This set can trigger Wildfire Embers once every 10 seconds.',
   ],
 };
 
@@ -1554,10 +1554,10 @@ export const savageWerewolf: GearSetData = {
   icon: 'Savage Werewolf',
   setType: 'Dungeon',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Stamina',
+    '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
-    '(4 items) Adds 129 Stamina Recovery',
-    '(5 items) Your Light Attacks made within melee range rend flesh, causing your enemy to bleed for 232 Bleed Damage instantly and additionally every 2 seconds for 4 seconds. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(4 items) Adds 129 Weapon and Spell Damage',
+    '(5 items) Your Light Attacks made within melee range rend flesh, causing your enemy to bleed for 232 Bleed Damage instantly and additionally every 2 seconds for 4 seconds. This effect scales off the higher of your Weapon or Spell Damage. While in Werewolf form, your damage done is increased by 6%.',
   ],
 };
 
@@ -1748,9 +1748,9 @@ export const soulcleaver: GearSetData = {
   setType: 'Class Sets',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
-    '(3 items) Adds 1096 Maximum Magicka',
+    '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate:\n\nIncreases the damage and healing of Siphoning abilities by 21%. Reduces the cost of Siphoning abilities by 21%. Casting Siphoning abilities drains you of 1 Ultimate.',
+    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate:\n\nIncreases the damage and healing of Siphoning abilities by 15%. Reduces the cost of Siphoning abilities by 15%. Casting Siphoning abilities drains you of 1 Ultimate and increases your damage done by up to 12% based on your current Health for 20 seconds.',
   ],
 };
 
@@ -1762,7 +1762,7 @@ export const spatteringDisjunction: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with an Arcanist ability applies two random status effects to your target. This effect can occur once every 7 seconds. Dealing damage with a Herald of the Tome ability reduces this cooldown by 0.5 seconds, up to once every 1 second.',
+    '(5 items) Dealing damage with an Arcanist ability applies two random status effects to your target. This effect can occur once every 7 seconds. Dealing damage with a Herald of the Tome ability reduces this cooldown by 0.5 seconds, up to once every 1 second. While worn, your damage done with status effects is increased by 40%, and triggering this effect generates a Crux.',
   ],
 };
 
@@ -2047,7 +2047,7 @@ export const tidebornWildstalker: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Increase your direct damage done to monsters by 12%.',
+    '(5 items) Increase your direct damage done to monsters by 15%.',
   ],
 };
 
@@ -2488,7 +2488,7 @@ export const wrathsun: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 40 stacks max and gain 12 Magicka Recovery per stack. When at max stacks, your Dawn's Wrath abilities deal 25% bonus damage and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
+    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 30 stacks max and gain 21 Magicka Recovery per stack. When at max stacks, your damage done with Templar skill line abilities is increased by 25% (10% against players) and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
   ],
 };
 
@@ -2652,7 +2652,7 @@ export const bluntedBlades: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(2 items) Adds 1487 Armor',
-    '(3 items) Adds 1096 Maximum Stamina',
+    '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) When you take direct damage, Minor Enervation is applied to your enemy for 4 seconds, reducing their Critical Damage done by 10%. This can occur once every 5 seconds.\n\nIncrease your damage done to enemies with Minor Enervation by 6%.',
   ],
@@ -2772,7 +2772,7 @@ export const farstrider: GearSetData = {
   setType: 'Mythic',
   bonuses: [
     '(2 items) Adds 1487 Armor',
-    '(3 items) Adds 1096 Maximum Stamina',
+    '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) When you deal direct damage with a Blink, Charge, Leap, Teleport, or Pull ability, decrease the Critical Resistance of your enemy by 40% and increase your Critical Resistance by an equal amount for 10 seconds. This effect can occur once every 7 seconds.',
   ],
@@ -2795,7 +2795,7 @@ export const galerionSRevenge: GearSetData = {
   setType: 'Class Sets',
   bonuses: [
     '(2 items) Adds 657 Critical Chance',
-    '(3 items) Adds 129 Magicka Recovery',
+    '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) When you deal damage with a Light or Heavy Attack, you put a Mark of Revenge on the enemy for 15 seconds. After stacking 5 Marks of Revenge on an enemy they detonate for 1462 Magic Damage.\n\nYou can only apply a stack once every half second and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
@@ -2858,8 +2858,8 @@ export const hewAndSunder: GearSetData = {
   icon: 'Hew and Sunder',
   setType: 'Overland',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Stamina',
-    '(3 items) Adds 1096 Maximum Stamina',
+    '(2 items) Adds 129 Weapon and Spell Damage',
+    '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) When you deal damage with a Heavy Attack, gain 1236 Offensive Penetration for each enemy within 8 meters of your target for 10 seconds. This effect can occur once every 7 seconds.',
   ],
@@ -2925,10 +2925,10 @@ export const impregnableArmor: GearSetData = {
   icon: 'Impregnable Armor',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) Adds 1206 Maximum Health',
-    '(3 items) Adds 1096 Maximum Stamina',
-    '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) Adds 1650 Critical Resistance',
+    '(2 items) Adds 424 Critical Resistance',
+    '(3 items) Adds 424 Critical Resistance',
+    '(4 items) Adds 424 Critical Resistance',
+    '(5 items) Adds 986 Critical Resistance',
   ],
 };
 
@@ -3033,8 +3033,8 @@ export const lekiSFocus: GearSetData = {
   setType: 'Dungeon',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
-    '(3 items) Adds 1096 Maximum Stamina',
-    '(4 items) Adds 129 Stamina Recovery',
+    '(3 items) Adds 424 Critical Resistance',
+    '(4 items) Adds 424 Critical Resistance',
     '(5 items) Reduces your damage done with area of effect attacks by 5%, but grants Major Evasion at all times; reducing your damage taken from area of effect attacks by 20%.',
   ],
 };
@@ -3331,7 +3331,7 @@ export const sentry: GearSetData = {
   icon: 'Sentry',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Stamina',
+    '(2 items) Adds 424 Critical Resistance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 266 Weapon and Spell Damage',
@@ -3366,8 +3366,8 @@ export const sharedPain: GearSetData = {
   icon: 'Shared Pain',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Stamina',
-    '(3 items) Adds 1096 Maximum Stamina',
+    '(2 items) Adds 424 Critical Resistance',
+    '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) Whenever you are dealt damage from a damage over time ability, you deal 139 Magic Damage to the attacker. This effect scales off the higher of your Weapon or Spell Damage. Reduce your damage taken from over time abilities by 8%.',
   ],
@@ -3401,8 +3401,8 @@ export const shieldBreaker: GearSetData = {
   icon: 'Shield Breaker',
   setType: 'PvP',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Stamina',
-    '(3 items) Adds 129 Stamina Recovery',
+    '(2 items) Adds 657 Critical Chance',
+    '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) Increases your damage done by 6%. This effect is doubled when attacking targets with a damage shield active.',
   ],

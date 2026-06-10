@@ -49,7 +49,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_004',
       description:
-        'Cloak yourself in shadow to become invisible. When moving your Magicka Recovery is disabled and when not moving Shadow Cloak is half cost.\n\nWhen Shadow Cloak begins or ends, you gain Born From Shadow for 10 seconds, increasing your damage done to monsters by 10%.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
+        'Cloak yourself in shadow to become invisible. When moving your Magicka Recovery is disabled and when not moving Shadow Cloak is half cost.\n\nWhen Shadow Cloak begins or ends, you gain Born From Shadow for 10 seconds, increasing your damage done to monsters by 15%.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SHADOW_CLOAK,
     },
     {
@@ -58,7 +58,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_004_a',
       description:
-        'Cloak yourself in shadow to become invisible. When moving your Magicka Recovery is disabled and when not moving Shadowy Disguise is half cost. Your next direct damage attack will Critically Strike.\n\nWhen Shadowy Disguise begins or ends, you gain Born From Shadow for 10 seconds, increasing your damage done to monsters by 10%.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
+        'Cloak yourself in shadow to become invisible. When moving your Magicka Recovery is disabled and when not moving Shadowy Disguise is half cost. Your next direct damage attack will Critically Strike.\n\nWhen Shadowy Disguise begins or ends, you gain Born From Shadow for 10 seconds, increasing your damage done to monsters by 15%.\n\nWhile slotted on either bar, you gain Minor Protection, reducing your damage taken by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SHADOW_CLOAK,
     },
     {

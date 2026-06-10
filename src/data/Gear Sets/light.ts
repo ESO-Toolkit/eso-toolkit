@@ -20,7 +20,7 @@ export const aeriesCry: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done with Animal Companion abilities by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time.",
+    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time, and this effect can stack between multiple wearers.",
   ],
 };
 
@@ -44,7 +44,7 @@ export const aethericLancer: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 6 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 10 seconds. The damage scales off the higher of your Weapon or Spell Damage and counts as a class ability.',
   ],
 };
 
@@ -432,7 +432,7 @@ export const bahseiSMania: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Increases your damage done against monsters by up to 10% based on your missing Magicka, reaching the maximum at 50% Magicka.',
+    '(5 items) Increases your damage done against monsters by up to 15% based on your missing Magicka, reaching the maximum at 50% Magicka.',
   ],
 };
 
@@ -499,7 +499,7 @@ export const beaconOfOblivion: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) While you have a permanent pet active, gain 1840 Health and 1980 Armor.\n\nWhile you do not have a permanent pet active, increase your Damage Done and Healing Done by 15%. This value is reduced to 5% while affected by Battle Spirit.',
+    '(5 items) While you have a permanent pet active, gain 1840 Health and 1980 Armor.\n\nWhile you do not have a permanent pet active, increase your Damage Done and Healing Done by 15%. This value is reduced to 7% while affected by Battle Spirit.',
   ],
 };
 
@@ -719,7 +719,7 @@ export const corpseburster: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Magic Damage to enemies within 5 meters and applying Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted.',
+    '(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Disease Damage to enemies within 5 meters and applying Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted. Enemies hit are afflicted with the Diseased status effect.',
   ],
 };
 
@@ -788,7 +788,7 @@ export const darkConvergence: GearSetData = {
   icon: 'Dark Convergence',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Magicka',
+    '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) While in combat, casting abilities that leave an effect on the ground will create an area that applies a 60% snare and pulls enemies after a 1 second delay, stunning them for 1 second. After 4 seconds, the area deals 821 Magic Damage to all enemies in the 10 meter area, and 1642 Magic Damage to enemies within 3 meters of the center, increasing by 50% for each target. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.',
@@ -1136,7 +1136,7 @@ export const galerionSRevenge: GearSetData = {
   setType: 'Class Sets',
   bonuses: [
     '(2 items) Adds 657 Critical Chance',
-    '(3 items) Adds 129 Magicka Recovery',
+    '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) When you deal damage with a Light or Heavy Attack, you put a Mark of Revenge on the enemy for 15 seconds. After stacking 5 Marks of Revenge on an enemy they detonate for 1462 Magic Damage.\n\nYou can only apply a stack once every half second and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
@@ -1438,10 +1438,10 @@ export const impregnableArmor: GearSetData = {
   icon: 'Impregnable Armor',
   setType: 'PvP',
   bonuses: [
-    '(2 items) Adds 1206 Maximum Health',
-    '(3 items) Adds 1096 Maximum Stamina',
-    '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) Adds 1650 Critical Resistance',
+    '(2 items) Adds 424 Critical Resistance',
+    '(3 items) Adds 424 Critical Resistance',
+    '(4 items) Adds 424 Critical Resistance',
+    '(5 items) Adds 986 Critical Resistance',
   ],
 };
 
@@ -1450,8 +1450,8 @@ export const indomitableFury: GearSetData = {
   icon: 'Indomitable Fury',
   setType: 'Trial',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Magicka',
-    '(3 items) Adds 1096 Maximum Magicka',
+    '(2 items) Adds 424 Critical Resistance',
+    '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 129 Stamina Recovery',
     '(5 items) After Breaking Free, you gain Minor Protection and Minor Heroism for 7 seconds, reducing your damage taken by 5% and generating 1 Ultimate every 1.5 seconds.',
   ],
@@ -1578,7 +1578,7 @@ export const knightSlayer: GearSetData = {
   icon: 'Knight Slayer',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Magicka',
+    '(2 items) Adds 424 Critical Resistance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1206 Maximum Health',
     "(5 items) Your fully-charged Heavy Attacks deal an additional 8% of an enemy's Max Health as Oblivion Damage. This can deal a maximum of 8000 Oblivion Damage.",
@@ -1705,9 +1705,9 @@ export const lightOfCyrodiil: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
-    '(3 items) Adds 1096 Maximum Magicka',
-    '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) While you are casting or channeling an ability, your damage taken is reduced by 15%. When you are interrupted, your next Magicka ability will cost no Magicka.',
+    '(3 items) Adds 657 Critical Chance',
+    '(4 items) Adds 129 Weapon and Spell Damage',
+    '(5 items) While you are casting or channeling an ability, your damage taken is reduced by 15%. When you are interrupted, your next ability costs no Health, Magicka, or Stamina.',
   ],
 };
 
@@ -1915,7 +1915,7 @@ export const monolithOfStorms: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 680 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds.",
+    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 935 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds. You gain 100 Weapon and Spell Damage for each Monolith active.",
   ],
 };
 
@@ -2476,8 +2476,8 @@ export const phoenix: GearSetData = {
   icon: 'Phoenix',
   setType: 'Trial',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Magicka',
-    '(3 items) Adds 129 Magicka Recovery',
+    '(2 items) Adds 129 Weapon and Spell Damage',
+    '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) When you take damage while below 25% Health, gain a damage shield that absorbs 25000 damage for 10 seconds and deals 1006 Flame Damage to nearby enemies. This effect can occur once every 1 minute and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
@@ -2547,7 +2547,7 @@ export const pyrebrand: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Your Light Attacks deal 1220 Flame Damage over 6 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 of your damage over time effects to deal 862 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage and is increased by 20% for each damage over time effect on the target, up to 60%.',
+    '(5 items) Your Light Attacks deal 837 Flame Damage over 6 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 stacks of Wildfire Embers or Pyrebrand to deal 637 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage and is increased by 25% for each stack of Wildfire Embers on the target, up to 300%. This set can trigger Wildfire Embers once every 10 seconds.',
   ],
 };
 
@@ -2569,9 +2569,9 @@ export const rallyingCry: GearSetData = {
   setType: 'Class Sets',
   bonuses: [
     '(2 items) Adds 657 Critical Chance',
-    '(3 items) Adds 1096 Maximum Magicka',
-    '(4 items) Adds 657 Critical Chance',
-    '(5 items) When your healing critically strikes while Battle Spirit is active, you and group members within 12 meters of you gain 1650 Critical Resistance and 300 Weapon and Spell Damage for 20 seconds. Each group member affected reduces the Weapon and Spell Damage by 15 and Critical Resistance by 83. This effect can occur once every 15 seconds.',
+    '(3 items) Adds 424 Critical Resistance',
+    '(4 items) Adds 129 Weapon and Spell Damage',
+    '(5 items) When your healing critically strikes while Battle Spirit is active, you and group members within 12 meters of you gain 986 Critical Resistance and 300 Weapon and Spell Damage for 20 seconds. Each group member affected reduces the Weapon and Spell Damage by 15 and Critical Resistance by 50. This effect can occur once every 15 seconds.',
   ],
 };
 
@@ -2679,10 +2679,10 @@ export const robesOfTransmutation: GearSetData = {
   icon: 'Robes of Transmutation',
   setType: 'Overland',
   bonuses: [
-    '(2 items) Adds 129 Magicka Recovery',
-    '(3 items) Adds 129 Magicka Recovery',
+    '(2 items) Adds 424 Critical Resistance',
+    '(3 items) Adds 4% Healing Done',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) When you heal yourself or an ally with a healing over time ability, grant them 1400 Critical Resistance for 5 seconds.',
+    '(5 items) When you heal yourself or an ally with a healing over time ability, grant them 1363 Critical Resistance for 4 seconds.',
   ],
 };
 
@@ -3006,9 +3006,9 @@ export const soulcleaver: GearSetData = {
   setType: 'Class Sets',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
-    '(3 items) Adds 1096 Maximum Magicka',
+    '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate:\n\nIncreases the damage and healing of Siphoning abilities by 21%. Reduces the cost of Siphoning abilities by 21%. Casting Siphoning abilities drains you of 1 Ultimate.',
+    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate:\n\nIncreases the damage and healing of Siphoning abilities by 15%. Reduces the cost of Siphoning abilities by 15%. Casting Siphoning abilities drains you of 1 Ultimate and increases your damage done by up to 12% based on your current Health for 20 seconds.',
   ],
 };
 
@@ -3020,7 +3020,7 @@ export const spatteringDisjunction: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with an Arcanist ability applies two random status effects to your target. This effect can occur once every 7 seconds. Dealing damage with a Herald of the Tome ability reduces this cooldown by 0.5 seconds, up to once every 1 second.',
+    '(5 items) Dealing damage with an Arcanist ability applies two random status effects to your target. This effect can occur once every 7 seconds. Dealing damage with a Herald of the Tome ability reduces this cooldown by 0.5 seconds, up to once every 1 second. While worn, your damage done with status effects is increased by 40%, and triggering this effect generates a Crux.',
   ],
 };
 
@@ -3075,7 +3075,7 @@ export const spellStrategist: GearSetData = {
   icon: 'Spell Strategist',
   setType: 'PvP',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Magicka',
+    '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) When you deal damage with a Light Attack, you place a mark over your target for 5 seconds, granting you 460 Weapon and Spell Damage against your marked target. This effect can occur every 4 seconds.',
@@ -3463,7 +3463,7 @@ export const tideBornWildstalker: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Increase your direct damage done to monsters by 12%.',
+    '(5 items) Increase your direct damage done to monsters by 15%.',
   ],
 };
 
@@ -3494,7 +3494,7 @@ export const trackerSLash: GearSetData = {
   setType: 'Trial',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
-    '(3 items) Adds 1096 Maximum Magicka',
+    '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) When your attack is dodged, increase your Weapon and Spell Damage by 95 for 7 seconds, stacking up to 5 times. This effect can occur once every 0.5 seconds.',
   ],
@@ -3800,7 +3800,7 @@ export const viciousDeath: GearSetData = {
   setType: 'Overland',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
-    '(3 items) Adds 1096 Maximum Magicka',
+    '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 1487 Offensive Penetration',
     '(5 items) When you kill a Player, they violently explode for 3322 Flame Damage to all other enemies in a 5 meter radius. This effect scales off the higher of your Weapon or Spell Damage.',
@@ -3970,7 +3970,7 @@ export const wizardSRiposte: GearSetData = {
   bonuses: [
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
-    '(4 items) Adds 129 Magicka Recovery',
+    '(4 items) Adds 424 Critical Resistance',
     '(5 items) Adds 660 Critical Resistance',
     '(5 items) When you take direct Critical Damage, you apply Minor Enervation to the enemy for 5 seconds, reducing their Critical Damage done by 10%.',
   ],
@@ -3984,7 +3984,7 @@ export const wrathsun: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 40 stacks max and gain 12 Magicka Recovery per stack. When at max stacks, your Dawn's Wrath abilities deal 25% bonus damage and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
+    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 30 stacks max and gain 21 Magicka Recovery per stack. When at max stacks, your damage done with Templar skill line abilities is increased by 25% (10% against players) and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
   ],
 };
 

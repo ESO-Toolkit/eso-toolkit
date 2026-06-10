@@ -25,9 +25,19 @@
  * coverage threshold. Known-unsourceable entries (sets removed from the game,
  * runtime-composed scribing morphs) are declared in ALLOW below with a reason.
  *
+ * Patch-cycle exceptions: when a new game update changes tooltip text before a
+ * fresh dump can be taken, the changed entries live in
+ * data/tooltip-provenance-pending.json — pinned to their exact normalized text,
+ * with a reason and source. They are counted and reported separately, and the
+ * file is DELETED when the post-patch dump is re-run (any drift from the pinned
+ * text re-trips the gate). Generate it from the current misses with
+ * --emit-pending after a patch-data update.
+ *
  * Usage:
- *   node scripts/check-tooltip-provenance.mjs            # report + exit code
- *   node scripts/check-tooltip-provenance.mjs --list     # also print every miss
+ *   node scripts/check-tooltip-provenance.mjs                 # report + exit code
+ *   node scripts/check-tooltip-provenance.mjs --list          # also print every miss
+ *   node scripts/check-tooltip-provenance.mjs --emit-pending  # write current misses
+ *                                                             # to the pending file
  */
 
 import fs from 'node:fs';
@@ -35,6 +45,18 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const LIST = process.argv.includes('--list');
+const EMIT_PENDING = process.argv.includes('--emit-pending');
+
+// --- patch-cycle pending exceptions ----------------------------------------
+// Exact-text-pinned entries changed by a game patch that the committed dump
+// pre-dates. See header. Absent file = no exceptions.
+const PENDING_PATH = path.join(ROOT, 'data/tooltip-provenance-pending.json');
+const pending = fs.existsSync(PENDING_PATH)
+  ? JSON.parse(fs.readFileSync(PENDING_PATH, 'utf8'))
+  : null;
+const pendingSkills = new Set(pending?.skills || []);
+const pendingGearBonuses = new Set(pending?.gearBonuses || []);
+const pendingReplacedDump = new Map(Object.entries(pending?.replacedDumpBonuses || {}));
 
 // Coverage floor. Every rendered entry must either trace to the dump or be
 // explicitly allowlisted-with-reason, so the floor is 1.0 — any NEW un-sourced
@@ -243,6 +265,7 @@ for (const f of ['heavy.ts', 'light.ts', 'medium.ts', 'mythics.ts', 'arena.ts'])
 // --- evaluate -------------------------------------------------------------
 let covered = 0;
 let allowed = 0;
+let pendingCount = 0;
 const kinds = { exact: 0, prefix: 0, contained: 0 };
 const misses = [];
 for (const c of checked) {
@@ -258,10 +281,18 @@ for (const c of checked) {
   if (k) {
     covered++;
     kinds[k]++;
-  } else misses.push(c);
+    continue;
+  }
+  // Patch-pending exception: exact normalized text pinned in the pending file.
+  const n = norm(c.text);
+  if (c.kind === 'skill' ? pendingSkills.has(n) : pendingGearBonuses.has(n)) {
+    pendingCount++;
+    continue;
+  }
+  misses.push(c);
 }
 
-const denom = checked.length - allowed;
+const denom = checked.length - allowed - pendingCount;
 const rate = denom ? covered / denom : 1;
 
 // --- COMPLETENESS (reverse direction) ------------------------------------
@@ -285,7 +316,8 @@ const incompleteSets = [];
 for (const [k, dumpSet] of dumpSetBonuses) {
   const appBonuses = appSetBonuses.get(k);
   if (!appBonuses) continue; // set not in the app (fine — not every dump set is shipped)
-  const missing = dumpSet.list.filter((b) => !appBonuses.has(b));
+  const replaced = new Set(pendingReplacedDump.get(k) || []);
+  const missing = dumpSet.list.filter((b) => !appBonuses.has(b) && !replaced.has(b));
   if (missing.length) incompleteSets.push({ name: dumpSet.name, missing });
 }
 
@@ -293,6 +325,11 @@ console.log('=== Tooltip provenance gate (rendered text -> game dump) ===');
 console.log(`Dump descriptions (normalized): ${dumpNorm.size}`);
 console.log(`Rendered entries checked:       ${checked.length}`);
 console.log(`  allowed (removed/equip-gated): ${allowed}`);
+if (pending) {
+  console.log(
+    `  patch-pending (pinned text):   ${pendingCount}  [${pending.reason?.slice(0, 80) ?? 'no reason given'}]`,
+  );
+}
 console.log(`  traced to dump:               ${covered} / ${denom} (${(100 * rate).toFixed(2)}%)`);
 console.log(`    exact:                      ${kinds.exact}`);
 console.log(`    prefix ((N items) strip):   ${kinds.prefix}`);
@@ -320,6 +357,33 @@ if (incompleteSets.length && (LIST || incompleteSets.length <= 40)) {
   }
 } else if (incompleteSets.length) {
   console.log(`\n(${incompleteSets.length} incomplete sets — re-run with --list to see all)`);
+}
+
+// --- emit pending file from current misses ---------------------------------
+if (EMIT_PENDING) {
+  const skills = [...new Set(misses.filter((c) => c.kind === 'skill').map((c) => norm(c.text)))];
+  const gearBonuses = [
+    ...new Set(misses.filter((c) => c.kind === 'gear').map((c) => norm(c.text))),
+  ];
+  const replacedDumpBonuses = {};
+  for (const s of incompleteSets) replacedDumpBonuses[s.name] = s.missing;
+  const out = {
+    reason:
+      'Pinned text changed by a game patch that the committed dump pre-dates. ' +
+      'Each entry must be re-sourced verbatim by re-running the in-game tooltip dump, ' +
+      'then this file is deleted.',
+    source: 'fill in: patch notes URL',
+    generatedAt: new Date().toISOString(),
+    skills,
+    gearBonuses,
+    replacedDumpBonuses,
+  };
+  fs.writeFileSync(PENDING_PATH, JSON.stringify(out, null, 2) + '\n');
+  console.log(
+    `\nWrote ${skills.length} skill + ${gearBonuses.length} gear pending entries (+${incompleteSets.length} replaced-tier sets) to ${path.relative(ROOT, PENDING_PATH)}`,
+  );
+  console.log('Review the file, set the source URL, and re-run the gate.');
+  process.exit(0);
 }
 
 let failed = false;

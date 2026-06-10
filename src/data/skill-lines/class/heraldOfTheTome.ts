@@ -29,7 +29,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_006_b',
       description:
-        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 6 seconds that deals 1115 Magic Damage to enemies within 5 meters every 0.5 seconds and snares them by 50% for 3 seconds. Every 0.5 seconds, the beam's damage increases by 7%.\n\nThe scion's beam can be repositioned by recasting The Languid Eye.",
+        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 6 seconds that deals 1115 Magic Damage to enemies within 5 meters every 0.5 seconds and snares them by 50% for 3 seconds. Every 0.5 seconds, the beam's damage increases by 7%, up to 12 times. Additional Languid Eyes share the highest stack count.\n\nThe scion's beam can be repositioned by recasting The Languid Eye.",
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
     },
