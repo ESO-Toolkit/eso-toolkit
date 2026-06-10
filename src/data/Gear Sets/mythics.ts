@@ -221,7 +221,7 @@ export const shatteredPathsSignet: GearSetData = {
   icon: 'Shattered Paths Signet',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Increase your damage done with status effects by 1% for every 1 Ultimate you have, up to 170%. Both the current and maximum damage done is halved against Players. While you have 170 or more Ultimate, your Light and Heavy Attacks apply a random status effect, up to once every 4 seconds. Applies Minor Timidity to you, consuming 1 Ultimate every 1.5 seconds while in combat.',
+    '(1 item) Increase your damage done with status effects by 1% for every 1 Ultimate you have, up to 170%. The current and maximum damage done is divided by 1, plus 1 if Feral Guardian or its morphs are active, plus 1 if the target is a player. While you have 170 or more Ultimate, your Light and Heavy Attacks apply a random status effect, up to once every 4 seconds. Applies Minor Timidity to you, consuming 1 Ultimate every 1.5 seconds while in combat.',
   ],
 };
 
@@ -276,6 +276,15 @@ export const theShadowQueensCowl: GearSetData = {
   setType: 'Mythic',
   bonuses: [
     '(1 item) While crouched, you can see Witnesses and Guards through walls. Successfully pickpocketing a Witness or Guard applies Distracted to them for 10 seconds, stunning them and decreasing their Stealth detection radius by 30 meters for the duration.',
+  ],
+};
+
+export const theProwlersTalisman: GearSetData = {
+  name: "The Prowler's Talisman",
+  icon: "The Prowler's Talisman",
+  setType: 'Mythic',
+  bonuses: [
+    '(1 item) While Battle Spirit is inactive, bracing while crouching turns you invisible for 10 seconds. This can occur once every 45 seconds. Increase your chances of successfully Pickpocketing by 5%. On dealing Critical Damage, increase your Max Magicka and Max Stamina for 10 seconds, up to 1900 at 10 stacks. On dealing non-Critical Damage, increase your Health, Magicka, and Stamina Recovery for 10 seconds, up to 160 at 10 stacks. Either effect can occur up to once every 1 second.',
   ],
 };
 
