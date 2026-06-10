@@ -7,6 +7,7 @@
  */
 
 import { decodeHtmlEntities } from '../../../utils/decodeHtmlEntities';
+import { getRosterHubBaseUrl } from '../../../utils/envUtils';
 import type {
   HubPack,
   ListPacksResponse,
@@ -17,8 +18,7 @@ import type {
   VoteResponse,
 } from '../types/pack-hub.types';
 
-const BASE_URL =
-  (import.meta.env.VITE_ROSTER_HUB_API_URL as string | undefined) ?? 'http://localhost:8787';
+const BASE_URL = getRosterHubBaseUrl();
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
