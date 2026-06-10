@@ -64,6 +64,22 @@ const EXCLUDED_CLASS_SKILLSET_FILES = new Set([
 // Verified real icon families absent from both bundled datasets.
 const KNOWN_GOOD_PREFIXES = ['u26_ability_digging_'];
 
+// Individual icons absent from both bundled datasets (which predate U50) but
+// confirmed to resolve on the rpglogs CDN (probed 200, 2026-06-10). Used by the
+// Class Mastery passives, whose icon paths come from the in-game tooltip dump.
+// Exact names, not prefixes, so a typo'd sibling icon still fails the check.
+const KNOWN_GOOD_ICONS = new Set([
+  'passive_dragonknight_015',
+  'passive_dragonknight_009',
+  'passive_armor_003',
+  'passive_armor_001',
+  'ability_templar_025',
+  'ability_templar_005',
+  'passive_sorcerer_017',
+  'passive_armor_008',
+  'passive_sorcerer_025',
+]);
+
 function buildValidIconSet() {
   const set = new Set();
   const abilities = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'abilities.json'), 'utf8'));
@@ -80,6 +96,7 @@ function buildValidIconSet() {
 
 function isKnownGood(icon, validIcons) {
   if (validIcons.has(icon)) return true;
+  if (KNOWN_GOOD_ICONS.has(icon)) return true;
   return KNOWN_GOOD_PREFIXES.some((p) => icon.startsWith(p));
 }
 

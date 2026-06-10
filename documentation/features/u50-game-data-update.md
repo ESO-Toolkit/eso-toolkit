@@ -94,9 +94,16 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
    - Sorcerer: 263870 Conservation of Energy, 263871 Font of Power, 263872 Static
      Reverberation, 263873 Calculated Defense, 263874 Sphere of Influence
 
-   Remaining work is a FEATURE decision, no longer data-blocked: skill-line data entries,
-   build-editor representation (interacts with subclassing — running any subclass line
-   disables Class Mastery), and buff tracking for the group buff sources (Lead from the
+   **Skill-line data entries SHIPPED 2026-06-10**: `src/data/skill-lines/class/classMastery.ts`
+   (7 per-class `SkillLineData` entries — the game models it as ONE shared line, in-game
+   lineId 351, but per-class entries match the registry's class keying and feed class
+   detection) + 35 `ClassSkillId` enum entries + 9 CDN-verified icons added to the icon
+   guard's exact-name allowlist. Descriptions verbatim from the dump (provenance gate 100%).
+
+   Remaining work is a FEATURE decision, no longer data-blocked: build-editor
+   representation (interacts with subclassing — running any subclass line
+   disables Class Mastery; the line is NOT subclassable, keep it out of
+   `esoStaticData.ts`'s picker list), and buff tracking for the group buff sources (Lead from the
    Front: Major Berserk+Protection; Bountiful Harvest: Major Heroism; Ink-Scribe's Verve:
    Major Force; Tundra's Maw: Major Brittle via Chilled — granted-buff effect IDs are the
    existing tracked Major/Minor IDs; verify source attribution against a live U50 log).
