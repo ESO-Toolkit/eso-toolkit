@@ -95,9 +95,10 @@ Object.values(scribingData.signatureScripts).forEach(
         },
       );
 
-      // ESO combat logs surface the Arcanist Class Mastery signature via ability 252143 (Crux/Ultimate
-      // tick) instead of the class-specific banner IDs that live in the scribing database. Manually map
-      // that ability so our detectors can positively identify Class Mastery from resource events.
+      // ESO combat logs surface the Arcanist Class Flourish signature (named Class Mastery before U50)
+      // via ability 252143 (Crux/Ultimate tick) instead of the class-specific banner IDs that live in
+      // the scribing database. Manually map that ability so our detectors can positively identify
+      // Class Flourish from resource events.
       const CLASS_MASTERY_EXTRA_EFFECT_IDS = [252143];
       const classMasteryScript = (
         scribingData.signatureScripts as Record<string, { name: string }>
@@ -105,7 +106,7 @@ Object.values(scribingData.signatureScripts).forEach(
       if (classMasteryScript) {
         CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
           VALID_SIGNATURE_SCRIPT_IDS.add(id);
-          SIGNATURE_SCRIPT_ID_TO_NAME.set(id, classMasteryScript.name ?? 'Class Mastery');
+          SIGNATURE_SCRIPT_ID_TO_NAME.set(id, classMasteryScript.name ?? 'Class Flourish');
         });
       }
     }

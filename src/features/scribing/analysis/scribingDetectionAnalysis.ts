@@ -161,7 +161,7 @@ function initializeScribingDataset(): void {
   if (classMasteryScript) {
     CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => {
       VALID_SIGNATURE_SCRIPT_IDS.add(id);
-      SIGNATURE_SCRIPT_ID_TO_NAME.set(id, classMasteryScript.name ?? 'Class Mastery');
+      SIGNATURE_SCRIPT_ID_TO_NAME.set(id, classMasteryScript.name ?? 'Class Flourish');
     });
   }
 
