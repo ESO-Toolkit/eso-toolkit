@@ -1,6 +1,5 @@
 /**
  * Destruction Staff Weapon Skill Line
- * Data sourced from: https://eso-hub.com/en/skills/weapon/destruction-staff
  */
 
 import { SkillData } from '../types';

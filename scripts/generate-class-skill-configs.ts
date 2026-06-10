@@ -78,7 +78,7 @@ const CLASS_SKILL_ID_PATH = path.join(
   'features',
   'loadout-manager',
   'data',
-  'classSkillIds.ts'
+  'classSkillIds.ts',
 );
 
 const ABILITY_SOURCE_PATH = path.join(REPO_ROOT, 'data', 'abilities.json');
@@ -108,10 +108,7 @@ const toEnumKey = (classKey: ClassKey, skillName: string): string =>
     .toUpperCase();
 
 const escapeString = (value: string): string =>
-  value
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/\r?\n/g, '\\n');
+  value.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, '\\n');
 
 const loadAbilityLookup = async (): Promise<Map<string, AbilityRecord>> => {
   const raw = await fs.readFile(ABILITY_SOURCE_PATH, 'utf8');
@@ -130,7 +127,10 @@ const loadAbilityLookup = async (): Promise<Map<string, AbilityRecord>> => {
   return map;
 };
 
-const findAbility = (lookup: Map<string, AbilityRecord>, name: string): AbilityRecord | undefined => {
+const findAbility = (
+  lookup: Map<string, AbilityRecord>,
+  name: string,
+): AbilityRecord | undefined => {
   const key = normalizeName(name);
   return lookup.get(key);
 };
@@ -139,7 +139,7 @@ const ensureAbility = (
   lookup: Map<string, AbilityRecord>,
   classKey: ClassKey,
   skillLineKey: string,
-  name: string
+  name: string,
 ): AbilityRecord => {
   const ability = findAbility(lookup, name);
   if (!ability) {
@@ -158,7 +158,7 @@ const createSkillEntries = (
   lookup: Map<string, AbilityRecord>,
   classKey: ClassKey,
   skillLineKey: string,
-  skillLine: SkillLine
+  skillLine: SkillLine,
 ): GeneratedSkill[] => {
   const entries: GeneratedSkill[] = [];
 
@@ -168,11 +168,13 @@ const createSkillEntries = (
     name: string | undefined,
     type: 'ultimate' | 'active' | 'passive',
     description?: string,
-    baseEnumKey?: string
+    baseEnumKey?: string,
   ) => {
     if (!name) return;
     const ability =
-      type === 'passive' ? findAbility(lookup, name) : ensureAbility(lookup, classKey, skillLineKey, name);
+      type === 'passive'
+        ? findAbility(lookup, name)
+        : ensureAbility(lookup, classKey, skillLineKey, name);
     const enumKey = toEnumKey(classKey, name);
     entries.push({
       enumKey,
@@ -188,7 +190,7 @@ const createSkillEntries = (
   const processMorphs = (
     morphs: MorphCollection,
     type: 'ultimate' | 'active',
-    baseEnumKey: string
+    baseEnumKey: string,
   ) => {
     if (!morphs) return;
     const morphList = Array.isArray(morphs) ? morphs : Object.values(morphs);
@@ -259,12 +261,12 @@ const formatSkillLineFile = (
   classKey: ClassKey,
   skillLineKey: string,
   skillLine: SkillLine,
-  entries: GeneratedSkill[]
+  entries: GeneratedSkill[],
 ): string => {
   const exportName = skillLineKey;
   const slug = slugify(skillLine.name || skillLineKey);
-  const sourceUrl = `https://eso-hub.com/en/skills/${classKey}/${slug}`;
-  const topIcon = (isValidIcon(skillLine.icon) ? skillLine.icon : entries[0]?.icon) || 'icon_missing';
+  const topIcon =
+    (isValidIcon(skillLine.icon) ? skillLine.icon : entries[0]?.icon) || 'icon_missing';
 
   const skillsLiteral = entries.map(formatSkillLiteral).join(',\n');
 
@@ -274,7 +276,6 @@ const formatSkillLineFile = (
 
   return `/**
  * ${displayName} — ${CLASS_DISPLAY_NAMES[classKey]} Skill Line
- * Source: ${sourceUrl}
  * Regenerated: ${regeneratedAt}
  */
 
@@ -287,7 +288,6 @@ export const ${exportName}: SkillLineData = {
   class: '${CLASS_DISPLAY_NAMES[classKey]}',
   category: 'class',
   icon: '${escapeString(topIcon)}',
-  sourceUrl: '${sourceUrl}',
   skills: [
 ${skillsLiteral}
   ],
@@ -320,19 +320,15 @@ ${lines}
 };
 
 const formatIndexFile = (exports: string[]): string =>
-  exports
-    .map((name) => `export { ${name} } from './${name}';`)
-    .join('\n') + '\n';
+  exports.map((name) => `export { ${name} } from './${name}';`).join('\n') + '\n';
 
 const writeFileIfChanged = async (filePath: string, content: string) => {
   const prettierConfig = (await prettier.resolveConfig(filePath)) ?? {};
   const formatted = await Promise.resolve(
-    prettier.format(content, { ...prettierConfig, parser: 'typescript' })
+    prettier.format(content, { ...prettierConfig, parser: 'typescript' }),
   );
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  const existing = await fs
-    .readFile(filePath, 'utf8')
-    .catch(() => undefined);
+  const existing = await fs.readFile(filePath, 'utf8').catch(() => undefined);
   if (existing !== formatted) {
     await fs.writeFile(filePath, formatted, 'utf8');
     console.log(`✏️  Updated ${path.relative(REPO_ROOT, filePath)}`);
@@ -349,7 +345,7 @@ async function main(): Promise<void> {
       const entries = createSkillEntries(abilityLookup, classKey, skillLineKey, skillLine);
       if (entries.length === 0) continue;
       const fileContent = formatSkillLineFile(classKey, skillLineKey, skillLine, entries);
-  await writeFileIfChanged(path.join(CLASS_OUTPUT_DIR, `${skillLineKey}.ts`), fileContent);
+      await writeFileIfChanged(path.join(CLASS_OUTPUT_DIR, `${skillLineKey}.ts`), fileContent);
       generatedExports.push(skillLineKey);
       allSkillEntries.push(...entries);
     }

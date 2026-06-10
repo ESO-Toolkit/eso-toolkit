@@ -104,7 +104,7 @@ The foundation is now solid. Future improvements could include:
 2. **Affix Script Detection**: Analyze effect patterns to identify affix scripts
 3. **Confidence Scoring**: More sophisticated confidence metrics based on multiple detection methods
 4. **Caching**: Performance optimization for repeated lookups
-5. **Database Updates**: Automated sync with ESO Hub data
+5. **Database Updates**: Refreshed from game-client scribing data
 
 ## Conclusion
 

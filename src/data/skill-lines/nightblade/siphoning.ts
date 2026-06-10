@@ -1,6 +1,5 @@
 /**
  * Siphoning Skill Line - Nightblade Class
- * Source: https://eso-hub.com/en/skills/nightblade/siphoning
  */
 
 import { SkillLineData } from '../../types/skill-line-types';

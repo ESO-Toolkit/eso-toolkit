@@ -7,7 +7,6 @@ export const darkBrotherhood: SkillLineData = {
   class: 'guild',
   category: 'guild',
   icon: 'ability_darkbrotherhood_passive_002',
-  sourceUrl: 'https://eso-hub.com/en/skills/guild/dark-brotherhood',
   skills: [
     {
       id: AbilityId.BLADE_OF_WOE,
@@ -16,7 +15,7 @@ export const darkBrotherhood: SkillLineData = {
       ],
       name: 'Blade of Woe',
       description:
-        'Call the weapon of the Dark Brotherhood to your hand and deliver a killing blow to an unsuspecting target. Experience from this target is reduced by 75%. This ability does not work on players or difficult targets.',
+        'Call the weapon of the Dark Brotherhood to your hand and deliver a killing blow to an unsuspecting target. Experience from this target is reduced by 75%.\n\nThis ability does not work on players or difficult targets.',
       type: 'passive',
       icon: 'achievement_darkbrotherhood_003',
       maxRank: 1,
@@ -26,7 +25,7 @@ export const darkBrotherhood: SkillLineData = {
       alternateIds: [77392, 77394, 77395, 79275, 79865, 79866],
       name: 'Scales of Pitiless Justice',
       description:
-        'Bounty and Heat resulting from a witnessed Murder or Assault is reduced by 50%.',
+        'Bounty and Heat resulting from a witnessed Murder or Assault is reduced by 20%.',
       type: 'passive',
       icon: 'ability_darkbrotherhood_passive_002',
       maxRank: 1,
@@ -36,7 +35,7 @@ export const darkBrotherhood: SkillLineData = {
       alternateIds: [77397, 77398, 77399, 79868, 80393],
       name: 'Padomaic Sprint',
       description:
-        'Grants Major Expedition, increasing your Movement Speed by 30% for 12 seconds after killing an enemy with Blade of Woe.',
+        'Grants Major Expedition, increasing your Movement Speed by 30% for 6 seconds after killing an enemy with Blade of Woe.',
       type: 'passive',
       icon: 'ability_darkbrotherhood_passive_004',
       maxRank: 1,
@@ -52,7 +51,8 @@ export const darkBrotherhood: SkillLineData = {
       id: AbilityId.SHADOW_RIDER,
       icon: 'ability_darkbrotherhood_passive_005',
       name: 'Shadow Rider',
-      description: 'Aggression radius from hostile monsters is decreased by 50% while mounted.',
+      description:
+        "A contact from the Brotherhood provides beneficial items once per day. This contact is located in Outlaw Refuges, the Gold Coast Dark Brotherhood Sanctuary, and the Hew's Bane Thieves Den.",
       type: 'passive',
       maxRank: 1,
     },

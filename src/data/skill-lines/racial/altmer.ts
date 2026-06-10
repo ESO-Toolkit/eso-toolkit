@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Altmer (High Elf) Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/high-elf-skills
  */
 export const altmer: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const altmer: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_templar_032',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/altmer',
   skills: [
     {
       id: AbilityId.HIGHBORN,

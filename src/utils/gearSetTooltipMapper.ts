@@ -5,7 +5,6 @@ import type {
 } from '../components/GearSetTooltip';
 import * as arenaSets from '../data/Gear Sets/arena';
 import * as heavySets from '../data/Gear Sets/heavy';
-import { arenaSpecialGearSets, monsterGearSets } from '../data/Gear Sets/legacyAdapters';
 import * as lightSets from '../data/Gear Sets/light';
 import * as mediumSets from '../data/Gear Sets/medium';
 import * as mythicSets from '../data/Gear Sets/mythics';
@@ -35,9 +34,7 @@ const populateGearSetRegistry = (): void => {
     ...Object.values(lightSets),
     ...Object.values(heavySets),
     ...Object.values(mediumSets),
-    ...Object.values(monsterGearSets),
     ...Object.values(mythicSets),
-    ...Object.values(arenaSpecialGearSets),
     ...Object.values(arenaSets),
     ...Object.values(sharedSets),
   ];

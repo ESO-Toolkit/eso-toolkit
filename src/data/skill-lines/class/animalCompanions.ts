@@ -1,6 +1,5 @@
 /**
  * Animal Companions — Warden Skill Line
- * Source: https://eso-hub.com/en/skills/warden/animal-companions
  * Regenerated: 2025-11-14T20:33:08.874Z
  */
 
@@ -13,7 +12,6 @@ export const animalCompanions: SkillLineData = {
   class: 'Warden',
   category: 'class',
   icon: 'ability_warden_018',
-  sourceUrl: 'https://eso-hub.com/en/skills/warden/animal-companions',
   skills: [
     {
       id: ClassSkillId.WARDEN_FERAL_GUARDIAN,
@@ -31,7 +29,7 @@ export const animalCompanions: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_warden_018_b',
       description:
-        "Rouse a grizzly to fight by your side. The grizzly swipes an enemy, dealing 599 Magic Damage, and sometimes swipes all enemies in front of it, dealing 2399 Magic Damage and stunning them for 2 seconds.\n\nOnce summoned you can activate Guardian's Wrath for 75 Ultimate, causing the grizzly to maul an enemy for 3360 Magic Damage. Deals 150% more damage to enemies below 25% Health.\n\n The grizzly respawns when killed, once per minute.",
+        "Rouse a grizzly to fight by your side. The grizzly swipes an enemy, dealing 599 Magic Damage, and sometimes swipes all enemies in front of it, dealing 2399 Magic Damage and stunning them for 2 seconds.\n\nOnce summoned you can activate Guardian's Wrath for 75 Ultimate, causing the grizzly to maul an enemy for 3360 Magic Damage. Deals 150% more damage to enemies below 25% Health.\n\nThe grizzly respawns when killed, once per minute.",
       isUltimate: true,
       baseSkillId: ClassSkillId.WARDEN_FERAL_GUARDIAN,
     },
@@ -70,7 +68,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_017_b',
       description:
-        'Call a bull netch to your side, which restores 4416 Stamina to you over 25 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds',
+        'Call a bull netch to your side, which restores 4992 Stamina to you over 25 seconds and grants you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.\n\nEvery 5 seconds, the netch removes 1 negative effect from you. If no negative effects are removed you instead increase your damage done by 5% for 5 seconds',
       baseSkillId: ClassSkillId.WARDEN_BETTY_NETCH,
     },
     {
@@ -134,7 +132,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_014',
       description:
-        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, dealing 4631 Magic Damage over 20 seconds.  \n\nThe fetcherflies rip through the enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.",
+        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, dealing 4631 Magic Damage over 20 seconds.\n\nThe fetcherflies rip through the enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.",
       baseSkillId: ClassSkillId.WARDEN_SWARM,
     },
     {
@@ -152,7 +150,7 @@ export const animalCompanions: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_014_b',
       description:
-        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, causing them to bleed for 4785 Bleed Damage over 20 seconds. \n\nThe fetcherflies rip through the original enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.\n\nEnemies near the carrier take 435 Bleed Damage every 2 seconds for the duration.\n\nYou can only have one Growing Swarm active at a time.",
+        "Unleash a swarm of fetcherflies to relentlessly attack an enemy, causing them to bleed for 4785 Bleed Damage over 20 seconds.\n\nThe fetcherflies rip through the original enemy's flesh, afflicting them with Minor Vulnerability for the duration, increasing their damage taken by 5%.\n\nEnemies near the carrier take 435 Bleed Damage every 2 seconds for the duration.\n\nYou can only have one Growing Swarm active at a time.",
       baseSkillId: ClassSkillId.WARDEN_SWARM,
     },
     {
@@ -218,7 +216,7 @@ export const animalCompanions: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_009',
       description:
-        'Casting an Animal Companions ability while are in combat generates 4 Ultimate. This effect can occur once every 8 seconds.',
+        'Casting an Animal Companions ability while are in combat generates 2 Ultimate. This effect can occur once every 8 seconds.',
       isPassive: true,
     },
   ],

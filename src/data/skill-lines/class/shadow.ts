@@ -1,6 +1,5 @@
 /**
  * Shadow — Nightblade Skill Line
- * Source: https://eso-hub.com/en/skills/nightblade/shadow
  * Regenerated: 2025-11-14T20:33:08.833Z
  */
 
@@ -13,7 +12,6 @@ export const shadow: SkillLineData = {
   class: 'Nightblade',
   category: 'class',
   icon: 'ability_nightblade_015',
-  sourceUrl: 'https://eso-hub.com/en/skills/nightblade/shadow',
   skills: [
     {
       id: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
@@ -41,7 +39,7 @@ export const shadow: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_nightblade_015_b',
       description:
-        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70%, dealing 1438 Magic Damage to them every 1 second, and granting you and your allies Major Protection, reducing your damage taken by 10%. \n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
+        'Conjure a ring of shadow, reducing the Movement Speed of enemies by 70%, dealing 1438 Magic Damage to them every 1 second, and granting you and your allies Major Protection, reducing your damage taken by 10%.\n\nAllies in the area can activate the Hidden Refresh synergy, granting them invisibility, increasing their Movement Speed by 70%, and healing them for 9110 Health over 4 seconds.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NIGHTBLADE_CONSUMING_DARKNESS,
     },
@@ -132,7 +130,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001',
       description:
-        "Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds. \n\nThe shade slashes at an enemy, dealing 462 Magic Damage once every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.",
+        "Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade slashes at an enemy, dealing 462 Magic Damage once every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -141,7 +139,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001_a',
       description:
-        'Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds. \n\nThe shade attacks nearby enemies within 9 meters of it, dealing 623 Magic Damage once every 2 seconds and afflicting them with Minor Maim for 4 seconds, reducing their damage done by 5%.',
+        'Summon a shade version of yourself to attack an enemy and fight at your side for 20 seconds.\n\nThe shade attacks nearby enemies within 9 meters of it, dealing 623 Magic Damage once every 2 seconds and afflicting them with Minor Maim for 4 seconds, reducing their damage done by 5%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -150,7 +148,7 @@ export const shadow: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_001_b',
       description:
-        "Summon a shade version of yourself to stay in place and attack an enemy from range for 20 seconds. \n\nThe shade shoots at an enemy, dealing 478 Magic Damage every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.\n\nWhile the shade is summoned, you can activate this ability again for no cost to teleport to the shade's location.",
+        "Summon a shade version of yourself to stay in place and attack an enemy from range for 20 seconds.\n\nThe shade shoots at an enemy, dealing 478 Magic Damage every 2 seconds, and inflicts Minor Maim for 4 seconds, reducing the enemy's damage done by 5%.\n\nWhile the shade is summoned, you can activate this ability again for no cost to teleport to the shade's location.",
       baseSkillId: ClassSkillId.NIGHTBLADE_SUMMON_SHADE,
     },
     {
@@ -187,7 +185,7 @@ export const shadow: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_036',
       description:
-        'Increases the duration of your Shadow abilities by 2 seconds. Does not apply to Shadow Cloak or its morphs.',
+        'Increases the duration of your Shadow abilities by 2 seconds.\n\nDoes not apply to Shadow Cloak or its morphs.',
       isPassive: true,
     },
     {
@@ -215,7 +213,7 @@ export const shadow: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_022',
       description:
-        'Casting a Shadow ability grants you Major Resolve for 12 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.\n\nCurrent duration: 12 seconds',
+        'Casting a Shadow ability grants you Major Resolve for 12 seconds, increasing your Physical and Spell Resistance by 5948. This duration is increased by 2 seconds for each piece of Heavy Armor equipped.',
       isPassive: true,
     },
   ],

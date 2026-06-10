@@ -10,8 +10,7 @@ import type { TooltipProps } from '@mui/material';
  *  - overflow: hidden — most tooltips are well under the cap, and letting
  *    the browser render any scrollbar on the popper caused a flash when
  *    hovering between tooltips quickly. Overflow on a rare oversized card
- *    clips the bottom; the user can click through to ESO-Hub for full
- *    detail.
+ *    clips the bottom.
  *  - popperOptions.strategy = 'fixed' positions the popper via
  *    `position: fixed` instead of `absolute` so it never contributes to
  *    document scroll height.

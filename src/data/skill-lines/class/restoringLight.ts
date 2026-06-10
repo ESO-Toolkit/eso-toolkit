@@ -1,6 +1,5 @@
 /**
  * Restoring Light — Templar Skill Line
- * Source: https://eso-hub.com/en/skills/templar/restoring-light
  * Regenerated: 2025-11-14T20:33:08.869Z
  */
 
@@ -13,7 +12,6 @@ export const restoringLight: SkillLineData = {
   class: 'Templar',
   category: 'class',
   icon: 'ability_templar_rite_of_passage',
-  sourceUrl: 'https://eso-hub.com/en/skills/templar/restoring-light',
   skills: [
     {
       id: ClassSkillId.TEMPLAR_RITE_OF_PASSAGE,
@@ -69,7 +67,7 @@ export const restoringLight: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_honor_the_dead',
       description:
-        "Beacon your inner light, healing yourself or a wounded ally in front of you for 3485 Health. \n\nHealing anyone who is below 75% Health restores 18% of the ability's cost every 2 seconds over 6 seconds as Magicka.",
+        "Beacon your inner light, healing yourself or a wounded ally in front of you for 3485 Health.\n\nHealing anyone who is below 75% Health restores 18% of the ability's cost every 2 seconds over 6 seconds as Magicka.",
       baseSkillId: ClassSkillId.TEMPLAR_RUSHED_CEREMONY,
     },
     {
@@ -131,7 +129,7 @@ export const restoringLight: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_rune_focus',
       description:
-        'Create a rune of celestial protection and gain Major Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948. \n\nWhile the rune is active you heal for 319 Health every 1 second, scaling off your Max Health. Standing within the rune increases the healing done by 200%.',
+        'Create a rune of celestial protection and gain Major Resolve for 20 seconds, increasing your Physical Resistance and Spell Resistance by 5948.\n\nWhile the rune is active you heal for 319 Health every 1 second, scaling off your Max Health. Standing within the rune increases the healing done by 200%.',
       baseSkillId: ClassSkillId.TEMPLAR_RUNE_FOCUS,
     },
     {
@@ -176,7 +174,7 @@ export const restoringLight: SkillLineData = {
       type: 'active',
       icon: 'ability_templar_purifying_ritual',
       description:
-        'Exalt in the sacred light of the Aedra, cleansing up to 2 harmful effects from yourself immediately.  While in the area, enemies take 435 Magic Damage every 2 seconds for 20 seconds which increases by 12% per tick.  \n\nAllies in the area can activate the Purify synergy, cleansing all harmful effects from themselves and healing for 1912 Health.',
+        'Exalt in the sacred light of the Aedra, cleansing up to 2 harmful effects from yourself immediately. While in the area, enemies take 435 Magic Damage every 2 seconds for 20 seconds which increases by 12% per tick.\n\nAllies in the area can activate the Purify synergy, cleansing all harmful effects from themselves and healing for 1912 Health.',
       baseSkillId: ClassSkillId.TEMPLAR_CLEANSING_RITUAL,
     },
     {
@@ -186,7 +184,7 @@ export const restoringLight: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_012',
       description:
-        'When you heal an ally under 50% Health with a Restoring Light ability, you grant them 2 Ultimate. Activating an ability with a cast or channel time while in combat causes you to automatically block all attacks at no cost for 2 seconds, up to once every 15 seconds.',
+        'When you heal an ally under 50% Health with a Restoring Light ability, you grant them 2 Ultimate.\n\nActivating an ability with a cast or channel time while in combat causes you to automatically block all attacks at no cost for 2 seconds, up to once every 15 seconds.',
       isPassive: true,
     },
     {
@@ -196,7 +194,7 @@ export const restoringLight: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_026',
       description:
-        'Increases resurrection speed by 20%. Resurrected allies return with 100% more Health. Gives you a 50% chance to fill an empty Soul Gem after each successful resurrection.',
+        'Increases resurrection speed by 20%.\n\nResurrected allies return with 100% more Health.\n\nGives you a 50% chance to fill an empty Soul Gem after each successful resurrection.',
       isPassive: true,
     },
     {
@@ -216,7 +214,7 @@ export const restoringLight: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_014',
       description:
-        'While standing in your own Cleansing Ritual, Rune Focus, or Rite of Passage area effects and for up to 4 seconds after leaving them you gain Minor Mending, increasing your healing done by 8%. Also increases the amount of damage you can block by 10% for the duration.',
+        'While standing in your own Cleansing Ritual, Rune Focus, or Rite of Passage area effects and for up to 4 seconds after leaving them you gain Minor Mending, increasing your healing done by 8%.\n\nAlso increases the amount of damage you can block by 10% for the duration.',
       isPassive: true,
     },
   ],

@@ -4,7 +4,6 @@
  * The Daedric Summoning skill-line is part of the Sorcerer toolkit and has a focus on
  * summoned pets, defensive and offensive abilities.
  *
- * Source: https://eso-hub.com/en/skills/sorcerer/daedric-summoning
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

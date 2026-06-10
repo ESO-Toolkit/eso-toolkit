@@ -1,7 +1,6 @@
 /**
  * Storm Calling Skill Line
  * Class: Sorcerer
- * Source: https://eso-hub.com/en/skills/sorcerer/storm-calling
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

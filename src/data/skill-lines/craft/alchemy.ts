@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Alchemy Craft Skills
- * Source: https://eso-hub.com/en/skills/craft/alchemy
  */
 export const alchemy: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const alchemy: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_alchemy_001',
-  sourceUrl: 'https://eso-hub.com/en/skills/craft/alchemy',
   skills: [
     {
       id: AbilityId.SOLVENT_PROFICIENCY,

@@ -8,7 +8,8 @@ export const abyssalBrace: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 1710 Maximum Health, While you are Bracing, you and group members within 12 meters of you gain Minor Evasion, reducing damage from area attacks by 10%.',
+    '(5 items) Adds 1710 Maximum Health',
+    '(5 items) While you are Bracing, you and group members within 12 meters of you gain Minor Evasion, reducing damage from area attacks by 10%.',
   ],
 };
 
@@ -56,7 +57,7 @@ export const aeriesCry: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack. Applying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done with Animal Companion abilities by 10% against enemies with Eagle's Mark. This effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time.",
+    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done with Animal Companion abilities by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time.",
   ],
 };
 
@@ -80,7 +81,7 @@ export const aethericLancer: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds. While in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 6 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 6 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -92,7 +93,7 @@ export const affliction: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Stamina Recovery',
-    '(5 items) When you deal damage, you deal 330 Disease damage to the target. The enemy is then afflicted with the Diseased status effect, applying Minor Defile to the target, reducing their Healing Received and damage shield strength by 6% for 4 seconds. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage, you deal 330 Disease Damage to the target. The enemy is then afflicted with the Diseased status effect, applying Minor Defile to the target, reducing their Healing Received and damage shield strength by 6% for 4 seconds. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -104,7 +105,8 @@ export const akaviriDragonguard: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 4% Healing Taken',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 158 Health Recovery, Reduces the cost of your Ultimate abilities by 15%.',
+    '(5 items) Adds 158 Health Recovery',
+    '(5 items) Reduces the cost of your Ultimate abilities by 15%.',
   ],
 };
 
@@ -150,7 +152,7 @@ export const anthelmirsConstruct: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Attacking an enemy with a fully-charged Heavy Attack throws an axe at your enemy, dealing 1572 Physical damage and reducing their Armor by 400 for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage. The axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.',
+    '(2 items) Dealing damage with a fully-charged Heavy Attack throws an axe at the enemy, dealing 1572 Physical Damage and reducing their Armor by 400 for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.\n\nThe axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.',
   ],
 };
 
@@ -160,7 +162,7 @@ export const archdruidDevyric: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1487 Offensive Penetration',
-    '(2 items) When you deal damage with a Heavy Attack, after 1.2 seconds deal 650 Shock damage to up to 6 enemies within a 7 by 5 meter line on your target, applying Major Vulnerability to them for 7 seconds, increasing the damage enemies take by 10%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(2 items) When you deal damage with a Heavy Attack, after 1.2 seconds deal 650 Shock Damage to up to 6 enemies within a 7 by 5 meter line on your target, applying Major Vulnerability to them for 7 seconds, increasing the damage enemies take by 10%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -243,7 +245,7 @@ export const ashenGrip: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) When you deal Martial melee damage, you breathe fire to all enemies in front of you for 774 Flame damage. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal Martial melee damage, you breathe fire to all enemies in front of you for 774 Flame Damage. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -303,7 +305,7 @@ export const baanDarsBlessing: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Reduce the duration of Breakable Crowd Control, Immobilizes, and Snares on you by 75%. Reduce the duration of your Breakable Crowd Control, Immobilizes, and Snares by 38%.',
+    '(5 items) Reduce the duration of Breakable Crowd Control, Immobilizes, and Snares on you by 75%.\n\nReduce the duration of your Breakable Crowd Control, Immobilizes, and Snares by 38%.',
   ],
 };
 
@@ -314,8 +316,9 @@ export const bahrahasCurse: GearSetData = {
   bonuses: [
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1096 Maximum Magicka',
-    '(4 items) Adds 1096 Maximum Stamina, Reduces your damage taken from environmental traps by 40%.',
-    '(5 items) When you deal damage, you have a 25% chance to create desecrated ground for 5 seconds, which reduces the Movement Speed of enemies within 3.5 meters by 60%, damages them for 349 Magic damage every 1 second, and heals you for 100% of the damage done. This effect can occur once every 5 seconds and the damage scales off your Max Health.',
+    '(4 items) Adds 1096 Maximum Stamina',
+    '(4 items) Reduces your damage taken from environmental traps by 40%.',
+    '(5 items) When you deal damage, you have a 25% chance to create desecrated ground for 5 seconds, which reduces the Movement Speed of enemies within 3.5 meters by 60%, damages them for 349 Magic Damage every 1 second, and heals you for 100% of the damage done. This effect can occur once every 5 seconds and the damage scales off your Max Health.',
   ],
 };
 
@@ -325,7 +328,7 @@ export const balorgh: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) When you use an Ultimate ability you gain Weapon and Spell Damage equal to the amount of total Ultimate consumed, and Physical and Spell Penetration equal to 23 times the amount for 12 seconds.',
+    '(2 items) When you use an Ultimate ability, you gain Weapon and Spell Damage equal to the amount of total Ultimate consumed, and Physical and Spell Penetration equal to 23 times the amount for 12 seconds.',
   ],
 };
 
@@ -347,7 +350,7 @@ export const barSakka: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 1206 Maximum Health',
-    '(2 items) While in combat, performing a roll dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 788 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.',
+    '(2 items) While in combat, performing a Roll Dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 788 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.',
   ],
 };
 
@@ -356,8 +359,9 @@ export const baronThirsk: GearSetData = {
   icon: 'Baron Thirsk',
   setType: 'Monster Set',
   bonuses: [
-    '(1 item) Adds 129 Stamina Recovery, Adds 129 Magicka Recovery',
-    '(2 items) On dealing area direct damage, mark a target for 6 seconds. Every 2 seconds after, an Explosive Scamp is spawned nearby and detonates after 1 second, dealing 362 Magic damage to up to 6 enemies within 4 meters and applying Minor Timidity for 10 seconds, draining 1 Ultimate every 1.5 seconds. Each Explosive Scamp spawned deals 100% increased damage. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 129 Stamina Recovery',
+    '(1 item) Adds 129 Magicka Recovery',
+    '(2 items) On dealing area direct damage, mark a target for 6 seconds. Every 2 seconds after, an Explosive Scamp is spawned nearby and detonates after 1 second, dealing 362 Magic Damage to up to 6 enemies within 4 meters and applying Minor Timidity for 10 seconds, draining 1 Ultimate every 1.5 seconds. Each Explosive Scamp spawned deals 100% increased damage. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -366,7 +370,9 @@ export const baronZaudrus: GearSetData = {
   icon: 'Baron Zaudrus',
   setType: 'Monster Set',
   bonuses: [
-    '(1 item) Adds 548 Maximum Stamina, Adds 548 Maximum Magicka, Adds 603 Maximum Health',
+    '(1 item) Adds 548 Maximum Stamina',
+    '(1 item) Adds 548 Maximum Magicka',
+    '(1 item) Adds 603 Maximum Health',
     "(2 items) Applying a status effect to an enemy grants you a stack of Zaudrus's Ambition for 10 seconds, up to 3 stacks max. When you gain 3 stacks, the stacks are removed and you gain 4 Ultimate. On gaining Ultimate, you cannot gain additional stacks of Zaudrus's Ambition for 1 second.",
   ],
 };
@@ -379,7 +385,7 @@ export const basaltBloodedWarrior: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Casting an Earthen Heart ability grants you a Rock Stance for 10 seconds. While on your Primary Weapon you gain Molten Stance, granting you Major Heroism, generating 3 Ultimate every 1.5 seconds. While you are on your Secondary Weapon you gain Obsidian Stance, increasing your Healing Done and damage shields by 14%. Bar Swapping will swap your Stance automatically.',
+    '(5 items) Casting an Earthen Heart ability grants you a Rock Stance for 10 seconds. While on your Primary Weapon you gain Molten Stance, granting you Major Heroism, generating 3 Ultimate every 1.5 seconds. While you are on your Secondary Weapon you gain Obsidian Stance, increasing your Healing Done and damage shields by 14%.\n\nBar Swapping will swap your Stance automatically.',
   ],
 };
 
@@ -427,7 +433,7 @@ export const beaconOfOblivion: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) While you have a permanent pet active, gain 1840 Health and 1980 Armor. While you do not have a permanent pet active, increase your Damage Done and Healing Done by 15%. This value is reduced to 5% while affected by Battle Spirit.',
+    '(5 items) While you have a permanent pet active, gain 1840 Health and 1980 Armor.\n\nWhile you do not have a permanent pet active, increase your Damage Done and Healing Done by 15%. This value is reduced to 5% while affected by Battle Spirit.',
   ],
 };
 
@@ -439,7 +445,7 @@ export const beckoningSteel: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1487 Armor',
-    '(5 items) Generate an aura that causes you and 11 group members within the aura to take 10% less damage from projectiles. This bonus persists through death. You can only be affected by one instance of Beckoning Steel.',
+    '(5 items) Generate an aura that causes you and 11 group members within the aura to take 10% less damage from projectiles. This bonus persists through death.\n\nYou can only be affected by one instance of Beckoning Steel.',
   ],
 };
 
@@ -463,7 +469,8 @@ export const berserkingWarrior: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Adds 986 Critical Chance, When you deal Martial melee damage, your Critical Chance is increased by 298 for 5 seconds, stacking up to 5 times. This effect can occur once every half second.',
+    '(5 items) Adds 986 Critical Chance',
+    '(5 items) When you deal Martial melee damage, your Critical Chance is increased by 298 for 5 seconds, stacking up to 5 times. This effect can occur once every half second.',
   ],
 };
 
@@ -497,7 +504,8 @@ export const blackRose: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) Adds 176 Weapon and Spell Damage, Increases the Magicka and Stamina restored from the Constitution passive ability by 60%.',
+    '(5 items) Adds 176 Weapon and Spell Damage',
+    '(5 items) Increases the Magicka and Stamina restored from the Constitution passive ability by 60%.',
   ],
 };
 
@@ -567,7 +575,8 @@ export const callOfTheUndertaker: GearSetData = {
     '(2 items) Adds 4% Healing Taken',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 4% Healing Done',
-    '(5 items) Adds 1206 Maximum Health, When you deal damage, you apply Minor Lifesteal to your enemy for 8 seconds, healing you and your allies for 600 Health every 1 second when damaging them.',
+    '(5 items) Adds 1206 Maximum Health',
+    '(5 items) When you deal damage, you apply Minor Lifesteal to your enemy for 8 seconds, healing you and your allies for 600 Health every 1 second when damaging them.',
   ],
 };
 
@@ -579,7 +588,8 @@ export const championOfTheHist: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1096 Maximum Stamina',
-    '(5 items) Adds 1600 Maximum Health, Gain Minor Heroism at all times while you are in combat, generating 1 Ultimate every 1.5 seconds.',
+    '(5 items) Adds 1600 Maximum Health',
+    '(5 items) Gain Minor Heroism at all times while you are in combat, generating 1 Ultimate every 1.5 seconds.',
   ],
 };
 
@@ -648,7 +658,7 @@ export const coldharbourSFavorite: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Healing yourself or a group member summons Coldharbour's Favorite, who after 2 seconds, begins healing you and group members near him for 4648 Health over 6 seconds based on the higher of your Max Magicka or Stamina. Dealing damage summons Coldharbour's Favorite, who after 2 seconds, explodes, damaging enemies near him for 2352 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage. Coldharbour's Favorite can only be summoned once every 10 seconds.",
+    "(5 items) Healing yourself or a group member summons Coldharbour's Favorite, who after 2 seconds, begins healing you and group members near him for 4648 Health over 6 seconds based on the higher of your Max Magicka or Stamina.\n\nDealing damage summons Coldharbour's Favorite, who after 2 seconds, explodes, damaging enemies near him for 2352 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage.\n\nColdharbour's Favorite can only be summoned once every 10 seconds.",
   ],
 };
 
@@ -657,6 +667,7 @@ export const colovianHighlandsGeneral: GearSetData = {
   icon: 'Colovian Highlands General',
   setType: 'Class Sets',
   bonuses: [
+    '(1 item) Adds 1487 Offensive Penetration',
     '(2 items) When you kill a Player, gain a stack of Blood Debt for 0.5 seconds. When Blood Debt expires, you and up to 5 group members within 28 meters of you gain 15 Ultimate per stack of Blood Debt.',
   ],
 };
@@ -753,7 +764,7 @@ export const daringCorsair: GearSetData = {
     '(2 items) Adds 129 Stamina Recovery',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Reduce the cost of your Weapon abilities by 10% Magicka or Stamina. After casting a Weapon ability, you gain Minor Heroism for 8 seconds, generating 1 Ultimate every 1.5 seconds while in combat. This effect can occur every 8 seconds.',
+    '(5 items) Reduce the cost of your Weapon abilities by 10% Magicka or Stamina.\n\nAfter casting a Weapon ability, you gain Minor Heroism for 8 seconds, generating 1 Ultimate every 1.5 seconds while in combat. This effect can occur every 8 seconds.',
   ],
 };
 
@@ -765,7 +776,8 @@ export const dauntlessCombatant: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) Adds 1206 Maximum Health, When you are affected by a disabling effect, you automatically Break Free for no cost. After using this effect, you become Winded and cannot trigger this effect or others like it for 21 seconds.',
+    '(5 items) Adds 1206 Maximum Health',
+    '(5 items) When you are affected by a disabling effect, you automatically Break Free for no cost. After using this effect, you become Winded and cannot trigger this effect or others like it for 21 seconds.',
   ],
 };
 
@@ -825,7 +837,7 @@ export const diamondSVictory: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, using an ability with a range of 7 meters or less grants you Range Supremacy for 5 seconds, adding 437 Weapon and Spell Damage to your damage over time and ranged attacks. While in combat, using an ability with a range of over 7 meters grants you Melee Supremacy for 5 seconds, adding 437 Weapon and Spell Damage to your melee attacks.',
+    '(5 items) While in combat, using an ability with a range of 7 meters or less grants you Range Supremacy for 5 seconds, adding 437 Weapon and Spell Damage to your damage over time and ranged attacks.\n\nWhile in combat, using an ability with a range of over 7 meters grants you Melee Supremacy for 5 seconds, adding 437 Weapon and Spell Damage to your melee attacks.',
   ],
 };
 
@@ -846,7 +858,9 @@ export const domihaus: GearSetData = {
   icon: 'Domihaus',
   setType: 'Mythic',
   bonuses: [
-    '(2 items) When you deal damage, you create a 10 meter ring of molten earth around you for 10 seconds, which deals 90 Flame damage and 90 Physical damage every 1 second. Standing within the ring grants you 300 Weapon and Spell Damage. This effect can occur once every 15 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1096 Maximum Stamina',
+    '(1 item) Adds 1096 Maximum Magicka',
+    '(2 items) When you deal damage, you create a 10 meter ring of molten earth around you for 10 seconds, which deals 90 Flame Damage and 90 Physical Damage every 1 second. Standing within the ring grants you 300 Weapon and Spell Damage. This effect can occur once every 15 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -870,7 +884,8 @@ export const dragonSDefilement: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 1206 Maximum Health, When you take damage from a melee attack, gain a corrupting aura for 5 seconds that applies Minor Breach to all enemies within 8 meters of you, reducing their Physical and Spell Resistance by 2974. This effect can occur every 5 seconds.',
+    '(5 items) Adds 1206 Maximum Health',
+    '(5 items) When you take damage from a melee attack, gain a corrupting aura for 5 seconds that applies Minor Breach to all enemies within 8 meters of you, reducing their Physical and Spell Resistance by 2974. This effect can occur every 5 seconds.',
   ],
 };
 
@@ -915,6 +930,7 @@ export const druidSBraid: GearSetData = {
   icon: "Druid's Braid",
   setType: 'Dungeon',
   bonuses: [
+    '(1 item) Adds 1206 Maximum Health',
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 1206 Maximum Health',
@@ -958,6 +974,7 @@ export const earthgore: GearSetData = {
   icon: 'Earthgore',
   setType: 'Dungeon',
   bonuses: [
+    '(1 item) Adds 4% Healing Done',
     '(2 items) When you heal yourself or a group member that is under 50% Health, you conjure a pool of blood underneath them, immediately removing all harmful area effects, and healing the lowest Health group member in the area after 2 seconds for 1702 Health every 2 seconds over 8 seconds. This effect can occur once every 20 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
@@ -982,7 +999,7 @@ export const elfBane: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, increases the duration of your Flame Damage over Time abilities by 5 seconds. This effect does not work with beam or channeled effects.',
+    '(5 items) While in combat, increases the duration of your Flame Damage over Time abilities by 5 seconds.\n\nThis effect does not work with beam or channeled effects.',
   ],
 };
 
@@ -994,7 +1011,7 @@ export const embershield: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1487 Armor',
-    '(5 items) When you complete a fully-charged Heavy Attack, you increase your Physical and Spell Resistance by 3300 and deal 0 Flame damage to all enemies within 5 meters of you every 1 second for 6 seconds. The damage scales off the higher of your Physical or Spell Resistance.',
+    '(5 items) When you complete a fully-charged Heavy Attack, you increase your Physical and Spell Resistance by 3300 and deal 0 Flame Damage to all enemies within 5 meters of you every 1 second for 6 seconds. The damage scales off the higher of your Physical or Spell Resistance.',
   ],
 };
 
@@ -1003,6 +1020,7 @@ export const encratisSBehemoth: GearSetData = {
   icon: "Encratis's Behemoth",
   setType: 'PvP',
   bonuses: [
+    '(1 item) Adds 1096 Maximum Magicka',
     "(2 items) Dealing Flame Damage to an enemy grants you Behemoth's Aura for 12 seconds that reaches up to 12 meters. You and up to 11 group members in the aura reduce Flame Damage taken by 5%. Enemies in the aura increase their Flame Damage taken by 5%. This effect can occur once every 15 seconds.",
   ],
 };
@@ -1024,6 +1042,7 @@ export const engineGuardian: GearSetData = {
   icon: 'Engine Guardian',
   setType: 'Mythic',
   bonuses: [
+    '(1 item) Adds 129 Health Recovery',
     '(2 items) When you use an ability that costs resources, you have a 25% chance to summon a Dwemer automaton to restore 550 Stamina or Magicka or 1955 Health to you every 0.5 seconds for 6 seconds. This effect can occur once every 10 seconds.',
   ],
 };
@@ -1036,7 +1055,7 @@ export const eternalHunt: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Stamina Recovery',
-    '(5 items) When you use Roll Dodge, you leave behind a rune that detonates when an enemy comes close, dealing 992 Poison damage and immobilizing them for 1.5 seconds. This effect scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you use Roll Dodge, you leave behind a rune that detonates when an enemy comes close, dealing 992 Poison Damage and immobilizing them for 1.5 seconds. This effect scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1060,7 +1079,8 @@ export const eternalWarrior: GearSetData = {
     '(2 items) Adds 4% Healing Taken',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 4% Healing Taken, When you take damage while below 25% Health in combat, you heal for 9370 Health and gain 100 Ultimate. This effect can occur once every 1 minute and the heal scales off your Max Health.',
+    '(5 items) Adds 4% Healing Taken',
+    '(5 items) When you take damage while below 25% Health in combat, you heal for 9370 Health and gain 100 Ultimate. This effect can occur once every 1 minute and the heal scales off your Max Health.',
   ],
 };
 
@@ -1069,7 +1089,8 @@ export const euphoticGatekeeper: GearSetData = {
   icon: 'Euphotic Gatekeeper',
   setType: 'Arena',
   bonuses: [
-    '(2 items) When you use Roll Dodge, create a Hadolid Husk after you roll. While within 5 meters of the Hadolid Husk, it will absorb all direct damage attacks against you. After 1 second, the Hadolid Husk explodes, dealing 1155 Poison damage to all enemies within 5 meters. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 129 Stamina Recovery',
+    '(2 items) When you use Roll Dodge, create a Hadolid Husk after you roll. While within 5 meters of the Hadolid Husk, it will absorb all direct damage attacks against you. After 1 second, the Hadolid Husk explodes, dealing 1155 Poison Damage to all enemies within 5 meters. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1105,7 +1126,8 @@ export const fasallaSGuile: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) Adds 1487 Armor, While in combat, every 1 second you apply Minor Defile to enemies within 5 meters of you for 2 seconds, reducing their healing received and damage shield strength by 6%.',
+    '(5 items) Adds 1487 Armor',
+    '(5 items) While in combat, every 1 second you apply Minor Defile to enemies within 5 meters of you for 2 seconds, reducing their healing received and damage shield strength by 6%.',
   ],
 };
 
@@ -1128,7 +1150,7 @@ export const foolkillerSWard: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Activating Block while in combat places a damage shield on you and up to 3 group members within 18 meters for 2 seconds that absorbs up to 4000 direct damage. If a damage shield breaks, the wearer of the shield restores 5680 Magicka and Stamina. This effect can occur once every 30 seconds if a damage shield broke. This effect can occur once every 10 seconds if no damage shields broke.',
+    '(5 items) Activating Block while in combat places a damage shield on you and up to 3 group members within 18 meters for 2 seconds that absorbs up to 4000 direct damage. If a damage shield breaks, the wearer of the shield restores 5680 Magicka and Stamina.\n\nThis effect can occur once every 30 seconds if a damage shield broke. This effect can occur once every 10 seconds if no damage shields broke.',
   ],
 };
 
@@ -1188,7 +1210,7 @@ export const galerionSRevenge: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) When you deal damage with a Light or Heavy Attack, you put a Mark of Revenge on the enemy for 15 seconds. After stacking 5 Marks of Revenge on an enemy they detonate for 1462 Magic Damage. You can only apply a stack once every half second and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage with a Light or Heavy Attack, you put a Mark of Revenge on the enemy for 15 seconds. After stacking 5 Marks of Revenge on an enemy they detonate for 1462 Magic Damage.\n\nYou can only apply a stack once every half second and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1200,7 +1222,7 @@ export const gardenerOfSeasons: GearSetData = {
     '(2 items) Adds 4% Healing Done',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Gain Herald of Spring, causing your Green Balance overheals to apply Minor Heroism for 3 seconds. Casting a Heal ability while Bracing consumes Herald of Spring and gives you Harbinger of Fall for 6 seconds, causing your Green Balance overheals to create an 8 meter area for 5 seconds, applying Major Cowardice to enemies and Minor Vitality to allies. You can create an area once every 5 seconds. When Harbinger of Fall ends, regain Herald of Spring.',
+    '(5 items) Gain Herald of Spring, causing your Green Balance overheals to apply Minor Heroism for 3 seconds.\n\nCasting a Heal ability while Bracing consumes Herald of Spring and gives you Harbinger of Fall for 6 seconds, causing your Green Balance overheals to create an 8 meter area for 5 seconds, applying Major Cowardice to enemies and Minor Vitality to allies. You can create an area once every 5 seconds.\n\nWhen Harbinger of Fall ends, regain Herald of Spring.',
   ],
 };
 
@@ -1231,7 +1253,7 @@ export const glitteringGoad: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 129 Weapon and Spell Damage',
-    '(2 items) Dealing damage with a Bash or Heavy Attack deals 1024 Frost damage over 8 seconds to the enemy. This effect can occur once every 8 seconds. If the effect completes, the enemy applies Minor Brittle to up to of 6 enemies within 12 meters of itself for 10 seconds. If the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the enemy.',
+    '(2 items) Dealing damage with a Bash or Heavy Attack deals 812 Frost Damage over 8 seconds to the enemy. This effect can occur once every 8 seconds.\n\nIf the effect completes, the enemy applies Minor Brittle to up to 6 enemies within 12 meters of itself for 10 seconds.\n\nIf the enemy dies, the enemy releases glittering energy, restoring 847 Magicka and Stamina to you and group members within 12 meters of the defeated enemy.',
   ],
 };
 
@@ -1240,7 +1262,8 @@ export const glorgolochTheDestroyer: GearSetData = {
   icon: 'Glorgoloch the Destroyer',
   setType: 'Arena',
   bonuses: [
-    '(2 items) While in combat, each second you stand still grants you a stack of Flesh Fortress, up to 10 stacks. Each stack increases your Armor by 380 and your Critical Resistance by 38. Each second you move removes a stack of Flesh Fortress. Exiting combat removes all stacks of Flesh Fortress. Using charge and teleport abilities do not remove stacks of Flesh Fortress.',
+    '(1 item) Adds 1206 Maximum Health',
+    '(2 items) While in combat, each second you stand still grants you a stack of Flesh Fortress, up to 10 stacks. Each stack increases your Armor by 380 and your Critical Resistance by 38. Each second you move removes a stack of Flesh Fortress. Exiting combat removes all stacks of Flesh Fortress.\n\nUsing charge and teleport abilities do not remove stacks of Flesh Fortress.',
   ],
 };
 
@@ -1309,7 +1332,8 @@ export const grothdarr: GearSetData = {
   icon: 'Grothdarr',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) When you deal damage to an enemy within 8 meters, you have a 10% chance to create lava pools that swirl around you, dealing 259 Flame damage to all enemies within 8 meters of you every 1 second for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1096 Maximum Magicka',
+    '(2 items) When you deal damage to an enemy within 8 meters, you have a 10% chance to create lava pools that swirl around you, dealing 259 Flame Damage to all enemies within 8 meters of you every 1 second for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1318,6 +1342,7 @@ export const grundwulf: GearSetData = {
   icon: 'Grundwulf',
   setType: 'Dungeon',
   bonuses: [
+    '(1 item) Adds 657 Critical Chance',
     '(2 items) Whenever you deal critical damage, restore 700 Magicka or Stamina, whichever maximum is higher. You also gain 350 of the other resource. This effect can occur once every 5 seconds.',
   ],
 };
@@ -1402,7 +1427,8 @@ export const hideOfMorihaus: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1096 Maximum Stamina',
-    '(5 items) Adds 129 Stamina Recovery, When you Roll Dodge through an enemy, you deal 0 Physical Damage and knock them down for 3 seconds. This effect scales off the higher of your Physical or Spell Resistance.',
+    '(5 items) Adds 129 Stamina Recovery',
+    '(5 items) When you Roll Dodge through an enemy, you deal 0 Physical Damage and knock them down for 3 seconds. This effect scales off the higher of your Physical or Spell Resistance.',
   ],
 };
 
@@ -1414,7 +1440,8 @@ export const highlandSentinel: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 657 Critical Chance',
-    "(5 items) Adds 986 Critical Chance, While in combat, each second you stand still grants you a stack of Sentinel's Eye, increasing your Critical Chance by 443 per stack, stacking up to 3 times. Each second you move, one stack is removed. Using charge and teleport abilities does not remove stacks, and exiting combat will remove all stacks of Sentinel's Eye.",
+    '(5 items) Adds 986 Critical Chance',
+    "(5 items) While in combat, each second you stand still grants you a stack of Sentinel's Eye, increasing your Critical Chance by 443 per stack, stacking up to 3 times. Each second you move, one stack is removed. Using charge and teleport abilities does not remove stacks, and exiting combat will remove all stacks of Sentinel's Eye.",
   ],
 };
 
@@ -1471,7 +1498,8 @@ export const iceheart: GearSetData = {
   icon: 'Iceheart',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) When you deal Critical Damage, you have a 20% chance to gain a damage shield that absorbs 5000 damage for 6 seconds. While the damage shield holds, you deal 259 Frost damage to all enemies within 5 meters of you every 1 second. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 657 Critical Chance',
+    '(2 items) When you deal Critical Damage, you have a 20% chance to gain a damage shield that absorbs 5000 damage for 6 seconds. While the damage shield holds, you deal 259 Frost Damage to all enemies within 5 meters of you every 1 second. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1480,7 +1508,8 @@ export const ilambris: GearSetData = {
   icon: 'Ilambris',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) When you deal Flame or Shock Damage, you have a 33% chance to summon a meteor shower that deals 145 Flame damage and 145 Shock damage to all enemies within 4 meters every 1 second for 5 seconds. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1096 Maximum Magicka',
+    '(2 items) When you deal Flame or Shock Damage, you have a 33% chance to summon a meteor shower that deals 145 Flame Damage and 145 Shock Damage to all enemies within 4 meters every 1 second for 5 seconds. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1489,7 +1518,9 @@ export const immolatorCharr: GearSetData = {
   icon: 'Immolator Charr',
   setType: 'Trial',
   bonuses: [
-    '(2 items) Adds 1206 Maximum Health, When you take damage while below 50% Health, gain immunity to immobilization, snares, and crowd control effects for 10 seconds. This effect can occur once every 40 seconds.',
+    '(1 item) Adds 1487 Armor',
+    '(2 items) Adds 1206 Maximum Health',
+    '(2 items) When you take damage while below 50% Health, gain immunity to immobilization, snares, and crowd control effects for 10 seconds. This effect can occur once every 40 seconds.',
   ],
 };
 
@@ -1534,7 +1565,8 @@ export const infernalGuardian: GearSetData = {
   icon: 'Infernal Guardian',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) When you apply a damage shield to yourself or an ally, you have a 50% chance to lob 3 mortars over 2 seconds at the furthest enemy from you that each deal 641 Flame damage to all enemies within 5 meters of the blast area. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1096 Maximum Magicka',
+    '(2 items) When you apply a damage shield to yourself or an ally, you have a 50% chance to lob 3 mortars over 2 seconds at the furthest enemy from you that each deal 641 Flame Damage to all enemies within 5 meters of the blast area. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1544,7 +1576,8 @@ export const innateAxiom: GearSetData = {
   setType: 'Craftable',
   bonuses: [
     '(2 items) Adds 129 Weapon and Spell Damage',
-    '(3 items) Adds 1096 Maximum Magicka, Adds 1096 Maximum Stamina',
+    '(3 items) Adds 1096 Maximum Magicka',
+    '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 657 Critical Chance',
     '(5 items) Adds 400 Weapon and Spell Damage to your Class abilities.',
   ],
@@ -1591,7 +1624,8 @@ export const jerallMountainsWarchief: GearSetData = {
   icon: 'Jerall Mountains Warchief',
   setType: 'Dungeon',
   bonuses: [
-    '(2 items) Dealing damage applies a stack of Malady to your enemy, reducing healing received by 1% for 5 seconds, up to 35 stacks. You can apply a stack once every 0.5 seconds. Applying Malady gives you a stack of Contagion, reducing healing received by 1% for 5 seconds, up to 15 stacks. You can only gain a stack once every 1 second.',
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    '(2 items) Dealing damage applies a stack of Malady to your enemy, reducing healing received by 1% for 5 seconds, up to 35 stacks. You can apply a stack once every 0.5 seconds.\n\nApplying Malady gives you a stack of Contagion, reducing healing received by 1% for 5 seconds, up to 15 stacks. You can only gain a stack once every 1 second.',
   ],
 };
 
@@ -1603,7 +1637,7 @@ export const joltingArms: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1487 Armor',
-    '(5 items) When you Block, you charge your arms, increasing your Physical and Spell Resistance by 4620 for 6 seconds and causing your next Bash attack to deal an additional 3513 damage. This effect can occur once every 6 seconds.',
+    '(5 items) When you Block, you charge your arms, increasing your Physical and Spell Resistance by 4620 for 6 seconds and causing your next Bash attack to deal an additional 3513 damage.\n\nThis effect can occur once every 6 seconds.',
   ],
 };
 
@@ -1615,7 +1649,8 @@ export const judgmentOfAkatosh: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 2291 Armor, When you deal direct damage with a Blink, Charge, Leap, Teleport, or Pull ability, you distort time on your enemy. After 3 seconds, the enemy bursts with temporal energy, reducing the Movement Speed of all enemies within 12 meters by 70% for 6 seconds and stunning them for 3 seconds. This effect can be blocked and can occur once every 15 seconds.',
+    '(5 items) Adds 2291 Armor',
+    '(5 items) When you deal direct damage with a Blink, Charge, Leap, Teleport, or Pull ability, you distort time on your enemy. After 3 seconds, the enemy bursts with temporal energy, reducing the Movement Speed of all enemies within 12 meters by 70% for 6 seconds and stunning them for 3 seconds. This effect can be blocked and can occur once every 15 seconds.',
   ],
 };
 
@@ -1627,7 +1662,8 @@ export const kagrenacSHope: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 222 Weapon and Spell Damage, Decreases the time it takes to resurrect an ally by 25%. When you successfully resurrect an ally, you restore 1720 Magicka.',
+    '(5 items) Adds 222 Weapon and Spell Damage',
+    '(5 items) Decreases the time it takes to resurrect an ally by 25%. When you successfully resurrect an ally, you restore 1720 Magicka.',
   ],
 };
 
@@ -1636,7 +1672,9 @@ export const kargaeda: GearSetData = {
   icon: 'Kargaeda',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) On dealing damage with a Heavy Attack, create a 6 meter whirlwind that slowly moves forward for 8 seconds, growing by 3 meters every 3 seconds. Enemies within the whirlwind take 150 Shock damage and 150 Physical damage every second, while group members reduce their Magicka and Stamina costs by 10%. This effect can occur once every 20 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 731 Maximum Magicka',
+    '(1 item) Adds 731 Maximum Stamina',
+    '(2 items) On dealing damage with a Heavy Attack, create a 6 meter whirlwind that slowly moves forward for 8 seconds, growing by 3 meters every 3 seconds. Enemies within the whirlwind take 150 Shock Damage and 150 Physical Damage every second, while group members reduce their Magicka and Stamina costs by 10%. This effect can occur once every 20 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1645,7 +1683,8 @@ export const kjalnarSNightmare: GearSetData = {
   icon: "Kjalnar's Nightmare",
   setType: 'Dungeon',
   bonuses: [
-    "(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds. At 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 2221 Magic damage if they cannot be stunned. Enemies then become immune to Kjalnar's Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.",
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    "(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds.\n\nAt 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 2221 Magic Damage if they cannot be stunned. Enemies then become immune to Kjalnar's Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -1669,7 +1708,8 @@ export const knightmare: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1487 Armor',
-    '(5 items) Adds 1206 Maximum Health, When you deal Martial melee damage, you apply Minor Maim to all enemies within 8 meters of you for 5 seconds, reducing their damage done by 5%. This effect can occur once every 3 seconds.',
+    '(5 items) Adds 1206 Maximum Health',
+    '(5 items) When you deal Martial melee damage, you apply Minor Maim to all enemies within 8 meters of you for 5 seconds, reducing their damage done by 5%. This effect can occur once every 3 seconds.',
   ],
 };
 
@@ -1678,7 +1718,8 @@ export const kraGh: GearSetData = {
   icon: "Kra'gh",
   setType: 'Craftable',
   bonuses: [
-    '(2 items) When you deal damage, you have a 10% chance to spawn dreugh limbs that create shockwaves in front of you dealing 249 Physical damage every 0.6 seconds for 2.4 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1487 Offensive Penetration',
+    '(2 items) When you deal damage, you have a 10% chance to spawn dreugh limbs that create shockwaves in front of you dealing 249 Physical Damage every 0.6 seconds for 2.4 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1702,7 +1743,7 @@ export const kynmarcherSCruelty: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 1487 Armor',
-    '(5 items) When you deal direct damage, you apply one of 5 random Major debuffs to enemies within 8 meters of you for 18 seconds. This effect can occur once every 8 seconds and only if an enemy is in range. Eligible effects are Major Breach, Major Cowardice, Major Defile, Major Maim, and Major Vulnerability.',
+    '(5 items) When you deal direct damage, you apply one of 5 random Major debuffs to enemies within 8 meters of you for 18 seconds. This effect can occur once every 8 seconds and only if an enemy is in range.\n\nEligible effects are Major Breach, Major Cowardice, Major Defile, Major Maim, and Major Vulnerability.',
   ],
 };
 
@@ -1711,7 +1752,8 @@ export const ladyMalygda: GearSetData = {
   icon: 'Lady Malygda',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) When you deal direct damage to a target within 12 meters, create a 5 meter area that after 1 second, quickly moves forward and then returns, dealing 811 Shock damage to enemies and applying Minor Enervation for 5 seconds, causing the target to deal 10% less Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1487 Offensive Penetration',
+    '(2 items) When you deal direct damage to a target within 12 meters, create a 5 meter area that after 1 second, quickly moves forward and then returns, dealing 811 Shock Damage to enemies and applying Minor Enervation for 5 seconds, causing the target to deal 10% less Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1720,7 +1762,8 @@ export const ladyThorn: GearSetData = {
   icon: 'Lady Thorn',
   setType: 'Craftable',
   bonuses: [
-    "(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds. You or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 2879 Disease damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.",
+    '(1 item) Adds 1206 Maximum Health',
+    "(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds.\n\nYou or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 2879 Disease Damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.",
   ],
 };
 
@@ -1744,7 +1787,7 @@ export const leechingPlate: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 4% Healing Taken',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) When you take damage, you summon a cloud of leeching poison under the assailant. The cloud deals 427 Poison damage every 1 second for 5 seconds and heals you for 100% of the damage caused. This effect can occur once every 5 seconds and scales off your Max Health.',
+    '(5 items) When you take damage, you summon a cloud of leeching poison under the assailant. The cloud deals 427 Poison Damage every 1 second for 5 seconds and heals you for 100% of the damage caused. This effect can occur once every 5 seconds and scales off your Max Health.',
   ],
 };
 
@@ -1777,6 +1820,7 @@ export const lordWarden: GearSetData = {
   icon: 'Lord Warden',
   setType: 'Trial',
   bonuses: [
+    '(1 item) Adds 1487 Armor',
     '(2 items) When you take damage, you have a 50% chance to summon a shadow orb for 10 seconds that increases the Physical and Spell Resistance of you and your group members within 8 meters by 3180. This effect can occur once every 10 seconds.',
   ],
 };
@@ -1789,7 +1833,7 @@ export const lucentEchoes: GearSetData = {
     '(2 items) Adds 4% Healing Taken',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) While you have more than 50% Health, the Critical Damage and Critical Healing of any group members not wearing Lucent Echoes within 28 meters of you increases by 11%. While you have 50% or less Health, your damage taken from monsters is reduced by 20%.',
+    '(5 items) While you have more than 50% Health, the Critical Damage and Critical Healing of any group members not wearing Lucent Echoes within 28 meters of you increases by 11%.\n\nWhile you have 50% or less Health, your damage taken from monsters is reduced by 20%.',
   ],
 };
 
@@ -1822,7 +1866,8 @@ export const maarselok: GearSetData = {
   icon: 'Maarselok',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) When you deal damage with a melee Heavy Attack, you spew a cone of corruption, dealing 1492 Disease damage to enemies over 4 seconds. This damage is increased by 10% for each negative effect the enemies have, up to a maximum of 300%. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1096 Maximum Stamina',
+    '(2 items) When you deal damage with a melee Heavy Attack, you spew a cone of corruption, dealing 1492 Disease Damage to enemies over 4 seconds. This damage is increased by 10% for each negative effect the enemies have, up to a maximum of 300%. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -1831,6 +1876,8 @@ export const magmaIncarnate: GearSetData = {
   icon: 'Magma Incarnate',
   setType: 'Craftable',
   bonuses: [
+    '(1 item) Adds 129 Magicka Recovery',
+    '(1 item) Adds 129 Stamina Recovery',
     '(2 items) When you heal yourself or a group member with a single target heal ability, grant the lowest Health group member within 28 meters Minor Courage and Minor Resolve, increasing their Weapon and Spell Damage by 215 and Armor by 2974 for 10 seconds. Daedric Energy will then bounce to a nearby group member within 8 meters, up to 3 times, applying Minor Courage and Minor Resolve for 10 seconds. This effect can occur once every 15 seconds.',
   ],
 };
@@ -1855,7 +1902,7 @@ export const maraSBalm: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 424 Critical Resistance',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) When a negative effect is removed from you, restore 1106 Health. This effect can occur once every 1 second. When you take damage and have 6 or more negative effects, restore 1106 Health per negative effect and then cleanse all. This effect can occur once every 30 seconds.',
+    '(5 items) When a negative effect is removed from you, restore 1106 Health. This effect can occur once every 1 second.\n\nWhen you take damage and have 6 or more negative effects, restore 1106 Health per negative effect and then cleanse all. This effect can occur once every 30 seconds.',
   ],
 };
 
@@ -1876,7 +1923,8 @@ export const mawOfTheInfernal: GearSetData = {
   icon: 'Maw of the Infernal',
   setType: 'Craftable',
   bonuses: [
-    "(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth's attacks deal 599 Flame damage every 2 seconds. The Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.",
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    "(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth's attacks deal 599 Flame Damage every 2 seconds.\n\nThe Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -1900,7 +1948,8 @@ export const medusa: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Adds 892 Critical Chance, Gain Minor Force at all times, increasing your Critical Damage by 10%.',
+    '(5 items) Adds 892 Critical Chance',
+    '(5 items) Gain Minor Force at all times, increasing your Critical Damage by 10%.',
   ],
 };
 
@@ -1924,7 +1973,8 @@ export const mightOfTheLostLegion: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Adds 1206 Maximum Health, When you Block, you gain Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 3 seconds.',
+    '(5 items) Adds 1206 Maximum Health',
+    '(5 items) When you Block, you gain Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 3 seconds.',
   ],
 };
 
@@ -1933,7 +1983,9 @@ export const mightyChudan: GearSetData = {
   icon: 'Mighty Chudan',
   setType: 'Dungeon',
   bonuses: [
-    '(2 items) Adds 1206 Maximum Health, Gain Major Resolve at all times, increasing your Physical and Spell Resistance by 5948.',
+    '(1 item) Adds 1487 Armor',
+    '(2 items) Adds 1206 Maximum Health',
+    '(2 items) Gain Major Resolve at all times, increasing your Physical and Spell Resistance by 5948.',
   ],
 };
 
@@ -1944,7 +1996,8 @@ export const mightyGlacier: GearSetData = {
   bonuses: [
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1096 Maximum Magicka',
-    '(4 items) Adds 129 Stamina Recovery, Adds 129 Magicka Recovery',
+    '(4 items) Adds 129 Stamina Recovery',
+    '(4 items) Adds 129 Magicka Recovery',
     '(5 items) When you activate a snare or immobilize ability or hit a target with a snare or immobilize ability, you and up to 11 group members gain Major Resolve for 15 seconds, increasing your Physical and Spell Resistances by 5948. This effect can occur once every 10 seconds.',
   ],
 };
@@ -1954,6 +2007,7 @@ export const molagKena: GearSetData = {
   icon: 'Molag Kena',
   setType: 'Class Sets',
   bonuses: [
+    '(1 item) Adds 129 Weapon and Spell Damage',
     '(2 items) When you consecutively Light Attack 2 times, you trigger Overkill for 6 seconds, which increases your Weapon and Spell Damage by 560 but also increases the cost of your abilities by 8%. This effect can occur once every 6 seconds.',
   ],
 };
@@ -1978,7 +2032,7 @@ export const morkuldin: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon's basic attacks deal 422 Physical damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.",
+    "(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon's basic attacks deal 422 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -1987,6 +2041,7 @@ export const motherCiannait: GearSetData = {
   icon: 'Mother Ciannait',
   setType: 'Craftable',
   bonuses: [
+    '(1 item) Adds 1096 Maximum Magicka',
     '(2 items) While in combat, casting an ability with a cast time or channeling an ability grants you a damage shield that absorbs 5000 damage for 6 seconds. If the damage shield is broken, you restore 985 Magicka. This effect can occur once every 7 seconds.',
   ],
 };
@@ -2008,6 +2063,7 @@ export const nazaray: GearSetData = {
   icon: 'Nazaray',
   setType: 'Monster Set',
   bonuses: [
+    '(1 item) Adds 1206 Maximum Health',
     '(2 items) When you use an Ultimate ability, the closest 6 enemies within 12 meters have all Major and Minor debuffs applied to them extended by 1 second per 20 Ultimate spent. This effect can occur once every 30 seconds per target.',
   ],
 };
@@ -2017,7 +2073,8 @@ export const nerienEth: GearSetData = {
   icon: "Nerien'eth",
   setType: 'PvP',
   bonuses: [
-    '(2 items) When you deal direct damage, you have a 15% chance to summon a Lich crystal that explodes after 2 seconds, dealing 1360 Magic damage to all enemies within 4 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    '(2 items) When you deal direct damage, you have a 15% chance to summon a Lich crystal that explodes after 2 seconds, dealing 1360 Magic Damage to all enemies within 4 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2041,7 +2098,7 @@ export const newMoonAcolyte: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1487 Offensive Penetration',
-    '(5 items) Adds 401 Weapon and Spell Damage. Increases the cost of your active abilities by 5%.',
+    '(5 items) Adds 401 Weapon and Spell Damage.\n\nIncreases the cost of your active abilities by 5%.',
   ],
 };
 
@@ -2050,6 +2107,7 @@ export const nibenayBayBattlereeve: GearSetData = {
   icon: 'Nibenay Bay Battlereeve',
   setType: 'Overland',
   bonuses: [
+    '(1 item) Adds 424 Critical Resistance',
     '(2 items) When you are forcefully moved via a Pull, Knockback or Teleport ability, gain a damage shield that absorbs up to 15112 damage for 6 seconds. This damage shield is not affected by Battle Spirit. This effect can occur once every 14 seconds. While you do not have the damage shield from this set, reduce your damage taken from players by 5%.',
   ],
 };
@@ -2062,7 +2120,8 @@ export const nightMotherSEmbrace: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Stamina Recovery',
-    '(5 items) Adds 171 Weapon and Spell Damage, Reduces the radius you can be detected while Sneaking by 2 meters. Reduces the cost of Sneak by 25%.',
+    '(5 items) Adds 171 Weapon and Spell Damage',
+    '(5 items) Reduces the radius you can be detected while Sneaking by 2 meters. Reduces the cost of Sneak by 25%.',
   ],
 };
 
@@ -2095,6 +2154,7 @@ export const nightflame: GearSetData = {
   icon: 'Nightflame',
   setType: 'Dungeon',
   bonuses: [
+    '(1 item) Adds 1096 Maximum Magicka',
     '(2 items) When you heal yourself or an ally, you have a 20% chance to summon a totem for 6 seconds that heals you and your allies within 5 meters for 704 Health every 1 second. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
@@ -2119,7 +2179,7 @@ export const nobilityInDecay: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 4% Healing Taken',
     '(4 items) Adds 1206 Maximum Health',
-    "(5 items) Casting a Bone Tyrant ability while in combat grants you Beautiful Corpse and Death's Favor for 16 seconds. Death's Favor increases your healing received and reduces damage taken by up to 12% based on your missing Health. This can occur once every 20 seconds, and is reduced by 2 seconds for each slotted Bone Tyrant ability. Casting a corpse consumer ability consumes Beautiful Corpse, treating you as a corpse.",
+    "(5 items) Casting a Bone Tyrant ability while in combat grants you Beautiful Corpse and Death's Favor for 16 seconds. Death's Favor increases your healing received and reduces damage taken by up to 12% based on your missing Health. This can occur once every 20 seconds, and is reduced by 2 seconds for each slotted Bone Tyrant ability.\n\nCasting a corpse consumer ability consumes Beautiful Corpse, treating you as a corpse.",
   ],
 };
 
@@ -2152,7 +2212,8 @@ export const nunatak: GearSetData = {
   icon: 'Nunatak',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) On dealing Frost Damage, create a 6 meter area under the target for 6 seconds, dealing 191 Frost damage to enemies every 1 second and applying a 40% snare for 4 seconds. Enemies damaged four times become immobilized and afflicted with Major Brittle for 4 seconds, causing the target to take 20% increased Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1487 Armor',
+    '(2 items) On dealing Frost Damage, create a 6 meter area under the target for 6 seconds, dealing 191 Frost Damage to enemies every 1 second and applying a 40% snare for 4 seconds. Enemies damaged four times become immobilized and afflicted with Major Brittle for 4 seconds, causing the target to take 20% increased Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2164,7 +2225,8 @@ export const oblivionSFoe: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1487 Offensive Penetration',
     '(4 items) Adds 657 Critical Chance',
-    "(5 items) Adds 129 Weapon and Spell Damage, When you deal damage with Soul Magic, you mark the target's soul dealing 1875 Magic damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.",
+    '(5 items) Adds 129 Weapon and Spell Damage',
+    "(5 items) When you deal damage with Soul Magic, you mark the target's soul dealing 1875 Magic Damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2188,7 +2250,8 @@ export const orderOfDiagna: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) Adds 5% Healing Taken, Gain Minor Vitality at all times, increasing your healing received and damage shield strength by 6%.',
+    '(5 items) Adds 5% Healing Taken',
+    '(5 items) Gain Minor Vitality at all times, increasing your healing received and damage shield strength by 6%.',
   ],
 };
 
@@ -2200,7 +2263,8 @@ export const orderSWrath: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Adds 943 Critical Chance, Increases your Critical Damage and Critical Healing by 8%.',
+    '(5 items) Adds 943 Critical Chance',
+    '(5 items) Increases your Critical Damage and Critical Healing by 8%.',
   ],
 };
 
@@ -2221,7 +2285,8 @@ export const orpheonTheTactician: GearSetData = {
   icon: 'Orpheon the Tactician',
   setType: 'Monster Set',
   bonuses: [
-    "(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target's location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 229 Physical damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 1429 Physical damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.",
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    "(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target's location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 229 Physical Damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 1429 Physical Damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.",
   ],
 };
 
@@ -2230,6 +2295,7 @@ export const ozezanTheInferno: GearSetData = {
   icon: 'Ozezan the Inferno',
   setType: 'Dungeon',
   bonuses: [
+    '(1 item) Adds 129 Magicka Recovery',
     '(2 items) Overhealing yourself or an ally grants them 4272 Armor for 1.1 seconds. Healing yourself or an ally grants them Minor Vitality for 1.1 seconds, increasing their healing received and damage shield strength by 6%.',
   ],
 };
@@ -2242,7 +2308,8 @@ export const pangritDenmother: GearSetData = {
     '(2 items) Adds 4% Healing Taken',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 129 Health Recovery',
-    '(5 items) Adds 1890 Maximum Stamina, When you Block, you and up to 3 group members within 12 meters gain Minor Courage for 10 seconds, increasing your Weapon and Spell Damage by 215. This effect can occur once every 5 seconds.',
+    '(5 items) Adds 1890 Maximum Stamina',
+    '(5 items) When you Block, you and up to 3 group members within 12 meters gain Minor Courage for 10 seconds, increasing your Weapon and Spell Damage by 215. This effect can occur once every 5 seconds.',
   ],
 };
 
@@ -2254,7 +2321,7 @@ export const pearlescentWard: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) Grants you and up to 11 other group members Pearlescent Ward. This bonus persists through death. Pearlescent Ward increases Weapon and Spell Damage by up to 180 based on the number of group members that are alive. Current 180 Weapon and Spell Damage. Pearlescent Ward increases damage reduction from non-player enemies out of 66% based on the number of group members that are dead.',
+    '(5 items) Grants you and up to 11 other group members Pearlescent Ward. This bonus persists through death.\n\nPearlescent Ward increases Weapon and Spell Damage by up to 180 based on the number of group members that are alive.\n\nPearlescent Ward increases damage reduction from non-player enemies out of 66% based on the number of group members that are dead.',
   ],
 };
 
@@ -2278,7 +2345,7 @@ export const perfectedAegisOfGalenwe: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) Adds 1206 Maximum Health, When you Block, you grant Empower to 11 other group members within 15 meters for 3 seconds, increasing the damage of their Heavy Attacks against monsters by 70%. This effect can occur once every 2 seconds.',
+    '(5 items) When you Block, you grant Empower to 11 other group members within 15 meters for 3 seconds, increasing the damage of their Heavy Attacks against monsters by 70%. This effect can occur once every 2 seconds.',
   ],
 };
 
@@ -2290,7 +2357,7 @@ export const perfectedClawOfYolnahkriin: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Stamina',
-    '(5 items) Adds 1206 Maximum Health, When you taunt an enemy, you give yourself and 11 group members Minor Courage for 15 seconds, increasing your Weapon and Spell Damage by 215. This effect can occur once every 8 seconds.',
+    '(5 items) When you taunt an enemy, you give yourself and 11 group members Minor Courage for 15 seconds, increasing your Weapon and Spell Damage by 215. This effect can occur once every 8 seconds.',
   ],
 };
 
@@ -2302,7 +2369,7 @@ export const perfectedDolorousArena: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1487 Armor',
-    '(5 items) Adds 1096 Maximum Stamina, While bracing you create a distortion barrier around yourself after 2 seconds. After the delay, every 2 seconds you gain 614 Armor and enemies within the distortion barrier have their Armor reduced by 1843 for 5 seconds. These effects stack up to 3 times.',
+    '(5 items) While bracing you create a distortion barrier around yourself after 2 seconds. After the delay, every 2 seconds you gain 614 Armor and enemies within the distortion barrier have their Armor reduced by 1843 for 5 seconds. These effects stack up to 3 times.',
   ],
 };
 
@@ -2314,7 +2381,7 @@ export const perfectedLucentEchoes: GearSetData = {
     '(2 items) Adds 4% Healing Taken',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 1206 Maximum Health, While you have more than 50% Health, the Critical Damage and Critical Healing of any group members not wearing Lucent Echoes within 28 meters of you increases by 11%. While you have 50% or less Health, your damage taken from monsters is reduced by 20%.',
+    '(5 items) While you have more than 50% Health, the Critical Damage and Critical Healing of any group members not wearing Lucent Echoes within 28 meters of you increases by 11%.\n\nWhile you have 50% or less Health, your damage taken from monsters is reduced by 20%.',
   ],
 };
 
@@ -2326,7 +2393,7 @@ export const perfectedPearlescentWard: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) Adds 1206 Maximum Health, Grants you and up to 11 other group members Pearlescent Ward. This bonus persists through death. Pearlescent Ward increases Weapon and Spell Damage by up to 180 based on the number of group members that are alive. Current 180 Weapon and Spell Damage. Pearlescent Ward increases damage reduction from non-player enemies out of 66% based on the number of group members that are dead.',
+    '(5 items) Grants you and up to 11 other group members Pearlescent Ward. This bonus persists through death.\n\nPearlescent Ward increases Weapon and Spell Damage by up to 180 based on the number of group members that are alive.\n\nPearlescent Ward increases damage reduction from non-player enemies out of 66% based on the number of group members that are dead.',
   ],
 };
 
@@ -2338,7 +2405,7 @@ export const perfectedSaxhleelChampion: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1096 Maximum Stamina',
-    '(5 items) Adds 1096 Maximum Stamina, When you use an Ultimate ability while in combat, you and up to 11 group members within 28 meters of you gain Major Force for 1 second per 15 Ultimate spent, increasing your Critical Damage done by 20%.',
+    '(5 items) When you use an Ultimate ability while in combat, you and up to 11 group members within 28 meters of you gain Major Force for 1 second per 15 Ultimate spent, increasing your Critical Damage done by 20%.',
   ],
 };
 
@@ -2350,7 +2417,7 @@ export const perfectedTestOfResolve: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 1487 Armor, When you take damage while under 50% Health, your resolve is tested. If you are also below 50% Stamina, you restore full Health, Magicka, and Stamina while also gaining Major Protection and Major Aegis for 10 seconds. If you are above 50% Stamina you become a Beacon of Hope for 20 seconds, causing your Major and Minor buffs to also grant Major Aegis for 10 seconds. This effect can occur once every 45 seconds.',
+    '(5 items) When you take damage while under 50% Health, your resolve is tested. If you are also below 50% Stamina, you restore full Health, Magicka, and Stamina while also gaining Major Protection and Major Aegis for 10 seconds. If you are above 50% Stamina you become a Beacon of Hope for 20 seconds, causing your Major and Minor buffs to also grant Major Aegis for 10 seconds. This effect can occur once every 45 seconds.',
   ],
 };
 
@@ -2362,7 +2429,7 @@ export const perfectedVrolSCommand: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 4% Healing Taken, After completing a fully-charged Heavy Attack, apply Major Aegis to you and up to 11 nearby group members for 12 seconds, reducing damage taken from Dungeon, Trial, and Arena enemies by 10%. This effect can occur once every 21 seconds.',
+    '(5 items) After completing a fully-charged Heavy Attack, apply Major Aegis to you and up to 11 nearby group members for 12 seconds, reducing damage taken from Dungeon, Trial, and Arena enemies by 10%. This effect can occur once every 21 seconds.',
   ],
 };
 
@@ -2383,6 +2450,7 @@ export const pirateSkeleton: GearSetData = {
   icon: 'Pirate Skeleton',
   setType: 'Overland',
   bonuses: [
+    '(1 item) Adds 1487 Armor',
     '(2 items) When you take damage, you transform into a skeleton and gain Major Protection and Minor Defile for 15 seconds, reducing your damage taken by 10% but reducing your healing received and damage shield strength by 6%. This effect can occur once every 20 seconds.',
   ],
 };
@@ -2404,7 +2472,8 @@ export const priorThierric: GearSetData = {
   icon: 'Prior Thierric',
   setType: 'Unknown',
   bonuses: [
-    '(2 items) Dealing direct damage with an area of effect ability creates a 6 meter shadowy whirlwind below your enemy for 7 seconds. Enemies within the whirlwind take 283 Physical damage each second and increase their damage taken from your area of effect abilities by 5%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    '(2 items) Dealing direct damage with an area of effect ability creates a 6 meter shadowy whirlwind below your enemy for 7 seconds. Enemies within the whirlwind take 283 Physical Damage each second and increase their damage taken from your area of effect abilities by 5%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2416,7 +2485,7 @@ export const pyrebrand: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Your Light Attacks deal 1220 Flame Damage over 6 seconds. Your fully-charged Heavy Attacks consume up to 3 of your damage over time effects to deal 862 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health. The damage scales off the higher of your Weapon or Spell Damage and is increased by 20% for each damage over time effect on the target, up to 60%.',
+    '(5 items) Your Light Attacks deal 1220 Flame Damage over 6 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 of your damage over time effects to deal 862 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage and is increased by 20% for each damage over time effect on the target, up to 60%.',
   ],
 };
 
@@ -2440,7 +2509,8 @@ export const rattlecage: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Adds 171 Weapon and Spell Damage, Gain Major Brutality and Sorcery at all times, increasing your Weapon and Spell Damage by 20%.',
+    '(5 items) Adds 171 Weapon and Spell Damage',
+    '(5 items) Gain Major Brutality and Sorcery at all times, increasing your Weapon and Spell Damage by 20%.',
   ],
 };
 
@@ -2473,10 +2543,13 @@ export const reawakenedHierophant: GearSetData = {
   icon: 'Reawakened Hierophant',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) Adds 731 Maximum Magicka, Adds 731 Maximum Stamina',
-    '(3 items) Adds 731 Maximum Magicka, Adds 731 Maximum Stamina',
-    '(4 items) Adds 731 Maximum Magicka, Adds 731 Maximum Stamina',
-    '(5 items) Casting a non-Ultimate Curative Runeform ability grants an effect for 6 seconds to your affected allies based on how many Crux you had. At 1 Crux, allies gain a damage shield that absorbs 3618 damage. At 2 Crux, allies gain Minor Heroism, granting 1 Ultimate every 1.5 seconds. At 3 Crux, allies gain Major Protection, reducing damage taken by 10%.',
+    '(2 items) Adds 731 Maximum Magicka',
+    '(2 items) Adds 731 Maximum Stamina',
+    '(3 items) Adds 731 Maximum Magicka',
+    '(3 items) Adds 731 Maximum Stamina',
+    '(4 items) Adds 731 Maximum Magicka',
+    '(4 items) Adds 731 Maximum Stamina',
+    '(5 items) Casting a non-Ultimate Curative Runeform ability grants an effect for 6 seconds to your affected allies based on how many Crux you had.\n\nAt 1 Crux, allies gain a damage shield that absorbs 3618 damage. At 2 Crux, allies gain Minor Heroism, granting 1 Ultimate every 1.5 seconds. At 3 Crux, allies gain Major Protection, reducing damage taken by 10%.',
   ],
 };
 
@@ -2524,7 +2597,7 @@ export const renaldSResolve: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 4% Healing Taken',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Whenever you deal direct damage, gain a stack of Resolve for 5 seconds. Each stack increases your healing received by 1% and your Physical and Spell Resistance by 420. This effect can occur once every half second and can stack up to 9 times.',
+    '(5 items) Whenever you deal direct damage, gain a stack of Resolve for 5 seconds. Each stack increases your healing received by 1% and your Physical and Spell Resistance by 420.\n\nThis effect can occur once every half second and can stack up to 9 times.',
   ],
 };
 
@@ -2533,6 +2606,9 @@ export const roksaTheWarped: GearSetData = {
   icon: 'Roksa the Warped',
   setType: 'Mythic',
   bonuses: [
+    '(1 item) Adds 70 Stamina Recovery',
+    '(1 item) Adds 70 Magicka Recovery',
+    '(1 item) Adds 70 Health Recovery',
     '(2 items) Each second you are in combat, gain a stack of Darklight, up to 30 stacks max. Each stack of Darklight increases your Stamina Recovery, Magicka Recovery, and Health Recovery by 8. Each second you are out of combat, lose a stack of Darklight.',
   ],
 };
@@ -2554,7 +2630,8 @@ export const scourgeHarvester: GearSetData = {
   icon: 'Scourge Harvester',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) When you take damage, you have a 10% chance to tether to your enemy for 6 seconds, as long as you remain within 8 meters of them. While tethered, you deal 311 Magic damage every second to the enemy, heal for the damage caused, and gain Major Vitality, increasing your healing received and damage shield strength by 12%. This effect can occur once every 6 seconds and scales off your Max Health.',
+    '(1 item) Adds 1206 Maximum Health',
+    '(2 items) When you take damage, you have a 10% chance to tether to your enemy for 6 seconds, as long as you remain within 8 meters of them. While tethered, you deal 311 Magic Damage every second to the enemy, heal for the damage caused, and gain Major Vitality, increasing your healing received and damage shield strength by 12%. This effect can occur once every 6 seconds and scales off your Max Health.',
   ],
 };
 
@@ -2575,7 +2652,8 @@ export const selene: GearSetData = {
   icon: 'Selene',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) When you deal Martial melee damage, you call upon a primal spirit that mauls the closest enemy in front of you after 1.3 seconds for 1702 Physical damage. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    '(2 items) When you deal Martial melee damage, you call upon a primal spirit that mauls the closest enemy in front of you after 1.3 seconds for 1702 Physical Damage. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2584,7 +2662,8 @@ export const sellistrix: GearSetData = {
   icon: 'Sellistrix',
   setType: 'Overland',
   bonuses: [
-    '(2 items) When you deal damage you create an earthquake under the enemy that erupts after 1.5 seconds, dealing 975 Physical damage to all enemies within 4 meters and stunning them for 3 seconds. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1096 Maximum Stamina',
+    '(2 items) When you deal damage you create an earthquake under the enemy that erupts after 1.5 seconds, dealing 975 Physical Damage to all enemies within 4 meters and stunning them for 3 seconds. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2617,6 +2696,7 @@ export const sentinelOfRkugamz: GearSetData = {
   icon: 'Sentinel of Rkugamz',
   setType: 'Dungeon',
   bonuses: [
+    '(1 item) Adds 4% Healing Done',
     '(2 items) When you heal yourself or an ally you summon a Dwemer spider that heals for 1000 Health and restores 125 Magicka and Stamina to you and your allies within 5 meters every 1 second for 8 seconds. This effect can occur once every 15 seconds.',
   ],
 };
@@ -2665,7 +2745,8 @@ export const shacklebreaker: GearSetData = {
     '(2 items) Adds 129 Stamina Recovery',
     '(3 items) Adds 129 Magicka Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Adds 2065 Maximum Stamina, Adds 2065 Maximum Magicka',
+    '(5 items) Adds 2065 Maximum Stamina',
+    '(5 items) Adds 2065 Maximum Magicka',
   ],
 };
 
@@ -2674,7 +2755,8 @@ export const shadowrend: GearSetData = {
   icon: 'Shadowrend',
   setType: 'Craftable',
   bonuses: [
-    "(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear's attacks deal 615 Magic damage and apply Minor Maim, reducing the target's damage done by 5% for 2 seconds. The Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.",
+    '(1 item) Adds 129 Magicka Recovery',
+    "(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear's attacks deal 615 Magic Damage and apply Minor Maim, reducing the target's damage done by 5% for 2 seconds.\n\nThe Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.",
   ],
 };
 
@@ -2683,9 +2765,9 @@ export const shalidorSCurse: GearSetData = {
   icon: "Shalidor's Curse",
   setType: 'Overland',
   bonuses: [
-    '(2 items) Adds 841 Maximum Health',
+    '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 4% Healing Taken',
-    '(4 items) Adds 841 Maximum Health',
+    '(4 items) Adds 1206 Maximum Health',
     '(5 items) While you are under 50% Health, dealing damage with a Light or Heavy Attack heals you for 941 Health. This effect can occur once every 1 second and scales off the higher of your Max Magicka or Stamina.',
   ],
 };
@@ -2698,7 +2780,8 @@ export const shalkExoskeleton: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Adds 171 Weapon and Spell Damage, Gain Minor Heroism at all times while you are in combat, generating 1 Ultimate every 1.5 seconds.',
+    '(5 items) Adds 171 Weapon and Spell Damage',
+    '(5 items) Gain Minor Heroism at all times while you are in combat, generating 1 Ultimate every 1.5 seconds.',
   ],
 };
 
@@ -2710,7 +2793,7 @@ export const sharedBurden: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) When you enter combat 6% the damage you take is transferred to your Companion instead. Reduce the damage your Companion takes by 16%. When your Companion dies in combat, they will automatically revive themselves after 12 seconds.',
+    '(5 items) When you enter combat, 6% of the damage you take is transferred to your Companion instead. Reduce the damage your Companion takes by 16%. When your Companion dies in combat, they will automatically revive themselves after 12 seconds.',
   ],
 };
 
@@ -2766,7 +2849,9 @@ export const slimecraw: GearSetData = {
   icon: 'Slimecraw',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) Adds 113 Critical Chance, Gain Minor Berserk at all times, increasing your damage done by 5%.',
+    '(1 item) Adds 657 Critical Chance',
+    '(2 items) Adds 113 Critical Chance',
+    '(2 items) Gain Minor Berserk at all times, increasing your damage done by 5%.',
   ],
 };
 
@@ -2778,7 +2863,7 @@ export const sloadSSemblance: GearSetData = {
     '(2 items) Adds 1096 Maximum Magicka',
     '(3 items) Adds 1096 Maximum Stamina',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Damaging an enemy has a 10% chance to fire a Shadow Pearl at them, dealing 3% of the target's Max Health as Oblivion Damage every 1 second for 6 seconds. The Shadow Pearl cannot be reflected. Effect can occur every 6 seconds. This can deal a maximum of 3000 Oblivion Damage per tick.",
+    "(5 items) Damaging an enemy has a 10% chance to fire a Shadow Pearl at them, dealing 3% of the target's Max Health as Oblivion Damage every 1 second for 6 seconds. The Shadow Pearl cannot be reflected. Effect can occur every 6 seconds.\n\nThis can deal a maximum of 3000 Oblivion Damage per tick.",
   ],
 };
 
@@ -2790,7 +2875,7 @@ export const songOfLamae: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) When you take damage while you are under 30% Health, you deal 1377 Magic damage to the attacker and heal for the damage done. This effect can occur once every 3 seconds and scales off your Max Health.',
+    '(5 items) When you take damage while you are under 30% Health, you deal 1377 Magic Damage to the attacker and heal for the damage done. This effect can occur once every 3 seconds and scales off your Max Health.',
   ],
 };
 
@@ -2802,7 +2887,7 @@ export const soulcleaver: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate: Increases the damage and healing of Siphoning abilities by 21%. Reduces the cost of Siphoning abilities by 21%. Casting Siphoning abilities drains you of 1 Ultimate.',
+    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate:\n\nIncreases the damage and healing of Siphoning abilities by 21%. Reduces the cost of Siphoning abilities by 21%. Casting Siphoning abilities drains you of 1 Ultimate.',
   ],
 };
 
@@ -2835,7 +2920,8 @@ export const spawnOfMephala: GearSetData = {
   icon: 'Spawn of Mephala',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) When you deal damage with a fully-charged Heavy Attack, you create a web under the target for 10 seconds that deals 218 Poison damage every 1 second to all enemies within 4 meters. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1096 Maximum Stamina',
+    '(2 items) When you deal damage with a fully-charged Heavy Attack, you create a web under the target for 10 seconds that deals 218 Poison Damage every 1 second to all enemies within 4 meters. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2868,7 +2954,8 @@ export const squallOfRetribution: GearSetData = {
   icon: 'Squall of Retribution',
   setType: 'PvP',
   bonuses: [
-    '(2 items) When you take damage, gain one random effect for 6 seconds: Gain Minor Protection, reducing your damage taken by 5%. Gain a damage shield that absorbs up to 5835 damage. Heal for 607 Health every 2 seconds. The Health restore scales off of your Max Health. This effect can occur once every 4.5 seconds.',
+    '(1 item) Adds 1206 Maximum Health',
+    '(2 items) When you take damage, gain one random effect for 6 seconds:\nGain Minor Protection, reducing your damage taken by 5%.\nGain a damage shield that absorbs up to 5835 damage.\nHeal for 607 Health every 2 seconds.\n\nThe Health restore scales off of your Max Health. This effect can occur once every 4.5 seconds.',
   ],
 };
 
@@ -2901,7 +2988,8 @@ export const stoneHusk: GearSetData = {
   icon: 'Stone Husk',
   setType: 'Dungeon',
   bonuses: [
-    '(2 items) Your Heavy Attacks tether you to enemies for 5 seconds, as long as you remain within 10 meters of them. Enemies touching the tether take 212 Physical damage every 1 second and you gain a stack of Husk Drain, up to 15 stacks. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage. When the tether ends, you consume the stacks and gain 30 Weapon and Spell Damage per stack for 5 seconds.',
+    '(1 item) Adds 657 Critical Chance',
+    '(2 items) Your Heavy Attacks tether you to enemies for 5 seconds, as long as you remain within 10 meters of them. Enemies touching the tether take 212 Physical Damage every 1 second and you gain a stack of Husk Drain, up to 15 stacks. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.\n\nWhen the tether ends, you consume the stacks and gain 30 Weapon and Spell Damage per stack for 5 seconds.',
   ],
 };
 
@@ -2922,7 +3010,10 @@ export const stonekeeper: GearSetData = {
   icon: 'Stonekeeper',
   setType: 'Overland',
   bonuses: [
-    '(2 items) When you Block, you gain an energy Charge stack. When you gain 6 Charges, you release the energy, restoring 2480 Stamina and Magicka, and healing for 2480. After releasing the Charges, you cannot regain new Charges for 14 seconds. Charges can be accumulated up to once every .25 seconds.',
+    '(1 item) Adds 548 Maximum Stamina',
+    '(1 item) Adds 548 Maximum Magicka',
+    '(1 item) Adds 603 Maximum Health',
+    '(2 items) When you Block, you gain an energy Charge stack. When you gain 6 Charges, you release the energy, restoring 2480 Stamina and Magicka, and healing for 2480. After releasing the Charges, you cannot regain new Charges for 14 seconds.\n\nCharges can be accumulated up to once every .25 seconds.',
   ],
 };
 
@@ -2934,7 +3025,7 @@ export const stormKnightSPlate: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) When you take non-Physical Damage, you deal 357 Shock damage to all enemies within 5 meters of you every 2 seconds for 6 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you take non-Physical Damage, you deal 357 Shock Damage to all enemies within 5 meters of you every 2 seconds for 6 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2943,7 +3034,8 @@ export const stormfist: GearSetData = {
   icon: 'Stormfist',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) When you deal damage, you have a 10% chance to create a thunderfist to crush the enemy, dealing 277 Shock damage every 1 second for 3 seconds to all enemies within 4 meters and a final 1110 Physical damage when the fist closes. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 129 Stamina Recovery',
+    '(2 items) When you deal damage, you have a 10% chance to create a thunderfist to crush the enemy, dealing 277 Shock Damage every 1 second for 3 seconds to all enemies within 4 meters and a final 1110 Physical Damage when the fist closes. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -2964,6 +3056,8 @@ export const swarmMother: GearSetData = {
   icon: 'Swarm Mother',
   setType: 'Monster Set',
   bonuses: [
+    '(1 item) Adds 1096 Maximum Stamina',
+    '(1 item) Adds 1096 Maximum Magicka',
     '(2 items) When you Block an enemy that is between 8 and 22 meters from you, you spin strands of spider silk to pull the enemy to you and taunt them for 15 seconds if they are not already taunted. This effect can occur once every 1 second.',
   ],
 };
@@ -2973,7 +3067,8 @@ export const symphonyOfBlades: GearSetData = {
   icon: 'Symphony of Blades',
   setType: 'Mythic',
   bonuses: [
-    "(2 items) When you heal a group member who is under 50% of their primary resource, grant them Meridia's Favor, which restores 570 Magicka or Stamina every 1 second for 6 seconds. This effect can occur every 18 seconds per target. This effect cannot target yourself, and the resource returned is based off the target's highest maximum resource.",
+    '(1 item) Adds 4% Healing Done',
+    "(2 items) When you heal a group member who is under 50% of their primary resource, grant them Meridia's Favor, which restores 570 Magicka or Stamina every 1 second for 6 seconds. This effect can occur every 18 seconds per target.\n\nThis effect cannot target yourself, and the resource returned is based off the target's highest maximum resource.",
   ],
 };
 
@@ -2996,8 +3091,9 @@ export const syvarraSScales: GearSetData = {
   bonuses: [
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1096 Maximum Stamina',
-    '(4 items) Adds 1096 Maximum Magicka, Reduces your damage taken from Guards by 20%.',
-    '(5 items) When you deal damage, you cause a burst of lamia poison that deals 149 Poison damage in a 5 meter radius and an additional 1494 Poison damage over 6 seconds to all enemies hit. This effect can occur once every 7 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(4 items) Adds 1096 Maximum Magicka',
+    '(4 items) Reduces your damage taken from Guards by 20%.',
+    '(5 items) When you deal damage, you cause a burst of lamia poison that deals 149 Poison Damage in a 5 meter radius and an additional 1494 Poison Damage over 6 seconds to all enemies hit. This effect can occur once every 7 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3066,6 +3162,7 @@ export const theBlind: GearSetData = {
   icon: 'The Blind',
   setType: 'Dungeon',
   bonuses: [
+    '(1 item) Adds 657 Critical Chance',
     '(2 items) When your healing critically strikes, your target gains a Hydroglass Damage Shield that absorbs up to 2692 damage for 6 seconds. While the Damage Shield holds and for 3 seconds after it ends, the target gains Minor Force, increasing their Critical Damage done by 10%. This effect can occur once every 6 seconds per target.',
   ],
 };
@@ -3109,6 +3206,7 @@ export const theTrollKing: GearSetData = {
   icon: 'The Troll King',
   setType: 'PvP',
   bonuses: [
+    '(1 item) Adds 4% Healing Done',
     '(2 items) When you heal yourself or an ally, if they are still below 50% Health, their Health Recovery is increased by 925 for 10 seconds.',
   ],
 };
@@ -3131,7 +3229,7 @@ export const thousandEyes: GearSetData = {
   setType: 'Monster Set',
   bonuses: [
     '(1 item) Adds 657 Critical Chance',
-    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1357 Bleed damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
+    '(2 items) Dealing direct critical damage applies Shived to the enemy, dealing 1079 Bleed Damage and increasing their damage taken from you by 2% for 15 seconds. This damage scales off the higher of your Weapon or Spell Damage. When the enemy dies, Shived is reapplied to the lowest health enemy within 12 meters of the corpse and increases the damage taken by 2%, up to 8%. You may only have 1 enemy with Shived.',
   ],
 };
 
@@ -3164,7 +3262,8 @@ export const thurvokun: GearSetData = {
   icon: 'Thurvokun',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) When you take damage from a nearby enemy, you summon a growing pool of desecrated bile for 8 seconds. Enemies in the bile take 195 Disease damage every 1 second and are afflicted with Minor Maim and the Diseased status for 4 seconds, reducing their damage done by 5% and healing received and Health Recovery by 6%. This effect can occur every 16 seconds and the damage scales off your Max Health.',
+    '(1 item) Adds 1206 Maximum Health',
+    '(2 items) When you take damage from a nearby enemy, you summon a growing pool of desecrated bile for 8 seconds. Enemies in the bile take 195 Disease Damage every 1 second and are afflicted with Minor Maim and the Diseased status for 4 seconds, reducing their damage done by 5% and healing received and Health Recovery by 6%. This effect can occur every 16 seconds and the damage scales off your Max Health.',
   ],
 };
 
@@ -3209,7 +3308,8 @@ export const tremorscale: GearSetData = {
   icon: 'Tremorscale',
   setType: 'Craftable',
   bonuses: [
-    '(2 items) When you activate a taunt ability on an enemy, you cause a duneripper to burst from the ground beneath them after 1 second, dealing 0 Physical damage to all enemies within 4 meters and reducing their Armor by 0 for 15 seconds. This effect can occur once every 10 seconds and scales off the higher of your Physical or Spell Resistance.',
+    '(1 item) Adds 1096 Maximum Stamina',
+    '(2 items) When you activate a taunt ability on an enemy, you cause a duneripper to burst from the ground beneath them after 1 second, dealing 0 Physical Damage to all enemies within 4 meters and reducing their Armor by 0 for 15 seconds. This effect can occur once every 10 seconds and scales off the higher of your Physical or Spell Resistance.',
   ],
 };
 
@@ -3267,7 +3367,8 @@ export const ulfnorSFavor: GearSetData = {
   setType: 'Class Sets',
   bonuses: [
     '(2 items) Adds 1206 Maximum Health',
-    '(3 items) Adds 129 Magicka Recovery, Adds 129 Stamina Recovery',
+    '(3 items) Adds 129 Magicka Recovery',
+    '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 4% Healing Taken',
     '(5 items) Increases the Magicka or Stamina your Heavy Attacks restore by 30%.',
   ],
@@ -3326,7 +3427,8 @@ export const valkynSkoria: GearSetData = {
   icon: 'Valkyn Skoria',
   setType: 'Overland',
   bonuses: [
-    '(2 items) When you deal damage with a damage over time effect, you have an 8% chance to summon a meteor that deals 1342 Flame damage to the target and 447 Flame damage to all other enemies within 5 meters. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 1487 Offensive Penetration',
+    '(2 items) When you deal damage with a damage over time effect, you have an 8% chance to summon a meteor that deals 1342 Flame Damage to the target and 447 Flame Damage to all other enemies within 5 meters. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3338,7 +3440,8 @@ export const vampireCloak: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Adds 171 Weapon and Spell Damage, Gain Minor Protection at all times, reducing your damage taken by 5%.',
+    '(5 items) Adds 171 Weapon and Spell Damage',
+    '(5 items) Gain Minor Protection at all times, reducing your damage taken by 5%.',
   ],
 };
 
@@ -3349,8 +3452,10 @@ export const vampireSKiss: GearSetData = {
   bonuses: [
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1096 Maximum Magicka',
-    '(4 items) Adds 1096 Maximum Stamina, Adds 1096 Maximum Magicka',
-    '(5 items) Adds 129 Weapon and Spell Damage, When you kill an enemy, you heal for 10512 Health over 10 seconds. This effect scales off the higher of your Max Magicka or Stamina.',
+    '(4 items) Adds 1096 Maximum Stamina',
+    '(4 items) Adds 1096 Maximum Magicka',
+    '(5 items) Adds 129 Weapon and Spell Damage',
+    '(5 items) When you kill an enemy, you heal for 10512 Health over 10 seconds. This effect scales off the higher of your Max Magicka or Stamina.',
   ],
 };
 
@@ -3386,7 +3491,9 @@ export const vastarieSTutelage: GearSetData = {
     '(2 items) Adds 1096 Maximum Stamina',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1096 Maximum Magicka',
-    '(5 items) Adds 129 Magicka Recovery, Adds 129 Stamina Recovery, When you resurrect an ally, you and your ally gain 258 Weapon and Spell Damage and 10% cost reduction to non-Ultimate abilities for 10 seconds.',
+    '(5 items) Adds 129 Magicka Recovery',
+    '(5 items) Adds 129 Stamina Recovery',
+    '(5 items) When you resurrect an ally, you and your ally gain 258 Weapon and Spell Damage and 10% cost reduction to non-Ultimate abilities for 10 seconds.',
   ],
 };
 
@@ -3395,7 +3502,8 @@ export const velidreth: GearSetData = {
   icon: 'Velidreth',
   setType: 'PvP',
   bonuses: [
-    '(2 items) When you deal damage, you have a 20% chance to spawn 3 disease spores in front of you after 1 second that deal 1557 Disease damage to any enemy they hit. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 129 Weapon and Spell Damage',
+    '(2 items) When you deal damage, you have a 20% chance to spawn 3 disease spores in front of you after 1 second that deal 1557 Disease Damage to any enemy they hit. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3428,6 +3536,7 @@ export const vykosa: GearSetData = {
   icon: 'Vykosa',
   setType: 'PvP',
   bonuses: [
+    '(1 item) Adds 4% Healing Taken',
     "(2 items) When you Bash an enemy you've taunted, you frighten them with a deafening howl, applying Major Cowardice to them, lowering their Weapon and Spell Damage by 430 for 8 seconds. This effect can occur once every 15 seconds.",
   ],
 };
@@ -3452,7 +3561,8 @@ export const warriorPoet: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1487 Armor',
-    '(5 items) Adds 1600 Maximum Health, Gain Minor Toughness at all times, increasing your Max Health by 10%.',
+    '(5 items) Adds 1600 Maximum Health',
+    '(5 items) Gain Minor Toughness at all times, increasing your Max Health by 10%.',
   ],
 };
 
@@ -3464,7 +3574,7 @@ export const wayOfFire: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) When you deal damage with a Light or Heavy Attack, you deal an additional 571 Flame damage. This effect can occur once every 2 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(5 items) When you deal damage with a Light or Heavy Attack, you deal an additional 571 Flame Damage. This effect can occur once every 2 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3476,7 +3586,8 @@ export const wayOfTheArena: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 1096 Maximum Stamina',
-    '(5 items) Adds 165 Weapon and Spell Damage, Reduces the cost of Break Free by 40%.',
+    '(5 items) Adds 165 Weapon and Spell Damage',
+    '(5 items) Reduces the cost of Break Free by 40%.',
   ],
 };
 
@@ -3512,7 +3623,7 @@ export const wrathsun: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 40 stacks max and gain 12 Magicka Recovery per stack. When at max stacks, your Dawn's Wrath abilities deal 25% bonus damage and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight. When Sunlight expires at max stacks, you lose 50% of your current Magicka.",
+    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 40 stacks max and gain 12 Magicka Recovery per stack. When at max stacks, your Dawn's Wrath abilities deal 25% bonus damage and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
   ],
 };
 
@@ -3524,7 +3635,7 @@ export const wretchedVitality: GearSetData = {
     '(2 items) Adds 129 Magicka Recovery',
     '(3 items) Adds 129 Stamina Recovery',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, applying a Major Buff or Debuff with a duration to a target grants you 260 Magicka and Stamina Recovery for 15 seconds. While in combat, applying a Minor Buff or Debuff with a duration to a target grants you 130 Magicka and Stamina Recovery for 15 seconds.',
+    '(5 items) While in combat, applying a Major Buff or Debuff with a duration to a target grants you 260 Magicka and Stamina Recovery for 15 seconds.\nWhile in combat, applying a Minor Buff or Debuff with a duration to a target grants you 130 Magicka and Stamina Recovery for 15 seconds.',
   ],
 };
 
@@ -3545,7 +3656,8 @@ export const zaan: GearSetData = {
   icon: 'Zaan',
   setType: 'Monster Set',
   bonuses: [
-    '(2 items) When you deal Critical Damage with a Light or Heavy Attack, you have a 33% chance to tether to your enemy for 10 seconds as long as you remain within 8 meters of them. Enemies touching the tether take 145 Flame damage every 1 second, increasing by 100% per tick and are afflicted with the Burning status effect. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
+    '(1 item) Adds 657 Critical Chance',
+    '(2 items) When you deal Critical Damage with a Light or Heavy Attack, you have a 33% chance to tether to your enemy for 10 seconds as long as you remain within 8 meters of them. Enemies touching the tether take 145 Flame Damage every 1 second, increasing by 100% per tick and are afflicted with the Burning status effect. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -3554,6 +3666,7 @@ export const zoalTheEverWakeful: GearSetData = {
   icon: 'Zoal the Ever-Wakeful',
   setType: 'Monster Set',
   bonuses: [
+    '(1 item) Adds 1096 Maximum Stamina',
     '(2 items) When you Break Free, you release a wave of Watcher energy, causing enemies within 8 meters of you to become Feared for 3 seconds. You also gain 34 Weapon and Spell Damage for each enemy hit, up to 6 enemies, for 7 seconds.',
   ],
 };

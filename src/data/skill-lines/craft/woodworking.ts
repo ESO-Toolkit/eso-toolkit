@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Woodworking Craft Skills
- * Source: https://eso-hub.com/en/skills/craft/woodworking
  */
 export const woodworking: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const woodworking: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_tradecraft_003',
-  sourceUrl: 'https://eso-hub.com/en/skills/craft/woodworking',
   skills: [
     {
       id: AbilityId.WOODWORKING,

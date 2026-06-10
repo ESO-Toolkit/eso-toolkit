@@ -64,7 +64,6 @@ import {
   encounterHasOverrides,
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
-import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../utils/esoHubLinks';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '../utils/playerCardStyleUtils';
 import { RICH_TOOLTIP_SLOT_PROPS } from '../utils/richTooltipSlotProps';
@@ -235,28 +234,10 @@ const renderSkillLines = (
   const lines = [sl.line1, sl.line2, sl.line3].filter(Boolean) as string[];
   if (!lines.length) return null;
   return lines.map((name, i) => {
-    const url = getEsoHubSkillLineUrl(name);
     return (
       <React.Fragment key={name}>
         {i > 0 && ' / '}
-        {url ? (
-          <Box
-            component="a"
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            sx={{
-              color: 'inherit',
-              textDecoration: 'underline',
-              textDecorationStyle: 'dotted',
-              textUnderlineOffset: '2px',
-            }}
-          >
-            {name}
-          </Box>
-        ) : (
-          name
-        )}
+        {name}
       </React.Fragment>
     );
   });
@@ -461,19 +442,7 @@ const TankCard: React.FC<TankCardProps> = ({ tank, slotNum, label, color, isDark
                 <GearSetChipWithTooltip
                   key={entry.name}
                   entry={entry}
-                  chip={
-                    <Chip
-                      component="a"
-                      href={getEsoHubSetUrl(entry.name)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      clickable
-                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                      label={entry.name}
-                      size="small"
-                      sx={getSetChipSx(entry, theme)}
-                    />
-                  }
+                  chip={<Chip label={entry.name} size="small" sx={getSetChipSx(entry, theme)} />}
                 />
               ))}
             </Box>
@@ -749,19 +718,7 @@ const HealerCard: React.FC<HealerCardProps> = ({ healer, slotNum, label, color, 
                 <GearSetChipWithTooltip
                   key={entry.name}
                   entry={entry}
-                  chip={
-                    <Chip
-                      component="a"
-                      href={getEsoHubSetUrl(entry.name)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      clickable
-                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                      label={entry.name}
-                      size="small"
-                      sx={getSetChipSx(entry, theme)}
-                    />
-                  }
+                  chip={<Chip label={entry.name} size="small" sx={getSetChipSx(entry, theme)} />}
                 />
               ))}
               {healer.arenaWeapon && (

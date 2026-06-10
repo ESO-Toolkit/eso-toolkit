@@ -13,7 +13,7 @@ const TOOLTIP_DICT = {
   'Elemental Catalyst':
     'Enemies take up to <strong>15%</strong> increased Critical Damage when affected by different elemental status effects.',
 
-  // Gear sets or enchants that are not strictly ESO-Hub set pages
+  // Gear sets or enchants that are not strictly standard set pages
   'Legendary Infused Crusher Enchant':
     'Targets the closest enemy you damage, applying Crusher to reduce their Armor. Only one enemy can be affected at a time. Value scales with enchant quality and with the Infused trait on the weapon.',
   'Runic Sunder':
@@ -70,7 +70,6 @@ const TOOLTIP_DICT = {
       <strong>Effect</strong><br>
       <u>Rank 1</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>6%</strong> for 7 seconds.<br>
       <u>Rank 2</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>12%</strong> for 7 seconds.<br>
-      <div class="tooltip-source"><em>Tooltips by ESO-Hub.com</em></div>
     `,
   'Aedric Spear: Piercing Spear': `
       <em>Templar — Aedric Spear</em><br>
@@ -134,8 +133,8 @@ const TOOLTIP_DICT = {
       Extra Penetration granted by certain armor sets when wearing multiple pieces.<br>
       Examples:
       <ul>
-        <li><a href="https://eso-hub.com/en/sets/tide-born-wildstalker" target="_blank" rel="noopener">Tide-born Wildstalker</a></li>
-        <li><a href="https://eso-hub.com/en/sets/ansuuls-torment" target="_blank" rel="noopener">Ansuul's Torment</a></li>
+        <li>Tide-born Wildstalker</li>
+        <li>Ansuul's Torment</li>
       </ul>
     `,
 };
@@ -264,15 +263,15 @@ const critTooltips = {
     One of the best consistent critical damage buffs.<br><br>
 
     <div><strong>Sources</strong></div>
-    <div><em>Buff info</em>: <a href="https://eso-hub.com/en/buffs-debuffs/minor-force" target="_blank" rel="noopener">Minor Force</a></div>
+    <div><em>Buff info</em>: Minor Force</div>
     <div><strong>Skills</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/skills/guild/fighters-guild/barbed-trap" target="_blank" rel="noopener">Barbed Trap</a></li>
+      <li>Barbed Trap</li>
     </ul>
     <div><strong>Sets</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/sets/oakensoul-ring" target="_blank" rel="noopener">(M) Oakensoul Ring</a></li>
-      <li><a href="https://eso-hub.com/en/sets/velothi-ur-mages-amulet" target="_blank" rel="noopener">Velothi Ur-Mage's Amulet</a></li>
+      <li>(M) Oakensoul Ring</li>
+      <li>Velothi Ur-Mage's Amulet</li>
     </ul>
   `,
   'Major Force': `
@@ -280,17 +279,17 @@ const critTooltips = {
     A powerful burst critical damage buff.<br><br>
     
     <div><strong>Sources</strong></div>
-    <div><em>Buff info</em>: <a href="https://eso-hub.com/en/buffs-debuffs/major-force" target="_blank" rel="noopener">Major Force</a></div>
+    <div><em>Buff info</em>: Major Force</div>
     <div><strong>Skills</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/skills/alliance-war/assault/aggressive-horn" target="_blank" rel="noopener">Aggressive Horn</a></li>
+      <li>Aggressive Horn</li>
     </ul>
     <div><strong>Sets</strong></div>
     <ul>
-      <li>(5) <a href="https://eso-hub.com/en/sets/perfected-saxhleel-champion" target="_blank" rel="noopener">Saxhleel Champion</a></li>
-      <li>(5) <a href="https://eso-hub.com/en/sets/vykands-soulfury" target="_blank" rel="noopener">Vykand's Soulfury</a></li>
-      <li>(M) <a href="https://eso-hub.com/en/sets/monomyth-reforged" target="_blank" rel="noopener">Monomyth Reforged</a></li>
-      <li>(M) <a href="https://eso-hub.com/en/sets/the-saint-and-the-seducer" target="_blank" rel="noopener">The Saint and the Seducer</a></li>
+      <li>(5) Saxhleel Champion</li>
+      <li>(5) Vykand's Soulfury</li>
+      <li>(M) Monomyth Reforged</li>
+      <li>(M) The Saint and the Seducer</li>
     </ul>
   `,
   'Minor Brittle': `
@@ -298,12 +297,12 @@ const critTooltips = {
     <em>The Chilled Status Effect:</em> Instant damage. Applies <strong>Minor Maim</strong> and <strong>Minor Brittle</strong> to the enemy. Chilled can be applied by skills that deal frost damage, weapon enchants, and sets.<br><br>
     <div><strong>Skills that apply Minor Brittle</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/skills/weapon/destruction-staff/elemental-susceptibility" target="_blank" rel="noopener">Elemental Susceptibility</a></li>
-      <li><a href="https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha/rune-of-the-colorless-pool" target="_blank" rel="noopener">Rune of the Colorless Pool</a></li>
+      <li>Elemental Susceptibility</li>
+      <li>Rune of the Colorless Pool</li>
     </ul>
     <div><strong>Sets</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/sets/the-saint-and-the-seducer" target="_blank" rel="noopener">The Saint and the Seducer</a></li>
+      <li>The Saint and the Seducer</li>
     </ul>
   `,
   'Major Brittle': `
@@ -311,7 +310,7 @@ const critTooltips = {
     Strongest stacking debuff increasing incoming critical damage.<br><br>
     <em>How to obtain:</em>
     <ul>
-      <li>Granted by the <a href="https://eso-hub.com/en/sets/nunatak" target="_blank" rel="noopener">Nunatak</a> monster set.</li>
+      <li>Granted by the Nunatak monster set.</li>
     </ul>
   `,
   'Elemental Catalyst': `
@@ -324,10 +323,10 @@ const critTooltips = {
     </ul>
     <div><strong>Good Ways to Proc</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/skills/weapon/destruction-staff/elemental-blockade" target="_blank" rel="noopener">Elemental Blockade</a></li>
-      <li><a href="https://eso-hub.com/en/skills/dragonknight/ardent-flame/engulfing-flames" target="_blank" rel="noopener">Engulfing Flames</a></li>
-      <li><a href="https://eso-hub.com/en/skills/guild/mages-guild/scalding-rune" target="_blank" rel="noopener">Scalding Rune</a></li>
-      <li><a href="https://eso-hub.com/en/scribing/scripts/lingering-torment" target="_blank" rel="noopener">Lingering Torment (Script)</a></li>
+      <li>Elemental Blockade</li>
+      <li>Engulfing Flames</li>
+      <li>Scalding Rune</li>
+      <li>Lingering Torment (Script)</li>
     </ul>
   `,
 };
@@ -340,25 +339,25 @@ const penTooltips = {
     <em>Sources (U47):</em>
     <div><strong>Skills</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/skills/guild/psijic-order/crushing-weapon" target="_blank" rel="noopener">Crushing Weapon</a></li>
-      <li><a href="https://eso-hub.com/en/skills/world/werewolf/deafening-roar" target="_blank" rel="noopener">Deafening Roar</a></li>
-      <li><a href="https://eso-hub.com/en/skills/weapon/destruction-staff/elemental-susceptibility" target="_blank" rel="noopener">Elemental Drain</a></li>
-      <li><a href="https://eso-hub.com/en/skills/weapon/destruction-staff/elemental-susceptibility" target="_blank" rel="noopener">Elemental Susceptibility</a></li>
-      <li><a href="https://eso-hub.com/en/skills/nightblade/assassination/mark-target" target="_blank" rel="noopener">Mark Target</a></li>
-      <li><a href="https://eso-hub.com/en/skills/dragonknight/ardent-flame/noxious-breath" target="_blank" rel="noopener">Noxious Breath</a></li>
-      <li><a href="https://eso-hub.com/en/skills/weapon/one-hand-and-shield/pierce-armor" target="_blank" rel="noopener">Pierce Armor</a></li>
-      <li><a href="https://eso-hub.com/en/skills/nightblade/assassination/piercing-mark" target="_blank" rel="noopener">Piercing Mark</a></li>
-      <li><a href="https://eso-hub.com/en/skills/weapon/one-hand-and-shield/puncture" target="_blank" rel="noopener">Puncture</a></li>
-      <li><a href="https://eso-hub.com/en/skills/weapon/one-hand-and-shield/ransack" target="_blank" rel="noopener">Ransack</a></li>
-      <li><a href="https://eso-hub.com/en/skills/alliance-war/assault/razor-caltrops" target="_blank" rel="noopener">Razor Caltrops</a></li>
-      <li><a href="https://eso-hub.com/en/skills/nightblade/assassination/reapers-mark#:~:text=Reaper%27s%20Mark%20is%20a%20skill%20in%20the%20Assassination,and%20Spell%20Resistance%20by%205948%20for%2020%20seconds." target="_blank" rel="noopener">Reaper's Mark</a></li>
-      <li><a href="https://eso-hub.com/en/skills/necromancer/grave-lord/unnerving-boneyard" target="_blank" rel="noopener">Unnerving Boneyard</a></li>
-      <li><a href="https://eso-hub.com/en/skills/weapon/destruction-staff/weakness-to-elements" target="_blank" rel="noopener">Weakness to Elements</a></li>
+      <li>Crushing Weapon</li>
+      <li>Deafening Roar</li>
+      <li>Elemental Drain</li>
+      <li>Elemental Susceptibility</li>
+      <li>Mark Target</li>
+      <li>Noxious Breath</li>
+      <li>Pierce Armor</li>
+      <li>Piercing Mark</li>
+      <li>Puncture</li>
+      <li>Ransack</li>
+      <li>Razor Caltrops</li>
+      <li>Reaper's Mark</li>
+      <li>Unnerving Boneyard</li>
+      <li>Weakness to Elements</li>
     </ul>
     <div><strong>Sets</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/sets/kynmarchers-cruelty" target="_blank" rel="noopener">Kynmarcher's Cruelty</a></li>
-      <li><a href="https://eso-hub.com/en/sets/night-mothers-gaze" target="_blank" rel="noopener">Night Mother's Gaze</a></li>
+      <li>Kynmarcher's Cruelty</li>
+      <li>Night Mother's Gaze</li>
     </ul>
   `,
   'Minor Breach': `
@@ -367,19 +366,19 @@ const penTooltips = {
     <em>Sources (U47):</em>
     <div><strong>Skills</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha/cruxweaver-armor" target="_blank" rel="noopener">Cruxweaver Armor</a></li>
-      <li><a href="https://eso-hub.com/en/skills/warden/animal-companions/deep-fissure" target="_blank" rel="noopener">Deep Fissure</a></li>
-      <li><a href="https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha/fatewoven-armor" target="_blank" rel="noopener">Fatewoven Armor</a></li>
-      <li><a href="https://eso-hub.com/en/skills/weapon/one-hand-and-shield/pierce-armor" target="_blank" rel="noopener">Pierce Armor</a></li>
-      <li><a href="https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha/unbreakable-fate" target="_blank" rel="noopener">Unbreakable Fate</a></li>
+      <li>Cruxweaver Armor</li>
+      <li>Deep Fissure</li>
+      <li>Fatewoven Armor</li>
+      <li>Pierce Armor</li>
+      <li>Unbreakable Fate</li>
     </ul>
     <div><strong>Sets</strong></div>
     <ul>
-      <li><a href="https://eso-hub.com/en/sets/corpseburster" target="_blank" rel="noopener">Corpseburster</a> (5)</li>
-      <li><a href="https://eso-hub.com/en/sets/dragons-defilement" target="_blank" rel="noopener">Dragon's Defilement</a> (5)</li>
-      <li><a href="https://eso-hub.com/en/sets/hand-of-mephala" target="_blank" rel="noopener">Hand of Mephala</a> (5)</li>
-      <li><a href="https://eso-hub.com/en/sets/sunderflame" target="_blank" rel="noopener">Sunderflame</a> (5)</li>
-      <li><a href="https://eso-hub.com/en/sets/the-saint-and-the-seducer" target="_blank" rel="noopener">The Saint and the Seducer</a> (M)</li>
+      <li>Corpseburster (5)</li>
+      <li>Dragon's Defilement (5)</li>
+      <li>Hand of Mephala (5)</li>
+      <li>Sunderflame (5)</li>
+      <li>The Saint and the Seducer (M)</li>
     </ul>
   `,
 };
@@ -408,17 +407,6 @@ const cpTooltips = {
   `,
 };
 
-// Convert item name into an eso-hub.com slug automatically (for gear sets)
-function getEsoHubLink(name) {
-  return (
-    'https://eso-hub.com/en/sets/' +
-    name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // remove special characters
-      .replace(/\s+/g, '-') // spaces -> hyphens
-      .trim()
-  );
-}
 const penData = {
   groupBuffs: [
     {
@@ -491,10 +479,6 @@ const penData = {
           <strong>Target:</strong> Self • <em>Dark Magic</em> • <strong>Cost:</strong> 2295
           <div class="tt-head"><strong>Skill description</strong></div>
           Encase your weapon in dark crystals for 6 seconds, causing your next two Light or Heavy Attacks to deal additional damage and reduce the target's Armor by <strong>1000</strong> for 5 seconds. The first hit deals <strong>2091 Physical Damage</strong> and the second deals <strong>836 Physical Damage</strong>. After casting, your next non-Ultimate ability used within 3 seconds costs 10% less.
-          <div class="tooltip-source">
-            <a href="https://eso-hub.com/en/skills?search=Crystal%20Weapon" target="_blank" rel="noopener">View skill on ESO-Hub</a>
-            <div><em>Tooltips by ESO-Hub.com</em></div>
-          </div>
         `,
     },
     {
@@ -520,7 +504,6 @@ const penData = {
             <li>(10 items) Adds <strong>687</strong> Weapon and Spell Damage</li>
             <li>(12 items) Adds <strong>1528</strong> Critical Chance</li>
           </ul>
-          <div class="tooltip-source"><em>Source</em>: <a href="https://eso-hub.com/en/sets/shattered-fate" target="_blank" rel="noopener">View set on ESO-Hub</a></div>
         `,
     },
     {
@@ -547,10 +530,6 @@ const penData = {
             <li>(4 items) Adds <strong>129</strong> Weapon and Spell Damage</li>
             <li>(5 items) Adds <strong>3460</strong> Offensive Penetration</li>
           </ul>
-          <div class="tooltip-source">
-            <a href="https://eso-hub.com/en/sets/spriggans-thorns" target="_blank" rel="noopener">Spriggan's Thorns Set ESO - Stats & Location</a>
-            <div><em>Tooltips by ESO-Hub.com</em></div>
-          </div>
         `,
     },
     // New entries
@@ -570,7 +549,6 @@ const penData = {
             <div style="color:#a855f7;">Increases Physical and Spell Penetration by&nbsp;<strong>1580</strong></div>
             <div style="color:#f59e0b;">Increases Physical and Spell Penetration by&nbsp;<strong>1638</strong></div>
           </div>
-          <div class="tooltip-source"><em>Source</em>: <a href="https://eso-hub.com/en/traits/weapon/sharpened" target="_blank" rel="noopener">ESO-Hub — Sharpened</a></div>
         `,
     },
     {
@@ -589,7 +567,6 @@ const penData = {
             <div style="color:#a855f7;">Increases Physical and Spell Penetration by&nbsp;<strong>3160</strong></div>
             <div style="color:#f59e0b;">Increases Physical and Spell Penetration by&nbsp;<strong>3276</strong></div>
           </div>
-          <div class="tooltip-source"><em>Source</em>: <a href="https://eso-hub.com/en/traits/weapon/sharpened" target="_blank" rel="noopener">ESO-Hub — Sharpened</a></div>
         `,
     },
     {
@@ -603,12 +580,12 @@ const penData = {
           <strong>Arena 1-piece Bonus</strong><br>
           Examples of Perfected Arena sets that grant a 1-piece Offensive Penetration bonus:
           <ul>
-            <li><a href="https://eso-hub.com/en/sets/perfected-crushing-wall" target="_blank" rel="noopener">Perfected Crushing Wall</a></li>
-            <li><a href="https://eso-hub.com/en/sets/perfected-merciless-charge" target="_blank" rel="noopener">Perfected Merciless Charge</a></li>
-            <li><a href="https://eso-hub.com/en/sets/perfected-titanic-cleave" target="_blank" rel="noopener">Perfected Titanic Cleave</a></li>
-            <li><a href="https://eso-hub.com/en/sets/perfected-radial-uppercut" target="_blank" rel="noopener">Perfected Radial Uppercut</a></li>
-            <li><a href="https://eso-hub.com/en/sets/perfected-wild-impulse" target="_blank" rel="noopener">Perfected Wild Impulse</a></li>
-            <li><a href="https://eso-hub.com/en/sets/perfected-wrath-of-elements" target="_blank" rel="noopener">Perfected Wrath of Elements</a></li>
+            <li>Perfected Crushing Wall</li>
+            <li>Perfected Merciless Charge</li>
+            <li>Perfected Titanic Cleave</li>
+            <li>Perfected Radial Uppercut</li>
+            <li>Perfected Wild Impulse</li>
+            <li>Perfected Wrath of Elements</li>
           </ul>
         `,
     },
@@ -629,10 +606,6 @@ const penData = {
             <li>(1 item) Adds <strong>129</strong> Weapon and Spell Damage</li>
             <li>(2 items) Attacking an enemy with a fully-charged Heavy Attack throws an axe at your enemy, dealing <strong>1572 Physical Damage</strong> and reducing their Armor by <strong>400</strong> for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage. The axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.</li>
           </ul>
-          <div class="tooltip-source">
-            <a href="https://eso-hub.com/en/sets/anthelmirs-construct" target="_blank" rel="noopener">View set on ESO-Hub</a>
-            <div><em>Tooltips by ESO-Hub.com</em></div>
-          </div>
         `,
     },
     {
@@ -652,10 +625,7 @@ const penData = {
             <li>(1 item) Adds <strong>129</strong> Weapon and Spell Damage</li>
             <li>(2 items) When you use an Ultimate ability you gain Weapon and Spell Damage equal to the amount of total Ultimate consumed, and Physical and Spell Penetration equal to <strong>23</strong> times the amount for 12 seconds.</li>
           </ul>
-          <div class="tooltip-source">
-            <a href="https://eso-hub.com/en/sets/balorgh" target="_blank" rel="noopener">Balorgh — ESO-Hub</a>
-          </div>
-        `,
+`,
     },
   ],
   passives: [
@@ -813,7 +783,6 @@ const critData = {
             <li>(4 items) Adds <strong>657</strong> Critical Chance</li>
             <li>(5 items) When an enemy you recently damaged dies, they leave behind a vengeful soul for 6 seconds. You can only create one vengeful soul at a time. Touching the soul increases your Critical Chance by <strong>2160</strong> and your Critical Damage by <strong>12%</strong> for 30 seconds.</li>
           </ul>
-          <div class="tooltip-source"><em>Source</em>: <a href="https://eso-hub.com/en/sets/sul-xans-torment" target="_blank" rel="noopener">ESO-Hub — Sul-Xan's Torment</a></div>
         `,
     },
     {
@@ -984,23 +953,19 @@ function createItem(item, index, type) {
   let tooltipHTML = item.tooltip || '';
   if (!tooltipHTML) {
     if (item.category === 'gear') {
-      const link = getEsoHubLink(item.name);
       const setHtml = buildSetTooltip(item.name);
       const dictExtra = TOOLTIP_DICT[item.name] ? `<br>${TOOLTIP_DICT[item.name]}` : '';
       const details = setHtml || dictExtra; // prefer structured set data; fallback to generic blurb
       tooltipHTML = `
                 <strong>${item.name}</strong>${details ? `<br>${details}` : ''}<br>
-                <div class="tooltip-source"><a href="${link}" target="_blank" rel="noopener"><span class="link-emoji" aria-hidden="true">🔗</span><span class="link-text">View Set on ESO-Hub</span></a></div>
             `;
     } else if (item.category === 'group') {
       // Prefer full set info for group-applied set effects like Alkosh/Crimson if available
       const setHtml = buildSetTooltip(item.name);
       if (setHtml) {
-        const link = getEsoHubLink(item.name);
         tooltipHTML = `
                     <strong>${item.name}</strong><br>
                     ${setHtml}<br>
-                    <div class="tooltip-source"><a href="${link}" target="_blank" rel="noopener"><span class="link-emoji" aria-hidden="true">🔗</span><span class="link-text">View Set on ESO-Hub</span></a></div>
                 `;
       } else {
         // Use rich predefined tooltip content without adding a heading here;

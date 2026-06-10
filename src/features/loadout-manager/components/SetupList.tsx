@@ -56,7 +56,7 @@ const resolveAbilityIconUrl = (icon?: string): string | null => {
   }
 
   const sanitized = icon.replace(/\.(dds|png)$/i, '');
-  return `https://eso-hub.com/storage/icons/${sanitized}.png`;
+  return `https://assets.rpglogs.com/img/eso/abilities/${sanitized}.png`;
 };
 
 interface SetupListProps {

@@ -4,8 +4,6 @@
  * The Dark Magic skill-line is part of the Sorcerer toolkit and has a focus on
  * offensive and support abilities. In addition to powerful abilities, you can also
  * select passives that increase your sustain and support capabilities even further.
- *
- * @source https://eso-hub.com/en/skills/sorcerer/dark-magic
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

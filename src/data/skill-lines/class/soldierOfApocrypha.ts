@@ -1,6 +1,5 @@
 /**
  * Soldier of Apocrypha — Arcanist Skill Line
- * Source: https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha
  * Regenerated: 2025-11-14T20:33:08.754Z
  */
 
@@ -13,7 +12,6 @@ export const soldierOfApocrypha: SkillLineData = {
   class: 'Arcanist',
   category: 'class',
   icon: 'ability_mage_065',
-  sourceUrl: 'https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha',
   skills: [
     {
       id: ClassSkillId.ARCANIST_GIBBERING_SHIELD,

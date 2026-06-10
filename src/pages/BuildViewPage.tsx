@@ -75,7 +75,7 @@ import { buildTooltipPropsFromAbilityId } from '../utils/skillTooltipMapper';
 
 // ─── Icon CDNs ────────────────────────────────────────────────────────────────
 
-const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
+const SKILL_ICON_URL = 'https://assets.rpglogs.com/img/eso/abilities/';
 
 /** Resolve an icon value to a full URL, handling both short names and full URLs. */
 const resolveIconUrl = (icon: string): string =>

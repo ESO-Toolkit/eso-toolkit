@@ -96,7 +96,6 @@ AI-specific operational guides — [ai-agents/](./ai-agents/)
 | [Playwright Testing](./ai-agents/playwright/) | E2E test automation guides |
 | [Preloading System](./ai-agents/preloading/) | Data preloading patterns |
 | [MCP Tools](./ai-agents/mcp-tools/) | MCP browser tool auth setup |
-| [Skill Data Regen](./ai-agents/SKILL_DATA_REGENERATION_PROMPT.md) | Skill line data regeneration |
 
 ### Other
 | Document | Description |

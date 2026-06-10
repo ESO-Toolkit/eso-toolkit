@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Redguard Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/redguard-skills
  */
 export const redguard: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const redguard: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_templar_027',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/redguard',
   skills: [
     {
       id: AbilityId.WAYFARER,

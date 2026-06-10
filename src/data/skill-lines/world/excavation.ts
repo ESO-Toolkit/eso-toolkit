@@ -13,7 +13,6 @@ export const excavation: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'u26_ability_digging_01',
-  sourceUrl: 'https://eso-hub.com/en/skills/world/excavation',
   skills: [
     {
       id: AbilityId.HAND_BRUSH,
@@ -21,7 +20,7 @@ export const excavation: SkillLineData = {
       name: 'Hand Brush',
       icon: 'u26_ability_digging_03',
       description:
-        'Removes 1 layer of soil or rock from a 1x1 area. Generates: 1 Intuition Maximum Intuition: 4.',
+        'Removes 1 layer of soil or rock from a 1x1 area.\n\nGenerates: 1 Intuition\nMaximum Intuition: 2.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -32,7 +31,7 @@ export const excavation: SkillLineData = {
       name: 'Augur',
       icon: 'u26_ability_digging_04',
       description:
-        "Indicates how near the Antiquity is to the selected location. Can only be used a limited number of times, based on the Antiquity's Difficulty. Works on the lowest six layers of dirt and rocks. Cannot detect Bonus Loot. Using Augur does not consume a turn.",
+        "Indicates how near the Antiquity is to the selected location.\n\nCan only be used a limited number of times, based on the Antiquity's Difficulty.\n\nOnly works on the lowest three layers of dirt and rocks. Cannot detect Bonus Loot.\n\nUsing Augur does not consume a turn.",
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -42,8 +41,7 @@ export const excavation: SkillLineData = {
       alternateIds: [139943, 140093],
       name: 'Trowel',
       icon: 'u26_ability_digging_01',
-      description:
-        'Removes 3 layers of dirt or rock from a 1x1 area. Costs 2 Intuition to use. Can safely trigger Fissures to create explosive chain reactions.',
+      description: 'Removes 3 layers of dirt or rock from a 1x1 area.\n\nCosts 2 Intuition to use.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -53,7 +51,7 @@ export const excavation: SkillLineData = {
       alternateIds: [140173, 140174],
       name: 'Keen Eye: Dig Sites',
       icon: 'ability_scrying_08a',
-      description: 'Antiquity Dig Sites will be easier to see when you are 30 meters or closer.',
+      description: 'Antiquity Dig Sites will be easier to see when you are 20 meters or closer.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -62,8 +60,7 @@ export const excavation: SkillLineData = {
       id: AbilityId.EXCAVATORS_RESERVES,
       name: "Excavator's Reserves",
       icon: 'u26_ability_digging_05',
-      description:
-        'Further increases the amount of time you have available when excavating a dig site.',
+      description: 'Increases the amount of time you have available when excavating a dig site.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -74,7 +71,7 @@ export const excavation: SkillLineData = {
       name: 'Heavy Shovel',
       icon: 'u26_ability_digging_02',
       description:
-        'Removes 1 layer of dirt and rocks from up to a 3x3 area. The shovel only affects a single contiguous height of dirt and rocks. Costs 2 Intuition to use. Has a chance to consume no Intuition on use.',
+        'Removes 1 layer of dirt and rocks from up to a 3x3 area.\n\nThe shovel only affects a single contiguous height of dirt and rocks.\n\nCosts 2 Intuition to use.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,
@@ -84,7 +81,7 @@ export const excavation: SkillLineData = {
       alternateIds: [139771, 139772],
       name: 'Keen Eye: Treasure Chests',
       icon: 'ability_scrying_08a',
-      description: 'Treasure Chests will be easier to see when you are 30 meters or closer.',
+      description: 'Treasure Chests will be easier to see when you are 20 meters or closer.',
       isUltimate: false,
       isPassive: true,
       maxRank: 1,

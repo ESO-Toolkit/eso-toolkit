@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Enchanting Craft Skills
- * Source: https://eso-hub.com/en/skills/craft/enchanting
  */
 export const enchanting: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const enchanting: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_enchanter_002b',
-  sourceUrl: 'https://eso-hub.com/en/skills/craft/enchanting',
   skills: [
     {
       id: AbilityId.ASPECT_IMPROVEMENT,

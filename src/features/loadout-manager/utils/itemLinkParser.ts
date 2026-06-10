@@ -50,7 +50,7 @@ export function parseItemLink(link: string): { itemId: number; params: number[] 
  * Future improvements could:
  * 1. Use UESP MediaWiki API to search for items
  * 2. Build a local item database from ESO data files
- * 3. Use ESO Hub or other third-party APIs
+ * 3. Use other third-party item APIs
  */
 const itemLinkLogger = new Logger({ contextPrefix: 'ItemLinkParser' });
 

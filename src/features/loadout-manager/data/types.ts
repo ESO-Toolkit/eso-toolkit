@@ -6,7 +6,7 @@ export interface SkillData {
   id: number;
   name: string;
   category: string;
-  icon?: string; // Icon name from ESO-Hub
+  icon?: string; // Icon slug (e.g. "ability_dragonknight_006")
   isUltimate?: boolean;
   baseSkillId?: number; // For morphs, references the base skill ID
 }

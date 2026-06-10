@@ -1,6 +1,5 @@
 /**
  * Animal Companions - Warden Class Skill Line
- * Source: https://eso-hub.com/en/skills/warden/animal-companions
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

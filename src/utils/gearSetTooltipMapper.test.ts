@@ -4,29 +4,6 @@ import type { PlayerGearSetRecord } from './gearUtilities';
 import type { PlayerGear } from '../types/playerDetails';
 import { ArmorType, GearSlot, GearTrait } from '../types/playerDetails';
 
-jest.mock('../data/Gear Sets/legacyAdapters', () => ({
-  arenaSpecialGearSets: {
-    arenaSet1: {
-      name: 'Arena Special Set',
-      icon: 'arena',
-      setType: 'Arena',
-      bonuses: [
-        '(2 items) Adds 1206 Maximum Health',
-        '(3 items) Adds 1096 Maximum Stamina',
-        '(5 items) Trigger a combat requirement effect',
-      ],
-    },
-  },
-  monsterGearSets: {
-    monsterSet1: {
-      name: 'Monster Helm Set',
-      icon: 'monster',
-      setType: 'Monster Set',
-      bonuses: ['(1 item) Adds 1096 Maximum Magicka', '(2 items) Summon a monster ally'],
-    },
-  },
-}));
-
 jest.mock('../data/Gear Sets/heavy', () => ({
   heavySet1: {
     name: 'Heavy Armor Set',
@@ -149,18 +126,12 @@ describe('gearSetTooltipMapper', () => {
         count: 1,
       });
 
-      const monsterRecord = buildGearRecord({
-        labelName: 'Monster Helm Set',
+      const arenaRecord = buildGearRecord({
+        labelName: 'Arena Master Set',
         count: 2,
       });
 
-      const arenaRecord = buildGearRecord({
-        labelName: 'Arena Special Set',
-        count: 5,
-      });
-
       expect(createGearSetTooltipProps(mythicRecord)!.headerBadge).toBe('Mythic');
-      expect(createGearSetTooltipProps(monsterRecord)!.headerBadge).toBe('Monster Set');
       expect(createGearSetTooltipProps(arenaRecord)!.headerBadge).toBe('Arena');
     });
 
@@ -264,11 +235,11 @@ describe('gearSetTooltipMapper', () => {
     });
 
     it('handles perfected prefixes when searching', () => {
-      const result = getGearSetTooltipPropsByName('Perfected Monster Helm Set', 2);
+      const result = getGearSetTooltipPropsByName('Perfected Arena Master Set', 2);
 
       expect(result).not.toBeNull();
-      expect(result!.setName).toBe('Perfected Monster Helm Set');
-      expect(result!.headerBadge).toBe('Monster Set');
+      expect(result!.setName).toBe('Perfected Arena Master Set');
+      expect(result!.headerBadge).toBe('Arena');
     });
   });
 

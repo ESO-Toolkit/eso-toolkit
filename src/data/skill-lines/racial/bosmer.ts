@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Wood Elf (Bosmer) Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/wood-elf-skills
  */
 export const bosmer: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const bosmer: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'passive_weapon_025',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/wood-elf',
   skills: [
     {
       id: AbilityId.ACROBAT,

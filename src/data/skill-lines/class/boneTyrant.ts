@@ -1,6 +1,5 @@
 /**
  * Bone Tyrant — Necromancer Skill Line
- * Source: https://eso-hub.com/en/skills/necromancer/bone-tyrant
  * Regenerated: 2025-11-14T20:33:08.812Z
  */
 
@@ -13,7 +12,6 @@ export const boneTyrant: SkillLineData = {
   class: 'Necromancer',
   category: 'class',
   icon: 'ability_necromancer_012',
-  sourceUrl: 'https://eso-hub.com/en/skills/necromancer/bone-tyrant',
   skills: [
     {
       id: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
@@ -21,7 +19,7 @@ export const boneTyrant: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_012',
       description:
-        'Become a horrific Bone Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health.',
+        'Become a horrific Bone Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health.\n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -31,7 +29,7 @@ export const boneTyrant: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_012_a',
       description:
-        'Become a destructive Pummeling Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health. \n\nYour Bash attacks can hit multiple targets in front of you and deal 1799 Physical Damage.',
+        'Become a destructive Pummeling Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health.\n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. This ability scales off your Max Health.\n\nYour Bash attacks can hit multiple targets in front of you and deal 1799 Physical Damage.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -41,7 +39,7 @@ export const boneTyrant: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_012_b',
       description:
-        'Become a horrific Ravenous Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health. \n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. You deal 826 Magic Damage to nearby enemies every second and heal for that amount. These abilities scale off your Max Health.',
+        'Become a horrific Ravenous Goliath, increasing your Max Health by 30000 for 20 seconds and immediately restoring 30000 Health.\n\nWhile transformed, your damaging Light Attacks restore 319 Health and your fully-charged Heavy Attacks restore 800 Health. You deal 826 Magic Damage to nearby enemies every second and heal for that amount. These abilities scale off your Max Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_BONE_GOLIATH_TRANSFORMATION,
     },
@@ -141,7 +139,7 @@ export const boneTyrant: SkillLineData = {
       type: 'active',
       icon: 'ability_necromancer_007_a',
       description:
-        "Slice into your enemy's life force, dealing 1742 Magic Damage.  \n\nYou heal for 2400 Health for the first enemy hit, and an additional 800 for each additional enemy, up to five times. After dealing damage, you heal for 991 Health every 2 seconds over 10 seconds. The healing of this ability scales off your Max Health.",
+        "Slice into your enemy's life force, dealing 1742 Magic Damage.\n\nYou heal for 2400 Health for the first enemy hit, and an additional 800 for each additional enemy, up to five times. After dealing damage, you heal for 991 Health every 2 seconds over 10 seconds. The healing of this ability scales off your Max Health.",
       baseSkillId: ClassSkillId.NECROMANCER_DEATH_SCYTHE,
     },
     {

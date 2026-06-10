@@ -1,6 +1,5 @@
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
@@ -29,13 +28,11 @@ import React, { useMemo, useState } from 'react';
 
 import * as arenaSets from '../data/Gear Sets/arena';
 import * as heavySets from '../data/Gear Sets/heavy';
-import { arenaSpecialGearSets, monsterGearSets } from '../data/Gear Sets/legacyAdapters';
 import * as lightSets from '../data/Gear Sets/light';
 import * as mediumSets from '../data/Gear Sets/medium';
 import * as mythicSets from '../data/Gear Sets/mythics';
 import * as sharedSets from '../data/Gear Sets/shared';
 import type { GearSetData } from '../types/gearSet';
-import { getEsoHubSetUrl } from '../utils/esoHubLinks';
 
 const ICON_BASE_URL = 'https://assets.rpglogs.com/img/eso/abilities/';
 
@@ -56,9 +53,7 @@ const ALL_GEAR_SETS: GearSetData[] = (() => {
   addSets(lightSets as Record<string, unknown>);
   addSets(heavySets as Record<string, unknown>);
   addSets(mediumSets as Record<string, unknown>);
-  addSets(monsterGearSets as Record<string, unknown>);
   addSets(mythicSets as Record<string, unknown>);
-  addSets(arenaSpecialGearSets as Record<string, unknown>);
   addSets(arenaSets as Record<string, unknown>);
   addSets(sharedSets as Record<string, unknown>);
   return Array.from(registry.values()).sort((a, b) => a.name.localeCompare(b.name));
@@ -135,29 +130,9 @@ const GearSetRow: React.FC<GearSetRowProps> = ({ set }) => {
           )}
         </TableCell>
         <TableCell>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {set.name}
-            </Typography>
-            <Box
-              component="a"
-              href={getEsoHubSetUrl(set.name)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-              aria-label={`${set.name} on ESO-Hub`}
-              title="View on ESO-Hub"
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                color: 'rgba(148,163,184,0.35)',
-                lineHeight: 0,
-                '&:hover': { color: 'rgba(148,163,184,0.85)' },
-              }}
-            >
-              <OpenInNewIcon sx={{ fontSize: 12 }} />
-            </Box>
-          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            {set.name}
+          </Typography>
         </TableCell>
         <TableCell sx={{ width: 160 }}>
           <Chip

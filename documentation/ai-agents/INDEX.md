@@ -20,7 +20,6 @@ All agent skills are `SKILL.md` files in `.agents/skills/`. See [AGENTS.md](../.
 | Rollbar | [.agents/skills/rollbar/SKILL.md](../../.agents/skills/rollbar/SKILL.md) | Error tracking |
 | Rebase | [.agents/skills/rebase/SKILL.md](../../.agents/skills/rebase/SKILL.md) | Post-squash rebase |
 | Auth | [.agents/skills/auth/SKILL.md](../../.agents/skills/auth/SKILL.md) | Browser session OAuth authentication |
-| Skill Data Regen | [.agents/skills/skill-data-regen/SKILL.md](../../.agents/skills/skill-data-regen/SKILL.md) | ESO skill line data regeneration |
 | UESP Data | [.agents/skills/uesp-data/SKILL.md](../../.agents/skills/uesp-data/SKILL.md) | Item icon management |
 | Create Skill | [.agents/skills/create-skill/SKILL.md](../../.agents/skills/create-skill/SKILL.md) | Add a new skill to the project |
 
@@ -56,7 +55,7 @@ Reference docs (supplemental detail):
 - [Quick Reference](./mcp-tools/AI_MCP_QUICK_REFERENCE.md) — Tool usage reference
 
 ### Data Generation
-- [Skill Data Regeneration Prompt](./SKILL_DATA_REGENERATION_PROMPT.md) — Reference for skill line data regeneration (use Skill Data Regen skill for automated workflows)
+- Skill and gear tooltip data is generated from the game client via `tools/eso-tooltip-dump/` (in-game addon) and `scripts/parse-tooltip-dump.mjs` (parser).
 
 ### Wireframes — [`wireframes/`](./wireframes/)
 - UI design wireframes for features
