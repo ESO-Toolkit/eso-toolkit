@@ -6,6 +6,17 @@ import { MarkerIconPicker } from './MarkerIconPicker';
 const anchor = { left: 120, top: 80 };
 const noop = (): void => undefined;
 
+/** jsdom lacks a full PointerEvent, so build a plain event carrying the pointer fields. */
+function firePointer(
+  element: Element,
+  type: 'pointerdown' | 'pointerup',
+  init: { pointerId: number; pointerType: string; clientX: number; clientY: number },
+): void {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.assign(event, init);
+  fireEvent(element, event);
+}
+
 describe('MarkerIconPicker', () => {
   it('renders nothing while closed', () => {
     render(<MarkerIconPicker open={false} anchorPosition={null} onSelect={noop} onClose={noop} />);
@@ -33,6 +44,56 @@ describe('MarkerIconPicker', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Use icon MT Hex' }));
     expect(onSelect).toHaveBeenCalledWith(21);
+  });
+
+  it('commits a touch tap on pointerup and swallows the trailing synthetic click', () => {
+    const onSelect = jest.fn();
+    render(
+      <MarkerIconPicker open mobile anchorPosition={anchor} onSelect={onSelect} onClose={noop} />,
+    );
+
+    const cell = screen.getByRole('button', { name: 'Use icon MT Hex' });
+    // iOS-style sequence: pointer events, then the (sometimes-missing) synthetic click.
+    firePointer(cell, 'pointerdown', {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 50,
+      clientY: 50,
+    });
+    firePointer(cell, 'pointerup', {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 52,
+      clientY: 51,
+    });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(21);
+
+    // A browser that does emit the trailing click must not double-fire the pick.
+    fireEvent.click(cell);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it('a touch that travels (scroll over the grid) does not pick', () => {
+    const onSelect = jest.fn();
+    render(
+      <MarkerIconPicker open mobile anchorPosition={anchor} onSelect={onSelect} onClose={noop} />,
+    );
+
+    const cell = screen.getByRole('button', { name: 'Use icon Number 1' });
+    firePointer(cell, 'pointerdown', {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 50,
+      clientY: 50,
+    });
+    firePointer(cell, 'pointerup', {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 50,
+      clientY: 90,
+    });
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('mobile bottom sheet has a title and an explicit close affordance', () => {

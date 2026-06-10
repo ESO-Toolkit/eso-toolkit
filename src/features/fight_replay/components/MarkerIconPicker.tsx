@@ -12,7 +12,7 @@
  */
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Drawer, IconButton, Popover, Typography } from '@mui/material';
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 
 import { MarkerIconGrid } from './MarkerIconGrid';
 
@@ -47,6 +47,33 @@ export const MarkerIconPicker: React.FC<MarkerIconPickerProps> = ({
     lastAnchorRef.current = anchorPosition;
   }
 
+  // Close commits on pointerup for touch/pen (same iOS synthesized-click unreliability the
+  // grid guards against — see MarkerIconGrid); the click path stays for mouse/keyboard,
+  // with a flag so a browser that does emit the trailing click can't double-close.
+  const closeHandledRef = useRef(false);
+  const handleClosePointerUp = useCallback(
+    (event: React.PointerEvent) => {
+      if (event.pointerType === 'mouse') {
+        return;
+      }
+      closeHandledRef.current = true;
+      onClose();
+    },
+    [onClose],
+  );
+  const handleCloseTouchEnd = useCallback((event: React.TouchEvent) => {
+    if (closeHandledRef.current) {
+      event.preventDefault();
+    }
+  }, []);
+  const handleCloseClick = useCallback(() => {
+    if (closeHandledRef.current) {
+      closeHandledRef.current = false;
+      return;
+    }
+    onClose();
+  }, [onClose]);
+
   if (mobile) {
     return (
       <Drawer
@@ -63,9 +90,11 @@ export const MarkerIconPicker: React.FC<MarkerIconPickerProps> = ({
               borderTopRightRadius: 16,
               maxHeight: '70dvh',
               pb: 'calc(env(safe-area-inset-bottom) + 12px)',
-              // iOS: a long-press that bleeds into the sheet must not text-select it.
+              // iOS: a long-press that bleeds into the sheet must not text-select it, and
+              // taps must act immediately (no double-tap-zoom heuristics).
               userSelect: 'none',
               WebkitTouchCallout: 'none',
+              touchAction: 'manipulation',
             },
           },
         }}
@@ -77,7 +106,13 @@ export const MarkerIconPicker: React.FC<MarkerIconPickerProps> = ({
           <Typography variant="subtitle1" sx={{ fontWeight: 700, flexGrow: 1 }}>
             Add marker
           </Typography>
-          <IconButton aria-label="Close marker picker" onClick={onClose} sx={{ p: 1.25 }}>
+          <IconButton
+            aria-label="Close marker picker"
+            onPointerUp={handleClosePointerUp}
+            onTouchEnd={handleCloseTouchEnd}
+            onClick={handleCloseClick}
+            sx={{ p: 1.25, touchAction: 'manipulation' }}
+          >
             <CloseIcon />
           </IconButton>
         </Box>
