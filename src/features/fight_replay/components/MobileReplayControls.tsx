@@ -7,6 +7,7 @@ import Insights from '@mui/icons-material/Insights';
 import Label from '@mui/icons-material/Label';
 import LabelOff from '@mui/icons-material/LabelOff';
 import People from '@mui/icons-material/People';
+import Redo from '@mui/icons-material/Redo';
 import RestartAlt from '@mui/icons-material/RestartAlt';
 import Route from '@mui/icons-material/Route';
 import Tune from '@mui/icons-material/Tune';
@@ -58,9 +59,11 @@ export interface MobileReplayControlsProps {
   onToggleMarkersEditMode?: () => void;
   /** Gesture-free marker placement: opens the add-marker menu at the screen center. */
   onAddMarkerAtCenter?: () => void;
-  /** Undo the last marker change — only shown while edit mode is on. */
+  /** Undo/redo the last marker change — only shown while edit mode is on. */
   canUndoMarkers?: boolean;
   onUndoMarkers?: () => void;
+  canRedoMarkers?: boolean;
+  onRedoMarkers?: () => void;
 }
 
 /** A row in the tools sheet. `closesOnTap` items open another on-screen panel, so the sheet dismisses
@@ -93,6 +96,8 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
   onAddMarkerAtCenter,
   canUndoMarkers = false,
   onUndoMarkers,
+  canRedoMarkers = false,
+  onRedoMarkers,
 }) => {
   // The tools sheet anchor — null = closed.
   const [toolsAnchor, setToolsAnchor] = useState<HTMLElement | null>(null);
@@ -161,6 +166,18 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
             active: false,
             onTap: onUndoMarkers,
             disabled: !canUndoMarkers,
+          } as ToolItem,
+        ]
+      : []),
+    ...(markersEditMode && onRedoMarkers
+      ? [
+          {
+            key: 'redoMarkers',
+            label: 'Redo marker change',
+            icon: <Redo fontSize="small" />,
+            active: false,
+            onTap: onRedoMarkers,
+            disabled: !canRedoMarkers,
           } as ToolItem,
         ]
       : []),

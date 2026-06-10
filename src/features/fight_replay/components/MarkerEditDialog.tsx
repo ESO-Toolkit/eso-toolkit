@@ -2,6 +2,7 @@
  * Dialog for editing a single map marker: icon (Elms template), label, colour, and size.
  * Submits one atomic MarkerEdit so the change is a single undo step.
  */
+import CloseIcon from '@mui/icons-material/Close';
 import {
   Box,
   Button,
@@ -9,6 +10,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Slider,
   TextField,
   Tooltip,
@@ -22,9 +24,9 @@ import { MorMarker } from '@/types/mapMarkers';
 import { ELMS_ICON_MAP } from '@/utils/elmsMarkersDecoder';
 
 import { ReplayMarker } from '../types/mapMarkers';
-import { COMMON_MARKER_GROUPS, MarkerEdit } from '../utils/mapMarkerConverters';
+import { MarkerEdit } from '../utils/mapMarkerConverters';
 
-import { MarkerSpritePreview } from './MarkerSpritePreview';
+import { MarkerIconGrid } from './MarkerIconGrid';
 
 const MIN_SIZE_METERS = 0.5;
 const MAX_SIZE_METERS = 5;
@@ -139,49 +141,23 @@ export const MarkerEditDialog: React.FC<MarkerEditDialogProps> = ({
       fullWidth
       fullScreen={fullScreen}
     >
-      <DialogTitle>Edit Marker</DialogTitle>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', pr: 1.5 }}>
+        <Box component="span" sx={{ flexGrow: 1 }}>
+          Edit Marker
+        </Box>
+        {/* Full-screen on phones, so the dialog needs an exit at the top — reaching the
+            bottom Cancel one-handed is a stretch. */}
+        <IconButton aria-label="Close" onClick={onClose} edge="end">
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
         {/* Icon picker */}
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Icon
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {COMMON_MARKER_GROUPS.map((group) => (
-              <Box key={group.key} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ width: 110, flexShrink: 0 }}
-                >
-                  {group.label}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                  {group.options.map((option) => (
-                    <Box
-                      key={option.iconKey}
-                      component="button"
-                      type="button"
-                      onClick={() => handlePickIcon(option.iconKey)}
-                      aria-label={`Use icon ${option.label}`}
-                      aria-pressed={iconKey === option.iconKey}
-                      sx={{
-                        p: 0.25,
-                        background: 'none',
-                        border: '2px solid',
-                        borderColor: iconKey === option.iconKey ? 'primary.main' : 'transparent',
-                        borderRadius: 1,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                      }}
-                    >
-                      <MarkerSpritePreview iconKey={option.iconKey} label={option.label} />
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            ))}
-          </Box>
+          <MarkerIconGrid selectedIconKey={iconKey} onPick={handlePickIcon} touch={fullScreen} />
         </Box>
 
         {/* Label */}

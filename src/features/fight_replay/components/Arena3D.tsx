@@ -1,6 +1,5 @@
 import { Fullscreen, FullscreenExit, LockOpen, Videocam } from '@mui/icons-material';
 import Bolt from '@mui/icons-material/Bolt';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 import Insights from '@mui/icons-material/Insights';
 import Label from '@mui/icons-material/Label';
@@ -10,7 +9,6 @@ import {
   Box,
   Button,
   Chip,
-  ClickAwayListener,
   IconButton,
   Tooltip,
   Typography,
@@ -32,7 +30,6 @@ import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
-import { COMMON_MARKER_GROUPS, MarkerGroup, MarkerGroupKey } from '../utils/mapMarkerConverters';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
@@ -41,7 +38,7 @@ import { ADD_MARKER_AT_CENTER_EVENT, Arena3DScene, GroundContextMenuPayload } fr
 import { BossHealthPanel } from './BossHealthPanel';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
-import { MarkerSpritePreview } from './MarkerSpritePreview';
+import { MarkerIconPicker } from './MarkerIconPicker';
 import { MobileReplayControls } from './MobileReplayControls';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
@@ -115,9 +112,11 @@ interface Arena3DProps {
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
-  /** Marker undo (mobile tools sheet — Ctrl+Z has no touch equivalent). */
+  /** Marker undo/redo (mobile tools sheet — Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
   canUndoMarkers?: boolean;
   onUndoMarkers?: () => void;
+  canRedoMarkers?: boolean;
+  onRedoMarkers?: () => void;
   /** Fight data for zone/map information (required for map markers coordinate transformation) */
   fight: FightFragment;
   /** Selected player IDs for path visualization */
@@ -173,6 +172,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
+  canRedoMarkers = false,
+  onRedoMarkers,
   fight,
   selectedPlayerIds,
   onPlayerSelectionChange,
@@ -262,10 +263,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-  const [submenuState, setSubmenuState] = useState<{
-    key: MarkerGroupKey;
-    anchorEl: HTMLElement | null;
-  } | null>(null);
 
   const markerLookup = useMemo(() => {
     if (!markersState) {
@@ -283,7 +280,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         return;
       }
 
-      setSubmenuState(null);
       setContextMenu({
         type: 'ground',
         anchor: payload.screenPosition,
@@ -299,7 +295,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         return;
       }
 
-      setSubmenuState(null);
       setContextMenu({
         type: 'marker',
         anchor: payload.screenPosition,
@@ -311,7 +306,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null);
-    setSubmenuState(null);
   }, []);
 
   const handleAddMarkerOption = useCallback(
@@ -322,44 +316,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
       onAddMarker(iconKey, contextMenu.arenaPoint);
       setContextMenu(null);
-      setSubmenuState(null);
     },
     [contextMenu, onAddMarker],
   );
-
-  const handleOpenSubmenu = useCallback(
-    (event: React.MouseEvent<HTMLElement>, groupKey: MarkerGroupKey) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      setSubmenuState({ key: groupKey, anchorEl: event.currentTarget });
-    },
-    [],
-  );
-
-  const handleGroupMouseLeave = useCallback(() => {
-    // Don't close submenu on mouse leave - let it stay open
-    // It will close when clicking outside or when another group is hovered
-  }, []);
-
-  const handleGroupKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLElement>, groupKey: MarkerGroupKey) => {
-      if (event.key !== 'ArrowRight' && event.key !== 'Enter' && event.key !== ' ') {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const target = event.currentTarget as HTMLElement;
-      setSubmenuState({ key: groupKey, anchorEl: target });
-    },
-    [],
-  );
-
-  const handleCloseSubmenu = useCallback(() => {
-    setSubmenuState(null);
-  }, []);
 
   const handleRemoveMarkerClick = useCallback(() => {
     if (!contextMenu || contextMenu.type !== 'marker' || !onRemoveMarker) {
@@ -386,15 +345,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       ? `Remove "${markerForMenu.text.trim()}"`
       : 'Remove marker';
 
-  const activeSubmenuGroup: MarkerGroup | null = useMemo(() => {
-    if (!submenuState) {
-      return null;
-    }
-
-    const group = COMMON_MARKER_GROUPS.find((candidate) => candidate.key === submenuState.key);
-    return group && group.options.length > 0 ? group : null;
-  }, [submenuState]);
-
   const handleCanvasContextMenu = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -413,12 +363,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     return () => {
       document.removeEventListener('contextmenu', suppressNativeContextMenu);
     };
-  }, [contextMenu]);
-
-  useEffect(() => {
-    if (!contextMenu) {
-      setSubmenuState(null);
-    }
   }, [contextMenu]);
 
   // Show keyboard help on initial mount for 5 seconds
@@ -955,132 +899,61 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         {/* Player-list + boss-health HUDs are DOM overlays (above) rendered as siblings of
             the <Canvas>, not in-canvas textured planes — crisp text, real scroll, native
             MUI styling. */}
-        {contextMenu && (
-          <ClickAwayListener onClickAway={handleCloseContextMenu}>
-            <div>
-              <Menu
-                open={Boolean(contextMenu)}
-                onClose={handleCloseContextMenu}
-                anchorReference="anchorPosition"
-                anchorPosition={
-                  contextMenu
-                    ? { top: contextMenu.anchor.top, left: contextMenu.anchor.left }
-                    : undefined
-                }
-                disableScrollLock
-                slotProps={{
-                  list: {
-                    dense: true,
-                    onContextMenu: (event: React.MouseEvent) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    },
-                  },
-                  // Portaled past the replay container, so it needs its own selection
-                  // suppression: iOS otherwise text-selects the menu items the long-press
-                  // gesture lands on and covers them with the Copy/Look Up callout.
-                  paper: {
-                    sx: { userSelect: 'none', WebkitTouchCallout: 'none' },
-                  },
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-              >
-                {contextMenu?.type === 'ground' &&
-                  COMMON_MARKER_GROUPS.filter((group) => group.options.length > 0).map((group) => (
-                    <MenuItem
-                      key={group.key}
-                      onMouseEnter={(event: React.MouseEvent<HTMLLIElement>) =>
-                        handleOpenSubmenu(event, group.key)
-                      }
-                      onMouseLeave={handleGroupMouseLeave}
-                      onClick={(event: React.MouseEvent<HTMLLIElement>) =>
-                        handleOpenSubmenu(event, group.key)
-                      }
-                      onContextMenu={(event: React.MouseEvent<HTMLLIElement>) =>
-                        handleOpenSubmenu(event, group.key)
-                      }
-                      onKeyDown={(event: React.KeyboardEvent<HTMLLIElement>) =>
-                        handleGroupKeyDown(event, group.key)
-                      }
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 1,
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {group.label}
-                      </Typography>
-                      <ChevronRightIcon fontSize="small" />
-                    </MenuItem>
-                  ))}
-                {contextMenu?.type === 'marker' && onEditMarker && (
-                  <MenuItem onClick={handleEditMarkerClick}>Edit marker…</MenuItem>
-                )}
-                {contextMenu?.type === 'marker' && (
-                  <MenuItem onClick={handleRemoveMarkerClick} disabled={!onRemoveMarker}>
-                    {markerRemoveLabel}
-                  </MenuItem>
-                )}
-              </Menu>
-              <Menu
-                open={Boolean(activeSubmenuGroup && submenuState?.anchorEl)}
-                anchorEl={submenuState?.anchorEl ?? null}
-                onClose={handleCloseSubmenu}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                disableScrollLock
-                disableAutoFocus
-                disableEnforceFocus
-                disableRestoreFocus
-                onContextMenu={(event: React.MouseEvent) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-                slotProps={{
-                  list: {
-                    dense: true,
-                    onContextMenu: (event: React.MouseEvent) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    },
-                    onMouseLeave: handleGroupMouseLeave,
-                    sx: { pointerEvents: 'auto' },
-                  },
-                  paper: {
-                    onMouseLeave: handleGroupMouseLeave,
-                    sx: { pointerEvents: 'auto', userSelect: 'none', WebkitTouchCallout: 'none' },
-                  },
-                  root: {
-                    sx: { pointerEvents: 'none' },
-                  },
-                }}
-              >
-                {activeSubmenuGroup?.options.map((option) => (
-                  <MenuItem
-                    key={option.iconKey}
-                    onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      handleAddMarkerOption(option.iconKey);
-                    }}
-                    disabled={!onAddMarker}
-                    sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
-                  >
-                    <MarkerSpritePreview iconKey={option.iconKey} label={option.label} />
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {option.label}
-                    </Typography>
-                  </MenuItem>
-                ))}
-              </Menu>
-            </div>
-          </ClickAwayListener>
-        )}
+
+        {/* Add-marker picker: one flat surface with every icon (bottom sheet on touch,
+            popover at the click point on desktop). Kept mounted so close transitions run. */}
+        <MarkerIconPicker
+          open={contextMenu?.type === 'ground'}
+          anchorPosition={contextMenu?.type === 'ground' ? contextMenu.anchor : null}
+          mobile={isMobile}
+          onSelect={handleAddMarkerOption}
+          onClose={handleCloseContextMenu}
+        />
+
+        {/* Marker context menu: edit/remove for an existing marker. */}
+        <Menu
+          open={contextMenu?.type === 'marker'}
+          onClose={handleCloseContextMenu}
+          anchorReference="anchorPosition"
+          anchorPosition={
+            contextMenu?.type === 'marker'
+              ? { top: contextMenu.anchor.top, left: contextMenu.anchor.left }
+              : undefined
+          }
+          disableScrollLock
+          slotProps={{
+            list: {
+              dense: !isMobile,
+              onContextMenu: (event: React.MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+              },
+            },
+            // Portaled past the replay container, so it needs its own selection
+            // suppression: iOS otherwise text-selects the menu items the long-press
+            // gesture lands on and covers them with the Copy/Look Up callout.
+            paper: {
+              sx: { userSelect: 'none', WebkitTouchCallout: 'none' },
+            },
+          }}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
+          {onEditMarker && (
+            <MenuItem onClick={handleEditMarkerClick} sx={isMobile ? { minHeight: 48 } : undefined}>
+              Edit marker…
+            </MenuItem>
+          )}
+          <MenuItem
+            onClick={handleRemoveMarkerClick}
+            disabled={!onRemoveMarker}
+            sx={isMobile ? { minHeight: 48 } : undefined}
+          >
+            {markerRemoveLabel}
+          </MenuItem>
+        </Menu>
       </ReplayErrorBoundary>
 
       {/* Performance Monitor Overlay - rendered outside Canvas for proper screen-space positioning */}
@@ -1401,6 +1274,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           }
           canUndoMarkers={canUndoMarkers}
           onUndoMarkers={onUndoMarkers}
+          canRedoMarkers={canRedoMarkers}
+          onRedoMarkers={onRedoMarkers}
         />
       )}
 

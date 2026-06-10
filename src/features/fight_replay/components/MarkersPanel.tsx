@@ -154,10 +154,12 @@ export const MarkersPanel: React.FC<MarkersPanelProps> = ({
               secondaryAction={
                 <Box sx={{ display: 'flex', gap: 0.25 }}>
                   <Tooltip title="Edit marker">
+                    {/* p:1 → ~36px targets; the small default (~30px) is fiddly on touch. */}
                     <IconButton
                       size="small"
                       onClick={() => onEditMarker(marker.id)}
                       aria-label={`Edit ${describeMarker(marker)}`}
+                      sx={{ p: 1 }}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
@@ -167,13 +169,14 @@ export const MarkersPanel: React.FC<MarkersPanelProps> = ({
                       size="small"
                       onClick={() => onRemoveMarker(marker.id)}
                       aria-label={`Delete ${describeMarker(marker)}`}
+                      sx={{ p: 1 }}
                     >
                       <DeleteOutlineIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 </Box>
               }
-              sx={{ pr: 9 }}
+              sx={{ pr: 10 }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
                 <MarkerGlyph marker={marker} />

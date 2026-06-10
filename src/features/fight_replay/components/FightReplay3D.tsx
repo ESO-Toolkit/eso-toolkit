@@ -40,9 +40,11 @@ interface FightReplay3DProps {
   onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
   /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
   onEditMarker?: (markerId: string) => void;
-  /** Marker undo for the mobile tools sheet (Ctrl+Z has no touch equivalent). */
+  /** Marker undo/redo for the mobile tools sheet (Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
   canUndoMarkers?: boolean;
   onUndoMarkers?: () => void;
+  canRedoMarkers?: boolean;
+  onRedoMarkers?: () => void;
   /** Whether to show player paths toolkit */
   showPlayerPaths?: boolean;
   /** Initial selected player IDs for path visualization */
@@ -62,6 +64,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   onEditMarker,
   canUndoMarkers = false,
   onUndoMarkers,
+  canRedoMarkers = false,
+  onRedoMarkers,
   showPlayerPaths = false,
   initialSelectedPlayerIds = [],
 }) => {
@@ -720,6 +724,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           onEditMarker={onEditMarker}
           canUndoMarkers={canUndoMarkers}
           onUndoMarkers={onUndoMarkers}
+          canRedoMarkers={canRedoMarkers}
+          onRedoMarkers={onRedoMarkers}
           fight={selectedFight}
           selectedPlayerIds={selectedPlayerIds}
           onPlayerSelectionChange={setSelectedPlayerIds}

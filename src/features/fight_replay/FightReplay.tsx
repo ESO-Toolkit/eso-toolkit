@@ -446,6 +446,8 @@ export const FightReplay: React.FC = () => {
         onEditMarker={setEditingMarkerId}
         canUndoMarkers={canUndo}
         onUndoMarkers={undo}
+        canRedoMarkers={canRedo}
+        onRedoMarkers={redo}
         showPlayerPaths={true}
         initialSelectedPlayerIds={[]} // Empty initially, user can select via HUD
       />
