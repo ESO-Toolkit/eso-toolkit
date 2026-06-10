@@ -228,9 +228,11 @@ function classifyUnknownZone(name: string | null | undefined): ContentType {
 /**
  * Resolve which trial/dungeon a fight belongs to, in priority order:
  *   1. `gameZone.id` matched against the canonical content table (most reliable).
- *   2. Boss-name → trial fallback (legacy logs without `gameZone`).
- *   3. The raw `gameZone` (id/name) as a dungeon/unknown zone — no static table
- *      needed, so dungeons still group and label correctly.
+ *   2. The raw `gameZone` (id/name) as a dungeon/unknown zone — the per-fight
+ *      API signal always outranks name heuristics, so a dungeon boss whose name
+ *      happens to contain a trial token ("the mage", "serpent", …) is never
+ *      mislabeled as a trial.
+ *   3. Boss-name → trial fallback (legacy logs with no `gameZone` at all).
  *   4. The report-level zone name.
  */
 export function resolveFightZone(
@@ -252,7 +254,39 @@ export function resolveFightZone(
     };
   }
 
-  // 2. Boss-name fallback (only for recognised trial bosses).
+  // 2. Raw gameZone — an unrecognised zone (a dungeon, or a solo/group arena).
+  //    Group by its id; classify arenas by name so they aren't called dungeons.
+  if (gz?.id) {
+    return {
+      key: `zone:${gz.id}`,
+      zoneId: gz.id,
+      name: gz.name || reportData?.zone?.name || 'Unknown Zone',
+      type: classifyUnknownZone(gz.name),
+    };
+  }
+  if (gz?.name) {
+    // A name-only gameZone can still match a canonical trial by name.
+    const byName = ZONE_BY_NAME.get(gz.name.toLowerCase());
+    if (byName) {
+      return {
+        key: `zone:${byName.zoneId}`,
+        zoneId: byName.zoneId,
+        name: byName.name,
+        type: byName.type,
+        shortName: byName.shortName,
+        expectedBossCount: byName.expectedBossCount,
+      };
+    }
+    return {
+      key: `name:${gz.name.toLowerCase()}`,
+      zoneId: null,
+      name: gz.name,
+      type: classifyUnknownZone(gz.name),
+    };
+  }
+
+  // 3. Boss-name fallback — only for legacy logs with no `gameZone` at all,
+  //    and only for recognised trial bosses.
   if (isBossFight(fight)) {
     const trialName = trialNameFromBossName(fight.name);
     const byName = trialName ? ZONE_BY_NAME.get(trialName.toLowerCase()) : undefined;
@@ -266,25 +300,6 @@ export function resolveFightZone(
         expectedBossCount: byName.expectedBossCount,
       };
     }
-  }
-
-  // 3. Raw gameZone — an unrecognised zone (a dungeon, or a solo/group arena).
-  //    Group by its id; classify arenas by name so they aren't called dungeons.
-  if (gz?.id) {
-    return {
-      key: `zone:${gz.id}`,
-      zoneId: gz.id,
-      name: gz.name || reportData?.zone?.name || 'Unknown Zone',
-      type: classifyUnknownZone(gz.name),
-    };
-  }
-  if (gz?.name) {
-    return {
-      key: `name:${gz.name.toLowerCase()}`,
-      zoneId: null,
-      name: gz.name,
-      type: classifyUnknownZone(gz.name),
-    };
   }
 
   // 4. Report-level zone name (weak: report-wide, so wrong for every fight

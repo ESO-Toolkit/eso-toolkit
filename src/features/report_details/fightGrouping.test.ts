@@ -117,6 +117,30 @@ describe('resolveFightZone', () => {
     expect(zone.name).toBe('Fungal Grotto I');
     expect(zone.zoneId).toBe(ZONE_DUNGEON);
   });
+
+  it('prefers the raw gameZone over the boss-name fallback (dungeon boss with a trial token)', () => {
+    // "The Mage's Twin Serpent" hits several trial tokens ('the mage',
+    // 'serpent', 'twins') — but the fight carries a real dungeon gameZone, and
+    // the per-fight API signal must win.
+    const zone = resolveFightZone(
+      makeFight({
+        gameZone: { id: ZONE_DUNGEON, name: 'Fungal Grotto I' },
+        name: "The Mage's Twin Serpent",
+        encounterID: 500,
+      }),
+    );
+    expect(zone.type).toBe('dungeon');
+    expect(zone.name).toBe('Fungal Grotto I');
+    expect(zone.zoneId).toBe(ZONE_DUNGEON);
+  });
+
+  it('resolves a name-only gameZone that matches a canonical trial', () => {
+    const zone = resolveFightZone(
+      makeFight({ gameZone: { id: null, name: 'Sunspire' }, encounterID: 21 }),
+    );
+    expect(zone.type).toBe('trial');
+    expect(zone.zoneId).toBe(ZONE_SUNSPIRE);
+  });
 });
 
 describe('groupFightsIntoRuns', () => {
