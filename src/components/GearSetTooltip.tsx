@@ -1,10 +1,8 @@
-import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import { Box, Card, CardContent, Chip, Stack, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import React from 'react';
 
-import { getEsoHubSetUrl } from '../utils/esoHubLinks';
 import { highlightMetrics } from '../utils/highlightMetrics';
 
 export interface GearSetBonus {
@@ -187,57 +185,34 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
             )}
             <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
               <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
-                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
-                      fontWeight: 800,
-                      letterSpacing: '-.02em',
-                      ...(isDark
-                        ? {
-                            background:
-                              'linear-gradient(135deg, #ffffff 0%, #94d2ff 45%, #c8f0ff 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                            filter: 'drop-shadow(0 1px 2px rgba(148, 210, 255, 0.15))',
-                          }
-                        : {
-                            background:
-                              'linear-gradient(135deg, #0c4a8a 0%, #1e6fd4 50%, #3b8fe8 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                          }),
-                      lineHeight: 1.15,
-                      fontSize: { xs: '0.92rem', sm: '1rem' },
-                    }}
-                  >
-                    {setName}
-                  </Typography>
-                  <Box
-                    component="a"
-                    href={getEsoHubSetUrl(setName)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                    aria-label={`View ${setName} on ESO-Hub`}
-                    title="View on ESO-Hub"
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                      flexShrink: 0,
-                      lineHeight: 0,
-                      '&:hover': {
-                        color: isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
-                      },
-                    }}
-                  >
-                    <OpenInNewIcon sx={{ fontSize: 12 }} />
-                  </Box>
-                </Box>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    fontWeight: 800,
+                    letterSpacing: '-.02em',
+                    ...(isDark
+                      ? {
+                          background:
+                            'linear-gradient(135deg, #ffffff 0%, #94d2ff 45%, #c8f0ff 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                          filter: 'drop-shadow(0 1px 2px rgba(148, 210, 255, 0.15))',
+                        }
+                      : {
+                          background:
+                            'linear-gradient(135deg, #0c4a8a 0%, #1e6fd4 50%, #3b8fe8 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          backgroundClip: 'text',
+                        }),
+                    lineHeight: 1.15,
+                    fontSize: { xs: '0.92rem', sm: '1rem' },
+                  }}
+                >
+                  {setName}
+                </Typography>
                 {itemCount && (
                   <Typography
                     variant="caption"

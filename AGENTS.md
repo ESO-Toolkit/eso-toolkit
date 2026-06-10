@@ -149,12 +149,12 @@ Skills are `SKILL.md` files in `.agents/skills/`, following the [Agent Skills sp
 - **Troubleshoot**: [.agents/skills/troubleshoot/SKILL.md](.agents/skills/troubleshoot/SKILL.md) - Quick-reference fixes for common dev issues
 
 **Data & Content:**
-- **Class Skill Regen**: [.agents/skills/class-skill-regen/SKILL.md](.agents/skills/class-skill-regen/SKILL.md) - Refresh class skill descriptions/icons from ESO-Hub API
-- **Gear Data Regen**: [.agents/skills/gear-data-regen/SKILL.md](.agents/skills/gear-data-regen/SKILL.md) - Gear set bonus/tooltip data from ESO-Hub
 - **Mythic Armor Corrections**: [.agents/skills/mythic-armor-corrections/SKILL.md](.agents/skills/mythic-armor-corrections/SKILL.md) - Add/update ARMOR_TYPE_CORRECTIONS for new mythic armor
 - **No-Edit Generated**: [.agents/skills/no-edit-generated/SKILL.md](.agents/skills/no-edit-generated/SKILL.md) - Never manually edit generated files
-- **Skill Data Regen**: [.agents/skills/skill-data-regen/SKILL.md](.agents/skills/skill-data-regen/SKILL.md) - ESO skill line data regeneration
 - **UESP Data**: [.agents/skills/uesp-data/SKILL.md](.agents/skills/uesp-data/SKILL.md) - Item icon management
+
+Skill and gear tooltip data is sourced from the game client via the addon + parser
+pipeline in `tools/eso-tooltip-dump/` and `scripts/parse-tooltip-dump.mjs`.
 
 **Integrations:**
 - **Auth / OAuth**: [.agents/skills/auth/SKILL.md](.agents/skills/auth/SKILL.md) - Browser session authentication

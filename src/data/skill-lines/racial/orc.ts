@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Orc Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/orc-skills
  */
 export const orc: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const orc: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_dragonknight_021',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/orc',
   skills: [
     {
       id: AbilityId.CRAFTSMAN,

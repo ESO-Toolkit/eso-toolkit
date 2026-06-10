@@ -22,7 +22,7 @@ Only **non-light** mythic armor pieces need entries. Light mythics (e.g. Cryptca
 | Corrections table | `src/utils/armorUtils.ts` | `ARMOR_TYPE_CORRECTIONS` — edit this |
 | Tests | `src/utils/armorUtils.test.ts` | Must add a test case for each new correction |
 
-If `tmp/libsets-data/` does not exist or is stale, follow the `skill-data-regen` skill to regenerate it, or manually download a fresh LibSets SavedVariables file.
+If `tmp/libsets-data/` does not exist or is stale, manually download a fresh LibSets SavedVariables file.
 
 ## Step-by-Step: Add a New Mythic Armor Correction
 
@@ -62,7 +62,7 @@ $item = $items.<itemId>      # replace <itemId> with the number from step 2
 - If `weight` is `"light"` → **no correction needed**, stop here.
 - If `weight` is `"medium"` → add `ArmorType.MEDIUM` correction.
 - If `weight` is `"heavy"` → add `ArmorType.HEAVY` correction.
-- If the item is not in the globals file → it's a brand-new item not yet in the ESO globals dump. In this case, look up the slot on ESO-Hub or UESP, determine the weight from the item name/description, and add the correction manually.
+- If the item is not in the globals file → it's a brand-new item not yet in the ESO globals dump. In this case, determine the slot and weight from the item name/description (cross-referencing an in-game or community item source as needed), and add the correction manually.
 
 ### 4. Add the correction to armorUtils.ts
 

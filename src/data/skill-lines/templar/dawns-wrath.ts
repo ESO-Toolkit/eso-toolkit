@@ -1,7 +1,6 @@
 /**
  * Dawn's Wrath Skill Line
  * Class: Templar
- * Source: https://eso-hub.com/en/skills/templar/dawns-wrath
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

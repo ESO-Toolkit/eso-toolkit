@@ -18,7 +18,6 @@ import type { SlotType } from '../../features/loadout-manager/data/slotTypes';
 import type { GearConfig, SkillsConfig } from '../../features/loadout-manager/types/loadout.types';
 import { deriveItemNameForSlot } from '../../features/loadout-manager/utils/itemIconResolver';
 import { getChampionPointAbilityName } from '../../types/champion-points';
-import { getEsoHubSetUrl, getEsoHubSkillLineUrl } from '../../utils/esoHubLinks';
 import { getGearSetTooltipPropsByName } from '../../utils/gearSetTooltipMapper';
 import { RICH_TOOLTIP_SLOT_PROPS } from '../../utils/richTooltipSlotProps';
 import { buildTooltipPropsFromAbilityId } from '../../utils/skillTooltipMapper';
@@ -27,7 +26,7 @@ import { LazySkillTooltip as SkillTooltipCard } from '../LazySkillTooltip';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const SKILL_ICON_URL = 'https://eso-hub.com/storage/icons/';
+const SKILL_ICON_URL = 'https://assets.rpglogs.com/img/eso/abilities/';
 
 /** Resolve an icon value to a full URL, handling both short names and full URLs. */
 const resolveIconUrl = (icon: string): string =>
@@ -91,7 +90,6 @@ const SkillTile: React.FC<{
   const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
   const size = isUltimate ? ULT_TILE : TILE;
   const accent = isUltimate ? 'rgba(255,179,0,' : 'rgba(56,189,248,';
-  const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
 
   // Recomputed every render: buildTooltipPropsFromAbilityId may return null
   // until abilityIdMapper finishes its async load, and memoizing on abilityId
@@ -163,21 +161,7 @@ const SkillTile: React.FC<{
       leaveTouchDelay={3000}
       slotProps={richProps ? RICH_TOOLTIP_SLOT_PROPS : undefined}
     >
-      {esoHubUrl ? (
-        <Box
-          component="a"
-          href={esoHubUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`${skill?.name ?? `Ability #${abilityId}`} on ESO-Hub`}
-          title="View on ESO-Hub"
-          sx={{ display: 'inline-flex', lineHeight: 0 }}
-        >
-          {tile}
-        </Box>
-      ) : (
-        tile
-      )}
+      {tile}
     </Tooltip>
   );
 };
@@ -418,15 +402,8 @@ const GearDisplay: React.FC<{
             </Typography>
             {setName && (
               <Chip
-                component="a"
-                href={getEsoHubSetUrl(setName)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                clickable
                 label={setName}
                 size="small"
-                aria-label={`${setName} on ESO-Hub`}
                 sx={{
                   height: 16,
                   fontSize: '0.5rem',
@@ -435,7 +412,6 @@ const GearDisplay: React.FC<{
                   color: isDarkMode ? 'rgba(168,85,247,0.85)' : 'rgba(126,34,206,0.85)',
                   border: `1px solid ${isDarkMode ? 'rgba(168,85,247,0.2)' : 'rgba(147,51,234,0.15)'}`,
                   '& .MuiChip-label': { px: 0.5 },
-                  textDecoration: 'none',
                 }}
               />
             )}
@@ -490,21 +466,9 @@ const PassivesDisplay: React.FC<{
       {passives.map((id, i) => {
         const skill = getSkillById(id);
         const name = skill?.name ?? `#${id}`;
-        const esoHubUrl = skill?.category ? getEsoHubSkillLineUrl(skill.category) : undefined;
         return (
           <Chip
             key={`${id}-${i}`}
-            {...(esoHubUrl
-              ? {
-                  component: 'a',
-                  href: esoHubUrl,
-                  target: '_blank',
-                  rel: 'noopener noreferrer',
-                  clickable: true,
-                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
-                  'aria-label': `${name} on ESO-Hub`,
-                }
-              : {})}
             label={name}
             size="small"
             sx={{
@@ -515,7 +479,6 @@ const PassivesDisplay: React.FC<{
               color: 'text.secondary',
               border: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
               '& .MuiChip-label': { px: 0.5 },
-              ...(esoHubUrl ? { textDecoration: 'none' } : {}),
             }}
           />
         );

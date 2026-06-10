@@ -1,6 +1,5 @@
 /**
  * Dual Wield Weapon Skill Line
- * Data sourced from: https://eso-hub.com/en/skills/weapon/dual-wield
  */
 
 import { SkillData } from '../types';

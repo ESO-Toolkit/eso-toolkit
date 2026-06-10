@@ -151,7 +151,6 @@
     "download-report-data": "npm run script -- scripts/download-report-data.ts",
     "download-test-data": "npm run script -- scripts/download-test-data.ts",
     "fetch-abilities": "npm run script -- scripts/fetchAbilitiesToJson.ts",
-    "fetch-scribing-data": "npm run script -- scripts/fetchScribingData.ts",
     "fix:cache-busting": "node scripts/fix-cache-busting.cjs",
     "generate:skill-icons": "tsx --tsconfig tsconfig/scripts.json scripts/generate-skill-icons.ts",
     "generate:item-sets": "npm run script -- scripts/generate-item-set-collections.ts",
@@ -237,6 +236,8 @@
     "test:debug:headed": "playwright test --config=playwright/debug.config.ts --headed",
     "test:debug:ui": "playwright test --config=playwright/debug.config.ts --ui",
     "typecheck": "tsc --noEmit",
+    "check:no-esohub": "node scripts/check-no-esohub.cjs",
+    "check:provenance": "node scripts/check-tooltip-provenance.mjs",
     "validate": "npm run typecheck && npm run lint && npm run format:check",
     "validate:playwright-ai": "node scripts/validate-playwright-ai.cjs",
     "validate:preloading": "node scripts/validate-playwright-ai.cjs tests/visual-*.spec.ts"

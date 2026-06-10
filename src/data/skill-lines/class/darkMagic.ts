@@ -1,6 +1,5 @@
 /**
  * Dark Magic — Sorcerer Skill Line
- * Source: https://eso-hub.com/en/skills/sorcerer/dark-magic
  * Regenerated: 2025-11-14T20:33:08.843Z
  */
 
@@ -13,7 +12,6 @@ export const darkMagic: SkillLineData = {
   class: 'Sorcerer',
   category: 'class',
   icon: 'ability_sorcerer_monsoon',
-  sourceUrl: 'https://eso-hub.com/en/skills/sorcerer/dark-magic',
   skills: [
     {
       id: ClassSkillId.SORCERER_NEGATE_MAGIC,
@@ -69,7 +67,7 @@ export const darkMagic: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_crystalweapon',
       description:
-        "Encase your weapon in dark crystals for 6 seconds, causing your next two Light or Heavy Attacks to deal additional damage and reduce the target's Armor by 1000 for 5 seconds. The first hit deals 2091 Physical Damage and the second deals 836 Physical Damage.\n\n After casting, your next non-Ultimate ability used within 3 seconds costs 10% less.",
+        "Encase your weapon in dark crystals for 6 seconds, causing your next two Light or Heavy Attacks to deal additional damage and reduce the target's Armor by 1000 for 5 seconds. The first hit deals 2091 Physical Damage and the second deals 836 Physical Damage.\n\nAfter casting, your next non-Ultimate ability used within 3 seconds costs 10% less.",
       baseSkillId: ClassSkillId.SORCERER_CRYSTAL_SHARD,
     },
     {
@@ -96,7 +94,7 @@ export const darkMagic: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_crushing_winds',
       description:
-        'Call forth a Daedric shroud from the Colored Rooms to heal you and your allies and enfeeble foes in front of you. \n\nYou and allies in the area are healed for 2700 Health and receive Minor Vitality, increasing your healing received and damage shield strength by 6% for 10 seconds.\n\nEnemies are afflicted with Major Maim, reducing their damage done by 10% for 10 seconds.',
+        'Call forth a Daedric shroud from the Colored Rooms to heal you and your allies and enfeeble foes in front of you.\n\nYou and allies in the area are healed for 2700 Health and receive Minor Vitality, increasing your healing received and damage shield strength by 6% for 10 seconds.\n\nEnemies are afflicted with Major Maim, reducing their damage done by 10% for 10 seconds.',
       baseSkillId: ClassSkillId.SORCERER_ENCASE,
     },
     {
@@ -132,7 +130,7 @@ export const darkMagic: SkillLineData = {
       type: 'active',
       icon: 'ability_sorcerer_dark_exchange',
       description:
-        'Bargain with darkness to restore 8000 Health and 3600 Magicka instantly, and an additional 2400 Magicka over 20 seconds. \n\nThe exchange also grants you Minor Berserk for 20 seconds, increasing your damage done by 5%.',
+        'Bargain with darkness to restore 8000 Health and 3600 Magicka instantly, and an additional 2400 Magicka over 20 seconds.\n\nThe exchange also grants you Minor Berserk for 20 seconds, increasing your damage done by 5%.',
       baseSkillId: ClassSkillId.SORCERER_DARK_EXCHANGE,
     },
     {

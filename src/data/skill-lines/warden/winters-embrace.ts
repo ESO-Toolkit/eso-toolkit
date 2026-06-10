@@ -1,6 +1,5 @@
 /**
  * Winter's Embrace - Warden Class Skill Line
- * Source: https://eso-hub.com/en/skills/warden/winters-embrace
  */
 
 import type { SkillLineData } from '../../types/skill-line-types';

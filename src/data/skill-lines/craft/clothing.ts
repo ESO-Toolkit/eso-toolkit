@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Clothing Craft Skills
- * Source: https://eso-hub.com/en/skills/craft/clothing
  */
 export const clothing: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const clothing: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'ability_tradecraft_002',
-  sourceUrl: 'https://eso-hub.com/en/skills/craft/clothing',
   skills: [
     {
       id: AbilityId.TAILORING,

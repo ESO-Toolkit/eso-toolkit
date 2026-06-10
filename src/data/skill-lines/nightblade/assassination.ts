@@ -4,7 +4,6 @@
  * The Assassination skill-line is part of the Nightblade toolkit and has a focus on offensive abilities.
  * In addition to powerful abilities, you can also select passives that increase your damage capabilities even further.
  *
- * Source: https://eso-hub.com/en/skills/nightblade/assassination
  */
 
 import { SkillLineData } from '../../types/skill-line-types';

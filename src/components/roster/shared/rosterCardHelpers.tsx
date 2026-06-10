@@ -6,7 +6,7 @@
  * Extracted here so the card files can import them without circular deps.
  */
 
-import { Avatar, Box } from '@mui/material';
+import { Avatar } from '@mui/material';
 import React from 'react';
 
 import { KnownSetIDs } from '../../../types/abilities';
@@ -23,7 +23,6 @@ import {
   ALL_5PIECE_SETS,
   DD_SPECIAL_SETS,
 } from '../../../types/roster';
-import { getEsoHubSkillLineUrl } from '../../../utils/esoHubLinks';
 import { getSetDisplayName } from '../../../utils/setNameUtils';
 
 // ---------------------------------------------------------------------------
@@ -114,29 +113,13 @@ export const getHealerBuffIcon = (buff: string | undefined): React.ReactElement 
 export const getSkillLineIcon = (skillLine: string): React.ReactElement | null => {
   const iconFile = SKILL_LINE_ICONS[skillLine];
   if (!iconFile) return null;
-  const href = getEsoHubSkillLineUrl(skillLine);
-  const avatar = (
+  return (
     <Avatar
       src={`https://assets.rpglogs.com/img/eso/abilities/${iconFile}.png`}
       alt=""
       sx={{ width: 20, height: 20, mr: 0.5 }}
       variant="rounded"
     />
-  );
-  if (!href) return avatar;
-  return (
-    <Box
-      component="a"
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e: React.MouseEvent) => e.stopPropagation()}
-      aria-label={`${skillLine} on ESO-Hub`}
-      title={`${skillLine} — view on ESO-Hub`}
-      sx={{ display: 'inline-flex', lineHeight: 0 }}
-    >
-      {avatar}
-    </Box>
   );
 };
 

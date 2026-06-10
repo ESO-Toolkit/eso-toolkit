@@ -1,6 +1,5 @@
 /**
  * Curative Runeforms — Arcanist Skill Line
- * Source: https://eso-hub.com/en/skills/arcanist/curative-runeforms
  * Regenerated: 2025-11-14T20:33:08.767Z
  */
 
@@ -13,7 +12,6 @@ export const curativeRuneforms: SkillLineData = {
   class: 'Arcanist',
   category: 'class',
   icon: 'ability_mage_065',
-  sourceUrl: 'https://eso-hub.com/en/skills/arcanist/curative-runeforms',
   skills: [
     {
       id: ClassSkillId.ARCANIST_VITALIZING_GLYPHIC,
@@ -41,7 +39,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_018_b',
       description:
-        'Summon an Apocryphal glyphic while in combat, which you and your allies can damage. The glyphic spawns at 70% Health and grows stronger the more you damage it. \n\nThe glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 958 Health every 1 second in proportion to its Health.',
+        'Summon an Apocryphal glyphic while in combat, which you and your allies can damage. The glyphic spawns at 70% Health and grows stronger the more you damage it.\n\nThe glyphic grants up to 200 Weapon and Spell Damage and heals you and your allies around it for up to 958 Health every 1 second in proportion to its Health.',
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_VITALIZING_GLYPHIC,
     },
@@ -60,7 +58,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_013_b',
       description:
-        'Craft a series of virtuous Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 1199 Health three times and generate Crux. \n\nHealing a target under 50% Health grants them Minor Heroism for 6 seconds, generating 1 Ultimate every 1.5 seconds.\n\nEach active Crux reduces the cost of this ability by 3%.',
+        'Craft a series of virtuous Apocryphal runes, then propel them at yourself or an ally in front of you. The runes heal for 1199 Health three times and generate Crux.\n\nHealing a target under 50% Health grants them Minor Heroism for 6 seconds, generating 1 Ultimate every 1.5 seconds.\n\nEach active Crux reduces the cost of this ability by 3%.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEMEND,
     },
     {
@@ -106,7 +104,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015',
       description:
-        'Carve the runes of the Blind Man to call forth spinning mystical discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3159 damage for 6 seconds.\n\nDiscs prefer your reticle target, or low-Health targets without shields.',
+        'Carve the runes of the Blind Man to call forth spinning mystical discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3068 damage for 6 seconds.\n\nDiscs prefer your reticle target, or low-Health targets without shields.',
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
       alternateIds: [183447],
     },
@@ -116,7 +114,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015_a',
       description:
-        "Carve the Fate Crone's runes to create spinning mystical discs and generate Crux. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3160 damage for 6 seconds. \n\nRecasting on a target already shielded grants a new shield that is 30% stronger.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
+        "Carve the Fate Crone's runes to create spinning mystical discs and generate Crux. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3068 damage for 6 seconds.\n\nRecasting on a target already shielded grants a new shield that is 30% stronger.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
     },
     {
@@ -125,7 +123,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_015_b',
       description:
-        "Carve the Baron of Breakers' runes to create spinning discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3264 damage for 6 seconds.\n\nConsume Crux to cause the shields to heal for 33% of the shield's remaining strength every 1 second per Crux spent.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
+        "Carve the Baron of Breakers' runes to create spinning discs. Discs surround you or up to 4 allies in front of you, granting a shield that absorbs 3169 damage for 6 seconds.\n\nConsume Crux to cause the shields to heal for 33% of the shield's remaining strength every 1 second per Crux spent.\n\nDiscs prefer your reticle target, or low-Health targets without shields.",
       baseSkillId: ClassSkillId.ARCANIST_CHAKRAM_SHIELDS,
     },
     {
@@ -161,7 +159,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_016',
       description:
-        'Breach the world walls to create a portal at a target location. Its twin appears directly before you. Crossing the threshold allows you to teleport from one to the other for as long as the portals remain open. \n\nApocryphal Gate generates Crux each time you teleport.',
+        'Breach the world walls to create a portal at a target location. Its twin appears directly before you. Crossing the threshold allows you to teleport from one to the other for as long as the portals remain open.\n\nApocryphal Gate generates Crux each time you teleport.',
       baseSkillId: ClassSkillId.ARCANIST_APOCRYPHAL_GATE,
     },
     {
@@ -170,7 +168,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_016_a',
       description:
-        'Breach the world walls to create a portal at a target location. Its twin appears directly before you. Crossing the threshold allows you to teleport from one to the other for as long as the portals remain open. \n\nAfter teleporting, you gain Major Expedition for 5 seconds, increasing your Movement Speed by 30%.\n\nFleet-Footed Gate generates Crux each time you teleport.',
+        'Breach the world walls to create a portal at a target location. Its twin appears directly before you. Crossing the threshold allows you to teleport from one to the other for as long as the portals remain open.\n\nAfter teleporting, you gain Major Expedition for 5 seconds, increasing your Movement Speed by 30%.\n\nFleet-Footed Gate generates Crux each time you teleport.',
       baseSkillId: ClassSkillId.ARCANIST_APOCRYPHAL_GATE,
     },
     {
@@ -179,7 +177,7 @@ export const curativeRuneforms: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_016_b',
       description:
-        'Breach the world walls to create a portal at a target location. Its twin appears directly before you. Crossing the threshold allows you to teleport from one to the other for as long as the portals remain open. \n\nAllies standing within either portal can activate the Passage synergy, allowing them to teleport to the opposite portal.\n\nPassage Between Worlds generates Crux each time you teleport.',
+        'Breach the world walls to create a portal at a target location. Its twin appears directly before you. Crossing the threshold allows you to teleport from one to the other for as long as the portals remain open.\n\nAllies standing within either portal can activate the Passage synergy, allowing them to teleport to the opposite portal.\n\nPassage Between Worlds generates Crux each time you teleport.',
       baseSkillId: ClassSkillId.ARCANIST_APOCRYPHAL_GATE,
     },
     {

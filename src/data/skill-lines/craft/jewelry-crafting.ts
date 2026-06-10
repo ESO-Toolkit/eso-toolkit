@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Jewelry Crafting Skills
- * Source: https://eso-hub.com/en/skills/craft/jewelry-crafting
  */
 export const jewelryCrafting: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const jewelryCrafting: SkillLineData = {
   class: 'craft',
   category: 'craft',
   icon: 'passive_jewelerengraver',
-  sourceUrl: 'https://eso-hub.com/en/skills/craft/jewelry-crafting',
   skills: [
     {
       id: AbilityId.ENGRAVER,

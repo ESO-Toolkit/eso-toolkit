@@ -46,7 +46,7 @@ import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const ICON_URL = 'https://eso-hub.com/storage/icons/';
+const ICON_URL = 'https://assets.rpglogs.com/img/eso/abilities/';
 const TILE_SIZE = 44;
 const MIN_SEARCH = 2;
 const MAX_RESULTS = 100;

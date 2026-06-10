@@ -1,6 +1,5 @@
 /**
  * Grave Lord — Necromancer Skill Line
- * Source: https://eso-hub.com/en/skills/necromancer/grave-lord
  * Regenerated: 2025-11-14T20:33:08.804Z
  */
 
@@ -13,7 +12,6 @@ export const graveLord: SkillLineData = {
   class: 'Necromancer',
   category: 'class',
   icon: 'ability_necromancer_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/necromancer/grave-lord',
   skills: [
     {
       id: ClassSkillId.NECROMANCER_FROZEN_COLOSSUS,
@@ -41,7 +39,7 @@ export const graveLord: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_necromancer_006_b',
       description:
-        'Unleash a pestilent Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 3200 3360, and 3528 Disease Damage with the first, second, and third smash.\n\nDealing damage applies the Diseased status effect and Major Vulnerability to any enemy hit for 12 seconds, increasing their damage taken by 10%.',
+        'Unleash a pestilent Flesh Colossus to pulverize enemies in the area. The Colossus smashes the ground three times over 3 seconds, dealing 3200, 3360, and 3528 Disease Damage with the first, second, and third smash.\n\nDealing damage applies the Diseased status effect and Major Vulnerability to any enemy hit for 12 seconds, increasing their damage taken by 10%.',
       isUltimate: true,
       baseSkillId: ClassSkillId.NECROMANCER_FROZEN_COLOSSUS,
     },

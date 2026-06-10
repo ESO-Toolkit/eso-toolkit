@@ -1,6 +1,5 @@
 /**
  * Herald of the Tome — Arcanist Skill Line
- * Source: https://eso-hub.com/en/skills/arcanist/herald-of-the-tome
  * Regenerated: 2025-11-14T20:33:08.637Z
  */
 
@@ -13,7 +12,6 @@ export const heraldOfTheTome: SkillLineData = {
   class: 'Arcanist',
   category: 'class',
   icon: 'ability_arcanist_006',
-  sourceUrl: 'https://eso-hub.com/en/skills/arcanist/herald-of-the-tome',
   skills: [
     {
       id: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
@@ -21,7 +19,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_006',
       description:
-        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 6 seconds and deals 1115 Magic Damage to enemies within 5 meters every 0.5 seconds. The scion's beam can be repositioned by recasting The Unblinking Eye.",
+        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 6 seconds and deals 1115 Magic Damage to enemies within 5 meters every 0.5 seconds.\n\nThe scion's beam can be repositioned by recasting The Unblinking Eye.",
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
     },
@@ -41,7 +39,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'ultimate',
       icon: 'ability_arcanist_006_a',
       description:
-        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 8 seconds that deals 1151 Magic Damage to enemies within 5 meters every 0.5 seconds. \n\nThe scion's beam automatically follows the initial target, and hunts for a new one within 8 meters if it is slain.",
+        "Tear open the fabric of the Aurbis to summon a scion of Hermaeus Mora. This being casts forth a beam that rends asunder reality for 8 seconds that deals 1151 Magic Damage to enemies within 5 meters every 0.5 seconds.\n\nThe scion's beam automatically follows the initial target, and hunts for a new one within 8 meters if it is slain.",
       isUltimate: true,
       baseSkillId: ClassSkillId.ARCANIST_THE_UNBLINKING_EYE,
     },
@@ -87,7 +85,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_001_b',
       description:
-        'Craft a series of Apocryphal runes before launching them at a foe, dealing 696 Magic Damage 766 Magic Damage, and 917 Magic Damage and generating Crux. The last rune explodes, dealing damage to all enemies within 8 meters of the target.\n\nThis ability deals 3% increased damage for each active Crux when cast.',
+        'Craft a series of Apocryphal runes before launching them at a foe, dealing 696 Magic Damage, 766 Magic Damage, and 917 Magic Damage and generating Crux. The last rune explodes, dealing damage to all enemies within 8 meters of the target.\n\nThis ability deals 3% increased damage for each active Crux when cast.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEBLADES,
       alternateIds: [188780],
     },
@@ -97,7 +95,7 @@ export const heraldOfTheTome: SkillLineData = {
       type: 'active',
       icon: 'ability_arcanist_001_a',
       description:
-        'Craft a series of Apocryphal runes before launching them at a foe, dealing 718 Magic Damage three times and generating Crux. \n\nThis ability gains between 1095 and 2191 Weapon and Spell Critical rating and deals 3% increased damage for each active Crux when cast.',
+        'Craft a series of Apocryphal runes before launching them at a foe, dealing 718 Magic Damage three times and generating Crux.\n\nThis ability gains between 1095 and 2191 Weapon and Spell Critical rating and deals 3% increased damage for each active Crux when cast.',
       baseSkillId: ClassSkillId.ARCANIST_RUNEBLADES,
     },
     {

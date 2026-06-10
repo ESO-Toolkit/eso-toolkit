@@ -7,7 +7,6 @@ export const scrying: SkillLineData = {
   class: 'world',
   category: 'world',
   icon: 'ability_scrying_01',
-  sourceUrl: 'https://eso-hub.com/en/skills/world/scrying',
   skills: [
     {
       id: AbilityId.SCRY,
@@ -17,7 +16,7 @@ export const scrying: SkillLineData = {
       isUltimate: false,
       isPassive: true,
       description:
-        'Adds the selected contiguous group of facets to your area of control. Consumes 1 turn.',
+        'Adds the selected contiguous group of facets to your area of control.\n\nConsumes 1 turn.',
       skillStyles: [],
     },
     {
@@ -28,7 +27,7 @@ export const scrying: SkillLineData = {
       maxRank: 10,
       isUltimate: false,
       isPassive: true,
-      description: 'Allows you to scry for Antiquities of up to Ultimate difficulty.',
+      description: 'Allows you to scry for Antiquities of up to Simple difficulty.',
       skillStyles: [],
     },
     {
@@ -38,7 +37,7 @@ export const scrying: SkillLineData = {
       maxRank: 3,
       isUltimate: false,
       isPassive: true,
-      description: 'Grants you two additional turns of Scrying.',
+      description: 'Grants you an additional turn of Scrying.',
       skillStyles: [],
     },
     {
@@ -50,7 +49,7 @@ export const scrying: SkillLineData = {
       isUltimate: false,
       isPassive: true,
       description:
-        "Unites a hexagonal cluster of facets in the Antiquarian's Eye, converting the symbols to match that of the central facet. New Effect: The ability's range increases by one facet, creating a snowflake-like pattern. Consumes 1 Magicka Charge.",
+        "Unites a hexagonal cluster of facets in the Antiquarian's Eye, converting the symbols to match that of the central facet.\n\nConsumes 1 Magicka Charge.",
       skillStyles: [],
     },
     {
@@ -61,7 +60,7 @@ export const scrying: SkillLineData = {
       maxRank: 4,
       isUltimate: false,
       isPassive: true,
-      description: 'Grants you two additional Magicka Charges for use in Scrying.',
+      description: 'Grants you an additional Magicka Charge for use in Scrying.',
       skillStyles: [],
     },
     {
@@ -73,7 +72,7 @@ export const scrying: SkillLineData = {
       isUltimate: false,
       isPassive: true,
       description:
-        'Claim all facets of the selected type that touch your area of control, as well as matching facets directly adjacent. New Effect: Dilation now claims ALL contiguous facets of the same type. Consumes 1 Magicka Charge.',
+        'Claim all facets of the selected type that touch your area of control, as well as matching facets directly adjacent.\n\nConsumes 1 Magicka Charge.',
       skillStyles: [],
     },
     {
@@ -85,7 +84,7 @@ export const scrying: SkillLineData = {
       isUltimate: false,
       isPassive: true,
       description:
-        'Claim a line of facets, stretching out from your area of control. New Effect: Range increased from 4 facets to 6. Consumes 1 Magicka Charge.',
+        'Claim a line of facets, stretching out from your area of control.\n\nConsumes 1 Magicka Charge.',
       skillStyles: [],
     },
     {

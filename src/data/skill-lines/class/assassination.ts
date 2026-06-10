@@ -1,6 +1,5 @@
 /**
  * Assassination — Nightblade Skill Line
- * Source: https://eso-hub.com/en/skills/nightblade/assassination
  * Regenerated: 2025-11-14T20:33:08.826Z
  */
 
@@ -13,7 +12,6 @@ export const assassination: SkillLineData = {
   class: 'Nightblade',
   category: 'class',
   icon: 'ability_nightblade_007',
-  sourceUrl: 'https://eso-hub.com/en/skills/nightblade/assassination',
   skills: [
     {
       id: ClassSkillId.NIGHTBLADE_DEATH_STROKE,
@@ -107,7 +105,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_014',
       description:
-        "Expose an enemy's weaknesses to afflict them with Major Breach, reducing their Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health.\n\nYou can only have one Mark Target active at a time.",
+        "Expose an enemy's weaknesses by applying Major Breach to them, reducing Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health.\n\nYou can only have one Mark Target active at a time.",
       baseSkillId: ClassSkillId.NIGHTBLADE_MARK_TARGET,
     },
     {
@@ -116,7 +114,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_014_a',
       description:
-        "Expose an enemy's weaknesses to afflict them with Major Breach, reducing their Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health and gain Major Berserk, increasing your damage done by 10% for 10 seconds.\n\nYou can only have one Reaper's Mark active at a time.",
+        "Expose an enemy's weaknesses by applying Major Breach to them, reducing Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nWhen a marked enemy dies, you heal to full Health and gain Major Berserk, increasing your damage done by 10% for 10 seconds.\n\nYou can only have one Reaper's Mark active at a time.",
       baseSkillId: ClassSkillId.NIGHTBLADE_MARK_TARGET,
     },
     {
@@ -125,7 +123,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_014_b',
       description:
-        "Expose an enemy's weaknesses to afflict them with Major Breach, reducing their Physical Resistance and Spell Resistance by 5948 for 1 minute.\n\nYou can detect marked enemies even if they use stealth or invisibility for 3 seconds. When a marked enemy dies, you heal to full Health.\n\nYou can only have one Piercing Mark active at a time.",
+        "Expose an enemy's weaknesses by applying Major Breach to them, reducing Physical Resistance and Spell Resistance by 5948 for 20 seconds.\n\nYou can detect marked enemies even if they use stealth or invisibility for 3 seconds. When a marked enemy dies, you heal to full Health.\n\nYou can only have one Piercing Mark active at a time.",
       baseSkillId: ClassSkillId.NIGHTBLADE_MARK_TARGET,
     },
     {
@@ -134,7 +132,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_002',
       description:
-        'Slash an enemy, dealing 2323 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.',
+        'Slash an enemy, dealing 2323 Magic Damage.\n\nIf you strike an enemy from their flank you set them Off Balance.',
       baseSkillId: ClassSkillId.NIGHTBLADE_VEILED_STRIKE,
     },
     {
@@ -152,7 +150,7 @@ export const assassination: SkillLineData = {
       type: 'active',
       icon: 'ability_nightblade_002_b',
       description:
-        'Slash an enemy, dealing 2556 Magic Damage. \n\nIf you strike an enemy from their flank you set them Off Balance.\n\nWhen you leave Sneak or invisibility while in combat, increase your damage done with this ability by 10% for 15 seconds.\n\nWhile slotted on either bar, you gain Minor Expedition, increasing your Movement Speed by 15%.',
+        'Slash an enemy, dealing 2556 Magic Damage.\n\nIf you strike an enemy from their flank you set them Off Balance.\n\nWhen you leave Sneak or invisibility while in combat, increase your damage done with this ability by 10% for 15 seconds.\n\nWhile slotted on either bar, you gain Minor Expedition, increasing your Movement Speed by 15%.',
       baseSkillId: ClassSkillId.NIGHTBLADE_VEILED_STRIKE,
     },
     {
@@ -192,7 +190,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_018',
       description:
-        'When an enemy dies within 2 seconds of being damaged by you, you restore 1000 Magicka and Stamina.',
+        'Shift your grip and cut deep, dealing 1161 Bleed Damage to your foe. Deals up to 400% more damage to enemies with less than 50% Health.',
       isPassive: true,
     },
     {
@@ -206,7 +204,7 @@ export const assassination: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_017',
       description:
-        'Increases your Critical Damage by 10%. Dealing Critical Damage grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
+        'Increases your Critical Damage by 10%.\n\nDealing Critical Damage grants you and your group Minor Savagery, increasing your Weapon Critical rating by 1314 for 20 seconds.',
       isPassive: true,
     },
     {

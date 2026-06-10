@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Nord Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/nord-skills
  */
 export const nord: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const nord: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_dragonknight_032',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/nord',
   skills: [
     {
       id: AbilityId.REVELER,

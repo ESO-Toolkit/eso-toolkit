@@ -1,6 +1,5 @@
 /**
  * Green Balance — Warden Skill Line
- * Source: https://eso-hub.com/en/skills/warden/green-balance
  * Regenerated: 2025-11-14T20:33:08.879Z
  */
 
@@ -13,7 +12,6 @@ export const greenBalance: SkillLineData = {
   class: 'Warden',
   category: 'class',
   icon: 'ability_warden_012',
-  sourceUrl: 'https://eso-hub.com/en/skills/warden/green-balance',
   skills: [
     {
       id: ClassSkillId.WARDEN_SECLUDED_GROVE,
@@ -60,7 +58,7 @@ export const greenBalance: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_008_b',
       description:
-        'Seed a large area of mushrooms in front of you, healing you and your allies for 2700 Health. \n\nAny target healed gains Minor Intellect and Minor Endurance, increasing their Magicka and Stamina Recovery by 15% for 20 seconds.',
+        'Seed a large area of mushrooms in front of you, healing you and your allies for 2700 Health.\n\nAny target healed gains Minor Intellect and Minor Endurance, increasing their Magicka and Stamina Recovery by 15% for 20 seconds.',
       baseSkillId: ClassSkillId.WARDEN_FUNGAL_GROWTH,
     },
     {
@@ -87,7 +85,7 @@ export const greenBalance: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_007_b',
       description:
-        'Summon a field of flowers which blooms after 6 seconds, healing you and allies in the area for 3485 Health.\n\nWhile the field grows, you and allies are healed for 410 Health every 1 second.  \n\nYou can activate this ability again to cause it to instantly bloom.\n\nAn ally within the field can activate the Harvest synergy, healing for 3372 Health over 5 seconds.',
+        'Summon a field of flowers which blooms after 6 seconds, healing you and allies in the area for 3485 Health.\n\nWhile the field grows, you and allies are healed for 410 Health every 1 second.\n\nYou can activate this ability again to cause it to instantly bloom.\n\nAn ally within the field can activate the Harvest synergy, healing for 3372 Health over 5 seconds.',
       baseSkillId: ClassSkillId.WARDEN_HEALING_SEED,
     },
     {
@@ -168,7 +166,7 @@ export const greenBalance: SkillLineData = {
       type: 'active',
       icon: 'ability_warden_011_a',
       description:
-        'Launch a vine to swing yourself to an ally, instantly healing them for 2700 Health.  \n\nGain 10 Ultimate when healing an ally under 60% Health while you are in combat. This effect can occur every 4 seconds.',
+        'Launch a vine to swing yourself to an ally, instantly healing them for 2700 Health.\n\nGain 10 Ultimate when healing an ally under 60% Health while you are in combat. This effect can occur every 4 seconds.',
       baseSkillId: ClassSkillId.WARDEN_NATURE_S_GRASP,
     },
     {

@@ -48,7 +48,6 @@ export interface SkillLineData {
   class: string;
   category: 'class' | 'weapon' | 'armor' | 'guild' | 'alliance' | 'world' | 'racial' | 'craft';
   icon: string;
-  /** Canonical ESO-Hub URL for this skill line */
   sourceUrl?: string;
   skills: SkillData[];
 }

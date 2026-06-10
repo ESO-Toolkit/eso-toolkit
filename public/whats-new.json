@@ -64,7 +64,7 @@
     {
       "id": 843,
       "title": "feat(data): update U49 Night Market monster set bonuses (ESO-680)",
-      "description": "## Summary\n\nUpdates bonus text for two of the three U49 Night Market monster sets to match current ESO-Hub data.\n\nAll three sets (`glitteringGoad`, `thousandEyes`, `theRuckus`) exist in `src/data/Gear Sets/medium.ts` with `setType: 'Monster Set'`, following the codebase convention for monster set `GearSetData` entries.\n\n## Changes\n\n- **Glittering Goad** ? Frost damage corrected 1024 ? 812; removed erroneous \"of\" in \"up to of 6 enemies\"; reformatted to multi-sentence; \"enemy\" ? \"defeated enemy\" at end\n- **Thousand Eyes** ? Bleed damage corrected 1357 ? 1079\n- **The Ruckus** ? Already matched ESO-Hub; no change needed\n\nUpdated via `node scripts/refresh-gear-sets.mjs --apply --set \"...\"`.",
+      "description": "## Summary\n\nUpdates bonus text for two of the three U49 Night Market monster sets to match current in-game values.\n\nAll three sets (`glitteringGoad`, `thousandEyes`, `theRuckus`) exist in `src/data/Gear Sets/medium.ts` with `setType: 'Monster Set'`, following the codebase convention for monster set `GearSetData` entries.\n\n## Changes\n\n- **Glittering Goad** ? Frost damage corrected 1024 ? 812; removed erroneous \"of\" in \"up to of 6 enemies\"; reformatted to multi-sentence; \"enemy\" ? \"defeated enemy\" at end\n- **Thousand Eyes** ? Bleed damage corrected 1357 ? 1079\n- **The Ruckus** ? Already matched current values; no change needed\n\nUpdated via `node scripts/refresh-gear-sets.mjs --apply --set \"...\"`.",
       "mergedAt": "2026-03-10T06:40:52Z",
       "author": "bkrupa",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/843",
@@ -84,7 +84,7 @@
     {
       "id": 841,
       "title": "feat(ESO-675): regenerate DK Earthen Heart skill line for U49",
-      "description": "## Summary\r\n\r\nFull regeneration of the Dragonknight Earthen Heart skill line for the U49 patch. Updates skill names, descriptions, and adds/moves skills to match the redesigned skill tree.\r\n\r\n## Jira Ticket\r\n\r\n[ESO-675](https://bkrupa.atlassian.net/browse/ESO-675)\r\n\r\n## Changes Made\r\n\r\n### `src/data/skill-lines/class/earthenHeart.ts`\r\n\r\n**Description updates (auto-applied via `refresh-class-skills.mjs`):**\r\n- Magma Armor / Magma Shell / Corrosive Armor (Corrosive now deals Flame Damage, not all damage)\r\n- Molten Weapons / Igneous Weapons / Molten Armaments\r\n- Obsidian Shield / Fragmented Shield / Igneous Shield (Fragmented now scales off Magicka/Stamina)\r\n- Petrify / Fossilize / Shattering Rocks (new delay mechanic before stun completes)\r\n- Magma Fist (full description from ESO-Hub; was a placeholder from ESO-672)\r\n\r\n**Structural changes:**\r\n- Stonefist → **Superheated Ward** (complete rework: now a targeted damage shield ability)\r\n- Obsidian Shard → **Volcanic Ward** (morph of Superheated Ward: shield + heal on expiry)\r\n- **Spiked Armor moved from Draconic Power → Earthspike Mantle** (whole group relocated to Earthen Heart):\r\n  - Volatile Armor → Shatterspike Mantle\r\n  - Hardened Armor → Earthshield Mantle\r\n- Passive: Battle Roar → **Landslide** (new stacking +1% damage per stack mechanic)\r\n- Passive: Helping Hands → **Mountain Giant** (Heavy Attack applies Off Balance + restores Stamina)\r\n- Passive: Mountain's Blessing → **Blessing at the Peak** (generate Ultimate on Earthen Heart ability + +10% Crit Damage)\r\n\r\n**TODO (skipped):** Heart of Stone — new U49 5th passive; game ability ID not determinable from available data sources (not in `abilities.json`, not exposed by ESO-Hub). Requires in-game addon data.\r\n\r\n### `src/features/loadout-manager/data/classSkillIds.ts`\r\n\r\nAdded U49 enum aliases for all renamed skills (old names kept as aliases for `draconicPower.ts` backwards compatibility until ESO-674 regen):\r\n- `DRAGONKNIGHT_LANDSLIDE` = 29463 (alias for `BATTLE_ROAR`)\r\n- `DRAGONKNIGHT_EARTHSHIELD_MANTLE` = 20328 (alias for `HARDENED_ARMOR`)\r\n- `DRAGONKNIGHT_MOUNTAIN_GIANT` = 29475 (alias for `HELPING_HANDS`)\r\n- `DRAGONKNIGHT_BLESSING_AT_THE_PEAK` = 29473 (alias for `MOUNTAIN_S_BLESSING`)\r\n- `DRAGONKNIGHT_VOLCANIC_WARD` = 31820 (alias for `OBSIDIAN_SHARD`)\r\n- `DRAGONKNIGHT_EARTHSPIKE_MANTLE` = 20319 (alias for `SPIKED_ARMOR`)\r\n- `DRAGONKNIGHT_SUPERHEATED_WARD` = 29032 (alias for `STONEFIST`)\r\n- `DRAGONKNIGHT_SHATTERSPIKE_MANTLE` = 20323 (alias for `VOLATILE_ARMOR`)\r\n\r\n## Notes\r\n\r\n- `draconicPower.ts` is intentionally **not** modified in this PR — it still references the old enum names (`SPIKED_ARMOR`, `VOLATILE_ARMOR`, `HARDENED_ARMOR`) which remain valid aliases. Full Draconic Power cleanup will happen in ESO-674.\r\n- This PR is based on `main` which includes ESO-672 (Heat Shock rename) and ESO-679 (abilities.json re-fetch).",
+      "description": "## Summary\r\n\r\nFull regeneration of the Dragonknight Earthen Heart skill line for the U49 patch. Updates skill names, descriptions, and adds/moves skills to match the redesigned skill tree.\r\n\r\n## Jira Ticket\r\n\r\n[ESO-675](https://bkrupa.atlassian.net/browse/ESO-675)\r\n\r\n## Changes Made\r\n\r\n### `src/data/skill-lines/class/earthenHeart.ts`\r\n\r\n**Description updates (auto-applied via `refresh-class-skills.mjs`):**\r\n- Magma Armor / Magma Shell / Corrosive Armor (Corrosive now deals Flame Damage, not all damage)\r\n- Molten Weapons / Igneous Weapons / Molten Armaments\r\n- Obsidian Shield / Fragmented Shield / Igneous Shield (Fragmented now scales off Magicka/Stamina)\r\n- Petrify / Fossilize / Shattering Rocks (new delay mechanic before stun completes)\r\n- Magma Fist (full description added; was a placeholder from ESO-672)\r\n\r\n**Structural changes:**\r\n- Stonefist → **Superheated Ward** (complete rework: now a targeted damage shield ability)\r\n- Obsidian Shard → **Volcanic Ward** (morph of Superheated Ward: shield + heal on expiry)\r\n- **Spiked Armor moved from Draconic Power → Earthspike Mantle** (whole group relocated to Earthen Heart):\r\n  - Volatile Armor → Shatterspike Mantle\r\n  - Hardened Armor → Earthshield Mantle\r\n- Passive: Battle Roar → **Landslide** (new stacking +1% damage per stack mechanic)\r\n- Passive: Helping Hands → **Mountain Giant** (Heavy Attack applies Off Balance + restores Stamina)\r\n- Passive: Mountain's Blessing → **Blessing at the Peak** (generate Ultimate on Earthen Heart ability + +10% Crit Damage)\r\n\r\n**TODO (skipped):** Heart of Stone — new U49 5th passive; game ability ID not determinable from available data sources (not in `abilities.json`). Requires in-game addon data.\r\n\r\n### `src/features/loadout-manager/data/classSkillIds.ts`\r\n\r\nAdded U49 enum aliases for all renamed skills (old names kept as aliases for `draconicPower.ts` backwards compatibility until ESO-674 regen):\r\n- `DRAGONKNIGHT_LANDSLIDE` = 29463 (alias for `BATTLE_ROAR`)\r\n- `DRAGONKNIGHT_EARTHSHIELD_MANTLE` = 20328 (alias for `HARDENED_ARMOR`)\r\n- `DRAGONKNIGHT_MOUNTAIN_GIANT` = 29475 (alias for `HELPING_HANDS`)\r\n- `DRAGONKNIGHT_BLESSING_AT_THE_PEAK` = 29473 (alias for `MOUNTAIN_S_BLESSING`)\r\n- `DRAGONKNIGHT_VOLCANIC_WARD` = 31820 (alias for `OBSIDIAN_SHARD`)\r\n- `DRAGONKNIGHT_EARTHSPIKE_MANTLE` = 20319 (alias for `SPIKED_ARMOR`)\r\n- `DRAGONKNIGHT_SUPERHEATED_WARD` = 29032 (alias for `STONEFIST`)\r\n- `DRAGONKNIGHT_SHATTERSPIKE_MANTLE` = 20323 (alias for `VOLATILE_ARMOR`)\r\n\r\n## Notes\r\n\r\n- `draconicPower.ts` is intentionally **not** modified in this PR — it still references the old enum names (`SPIKED_ARMOR`, `VOLATILE_ARMOR`, `HARDENED_ARMOR`) which remain valid aliases. Full Draconic Power cleanup will happen in ESO-674.\r\n- This PR is based on `main` which includes ESO-672 (Heat Shock rename) and ESO-679 (abilities.json re-fetch).",
       "mergedAt": "2026-03-10T06:40:17Z",
       "author": "bkrupa",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/841",
@@ -104,7 +104,7 @@
     {
       "id": 838,
       "title": "feat(ESO-674): regenerate DK Draconic Power skill line for U49",
-      "description": "## Summary\r\n\r\nRegenerates the DK Draconic Power skill line data for Update 49, applying all ability moves, renames, and description changes from ESO-Hub.\r\n\r\n## Jira Ticket\r\n\r\n[ESO-674](https://bkrupa.atlassian.net/browse/ESO-674)\r\n\r\n## Changes Made\r\n\r\n**Abilities moved IN** (from Ardent Flame):\r\n- `Fiery Breath` → renamed `Dragonfire Breath` (now Stamina ability)\r\n  - `Noxious Breath` → `Disintegrating Dragonfire`\r\n  - `Engulfing Flames` → `Engulfing Dragonfire`\r\n- `Fiery Grip` → renamed `Chains of Flame`\r\n  - `Unrelenting Grip` → `Chains of Dominance`\r\n  - `Chains of Devastation` (name unchanged)\r\n\r\n**Abilities moved OUT** (to Earthen Heart):\r\n- `Spiked Armor` (+ `Volatile Armor`, `Hardened Armor`)\r\n\r\n**Renames within the skill line:**\r\n- `Green Dragon Blood` → `Blood of the Green Dragon`\r\n- `Coagulating Blood` → `Blood of the Elder Dragon`\r\n- `Protective Scale` → `Wing Buffet`\r\n- `Dragon Fire Scale` → `Protect the Brood`\r\n- `Protective Plate` → `Fleetstep Wings`\r\n\r\n**Passive updates:**\r\n- `Iron Skin` → `Burnished Scales` (updated icon + description)\r\n- `Scaled Armor` → `World in Ruin` (uses `DRAGONKNIGHT_WORLD_IN_RUIN` ID)\r\n- `Battle Roar` → `The Storm Voice` (added to this skill line)\r\n- `Elder Dragon`: reworked — now grants Minor Brutality to group on activation\r\n\r\n**Description updates:**\r\n- `Dragon Leap`, `Ferocious Leap`, `Take Flight` — now deal Flame Damage (was Physical)\r\n- `Dragon Blood` — heal now scales with Max Health (was % missing Health)\r\n- `Choking Talons` — Minor Maim duration extended to 20s",
+      "description": "## Summary\r\n\r\nRegenerates the DK Draconic Power skill line data for Update 49, applying all ability moves, renames, and description changes.\r\n\r\n## Jira Ticket\r\n\r\n[ESO-674](https://bkrupa.atlassian.net/browse/ESO-674)\r\n\r\n## Changes Made\r\n\r\n**Abilities moved IN** (from Ardent Flame):\r\n- `Fiery Breath` → renamed `Dragonfire Breath` (now Stamina ability)\r\n  - `Noxious Breath` → `Disintegrating Dragonfire`\r\n  - `Engulfing Flames` → `Engulfing Dragonfire`\r\n- `Fiery Grip` → renamed `Chains of Flame`\r\n  - `Unrelenting Grip` → `Chains of Dominance`\r\n  - `Chains of Devastation` (name unchanged)\r\n\r\n**Abilities moved OUT** (to Earthen Heart):\r\n- `Spiked Armor` (+ `Volatile Armor`, `Hardened Armor`)\r\n\r\n**Renames within the skill line:**\r\n- `Green Dragon Blood` → `Blood of the Green Dragon`\r\n- `Coagulating Blood` → `Blood of the Elder Dragon`\r\n- `Protective Scale` → `Wing Buffet`\r\n- `Dragon Fire Scale` → `Protect the Brood`\r\n- `Protective Plate` → `Fleetstep Wings`\r\n\r\n**Passive updates:**\r\n- `Iron Skin` → `Burnished Scales` (updated icon + description)\r\n- `Scaled Armor` → `World in Ruin` (uses `DRAGONKNIGHT_WORLD_IN_RUIN` ID)\r\n- `Battle Roar` → `The Storm Voice` (added to this skill line)\r\n- `Elder Dragon`: reworked — now grants Minor Brutality to group on activation\r\n\r\n**Description updates:**\r\n- `Dragon Leap`, `Ferocious Leap`, `Take Flight` — now deal Flame Damage (was Physical)\r\n- `Dragon Blood` — heal now scales with Max Health (was % missing Health)\r\n- `Choking Talons` — Minor Maim duration extended to 20s",
       "mergedAt": "2026-03-10T03:48:06Z",
       "author": "bkrupa",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/838",
@@ -114,7 +114,7 @@
     {
       "id": 839,
       "title": "feat(ESO-678): update Two-Handed skill line data for U49",
-      "description": "## Summary\r\n\r\nUpdates the Two-Handed weapon skill line data for U49 mechanic changes.\r\n\r\n## Jira Ticket\r\n\r\n[ESO-678](https://bkrupa.atlassian.net/browse/ESO-678)\r\n\r\n## Changes Made\r\n\r\n- **Berserker Strike**: Added \"for 12 seconds\" to the Resistance buff duration (up from 8s)\r\n- **Berserker Rage**: Added \"for 12 seconds\" to the Resistance buff duration (up from 8s)\r\n- **Onslaught**: Added 100% Critical Chance for 8 seconds when Battle Spirit is inactive\r\n- **Momentum**: Added \"for 30 seconds\" duration (up from 20s)\r\n- **Rally**: Added \"for 30 seconds\" duration and reworked healing description (+20% every 2 seconds, up to 200%)\r\n- **Forward Momentum**: Updated duration to \"1 minute\" (up from 40s), added explicit 4-second immunity duration\r\n\r\nSource: https://eso-hub.com/en/skills/weapon/two-handed",
+      "description": "## Summary\r\n\r\nUpdates the Two-Handed weapon skill line data for U49 mechanic changes.\r\n\r\n## Jira Ticket\r\n\r\n[ESO-678](https://bkrupa.atlassian.net/browse/ESO-678)\r\n\r\n## Changes Made\r\n\r\n- **Berserker Strike**: Added \"for 12 seconds\" to the Resistance buff duration (up from 8s)\r\n- **Berserker Rage**: Added \"for 12 seconds\" to the Resistance buff duration (up from 8s)\r\n- **Onslaught**: Added 100% Critical Chance for 8 seconds when Battle Spirit is inactive\r\n- **Momentum**: Added \"for 30 seconds\" duration (up from 20s)\r\n- **Rally**: Added \"for 30 seconds\" duration and reworked healing description (+20% every 2 seconds, up to 200%)\r\n- **Forward Momentum**: Updated duration to \"1 minute\" (up from 40s), added explicit 4-second immunity duration",
       "mergedAt": "2026-03-10T03:47:57Z",
       "author": "bkrupa",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/839",
@@ -148,10 +148,7 @@
       "mergedAt": "2026-03-09T23:10:27Z",
       "author": "dependabot[bot]",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/835",
-      "labels": [
-        "auto-update",
-        "dependencies"
-      ],
+      "labels": ["auto-update", "dependencies"],
       "summary": "Under-the-hood dependency updates to keep the app's data layer running smoothly."
     },
     {
@@ -161,10 +158,7 @@
       "mergedAt": "2026-03-09T16:48:42Z",
       "author": "dependabot[bot]",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/834",
-      "labels": [
-        "auto-update",
-        "dependencies"
-      ],
+      "labels": ["auto-update", "dependencies"],
       "summary": "Under-the-hood dependency updates to keep the app's data layer running smoothly."
     },
     {
@@ -184,10 +178,7 @@
       "mergedAt": "2026-03-09T16:41:33Z",
       "author": "dependabot[bot]",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/824",
-      "labels": [
-        "auto-update",
-        "github-actions"
-      ],
+      "labels": ["auto-update", "github-actions"],
       "summary": "Under-the-hood build system update to keep deployments running on the latest tools."
     },
     {
@@ -197,10 +188,7 @@
       "mergedAt": "2026-03-09T16:39:50Z",
       "author": "dependabot[bot]",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/825",
-      "labels": [
-        "auto-update",
-        "github-actions"
-      ],
+      "labels": ["auto-update", "github-actions"],
       "summary": "Under-the-hood build system update to keep deployments running on the latest tools."
     },
     {
@@ -210,10 +198,7 @@
       "mergedAt": "2026-03-09T16:38:42Z",
       "author": "dependabot[bot]",
       "url": "https://github.com/ESO-Toolkit/eso-toolkit/pull/826",
-      "labels": [
-        "auto-update",
-        "github-actions"
-      ],
+      "labels": ["auto-update", "github-actions"],
       "summary": "Under-the-hood build system update to keep deployments running on the latest tools."
     }
   ]

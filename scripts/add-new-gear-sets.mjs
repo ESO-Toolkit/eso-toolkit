@@ -36,7 +36,10 @@ function buildBlock(exportVar, name, setType, bonuses) {
   const bonusLines = bonuses
     .map((b) => {
       // Clean up stray \r\n whitespace from API
-      const clean = b.replace(/\r?\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      const clean = b
+        .replace(/\r?\n/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
       if (clean.includes("'")) return `    "${clean}",`;
       return `    '${clean}',`;
     })
@@ -56,7 +59,9 @@ ${bonusLines}
 
 const apply = process.argv.includes('--apply');
 
-const newSets = JSON.parse(readFileSync(resolve(ROOT, 'tmp/new-sets.json'), 'utf-8').replace(/^\uFEFF/, ''));
+const newSets = JSON.parse(
+  readFileSync(resolve(ROOT, 'tmp/new-sets.json'), 'utf-8').replace(/^\uFEFF/, ''),
+);
 
 // Category → file mapping
 const CATEGORY_FILE = {
@@ -69,7 +74,7 @@ const CATEGORY_FILE = {
   'Monster Set': ['heavy.ts', 'light.ts', 'medium.ts'], // all 3 weights
   Mythic: 'mythics.ts',
   PvP: 'shared.ts',
-  Unknown: 'light.ts', // placeholder — reclassify when ESO-Hub categorises them
+  Unknown: 'light.ts', // placeholder — reclassify once the set's category is known
 };
 
 // setType to use for each category
@@ -87,9 +92,7 @@ const CATEGORY_SETTYPE = {
 };
 
 // Sets to skip (prototypes / placeholder data)
-const SKIP = new Set([
-  'Prototype Mythic Ring - U49 Mythic Proto 4',
-]);
+const SKIP = new Set(['Prototype Mythic Ring - U49 Mythic Proto 4']);
 
 const pendingByFile = new Map(); // file → array of {exportVar, block, name}
 
@@ -170,10 +173,7 @@ for (const [file, entries] of pendingByFile) {
 
     if (insertedBefore) {
       currentContent =
-        currentContent.slice(0, insertAt) +
-        entry.block +
-        '\n' +
-        currentContent.slice(insertAt);
+        currentContent.slice(0, insertAt) + entry.block + '\n' + currentContent.slice(insertAt);
     } else {
       currentContent = currentContent.trimEnd() + '\n\n' + entry.block;
     }
@@ -192,9 +192,9 @@ if (!apply) {
   console.log('\n\nRun with --apply to write changes to the TypeScript files.\n');
 } else {
   console.log('\nFormatting changed files...');
-  execSync(
-    `node node_modules/prettier/bin/prettier.cjs --write "src/data/Gear Sets/*.ts"`,
-    { stdio: 'inherit', cwd: ROOT },
-  );
+  execSync(`node node_modules/prettier/bin/prettier.cjs --write "src/data/Gear Sets/*.ts"`, {
+    stdio: 'inherit',
+    cwd: ROOT,
+  });
   console.log('\n\nDone! Run `npm run typecheck` to validate.\n');
 }

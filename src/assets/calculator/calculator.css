@@ -1123,7 +1123,7 @@ body.no-scroll {
   display: inline;
 }
 
-/* Tooltip footer link styling (ESO-Hub link) */
+/* Tooltip footer link styling */
 .tooltip-box .tooltip-source a {
   text-decoration: none;
   color: #9ad1ff;

@@ -4,7 +4,6 @@ import { AbilityId } from '../ability-ids';
 
 /**
  * Argonian Racial Skills
- * Source: https://eso-hub.com/en/skills/racial/argonian-skills
  */
 export const argonian: SkillLineData = {
   id: 0,
@@ -12,7 +11,6 @@ export const argonian: SkillLineData = {
   class: 'racial',
   category: 'racial',
   icon: 'ability_templar_010',
-  sourceUrl: 'https://eso-hub.com/en/skills/racial/argonian',
   skills: [
     {
       id: AbilityId.AMPHIBIAN,

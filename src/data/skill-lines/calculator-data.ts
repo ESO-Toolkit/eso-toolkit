@@ -86,7 +86,7 @@ export const CALCULATOR_TOOLTIPS = {
   'Assassination: Hemorrhage':
     '<em>Nightblade — Assassination</em><br><strong>Effect</strong><br><u>With an Assassination ability slotted</u><br><u>Rank 1</u>: Increases your Critical Damage by <strong>5%</strong>. Dealing Critical Damage grants you and your group <strong>Minor Savagery</strong>, increasing Weapon Critical rating by <strong>1314</strong> for 10 seconds.<br><u>Rank 2</u>: Increases your Critical Damage by <strong>10%</strong>. Dealing Critical Damage grants you and your group <strong>Minor Savagery</strong>, increasing Weapon Critical rating by <strong>1314</strong> for 20 seconds.',
   'Herald of the Tome: Fated Fortune':
-    '<em>Arcanist — Herald of the Tome</em><br><strong>Effect</strong><br><u>Rank 1</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>6%</strong> for 7 seconds.<br><u>Rank 2</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>12%</strong> for 7 seconds.<br><div class="tooltip-source"><em>Tooltips by ESO-Hub.com</em></div>',
+    '<em>Arcanist — Herald of the Tome</em><br><strong>Effect</strong><br><u>Rank 1</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>6%</strong> for 7 seconds.<br><u>Rank 2</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>12%</strong> for 7 seconds.<br>',
   'Aedric Spear: Piercing Spear':
     '<em>Templar — Aedric Spear</em><br><strong>Effect</strong><br><u>With an Aedric Spear ability slotted</u><br><u>Rank 1</u>: Increases your Critical Damage by <strong>6%</strong>. Increases your damage done to blocking players by <strong>6%</strong>.<br><u>Rank 2</u>: Increases your Critical Damage by <strong>12%</strong>. Increases your damage done to blocking players by <strong>12%</strong>.',
   'Earthen Heart: Blessing at the Peak':
@@ -109,7 +109,7 @@ export const CALCULATOR_TOOLTIPS = {
   "Sul-Xan's Torment":
     'Set: Provides Critical Damage when enemies are recently slain or affected; excels in add-heavy encounters.',
   'Armor Set Penetration Bonus':
-    'Extra Penetration granted by certain armor sets when wearing multiple pieces.<br>Examples:<ul><li><a href="https://eso-hub.com/en/sets/tide-born-wildstalker" target="_blank" rel="noopener">Tide-born Wildstalker</a></li><li><a href="https://eso-hub.com/en/sets/ansuuls-torment" target="_blank" rel="noopener">Ansuul\'s Torment</a></li></ul>',
+    "Extra Penetration granted by certain armor sets when wearing multiple pieces.<br>Examples:<ul><li>Tide-born Wildstalker</li><li>Ansuul's Torment</li></ul>",
   'Champion Point: Piercing':
     '<strong>Champion Point: Piercing</strong><br>Increases Physical and Spell Penetration by 350 per stage.<br>Max 2 stages (700 total).',
   'Champion Point: Force of Nature':
