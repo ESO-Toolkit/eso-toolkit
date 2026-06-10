@@ -305,7 +305,11 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
         return;
       }
     }
+    // Consuming a cancel (or stopping at the run's end) resets BOTH halves of the cancel state
+    // in lockstep — leaving countdownCancelled armed here suppressed the next countdown while
+    // the cleared skip ref let it auto-advance silently.
     skipNextAdvanceRef.current = false;
+    setCountdownCancelled(false);
     setIsPlaying(false);
   }, []);
 
@@ -338,16 +342,28 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // Playback control handlers. Pressing play while parked at the final frame restarts the
   // fight from the top (the standard player convention) — without this, the loop's first tick
   // immediately re-fired onEnd, which with autoplay on re-advanced past a boundary the user may
-  // have just cancelled.
+  // have just cancelled. With a sane A–B loop armed the restart is SKIPPED: the playback hook's
+  // wrap branch never calls onEnd and resumes at the loop in-point — restarting to 0:00 would
+  // dump a user looping the final burn back into the whole pre-loop section.
   const handlePlayPause = useCallback(() => {
     if (!isPlaying) {
       const dur = selectedFight.endTime - selectedFight.startTime;
-      if (animationTimeRef.timeRef.current >= dur - 250) {
+      const loopArmed =
+        loopStart != null && loopEnd != null && Math.abs(loopEnd - loopStart) >= 100;
+      if (!loopArmed && animationTimeRef.timeRef.current >= dur - 250) {
         seekTo(0);
       }
     }
     setIsPlaying(!isPlaying);
-  }, [isPlaying, selectedFight.endTime, selectedFight.startTime, animationTimeRef.timeRef, seekTo]);
+  }, [
+    isPlaying,
+    selectedFight.endTime,
+    selectedFight.startTime,
+    animationTimeRef.timeRef,
+    loopStart,
+    loopEnd,
+    seekTo,
+  ]);
 
   const handlePlayingChange = useCallback((playing: boolean) => {
     setIsPlaying(playing);
