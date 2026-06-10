@@ -27,21 +27,21 @@ export const WEREWOLF_SKILLS: SkillData[] = [
   { id: 39113, name: 'Deafening Roar', category: 'Werewolf', baseSkillId: 25402 },
   { id: 39114, name: 'Ferocious Roar', category: 'Werewolf', baseSkillId: 25402 },
 
-  // Piercing Howl
-  { id: 58405, name: 'Piercing Howl', category: 'Werewolf' },
-  { id: 58413, name: 'Howl of Agony', category: 'Werewolf', baseSkillId: 58405 },
-  { id: 58420, name: 'Howl of Despair', category: 'Werewolf', baseSkillId: 58405 },
+  // Gnash (renamed from Piercing Howl in U50)
+  { id: 58405, name: 'Gnash', category: 'Werewolf' },
+  { id: 58413, name: 'Bloody Gnash', category: 'Werewolf', baseSkillId: 58405 },
+  { id: 58420, name: 'Rip and Tear', category: 'Werewolf', baseSkillId: 58405 },
 
-  // Infectious Claws
-  { id: 58850, name: 'Infectious Claws', category: 'Werewolf' },
-  { id: 58855, name: 'Claws of Anguish', category: 'Werewolf', baseSkillId: 58850 },
-  { id: 58857, name: 'Claws of Life', category: 'Werewolf', baseSkillId: 58850 },
+  // Rending Claws (renamed from Infectious Claws in U50)
+  { id: 58850, name: 'Rending Claws', category: 'Werewolf' },
+  { id: 58855, name: 'Claw Fury', category: 'Werewolf', baseSkillId: 58850 },
+  { id: 58857, name: 'Bloodclaws', category: 'Werewolf', baseSkillId: 58850 },
 
   // Passives
-  { id: 32498, name: 'Devour', category: 'Werewolf' },
-  { id: 32499, name: 'Pursuit', category: 'Werewolf' },
+  { id: 32498, name: 'Insatiable Hunger', category: 'Werewolf' },
+  { id: 32499, name: 'Master of the Chase', category: 'Werewolf' },
   { id: 32550, name: 'Blood Rage', category: 'Werewolf' },
-  { id: 32554, name: 'Bloodmoon', category: 'Werewolf' },
-  { id: 45038, name: 'Savage Strength', category: 'Werewolf' },
-  { id: 45039, name: 'Call of the Pack', category: 'Werewolf' },
+  { id: 32554, name: 'Shadow of the Bloodmoon', category: 'Werewolf' },
+  { id: 45038, name: 'Feral Cruelty', category: 'Werewolf' },
+  { id: 45039, name: 'Call of the Hunt', category: 'Werewolf' },
 ];

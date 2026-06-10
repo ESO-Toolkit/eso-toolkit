@@ -15,7 +15,7 @@ export const werewolf: SkillLineData = {
       name: 'Werewolf Transformation',
       icon: 'ability_werewolf_001',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, your Max Stamina is increased by 30%. While slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds. Costs 100 Ultimate to activate and drains 100 Ultimate every 10 seconds while in combat; you continue to generate Ultimate while transformed. Activating Werewolf abilities in combat builds Fury. At 1000 Fury you can unleash Rampage, increasing your Movement Speed by 20% and your damage done by 15% and removing the cost of your Werewolf abilities for 20 seconds. While slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -25,7 +25,7 @@ export const werewolf: SkillLineData = {
       name: 'Pack Leader',
       icon: 'ability_werewolf_001_a',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, your Max Stamina is increased by 30%, you take 10% less damage, and you summon two direwolves. You also grant yourself and nearby group members Minor Courage, increasing their Weapon and Spell Damage by 215. While slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, you can block 30% more damage, you gain Major Protection, reducing your damage taken by 10%, and you summon two direwolves. You also grant yourself and nearby group members Minor Courage, increasing their Weapon and Spell Damage by 215. Your Rampage becomes Enduring Rampage, also granting 4000 Health Recovery. While slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -35,7 +35,7 @@ export const werewolf: SkillLineData = {
       name: 'Werewolf Berserker',
       icon: 'ability_werewolf_001_b',
       description:
-        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, your Light Attacks apply a bleed for 3716 Bleed Damage over 4 seconds, your Heavy Attacks deal their damage in an area, and your Max Stamina is increased by 30%. While slotted, your Stamina Recovery is increased by 15%.',
+        'Transform into a beast, fearing nearby enemies for 3 seconds. While transformed, you gain Major Berserk, increasing your damage done by 10%, and your Light and Heavy Attacks apply a bleed that stacks up to 5 times. Each tick of devouring a corpse also generates Fury. While slotted, your Stamina Recovery is increased by 15%.',
       maxRank: 4,
       isUltimate: true,
       isPassive: false,
@@ -46,7 +46,7 @@ export const werewolf: SkillLineData = {
       name: 'Pounce',
       icon: 'ability_werewolf_002',
       description:
-        'Pounce on an enemy with primal fury, dealing 1742 Bleed Damage and applying the Hemorrhaging status effect. Activating the ability again within the next 5 seconds causes you to rip into an enemy and deal 1296 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health.',
+        'Pounce on an enemy with primal fury, dealing Bleed Damage and applying the Hemorrhaging status effect. While within 7 meters of your target this ability becomes Carnage, ripping into the enemy to deal Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -56,7 +56,7 @@ export const werewolf: SkillLineData = {
       name: 'Brutal Pounce',
       icon: 'ability_werewolf_002_b',
       description:
-        'Pounce on an enemy with primal fury, dealing 1799 Bleed Damage and applying the Hemorrhaging status effect to all nearby enemies. Activating the ability again within the next 5 seconds causes you to rip into all enemies in front of you to deal 1302 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health. Increases your Weapon and Spell Damage by 100 for each enemy hit, up to 6 times.',
+        'Pounce on an enemy with primal fury, dealing Bleed Damage and applying the Hemorrhaging status effect to all enemies within 7 meters. While within 7 meters of your target this ability becomes Brutal Carnage, ripping into all enemies in front of you to deal Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health. The damage over time stacks up to 3 times, each stack increasing its duration by 10 seconds.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -66,7 +66,7 @@ export const werewolf: SkillLineData = {
       name: 'Feral Pounce',
       icon: 'ability_werewolf_002_a',
       description:
-        'Pounce on an enemy with primal fury, dealing 1742 Bleed Damage and applying the Hemorrhaging status effect. Activating the ability again within the next 5 seconds causes you to rip into an enemy and deal 1302 Bleed Damage over 10 seconds, dealing up to 450% more damage to enemies under 100% Health. Dealing damage with either attack restores 100 Stamina and extends your Werewolf Transformation by 1 second.',
+        'Pounce on an enemy with primal fury, dealing Bleed Damage and applying the Hemorrhaging status effect. While within 7 meters of your target this ability becomes Feral Carnage, ripping into the enemy to deal Bleed Damage over 12 seconds, dealing up to 450% more damage to enemies under 100% Health. Dealing damage with either attack restores 200 Stamina and generates Fury, up to once every 4 seconds.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -77,7 +77,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Bounty",
       icon: 'ability_werewolf_004_a',
       description:
-        "Invoke the Huntsman's blessing, healing you for 6198 Health. This ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina. While slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you based on your Max Health, then restoring 10% of your Max Stamina, increased by 1% for every 1% of your current Health, up to a maximum of 20%. While slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -87,7 +87,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Fortitude",
       icon: 'ability_werewolf_004_c',
       description:
-        "Invoke the Huntsman's blessing, healing you for 8002 Health. This portion of the ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina. You also gain Minor Endurance and Minor Fortitude, increasing your Health and Stamina Recovery by 15% for 20 seconds. While slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you based on your Max Health, then restoring 12% of your Max Stamina, increased by 1% for every 1% of your current Health, up to a maximum of 24%. While slotted you gain Major Vitality, increasing your healing received and damage shield strength by 12%, and Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -97,7 +97,7 @@ export const werewolf: SkillLineData = {
       name: "Hircine's Rage",
       icon: 'ability_werewolf_004_b',
       description:
-        "Invoke the Huntsman's blessing, healing you for 6197 Health. This portion of the ability scales off your Max Health. If you are at full Health you instead restore 3000 Stamina and gain Major Berserk, increasing your damage done by 10% for 10 seconds, but you also take 5% more damage. While slotted you gain Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
+        "Invoke the Huntsman's blessing, healing you based on your Weapon and Spell Damage, then restoring 10% of your Max Stamina, increased by 1% for every 1% of your current Health, up to a maximum of 20%. You also increase your damage done and damage taken for 20 seconds by up to 12% based on your current Health, and generate double Fury. While slotted you gain Minor Berserk, increasing your damage done by 5%, and Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20%.",
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -108,7 +108,7 @@ export const werewolf: SkillLineData = {
       name: 'Roar',
       icon: 'ability_werewolf_003',
       description:
-        'Roar with bloodlust to fear nearby enemies for 4 seconds, setting them Off Balance for 7 seconds, and making them Terrified for 10 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+        'Roar with bloodlust to fear nearby enemies within 10 meters for 4 seconds and set them Off Balance for 7 seconds. You gain a stack of Blood Hunger for 30 seconds, up to 4 times, empowering your Gnash and Claw Fury. Exposes the Feeding Frenzy synergy, granting nearby allies 6% increased damage done and Minor Force for 30 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -118,7 +118,7 @@ export const werewolf: SkillLineData = {
       name: 'Deafening Roar',
       icon: 'ability_werewolf_003_a',
       description:
-        'Roar with bloodlust to fear nearby enemies for 4 seconds and setting them Off Balance for 7 seconds. Your roar also leaves enemies dazed, applying Major Breach and Minor Maim, reducing their Physical and Spell Resistance by 5948 and damage done by 5% for 10 seconds. While slotted you gain Major Protection and your Heavy Attacks taunt enemies for 15 seconds.',
+        'Roar with bloodlust to fear nearby enemies within 10 meters for 4 seconds and set them Off Balance for 7 seconds. Your roar applies Major Maim and Major Cowardice, reducing enemy damage done by 10% and Weapon and Spell Damage by 430 for 15 seconds, and grants you a stack of Blood Hunger. Casting Gnash while Bracing taunts the enemy. Exposes the Feeding Frenzy synergy, granting nearby allies 6% increased damage done and Minor Force for 30 seconds. While slotted you gain Major Evasion and Minor Protection.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -128,69 +128,69 @@ export const werewolf: SkillLineData = {
       name: 'Ferocious Roar',
       icon: 'ability_werewolf_003_b',
       description:
-        'Roar with bloodlust to fear nearby enemies for 4 seconds, setting them Off Balance for 7 seconds, and making them Terrified for 10 seconds. Your Heavy Attacks also are 33% faster for 10 seconds after casting. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+        'Roar with bloodlust to fear nearby enemies within 10 meters for 4 seconds and set them Off Balance for 7 seconds. You gain 2 stacks of Blood Hunger and grant yourself and up to 11 nearby group members Major Courage, increasing their Weapon and Spell Damage by 430 for 20 seconds. Exposes the Feeding Frenzy synergy, which you can also activate yourself, granting 6% increased damage done and Minor Force for 30 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
     },
-    // Active Abilities - Piercing Howl Line
+    // Active Abilities - Gnash Line (renamed from Piercing Howl in U50)
     {
-      id: AbilityId.PIERCING_HOWL,
-      name: 'Piercing Howl',
+      id: AbilityId.GNASH,
+      name: 'Gnash',
       icon: 'ability_werewolf_005_a',
       description:
-        'Crush an enemy with a deafening howl, dealing 2904 Physical Damage. Deals 10% more damage to enemies that are Terrified.',
+        'Bare your fangs and bite an enemy within 7 meters twice, dealing Physical Damage followed by Bleed Damage, each hit with a 10% chance to apply the Sundered or Hemorrhaging status effect. The second bite deals up to 125% more damage to enemies under 25% Health. Consumes a stack of Blood Hunger, if available, to deal 25% more damage with the first bite.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
     },
     {
-      id: 58798, // Morph of Piercing Howl
-      name: 'Howl of Agony',
+      id: 58798, // Morph of Gnash (renamed from Howl of Agony in U50)
+      name: 'Bloody Gnash',
       icon: 'ability_werewolf_005_c',
       description:
-        'Crush an enemy with a deafening howl, dealing 2904 Physical Damage. Deals 10% more damage to enemies that are Terrified and 10% more to enemies that are Off Balance.',
+        'Bare your fangs and bite an enemy within 7 meters twice, dealing Physical Damage followed by Bleed Damage. The first bite has a 10% chance to apply the Sundered status effect and the second bite always applies the Hemorrhaging status effect. The second bite deals up to 200% more damage to enemies under 25% Health. Consumes a stack of Blood Hunger, if available, to deal 25% more damage with the first bite, with a 50% chance to not consume the stack.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
     },
     {
-      id: 58742, // Morph of Piercing Howl
-      name: 'Howl of Despair',
+      id: 58742, // Morph of Gnash (renamed from Howl of Despair in U50)
+      name: 'Rip and Tear',
       icon: 'ability_werewolf_005_b',
       description:
-        'Crush an enemy with a deafening howl, dealing 2999 Physical Damage. Enemies who are Terrified take 10% more damage from this attack. You or an ally targeting the enemy can activate the Feeding Frenzy synergy, which grants them Empower and Minor Force for 20 seconds, increasing their damage done with Heavy Attacks against monsters by 70% and their Critical Damage by 10%.',
+        'Bare your fangs and bite an enemy within 7 meters twice, dealing Physical Damage followed by Bleed Damage. The first bite always applies the Sundered status effect and inflicts Major Breach, reducing their Physical and Spell Resistance by 5948 for 15 seconds. The second bite heals you based on your Max Health and deals up to 125% more damage to enemies under 25% Health. A stack of Blood Hunger, if available, is consumed to increase the healing by 25%.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
     },
-    // Active Abilities - Infectious Claws Line
+    // Active Abilities - Rending Claws Line (renamed from Infectious Claws in U50)
     {
-      id: AbilityId.INFECTIOUS_CLAWS,
-      name: 'Infectious Claws',
+      id: AbilityId.RENDING_CLAWS,
+      name: 'Rending Claws',
       icon: 'ability_mage_065',
       description:
-        'Shred enemies in front of you with your tainted claws, dealing 2178 Disease Damage and an additional 3620 Disease Damage over 20 seconds. Enemies hit by the initial hit are afflicted with the Diseased status effect.',
+        'Shred up to 6 enemies in front of you with your claws, dealing Physical Damage and an additional Bleed Damage over 10 seconds. The initial hit has a 15% chance to apply the Sundered status effect and the bleed has a 5% chance to apply the Hemorrhaging status effect each tick.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
     },
     {
-      id: 58864, // Morph of Infectious Claws
-      name: 'Claws of Anguish',
+      id: 58864, // Morph of Rending Claws (renamed from Claws of Anguish in U50)
+      name: 'Claw Fury',
       icon: 'ability_werewolf_006_b',
       description:
-        'Shred enemies in front of you with your tainted claws, dealing 2178 Disease Damage and an additional 3620 Disease Damage over 20 seconds. Afflicts enemies with Major Defile for 4 seconds, reducing their healing received and damage shield strength by 12%. Enemies hit by any part of the ability are afflicted with the Diseased status effect.',
+        'Channel a flurry of slashes for 4.8 seconds, striking up to 6 enemies in front of you up to 13 times, dealing Physical Damage. Deals 25% more damage for each stack of Blood Hunger you hold, and generates Fury and a stack of Blood Hunger up to once per second while dealing damage. All Blood Hunger stacks are removed when the channel ends.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
     },
     {
-      id: 58879, // Morph of Infectious Claws
-      name: 'Claws of Life',
+      id: 58879, // Morph of Rending Claws (renamed from Claws of Life in U50)
+      name: 'Bloodclaws',
       icon: 'ability_werewolf_006_c',
       description:
-        'Shred enemies in front of you with your tainted claws, dealing 2249 Disease Damage and an additional 3620 Disease Damage over 20 seconds. You are healed for 66% of the damage over time caused. Enemies hit by the initial hit are afflicted with the Diseased status effect.',
+        'Shred up to 6 enemies in front of you with your claws, dealing Physical Damage and an additional Bleed Damage over 10 seconds. You are healed for 40% of the initial hit damage done, and the bleed heals you based on your Max Health when it damages an enemy. The initial hit has a 15% chance to apply the Sundered status effect and the bleed has a 5% chance to apply the Hemorrhaging status effect each tick.',
       maxRank: 4,
       isUltimate: false,
       isPassive: false,
@@ -211,10 +211,10 @@ export const werewolf: SkillLineData = {
         169873, 189092, 189093, 189094, 189095, 189096, 189097, 189098, 189099, 189100, 189101,
         189104, 226766, 226767, 226768, 226769, 245420, 245423, 245424, 245425,
       ],
-      name: 'Devour',
+      name: 'Insatiable Hunger',
       icon: 'ability_werewolf_007',
       description:
-        'Allows you to devour corpses to increase the duration of your Werewolf Transformation and restore your Health. Every second you spend devouring a corpse adds 3 seconds to the duration of your Werewolf Transformation and restores 8% of your Max Health. Each corpse can be devoured for up to 4 seconds.',
+        'Allows you to devour corpses to restore your Health and Ultimate. Every second you spend devouring a corpse restores 20% of your Max Health and 15 Ultimate, and devouring disables the maintenance cost of your Werewolf Transformation for 12 seconds. Each corpse can be devoured for up to 4 seconds.',
       maxRank: 1,
       isUltimate: false,
       isPassive: true,
@@ -222,10 +222,10 @@ export const werewolf: SkillLineData = {
     {
       id: AbilityId.PURSUIT,
       alternateIds: [32636, 46142],
-      name: 'Pursuit',
+      name: 'Master of the Chase',
       icon: 'ability_werewolf_010',
       description:
-        'Increases your Movement Speed by 30%. Increases the Stamina your Heavy Attacks restore by 50%.',
+        'Increases your Movement Speed by 30%. At rank 2, also increases the Stamina your Heavy Attacks restore by 50%.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
@@ -240,15 +240,14 @@ export const werewolf: SkillLineData = {
       ],
       name: 'Blood Rage',
       icon: 'ability_werewolf_004',
-      description:
-        'When you deal damage, the duration of your Werewolf Transformation is increased by 4 seconds. This effect can occur once every 5 seconds.',
+      description: 'Increases the Fury you generate by 10 per source.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
     },
     {
       id: AbilityId.BLOODMOON,
-      name: 'Bloodmoon',
+      name: 'Shadow of the Bloodmoon',
       icon: 'ability_werewolf_008',
       description:
         'Allows you to infect another player with Lycanthropy once every week by returning to the Werewolf ritual site. Players already infected with Noxiphilic Sanguivoria cannot be infected with Lycanthropy.',
@@ -262,10 +261,10 @@ export const werewolf: SkillLineData = {
         32638, 46139, 111928, 111929, 111932, 111933, 168022, 172383, 172384, 172385, 172386,
         173016,
       ],
-      name: 'Savage Strength',
+      name: 'Feral Cruelty',
       icon: 'ability_werewolf_009',
       description:
-        'Increases your Weapon and Spell Damage by 18%. Grants you Major Resolve, increasing your Physical and Spell Resistance by 5948.',
+        'Increases your Weapon and Spell Damage by 25%. Grants you Major Resolve, increasing your Physical and Spell Resistance by 5948.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,
@@ -276,10 +275,10 @@ export const werewolf: SkillLineData = {
         4051, 13808, 14271, 14272, 14273, 15207, 26658, 26659, 32641, 45720, 45721, 45751, 45753,
         46137, 49257, 49258, 49259, 61616, 61617, 61618, 80277, 80282, 80283,
       ],
-      name: 'Call of the Pack',
+      name: 'Call of the Hunt',
       icon: 'ability_werewolf_006',
       description:
-        'Reduces the cost of remaining in your Werewolf Transformation by 20% for each transformed werewolf or direwolf in your group, including yourself, up to a maximum of 80%.',
+        'Reduces the Ultimate cost of maintaining your Werewolf Transformation by 16%, plus an additional 16% for each transformed werewolf or direwolf in your group, including yourself, up to a maximum of 80%.',
       maxRank: 2,
       isUltimate: false,
       isPassive: true,

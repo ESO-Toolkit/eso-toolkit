@@ -311,14 +311,26 @@ export enum AbilityId {
   POUNCE = 32632,
   HIRCINES_BOUNTY = 58310,
   ROAR = 32633,
-  PIERCING_HOWL = 58405,
-  INFECTIOUS_CLAWS = 58850,
-  DEVOUR = 32634,
-  PURSUIT = 32636,
+  PIERCING_HOWL = 58405, // Pre-U50 name (renamed to Gnash in U50, ID unchanged)
+  GNASH = 58405, // U50: renamed from Piercing Howl
+  INFECTIOUS_CLAWS = 58850, // Pre-U50 name (renamed to Rending Claws in U50, ID unchanged)
+  RENDING_CLAWS = 58850, // U50: renamed from Infectious Claws
+  DEVOUR = 32634, // Pre-U50 name (renamed to Insatiable Hunger in U50, ID unchanged)
+  INSATIABLE_HUNGER = 32634, // U50: renamed from Devour
+  PURSUIT = 32636, // Pre-U50 name (renamed to Master of the Chase in U50, ID unchanged)
+  MASTER_OF_THE_CHASE = 32636, // U50: renamed from Pursuit
   BLOOD_RAGE = 32637,
-  BLOODMOON = 32639,
-  SAVAGE_STRENGTH = 32638,
-  CALL_OF_THE_PACK = 32641,
+  BLOODMOON = 32639, // Pre-U50 name (renamed to Shadow of the Bloodmoon in U50, ID unchanged)
+  SHADOW_OF_THE_BLOODMOON = 32639, // U50: renamed from Bloodmoon
+  SAVAGE_STRENGTH = 32638, // Pre-U50 name (renamed to Feral Cruelty in U50, ID unchanged)
+  FERAL_CRUELTY = 32638, // U50: renamed from Savage Strength
+  CALL_OF_THE_PACK = 32641, // Pre-U50 name (renamed to Call of the Hunt in U50, ID unchanged)
+  CALL_OF_THE_HUNT = 32641, // U50: renamed from Call of the Pack
+  // Werewolf — new U50 effect IDs (sourced from LuiExtended U50 data tables)
+  BLOOD_HUNGER = 267744, // U50: stacking buff applied by Roar + morphs, consumed by Gnash/Claw Fury
+  RAMPAGE = 267416, // U50: replacement ultimate at 1000 Fury
+  ENDURING_RAMPAGE = 267425, // U50: Pack Leader's upgraded Rampage
+  WEREWOLF_SLAUGHTER = 268123, // U50: werewolf assassination synergy vs Blade of Woe-eligible targets
 
   // Vampire
   BLOOD_SCION = 32624,
@@ -640,10 +652,14 @@ export enum AbilityId {
   HIRCINES_FORTITUDE = 58325,
   FEROCIOUS_ROAR = 39113,
   DEAFENING_ROAR = 39114,
-  HOWL_OF_DESPAIR = 58742,
-  HOWL_OF_AGONY = 58798,
-  CLAWS_OF_ANGUISH = 58864,
-  CLAWS_OF_LIFE = 58879,
+  HOWL_OF_DESPAIR = 58742, // Pre-U50 name (renamed to Rip and Tear in U50, ID unchanged)
+  RIP_AND_TEAR = 58742, // U50: renamed from Howl of Despair
+  HOWL_OF_AGONY = 58798, // Pre-U50 name (renamed to Bloody Gnash in U50, ID unchanged)
+  BLOODY_GNASH = 58798, // U50: renamed from Howl of Agony
+  CLAWS_OF_ANGUISH = 58864, // Pre-U50 name (renamed to Claw Fury in U50, ID unchanged)
+  CLAW_FURY = 58864, // U50: renamed from Claws of Anguish
+  CLAWS_OF_LIFE = 58879, // Pre-U50 name (renamed to Bloodclaws in U50, ID unchanged)
+  BLOODCLAWS = 58879, // U50: renamed from Claws of Life
 
   // Vampire - Morphs
   PERFECT_SCION = 38931,
