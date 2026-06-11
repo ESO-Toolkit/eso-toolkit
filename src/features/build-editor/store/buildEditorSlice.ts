@@ -6,15 +6,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
 
+import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
+
 import type {
   ArmorWeight,
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
-import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
-
 import { getDefaultLinesForClass } from '../data/esoStaticData';
-import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
 import type {
@@ -30,6 +29,7 @@ import type {
   SetupTab,
   SkilledAbility,
 } from '../types/build.types';
+import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
