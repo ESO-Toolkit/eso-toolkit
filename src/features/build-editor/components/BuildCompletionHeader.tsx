@@ -524,7 +524,7 @@ export const BuildCompletionHeader: React.FC = () => {
             }}
           />
           <input
-            placeholder="Short description (e.g. Runic Sunder + Fatecarver rotation)"
+            placeholder="Short description (one line summarizing this build)"
             value={build.shortDescription}
             onChange={(e) => dispatch(setBuildDescription(e.target.value))}
             maxLength={140}
