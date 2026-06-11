@@ -40,7 +40,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { ItemInfo, SlotType } from '@features/loadout-manager/data/itemIdMap';
+import type { CanonicalKeyFn, ItemInfo, SlotType } from '@features/loadout-manager/data/itemIdMap';
 import {
   getAvailableSetsForSlot,
   getCanonicalItemsBySlot,
@@ -81,6 +81,22 @@ const APPAREL_SLOTS_SET = new Set<SlotType>([
   'legs',
   'feet',
 ]);
+
+// Weapon slots pack every weapon TYPE of a set (axe/sword/bow/staff/…) under one
+// generic name — see getCanonicalItemsBySlot. For these, the canonical key must
+// fold in the per-item weapon type so each type survives as its own pickable row.
+const WEAPON_SLOTS_SET = new Set<SlotType>(['weapon', 'offhand']);
+
+/**
+ * Canonical dedup key for the gear picker. Weapons key by their slot-aware
+ * display name (which carries the weapon type, incl. staff element), so distinct
+ * weapon types aren't collapsed away. Everything else keys by set name, folding
+ * the ~24 level/quality variants of an apparel/jewelry piece into one row.
+ */
+function makeCanonicalKey(targetSlot: SlotType): CanonicalKeyFn {
+  if (!WEAPON_SLOTS_SET.has(targetSlot)) return (_itemId, info) => info.setName;
+  return (itemId, info) => `${info.setName} ${deriveItemNameForSlot(itemId, targetSlot)}`;
+}
 
 const WeightBadge: React.FC<{ weight: ArmorWeight }> = ({ weight }) => {
   const isDark = useTheme().palette.mode === 'dark';
@@ -151,9 +167,11 @@ function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
 
 function buildSetGroups(targetSlot: SlotType): SetGroupResult {
   const setSummaries = getAvailableSetsForSlot(targetSlot);
-  // One canonical item per set+slot — collapses the ~24 level/quality/trait
-  // variants the raw data carries (e.g. "Zaan Shoulders") down to a single row.
-  const allItems = getCanonicalItemsBySlot(targetSlot);
+  // Canonical items for this slot. Apparel/jewelry collapse to one row per set
+  // (the ~24 level/quality/trait variants are pure noise); weapons keep one row
+  // per weapon TYPE so a set's bow / staff / greatsword stay individually
+  // selectable. See makeCanonicalKey / getCanonicalItemsBySlot.
+  const allItems = getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot));
 
   // Build item lookup by set name
   const itemsBySet = new Map<string, { itemId: number; info: ItemInfo }[]>();
@@ -267,13 +285,16 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [showBonuses, setShowBonuses] = useState(false);
+  const [showVariants, setShowVariants] = useState(false);
   const catColor = SET_TYPE_COLORS[group.setType];
 
-  // After dedup there is exactly one canonical item per set+slot, so the row
-  // itself is the selectable unit — no nested item list.
   const canonical = group.items[0];
   if (!canonical) return null;
 
+  // Weapon sets carry one canonical item PER weapon TYPE (axe/sword/bow/staff/…),
+  // so the set row expands to its types. Apparel/jewelry collapse to a single
+  // item, so the row itself is directly selectable. See getCanonicalItemsBySlot.
+  const isMultiVariant = group.items.length > 1;
   const isSelected = currentSetName === group.setName;
   const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
     ? getLockedArmorWeight(group.setName)
@@ -304,10 +325,14 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
           },
         }}
       >
-        {/* Primary action: select the set's canonical item for this slot. */}
+        {/* Primary action: apparel selects the set's canonical item directly;
+            weapons toggle the per-type variant list open. */}
         <ButtonBase
-          onClick={() => onSelect(canonical.itemId)}
-          aria-label={`Equip ${group.setName}`}
+          onClick={() => (isMultiVariant ? setShowVariants((v) => !v) : onSelect(canonical.itemId))}
+          aria-label={
+            isMultiVariant ? `Choose a ${group.setName} weapon` : `Equip ${group.setName}`
+          }
+          aria-expanded={isMultiVariant ? showVariants : undefined}
           sx={{
             flex: 1,
             minWidth: 0,
@@ -350,23 +375,34 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
             />
             {lockedWeight && <WeightBadge weight={lockedWeight} />}
           </Stack>
-          {isSelected && (
-            <Chip
-              label="EQUIPPED"
-              size="small"
-              sx={{
-                height: 14,
-                fontSize: '0.5rem',
-                fontWeight: 700,
-                fontFamily: 'Space Grotesk',
-                background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-                color: 'var(--be-accent, #38bdf8)',
-                border: 'none',
-                flexShrink: 0,
-                ml: 0.5,
-              }}
-            />
-          )}
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexShrink: 0 }}>
+            {isSelected && (
+              <Chip
+                label="EQUIPPED"
+                size="small"
+                sx={{
+                  height: 14,
+                  fontSize: '0.5rem',
+                  fontWeight: 700,
+                  fontFamily: 'Space Grotesk',
+                  background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
+                  color: 'var(--be-accent, #38bdf8)',
+                  border: 'none',
+                  ml: 0.5,
+                }}
+              />
+            )}
+            {isMultiVariant && (
+              <ExpandIcon
+                sx={{
+                  fontSize: 16,
+                  transition: 'transform 0.2s',
+                  transform: showVariants ? 'rotate(180deg)' : 'rotate(0deg)',
+                  color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                }}
+              />
+            )}
+          </Stack>
         </ButtonBase>
 
         {/* Secondary action: peek the set bonuses without selecting. */}
@@ -397,6 +433,46 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
       <Collapse in={showBonuses} unmountOnExit>
         {hasBonuses && <SetBonusPreview bonuses={group.bonuses} />}
       </Collapse>
+
+      {/* Weapon-type variant list (weapons only). */}
+      {isMultiVariant && (
+        <Collapse in={showVariants} unmountOnExit>
+          <Stack spacing={0} sx={{ pl: 2, pr: 0.5, pb: 0.5, pt: 0.25 }}>
+            {group.items.map((item) => (
+              <ButtonBase
+                key={item.itemId}
+                onClick={() => onSelect(item.itemId)}
+                aria-label={`Equip ${deriveItemNameForSlot(item.itemId, targetSlot)}`}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.75,
+                  py: 0.5,
+                  px: 1,
+                  borderRadius: 1.5,
+                  width: '100%',
+                  textAlign: 'left',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                  },
+                }}
+              >
+                <Typography
+                  noWrap
+                  sx={{
+                    fontSize: 11.5,
+                    fontWeight: 500,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                  }}
+                >
+                  {deriveItemNameForSlot(item.itemId, targetSlot)}
+                </Typography>
+              </ButtonBase>
+            ))}
+          </Stack>
+        </Collapse>
+      )}
     </Box>
   );
 };
@@ -460,7 +536,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
     const q = debouncedSearch.toLowerCase().trim();
-    const allItems = getCanonicalItemsBySlot(targetSlot);
+    const allItems = getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot));
     return allItems
       .filter(
         (item) =>

@@ -5,8 +5,10 @@
  * No React, no Redux — just math. Components call this via useMemo.
  */
 
-import type { GearConfig } from '../../loadout-manager/types/loadout.types';
+import { getItemInfo } from '../../loadout-manager/data/itemIdMap';
+import type { ArmorWeight, GearConfig } from '../../loadout-manager/types/loadout.types';
 import { EQUIP_SLOTS } from '../data/esoStaticData';
+import { getLockedArmorWeight } from '../data/setArmorWeights';
 import type { Build, BuildSetup, GameMode } from '../types/build.types';
 
 import {
@@ -51,13 +53,32 @@ interface ArmorWeightCounts {
   heavy: number;
 }
 
+/**
+ * Resolve the armor weight an equipped apparel piece counts as.
+ *
+ * A set that only exists in one weight in-game (mythic / overland / dungeon /
+ * trial drop) is AUTHORITATIVE — its locked weight wins even over a stored
+ * `piece.weight`, because imported/CSPS gear often carries no weight (the
+ * importer only writes id/trait/enchant) or a stale value, while the picker
+ * shows the locked weight as a read-only chip. Using the lock here keeps stats
+ * in lockstep with what the UI displays. Falls back to the stored weight, then
+ * to 'heavy' (ESO's default when nothing else is known).
+ */
+function resolvePieceWeight(id: string | number, storedWeight?: ArmorWeight): ArmorWeight {
+  const numericId = typeof id === 'number' ? id : Number(id);
+  if (Number.isFinite(numericId) && numericId > 0) {
+    const locked = getLockedArmorWeight(getItemInfo(numericId)?.setName);
+    if (locked) return locked;
+  }
+  return storedWeight ?? 'heavy';
+}
+
 export function countArmorWeights(gear: GearConfig): ArmorWeightCounts {
   const counts: ArmorWeightCounts = { light: 0, medium: 0, heavy: 0 };
   for (const slot of APPAREL_SLOTS) {
     const piece = gear[slot];
     if (!piece?.id) continue;
-    const weight = piece.weight ?? 'heavy';
-    counts[weight]++;
+    counts[resolvePieceWeight(piece.id, piece.weight)]++;
   }
   return counts;
 }

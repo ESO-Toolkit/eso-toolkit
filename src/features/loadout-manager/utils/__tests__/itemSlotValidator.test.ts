@@ -4,6 +4,7 @@
 
 import { getCanonicalItemsBySlot, getItemsBySlot } from '../../data/itemIdMap';
 import type { GearConfig, GearPiece } from '../../types/loadout.types';
+import { deriveItemNameForSlot } from '../itemIconResolver';
 import {
   hasKnownSlot,
   getItemSlotInfo,
@@ -251,6 +252,50 @@ describe('itemSlotValidator', () => {
           getItemsBySlot(slot).length,
         );
       }
+    });
+  });
+
+  describe('getCanonicalItemsBySlot — weapon-type-aware key', () => {
+    // The picker keys weapons by their slot-aware display name so distinct
+    // weapon TYPES (axe/sword/bow/staff/…) of one set aren't collapsed away.
+    const weaponKey = (itemId: number, info: { setName: string }): string =>
+      `${info.setName} ${deriveItemNameForSlot(itemId, 'weapon')}`;
+
+    it('default (set-name) key drops all but one weapon per set — the regression we guard against', () => {
+      const defaultCanon = getCanonicalItemsBySlot('weapon').filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      // Set-name dedup keeps a single (wrong) weapon for the whole set.
+      expect(defaultCanon).toHaveLength(1);
+    });
+
+    it('weapon-aware key keeps every distinct weapon type of a set', () => {
+      const raw = getItemsBySlot('weapon').filter(({ info }) => info.setName === "Mother's Sorrow");
+      const distinctTypes = new Set(
+        raw.map(({ itemId }) => deriveItemNameForSlot(itemId, 'weapon')),
+      );
+      const canon = getCanonicalItemsBySlot('weapon', weaponKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      // One canonical row per distinct weapon type — bow/staff/greatsword survive.
+      expect(canon.length).toBe(distinctTypes.size);
+      expect(canon.length).toBeGreaterThan(1);
+      const canonNames = canon.map(({ itemId }) => deriveItemNameForSlot(itemId, 'weapon'));
+      expect(canonNames).toEqual(expect.arrayContaining([expect.stringMatching(/Bow$/)]));
+      expect(canonNames).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/(Inferno|Ice|Lightning|Restoration) Staff$/),
+        ]),
+      );
+    });
+
+    it('still collapses level/quality variants of a single weapon type to one entry', () => {
+      const canon = getCanonicalItemsBySlot('weapon', weaponKey);
+      // No two canonical entries share the same (set, weapon-type) key.
+      const keys = canon.map(({ itemId, info }) => weaponKey(itemId, info));
+      expect(keys.length).toBe(new Set(keys).size);
+      // And the picker-aware result is strictly larger than the set-name dedup.
+      expect(canon.length).toBeGreaterThan(getCanonicalItemsBySlot('weapon').length);
     });
   });
 
