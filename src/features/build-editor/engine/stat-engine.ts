@@ -124,6 +124,25 @@ function makeResult(items: StatItem[], cap: number, maxCap: number): StatResult 
   };
 }
 
+/** Display name for a class passive — appends its condition, if any. */
+function classPassiveLabel(cp: { name: string; condition?: string }): string {
+  return cp.condition ? `${cp.name} (${cp.condition})` : cp.name;
+}
+
+/**
+ * Whether a class passive's contribution is enabled. Always-on passives
+ * (no `defaultEnabled`) are auto-applied; conditional ones (flank/execute,
+ * `defaultEnabled: false`) are a toggle keyed by display label in
+ * overrides.buffs — the same label the Buff Toggles UI writes.
+ */
+function classPassiveEnabled(
+  cp: { name: string; condition?: string; defaultEnabled?: boolean },
+  overrides: StatOverrides,
+): boolean {
+  if (cp.defaultEnabled === undefined) return true;
+  return overrides.buffs[classPassiveLabel(cp)] ?? cp.defaultEnabled;
+}
+
 // ─── Penetration ────────────────────────────────────────────────────────────
 
 export function calculatePenetration(
@@ -180,14 +199,13 @@ export function calculatePenetration(
   const activeLines = build.classSkillLines.filter(Boolean) as string[];
   for (const cp of CLASS_PASSIVES) {
     if (cp.stat !== 'penetration') continue;
-    const detected = activeLines.includes(cp.skillLineId);
-    if (detected) {
+    if (activeLines.includes(cp.skillLineId)) {
       items.push({
-        name: cp.name,
+        name: classPassiveLabel(cp),
         value: cp.value,
         source: 'class',
-        enabled: true,
-        autoDetected: true,
+        enabled: classPassiveEnabled(cp, overrides),
+        autoDetected: cp.defaultEnabled === undefined,
       });
     }
   }
@@ -355,12 +373,12 @@ export function calculateCritDamage(
     if (cp.stat !== 'critDamage') continue;
     if (activeLines.includes(cp.skillLineId)) {
       items.push({
-        name: cp.name,
+        name: classPassiveLabel(cp),
         value: cp.value,
         source: 'class',
-        enabled: true,
+        enabled: classPassiveEnabled(cp, overrides),
         isPercent: cp.isPercent,
-        autoDetected: true,
+        autoDetected: cp.defaultEnabled === undefined,
       });
     }
   }
@@ -424,7 +442,7 @@ export function calculateCritDamage(
 export function calculateCritChance(
   setup: BuildSetup,
   build: Build,
-  _overrides: StatOverrides,
+  overrides: StatOverrides,
 ): StatResult {
   const cap = 100;
   const max = 100;
@@ -505,6 +523,22 @@ export function calculateCritChance(
     });
   }
 
+  // Class passives (crit chance) — ratings convert to % via CRIT_CHANCE_DIVISOR.
+  const critChanceLines = build.classSkillLines.filter(Boolean) as string[];
+  for (const cp of CLASS_PASSIVES) {
+    if (cp.stat !== 'critChance') continue;
+    if (!critChanceLines.includes(cp.skillLineId)) continue;
+    const pct = cp.isRating ? parseFloat((cp.value / CRIT_CHANCE_DIVISOR).toFixed(1)) : cp.value;
+    items.push({
+      name: classPassiveLabel(cp),
+      value: pct,
+      source: 'class',
+      enabled: classPassiveEnabled(cp, overrides),
+      isPercent: true,
+      autoDetected: cp.defaultEnabled === undefined,
+    });
+  }
+
   return makeResult(items, cap, max);
 }
 
@@ -513,7 +547,7 @@ export function calculateCritChance(
 export function calculateArmor(
   setup: BuildSetup,
   build: Build,
-  _overrides: StatOverrides,
+  overrides: StatOverrides,
 ): StatResult {
   const items: StatItem[] = [];
 
@@ -569,6 +603,36 @@ export function calculateArmor(
       source: 'gear',
       enabled: true,
       autoDetected: true,
+    });
+  }
+
+  // Class passives (armor / resistance). This panel tracks resistance ADDITIONS
+  // on top of equipped gear (gear base armor isn't summed here), so a flat
+  // resistance grant adds directly. A "% of total armor" passive (Balanced
+  // Warrior) can't be folded into this additive subtotal without the gear base,
+  // so it's surfaced as an informational item (value 0) rather than a wrong
+  // number.
+  const armorLines = build.classSkillLines.filter(Boolean) as string[];
+  for (const cp of CLASS_PASSIVES) {
+    if (cp.stat !== 'armor') continue;
+    if (!armorLines.includes(cp.skillLineId)) continue;
+    if (cp.percentOfSubtotal) {
+      items.push({
+        name: `${cp.name} (+${cp.value}% Armor)`,
+        value: 0,
+        source: 'class',
+        enabled: classPassiveEnabled(cp, overrides),
+        isPercent: true,
+        autoDetected: cp.defaultEnabled === undefined,
+      });
+      continue;
+    }
+    items.push({
+      name: classPassiveLabel(cp),
+      value: cp.value,
+      source: 'class',
+      enabled: classPassiveEnabled(cp, overrides),
+      autoDetected: cp.defaultEnabled === undefined,
     });
   }
 

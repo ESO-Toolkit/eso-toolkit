@@ -12,6 +12,8 @@ import { useDispatch, useSelector, useStore } from 'react-redux';
 import type { RootState } from '@/store/storeWithHistory';
 
 import {
+  CLASS_PASSIVES,
+  CRIT_CHANCE_DIVISOR,
   CRIT_DMG_BUFFS,
   CRIT_DMG_GEAR,
   DEFAULT_STAT_OVERRIDES,
@@ -93,12 +95,25 @@ const StatsSectionComponent: React.FC = () => {
 
   // All available buff toggles for current game mode
   const availableBuffs = useMemo(() => {
+    // Conditional class passives (flank/execute) become toggles only when their
+    // class skill line is active. Crit ratings convert to % for the chip label.
+    const activeLines = new Set(classSkillLines.filter(Boolean) as string[]);
+    const conditionalClassToggles = CLASS_PASSIVES.filter(
+      (cp) => cp.defaultEnabled === false && activeLines.has(cp.skillLineId),
+    ).map((cp) => ({
+      name: cp.condition ? `${cp.name} (${cp.condition})` : cp.name,
+      value: cp.isRating ? parseFloat((cp.value / CRIT_CHANCE_DIVISOR).toFixed(1)) : cp.value,
+      defaultEnabled: cp.defaultEnabled ?? false,
+      stat: cp.stat,
+      modes: [gameMode],
+    }));
     return [
       ...PEN_BUFFS.filter((b) => b.modes.includes(gameMode)),
       ...CRIT_DMG_BUFFS.filter((b) => b.modes.includes(gameMode)),
       ...CRIT_DMG_GEAR.filter((b) => b.modes.includes(gameMode)),
+      ...conditionalClassToggles,
     ];
-  }, [gameMode]);
+  }, [gameMode, classSkillLines]);
 
   const labelSx = {
     fontWeight: 700,
@@ -211,7 +226,7 @@ const StatsSectionComponent: React.FC = () => {
                         }}
                       >
                         ({buff.value}
-                        {buff.stat === 'critDamage' ? '%' : ''})
+                        {buff.stat === 'critDamage' || buff.stat === 'critChance' ? '%' : ''})
                       </Box>
                     </Typography>
                   }
