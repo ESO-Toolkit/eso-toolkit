@@ -296,10 +296,14 @@ export const FightReplay: React.FC = () => {
     if (prevFightIdRef.current !== fightId) {
       // Free the previous fight's positions on switch. On mobile, FULLY clear the worker's LRU
       // result cache (clearResult) so several fights' large position datasets can't accumulate and
-      // OOM-reload the tab (the "whole page refresh"); on desktop, resetTask keeps the cache so a
-      // revisit stays instant.
+      // OOM-reload the tab (the "whole page refresh"); on desktop, invalidateTask keeps the cache
+      // (revisits stay instant) while dropping latestRequestId — the previous fight's still-in-
+      // flight completion must fail the request-id guard, not repopulate the cleared slot with
+      // stale positions during the switch window.
       dispatch(
-        isMobileReplay ? actorPositionsActions.clearResult() : actorPositionsActions.resetTask(),
+        isMobileReplay
+          ? actorPositionsActions.clearResult()
+          : actorPositionsActions.invalidateTask(),
       );
       prevFightIdRef.current = fightId;
       loadingSeenRef.current = false;

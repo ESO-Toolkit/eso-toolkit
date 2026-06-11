@@ -72,6 +72,7 @@ type WorkerTaskSliceReturn<T extends SharedComputationWorkerTaskType> = {
     failTask: (payload: WorkerTaskFailedPayload) => PayloadAction<WorkerTaskFailedPayload>;
     clearResult: () => PayloadAction<void>;
     resetTask: () => PayloadAction<void>;
+    invalidateTask: () => PayloadAction<void>;
   };
   reducer: (
     state: WorkerTaskState<SharedWorkerResultType<T>> | undefined,
@@ -209,6 +210,25 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
         state.lastUpdated = lastUpdated;
         state.cacheMetadata = cacheMetadata;
         state.latestRequestId = latestRequestId;
+        state.resultCache = resultCache;
+        state.cacheOrder = cacheOrder;
+      },
+
+      /**
+       * Like resetTask (LRU cache and metadata survive) but the context is CHANGING: drops
+       * latestRequestId so any still-in-flight completion from the previous context fails the
+       * request-id guard instead of repopulating the cleared slot with stale data. Use on
+       * boundaries like a fight switch, where resetTask's id preservation accepted an old
+       * fulfillment that landed between the reset and the next dispatch.
+       */
+      invalidateTask(state) {
+        const lastUpdated = state.lastUpdated;
+        const cacheMetadata = state.cacheMetadata;
+        const resultCache = state.resultCache;
+        const cacheOrder = [...state.cacheOrder];
+        Object.assign(state, createInitialTaskState<ResultType>());
+        state.lastUpdated = lastUpdated;
+        state.cacheMetadata = cacheMetadata;
         state.resultCache = resultCache;
         state.cacheOrder = cacheOrder;
       },

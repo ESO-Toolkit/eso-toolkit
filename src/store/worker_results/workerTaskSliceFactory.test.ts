@@ -275,6 +275,60 @@ describe('workerTaskSliceFactory', () => {
         expect(newState.workerResults[mockTaskName].latestRequestId).toBe(originalRequestId);
       });
     });
+
+    describe('invalidateTask', () => {
+      it('preserves the LRU cache but drops latestRequestId', async () => {
+        mockWorkerManager.executeTask.mockResolvedValueOnce(mockResult);
+        await store.dispatch(workerSlice.executeTask(mockInput));
+
+        let state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+        const cachedKeys = Object.keys(state.workerResults[mockTaskName].resultCache);
+        expect(cachedKeys.length).toBeGreaterThan(0);
+        expect(state.workerResults[mockTaskName].latestRequestId).not.toBeNull();
+
+        store.dispatch(workerSlice.actions.invalidateTask());
+
+        state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+        expect(state.workerResults[mockTaskName].result).toBeNull();
+        expect(state.workerResults[mockTaskName].latestRequestId).toBeNull();
+        expect(Object.keys(state.workerResults[mockTaskName].resultCache)).toEqual(cachedKeys);
+      });
+
+      it('drops a completion that was in flight when the invalidation happened', async () => {
+        // The stale-fulfillment race: a task is running for the OLD context, the context
+        // changes (fight switch dispatches invalidateTask), and only then does the old
+        // worker resolve. The fulfilled action must fail the request-id guard — not
+        // repopulate the cleared slot with stale data.
+        let resolveWorker!: (value: unknown) => void;
+        mockWorkerManager.executeTask.mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveWorker = resolve;
+            }),
+        );
+
+        const inFlight = store.dispatch(workerSlice.executeTask(mockInput));
+        store.dispatch(workerSlice.actions.invalidateTask());
+        resolveWorker(mockResult);
+        await inFlight;
+
+        const state = store.getState() as {
+          workerResults: {
+            [mockTaskName]: WorkerTaskState<SharedWorkerResultType<typeof mockTaskName>>;
+          };
+        };
+        expect(state.workerResults[mockTaskName].result).toBeNull();
+        expect(state.workerResults[mockTaskName].latestRequestId).toBeNull();
+      });
+    });
   });
 
   describe('executeTask async thunk', () => {
