@@ -100,13 +100,43 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
    detection) + 35 `ClassSkillId` enum entries + 9 CDN-verified icons added to the icon
    guard's exact-name allowlist. Descriptions verbatim from the dump (provenance gate 100%).
 
-   Remaining work is a FEATURE decision, no longer data-blocked: build-editor
-   representation (interacts with subclassing — running any subclass line
-   disables Class Mastery; the line is NOT subclassable, keep it out of
-   `esoStaticData.ts`'s picker list), and buff tracking for the group buff sources (Lead from the
-   Front: Major Berserk+Protection; Bountiful Harvest: Major Heroism; Ink-Scribe's Verve:
-   Major Force; Tundra's Maw: Major Brittle via Chilled — granted-buff effect IDs are the
-   existing tracked Major/Minor IDs; verify source attribution against a live U50 log).
+   **Build-editor representation SHIPPED 2026-06-10**: dedicated "Class Mastery"
+   section (`ClassMasterySection.tsx`, gated by
+   `src/features/build-editor/utils/classMasteryEligibility.ts` — enabled only while
+   every `classSkillLines` slot is the base class's own line or empty), 2-of-5 picker
+   persisted build-level as `Build.classMasteryPassives` (additive reducers
+   `toggleClassMasteryPassive`/`setClassMasteryPassives`, localStorage migration,
+   `cm` field in the URL build encoding), picks surfaced in BuildViewPage's Passives
+   panel while eligible. The line stays out of `esoStaticData.ts`'s subclass picker
+   and out of the generic passive picker (`getSkillLineIndex`/`searchPassives`
+   exclude it; picks live in their own slice field, not `setup.passives`).
+
+   **Buff tracking for the group-buff passives** (Lead from the Front 263247:
+   Major Berserk 61745 + Major Protection; Bountiful Harvest 263523: Major
+   Heroism 61709; Ink-Scribe's Verve 263416: Major Force 61747; Tundra's Maw
+   263519: Major Brittle 145977 via Chilled): the granted buffs use the existing
+   tracked Major effect IDs, and every consumer (buff-uptime panels, stat
+   engines `CritDamageUtils`/`damageReductionUtils`/`PenetrationUtils`,
+   locked-player live stats) keys on the BUFF effect ID, not the granting
+   ability — uptime and stat modeling work with no code change. **TODO (needs
+   the first real U50 log containing these passives — none exists yet):**
+
+   1. Role detection: `OFFENSIVE_BUFF_CATEGORIES`
+      (`src/features/role_detection/constants.ts`) counts group applications of
+      61747 ("Major Force (Horn)") and 61745 ("Major Berserk") toward the
+      buff-healer gate. A non-subclassed Arcanist (Ink-Scribe's Verve) or DK
+      (Lead from the Front) DPS now applies these group-wide — check whether
+      ESO Logs credits them as buff `sourceID` and whether that flips any
+      classification; if so, exclude applications sourced from the Class
+      Mastery passives (IDs above).
+   2. Potion detection: 61709 is in `MAJOR_HEROISM_IDS`
+      (`src/utils/potionDetectionUtils.ts`) and classifies a potion when it
+      lands within the 5 ms buff cluster of a ≥500 resource restore. Verify a
+      Bountiful Harvest application coinciding with a potion sip doesn't
+      misclassify the potion as Heroism.
+   3. Tundra's Maw: verify the Warden applying Chilled gets debuff-applied
+      credit for Major Brittle 145977 (insights debuff attribution uses event
+      `sourceID`).
 3. **The Prowler's Talisman set ID**: not yet in ESO Logs `gameData.item_sets`
    (scanned 2026-06-09). Add to `KnownSetIDs` when it appears (post-July 8).
 4. **Season One wave (July 8, 2026)**: Thieves Guild questline, Dynamic Encounters,
