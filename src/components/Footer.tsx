@@ -549,6 +549,50 @@ export const Footer: React.FC = React.memo(() => {
     [],
   );
 
+  const featureCards = React.useMemo(
+    () => [
+      {
+        title: 'Log analysis',
+        desc: 'Break down fights, parses, and uptimes from your ESO Logs reports.',
+      },
+      {
+        title: 'Build & roster tools',
+        desc: 'Craft builds, plan trial compositions, and share them in a click.',
+      },
+      {
+        title: 'Open & free',
+        desc: 'Free during beta and open source — built in the open with the community.',
+      },
+      {
+        title: 'Always current',
+        desc: 'Set, skill, and game data refreshed each major ESO update.',
+      },
+    ],
+
+    [],
+  );
+
+  const featureCardSx = React.useMemo(
+    () => ({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 0.5,
+      p: { xs: 1.4, md: 1.6 },
+      borderRadius: 2,
+      height: '100%',
+      background: theme.palette.mode === 'dark' ? alpha('#0f172a', 0.55) : alpha('#f8fafc', 0.72),
+      border: `1px solid ${alpha(accentColor, theme.palette.mode === 'dark' ? 0.22 : 0.16)}`,
+      transition: 'border-color 0.25s ease, transform 0.25s ease, background-color 0.25s ease',
+      '&:hover': {
+        transform: 'translateY(-2px)',
+        borderColor: alpha(accentColor, theme.palette.mode === 'dark' ? 0.5 : 0.36),
+        backgroundColor: theme.palette.mode === 'dark' ? alpha('#0f172a', 0.7) : alpha('#eef2f8', 0.9),
+      },
+    }),
+
+    [accentColor, theme.palette.mode],
+  );
+
   return (
     <Box
       component="footer"
@@ -922,6 +966,51 @@ export const Footer: React.FC = React.memo(() => {
                 </Box>
               ))}
             </Box>
+
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+                gap: { xs: 1.1, md: 1.35 },
+                mt: { xs: 2.5, md: 'auto' },
+                pt: { xs: 0.5, md: 1.5 },
+                width: '100%',
+              }}
+            >
+              {featureCards.map((card) => (
+                <Box key={card.title} sx={featureCardSx}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.85,
+                    }}
+                  >
+                    <Box component="span" sx={badgeDotSx} />
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: { xs: '0.85rem', md: '0.9rem' },
+                        letterSpacing: '0.01em',
+                        color: 'text.primary',
+                      }}
+                    >
+                      {card.title}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      fontSize: { xs: '0.78rem', md: '0.82rem' },
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {card.desc}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
           </Box>
 
           <Box sx={linksPanelSx}>
@@ -938,6 +1027,8 @@ export const Footer: React.FC = React.memo(() => {
                 gap: { xs: 3, md: 5.25, lg: 6 },
 
                 width: '100%',
+
+                my: { xs: 0, md: 'auto' },
               }}
             >
               {footerSections.map((section) => (
