@@ -284,6 +284,8 @@ interface SetCategorySectionProps {
    * the canonical row as EQUIPPED.
    */
   currentSetName: string | null;
+  /** Exact equipped item id — used to highlight the specific weapon-type row. */
+  currentItemId: number | null;
   onSelect: (itemId: number) => void;
   targetSlot: SlotType;
   /**
@@ -296,6 +298,7 @@ interface SetCategorySectionProps {
 const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   group,
   currentSetName,
+  currentItemId,
   onSelect,
   targetSlot,
   iconReady,
@@ -487,38 +490,53 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
       {isMultiVariant && (
         <Collapse in={showVariants} unmountOnExit>
           <Stack spacing={0} sx={{ pl: 2, pr: 0.5, pb: 0.5, pt: 0.25 }}>
-            {group.items.map((item) => (
-              <ButtonBase
-                key={item.itemId}
-                onClick={() => onSelect(item.itemId)}
-                aria-label={`Equip ${deriveItemNameForSlot(item.itemId, targetSlot)}`}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.75,
-                  py: 0.5,
-                  px: 1,
-                  borderRadius: 1.5,
-                  width: '100%',
-                  textAlign: 'left',
-                  '&:hover': {
-                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                  },
-                }}
-              >
-                <Typography
-                  noWrap
+            {group.items.map((item) => {
+              const variantSelected = currentItemId != null && item.itemId === currentItemId;
+              return (
+                <ButtonBase
+                  key={item.itemId}
+                  onClick={() => onSelect(item.itemId)}
+                  aria-label={`Equip ${deriveItemNameForSlot(item.itemId, targetSlot)}`}
+                  aria-current={variantSelected || undefined}
                   sx={{
-                    fontSize: 11.5,
-                    fontWeight: 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    py: 0.5,
+                    px: 1,
+                    borderRadius: 1.5,
+                    width: '100%',
+                    textAlign: 'left',
+                    background: variantSelected
+                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
+                      : 'transparent',
+                    '&:hover': {
+                      background: variantSelected
+                        ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.14)'
+                        : isDark
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(0,0,0,0.03)',
+                    },
                   }}
                 >
-                  {deriveItemNameForSlot(item.itemId, targetSlot)}
-                </Typography>
-              </ButtonBase>
-            ))}
+                  <Typography
+                    noWrap
+                    sx={{
+                      fontSize: 11.5,
+                      fontWeight: variantSelected ? 700 : 500,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      color: variantSelected
+                        ? 'var(--be-accent, #38bdf8)'
+                        : isDark
+                          ? 'rgba(255,255,255,0.70)'
+                          : 'rgba(0,0,0,0.65)',
+                    }}
+                  >
+                    {deriveItemNameForSlot(item.itemId, targetSlot)}
+                  </Typography>
+                </ButtonBase>
+              );
+            })}
           </Stack>
         </Collapse>
       )}
@@ -844,8 +862,13 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                 </Typography>
                 <Stack spacing={0.5}>
                   {searchResults.map((item) => {
-                    const isSelected =
-                      currentInfo?.setName != null && item.info.setName === currentInfo.setName;
+                    // Weapons have one row per type, so match the equipped piece
+                    // by exact item id — set-name matching would light up every
+                    // weapon variant of the set. Apparel/jewelry collapse to one
+                    // row per set, so set-name matching is correct there.
+                    const isSelected = WEAPON_SLOTS_SET.has(targetSlot)
+                      ? currentItemId != null && item.itemId === currentItemId
+                      : currentInfo?.setName != null && item.info.setName === currentInfo.setName;
                     const setType = getSetType(item.info.setName);
                     const catColor = SET_TYPE_COLORS[setType];
                     const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
@@ -1011,6 +1034,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                     key={group.setName}
                     group={group}
                     currentSetName={currentInfo?.setName ?? null}
+                    currentItemId={currentItemId}
                     onSelect={handleSelect}
                     targetSlot={targetSlot}
                     iconReady={iconReady}

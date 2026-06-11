@@ -47,6 +47,38 @@ const BACK_OFF = 21;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
+/**
+ * Build the GearPiece for a slot when the user picks a new item `itemId`.
+ *
+ * Carries over ONLY the user's trait/enchant (and, for apparel, weight). It
+ * deliberately does NOT spread the previous piece: a stale `link` field encodes
+ * the OLD item id, and consumers like GearSelector resolve the slot's item id
+ * from `link` BEFORE `id` — so keeping it would leave the slot pointing at the
+ * previous item after a replace. The fresh `id` is the single source of truth.
+ *
+ * Weight: a set locked to one armor weight in-game wins (mythic / overland drop)
+ * so exports + stats stay correct even though the chip is read-only; otherwise
+ * the user's chosen weight carries over, but only for apparel (jewelry / weapons
+ * have no armor weight).
+ */
+export function buildReplacementPiece(
+  prev: GearPiece | undefined,
+  itemId: number,
+  category: EquipSlotDef['category'],
+): GearPiece {
+  const next: GearPiece = { id: itemId };
+  if (prev?.trait !== undefined) next.trait = prev.trait;
+  if (prev?.enchant !== undefined) next.enchant = prev.enchant;
+
+  const locked = getLockedArmorWeight(getItemInfo(itemId)?.setName);
+  if (locked) {
+    next.weight = locked;
+  } else if (category === 'apparel' && prev?.weight !== undefined) {
+    next.weight = prev.weight;
+  }
+  return next;
+}
+
 const slotDef = (idx: number): EquipSlotDef =>
   EQUIP_SLOTS.find((s) => s.slot === idx) ?? {
     slot: idx,
@@ -237,23 +269,7 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
     (itemId: number): void => {
       if (!pickerSlot) return;
       const slot = pickerSlot.slot;
-      // Preserve the slot's existing trait/enchant; only the item identity
-      // (and possibly its weight) changes when a new piece is chosen.
-      const prev = gearRef.current[slot];
-      const nextPiece: GearPiece = { ...prev, id: itemId };
-
-      // If the chosen set is locked to a single armor weight (mythic / overland
-      // drop), persist that weight so exports and stats stay correct even
-      // though the chip is read-only. Otherwise keep whatever the user had.
-      const info = getItemInfo(itemId);
-      const locked = getLockedArmorWeight(info?.setName);
-      if (locked) {
-        nextPiece.weight = locked;
-      } else if (pickerSlot.category !== 'apparel') {
-        // Non-apparel slots (jewelry / weapons) have no armor weight.
-        delete nextPiece.weight;
-      }
-
+      const nextPiece = buildReplacementPiece(gearRef.current[slot], itemId, pickerSlot.category);
       const next: GearConfig = { ...gearRef.current, [slot]: nextPiece };
       // Sync fast-path auto-clear (local-data items). The useEffect above
       // handles the uncached case retroactively once the UESP fetch lands.
