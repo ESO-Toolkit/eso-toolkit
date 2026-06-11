@@ -224,7 +224,7 @@ export const shatteredPathsSignet: GearSetData = {
   icon: 'Shattered Paths Signet',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Increase your damage done with status effects by 1% for every 1 Ultimate you have, up to 170%. The current and maximum damage done is divided by 1, plus 1 if Feral Guardian or its morphs are active, plus 1 if the target is a player.\n\nWhile you have 170 or more Ultimate, your Light and Heavy Attacks apply a random status effect, up to once every 4 seconds.\n\nApplies Minor Timidity to you, consuming 1 Ultimate every 1.5 seconds while in combat.',
+    '(1 item) Increase your damage done with status effects by 1% for every 1 Ultimate you have, up to 170%. This effect is divided by 1 plus 1 if the target is a player, plus 1 if Feral Guardian is active.\n\nWhile you have 170 or more Ultimate, your Light and Heavy Attacks apply a random status effect, up to once every 4 seconds.\n\nApplies Minor Timidity to you, consuming 1 Ultimate every 1.5 seconds in combat.',
   ],
 };
 
@@ -242,7 +242,7 @@ export const spaulderOfRuin: GearSetData = {
   icon: 'Spaulder of Ruin',
   setType: 'Mythic',
   bonuses: [
-    '(1 item) Activating crouch activates and deactivates a 12 meter Aura of Pride. Up to 6 group members in the aura gain 260 Weapon and Spell Damage. Reduce your Health, Magicka, and Stamina Recovery by 70 for every target benefiting from your Aura of Pride.',
+    '(1 item) Activating crouch or Prowl activates and deactivates a 12 meter Aura of Pride. Up to 6 group members in the aura gain 260 Weapon and Spell Damage. Reduce your Health, Magicka, and Stamina Recovery by 70 for every target benefiting from your Aura of Pride.',
   ],
 };
 
@@ -288,7 +288,7 @@ export const theProwlersTalisman: GearSetData = {
   icon: "The Prowler's Talisman",
   setType: 'Mythic',
   bonuses: [
-    '(1 item) While Battle Spirit is inactive, bracing while crouching turns you invisible for 10 seconds. This can occur once every 45 seconds. Increase your chances of successfully Pickpocketing by 5%. On dealing Critical Damage, increase your Max Magicka and Max Stamina for 10 seconds, up to 1900 at 10 stacks. On dealing non-Critical Damage, increase your Health, Magicka, and Stamina Recovery for 10 seconds, up to 160 at 10 stacks. Either effect can occur up to once every 1 second.',
+    '(1 item) While Battle Spirit is inactive, bracing while crouching turns you invisible for 10 seconds. This can occur once every 45 seconds.\n\nIncrease your chances of successfully Pickpocketing by 5%.\n\nOn dealing Critical Damage, increase your Max Magicka and Max Stamina for 10 seconds, up to 1900 at 10 stacks.\n\nOn dealing non-Critical Damage, increase your Health, Magicka, and Stamina Recovery for 10 seconds, up to 160 at 10 stacks.\n\nEither effect can occur up to once every 1 second.',
   ],
 };
 

@@ -21,6 +21,7 @@ import path from 'node:path';
 
 const ROOT = process.cwd();
 const WRITE = process.argv.includes('--write');
+const LIST_UNMATCHED = process.argv.includes('--list-unmatched');
 
 // --- dump indexes ---------------------------------------------------------
 const dump = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/tooltip-dump.json'), 'utf8'));
@@ -98,6 +99,7 @@ let totalSkills = 0;
 let updated = 0;
 let unchanged = 0;
 let unmatched = 0;
+const unmatchedNames = [];
 const perFile = [];
 
 // Pick the highest-rank dump entry across a set of candidate ids (the skill's `id`
@@ -120,8 +122,11 @@ function bestByIds(ids) {
 // The id→name gap can be large when `alternateIds` is a long multiline array (e.g.
 // Devour has ~130 ids). Cap is generous; the lazy quantifier still binds to the nearest
 // `name:`/`description:`, so it won't bleed across skill objects.
+// The name→description gap must NOT cross into another object (guarded by the
+// (?!\bid:) tempered dot): skill-LINE headers ({ id: 0, name: 'Werewolf', ... })
+// otherwise swallow the first skill's description and silently skip that skill.
 const SKILL_RE =
-  /(\bid:\s*([\w.]+)\s*,[\s\S]{0,2000}?\bname:\s*(['"])((?:[^\\]|\\.)*?)\3[\s\S]{0,400}?\bdescription:\s*)((['"])(?:[^\\]|\\.)*?\6)/g;
+  /(\bid:\s*([\w.]+)\s*,[\s\S]{0,2000}?\bname:\s*(['"])((?:(?!\3)(?:[^\\\n]|\\.))*?)\3(?:(?!\bid:)[\s\S]){0,400}?\bdescription:\s*)((['"])(?:[^\\]|\\.)*?\6)/g;
 
 // Pull alternateIds out of the matched skill chunk (between name and description).
 const ALT_RE = /\balternateIds:\s*\[([0-9,\s]*)\]/;
@@ -149,6 +154,7 @@ for (const file of files) {
     if (!hit || !hit.description) {
       unmatched++;
       fileUnmatched++;
+      unmatchedNames.push(`${path.relative(ROOT, file)}: ${nameRaw} (${idTok})`);
       return full; // keep current
     }
     // Preserve the original quote style of the description literal.
@@ -183,6 +189,10 @@ console.log(`Skills scanned:   ${totalSkills}`);
 console.log(`Updated:          ${updated}`);
 console.log(`Already current:  ${unchanged}`);
 console.log(`Unmatched (kept): ${unmatched}`);
+if (LIST_UNMATCHED && unmatchedNames.length) {
+  console.log('\nUnmatched skills:');
+  for (const n of unmatchedNames) console.log(`  ${n}`);
+}
 console.log(`Files touched:    ${perFile.length}`);
 console.log('\nTop files by updates:');
 for (const p of perFile.sort((a, b) => b.updated - a.updated).slice(0, 15)) {

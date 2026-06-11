@@ -76,7 +76,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.UPPERCUT,
       description:
-        'Slam an enemy with an upward swing, dealing 2760 Physical Damage.\n\nGrants you Major Berserk and Empower for 3 seconds, increasing damage done by 10% and increasing damage done with Heavy Attacks against monsters by 70%.',
+        'Slam an enemy with an upward swing, dealing 2760 Physical Damage.\n\nGrants you Major Berserk and Empower for 3 seconds, increasing damage done by 10% and increasing damage done with Heavy Attacks against monsters by 150%.',
     },
     {
       id: AbilityId.CRITICAL_CHARGE,
@@ -116,7 +116,7 @@ export const twoHandedSkillLine: SkillLineData = {
       type: 'active',
       baseAbilityId: AbilityId.CLEAVE,
       description:
-        'Focus your strength into a mighty swing, dealing 1742 Bleed Damage to enemies in front of you, and causing them to bleed for an additional 2868 Bleed Damage over 12 seconds.\n\nHitting a target that is already bleeding from this ability extends the duration by 10 seconds, up to a maximum of 32.\n\nYou also gain a damage shield that absorbs 1742 damage for 6 seconds.',
+        'Focus your strength into a mighty swing, dealing 1742 Bleed Damage to enemies in front of you, and causing them to bleed for an additional 2868 Bleed Damage over 12 seconds.\n\nHitting a target that is already affected from this ability extends the duration by 10 seconds, up to a maximum of 32.\n\nYou also gain a damage shield that absorbs 1742 damage for 6 seconds.',
     },
     {
       id: 38754, // Carve (morph)

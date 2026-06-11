@@ -12,6 +12,8 @@
  */
 
 import { ESO_POTION_LOOKUP } from '@/data/esoPotions';
+import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
+import { CLASS_MASTERY_MAX_PICKS } from '@/features/build-editor/utils/classMasteryEligibility';
 
 import type {
   Build,
@@ -113,6 +115,7 @@ interface CompactBuild {
   d?: string; // shortDescription
   ec?: number; // esoClass index
   csl?: (number | null)[]; // classSkillLines (3 items)
+  cm?: number[]; // classMasteryPassives (omit if empty)
   r?: number; // role index
   gm?: 1; // gameMode: only set when 'pvp' (default pve)
   ra?: string[]; // races
@@ -365,6 +368,8 @@ function compactifyBuild(build: Build): CompactBuild {
   );
   if (csl.some((v) => v !== null)) c.csl = csl;
 
+  if (build.classMasteryPassives?.length) c.cm = build.classMasteryPassives;
+
   const roleIdx = ROLE_IDX.get(build.role);
   if (roleIdx !== undefined) c.r = roleIdx;
 
@@ -389,6 +394,17 @@ function compactifyBuild(build: Build): CompactBuild {
   return c;
 }
 
+/**
+ * A crafted/corrupted `cm` payload with ids the section never renders would
+ * otherwise hit the 2-pick cap and soft-lock the picker — keep only the
+ * decoded class's own Class Mastery passives, deduped and capped.
+ */
+function sanitizeClassMasteryPicks(cm: number[] | undefined, esoClass: ESOClass): number[] {
+  if (!Array.isArray(cm) || cm.length === 0) return [];
+  const valid = new Set(getClassMasteryLine(esoClass)?.skills.map((skill) => skill.id) ?? []);
+  return [...new Set(cm)].filter((id) => valid.has(id)).slice(0, CLASS_MASTERY_MAX_PICKS);
+}
+
 function expandCompactBuild(c: CompactBuild): Build {
   const setups = c.s.map((cs, i) => expandSetup(cs, i));
   const esoClass: ESOClass = c.ec != null ? (ESO_CLASSES[c.ec] ?? 'dragonknight') : 'dragonknight';
@@ -407,6 +423,7 @@ function expandCompactBuild(c: CompactBuild): Build {
     shortDescription: c.d ?? '',
     esoClass,
     classSkillLines,
+    classMasteryPassives: sanitizeClassMasteryPicks(c.cm, esoClass),
     role,
     gameMode: c.gm === 1 ? 'pvp' : 'pve',
     races: c.ra ?? [],

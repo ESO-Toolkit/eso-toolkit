@@ -92,7 +92,13 @@ for (const file of files) {
 
   const next = original.replace(SET_RE, (full, _q, nameRaw, head, bonusesBody, close) => {
     setsSeen++;
-    const dumpSet = dumpByName.get(norm(unescape(nameRaw)));
+    // App names sometimes carry a leading "The " the game omits (e.g. app
+    // "The Prowler's Talisman" vs in-game "Prowler's Talisman") — try both ways.
+    const appName = norm(unescape(nameRaw));
+    const dumpSet =
+      dumpByName.get(appName) ??
+      dumpByName.get(appName.replace(/^the/, '')) ??
+      dumpByName.get('the' + appName);
     if (!dumpSet || dumpSet.list.length === 0) {
       unmatchedSets.push(unescape(nameRaw));
       return full;
@@ -107,9 +113,17 @@ for (const file of files) {
       indent.replace(/[ \t]{2}$/, ''); // closing-bracket indent (one level out)
 
     const rebuilt = head + newBody + close;
-    // Compare normalized to skip no-op rewrites (already current).
-    const normBody = (s) => s.replace(/\s+/g, ' ').trim();
-    if (normBody(head + bonusesBody + close) === normBody(rebuilt)) {
+    // Skip no-op rewrites by comparing bonus string VALUES, not literal text:
+    // prettier may re-quote ('It\'s' -> "It's") or re-wrap the array, neither of
+    // which is a content change worth rewriting (kept layout-stable for prettier).
+    const existingValues = [];
+    const STR_RE = /(['"])((?:[^\\]|\\.)*?)\1/g;
+    let sm;
+    while ((sm = STR_RE.exec(bonusesBody))) existingValues.push(unescape(sm[2]));
+    if (
+      existingValues.length === dumpSet.list.length &&
+      existingValues.every((v, k) => v === dumpSet.list[k])
+    ) {
       return full;
     }
     setsRewritten++;

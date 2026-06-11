@@ -54,6 +54,7 @@ import { calculateBuildStats } from '../features/build-editor/engine/stat-engine
 import { BE_TOKENS } from '../features/build-editor/theme/buildEditorTokens';
 import { CLASS_COLOR_MAP } from '../features/build-editor/theme/classColorMap';
 import type { Build, BuildSetup, CombatRole } from '../features/build-editor/types/build.types';
+import { isClassMasteryEligible } from '../features/build-editor/utils/classMasteryEligibility';
 import { exportBuildToCSPSLua } from '../features/build-editor/utils/cspsExport';
 import { buildHubApi } from '../features/build-hub/api/build-hub-api';
 import { BuildViewShell } from '../features/build-viewer/components/BuildViewShell';
@@ -886,6 +887,12 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
     : null;
   const curseLabel = setup.curse && setup.curse !== 'none' ? setup.curse : null;
 
+  // Class Mastery picks (build-level, U50) — only shown while the build is
+  // actually eligible (non-subclassed); picks are inert otherwise.
+  const classMasteryIds = isClassMasteryEligible(viewBuild.esoClass, viewBuild.classSkillLines)
+    ? (viewBuild.classMasteryPassives ?? [])
+    : [];
+
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible">
       {/* Row 1: Attributes + Character */}
@@ -1592,6 +1599,99 @@ const SetupDisplay: React.FC<{ setup: BuildSetup; build: Build; races?: string[]
             label="Passives"
             count={setup.passives.length > 0 ? `${setup.passives.length} selected` : undefined}
           >
+            {classMasteryIds.length > 0 && (
+              <Box sx={{ mb: 1.25 }}>
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+                    mb: 0.5,
+                  }}
+                >
+                  Class Mastery
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                  {classMasteryIds.map((passiveId) => {
+                    const skill = getSkillById(passiveId);
+                    const iconUrl = skill?.icon ? resolveIconUrl(skill.icon) : null;
+                    return (
+                      <Tooltip
+                        key={passiveId}
+                        title={
+                          skill?.description ? (
+                            <Box sx={{ maxWidth: 320 }}>
+                              <Typography sx={{ fontWeight: 600, fontSize: 12 }}>
+                                {skill.name}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: 11,
+                                  opacity: 0.85,
+                                  whiteSpace: 'pre-line',
+                                  mt: 0.5,
+                                }}
+                              >
+                                {skill.description}
+                              </Typography>
+                            </Box>
+                          ) : (
+                            (skill?.name ?? `Passive #${passiveId}`)
+                          )
+                        }
+                        arrow
+                        placement="top"
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            py: 0.6,
+                            px: 1,
+                            borderRadius: 2,
+                            background: isDark ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)',
+                            border: `1px solid ${
+                              isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'
+                            }`,
+                          }}
+                        >
+                          {iconUrl && (
+                            <img
+                              src={iconUrl}
+                              alt=""
+                              loading="lazy"
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: 6,
+                                objectFit: 'cover',
+                                display: 'block',
+                              }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <Typography
+                            sx={{
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              color: isDark ? 'rgba(255,255,255,0.72)' : 'rgba(0,0,0,0.68)',
+                            }}
+                          >
+                            {skill?.name ?? `Passive #${passiveId}`}
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
             {setup.passives.length > 0 ? (
               (() => {
                 const n = setup.passives.length;

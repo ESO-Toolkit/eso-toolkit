@@ -70,27 +70,83 @@ addon (`tools/eso-tooltip-dump` on `feat/tooltip-data-pipeline`) will supply exa
 ## Follow-ups (blocked on external data)
 
 1. **Re-fetch `data/abilities.json`** (`scripts/fetchAbilitiesToJson.ts`): ESO Logs still
-   served pre-U50 names for the renamed werewolf IDs as of 2026-06-09 (their mining lags the
-   patch). Re-run once `gameData.ability(id: 58405)` returns "Gnash". Re-run
-   `node scripts/check-skill-line-icons.cjs` afterwards.
+   served pre-U50 names for the renamed werewolf IDs as of 2026-06-10 (re-checked: 58405 =
+   "Piercing Howl"; their mining lags the patch). Re-run once `gameData.ability(id: 58405)`
+   returns "Gnash". Re-run `node scripts/check-skill-line-icons.cjs` afterwards.
 2. **Class Mastery passives (35 new, 5 per class)**: new passive-only skill line per class for
-   non-subclassed characters (2 of 5 active via Class Mastery Points). Ability IDs not yet
-   published anywhere. Once mined (UESP esolog / LibSkillsFactory v26+), consider:
-   skill-line data entries, build-editor representation (interacts with subclassing — running
-   any subclass line disables Class Mastery), and buff tracking for the new group buff sources
-   (Lead From the Front: Major Berserk+Protection; Nature's Bounty: Major Heroism;
-   Ink-Scribe's Verve: Major Force; Tundra's Maw: Major Brittle via Chilled).
+   non-subclassed characters (2 of 5 active via Class Mastery Points). **IDs SELF-SOURCED
+   2026-06-10** from the U50 in-game tooltip dump (skill-tree walk enumerates them; exact names
+   + descriptions in `data/tooltip-dump.json`; ESO Logs `gameData.ability` still returns null
+   for them). Grouped by class:
+   - Dragonknight: 238232 Inexorable Descent, 240268 Booming Voice, 259224 Wildfire Embers,
+     263220 Resolute Defense, 263247 Lead from the Front
+   - Arcanist: 263316 Abyssal Emergence, 263398 Fate Realigned, 263410 Unbound Potential,
+     263412 Erudite's Rigor, 263416 Ink-Scribe's Verve
+   - Necromancer: 263448 Nothing Wasted, 263465 Malevolent Promise, 263509 Cycle Unending,
+     263549 Pound of Flesh, 263554 Veil's Forfeit
+   - Warden: 263519 Tundra's Maw, 263520 Wild Adaptation, 263521 Glacial Obstinance,
+     263522 Green-Keeper's Hide, 263523 Bountiful Harvest (patch notes called it
+     "Nature's Bounty")
+   - Templar: 263585 Bastion of Light, 263586 Devout Guardian, 263587 Bright Harbinger,
+     263588 Judgment's Brand, 263589 Steadfast Candescence
+   - Nightblade: 263603 Nocturnal Inspiration, 263604 An Eye for Exploitation,
+     263605 Above and Beyond, 263606 Cutthroat's Focus, 263607 Share the Spoils
+   - Sorcerer: 263870 Conservation of Energy, 263871 Font of Power, 263872 Static
+     Reverberation, 263873 Calculated Defense, 263874 Sphere of Influence
+
+   **Skill-line data entries SHIPPED 2026-06-10**: `src/data/skill-lines/class/classMastery.ts`
+   (7 per-class `SkillLineData` entries — the game models it as ONE shared line, in-game
+   lineId 351, but per-class entries match the registry's class keying and feed class
+   detection) + 35 `ClassSkillId` enum entries + 9 CDN-verified icons added to the icon
+   guard's exact-name allowlist. Descriptions verbatim from the dump (provenance gate 100%).
+
+   **Build-editor representation SHIPPED 2026-06-10**: dedicated "Class Mastery"
+   section (`ClassMasterySection.tsx`, gated by
+   `src/features/build-editor/utils/classMasteryEligibility.ts` — enabled only while
+   every `classSkillLines` slot is the base class's own line or empty), 2-of-5 picker
+   persisted build-level as `Build.classMasteryPassives` (additive reducers
+   `toggleClassMasteryPassive`/`setClassMasteryPassives`, localStorage migration,
+   `cm` field in the URL build encoding), picks surfaced in BuildViewPage's Passives
+   panel while eligible. The line stays out of `esoStaticData.ts`'s subclass picker
+   and out of the generic passive picker (`getSkillLineIndex`/`searchPassives`
+   exclude it; picks live in their own slice field, not `setup.passives`).
+
+   **Buff tracking for the group-buff passives** (Lead from the Front 263247:
+   Major Berserk 61745 + Major Protection; Bountiful Harvest 263523: Major
+   Heroism 61709; Ink-Scribe's Verve 263416: Major Force 61747; Tundra's Maw
+   263519: Major Brittle 145977 via Chilled): the granted buffs use the existing
+   tracked Major effect IDs, and every consumer (buff-uptime panels, stat
+   engines `CritDamageUtils`/`damageReductionUtils`/`PenetrationUtils`,
+   locked-player live stats) keys on the BUFF effect ID, not the granting
+   ability — uptime and stat modeling work with no code change. **TODO (needs
+   the first real U50 log containing these passives — none exists yet):**
+
+   1. Role detection: `OFFENSIVE_BUFF_CATEGORIES`
+      (`src/features/role_detection/constants.ts`) counts group applications of
+      61747 ("Major Force (Horn)") and 61745 ("Major Berserk") toward the
+      buff-healer gate. A non-subclassed Arcanist (Ink-Scribe's Verve) or DK
+      (Lead from the Front) DPS now applies these group-wide — check whether
+      ESO Logs credits them as buff `sourceID` and whether that flips any
+      classification; if so, exclude applications sourced from the Class
+      Mastery passives (IDs above).
+   2. Potion detection: 61709 is in `MAJOR_HEROISM_IDS`
+      (`src/utils/potionDetectionUtils.ts`) and classifies a potion when it
+      lands within the 5 ms buff cluster of a ≥500 resource restore. Verify a
+      Bountiful Harvest application coinciding with a potion sip doesn't
+      misclassify the potion as Heroism.
+   3. Tundra's Maw: verify the Warden applying Chilled gets debuff-applied
+      credit for Major Brittle 145977 (insights debuff attribution uses event
+      `sourceID`).
 3. **The Prowler's Talisman set ID**: not yet in ESO Logs `gameData.item_sets`
    (scanned 2026-06-09). Add to `KnownSetIDs` when it appears (post-July 8).
 4. **Season One wave (July 8, 2026)**: Thieves Guild questline, Dynamic Encounters,
    Prowler's Talisman upgrade tiers — expect another data pass, no API bump.
 5. **Tooltip dump addon**: already declares `## APIVersion: 101050` (correct for U50 — single
-   bump, confirmed via ESOUI dev thread). Run the in-game dump on the U50 client to replace
-   patch-note-derived descriptions with exact tooltip strings. The U50-changed entries are
-   pinned in `data/tooltip-provenance-pending.json` (81 entries, exact-text-pinned, generated
-   via `check-tooltip-provenance.mjs --emit-pending`) so the provenance gate stays at 100% with
-   the exceptions reported separately — **delete that file** after the U50 dump refresh; any
-   drift from the pinned text re-trips the gate until then.
+   bump, confirmed via ESOUI dev thread). **DONE 2026-06-10**: U50 in-game dump run (API
+   101050, 4350 abilities / 702 sets), parsed and applied via the refresh scripts — exact
+   tooltip strings replaced the patch-note-derived text (41 skills, 141 sets), and
+   `data/tooltip-provenance-pending.json` was deleted; the provenance gate passes pure at
+   100.00% exact with no pending allowlist.
 6. **Werewolf tank taunt**: Deafening Roar's slot taunt moved from Heavy Attacks to
    "Gnash cast while Bracing". The innate taunt debuff (38254) is unchanged, but verify
    role-detection taunt attribution against a live U50 werewolf-tank log.

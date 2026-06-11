@@ -50,6 +50,11 @@ export const selectBuildGameMode = (s: RootState): Build['gameMode'] =>
 export const selectBuildRaces = (s: RootState): string[] => s.buildEditor.build.races;
 export const selectBuildClassSkillLines = (s: RootState): Build['classSkillLines'] =>
   s.buildEditor.build.classSkillLines;
+// Stable empty array — builds saved before U50 have no classMasteryPassives,
+// and `?? []` inline would defeat useSelector reference equality.
+const EMPTY_CLASS_MASTERY: number[] = [];
+export const selectClassMasteryPassives = (s: RootState): number[] =>
+  s.buildEditor.build.classMasteryPassives ?? EMPTY_CLASS_MASTERY;
 export const selectBuildGuide = (s: RootState): Build['guide'] => s.buildEditor.build.guide;
 export const selectBuildSettings = (s: RootState): Build['settings'] =>
   s.buildEditor.build.settings;

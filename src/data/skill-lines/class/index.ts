@@ -3,6 +3,15 @@ export { animalCompanions } from './animalCompanions';
 export { ardentFlame } from './ardentFlame';
 export { assassination } from './assassination';
 export { boneTyrant } from './boneTyrant';
+export {
+  classMasteryArcanist,
+  classMasteryDragonknight,
+  classMasteryNecromancer,
+  classMasteryNightblade,
+  classMasterySorcerer,
+  classMasteryTemplar,
+  classMasteryWarden,
+} from './classMastery';
 export { curativeRuneforms } from './curativeRuneforms';
 export { daedricSummoning } from './daedricSummoning';
 export { darkMagic } from './darkMagic';

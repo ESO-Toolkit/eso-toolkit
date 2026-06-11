@@ -45,7 +45,7 @@ export const aegisOfGalenwe: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) When you Block, you grant Empower to 11 other group members within 15 meters for 3 seconds, increasing the damage of their Heavy Attacks against monsters by 70%. This effect can occur once every 2 seconds.',
+    '(5 items) When you Block, you grant Empower to 11 other group members within 15 meters for 3 seconds, increasing the damage of their Heavy Attacks against monsters by 150%. This effect can occur once every 2 seconds.',
   ],
 };
 
@@ -57,7 +57,7 @@ export const aeriesCry: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time, and this effect can stack between multiple wearers.",
+    "(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack.\n\nApplying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done by 10% against enemies with Eagle's Mark.\n\nThis effect can occur every 3 seconds. You can have one Eagle's Mark active at a time.",
   ],
 };
 
@@ -81,7 +81,7 @@ export const aethericLancer: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 10 seconds. The damage scales off the higher of your Weapon or Spell Damage and counts as a class ability.',
+    '(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 3 seconds.\n\nWhile in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 10 seconds. The damage scales off the higher of your Weapon or Spell Damage.',
   ],
 };
 
@@ -680,7 +680,7 @@ export const corpseburster: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 657 Critical Chance',
-    '(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Disease Damage to enemies within 5 meters and applying Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted. Enemies hit are afflicted with the Diseased status effect.',
+    '(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Disease Damage to enemies within 5 meters and applying the Diseased status effect and Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted.',
   ],
 };
 
@@ -999,7 +999,7 @@ export const elfBane: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, increases the duration of your Flame Damage over Time abilities, including Dragonknight Standard, by 5 seconds.\n\nThis effect does not work with beam or channeled effects.',
+    '(5 items) While in combat, increases the duration of your Flame Damage over Time abilities by 5 seconds.\n\nThis effect does not work with beam or channeled effects. Applies to Dragonknight Standard.',
   ],
 };
 
@@ -1033,7 +1033,7 @@ export const enervatingAura: GearSetData = {
     '(2 items) Adds 4% Healing Taken',
     '(3 items) Adds 1206 Maximum Health',
     '(4 items) Adds 1487 Armor',
-    '(5 items) When you deal direct damage, you have a 10% chance to create an area under the target that detonates after 1 second, applying Enervating Aura for 10 seconds to enemies within 5 meters. Enervating Aura lowers the Health Recovery, Magicka Recovery, and Stamina Recovery of enemy players by 129 per player hit. This effect can occur once every 15 seconds. Enemies hit are also afflicted with Minor Enervation, reducing their Critical Damage done by 10%.',
+    '(5 items) When you deal direct damage, you have a 10% chance to create an area under the target that detonates after 1 second, applying Enervating Aura and Minor Enervation for 10 seconds to enemies within 5 meters. Enervating Aura lowers the Health Recovery, Magicka Recovery, and Stamina Recovery of enemy players by 129 per player hit. This effect can occur once every 15 seconds.',
   ],
 };
 
@@ -1150,7 +1150,7 @@ export const foolkillerSWard: GearSetData = {
     '(2 items) Adds 1487 Armor',
     '(3 items) Adds 1487 Armor',
     '(4 items) Adds 1206 Maximum Health',
-    '(5 items) Activating Block while in combat places a damage shield on you and up to 3 group members within 18 meters for 2 seconds that absorbs up to 4000 direct damage. If a damage shield breaks, the wearer of the shield restores 5680 Magicka and Stamina.\n\nThis effect can occur once every 30 seconds if a damage shield broke. This effect can occur once every 10 seconds if no damage shields broke.',
+    '(5 items) Bracing while in combat places a damage shield on you and up to 3 group members within 18 meters for 2 seconds that absorbs up to 4000 direct damage. If a damage shield breaks, the wearer of the shield restores 5680 Magicka and Stamina.\n\nThis effect can occur once every 30 seconds if a damage shield broke. This effect can occur once every 10 seconds if no damage shields broke.',
   ],
 };
 
@@ -1974,7 +1974,7 @@ export const mightOfTheLostLegion: GearSetData = {
     '(3 items) Adds 1096 Maximum Magicka',
     '(4 items) Adds 129 Weapon and Spell Damage',
     '(5 items) Adds 1206 Maximum Health',
-    '(5 items) When you Block, you gain Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 3 seconds.',
+    '(5 items) When you Block, you gain Empower, increasing the damage of your Heavy Attacks against monsters by 150% for 3 seconds.',
   ],
 };
 
@@ -2020,7 +2020,7 @@ export const monolithOfStorms: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 935 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds. You gain 100 Weapon and Spell Damage for each Monolith active.",
+    "(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second, up to 3 total. Your Monoliths within 28 meters of one another link together, dealing 742 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies near the links, up to once every 2 seconds per enemy.\n\nEach Monolith active grants you 100 Weapon and Spell Damage.",
   ],
 };
 
@@ -2345,7 +2345,7 @@ export const perfectedAegisOfGalenwe: GearSetData = {
     '(2 items) Adds 1206 Maximum Health',
     '(3 items) Gain Minor Aegis at all times, reducing your damage taken from Dungeon, Trial, and Arena Monsters by 5%.',
     '(4 items) Adds 4% Healing Taken',
-    '(5 items) When you Block, you grant Empower to 11 other group members within 15 meters for 3 seconds, increasing the damage of their Heavy Attacks against monsters by 70%. This effect can occur once every 2 seconds.',
+    '(5 items) When you Block, you grant Empower to 11 other group members within 15 meters for 3 seconds, increasing the damage of their Heavy Attacks against monsters by 150%. This effect can occur once every 2 seconds.',
   ],
 };
 
@@ -2485,7 +2485,7 @@ export const pyrebrand: GearSetData = {
     '(2 items) Adds 1487 Offensive Penetration',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Your Light Attacks deal 837 Flame Damage over 6 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 stacks of Wildfire Embers or Pyrebrand to deal 637 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage and is increased by 25% for each stack of Wildfire Embers on the target, up to 300%. This set can trigger Wildfire Embers once every 10 seconds.',
+    '(5 items) Your Light Attacks deal 836 Flame Damage over 6 seconds. This effect can activate Wildfire Embers, up to once every 10 seconds.\n\nYour fully-charged Heavy Attacks consume up to 3 stacks of your Wildfire Embers to deal 629 Flame Damage around the target, dealing up to 200% more damage to enemies below 33% Health.\n\nThe damage scales off the higher of your Weapon or Spell Damage increases by 25% per stack of Recursive Flame and Pyrebrand.',
   ],
 };
 
@@ -2887,7 +2887,7 @@ export const soulcleaver: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate:\n\nIncreases the damage and healing of Siphoning abilities by 15%. Reduces the cost of Siphoning abilities by 15%. Casting Siphoning abilities drains you of 1 Ultimate and increases your damage done by up to 12% based on your current Health for 20 seconds.',
+    '(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate:\n\nIncreases the damage and healing of Siphoning abilities by 15%. Reduces the cost of Siphoning abilities by 15%. Casting Siphoning abilities drains you of 1 Ultimate and increases your damage done for 20 seconds by up to 12%, based on how high your current Health is.',
   ],
 };
 
@@ -2911,7 +2911,7 @@ export const spatteringDisjunction: GearSetData = {
     '(2 items) Adds 657 Critical Chance',
     '(3 items) Adds 129 Weapon and Spell Damage',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    '(5 items) Dealing damage with an Arcanist ability applies two random status effects to your target. This effect can occur once every 7 seconds. Dealing damage with a Herald of the Tome ability reduces this cooldown by 0.5 seconds, up to once every 1 second. While worn, your damage done with status effects is increased by 40%, and triggering this effect generates a Crux.',
+    '(5 items) Dealing damage with an Arcanist ability applies two random status effects to your target and generates a Crux. This effect can occur once every 7 seconds. Dealing damage with a Herald of the Tome ability reduces this cooldown by 0.5 seconds, up to once every 1 second.\n\nIncreases your damage done with status effects by 40%.',
   ],
 };
 
@@ -3512,9 +3512,9 @@ export const vicecanonOfVenom: GearSetData = {
   icon: 'Vicecanon of Venom',
   setType: 'Trial',
   bonuses: [
-    '(2 items) Adds 1096 Maximum Stamina',
+    '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 129 Weapon and Spell Damage',
-    '(4 items) Adds 129 Stamina Recovery',
+    '(4 items) Adds 657 Critical Chance',
     '(5 items) When you deal direct Critical Damage to an enemy while behind them, you inject a leeching poison that deals 1300 Poison Damage over 10 seconds to them and heals you for 100% of the damage done. This effect can occur once every 10 seconds per enemy and scales off the higher of your Weapon or Spell Damage.',
   ],
 };
@@ -3623,7 +3623,7 @@ export const wrathsun: GearSetData = {
     '(2 items) Adds 129 Weapon and Spell Damage',
     '(3 items) Adds 657 Critical Chance',
     '(4 items) Adds 129 Weapon and Spell Damage',
-    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 30 stacks max and gain 21 Magicka Recovery per stack. When at max stacks, your damage done with Templar skill line abilities is increased by 25% (10% against players) and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
+    "(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack and up to 30 times. Each stack grants 21 Magicka Recovery. When at max stacks, stacks no longer refresh, your Templar skill line abilities deal 25% bonus damage but is reduced to 10% against players, and a Wrathful Nova is cast on the enemy.\n\nWhen Sunlight expires at max stacks, you lose 50% of your current Magicka.",
   ],
 };
 

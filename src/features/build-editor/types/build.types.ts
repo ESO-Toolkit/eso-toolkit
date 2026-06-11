@@ -156,6 +156,14 @@ export interface Build {
   esoClass: ESOClass;
   /** Exactly 3 class skill line slots — can be from any class, nullable during editing */
   classSkillLines: [ClassSkillLineId | null, ClassSkillLineId | null, ClassSkillLineId | null];
+  /**
+   * Class Mastery passive picks (max 2 of the base class's 5; U50).
+   * Only active while NOT subclassed — every classSkillLines slot must be the
+   * base class's own line (or empty). Picks are kept when the gate closes so
+   * toggling a subclass line back restores them. Optional for builds saved
+   * before U50.
+   */
+  classMasteryPassives?: number[];
   role: CombatRole;
   gameMode: GameMode;
   races: string[];
