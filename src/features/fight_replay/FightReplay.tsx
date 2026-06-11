@@ -306,6 +306,13 @@ export const FightReplay: React.FC = () => {
       // New fight's positions are ready.
       loadingSeenRef.current = false;
       setIsSwitchingFight(false);
+    } else if (actorPositionsError) {
+      // The new fight's pipeline FAILED. Without this branch the switch never settled —
+      // renderArena suppresses the error panel while switching (deliberately, so transient
+      // aborts can't unmount the arena), so a hard worker failure left the user parked on an
+      // indefinite "Entering…" state with the real error hidden behind it.
+      loadingSeenRef.current = false;
+      setIsSwitchingFight(false);
     } else if (isActorPositionsLoading) {
       // Pipeline has engaged for the new fight.
       loadingSeenRef.current = true;
@@ -314,7 +321,7 @@ export const FightReplay: React.FC = () => {
       loadingSeenRef.current = false;
       setIsSwitchingFight(false);
     }
-  }, [isSwitchingFight, lookup, isActorPositionsLoading]);
+  }, [isSwitchingFight, lookup, isActorPositionsLoading, actorPositionsError]);
 
   // Keyboard skip to the previous / next boss ( [ and ] ). Distinct from FightReplay3D's
   // in-fight transport keys, so the two handlers never collide. Guards mirror the

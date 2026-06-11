@@ -112,63 +112,72 @@ export function buildTrialChapters(
   let runTrialName: string | null = null;
   let currentRun: TrialChapterRun | null = null;
   let attemptsByBoss = new Map<string, number>();
-  // Trash seen before the current run's first boss — folded in as the lead-in once
-  // the boss (and thus the trial name) is known.
-  let leadingTrash: FightFragment[] = [];
+  // Trash is ALWAYS buffered until the next boss reveals which trial it leads into. Attaching
+  // post-boss trash to the current run immediately mis-filed inter-trial travel pulls (Trial A
+  // final boss → travel trash → Trial B first boss) under Trial A, leaving Trial B with no
+  // lead-in and continuous play hitting "run complete" at A's edge instead of flowing into B's
+  // run-up — contradicting the module contract that a run's preceding trash is its lead-in.
+  let pendingTrash: FightFragment[] = [];
 
   for (const fight of validFights) {
     const isBoss = fight.difficulty != null;
 
-    if (isBoss) {
-      const bossName = fight.name || 'Unknown Boss';
-      const trialName = getTrialNameFromBoss(bossName, reportData);
-
-      // Start a new run when there is no run yet, or the trial actually changes.
-      if (currentRun === null || runTrialName !== trialName) {
-        runNumber += 1;
-        runTrialName = trialName;
-        attemptsByBoss = new Map<string, number>();
-        currentRun = {
-          id: `${trialName}-run-${runNumber}`,
-          trialName,
-          segments: [],
-          bossChapters: [],
-        };
-        runs.push(currentRun);
-        // The buffered trash was this boss's run-up — attach it as the lead-in.
-        for (const trash of leadingTrash) {
-          pushSegment(currentRun, trash, 'trash', trialName, 1);
-        }
-        leadingTrash = [];
-      }
-
-      const attempt = (attemptsByBoss.get(bossName) ?? 0) + 1;
-      attemptsByBoss.set(bossName, attempt);
-      pushSegment(currentRun, fight, 'boss', trialName, attempt);
-    } else if (currentRun === null) {
-      // Trash before any boss — buffer it until the next boss reveals the trial.
-      leadingTrash.push(fight);
-    } else {
-      // Trash within / after a run — belongs to the currently-active run.
-      pushSegment(currentRun, fight, 'trash', currentRun.trialName, 1);
+    if (!isBoss) {
+      pendingTrash.push(fight);
+      continue;
     }
+
+    const bossName = fight.name || 'Unknown Boss';
+    const trialName = getTrialNameFromBoss(bossName, reportData);
+
+    // Start a new run when there is no run yet, or the trial actually changes.
+    if (currentRun === null || runTrialName !== trialName) {
+      runNumber += 1;
+      runTrialName = trialName;
+      attemptsByBoss = new Map<string, number>();
+      currentRun = {
+        id: `${trialName}-run-${runNumber}`,
+        trialName,
+        segments: [],
+        bossChapters: [],
+      };
+      runs.push(currentRun);
+    }
+
+    // The buffered trash was this boss's run-up — it belongs to THIS boss's run (the lead-in
+    // of a new run, or connective pulls within the current one).
+    for (const trash of pendingTrash) {
+      pushSegment(currentRun, trash, 'trash', currentRun.trialName, 1);
+    }
+    pendingTrash = [];
+
+    const attempt = (attemptsByBoss.get(bossName) ?? 0) + 1;
+    attemptsByBoss.set(bossName, attempt);
+    pushSegment(currentRun, fight, 'boss', trialName, attempt);
   }
 
-  // Trailing trash with no following boss (e.g. a trash-only log) — keep it
-  // navigable as a standalone run so the replay still has a chapter context.
-  if (leadingTrash.length > 0) {
-    runNumber += 1;
-    const trialName = reportData?.zone?.name || 'Trash';
-    const run: TrialChapterRun = {
-      id: `Trash-run-${runNumber}`,
-      trialName,
-      segments: [],
-      bossChapters: [],
-    };
-    for (const trash of leadingTrash) {
-      pushSegment(run, trash, 'trash', trialName, 1);
+  // Trash with no following boss: after a run's final boss it stays with that run (the
+  // post-clear pulls); with no run at all (a trash-only log) it becomes a standalone run so
+  // the replay still has a chapter context.
+  if (pendingTrash.length > 0) {
+    if (currentRun !== null) {
+      for (const trash of pendingTrash) {
+        pushSegment(currentRun, trash, 'trash', currentRun.trialName, 1);
+      }
+    } else {
+      runNumber += 1;
+      const trialName = reportData?.zone?.name || 'Trash';
+      const run: TrialChapterRun = {
+        id: `Trash-run-${runNumber}`,
+        trialName,
+        segments: [],
+        bossChapters: [],
+      };
+      for (const trash of pendingTrash) {
+        pushSegment(run, trash, 'trash', trialName, 1);
+      }
+      runs.push(run);
     }
-    runs.push(run);
   }
 
   return runs;

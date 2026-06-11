@@ -125,6 +125,34 @@ describe('buildTrialChapters', () => {
     expect(runs[0].id).not.toBe(runs[1].id);
   });
 
+  it('attaches inter-trial travel trash to the FOLLOWING run as its lead-in', () => {
+    // Trial A boss → travel/trash pull → Trial B boss: the trash is B's run-up, not A's
+    // epilogue. Mis-filing it under A made continuous play hit "run complete" at A's edge
+    // instead of flowing into B.
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      trash({ id: 9, name: 'Travel Pack', startTime: 70000, endTime: 100000 }),
+      makeFight({ id: 2, name: 'Lord Falgravn', startTime: 110000, endTime: 250000 }),
+    ];
+    const runs = buildTrialChapters(fights, null);
+    expect(runs).toHaveLength(2);
+    expect(runs[0].segments.map((s) => s.kind)).toEqual(['boss']);
+    expect(runs[1].segments.map((s) => [s.kind, s.name])).toEqual([
+      ['trash', 'Travel Pack'],
+      ['boss', 'Lord Falgravn'],
+    ]);
+  });
+
+  it('keeps trailing trash after the final boss with that run', () => {
+    const fights = [
+      makeFight({ id: 1, name: 'Oaxiltso', startTime: 0, endTime: 60000 }),
+      trash({ id: 9, name: 'Cleanup Pack', startTime: 70000, endTime: 100000 }),
+    ];
+    const runs = buildTrialChapters(fights, rockgrove);
+    expect(runs).toHaveLength(1);
+    expect(runs[0].segments.map((s) => s.kind)).toEqual(['boss', 'trash']);
+  });
+
   it('keeps a trash-only log navigable as a standalone trash run', () => {
     const fights = [
       trash({ id: 1, startTime: 0, endTime: 20000 }),
