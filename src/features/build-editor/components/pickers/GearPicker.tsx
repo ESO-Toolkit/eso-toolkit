@@ -571,34 +571,40 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   // the grouped data recomputes (and re-caches) once it lands, instead of showing
   // a single collapsed weapon row if the picker opens before icon data settles.
   const [iconReady, setIconReady] = useState(() => isIconDataReady());
+  // Set when the icon-data load fails. preloadIconData clears its rejected
+  // promise on failure, so reopening the dialog retries the load.
+  const [iconError, setIconError] = useState(false);
 
-  // Reset state on open
+  // Reset state on open (incl. clearing a prior load error so the retry fires).
   useEffect(() => {
     if (open) {
       setSearch('');
       setActiveTab('all');
+      setIconError(false);
     }
   }, [open]);
 
   // While open, make sure icon data is loaded so weapon types split correctly.
-  // On failure, keep iconReady false — weapon rows stay non-selectable (showing
-  // "loading…") rather than letting a click equip the wrong collapsed variant.
+  // On failure, surface a recoverable error (weapon rows stay non-selectable
+  // rather than letting a click equip the wrong collapsed variant); reopening
+  // the dialog clears the error and retries via the resettable promise.
   useEffect(() => {
-    if (!open || iconReady) return;
+    if (!open || iconReady || iconError) return;
     let cancelled = false;
     preloadIconData()
       .then(() => {
         if (!cancelled) setIconReady(true);
       })
       .catch(() => {
-        // Icon chunk failed to load. Re-check in case another path resolved it;
-        // otherwise leave the weapon rows in the safe non-selectable state.
-        if (!cancelled && isIconDataReady()) setIconReady(true);
+        if (cancelled) return;
+        // Another path may have resolved it; otherwise mark the error.
+        if (isIconDataReady()) setIconReady(true);
+        else setIconError(true);
       });
     return () => {
       cancelled = true;
     };
-  }, [open, iconReady]);
+  }, [open, iconReady, iconError]);
 
   // A weapon slot whose types haven't loaded yet — used to suppress collapsed,
   // mis-selectable weapon rows in both browse and search until icon data lands.
@@ -826,16 +832,25 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
               // Weapon search results collapse to one row per set until icon data
               // loads — don't show them, or a click could equip the wrong weapon.
               <Typography
-                aria-busy
+                role={iconError ? 'alert' : undefined}
+                aria-busy={!iconError || undefined}
                 sx={{
                   fontSize: 12,
-                  fontStyle: 'italic',
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  fontStyle: iconError ? 'normal' : 'italic',
+                  color: iconError
+                    ? isDark
+                      ? 'rgba(248,113,113,0.85)'
+                      : 'rgba(220,38,38,0.85)'
+                    : isDark
+                      ? 'rgba(255,255,255,0.35)'
+                      : 'rgba(0,0,0,0.35)',
                   textAlign: 'center',
                   py: 3,
                 }}
               >
-                Loading weapon types…
+                {iconError
+                  ? 'Couldn’t load weapon types. Close and reopen to retry.'
+                  : 'Loading weapon types…'}
               </Typography>
             ) : searchResults.length === 0 ? (
               <Typography
@@ -1017,6 +1032,19 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
 
             {/* ── Browse mode: set groups ──────────────────── */}
             <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
+              {WEAPON_SLOTS_SET.has(targetSlot) && iconError && (
+                <Typography
+                  role="alert"
+                  sx={{
+                    fontSize: 11,
+                    color: isDark ? 'rgba(248,113,113,0.85)' : 'rgba(220,38,38,0.85)',
+                    textAlign: 'center',
+                    py: 1,
+                  }}
+                >
+                  Couldn&rsquo;t load weapon types. Close and reopen to retry.
+                </Typography>
+              )}
               {visibleGroups.length === 0 ? (
                 <Typography
                   sx={{

@@ -158,6 +158,40 @@ describe('cspsExport', () => {
       expect(gear[4]?.setId).toBe(50);
     });
 
+    it('serializes resolved armor weight into the CSPS gear type', () => {
+      // Concrete ids: 97232 = Mother's Sorrow Chest (locked LIGHT → type 1),
+      // 97050 = Plague Doctor Chest (locked HEAVY → type 3). A weapon (slot 4)
+      // has no armor weight → type 0. Chest slot = 2.
+      const build = makeBuild({
+        setups: [
+          makeSetup({
+            gear: {
+              2: { id: 97232 }, // Mother's Sorrow → light
+              0: { id: 97050 }, // Plague Doctor (used in head slot) → heavy by SET
+              4: { id: 50 }, // weapon → no armor weight
+            },
+          }),
+        ],
+      });
+      const csps = convertBuildToCSPS(build);
+      const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      const gear = parseGearComp(decompressComp2(charData.comp2)!.gearComp);
+      expect(gear[2]?.type).toBe(1); // light
+      expect(gear[0]?.type).toBe(3); // heavy (locked by set)
+      expect(gear[4]?.type).toBe(0); // weapon — no armor weight
+    });
+
+    it('a stored weight survives export for a free (all-weight) apparel set', () => {
+      // 999999999 is unknown → no lock → user-chosen weight is honored.
+      const build = makeBuild({
+        setups: [makeSetup({ gear: { 2: { id: 999999999, weight: 'medium' } } })],
+      });
+      const csps = convertBuildToCSPS(build);
+      const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
+      const gear = parseGearComp(decompressComp2(charData.comp2)!.gearComp);
+      expect(gear[2]?.type).toBe(2); // medium
+    });
+
     it('exports passives to werte.pass', () => {
       const build = makeBuild({
         setups: [makeSetup({ passives: [400, 500, 600] })],

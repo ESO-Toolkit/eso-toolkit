@@ -70,11 +70,14 @@ export function buildReplacementPiece(
   if (prev?.trait !== undefined) next.trait = prev.trait;
   if (prev?.enchant !== undefined) next.enchant = prev.enchant;
 
-  const locked = getLockedArmorWeight(getItemInfo(itemId)?.setName);
-  if (locked) {
-    next.weight = locked;
-  } else if (category === 'apparel' && prev?.weight !== undefined) {
-    next.weight = prev.weight;
+  // Weight is an APPAREL-only concept. A locked set's jewelry/weapon (e.g. a
+  // Mother's Sorrow ring or staff) must NOT get armor-weight metadata — the lock
+  // is about the set's ARMOR pieces. Downstream (URL encoding, roster display)
+  // treats any piece.weight as real, so only stamp it on apparel slots.
+  if (category === 'apparel') {
+    const locked = getLockedArmorWeight(getItemInfo(itemId)?.setName);
+    if (locked) next.weight = locked;
+    else if (prev?.weight !== undefined) next.weight = prev.weight;
   }
   return next;
 }

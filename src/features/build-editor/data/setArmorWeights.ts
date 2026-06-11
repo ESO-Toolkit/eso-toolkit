@@ -14,6 +14,7 @@
  * (regenerate with `node scripts/generate-set-armor-weights.mjs`).
  */
 
+import { getItemInfo } from '../../loadout-manager/data/itemIdMap';
 import type { ArmorWeight } from '../../loadout-manager/types/loadout.types';
 
 import { LOCKED_SET_ARMOR_WEIGHTS } from './setArmorWeights.generated';
@@ -53,3 +54,33 @@ export function getLockedArmorWeight(setName: string | null | undefined): ArmorW
 export function isArmorWeightLocked(setName: string | null | undefined): boolean {
   return getLockedArmorWeight(setName) !== null;
 }
+
+/**
+ * Resolve the armor weight an equipped APPAREL piece counts as — the single
+ * source of truth shared by stat counting and CSPS export so they never
+ * disagree with what the picker displays.
+ *
+ * A set that only exists in one weight in-game (mythic / overland / dungeon /
+ * trial drop) is AUTHORITATIVE — its locked weight wins even over a stored
+ * `storedWeight`, because imported/CSPS gear often carries no weight (the
+ * importer writes only id/trait/enchant) or a stale value. Falls back to the
+ * stored weight, then to 'heavy' (ESO's default when nothing else is known).
+ */
+export function resolveApparelWeight(
+  id: string | number | null | undefined,
+  storedWeight?: ArmorWeight,
+): ArmorWeight {
+  const numericId = typeof id === 'number' ? id : Number(id);
+  if (Number.isFinite(numericId) && numericId > 0) {
+    const locked = getLockedArmorWeight(getItemInfo(numericId)?.setName);
+    if (locked) return locked;
+  }
+  return storedWeight ?? 'heavy';
+}
+
+/** ESO ArmorType numeric code for an armor weight (LIGHT=1, MEDIUM=2, HEAVY=3). */
+export const ARMOR_WEIGHT_TO_ESO_TYPE: Readonly<Record<ArmorWeight, number>> = {
+  light: 1,
+  medium: 2,
+  heavy: 3,
+};

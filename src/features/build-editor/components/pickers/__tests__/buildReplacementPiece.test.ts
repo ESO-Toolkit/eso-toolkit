@@ -55,6 +55,13 @@ describe('buildReplacementPiece', () => {
     ).toBeUndefined();
   });
 
+  it('does NOT stamp a locked set weight onto its jewelry/weapon pieces', () => {
+    // Mother's Sorrow is locked LIGHT for armor, but its ring/staff have no
+    // armor weight — weight metadata must not leak onto non-apparel slots.
+    expect(buildReplacementPiece(undefined, 97232, 'accessories').weight).toBeUndefined();
+    expect(buildReplacementPiece(undefined, 97232, 'weapons').weight).toBeUndefined();
+  });
+
   it('handles a missing previous piece', () => {
     const next = buildReplacementPiece(undefined, 97232, 'apparel');
     expect(next).toEqual({ id: 97232, weight: 'light' });

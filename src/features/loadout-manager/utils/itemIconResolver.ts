@@ -29,14 +29,22 @@ type IconData = {
 let iconData: IconData | null = null;
 let iconDataPromise: Promise<IconData> | null = null;
 
+function startIconDataLoad(): Promise<IconData> {
+  const promise = import('../data/itemIcons.json').then((m) => {
+    iconData = m.default as IconData;
+    return iconData;
+  });
+  // On failure, clear the cached promise so the next caller retries instead of
+  // re-awaiting a permanently rejected promise (which would dead-end the picker).
+  promise.catch(() => {
+    if (iconDataPromise === promise) iconDataPromise = null;
+  });
+  return promise;
+}
+
 function ensureIconData(): IconData | null {
   if (iconData) return iconData;
-  if (!iconDataPromise) {
-    iconDataPromise = import('../data/itemIcons.json').then((m) => {
-      iconData = m.default as IconData;
-      return iconData;
-    });
-  }
+  if (!iconDataPromise) iconDataPromise = startIconDataLoad();
   return null;
 }
 
@@ -46,12 +54,10 @@ ensureIconData();
 
 export async function preloadIconData(): Promise<void> {
   if (iconData) return;
-  if (!iconDataPromise) {
-    iconDataPromise = import('../data/itemIcons.json').then((m) => {
-      iconData = m.default as IconData;
-      return iconData;
-    });
-  }
+  if (!iconDataPromise) iconDataPromise = startIconDataLoad();
+  // Awaits the shared promise; if it rejects, startIconDataLoad has already
+  // cleared it so a subsequent call retries. The rejection propagates here so
+  // callers can surface a recoverable error state.
   await iconDataPromise;
 }
 
