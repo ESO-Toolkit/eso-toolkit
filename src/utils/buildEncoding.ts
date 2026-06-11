@@ -113,6 +113,7 @@ interface CompactBuild {
   d?: string; // shortDescription
   ec?: number; // esoClass index
   csl?: (number | null)[]; // classSkillLines (3 items)
+  cm?: number[]; // classMasteryPassives (omit if empty)
   r?: number; // role index
   gm?: 1; // gameMode: only set when 'pvp' (default pve)
   ra?: string[]; // races
@@ -365,6 +366,8 @@ function compactifyBuild(build: Build): CompactBuild {
   );
   if (csl.some((v) => v !== null)) c.csl = csl;
 
+  if (build.classMasteryPassives?.length) c.cm = build.classMasteryPassives;
+
   const roleIdx = ROLE_IDX.get(build.role);
   if (roleIdx !== undefined) c.r = roleIdx;
 
@@ -407,6 +410,7 @@ function expandCompactBuild(c: CompactBuild): Build {
     shortDescription: c.d ?? '',
     esoClass,
     classSkillLines,
+    classMasteryPassives: c.cm ?? [],
     role,
     gameMode: c.gm === 1 ? 'pvp' : 'pve',
     races: c.ra ?? [],

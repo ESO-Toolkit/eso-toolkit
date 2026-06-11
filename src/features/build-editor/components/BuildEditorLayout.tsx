@@ -17,6 +17,7 @@
 import {
   AccountTreeOutlined as SubclassingIcon,
   AutoFixHigh as ChampionIcon,
+  SchoolOutlined as ClassMasteryIcon,
   BarChartOutlined as StatsIcon,
   BookOutlined as GuideIcon,
   Inventory2Outlined as EquipmentIcon,
@@ -45,6 +46,7 @@ import { LazySection } from './primitives/LazySection';
 import { SectionCard } from './primitives/SectionCard';
 import { ChampionSection } from './sections/ChampionSection';
 import { CharacterSection } from './sections/CharacterSection';
+import { ClassMasterySection } from './sections/ClassMasterySection';
 import { ConsumablesSection } from './sections/ConsumablesSection';
 import { EquipmentSection } from './sections/EquipmentSection';
 import { GeneralSection } from './sections/GeneralSection';
@@ -172,7 +174,7 @@ export const BuildEditorLayout: React.FC = () => {
               </SectionCard>
             </LazySection>
 
-            {/* Row 2: Subclassing — typically just below fold, eager to avoid jump on load */}
+            {/* Row 2: Subclassing + Class Mastery — just below fold, eager to avoid jump on load */}
             <LazySection eager>
               <SectionCard
                 id="subclassing"
@@ -182,6 +184,18 @@ export const BuildEditorLayout: React.FC = () => {
                 defaultExpanded={!isMobile}
               >
                 <SubclassingSection />
+              </SectionCard>
+            </LazySection>
+
+            <LazySection eager>
+              <SectionCard
+                id="class-mastery"
+                title="Class Mastery"
+                icon={<ClassMasteryIcon />}
+                complete={progress['class-mastery']}
+                defaultExpanded={!isMobile}
+              >
+                <ClassMasterySection />
               </SectionCard>
             </LazySection>
 

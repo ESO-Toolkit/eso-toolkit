@@ -11,7 +11,10 @@ import type {
   GearConfig,
   SkillsConfig,
 } from '../../loadout-manager/types/loadout.types';
+import { getClassMasteryLine } from '@/data/skill-lines/class/classMastery';
+
 import { getDefaultLinesForClass } from '../data/esoStaticData';
+import { CLASS_MASTERY_MAX_PICKS } from '../utils/classMasteryEligibility';
 import { DEFAULT_STAT_OVERRIDES } from '../engine/stat-constants';
 import type { StatOverrides } from '../engine/stat-types';
 import type {
@@ -65,6 +68,7 @@ const makeBuild = (): Build => ({
   shortDescription: '',
   esoClass: 'dragonknight',
   classSkillLines: getDefaultLinesForClass('dragonknight'),
+  classMasteryPassives: [],
   role: 'tank',
   gameMode: 'pve',
   races: [],
@@ -93,6 +97,10 @@ function loadFromStorage(): Pick<BuildEditorState, 'build' | 'activeSetupIndex'>
       parsed.build.classSkillLines = getDefaultLinesForClass(
         parsed.build.esoClass ?? 'dragonknight',
       );
+    }
+    // Migration: builds saved before U50 won't have classMasteryPassives
+    if (!Array.isArray(parsed.build.classMasteryPassives)) {
+      parsed.build.classMasteryPassives = [];
     }
     // Migration: builds saved before stats feature won't have statOverrides
     for (const setup of parsed.build.setups) {
@@ -158,6 +166,8 @@ export const buildEditorSlice = createSlice({
       state.build.esoClass = action.payload;
       // Pre-fill all 3 skill line slots with the selected class's lines (convenience shortcut)
       state.build.classSkillLines = getDefaultLinesForClass(action.payload);
+      // Class Mastery picks belong to the previous class — clear them
+      state.build.classMasteryPassives = [];
       state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
@@ -428,6 +438,32 @@ export const buildEditorSlice = createSlice({
       state.build.updatedAt = new Date().toISOString();
       state.isDirty = true;
     },
+    // ── Class Mastery (build-level, U50) ──────────────────────────────────────
+    toggleClassMasteryPassive(state, action: PayloadAction<number>) {
+      // Only the base class's own Class Mastery passives are valid picks
+      const line = getClassMasteryLine(state.build.esoClass);
+      if (!line?.skills.some((skill) => skill.id === action.payload)) return;
+      const picks = state.build.classMasteryPassives ?? [];
+      const idx = picks.indexOf(action.payload);
+      if (idx !== -1) {
+        picks.splice(idx, 1);
+      } else {
+        if (picks.length >= CLASS_MASTERY_MAX_PICKS) return;
+        picks.push(action.payload);
+      }
+      state.build.classMasteryPassives = picks;
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
+    setClassMasteryPassives(state, action: PayloadAction<number[]>) {
+      const line = getClassMasteryLine(state.build.esoClass);
+      const valid = new Set(line?.skills.map((skill) => skill.id) ?? []);
+      state.build.classMasteryPassives = [...new Set(action.payload)]
+        .filter((id) => valid.has(id))
+        .slice(0, CLASS_MASTERY_MAX_PICKS);
+      state.build.updatedAt = new Date().toISOString();
+      state.isDirty = true;
+    },
     setQuickslots(state, action: PayloadAction<QuickslotEntry[]>) {
       const setup = state.build.setups[state.activeSetupIndex];
       if (!setup) return;
@@ -536,6 +572,8 @@ export const {
   setConsumables,
   togglePassive,
   setPassives,
+  toggleClassMasteryPassive,
+  setClassMasteryPassives,
   setQuickslots,
   setSkilledAbilities,
   setScribedAbilityIds,

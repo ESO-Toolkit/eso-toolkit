@@ -10,6 +10,7 @@
 import {
   AccountTreeOutlined as SubclassingIcon,
   AutoFixHigh as ChampionIcon,
+  SchoolOutlined as ClassMasteryIcon,
   BarChartOutlined as StatsIcon,
   BookOutlined as GuideIcon,
   CheckCircleOutlineRounded as CheckIcon,
@@ -49,6 +50,11 @@ const NAV_GROUPS: NavGroup[] = [
       { id: 'general', label: 'Identity', icon: <GeneralIcon sx={{ fontSize: 18 }} /> },
       { id: 'character', label: 'Character', icon: <CharacterIcon sx={{ fontSize: 18 }} /> },
       { id: 'subclassing', label: 'Subclassing', icon: <SubclassingIcon sx={{ fontSize: 18 }} /> },
+      {
+        id: 'class-mastery',
+        label: 'Class Mastery',
+        icon: <ClassMasteryIcon sx={{ fontSize: 18 }} />,
+      },
     ],
   },
   {

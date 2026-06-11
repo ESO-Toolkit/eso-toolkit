@@ -20,6 +20,7 @@ import type { RootState } from '@/store/storeWithHistory';
 
 import { BE_TOKENS } from '../theme/buildEditorTokens';
 import type { SectionId } from '../theme/buildEditorTokens';
+import { isClassMasteryEligible } from '../utils/classMasteryEligibility';
 
 export type SectionProgressMap = Record<SectionId, boolean>;
 
@@ -40,6 +41,13 @@ const selectHasName = (s: RootState): boolean => s.buildEditor.build.name.trim()
 
 const selectAllClassLinesSet = (s: RootState): boolean =>
   s.buildEditor.build.classSkillLines.every((line) => line != null);
+
+// Complete when picks exist — or when the gate is closed (nothing actionable)
+const selectClassMasteryDone = (s: RootState): boolean => {
+  const { esoClass, classSkillLines, classMasteryPassives } = s.buildEditor.build;
+  if (!isClassMasteryEligible(esoClass, classSkillLines)) return true;
+  return (classMasteryPassives?.length ?? 0) > 0;
+};
 
 const selectHasCharacter = (s: RootState): boolean => {
   const setup = s.buildEditor.build.setups[s.buildEditor.activeSetupIndex];
@@ -97,6 +105,7 @@ export const useSectionProgress = (): SectionProgressMap => {
   const setupExists = useSelector(selectSetupExists);
   const hasName = useSelector(selectHasName);
   const subclassingComplete = useSelector(selectAllClassLinesSet);
+  const classMasteryDone = useSelector(selectClassMasteryDone);
   const hasCharacter = useSelector(selectHasCharacter);
   const hasEquipment = useSelector(selectHasEquipment);
   const hasSkills = useSelector(selectHasSkills);
@@ -113,6 +122,7 @@ export const useSectionProgress = (): SectionProgressMap => {
     const next: SectionProgressMap = {
       general: hasName,
       subclassing: subclassingComplete,
+      'class-mastery': classMasteryDone,
       character: hasCharacter,
       equipment: hasEquipment,
       skills: hasSkills,
@@ -133,6 +143,7 @@ export const useSectionProgress = (): SectionProgressMap => {
     setupExists,
     hasName,
     subclassingComplete,
+    classMasteryDone,
     hasCharacter,
     hasEquipment,
     hasSkills,

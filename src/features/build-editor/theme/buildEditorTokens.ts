@@ -80,6 +80,7 @@ export const BE_TOKENS = {
     'general',
     'character',
     'subclassing',
+    'class-mastery',
     'equipment',
     'skills',
     'consumables',
