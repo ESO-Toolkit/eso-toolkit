@@ -366,10 +366,14 @@ export interface MundusDef {
 export const MUNDUS_BONUSES: MundusDef[] = [
   { mundusId: 'lover', stat: 'penetration', name: 'The Lover', baseValue: 2752, perDivines: 220 },
   {
+    // The Shadow at CP160 gold is ~11.6% crit damage at 0 Divines, scaling
+    // multiplicatively with Divines (~×1.077 per gold piece). Modeled additively
+    // as base 11.6 + ~1% per Divines, which tracks the real curve within ~1%
+    // across 0–7 Divines. (Was 13 base, which ran ~1.5% high.)
     mundusId: 'shadow',
     stat: 'critDamage',
     name: 'The Shadow',
-    baseValue: 13,
+    baseValue: 11.6,
     perDivines: 1,
     isPercent: true,
   },

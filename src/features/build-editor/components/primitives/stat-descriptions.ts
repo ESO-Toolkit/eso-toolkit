@@ -130,7 +130,7 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
 
   // ── Crit Damage: Mundus ─────────────────────────────────────────────────
   'The Shadow':
-    'Mundus stone. Grants 13% Critical Damage at base, plus ~1% per Divines trait piece.',
+    'Mundus stone. Grants ~11.6% Critical Damage at base (CP160 gold), plus ~1% per Divines trait piece.',
 
   // ── Crit Damage: CP ─────────────────────────────────────────────────────
   'CP: Fighting Finesse':
