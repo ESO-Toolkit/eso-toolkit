@@ -378,11 +378,15 @@ export const MUNDUS_BONUSES: MundusDef[] = [
     isPercent: true,
   },
   {
+    // The Thief at CP160 gold grants ~1333 Critical rating at 0 Divines
+    // (≈6.1% via the 219 divisor), ~107 more per gold Divines piece. This
+    // matches the gold-quality base convention of the Lover/Lady stones above
+    // (both 2752). Was 1537/123, which over-read by ~1% (and grew with Divines).
     mundusId: 'thief',
     stat: 'critChance',
     name: 'The Thief',
-    baseValue: 1537,
-    perDivines: 123,
+    baseValue: 1333,
+    perDivines: 107,
     isCritRating: true,
   },
   { mundusId: 'lady', stat: 'armor', name: 'The Lady', baseValue: 2752, perDivines: 220 },

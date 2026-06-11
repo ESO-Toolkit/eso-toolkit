@@ -41,7 +41,7 @@ export function getItemDescription(name: string): string | undefined {
     return 'Mundus stone. Base 13% Crit Damage, plus ~1% per Divines-traited armor piece.';
   }
   if (name.startsWith('The Thief (')) {
-    return 'Mundus stone. Base ~7% Crit Chance, plus ~0.6% per Divines-traited armor piece.';
+    return 'Mundus stone. Base ~6.1% Crit Chance (CP160 gold), plus ~0.5% per Divines-traited armor piece.';
   }
   if (name.startsWith('The Lady (')) {
     return 'Mundus stone. Base 2752 resistance, plus ~220 per Divines-traited armor piece.';
@@ -147,7 +147,7 @@ const STAT_ITEM_DESCRIPTIONS: Record<string, string> = {
 
   // ── Crit Chance: Mundus ─────────────────────────────────────────────────
   'The Thief':
-    'Mundus stone. Grants ~7% Critical Chance at base, plus ~0.6% per Divines trait piece.',
+    'Mundus stone. Grants ~6.1% Critical Chance at base (CP160 gold), plus ~0.5% per Divines trait piece.',
 
   // ── Crit Chance: Passive (weapon) ───────────────────────────────────────
   'Twin Blade & Blunt (Dagger)':
