@@ -395,3 +395,32 @@ export const classMasterySorcerer: SkillLineData = {
     },
   ],
 };
+
+/**
+ * All seven entries share the display name "Class Mastery", so anything keyed
+ * by line NAME (e.g. the loadout-manager passive cache categories) collides
+ * across classes — identify these lines by id prefix instead.
+ */
+export const CLASS_MASTERY_LINE_ID_PREFIX = 'class.class-mastery-';
+
+export const isClassMasteryLine = (line: Pick<SkillLineData, 'id'>): boolean =>
+  typeof line.id === 'string' && line.id.startsWith(CLASS_MASTERY_LINE_ID_PREFIX);
+
+export const CLASS_MASTERY_LINES: SkillLineData[] = [
+  classMasteryDragonknight,
+  classMasteryArcanist,
+  classMasteryNecromancer,
+  classMasteryWarden,
+  classMasteryTemplar,
+  classMasteryNightblade,
+  classMasterySorcerer,
+];
+
+/** Class Mastery line for a class name (case-insensitive), if it exists. */
+export const getClassMasteryLine = (className: string): SkillLineData | undefined =>
+  CLASS_MASTERY_LINES.find((line) => line.class.toLowerCase() === className.toLowerCase());
+
+/** Every Class Mastery passive ability id (35 total, 5 per class). */
+export const CLASS_MASTERY_SKILL_IDS: ReadonlySet<number> = new Set(
+  CLASS_MASTERY_LINES.flatMap((line) => line.skills.map((skill) => skill.id)),
+);

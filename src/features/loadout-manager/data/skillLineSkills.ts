@@ -12,6 +12,10 @@ import { heavyArmor } from '../../../data/skill-lines/armor/heavyArmor';
 import { lightArmor } from '../../../data/skill-lines/armor/lightArmor';
 import { mediumArmor } from '../../../data/skill-lines/armor/mediumArmor';
 import * as classSkillLines from '../../../data/skill-lines/class';
+import {
+  CLASS_MASTERY_SKILL_IDS,
+  isClassMasteryLine,
+} from '../../../data/skill-lines/class/classMastery';
 import { SCRIBING_ICON_OVERRIDES } from '../../../data/skill-lines/generated/scribingIconOverrides';
 import { SKILL_ICON_OVERRIDES } from '../../../data/skill-lines/generated/skillIconOverrides';
 
@@ -452,6 +456,9 @@ export function searchPassives(query: string, limit = 50): SkillData[] {
   const results: SkillData[] = [];
 
   for (const skill of passiveSkillsCache) {
+    // Class Mastery passives are picked via the dedicated 2-of-5 build-editor
+    // section, not the generic passive picker.
+    if (CLASS_MASTERY_SKILL_IDS.has(skill.id)) continue;
     if (skill.name.toLowerCase().includes(lowerQuery)) {
       results.push(skill);
       if (results.length >= limit) break;
@@ -519,7 +526,9 @@ export interface SkillLineMeta {
 /** Returns metadata for all skill lines, organized for picker UI. */
 export function getSkillLineIndex(): SkillLineMeta[] {
   return [
-    ...CLASS_SKILL_LINES,
+    // All seven Class Mastery lines share one display name, and the line is
+    // exposed through its own gated build-editor section instead of here.
+    ...CLASS_SKILL_LINES.filter((line) => !isClassMasteryLine(line)),
     ...WEAPON_SKILL_LINES,
     ...GUILD_SKILL_LINES,
     ...ALLIANCE_SKILL_LINES,
