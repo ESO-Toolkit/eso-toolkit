@@ -207,6 +207,7 @@ const MODE_FILTER = {
       'Earthen Heart: Blessing at the Peak',
       'Medium Armor: Dexterity',
       'Animal Companions: Advanced Species',
+      'Class Mastery: Above and Beyond',
       'Dual Wield: Twin Blade and Blunt (Axe)',
       'Two Handed: Heavy Weapons (Battle Axe)',
       'Champion Point: Precision',

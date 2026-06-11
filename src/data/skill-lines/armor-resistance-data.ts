@@ -510,11 +510,11 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       name: 'Dragonknight Passive',
       enabled: false,
       quantity: 1,
-      value: 1650,
+      value: 2974,
       isFlat: true,
       category: 'classPassives',
       tooltip:
-        '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
+        '<div class="tt-head">Earthen Heart</div><strong>Heart of Stone</strong><br/>Increases your Armor by <strong>2974</strong>.',
     },
     {
       name: 'Warden Passive Per Skill',
@@ -542,11 +542,11 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       name: 'Arcanist Passive',
       enabled: false,
       quantity: 1,
-      value: 1980,
+      value: 3271,
       isFlat: true,
       category: 'classPassives',
       tooltip:
-        '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
+        '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by <strong>3271</strong>.',
     },
     {
       name: 'Nord Passive',
