@@ -16,6 +16,7 @@ import {
   BALORGH_MULTIPLIER,
   BASE_CRIT_CHANCE,
   BASE_CRIT_DAMAGE,
+  CLASS_MASTERY_CRIT_PASSIVES,
   CLASS_PASSIVES,
   CP_FIGHTING_FINESSE_CRIT_DMG,
   CP_FIGHTING_FINESSE_ID,
@@ -264,8 +265,19 @@ export function calculateCritDamage(
   overrides: StatOverrides,
 ): StatResult {
   const mode: GameMode = build.gameMode;
-  const { cap, max } = CRIT_DMG_CAPS;
+  let { cap, max } = CRIT_DMG_CAPS;
   const items: StatItem[] = [];
+
+  // U50 Class Mastery passives the player selected (only relevant while not
+  // subclassed — the selection is build-level and already gated by the picker).
+  const selectedMastery = new Set(build.classMasteryPassives ?? []);
+  const masteryCrit = CLASS_MASTERY_CRIT_PASSIVES.filter((p) => selectedMastery.has(p.id));
+  // Buffs (e.g. Major Force / Major Brittle) supplied by a selected passive —
+  // map buff name → the passive granting it, so the buff loop can force it on
+  // and label its source instead of letting it double-count with the toggle.
+  const buffFromMastery = new Map(
+    masteryCrit.filter((p) => p.grantsBuff).map((p) => [p.grantsBuff as string, p.name]),
+  );
 
   // Base character crit damage (always on)
   items.push({
@@ -280,14 +292,17 @@ export function calculateCritDamage(
   // Group buffs
   for (const buff of CRIT_DMG_BUFFS) {
     if (!buff.modes.includes(mode)) continue;
-    const enabled = overrides.buffs[buff.name] ?? buff.defaultEnabled;
+    // A selected Class Mastery passive that grants this buff forces it on and
+    // marks it auto-detected so it can't be double-counted with the toggle.
+    const grantingPassive = buffFromMastery.get(buff.name);
+    const enabled = grantingPassive ? true : (overrides.buffs[buff.name] ?? buff.defaultEnabled);
     items.push({
-      name: buff.name,
+      name: grantingPassive ? `${buff.name} (${grantingPassive})` : buff.name,
       value: buff.value,
-      source: 'buff',
+      source: grantingPassive ? 'class' : 'buff',
       enabled,
       isPercent: true,
-      autoDetected: false,
+      autoDetected: Boolean(grantingPassive),
     });
   }
 
@@ -378,6 +393,27 @@ export function calculateCritDamage(
       isPercent: true,
       autoDetected: true,
     });
+  }
+
+  // Class Mastery passives that add crit damage on their own (not via a named
+  // buff) — e.g. Nightblade's Above and Beyond. Some also raise the cap.
+  for (const passive of masteryCrit) {
+    if (passive.grantsBuff) continue; // already handled in the buff loop
+    if (passive.capBonus) {
+      cap += passive.capBonus;
+      max += passive.capBonus;
+    }
+    const value = mode === 'pvp' ? (passive.valuePvp ?? passive.value ?? 0) : (passive.value ?? 0);
+    if (value) {
+      items.push({
+        name: passive.name,
+        value,
+        source: 'class',
+        enabled: true,
+        isPercent: true,
+        autoDetected: true,
+      });
+    }
   }
 
   return makeResult(items, cap, max);

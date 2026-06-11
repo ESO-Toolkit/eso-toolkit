@@ -24,6 +24,7 @@ import {
   selectBuildClassSkillLines,
   selectBuildGameMode,
   selectBuildRaces,
+  selectClassMasteryPassives,
 } from '../../store/buildEditorSelectors';
 import { setStatOverrides as setStatOverridesAction } from '../../store/buildEditorSlice';
 import { StatBreakdown } from '../primitives/StatBreakdown';
@@ -41,6 +42,9 @@ const StatsSectionComponent: React.FC = () => {
   const gameMode = useSelector(selectBuildGameMode);
   const races = useSelector(selectBuildRaces);
   const classSkillLines = useSelector(selectBuildClassSkillLines);
+  // Selected U50 Class Mastery passives — three of them move crit damage, so a
+  // change must invalidate the stats memo below.
+  const classMasteryPassives = useSelector(selectClassMasteryPassives);
   // Used lazily inside useMemo to pass the whole build to the engine — not
   // subscribed to, so it doesn't drive re-renders.
   const store = useStore<RootState>();
@@ -61,12 +65,13 @@ const StatsSectionComponent: React.FC = () => {
       if (!setup) return null;
       return calculateBuildStats(setup, store.getState().buildEditor.build, overrides);
     },
-    // `store` is a stable ref. `gameMode/races/classSkillLines` cover every
-    // build-level field read by calculateBuildStats; including them in the
-    // deps ensures the memo invalidates when they change even though we
-    // read `build` lazily from the store.
+    // `store` is a stable ref. `gameMode/races/classSkillLines/
+    // classMasteryPassives` cover every build-level field read by
+    // calculateBuildStats; including them in the deps ensures the memo
+    // invalidates when they change even though we read `build` lazily from the
+    // store.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setup, gameMode, races, classSkillLines, overrides, store],
+    [setup, gameMode, races, classSkillLines, classMasteryPassives, overrides, store],
   );
 
   // Update helpers

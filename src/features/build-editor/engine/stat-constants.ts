@@ -357,6 +357,51 @@ export const TRAIT_NIRNHONED_ARMOR_RESISTANCE = 253;
 /** Defending weapon trait: flat resistance per weapon */
 export const TRAIT_DEFENDING_RESISTANCE = 2752;
 
+// ─── Class Mastery passives (U50) that affect crit damage ───────────────────
+
+/**
+ * The build editor's stat engine only models penetration, crit damage, crit
+ * chance, and armor. Of the 35 U50 Class Mastery passives, exactly three move
+ * any of those four stats — all three affect crit damage. The rest grant
+ * weapon/spell damage, max stats, recovery, shields, etc. that this engine
+ * doesn't model, so they stay cosmetic to the calculator.
+ *
+ * Keyed by the passive's ability id (see ClassSkillId). Selecting the passive
+ * in the build auto-applies the effect, exactly like a class skill-line passive
+ * — these are not manual buff toggles.
+ */
+export interface ClassMasteryCritPassive {
+  /** Ability id from ClassSkillId. */
+  id: number;
+  /** Display name of the passive (the picker label). */
+  name: string;
+  /**
+   * If the passive merely supplies an already-modeled named buff (e.g. Major
+   * Force), this is that buff's name in CRIT_DMG_BUFFS. When set, selecting the
+   * passive forces that buff on (auto-detected) instead of adding a second
+   * line, so it can never double-count with the manual buff toggle.
+   */
+  grantsBuff?: string;
+  /**
+   * Crit-damage % the passive adds on its own (only for passives not covered by
+   * an existing buff). PvP value differs for effects reduced vs Battle Spirit.
+   */
+  value?: number;
+  valuePvp?: number;
+  /** Amount this passive raises the crit-damage cap/max by, if any. */
+  capBonus?: number;
+}
+
+export const CLASS_MASTERY_CRIT_PASSIVES: ClassMasteryCritPassive[] = [
+  // Arcanist — Ink-Scribe's Verve: grants Major Force (+20% crit dmg) to the group.
+  { id: 263416, name: "Ink-Scribe's Verve", grantsBuff: 'Major Force' },
+  // Warden — Tundra's Maw: applies Major Brittle (+20% crit dmg taken) on Chill.
+  { id: 263519, name: "Tundra's Maw", grantsBuff: 'Major Brittle' },
+  // Nightblade — Above and Beyond: +25% crit damage (PvE) / +5% vs Battle Spirit,
+  // and raises the maximum crit damage by +30%.
+  { id: 263605, name: 'Above and Beyond', value: 25, valuePvp: 5, capBonus: 30 },
+];
+
 // ─── Armor base values ──────────────────────────────────────────────────────
 
 /** Base resistance at level 50 (before any gear) */
