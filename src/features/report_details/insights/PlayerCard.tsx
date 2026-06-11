@@ -52,6 +52,7 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { selectActiveReportContext } from '../../../store/report/reportSelectors';
 import type { RootState } from '../../../store/storeWithHistory';
 import { selectScribingDetectionsResult } from '../../../store/worker_results';
+import type { PlayerGear } from '../../../types/playerDetails';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -66,6 +67,67 @@ import { MetricsScrollRow } from './MetricsScrollRow';
 import type { StatChipId } from './statChipConfig';
 import { formatStatValue, STAT_CHIP_IDS, STAT_CHIP_META } from './statChipConfig';
 import { StatChipIcon } from './StatChipIcon';
+
+/**
+ * Renders a gear-set tooltip's content, computing the (expensive) tooltip props only when
+ * this component actually mounts — i.e. when MUI opens the tooltip on hover. Building these
+ * eagerly for every gear chip across every player card was a major freeze source on
+ * high-player-count fights.
+ */
+const LazyGearSetTooltipContent: React.FC<{
+  gearRecord: PlayerGearSetRecord;
+  playerGear: PlayerGear[];
+}> = ({ gearRecord, playerGear }) => {
+  const tooltipProps = React.useMemo(
+    () => createGearSetTooltipProps(gearRecord, playerGear),
+    [gearRecord, playerGear],
+  );
+
+  if (!tooltipProps) {
+    return null;
+  }
+
+  const { itemCount: _itemCount, ...filteredTooltipProps } = tooltipProps;
+  return <GearSetTooltip {...filteredTooltipProps} />;
+};
+
+type TalentTooltipProps = ReturnType<typeof buildTooltipProps>;
+
+/**
+ * Renders a talent/skill tooltip's content, resolving the (expensive) rich tooltip props only
+ * when this component mounts — i.e. when MUI opens the tooltip on hover. The resolver caches per
+ * talent, so the underlying buildTooltipProps runs at most once per ability. Resolving eagerly for
+ * every talent on mount was a major freeze source on high-player-count fights.
+ */
+const LazyTalentTooltipContent: React.FC<{
+  talent: { guid: number; name: string; abilityIcon?: string };
+  isUltimate: boolean;
+  resolveProps: (talent: { guid: number; name: string }) => TalentTooltipProps;
+  scribedSkillDataFor: (name: string) => ScribedSkillData | undefined;
+  fightId?: string;
+  playerId: number;
+}> = ({ talent, isUltimate, resolveProps, scribedSkillDataFor, fightId, playerId }) => {
+  const rich = resolveProps(talent);
+  const base = {
+    name: talent.name,
+    description: `${talent.name} (ID: ${talent.guid})`,
+  };
+
+  return (
+    <SkillTooltip
+      {...(rich ?? base)}
+      name={isUltimate ? `${rich?.name ?? base.name} (Ultimate)` : (rich?.name ?? base.name)}
+      iconUrl={
+        rich?.iconUrl ||
+        `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
+      }
+      abilityId={talent.guid}
+      scribedSkillData={rich?.scribedSkillData ?? scribedSkillDataFor(talent.name)}
+      fightId={fightId}
+      playerId={playerId}
+    />
+  );
+};
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -355,30 +417,34 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       return lookup;
     }, [scribingResult, player.id, scribingSkills]);
 
-    const tooltipPropsLookup = React.useMemo(() => {
-      const lookup = new Map<number, ReturnType<typeof buildTooltipProps>>();
+    // Lazy resolver: build (and cache) a talent's rich tooltip props only the first time
+    // its tooltip is actually rendered. Building eagerly for every talent on mount was a
+    // major freeze source on high-player-count fights (~12+ buildTooltipProps calls per card
+    // x 30 cards). The cache is keyed off the same deps as before, so it resets when they change.
+    const getTalentTooltipProps = React.useMemo(() => {
+      const cache = new Map<number, ReturnType<typeof buildTooltipProps>>();
       const clsKey = toClassKey(player.type);
 
-      talents.forEach((talent) => {
+      return (talent: { guid: number; name: string }): ReturnType<typeof buildTooltipProps> => {
         const key = talent.guid;
-        if (!lookup.has(key)) {
-          const scribedSkillData = scribedSkillsLookup.get(talent.name);
+        const cached = cache.get(key);
+        if (cached !== undefined) {
+          return cached;
+        }
 
-          const tooltipProps = buildTooltipProps({
+        const scribedSkillData = scribedSkillsLookup.get(talent.name);
+        const tooltipProps =
+          buildTooltipProps({
             abilityId: talent.guid,
             abilityName: talent.name,
             classKey: clsKey,
             scribedSkillData,
-          });
+          }) ?? null;
 
-          if (tooltipProps) {
-            lookup.set(key, tooltipProps);
-          }
-        }
-      });
-
-      return lookup;
-    }, [talents, player.type, scribedSkillsLookup]);
+        cache.set(key, tooltipProps);
+        return tooltipProps;
+      };
+    }, [player.type, scribedSkillsLookup]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
@@ -1275,35 +1341,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               <Tooltip
                                 enterTouchDelay={0}
                                 leaveTouchDelay={3000}
-                                title={(() => {
-                                  // Use memoized tooltip props lookup
-                                  const rich = tooltipPropsLookup.get(talent.guid);
-                                  const base = {
-                                    name: talent.name,
-                                    description: `${talent.name} (ID: ${talent.guid})`,
-                                  };
-                                  return (
-                                    <SkillTooltip
-                                      {...(rich ?? base)}
-                                      name={
-                                        isUltimate
-                                          ? `${rich?.name ?? base.name} (Ultimate)`
-                                          : (rich?.name ?? base.name)
-                                      }
-                                      iconUrl={
-                                        rich?.iconUrl ||
-                                        `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
-                                      }
-                                      abilityId={talent.guid}
-                                      scribedSkillData={
-                                        rich?.scribedSkillData ??
-                                        scribedSkillsLookup.get(talent.name)
-                                      }
-                                      fightId={fightId || undefined}
-                                      playerId={player.id}
-                                    />
-                                  );
-                                })()}
+                                title={
+                                  <LazyTalentTooltipContent
+                                    talent={talent}
+                                    isUltimate={isUltimate}
+                                    resolveProps={getTalentTooltipProps}
+                                    scribedSkillDataFor={(name) => scribedSkillsLookup.get(name)}
+                                    fightId={fightId || undefined}
+                                    playerId={player.id}
+                                  />
+                                }
                                 placement="top-start"
                                 enterDelay={0}
                                 arrow
@@ -1396,31 +1443,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 <Tooltip
                                   enterTouchDelay={0}
                                   leaveTouchDelay={3000}
-                                  title={(() => {
-                                    // Use memoized tooltip props lookup
-                                    const rich = tooltipPropsLookup.get(talent.guid);
-                                    const base = {
-                                      name: talent.name,
-                                      description: `${talent.name} (ID: ${talent.guid})`,
-                                    };
-                                    return (
-                                      <SkillTooltip
-                                        {...(rich ?? base)}
-                                        name={
-                                          isUltimate
-                                            ? `${rich?.name ?? base.name} (Ultimate)`
-                                            : (rich?.name ?? base.name)
-                                        }
-                                        iconUrl={
-                                          rich?.iconUrl ||
-                                          `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
-                                        }
-                                        abilityId={talent.guid}
-                                        fightId={fightId || undefined}
-                                        playerId={player.id}
-                                      />
-                                    );
-                                  })()}
+                                  title={
+                                    <LazyTalentTooltipContent
+                                      talent={talent}
+                                      isUltimate={isUltimate}
+                                      resolveProps={getTalentTooltipProps}
+                                      scribedSkillDataFor={(name) => scribedSkillsLookup.get(name)}
+                                      fightId={fightId || undefined}
+                                      playerId={player.id}
+                                    />
+                                  }
                                   placement="top-start"
                                   enterDelay={0}
                                   arrow
@@ -1623,17 +1655,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           {gearChips.map((chipData, index) => {
                             // Find the corresponding gear record for tooltip
                             const gearRecord = playerGear[index];
-                            const tooltipProps = gearRecord
-                              ? createGearSetTooltipProps(gearRecord, player.combatantInfo.gear)
-                              : null;
 
-                            if (tooltipProps) {
-                              const { itemCount: _itemCount, ...filteredTooltipProps } =
-                                tooltipProps;
+                            if (gearRecord) {
                               return (
                                 <Tooltip
                                   key={chipData.key}
-                                  title={<GearSetTooltip {...filteredTooltipProps} />}
+                                  title={
+                                    <LazyGearSetTooltipContent
+                                      gearRecord={gearRecord}
+                                      playerGear={player.combatantInfo.gear}
+                                    />
+                                  }
                                   placement="top"
                                   enterDelay={300}
                                   enterTouchDelay={0}
