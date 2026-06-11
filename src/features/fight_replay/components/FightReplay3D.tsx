@@ -239,10 +239,15 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // outgoing fight is longer than the incoming one that tick lands past the new duration, fires
   // onEnd again, and silently SKIPS the fight that was just entered (or misroutes a chapter
   // click made while playing). Pausing here closes that window for every switch path; the reset
-  // effect + pendingAutoplay then seed and resume as designed.
+  // effect + pendingAutoplay then seed and resume as designed. The pre-switch playing state is
+  // captured first: autoplay resumes on arrival only when playback was actually RUNNING when the
+  // switch began (auto-advance, or a jump made while watching) — a paused viewer who jumps or
+  // scrubs to another chapter stays paused, even with the Autoplay preference on.
+  const wasPlayingAtSwitchRef = useRef(false);
   const [renderedFightId, setRenderedFightId] = useState(selectedFight.id);
   if (renderedFightId !== selectedFight.id) {
     setRenderedFightId(selectedFight.id);
+    wasPlayingAtSwitchRef.current = isPlaying;
     setIsPlaying(false);
   }
 
@@ -423,10 +428,15 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
     // while the cleared skip ref let it auto-advance silently).
     skipNextAdvanceRef.current = false;
     setCountdownCancelled(false);
+    // Resume on arrival only for explicit play actions (forceAutoplay) or when autoplay is on
+    // AND playback was running when the switch began — Autoplay means "continue", not "start
+    // playing because I navigated while paused".
     setPendingAutoplay(
-      forceAutoplayRef.current || (trialNavRef.current?.continuousEnabled ?? false),
+      forceAutoplayRef.current ||
+        ((trialNavRef.current?.continuousEnabled ?? false) && wasPlayingAtSwitchRef.current),
     );
     forceAutoplayRef.current = false;
+    wasPlayingAtSwitchRef.current = false;
   }, [
     selectedFight.id,
     selectedFight.endTime,
