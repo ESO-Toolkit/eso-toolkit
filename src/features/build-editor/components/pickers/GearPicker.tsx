@@ -43,12 +43,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ItemInfo, SlotType } from '@features/loadout-manager/data/itemIdMap';
 import {
   getAvailableSetsForSlot,
+  getCanonicalItemsBySlot,
   getItemInfo,
-  getItemsBySlot,
   validateItemForSlot,
 } from '@features/loadout-manager/data/itemIdMap';
 import { deriveItemNameForSlot } from '@features/loadout-manager/utils/itemIconResolver';
 
+import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import {
   getSetType,
   lookupGearSet,
@@ -56,7 +57,57 @@ import {
   SET_TYPE_ORDER,
   type GearSetType,
 } from '../../data/gearSetRegistry';
+import { getLockedArmorWeight } from '../../data/setArmorWeights';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+
+// Shared apparel-weight badge colors/labels (mirror GearSlotCard).
+const WEIGHT_COLORS: Record<ArmorWeight, string> = {
+  light: '#60a5fa',
+  medium: '#4ade80',
+  heavy: '#f87171',
+};
+const WEIGHT_LABELS: Record<ArmorWeight, string> = {
+  light: 'Light',
+  medium: 'Medium',
+  heavy: 'Heavy',
+};
+
+const APPAREL_SLOTS_SET = new Set<SlotType>([
+  'head',
+  'shoulders',
+  'chest',
+  'hand',
+  'waist',
+  'legs',
+  'feet',
+]);
+
+const WeightBadge: React.FC<{ weight: ArmorWeight }> = ({ weight }) => {
+  const isDark = useTheme().palette.mode === 'dark';
+  const color = WEIGHT_COLORS[weight];
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        px: 0.5,
+        py: 0.15,
+        borderRadius: 1,
+        fontSize: '0.5rem',
+        fontWeight: 700,
+        fontFamily: 'Space Grotesk, Inter, system-ui',
+        letterSpacing: 0.2,
+        flexShrink: 0,
+        color,
+        background: isDark ? `${color}14` : `${color}0C`,
+        border: `1px solid ${isDark ? `${color}30` : `${color}25`}`,
+      }}
+    >
+      {WEIGHT_LABELS[weight]}
+    </Box>
+  );
+};
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -100,7 +151,9 @@ function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
 
 function buildSetGroups(targetSlot: SlotType): SetGroupResult {
   const setSummaries = getAvailableSetsForSlot(targetSlot);
-  const allItems = getItemsBySlot(targetSlot);
+  // One canonical item per set+slot — collapses the ~24 level/quality/trait
+  // variants the raw data carries (e.g. "Zaan Shoulders") down to a single row.
+  const allItems = getCanonicalItemsBySlot(targetSlot);
 
   // Build item lookup by set name
   const itemsBySet = new Map<string, { itemId: number; info: ItemInfo }[]>();
@@ -196,167 +249,153 @@ const SetBonusPreview: React.FC<{ bonuses: string[] }> = ({ bonuses }) => {
 
 interface SetCategorySectionProps {
   group: SetGroup;
-  currentItemId: number | null;
+  /**
+   * Set name of the currently-equipped piece in this slot. Matched by set name
+   * (not item id) so a previously-equipped non-canonical variant still lights up
+   * the canonical row as EQUIPPED.
+   */
+  currentSetName: string | null;
   onSelect: (itemId: number) => void;
   targetSlot: SlotType;
 }
 
 const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   group,
-  currentItemId,
+  currentSetName,
   onSelect,
   targetSlot,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
-  const [expanded, setExpanded] = useState(false);
+  const [showBonuses, setShowBonuses] = useState(false);
   const catColor = SET_TYPE_COLORS[group.setType];
+
+  // After dedup there is exactly one canonical item per set+slot, so the row
+  // itself is the selectable unit — no nested item list.
+  const canonical = group.items[0];
+  if (!canonical) return null;
+
+  const isSelected = currentSetName === group.setName;
+  const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
+    ? getLockedArmorWeight(group.setName)
+    : null;
+  const hasBonuses = group.bonuses.length > 0;
 
   return (
     <Box>
-      <ButtonBase
-        onClick={() => setExpanded(!expanded)}
+      <Box
         sx={{
-          width: '100%',
-          py: 0.75,
-          px: 1,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           borderRadius: 1.5,
+          background: isSelected
+            ? isDark
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
+              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
+            : 'transparent',
+          border: isSelected
+            ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
+            : '1px solid transparent',
           '&:hover': {
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            background: isSelected
+              ? undefined
+              : isDark
+                ? 'rgba(255,255,255,0.04)'
+                : 'rgba(0,0,0,0.03)',
           },
         }}
       >
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
-          <ShieldIcon
-            sx={{
-              fontSize: 16,
-              color: catColor,
-              opacity: 0.75,
-              flexShrink: 0,
-            }}
-          />
-          <Typography
-            noWrap
-            sx={{
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-            }}
-          >
-            {group.setName}
-          </Typography>
-          <Chip
-            label={group.setType}
+        {/* Primary action: select the set's canonical item for this slot. */}
+        <ButtonBase
+          onClick={() => onSelect(canonical.itemId)}
+          aria-label={`Equip ${group.setName}`}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            py: 0.75,
+            pl: 1,
+            pr: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderRadius: 1.5,
+            textAlign: 'left',
+          }}
+        >
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
+            <ShieldIcon sx={{ fontSize: 16, color: catColor, opacity: 0.75, flexShrink: 0 }} />
+            <Typography
+              noWrap
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
+              }}
+            >
+              {group.setName}
+            </Typography>
+            <Chip
+              label={group.setType}
+              size="small"
+              sx={{
+                height: 14,
+                fontSize: '0.5rem',
+                fontWeight: 700,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                background: `${catColor}25`,
+                color: catColor,
+                border: 'none',
+                flexShrink: 0,
+              }}
+            />
+            {lockedWeight && <WeightBadge weight={lockedWeight} />}
+          </Stack>
+          {isSelected && (
+            <Chip
+              label="EQUIPPED"
+              size="small"
+              sx={{
+                height: 14,
+                fontSize: '0.5rem',
+                fontWeight: 700,
+                fontFamily: 'Space Grotesk',
+                background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
+                color: 'var(--be-accent, #38bdf8)',
+                border: 'none',
+                flexShrink: 0,
+                ml: 0.5,
+              }}
+            />
+          )}
+        </ButtonBase>
+
+        {/* Secondary action: peek the set bonuses without selecting. */}
+        {hasBonuses && (
+          <IconButton
             size="small"
+            onClick={() => setShowBonuses((v) => !v)}
+            aria-label={showBonuses ? 'Hide set bonuses' : 'Show set bonuses'}
+            aria-expanded={showBonuses}
             sx={{
-              height: 14,
-              fontSize: '0.5rem',
-              fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              background: `${catColor}25`,
-              color: catColor,
-              border: 'none',
+              p: 0.4,
+              mr: 0.4,
               flexShrink: 0,
-            }}
-          />
-        </Stack>
-        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-          <Typography
-            sx={{
-              fontSize: 10,
-              color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
-            }}
-          >
-            {group.items.length}
-          </Typography>
-          <ExpandIcon
-            sx={{
-              fontSize: 16,
-              transition: 'transform 0.2s',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
               color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
             }}
-          />
-        </Stack>
-      </ButtonBase>
+          >
+            <ExpandIcon
+              sx={{
+                fontSize: 16,
+                transition: 'transform 0.2s',
+                transform: showBonuses ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          </IconButton>
+        )}
+      </Box>
 
-      <Collapse in={expanded} unmountOnExit>
-        {group.bonuses.length > 0 && <SetBonusPreview bonuses={group.bonuses} />}
-        <Stack spacing={0} sx={{ pl: 1, pr: 0.5, pb: 1, pt: 0.25 }}>
-          {group.items.map((item) => {
-            const isSelected = item.itemId === currentItemId;
-            return (
-              <ButtonBase
-                key={item.itemId}
-                onClick={() => onSelect(item.itemId)}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  py: 0.6,
-                  px: 1,
-                  borderRadius: 1.5,
-                  width: '100%',
-                  textAlign: 'left',
-                  background: isSelected
-                    ? isDark
-                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
-                      : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
-                    : 'transparent',
-                  border: isSelected
-                    ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
-                    : '1px solid transparent',
-                  '&:hover': {
-                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                  },
-                }}
-              >
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    noWrap
-                    sx={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {deriveItemNameForSlot(item.itemId, targetSlot)}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 10,
-                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    ID: {item.itemId}
-                    {item.info.type !== 'Gear' ? ` · ${item.info.type}` : ''}
-                  </Typography>
-                </Box>
-                {isSelected && (
-                  <Chip
-                    label="EQUIPPED"
-                    size="small"
-                    sx={{
-                      height: 14,
-                      fontSize: '0.5rem',
-                      fontWeight: 700,
-                      fontFamily: 'Space Grotesk',
-                      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-                      color: 'var(--be-accent, #38bdf8)',
-                      border: 'none',
-                    }}
-                  />
-                )}
-              </ButtonBase>
-            );
-          })}
-        </Stack>
+      <Collapse in={showBonuses} unmountOnExit>
+        {hasBonuses && <SetBonusPreview bonuses={group.bonuses} />}
       </Collapse>
     </Box>
   );
@@ -421,7 +460,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
     const q = debouncedSearch.toLowerCase().trim();
-    const allItems = getItemsBySlot(targetSlot);
+    const allItems = getCanonicalItemsBySlot(targetSlot);
     return allItems
       .filter(
         (item) =>
@@ -622,9 +661,13 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                 </Typography>
                 <Stack spacing={0.5}>
                   {searchResults.map((item) => {
-                    const isSelected = item.itemId === currentItemId;
+                    const isSelected =
+                      currentInfo?.setName != null && item.info.setName === currentInfo.setName;
                     const setType = getSetType(item.info.setName);
                     const catColor = SET_TYPE_COLORS[setType];
+                    const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
+                      ? getLockedArmorWeight(item.info.setName)
+                      : null;
                     return (
                       <ButtonBase
                         key={item.itemId}
@@ -677,6 +720,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                                 border: 'none',
                               }}
                             />
+                            {lockedWeight && <WeightBadge weight={lockedWeight} />}
                           </Stack>
                           <Typography
                             sx={{
@@ -783,7 +827,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                   <SetCategorySection
                     key={group.setName}
                     group={group}
-                    currentItemId={currentItemId}
+                    currentSetName={currentInfo?.setName ?? null}
                     onSelect={handleSelect}
                     targetSlot={targetSlot}
                   />

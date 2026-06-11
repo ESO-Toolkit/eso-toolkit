@@ -2,7 +2,7 @@
  * Tests for Item Slot Validator
  */
 
-import { getItemsBySlot } from '../../data/itemIdMap';
+import { getCanonicalItemsBySlot, getItemsBySlot } from '../../data/itemIdMap';
 import type { GearConfig, GearPiece } from '../../types/loadout.types';
 import {
   hasKnownSlot,
@@ -204,6 +204,53 @@ describe('itemSlotValidator', () => {
       // This shouldn't happen, but test the behavior
       const items = getItemsBySlot('head');
       expect(Array.isArray(items)).toBe(true);
+    });
+  });
+
+  describe('getCanonicalItemsBySlot', () => {
+    it('returns exactly one item per set for a slot', () => {
+      const canonical = getCanonicalItemsBySlot('shoulders');
+      const setNames = canonical.map(({ info }) => info.setName);
+      const uniqueSetNames = new Set(setNames);
+      // One canonical entry per set — no duplicates.
+      expect(setNames.length).toBe(uniqueSetNames.size);
+    });
+
+    it('collapses the many Zaan shoulder variants down to a single entry', () => {
+      const rawZaanShoulders = getItemsBySlot('shoulders').filter(
+        ({ info }) => info.setName === 'Zaan',
+      );
+      const canonicalZaanShoulders = getCanonicalItemsBySlot('shoulders').filter(
+        ({ info }) => info.setName === 'Zaan',
+      );
+
+      // The raw data carries many quality/level variants...
+      expect(rawZaanShoulders.length).toBeGreaterThan(1);
+      // ...but the picker only ever sees one.
+      expect(canonicalZaanShoulders).toHaveLength(1);
+    });
+
+    it('picks the lowest item id as the canonical variant', () => {
+      const bySet = new Map<string, number[]>();
+      for (const { itemId, info } of getItemsBySlot('head')) {
+        const list = bySet.get(info.setName) ?? [];
+        list.push(itemId);
+        bySet.set(info.setName, list);
+      }
+
+      for (const { itemId, info } of getCanonicalItemsBySlot('head')) {
+        const allIdsForSet = bySet.get(info.setName) ?? [];
+        expect(itemId).toBe(Math.min(...allIdsForSet));
+      }
+    });
+
+    it('has no more entries than getItemsBySlot for the same slot', () => {
+      const slots = ['head', 'shoulders', 'chest', 'hand'] as const;
+      for (const slot of slots) {
+        expect(getCanonicalItemsBySlot(slot).length).toBeLessThanOrEqual(
+          getItemsBySlot(slot).length,
+        );
+      }
     });
   });
 

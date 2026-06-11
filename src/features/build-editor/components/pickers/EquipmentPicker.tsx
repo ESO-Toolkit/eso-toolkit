@@ -27,6 +27,7 @@ import {
   isTwoHandedWeapon,
 } from '../../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
+import { getLockedArmorWeight } from '../../data/setArmorWeights';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
 import { GearPickerDialog } from './GearPicker';
@@ -81,6 +82,11 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
   const info = itemId ? getItemInfo(itemId) : null;
   const itemName = itemId ? deriveItemNameForSlot(itemId, def.slotType) : null;
 
+  // Sets that only exist in one armor weight in-game (mythics, overland/
+  // dungeon/trial drops) are locked — the chip shows their fixed weight and
+  // can't be cycled. Crafted + monster sets return null here = free choice.
+  const lockedWeight = getLockedArmorWeight(info?.setName);
+
   return (
     <GearSlotCard
       slotDef={def}
@@ -89,7 +95,8 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
       setName={info?.setName ?? null}
       isDisabled={Boolean(disabledReason)}
       disabledReason={disabledReason}
-      weight={piece?.weight}
+      weight={lockedWeight ?? piece?.weight}
+      lockedWeight={lockedWeight}
       onWeightChange={onWeightChange ? (w: ArmorWeight) => onWeightChange(def.slot, w) : undefined}
       trait={piece?.trait}
       onTraitChange={
@@ -230,7 +237,24 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
     (itemId: number): void => {
       if (!pickerSlot) return;
       const slot = pickerSlot.slot;
-      const next: GearConfig = { ...gearRef.current, [slot]: { id: itemId } };
+      // Preserve the slot's existing trait/enchant; only the item identity
+      // (and possibly its weight) changes when a new piece is chosen.
+      const prev = gearRef.current[slot];
+      const nextPiece: GearPiece = { ...prev, id: itemId };
+
+      // If the chosen set is locked to a single armor weight (mythic / overland
+      // drop), persist that weight so exports and stats stay correct even
+      // though the chip is read-only. Otherwise keep whatever the user had.
+      const info = getItemInfo(itemId);
+      const locked = getLockedArmorWeight(info?.setName);
+      if (locked) {
+        nextPiece.weight = locked;
+      } else if (pickerSlot.category !== 'apparel') {
+        // Non-apparel slots (jewelry / weapons) have no armor weight.
+        delete nextPiece.weight;
+      }
+
+      const next: GearConfig = { ...gearRef.current, [slot]: nextPiece };
       // Sync fast-path auto-clear (local-data items). The useEffect above
       // handles the uncached case retroactively once the UESP fetch lands.
       if ((slot === FRONT_MAIN || slot === BACK_MAIN) && isTwoHandedWeapon(itemId)) {

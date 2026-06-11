@@ -203900,6 +203900,42 @@ export function getItemsBySlot(slot: SlotType): { itemId: number; info: ItemInfo
   return itemsBySlotCache[slot]!;
 }
 
+const canonicalItemsBySlotCache: Partial<Record<SlotType, { itemId: number; info: ItemInfo }[]>> =
+  {};
+
+/**
+ * Like `getItemsBySlot`, but collapses every set down to a SINGLE canonical
+ * item per (set, slot).
+ *
+ * The raw item data carries one entry per level/quality/trait variant — e.g.
+ * "Zaan" shoulders has ~24 distinct item IDs that all render as the identical
+ * name "Zaan Shoulders". The build editor never distinguishes those variants
+ * (trait, weight, and enchant are chosen via separate chips on the slot card),
+ * so surfacing all of them in the picker is pure noise.
+ *
+ * Canonical pick = the lowest item ID for the set+slot. This is deterministic
+ * and matches the lowest-ID convention already used by the collection index
+ * (`collectionItemsBySetAndSlotType`), so the picker and the import/export
+ * paths agree on which ID represents a set's piece in a given slot.
+ */
+export function getCanonicalItemsBySlot(slot: SlotType): { itemId: number; info: ItemInfo }[] {
+  if (!canonicalItemsBySlotCache[slot]) {
+    const bySet = new Map<string, { itemId: number; info: ItemInfo }>();
+    for (const entry of getItemsBySlot(slot)) {
+      const existing = bySet.get(entry.info.setName);
+      if (!existing || entry.itemId < existing.itemId) {
+        bySet.set(entry.info.setName, entry);
+      }
+    }
+
+    canonicalItemsBySlotCache[slot] = Array.from(bySet.values()).sort(
+      (a, b) =>
+        a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name),
+    );
+  }
+  return canonicalItemsBySlotCache[slot]!;
+}
+
 export function getAvailableSetsForSlot(slot: SlotType): SlotSetSummary[] {
   if (!setSummaryCache[slot]) {
     const counts = new Map<string, number>();
