@@ -55,6 +55,15 @@ export async function preloadIconData(): Promise<void> {
   await iconDataPromise;
 }
 
+/**
+ * True once the local icon data has loaded. Synchronous — lets callers that
+ * derive values from icons (e.g. weapon-type display names) avoid baking in or
+ * caching results computed while icon lookups still fall back to generic data.
+ */
+export function isIconDataReady(): boolean {
+  return iconData !== null;
+}
+
 const logger = new Logger({ contextPrefix: 'ItemIconResolver' });
 
 /** Base URL for the UESP icon CDN */

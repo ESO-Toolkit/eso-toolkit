@@ -47,7 +47,11 @@ import {
   getItemInfo,
   validateItemForSlot,
 } from '@features/loadout-manager/data/itemIdMap';
-import { deriveItemNameForSlot } from '@features/loadout-manager/utils/itemIconResolver';
+import {
+  deriveItemNameForSlot,
+  isIconDataReady,
+  preloadIconData,
+} from '@features/loadout-manager/utils/itemIconResolver';
 
 import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import {
@@ -161,7 +165,14 @@ function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
   const cached = SET_GROUPS_CACHE[targetSlot];
   if (cached) return cached;
   const result = buildSetGroups(targetSlot);
-  SET_GROUPS_CACHE[targetSlot] = result;
+  // Weapon groups key off icon-derived display names (see makeCanonicalKey). If
+  // the lazily-imported icon data hasn't loaded yet, every weapon type of a set
+  // collapses to its generic name — so DON'T cache that incomplete result, or it
+  // would stick for the whole page session. Recompute on the next open; once
+  // icon data is ready the correct, fully-split result gets cached.
+  if (!WEAPON_SLOTS_SET.has(targetSlot) || isIconDataReady()) {
+    SET_GROUPS_CACHE[targetSlot] = result;
+  }
   return result;
 }
 
@@ -500,6 +511,11 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | GearSetType>('all');
 
+  // Weapon-type splitting depends on lazily-loaded icon data. Track readiness so
+  // the grouped data recomputes (and re-caches) once it lands, instead of showing
+  // a single collapsed weapon row if the picker opens before icon data settles.
+  const [iconReady, setIconReady] = useState(() => isIconDataReady());
+
   // Reset state on open
   useEffect(() => {
     if (open) {
@@ -508,9 +524,26 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     }
   }, [open]);
 
+  // While open, make sure icon data is loaded so weapon types split correctly.
+  useEffect(() => {
+    if (!open || iconReady) return;
+    let cancelled = false;
+    void preloadIconData().then(() => {
+      if (!cancelled) setIconReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, iconReady]);
+
   // Build grouped data for this slot (cached at module scope — per-slot work
-  // runs once per page, not once per picker open).
-  const { groups, byType } = useMemo(() => getSetGroupsForSlot(targetSlot), [targetSlot]);
+  // runs once per page, not once per picker open). `iconReady` is a dep so weapon
+  // groups recompute once icon data lands (apparel results are icon-independent).
+  const { groups, byType } = useMemo(
+    () => getSetGroupsForSlot(targetSlot),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [targetSlot, iconReady],
+  );
 
   // Available type tabs (only show tabs that have sets)
   const availableTabs = useMemo(() => {
@@ -533,17 +566,26 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
   const isSearching = debouncedSearch.trim().length >= MIN_SEARCH_LENGTH;
 
+  // Canonical item list for search — computed once per slot, not per keystroke.
+  // The weapon-aware key recomputes (it isn't module-cached), and for weapons it
+  // scans ~5k items resolving each one's type, so memoize it away from `search`.
+  // `iconReady` is a dep for the same reason as the browse groups above.
+  const canonicalItems = useMemo(
+    () => getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [targetSlot, iconReady],
+  );
+
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
     const q = debouncedSearch.toLowerCase().trim();
-    const allItems = getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot));
-    return allItems
+    return canonicalItems
       .filter(
         (item) =>
           item.info.name.toLowerCase().includes(q) || item.info.setName.toLowerCase().includes(q),
       )
       .slice(0, MAX_SEARCH_RESULTS);
-  }, [debouncedSearch, isSearching, targetSlot]);
+  }, [debouncedSearch, isSearching, canonicalItems]);
 
   const handleSelect = useCallback(
     (itemId: number) => {

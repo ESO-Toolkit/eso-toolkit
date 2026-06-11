@@ -297,6 +297,26 @@ describe('itemSlotValidator', () => {
       // And the picker-aware result is strictly larger than the set-name dedup.
       expect(canon.length).toBeGreaterThan(getCanonicalItemsBySlot('weapon').length);
     });
+
+    // Regression for the lazy-icon-data race: before icon data loads,
+    // deriveItemNameForSlot falls back to the generic "<Set> Weapon" name, so a
+    // key built from it collapses every weapon type into one — the picker must
+    // NOT cache groups built in that state (see getSetGroupsForSlot's iconReady
+    // gate). This test demonstrates the collapse the gate exists to prevent.
+    it('a generic-name key (icon data not ready) collapses weapon types — why the cache gate exists', () => {
+      const genericKey = (_itemId: number, info: { setName: string }): string =>
+        `${info.setName} ${info.setName} Weapon`; // mimics derive fallback pre-icon-load
+      const collapsed = getCanonicalItemsBySlot('weapon', genericKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      const split = getCanonicalItemsBySlot('weapon', weaponKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      expect(collapsed).toHaveLength(1);
+      // The real (icon-ready) key keeps many more — so caching the collapsed
+      // result would permanently hide the rest for the page session.
+      expect(split.length).toBeGreaterThan(collapsed.length);
+    });
   });
 
   describe('canExportLoadout', () => {

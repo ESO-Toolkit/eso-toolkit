@@ -18,6 +18,7 @@ import {
   fetchIsTwoHandedWeapon,
   GENERIC_WEAPON_SUFFIXES,
   getItemIconUrl,
+  isIconDataReady,
   isTwoHandedFromName,
   isTwoHandedWeapon,
   parseWeaponTypeFromIconUrl,
@@ -29,6 +30,13 @@ beforeAll(async () => {
 });
 
 const CDN = 'https://esoicons.uesp.net/esoui/art/icons';
+
+describe('isIconDataReady', () => {
+  it('reports ready once icon data has been preloaded', () => {
+    // beforeAll awaited preloadIconData, so it must be ready here.
+    expect(isIconDataReady()).toBe(true);
+  });
+});
 
 describe('parseWeaponTypeFromIconUrl', () => {
   it.each([
