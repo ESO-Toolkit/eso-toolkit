@@ -96,6 +96,11 @@ const ScribingSimulatorPage = React.lazy(() =>
     default: module.ScribingSimulatorPage,
   })),
 );
+const UltimateSimulatorPage = React.lazy(() =>
+  import('./pages/UltimateSimulatorPage').then((module) => ({
+    default: module.UltimateSimulatorPage,
+  })),
+);
 const ParseAnalysisPage = React.lazy(() =>
   import('./pages/ParseAnalysisPage').then((module) => ({
     default: module.ParseAnalysisPage,
@@ -614,6 +619,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <ScribingSimulatorPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/ultimate-simulator"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <UltimateSimulatorPage />
                   </Suspense>
                 </ErrorBoundary>
               }
