@@ -22,9 +22,7 @@ export const crushingWall: GearSetData = {
   name: 'Crushing Wall',
   icon: 'Crushing Wall',
   setType: 'Arena',
-  bonuses: [
-    '(2 items) Increases the damage Wall of Elements deals by 1250.',
-  ],
+  bonuses: ['(2 items) Increases the damage Wall of Elements deals by 1250.'],
 };
 
 export const destructiveImpact: GearSetData = {
@@ -121,9 +119,7 @@ export const perfectedCrushingWall: GearSetData = {
   name: 'Perfected Crushing Wall',
   icon: 'Perfected Crushing Wall',
   setType: 'Arena',
-  bonuses: [
-    '(2 items) Increases the damage Wall of Elements deals by 1250.',
-  ],
+  bonuses: ['(2 items) Increases the damage Wall of Elements deals by 1250.'],
 };
 
 export const perfectedDestructiveImpact: GearSetData = {
@@ -229,9 +225,7 @@ export const perfectedRadialUppercut: GearSetData = {
   name: 'Perfected Radial Uppercut',
   icon: 'Perfected Radial Uppercut',
   setType: 'Arena',
-  bonuses: [
-    '(2 items) Uppercut deals 45% of its damage to all enemies near your primary target.',
-  ],
+  bonuses: ['(2 items) Uppercut deals 45% of its damage to all enemies near your primary target.'],
 };
 
 export const perfectedRampagingSlash: GearSetData = {
@@ -346,9 +340,7 @@ export const radialUppercut: GearSetData = {
   name: 'Radial Uppercut',
   icon: 'Radial Uppercut',
   setType: 'Arena',
-  bonuses: [
-    '(2 items) Uppercut deals 45% of its damage to all enemies near your primary target.',
-  ],
+  bonuses: ['(2 items) Uppercut deals 45% of its damage to all enemies near your primary target.'],
 };
 
 export const rampagingSlash: GearSetData = {

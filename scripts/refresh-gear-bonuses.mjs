@@ -113,9 +113,17 @@ for (const file of files) {
       indent.replace(/[ \t]{2}$/, ''); // closing-bracket indent (one level out)
 
     const rebuilt = head + newBody + close;
-    // Compare normalized to skip no-op rewrites (already current).
-    const normBody = (s) => s.replace(/\s+/g, ' ').trim();
-    if (normBody(head + bonusesBody + close) === normBody(rebuilt)) {
+    // Skip no-op rewrites by comparing bonus string VALUES, not literal text:
+    // prettier may re-quote ('It\'s' -> "It's") or re-wrap the array, neither of
+    // which is a content change worth rewriting (kept layout-stable for prettier).
+    const existingValues = [];
+    const STR_RE = /(['"])((?:[^\\]|\\.)*?)\1/g;
+    let sm;
+    while ((sm = STR_RE.exec(bonusesBody))) existingValues.push(unescape(sm[2]));
+    if (
+      existingValues.length === dumpSet.list.length &&
+      existingValues.every((v, k) => v === dumpSet.list[k])
+    ) {
       return full;
     }
     setsRewritten++;

@@ -102,7 +102,7 @@ export const classMasteryArcanist: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_ERUDITE_S_RIGOR,
-      name: 'Erudite\'s Rigor',
+      name: "Erudite's Rigor",
       type: 'passive',
       icon: 'passive_arcanist_07',
       description:
@@ -111,7 +111,7 @@ export const classMasteryArcanist: SkillLineData = {
     },
     {
       id: ClassSkillId.ARCANIST_INK_SCRIBE_S_VERVE,
-      name: 'Ink-Scribe\'s Verve',
+      name: "Ink-Scribe's Verve",
       type: 'passive',
       icon: 'passive_arcanist_04',
       description:
@@ -143,7 +143,7 @@ export const classMasteryNecromancer: SkillLineData = {
       type: 'passive',
       icon: 'passive_armor_003',
       description:
-        'Death\'s knell is a familiar song. Share it with your enemies.\n\nUpgrades rank 2 of Corpse Consumption to mark the closest non-player enemy to you with death\'s touch for 6 seconds, allowing you to use a corpse consuming ability on them. Consuming or replacing this effect forcibly triggers rank 1 of Corpse Consumption\'s Ultimate generation and triggers rank 2 of Death Gleaning.\n\nThis effect can occur once every 2 seconds.',
+        "Death's knell is a familiar song. Share it with your enemies.\n\nUpgrades rank 2 of Corpse Consumption to mark the closest non-player enemy to you with death's touch for 6 seconds, allowing you to use a corpse consuming ability on them. Consuming or replacing this effect forcibly triggers rank 1 of Corpse Consumption's Ultimate generation and triggers rank 2 of Death Gleaning.\n\nThis effect can occur once every 2 seconds.",
       isPassive: true,
     },
     {
@@ -161,16 +161,16 @@ export const classMasteryNecromancer: SkillLineData = {
       type: 'passive',
       icon: 'passive_necromancer_010',
       description:
-        'Knock upon death\'s door and demand your due.\n\nWhen you take damage you have a 10% chance to heal 1600 Health and restore 5% of your missing Stamina, up to once per second. This chance increases by 1% for every missing Health percent you have and the healing is based off your Max Health.',
+        "Knock upon death's door and demand your due.\n\nWhen you take damage you have a 10% chance to heal 1600 Health and restore 5% of your missing Stamina, up to once per second. This chance increases by 1% for every missing Health percent you have and the healing is based off your Max Health.",
       isPassive: true,
     },
     {
       id: ClassSkillId.NECROMANCER_VEIL_S_FORFEIT,
-      name: 'Veil\'s Forfeit',
+      name: "Veil's Forfeit",
       type: 'passive',
       icon: 'passive_necromancer_009',
       description:
-        'Call souls back from an early grave. Only you may grant them release.\n\nWhile you are in combat, directly healing a target below 66% Health relinquishes them from death\'s clutches and allows you to use a corpse consuming ability against them within 10 seconds, up to once every second.\n\nExtends the duration of Major Vulnerability you apply by 50%.',
+        "Call souls back from an early grave. Only you may grant them release.\n\nWhile you are in combat, directly healing a target below 66% Health relinquishes them from death's clutches and allows you to use a corpse consuming ability against them within 10 seconds, up to once every second.\n\nExtends the duration of Major Vulnerability you apply by 50%.",
       isPassive: true,
     },
   ],
@@ -185,7 +185,7 @@ export const classMasteryWarden: SkillLineData = {
   skills: [
     {
       id: ClassSkillId.WARDEN_TUNDRA_S_MAW,
-      name: 'Tundra\'s Maw',
+      name: "Tundra's Maw",
       type: 'passive',
       icon: 'passive_warden_001',
       description:
@@ -207,12 +207,12 @@ export const classMasteryWarden: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_004',
       description:
-        'Tap into the wellspring of permafrost\'s resolve.\n\nUpgrades Bond with Nature to also activate when casting Winter\'s Embrace abilities and to grant 15% Weapon and Spell Damage for 10 seconds if you are at full Health after the heal.',
+        "Tap into the wellspring of permafrost's resolve.\n\nUpgrades Bond with Nature to also activate when casting Winter's Embrace abilities and to grant 15% Weapon and Spell Damage for 10 seconds if you are at full Health after the heal.",
       isPassive: true,
     },
     {
       id: ClassSkillId.WARDEN_GREEN_KEEPER_S_HIDE,
-      name: 'Green-Keeper\'s Hide',
+      name: "Green-Keeper's Hide",
       type: 'passive',
       icon: 'passive_warden_012',
       description:
@@ -225,7 +225,7 @@ export const classMasteryWarden: SkillLineData = {
       type: 'passive',
       icon: 'passive_warden_006',
       description:
-        'Share in the spoils of nature\'s abundance.\n\nUpgrades rank 2 of Nature\'s Gift to grant you and your group members Major Heroism for 3 seconds and an additional 125 Magicka and Stamina, up to once ever 2 seconds.',
+        "Share in the spoils of nature's abundance.\n\nUpgrades rank 2 of Nature's Gift to grant you and your group members Major Heroism for 3 seconds and an additional 125 Magicka and Stamina, up to once ever 2 seconds.",
       isPassive: true,
     },
   ],
@@ -262,12 +262,12 @@ export const classMasteryTemplar: SkillLineData = {
       type: 'passive',
       icon: 'ability_templar_005',
       description:
-        'Light\'s banner instills hope. You are its bearer.\n\nUpgrades rank 2 of Illuminate to also grant Bright Harbinger for the duration, which grants 300 Weapon and Spell Damage to allies and doubles for you.',
+        "Light's banner instills hope. You are its bearer.\n\nUpgrades rank 2 of Illuminate to also grant Bright Harbinger for the duration, which grants 300 Weapon and Spell Damage to allies and doubles for you.",
       isPassive: true,
     },
     {
       id: ClassSkillId.TEMPLAR_JUDGMENT_S_BRAND,
-      name: 'Judgment\'s Brand',
+      name: "Judgment's Brand",
       type: 'passive',
       icon: 'ability_templar_004',
       description:
@@ -308,7 +308,7 @@ export const classMasteryNightblade: SkillLineData = {
       type: 'passive',
       icon: 'passive_weapon_026',
       description:
-        'Every strike, every stab, is a step towards execution.\n\nIncreases your Weapon and Spell Damage by up to 2000, based on your target\'s missing Health.\n\nReduces your damage taken by up to 20%, based on your attacker\'s missing Health.\n\nBoth effects are halved against targets with Battle Spirit.',
+        "Every strike, every stab, is a step towards execution.\n\nIncreases your Weapon and Spell Damage by up to 2000, based on your target's missing Health.\n\nReduces your damage taken by up to 20%, based on your attacker's missing Health.\n\nBoth effects are halved against targets with Battle Spirit.",
       isPassive: true,
     },
     {
@@ -322,11 +322,11 @@ export const classMasteryNightblade: SkillLineData = {
     },
     {
       id: ClassSkillId.NIGHTBLADE_CUTTHROAT_S_FOCUS,
-      name: 'Cutthroat\'s Focus',
+      name: "Cutthroat's Focus",
       type: 'passive',
       icon: 'passive_sorcerer_025',
       description:
-        'This duel will be their last. For you, it\'s just another dance.\n\nActivating a Nightblade ability while bracing causes you to dodge attacks for 0.3 seconds.\n\nWhenever you dodge an attack, your attacker\'s psyche suffers, increasing their damage taken by 5% for 5 seconds, increasing to 20 seconds against monsters.',
+        "This duel will be their last. For you, it's just another dance.\n\nActivating a Nightblade ability while bracing causes you to dodge attacks for 0.3 seconds.\n\nWhenever you dodge an attack, your attacker's psyche suffers, increasing their damage taken by 5% for 5 seconds, increasing to 20 seconds against monsters.",
       isPassive: true,
     },
     {
@@ -390,7 +390,7 @@ export const classMasterySorcerer: SkillLineData = {
       type: 'passive',
       icon: 'ability_sorcerer_047',
       description:
-        'Magicka extends your reach, a benefit to those who fight beside you.\n\nCasting a damage shield on yourself or an ally grants an additional shield that absorbs up to 2400 damage for 4 seconds and 225 Health, Magicka, and Stamina Recovery for 12 seconds. The shield scales off the higher of your Max Health or Max Magicka, and is capped at 25% of the target\'s Max Health.',
+        "Magicka extends your reach, a benefit to those who fight beside you.\n\nCasting a damage shield on yourself or an ally grants an additional shield that absorbs up to 2400 damage for 4 seconds and 225 Health, Magicka, and Stamina Recovery for 12 seconds. The shield scales off the higher of your Max Health or Max Magicka, and is capped at 25% of the target's Max Health.",
       isPassive: true,
     },
   ],
