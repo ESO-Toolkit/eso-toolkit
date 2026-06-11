@@ -2,7 +2,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { FightFragment } from '@/graphql/gql/graphql';
@@ -285,7 +285,14 @@ export const FightReplay: React.FC = () => {
   const [isSwitchingFight, setIsSwitchingFight] = useState(false);
   const loadingSeenRef = useRef(false);
 
-  useEffect(() => {
+  // LAYOUT effect, deliberately: it must run BEFORE useActorPositionsTask's passive execute
+  // effect for the new fight. With warm dependencies (revisiting a fight whose events are
+  // cached) that effect dispatches the new task in the same flush — if this reset ran after it,
+  // mobile's clearResult wiped latestRequestId AFTER the task's pending action set it, so the
+  // fulfilled result failed the request-id guard and was dropped with nothing re-dispatching:
+  // an indefinite loading/"Entering" state. Layout effects always flush before passive effects,
+  // making the order deterministic: clear first, then dispatch.
+  useLayoutEffect(() => {
     if (prevFightIdRef.current !== fightId) {
       // Free the previous fight's positions on switch. On mobile, FULLY clear the worker's LRU
       // result cache (clearResult) so several fights' large position datasets can't accumulate and
