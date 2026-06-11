@@ -286,6 +286,11 @@ interface SetCategorySectionProps {
   currentSetName: string | null;
   onSelect: (itemId: number) => void;
   targetSlot: SlotType;
+  /**
+   * Whether the lazily-loaded icon data is ready. Weapon-type splitting depends
+   * on it; until it's true a weapon group can't be trusted to be fully split.
+   */
+  iconReady: boolean;
 }
 
 const SetCategorySection: React.FC<SetCategorySectionProps> = ({
@@ -293,6 +298,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   currentSetName,
   onSelect,
   targetSlot,
+  iconReady,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [showBonuses, setShowBonuses] = useState(false);
@@ -305,6 +311,13 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   // Weapon sets carry one canonical item PER weapon TYPE (axe/sword/bow/staff/…),
   // so the set row expands to its types. Apparel/jewelry collapse to a single
   // item, so the row itself is directly selectable. See getCanonicalItemsBySlot.
+  //
+  // A weapon group is only trustworthy once icon data is loaded — before that,
+  // deriveItemNameForSlot can't tell the types apart and they collapse to one
+  // row. Selecting that collapsed row would silently equip an arbitrary weapon
+  // (the lowest-ID axe), so weapon rows are NOT directly selectable until ready.
+  const isWeaponSlot = WEAPON_SLOTS_SET.has(targetSlot);
+  const weaponTypesPending = isWeaponSlot && !iconReady;
   const isMultiVariant = group.items.length > 1;
   const isSelected = currentSetName === group.setName;
   const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
@@ -337,13 +350,25 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
         }}
       >
         {/* Primary action: apparel selects the set's canonical item directly;
-            weapons toggle the per-type variant list open. */}
+            weapons toggle the per-type variant list open. While a weapon's types
+            are still loading, the row is inert (no select, no toggle) so a fast
+            click can't equip the wrong collapsed variant. */}
         <ButtonBase
-          onClick={() => (isMultiVariant ? setShowVariants((v) => !v) : onSelect(canonical.itemId))}
+          disabled={weaponTypesPending}
+          onClick={() => {
+            if (weaponTypesPending) return;
+            if (isMultiVariant) setShowVariants((v) => !v);
+            else onSelect(canonical.itemId);
+          }}
           aria-label={
-            isMultiVariant ? `Choose a ${group.setName} weapon` : `Equip ${group.setName}`
+            weaponTypesPending
+              ? `${group.setName} — loading weapon types`
+              : isMultiVariant
+                ? `Choose a ${group.setName} weapon`
+                : `Equip ${group.setName}`
           }
-          aria-expanded={isMultiVariant ? showVariants : undefined}
+          aria-busy={weaponTypesPending || undefined}
+          aria-expanded={isMultiVariant && !weaponTypesPending ? showVariants : undefined}
           sx={{
             flex: 1,
             minWidth: 0,
@@ -355,6 +380,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
             justifyContent: 'space-between',
             borderRadius: 1.5,
             textAlign: 'left',
+            opacity: weaponTypesPending ? 0.6 : 1,
           }}
         >
           <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
@@ -387,6 +413,18 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
             {lockedWeight && <WeightBadge weight={lockedWeight} />}
           </Stack>
           <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexShrink: 0 }}>
+            {weaponTypesPending && (
+              <Typography
+                sx={{
+                  fontSize: 9,
+                  fontStyle: 'italic',
+                  fontFamily: 'Space Grotesk',
+                  color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                }}
+              >
+                loading…
+              </Typography>
+            )}
             {isSelected && (
               <Chip
                 label="EQUIPPED"
@@ -403,7 +441,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                 }}
               />
             )}
-            {isMultiVariant && (
+            {isMultiVariant && !weaponTypesPending && (
               <ExpandIcon
                 sx={{
                   fontSize: 16,
@@ -525,16 +563,28 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   }, [open]);
 
   // While open, make sure icon data is loaded so weapon types split correctly.
+  // On failure, keep iconReady false — weapon rows stay non-selectable (showing
+  // "loading…") rather than letting a click equip the wrong collapsed variant.
   useEffect(() => {
     if (!open || iconReady) return;
     let cancelled = false;
-    void preloadIconData().then(() => {
-      if (!cancelled) setIconReady(true);
-    });
+    preloadIconData()
+      .then(() => {
+        if (!cancelled) setIconReady(true);
+      })
+      .catch(() => {
+        // Icon chunk failed to load. Re-check in case another path resolved it;
+        // otherwise leave the weapon rows in the safe non-selectable state.
+        if (!cancelled && isIconDataReady()) setIconReady(true);
+      });
     return () => {
       cancelled = true;
     };
   }, [open, iconReady]);
+
+  // A weapon slot whose types haven't loaded yet — used to suppress collapsed,
+  // mis-selectable weapon rows in both browse and search until icon data lands.
+  const weaponSlotPending = WEAPON_SLOTS_SET.has(targetSlot) && !iconReady;
 
   // Build grouped data for this slot (cached at module scope — per-slot work
   // runs once per page, not once per picker open). `iconReady` is a dep so weapon
@@ -754,7 +804,22 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
         {isSearching ? (
           /* ── Search results ───────────────────────────────── */
           <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
+            {weaponSlotPending ? (
+              // Weapon search results collapse to one row per set until icon data
+              // loads — don't show them, or a click could equip the wrong weapon.
+              <Typography
+                aria-busy
+                sx={{
+                  fontSize: 12,
+                  fontStyle: 'italic',
+                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  textAlign: 'center',
+                  py: 3,
+                }}
+              >
+                Loading weapon types…
+              </Typography>
+            ) : searchResults.length === 0 ? (
               <Typography
                 sx={{
                   fontSize: 12,
@@ -948,6 +1013,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                     currentSetName={currentInfo?.setName ?? null}
                     onSelect={handleSelect}
                     targetSlot={targetSlot}
+                    iconReady={iconReady}
                   />
                 ))
               )}
