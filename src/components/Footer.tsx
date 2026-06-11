@@ -32,13 +32,15 @@ export const Footer: React.FC = React.memo(() => {
     () => [
       { label: 'Build Calculator', href: '/calculator' },
 
-      { label: 'Text Editor', href: '/text-editor' },
-
-      { label: 'Log Analyzer', href: '/my-reports' },
+      { label: 'Build Editor', href: '/build-editor' },
 
       { label: 'Roster Builder', href: '/roster-builder' },
 
-      { label: 'My Reports', href: '/my-reports' },
+      { label: 'Parse Analysis', href: '/parse-analysis' },
+
+      { label: 'Text Editor', href: '/text-editor' },
+
+      { label: 'Loadout Manager', href: '/loadout-manager' },
 
       { label: 'Gear Sets', href: '/gear-sets' },
     ],
@@ -50,7 +52,13 @@ export const Footer: React.FC = React.memo(() => {
     () => [
       { label: 'Home', href: '/' },
 
-      { label: 'Privacy Settings', href: '/privacy-settings' },
+      { label: 'Roster Hub', href: '/roster-hub' },
+
+      { label: 'Build Hub', href: '/build-hub' },
+
+      { label: 'Pack Hub', href: '/pack-hub' },
+
+      { label: 'Leaderboards', href: '/leaderboards' },
 
       { label: 'Calculation Knowledge Base', href: '/docs/calculations' },
 
