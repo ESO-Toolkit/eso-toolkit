@@ -356,6 +356,9 @@ export function searchSkills(query: string, limit = 50): SkillData[] {
   // Search active/ultimate skills first, then passives
   for (const pool of [activeSkillsCache, passiveSkillsCache]) {
     for (const skill of pool) {
+      // Class Mastery passives are never slottable/search targets — they're
+      // picked via the dedicated 2-of-5 build-editor section.
+      if (CLASS_MASTERY_SKILL_IDS.has(skill.id)) continue;
       if (skill.name.toLowerCase().includes(lowerQuery)) {
         results.push(skill);
         if (results.length >= limit) break;
@@ -440,7 +443,11 @@ export function getPassivesByCategory(lineName: string): SkillData[] {
     return [];
   }
 
-  return passiveSkillsCache.filter((skill) => skill.category === lineName);
+  // 'Class Mastery' would merge all seven classes' passives (shared display
+  // name) — the dedicated build-editor section reads the line data directly.
+  return passiveSkillsCache.filter(
+    (skill) => skill.category === lineName && !CLASS_MASTERY_SKILL_IDS.has(skill.id),
+  );
 }
 
 /**

@@ -439,6 +439,10 @@ export const buildEditorSlice = createSlice({
       state.isDirty = true;
     },
     // ── Class Mastery (build-level, U50) ──────────────────────────────────────
+    // Note: these reducers validate class ownership and the 2-pick cap but NOT
+    // the subclassed gate — picks are intentionally kept (inert) while
+    // subclassed; eligibility is enforced at the UI/display layer via
+    // classMasteryEligibility.ts.
     toggleClassMasteryPassive(state, action: PayloadAction<number>) {
       // Only the base class's own Class Mastery passives are valid picks
       const line = getClassMasteryLine(state.build.esoClass);
