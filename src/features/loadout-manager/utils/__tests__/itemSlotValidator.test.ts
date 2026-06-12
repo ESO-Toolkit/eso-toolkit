@@ -325,6 +325,22 @@ describe('itemSlotValidator', () => {
       // result would permanently hide the rest for the page session.
       expect(split.length).toBeGreaterThan(collapsed.length);
     });
+
+    // The picker's makeCanonicalKey falls back to per-itemId when a weapon's
+    // display name is still generic (stale/missing icon data), so distinct types
+    // are NEVER collapsed even when names can't be resolved. This mirrors that
+    // robustness: a key that appends itemId for generic names keeps every item.
+    it('a generic-name key with an itemId fallback never collapses distinct weapons', () => {
+      const robustKey = (itemId: number, info: { setName: string }): string =>
+        `${info.setName} #${itemId}`; // mimics the generic-name itemId fallback
+      const raw = getItemsBySlot('weapon').filter(({ info }) => info.setName === "Mother's Sorrow");
+      const canon = getCanonicalItemsBySlot('weapon', robustKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      // Distinct item IDs all survive — at least one row per real weapon type.
+      expect(canon.length).toBe(new Set(raw.map((x) => x.itemId)).size);
+      expect(canon.length).toBeGreaterThan(1);
+    });
   });
 
   describe('canExportLoadout', () => {

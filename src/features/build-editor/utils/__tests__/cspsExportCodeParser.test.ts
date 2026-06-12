@@ -150,6 +150,17 @@ describe('parseCSPSExportCode', () => {
     expect(gear[1].enchant).toBe('45884');
   });
 
+  it('deserializes apparel armor weight from the export-code gear type', () => {
+    // Example code: "0:1:270:…" (HEAD type 1=light), "2:2:772:…" (CHEST type
+    // 2=medium), "4:11:809:…" (weapon, type 11 — not an armor weight).
+    const { build } = parseCSPSExportCode(EXAMPLE_EXPORT_CODE);
+    const gear = build.setups[0].gear;
+    expect(gear[0].weight).toBe('light'); // HEAD, type 1
+    expect(gear[2].weight).toBe('medium'); // CHEST, type 2
+    expect(gear[4].weight).toBeUndefined(); // weapon slot — no armor weight
+    expect(gear[1].weight).toBeUndefined(); // NECK (accessory) — no armor weight
+  });
+
   it('parses consumables (buff food and potions)', () => {
     const { build } = parseCSPSExportCode(EXAMPLE_EXPORT_CODE);
     expect(build.setups[0].consumables.food.id).toBe(68239);
@@ -305,6 +316,18 @@ describe('parseCSPSNativeCode', () => {
     expect(gear[1]).toBeDefined();
     expect(gear[1].trait).toBe('31');
     expect(gear[1].enchant).toBe('45884');
+  });
+
+  it('deserializes apparel armor weight from the native-code gear type', () => {
+    // Native gear (positional setId:type:trait:quality:enchant): HEAD "270:1:…"
+    // → type 1 (light); SHOULDERS "809:2:…" → type 2 (medium). NECK is an
+    // accessory and the weapon slots carry weapon types, so no armor weight.
+    const { build } = parseCSPSNativeCode(NATIVE_CODE);
+    const gear = build.setups[0].gear;
+    expect(gear[0].weight).toBe('light'); // HEAD, type 1
+    expect(gear[3].weight).toBe('medium'); // SHOULDERS, type 2
+    expect(gear[1].weight).toBeUndefined(); // NECK (accessory)
+    expect(gear[4].weight).toBeUndefined(); // MAIN_HAND (weapon)
   });
 
   it('parses role', () => {

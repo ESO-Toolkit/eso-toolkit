@@ -49,6 +49,7 @@ import {
 } from '@features/loadout-manager/data/itemIdMap';
 import {
   deriveItemNameForSlot,
+  GENERIC_WEAPON_SUFFIXES,
   isIconDataReady,
   preloadIconData,
 } from '@features/loadout-manager/utils/itemIconResolver';
@@ -91,15 +92,41 @@ const APPAREL_SLOTS_SET = new Set<SlotType>([
 // fold in the per-item weapon type so each type survives as its own pickable row.
 const WEAPON_SLOTS_SET = new Set<SlotType>(['weapon', 'offhand']);
 
+/** A weapon display name that still carries a generic suffix = type unresolved. */
+function isGenericWeaponName(name: string): boolean {
+  return GENERIC_WEAPON_SUFFIXES.some((suffix) => name.endsWith(suffix));
+}
+
 /**
  * Canonical dedup key for the gear picker. Weapons key by their slot-aware
  * display name (which carries the weapon type, incl. staff element), so distinct
  * weapon types aren't collapsed away. Everything else keys by set name, folding
  * the ~24 level/quality variants of an apparel/jewelry piece into one row.
+ *
+ * Robustness: if icon data is missing/stale for an item, the display name stays
+ * generic ("<Set> Weapon"). Keying by that alone would wrongly collapse every
+ * weapon type of the set, so a generic key falls back to per-itemId — distinct
+ * types never merge incorrectly. getSetGroupsForSlot won't cache such a result,
+ * so it can recompute into the proper type-split once the data is present.
  */
 function makeCanonicalKey(targetSlot: SlotType): CanonicalKeyFn {
   if (!WEAPON_SLOTS_SET.has(targetSlot)) return (_itemId, info) => info.setName;
-  return (itemId, info) => `${info.setName} ${deriveItemNameForSlot(itemId, targetSlot)}`;
+  return (itemId, info) => {
+    const name = deriveItemNameForSlot(itemId, targetSlot);
+    const discriminator = isGenericWeaponName(name) ? `#${itemId}` : name;
+    return `${info.setName} ${discriminator}`;
+  };
+}
+
+/** True when every weapon in the slot resolved to a specific (non-generic) name. */
+function weaponGroupsFullyResolved(targetSlot: SlotType, groups: SetGroup[]): boolean {
+  if (!WEAPON_SLOTS_SET.has(targetSlot)) return true;
+  for (const group of groups) {
+    for (const { itemId } of group.items) {
+      if (isGenericWeaponName(deriveItemNameForSlot(itemId, targetSlot))) return false;
+    }
+  }
+  return true;
 }
 
 const WeightBadge: React.FC<{ weight: ArmorWeight }> = ({ weight }) => {
@@ -165,12 +192,17 @@ function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
   const cached = SET_GROUPS_CACHE[targetSlot];
   if (cached) return cached;
   const result = buildSetGroups(targetSlot);
-  // Weapon groups key off icon-derived display names (see makeCanonicalKey). If
-  // the lazily-imported icon data hasn't loaded yet, every weapon type of a set
-  // collapses to its generic name — so DON'T cache that incomplete result, or it
-  // would stick for the whole page session. Recompute on the next open; once
-  // icon data is ready the correct, fully-split result gets cached.
-  if (!WEAPON_SLOTS_SET.has(targetSlot) || isIconDataReady()) {
+  // Weapon groups key off icon-derived display names (see makeCanonicalKey). Only
+  // cache a weapon result when it's TRUSTWORTHY: icon data loaded AND every weapon
+  // resolved to a specific type. If the data is still loading OR stale/missing for
+  // some items, names stay generic and (despite the per-itemId key fallback) the
+  // result isn't the intended type-split — don't cache it, so a later open
+  // recomputes the correct grouping once the data is present. Non-weapon slots are
+  // icon-independent and always safe to cache.
+  const cacheable =
+    !WEAPON_SLOTS_SET.has(targetSlot) ||
+    (isIconDataReady() && weaponGroupsFullyResolved(targetSlot, result.groups));
+  if (cacheable) {
     SET_GROUPS_CACHE[targetSlot] = result;
   }
   return result;
