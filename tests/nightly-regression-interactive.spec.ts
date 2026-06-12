@@ -498,45 +498,18 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForTimeout(5000);
 
-      // Look for live logging interface elements
-      const hasLiveCssElements = await page
-        .locator('.live-log, .live-logging, .real-time, [data-testid*="live"]')
-        .isVisible()
-        .catch(() => false);
-      const hasLiveText = await page
-        .getByText(/live/i)
-        .isVisible()
-        .catch(() => false);
-
-      const hasLiveInterface = hasLiveCssElements || hasLiveText;
-
-      // Take screenshot with error handling
+      // LiveLog is a passive polling wrapper around ReportFightDetails — it has
+      // no Start/Stop/Connect controls. Earlier heuristics here matched
+      // unrelated UI (e.g. "Enlivening Overflow" CP, footer "Connect with our
+      // team" CTA), so the test only takes a smoke-test screenshot.
       try {
         await page.screenshot({
           path: `test-results/nightly-regression-live-logging-${reportId}.png`,
           fullPage: true,
-          timeout: 15000, // Increased timeout
+          timeout: 15000,
         });
       } catch (screenshotError) {
         console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
-      }
-
-      if (hasLiveInterface) {
-        // Test live logging controls if available
-        const controls = page.locator(
-          'button:has-text("Start"), button:has-text("Stop"), button:has-text("Connect")',
-        );
-
-        if (await controls.first().isVisible({ timeout: 3000 })) {
-          await controls.first().click();
-          await page.waitForTimeout(2000);
-
-          await page.screenshot({
-            path: `test-results/nightly-regression-live-active-${reportId}.png`,
-            fullPage: true,
-            timeout: TEST_TIMEOUTS.screenshot,
-          });
-        }
       }
     });
   });
