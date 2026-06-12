@@ -469,6 +469,9 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
                   <Box
                     component="span"
                     aria-label={`Weight: ${WEIGHT_FULL_LABELS[currentWeight]} (fixed)`}
+                    // Read-only badge: swallow the click so it doesn't bubble to
+                    // the row and open the gear picker (matches the cycle chip).
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
                     sx={{
                       display: 'inline-flex',
                       alignItems: 'center',
