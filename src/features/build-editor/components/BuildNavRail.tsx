@@ -123,6 +123,7 @@ const BuildNavRailComponent: React.FC<BuildNavRailProps> = ({ progress }) => {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const scrollToSection = useCallback((sectionId: SectionId) => {
+    navigator.vibrate?.(10);
     const el = document.getElementById(`section-${sectionId}`);
     if (!el) return;
     // H3: expand the section first if it's collapsed, then scroll to it.

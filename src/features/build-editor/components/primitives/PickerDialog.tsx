@@ -165,7 +165,7 @@ interface BodyProps {
 }
 
 const Body = React.forwardRef<HTMLDivElement, BodyProps>(function Body(
-  { children, maxHeight = 'calc(80vh - 180px)', empty = false, emptyMessage = 'Nothing found' },
+  { children, maxHeight = 'calc(80dvh - 180px)', empty = false, emptyMessage = 'Nothing found' },
   ref,
 ) {
   const isDark = useTheme().palette.mode === 'dark';
@@ -297,7 +297,7 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
                 ? '1px solid #1f2937'
                 : '1px solid rgba(0, 0, 0, 0.08)',
             boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-            maxHeight: isMobile ? '100vh' : '90vh',
+            maxHeight: isMobile ? '100dvh' : '90dvh',
             // Subtle top-edge glow
             '&::after': isMobile
               ? {}

@@ -1163,6 +1163,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
 
   const handlePickerSelect = useCallback(
     (skill: SkillData) => {
+      navigator.vibrate?.(10);
       handleSelect(picker.barIndex, picker.slotIndex, skill.id);
       setPicker((prev) => ({ ...prev, open: false }));
     },

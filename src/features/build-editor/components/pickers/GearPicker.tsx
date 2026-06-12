@@ -416,6 +416,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     (itemId: number) => {
       const validation = validateItemForSlot(itemId, targetSlot);
       if (!validation.valid) return;
+      navigator.vibrate?.(10);
       onSelect(itemId);
       onClose();
     },
