@@ -45,8 +45,8 @@ const OUT_PATH = path.join(
 );
 
 // ── Verified overrides for the 4 LibSets two-weight artifacts ────────────────
-// Each was confirmed single-weight by authoritative web sources (eso-hub,
-// hacktheminotaur, arzyelarmory). See project memory for the verification run.
+// Each was cross-checked as single-weight against multiple independent set
+// references during development. See project memory for the verification run.
 const TWO_WEIGHT_OVERRIDES = {
   643: 'light', // Blessing of High Isle — overland, light only (LibSets said L+H)
   34: 'medium', // Night Mother's Embrace — medium now; heavy is a legacy TG-era vestige
