@@ -109,6 +109,7 @@ const InlineChip: React.FC<InlineChipProps> = ({
         gap: 0.35,
         px: 0.6,
         py: 0.2,
+        minHeight: 32,
         borderRadius: 1,
         fontSize: 10,
         fontWeight: isSet ? 600 : 400,

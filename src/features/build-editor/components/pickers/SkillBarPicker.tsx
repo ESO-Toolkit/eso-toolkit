@@ -820,6 +820,10 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
   const skill = abilityId ? getSkillById(abilityId) : null;
   const size = isUlt ? ULT_SIZE : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
+  const [iconFailed, setIconFailed] = React.useState(false);
+  React.useEffect(() => {
+    setIconFailed(false);
+  }, [abilityId]);
 
   const accentA = (a: number): string =>
     isUlt ? `rgba(255,179,0,${a})` : `rgba(var(--be-accent-rgb, 56,189,248),${a})`;
@@ -905,14 +909,12 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             },
           }}
         >
-          {skill?.icon ? (
+          {skill?.icon && !iconFailed ? (
             <img
               src={resolveIconUrl(skill.icon)}
               alt={skill.name}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+              onError={() => setIconFailed(true)}
             />
           ) : (
             <Box
@@ -929,12 +931,21 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                   fontWeight: 800,
                   fontFamily: 'Space Grotesk, Inter, system-ui',
                   letterSpacing: 0.4,
-                  color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                  color:
+                    skill && iconFailed
+                      ? isDark
+                        ? 'rgba(255,255,255,0.55)'
+                        : 'rgba(0,0,0,0.45)'
+                      : isDark
+                        ? 'rgba(255,255,255,0.16)'
+                        : 'rgba(0,0,0,0.13)',
                   lineHeight: 1,
                   userSelect: 'none',
                 }}
               >
-                {label}
+                {skill && iconFailed
+                  ? skill.name.slice(0, 2).toUpperCase()
+                  : label}
               </Typography>
             </Box>
           )}

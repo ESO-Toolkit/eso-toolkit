@@ -224,6 +224,7 @@ const Body = React.forwardRef<HTMLDivElement, BodyProps>(function Body(
       sx={{
         maxHeight,
         overflowY: 'auto',
+        overscrollBehavior: 'contain',
         px: 1,
         pb: 1.5,
         // Subtle scroll styling

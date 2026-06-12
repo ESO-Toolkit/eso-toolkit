@@ -21,6 +21,7 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -50,7 +51,7 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useMediaQuery,
+
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -175,7 +176,6 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
               py: 0.85,
               borderRadius: '99px',
               cursor: isDragging ? 'grabbing' : 'grab',
-              touchAction: 'none',
               background: active
                 ? isDark
                   ? 'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.16) 0%, rgba(var(--be-accent-rgb, 56, 189, 248), 0.06) 100%)'
@@ -464,7 +464,6 @@ export const SetupTabBar: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const prefersReduced = useReducedMotion();
 
   // Narrow: setups array is stable across unrelated build edits (name,
@@ -477,6 +476,9 @@ export const SetupTabBar: React.FC = () => {
   // ── Drag-and-drop ──────────────────────────────────────────────────────────
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    // Hold 250ms + move 8px to drag on touch — restores page scrolling when
+    // a swipe starts on a tab without triggering the drag.
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -571,7 +573,6 @@ export const SetupTabBar: React.FC = () => {
           overflowX: 'auto',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
-          pb: isMobile ? 8 : 1.25,
           position: 'relative',
           // Subtle accent gradient bleed from left
           '&::before': {

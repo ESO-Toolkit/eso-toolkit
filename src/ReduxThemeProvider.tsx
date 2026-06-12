@@ -695,58 +695,63 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       />
       <GlobalStyles
         styles={{
-          // Global scrollbar styles with highest specificity
-          '*': {
-            '&::-webkit-scrollbar': {
-              width: '12px !important',
-              height: '12px !important',
+          // Scope custom scrollbars to pointer:fine (mouse/trackpad) devices only.
+          // Touch/mobile UAs use system overlay scrollbars — the 12px custom style
+          // adds visual noise on Android WebView and wastes layout space.
+          '@media (pointer: fine)': {
+            // Global scrollbar styles with highest specificity
+            '*': {
+              '&::-webkit-scrollbar': {
+                width: '12px !important',
+                height: '12px !important',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: `${darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)'} !important`,
+                borderRadius: '6px !important',
+                margin: '2px !important',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: `${darkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.25)'} !important`,
+                borderRadius: '6px !important',
+                border: `${darkMode ? '2px solid rgba(15, 23, 42, 0.5)' : '2px solid rgba(188, 217, 255, 0.2)'} !important`,
+                backgroundClip: 'padding-box !important',
+                transition: 'background-color 0.2s ease, border-color 0.2s ease !important',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                background: `${darkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(15, 23, 42, 0.4)'} !important`,
+              },
+              '&::-webkit-scrollbar-thumb:active': {
+                background: `${darkMode ? 'rgba(56, 189, 248, 0.7)' : 'rgba(15, 23, 42, 0.55)'} !important`,
+              },
+              '&::-webkit-scrollbar-corner': {
+                background: `${darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)'} !important`,
+              },
+              scrollbarWidth: 'thin !important',
+              scrollbarColor: `${
+                darkMode
+                  ? 'rgba(56, 189, 248, 0.3) rgba(15, 23, 42, 0.5)'
+                  : 'rgba(15, 23, 42, 0.25) rgba(188, 217, 255, 0.2)'
+              } !important`,
             },
-            '&::-webkit-scrollbar-track': {
-              background: `${darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)'} !important`,
-              borderRadius: '6px !important',
-              margin: '2px !important',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: `${darkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.25)'} !important`,
-              borderRadius: '6px !important',
-              border: `${darkMode ? '2px solid rgba(15, 23, 42, 0.5)' : '2px solid rgba(188, 217, 255, 0.2)'} !important`,
-              backgroundClip: 'padding-box !important',
-              transition: 'background-color 0.2s ease, border-color 0.2s ease !important',
-            },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: `${darkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(15, 23, 42, 0.4)'} !important`,
-            },
-            '&::-webkit-scrollbar-thumb:active': {
-              background: `${darkMode ? 'rgba(56, 189, 248, 0.7)' : 'rgba(15, 23, 42, 0.55)'} !important`,
-            },
-            '&::-webkit-scrollbar-corner': {
-              background: `${darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)'} !important`,
-            },
-            scrollbarWidth: 'thin !important',
-            scrollbarColor: `${
-              darkMode
-                ? 'rgba(56, 189, 248, 0.3) rgba(15, 23, 42, 0.5)'
-                : 'rgba(15, 23, 42, 0.25) rgba(188, 217, 255, 0.2)'
-            } !important`,
-          },
-          // Specific overrides for form elements with smaller scrollbars
-          'textarea, input[type="text"], .MuiOutlinedInput-input': {
-            '&::-webkit-scrollbar': {
-              width: '8px !important',
-              height: '8px !important',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: `${darkMode ? 'rgba(15, 23, 42, 0.3)' : 'rgba(188, 217, 255, 0.15)'} !important`,
-              borderRadius: '4px !important',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: `${darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(15, 23, 42, 0.3)'} !important`,
-              borderRadius: '4px !important',
-              border: `${darkMode ? '1px solid rgba(15, 23, 42, 0.3)' : '1px solid rgba(188, 217, 255, 0.15)'} !important`,
-              backgroundClip: 'padding-box !important',
-            },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: `${darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(15, 23, 42, 0.45)'} !important`,
+            // Specific overrides for form elements with smaller scrollbars
+            'textarea, input[type="text"], .MuiOutlinedInput-input': {
+              '&::-webkit-scrollbar': {
+                width: '8px !important',
+                height: '8px !important',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: `${darkMode ? 'rgba(15, 23, 42, 0.3)' : 'rgba(188, 217, 255, 0.15)'} !important`,
+                borderRadius: '4px !important',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: `${darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(15, 23, 42, 0.3)'} !important`,
+                borderRadius: '4px !important',
+                border: `${darkMode ? '1px solid rgba(15, 23, 42, 0.3)' : '1px solid rgba(188, 217, 255, 0.15)'} !important`,
+                backgroundClip: 'padding-box !important',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                background: `${darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(15, 23, 42, 0.45)'} !important`,
+              },
             },
           },
         }}

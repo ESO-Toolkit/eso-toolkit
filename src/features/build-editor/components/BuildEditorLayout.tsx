@@ -148,10 +148,14 @@ export const BuildEditorLayout: React.FC = () => {
             overflowY: 'auto',
             p: { xs: 1.5, md: 2.5 },
             // Extra bottom padding on mobile so content isn't hidden behind
-            // the fixed bottom nav (56px) + iOS home-indicator safe area.
+            // the fixed bottom nav (64px) + iOS home-indicator safe area.
             pb: isMobile ? 'calc(80px + env(safe-area-inset-bottom))' : 2.5,
           }}
         >
+          {/* Setup tab bar at top on mobile — surfaced above sections so users
+              discover multi-setup support without scrolling ~3 000px down. */}
+          {isMobile && <SetupTabBar />}
+
           <Box
             sx={{
               display: 'grid',
@@ -347,8 +351,8 @@ export const BuildEditorLayout: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Setup tab bar at bottom */}
-      <SetupTabBar />
+      {/* Setup tab bar at bottom on desktop */}
+      {!isMobile && <SetupTabBar />}
 
       {/* Mobile bottom nav */}
       {isMobile && <BuildNavRail progress={progress} />}
