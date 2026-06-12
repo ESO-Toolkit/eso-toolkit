@@ -345,17 +345,19 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   // so the set row expands to its types. Apparel/jewelry collapse to a single
   // item, so the row itself is directly selectable. See getCanonicalItemsBySlot.
   //
-  // A weapon group is only trustworthy once its types are resolvable. That needs
-  // icon data loaded AND every weapon in the group resolving to a SPECIFIC name —
-  // not the generic "<Set> Weapon" fallback. Two bad states make a row pending:
+  // A weapon's type is trustworthy only once icon data is loaded AND that item
+  // resolves to a SPECIFIC type (not the generic "<Set> Weapon"/"Staff" fallback).
+  // The whole set row is rendered inert (pending) only when NOTHING is usable:
   //   1. icon data still loading (global !iconReady), or
-  //   2. data loaded but stale/missing for some items, so names stay generic.
-  // In either case selecting a row could equip the wrong/arbitrary weapon, so the
-  // row is rendered inert until every displayed type resolves.
+  //   2. data loaded but EVERY weapon in the set is unresolvable (stale/missing).
+  // A MIXED group (some resolved, some not) stays expandable — each unresolved
+  // variant row disables itself, but the resolved siblings remain selectable.
   const isWeaponSlot = WEAPON_SLOTS_SET.has(targetSlot);
-  const weaponNamesUnresolved =
-    isWeaponSlot && group.items.some((item) => !isWeaponTypeResolved(item.itemId, targetSlot));
-  const weaponTypesPending = isWeaponSlot && (!iconReady || weaponNamesUnresolved);
+  const resolvedFlags = isWeaponSlot
+    ? group.items.map((item) => isWeaponTypeResolved(item.itemId, targetSlot))
+    : [];
+  const allWeaponsUnresolved = isWeaponSlot && resolvedFlags.every((r) => !r);
+  const weaponTypesPending = isWeaponSlot && (!iconReady || allWeaponsUnresolved);
   const isMultiVariant = group.items.length > 1;
   const isSelected = currentSetName === group.setName;
   const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
@@ -525,13 +527,24 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
       {isMultiVariant && (
         <Collapse in={showVariants} unmountOnExit>
           <Stack spacing={0} sx={{ pl: 2, pr: 0.5, pb: 0.5, pt: 0.25 }}>
-            {group.items.map((item) => {
+            {group.items.map((item, idx) => {
               const variantSelected = currentItemId != null && item.itemId === currentItemId;
+              // A single unresolved-type variant in a MIXED group: keep it inert
+              // (its name is ambiguous) without blocking its resolved siblings.
+              const variantUnresolved = !resolvedFlags[idx];
               return (
                 <ButtonBase
                   key={item.itemId}
-                  onClick={() => onSelect(item.itemId)}
-                  aria-label={`Equip ${deriveItemNameForSlot(item.itemId, targetSlot)}`}
+                  disabled={variantUnresolved}
+                  onClick={() => {
+                    if (!variantUnresolved) onSelect(item.itemId);
+                  }}
+                  aria-label={
+                    variantUnresolved
+                      ? `${group.setName} weapon — type loading`
+                      : `Equip ${deriveItemNameForSlot(item.itemId, targetSlot)}`
+                  }
+                  aria-busy={variantUnresolved || undefined}
                   aria-current={variantSelected || undefined}
                   sx={{
                     display: 'flex',
@@ -542,6 +555,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                     borderRadius: 1.5,
                     width: '100%',
                     textAlign: 'left',
+                    opacity: variantUnresolved ? 0.55 : 1,
                     background: variantSelected
                       ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
                       : 'transparent',
@@ -559,6 +573,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                     sx={{
                       fontSize: 11.5,
                       fontWeight: variantSelected ? 700 : 500,
+                      fontStyle: variantUnresolved ? 'italic' : 'normal',
                       fontFamily: 'Space Grotesk, Inter, system-ui',
                       color: variantSelected
                         ? 'var(--be-accent, #38bdf8)'
@@ -567,7 +582,9 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
                           : 'rgba(0,0,0,0.65)',
                     }}
                   >
-                    {deriveItemNameForSlot(item.itemId, targetSlot)}
+                    {variantUnresolved
+                      ? 'Loading weapon type…'
+                      : deriveItemNameForSlot(item.itemId, targetSlot)}
                   </Typography>
                 </ButtonBase>
               );
@@ -699,9 +716,19 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
         if (isWeaponTargetSlot && !isWeaponTypeResolved(item.itemId, targetSlot)) {
           return false;
         }
-        return (
-          item.info.name.toLowerCase().includes(q) || item.info.setName.toLowerCase().includes(q)
-        );
+        if (
+          item.info.name.toLowerCase().includes(q) ||
+          item.info.setName.toLowerCase().includes(q)
+        ) {
+          return true;
+        }
+        // Weapons display their derived type name (Bow, Inferno Staff, …), not the
+        // generic info.name — so match that too, or queries like "bow"/"inferno"
+        // find nothing even though the row exists in browse.
+        if (isWeaponTargetSlot) {
+          return deriveItemNameForSlot(item.itemId, targetSlot).toLowerCase().includes(q);
+        }
+        return false;
       })
       .slice(0, MAX_SEARCH_RESULTS);
   }, [debouncedSearch, isSearching, canonicalItems, isWeaponTargetSlot, targetSlot]);
