@@ -1330,12 +1330,18 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       )}
 
       {/* Marker edit-mode hint — touch gestures are invisible, so name them while the mode is on.
-          Top-center, clear of the Close (top-right) and the boss HUD; non-interactive. */}
+          Anchored bottom-center, just above the transport dock: the top band is taken by the
+          full-width fight-name bar (which would paint over a top-center chip) and the boss HUD
+          (top-right), so the clear horizontal strip is here, above the controls and below the
+          arena. Non-interactive. */}
       {mobileImmersive && markersEditMode && (
         <Box
           sx={{
             position: 'absolute',
-            top: 12,
+            // Plain px (no env()) — the immersive overlay container already pads the safe area,
+            // matching the Tools button (bottom: 96) in MobileReplayControls. 150 clears the
+            // transport dock + that button's band.
+            bottom: 150,
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 2,
@@ -1345,7 +1351,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             borderRadius: '999px',
             backgroundColor: 'rgba(13,20,48,0.85)',
             border: '1px solid rgba(148,210,255,0.35)',
-            maxWidth: 'calc(100% - 140px)',
+            maxWidth: 'calc(100% - 32px)',
           }}
         >
           <Typography
