@@ -4,7 +4,7 @@
 
 import { getCanonicalItemsBySlot, getItemsBySlot } from '../../data/itemIdMap';
 import type { GearConfig, GearPiece } from '../../types/loadout.types';
-import { deriveItemNameForSlot } from '../itemIconResolver';
+import { deriveItemNameForSlot, preloadIconData } from '../itemIconResolver';
 import {
   hasKnownSlot,
   getItemSlotInfo,
@@ -17,6 +17,14 @@ import {
 
 const UNKNOWN_SLOT_ITEM_ID = 40259; // Shalidor's Curse gear piece lacking slot data
 const SECOND_UNKNOWN_SLOT_ITEM_ID = 43803; // Death's Wind gear piece without slot info
+
+// The weapon-type-aware canonical-key tests below rely on deriveItemNameForSlot,
+// which needs the lazily-imported icon data. Await it so weapon names resolve to
+// real types (Bow / staves) instead of the generic fallback — otherwise those
+// assertions are order-dependent on whether the JSON import has resolved.
+beforeAll(async () => {
+  await preloadIconData();
+});
 
 describe('itemSlotValidator', () => {
   describe('hasKnownSlot', () => {

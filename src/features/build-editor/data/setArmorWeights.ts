@@ -84,3 +84,21 @@ export const ARMOR_WEIGHT_TO_ESO_TYPE: Readonly<Record<ArmorWeight, number>> = {
   medium: 2,
   heavy: 3,
 };
+
+/**
+ * Inverse of ARMOR_WEIGHT_TO_ESO_TYPE — maps an ESO armor-type code back to an
+ * armor weight, or null for 0/unknown (no armor weight). Used by CSPS import so
+ * a serialized weight round-trips back into GearPiece.weight.
+ */
+export function esoTypeToArmorWeight(type: number | null | undefined): ArmorWeight | null {
+  switch (type) {
+    case 1:
+      return 'light';
+    case 2:
+      return 'medium';
+    case 3:
+      return 'heavy';
+    default:
+      return null;
+  }
+}

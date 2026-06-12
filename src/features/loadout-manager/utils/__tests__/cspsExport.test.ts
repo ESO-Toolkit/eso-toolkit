@@ -3,6 +3,10 @@
  */
 
 import { convertBuildToCSPS, exportBuildToCSPSLua } from '../../../build-editor/utils/cspsExport';
+import {
+  convertCSPSCharacterToBuild,
+  parseCSPSInput,
+} from '../../../build-editor/utils/cspsImport';
 import type { Build, BuildSetup } from '../../../build-editor/types/build.types';
 import { parseLuaAssignments } from '../wizardsWardrobeSavedVariables';
 import {
@@ -190,6 +194,18 @@ describe('cspsExport', () => {
       const charData = csps.Default!['@ESOToolkit'].$AccountWide.charData!['1'];
       const gear = parseGearComp(decompressComp2(charData.comp2)!.gearComp);
       expect(gear[2]?.type).toBe(2); // medium
+    });
+
+    it('round-trips a free set medium weight through export → import', () => {
+      // A crafted/all-weight set chest at MEDIUM must survive a full round trip,
+      // not silently fall back to heavy. 19 = Hunding's Rage (craftable, free).
+      const build = makeBuild({
+        setups: [makeSetup({ gear: { 2: { id: 19, weight: 'medium' } } })],
+      });
+      const lua = exportBuildToCSPSLua(build);
+      const parsed = parseCSPSInput(lua);
+      const reimported = convertCSPSCharacterToBuild(parsed.characters[0]);
+      expect(reimported.setups[0].gear[2]?.weight).toBe('medium');
     });
 
     it('exports passives to werte.pass', () => {
