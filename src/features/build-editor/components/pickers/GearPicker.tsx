@@ -347,12 +347,18 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   // so the set row expands to its types. Apparel/jewelry collapse to a single
   // item, so the row itself is directly selectable. See getCanonicalItemsBySlot.
   //
-  // A weapon group is only trustworthy once icon data is loaded — before that,
-  // deriveItemNameForSlot can't tell the types apart and they collapse to one
-  // row. Selecting that collapsed row would silently equip an arbitrary weapon
-  // (the lowest-ID axe), so weapon rows are NOT directly selectable until ready.
+  // A weapon group is only trustworthy once its types are resolvable. That needs
+  // icon data loaded AND every weapon in the group resolving to a SPECIFIC name —
+  // not the generic "<Set> Weapon" fallback. Two bad states make a row pending:
+  //   1. icon data still loading (global !iconReady), or
+  //   2. data loaded but stale/missing for some items, so names stay generic.
+  // In either case selecting a row could equip the wrong/arbitrary weapon, so the
+  // row is rendered inert until every displayed type resolves.
   const isWeaponSlot = WEAPON_SLOTS_SET.has(targetSlot);
-  const weaponTypesPending = isWeaponSlot && !iconReady;
+  const weaponNamesUnresolved =
+    isWeaponSlot &&
+    group.items.some((item) => isGenericWeaponName(deriveItemNameForSlot(item.itemId, targetSlot)));
+  const weaponTypesPending = isWeaponSlot && (!iconReady || weaponNamesUnresolved);
   const isMultiVariant = group.items.length > 1;
   const isSelected = currentSetName === group.setName;
   const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
@@ -682,16 +688,29 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     [targetSlot, iconReady],
   );
 
+  const isWeaponTargetSlot = WEAPON_SLOTS_SET.has(targetSlot);
+
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
     const q = debouncedSearch.toLowerCase().trim();
     return canonicalItems
-      .filter(
-        (item) =>
-          item.info.name.toLowerCase().includes(q) || item.info.setName.toLowerCase().includes(q),
-      )
+      .filter((item) => {
+        // Drop weapon items whose type still resolves to a generic name (stale/
+        // missing icon data): they'd appear as indistinguishable "<Set> Weapon"
+        // rows and could be equipped as the wrong variant. The full pre-load
+        // suppression is handled separately via weaponSlotPending.
+        if (
+          isWeaponTargetSlot &&
+          isGenericWeaponName(deriveItemNameForSlot(item.itemId, targetSlot))
+        ) {
+          return false;
+        }
+        return (
+          item.info.name.toLowerCase().includes(q) || item.info.setName.toLowerCase().includes(q)
+        );
+      })
       .slice(0, MAX_SEARCH_RESULTS);
-  }, [debouncedSearch, isSearching, canonicalItems]);
+  }, [debouncedSearch, isSearching, canonicalItems, isWeaponTargetSlot, targetSlot]);
 
   const handleSelect = useCallback(
     (itemId: number) => {
