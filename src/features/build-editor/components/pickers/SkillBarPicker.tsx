@@ -943,9 +943,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                   userSelect: 'none',
                 }}
               >
-                {skill && iconFailed
-                  ? skill.name.slice(0, 2).toUpperCase()
-                  : label}
+                {skill && iconFailed ? skill.name.slice(0, 2).toUpperCase() : label}
               </Typography>
             </Box>
           )}
