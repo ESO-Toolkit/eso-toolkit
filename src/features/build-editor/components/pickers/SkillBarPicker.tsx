@@ -12,21 +12,15 @@ import {
   ExpandMore as ExpandIcon,
   FilterList as FilterListIcon,
   InfoOutlined as InfoIcon,
-  Search as SearchIcon,
 } from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
   Collapse,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   IconButton,
-  InputAdornment,
   ListSubheader,
   Popover,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -44,6 +38,7 @@ import {
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import { CLASS_SKILL_LINES, ESO_CLASSES } from '../../data/esoStaticData';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
+import { PickerDialog } from '../primitives/PickerDialog';
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
@@ -598,111 +593,38 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
   }, [onClose]);
 
   return (
-    <Dialog
+    <PickerDialog
       open={open}
       onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-      className="glass-dialog"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: '20px',
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-            backgroundColor: 'transparent',
-            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-            maxHeight: '90vh',
-          },
-        },
-      }}
+      title={isUltimate ? 'Assign Ultimate' : `Assign Skill \u00b7 Slot ${slotLabel}`}
     >
-      <DialogTitle
-        sx={{
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '1rem',
-          pb: 1,
-          background: isDark
-            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        {isUltimate ? 'Assign Ultimate' : `Assign Skill \u00b7 Slot ${slotLabel}`}
-      </DialogTitle>
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder="Search skills..."
+        resultCount={isSearching ? searchResults.length : undefined}
+      />
 
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search skills..."
-            size="small"
-            fullWidth
-            autoFocus
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
-
-        {isSearching ? (
-          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  textAlign: 'center',
-                  py: 3,
-                }}
-              >
-                No {isUltimate ? 'ultimates' : 'skills'} found
-              </Typography>
-            ) : (
-              <Stack spacing={0.25}>
-                {searchResults.map((skill) => (
-                  <SkillOptionRow
-                    key={skill.id}
-                    skill={skill}
-                    onSelect={handleSelect}
-                    isMorph={isMorphSkill(skill)}
-                    isCurrent={skill.id === currentAbilityId}
-                  />
-                ))}
-              </Stack>
-            )}
-          </Box>
-        ) : (
-          <>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 2,
-                pb: 1.5,
-                overflowX: 'auto',
-              }}
-            >
+      {isSearching ? (
+        <PickerDialog.Body
+          empty={searchResults.length === 0}
+          emptyMessage={`No ${isUltimate ? 'ultimates' : 'skills'} found`}
+        >
+          <Stack spacing={0.25}>
+            {searchResults.map((skill) => (
+              <SkillOptionRow
+                key={skill.id}
+                skill={skill}
+                onSelect={handleSelect}
+                isMorph={isMorphSkill(skill)}
+                isCurrent={skill.id === currentAbilityId}
+              />
+            ))}
+          </Stack>
+        </PickerDialog.Body>
+      ) : (
+        <>
+          <PickerDialog.Tabs>
               {PICKER_TABS.map((tab, idx) => (
                 <ButtonBase
                   key={tab.category}
@@ -811,70 +733,69 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
                   </Tooltip>
                 </>
               )}
-            </Box>
+          </PickerDialog.Tabs>
 
-            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-              {activeTab === 0
-                ? filteredClassLinesByClass.map(({ cls, lines }) => {
-                    const clsColor = CLASS_COLOR_MAP[cls.id].accent;
-                    return (
-                      <Box key={cls.id}>
-                        <ListSubheader
-                          disableSticky
+          <PickerDialog.Body>
+            {activeTab === 0
+              ? filteredClassLinesByClass.map(({ cls, lines }) => {
+                  const clsColor = CLASS_COLOR_MAP[cls.id].accent;
+                  return (
+                    <Box key={cls.id}>
+                      <ListSubheader
+                        disableSticky
+                        sx={{
+                          fontSize: 9,
+                          fontWeight: 700,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          letterSpacing: 1,
+                          textTransform: 'uppercase',
+                          color: clsColor,
+                          lineHeight: '28px',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1,
+                        }}
+                      >
+                        <Box
                           sx={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            letterSpacing: 1,
-                            textTransform: 'uppercase',
-                            color: clsColor,
-                            lineHeight: '28px',
-                            background: 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            px: 1,
+                            width: 7,
+                            height: 7,
+                            borderRadius: '50%',
+                            background: clsColor,
+                            boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
+                            flexShrink: 0,
                           }}
-                        >
-                          <Box
-                            sx={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: '50%',
-                              background: clsColor,
-                              boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
-                              flexShrink: 0,
-                            }}
-                          />
-                          {cls.label}
-                        </ListSubheader>
-                        {lines.map((line) => (
-                          <SkillLineSection
-                            key={line.name}
-                            lineName={line.name}
-                            isUltimate={isUltimate}
-                            onSelect={handleSelect}
-                            defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
-                            currentAbilityId={currentAbilityId}
-                          />
-                        ))}
-                      </Box>
-                    );
-                  })
-                : linesByTab[activeTab].map((line) => (
-                    <SkillLineSection
-                      key={line.name}
-                      lineName={line.name}
-                      isUltimate={isUltimate}
-                      onSelect={handleSelect}
-                      currentAbilityId={currentAbilityId}
-                    />
-                  ))}
-            </Box>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                        />
+                        {cls.label}
+                      </ListSubheader>
+                      {lines.map((line) => (
+                        <SkillLineSection
+                          key={line.name}
+                          lineName={line.name}
+                          isUltimate={isUltimate}
+                          onSelect={handleSelect}
+                          defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
+                          currentAbilityId={currentAbilityId}
+                        />
+                      ))}
+                    </Box>
+                  );
+                })
+              : linesByTab[activeTab].map((line) => (
+                  <SkillLineSection
+                    key={line.name}
+                    lineName={line.name}
+                    isUltimate={isUltimate}
+                    onSelect={handleSelect}
+                    currentAbilityId={currentAbilityId}
+                  />
+                ))}
+          </PickerDialog.Body>
+        </>
+      )}
+    </PickerDialog>
   );
 };
 

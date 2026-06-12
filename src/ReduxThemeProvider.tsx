@@ -9,6 +9,13 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Use persistent dark mode hook that handles localStorage persistence
   const { darkMode } = usePersistentDarkMode();
 
+  // Mirror color-scheme onto <html data-color-scheme="dark|light"> so static
+  // CSS rules (e.g. the data-perf='low' glass-dialog fallback in index.css)
+  // can distinguish dark from light without MUI context.
+  React.useEffect(() => {
+    document.documentElement.dataset.colorScheme = darkMode ? 'dark' : 'light';
+  }, [darkMode]);
+
   // Design tokens - Dynamic light/dark support
   const tokens = React.useMemo(() => {
     if (darkMode) {

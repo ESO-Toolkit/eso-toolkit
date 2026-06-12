@@ -16,27 +16,8 @@
  *   currentItemId — currently equipped item (nullable)
  */
 
-import {
-  Close as CloseIcon,
-  ExpandMore as ExpandIcon,
-  Search as SearchIcon,
-  Shield as ShieldIcon,
-} from '@mui/icons-material';
-import {
-  Box,
-  ButtonBase,
-  Chip,
-  Collapse,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  InputAdornment,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { ExpandMore as ExpandIcon, Shield as ShieldIcon } from '@mui/icons-material';
+import { Box, ButtonBase, Chip, Collapse, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -57,6 +38,7 @@ import {
   type GearSetType,
 } from '../../data/gearSetRegistry';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { PickerDialog } from '../primitives/PickerDialog';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -447,76 +429,21 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   }, [currentItemId]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      className="glass-dialog"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: '20px',
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-            backgroundColor: 'transparent',
-            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-            maxHeight: '90vh',
-          },
-        },
-      }}
-    >
-      {/* ── Header ───────────────────────────────────────────── */}
-      <DialogTitle
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          pb: 1,
-        }}
-      >
-        <Typography
+    <PickerDialog open={open} onClose={onClose} title={`Select ${slotName} Gear`}>
+      {/* ── Currently equipped ─────────────────────────────── */}
+      {currentInfo && (
+        <Box
           sx={{
-            fontWeight: 700,
-            fontFamily: 'Space Grotesk, Inter, system-ui',
-            fontSize: '1rem',
-            background: isDark
-              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
+            mx: 2,
+            mb: 1.5,
+            p: 1,
+            borderRadius: 2,
+            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
           }}
         >
-          Select {slotName} Gear
-        </Typography>
-        <IconButton
-          size="small"
-          onClick={onClose}
-          aria-label="Close"
-          sx={{ color: 'text.disabled' }}
-        >
-          <CloseIcon sx={{ fontSize: 18 }} />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 0 }}>
-        {/* ── Currently equipped ─────────────────────────────── */}
-        {currentInfo && (
-          <Box
-            sx={{
-              mx: 2,
-              mb: 1.5,
-              p: 1,
-              borderRadius: 2,
-              background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
-            }}
-          >
-            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-              <ShieldIcon
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+            <ShieldIcon
                 sx={{
                   fontSize: 16,
                   color: 'var(--be-accent, #38bdf8)',
@@ -566,233 +493,171 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
           </Box>
         )}
 
-        {/* ── Search bar ────────────────────────────────────── */}
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${slotName.toLowerCase()} gear by name or set...`}
-            size="small"
-            fullWidth
-            autoFocus
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
+      {/* ── Search bar ────────────────────────────────────── */}
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder={`Search ${slotName.toLowerCase()} gear by name or set...`}
+        resultCount={isSearching ? searchResults.length : undefined}
+      />
 
-        {isSearching ? (
-          /* ── Search results ───────────────────────────────── */
-          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  textAlign: 'center',
-                  py: 3,
-                }}
-              >
-                No gear found for &ldquo;{search}&rdquo;
-              </Typography>
-            ) : (
-              <>
-                <Typography
+      {isSearching ? (
+        /* ── Search results ───────────────────────────────── */
+        <PickerDialog.Body
+          empty={searchResults.length === 0}
+          emptyMessage={`No gear found for "${search}"`}
+        >
+          <Stack spacing={0.5}>
+            {searchResults.map((item) => {
+              const isSelected = item.itemId === currentItemId;
+              const setType = getSetType(item.info.setName);
+              const catColor = SET_TYPE_COLORS[setType];
+              return (
+                <ButtonBase
+                  key={item.itemId}
+                  onClick={() => handleSelect(item.itemId)}
                   sx={{
-                    fontSize: 10,
-                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                    fontFamily: 'Space Grotesk',
-                    mb: 0.75,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    py: 0.75,
+                    px: 1,
+                    borderRadius: 1.5,
+                    width: '100%',
+                    textAlign: 'left',
+                    background: isSelected
+                      ? isDark
+                        ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                        : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
+                      : 'transparent',
+                    '&:hover': {
+                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    },
                   }}
                 >
-                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
-                </Typography>
-                <Stack spacing={0.5}>
-                  {searchResults.map((item) => {
-                    const isSelected = item.itemId === currentItemId;
-                    const setType = getSetType(item.info.setName);
-                    const catColor = SET_TYPE_COLORS[setType];
-                    return (
-                      <ButtonBase
-                        key={item.itemId}
-                        onClick={() => handleSelect(item.itemId)}
+                  <ShieldIcon
+                    sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }}
+                  />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                      <Typography
+                        noWrap
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          py: 0.75,
-                          px: 1,
-                          borderRadius: 1.5,
-                          width: '100%',
-                          textAlign: 'left',
-                          background: isSelected
-                            ? isDark
-                              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
-                            : 'transparent',
-                          '&:hover': {
-                            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                          },
+                          fontSize: 12,
+                          fontWeight: 600,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          lineHeight: 1.3,
                         }}
                       >
-                        <ShieldIcon
-                          sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }}
-                        />
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                            <Typography
-                              noWrap
-                              sx={{
-                                fontSize: 12,
-                                fontWeight: 600,
-                                fontFamily: 'Space Grotesk, Inter, system-ui',
-                                lineHeight: 1.3,
-                              }}
-                            >
-                              {deriveItemNameForSlot(item.itemId, targetSlot)}
-                            </Typography>
-                            <Chip
-                              label={item.info.setName}
-                              size="small"
-                              sx={{
-                                height: 14,
-                                fontSize: '0.5rem',
-                                fontWeight: 700,
-                                fontFamily: 'Space Grotesk',
-                                background: `${catColor}25`,
-                                color: catColor,
-                                border: 'none',
-                              }}
-                            />
-                          </Stack>
-                          <Typography
-                            sx={{
-                              fontSize: 10,
-                              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                              lineHeight: 1.2,
-                            }}
-                          >
-                            {setType} · ID: {item.itemId}
-                          </Typography>
-                        </Box>
-                      </ButtonBase>
-                    );
-                  })}
-                </Stack>
-              </>
-            )}
-          </Box>
-        ) : (
-          <>
-            {/* ── Set type tabs ─────────────────────────────── */}
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 0.5,
-                px: 2,
-                pb: 1.5,
-                flexWrap: 'wrap',
-                rowGap: 0.5,
-              }}
-            >
-              {availableTabs.map((tab) => {
-                const isActive = activeTab === tab;
-                const label = tab === 'all' ? 'All' : tab;
-                const count =
-                  tab === 'all' ? groups.length : (byType.get(tab as GearSetType)?.length ?? 0);
-                const color = tab === 'all' ? undefined : SET_TYPE_COLORS[tab as GearSetType];
-                return (
-                  <Tooltip
-                    key={tab}
-                    title={`${count} set${count !== 1 ? 's' : ''}`}
-                    placement="top"
-                  >
-                    <ButtonBase
-                      onClick={() => setActiveTab(tab)}
+                        {deriveItemNameForSlot(item.itemId, targetSlot)}
+                      </Typography>
+                      <Chip
+                        label={item.info.setName}
+                        size="small"
+                        sx={{
+                          height: 14,
+                          fontSize: '0.5rem',
+                          fontWeight: 700,
+                          fontFamily: 'Space Grotesk',
+                          background: `${catColor}25`,
+                          color: catColor,
+                          border: 'none',
+                        }}
+                      />
+                    </Stack>
+                    <Typography
                       sx={{
-                        px: 1,
-                        py: 0.4,
-                        borderRadius: 1.5,
                         fontSize: 10,
-                        fontWeight: isActive ? 700 : 500,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        letterSpacing: 0.3,
-                        flexShrink: 0,
-                        color: isActive
-                          ? (color ?? (isDark ? '#fff' : '#0f172a'))
-                          : isDark
-                            ? 'rgba(255,255,255,0.45)'
-                            : 'rgba(0,0,0,0.45)',
-                        background: isActive
-                          ? color
-                            ? `${color}18`
-                            : isDark
-                              ? 'rgba(255,255,255,0.08)'
-                              : 'rgba(0,0,0,0.06)'
-                          : 'transparent',
-                        border: `1px solid ${
-                          isActive
-                            ? color
-                              ? `${color}35`
-                              : isDark
-                                ? 'rgba(255,255,255,0.12)'
-                                : 'rgba(0,0,0,0.10)'
-                            : 'transparent'
-                        }`,
-                        transition: 'all 0.15s',
-                        '&:hover': {
-                          background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                        },
+                        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                        lineHeight: 1.2,
                       }}
                     >
-                      {label}
-                    </ButtonBase>
-                  </Tooltip>
-                );
-              })}
-            </Box>
-
-            {/* ── Browse mode: set groups ──────────────────── */}
-            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-              {visibleGroups.length === 0 ? (
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                    textAlign: 'center',
-                    py: 3,
-                  }}
+                      {setType} · ID: {item.itemId}
+                    </Typography>
+                  </Box>
+                </ButtonBase>
+              );
+            })}
+          </Stack>
+        </PickerDialog.Body>
+      ) : (
+        <>
+          {/* ── Set type tabs ─────────────────────────────── */}
+          <PickerDialog.Tabs>
+            {availableTabs.map((tab) => {
+              const isActive = activeTab === tab;
+              const label = tab === 'all' ? 'All' : tab;
+              const count =
+                tab === 'all' ? groups.length : (byType.get(tab as GearSetType)?.length ?? 0);
+              const color = tab === 'all' ? undefined : SET_TYPE_COLORS[tab as GearSetType];
+              return (
+                <Tooltip
+                  key={tab}
+                  title={`${count} set${count !== 1 ? 's' : ''}`}
+                  placement="top"
                 >
-                  No sets available for this slot
-                </Typography>
-              ) : (
-                visibleGroups.map((group) => (
-                  <SetCategorySection
-                    key={group.setName}
-                    group={group}
-                    currentItemId={currentItemId}
-                    onSelect={handleSelect}
-                    targetSlot={targetSlot}
-                  />
-                ))
-              )}
-            </Box>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                  <ButtonBase
+                    onClick={() => setActiveTab(tab)}
+                    sx={{
+                      px: 1,
+                      py: 0.4,
+                      borderRadius: 1.5,
+                      fontSize: 10,
+                      fontWeight: isActive ? 700 : 500,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 0.3,
+                      flexShrink: 0,
+                      color: isActive
+                        ? (color ?? (isDark ? '#fff' : '#0f172a'))
+                        : isDark
+                          ? 'rgba(255,255,255,0.45)'
+                          : 'rgba(0,0,0,0.45)',
+                      background: isActive
+                        ? color
+                          ? `${color}18`
+                          : isDark
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)'
+                        : 'transparent',
+                      border: `1px solid ${
+                        isActive
+                          ? color
+                            ? `${color}35`
+                            : isDark
+                              ? 'rgba(255,255,255,0.12)'
+                              : 'rgba(0,0,0,0.10)'
+                          : 'transparent'
+                      }`,
+                      transition: 'all 0.15s',
+                      '&:hover': {
+                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                  >
+                    {label}
+                  </ButtonBase>
+                </Tooltip>
+              );
+            })}
+          </PickerDialog.Tabs>
+
+          {/* ── Browse mode: set groups ──────────────────── */}
+          <PickerDialog.Body
+            empty={visibleGroups.length === 0}
+            emptyMessage="No sets available for this slot"
+          >
+            {visibleGroups.map((group) => (
+              <SetCategorySection
+                key={group.setName}
+                group={group}
+                currentItemId={currentItemId}
+                onSelect={handleSelect}
+                targetSlot={targetSlot}
+              />
+            ))}
+          </PickerDialog.Body>
+        </>
+      )}
+    </PickerDialog>
   );
 };

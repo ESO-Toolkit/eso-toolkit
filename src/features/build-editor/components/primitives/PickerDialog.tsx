@@ -60,7 +60,12 @@ const Search: React.FC<SearchProps> = ({
   resultCount,
   autoFocus = true,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  // iOS Safari zooms the page when a focused input is <16px. Use ≥16px on
+  // mobile (≤600px) to prevent that, while keeping 13px on desktop where
+  // vertical space is abundant.
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <Box sx={{ px: 2, pb: 1.5 }}>
@@ -118,7 +123,7 @@ const Search: React.FC<SearchProps> = ({
           '& .MuiOutlinedInput-root': {
             background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
             borderRadius: 2,
-            fontSize: 13,
+            fontSize: isMobile ? 16 : 13,
             fontFamily: 'Space Grotesk, Inter, system-ui',
             transition: 'background 0.15s, border-color 0.15s',
             '&.Mui-focused': {

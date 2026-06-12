@@ -136,7 +136,9 @@ export const BuildEditorLayout: React.FC = () => {
             minWidth: 0,
             overflowY: 'auto',
             p: { xs: 1.5, md: 2.5 },
-            pb: isMobile ? 10 : 2.5, // Extra bottom padding for mobile nav bar
+            // Extra bottom padding on mobile so content isn't hidden behind
+            // the fixed bottom nav (56px) + iOS home-indicator safe area.
+            pb: isMobile ? 'calc(80px + env(safe-area-inset-bottom))' : 2.5,
           }}
         >
           <Box
