@@ -1,4 +1,5 @@
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded';
 import { Box, IconButton, Paper, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { visuallyHidden } from '@mui/utils';
@@ -34,6 +35,7 @@ import { lockDocumentSelection } from '../utils/documentSelectionLock';
 import { clampReplayTime } from '../utils/replayTime';
 
 import { Arena3D } from './Arena3D';
+import { ADD_MARKER_AT_CENTER_EVENT } from './Arena3DScene';
 import { MobileReplayDock } from './mobile/MobileReplayDock';
 import { PlaybackControls, PLAYBACK_SPEEDS, type TransportTrial } from './PlaybackControls';
 import { ReplayTransitionOverlay } from './ReplayTransitionOverlay';
@@ -730,6 +732,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   // they don't break Arena3D's React.memo on every render.
   const togglePlayerPathsHUD = useCallback(() => setShowPlayerPathsHUD((prev) => !prev), []);
   const toggleTrails = useCallback(() => setShowPlayerTrails((prev) => !prev), []);
+
+  // Gesture-free marker placement for the mobile Settings sheet: the in-canvas bridge raycasts the
+  // screen center onto the arena floor and opens the icon picker there. Stable so it doesn't break
+  // the dock's React.memo on every playback tick.
+  const handleAddMarkerAtCenter = useCallback(() => {
+    window.dispatchEvent(new CustomEvent(ADD_MARKER_AT_CENTER_EVENT));
+  }, []);
 
   // A mobile bottom sheet is open (Chapters / Settings) — chrome must never auto-hide
   // out from under an open sheet.
@@ -1472,15 +1481,61 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           Replaces the desktop transport + the floating trial chip + the tools button entirely.
           Fades with the tap-to-toggle chrome (opacity only — NO transform, the sheets inside are
           position:fixed and a transformed ancestor would become their containing block). */}
+      {/* Chrome hidden (auto-hide while playing): two persistent affordances so the user is never
+          stranded — the cinema-tap-anywhere reveal isn't discoverable on its own (field-reported as
+          "no way to bring the controls back"). A bottom restore handle (carries the progress
+          hairline) reveals the dock, and a top-right Close always offers a way out of the overlay. */}
       {mobileImmersive && !barVisible && (
-        <Box
-          aria-hidden
-          sx={(t) => ({
-            ...transportHairline(t, duration > 0 ? (currentTime / duration) * 100 : 0),
-            position: 'absolute',
-            zIndex: 6,
-          })}
-        />
+        <>
+          <Box
+            component="button"
+            type="button"
+            aria-label="Show playback controls"
+            onClick={toggleBar}
+            sx={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 7,
+              appearance: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              p: 0,
+              m: 0,
+              height: 'calc(28px + env(safe-area-inset-bottom))',
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              pt: '4px',
+              background: 'linear-gradient(0deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
+            }}
+          >
+            <KeyboardArrowUpRoundedIcon sx={{ fontSize: 20, color: 'rgba(255,255,255,0.82)' }} />
+            <Box
+              aria-hidden
+              sx={(t) => transportHairline(t, duration > 0 ? (currentTime / duration) * 100 : 0)}
+            />
+          </Box>
+          <IconButton
+            aria-label="Close replay"
+            onClick={toggleFullscreen}
+            sx={{
+              position: 'absolute',
+              top: 'calc(env(safe-area-inset-top) + 8px)',
+              right: 12,
+              zIndex: 7,
+              color: '#fff',
+              width: 44,
+              height: 44,
+              backgroundColor: 'rgba(8,11,20,0.86)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              '&:hover': { backgroundColor: 'rgba(8,11,20,0.95)' },
+            }}
+          >
+            <CloseRoundedIcon />
+          </IconButton>
+        </>
       )}
       {mobileImmersive && (
         <Box
@@ -1531,6 +1586,13 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
             onToggleStats={toggleStats}
             following={followingActorId != null}
             onSheetOpenChange={setMobileSheetOpen}
+            markersEditMode={markersEditMode}
+            onToggleMarkersEditMode={onToggleMarkersEditMode}
+            onAddMarkerAtCenter={onAddMarker ? handleAddMarkerAtCenter : undefined}
+            canUndoMarkers={canUndoMarkers}
+            onUndoMarkers={onUndoMarkers}
+            canRedoMarkers={canRedoMarkers}
+            onRedoMarkers={onRedoMarkers}
           />
         </Box>
       )}

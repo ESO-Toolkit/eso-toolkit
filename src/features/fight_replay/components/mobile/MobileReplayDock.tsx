@@ -12,15 +12,19 @@
  * @module features/fight_replay/components/mobile/MobileReplayDock
  */
 
+import AddLocationAltRoundedIcon from '@mui/icons-material/AddLocationAltRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded';
+import EditLocationAltRoundedIcon from '@mui/icons-material/EditLocationAltRounded';
 import GroupRoundedIcon from '@mui/icons-material/GroupRounded';
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import LabelRoundedIcon from '@mui/icons-material/LabelRounded';
 import PlaylistPlayRoundedIcon from '@mui/icons-material/PlaylistPlayRounded';
+import RedoRoundedIcon from '@mui/icons-material/RedoRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import { Box, Switch, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -91,6 +95,19 @@ interface MobileReplayDockProps {
   following: boolean;
   /** Reports whether a sheet is open (the host pauses chrome auto-hide while one is). */
   onSheetOpenChange?: (open: boolean) => void;
+  // Map markers — the touch home for the desktop "Edit Markers" tools, surfaced in the Settings
+  // sheet (the page-toolbar marker controls sit behind the immersive overlay, unreachable on a
+  // phone). Omit onToggleMarkersEditMode to hide the whole Markers section.
+  /** Marker edit mode: long-press to place/edit, drag to move. */
+  markersEditMode?: boolean;
+  onToggleMarkersEditMode?: () => void;
+  /** Gesture-free marker placement: drops a marker at the screen center (opens the icon picker). */
+  onAddMarkerAtCenter?: () => void;
+  /** Undo/redo the last marker change — shown while edit mode is on (no touch Ctrl+Z). */
+  canUndoMarkers?: boolean;
+  onUndoMarkers?: () => void;
+  canRedoMarkers?: boolean;
+  onRedoMarkers?: () => void;
 }
 
 type SheetId = 'chapters' | 'settings' | null;
@@ -214,6 +231,47 @@ const DockButton: React.FC<{
   </Box>
 );
 
+/**
+ * A marker-action button (icon over a tiny label) for the Settings-sheet Markers row — Add / Undo /
+ * Redo. Module-scope for a stable component identity across the dock's per-tick re-renders.
+ */
+const MarkerActionButton: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}> = ({ icon, label, onClick, disabled }) => (
+  <Box
+    component="button"
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    aria-label={label}
+    sx={(theme) => ({
+      appearance: 'none',
+      cursor: disabled ? 'default' : 'pointer',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 0.25,
+      minHeight: 56,
+      borderRadius: 2.5,
+      border: '1px solid',
+      borderColor: 'divider',
+      backgroundColor:
+        theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+      color: disabled ? 'text.disabled' : 'text.primary',
+      opacity: disabled ? 0.5 : 1,
+      transition: 'background-color 120ms ease',
+      '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
+    })}
+  >
+    {icon}
+    <Typography sx={{ fontSize: '0.72rem', fontWeight: 600, lineHeight: 1 }}>{label}</Typography>
+  </Box>
+);
+
 const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   currentTime,
   duration,
@@ -250,6 +308,13 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
   onToggleStats,
   following,
   onSheetOpenChange,
+  markersEditMode = false,
+  onToggleMarkersEditMode,
+  onAddMarkerAtCenter,
+  canUndoMarkers = false,
+  onUndoMarkers,
+  canRedoMarkers = false,
+  onRedoMarkers,
 }) => {
   const [sheet, setSheet] = useState<SheetId>(null);
 
@@ -288,6 +353,20 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
     },
     [onTrialSeek, onChapterSelect, trialNav?.currentFightId],
   );
+
+  // Entering edit mode closes the Settings sheet so the map is reachable for long-press placement
+  // (the sheet covers the arena). Leaving it keeps the sheet so the user can flip other settings.
+  const handleToggleEditMarkers = useCallback(() => {
+    onToggleMarkersEditMode?.();
+    if (!markersEditMode) setSheet(null);
+  }, [onToggleMarkersEditMode, markersEditMode]);
+
+  // "Add here" drops a marker at the screen center; close the sheet first so the icon picker that
+  // opens there isn't hidden behind it.
+  const handleAddMarkerAtCenter = useCallback(() => {
+    setSheet(null);
+    onAddMarkerAtCenter?.();
+  }, [onAddMarkerAtCenter]);
 
   const {
     displayTime,
@@ -642,6 +721,68 @@ const MobileReplayDockComponent: React.FC<MobileReplayDockProps> = ({
                 }
               />
             </Box>
+
+            {/* Markers — the touch home for the desktop "Edit Markers" tools. The page-toolbar
+                marker controls sit behind the immersive overlay, so on a phone this sheet is the
+                only place to manage markers. Hidden entirely when the host wires no marker toggle. */}
+            {onToggleMarkersEditMode && (
+              <>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.08em' }}
+                >
+                  Markers
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mt: 1, mb: 2.5 }}>
+                  <SettingRow
+                    icon={<EditLocationAltRoundedIcon fontSize="small" />}
+                    label="Edit markers"
+                    description="Place, move, and remove map markers"
+                    active={markersEditMode}
+                    control={
+                      <Switch
+                        checked={markersEditMode}
+                        onChange={handleToggleEditMarkers}
+                        slotProps={{ input: { 'aria-label': 'Edit markers' } }}
+                      />
+                    }
+                  />
+                  {markersEditMode && (
+                    <>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary', px: 0.5, lineHeight: 1.4 }}
+                      >
+                        Press and hold the map to place a marker · drag a marker to move it · press
+                        and hold a marker to edit or remove it
+                      </Typography>
+                      <Box
+                        sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}
+                      >
+                        <MarkerActionButton
+                          icon={<AddLocationAltRoundedIcon fontSize="small" />}
+                          label="Add here"
+                          onClick={handleAddMarkerAtCenter}
+                          disabled={!onAddMarkerAtCenter}
+                        />
+                        <MarkerActionButton
+                          icon={<UndoRoundedIcon fontSize="small" />}
+                          label="Undo"
+                          onClick={() => onUndoMarkers?.()}
+                          disabled={!onUndoMarkers || !canUndoMarkers}
+                        />
+                        <MarkerActionButton
+                          icon={<RedoRoundedIcon fontSize="small" />}
+                          label="Redo"
+                          onClick={() => onRedoMarkers?.()}
+                          disabled={!onRedoMarkers || !canRedoMarkers}
+                        />
+                      </Box>
+                    </>
+                  )}
+                </Box>
+              </>
+            )}
 
             <Typography
               variant="overline"
