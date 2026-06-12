@@ -27,7 +27,7 @@ import {
   isTwoHandedWeapon,
 } from '../../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
-import { getLockedArmorWeight } from '../../data/setArmorWeights';
+import { getLockedArmorWeight, resolveApparelWeight } from '../../data/setArmorWeights';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
 import { GearPickerDialog } from './GearPicker';
@@ -57,9 +57,11 @@ const BACK_OFF = 21;
  * previous item after a replace. The fresh `id` is the single source of truth.
  *
  * Weight: a set locked to one armor weight in-game wins (mythic / overland drop)
- * so exports + stats stay correct even though the chip is read-only; otherwise
- * the user's chosen weight carries over, but only for apparel (jewelry / weapons
- * have no armor weight).
+ * so exports + stats stay correct even though the chip is read-only. For a free
+ * (all-weight) replacement we carry the previous piece's RESOLVED/displayed
+ * weight, not its raw stored value — an imported locked piece is shown via the
+ * lock lookup but may have no stored weight, and carrying the raw blank would
+ * silently drop to Heavy. Weight is apparel-only (jewelry/weapons have none).
  */
 export function buildReplacementPiece(
   prev: GearPiece | undefined,
@@ -70,14 +72,15 @@ export function buildReplacementPiece(
   if (prev?.trait !== undefined) next.trait = prev.trait;
   if (prev?.enchant !== undefined) next.enchant = prev.enchant;
 
-  // Weight is an APPAREL-only concept. A locked set's jewelry/weapon (e.g. a
-  // Mother's Sorrow ring or staff) must NOT get armor-weight metadata — the lock
-  // is about the set's ARMOR pieces. Downstream (URL encoding, roster display)
-  // treats any piece.weight as real, so only stamp it on apparel slots.
+  // A locked set's jewelry/weapon (e.g. a Mother's Sorrow ring/staff) must NOT
+  // get armor-weight metadata — downstream (URL encoding, roster display) treats
+  // any piece.weight as real, so only stamp it on apparel slots.
   if (category === 'apparel') {
-    const locked = getLockedArmorWeight(getItemInfo(itemId)?.setName);
-    if (locked) next.weight = locked;
-    else if (prev?.weight !== undefined) next.weight = prev.weight;
+    // The previous piece's DISPLAYED weight (lock wins over stored/blank), used
+    // as the fallback so a free replacement inherits what the user actually saw.
+    const prevDisplayed = prev?.id != null ? resolveApparelWeight(prev.id, prev.weight) : undefined;
+    // For the new item: its own lock wins, else the previous displayed weight.
+    next.weight = resolveApparelWeight(itemId, prevDisplayed);
   }
   return next;
 }

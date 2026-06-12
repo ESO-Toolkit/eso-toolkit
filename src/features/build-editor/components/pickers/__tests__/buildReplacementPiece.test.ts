@@ -46,6 +46,15 @@ describe('buildReplacementPiece', () => {
     expect(next.weight).toBe('medium');
   });
 
+  it('carries the DISPLAYED weight of an imported locked piece to a free replacement', () => {
+    // Imported Mother's Sorrow (locked LIGHT) with NO stored weight — the UI
+    // shows Light via the lock lookup. Replacing it with a free set must inherit
+    // that displayed Light, not silently fall back to Heavy.
+    const importedLocked = { id: 97232 }; // Mother's Sorrow chest, no weight field
+    const next = buildReplacementPiece(importedLocked, 999999999, 'apparel');
+    expect(next.weight).toBe('light');
+  });
+
   it('never sets weight for weapon/accessory slots without a lock', () => {
     expect(
       buildReplacementPiece({ id: 1, weight: 'heavy' }, 999999999, 'weapons').weight,
