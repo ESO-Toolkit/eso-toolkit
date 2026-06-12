@@ -9,16 +9,20 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-// icon data READY, but every weapon name resolves generic (stale/missing data).
+// icon data READY, but every weapon's type is UNRESOLVED (stale/missing data —
+// e.g. a staff with no element data → generic "Staff"). The picker must treat
+// these as ambiguous via isWeaponTypeResolved, independent of the display name.
 jest.mock('@features/loadout-manager/utils/itemIconResolver', () => {
   const actual = jest.requireActual('@features/loadout-manager/utils/itemIconResolver');
+  const isWeapon = (slot: string) => slot === 'weapon' || slot === 'offhand';
   return {
     ...actual,
     isIconDataReady: () => true,
     preloadIconData: () => Promise.resolve(),
+    // Weapons can't be resolved (apparel is unaffected).
+    isWeaponTypeResolved: (_itemId: number, slot: string) => !isWeapon(slot),
     deriveItemNameForSlot: (itemId: number, slot: string) => {
-      // Apparel keeps a real name; weapons stay generic to simulate stale data.
-      if (slot === 'weapon' || slot === 'offhand') return 'Stale Set Weapon';
+      if (isWeapon(slot)) return 'Stale Set Weapon';
       return actual.deriveItemNameForSlot(itemId, slot);
     },
   };

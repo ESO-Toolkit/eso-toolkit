@@ -359,6 +359,42 @@ export function deriveItemNameForSlot(
 }
 
 /**
+ * True when a weapon item's SPECIFIC type is determinable — so its display name
+ * uniquely identifies the weapon (Axe, Bow, Inferno Staff, …). Returns false
+ * when the type can't be pinned down:
+ *   - no icon token resolves (still "<Set> Weapon"), or
+ *   - a regular-gear staff whose element data is missing, so it only resolves to
+ *     the generic "Staff" label and Inferno/Ice/Lightning/Restoration are
+ *     indistinguishable.
+ *
+ * Callers that key/select weapons by display name MUST treat an unresolved item
+ * as ambiguous (don't dedupe-by-name, keep it non-selectable) — otherwise
+ * distinct elements collapse into one row and the wrong one gets equipped.
+ *
+ * Non-weapon items are always "resolved" (their name is already specific).
+ */
+export function isWeaponTypeResolved(
+  itemId: number | null | undefined,
+  slotType: SlotType | undefined,
+): boolean {
+  const id = itemId ?? 0;
+  if (id <= 0) return false;
+  // Non-weapon slot context, or an item that isn't a slot-specific weapon, keeps
+  // its already-specific name — mirror deriveItemNameForSlot's weapon-type gate.
+  if (slotType !== 'weapon' && slotType !== 'offhand') return true;
+  const info = getItemInfo(id);
+  if (info?.slot !== 'weapon' && info?.slot !== 'offhand') return true;
+
+  // Prefer data-driven staff element (distinguishes inferno/ice/lightning/resto).
+  if (lookupStaffTypeLabelFromData(id)) return true;
+
+  // Otherwise the icon token is the only signal. A specific token (1haxe, bow, …)
+  // is fine; the bare "Staff" token is NOT — its element is unknown.
+  const label = parseWeaponTypeFromIconUrl(getItemIconUrl(id));
+  return label !== null && label !== 'Staff';
+}
+
+/**
  * Fetch the icon URL for a single item from UESP (fallback).
  * Only called for items not present in the local JSON data.
  */

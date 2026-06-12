@@ -49,8 +49,8 @@ import {
 } from '@features/loadout-manager/data/itemIdMap';
 import {
   deriveItemNameForSlot,
-  GENERIC_WEAPON_SUFFIXES,
   isIconDataReady,
+  isWeaponTypeResolved,
   preloadIconData,
 } from '@features/loadout-manager/utils/itemIconResolver';
 
@@ -92,38 +92,36 @@ const APPAREL_SLOTS_SET = new Set<SlotType>([
 // fold in the per-item weapon type so each type survives as its own pickable row.
 const WEAPON_SLOTS_SET = new Set<SlotType>(['weapon', 'offhand']);
 
-/** A weapon display name that still carries a generic suffix = type unresolved. */
-function isGenericWeaponName(name: string): boolean {
-  return GENERIC_WEAPON_SUFFIXES.some((suffix) => name.endsWith(suffix));
-}
-
 /**
  * Canonical dedup key for the gear picker. Weapons key by their slot-aware
  * display name (which carries the weapon type, incl. staff element), so distinct
  * weapon types aren't collapsed away. Everything else keys by set name, folding
  * the ~24 level/quality variants of an apparel/jewelry piece into one row.
  *
- * Robustness: if icon data is missing/stale for an item, the display name stays
- * generic ("<Set> Weapon"). Keying by that alone would wrongly collapse every
- * weapon type of the set, so a generic key falls back to per-itemId — distinct
- * types never merge incorrectly. getSetGroupsForSlot won't cache such a result,
- * so it can recompute into the proper type-split once the data is present.
+ * Robustness: if a weapon's type can't be pinned down (icon data missing/stale,
+ * or a regular-gear staff whose element data is absent so it only resolves to a
+ * generic "Staff"), keying by the display name would wrongly collapse distinct
+ * items. Unresolved weapons fall back to a per-itemId key so they never merge,
+ * and getSetGroupsForSlot won't cache such a result — it recomputes the proper
+ * split once the data is present. Resolution is judged by isWeaponTypeResolved,
+ * NOT by name suffixes (a bare "Staff" name has no telltale generic suffix).
  */
 function makeCanonicalKey(targetSlot: SlotType): CanonicalKeyFn {
   if (!WEAPON_SLOTS_SET.has(targetSlot)) return (_itemId, info) => info.setName;
   return (itemId, info) => {
-    const name = deriveItemNameForSlot(itemId, targetSlot);
-    const discriminator = isGenericWeaponName(name) ? `#${itemId}` : name;
+    const discriminator = isWeaponTypeResolved(itemId, targetSlot)
+      ? deriveItemNameForSlot(itemId, targetSlot)
+      : `#${itemId}`;
     return `${info.setName} ${discriminator}`;
   };
 }
 
-/** True when every weapon in the slot resolved to a specific (non-generic) name. */
+/** True when every weapon in the slot resolved to a specific (non-generic) type. */
 function weaponGroupsFullyResolved(targetSlot: SlotType, groups: SetGroup[]): boolean {
   if (!WEAPON_SLOTS_SET.has(targetSlot)) return true;
   for (const group of groups) {
     for (const { itemId } of group.items) {
-      if (isGenericWeaponName(deriveItemNameForSlot(itemId, targetSlot))) return false;
+      if (!isWeaponTypeResolved(itemId, targetSlot)) return false;
     }
   }
   return true;
@@ -356,8 +354,7 @@ const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   // row is rendered inert until every displayed type resolves.
   const isWeaponSlot = WEAPON_SLOTS_SET.has(targetSlot);
   const weaponNamesUnresolved =
-    isWeaponSlot &&
-    group.items.some((item) => isGenericWeaponName(deriveItemNameForSlot(item.itemId, targetSlot)));
+    isWeaponSlot && group.items.some((item) => !isWeaponTypeResolved(item.itemId, targetSlot));
   const weaponTypesPending = isWeaponSlot && (!iconReady || weaponNamesUnresolved);
   const isMultiVariant = group.items.length > 1;
   const isSelected = currentSetName === group.setName;
@@ -695,14 +692,11 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
     const q = debouncedSearch.toLowerCase().trim();
     return canonicalItems
       .filter((item) => {
-        // Drop weapon items whose type still resolves to a generic name (stale/
-        // missing icon data): they'd appear as indistinguishable "<Set> Weapon"
-        // rows and could be equipped as the wrong variant. The full pre-load
-        // suppression is handled separately via weaponSlotPending.
-        if (
-          isWeaponTargetSlot &&
-          isGenericWeaponName(deriveItemNameForSlot(item.itemId, targetSlot))
-        ) {
+        // Drop weapon items whose specific type can't be determined (stale/missing
+        // icon data, or a staff with no element data → generic "Staff"): they'd
+        // appear as indistinguishable rows and could be equipped as the wrong
+        // variant. Full pre-load suppression is handled via weaponSlotPending.
+        if (isWeaponTargetSlot && !isWeaponTypeResolved(item.itemId, targetSlot)) {
           return false;
         }
         return (
