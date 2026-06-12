@@ -890,81 +890,88 @@ export const BuildCompletionHeader: React.FC = () => {
             </Button>
           </Tooltip>
 
-          <Divider orientation="vertical" flexItem sx={dividerSx} />
-
-          {/* Get Link (guest only) */}
-          {!isLoggedIn && (
+          {/* Get Link and Roster hidden on mobile — accessible via "More actions" menu.
+              This reduces the action strip to Save | Publish on mobile, fitting
+              without wrapping and revealing more header content above the fold (M4). */}
+          {!isMobile && (
             <>
-              <Tooltip title="Save and get a shareable short link (expires in 5 days)">
-                <Button
-                  size="small"
-                  onClick={handleGetLink}
-                  disabled={isCreatingLink}
-                  aria-label="Get shareable link"
-                  sx={{
-                    borderRadius: 0,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: 13,
-                    px: 1.5,
-                    minWidth: 0,
-                    height: 36,
-                    color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)',
-                    transition: 'all 0.15s ease',
-                    '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                      color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)',
-                    },
-                  }}
-                >
-                  {isCreatingLink ? (
-                    <CircularProgress size={14} color="inherit" />
-                  ) : (
-                    <>
-                      <LinkOutlined sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
-                      {!isMobile && 'Link'}
-                    </>
-                  )}
-                </Button>
-              </Tooltip>
               <Divider orientation="vertical" flexItem sx={dividerSx} />
+
+              {/* Get Link (guest only) */}
+              {!isLoggedIn && (
+                <>
+                  <Tooltip title="Save and get a shareable short link (expires in 5 days)">
+                    <Button
+                      size="small"
+                      onClick={handleGetLink}
+                      disabled={isCreatingLink}
+                      aria-label="Get shareable link"
+                      sx={{
+                        borderRadius: 0,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: 13,
+                        px: 1.5,
+                        minWidth: 0,
+                        height: 36,
+                        color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.6)',
+                        transition: 'all 0.15s ease',
+                        '&:hover': {
+                          background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                          color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)',
+                        },
+                      }}
+                    >
+                      {isCreatingLink ? (
+                        <CircularProgress size={14} color="inherit" />
+                      ) : (
+                        <>
+                          <LinkOutlined sx={{ fontSize: 16, mr: 0.5 }} />
+                          Link
+                        </>
+                      )}
+                    </Button>
+                  </Tooltip>
+                  <Divider orientation="vertical" flexItem sx={dividerSx} />
+                </>
+              )}
+
+              {/* Roster */}
+              <Tooltip
+                title={
+                  savedRostersCount === 0
+                    ? 'Create a roster in the Roster Builder first'
+                    : 'Attach this build to a roster slot'
+                }
+              >
+                <Box component="span" sx={{ display: 'flex' }}>
+                  <Button
+                    size="small"
+                    onClick={() => setAddToRosterOpen(true)}
+                    aria-label="Add build to roster"
+                    sx={{
+                      borderRadius: 0,
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      px: 1.5,
+                      minWidth: 0,
+                      height: 36,
+                      color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
+                      transition: 'all 0.15s ease',
+                      '&:hover': {
+                        background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+                        color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)',
+                      },
+                    }}
+                  >
+                    <GroupsIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                    Roster
+                  </Button>
+                </Box>
+              </Tooltip>
             </>
           )}
-
-          {/* Roster */}
-          <Tooltip
-            title={
-              savedRostersCount === 0
-                ? 'Create a roster in the Roster Builder first'
-                : 'Attach this build to a roster slot'
-            }
-          >
-            <Box component="span" sx={{ display: 'flex' }}>
-              <Button
-                size="small"
-                onClick={() => setAddToRosterOpen(true)}
-                aria-label="Add build to roster"
-                sx={{
-                  borderRadius: 0,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: 13,
-                  px: 1.5,
-                  minWidth: 0,
-                  height: 36,
-                  color: isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.5)',
-                  transition: 'all 0.15s ease',
-                  '&:hover': {
-                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-                    color: isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.8)',
-                  },
-                }}
-              >
-                <GroupsIcon sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
-                {!isMobile && 'Roster'}
-              </Button>
-            </Box>
-          </Tooltip>
 
           <Divider orientation="vertical" flexItem sx={dividerSx} />
 

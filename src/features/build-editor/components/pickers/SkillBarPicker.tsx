@@ -625,114 +625,114 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
       ) : (
         <>
           <PickerDialog.Tabs>
-              {PICKER_TABS.map((tab, idx) => (
-                <ButtonBase
-                  key={tab.category}
-                  onClick={() => setActiveTab(idx)}
-                  sx={{
-                    px: 1.25,
-                    py: 0.5,
-                    borderRadius: 1.5,
-                    fontSize: 11,
-                    fontWeight: activeTab === idx ? 700 : 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.3,
-                    flexShrink: 0,
-                    color:
-                      activeTab === idx
-                        ? isDark
-                          ? '#fff'
-                          : '#0f172a'
-                        : isDark
-                          ? 'rgba(255,255,255,0.45)'
-                          : 'rgba(0,0,0,0.45)',
-                    background:
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.06)'
-                        : 'transparent',
-                    border: `1px solid ${
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.12)'
-                          : 'rgba(0,0,0,0.10)'
-                        : 'transparent'
-                    }`,
-                    transition: 'all 0.15s',
-                    '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
-                  }}
-                >
-                  {tab.label}
-                </ButtonBase>
-              ))}
+            {PICKER_TABS.map((tab, idx) => (
+              <ButtonBase
+                key={tab.category}
+                onClick={() => setActiveTab(idx)}
+                sx={{
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: 1.5,
+                  fontSize: 11,
+                  fontWeight: activeTab === idx ? 700 : 500,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: 0.3,
+                  flexShrink: 0,
+                  color:
+                    activeTab === idx
+                      ? isDark
+                        ? '#fff'
+                        : '#0f172a'
+                      : isDark
+                        ? 'rgba(255,255,255,0.45)'
+                        : 'rgba(0,0,0,0.45)',
+                  background:
+                    activeTab === idx
+                      ? isDark
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(0,0,0,0.06)'
+                      : 'transparent',
+                  border: `1px solid ${
+                    activeTab === idx
+                      ? isDark
+                        ? 'rgba(255,255,255,0.12)'
+                        : 'rgba(0,0,0,0.10)'
+                      : 'transparent'
+                  }`,
+                  transition: 'all 0.15s',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  },
+                }}
+              >
+                {tab.label}
+              </ButtonBase>
+            ))}
 
-              {activeTab === 0 && hasSelectedLines && (
-                <>
-                  <Box sx={{ flex: 1, minWidth: 4 }} />
-                  <Tooltip
-                    title={
-                      myBuildOnly
-                        ? 'Showing your 3 selected class lines · click to show all'
-                        : 'Show only your selected class lines'
-                    }
-                    arrow
-                    placement="top"
-                  >
-                    <ButtonBase
-                      onClick={() => setMyBuildOnly((v) => !v)}
-                      aria-pressed={myBuildOnly}
-                      sx={{
-                        px: 1.25,
-                        py: 0.5,
-                        borderRadius: 1.5,
-                        fontSize: 11,
-                        fontWeight: myBuildOnly ? 700 : 500,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        letterSpacing: 0.3,
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.4,
-                        color: myBuildOnly
+            {activeTab === 0 && hasSelectedLines && (
+              <>
+                <Box sx={{ flex: 1, minWidth: 4 }} />
+                <Tooltip
+                  title={
+                    myBuildOnly
+                      ? 'Showing your 3 selected class lines · click to show all'
+                      : 'Show only your selected class lines'
+                  }
+                  arrow
+                  placement="top"
+                >
+                  <ButtonBase
+                    onClick={() => setMyBuildOnly((v) => !v)}
+                    aria-pressed={myBuildOnly}
+                    sx={{
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: 1.5,
+                      fontSize: 11,
+                      fontWeight: myBuildOnly ? 700 : 500,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 0.3,
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.4,
+                      color: myBuildOnly
+                        ? isDark
+                          ? '#38bdf8'
+                          : '#0284c7'
+                        : isDark
+                          ? 'rgba(255,255,255,0.40)'
+                          : 'rgba(0,0,0,0.40)',
+                      background: myBuildOnly
+                        ? isDark
+                          ? 'rgba(56,189,248,0.10)'
+                          : 'rgba(2,132,199,0.06)'
+                        : 'transparent',
+                      border: `1px solid ${
+                        myBuildOnly
                           ? isDark
-                            ? '#38bdf8'
-                            : '#0284c7'
-                          : isDark
-                            ? 'rgba(255,255,255,0.40)'
-                            : 'rgba(0,0,0,0.40)',
+                            ? 'rgba(56,189,248,0.28)'
+                            : 'rgba(2,132,199,0.22)'
+                          : 'transparent'
+                      }`,
+                      transition: 'all 0.15s',
+                      '&:hover': {
                         background: myBuildOnly
                           ? isDark
-                            ? 'rgba(56,189,248,0.10)'
-                            : 'rgba(2,132,199,0.06)'
-                          : 'transparent',
-                        border: `1px solid ${
-                          myBuildOnly
-                            ? isDark
-                              ? 'rgba(56,189,248,0.28)'
-                              : 'rgba(2,132,199,0.22)'
-                            : 'transparent'
-                        }`,
-                        transition: 'all 0.15s',
-                        '&:hover': {
-                          background: myBuildOnly
-                            ? isDark
-                              ? 'rgba(56,189,248,0.16)'
-                              : 'rgba(2,132,199,0.10)'
-                            : isDark
-                              ? 'rgba(255,255,255,0.06)'
-                              : 'rgba(0,0,0,0.04)',
-                        },
-                      }}
-                    >
-                      <FilterListIcon sx={{ fontSize: 12 }} />
-                      My Lines
-                    </ButtonBase>
-                  </Tooltip>
-                </>
-              )}
+                            ? 'rgba(56,189,248,0.16)'
+                            : 'rgba(2,132,199,0.10)'
+                          : isDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                  >
+                    <FilterListIcon sx={{ fontSize: 12 }} />
+                    My Lines
+                  </ButtonBase>
+                </Tooltip>
+              </>
+            )}
           </PickerDialog.Tabs>
 
           <PickerDialog.Body>

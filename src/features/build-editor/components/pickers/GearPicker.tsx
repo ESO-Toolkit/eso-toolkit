@@ -444,54 +444,54 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
         >
           <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
             <ShieldIcon
-                sx={{
-                  fontSize: 16,
-                  color: 'var(--be-accent, #38bdf8)',
-                  opacity: 0.6,
-                }}
-              />
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                  <Typography
-                    noWrap
-                    sx={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      fontFamily: 'Space Grotesk, Inter, system-ui',
-                      color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-                    }}
-                  >
-                    {currentItemId != null
-                      ? deriveItemNameForSlot(currentItemId, targetSlot)
-                      : currentInfo.name}
-                  </Typography>
-                  <Chip
-                    label={currentInfo.setName}
-                    size="small"
-                    sx={{
-                      height: 14,
-                      fontSize: '0.5rem',
-                      fontWeight: 700,
-                      fontFamily: 'Space Grotesk',
-                      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
-                      color: 'var(--be-accent, #38bdf8)',
-                      border: 'none',
-                    }}
-                  />
-                </Stack>
+              sx={{
+                fontSize: 16,
+                color: 'var(--be-accent, #38bdf8)',
+                opacity: 0.6,
+              }}
+            />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                 <Typography
+                  noWrap
                   sx={{
-                    fontSize: 9,
-                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                    fontFamily: 'Space Grotesk',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    fontFamily: 'Space Grotesk, Inter, system-ui',
+                    color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
                   }}
                 >
-                  Currently equipped · ID: {currentItemId}
+                  {currentItemId != null
+                    ? deriveItemNameForSlot(currentItemId, targetSlot)
+                    : currentInfo.name}
                 </Typography>
-              </Box>
-            </Stack>
-          </Box>
-        )}
+                <Chip
+                  label={currentInfo.setName}
+                  size="small"
+                  sx={{
+                    height: 14,
+                    fontSize: '0.5rem',
+                    fontWeight: 700,
+                    fontFamily: 'Space Grotesk',
+                    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
+                    color: 'var(--be-accent, #38bdf8)',
+                    border: 'none',
+                  }}
+                />
+              </Stack>
+              <Typography
+                sx={{
+                  fontSize: 9,
+                  color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                  fontFamily: 'Space Grotesk',
+                }}
+              >
+                Currently equipped · ID: {currentItemId}
+              </Typography>
+            </Box>
+          </Stack>
+        </Box>
+      )}
 
       {/* ── Search bar ────────────────────────────────────── */}
       <PickerDialog.Search
@@ -535,9 +535,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                     },
                   }}
                 >
-                  <ShieldIcon
-                    sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }}
-                  />
+                  <ShieldIcon sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }} />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                       <Typography
@@ -591,11 +589,7 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
                 tab === 'all' ? groups.length : (byType.get(tab as GearSetType)?.length ?? 0);
               const color = tab === 'all' ? undefined : SET_TYPE_COLORS[tab as GearSetType];
               return (
-                <Tooltip
-                  key={tab}
-                  title={`${count} set${count !== 1 ? 's' : ''}`}
-                  placement="top"
-                >
+                <Tooltip key={tab} title={`${count} set${count !== 1 ? 's' : ''}`} placement="top">
                   <ButtonBase
                     onClick={() => setActiveTab(tab)}
                     sx={{

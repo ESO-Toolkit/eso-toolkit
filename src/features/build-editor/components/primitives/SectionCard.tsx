@@ -53,6 +53,8 @@ export const SectionCard = React.memo<SectionCardProps>(function SectionCard({
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        // H3: offset scroll target so nav tap lands below the sticky header
+        scrollMarginTop: isMobile ? '12px' : undefined,
       }}
     >
       {/* Header */}

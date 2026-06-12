@@ -114,8 +114,19 @@ export const BuildEditorLayout: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
-      {/* Header: build name + progress + save/share */}
-      <BuildCompletionHeader />
+      {/* Header: build name + progress + save/share.
+          Sticky on mobile so Save/Publish stay within thumb reach from any
+          scroll position (H5). On desktop the inner bento grid is the scroll
+          container and the header is already always visible. */}
+      <Box
+        sx={{
+          position: isMobile ? 'sticky' : 'relative',
+          top: 0,
+          zIndex: isMobile ? 100 : 1,
+        }}
+      >
+        <BuildCompletionHeader />
+      </Box>
 
       {/* Body: nav rail + bento grid */}
       <Box
