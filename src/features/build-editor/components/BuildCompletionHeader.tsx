@@ -460,17 +460,16 @@ export const BuildCompletionHeader: React.FC = () => {
         viewTransitionName: 'build-hero',
         display: 'flex',
         alignItems: 'center',
-        gap: { xs: 1.5, md: 2 },
-        px: { xs: 2, md: 3 },
-        py: 1.5,
+        gap: { xs: 1, md: 2 },
+        px: { xs: 1.5, md: 3 },
+        py: { xs: 1, md: 1.5 },
         borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'}`,
         backgroundColor: isDark ? 'rgba(11, 18, 32, 0.88)' : 'rgba(248, 250, 252, 0.92)',
         backgroundImage:
           'linear-gradient(135deg, rgba(var(--be-accent-rgb, 56, 189, 248), 0.07) 0%, transparent 55%)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        flexWrap: { xs: 'wrap', md: 'nowrap' },
-        rowGap: 1,
+        flexWrap: 'nowrap',
         position: 'relative',
         zIndex: 1,
       }}
@@ -479,7 +478,7 @@ export const BuildCompletionHeader: React.FC = () => {
       <Box
         sx={{
           flex: 1,
-          minWidth: 160,
+          minWidth: 0,
           maxWidth: 480,
           display: 'flex',
           alignItems: 'center',
@@ -489,6 +488,7 @@ export const BuildCompletionHeader: React.FC = () => {
         <Box
           sx={{
             flex: 1,
+            minWidth: 0,
             background: isDark ? BE_TOKENS.input.dark.bg : BE_TOKENS.input.light.bg,
             borderRadius: '10px',
             border: `1px solid ${isDark ? BE_TOKENS.input.dark.border : BE_TOKENS.input.light.border}`,
@@ -519,29 +519,34 @@ export const BuildCompletionHeader: React.FC = () => {
               fontSize: isMobile ? 16 : 19,
               letterSpacing: '-0.3px',
               color: isDark ? '#e2e8f0' : '#0f172a',
-              padding: '8px 12px 0',
+              padding: isMobile ? '8px 12px' : '8px 12px 0',
               boxSizing: 'border-box',
             }}
           />
-          <input
-            placeholder="Short description (one line summarizing this build)"
-            value={build.shortDescription}
-            onChange={(e) => dispatch(setBuildDescription(e.target.value))}
-            maxLength={140}
-            aria-label="Build short description"
-            style={{
-              width: '100%',
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              fontWeight: 400,
-              fontSize: isMobile ? 16 : 12,
-              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-              padding: '2px 12px 6px',
-              boxSizing: 'border-box',
-            }}
-          />
+          {/* Description hidden on mobile — saves header height and avoids 16px font
+              making the header taller than necessary. Editable via desktop or the
+              Settings section which surfaces the field on all viewports. */}
+          {!isMobile && (
+            <input
+              placeholder="Short description (one line summarizing this build)"
+              value={build.shortDescription}
+              onChange={(e) => dispatch(setBuildDescription(e.target.value))}
+              maxLength={140}
+              aria-label="Build short description"
+              style={{
+                width: '100%',
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontWeight: 400,
+                fontSize: 12,
+                color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
+                padding: '2px 12px 6px',
+                boxSizing: 'border-box',
+              }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -885,8 +890,8 @@ export const BuildCompletionHeader: React.FC = () => {
                 },
               }}
             >
-              <SaveOutlined sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
-              {!isMobile && (isDirty ? 'Save' : 'Saved')}
+              <SaveOutlined sx={{ fontSize: 16, mr: 0.5 }} />
+              {isDirty ? 'Save' : 'Saved'}
             </Button>
           </Tooltip>
 
@@ -973,50 +978,54 @@ export const BuildCompletionHeader: React.FC = () => {
             </>
           )}
 
-          <Divider orientation="vertical" flexItem sx={dividerSx} />
+          {/* Publish — accent end-cap, desktop only. Mobile: in More menu below. */}
+          {!isMobile && (
+            <>
+              <Divider orientation="vertical" flexItem sx={dividerSx} />
 
-          {/* Publish — accent end-cap */}
-          <Tooltip title={isLoggedIn ? 'Publish to Build Hub' : 'Log in to publish your build'}>
-            <Box component="span" sx={{ display: 'flex' }}>
-              <Button
-                size="small"
-                onClick={isLoggedIn ? handlePublishClick : handleGuestPublishRedirect}
-                disabled={isPublishing}
-                aria-label={
-                  isLoggedIn ? 'Publish build to Build Hub' : 'Log in to publish your build'
-                }
-                sx={{
-                  borderRadius: 0,
-                  textTransform: 'none',
-                  fontWeight: 700,
-                  fontSize: 13,
-                  px: 1.75,
-                  minWidth: 0,
-                  height: 36,
-                  color: '#fff',
-                  background: 'var(--be-accent, #38bdf8)',
-                  transition: 'all 0.18s ease',
-                  '&:hover:not(:disabled)': {
-                    filter: 'brightness(1.25)',
-                    boxShadow: '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.45)',
-                  },
-                  '&.Mui-disabled': {
-                    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
-                    color: 'rgba(255,255,255,0.5)',
-                  },
-                }}
-              >
-                {isPublishing ? (
-                  <CircularProgress size={14} sx={{ color: '#fff' }} />
-                ) : (
-                  <>
-                    <PublishOutlined sx={{ fontSize: 16, mr: isMobile ? 0 : 0.5 }} />
-                    {!isMobile && 'Publish'}
-                  </>
-                )}
-              </Button>
-            </Box>
-          </Tooltip>
+              <Tooltip title={isLoggedIn ? 'Publish to Build Hub' : 'Log in to publish your build'}>
+                <Box component="span" sx={{ display: 'flex' }}>
+                  <Button
+                    size="small"
+                    onClick={isLoggedIn ? handlePublishClick : handleGuestPublishRedirect}
+                    disabled={isPublishing}
+                    aria-label={
+                      isLoggedIn ? 'Publish build to Build Hub' : 'Log in to publish your build'
+                    }
+                    sx={{
+                      borderRadius: 0,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      fontSize: 13,
+                      px: 1.75,
+                      minWidth: 0,
+                      height: 36,
+                      color: '#fff',
+                      background: 'var(--be-accent, #38bdf8)',
+                      transition: 'all 0.18s ease',
+                      '&:hover:not(:disabled)': {
+                        filter: 'brightness(1.25)',
+                        boxShadow: '0 0 16px rgba(var(--be-accent-rgb, 56, 189, 248), 0.45)',
+                      },
+                      '&.Mui-disabled': {
+                        background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)',
+                        color: 'rgba(255,255,255,0.5)',
+                      },
+                    }}
+                  >
+                    {isPublishing ? (
+                      <CircularProgress size={14} sx={{ color: '#fff' }} />
+                    ) : (
+                      <>
+                        <PublishOutlined sx={{ fontSize: 16, mr: 0.5 }} />
+                        Publish
+                      </>
+                    )}
+                  </Button>
+                </Box>
+              </Tooltip>
+            </>
+          )}
         </Box>
 
         {/* ── Overflow menu — visible only on medium/mobile viewports ── */}
@@ -1098,6 +1107,28 @@ export const BuildCompletionHeader: React.FC = () => {
                 <ListItemText>Export to CSPS</ListItemText>
               </MuiMenuItem>
               <Divider />
+              {/* Publish — shown in More menu on mobile since it's stripped from inline strip */}
+              {isMobile && (
+                <>
+                  <MuiMenuItem
+                    onClick={() => {
+                      setMoreAnchor(null);
+                      if (isLoggedIn) {
+                        handlePublishClick();
+                      } else {
+                        handleGuestPublishRedirect();
+                      }
+                    }}
+                    disabled={isPublishing}
+                  >
+                    <ListItemIcon>
+                      <PublishOutlined sx={{ fontSize: 18 }} />
+                    </ListItemIcon>
+                    <ListItemText>{isPublishing ? 'Publishing…' : 'Publish to Hub'}</ListItemText>
+                  </MuiMenuItem>
+                  <Divider />
+                </>
+              )}
               <MuiMenuItem
                 onClick={() => {
                   setMoreAnchor(null);

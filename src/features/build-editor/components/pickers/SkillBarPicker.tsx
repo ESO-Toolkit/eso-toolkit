@@ -12,6 +12,7 @@ import {
   ExpandMore as ExpandIcon,
   FilterList as FilterListIcon,
   InfoOutlined as InfoIcon,
+  SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -840,6 +841,27 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
         minWidth: isUlt ? ULT_SIZE : TILE_SIZE,
       }}
     >
+      {/* Slot position label above the tile \u2014 always visible for orientation */}
+      <Typography
+        sx={{
+          fontSize: '0.58rem',
+          fontWeight: 700,
+          letterSpacing: isUlt ? 0.8 : 0.5,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          color: isUlt
+            ? isDark
+              ? 'rgba(255,179,0,0.55)'
+              : 'rgba(180,120,0,0.55)'
+            : isDark
+              ? 'rgba(255,255,255,0.28)'
+              : 'rgba(0,0,0,0.25)',
+          userSelect: 'none',
+          lineHeight: 1,
+          textTransform: isUlt ? 'uppercase' : undefined,
+        }}
+      >
+        {isUlt ? 'Ult' : label}
+      </Typography>
       <Tooltip
         title={
           skill
@@ -872,23 +894,23 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             cursor: 'pointer',
             overflow: 'hidden',
             flexShrink: 0,
-            border: `${isUlt ? 2 : 1.5}px solid ${
-              skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-            }`,
+            border: skill
+              ? `${isUlt ? 2 : 1.5}px solid ${accentA(0.45)}`
+              : `${isUlt ? 2 : 1.5}px dashed ${
+                  isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)'
+                }`,
             background: skill
               ? isDark
                 ? accentA(0.08)
                 : accentA(0.04)
               : isDark
-                ? 'rgba(255,255,255,0.025)'
-                : 'rgba(0,0,0,0.015)',
+                ? 'rgba(255,255,255,0.02)'
+                : 'rgba(0,0,0,0.012)',
             boxShadow: skill
               ? isDark
                 ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
                 : 'inset 0 1px 0 rgba(255,255,255,0.5)'
-              : isDark
-                ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
-                : 'inset 0 1px 0 rgba(255,255,255,0.4)',
+              : 'none',
             transition: 'all 180ms ease',
             '&:focus-visible': {
               outline: '2px solid var(--be-accent, #38bdf8)',
@@ -896,6 +918,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             },
             '&:hover': {
               transform: 'scale(1.08)',
+              borderStyle: 'solid',
               borderColor: accentA(0.7),
               background: isDark ? accentA(0.14) : accentA(0.08),
               boxShadow: isDark
@@ -985,7 +1008,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
       {skill && (
         <Typography
           sx={{
-            fontSize: '0.58rem',
+            fontSize: '0.65rem',
             fontWeight: 600,
             fontFamily: 'Space Grotesk, Inter, system-ui',
             color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
@@ -1178,37 +1201,49 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
           onRemove={(slotIndex) => handleRemove(0, slotIndex)}
         />
 
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 0.5 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 0.75 }}>
           <Box
             sx={{
               flex: 1,
               height: 1,
               background: isDark
-                ? 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.20) 100%)'
-                : 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.12) 100%)',
+                ? 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.25) 100%)'
+                : 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.15) 100%)',
             }}
           />
-          <Typography
-            sx={{
-              fontSize: '0.56rem',
-              fontWeight: 700,
-              letterSpacing: 2,
-              textTransform: 'uppercase',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
-              flexShrink: 0,
-              userSelect: 'none',
-            }}
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ alignItems: 'center', flexShrink: 0, userSelect: 'none' }}
           >
-            weapon swap
-          </Typography>
+            <SwapHorizIcon
+              sx={{
+                fontSize: 14,
+                color: isDark
+                  ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.55)'
+                  : 'rgba(var(--be-accent-rgb, 56,189,248), 0.50)',
+              }}
+            />
+            <Typography
+              sx={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.42)',
+              }}
+            >
+              Weapon Swap
+            </Typography>
+          </Stack>
           <Box
             sx={{
               flex: 1,
               height: 1,
               background: isDark
-                ? 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.20) 0%, transparent 100%)'
-                : 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.12) 0%, transparent 100%)',
+                ? 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.25) 0%, transparent 100%)'
+                : 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.15) 0%, transparent 100%)',
             }}
           />
         </Stack>

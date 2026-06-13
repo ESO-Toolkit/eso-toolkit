@@ -17,7 +17,11 @@
  *   </PickerDialog>
  */
 
-import { Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
+import {
+  ArrowBack as ArrowBackIcon,
+  Close as CloseIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
 import {
   Box,
   Dialog,
@@ -318,11 +322,33 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
         },
         backdrop: {
           sx: {
-            background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.28)',
+            background: isDark ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.40)',
           },
         },
       }}
     >
+      {/* ── Mobile drag handle — visual affordance for bottom sheet context ── */}
+      {isMobile && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            pt: 1.25,
+            pb: 0.25,
+            flexShrink: 0,
+          }}
+        >
+          <Box
+            sx={{
+              width: 36,
+              height: 4,
+              borderRadius: 2,
+              background: isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.18)',
+            }}
+          />
+        </Box>
+      )}
+
       {/* ── Header ──────────────────────────────────────── */}
       <DialogTitle
         sx={{
@@ -330,7 +356,11 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           pb: 1,
-          pt: isMobile ? 2 : undefined,
+          pt: isMobile ? 1 : undefined,
+          borderBottom: isMobile
+            ? `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'}`
+            : 'none',
+          mb: isMobile ? 0.5 : 0,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
@@ -338,7 +368,7 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
             sx={{
               fontWeight: 700,
               fontFamily: 'Space Grotesk, Inter, system-ui',
-              fontSize: '1rem',
+              fontSize: isMobile ? '1.05rem' : '1rem',
               background: isDark
                 ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
                 : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
@@ -366,7 +396,7 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {/* ESC hint */}
+          {/* ESC hint — desktop only */}
           <Typography
             sx={{
               fontSize: 9,
@@ -384,20 +414,30 @@ const PickerDialogRoot: React.FC<PickerDialogProps> = ({
           >
             ESC
           </Typography>
+          {/* Mobile: back-chevron style close; desktop: X close */}
           <IconButton
             size="small"
             onClick={onClose}
             aria-label="Close dialog"
             sx={{
-              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
+              color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
               transition: 'all 0.15s',
+              ...(isMobile && {
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)'}`,
+                borderRadius: '8px',
+                p: 0.75,
+              }),
               '&:hover': {
                 color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)',
                 background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
               },
             }}
           >
-            <CloseIcon sx={{ fontSize: 18 }} />
+            {isMobile ? (
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            ) : (
+              <CloseIcon sx={{ fontSize: 18 }} />
+            )}
           </IconButton>
         </Box>
       </DialogTitle>
