@@ -16,6 +16,7 @@ import {
   BALORGH_MULTIPLIER,
   BASE_CRIT_CHANCE,
   BASE_CRIT_DAMAGE,
+  CLASS_MASTERY_CRIT_PASSIVES,
   CLASS_PASSIVES,
   CP_FIGHTING_FINESSE_CRIT_DMG,
   CP_FIGHTING_FINESSE_ID,
@@ -123,6 +124,25 @@ function makeResult(items: StatItem[], cap: number, maxCap: number): StatResult 
   };
 }
 
+/** Display name for a class passive — appends its condition, if any. */
+function classPassiveLabel(cp: { name: string; condition?: string }): string {
+  return cp.condition ? `${cp.name} (${cp.condition})` : cp.name;
+}
+
+/**
+ * Whether a class passive's contribution is enabled. Always-on passives
+ * (no `defaultEnabled`) are auto-applied; conditional ones (flank/execute,
+ * `defaultEnabled: false`) are a toggle keyed by display label in
+ * overrides.buffs — the same label the Buff Toggles UI writes.
+ */
+function classPassiveEnabled(
+  cp: { name: string; condition?: string; defaultEnabled?: boolean },
+  overrides: StatOverrides,
+): boolean {
+  if (cp.defaultEnabled === undefined) return true;
+  return overrides.buffs[classPassiveLabel(cp)] ?? cp.defaultEnabled;
+}
+
 // ─── Penetration ────────────────────────────────────────────────────────────
 
 export function calculatePenetration(
@@ -179,14 +199,13 @@ export function calculatePenetration(
   const activeLines = build.classSkillLines.filter(Boolean) as string[];
   for (const cp of CLASS_PASSIVES) {
     if (cp.stat !== 'penetration') continue;
-    const detected = activeLines.includes(cp.skillLineId);
-    if (detected) {
+    if (activeLines.includes(cp.skillLineId)) {
       items.push({
-        name: cp.name,
+        name: classPassiveLabel(cp),
         value: cp.value,
         source: 'class',
-        enabled: true,
-        autoDetected: true,
+        enabled: classPassiveEnabled(cp, overrides),
+        autoDetected: cp.defaultEnabled === undefined,
       });
     }
   }
@@ -264,8 +283,19 @@ export function calculateCritDamage(
   overrides: StatOverrides,
 ): StatResult {
   const mode: GameMode = build.gameMode;
-  const { cap, max } = CRIT_DMG_CAPS;
+  let { cap, max } = CRIT_DMG_CAPS;
   const items: StatItem[] = [];
+
+  // U50 Class Mastery passives the player selected (only relevant while not
+  // subclassed — the selection is build-level and already gated by the picker).
+  const selectedMastery = new Set(build.classMasteryPassives ?? []);
+  const masteryCrit = CLASS_MASTERY_CRIT_PASSIVES.filter((p) => selectedMastery.has(p.id));
+  // Buffs (e.g. Major Force / Major Brittle) supplied by a selected passive —
+  // map buff name → the passive granting it, so the buff loop can force it on
+  // and label its source instead of letting it double-count with the toggle.
+  const buffFromMastery = new Map(
+    masteryCrit.filter((p) => p.grantsBuff).map((p) => [p.grantsBuff as string, p.name]),
+  );
 
   // Base character crit damage (always on)
   items.push({
@@ -280,14 +310,17 @@ export function calculateCritDamage(
   // Group buffs
   for (const buff of CRIT_DMG_BUFFS) {
     if (!buff.modes.includes(mode)) continue;
-    const enabled = overrides.buffs[buff.name] ?? buff.defaultEnabled;
+    // A selected Class Mastery passive that grants this buff forces it on and
+    // marks it auto-detected so it can't be double-counted with the toggle.
+    const grantingPassive = buffFromMastery.get(buff.name);
+    const enabled = grantingPassive ? true : (overrides.buffs[buff.name] ?? buff.defaultEnabled);
     items.push({
-      name: buff.name,
+      name: grantingPassive ? `${buff.name} (${grantingPassive})` : buff.name,
       value: buff.value,
-      source: 'buff',
+      source: grantingPassive ? 'class' : 'buff',
       enabled,
       isPercent: true,
-      autoDetected: false,
+      autoDetected: Boolean(grantingPassive),
     });
   }
 
@@ -340,12 +373,12 @@ export function calculateCritDamage(
     if (cp.stat !== 'critDamage') continue;
     if (activeLines.includes(cp.skillLineId)) {
       items.push({
-        name: cp.name,
+        name: classPassiveLabel(cp),
         value: cp.value,
         source: 'class',
-        enabled: true,
+        enabled: classPassiveEnabled(cp, overrides),
         isPercent: cp.isPercent,
-        autoDetected: true,
+        autoDetected: cp.defaultEnabled === undefined,
       });
     }
   }
@@ -380,6 +413,27 @@ export function calculateCritDamage(
     });
   }
 
+  // Class Mastery passives that add crit damage on their own (not via a named
+  // buff) — e.g. Nightblade's Above and Beyond. Some also raise the cap.
+  for (const passive of masteryCrit) {
+    if (passive.grantsBuff) continue; // already handled in the buff loop
+    if (passive.capBonus) {
+      cap += passive.capBonus;
+      max += passive.capBonus;
+    }
+    const value = mode === 'pvp' ? (passive.valuePvp ?? passive.value ?? 0) : (passive.value ?? 0);
+    if (value) {
+      items.push({
+        name: passive.name,
+        value,
+        source: 'class',
+        enabled: true,
+        isPercent: true,
+        autoDetected: true,
+      });
+    }
+  }
+
   return makeResult(items, cap, max);
 }
 
@@ -388,7 +442,7 @@ export function calculateCritDamage(
 export function calculateCritChance(
   setup: BuildSetup,
   build: Build,
-  _overrides: StatOverrides,
+  overrides: StatOverrides,
 ): StatResult {
   const cap = 100;
   const max = 100;
@@ -469,6 +523,22 @@ export function calculateCritChance(
     });
   }
 
+  // Class passives (crit chance) — ratings convert to % via CRIT_CHANCE_DIVISOR.
+  const critChanceLines = build.classSkillLines.filter(Boolean) as string[];
+  for (const cp of CLASS_PASSIVES) {
+    if (cp.stat !== 'critChance') continue;
+    if (!critChanceLines.includes(cp.skillLineId)) continue;
+    const pct = cp.isRating ? parseFloat((cp.value / CRIT_CHANCE_DIVISOR).toFixed(1)) : cp.value;
+    items.push({
+      name: classPassiveLabel(cp),
+      value: pct,
+      source: 'class',
+      enabled: classPassiveEnabled(cp, overrides),
+      isPercent: true,
+      autoDetected: cp.defaultEnabled === undefined,
+    });
+  }
+
   return makeResult(items, cap, max);
 }
 
@@ -477,7 +547,7 @@ export function calculateCritChance(
 export function calculateArmor(
   setup: BuildSetup,
   build: Build,
-  _overrides: StatOverrides,
+  overrides: StatOverrides,
 ): StatResult {
   const items: StatItem[] = [];
 
@@ -533,6 +603,36 @@ export function calculateArmor(
       source: 'gear',
       enabled: true,
       autoDetected: true,
+    });
+  }
+
+  // Class passives (armor / resistance). This panel tracks resistance ADDITIONS
+  // on top of equipped gear (gear base armor isn't summed here), so a flat
+  // resistance grant adds directly. A "% of total armor" passive (Balanced
+  // Warrior) can't be folded into this additive subtotal without the gear base,
+  // so it's surfaced as an informational item (value 0) rather than a wrong
+  // number.
+  const armorLines = build.classSkillLines.filter(Boolean) as string[];
+  for (const cp of CLASS_PASSIVES) {
+    if (cp.stat !== 'armor') continue;
+    if (!armorLines.includes(cp.skillLineId)) continue;
+    if (cp.percentOfSubtotal) {
+      items.push({
+        name: `${cp.name} (+${cp.value}% Armor)`,
+        value: 0,
+        source: 'class',
+        enabled: classPassiveEnabled(cp, overrides),
+        isPercent: true,
+        autoDetected: cp.defaultEnabled === undefined,
+      });
+      continue;
+    }
+    items.push({
+      name: classPassiveLabel(cp),
+      value: cp.value,
+      source: 'class',
+      enabled: classPassiveEnabled(cp, overrides),
+      autoDetected: cp.defaultEnabled === undefined,
     });
   }
 
