@@ -224,45 +224,43 @@ const PickerPassiveTile: React.FC<PickerPassiveTileProps> = ({ skill, isSelected
   const accent = 'rgba(var(--be-accent-rgb, 56, 189, 248),';
 
   return (
-    <Tooltip
-      title={
-        <Box>
-          <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
-          {skill.category && (
-            <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
-          )}
-        </Box>
-      }
-      arrow
-      placement="top"
+    <ButtonBase
+      onClick={() => onToggle(skill)}
+      aria-label={`${skill.name}${isSelected ? ' (selected)' : ''}`}
+      aria-pressed={isSelected}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 0.5,
+        p: 0.5,
+        borderRadius: '12px',
+        border: `1.5px solid ${
+          isSelected ? `${accent}0.55)` : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
+        }`,
+        background: isSelected
+          ? `${accent}0.10)`
+          : isDark
+            ? 'rgba(255,255,255,0.02)'
+            : 'rgba(0,0,0,0.015)',
+        transition: 'all 150ms',
+        width: 60,
+        '&:hover': {
+          borderColor: `${accent}0.6)`,
+          background: `${accent}0.08)`,
+          transform: 'scale(1.05)',
+        },
+      }}
     >
-      <ButtonBase
-        onClick={() => onToggle(skill)}
-        aria-label={`${skill.name}${isSelected ? ' (selected)' : ''}`}
-        aria-pressed={isSelected}
+      {/* Icon with check/rank badges */}
+      <Box
         sx={{
           position: 'relative',
-          width: TILE_SIZE,
-          height: TILE_SIZE,
-          borderRadius: '10px',
-          border: `1.5px solid ${
-            isSelected ? `${accent}0.55)` : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-          }`,
-          background: isSelected
-            ? `${accent}0.12)`
-            : isDark
-              ? 'rgba(255,255,255,0.03)'
-              : 'rgba(0,0,0,0.02)',
+          width: 40,
+          height: 40,
+          borderRadius: '8px',
           overflow: 'hidden',
           flexShrink: 0,
-          transition: 'all 150ms',
-          boxShadow: isSelected ? `0 0 10px ${accent}0.15)` : 'none',
-          '&:hover': {
-            borderColor: `${accent}0.6)`,
-            background: `${accent}0.10)`,
-            transform: 'scale(1.08)',
-            boxShadow: `0 0 12px ${accent}0.15)`,
-          },
         }}
       >
         {skill.icon ? (
@@ -276,34 +274,101 @@ const PickerPassiveTile: React.FC<PickerPassiveTileProps> = ({ skill, isSelected
             }}
           />
         ) : (
-          <Typography
+          <Box
             sx={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-              userSelect: 'none',
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
             }}
           >
-            ?
-          </Typography>
+            <Typography
+              sx={{
+                fontSize: 10,
+                color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
+                userSelect: 'none',
+              }}
+            >
+              ?
+            </Typography>
+          </Box>
         )}
 
+        {/* Selected check badge */}
         {isSelected && (
           <Box
             sx={{
               position: 'absolute',
-              inset: 0,
+              bottom: 1,
+              right: 1,
+              width: 14,
+              height: 14,
+              borderRadius: '50%',
+              background: `${accent}1)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.45)',
             }}
           >
-            <CheckIcon sx={{ fontSize: 18, color: '#fff' }} />
+            <CheckIcon sx={{ fontSize: 10, color: '#fff' }} />
           </Box>
         )}
-      </ButtonBase>
-    </Tooltip>
+
+        {/* Rank badge */}
+        {skill.maxRank && skill.maxRank > 1 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 1,
+              left: 1,
+              background: 'rgba(0,0,0,0.65)',
+              borderRadius: '3px',
+              px: 0.3,
+              py: '1px',
+              lineHeight: 1,
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: 8,
+                fontWeight: 700,
+                color: 'rgba(255,255,255,0.75)',
+                letterSpacing: 0.3,
+              }}
+            >
+              ×{skill.maxRank}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+
+      {/* Name label — always visible, no tooltip needed on mobile */}
+      <Typography
+        sx={{
+          fontSize: 9,
+          fontWeight: 600,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          lineHeight: 1.2,
+          textAlign: 'center',
+          color: isSelected
+            ? isDark
+              ? `${accent}0.90)`
+              : `${accent}1)`
+            : isDark
+              ? 'rgba(255,255,255,0.60)'
+              : 'rgba(0,0,0,0.55)',
+          overflow: 'hidden',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical' as const,
+          width: '100%',
+        }}
+      >
+        {skill.name}
+      </Typography>
+    </ButtonBase>
   );
 };
 
@@ -473,6 +538,8 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
           <Stack spacing={0.5}>
             {searchResults.map((skill) => {
               const selected = selectedIds.has(skill.id);
+              const muted = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.45)';
+              const accentRgb = '56,189,248';
               return (
                 <ButtonBase
                   key={skill.id}
@@ -483,16 +550,24 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                     gap: 1.25,
                     py: 0.75,
                     px: 1,
-                    borderRadius: 1.5,
+                    borderRadius: 1.75,
                     width: '100%',
                     textAlign: 'left',
+                    border: `1px solid ${selected ? `rgba(${accentRgb},0.45)` : 'transparent'}`,
                     background: selected
                       ? isDark
-                        ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                        : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
+                        ? `rgba(${accentRgb},0.10)`
+                        : `rgba(${accentRgb},0.06)`
                       : 'transparent',
+                    transition: 'all 150ms',
                     '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      background: selected
+                        ? isDark
+                          ? `rgba(${accentRgb},0.14)`
+                          : `rgba(${accentRgb},0.09)`
+                        : isDark
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(0,0,0,0.035)',
                     },
                   }}
                 >
@@ -501,12 +576,13 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                       src={resolveIconUrl(skill.icon)}
                       alt=""
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 6,
+                        width: 38,
+                        height: 38,
+                        borderRadius: 9,
                         flexShrink: 0,
-                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
                         objectFit: 'cover',
+                        display: 'block',
                       }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).style.display = 'none';
@@ -515,31 +591,78 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                   ) : (
                     <Box
                       sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '6px',
+                        width: 38,
+                        height: 38,
+                        borderRadius: '9px',
                         bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                         flexShrink: 0,
                       }}
                     />
                   )}
                   <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography
-                      sx={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        lineHeight: 1.3,
-                      }}
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      sx={{ alignItems: 'center', minWidth: 0 }}
                     >
-                      {skill.name}
-                    </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          lineHeight: 1.3,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {skill.name}
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          flexShrink: 0,
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          letterSpacing: 0.6,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          color: muted,
+                          border: `1px solid ${alpha(isDark ? '#fff' : '#000', 0.18)}`,
+                          borderRadius: '4px',
+                          px: 0.5,
+                          py: '1px',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        PASSIVE
+                      </Box>
+                      {skill.maxRank && skill.maxRank > 1 && (
+                        <Box
+                          component="span"
+                          sx={{
+                            flexShrink: 0,
+                            fontSize: 8.5,
+                            fontWeight: 700,
+                            letterSpacing: 0.4,
+                            fontFamily: 'Space Grotesk, Inter, system-ui',
+                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          ×{skill.maxRank}
+                        </Box>
+                      )}
+                    </Stack>
                     {skill.category && (
                       <Typography
                         sx={{
-                          fontSize: 10,
-                          color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                          lineHeight: 1.2,
+                          fontSize: 10.5,
+                          color: muted,
+                          lineHeight: 1.35,
+                          mt: 0.15,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
                         }}
                       >
                         {skill.category}
@@ -547,9 +670,27 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                     )}
                   </Box>
                   {selected && (
-                    <CheckIcon
-                      sx={{ fontSize: 16, color: 'var(--be-accent, #38bdf8)', flexShrink: 0 }}
-                    />
+                    <Stack
+                      direction="row"
+                      spacing={0.25}
+                      sx={{
+                        alignItems: 'center',
+                        flexShrink: 0,
+                        color: `rgba(${accentRgb},1)`,
+                      }}
+                    >
+                      <CheckIcon sx={{ fontSize: 12 }} />
+                      <Typography
+                        sx={{
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          letterSpacing: 0.5,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                        }}
+                      >
+                        SELECTED
+                      </Typography>
+                    </Stack>
                   )}
                 </ButtonBase>
               );
