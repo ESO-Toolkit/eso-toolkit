@@ -15,6 +15,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -60,6 +61,7 @@ const GuideSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const prefersReduced = useReducedMotion();
   const { enqueueSnackbar } = useSnackbar();
   const setup = useSelector(selectActiveSetup);
@@ -134,7 +136,7 @@ const GuideSectionComponent: React.FC = () => {
           value={guide.content}
           onChange={(e) => dispatch(setGuideContent(e.target.value))}
           slotProps={{ htmlInput: { 'aria-label': 'Build guide content', maxLength: 50000 } }}
-          sx={glassInputSx(isDark)}
+          sx={glassInputSx(isDark, isMobile)}
         />
       </Box>
 
@@ -157,7 +159,7 @@ const GuideSectionComponent: React.FC = () => {
             value={guide.youtubeUrl}
             onChange={(e) => dispatch(setGuideYoutubeUrl(e.target.value))}
             slotProps={{ htmlInput: { 'aria-label': 'YouTube video URL' } }}
-            sx={glassInputSx(isDark)}
+            sx={glassInputSx(isDark, isMobile)}
           />
         </Box>
 
@@ -172,7 +174,7 @@ const GuideSectionComponent: React.FC = () => {
             value={guide.bannerImageUrl}
             onChange={(e) => dispatch(setGuideBannerUrl(e.target.value))}
             slotProps={{ htmlInput: { 'aria-label': 'Banner image URL' } }}
-            sx={glassInputSx(isDark)}
+            sx={glassInputSx(isDark, isMobile)}
           />
           {guide.bannerImageUrl && !sanitizeImageUrl(guide.bannerImageUrl) && (
             <Typography

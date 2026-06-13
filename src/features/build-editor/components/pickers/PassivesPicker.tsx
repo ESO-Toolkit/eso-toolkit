@@ -30,6 +30,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -417,7 +418,9 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
   selectedIds,
   onToggle,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [activeTab, setActiveTab] = useState(0);
   const [search, setSearch] = useState('');
 
@@ -519,7 +522,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
             placeholder="Search passives..."
             size="small"
             fullWidth
-            autoFocus
+            autoFocus={!isMobile}
             slotProps={{
               input: {
                 startAdornment: (
@@ -533,7 +536,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
               '& .MuiOutlinedInput-root': {
                 background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
                 borderRadius: 2,
-                fontSize: 13,
+                fontSize: isMobile ? 16 : 13,
               },
             }}
           />

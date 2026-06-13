@@ -1242,8 +1242,8 @@ export const BuildCompletionHeader: React.FC = () => {
                 multiline
                 minRows={3}
                 maxRows={8}
-                autoFocus
-                sx={glassInputSx(isDark)}
+                autoFocus={!isMobile}
+                sx={glassInputSx(isDark, isMobile)}
               />
 
               {importError && (
@@ -1422,7 +1422,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 maxRows={8}
                 slotProps={{ input: { readOnly: true } }}
                 onFocus={(e) => e.target.select()}
-                sx={glassInputSx(isDark)}
+                sx={glassInputSx(isDark, isMobile)}
               />
               <Stack
                 direction="row"
@@ -1516,8 +1516,8 @@ export const BuildCompletionHeader: React.FC = () => {
                 maxRows={12}
                 slotProps={{ input: { readOnly: true } }}
                 sx={{
-                  ...glassInputSx(isDark),
-                  '& textarea': { fontFamily: 'monospace', fontSize: 11 },
+                  ...glassInputSx(isDark, isMobile),
+                  '& textarea': { fontFamily: 'monospace', fontSize: isMobile ? 16 : 11 },
                 }}
               />
               <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end' }}>
@@ -1642,7 +1642,7 @@ export const BuildCompletionHeader: React.FC = () => {
                 value={tempLink}
                 slotProps={{ input: { readOnly: true } }}
                 onFocus={(e) => e.target.select()}
-                sx={glassInputSx(isDark)}
+                sx={glassInputSx(isDark, isMobile)}
               />
               <Stack
                 direction="row"

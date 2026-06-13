@@ -142,6 +142,7 @@ const SetupTabContent = React.memo<SetupTabContentProps>(function SetupTabConten
             width: 120,
             '& .MuiOutlinedInput-root': {
               fontSize: 13,
+              '@media (max-width: 600px)': { fontSize: 16 },
               fontFamily: 'Space Grotesk, Inter, system-ui',
               fontWeight: 600,
               borderRadius: '99px',
