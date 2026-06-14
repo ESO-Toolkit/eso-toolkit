@@ -33,6 +33,7 @@ fragment UserReportSummary on Report {
   visibility
   segments
   zone {
+    id
     name
   }
   owner {
@@ -74,12 +75,15 @@ query getUserReports($limit: Int, $page: Int, $userID: Int) {
   }
 }
 
-query getLatestReports($limit: Int, $page: Int) {
+query getLatestReports($limit: Int, $page: Int, $startTime: Float, $endTime: Float, $zoneID: Int) {
   reportData {
-    reports(limit: $limit, page: $page) {
+    reports(limit: $limit, page: $page, startTime: $startTime, endTime: $endTime, zoneID: $zoneID) {
       data {
         ...UserReportSummary
       }
+      total
+      from
+      to
       current_page
       per_page
       last_page

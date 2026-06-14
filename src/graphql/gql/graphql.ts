@@ -2944,7 +2944,7 @@ export type UserReportSummaryFragment = {
   title: string;
   visibility: string;
   segments: number;
-  zone?: { __typename?: 'Zone'; name: string } | null;
+  zone?: { __typename?: 'Zone'; id: number; name: string } | null;
   owner?: { __typename?: 'User'; name: string } | null;
 };
 
@@ -3105,6 +3105,9 @@ export type GetUserReportsQuery = {
 export type GetLatestReportsQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>;
   page?: InputMaybe<Scalars['Int']['input']>;
+  startTime?: InputMaybe<Scalars['Float']['input']>;
+  endTime?: InputMaybe<Scalars['Float']['input']>;
+  zoneID?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 export type GetLatestReportsQuery = {
@@ -3113,6 +3116,9 @@ export type GetLatestReportsQuery = {
     __typename?: 'ReportData';
     reports?: {
       __typename?: 'ReportPagination';
+      total: number;
+      from?: number | null;
+      to?: number | null;
       current_page: number;
       per_page: number;
       last_page: number;
@@ -3125,7 +3131,7 @@ export type GetLatestReportsQuery = {
         title: string;
         visibility: string;
         segments: number;
-        zone?: { __typename?: 'Zone'; name: string } | null;
+        zone?: { __typename?: 'Zone'; id: number; name: string } | null;
         owner?: { __typename?: 'User'; name: string } | null;
       } | null> | null;
     } | null;
@@ -3817,7 +3823,10 @@ export const UserReportSummaryFragmentDoc = {
             name: { kind: 'Name', value: 'zone' },
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
             },
           },
           {
@@ -6973,7 +6982,10 @@ export const GetUserReportsDocument = {
             name: { kind: 'Name', value: 'zone' },
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
             },
           },
           {
@@ -7007,6 +7019,21 @@ export const GetLatestReportsDocument = {
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
         },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'startTime' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Float' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'endTime' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Float' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'zoneID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -7031,6 +7058,21 @@ export const GetLatestReportsDocument = {
                       name: { kind: 'Name', value: 'page' },
                       value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
                     },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'startTime' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'startTime' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'endTime' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'endTime' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'zoneID' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'zoneID' } },
+                    },
                   ],
                   selectionSet: {
                     kind: 'SelectionSet',
@@ -7048,6 +7090,9 @@ export const GetLatestReportsDocument = {
                           ],
                         },
                       },
+                      { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'from' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'to' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'current_page' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'per_page' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'last_page' } },
@@ -7079,7 +7124,10 @@ export const GetLatestReportsDocument = {
             name: { kind: 'Name', value: 'zone' },
             selectionSet: {
               kind: 'SelectionSet',
-              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
             },
           },
           {
