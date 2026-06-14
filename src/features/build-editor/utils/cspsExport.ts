@@ -28,6 +28,8 @@ import {
   type CSPSSkillEntry,
   type CSPSSavedVariables,
 } from '../../loadout-manager/utils/cspsConverter';
+import { EQUIP_SLOTS } from '../data/esoStaticData';
+import { ARMOR_WEIGHT_TO_ESO_TYPE, resolveApparelWeight } from '../data/setArmorWeights';
 import type {
   Build,
   BuildChampionPoints,
@@ -106,6 +108,12 @@ function serializeCPPassives(cp: BuildChampionPoints): string {
   return entries.join(';');
 }
 
+// Apparel slot indices (armor pieces carry a light/medium/heavy weight that
+// CSPS stores in the gear `type` field). Weapons/jewelry have no armor weight.
+const APPAREL_SLOT_SET = new Set<number>(
+  EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot),
+);
+
 /**
  * Convert build editor gear config to CSPS gear entries.
  */
@@ -117,9 +125,16 @@ function convertGearConfigToCSPS(gear: Record<number, GearPiece>): Record<number
     const setId = typeof piece.id === 'string' ? parseInt(piece.id, 10) : (piece.id ?? 0);
     if (!setId || setId <= 0) continue;
 
+    // Serialize the resolved armor weight into CSPS `type` so the export isn't
+    // lossy now that weight is authoritative (locked weight wins over stored).
+    // Non-apparel slots have no armor weight → keep 0.
+    const type = APPAREL_SLOT_SET.has(slot)
+      ? ARMOR_WEIGHT_TO_ESO_TYPE[resolveApparelWeight(piece.id, piece.weight)]
+      : 0;
+
     result[slot] = {
       setId,
-      type: 0,
+      type,
       trait: piece.trait ? parseInt(piece.trait, 10) || 0 : 0,
       quality: 0,
       enchant: piece.enchant ? parseInt(piece.enchant, 10) || 0 : 0,

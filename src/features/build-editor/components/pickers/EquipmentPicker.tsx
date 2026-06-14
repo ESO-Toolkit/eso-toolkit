@@ -27,6 +27,7 @@ import {
   isTwoHandedWeapon,
 } from '../../../loadout-manager/utils/itemIconResolver';
 import { EQUIP_SLOTS, type EquipSlotDef } from '../../data/esoStaticData';
+import { getLockedArmorWeight, resolveApparelWeight } from '../../data/setArmorWeights';
 import { GearSlotCard } from '../primitives/GearSlotCard';
 
 import { GearPickerDialog } from './GearPicker';
@@ -45,6 +46,44 @@ const BACK_MAIN = 20;
 const BACK_OFF = 21;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Build the GearPiece for a slot when the user picks a new item `itemId`.
+ *
+ * Carries over ONLY the user's trait/enchant (and, for apparel, weight). It
+ * deliberately does NOT spread the previous piece: a stale `link` field encodes
+ * the OLD item id, and consumers like GearSelector resolve the slot's item id
+ * from `link` BEFORE `id` — so keeping it would leave the slot pointing at the
+ * previous item after a replace. The fresh `id` is the single source of truth.
+ *
+ * Weight: a set locked to one armor weight in-game wins (mythic / overland drop)
+ * so exports + stats stay correct even though the chip is read-only. For a free
+ * (all-weight) replacement we carry the previous piece's RESOLVED/displayed
+ * weight, not its raw stored value — an imported locked piece is shown via the
+ * lock lookup but may have no stored weight, and carrying the raw blank would
+ * silently drop to Heavy. Weight is apparel-only (jewelry/weapons have none).
+ */
+export function buildReplacementPiece(
+  prev: GearPiece | undefined,
+  itemId: number,
+  category: EquipSlotDef['category'],
+): GearPiece {
+  const next: GearPiece = { id: itemId };
+  if (prev?.trait !== undefined) next.trait = prev.trait;
+  if (prev?.enchant !== undefined) next.enchant = prev.enchant;
+
+  // A locked set's jewelry/weapon (e.g. a Mother's Sorrow ring/staff) must NOT
+  // get armor-weight metadata — downstream (URL encoding, roster display) treats
+  // any piece.weight as real, so only stamp it on apparel slots.
+  if (category === 'apparel') {
+    // The previous piece's DISPLAYED weight (lock wins over stored/blank), used
+    // as the fallback so a free replacement inherits what the user actually saw.
+    const prevDisplayed = prev?.id != null ? resolveApparelWeight(prev.id, prev.weight) : undefined;
+    // For the new item: its own lock wins, else the previous displayed weight.
+    next.weight = resolveApparelWeight(itemId, prevDisplayed);
+  }
+  return next;
+}
 
 const slotDef = (idx: number): EquipSlotDef =>
   EQUIP_SLOTS.find((s) => s.slot === idx) ?? {
@@ -81,6 +120,11 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
   const info = itemId ? getItemInfo(itemId) : null;
   const itemName = itemId ? deriveItemNameForSlot(itemId, def.slotType) : null;
 
+  // Sets that only exist in one armor weight in-game (mythics, overland/
+  // dungeon/trial drops) are locked — the chip shows their fixed weight and
+  // can't be cycled. Crafted + monster sets return null here = free choice.
+  const lockedWeight = getLockedArmorWeight(info?.setName);
+
   return (
     <GearSlotCard
       slotDef={def}
@@ -89,7 +133,8 @@ const SlotRowComponent: React.FC<SlotRowProps> = ({
       setName={info?.setName ?? null}
       isDisabled={Boolean(disabledReason)}
       disabledReason={disabledReason}
-      weight={piece?.weight}
+      weight={lockedWeight ?? piece?.weight}
+      lockedWeight={lockedWeight}
       onWeightChange={onWeightChange ? (w: ArmorWeight) => onWeightChange(def.slot, w) : undefined}
       trait={piece?.trait}
       onTraitChange={
@@ -230,7 +275,8 @@ export const EquipmentPicker: React.FC<EquipmentPickerProps> = ({
     (itemId: number): void => {
       if (!pickerSlot) return;
       const slot = pickerSlot.slot;
-      const next: GearConfig = { ...gearRef.current, [slot]: { id: itemId } };
+      const nextPiece = buildReplacementPiece(gearRef.current[slot], itemId, pickerSlot.category);
+      const next: GearConfig = { ...gearRef.current, [slot]: nextPiece };
       // Sync fast-path auto-clear (local-data items). The useEffect above
       // handles the uncached case retroactively once the UESP fetch lands.
       if ((slot === FRONT_MAIN || slot === BACK_MAIN) && isTwoHandedWeapon(itemId)) {

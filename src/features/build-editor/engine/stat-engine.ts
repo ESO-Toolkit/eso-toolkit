@@ -7,6 +7,7 @@
 
 import type { GearConfig } from '../../loadout-manager/types/loadout.types';
 import { EQUIP_SLOTS } from '../data/esoStaticData';
+import { resolveApparelWeight } from '../data/setArmorWeights';
 import type { Build, BuildSetup, GameMode } from '../types/build.types';
 
 import {
@@ -57,8 +58,8 @@ export function countArmorWeights(gear: GearConfig): ArmorWeightCounts {
   for (const slot of APPAREL_SLOTS) {
     const piece = gear[slot];
     if (!piece?.id) continue;
-    const weight = piece.weight ?? 'heavy';
-    counts[weight]++;
+    // Locked weight wins over a stored/absent weight — see resolveApparelWeight.
+    counts[resolveApparelWeight(piece.id, piece.weight)]++;
   }
   return counts;
 }
