@@ -51,6 +51,7 @@ import {
 import { PlayerTalent } from '../types/playerDetails';
 
 import { abilityIdMapper } from './abilityIdMapper';
+import { resolveScribingSkillLine } from './scribingSkillLineResolver';
 import { findSkillByName, findSkillById, SkillNode, getClassKey } from './skillLinesRegistry';
 
 // SkillNode type is now imported from skillLinesRegistry
@@ -305,6 +306,21 @@ export function buildTooltipPropsFromAbilityId(
     });
   }
 
+  // Scribed grimoire morphs (e.g. "Dazing Trample") never match the registry by
+  // id or by their morphed name, so resolve their owning skill line from the
+  // grimoire icon instead of falling through to "Unknown Skill Line".
+  const grimoireLine = resolveScribingSkillLine(abilityId, abilityData?.icon);
+  if (grimoireLine && abilityData?.name) {
+    return mapSkillToTooltipProps({
+      className: grimoireLine.className,
+      skillLineName: grimoireLine.skillLineName,
+      node: { name: abilityData.name },
+      abilityId,
+      iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
+      scribedSkillData: finalScribedSkillData,
+    });
+  }
+
   // Fallback to basic tooltip with just ability data (only if mapper has loaded)
   if (abilityData) {
     return {
@@ -392,6 +408,22 @@ export function buildTooltipPropsFromClassAndName(
     return {
       ...weaponFallback,
     };
+  }
+
+  // Scribed grimoire morphs resolve to their owning skill line via the grimoire
+  // icon even though the morphed name is absent from the registry.
+  const grimoireLine = resolveScribingSkillLine(abilityData?.gameID, abilityData?.icon);
+  if (grimoireLine) {
+    return mapSkillToTooltipProps({
+      className: grimoireLine.className,
+      skillLineName: grimoireLine.skillLineName,
+      node: { name: abilityName },
+      abilityId: abilityData?.gameID,
+      iconUrl: abilityData?.gameID
+        ? abilityIdMapper.getIconUrl(abilityData.gameID) || undefined
+        : undefined,
+      scribedSkillData: finalScribedSkillData,
+    });
   }
 
   // If this is a scribed skill but not found in skill lines, create a basic scribed skill tooltip

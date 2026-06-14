@@ -266,7 +266,9 @@ export enum AbilityId {
 
   // Assault
   WAR_HORN = 38563,
-  TRAMPLE = 46947,
+  // Scribing grimoire base (46947 is an unrelated NPC "Trample"; the Assault
+  // grimoire base is 217667, matching src/types/abilities.ts).
+  TRAMPLE = 217667,
   RAPID_MANEUVER = 38566,
   VIGOR = 61503,
   CALTROPS = 38549,

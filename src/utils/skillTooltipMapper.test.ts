@@ -431,6 +431,27 @@ describe('skillTooltipMapper', () => {
       });
     });
 
+    it('should resolve scribed grimoire morphs to their skill line instead of "Unknown Skill Line"', () => {
+      // 220543 = "Dazing Trample", a Trample grimoire morph that is absent from the
+      // registry by both id and (morphed) name. Before the grimoire-icon fallback it
+      // rendered as "Unknown Skill Line".
+      const abilityData = {
+        gameID: 220543,
+        name: 'Dazing Trample',
+        icon: 'ability_grimoire_assault',
+      };
+
+      mockAbilityIdMapper.getAbilityById.mockReturnValue(abilityData);
+      mockAbilityIdMapper.getIconUrl.mockReturnValue('https://example.com/trample.png');
+      mockFindSkillByName.mockReturnValue(null);
+
+      const result = buildTooltipPropsFromAbilityId(220543);
+
+      expect(result?.name).toBe('Dazing Trample');
+      expect(result?.lineText).toBe('alliance-war — Assault');
+      expect(result?.abilityId).toBe(220543);
+    });
+
     it('should handle weapon skill lines', () => {
       const abilityData = {
         gameID: 126,
@@ -546,6 +567,21 @@ describe('skillTooltipMapper', () => {
           { label: 'Radius', value: '18 meters' },
         ],
       });
+    });
+
+    it('should resolve scribed grimoire morphs by name via the grimoire icon', () => {
+      mockFindSkillByName.mockReturnValue(null);
+      // 217705 = "Magical Banner", a Banner Bearer (Support) grimoire morph.
+      mockAbilityIdMapper.getAbilityByName.mockReturnValue({
+        gameID: 217705,
+        name: 'Magical Banner',
+        icon: 'ability_grimoire_support',
+      });
+
+      const result = buildTooltipPropsFromClassAndName('', 'Magical Banner');
+
+      expect(result?.name).toBe('Magical Banner');
+      expect(result?.lineText).toBe('alliance-war — Support');
     });
 
     it('should return null for unknown abilities', () => {
