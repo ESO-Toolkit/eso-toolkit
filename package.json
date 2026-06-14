@@ -34,7 +34,7 @@
     "@types/react-dom": "^19.2.3",
     "axios": "^1.16.1",
     "comlink": "^4.4.2",
-    "date-fns": "^4.2.1",
+    "date-fns": "^4.4.0",
     "dompurify": "^3.4.7",
     "echarts": "^6.0.0",
     "framer-motion": "^12.39.0",
