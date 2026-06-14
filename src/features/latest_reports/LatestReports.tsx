@@ -36,12 +36,14 @@ import {
   formatReportDateTime,
   formatReportDuration,
   getReportVisibilityColor,
-  isReportEmpty,
+  partitionReportsByData,
 } from '../reports/reportFormatting';
 import { useReportPageLayout } from '../reports/useReportPageLayout';
 
 interface LatestReportsState {
   reports: UserReportSummaryFragment[];
+  /** Reports on the current page hidden because they contain no combat data. */
+  hiddenEmptyCount: number;
   loading: boolean;
   error: string | null;
   pagination: {
@@ -67,6 +69,7 @@ export const LatestReports: React.FC = () => {
 
   const [state, setState] = useState<LatestReportsState>({
     reports: [],
+    hiddenEmptyCount: 0,
     loading: true,
     error: null,
     pagination: {
@@ -109,12 +112,18 @@ export const LatestReports: React.FC = () => {
           return;
         }
 
+        const fetchedReports = (reportPagination.data || []).filter(
+          (report: UserReportSummaryFragment | null): report is UserReportSummaryFragment =>
+            report !== null,
+        );
+        // Hide logs with no combat data (failed uploads/parses on ESO Logs) —
+        // there is nothing to view, so listing them is just a dead end.
+        const { reportsWithData, emptyCount } = partitionReportsByData(fetchedReports);
+
         setState((prev) => ({
           ...prev,
-          reports: (reportPagination.data || []).filter(
-            (report: UserReportSummaryFragment | null): report is UserReportSummaryFragment =>
-              report !== null,
-          ),
+          reports: reportsWithData,
+          hiddenEmptyCount: emptyCount,
           loading: false,
           pagination: {
             currentPage: reportPagination.current_page || 1,
@@ -290,31 +299,54 @@ export const LatestReports: React.FC = () => {
             )}
           </Box>
 
-          {state.reports.length > 0 ? (
-            <>
-              <Box
-                sx={{
-                  flexDirection: isDesktop ? 'row' : 'column',
-                  justifyContent: 'space-between',
-                  gap: isDesktop ? 2 : 1.5,
-                  alignItems: isDesktop ? 'center' : 'flex-start',
-                  display: 'flex',
-                  mb: isDesktop ? 3 : 2,
-                }}
-              >
+          {(state.reports.length > 0 || state.hiddenEmptyCount > 0) && (
+            <Box
+              sx={{
+                flexDirection: isDesktop ? 'row' : 'column',
+                justifyContent: 'space-between',
+                gap: isDesktop ? 2 : 1.5,
+                alignItems: isDesktop ? 'center' : 'flex-start',
+                display: 'flex',
+                mb: isDesktop ? 3 : 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, flexWrap: 'wrap' }}>
                 <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                   Page {state.pagination.currentPage}
                   {state.pagination.hasMorePages ? '+' : ` of ${state.pagination.totalPages}`}
                 </Typography>
-
-                <Chip
-                  variant="outlined"
-                  color="primary"
-                  label={`${state.pagination.perPage} per page`}
-                  sx={{ fontWeight: 500 }}
-                />
+                {state.hiddenEmptyCount > 0 && (
+                  <Tooltip
+                    title="Logs with no combat data — usually caused by an upload or parsing issue on ESO Logs — are hidden from this list because there is nothing to view"
+                    arrow
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        cursor: 'help',
+                        textDecoration: 'underline dotted',
+                        textUnderlineOffset: '3px',
+                      }}
+                    >
+                      {state.hiddenEmptyCount} empty {state.hiddenEmptyCount === 1 ? 'log' : 'logs'}{' '}
+                      hidden
+                    </Typography>
+                  </Tooltip>
+                )}
               </Box>
 
+              <Chip
+                variant="outlined"
+                color="primary"
+                label={`${state.pagination.perPage} per page`}
+                sx={{ fontWeight: 500 }}
+              />
+            </Box>
+          )}
+
+          {state.reports.length > 0 ? (
+            <>
               {isDesktop ? (
                 <TableContainer
                   component={Paper}
@@ -406,20 +438,6 @@ export const LatestReports: React.FC = () => {
                                 >
                                   {report.title || 'Untitled Report'}
                                 </Typography>
-                                {isReportEmpty(report) && (
-                                  <Tooltip
-                                    title="This log may contain no fight data due to an upload or parsing issue on ESO Logs"
-                                    arrow
-                                  >
-                                    <Chip
-                                      label="Empty Log"
-                                      size="small"
-                                      color="warning"
-                                      variant="outlined"
-                                      sx={{ flexShrink: 0, fontSize: '0.7rem', height: 20 }}
-                                    />
-                                  </Tooltip>
-                                )}
                               </Box>
                               <Typography
                                 variant="caption"
@@ -482,26 +500,35 @@ export const LatestReports: React.FC = () => {
               ) : (
                 <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
               )}
-
-              {/* Pagination */}
-              <Box sx={{ mt: isDesktop ? 3 : 2, justifyContent: 'center', display: 'flex' }}>
-                <Pagination
-                  count={state.pagination.totalPages}
-                  page={state.pagination.currentPage}
-                  onChange={handlePageChange}
-                  disabled={state.loading}
-                  color="primary"
-                  size={isDesktop ? 'large' : 'medium'}
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      borderRadius: 2,
-                    },
-                  }}
-                />
-              </Box>
             </>
           ) : (
-            !state.loading && <Alert severity="info">No reports found.</Alert>
+            !state.loading && (
+              <Alert severity="info">
+                {state.hiddenEmptyCount > 0
+                  ? 'Every report on this page contains no combat data, so they were all hidden. Try another page.'
+                  : 'No reports found.'}
+              </Alert>
+            )
+          )}
+
+          {/* Pagination — kept visible even when a page has nothing to show, so
+              users can still navigate away from a fully-hidden page. */}
+          {state.pagination.totalPages > 1 && (
+            <Box sx={{ mt: isDesktop ? 3 : 2, justifyContent: 'center', display: 'flex' }}>
+              <Pagination
+                count={state.pagination.totalPages}
+                page={state.pagination.currentPage}
+                onChange={handlePageChange}
+                disabled={state.loading}
+                color="primary"
+                size={isDesktop ? 'large' : 'medium'}
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    borderRadius: 2,
+                  },
+                }}
+              />
+            </Box>
           )}
 
           {/* Loading overlay */}

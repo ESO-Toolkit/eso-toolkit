@@ -24,6 +24,7 @@ const makeReport = (code: string, visibility = 'public'): ProfileReportSummary =
   startTime: 1_700_000_000_000,
   endTime: 1_700_000_360_000,
   visibility,
+  segments: 3,
   zone: { name: 'Rockgrove' },
   owner: { id: 42, name: 'Tester' },
 });
