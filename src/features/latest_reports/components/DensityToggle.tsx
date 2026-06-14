@@ -23,7 +23,6 @@ export const DensityToggle: React.FC<DensityToggleProps> = ({ value, onChange })
         aria-label={nextLabel}
         aria-pressed={isCompact}
         color={isCompact ? 'primary' : 'default'}
-        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
       >
         {isCompact ? <DensitySmallIcon fontSize="small" /> : <DensityMediumIcon fontSize="small" />}
       </IconButton>

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import type { LatestReportsFilters } from '../hooks/useLatestReportsUrlState';
 
-import { DateRangeFilter, type DateRangeValue } from './DateRangeFilter';
+import { DateRangeFilter, isInvalidDateRange, type DateRangeValue } from './DateRangeFilter';
 import { ZoneFilterSelect } from './ZoneFilterSelect';
 
 interface MobileFilterSheetProps {
@@ -45,7 +45,10 @@ export const MobileFilterSheet: React.FC<MobileFilterSheetProps> = ({
     }
   }, [open, filters.zoneId, filters.range, filters.customFrom, filters.customTo]);
 
+  const invalidRange = isInvalidDateRange(draftDate);
+
   const handleApply = (): void => {
+    if (invalidRange) return;
     onApply({ zoneId: draftZoneId, date: draftDate });
     onClose();
   };
@@ -69,6 +72,10 @@ export const MobileFilterSheet: React.FC<MobileFilterSheetProps> = ({
             pt: 1,
             pb: 'calc(16px + env(safe-area-inset-bottom))',
             maxHeight: '85vh',
+            // Flex column so the controls scroll while the action row stays pinned
+            // on short / landscape viewports.
+            display: 'flex',
+            flexDirection: 'column',
           },
         },
       }}
@@ -86,7 +93,7 @@ export const MobileFilterSheet: React.FC<MobileFilterSheetProps> = ({
         </IconButton>
       </Box>
 
-      <Stack spacing={2.5} sx={{ py: 1 }}>
+      <Stack spacing={2.5} sx={{ py: 1, overflowY: 'auto', flexGrow: 1, minHeight: 0 }}>
         <Box>
           <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
             Zone
@@ -104,11 +111,11 @@ export const MobileFilterSheet: React.FC<MobileFilterSheetProps> = ({
 
       <Divider sx={{ my: 1.5 }} />
 
-      <Box sx={{ display: 'flex', gap: 1.5, pb: 1 }}>
+      <Box sx={{ display: 'flex', gap: 1.5, pb: 1, flexShrink: 0 }}>
         <Button variant="outlined" fullWidth onClick={handleReset}>
           Reset
         </Button>
-        <Button variant="contained" fullWidth onClick={handleApply}>
+        <Button variant="contained" fullWidth onClick={handleApply} disabled={invalidRange}>
           Apply
         </Button>
       </Box>

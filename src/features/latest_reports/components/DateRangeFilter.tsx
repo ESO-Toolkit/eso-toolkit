@@ -25,6 +25,16 @@ export interface DateRangeValue {
   customTo: string | null;
 }
 
+/** True when a custom range has both bounds and they are inverted (from > to). */
+export function isInvalidDateRange(value: DateRangeValue): boolean {
+  return (
+    value.range === 'custom' &&
+    value.customFrom !== null &&
+    value.customTo !== null &&
+    value.customFrom > value.customTo
+  );
+}
+
 interface DateRangeFilterProps {
   value: DateRangeValue;
   onChange: (value: DateRangeValue) => void;
@@ -38,6 +48,7 @@ const PRESET_BUTTONS: ReadonlyArray<DateRangePreset> = DATE_RANGE_PRESETS;
 const DateRangeBody: React.FC<DateRangeFilterProps> = ({ value, onChange }) => {
   const fromId = useId();
   const toId = useId();
+  const invalidRange = isInvalidDateRange(value);
 
   const handlePreset = (next: DateRangePreset): void => {
     if (next === 'custom') {
@@ -79,6 +90,7 @@ const DateRangeBody: React.FC<DateRangeFilterProps> = ({ value, onChange }) => {
             size="small"
             value={value.customFrom ?? ''}
             onChange={(event) => onChange({ ...value, customFrom: event.target.value || null })}
+            error={invalidRange}
             slotProps={{
               inputLabel: { shrink: true },
               htmlInput: { max: value.customTo ?? undefined },
@@ -92,6 +104,8 @@ const DateRangeBody: React.FC<DateRangeFilterProps> = ({ value, onChange }) => {
             size="small"
             value={value.customTo ?? ''}
             onChange={(event) => onChange({ ...value, customTo: event.target.value || null })}
+            error={invalidRange}
+            helperText={invalidRange ? 'Start date must be on or before the end date' : undefined}
             slotProps={{
               inputLabel: { shrink: true },
               htmlInput: { min: value.customFrom ?? undefined },

@@ -14,6 +14,8 @@ interface ActiveFilterBarProps {
   visibleCount: number;
   /** Whether the (debounced) text query is non-empty. */
   searchActive: boolean;
+  /** True while the raw query is still settling into the debounced value. */
+  searchDebouncing?: boolean;
   onRemoveZone: () => void;
   onRemoveDate: () => void;
   onClearAll: () => void;
@@ -35,6 +37,7 @@ export const ActiveFilterBar: React.FC<ActiveFilterBarProps> = ({
   zones,
   visibleCount,
   searchActive,
+  searchDebouncing = false,
   onRemoveZone,
   onRemoveDate,
   onClearAll,
@@ -121,10 +124,14 @@ export const ActiveFilterBar: React.FC<ActiveFilterBarProps> = ({
         >
           <Chip
             icon={<SearchIcon />}
-            label={`Searching ${visibleCount}`}
+            // Trailing ellipsis while the debounce settles, so a transient
+            // "Searching 0" mid-type does not read as "no matches". The match
+            // count is announced to screen readers by the page-level live region
+            // (in LatestReports), so this chip is intentionally visual-only to
+            // avoid double-announcing.
+            label={`Searching ${visibleCount}${searchDebouncing ? '…' : ''}`}
             color="info"
             variant="outlined"
-            // Status, not a filter — announced via the live region, not deletable.
             sx={{ ...chipSx, cursor: 'help' }}
           />
         </Tooltip>

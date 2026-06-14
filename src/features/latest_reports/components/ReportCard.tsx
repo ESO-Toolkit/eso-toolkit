@@ -57,10 +57,12 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onSelect, showOw
         gap: 'var(--report-gap, 12px)',
         height: '100%',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        // Mirror the page container's cyan gradient (135deg) at a lower opacity
+        // so cards read as surfaces ON the container rather than detached panels.
         background: (theme: Theme) =>
           theme.palette.mode === 'dark'
-            ? 'linear-gradient(rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
-            : 'linear-gradient(135deg, rgb(110 170 240 / 18%) 0%, rgb(152 131 227 / 10%) 50%, rgb(173 192 255 / 6%) 100%)',
+            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.06) 0%, rgba(0, 225, 255, 0.06) 100%)'
+            : 'linear-gradient(135deg, rgba(219, 234, 254, 0.4) 0%, rgba(224, 242, 254, 0.4) 100%)',
         '&:hover': {
           boxShadow: (theme: Theme) => theme.shadows[4],
           transform: 'translateY(-2px)',
@@ -142,7 +144,8 @@ const CardField: React.FC<{ label: string; value: string }> = ({ label, value })
     <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
       {label}
     </Typography>
-    <Typography variant="body2" noWrap>
+    {/* title gives a hover affordance for values clipped by noWrap (long owner/zone). */}
+    <Typography variant="body2" noWrap title={value}>
       {value}
     </Typography>
   </Box>

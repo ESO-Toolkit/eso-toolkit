@@ -19,7 +19,12 @@ export const ReportsResultsMeta: React.FC<ReportsResultsMetaProps> = ({
   isDesktop,
 }) => {
   const { currentPage, totalPages, totalReports, perPage, hasMorePages } = pagination;
-  const pageLabel = hasMorePages ? `Page ${currentPage}+` : `Page ${currentPage} of ${totalPages}`;
+  // The community feed returns no exact total (total / last_page come back -1),
+  // so when more pages exist we show the current page without a fixed count.
+  const pageLabel = hasMorePages ? `Page ${currentPage}` : `Page ${currentPage} of ${totalPages}`;
+  const pageTitle = hasMorePages
+    ? 'More pages are available; the total report count is not provided by ESO Logs.'
+    : undefined;
 
   return (
     <Box
@@ -32,7 +37,11 @@ export const ReportsResultsMeta: React.FC<ReportsResultsMetaProps> = ({
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1.5, flexWrap: 'wrap' }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant="body2"
+          title={pageTitle}
+          sx={{ color: 'text.secondary', cursor: pageTitle ? 'help' : 'default' }}
+        >
           {pageLabel}
         </Typography>
         {totalReports > 0 && (

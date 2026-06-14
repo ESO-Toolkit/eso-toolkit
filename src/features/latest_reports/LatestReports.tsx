@@ -68,7 +68,7 @@ export const LatestReports: React.FC = () => {
     customTo: filters.customTo,
   });
 
-  const { filtered, visibleCount, loadedCount, appliedQuery } = useFilteredReports(
+  const { filtered, visibleCount, loadedCount, appliedQuery, isDebouncing } = useFilteredReports(
     reports,
     filters.q,
   );
@@ -266,19 +266,21 @@ export const LatestReports: React.FC = () => {
               onOpenMobileFilters={() => setMobileFiltersOpen(true)}
               searchInputRef={searchInputRef}
             />
-          </Box>
 
-          {/* Active filter chips */}
-          <ActiveFilterBar
-            filters={filters}
-            zones={zones}
-            visibleCount={visibleCount}
-            searchActive={searchActive}
-            onRemoveZone={() => setFilters({ zoneId: null })}
-            onRemoveDate={() => setFilters({ range: 'all', customFrom: null, customTo: null })}
-            onClearAll={clearServerFilters}
-            searchInputRef={searchInputRef}
-          />
+            {/* Active filter chips — kept inside the sticky region so applied
+                filters stay visible while the results scroll. */}
+            <ActiveFilterBar
+              filters={filters}
+              zones={zones}
+              visibleCount={visibleCount}
+              searchActive={searchActive}
+              searchDebouncing={isDebouncing}
+              onRemoveZone={() => setFilters({ zoneId: null })}
+              onRemoveDate={() => setFilters({ range: 'all', customFrom: null, customTo: null })}
+              onClearAll={clearServerFilters}
+              searchInputRef={searchInputRef}
+            />
+          </Box>
 
           {/* Results meta */}
           {(reports.length > 0 || hiddenEmptyCount > 0) && (
@@ -313,6 +315,9 @@ export const LatestReports: React.FC = () => {
             ref={resultsRef}
             tabIndex={-1}
             aria-busy={loading}
+            aria-label={`Reports, page ${pagination.currentPage}${
+              searchActive ? `, ${visibleCount} matching the search` : ''
+            }`}
             style={DENSITY_VARS[density]}
             sx={{
               outline: 'none',
@@ -350,22 +355,31 @@ export const LatestReports: React.FC = () => {
               />
             ) : null}
 
-            {/* Re-fetch overlay (keeps prior results visible) */}
+            {/* Re-fetch indicator — a non-blocking corner pill so prior results
+                stay fully interactive (scroll/click) while new data loads. */}
             {loading && reports.length > 0 && (
               <Box
                 sx={{
                   position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'flex-start',
-                  pt: 8,
-                  bgcolor: (t: Theme) =>
-                    t.palette.mode === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.6)',
+                  top: 8,
+                  right: 8,
                   zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: 999,
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: (t: Theme) => t.shadows[2],
                 }}
               >
-                <CircularProgress aria-label="Loading reports" />
+                <CircularProgress size={16} aria-label="Loading reports" />
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Refreshing…
+                </Typography>
               </Box>
             )}
           </Box>
@@ -387,7 +401,13 @@ export const LatestReports: React.FC = () => {
                 disabled={loading}
                 color="primary"
                 size={isDesktop ? 'large' : 'medium'}
-                sx={{ '& .MuiPaginationItem-root': { borderRadius: 2 } }}
+                sx={{
+                  // WCAG 2.5.8 target size: ensure >= 40px touch targets on mobile.
+                  '& .MuiPaginationItem-root': {
+                    borderRadius: 2,
+                    ...(isDesktop ? {} : { minWidth: 40, height: 40 }),
+                  },
+                }}
               />
             </Box>
           )}
