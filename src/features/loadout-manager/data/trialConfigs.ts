@@ -6,8 +6,9 @@
 import { TrialConfig } from '../types/loadout.types';
 
 /**
- * All available trials in ESO
- * Ordered: General first, then alphabetically by name
+ * All available activities in ESO (trials, dungeons, arenas, and general setups).
+ * Trials are listed first (General, then alphabetically), followed by the group
+ * dungeons. The selector UI groups and sorts these by type via getGroupedTrials().
  */
 export const TRIALS: TrialConfig[] = [
   // Always first - General
@@ -229,6 +230,702 @@ export const TRIALS: TrialConfig[] = [
       { name: 'Nahviintaas', trashPacksBefore: 1 },
     ],
   },
+
+  // ─── Group Dungeons ──────────────────────────────────────────────
+  // Every boss counted by the dungeon's completion (Conqueror) achievement,
+  // listed in encounter order (final boss last) — including opening and
+  // mid-dungeon mini-bosses. Names/order verified June 2026 against UESP
+  // achievement pages and dungeon guides. Optional/secret side-bosses are
+  // omitted; trash counts are approximate planning aids (one pack before each
+  // boss). IDs follow common community / Wizard's Wardrobe acronyms for import
+  // parity (The Dread Cellar uses DRC to avoid clashing with Darkshade DC1/DC2).
+
+  // Base-game dungeons (I/II pairs)
+  {
+    id: 'FG1',
+    name: 'Fungal Grotto I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Tazkad the Packmaster', trashPacksBefore: 1 },
+      { name: 'War Chief Ozozai', trashPacksBefore: 1 },
+      { name: 'Broodbirther', trashPacksBefore: 1 },
+      { name: 'Clatterclaw', trashPacksBefore: 1 },
+      { name: "Kra'gh the Dreugh King", trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'FG2',
+    name: 'Fungal Grotto II',
+    type: 'dungeon',
+    bosses: [
+      { name: "Mephala's Fang", trashPacksBefore: 1 },
+      { name: 'Gamyne Bandu', trashPacksBefore: 1 },
+      { name: 'Ciirenas the Shepherd', trashPacksBefore: 1 },
+      { name: 'Reggr Dark-Dawn', trashPacksBefore: 1 },
+      { name: 'Spawn of Mephala', trashPacksBefore: 1 },
+      { name: 'Vila Theran', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'SC1',
+    name: 'Spindleclutch I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Spindlekin', trashPacksBefore: 1 },
+      { name: 'Swarm Mother', trashPacksBefore: 1 },
+      { name: 'Cerise the Widow-Maker', trashPacksBefore: 1 },
+      { name: 'Big Rabbu', trashPacksBefore: 1 },
+      { name: 'The Whisperer', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'SC2',
+    name: 'Spindleclutch II',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Mad Mortine', trashPacksBefore: 1 },
+      { name: 'Blood Spawn', trashPacksBefore: 1 },
+      { name: 'Praxin Douare', trashPacksBefore: 1 },
+      { name: 'Flesh Atronach Trio', trashPacksBefore: 1 },
+      { name: 'Urvan Veleth', trashPacksBefore: 1 },
+      { name: 'Vorenor Winterbourne', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BC1',
+    name: 'The Banished Cells I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Cell Haunter', trashPacksBefore: 1 },
+      { name: 'Shadowrend', trashPacksBefore: 1 },
+      { name: 'Angata the Clannfear Handler', trashPacksBefore: 1 },
+      { name: 'Skeletal Destroyer', trashPacksBefore: 1 },
+      { name: 'High Kinlord Rilis', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BC2',
+    name: 'The Banished Cells II',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Keeper Areldur', trashPacksBefore: 1 },
+      { name: 'Maw of the Infernal', trashPacksBefore: 1 },
+      { name: 'Keeper Voranil', trashPacksBefore: 1 },
+      { name: 'Keeper Imiril', trashPacksBefore: 1 },
+      { name: 'Sister Sihna & Sister Vera', trashPacksBefore: 1 },
+      { name: 'High Kinlord Rilis', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'DC1',
+    name: 'Darkshade Caverns I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Foreman Llothan', trashPacksBefore: 1 },
+      { name: 'The Hive Lord', trashPacksBefore: 1 },
+      { name: 'Sentinel of Rkugamz', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'DC2',
+    name: 'Darkshade Caverns II',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Fallen Foreman', trashPacksBefore: 1 },
+      { name: 'Transmuted Hive Lord', trashPacksBefore: 1 },
+      { name: 'Transmuted Alit', trashPacksBefore: 1 },
+      { name: 'Grobull the Transmuted', trashPacksBefore: 1 },
+      { name: 'Engine Garrison', trashPacksBefore: 1 },
+      { name: 'The Engine Guardian', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'EH1',
+    name: 'Elden Hollow I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Akash gra-Mal', trashPacksBefore: 1 },
+      { name: 'Ancient Spriggan', trashPacksBefore: 1 },
+      { name: 'Chokethorn', trashPacksBefore: 1 },
+      { name: 'Leafseether', trashPacksBefore: 1 },
+      { name: 'Nenesh gro-Mal', trashPacksBefore: 1 },
+      { name: 'Canonreeve Oraneth', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'EH2',
+    name: 'Elden Hollow II',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Dubroze the Infestor', trashPacksBefore: 1 },
+      { name: 'Dark Root', trashPacksBefore: 1 },
+      { name: 'Azara the Frightener', trashPacksBefore: 1 },
+      { name: 'Murklight', trashPacksBefore: 1 },
+      { name: 'Shadow Guard', trashPacksBefore: 1 },
+      { name: 'Bogdan the Nightflame', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'WS1',
+    name: 'Wayrest Sewers I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Slimecraw', trashPacksBefore: 1 },
+      { name: 'Investigator Garron', trashPacksBefore: 1 },
+      { name: 'The Rat Whisperer', trashPacksBefore: 1 },
+      { name: 'Uulgarg the Hungry', trashPacksBefore: 1 },
+      { name: 'Varaine Pellingare', trashPacksBefore: 1 },
+      { name: 'Allene Pellingare', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'WS2',
+    name: 'Wayrest Sewers II',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Malubeth the Scourger', trashPacksBefore: 1 },
+      { name: 'Uulgarg the Risen', trashPacksBefore: 1 },
+      { name: 'Skull Reaper', trashPacksBefore: 1 },
+      { name: 'Garron the Returned', trashPacksBefore: 1 },
+      { name: 'The Forgotten One', trashPacksBefore: 1 },
+      { name: 'Varaine & Allene Pellingare', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'COH1',
+    name: 'Crypt of Hearts I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Mage Master', trashPacksBefore: 1 },
+      { name: 'Archmaster Siniel', trashPacksBefore: 1 },
+      { name: "Death's Leviathan", trashPacksBefore: 1 },
+      { name: 'Uulkar Bonehand', trashPacksBefore: 1 },
+      { name: 'Dogas the Berserker', trashPacksBefore: 1 },
+      { name: 'The Ilambris Twins', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'COH2',
+    name: 'Crypt of Hearts II',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Ibelgast', trashPacksBefore: 1 },
+      { name: 'Ruzozuzalpamaz', trashPacksBefore: 1 },
+      { name: 'Chamber Guardian', trashPacksBefore: 1 },
+      { name: 'The Ilambris Amalgam', trashPacksBefore: 1 },
+      { name: 'Mezeluth', trashPacksBefore: 1 },
+      { name: "Nerien'eth", trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'COA1',
+    name: 'City of Ash I',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Infernal Guardian', trashPacksBefore: 1 },
+      { name: 'Golor the Banekin Handler', trashPacksBefore: 1 },
+      { name: 'Warden of the Shrine', trashPacksBefore: 1 },
+      { name: 'Dark Ember', trashPacksBefore: 1 },
+      { name: 'Rothariel Flameheart', trashPacksBefore: 1 },
+      { name: 'Razor Master Erthas', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'COA2',
+    name: 'City of Ash II',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Rukhan', trashPacksBefore: 1 },
+      { name: 'Urata the Legion', trashPacksBefore: 1 },
+      { name: 'Horvantud the Fire Maw', trashPacksBefore: 1 },
+      { name: 'Ash Titan', trashPacksBefore: 1 },
+      { name: 'Xivilai Fulminator & Boltaic', trashPacksBefore: 1 },
+      { name: 'Valkyn Skoria', trashPacksBefore: 1 },
+    ],
+  },
+  // Base-game dungeons (single)
+  {
+    id: 'AC',
+    name: 'Arx Corinium',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Fanged Menace', trashPacksBefore: 1 },
+      { name: 'Ganakton the Tempest', trashPacksBefore: 1 },
+      { name: 'Sliklenia the Songstress', trashPacksBefore: 1 },
+      { name: 'Matron Ixniaa', trashPacksBefore: 1 },
+      { name: 'The Ancient Lurcher', trashPacksBefore: 1 },
+      { name: 'Sellistrix the Lamia Queen', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BCR',
+    name: 'Blessed Crucible',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Grunt the Clever', trashPacksBefore: 1 },
+      { name: 'The Pack', trashPacksBefore: 1 },
+      { name: 'Teranya the Faceless', trashPacksBefore: 1 },
+      { name: 'The Troll King', trashPacksBefore: 1 },
+      { name: 'Captain Thoran', trashPacksBefore: 1 },
+      { name: 'The Lava Queen', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BH',
+    name: 'Blackheart Haven',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Iron-Heel', trashPacksBefore: 1 },
+      { name: 'Atarus', trashPacksBefore: 1 },
+      { name: 'First Mate Wavecutter', trashPacksBefore: 1 },
+      { name: 'The Roost Mother', trashPacksBefore: 1 },
+      { name: 'Hollow Heart', trashPacksBefore: 1 },
+      { name: 'Captain Blackheart', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'DK',
+    name: 'Direfrost Keep',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Teethnasher the Frostbound', trashPacksBefore: 1 },
+      { name: 'Guardian of the Flame', trashPacksBefore: 1 },
+      { name: "Drodda's Apprentice", trashPacksBefore: 1 },
+      { name: "Drodda's Dreadlord", trashPacksBefore: 1 },
+      { name: 'Iceheart', trashPacksBefore: 1 },
+      { name: 'Drodda of Icereach', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'SW',
+    name: "Selene's Web",
+    type: 'dungeon',
+    bosses: [
+      { name: 'Treethane Kerninn', trashPacksBefore: 1 },
+      { name: 'Longclaw', trashPacksBefore: 1 },
+      { name: 'Queen Aklayah', trashPacksBefore: 1 },
+      { name: 'Foulhide', trashPacksBefore: 1 },
+      { name: 'Mennir Many-Legs', trashPacksBefore: 1 },
+      { name: 'Selene', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'TI',
+    name: 'Tempest Island',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Sonolia the Matriarch', trashPacksBefore: 1 },
+      { name: 'Valaran Stormcaller', trashPacksBefore: 1 },
+      { name: 'Yalorasse the Speaker', trashPacksBefore: 1 },
+      { name: 'Stormfist', trashPacksBefore: 1 },
+      { name: 'Commodore Ohmanil', trashPacksBefore: 1 },
+      { name: 'Stormreeve Neidir', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'VF',
+    name: 'Volenfell',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Desert Lion', trashPacksBefore: 1 },
+      { name: 'Quintus Verres', trashPacksBefore: 1 },
+      { name: 'Boilbite', trashPacksBefore: 1 },
+      { name: 'Tremorscale', trashPacksBefore: 1 },
+      { name: 'Unstable Construct', trashPacksBefore: 1 },
+      { name: 'The Guardian Council', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'VOM',
+    name: 'Vaults of Madness',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Cursed One', trashPacksBefore: 1 },
+      { name: 'Ulguna Soul-Reaver', trashPacksBefore: 1 },
+      { name: "Death's Head", trashPacksBefore: 1 },
+      { name: 'Grothdarr', trashPacksBefore: 1 },
+      { name: 'Achaeraizur', trashPacksBefore: 1 },
+      { name: 'The Ancient One', trashPacksBefore: 1 },
+      { name: 'Iskra the Omen', trashPacksBefore: 1 },
+      { name: 'The Mad Architect', trashPacksBefore: 1 },
+    ],
+  },
+  // DLC dungeons
+  {
+    id: 'ICP',
+    name: 'Imperial City Prison',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Overfiend', trashPacksBefore: 1 },
+      { name: 'Ibomez the Flesh Sculptor', trashPacksBefore: 1 },
+      { name: 'Gravelight Sentry', trashPacksBefore: 1 },
+      { name: 'Flesh Abomination', trashPacksBefore: 1 },
+      { name: "Lord Warden's Council", trashPacksBefore: 1 },
+      { name: 'Lord Warden Dusk', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'WGT',
+    name: 'White-Gold Tower',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Adjudicator', trashPacksBefore: 1 },
+      { name: "Empress Regent's Guard", trashPacksBefore: 1 },
+      { name: 'The Planar Inhibitor', trashPacksBefore: 1 },
+      { name: 'Molag Kena', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'ROM',
+    name: 'Ruins of Mazzatun',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Zatzu the Spine-Breaker', trashPacksBefore: 1 },
+      { name: 'Mighty Chudan', trashPacksBefore: 1 },
+      { name: 'Xal-Nur the Slaver', trashPacksBefore: 1 },
+      { name: 'Tree-Minder Na-Kesh', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'COS',
+    name: 'Cradle of Shadows',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Sithera', trashPacksBefore: 1 },
+      { name: 'Khephidaen', trashPacksBefore: 1 },
+      { name: 'The Votary of Velidreth', trashPacksBefore: 1 },
+      { name: 'Dranos Velador', trashPacksBefore: 1 },
+      { name: 'Velidreth', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BRF',
+    name: 'Bloodroot Forge',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Mathgamain', trashPacksBefore: 1 },
+      { name: 'Caillaoife', trashPacksBefore: 1 },
+      { name: 'Stoneheart', trashPacksBefore: 1 },
+      { name: 'Galchobhar', trashPacksBefore: 1 },
+      { name: 'Gherig Bullblood', trashPacksBefore: 1 },
+      { name: 'Earthgore Amalgam', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'FH',
+    name: 'Falkreath Hold',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Morrigh Bullblood', trashPacksBefore: 1 },
+      { name: 'Siege Mammoth', trashPacksBefore: 1 },
+      { name: 'Cernunnon', trashPacksBefore: 1 },
+      { name: 'Deathlord Bjarfrud Skjoralmor', trashPacksBefore: 1 },
+      { name: 'Domihaus the Bloody-Horned', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'FL',
+    name: 'Fang Lair',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Lizabet Charnis', trashPacksBefore: 1 },
+      { name: 'The Cadaverous Menagerie', trashPacksBefore: 1 },
+      { name: 'Caluurion', trashPacksBefore: 1 },
+      { name: 'Ulfnor and Sabina Cedus', trashPacksBefore: 1 },
+      { name: 'Orryn the Black', trashPacksBefore: 1 },
+      { name: 'Thurvokun', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'SCP',
+    name: 'Scalecaller Peak',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Rinaerus the Rancid & Orzun the Foul-Smelling', trashPacksBefore: 1 },
+      { name: 'Doylemish Ironheart', trashPacksBefore: 1 },
+      { name: 'Matriarch Aldis', trashPacksBefore: 1 },
+      { name: 'Plague Concocter Mortieu', trashPacksBefore: 1 },
+      { name: 'Zaan the Scalecaller', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'MHK',
+    name: 'Moon Hunter Keep',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Jailer Melitus', trashPacksBefore: 1 },
+      { name: 'Hedge Maze Guardian', trashPacksBefore: 1 },
+      { name: 'Mylenne Moon-Caller', trashPacksBefore: 1 },
+      { name: 'Archivist Ernarde', trashPacksBefore: 1 },
+      { name: 'Vykosa the Ascendant', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'MOS',
+    name: 'March of Sacrifices',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Wyrd Sisters', trashPacksBefore: 1 },
+      { name: 'Aghaedh of the Solstice', trashPacksBefore: 1 },
+      { name: 'Dagrund the Bulky', trashPacksBefore: 1 },
+      { name: 'Tarcyr', trashPacksBefore: 1 },
+      { name: 'Balorgh', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'FV',
+    name: 'Frostvault',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Icestalker', trashPacksBefore: 1 },
+      { name: 'Warlord Tzogvin', trashPacksBefore: 1 },
+      { name: 'Vault Protector', trashPacksBefore: 1 },
+      { name: 'Rizzuk Bonechill', trashPacksBefore: 1 },
+      { name: 'The Stonekeeper', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'DOM',
+    name: 'Depths of Malatar',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Scavenging Maw', trashPacksBefore: 1 },
+      { name: 'The Weeping Woman', trashPacksBefore: 1 },
+      { name: 'The Dark Orb', trashPacksBefore: 1 },
+      { name: 'King Narilmor', trashPacksBefore: 1 },
+      { name: 'Symphony of Blades', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'MGF',
+    name: 'Moongrave Fane',
+    type: 'dungeon',
+    bosses: [
+      { name: 'The Risen Ruins', trashPacksBefore: 1 },
+      { name: "Dro'zakar", trashPacksBefore: 1 },
+      { name: 'Kujo Kethba', trashPacksBefore: 1 },
+      { name: 'Nisaazda', trashPacksBefore: 1 },
+      { name: 'Grundwulf', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'LOM',
+    name: 'Lair of Maarselok',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Selene', trashPacksBefore: 1 },
+      { name: 'Maarselok (in flight)', trashPacksBefore: 1 },
+      { name: 'Azureblight Cancroid', trashPacksBefore: 1 },
+      { name: 'Maarselok', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'IR',
+    name: 'Icereach',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Kjarg the Tuskscraper', trashPacksBefore: 1 },
+      { name: 'Sister Skelga', trashPacksBefore: 1 },
+      { name: 'Vearogh the Shambler', trashPacksBefore: 1 },
+      { name: 'Stormborn Revenant', trashPacksBefore: 1 },
+      { name: 'Icereach Coven', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'UG',
+    name: 'Unhallowed Grave',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Hakgrym the Howler', trashPacksBefore: 1 },
+      { name: 'Keeper of the Kiln', trashPacksBefore: 1 },
+      { name: 'The Eternal Aegis', trashPacksBefore: 1 },
+      { name: 'Ondagore the Mad', trashPacksBefore: 1 },
+      { name: 'Kjalnar Tombskald', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'CT',
+    name: 'Castle Thorn',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Dread Tindulra', trashPacksBefore: 1 },
+      { name: 'Blood Twilight', trashPacksBefore: 1 },
+      { name: 'Vaduroth', trashPacksBefore: 1 },
+      { name: 'Talfyg', trashPacksBefore: 1 },
+      { name: 'Lady Thorn', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'SG',
+    name: 'Stone Garden',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Exarch Kraglen', trashPacksBefore: 1 },
+      { name: 'Stone Behemoth', trashPacksBefore: 1 },
+      { name: 'Arkasis the Mad Alchemist', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BDV',
+    name: 'Black Drake Villa',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Kinras Ironeye', trashPacksBefore: 1 },
+      { name: 'Captain Geminus', trashPacksBefore: 1 },
+      { name: 'Pyroturge Encratis', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'TC',
+    name: 'The Cauldron',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Oxblood the Depraved', trashPacksBefore: 1 },
+      { name: 'Taskmaster Viccia', trashPacksBefore: 1 },
+      { name: 'Molten Guardian', trashPacksBefore: 1 },
+      { name: 'Baron Zaudrus', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'RPB',
+    name: 'Red Petal Bastion',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Rogerain the Sly', trashPacksBefore: 1 },
+      { name: 'The Artifact Bearers', trashPacksBefore: 1 },
+      { name: 'Prior Thierric Sarazen', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'DRC',
+    name: 'The Dread Cellar',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Scorion Broodlord', trashPacksBefore: 1 },
+      { name: 'Cyronin Artellian', trashPacksBefore: 1 },
+      { name: 'Magma Incarnate', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'CA',
+    name: 'Coral Aerie',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Maligalig', trashPacksBefore: 1 },
+      { name: 'Sarydil', trashPacksBefore: 1 },
+      { name: 'Varallion', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'SR',
+    name: "Shipwright's Regret",
+    type: 'dungeon',
+    bosses: [
+      { name: 'Foreman Bradiggan', trashPacksBefore: 1 },
+      { name: 'Nazaray', trashPacksBefore: 1 },
+      { name: 'Captain Numirril', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'ERE',
+    name: 'Earthen Root Enclave',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Corruption of Stone', trashPacksBefore: 1 },
+      { name: 'Corruption of Root', trashPacksBefore: 1 },
+      { name: 'Archdruid Devyric', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'GD',
+    name: 'Graven Deep',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Euphotic Gatekeeper', trashPacksBefore: 1 },
+      { name: 'Varzunon', trashPacksBefore: 1 },
+      { name: 'Zelvraak the Unbreathing', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BS',
+    name: 'Bal Sunnar',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Kovan Giryon', trashPacksBefore: 1 },
+      { name: 'Roksa the Warped', trashPacksBefore: 1 },
+      { name: 'Matriarch Lladi Telvanni', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'SH',
+    name: "Scrivener's Hall",
+    type: 'dungeon',
+    bosses: [
+      { name: 'Riftmaster Naqri', trashPacksBefore: 1 },
+      { name: 'Ozezan the Inferno', trashPacksBefore: 1 },
+      { name: 'Valinna', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'OP',
+    name: 'Oathsworn Pit',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Packmaster Rethelros', trashPacksBefore: 1 },
+      { name: 'Anthelmir', trashPacksBefore: 1 },
+      { name: 'Aradros the Awakened', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BV',
+    name: 'Bedlam Veil',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Shattered Champion', trashPacksBefore: 1 },
+      { name: 'Darkshard', trashPacksBefore: 1 },
+      { name: 'The Blind', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'ER',
+    name: 'Exiled Redoubt',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Executioner Jerensi', trashPacksBefore: 1 },
+      { name: 'Prime Sorcerer Vandorallen', trashPacksBefore: 1 },
+      { name: 'Squall of Retribution', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'LS',
+    name: 'Lep Seclusa',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Garvin the Tracker', trashPacksBefore: 1 },
+      { name: 'Noriwen', trashPacksBefore: 1 },
+      { name: 'Orpheon the Tactician', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'BGF',
+    name: 'Black Gem Foundry',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Quarrymaster Saldezaar', trashPacksBefore: 1 },
+      { name: 'Black Gem Monstrosity', trashPacksBefore: 1 },
+      { name: 'High Soulbinder Vykand', trashPacksBefore: 1 },
+    ],
+  },
+  {
+    id: 'NC',
+    name: 'Naj-Caldeesh',
+    type: 'dungeon',
+    bosses: [
+      { name: 'Poxito', trashPacksBefore: 1 },
+      { name: 'Voskrona Stonehulk Poxito', trashPacksBefore: 1 },
+      { name: 'Talen-Lah & Bar-Sakka', trashPacksBefore: 1 },
+    ],
+  },
 ];
 
 /**
@@ -236,6 +933,53 @@ export const TRIALS: TrialConfig[] = [
  */
 export function getTrialById(id: string): TrialConfig | undefined {
   return TRIALS.find((trial) => trial.id === id);
+}
+
+/** Human-readable label for an activity type, used in the selector UI. */
+export function getActivityKindLabel(type: TrialConfig['type']): string {
+  switch (type) {
+    case 'trial':
+      return 'Trial';
+    case 'dungeon':
+      return 'Dungeon';
+    case 'arena':
+      return 'Arena';
+    case 'substitute':
+      return 'Substitute';
+    case 'general':
+    default:
+      return 'General';
+  }
+}
+
+/** Display order and section headings for activity groups in the selector. */
+const ACTIVITY_GROUPS: { type: TrialConfig['type']; label: string }[] = [
+  { type: 'general', label: 'General' },
+  { type: 'trial', label: 'Trials' },
+  { type: 'dungeon', label: 'Dungeons' },
+  { type: 'arena', label: 'Arenas' },
+  { type: 'substitute', label: 'Substitutes' },
+];
+
+export interface TrialGroup {
+  type: TrialConfig['type'];
+  label: string;
+  trials: TrialConfig[];
+}
+
+/**
+ * Group the activities by type for sectioned rendering in the selector.
+ * Groups are returned in {@link ACTIVITY_GROUPS} order; empty groups are omitted.
+ * Within trials and dungeons, entries are sorted alphabetically by name.
+ */
+export function getGroupedTrials(): TrialGroup[] {
+  return ACTIVITY_GROUPS.map(({ type, label }) => {
+    const trials = TRIALS.filter((trial) => trial.type === type);
+    if (type === 'trial' || type === 'dungeon') {
+      trials.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return { type, label, trials };
+  }).filter((group) => group.trials.length > 0);
 }
 
 /**

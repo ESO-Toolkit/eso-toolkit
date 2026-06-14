@@ -27,6 +27,7 @@ import {
   InputLabel,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   Menu,
   MenuItem,
   Paper,
@@ -49,7 +50,12 @@ import type { RootState } from '@/store/storeWithHistory';
 
 import { preloadChampionPointData } from '../data/championPointData';
 import { preloadSkillData } from '../data/skillLineSkills';
-import { TRIALS, generateSetupStructure } from '../data/trialConfigs';
+import {
+  TRIALS,
+  generateSetupStructure,
+  getActivityKindLabel,
+  getGroupedTrials,
+} from '../data/trialConfigs';
 import {
   addPage,
   addSetup,
@@ -602,15 +608,7 @@ export const LoadoutManager: React.FC = () => {
                   renderValue={(value) => {
                     const trial = TRIALS.find((t) => t.id === value);
                     if (!trial) return 'Select trial';
-                    const kind =
-                      trial.type === 'trial'
-                        ? 'Trial'
-                        : trial.type === 'arena'
-                          ? 'Arena'
-                          : trial.type === 'substitute'
-                            ? 'Substitute'
-                            : 'General';
-                    return `${trial.name} · ${kind}`;
+                    return `${trial.name} · ${getActivityKindLabel(trial.type)}`;
                   }}
                   MenuProps={{
                     slotProps: {
@@ -627,24 +625,33 @@ export const LoadoutManager: React.FC = () => {
                     },
                   }}
                 >
-                  {TRIALS.map((trial) => (
-                    <MenuItem key={trial.id} value={trial.id}>
-                      <Stack spacing={0.15}>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {trial.name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          {trial.type === 'trial'
-                            ? 'Trial'
-                            : trial.type === 'arena'
-                              ? 'Arena'
-                              : trial.type === 'substitute'
-                                ? 'Substitute'
-                                : 'General'}
-                        </Typography>
-                      </Stack>
-                    </MenuItem>
-                  ))}
+                  {getGroupedTrials().flatMap((group) => [
+                    <ListSubheader
+                      key={`group-${group.type}`}
+                      sx={{
+                        bgcolor: 'transparent',
+                        lineHeight: 2,
+                        fontSize: '0.7rem',
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      {group.label}
+                    </ListSubheader>,
+                    ...group.trials.map((trial) => (
+                      <MenuItem key={trial.id} value={trial.id}>
+                        <Stack spacing={0.15}>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {trial.name}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {getActivityKindLabel(trial.type)}
+                          </Typography>
+                        </Stack>
+                      </MenuItem>
+                    )),
+                  ])}
                 </Select>
               </FormControl>
 
