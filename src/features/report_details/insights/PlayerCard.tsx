@@ -45,6 +45,7 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import { CLASS_MASTERY_LINE_NAME } from '../../../data/skill-lines/class/classMastery';
 import type { PlayerRoleResult } from '../../../features/role_detection';
 import { getRoleEmoji, ROLE_LABELS, toBroadRole } from '../../../hooks/useRoleDetection';
 import { selectPlayersByIdForContext } from '../../../store/player_data/playerDataSelectors';
@@ -297,8 +298,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     );
     const allPlayers = React.useMemo(() => Object.values(playersById), [playersById]);
 
-    // Get dynamic skill lines from class analysis
-    const detectedSkillLines = classAnalysis?.skillLines || [];
+    // Get dynamic skill lines from class analysis. Class Mastery (a U50 passive
+    // line only non-subclassed characters can use) is dropped from this chip row:
+    // it's redundant noise here — three matching class skill lines already make
+    // the class obvious, and Class Mastery is a passive line, not a build choice.
+    const detectedSkillLines = (classAnalysis?.skillLines || []).filter(
+      (sl) => sl.skillLine !== CLASS_MASTERY_LINE_NAME,
+    );
 
     const foodAura = detectFoodFromAuras(auras);
     const distanceDisplay = React.useMemo(() => {

@@ -11,9 +11,17 @@
 import { SkillLineData } from '@/data/types/skill-line-types';
 import { ClassSkillId } from '@/features/loadout-manager/data/classSkillIds';
 
+/**
+ * Shared display name for every Class Mastery line (all seven classes use it).
+ * Exported so display layers can recognise the line by name — the report-side
+ * class detection (classDetectionUtils) keys skill lines by NAME and carries no
+ * line id, so name matching is the only discriminator available there.
+ */
+export const CLASS_MASTERY_LINE_NAME = 'Class Mastery';
+
 export const classMasteryDragonknight: SkillLineData = {
   id: 'class.class-mastery-dragonknight',
-  name: 'Class Mastery',
+  name: CLASS_MASTERY_LINE_NAME,
   class: 'Dragonknight',
   category: 'class',
   icon: 'ability_weapon_005',
@@ -68,7 +76,7 @@ export const classMasteryDragonknight: SkillLineData = {
 
 export const classMasteryArcanist: SkillLineData = {
   id: 'class.class-mastery-arcanist',
-  name: 'Class Mastery',
+  name: CLASS_MASTERY_LINE_NAME,
   class: 'Arcanist',
   category: 'class',
   icon: 'passive_arcanist_09',
@@ -123,7 +131,7 @@ export const classMasteryArcanist: SkillLineData = {
 
 export const classMasteryNecromancer: SkillLineData = {
   id: 'class.class-mastery-necromancer',
-  name: 'Class Mastery',
+  name: CLASS_MASTERY_LINE_NAME,
   class: 'Necromancer',
   category: 'class',
   icon: 'passive_necromancer_011',
@@ -178,7 +186,7 @@ export const classMasteryNecromancer: SkillLineData = {
 
 export const classMasteryWarden: SkillLineData = {
   id: 'class.class-mastery-warden',
-  name: 'Class Mastery',
+  name: CLASS_MASTERY_LINE_NAME,
   class: 'Warden',
   category: 'class',
   icon: 'passive_warden_001',
@@ -233,7 +241,7 @@ export const classMasteryWarden: SkillLineData = {
 
 export const classMasteryTemplar: SkillLineData = {
   id: 'class.class-mastery-templar',
-  name: 'Class Mastery',
+  name: CLASS_MASTERY_LINE_NAME,
   class: 'Templar',
   category: 'class',
   icon: 'ability_templar_025',
@@ -288,7 +296,7 @@ export const classMasteryTemplar: SkillLineData = {
 
 export const classMasteryNightblade: SkillLineData = {
   id: 'class.class-mastery-nightblade',
-  name: 'Class Mastery',
+  name: CLASS_MASTERY_LINE_NAME,
   class: 'Nightblade',
   category: 'class',
   icon: 'passive_sorcerer_017',
@@ -343,7 +351,7 @@ export const classMasteryNightblade: SkillLineData = {
 
 export const classMasterySorcerer: SkillLineData = {
   id: 'class.class-mastery-sorcerer',
-  name: 'Class Mastery',
+  name: CLASS_MASTERY_LINE_NAME,
   class: 'Sorcerer',
   category: 'class',
   icon: 'ability_sorcerer_044',
