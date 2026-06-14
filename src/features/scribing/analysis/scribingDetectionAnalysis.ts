@@ -542,6 +542,37 @@ function detectAffixScripts(
   // Track timing information for buff candidates to identify immediate triggers
   const buffTimings = new Map<number, { immediateCasts: Set<number>; totalCasts: Set<number> }>();
 
+  // R7c/R4: total in-fight apply events per ability id by this player. A scribed affix triggers
+  // roughly ONCE per cast of the scribed skill; a buff/debuff the player maintains group-wide
+  // (e.g. Major Breach on the boss, applied dozens of times) fires far more often. The ratio of
+  // total applies to scribed casts cleanly separates the real affix (~1×) from a maintained
+  // group effect (≫1×) — the discriminator that window-occurrence consistency cannot see, since
+  // a maintained effect is present in (nearly) every window too. Computed over the whole fight.
+  const totalAppliesById = new Map<number, number>();
+  const countApply = (id: number): void => {
+    totalAppliesById.set(id, (totalAppliesById.get(id) ?? 0) + 1);
+  };
+  combatEvents.buffs.forEach((buff) => {
+    if (
+      buff.sourceID === playerId &&
+      (buff.type === 'applybuff' || buff.type === 'applybuffstack') &&
+      buff.abilityGameID !== abilityId &&
+      GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(buff.abilityGameID)
+    ) {
+      countApply(buff.abilityGameID);
+    }
+  });
+  combatEvents.debuffs.forEach((debuff) => {
+    if (
+      debuff.sourceID === playerId &&
+      (debuff.type === 'applydebuff' || debuff.type === 'applydebuffstack') &&
+      debuff.abilityGameID !== abilityId &&
+      GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(debuff.abilityGameID)
+    ) {
+      countApply(debuff.abilityGameID);
+    }
+  });
+
   const getAffixTriggerStartTime = (
     cast: UnifiedCastEvent,
     ability: number,
@@ -871,6 +902,14 @@ function detectAffixScripts(
       }
     }
 
+    // R7c/R4: total in-fight applies of this candidate's effect divided by the number of scribed
+    // casts. A scribed affix fires ~once per cast; a maintained group buff/debuff fires many times.
+    let totalApplies = 0;
+    for (const id of entry.abilityIds) {
+      totalApplies += totalAppliesById.get(id) ?? 0;
+    }
+    const appliesPerCast = totalCasts > 0 ? totalApplies / totalCasts : 0;
+
     return {
       key: entry.key,
       scriptName: entry.scriptName,
@@ -879,8 +918,37 @@ function detectAffixScripts(
       dominantType,
       consistency,
       immediateTriggerRatio,
+      appliesPerCast,
     };
   });
+
+  // R7c/R4: drop "maintained group effect" candidates. A buff/debuff the player applies far more
+  // often than once per scribed cast (e.g. Major Breach kept up on the boss, applied dozens of
+  // times) is not the scribed affix — the scribed affix fires ~once per cast. This is the debuff
+  // (and self-buff) analog of the immediate-trigger guard below: window-occurrence consistency
+  // alone cannot catch it because a maintained effect is present in nearly every window. Banner
+  // affixes are EXEMPT — one banner pulse applies the buff to many allies, so high apply counts
+  // are expected and legitimate there. Threshold is deliberately generous (a real affix is ~1×;
+  // observed false positives run 20×+) to avoid dropping affixes that occasionally re-apply.
+  const OVER_APPLICATION_RATIO = 4;
+  const overApplicationFiltered = allowAllyTargetedBuffs
+    ? aggregatedCandidates
+    : aggregatedCandidates.filter((candidate) => {
+        const overApplied =
+          (candidate.dominantType === 'buff' || candidate.dominantType === 'debuff') &&
+          candidate.appliesPerCast > OVER_APPLICATION_RATIO;
+        if (overApplied) {
+          logger?.debug?.('Affix detection dropped over-applied (maintained) candidate', {
+            abilityId,
+            playerId,
+            grimoireKey,
+            scriptName: candidate.scriptName,
+            dominantType: candidate.dominantType,
+            appliesPerCast: candidate.appliesPerCast,
+          });
+        }
+        return !overApplied;
+      });
 
   // R2: scribing affixes apply at the SAME instant as their trigger (immediate-trigger ratio
   // ~1.0), whereas buffs from other sources (gear procs, other skills, light-attack-cadence
@@ -891,18 +959,18 @@ function detectAffixScripts(
   // so that when NO candidate is immediate (some legitimate affixes) consistency still decides,
   // and scoped to buffs so damage/debuff/heal affixes (structurally immediateRatio 0) survive.
   const IMMEDIATE_TRIGGER_RATIO_GATE = 0.5;
-  const hasImmediateBuffCandidate = aggregatedCandidates.some(
+  const hasImmediateBuffCandidate = overApplicationFiltered.some(
     (candidate) =>
       candidate.dominantType === 'buff' &&
       candidate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE,
   );
   const filteredCandidates = hasImmediateBuffCandidate
-    ? aggregatedCandidates.filter(
+    ? overApplicationFiltered.filter(
         (candidate) =>
           candidate.dominantType !== 'buff' ||
           candidate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE,
       )
-    : aggregatedCandidates;
+    : overApplicationFiltered;
 
   logger?.debug?.('Affix detection aggregated candidates', {
     abilityId,

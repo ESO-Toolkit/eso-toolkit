@@ -138,3 +138,71 @@ describe('Scribing signature detection — grimoire-compatibility filter', () =>
     expect(sig).not.toBe('Leeching Thirst');
   });
 });
+
+describe('Scribing affix detection — maintained-group-debuff guard', () => {
+  // A Soul Burst caster who keeps Major Breach (61742) up on the boss group-wide would otherwise
+  // have it mis-detected as their affix: it lands in nearly every cast window at high consistency
+  // with no immediate-trigger signature, exactly like the original Courage→Berserk failure but for
+  // debuffs. Because the player applies Breach far more than once per scribed cast (maintained), it
+  // must be dropped in favour of the genuine once-per-cast affix (here, Maim 61723).
+  const MAGICAL_BURST = 217459; // Soul Burst (magic-damage focus)
+  const MAJOR_BREACH = 61742; // soul-burst-compatible debuff, kept up group-wide
+  const MINOR_MAIM = 61723; // soul-burst-compatible debuff, the genuine once-per-cast affix
+  const BOSS = 200;
+
+  function debuff(
+    abilityGameID: number,
+    timestamp: number,
+    sourceID: number,
+    targetID: number,
+  ): BuffEvent {
+    return {
+      timestamp,
+      type: 'applydebuff',
+      sourceID,
+      targetID,
+      sourceIsFriendly: true,
+      targetIsFriendly: false,
+      abilityGameID,
+      fight: 34,
+    } as BuffEvent;
+  }
+
+  it('drops a maintained group debuff in favour of the genuine once-per-cast affix', () => {
+    const casts: import('../../../../types/combatlogEvents').UnifiedCastEvent[] = [];
+    const debuffs: BuffEvent[] = [];
+    const castTimes = Array.from({ length: 10 }, (_, i) => 1_000_000 + i * 3000);
+
+    castTimes.forEach((t) => {
+      casts.push({
+        timestamp: t,
+        type: 'cast',
+        sourceID: CASTER,
+        targetID: BOSS,
+        sourceIsFriendly: true,
+        targetIsFriendly: false,
+        abilityGameID: MAGICAL_BURST,
+        fight: 34,
+      } as import('../../../../types/combatlogEvents').UnifiedCastEvent);
+
+      // Maim: exactly one application per cast (the real affix) — apc ~1.
+      debuffs.push(debuff(MINOR_MAIM, t + 40, CASTER, BOSS));
+
+      // Breach: maintained group-wide — re-applied every ~500ms (~6 per 3s cast window) — apc ~6.
+      for (let k = 0; k < 6; k++) {
+        debuffs.push(debuff(MAJOR_BREACH, t + 40 + k * 500, CASTER, BOSS));
+      }
+    });
+
+    const result = computeScribingDetection({
+      abilityId: MAGICAL_BURST,
+      playerId: CASTER,
+      combatEvents: { buffs: [], debuffs, damage: [], casts, heals: [], resources: [] },
+    });
+
+    expect(result).not.toBeNull();
+    const names = (result?.scribedSkillData?.affixScripts ?? []).map((a) => a.name);
+    expect(names).not.toContain('Breach');
+    expect(names).toContain('Maim');
+  });
+});
