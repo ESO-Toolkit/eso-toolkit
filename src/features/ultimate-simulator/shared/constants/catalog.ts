@@ -72,14 +72,19 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     kind: 'periodic',
     amountPerInstance: 1,
     instancesPerSecond: 1 / 1.5, // 1 ult / 1.5s
-    uptime: 0.95,
+    uptime: 0.9,
     rollsDecisive: true,
     availableIn: ['soloPve', 'groupPve', 'pvp'],
-    defaultEnabled: true,
+    // Off by default: Minor Heroism is an opt-in build choice (Heroism potions,
+    // Cryptcanon, certain sets, scribing) — not every DPS runs it. Leaving it off
+    // keeps the out-of-box estimate close to a plain weaving build; toggle it on
+    // if your build actually provides it. (Validated against a real trial log: a
+    // baseline Arcanist measured ~3.4 ult/s, matching base income + Decisive.)
+    defaultEnabled: false,
     provenance: ESOHUB_MINOR_HEROISM,
     confidence: 'high',
     description:
-      '1 ultimate every 1.5s (0.67/s) in combat. From Heroism potions, Cryptcanon Vestments, Saxhleel/various sets, or scribing.',
+      '1 ultimate every 1.5s (0.67/s) in combat. From Heroism potions, Cryptcanon Vestments, certain sets, or scribing — enable it if your build provides it.',
   },
   {
     id: 'major-heroism',

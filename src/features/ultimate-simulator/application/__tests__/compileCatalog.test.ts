@@ -59,11 +59,13 @@ describe('isEntryEnabled', () => {
 describe('compileSources', () => {
   it('returns only enabled, available sources as engine UltimateSource shape', () => {
     const sources = compileSources(ULTIMATE_SOURCE_CATALOG, baseSelection);
-    // Arcanist group DPS defaults: base + minor heroism + implacable.
+    // Arcanist group DPS defaults: base income + implacable (Minor Heroism is
+    // opt-in, off by default).
     const ids = sources.map((s) => s.id);
     expect(ids).toContain('base-light-attack');
-    expect(ids).toContain('minor-heroism');
     expect(ids).toContain('arcanist-implacable-outcome');
+    // Minor Heroism is default-off (opt-in build choice).
+    expect(ids).not.toContain('minor-heroism');
     // A non-arcanist class passive must not appear.
     expect(ids).not.toContain('necromancer-corpse-consumption');
     // Each compiled source is the bare engine shape (no catalog-only fields).
@@ -91,6 +93,8 @@ describe('compileSources', () => {
   it('applies and clamps uptime overrides', () => {
     const sources = compileSources(ULTIMATE_SOURCE_CATALOG, {
       ...baseSelection,
+      // Minor Heroism is default-off — enable it so its uptime override applies.
+      enabledOverrides: { 'minor-heroism': true },
       uptimeOverrides: { 'base-light-attack': 1.5, 'minor-heroism': -1 },
     });
     expect(sources.find((s) => s.id === 'base-light-attack')!.uptime).toBe(1);
