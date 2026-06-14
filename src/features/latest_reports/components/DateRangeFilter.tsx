@@ -9,6 +9,7 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
+  useTheme,
 } from '@mui/material';
 import React, { useId, useState } from 'react';
 
@@ -18,6 +19,14 @@ import {
   dateRangePresetLabel,
   type DateRangePreset,
 } from '../hooks/rangeToEpochMs';
+import {
+  fieldBorder,
+  fieldBorderHover,
+  FOCUS_BORDER,
+  FOCUS_GLOW,
+  glassFieldBg,
+  glassMenuPaperSx,
+} from '../latestReportsStyles';
 
 export interface DateRangeValue {
   range: DateRangePreset;
@@ -128,6 +137,8 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   onChange,
   inline = false,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
 
   if (inline) {
@@ -144,20 +155,30 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   return (
     <>
       <Button
-        variant="outlined"
-        color={isActive ? 'primary' : 'inherit'}
         size="medium"
         onClick={(event) => setAnchorEl(event.currentTarget)}
-        startIcon={<FilterAltIcon fontSize="small" />}
         endIcon={<KeyboardArrowDownIcon fontSize="small" />}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={`Date range filter: ${buttonLabel}`}
+        startIcon={
+          <FilterAltIcon fontSize="small" sx={{ color: isActive ? 'inherit' : 'text.disabled' }} />
+        }
         sx={{
           textTransform: 'none',
-          borderColor: isActive ? 'primary.main' : 'divider',
-          color: isActive ? 'primary.main' : 'text.primary',
           whiteSpace: 'nowrap',
+          height: 40,
+          borderRadius: '10px',
+          ...glassFieldBg(isDark),
+          border: '1px solid',
+          borderColor: isActive ? FOCUS_BORDER : fieldBorder(isDark),
+          color: isActive ? (isDark ? '#60a5fa' : '#1d4ed8') : 'text.primary',
+          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+          '&:hover': {
+            borderColor: isActive ? FOCUS_BORDER : fieldBorderHover(isDark),
+            background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+          },
+          ...(open && { borderColor: FOCUS_BORDER, boxShadow: FOCUS_GLOW }),
         }}
       >
         <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
@@ -171,7 +192,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
         onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        slotProps={{ paper: { sx: { mt: 0.5, borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: glassMenuPaperSx(isDark) } }}
       >
         <DateRangeBody value={value} onChange={onChange} />
       </Popover>

@@ -1,8 +1,16 @@
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import { Autocomplete, Box, CircularProgress, InputAdornment, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  Box,
+  CircularProgress,
+  InputAdornment,
+  TextField,
+  useTheme,
+} from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { useZoneOptions, type ZoneOption } from '../hooks/useZoneOptions';
+import { glassMenuPaperSx, glassOutlinedFieldSx } from '../latestReportsStyles';
 
 interface ZoneFilterSelectProps {
   value: number | null;
@@ -23,6 +31,8 @@ export const ZoneFilterSelect: React.FC<ZoneFilterSelectProps> = ({
   onChange,
   fullWidth = false,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const { zones, loading, error } = useZoneOptions();
 
   const selected = useMemo<ZoneOption | null>(
@@ -40,7 +50,39 @@ export const ZoneFilterSelect: React.FC<ZoneFilterSelectProps> = ({
       groupBy={(option) => option.category}
       isOptionEqualToValue={(option, val) => option.id === val.id}
       size="small"
-      sx={{ minWidth: fullWidth ? '100%' : 220, width: fullWidth ? '100%' : undefined }}
+      slotProps={{
+        paper: { sx: glassMenuPaperSx(isDark) },
+        listbox: {
+          sx: {
+            '& .MuiAutocomplete-groupLabel': {
+              fontSize: '0.62rem',
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: isDark ? 'rgba(148,163,184,0.75)' : 'rgba(100,116,139,0.85)',
+              lineHeight: 2.2,
+              backgroundColor: 'transparent',
+            },
+            '& .MuiAutocomplete-option': {
+              fontSize: '0.85rem',
+              borderRadius: 1,
+              mx: 0.5,
+              '&[aria-selected="true"]': {
+                color: isDark ? '#60a5fa' : '#1d4ed8',
+                fontWeight: 600,
+              },
+              '&.Mui-focused': {
+                background: isDark ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.06)',
+              },
+            },
+          },
+        },
+      }}
+      sx={{
+        minWidth: fullWidth ? '100%' : 220,
+        width: fullWidth ? '100%' : undefined,
+        ...glassOutlinedFieldSx(isDark),
+      }}
       renderInput={(params) => {
         const inputSlotProps = params.slotProps?.input ?? {};
         return (

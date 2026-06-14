@@ -1,13 +1,10 @@
-import RefreshIcon from '@mui/icons-material/Refresh';
 import {
   Box,
   Card,
   CardContent,
   CircularProgress,
   Container,
-  IconButton,
   Pagination,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -19,6 +16,7 @@ import { useReportPageLayout } from '../reports/useReportPageLayout';
 
 import { ActiveFilterBar } from './components/ActiveFilterBar';
 import type { DateRangeValue } from './components/DateRangeFilter';
+import { LatestReportsHeader } from './components/LatestReportsHeader';
 import { MobileFilterSheet } from './components/MobileFilterSheet';
 import { ReportCardGrid } from './components/ReportCardGrid';
 import { ReportsEmptyState, type EmptyStateInput } from './components/ReportsEmptyState';
@@ -31,6 +29,7 @@ import { useLatestReportsQuery } from './hooks/useLatestReportsQuery';
 import { hasActiveServerFilter, useLatestReportsUrlState } from './hooks/useLatestReportsUrlState';
 import { useReportViewPrefs } from './hooks/useReportViewPrefs';
 import { useZoneOptions } from './hooks/useZoneOptions';
+import { glassPanelSx } from './latestReportsStyles';
 
 const DENSITY_VARS: Record<'comfortable' | 'compact', React.CSSProperties> = {
   comfortable: {
@@ -50,7 +49,7 @@ const DENSITY_VARS: Record<'comfortable' | 'compact', React.CSSProperties> = {
 export const LatestReports: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
+  const { isDesktop, cardSx, cardContentSx } = useReportPageLayout();
 
   useEffect(() => {
     document.title = 'Latest Reports | ESO Toolkit';
@@ -176,79 +175,18 @@ export const LatestReports: React.FC = () => {
         }}
       >
         <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
-          {/* Mobile floating refresh */}
-          {!isDesktop && (
-            <IconButton
-              onClick={refetch}
-              disabled={loading}
-              aria-label="Refresh reports"
-              color="primary"
-              sx={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                zIndex: 2,
-                backgroundColor: theme.palette.background.paper,
-                boxShadow: theme.shadows[2],
-                '&:hover': { backgroundColor: theme.palette.action.hover },
-              }}
-            >
-              <RefreshIcon />
-            </IconButton>
-          )}
+          {/* Branded header tile (carries the refresh action) */}
+          <LatestReportsHeader onRefresh={refetch} refreshing={loading} />
 
-          {/* Header */}
-          <Box sx={{ ...headerStackSx, mb: 3 }}>
-            <Box>
-              <Typography
-                variant={isDesktop ? 'h4' : 'h5'}
-                component="h1"
-                gutterBottom
-                sx={{ mb: isDesktop ? 0.5 : 0, pr: isDesktop ? 0 : 5 }}
-              >
-                Latest Reports
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{ color: 'text.secondary', maxWidth: isDesktop ? 'none' : '26ch' }}
-              >
-                Discover the most recent combat logs from the community
-              </Typography>
-            </Box>
-            {isDesktop && (
-              <Box sx={actionGroupSx}>
-                <Tooltip title="Refresh" arrow>
-                  {/* span wrapper: a disabled button cannot fire the events the
-                      Tooltip needs, so wrap it to keep the tooltip working. */}
-                  <span>
-                    <IconButton
-                      onClick={refetch}
-                      disabled={loading}
-                      aria-label="Refresh reports"
-                      color="primary"
-                    >
-                      <RefreshIcon />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              </Box>
-            )}
-          </Box>
-
-          {/* Sticky toolbar */}
+          {/* Glassmorphic filter panel — sticky so filters stay reachable while
+              the results scroll. Matches the Roster Hub filter bar aesthetic. */}
           <Box
             sx={{
               position: 'sticky',
-              top: 0,
+              top: 8,
               zIndex: 3,
-              py: 1.5,
-              backgroundColor: (t: Theme) =>
-                t.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.92)' : 'rgba(255, 255, 255, 0.92)',
-              backdropFilter: 'blur(8px)',
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              mx: isDesktop ? -4 : -2,
-              px: isDesktop ? 4 : 2,
+              mb: 2,
+              ...glassPanelSx(theme.palette.mode === 'dark'),
             }}
           >
             <ReportsToolbar

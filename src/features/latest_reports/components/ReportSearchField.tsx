@@ -1,7 +1,10 @@
+import ClearIcon from '@mui/icons-material/Clear';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SearchIcon from '@mui/icons-material/Search';
-import { IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
+import { IconButton, InputAdornment, TextField, Tooltip, useTheme } from '@mui/material';
 import React from 'react';
+
+import { glassOutlinedFieldSx } from '../latestReportsStyles';
 
 const HELPER_TEXT = 'Searches title, owner, and zone on this page';
 
@@ -16,10 +19,10 @@ interface ReportSearchFieldProps {
 }
 
 /**
- * Free-text search box for the loaded page of reports. The placeholder and
- * helper text make the "loaded page only" scope explicit — the ESO Logs API has
- * no server-side title/owner search, so this only refines what is already on
- * screen.
+ * Free-text search box for the loaded page of reports. Glassmorphic styling +
+ * focus glow to match the Roster Hub filter bar. The placeholder and tooltip
+ * make the "loaded page only" scope explicit — the ESO Logs API has no
+ * server-side title/owner search, so this only refines what is already loaded.
  */
 export const ReportSearchField: React.FC<ReportSearchFieldProps> = ({
   value,
@@ -28,6 +31,9 @@ export const ReportSearchField: React.FC<ReportSearchFieldProps> = ({
   fullWidth = false,
   inputRef,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   return (
     <TextField
       value={value}
@@ -44,27 +50,44 @@ export const ReportSearchField: React.FC<ReportSearchFieldProps> = ({
         input: {
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon fontSize="small" color="action" />
+              <SearchIcon fontSize="small" sx={{ color: 'text.disabled' }} aria-hidden />
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <Tooltip title={HELPER_TEXT} arrow>
+              {value ? (
                 <IconButton
                   size="small"
                   edge="end"
-                  tabIndex={-1}
-                  aria-label="What does this search cover?"
-                  sx={{ cursor: 'help' }}
+                  onClick={() => onChange('')}
+                  aria-label="Clear search"
+                  sx={{ color: 'text.disabled', '&:hover': { color: 'text.secondary' } }}
                 >
-                  <InfoOutlinedIcon fontSize="small" color="action" />
+                  <ClearIcon sx={{ fontSize: 16 }} />
                 </IconButton>
-              </Tooltip>
+              ) : (
+                <Tooltip title={HELPER_TEXT} arrow>
+                  <IconButton
+                    size="small"
+                    edge="end"
+                    tabIndex={-1}
+                    aria-label="What does this search cover?"
+                    sx={{ cursor: 'help', color: 'text.disabled' }}
+                  >
+                    <InfoOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             </InputAdornment>
           ),
         },
       }}
-      sx={{ minWidth: { sm: 240 }, flex: { sm: '1 1 280px' }, maxWidth: { sm: 360 } }}
+      sx={{
+        minWidth: { sm: 240 },
+        flex: { sm: '1 1 280px' },
+        maxWidth: { sm: 380 },
+        ...glassOutlinedFieldSx(isDark),
+      }}
     />
   );
 };
