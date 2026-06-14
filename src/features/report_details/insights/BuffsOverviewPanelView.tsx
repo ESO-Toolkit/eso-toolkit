@@ -3,6 +3,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { DataGrid } from '../../../components/LazyDataGrid';
+import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
 
 import { BuffOverviewData } from './BuffsOverviewPanel';
 
@@ -25,12 +26,12 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
         header: 'Buff Name',
         size: 300,
         cell: ({ row }) => {
-          const { buffName, icon } = row.original;
+          const { buffName, icon, buffId } = row.original;
           return (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
               {icon && (
                 <Avatar
-                  src={`https://assets.rpglogs.com/img/eso/abilities/${icon}.png`}
+                  src={abilityIconUrl(icon, buffId)}
                   alt={buffName}
                   sx={{
                     width: 24,

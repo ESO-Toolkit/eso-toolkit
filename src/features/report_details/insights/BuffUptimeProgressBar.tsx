@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
+
 export interface BuffUptime {
   abilityGameID: string;
   abilityName: string;
@@ -314,7 +316,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         {/* Icon — decorative; the parent button's aria-label conveys the ability name */}
         {buff.icon ? (
           <Avatar
-            src={`https://assets.rpglogs.com/img/eso/abilities/${buff.icon}.png`}
+            src={abilityIconUrl(buff.icon, buff.abilityGameID)}
             alt=""
             aria-hidden="true"
             sx={{
