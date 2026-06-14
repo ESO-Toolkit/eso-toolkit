@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useReportMasterData } from '../hooks/useReportMasterData';
+import { abilityIconUrl } from '../utils/abilityIconCorrections';
 
 import { useLogger } from './LoggerContext';
 
@@ -145,7 +146,7 @@ export const AbilityIdMapperProvider: React.FC<{ children: React.ReactNode }> = 
       getIconUrl: (id: number): string | null => {
         const ability = idToDataMap.get(id);
         if (ability?.icon && ability.icon !== 'icon_missing') {
-          return `https://assets.rpglogs.com/img/eso/abilities/${ability.icon}.png`;
+          return abilityIconUrl(ability.icon, ability.gameID) ?? null;
         }
         return null;
       },
@@ -154,7 +155,7 @@ export const AbilityIdMapperProvider: React.FC<{ children: React.ReactNode }> = 
         const normalized = normalizeAbilityName(name);
         const ability = nameToDataMap.get(normalized);
         if (ability?.icon && ability.icon !== 'icon_missing') {
-          return `https://assets.rpglogs.com/img/eso/abilities/${ability.icon}.png`;
+          return abilityIconUrl(ability.icon, ability.gameID) ?? null;
         }
         return null;
       },

@@ -13,6 +13,7 @@ import React from 'react';
 
 import { DataGrid } from '../../../components/LazyDataGrid';
 import { useReportMasterData } from '../../../hooks';
+import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
 
 import { DebuffOverviewData } from './DebuffsOverviewPanel';
 
@@ -75,12 +76,12 @@ export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> =
         header: 'Debuff Name',
         size: 300,
         cell: ({ row }) => {
-          const { debuffName, icon } = row.original;
+          const { debuffName, icon, debuffId } = row.original;
           return (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
               {icon && (
                 <Avatar
-                  src={`https://assets.rpglogs.com/img/eso/abilities/${icon}.png`}
+                  src={abilityIconUrl(icon, debuffId)}
                   alt={debuffName}
                   sx={{
                     width: 24,

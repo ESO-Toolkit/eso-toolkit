@@ -18,6 +18,7 @@ import React, { useMemo, useState } from 'react';
 
 import { MetricPill } from '@/components/MetricPill';
 import { SynergyPanelSkeleton } from '@/components/SynergyPanelSkeleton';
+import { abilityIconUrl } from '@/utils/abilityIconCorrections';
 
 import type { FightFragment, ReportActorFragment } from '../../../graphql/gql/graphql';
 
@@ -673,7 +674,7 @@ const PlayerSynergyCard: React.FC<{
             >
               {info.abilityIcon && (
                 <Avatar
-                  src={`https://assets.rpglogs.com/img/eso/abilities/${info.abilityIcon}.png`}
+                  src={abilityIconUrl(info.abilityIcon, abilityId)}
                   alt=""
                   sx={{
                     width: 20,
@@ -784,7 +785,7 @@ const AbilityCard: React.FC<{
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.25 }}>
         {ability.abilityIcon ? (
           <Avatar
-            src={`https://assets.rpglogs.com/img/eso/abilities/${ability.abilityIcon}.png`}
+            src={abilityIconUrl(ability.abilityIcon, ability.abilityGameID)}
             alt=""
             variant="rounded"
             sx={{
@@ -1084,7 +1085,7 @@ const ActivationTimeline: React.FC<{
               {activation.abilityIcon && (
                 <Tooltip title={activation.abilityName ?? ''} arrow placement="top">
                   <Avatar
-                    src={`https://assets.rpglogs.com/img/eso/abilities/${activation.abilityIcon}.png`}
+                    src={abilityIconUrl(activation.abilityIcon, activation.abilityGameID)}
                     alt=""
                     variant="rounded"
                     sx={{

@@ -2,6 +2,7 @@ import { ReportAbilityFragment } from '../graphql/gql/graphql';
 import { selectAbilitiesById } from '../store/master_data/masterDataSelectors';
 import store, { RootState } from '../store/storeWithHistory';
 
+import { abilityIconUrl } from './abilityIconCorrections';
 import { Logger, LogLevel } from './logger';
 import { DataLoadError, NestedError, ValidationError } from './NestedError';
 
@@ -217,7 +218,7 @@ class AbilityIdMapper {
   getIconUrl(id: number): string | null {
     const ability = this.getAbilityById(id);
     if (ability?.icon && ability.icon !== 'icon_missing') {
-      return `https://assets.rpglogs.com/img/eso/abilities/${ability.icon}.png`;
+      return abilityIconUrl(ability.icon, ability.gameID) ?? null;
     }
     return null;
   }
@@ -228,7 +229,7 @@ class AbilityIdMapper {
   getIconUrlByName(name: string): string | null {
     const ability = this.getAbilityByName(name);
     if (ability?.icon && ability.icon !== 'icon_missing') {
-      return `https://assets.rpglogs.com/img/eso/abilities/${ability.icon}.png`;
+      return abilityIconUrl(ability.icon, ability.gameID) ?? null;
     }
     return null;
   }
@@ -339,7 +340,7 @@ class AbilityIdMapper {
     try {
       const ability = await this.getAbilityByIdAsync(id);
       if (ability?.icon && ability.icon !== 'icon_missing') {
-        return `https://assets.rpglogs.com/img/eso/abilities/${ability.icon}.png`;
+        return abilityIconUrl(ability.icon, ability.gameID) ?? null;
       }
       return null;
     } catch (error) {

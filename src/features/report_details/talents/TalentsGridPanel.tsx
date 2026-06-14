@@ -7,6 +7,7 @@ import { useLogger } from '../../../contexts/LoggerContext';
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
+import { abilityIconUrl } from '../../../utils/abilityIconCorrections';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 interface TalentsGridPanelProps {
@@ -107,7 +108,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         header: 'Icon',
         cell: (info) => (
           <Avatar
-            src={info.row.original.abilityIcon}
+            src={abilityIconUrl(info.row.original.abilityIcon, info.row.original.guid)}
             alt={info.row.original.name}
             sx={{ width: 32, height: 32 }}
             variant="rounded"

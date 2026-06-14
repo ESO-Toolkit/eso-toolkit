@@ -21,6 +21,7 @@ import type { Theme } from '@mui/material/styles';
 import React, { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { abilityIconUrl } from '@/utils/abilityIconCorrections';
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { encodeBuildToURL } from '@/utils/buildEncoding';
 import { toClassKey } from '@/utils/classNameUtils';
@@ -1292,7 +1293,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       }
                                       iconUrl={
                                         rich?.iconUrl ||
-                                        `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
+                                        abilityIconUrl(talent.abilityIcon, talent.guid)
                                       }
                                       abilityId={talent.guid}
                                       scribedSkillData={
@@ -1350,7 +1351,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 }}
                               >
                                 <Avatar
-                                  src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                  src={abilityIconUrl(talent.abilityIcon, talent.guid)}
                                   alt={talent.name}
                                   variant="rounded"
                                   sx={{
@@ -1413,7 +1414,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         }
                                         iconUrl={
                                           rich?.iconUrl ||
-                                          `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
+                                          abilityIconUrl(talent.abilityIcon, talent.guid)
                                         }
                                         abilityId={talent.guid}
                                         fightId={fightId || undefined}
@@ -1467,7 +1468,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   }}
                                 >
                                   <Avatar
-                                    src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                    src={abilityIconUrl(talent.abilityIcon, talent.guid)}
                                     alt={talent.name}
                                     variant="rounded"
                                     sx={{
