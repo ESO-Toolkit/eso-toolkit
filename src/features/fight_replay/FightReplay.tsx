@@ -1,6 +1,5 @@
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditLocationAltIcon from '@mui/icons-material/EditLocationAlt';
 import PlaceIcon from '@mui/icons-material/Place';
 import { Alert, Box, Button, Chip, Divider, Snackbar, Typography } from '@mui/material';
@@ -23,6 +22,7 @@ import { ChapterRail } from './components/ChapterRail';
 import { FightReplay3D, type TrialReplayNav } from './components/FightReplay3D';
 import { MapMarkersModal } from './components/MapMarkersModal';
 import { MarkerEditDialog } from './components/MarkerEditDialog';
+import { MarkerExportButton } from './components/MarkerExportButton';
 import { MarkersPanel } from './components/MarkersPanel';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
 import { markerDeckSurface } from './constants/replayDesign';
@@ -649,26 +649,10 @@ export const FightReplay: React.FC = () => {
                     flexItem
                     sx={{ display: { xs: 'none', sm: 'block' }, mx: 0.5, borderColor: 'divider' }}
                   />
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<ContentCopyIcon />}
-                    onClick={() => handleExportMarkers('elms')}
-                    type="button"
-                    sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
-                  >
-                    Copy Elms
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<ContentCopyIcon />}
-                    onClick={() => handleExportMarkers('mor')}
-                    type="button"
-                    sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
-                  >
-                    Copy M0R
-                  </Button>
+                  <MarkerExportButton
+                    onExport={handleExportMarkers}
+                    sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}
+                  />
                 </>
               )}
             </Box>
