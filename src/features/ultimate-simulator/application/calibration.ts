@@ -13,114 +13,144 @@
 import type { ResourceChangeEvent } from '../../../types/combatlogEvents';
 
 /**
- * ESO Logs `resourceChangeType` enum values. These are the LEGACY sequential
- * ESO `POWERTYPE` enum (POWERTYPE_MAGICKA=0, POWERTYPE_STAMINA=6,
- * POWERTYPE_ULTIMATE=10) — verified against the archived ESO API constants,
- * where all three appear in the same table and 0/6 match this codebase's
- * confirmed anchors (RotationAnalysisPanel.tsx, potionDetectionUtils.ts).
+ * ESO Logs `resourcechange` event `resourceChangeType` values — EMPIRICALLY
+ * VERIFIED against a real trial log (Lucent Citadel report kZAvqFwYcRTLB97W,
+ * fight 2), NOT the ESO `POWERTYPE` enum.
  *
- * TRAP — do NOT "correct" ultimate to 8. ESO also has a MODERN
- * `CombatMechanicFlags` bitflag enum (magicka=1, stamina=4, ultimate=8). ESO
- * Logs does not use it (it froze on the legacy sequential values), so following
- * the live-API alias chain and changing 10→8 would be wrong — magicka would then
- * be 1, contradicting the confirmed anchor of 0.
+ * IMPORTANT: an earlier version of this file assumed ESO Logs used the ESO
+ * `POWERTYPE` enum (magicka=0, stamina=6, ultimate=10). That is WRONG for the
+ * combat-log `resourcechange` stream. The discriminator: every event carries
+ * `maxResourceAmount`; matching it to the snapshot's `maxUltimate`/`maxMagicka`/
+ * `maxStamina` reveals the real scheme. In live data:
+ *   - type 0 → magicka  (maxResourceAmount === maxMagicka)
+ *   - type 1 → stamina  (maxResourceAmount === maxStamina)
+ *   - type 2 → ULTIMATE (maxResourceAmount === maxUltimate, i.e. 500)
+ * The "POWERTYPE=10" research was about the in-game API constant, which ESO Logs
+ * does not use for this field. The codebase's magicka/stamina handling reads the
+ * resource SNAPSHOT fields (targetResources.magicka, etc.), never this type code,
+ * which is why the mismatch went unnoticed.
+ *
+ * The robust way to attribute ultimate is to verify a candidate event's
+ * `maxResourceAmount === targetResources.maxUltimate` rather than trusting a bare
+ * type number — see `isUltimateGain`, which uses that check as the source of truth
+ * and treats the type number as a fast-path hint only.
  */
 export const RESOURCE_CHANGE_TYPE = {
   magicka: 0,
-  stamina: 6,
-  ultimate: 10,
+  stamina: 1,
+  ultimate: 2,
 } as const;
-
-/** Empirical generation attributed to one ability (game) ID over a fight. */
-export interface AbilityUltimateStat {
-  readonly abilityGameID: number;
-  /** Resolved display name if masterData was provided, else the numeric ID. */
-  readonly label: string;
-  /** Net ultimate granted (sum of positive resourceChange), excluding waste. */
-  readonly netUltimate: number;
-  /** Ultimate that was wasted (overcapped). */
-  readonly wastedUltimate: number;
-  /** Number of contributing events (≈ instances). */
-  readonly events: number;
-  /** netUltimate / fightDurationSeconds. */
-  readonly ultimatePerSecond: number;
-}
 
 export interface CalibrationResult {
   readonly fightDurationSeconds: number;
-  /** Total net ultimate generated for the target actor over the fight. */
-  readonly totalNetUltimate: number;
-  readonly totalWastedUltimate: number;
+  /**
+   * Total ultimate GENERATED over the fight (sum of positive deltas in the
+   * actor's ultimate snapshot). This is the conservation-closed gross
+   * generation: gen = spent + (final − initial), exact except for overcap waste.
+   */
+  readonly totalGenerated: number;
+  /** Ultimate spent (sum of negative deltas) — sanity / casts. */
+  readonly totalSpent: number;
+  /** Approximate ultimate casts (negative-delta segments). */
+  readonly approxCasts: number;
+  /** totalGenerated / fightDurationSeconds. */
   readonly perSecond: number;
-  /** Per-ability breakdown, sorted by netUltimate descending. */
-  readonly bySource: readonly AbilityUltimateStat[];
+  /** Snapshot samples seen for the actor (0 ⇒ actor not snapshotted in stream). */
+  readonly samples: number;
+  /**
+   * Whether the actor's ultimate hit the 500 cap during the fight. If true,
+   * `totalGenerated` UNDERCOUNTS by the overcapped amount (waste isn't visible in
+   * snapshots), so treat it as a lower bound.
+   */
+  readonly hitCap: boolean;
 }
 
 export interface CalibrationInput {
   readonly events: readonly ResourceChangeEvent[];
   readonly fightDurationSeconds: number;
-  /** Restrict to this actor's gains (the modeled Arcanist). Omit = all actors. */
-  readonly targetActorID?: number;
-  /** Optional abilityGameID → display name map (from report masterData). */
-  readonly abilityNames?: ReadonlyMap<number, string>;
+  /** Which actor's ultimate to measure (required — measure one actor at a time). */
+  readonly targetActorID: number;
 }
 
-/** Is this event an ultimate-resource gain for the target actor? */
-function isUltimateGain(event: ResourceChangeEvent, targetActorID?: number): boolean {
-  if (event.resourceChangeType !== RESOURCE_CHANGE_TYPE.ultimate) return false;
-  if (event.resourceChange <= 0) return false;
-  // Ultimate accrues to the actor as the TARGET of the resourcechange event.
-  if (targetActorID !== undefined && event.targetID !== targetActorID) return false;
-  return true;
+/** Hard ultimate pool cap — used to flag overcap (waste invisible in snapshots). */
+const ULTIMATE_POOL_CAP = 500;
+
+/**
+ * Identify whether a resourcechange event targets the ULTIMATE pool. Source of
+ * truth = the event's `maxResourceAmount` equals the actor's `maxUltimate`
+ * snapshot — robust across reports/patches even if the bare `resourceChangeType`
+ * numbering shifts. Falls back to the empirically-verified type code (2) when no
+ * snapshot is present. Exported for callers that want to filter ult events
+ * directly; note `calibrateFromEvents` measures generation via snapshots, not
+ * these events' `resourceChange` (which undercounts — see its doc comment).
+ */
+export function isUltimateResourceEvent(event: ResourceChangeEvent): boolean {
+  const maxUlt = event.targetResources?.maxUltimate ?? event.sourceResources?.maxUltimate;
+  if (typeof maxUlt === 'number' && maxUlt > 0) {
+    return event.maxResourceAmount === maxUlt;
+  }
+  return event.resourceChangeType === RESOURCE_CHANGE_TYPE.ultimate;
+}
+
+/** The actor's ultimate value in this event's snapshot, or null if absent. */
+function ultimateSnapshot(event: ResourceChangeEvent, actorID: number): number | null {
+  if (event.targetID === actorID && event.targetResources) return event.targetResources.ultimate;
+  if (event.sourceID === actorID && event.sourceResources) return event.sourceResources.ultimate;
+  return null;
 }
 
 /**
- * Bucket ultimate-gain events by ability into empirical per-source rates.
+ * Measure an actor's real ultimate generation from a fight's Resources events.
  *
- * Note on Decisive: ESO Logs typically folds the Decisive +1 into the host
- * ability's resourceChange rather than emitting a separate event, so Decisive
- * usually has no bucket of its own here — its contribution shows up as slightly
- * larger per-instance amounts on the sources it rolls against. That is expected;
- * the simulator models Decisive explicitly, and calibration measures the totals.
+ * WHY SNAPSHOTS, NOT resourceChange SUMS: ESO Logs does NOT emit a per-ability
+ * resourcechange event for most ultimate gains — the bulk of ultimate accrues
+ * implicitly (light-attack income, Heroism ticks) and only surfaces in the
+ * `ultimate` field of resource SNAPSHOTS carried on other events. Summing the
+ * `resourceChange` of ult-typed events therefore drastically undercounts (it
+ * misses casts too). So PER-SOURCE attribution is NOT derivable from logs.
+ *
+ * What IS exact: total generation, by conservation. Ultimate rises monotonically
+ * between casts, so summing the positive deltas of the ultimate-snapshot series
+ * captures every rising segment regardless of sample spacing. The only leak is
+ * overcap waste (invisible in snapshots) — flagged via `hitCap`. Equivalently,
+ * gen = spent + (final − initial).
  */
 export function calibrateFromEvents(input: CalibrationInput): CalibrationResult {
-  const { events, fightDurationSeconds, targetActorID, abilityNames } = input;
-
-  const buckets = new Map<number, { net: number; wasted: number; count: number }>();
-  let totalNet = 0;
-  let totalWasted = 0;
-
-  for (const event of events) {
-    if (!isUltimateGain(event, targetActorID)) continue;
-    const id = event.abilityGameID;
-    const bucket = buckets.get(id) ?? { net: 0, wasted: 0, count: 0 };
-    bucket.net += event.resourceChange;
-    bucket.wasted += event.waste ?? 0;
-    bucket.count += 1;
-    buckets.set(id, bucket);
-
-    totalNet += event.resourceChange;
-    totalWasted += event.waste ?? 0;
-  }
-
+  const { events, fightDurationSeconds, targetActorID } = input;
   const safeDuration = fightDurationSeconds > 0 ? fightDurationSeconds : 1;
 
-  const bySource: AbilityUltimateStat[] = Array.from(buckets.entries())
-    .map(([abilityGameID, b]) => ({
-      abilityGameID,
-      label: abilityNames?.get(abilityGameID) ?? `Ability ${abilityGameID}`,
-      netUltimate: b.net,
-      wastedUltimate: b.wasted,
-      events: b.count,
-      ultimatePerSecond: b.net / safeDuration,
-    }))
-    .sort((a, b) => b.netUltimate - a.netUltimate);
+  // Collect the actor's ultimate snapshots in timestamp order.
+  const series: number[] = [];
+  for (const event of events) {
+    const u = ultimateSnapshot(event, targetActorID);
+    if (u != null) series.push(u);
+  }
+
+  let generated = 0;
+  let spent = 0;
+  let approxCasts = 0;
+  let hitCap = false;
+  let prev: number | null = null;
+  for (const u of series) {
+    if (u >= ULTIMATE_POOL_CAP) hitCap = true;
+    if (prev != null) {
+      const delta = u - prev;
+      if (delta > 0) generated += delta;
+      else if (delta < 0) {
+        spent += -delta;
+        approxCasts += 1;
+      }
+    }
+    prev = u;
+  }
 
   return {
     fightDurationSeconds,
-    totalNetUltimate: totalNet,
-    totalWastedUltimate: totalWasted,
-    perSecond: totalNet / safeDuration,
-    bySource,
+    totalGenerated: generated,
+    totalSpent: spent,
+    approxCasts,
+    perSecond: generated / safeDuration,
+    samples: series.length,
+    hitCap,
   };
 }
