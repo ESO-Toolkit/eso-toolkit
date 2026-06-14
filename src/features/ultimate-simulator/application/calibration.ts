@@ -114,6 +114,12 @@ function ultimateSnapshot(event: ResourceChangeEvent, actorID: number): number |
  * captures every rising segment regardless of sample spacing. The only leak is
  * overcap waste (invisible in snapshots) — flagged via `hitCap`. Equivalently,
  * gen = spent + (final − initial).
+ *
+ * PRECONDITION: `events` must be in timestamp order (the ESO Logs `events` query
+ * returns them sorted, so callers using `fetchResourceEvents` get this for free).
+ * Validated against a real trial log (Lucent Citadel kZAvqFwYcRTLB97W, fight 2):
+ * this exact algorithm yields 627 generated / 186s ≈ 3.37 ult/s for a baseline
+ * Arcanist, conservation-closed (627 − 749 spent = 76 − 198 final−initial).
  */
 export function calibrateFromEvents(input: CalibrationInput): CalibrationResult {
   const { events, fightDurationSeconds, targetActorID } = input;
