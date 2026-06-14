@@ -19,20 +19,18 @@
  *    generation calculator must not present them as income.
  */
 
-import type {
-  CatalogCostReduction,
-  CatalogSource,
-  UltimateAbility,
-} from '../types/catalog';
+import type { CatalogCostReduction, CatalogSource, UltimateAbility } from '../types/catalog';
 
 const UESP_ULTIMATE = 'https://en.uesp.net/wiki/Online:Ultimate';
 const UESP_DECISIVE = 'https://en.uesp.net/wiki/Online:Decisive';
 const ESOHUB_MINOR_HEROISM = 'https://eso-hub.com/en/buffs-debuffs/minor-heroism';
 const ESOHUB_MAJOR_HEROISM = 'https://eso-hub.com/en/buffs-debuffs/major-heroism';
-const ESOHUB_IMPLACABLE = 'https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha/implacable-outcome';
+const ESOHUB_IMPLACABLE =
+  'https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha/implacable-outcome';
 const ESOHUB_CORPSE = 'https://eso-hub.com/en/skills/necromancer/living-death/corpse-consumption';
 const ESOHUB_POWERSTONE = 'https://eso-hub.com/en/skills/sorcerer/daedric-summoning/power-stone';
-const ESOHUB_RESTORING_SPIRIT = 'https://eso-hub.com/en/skills/templar/dawns-wrath/restoring-spirit';
+const ESOHUB_RESTORING_SPIRIT =
+  'https://eso-hub.com/en/skills/templar/dawns-wrath/restoring-spirit';
 const ESOHUB_CRYPTCANON = 'https://eso-hub.com/en/sets/cryptcanon-vestments';
 const ESOHUB_PILLAGERS = 'https://eso-hub.com/en/sets/pillagers-profit';
 const ESOHUB_MINOR_HEROISM_POTION = 'https://eso-hub.com/en/buffs-debuffs/minor-heroism';
@@ -190,7 +188,8 @@ export const COST_REDUCTION_CATALOG: readonly CatalogCostReduction[] = [
     defaultEnabled: true,
     provenance: ESOHUB_POWERSTONE,
     confidence: 'high',
-    description: 'Sorcerer Daedric Summoning passive: reduces the cost of your ultimate abilities by 15%.',
+    description:
+      'Sorcerer Daedric Summoning passive: reduces the cost of your ultimate abilities by 15%.',
   },
   {
     id: 'templar-restoring-spirit',
@@ -203,7 +202,8 @@ export const COST_REDUCTION_CATALOG: readonly CatalogCostReduction[] = [
     defaultEnabled: true,
     provenance: ESOHUB_RESTORING_SPIRIT,
     confidence: 'high',
-    description: 'Templar Dawn\'s Wrath passive: reduces all ability costs, including ultimate, by 5%.',
+    description:
+      "Templar Dawn's Wrath passive: reduces all ability costs, including ultimate, by 5%.",
   },
 ];
 

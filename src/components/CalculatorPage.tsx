@@ -15,9 +15,9 @@ import { Calculator } from './Calculator';
 import { SmartCalculatorSkeleton } from './SmartCalculatorSkeleton';
 
 const UltimateCalculator = React.lazy(() =>
-  import('@features/ultimate-simulator/presentation/components/UltimateCalculator').then(
-    (m) => ({ default: m.UltimateCalculator }),
-  ),
+  import('@features/ultimate-simulator/presentation/components/UltimateCalculator').then((m) => ({
+    default: m.UltimateCalculator,
+  })),
 );
 
 type TopTab = 'stats' | 'ultimate';

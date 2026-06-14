@@ -24,10 +24,7 @@ export interface CostReduction {
  * Only `enabled` reductions count. The result is rounded to the nearest whole
  * ultimate (ESO costs are integers) and floored at 0.
  */
-export function applyCostReduction(
-  baseCost: number,
-  reductions: readonly CostReduction[],
-): number {
+export function applyCostReduction(baseCost: number, reductions: readonly CostReduction[]): number {
   const base = Math.max(0, baseCost);
   let multiplier = 1;
   for (const r of reductions) {

@@ -18,7 +18,12 @@ export { createRng } from './core/rng';
 export { simulateFight } from './core/simulate';
 export { runMonteCarlo } from './core/monteCarlo';
 export type { MonteCarloOptions } from './core/monteCarlo';
-export { expectedValue, timeToUltimate, expectedInstances, expectedDecisivePerInstance } from './core/expectedValue';
+export {
+  expectedValue,
+  timeToUltimate,
+  expectedInstances,
+  expectedDecisivePerInstance,
+} from './core/expectedValue';
 export { applyCostReduction, totalReductionFraction } from './core/cost';
 export type { CostReduction } from './core/cost';
 

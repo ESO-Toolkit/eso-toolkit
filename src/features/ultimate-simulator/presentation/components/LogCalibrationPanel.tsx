@@ -121,8 +121,7 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
                   {cal.fights.map((f) => (
                     <MenuItem key={f.id} value={f.id}>
                       {f.kill ? '✓ ' : ''}
-                      {f.name} — {Math.floor(f.durationSeconds / 60)}m{' '}
-                      {f.durationSeconds % 60}s
+                      {f.name} — {Math.floor(f.durationSeconds / 60)}m {f.durationSeconds % 60}s
                     </MenuItem>
                   ))}
                 </Select>
@@ -226,7 +225,12 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
               </Box>
             )}
 
-            <Button size="small" variant="text" onClick={cal.clear} sx={{ alignSelf: 'flex-start' }}>
+            <Button
+              size="small"
+              variant="text"
+              onClick={cal.clear}
+              sx={{ alignSelf: 'flex-start' }}
+            >
               Clear
             </Button>
           </Stack>

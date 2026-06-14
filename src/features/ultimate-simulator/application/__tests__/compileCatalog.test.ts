@@ -1,7 +1,4 @@
-import {
-  COST_REDUCTION_CATALOG,
-  ULTIMATE_SOURCE_CATALOG,
-} from '../../shared/constants/catalog';
+import { COST_REDUCTION_CATALOG, ULTIMATE_SOURCE_CATALOG } from '../../shared/constants/catalog';
 import type { CatalogSelection } from '../compileCatalog';
 import {
   availableReductions,
@@ -36,7 +33,9 @@ describe('isSourceAvailable', () => {
 
   it('keeps universal sources for every class and context', () => {
     const base = ULTIMATE_SOURCE_CATALOG.find((s) => s.id === 'base-light-attack')!;
-    expect(isSourceAvailable(base, { ...baseSelection, esoClass: 'warden', context: 'pvp' })).toBe(true);
+    expect(isSourceAvailable(base, { ...baseSelection, esoClass: 'warden', context: 'pvp' })).toBe(
+      true,
+    );
   });
 });
 

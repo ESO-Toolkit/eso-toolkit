@@ -41,9 +41,7 @@ import React from 'react';
 
 import { totalReductionFraction } from '../../core/cost';
 import { DECISIVE_PROC_CHANCE, type DecisiveQuality } from '../../shared/constants';
-import {
-  ULTIMATE_ABILITIES,
-} from '../../shared/constants/catalog';
+import { ULTIMATE_ABILITIES } from '../../shared/constants/catalog';
 import {
   COMBAT_CONTEXT_LABELS,
   ESO_CLASSES,
@@ -191,7 +189,11 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
         <Stack
           direction="row"
           spacing={{ xs: 3, sm: 6 }}
-          sx={{ flexWrap: 'wrap', rowGap: 2, justifyContent: { xs: 'flex-start', sm: 'space-around' } }}
+          sx={{
+            flexWrap: 'wrap',
+            rowGap: 2,
+            justifyContent: { xs: 'flex-start', sm: 'space-around' },
+          }}
         >
           <StatBlock
             label="Ultimate / second"
@@ -356,7 +358,12 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               <Box key={category}>
                 <Typography
                   variant="caption"
-                  sx={{ color: accent, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}
+                  sx={{
+                    color: accent,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                  }}
                 >
                   {SOURCE_CATEGORY_LABELS[category]}
                 </Typography>
@@ -459,7 +466,12 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               </Box>
             ))}
 
-            <Button onClick={calc.reset} size="small" variant="text" sx={{ alignSelf: 'flex-start' }}>
+            <Button
+              onClick={calc.reset}
+              size="small"
+              variant="text"
+              sx={{ alignSelf: 'flex-start' }}
+            >
               Reset to defaults
             </Button>
           </Stack>
@@ -516,8 +528,12 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               />
             </Stack>
             {reductionFraction > 0 && (
-              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1.5 }}>
-                Cost reduced {Math.round(reductionFraction * 100)}% ({baseCost} → {effectiveCost}) by{' '}
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', display: 'block', mt: 1.5 }}
+              >
+                Cost reduced {Math.round(reductionFraction * 100)}% ({baseCost} → {effectiveCost})
+                by{' '}
                 {appliedReductions
                   .filter((r) => r.enabled)
                   .map((r) => r.label)
@@ -560,7 +576,10 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                       <TableCell align="right">{fmt(c.decisiveUltimate, 1)}</TableCell>
                       <TableCell align="right">{fmt(tot, 1)}</TableCell>
                       <TableCell align="right">
-                        {fmt(state.fightDurationSeconds > 0 ? tot / state.fightDurationSeconds : 0, 2)}
+                        {fmt(
+                          state.fightDurationSeconds > 0 ? tot / state.fightDurationSeconds : 0,
+                          2,
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -587,12 +606,13 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               <Box sx={{ mt: 2 }}>
                 <Divider sx={{ mb: 1.5 }} />
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  Per-fight spread (Monte Carlo, {distribution.runs.toLocaleString()} runs) — Decisive
-                  is random, so a single fight varies around the mean:
+                  Per-fight spread (Monte Carlo, {distribution.runs.toLocaleString()} runs) —
+                  Decisive is random, so a single fight varies around the mean:
                 </Typography>
                 <Stack direction="row" spacing={3} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
                   <Typography variant="body2">
-                    Mean <strong>{fmt(distribution.meanTotal, 1)}</strong> ± {fmt(distribution.ci95HalfWidth, 2)} (95% CI)
+                    Mean <strong>{fmt(distribution.meanTotal, 1)}</strong> ±{' '}
+                    {fmt(distribution.ci95HalfWidth, 2)} (95% CI)
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Range {fmt(distribution.minTotal, 0)}–{fmt(distribution.maxTotal, 0)}
