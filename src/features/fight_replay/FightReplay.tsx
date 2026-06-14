@@ -3,7 +3,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EditLocationAltIcon from '@mui/icons-material/EditLocationAlt';
 import PlaceIcon from '@mui/icons-material/Place';
-import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Divider, Snackbar, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,6 +25,7 @@ import { MapMarkersModal } from './components/MapMarkersModal';
 import { MarkerEditDialog } from './components/MarkerEditDialog';
 import { MarkersPanel } from './components/MarkersPanel';
 import { ReplayStatePanel } from './components/ReplayStatePanel';
+import { markerDeckSurface } from './constants/replayDesign';
 import { useIsMobileReplay } from './hooks/useIsMobileReplay';
 import { useMapMarkersManager } from './hooks/useMapMarkersManager';
 import { chapterDisplayName } from './trial_chapters/chapterDisplay';
@@ -563,102 +565,160 @@ export const FightReplay: React.FC = () => {
       )}
 
       {/* Map markers toolbar — the single home for marker tools in both trial and isolated-fight
-          layouts. Kept as quiet outlined controls so it never competes with the arena (the page's
-          hero); the Edit Markers toggle flips to contained only to signal its active state. */}
+          layouts. Wrapped in a quiet glass "control deck" (matching the replay's lit-surface
+          language) so the marker tools read as one intentional cluster instead of naked buttons
+          on the page, while staying calm enough never to compete with the arena hero below. The
+          actions stay quiet/outlined; the Edit toggle flips to contained only to signal its
+          active state. */}
       {fight && (
-        <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<PlaceIcon />}
-              onClick={() => setMarkersModalOpen(true)}
-              type="button"
-            >
-              {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
-            </Button>
+        <Box sx={{ mb: 2 }}>
+          <Box
+            sx={(theme) => ({
+              ...markerDeckSurface(theme),
+              p: { xs: 1.5, sm: 2 },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
+            })}
+          >
+            {/* Deck header: an identity label for the cluster + the live marker-stat chips,
+                pushed to the trailing edge so they read as a status readout for this surface. */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <PlaceIcon fontSize="small" sx={{ color: 'secondary.main' }} />
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 700, letterSpacing: 0.2, color: 'text.primary' }}
+              >
+                Map Markers
+              </Typography>
+              <Box sx={{ flexGrow: 1 }} />
+              {markersState && markerStats.success && (
+                <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Chip
+                    label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
+                    color="success"
+                    size="small"
+                    variant="outlined"
+                  />
+                  {markerStats.is3D && (
+                    <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
+                  )}
+                  {markerStats.removed > 0 && (
+                    <Chip
+                      label={`${markerStats.removed} filtered out`}
+                      color="warning"
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
+                </Box>
+              )}
+            </Box>
 
-            <Button
-              variant={markersEditMode ? 'contained' : 'outlined'}
-              color="secondary"
-              startIcon={<EditLocationAltIcon />}
-              onClick={toggleMarkersEditMode}
-              type="button"
-              aria-pressed={markersEditMode}
-            >
-              {markersEditMode ? 'Done Editing' : 'Edit Markers'}
-            </Button>
+            {/* Actions. Two intent groups — manage/edit, then export — separated by a hairline on
+                desktop. On mobile the buttons grow to share the row evenly so the cluster reads as
+                a tidy grid rather than ragged wrapping, and every target clears the 44px floor. */}
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<PlaceIcon />}
+                onClick={() => setMarkersModalOpen(true)}
+                type="button"
+                sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
+              >
+                {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
+              </Button>
 
-            {markersState && markersState.markers.length > 0 && (
-              <>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<ContentCopyIcon />}
-                  onClick={() => handleExportMarkers('elms')}
-                  type="button"
-                >
-                  Copy Elms
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<ContentCopyIcon />}
-                  onClick={() => handleExportMarkers('mor')}
-                  type="button"
-                >
-                  Copy M0R
-                </Button>
-              </>
+              <Button
+                variant={markersEditMode ? 'contained' : 'outlined'}
+                color="secondary"
+                startIcon={<EditLocationAltIcon />}
+                onClick={toggleMarkersEditMode}
+                type="button"
+                aria-pressed={markersEditMode}
+                sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
+              >
+                {markersEditMode ? 'Done Editing' : 'Edit Markers'}
+              </Button>
+
+              {markersState && markersState.markers.length > 0 && (
+                <>
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ display: { xs: 'none', sm: 'block' }, mx: 0.5, borderColor: 'divider' }}
+                  />
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={() => handleExportMarkers('elms')}
+                    type="button"
+                    sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
+                  >
+                    Copy Elms
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={() => handleExportMarkers('mor')}
+                    type="button"
+                    sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
+                  >
+                    Copy M0R
+                  </Button>
+                </>
+              )}
+            </Box>
+
+            {/* Edit-mode hint: surfaces the gestures, which are otherwise invisible. Touch and
+                mouse get their own wording — right-click and Ctrl+Z don't exist on a phone. It
+                sits in a tinted well so it reads as inline guidance, not body copy. */}
+            {markersEditMode && (
+              <Box
+                sx={(theme) => ({
+                  borderRadius: 1.5,
+                  px: 1.5,
+                  py: 1,
+                  bgcolor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.secondary.main, 0.08)
+                      : alpha(theme.palette.primary.main, 0.05),
+                  border: '1px solid',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.secondary.main, 0.22)
+                      : 'divider',
+                })}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  {isMobileReplay
+                    ? 'Press and hold the map to place a marker · drag a marker to move it · press and hold a marker to edit or remove it'
+                    : 'Right-click the map to place a marker · drag a marker to move it · right-click a marker to edit or remove it · Ctrl+Z to undo'}
+                </Typography>
+              </Box>
             )}
           </Box>
 
-          {/* Edit-mode hint: surfaces the gestures, which are otherwise invisible. Touch and
-              mouse get their own wording — right-click and Ctrl+Z don't exist on a phone. */}
-          {markersEditMode && (
-            <Typography variant="caption" color="text.secondary">
-              {isMobileReplay
-                ? 'Press and hold the map to place a marker · drag a marker to move it · press and hold a marker to edit or remove it'
-                : 'Right-click the map to place a marker · drag a marker to move it · right-click a marker to edit or remove it · Ctrl+Z to undo'}
-            </Typography>
-          )}
-
-          {/* Marker Statistics */}
-          {markersState && markerStats.success && (
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Chip
-                label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
-                color="success"
-                size="small"
-                variant="outlined"
-              />
-              {markerStats.is3D && (
-                <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
-              )}
-              {markerStats.removed > 0 && (
-                <Chip
-                  label={`${markerStats.removed} filtered out`}
-                  color="warning"
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-            </Box>
-          )}
-
-          {/* Marker management list: edit/delete each marker, undo/redo, clear all. */}
+          {/* Marker management list: edit/delete each marker, undo/redo, clear all. Kept just
+              below the deck (its own accordion surface) so the deck stays a compact command strip
+              and the per-marker detail expands separately. */}
           {(markersEditMode || (markersState && markersState.markers.length > 0)) && (
-            <MarkersPanel
-              markersState={markersState}
-              editMode={markersEditMode}
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onUndo={undo}
-              onRedo={redo}
-              onEditMarker={setEditingMarkerId}
-              onRemoveMarker={removeMarker}
-              onClearMarkers={clearMarkers}
-            />
+            <Box sx={{ mt: 1.5 }}>
+              <MarkersPanel
+                markersState={markersState}
+                editMode={markersEditMode}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onUndo={undo}
+                onRedo={redo}
+                onEditMarker={setEditingMarkerId}
+                onRemoveMarker={removeMarker}
+                onClearMarkers={clearMarkers}
+              />
+            </Box>
           )}
         </Box>
       )}

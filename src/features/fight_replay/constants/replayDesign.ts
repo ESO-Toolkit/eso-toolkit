@@ -147,6 +147,50 @@ export const transportSurface = (
 };
 
 /**
+ * Build the map-markers toolbar's surface `sx` from the live theme. A quieter sibling of
+ * `transportSurface`: the marker tools live in the page shell (above the arena), so this reads
+ * as a calm "control panel" — soft corner accent wash, a hairline top seam, and a glass-tinted
+ * panel gradient — rather than the heavier lit deck of the transport bar. Pure paint (no layout
+ * cost). Dark mode leans into the cyan/secondary glow; light mode keeps it whisper-subtle so the
+ * toolbar never competes with the arena hero below it.
+ */
+export const markerDeckSurface = (theme: Theme): SystemStyleObject<Theme> => {
+  const isDark = theme.palette.mode === 'dark';
+  const primary = theme.palette.primary.main;
+  const secondary = theme.palette.secondary.main;
+  const paper = theme.palette.background.paper;
+  const def = theme.palette.background.default;
+  return {
+    position: 'relative' as const,
+    borderRadius: 2,
+    border: '1px solid',
+    borderColor: isDark ? 'rgba(148,210,255,0.18)' : 'divider',
+    overflow: 'hidden',
+    backgroundImage: isDark
+      ? `radial-gradient(120% 160% at 6% 0%, ${alpha(primary, 0.16)}, transparent 46%),
+         radial-gradient(90% 140% at 96% 0%, ${alpha(secondary, 0.1)}, transparent 56%),
+         linear-gradient(180deg, ${alpha(paper, 0.72)} 0%, ${alpha(def, 0.72)} 100%)`
+      : `radial-gradient(120% 160% at 6% 0%, ${alpha(primary, 0.06)}, transparent 52%),
+         linear-gradient(180deg, ${alpha(paper, 0.9)} 0%, ${alpha(def, 0.86)} 100%)`,
+    boxShadow: isDark
+      ? '0 6px 22px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04)'
+      : '0 4px 14px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
+    // Top-edge light seam — the "this surface is active" cue, fading at both ends.
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: '5%',
+      right: '5%',
+      height: '1px',
+      background: `linear-gradient(90deg, transparent, ${secondary}, transparent)`,
+      opacity: isDark ? 0.5 : 0.3,
+      pointerEvents: 'none',
+    },
+  };
+};
+
+/**
  * The always-on progress hairline shown while the fullscreen bar is auto-hidden — a thin
  * elapsed-fill gradient flush at the bottom edge so the playhead position stays legible even when
  * the full transport has faded. `pct` (0–100) is the fraction elapsed: brand cyan→magenta up to
