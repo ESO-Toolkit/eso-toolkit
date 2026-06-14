@@ -203,8 +203,10 @@ export const COST_REDUCTION_CATALOG: readonly CatalogCostReduction[] = [
 ];
 
 /**
- * Known ultimates and their base costs, for the time-to-ultimate picker.
- * A representative (not exhaustive) list of commonly-run raid/dungeon ultimates.
+ * Known ultimates and their base costs (max rank), for the time-to-ultimate
+ * picker. A representative set of commonly-run raid/dungeon ultimates across all
+ * classes plus the popular guild/weapon-line ults. Costs are U50-current; morphs
+ * of the same base share a cost, so one representative morph is listed per base.
  */
 export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
   {
@@ -215,14 +217,16 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     provenance: UESP_ULTIMATE,
     confidence: 'high',
   },
+  // Guild / weapon lines (available to every class)
   {
     id: 'dawnbreaker',
-    label: 'Dawnbreaker (Fighters Guild)',
+    label: 'Dawnbreaker / Flawless (Fighters Guild)',
     baseCost: 125,
     owner: 'weapon',
-    provenance: 'https://eso-hub.com/en/skills/guild/fighters-guild/dawnbreaker',
+    provenance: 'https://eso-hub.com/en/skills/guild/fighters-guild/flawless-dawnbreaker',
     confidence: 'high',
   },
+  // Dragonknight
   {
     id: 'standard-of-might',
     label: 'Standard of Might (Dragonknight)',
@@ -232,11 +236,81 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     confidence: 'high',
   },
   {
+    id: 'shifting-standard',
+    label: 'Shifting Standard (Dragonknight)',
+    baseCost: 200,
+    owner: 'dragonknight',
+    provenance: 'https://eso-hub.com/en/skills/dragonknight/ardent-flame/shifting-standard',
+    confidence: 'medium',
+  },
+  {
+    id: 'corrosive-armor',
+    label: 'Corrosive Armor / Magma Shell (Dragonknight)',
+    baseCost: 200,
+    owner: 'dragonknight',
+    provenance: 'https://eso-hub.com/en/skills/dragonknight/earthen-heart/corrosive-armor',
+    confidence: 'medium',
+  },
+  // Sorcerer
+  {
+    id: 'storm-atronach',
+    label: 'Greater Storm Atronach (Sorcerer)',
+    baseCost: 200,
+    owner: 'sorcerer',
+    provenance: 'https://eso-hub.com/en/skills/sorcerer/daedric-summoning/greater-storm-atronach',
+    confidence: 'high',
+  },
+  {
+    id: 'negate-magic',
+    label: 'Negate Magic / Suppression Field (Sorcerer)',
+    baseCost: 225,
+    owner: 'sorcerer',
+    provenance: 'https://eso-hub.com/en/skills/sorcerer/dark-magic/suppression-field',
+    confidence: 'high',
+  },
+  // Nightblade
+  {
+    id: 'incapacitating-strike',
+    label: 'Incapacitating Strike / Soul Harvest (Nightblade)',
+    baseCost: 70,
+    owner: 'nightblade',
+    provenance: 'https://eso-skillbook.com/skill/incapacitating-strike',
+    confidence: 'high',
+  },
+  // Templar
+  {
+    id: 'nova',
+    label: 'Nova / Solar Disturbance (Templar)',
+    baseCost: 225,
+    owner: 'templar',
+    provenance: 'https://eso-skillbook.com/skill/solar-disturbance',
+    confidence: 'high',
+  },
+  // Warden
+  {
     id: 'permafrost',
-    label: 'Permafrost (Warden)',
+    label: 'Permafrost / Northern Storm (Warden)',
     baseCost: 200,
     owner: 'warden',
     provenance: 'https://eso-hub.com/en/skills/warden/winters-embrace/permafrost',
+    confidence: 'medium',
+  },
+  // Necromancer
+  {
+    id: 'colossus',
+    label: 'Pestilent / Glacial Colossus (Necromancer)',
+    baseCost: 175,
+    owner: 'necromancer',
+    provenance: 'https://eso-hub.com/en/skills/necromancer/grave-lord/pestilent-colossus',
+    confidence: 'high',
+  },
+  // Arcanist
+  {
+    id: 'the-unblinking-eye',
+    label: 'The Unblinking Eye (Arcanist)',
+    baseCost: 250,
+    owner: 'arcanist',
+    provenance: 'https://eso-hub.com/en/skills/arcanist/herald-of-the-tome/the-unblinking-eye',
     confidence: 'medium',
   },
 ];

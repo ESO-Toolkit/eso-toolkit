@@ -133,6 +133,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
     availableSourceEntries,
     exceedsSanity,
     sanityMax,
+    maxPool,
     distribution,
   } = calc;
 
@@ -150,6 +151,17 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
 
   const reductionFraction = totalReductionFraction(appliedReductions);
 
+  // Order the ultimate picker so the current class's ults (and global/weapon
+  // ones, usable by everyone) surface first; other classes' ults follow.
+  const orderedUltimates = React.useMemo(() => {
+    const rank = (owner: string): number => {
+      if (owner === state.esoClass) return 0;
+      if (owner === 'global' || owner === 'weapon') return 1;
+      return 2;
+    };
+    return [...ULTIMATE_ABILITIES].sort((a, b) => rank(a.owner) - rank(b.owner));
+  }, [state.esoClass]);
+
   return (
     <Box className={className} sx={{ width: '100%' }}>
       <Typography variant="h5" component="h2" sx={{ fontWeight: 700, mb: 0.5 }}>
@@ -160,6 +172,55 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
         and get exact ultimate&nbsp;/&nbsp;second, time to your first ultimate, and casts per fight.
         All numbers use Update&nbsp;50 mechanics.
       </Typography>
+
+      {/* ===================== HEADLINE (full width, results-first) ===================== */}
+      <Paper
+        variant="outlined"
+        sx={{
+          p: { xs: 2, sm: 2.5 },
+          mb: 2.5,
+          borderRadius: 3,
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56,189,248,0.12), rgba(15,23,42,0.25))'
+              : 'linear-gradient(135deg, rgba(40,145,200,0.10), rgba(248,250,252,0.6))',
+        }}
+      >
+        <Stack
+          direction="row"
+          spacing={{ xs: 3, sm: 6 }}
+          sx={{ flexWrap: 'wrap', rowGap: 2, justifyContent: { xs: 'flex-start', sm: 'space-around' } }}
+        >
+          <StatBlock
+            label="Ultimate / second"
+            value={fmt(expected.ultimatePerSecond, 2)}
+            sub={`${fmt(expected.totalUltimate, 0)} over ${state.fightDurationSeconds}s`}
+            accent={accent}
+          />
+          <StatBlock
+            label="Time to first ult"
+            value={fmtSeconds(timeToUlt.secondsToFirstCast)}
+            sub={`${effectiveCost} ult cost`}
+          />
+          <StatBlock
+            label="Casts / fight"
+            value={Number.isFinite(timeToUlt.castsPerFight) ? String(timeToUlt.castsPerFight) : '∞'}
+            sub={`every ${fmtSeconds(timeToUlt.secondsPerCast)}`}
+          />
+          <StatBlock
+            label="At 60s"
+            value={fmt(Math.min(expected.ultimatePerSecond * 60, maxPool), 0)}
+            sub="ult banked"
+          />
+        </Stack>
+        {exceedsSanity && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            {fmt(expected.ultimatePerSecond, 2)} ult/s is above the practical sustained ceiling (~
+            {sanityMax}/s, roughly the best a Warden achieves). Double-check the enabled sources and
+            uptimes — this may be optimistic.
+          </Alert>
+        )}
+      </Paper>
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 2.5 }}>
         {/* ============================ INPUTS ============================ */}
@@ -404,45 +465,6 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
 
         {/* ============================ RESULTS ============================ */}
         <Stack spacing={2.5} sx={{ flex: '1 1 480px', minWidth: 0 }}>
-          {/* Headline */}
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 2.5,
-              borderRadius: 3,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(56,189,248,0.10), rgba(15,23,42,0.2))'
-                  : 'linear-gradient(135deg, rgba(40,145,200,0.08), rgba(248,250,252,0.6))',
-            }}
-          >
-            <Stack direction="row" spacing={3} sx={{ flexWrap: 'wrap', rowGap: 2 }}>
-              <StatBlock
-                label="Ultimate / second"
-                value={fmt(expected.ultimatePerSecond, 2)}
-                sub={`${fmt(expected.totalUltimate, 0)} over ${state.fightDurationSeconds}s`}
-                accent={accent}
-              />
-              <StatBlock
-                label="Time to first ult"
-                value={fmtSeconds(timeToUlt.secondsToFirstCast)}
-                sub={`${effectiveCost} ult cost`}
-              />
-              <StatBlock
-                label="Casts / fight"
-                value={Number.isFinite(timeToUlt.castsPerFight) ? String(timeToUlt.castsPerFight) : '∞'}
-                sub={`every ${fmtSeconds(timeToUlt.secondsPerCast)}`}
-              />
-            </Stack>
-            {exceedsSanity && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                {fmt(expected.ultimatePerSecond, 2)} ult/s is above the practical sustained ceiling
-                (~{sanityMax}/s, roughly the best a Warden achieves). Double-check the enabled sources
-                and uptimes — this may be optimistic.
-              </Alert>
-            )}
-          </Paper>
-
           {/* Ultimate picker / cost */}
           <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
@@ -460,9 +482,10 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     else calc.setUltimateAbility(e.target.value);
                   }}
                 >
-                  {ULTIMATE_ABILITIES.map((a) => (
+                  {orderedUltimates.map((a) => (
                     <MenuItem key={a.id} value={a.id}>
                       {a.label} — {a.baseCost}
+                      {a.confidence !== 'high' ? ' *' : ''}
                     </MenuItem>
                   ))}
                   <MenuItem value="custom">Custom cost…</MenuItem>
