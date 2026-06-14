@@ -2,8 +2,9 @@
  * Tests for Item Slot Validator
  */
 
-import { getItemsBySlot } from '../../data/itemIdMap';
+import { getCanonicalItemsBySlot, getItemsBySlot } from '../../data/itemIdMap';
 import type { GearConfig, GearPiece } from '../../types/loadout.types';
+import { deriveItemNameForSlot, preloadIconData } from '../itemIconResolver';
 import {
   hasKnownSlot,
   getItemSlotInfo,
@@ -16,6 +17,14 @@ import {
 
 const UNKNOWN_SLOT_ITEM_ID = 40259; // Shalidor's Curse gear piece lacking slot data
 const SECOND_UNKNOWN_SLOT_ITEM_ID = 43803; // Death's Wind gear piece without slot info
+
+// The weapon-type-aware canonical-key tests below rely on deriveItemNameForSlot,
+// which needs the lazily-imported icon data. Await it so weapon names resolve to
+// real types (Bow / staves) instead of the generic fallback — otherwise those
+// assertions are order-dependent on whether the JSON import has resolved.
+beforeAll(async () => {
+  await preloadIconData();
+});
 
 describe('itemSlotValidator', () => {
   describe('hasKnownSlot', () => {
@@ -204,6 +213,133 @@ describe('itemSlotValidator', () => {
       // This shouldn't happen, but test the behavior
       const items = getItemsBySlot('head');
       expect(Array.isArray(items)).toBe(true);
+    });
+  });
+
+  describe('getCanonicalItemsBySlot', () => {
+    it('returns exactly one item per set for a slot', () => {
+      const canonical = getCanonicalItemsBySlot('shoulders');
+      const setNames = canonical.map(({ info }) => info.setName);
+      const uniqueSetNames = new Set(setNames);
+      // One canonical entry per set — no duplicates.
+      expect(setNames.length).toBe(uniqueSetNames.size);
+    });
+
+    it('collapses the many Zaan shoulder variants down to a single entry', () => {
+      const rawZaanShoulders = getItemsBySlot('shoulders').filter(
+        ({ info }) => info.setName === 'Zaan',
+      );
+      const canonicalZaanShoulders = getCanonicalItemsBySlot('shoulders').filter(
+        ({ info }) => info.setName === 'Zaan',
+      );
+
+      // The raw data carries many quality/level variants...
+      expect(rawZaanShoulders.length).toBeGreaterThan(1);
+      // ...but the picker only ever sees one.
+      expect(canonicalZaanShoulders).toHaveLength(1);
+    });
+
+    it('picks the lowest item id as the canonical variant', () => {
+      const bySet = new Map<string, number[]>();
+      for (const { itemId, info } of getItemsBySlot('head')) {
+        const list = bySet.get(info.setName) ?? [];
+        list.push(itemId);
+        bySet.set(info.setName, list);
+      }
+
+      for (const { itemId, info } of getCanonicalItemsBySlot('head')) {
+        const allIdsForSet = bySet.get(info.setName) ?? [];
+        expect(itemId).toBe(Math.min(...allIdsForSet));
+      }
+    });
+
+    it('has no more entries than getItemsBySlot for the same slot', () => {
+      const slots = ['head', 'shoulders', 'chest', 'hand'] as const;
+      for (const slot of slots) {
+        expect(getCanonicalItemsBySlot(slot).length).toBeLessThanOrEqual(
+          getItemsBySlot(slot).length,
+        );
+      }
+    });
+  });
+
+  describe('getCanonicalItemsBySlot — weapon-type-aware key', () => {
+    // The picker keys weapons by their slot-aware display name so distinct
+    // weapon TYPES (axe/sword/bow/staff/…) of one set aren't collapsed away.
+    const weaponKey = (itemId: number, info: { setName: string }): string =>
+      `${info.setName} ${deriveItemNameForSlot(itemId, 'weapon')}`;
+
+    it('default (set-name) key drops all but one weapon per set — the regression we guard against', () => {
+      const defaultCanon = getCanonicalItemsBySlot('weapon').filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      // Set-name dedup keeps a single (wrong) weapon for the whole set.
+      expect(defaultCanon).toHaveLength(1);
+    });
+
+    it('weapon-aware key keeps every distinct weapon type of a set', () => {
+      const raw = getItemsBySlot('weapon').filter(({ info }) => info.setName === "Mother's Sorrow");
+      const distinctTypes = new Set(
+        raw.map(({ itemId }) => deriveItemNameForSlot(itemId, 'weapon')),
+      );
+      const canon = getCanonicalItemsBySlot('weapon', weaponKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      // One canonical row per distinct weapon type — bow/staff/greatsword survive.
+      expect(canon.length).toBe(distinctTypes.size);
+      expect(canon.length).toBeGreaterThan(1);
+      const canonNames = canon.map(({ itemId }) => deriveItemNameForSlot(itemId, 'weapon'));
+      expect(canonNames).toEqual(expect.arrayContaining([expect.stringMatching(/Bow$/)]));
+      expect(canonNames).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/(Inferno|Ice|Lightning|Restoration) Staff$/),
+        ]),
+      );
+    });
+
+    it('still collapses level/quality variants of a single weapon type to one entry', () => {
+      const canon = getCanonicalItemsBySlot('weapon', weaponKey);
+      // No two canonical entries share the same (set, weapon-type) key.
+      const keys = canon.map(({ itemId, info }) => weaponKey(itemId, info));
+      expect(keys.length).toBe(new Set(keys).size);
+      // And the picker-aware result is strictly larger than the set-name dedup.
+      expect(canon.length).toBeGreaterThan(getCanonicalItemsBySlot('weapon').length);
+    });
+
+    // Regression for the lazy-icon-data race: before icon data loads,
+    // deriveItemNameForSlot falls back to the generic "<Set> Weapon" name, so a
+    // key built from it collapses every weapon type into one — the picker must
+    // NOT cache groups built in that state (see getSetGroupsForSlot's iconReady
+    // gate). This test demonstrates the collapse the gate exists to prevent.
+    it('a generic-name key (icon data not ready) collapses weapon types — why the cache gate exists', () => {
+      const genericKey = (_itemId: number, info: { setName: string }): string =>
+        `${info.setName} ${info.setName} Weapon`; // mimics derive fallback pre-icon-load
+      const collapsed = getCanonicalItemsBySlot('weapon', genericKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      const split = getCanonicalItemsBySlot('weapon', weaponKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      expect(collapsed).toHaveLength(1);
+      // The real (icon-ready) key keeps many more — so caching the collapsed
+      // result would permanently hide the rest for the page session.
+      expect(split.length).toBeGreaterThan(collapsed.length);
+    });
+
+    // The picker's makeCanonicalKey falls back to per-itemId when a weapon's
+    // display name is still generic (stale/missing icon data), so distinct types
+    // are NEVER collapsed even when names can't be resolved. This mirrors that
+    // robustness: a key that appends itemId for generic names keeps every item.
+    it('a generic-name key with an itemId fallback never collapses distinct weapons', () => {
+      const robustKey = (itemId: number, info: { setName: string }): string =>
+        `${info.setName} #${itemId}`; // mimics the generic-name itemId fallback
+      const raw = getItemsBySlot('weapon').filter(({ info }) => info.setName === "Mother's Sorrow");
+      const canon = getCanonicalItemsBySlot('weapon', robustKey).filter(
+        ({ info }) => info.setName === "Mother's Sorrow",
+      );
+      // Distinct item IDs all survive — at least one row per real weapon type.
+      expect(canon.length).toBe(new Set(raw.map((x) => x.itemId)).size);
+      expect(canon.length).toBeGreaterThan(1);
     });
   });
 

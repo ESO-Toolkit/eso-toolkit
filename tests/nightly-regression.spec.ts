@@ -346,10 +346,17 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
+      // Ensure the SPA has actually mounted before inspecting body content.
+      // On WebKit/mobile-safari, `networkidle` can resolve before React has
+      // rendered, leaving an effectively empty body (~61 chars) and producing a
+      // false "minimal content" failure. This mirrors the WebKit guard already
+      // used by the Report Landing Pages test above.
+      await waitForAppMount(page);
+
       // Check if the page loaded successfully - don't assume fight list exists
       const bodyContent = await page.locator('body').textContent();
       const contentLength = bodyContent?.length || 0;
-      
+
       if (contentLength < 100) {
         throw new Error(`Report ${reportId} appears to have minimal content (${contentLength} characters)`);
       }
@@ -737,8 +744,12 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.networkIdle });
       } catch (error) {
         console.log('⚠️ NetworkIdle timeout for visual regression test, checking for content instead...');
-        await waitForAppMount(page);
       }
+
+      // Wait for the SPA to mount regardless of whether networkidle resolved or
+      // timed out. On WebKit, networkidle frequently fires before React renders,
+      // which previously made this test flaky with a "minimal content" error.
+      await waitForAppMount(page);
 
       // Check if the page loaded successfully
       const bodyContent = await page.locator('body').textContent();

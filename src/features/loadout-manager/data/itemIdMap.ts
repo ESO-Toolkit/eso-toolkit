@@ -203900,6 +203900,73 @@ export function getItemsBySlot(slot: SlotType): { itemId: number; info: ItemInfo
   return itemsBySlotCache[slot]!;
 }
 
+const canonicalItemsBySlotCache: Partial<Record<SlotType, { itemId: number; info: ItemInfo }[]>> =
+  {};
+
+/**
+ * Per-item discriminator used to decide which raw variants collapse into one
+ * canonical row. Variants sharing a key are deduped to the lowest item ID.
+ */
+export type CanonicalKeyFn = (itemId: number, info: ItemInfo) => string;
+
+const defaultCanonicalKey: CanonicalKeyFn = (_itemId, info) => info.setName;
+
+/**
+ * Like `getItemsBySlot`, but collapses every set down to a SINGLE canonical
+ * item per (set, slot) — or per whatever `keyFn` distinguishes.
+ *
+ * The raw item data carries one entry per level/quality/trait variant — e.g.
+ * "Zaan" shoulders has ~24 distinct item IDs that all render as the identical
+ * name "Zaan Shoulders". The build editor never distinguishes those variants
+ * (trait, weight, and enchant are chosen via separate chips on the slot card),
+ * so surfacing all of them in the picker is pure noise.
+ *
+ * IMPORTANT — weapons are different. The `'weapon'`/`'offhand'` slots pack EVERY
+ * weapon TYPE of a set (axe, sword, bow, staff, …) under one generic name like
+ * "Mother's Sorrow Weapon" — the distinguishing signal lives in the per-item
+ * icon, not the name. Deduping those by set name alone would keep only the
+ * lowest-ID weapon (an axe) and silently drop the bow / staff / greatsword, so
+ * the user could no longer equip them. Callers that need weapon types preserved
+ * must pass a `keyFn` that folds the weapon type into the key (see GearPicker,
+ * which keys by the slot-aware display name).
+ *
+ * Canonical pick = the lowest item ID for each key. This is deterministic and
+ * matches the lowest-ID convention already used by the collection index
+ * (`collectionItemsBySetAndSlotType`), so the picker and the import/export
+ * paths agree on which ID represents a set's piece in a given slot.
+ *
+ * Results are cached per slot only for the DEFAULT (set-name) key — passing a
+ * custom `keyFn` recomputes each call, since the key function isn't part of the
+ * cache identity. Callers that invoke this hot path with a custom key should
+ * memoize the result themselves.
+ */
+export function getCanonicalItemsBySlot(
+  slot: SlotType,
+  keyFn: CanonicalKeyFn = defaultCanonicalKey,
+): { itemId: number; info: ItemInfo }[] {
+  const isDefaultKey = keyFn === defaultCanonicalKey;
+  if (isDefaultKey && canonicalItemsBySlotCache[slot]) {
+    return canonicalItemsBySlotCache[slot]!;
+  }
+
+  const byKey = new Map<string, { itemId: number; info: ItemInfo }>();
+  for (const entry of getItemsBySlot(slot)) {
+    const key = keyFn(entry.itemId, entry.info);
+    const existing = byKey.get(key);
+    if (!existing || entry.itemId < existing.itemId) {
+      byKey.set(key, entry);
+    }
+  }
+
+  const result = Array.from(byKey.values()).sort(
+    (a, b) =>
+      a.info.setName.localeCompare(b.info.setName) || a.info.name.localeCompare(b.info.name),
+  );
+
+  if (isDefaultKey) canonicalItemsBySlotCache[slot] = result;
+  return result;
+}
+
 export function getAvailableSetsForSlot(slot: SlotType): SlotSetSummary[] {
   if (!setSummaryCache[slot]) {
     const counts = new Map<string, number>();

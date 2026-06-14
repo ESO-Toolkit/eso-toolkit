@@ -188,6 +188,24 @@ describe('cspsImport', () => {
       expect(build.setups[0].gear[3].id).toBe(93377); // The Morag Tong Shoulders
     });
 
+    it('deserializes the apparel armor weight from CSPS gear type', () => {
+      // type field (2nd): 1=light, 2=medium, 3=heavy. HEAD=1→light, SHOULDERS=2→medium.
+      const char = makeCSPSCharacterOption({
+        comp2: '100:1:5:5:200;50:2:3:4:300;0;0;0;0;0;0;0;0;0;0;0;0;0;0#uniqueIds#outfitData',
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.setups[0].gear[0].weight).toBe('light'); // HEAD, type 1
+      expect(build.setups[0].gear[3].weight).toBe('medium'); // SHOULDERS, type 2
+    });
+
+    it('leaves weight unset for type 0 (no armor weight recorded)', () => {
+      const char = makeCSPSCharacterOption({
+        comp2: '100:0:5:5:200;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0#uniqueIds#outfitData',
+      });
+      const build = convertCSPSCharacterToBuild(char);
+      expect(build.setups[0].gear[0].weight).toBeUndefined();
+    });
+
     it('imports passives from werte.pass', () => {
       const char = makeCSPSCharacterOption({
         werte: {

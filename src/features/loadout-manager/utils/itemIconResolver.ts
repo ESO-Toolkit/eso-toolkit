@@ -29,14 +29,22 @@ type IconData = {
 let iconData: IconData | null = null;
 let iconDataPromise: Promise<IconData> | null = null;
 
+function startIconDataLoad(): Promise<IconData> {
+  const promise = import('../data/itemIcons.json').then((m) => {
+    iconData = m.default as IconData;
+    return iconData;
+  });
+  // On failure, clear the cached promise so the next caller retries instead of
+  // re-awaiting a permanently rejected promise (which would dead-end the picker).
+  promise.catch(() => {
+    if (iconDataPromise === promise) iconDataPromise = null;
+  });
+  return promise;
+}
+
 function ensureIconData(): IconData | null {
   if (iconData) return iconData;
-  if (!iconDataPromise) {
-    iconDataPromise = import('../data/itemIcons.json').then((m) => {
-      iconData = m.default as IconData;
-      return iconData;
-    });
-  }
+  if (!iconDataPromise) iconDataPromise = startIconDataLoad();
   return null;
 }
 
@@ -46,13 +54,20 @@ ensureIconData();
 
 export async function preloadIconData(): Promise<void> {
   if (iconData) return;
-  if (!iconDataPromise) {
-    iconDataPromise = import('../data/itemIcons.json').then((m) => {
-      iconData = m.default as IconData;
-      return iconData;
-    });
-  }
+  if (!iconDataPromise) iconDataPromise = startIconDataLoad();
+  // Awaits the shared promise; if it rejects, startIconDataLoad has already
+  // cleared it so a subsequent call retries. The rejection propagates here so
+  // callers can surface a recoverable error state.
   await iconDataPromise;
+}
+
+/**
+ * True once the local icon data has loaded. Synchronous — lets callers that
+ * derive values from icons (e.g. weapon-type display names) avoid baking in or
+ * caching results computed while icon lookups still fall back to generic data.
+ */
+export function isIconDataReady(): boolean {
+  return iconData !== null;
 }
 
 const logger = new Logger({ contextPrefix: 'ItemIconResolver' });
@@ -341,6 +356,42 @@ export function deriveItemNameForSlot(
   if (!itemIsSlotSpecificWeapon) return rawName;
   const url = iconUrlOverride !== undefined ? iconUrlOverride : getItemIconUrl(id);
   return applyWeaponTypeToName(rawName, url, slotType, id);
+}
+
+/**
+ * True when a weapon item's SPECIFIC type is determinable — so its display name
+ * uniquely identifies the weapon (Axe, Bow, Inferno Staff, …). Returns false
+ * when the type can't be pinned down:
+ *   - no icon token resolves (still "<Set> Weapon"), or
+ *   - a regular-gear staff whose element data is missing, so it only resolves to
+ *     the generic "Staff" label and Inferno/Ice/Lightning/Restoration are
+ *     indistinguishable.
+ *
+ * Callers that key/select weapons by display name MUST treat an unresolved item
+ * as ambiguous (don't dedupe-by-name, keep it non-selectable) — otherwise
+ * distinct elements collapse into one row and the wrong one gets equipped.
+ *
+ * Non-weapon items are always "resolved" (their name is already specific).
+ */
+export function isWeaponTypeResolved(
+  itemId: number | null | undefined,
+  slotType: SlotType | undefined,
+): boolean {
+  const id = itemId ?? 0;
+  if (id <= 0) return false;
+  // Non-weapon slot context, or an item that isn't a slot-specific weapon, keeps
+  // its already-specific name — mirror deriveItemNameForSlot's weapon-type gate.
+  if (slotType !== 'weapon' && slotType !== 'offhand') return true;
+  const info = getItemInfo(id);
+  if (info?.slot !== 'weapon' && info?.slot !== 'offhand') return true;
+
+  // Prefer data-driven staff element (distinguishes inferno/ice/lightning/resto).
+  if (lookupStaffTypeLabelFromData(id)) return true;
+
+  // Otherwise the icon token is the only signal. A specific token (1haxe, bow, …)
+  // is fine; the bare "Staff" token is NOT — its element is unknown.
+  const label = parseWeaponTypeFromIconUrl(getItemIconUrl(id));
+  return label !== null && label !== 'Staff';
 }
 
 /**

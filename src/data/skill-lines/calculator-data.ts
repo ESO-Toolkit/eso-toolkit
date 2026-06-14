@@ -95,6 +95,8 @@ export const CALCULATOR_TOOLTIPS = {
     '<em>Medium Armor</em><br><strong>Effect</strong><br><u>Rank 1</u>: Increases your Critical Damage and Healing done by <strong>1%</strong> for every <strong>2</strong> pieces of Medium Armor equipped.<br><u>Rank 2</u>: Increases your Critical Damage and Healing done by <strong>1%</strong> for every piece of Medium Armor equipped.<br><u>Rank 3</u>: Increases your Critical Damage and Healing done by <strong>2%</strong> for every piece of Medium Armor equipped.',
   'Animal Companions: Advanced Species':
     '<em>Warden — Animal Companions</em><br><strong>Effect</strong><br><u>Rank 1</u>: Increases your Critical Damage by <strong>2%</strong> for each Animal Companion ability slotted.<br><u>Rank 2</u>: Increases your Critical Damage by <strong>5%</strong> for each Animal Companion ability slotted.',
+  'Class Mastery: Above and Beyond':
+    '<em>Nightblade — Class Mastery (U50)</em><br><strong>Effect</strong><br>Increases your Critical Damage and Healing by <strong>25%</strong> in PvE (reduced to <strong>5%</strong> against players). Also increases your maximum Critical Damage and Healing by <strong>30%</strong>.',
   'Dual Wield: Twin Blade and Blunt (Axe)':
     '<em>Dual Wield</em><br><strong>Effect</strong><br><u>While Dual Wielding</u><br><u>Rank 1</u>: Each <strong>axe</strong> increases your Critical Damage done by <strong>3%</strong>. Each <strong>mace</strong> increases your Offensive Penetration by 743. Each <strong>sword</strong> increases your Weapon and Spell Damage by 64. Each <strong>dagger</strong> increases your Critical Chance rating by 328.<br><u>Rank 2</u>: Each <strong>axe</strong> increases your Critical Damage done by <strong>6%</strong>. Each <strong>mace</strong> increases your Offensive Penetration by 1487. Each <strong>sword</strong> increases your Weapon and Spell Damage by 129. Each <strong>dagger</strong> increases your Critical Chance rating by 657.',
   'Two Handed: Heavy Weapons (Axe)':
@@ -538,6 +540,16 @@ export const CRITICAL_DATA: CalculatorData = {
       isPercent: true,
       category: 'passive',
       tooltip: CALCULATOR_TOOLTIPS['Animal Companions: Advanced Species'],
+    },
+    {
+      name: 'Class Mastery: Above and Beyond',
+      enabled: false,
+      quantity: 1,
+      value: 25,
+      isFlat: true,
+      isPercent: true,
+      category: 'passive',
+      tooltip: CALCULATOR_TOOLTIPS['Class Mastery: Above and Beyond'],
     },
     {
       name: 'Dual Wield: Twin Blade and Blunt (Axe)',
