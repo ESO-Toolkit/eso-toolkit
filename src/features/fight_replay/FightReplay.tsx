@@ -394,30 +394,57 @@ export const FightReplay: React.FC = () => {
   // 1-boss-plus-trash run collapses to a single timeline entry, and gating on that unmounted
   // every trial surface — including the include-trash toggle itself — making the filter
   // irreversible inside fullscreen / mobile immersive.
-  const trialNav: TrialReplayNav | undefined =
-    trialChapters.currentRun && trialChapters.segments.length > 1
-      ? {
-          timeline: trialTimeline,
-          currentFightId: fightId,
-          continuousEnabled: continuousPlay,
-          includeTrash,
-          hasTrash,
-          runName: trialChapters.currentRun.trialName,
-          runIndex: trialChapters.runIndex,
-          runCount: trialChapters.runCount,
-          bossSummary:
-            trialChapters.bossChapters.length > 0
-              ? `${killedBosses} / ${trialChapters.bossChapters.length} bosses`
-              : null,
-          prevBoss: trialChapters.prevBoss,
-          nextBoss: trialChapters.nextBoss,
-          isFightDataLoading: isArenaLoading,
-          enteringLabel,
-          onAdvanceToFight: handleAdvanceToFight,
-          onToggleContinuous: handleToggleContinuous,
-          onToggleIncludeTrash: handleToggleIncludeTrash,
-        }
-      : undefined;
+  // Memoized so the bundle keeps a stable identity across the ~10Hz `currentTime` re-renders that
+  // playback drives in FightReplay3D. Without this, a fresh `trialNav` object every render would
+  // break the React.memo on every consumer it flows into (the transport's chapter popover, the
+  // trial mini-map, the chapter rail), re-rendering the whole trial UI on every playback tick —
+  // which collapsed playback to a fraction of the framerate on multi-fight trial runs.
+  const trialNav: TrialReplayNav | undefined = useMemo(
+    () =>
+      trialChapters.currentRun && trialChapters.segments.length > 1
+        ? {
+            timeline: trialTimeline,
+            currentFightId: fightId,
+            continuousEnabled: continuousPlay,
+            includeTrash,
+            hasTrash,
+            runName: trialChapters.currentRun.trialName,
+            runIndex: trialChapters.runIndex,
+            runCount: trialChapters.runCount,
+            bossSummary:
+              trialChapters.bossChapters.length > 0
+                ? `${killedBosses} / ${trialChapters.bossChapters.length} bosses`
+                : null,
+            prevBoss: trialChapters.prevBoss,
+            nextBoss: trialChapters.nextBoss,
+            isFightDataLoading: isArenaLoading,
+            enteringLabel,
+            onAdvanceToFight: handleAdvanceToFight,
+            onToggleContinuous: handleToggleContinuous,
+            onToggleIncludeTrash: handleToggleIncludeTrash,
+          }
+        : undefined,
+    [
+      trialChapters.currentRun,
+      trialChapters.segments.length,
+      trialChapters.bossChapters.length,
+      trialChapters.runIndex,
+      trialChapters.runCount,
+      trialChapters.prevBoss,
+      trialChapters.nextBoss,
+      trialTimeline,
+      fightId,
+      continuousPlay,
+      includeTrash,
+      hasTrash,
+      killedBosses,
+      isArenaLoading,
+      enteringLabel,
+      handleAdvanceToFight,
+      handleToggleContinuous,
+      handleToggleIncludeTrash,
+    ],
+  );
 
   // The arena swaps between loading / error / empty / the live 3D view, while the page shell
   // (header + chapter rail + marker tools) stays mounted across fight switches. Once the arena has

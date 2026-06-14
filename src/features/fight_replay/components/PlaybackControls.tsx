@@ -261,6 +261,15 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   const showTrial = trial != null;
   const showTrialStrip = trial != null && trial.timeline.entries.length > 0;
 
+  // The chapter list handed to the chapters popover. Derived once per timeline (not per render) so
+  // it keeps a stable identity across the ~10Hz playback ticks that re-render this transport — a
+  // fresh `.map()` array every render would break ChaptersPopoverButton's React.memo on every tick,
+  // re-rendering the whole chapter list under the playhead. `trial` itself is memoized upstream.
+  const chapterList = React.useMemo(
+    () => trial?.timeline.entries.map((e) => e.chapter) ?? [],
+    [trial],
+  );
+
   return (
     <Box sx={{ position: 'relative' }}>
       {/* Progress hairline — only while the fullscreen bar is hidden, so position stays legible. */}
@@ -515,7 +524,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             {/* Chapters — the fullscreen-reachable boss list. */}
             {showTrial && trial && (
               <ChaptersPopoverButton
-                chapters={trial.timeline.entries.map((e) => e.chapter)}
+                chapters={chapterList}
                 currentFightId={trial.currentFightId}
                 onSelectChapter={trial.onSelectChapter}
                 runName={trial.runName}
