@@ -213,9 +213,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_2',
         type: 'boss',
-        name: "Yokeda Rok'dun & Yokeda Kai",
+        name: 'The Yokedas',
         description:
-          "Simultaneous split bosses on separate sides: Rok'dun (archer, fire circles) on the left, Kai (mage, interrupt his duplicating fireball casts) on the right. ESO Logs tracks the pair as one encounter.",
+          "Simultaneous split bosses on separate sides: Yokeda Rok'dun (archer, fire circles) on the left, Yokeda Kai (mage, interrupt his duplicating fireball casts) on the right. ESO Logs tracks the pair as one encounter.",
       },
       {
         id: 'trash_3',
@@ -333,9 +333,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_2',
         type: 'boss',
-        name: "S'kinrai & Vashai (The Twins)",
+        name: 'The Twins',
         description:
-          "Twin Dro-m'Athra fought together: the raid is buff-split into Shadow (6) and Holy (6) halves handling color-matched mechanics, with Rage of S'kinrai / Will of Vashai adds.",
+          "S'kinrai & Vashai, twin Dro-m'Athra fought together: the raid is buff-split into Shadow (6) and Holy (6) halves handling color-matched mechanics, with Rage of S'kinrai / Will of Vashai adds.",
       },
       {
         id: 'trash_3',
@@ -347,9 +347,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_3',
         type: 'boss',
-        name: 'Rakkhat, Fang of Lorkhaj',
+        name: 'Rakkhat',
         description:
-          'Final boss in The High Lunarium: lunar pad rotation, Breath of Lorkhaj void, meteors, runner phases into the Dark Behind the World, lunar cycles, execute.',
+          'Rakkhat, Fang of Lorkhaj — final boss in The High Lunarium: lunar pad rotation, Breath of Lorkhaj void, meteors, runner phases into the Dark Behind the World, lunar cycles, execute.',
       },
     ],
   },
@@ -368,9 +368,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_1',
         type: 'boss',
-        name: 'Hunter-Killer Positrox & Negatrix',
+        name: 'The Hunter Killers',
         description:
-          'Raptor-fabricant pair: keep them apart (their arc disables Dwarven Sphere shields), lightning hazards, continuous shielded Spheres.',
+          'Raptor-fabricant pair (Hunter-Killer Positrox & Negatrix): keep them apart (their arc disables Dwarven Sphere shields), lightning hazards, continuous shielded Spheres.',
       },
       {
         id: 'trash_2',
@@ -410,7 +410,7 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_4',
         type: 'boss',
-        name: 'Refabrication Committee',
+        name: 'The Refabrication Committee',
         description:
           "Three Factotums (Reducer / Reclaimer / Reactor) kept apart so they don't link; Ruined Factotums charge, leap onto a player, and explode.",
       },
@@ -468,9 +468,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_1',
         type: 'boss',
-        name: 'Shade of Galenwe & Falarielle',
+        name: 'Shade of Galenwe',
         description:
-          'Ice Welkynar + gryphon: keep them apart (they empower when close), kill simultaneously or tentacles spawn, heavy tank bleed. ESO Logs tracks the pair as one boss.',
+          'Ice Welkynar Galenwe + gryphon Falarielle: keep them apart (they empower when close), kill simultaneously or tentacles spawn, heavy tank bleed. ESO Logs tracks the pair as one boss.',
       },
       {
         id: 'trash_1b',
@@ -481,9 +481,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_2',
         type: 'boss',
-        name: 'Shade of Siroria & Silaeda',
+        name: 'Shade of Siroria',
         description:
-          'Fire Welkynar + gryphon: same empower/simultaneous-kill/tank-bleed rules, plus a fire stack-circle mechanic.',
+          'Fire Welkynar Siroria + gryphon Silaeda: same empower/simultaneous-kill/tank-bleed rules, plus a fire stack-circle mechanic.',
       },
       {
         id: 'trash_1c',
@@ -494,9 +494,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_3',
         type: 'boss',
-        name: 'Shade of Relequen & Belanaril',
+        name: 'Shade of Relequen',
         description:
-          'Shock Welkynar + gryphon: same rules, plus a weapon-swap mechanic when Belanaril overloads your bar.',
+          'Shock Welkynar Relequen + gryphon Belanaril: same rules, plus a weapon-swap mechanic when Belanaril overloads your bar.',
       },
       {
         id: 'boss_4',
@@ -692,7 +692,7 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_1',
         type: 'boss',
-        name: 'Lylanar & Turlassil',
+        name: 'Lylanar and Turlassil',
         description:
           'Fire (Lylanar) + ice (Turlassil) brothers: carry Ember/Hailstone orbs to the opposite-element boss to manage stacks, then a two-sided split phase.',
       },
@@ -783,7 +783,7 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_2',
         type: 'boss',
-        name: 'Archwizard Twelvane',
+        name: 'Archwizard Twelvane and Chimera',
         description:
           '3-phase fight: elemental phase, a constellation/crystal puzzle, then the Chimera with Gryphon/Lion/Wamasu head phases.',
       },
@@ -818,7 +818,7 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_1',
         type: 'boss',
-        name: 'Count Ryelaz & Zilyesset',
+        name: 'Count Ryelaz and Zilyesset',
         description:
           'First boss in the Mirror of Opposition: the group SPLITS in two across a glass panel — one side fights Count Ryelaz (darkness/meteors), the other Zilyesset (light crystal scorpion). Cross via lit pads.',
       },
@@ -916,9 +916,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'boss_1',
         type: 'boss',
-        name: 'Shapers of Flesh',
+        name: 'Hall of Fleshcraft',
         description:
-          'Boss 1 in the Hall of Fleshcraft: Carrion Portal channels, Fleshspawn that merge into an Abomination if 6 gather, Harvester one-shots, and Caustic Carrion / Carrion Shield stack management.',
+          'Boss 1 (the Shapers of Flesh): Carrion Portal channels, Fleshspawn that merge into an Abomination if 6 gather, Harvester one-shots, and Caustic Carrion / Carrion Shield stack management.',
       },
       {
         id: 'abductor_1',
@@ -938,9 +938,9 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'trash_2',
         type: 'trash',
-        name: 'Hall of Fleshcraft',
+        name: 'Iron-Bone Halls',
         description:
-          'Iron-Bone Halls: Tormented Crusher (face the conal breath away), Soul Devourers, Death Hounds, then a mandatory "Split Ways" where two teams each take a Carrion Portal.',
+          'Trash + mandatory "Split Ways": Tormented Crusher (face the conal breath away), Soul Devourers, Death Hounds, then two teams each take a Carrion Portal.',
       },
       {
         id: 'boss_2',
@@ -959,10 +959,10 @@ export const TRIAL_ENCOUNTERS: readonly Trial[] = [
       {
         id: 'mini_2',
         type: 'mini_boss',
-        name: 'Tortured Trio',
+        name: 'Tortured Amkaos, Kathutet & Ranyu',
         optional: true,
         description:
-          'Optional side boss in the Gaol of Transition via the SECOND Dreadful Portal: three tortured Dremora (Amkaos, Kathutet, Ranyu) — split and burn. Skippable.',
+          'Optional side boss in the Gaol of Transition via the SECOND Dreadful Portal: three tortured Dremora — split and burn. Skippable.',
       },
       {
         id: 'trash_3',
