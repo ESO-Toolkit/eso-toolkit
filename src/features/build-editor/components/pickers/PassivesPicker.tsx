@@ -34,13 +34,13 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { SkillData } from '../../../../data/types/skill-line-types';
-import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import {
   getPassivesByCategory,
   getSkillById,
   getSkillLineIndex,
   searchPassives,
 } from '../../../loadout-manager/data/skillLineSkills';
+import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import { ESO_CLASSES } from '../../data/esoStaticData';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
 import { PickerDialog } from '../primitives/PickerDialog';
