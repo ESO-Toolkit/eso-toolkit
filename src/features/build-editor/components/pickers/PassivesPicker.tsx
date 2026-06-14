@@ -6,8 +6,11 @@
  * No Redux coupling — receives passives array and calls onChange on change.
  *
  * Props:
- *   passives  — array of passive ability IDs
- *   onChange  — called with the new passives array
+ *   passives    — array of passive ability IDs
+ *   onChange    — called with the new passives array
+ *   esoClass    — build's class (for smart suggestions)
+ *   races       — build's races (for smart suggestions)
+ *   setupSkills — front/back bar skill slots (for smart suggestions)
  */
 
 import {
@@ -15,21 +18,17 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
   ExpandMore as ExpandIcon,
-  Search as SearchIcon,
+  Lightbulb as LightbulbIcon,
 } from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
   Collapse,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  InputAdornment,
   ListSubheader,
   Stack,
-  TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -41,8 +40,10 @@ import {
   getSkillLineIndex,
   searchPassives,
 } from '../../../loadout-manager/data/skillLineSkills';
+import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import { ESO_CLASSES } from '../../data/esoStaticData';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
+import { PickerDialog } from '../primitives/PickerDialog';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ const resolveIconUrl = (icon: string): string =>
   icon.startsWith('http') ? icon : `${ICON_URL}${icon}.png`;
 
 const PASSIVE_PICKER_TABS = [
+  { label: 'Suggested', category: '__suggested__' },
   { label: 'Class', category: 'class' },
   { label: 'Weapon', category: 'weapon' },
   { label: 'Guild', category: 'guild' },
@@ -77,6 +79,72 @@ function deduplicatePassives(passives: SkillData[]): SkillData[] {
   return Array.from(seen.values());
 }
 
+// ── Smart suggestion algorithm ────────────────────────────────────────────────
+
+interface SuggestionGroup {
+  label: string;
+  passives: SkillData[];
+}
+
+function getSuggestedPassiveGroups(
+  esoClass: string | undefined,
+  races: string[] | undefined,
+  setupSkills: SkillsConfig | undefined,
+): SuggestionGroup[] {
+  const lineIndex = getSkillLineIndex();
+  const groups: SuggestionGroup[] = [];
+  const seenLines = new Set<string>();
+
+  // 1. Class passives — match by broadCategory + className
+  if (esoClass) {
+    const classLines = lineIndex.filter(
+      (l) => l.broadCategory === 'class' && l.className.toLowerCase() === esoClass.toLowerCase(),
+    );
+    for (const line of classLines) {
+      if (seenLines.has(line.name)) continue;
+      seenLines.add(line.name);
+      const passives = deduplicatePassives(getPassivesByCategory(line.name));
+      if (passives.length > 0) groups.push({ label: line.name, passives });
+    }
+  }
+
+  // 2. Racial passives — match by broadCategory + name
+  const race = races?.[0];
+  if (race) {
+    const raceLine = lineIndex.find(
+      (l) => l.broadCategory === 'racial' && l.name.toLowerCase() === race.toLowerCase(),
+    );
+    if (raceLine && !seenLines.has(raceLine.name)) {
+      seenLines.add(raceLine.name);
+      const passives = deduplicatePassives(getPassivesByCategory(raceLine.name));
+      if (passives.length > 0) groups.push({ label: raceLine.name, passives });
+    }
+  }
+
+  // 3. Weapon/skill-line passives from slotted active skills on front/back bars
+  if (setupSkills) {
+    const allSlotIds = [
+      ...Object.values(setupSkills[0] ?? {}),
+      ...Object.values(setupSkills[1] ?? {}),
+    ].filter((id): id is number => typeof id === 'number' && id > 0);
+
+    for (const skillId of allSlotIds) {
+      const skill = getSkillById(skillId);
+      if (!skill?.category) continue;
+      if (seenLines.has(skill.category)) continue;
+      const lineInfo = lineIndex.find((l) => l.name === skill.category);
+      if (!lineInfo) continue;
+      // Skip class/racial — already covered above
+      if (lineInfo.broadCategory === 'class' || lineInfo.broadCategory === 'racial') continue;
+      seenLines.add(skill.category);
+      const passives = deduplicatePassives(getPassivesByCategory(skill.category));
+      if (passives.length > 0) groups.push({ label: skill.category, passives });
+    }
+  }
+
+  return groups;
+}
+
 // ── Passive Tile (selected display) ──────────────────────────────────────────
 
 interface PassiveTileProps {
@@ -96,6 +164,11 @@ const PassiveTile: React.FC<PassiveTileProps> = ({ skill, id, onRemove }) => {
             <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
             {skill.category && (
               <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
+            )}
+            {skill.description && (
+              <Typography sx={{ fontSize: 10, opacity: 0.75, mt: 0.5, lineHeight: 1.4 }}>
+                {skill.description}
+              </Typography>
             )}
           </Box>
         ) : (
@@ -215,108 +288,13 @@ const AddPassiveTile: React.FC<AddPassiveTileProps> = ({ onClick }) => {
   );
 };
 
-// ── Picker Tile (inside dialog — multi-select) ────────────────────────────────
-
-interface PickerPassiveTileProps {
-  skill: SkillData;
-  isSelected: boolean;
-  onToggle: (skill: SkillData) => void;
-}
-
-const PickerPassiveTile: React.FC<PickerPassiveTileProps> = ({ skill, isSelected, onToggle }) => {
-  const isDark = useTheme().palette.mode === 'dark';
-  const accent = 'rgba(var(--be-accent-rgb, 56, 189, 248),';
-
-  return (
-    <Tooltip
-      title={
-        <Box>
-          <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
-          {skill.category && (
-            <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
-          )}
-        </Box>
-      }
-      arrow
-      placement="top"
-    >
-      <ButtonBase
-        onClick={() => onToggle(skill)}
-        aria-label={`${skill.name}${isSelected ? ' (selected)' : ''}`}
-        aria-pressed={isSelected}
-        sx={{
-          position: 'relative',
-          width: TILE_SIZE,
-          height: TILE_SIZE,
-          borderRadius: '10px',
-          border: `1.5px solid ${
-            isSelected ? `${accent}0.55)` : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-          }`,
-          background: isSelected
-            ? `${accent}0.12)`
-            : isDark
-              ? 'rgba(255,255,255,0.03)'
-              : 'rgba(0,0,0,0.02)',
-          overflow: 'hidden',
-          flexShrink: 0,
-          transition: 'all 150ms',
-          boxShadow: isSelected ? `0 0 10px ${accent}0.15)` : 'none',
-          '&:hover': {
-            borderColor: `${accent}0.6)`,
-            background: `${accent}0.10)`,
-            transform: 'scale(1.08)',
-            boxShadow: `0 0 12px ${accent}0.15)`,
-          },
-        }}
-      >
-        {skill.icon ? (
-          <img
-            src={resolveIconUrl(skill.icon)}
-            alt={skill.name}
-            loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        ) : (
-          <Typography
-            sx={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-              userSelect: 'none',
-            }}
-          >
-            ?
-          </Typography>
-        )}
-
-        {isSelected && (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.45)',
-            }}
-          >
-            <CheckIcon sx={{ fontSize: 18, color: '#fff' }} />
-          </Box>
-        )}
-      </ButtonBase>
-    </Tooltip>
-  );
-};
-
 // ── Passive Line Section (collapsible, inside dialog) ─────────────────────────
 
 interface PassiveLineSectionProps {
   lineName: string;
   selectedIds: Set<number>;
   onToggle: (skill: SkillData) => void;
+  onAddAll?: (ids: number[]) => void;
   defaultExpanded?: boolean;
 }
 
@@ -324,6 +302,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
   lineName,
   selectedIds,
   onToggle,
+  onAddAll,
   defaultExpanded = false,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
@@ -332,6 +311,8 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
   const passives = useMemo(() => deduplicatePassives(getPassivesByCategory(lineName)), [lineName]);
 
   if (passives.length === 0) return null;
+
+  const unselectedCount = passives.filter((p) => !selectedIds.has(p.id)).length;
 
   return (
     <Box>
@@ -361,6 +342,32 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
           {lineName}
         </Typography>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          {onAddAll && unselectedCount > 0 && (
+            <ButtonBase
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddAll(passives.map((p) => p.id));
+              }}
+              sx={{
+                fontSize: 9,
+                fontWeight: 700,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                letterSpacing: 0.4,
+                color: 'rgba(56,189,248,0.85)',
+                border: '1px solid rgba(56,189,248,0.30)',
+                borderRadius: '5px',
+                px: 0.75,
+                py: '2px',
+                lineHeight: 1.5,
+                '&:hover': {
+                  background: 'rgba(56,189,248,0.10)',
+                  color: 'rgba(56,189,248,1)',
+                },
+              }}
+            >
+              + Add all
+            </ButtonBase>
+          )}
           <Typography
             sx={{
               fontSize: 10,
@@ -382,20 +389,156 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
       </ButtonBase>
 
       <Collapse in={expanded} unmountOnExit>
-        <Stack
-          direction="row"
-          spacing={0.75}
-          useFlexGap
-          sx={{ flexWrap: 'wrap', pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}
-        >
-          {passives.map((p) => (
-            <PickerPassiveTile
-              key={p.id}
-              skill={p}
-              isSelected={selectedIds.has(p.id)}
-              onToggle={onToggle}
-            />
-          ))}
+        <Stack spacing={0.25} sx={{ px: 0.5, pb: 1, pt: 0.25 }}>
+          {passives.map((p) => {
+            const selected = selectedIds.has(p.id);
+            const accentRgb = '56,189,248';
+            const muted = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.45)';
+            return (
+              <ButtonBase
+                key={p.id}
+                onClick={() => onToggle(p)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 1.25,
+                  py: 0.75,
+                  px: 1,
+                  borderRadius: 1.75,
+                  width: '100%',
+                  textAlign: 'left',
+                  border: `1px solid ${selected ? `rgba(${accentRgb},0.45)` : 'transparent'}`,
+                  background: selected
+                    ? isDark
+                      ? `rgba(${accentRgb},0.10)`
+                      : `rgba(${accentRgb},0.06)`
+                    : 'transparent',
+                  transition: 'all 150ms',
+                  '&:hover': {
+                    background: selected
+                      ? isDark
+                        ? `rgba(${accentRgb},0.14)`
+                        : `rgba(${accentRgb},0.09)`
+                      : isDark
+                        ? 'rgba(255,255,255,0.05)'
+                        : 'rgba(0,0,0,0.035)',
+                  },
+                }}
+              >
+                {/* Icon */}
+                {p.icon ? (
+                  <img
+                    src={resolveIconUrl(p.icon)}
+                    alt=""
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      flexShrink: 0,
+                      objectFit: 'cover',
+                      display: 'block',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+
+                {/* Name + description */}
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        lineHeight: 1.3,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {p.name}
+                    </Typography>
+                    {p.maxRank && p.maxRank > 1 && (
+                      <Typography
+                        component="span"
+                        sx={{
+                          flexShrink: 0,
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        ×{p.maxRank}
+                      </Typography>
+                    )}
+                  </Stack>
+                  {p.description ? (
+                    <Typography
+                      sx={{
+                        fontSize: 10,
+                        color: muted,
+                        lineHeight: 1.4,
+                        mt: 0.25,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical' as const,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {p.description}
+                    </Typography>
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontSize: 10,
+                        color: muted,
+                        lineHeight: 1.4,
+                        mt: 0.25,
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      Passive ability
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Selected indicator */}
+                {selected && (
+                  <Stack
+                    direction="row"
+                    spacing={0.25}
+                    sx={{ alignItems: 'center', flexShrink: 0, color: `rgba(${accentRgb},1)` }}
+                  >
+                    <CheckIcon sx={{ fontSize: 12 }} />
+                    <Typography
+                      sx={{
+                        fontSize: 8.5,
+                        fontWeight: 700,
+                        letterSpacing: 0.5,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                      }}
+                    >
+                      SELECTED
+                    </Typography>
+                  </Stack>
+                )}
+              </ButtonBase>
+            );
+          })}
         </Stack>
       </Collapse>
     </Box>
@@ -409,6 +552,10 @@ interface PassivePickerDialogProps {
   onClose: () => void;
   selectedIds: Set<number>;
   onToggle: (skillId: number) => void;
+  onAddMany: (ids: number[]) => void;
+  esoClass?: string;
+  races?: string[];
+  setupSkills?: SkillsConfig;
 }
 
 const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
@@ -416,8 +563,14 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
   onClose,
   selectedIds,
   onToggle,
+  onAddMany,
+  esoClass,
+  races,
+  setupSkills,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [activeTab, setActiveTab] = useState(0);
   const [search, setSearch] = useState('');
 
@@ -429,13 +582,19 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
     [lineIndex],
   );
 
+  // Class tab is now at index 1
   const classLinesByClass = useMemo(() => {
-    const classLines = linesByTab[0];
+    const classLines = linesByTab[1];
     return ESO_CLASSES.map((cls) => ({
       cls,
       lines: classLines.filter((l) => l.className === cls.label),
     })).filter((g) => g.lines.length > 0);
   }, [linesByTab]);
+
+  const suggestedGroups = useMemo(
+    () => getSuggestedPassiveGroups(esoClass, races, setupSkills),
+    [esoClass, races, setupSkills],
+  );
 
   useEffect(() => {
     if (open) setSearch('');
@@ -455,299 +614,358 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
     [onToggle],
   );
 
+  const handleAddAll = useCallback(
+    (ids: number[]) => {
+      onAddMany(ids);
+    },
+    [onAddMany],
+  );
+
   return (
-    <Dialog
+    <PickerDialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      className="glass-dialog"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: '20px',
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-            backgroundColor: 'transparent',
-            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-            maxHeight: '90vh',
-          },
-        },
-      }}
+      title="Select Passives"
+      badge={selectedIds.size > 0 ? `${selectedIds.size} selected` : undefined}
     >
-      <DialogTitle
-        sx={{
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '1rem',
-          pb: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: isDark
-            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        Select Passives
-        {selectedIds.size > 0 && (
-          <Typography
-            component="span"
-            sx={{
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: 'Space Grotesk',
-              color: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-              WebkitTextFillColor: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
-            }}
-          >
-            {selectedIds.size} selected
-          </Typography>
-        )}
-      </DialogTitle>
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder="Search passives..."
+        resultCount={isSearching ? searchResults.length : undefined}
+        autoFocus={!isMobile}
+      />
 
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search passives..."
-            size="small"
-            fullWidth
-            autoFocus
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
-
-        {isSearching ? (
-          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
-              <Typography
-                sx={{
-                  fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  textAlign: 'center',
-                  py: 3,
-                }}
-              >
-                No passives found
-              </Typography>
-            ) : (
-              <Stack spacing={0.5}>
-                {searchResults.map((skill) => {
-                  const selected = selectedIds.has(skill.id);
-                  return (
-                    <ButtonBase
-                      key={skill.id}
-                      onClick={() => handleToggle(skill)}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.25,
-                        py: 0.75,
-                        px: 1,
-                        borderRadius: 1.5,
-                        width: '100%',
-                        textAlign: 'left',
-                        background: selected
-                          ? isDark
-                            ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                            : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
-                          : 'transparent',
-                        '&:hover': {
-                          background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                        },
-                      }}
-                    >
-                      {skill.icon ? (
-                        <img
-                          src={resolveIconUrl(skill.icon)}
-                          alt=""
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 6,
-                            flexShrink: 0,
-                            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                            objectFit: 'cover',
-                          }}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '6px',
-                            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-                      <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {skill.name}
-                        </Typography>
-                        {skill.category && (
-                          <Typography
-                            sx={{
-                              fontSize: 10,
-                              color: isDark ? 'rgba(255,255,255,0.40)' : 'rgba(0,0,0,0.40)',
-                              lineHeight: 1.2,
-                            }}
-                          >
-                            {skill.category}
-                          </Typography>
-                        )}
-                      </Box>
-                      {selected && (
-                        <CheckIcon
-                          sx={{ fontSize: 16, color: 'var(--be-accent, #38bdf8)', flexShrink: 0 }}
-                        />
-                      )}
-                    </ButtonBase>
-                  );
-                })}
-              </Stack>
-            )}
-          </Box>
-        ) : (
-          <>
-            {/* Browse mode: category tabs + skill lines */}
-            <Box sx={{ display: 'flex', gap: 0.5, px: 2, pb: 1.5, overflowX: 'auto' }}>
-              {PASSIVE_PICKER_TABS.map((tab, idx) => (
+      {isSearching ? (
+        <PickerDialog.Body empty={searchResults.length === 0} emptyMessage="No passives found">
+          <Stack spacing={0.5}>
+            {searchResults.map((skill) => {
+              const selected = selectedIds.has(skill.id);
+              const muted = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.45)';
+              const accentRgb = '56,189,248';
+              return (
                 <ButtonBase
-                  key={tab.category}
-                  onClick={() => setActiveTab(idx)}
+                  key={skill.id}
+                  onClick={() => handleToggle(skill)}
                   sx={{
-                    px: 1.25,
-                    py: 0.5,
-                    borderRadius: 1.5,
-                    fontSize: 11,
-                    fontWeight: activeTab === idx ? 700 : 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.3,
-                    flexShrink: 0,
-                    color:
-                      activeTab === idx
-                        ? isDark
-                          ? '#fff'
-                          : '#0f172a'
-                        : isDark
-                          ? 'rgba(255,255,255,0.45)'
-                          : 'rgba(0,0,0,0.45)',
-                    background:
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.06)'
-                        : 'transparent',
-                    border: `1px solid ${
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.12)'
-                          : 'rgba(0,0,0,0.10)'
-                        : 'transparent'
-                    }`,
-                    transition: 'all 0.15s',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 1.25,
+                    py: 0.75,
+                    px: 1,
+                    borderRadius: 1.75,
+                    width: '100%',
+                    textAlign: 'left',
+                    border: `1px solid ${selected ? `rgba(${accentRgb},0.45)` : 'transparent'}`,
+                    background: selected
+                      ? isDark
+                        ? `rgba(${accentRgb},0.10)`
+                        : `rgba(${accentRgb},0.06)`
+                      : 'transparent',
+                    transition: 'all 150ms',
                     '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      background: selected
+                        ? isDark
+                          ? `rgba(${accentRgb},0.14)`
+                          : `rgba(${accentRgb},0.09)`
+                        : isDark
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(0,0,0,0.035)',
                     },
                   }}
                 >
-                  {tab.label}
-                </ButtonBase>
-              ))}
-            </Box>
-
-            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-              {activeTab === 0
-                ? classLinesByClass.map(({ cls, lines }) => {
-                    const clsColor = CLASS_COLOR_MAP[cls.id].accent;
-                    return (
-                      <Box key={cls.id}>
-                        <ListSubheader
-                          disableSticky
+                  {skill.icon ? (
+                    <img
+                      src={resolveIconUrl(skill.icon)}
+                      alt=""
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 9,
+                        flexShrink: 0,
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: '9px',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      sx={{ alignItems: 'center', minWidth: 0 }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 12.5,
+                          fontWeight: 600,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          lineHeight: 1.3,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {skill.name}
+                      </Typography>
+                      <Box
+                        component="span"
+                        sx={{
+                          flexShrink: 0,
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          letterSpacing: 0.6,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          color: muted,
+                          border: `1px solid ${alpha(isDark ? '#fff' : '#000', 0.18)}`,
+                          borderRadius: '4px',
+                          px: 0.5,
+                          py: '1px',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        PASSIVE
+                      </Box>
+                      {skill.maxRank && skill.maxRank > 1 && (
+                        <Box
+                          component="span"
                           sx={{
-                            fontSize: 9,
+                            flexShrink: 0,
+                            fontSize: 8.5,
                             fontWeight: 700,
+                            letterSpacing: 0.4,
                             fontFamily: 'Space Grotesk, Inter, system-ui',
-                            letterSpacing: 1,
-                            textTransform: 'uppercase',
-                            color: clsColor,
-                            lineHeight: '28px',
-                            background: 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            px: 1,
+                            color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
+                            lineHeight: 1.4,
                           }}
                         >
-                          <Box
-                            sx={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: '50%',
-                              background: clsColor,
-                              boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
-                              flexShrink: 0,
-                            }}
-                          />
-                          {cls.label}
-                        </ListSubheader>
-                        {lines.map((line) => (
-                          <PassiveLineSection
-                            key={line.name}
-                            lineName={line.name}
-                            selectedIds={selectedIds}
-                            onToggle={handleToggle}
-                          />
-                        ))}
-                      </Box>
-                    );
-                  })
-                : linesByTab[activeTab].map((line) => (
-                    <PassiveLineSection
-                      key={line.name}
-                      lineName={line.name}
-                      selectedIds={selectedIds}
-                      onToggle={handleToggle}
-                    />
-                  ))}
-            </Box>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                          ×{skill.maxRank}
+                        </Box>
+                      )}
+                    </Stack>
+                    {skill.category && (
+                      <Typography
+                        sx={{
+                          fontSize: 10.5,
+                          color: muted,
+                          lineHeight: 1.35,
+                          mt: 0.15,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {skill.category}
+                      </Typography>
+                    )}
+                    {skill.description && (
+                      <Typography
+                        sx={{
+                          fontSize: 10,
+                          color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)',
+                          lineHeight: 1.4,
+                          mt: 0.35,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical' as const,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {skill.description}
+                      </Typography>
+                    )}
+                  </Box>
+                  {selected && (
+                    <Stack
+                      direction="row"
+                      spacing={0.25}
+                      sx={{
+                        alignItems: 'center',
+                        flexShrink: 0,
+                        color: `rgba(${accentRgb},1)`,
+                      }}
+                    >
+                      <CheckIcon sx={{ fontSize: 12 }} />
+                      <Typography
+                        sx={{
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          letterSpacing: 0.5,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                        }}
+                      >
+                        SELECTED
+                      </Typography>
+                    </Stack>
+                  )}
+                </ButtonBase>
+              );
+            })}
+          </Stack>
+        </PickerDialog.Body>
+      ) : (
+        <>
+          {/* Browse mode: category tabs + skill lines */}
+          <PickerDialog.Tabs>
+            {PASSIVE_PICKER_TABS.map((tab, idx) => (
+              <ButtonBase
+                key={tab.category}
+                onClick={() => setActiveTab(idx)}
+                sx={{
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: 1.5,
+                  fontSize: 11,
+                  fontWeight: activeTab === idx ? 700 : 500,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: 0.3,
+                  flexShrink: 0,
+                  color:
+                    activeTab === idx
+                      ? isDark
+                        ? '#fff'
+                        : '#0f172a'
+                      : isDark
+                        ? 'rgba(255,255,255,0.45)'
+                        : 'rgba(0,0,0,0.45)',
+                  background:
+                    activeTab === idx
+                      ? isDark
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(0,0,0,0.06)'
+                      : 'transparent',
+                  border: `1px solid ${
+                    activeTab === idx
+                      ? isDark
+                        ? 'rgba(255,255,255,0.12)'
+                        : 'rgba(0,0,0,0.10)'
+                      : 'transparent'
+                  }`,
+                  transition: 'all 0.15s',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  },
+                }}
+              >
+                {tab.label}
+              </ButtonBase>
+            ))}
+          </PickerDialog.Tabs>
+
+          <PickerDialog.Body>
+            {activeTab === 0 ? (
+              // Suggested tab
+              suggestedGroups.length === 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1,
+                    py: 5,
+                    color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                  }}
+                >
+                  <LightbulbIcon sx={{ fontSize: 32, opacity: 0.4 }} />
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      textAlign: 'center',
+                      maxWidth: 220,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Set your class, race, and skill bar to get smart passive suggestions
+                  </Typography>
+                </Box>
+              ) : (
+                suggestedGroups.map((group) => (
+                  <PassiveLineSection
+                    key={group.label}
+                    lineName={group.label}
+                    selectedIds={selectedIds}
+                    onToggle={handleToggle}
+                    onAddAll={handleAddAll}
+                    defaultExpanded
+                  />
+                ))
+              )
+            ) : activeTab === 1 ? (
+              // Class tab
+              classLinesByClass.map(({ cls, lines }) => {
+                const clsColor = CLASS_COLOR_MAP[cls.id].accent;
+                return (
+                  <Box key={cls.id}>
+                    <ListSubheader
+                      disableSticky
+                      sx={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        letterSpacing: 1,
+                        textTransform: 'uppercase',
+                        color: clsColor,
+                        lineHeight: '28px',
+                        background: 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        px: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: '50%',
+                          background: clsColor,
+                          boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      {cls.label}
+                    </ListSubheader>
+                    {lines.map((line) => (
+                      <PassiveLineSection
+                        key={line.name}
+                        lineName={line.name}
+                        selectedIds={selectedIds}
+                        onToggle={handleToggle}
+                      />
+                    ))}
+                  </Box>
+                );
+              })
+            ) : (
+              // All other category tabs
+              linesByTab[activeTab].map((line) => (
+                <PassiveLineSection
+                  key={line.name}
+                  lineName={line.name}
+                  selectedIds={selectedIds}
+                  onToggle={handleToggle}
+                />
+              ))
+            )}
+          </PickerDialog.Body>
+        </>
+      )}
+    </PickerDialog>
   );
 };
 
@@ -756,9 +974,18 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
 export interface PassivesPickerProps {
   passives: number[];
   onChange: (passives: number[]) => void;
+  esoClass?: string;
+  races?: string[];
+  setupSkills?: SkillsConfig;
 }
 
-export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChange }) => {
+export const PassivesPicker: React.FC<PassivesPickerProps> = ({
+  passives,
+  onChange,
+  esoClass,
+  races,
+  setupSkills,
+}) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -771,6 +998,14 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
       } else {
         onChange([...passives, skillId]);
       }
+    },
+    [passives, selectedIds, onChange],
+  );
+
+  const handleAddMany = useCallback(
+    (ids: number[]) => {
+      const toAdd = ids.filter((id) => !selectedIds.has(id));
+      if (toAdd.length > 0) onChange([...passives, ...toAdd]);
     },
     [passives, selectedIds, onChange],
   );
@@ -831,6 +1066,10 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
         onClose={() => setDialogOpen(false)}
         selectedIds={selectedIds}
         onToggle={handleToggle}
+        onAddMany={handleAddMany}
+        esoClass={esoClass}
+        races={races}
+        setupSkills={setupSkills}
       />
     </>
   );

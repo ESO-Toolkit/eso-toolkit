@@ -147,7 +147,7 @@ export const AppLayout: React.FC = () => {
           >
             {routeAnnouncement}
           </Box>
-          <Footer />
+          {!isBuildEditor && <Footer />}
         </Box>
       </ReportFightProvider>
     </ReduxThemeProvider>

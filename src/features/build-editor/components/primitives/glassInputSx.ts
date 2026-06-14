@@ -6,13 +6,13 @@
 
 import { BE_TOKENS } from '../../theme/buildEditorTokens';
 
-export const glassInputSx = (isDark: boolean): Record<string, unknown> => {
+export const glassInputSx = (isDark: boolean, isMobile?: boolean): Record<string, unknown> => {
   const t = isDark ? BE_TOKENS.input.dark : BE_TOKENS.input.light;
 
   return {
     '& .MuiOutlinedInput-root': {
       fontFamily: 'Space Grotesk, Inter, system-ui',
-      fontSize: 13,
+      fontSize: isMobile ? 16 : 13,
       background: t.bg,
       borderRadius: '10px',
       transition: 'background 0.2s ease',

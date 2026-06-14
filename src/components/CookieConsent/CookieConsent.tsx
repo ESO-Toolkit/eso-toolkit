@@ -53,7 +53,7 @@ const Transition = React.forwardRef(function Transition(
 /** Floating glassmorphism banner container */
 const BannerRoot = styled('div')(({ theme }) => ({
   position: 'fixed',
-  bottom: 24,
+  bottom: 'calc(24px + env(safe-area-inset-bottom))',
   left: '50%',
   transform: 'translateX(-50%)',
   zIndex: theme.zIndex.snackbar,

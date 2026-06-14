@@ -114,8 +114,19 @@ export const BuildEditorLayout: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
-      {/* Header: build name + progress + save/share */}
-      <BuildCompletionHeader />
+      {/* Header: build name + progress + save/share.
+          Sticky on mobile so Save/Publish stay within thumb reach from any
+          scroll position (H5). On desktop the inner bento grid is the scroll
+          container and the header is already always visible. */}
+      <Box
+        sx={{
+          position: isMobile ? 'sticky' : 'relative',
+          top: 0,
+          zIndex: isMobile ? 100 : 1,
+        }}
+      >
+        <BuildCompletionHeader />
+      </Box>
 
       {/* Body: nav rail + bento grid */}
       <Box
@@ -135,10 +146,20 @@ export const BuildEditorLayout: React.FC = () => {
             flex: 1,
             minWidth: 0,
             overflowY: 'auto',
-            p: { xs: 1.5, md: 2.5 },
-            pb: isMobile ? 10 : 2.5, // Extra bottom padding for mobile nav bar
+            pt: { xs: 1.5, md: 2.5 },
+            pl: { xs: 1.5, md: 2.5 },
+            pr: { xs: 1.5, md: 2.5 },
+            // Avoid p+pb shorthand conflicts — use explicit paddingBottom so it
+            // never gets overridden by the `padding` shorthand class cascade.
+            // Adds enough clearance for the fixed bottom nav (64px) + iOS home
+            // indicator safe area, with a generous 24px buffer.
+            paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '20px',
           }}
         >
+          {/* Setup tab bar at top on mobile — surfaced above sections so users
+              discover multi-setup support without scrolling ~3 000px down. */}
+          {isMobile && <SetupTabBar />}
+
           <Box
             sx={{
               display: 'grid',
@@ -334,8 +355,8 @@ export const BuildEditorLayout: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Setup tab bar at bottom */}
-      <SetupTabBar />
+      {/* Setup tab bar at bottom on desktop */}
+      {!isMobile && <SetupTabBar />}
 
       {/* Mobile bottom nav */}
       {isMobile && <BuildNavRail progress={progress} />}

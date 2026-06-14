@@ -12,21 +12,16 @@ import {
   ExpandMore as ExpandIcon,
   FilterList as FilterListIcon,
   InfoOutlined as InfoIcon,
-  Search as SearchIcon,
+  SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
 import {
   Box,
   ButtonBase,
   Collapse,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   IconButton,
-  InputAdornment,
   ListSubheader,
   Popover,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -44,6 +39,7 @@ import {
 import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import { CLASS_SKILL_LINES, ESO_CLASSES } from '../../data/esoStaticData';
 import { CLASS_COLOR_MAP } from '../../theme/classColorMap';
+import { PickerDialog } from '../primitives/PickerDialog';
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
@@ -598,283 +594,209 @@ const SkillPickerDialog: React.FC<SkillPickerDialogProps> = ({
   }, [onClose]);
 
   return (
-    <Dialog
+    <PickerDialog
       open={open}
       onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-      className="glass-dialog"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: '20px',
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
-            backgroundColor: 'transparent',
-            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
-            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
-            maxHeight: '90vh',
-          },
-        },
-      }}
+      title={isUltimate ? 'Assign Ultimate' : `Assign Skill \u00b7 Slot ${slotLabel}`}
     >
-      <DialogTitle
-        sx={{
-          fontWeight: 700,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          fontSize: '1rem',
-          pb: 1,
-          background: isDark
-            ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-        }}
-      >
-        {isUltimate ? 'Assign Ultimate' : `Assign Skill \u00b7 Slot ${slotLabel}`}
-      </DialogTitle>
+      <PickerDialog.Search
+        value={search}
+        onChange={setSearch}
+        placeholder="Search skills..."
+        resultCount={isSearching ? searchResults.length : undefined}
+      />
 
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ px: 2, pb: 1.5 }}>
-          <TextField
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search skills..."
-            size="small"
-            fullWidth
-            autoFocus
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
-                borderRadius: 2,
-                fontSize: 13,
-              },
-            }}
-          />
-        </Box>
-
-        {isSearching ? (
-          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
-            {searchResults.length === 0 ? (
-              <Typography
+      {isSearching ? (
+        <PickerDialog.Body
+          empty={searchResults.length === 0}
+          emptyMessage={`No ${isUltimate ? 'ultimates' : 'skills'} found`}
+        >
+          <Stack spacing={0.25}>
+            {searchResults.map((skill) => (
+              <SkillOptionRow
+                key={skill.id}
+                skill={skill}
+                onSelect={handleSelect}
+                isMorph={isMorphSkill(skill)}
+                isCurrent={skill.id === currentAbilityId}
+              />
+            ))}
+          </Stack>
+        </PickerDialog.Body>
+      ) : (
+        <>
+          <PickerDialog.Tabs>
+            {PICKER_TABS.map((tab, idx) => (
+              <ButtonBase
+                key={tab.category}
+                onClick={() => setActiveTab(idx)}
                 sx={{
-                  fontSize: 12,
-                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                  textAlign: 'center',
-                  py: 3,
+                  px: 1.25,
+                  py: 0.5,
+                  borderRadius: 1.5,
+                  fontSize: 11,
+                  fontWeight: activeTab === idx ? 700 : 500,
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  letterSpacing: 0.3,
+                  flexShrink: 0,
+                  color:
+                    activeTab === idx
+                      ? isDark
+                        ? '#fff'
+                        : '#0f172a'
+                      : isDark
+                        ? 'rgba(255,255,255,0.45)'
+                        : 'rgba(0,0,0,0.45)',
+                  background:
+                    activeTab === idx
+                      ? isDark
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(0,0,0,0.06)'
+                      : 'transparent',
+                  border: `1px solid ${
+                    activeTab === idx
+                      ? isDark
+                        ? 'rgba(255,255,255,0.12)'
+                        : 'rgba(0,0,0,0.10)'
+                      : 'transparent'
+                  }`,
+                  transition: 'all 0.15s',
+                  '&:hover': {
+                    background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                  },
                 }}
               >
-                No {isUltimate ? 'ultimates' : 'skills'} found
-              </Typography>
-            ) : (
-              <Stack spacing={0.25}>
-                {searchResults.map((skill) => (
-                  <SkillOptionRow
-                    key={skill.id}
-                    skill={skill}
-                    onSelect={handleSelect}
-                    isMorph={isMorphSkill(skill)}
-                    isCurrent={skill.id === currentAbilityId}
-                  />
-                ))}
-              </Stack>
-            )}
-          </Box>
-        ) : (
-          <>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
-                px: 2,
-                pb: 1.5,
-                overflowX: 'auto',
-              }}
-            >
-              {PICKER_TABS.map((tab, idx) => (
-                <ButtonBase
-                  key={tab.category}
-                  onClick={() => setActiveTab(idx)}
-                  sx={{
-                    px: 1.25,
-                    py: 0.5,
-                    borderRadius: 1.5,
-                    fontSize: 11,
-                    fontWeight: activeTab === idx ? 700 : 500,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    letterSpacing: 0.3,
-                    flexShrink: 0,
-                    color:
-                      activeTab === idx
-                        ? isDark
-                          ? '#fff'
-                          : '#0f172a'
-                        : isDark
-                          ? 'rgba(255,255,255,0.45)'
-                          : 'rgba(0,0,0,0.45)',
-                    background:
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.06)'
-                        : 'transparent',
-                    border: `1px solid ${
-                      activeTab === idx
-                        ? isDark
-                          ? 'rgba(255,255,255,0.12)'
-                          : 'rgba(0,0,0,0.10)'
-                        : 'transparent'
-                    }`,
-                    transition: 'all 0.15s',
-                    '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
-                  }}
-                >
-                  {tab.label}
-                </ButtonBase>
-              ))}
+                {tab.label}
+              </ButtonBase>
+            ))}
 
-              {activeTab === 0 && hasSelectedLines && (
-                <>
-                  <Box sx={{ flex: 1, minWidth: 4 }} />
-                  <Tooltip
-                    title={
-                      myBuildOnly
-                        ? 'Showing your 3 selected class lines · click to show all'
-                        : 'Show only your selected class lines'
-                    }
-                    arrow
-                    placement="top"
-                  >
-                    <ButtonBase
-                      onClick={() => setMyBuildOnly((v) => !v)}
-                      aria-pressed={myBuildOnly}
-                      sx={{
-                        px: 1.25,
-                        py: 0.5,
-                        borderRadius: 1.5,
-                        fontSize: 11,
-                        fontWeight: myBuildOnly ? 700 : 500,
-                        fontFamily: 'Space Grotesk, Inter, system-ui',
-                        letterSpacing: 0.3,
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.4,
-                        color: myBuildOnly
+            {activeTab === 0 && hasSelectedLines && (
+              <>
+                <Box sx={{ flex: 1, minWidth: 4 }} />
+                <Tooltip
+                  title={
+                    myBuildOnly
+                      ? 'Showing your 3 selected class lines · click to show all'
+                      : 'Show only your selected class lines'
+                  }
+                  arrow
+                  placement="top"
+                >
+                  <ButtonBase
+                    onClick={() => setMyBuildOnly((v) => !v)}
+                    aria-pressed={myBuildOnly}
+                    sx={{
+                      px: 1.25,
+                      py: 0.5,
+                      borderRadius: 1.5,
+                      fontSize: 11,
+                      fontWeight: myBuildOnly ? 700 : 500,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      letterSpacing: 0.3,
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.4,
+                      color: myBuildOnly
+                        ? isDark
+                          ? '#38bdf8'
+                          : '#0284c7'
+                        : isDark
+                          ? 'rgba(255,255,255,0.40)'
+                          : 'rgba(0,0,0,0.40)',
+                      background: myBuildOnly
+                        ? isDark
+                          ? 'rgba(56,189,248,0.10)'
+                          : 'rgba(2,132,199,0.06)'
+                        : 'transparent',
+                      border: `1px solid ${
+                        myBuildOnly
                           ? isDark
-                            ? '#38bdf8'
-                            : '#0284c7'
-                          : isDark
-                            ? 'rgba(255,255,255,0.40)'
-                            : 'rgba(0,0,0,0.40)',
+                            ? 'rgba(56,189,248,0.28)'
+                            : 'rgba(2,132,199,0.22)'
+                          : 'transparent'
+                      }`,
+                      transition: 'all 0.15s',
+                      '&:hover': {
                         background: myBuildOnly
                           ? isDark
-                            ? 'rgba(56,189,248,0.10)'
-                            : 'rgba(2,132,199,0.06)'
-                          : 'transparent',
-                        border: `1px solid ${
-                          myBuildOnly
-                            ? isDark
-                              ? 'rgba(56,189,248,0.28)'
-                              : 'rgba(2,132,199,0.22)'
-                            : 'transparent'
-                        }`,
-                        transition: 'all 0.15s',
-                        '&:hover': {
-                          background: myBuildOnly
-                            ? isDark
-                              ? 'rgba(56,189,248,0.16)'
-                              : 'rgba(2,132,199,0.10)'
-                            : isDark
-                              ? 'rgba(255,255,255,0.06)'
-                              : 'rgba(0,0,0,0.04)',
-                        },
-                      }}
-                    >
-                      <FilterListIcon sx={{ fontSize: 12 }} />
-                      My Lines
-                    </ButtonBase>
-                  </Tooltip>
-                </>
-              )}
-            </Box>
+                            ? 'rgba(56,189,248,0.16)'
+                            : 'rgba(2,132,199,0.10)'
+                          : isDark
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                  >
+                    <FilterListIcon sx={{ fontSize: 12 }} />
+                    My Lines
+                  </ButtonBase>
+                </Tooltip>
+              </>
+            )}
+          </PickerDialog.Tabs>
 
-            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
-              {activeTab === 0
-                ? filteredClassLinesByClass.map(({ cls, lines }) => {
-                    const clsColor = CLASS_COLOR_MAP[cls.id].accent;
-                    return (
-                      <Box key={cls.id}>
-                        <ListSubheader
-                          disableSticky
+          <PickerDialog.Body>
+            {activeTab === 0
+              ? filteredClassLinesByClass.map(({ cls, lines }) => {
+                  const clsColor = CLASS_COLOR_MAP[cls.id].accent;
+                  return (
+                    <Box key={cls.id}>
+                      <ListSubheader
+                        disableSticky
+                        sx={{
+                          fontSize: 9,
+                          fontWeight: 700,
+                          fontFamily: 'Space Grotesk, Inter, system-ui',
+                          letterSpacing: 1,
+                          textTransform: 'uppercase',
+                          color: clsColor,
+                          lineHeight: '28px',
+                          background: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          px: 1,
+                        }}
+                      >
+                        <Box
                           sx={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            fontFamily: 'Space Grotesk, Inter, system-ui',
-                            letterSpacing: 1,
-                            textTransform: 'uppercase',
-                            color: clsColor,
-                            lineHeight: '28px',
-                            background: 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.75,
-                            px: 1,
+                            width: 7,
+                            height: 7,
+                            borderRadius: '50%',
+                            background: clsColor,
+                            boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
+                            flexShrink: 0,
                           }}
-                        >
-                          <Box
-                            sx={{
-                              width: 7,
-                              height: 7,
-                              borderRadius: '50%',
-                              background: clsColor,
-                              boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
-                              flexShrink: 0,
-                            }}
-                          />
-                          {cls.label}
-                        </ListSubheader>
-                        {lines.map((line) => (
-                          <SkillLineSection
-                            key={line.name}
-                            lineName={line.name}
-                            isUltimate={isUltimate}
-                            onSelect={handleSelect}
-                            defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
-                            currentAbilityId={currentAbilityId}
-                          />
-                        ))}
-                      </Box>
-                    );
-                  })
-                : linesByTab[activeTab].map((line) => (
-                    <SkillLineSection
-                      key={line.name}
-                      lineName={line.name}
-                      isUltimate={isUltimate}
-                      onSelect={handleSelect}
-                      currentAbilityId={currentAbilityId}
-                    />
-                  ))}
-            </Box>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+                        />
+                        {cls.label}
+                      </ListSubheader>
+                      {lines.map((line) => (
+                        <SkillLineSection
+                          key={line.name}
+                          lineName={line.name}
+                          isUltimate={isUltimate}
+                          onSelect={handleSelect}
+                          defaultExpanded={myBuildOnly && selectedLineNames.has(line.name)}
+                          currentAbilityId={currentAbilityId}
+                        />
+                      ))}
+                    </Box>
+                  );
+                })
+              : linesByTab[activeTab].map((line) => (
+                  <SkillLineSection
+                    key={line.name}
+                    lineName={line.name}
+                    isUltimate={isUltimate}
+                    onSelect={handleSelect}
+                    currentAbilityId={currentAbilityId}
+                  />
+                ))}
+          </PickerDialog.Body>
+        </>
+      )}
+    </PickerDialog>
   );
 };
 
@@ -899,6 +821,10 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
   const skill = abilityId ? getSkillById(abilityId) : null;
   const size = isUlt ? ULT_SIZE : TILE_SIZE;
   const label = SLOT_LABELS[slotIndex] ?? String(slotIndex);
+  const [iconFailed, setIconFailed] = React.useState(false);
+  React.useEffect(() => {
+    setIconFailed(false);
+  }, [abilityId]);
 
   const accentA = (a: number): string =>
     isUlt ? `rgba(255,179,0,${a})` : `rgba(var(--be-accent-rgb, 56,189,248),${a})`;
@@ -915,6 +841,27 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
         minWidth: isUlt ? ULT_SIZE : TILE_SIZE,
       }}
     >
+      {/* Slot position label above the tile \u2014 always visible for orientation */}
+      <Typography
+        sx={{
+          fontSize: '0.58rem',
+          fontWeight: 700,
+          letterSpacing: isUlt ? 0.8 : 0.5,
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          color: isUlt
+            ? isDark
+              ? 'rgba(255,179,0,0.55)'
+              : 'rgba(180,120,0,0.55)'
+            : isDark
+              ? 'rgba(255,255,255,0.28)'
+              : 'rgba(0,0,0,0.25)',
+          userSelect: 'none',
+          lineHeight: 1,
+          textTransform: isUlt ? 'uppercase' : undefined,
+        }}
+      >
+        {isUlt ? 'Ult' : label}
+      </Typography>
       <Tooltip
         title={
           skill
@@ -947,23 +894,23 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             cursor: 'pointer',
             overflow: 'hidden',
             flexShrink: 0,
-            border: `${isUlt ? 2 : 1.5}px solid ${
-              skill ? accentA(0.45) : isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'
-            }`,
+            border: skill
+              ? `${isUlt ? 2 : 1.5}px solid ${accentA(0.45)}`
+              : `${isUlt ? 2 : 1.5}px dashed ${
+                  isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)'
+                }`,
             background: skill
               ? isDark
                 ? accentA(0.08)
                 : accentA(0.04)
               : isDark
-                ? 'rgba(255,255,255,0.025)'
-                : 'rgba(0,0,0,0.015)',
+                ? 'rgba(255,255,255,0.02)'
+                : 'rgba(0,0,0,0.012)',
             boxShadow: skill
               ? isDark
                 ? `0 0 14px ${accentA(0.12)}, inset 0 1px 0 rgba(255,255,255,0.04)`
                 : 'inset 0 1px 0 rgba(255,255,255,0.5)'
-              : isDark
-                ? 'inset 0 1px 0 rgba(255,255,255,0.025)'
-                : 'inset 0 1px 0 rgba(255,255,255,0.4)',
+              : 'none',
             transition: 'all 180ms ease',
             '&:focus-visible': {
               outline: '2px solid var(--be-accent, #38bdf8)',
@@ -971,6 +918,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             },
             '&:hover': {
               transform: 'scale(1.08)',
+              borderStyle: 'solid',
               borderColor: accentA(0.7),
               background: isDark ? accentA(0.14) : accentA(0.08),
               boxShadow: isDark
@@ -984,14 +932,12 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
             },
           }}
         >
-          {skill?.icon ? (
+          {skill?.icon && !iconFailed ? (
             <img
               src={resolveIconUrl(skill.icon)}
               alt={skill.name}
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+              onError={() => setIconFailed(true)}
             />
           ) : (
             <Box
@@ -1008,12 +954,19 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
                   fontWeight: 800,
                   fontFamily: 'Space Grotesk, Inter, system-ui',
                   letterSpacing: 0.4,
-                  color: isDark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.13)',
+                  color:
+                    skill && iconFailed
+                      ? isDark
+                        ? 'rgba(255,255,255,0.55)'
+                        : 'rgba(0,0,0,0.45)'
+                      : isDark
+                        ? 'rgba(255,255,255,0.16)'
+                        : 'rgba(0,0,0,0.13)',
                   lineHeight: 1,
                   userSelect: 'none',
                 }}
               >
-                {label}
+                {skill && iconFailed ? skill.name.slice(0, 2).toUpperCase() : label}
               </Typography>
             </Box>
           )}
@@ -1055,7 +1008,7 @@ const SkillSlotTile: React.FC<SkillSlotTileProps> = ({
       {skill && (
         <Typography
           sx={{
-            fontSize: '0.58rem',
+            fontSize: '0.65rem',
             fontWeight: 600,
             fontFamily: 'Space Grotesk, Inter, system-ui',
             color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.45)',
@@ -1231,6 +1184,7 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
 
   const handlePickerSelect = useCallback(
     (skill: SkillData) => {
+      navigator.vibrate?.(10);
       handleSelect(picker.barIndex, picker.slotIndex, skill.id);
       setPicker((prev) => ({ ...prev, open: false }));
     },
@@ -1247,37 +1201,49 @@ export const SkillBarPicker: React.FC<SkillBarPickerProps> = ({
           onRemove={(slotIndex) => handleRemove(0, slotIndex)}
         />
 
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 0.5 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', py: 0.75 }}>
           <Box
             sx={{
               flex: 1,
               height: 1,
               background: isDark
-                ? 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.20) 100%)'
-                : 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.12) 100%)',
+                ? 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.25) 100%)'
+                : 'linear-gradient(90deg, transparent 0%, rgba(var(--be-accent-rgb, 56,189,248), 0.15) 100%)',
             }}
           />
-          <Typography
-            sx={{
-              fontSize: '0.56rem',
-              fontWeight: 700,
-              letterSpacing: 2,
-              textTransform: 'uppercase',
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
-              flexShrink: 0,
-              userSelect: 'none',
-            }}
+          <Stack
+            direction="row"
+            spacing={0.5}
+            sx={{ alignItems: 'center', flexShrink: 0, userSelect: 'none' }}
           >
-            weapon swap
-          </Typography>
+            <SwapHorizIcon
+              sx={{
+                fontSize: 14,
+                color: isDark
+                  ? 'rgba(var(--be-accent-rgb, 56,189,248), 0.55)'
+                  : 'rgba(var(--be-accent-rgb, 56,189,248), 0.50)',
+              }}
+            />
+            <Typography
+              sx={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.42)',
+              }}
+            >
+              Weapon Swap
+            </Typography>
+          </Stack>
           <Box
             sx={{
               flex: 1,
               height: 1,
               background: isDark
-                ? 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.20) 0%, transparent 100%)'
-                : 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.12) 0%, transparent 100%)',
+                ? 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.25) 0%, transparent 100%)'
+                : 'linear-gradient(90deg, rgba(var(--be-accent-rgb, 56,189,248), 0.15) 0%, transparent 100%)',
             }}
           />
         </Stack>

@@ -29,6 +29,7 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -327,7 +328,9 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
   currentFoodId,
   onSelect,
 }) => {
-  const isDark = useTheme().palette.mode === 'dark';
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [activeTab, setActiveTab] = useState(0);
   const [search, setSearch] = useState('');
 
@@ -408,7 +411,7 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
             placeholder="Search food or drink..."
             size="small"
             fullWidth
-            autoFocus
+            autoFocus={!isMobile}
             slotProps={{
               input: {
                 startAdornment: (
@@ -422,7 +425,7 @@ const FoodPickerDialog: React.FC<FoodPickerDialogProps> = ({
               '& .MuiOutlinedInput-root': {
                 background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
                 borderRadius: 2,
-                fontSize: 13,
+                fontSize: isMobile ? 16 : 13,
               },
             }}
           />

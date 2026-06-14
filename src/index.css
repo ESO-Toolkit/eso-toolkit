@@ -138,3 +138,12 @@ html[data-perf='low'] * {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+/* Opaque fallback for dark-mode glass dialog papers when backdrop-filter is
+   stripped (data-perf='low'). Without blur the 12%-alpha gradient becomes
+   effectively transparent. data-color-scheme is synced by ReduxThemeProvider.
+   Light-mode papers are ≥98%-alpha even without blur, so no fallback needed. */
+html[data-perf='low'][data-color-scheme='dark'] .glass-dialog .MuiDialog-paper {
+  background: #0f172a !important;
+  background-image: none !important;
+}
