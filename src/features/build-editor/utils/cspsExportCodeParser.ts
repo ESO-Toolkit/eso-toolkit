@@ -28,6 +28,7 @@ import {
 import type { SlotType } from '../../loadout-manager/data/slotTypes';
 import type { GearPiece, SkillBar, SkillsConfig } from '../../loadout-manager/types/loadout.types';
 import { getDefaultLinesForClass, EQUIP_SLOTS } from '../data/esoStaticData';
+import { esoTypeToArmorWeight } from '../data/setArmorWeights';
 import type {
   Build,
   BuildChampionPoints,
@@ -396,6 +397,11 @@ function esoSlotToSlotType(esoSlot: number): SlotType | undefined {
   return EQUIP_SLOTS.find((s) => s.slot === esoSlot)?.slotType as SlotType | undefined;
 }
 
+// Apparel slot indices — only these carry an armor weight in CSPS gear `type`.
+const APPAREL_SLOT_SET = new Set<number>(
+  EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot),
+);
+
 /**
  * Resolve a CSPS set ID to an item ID for the build editor.
  *
@@ -442,17 +448,26 @@ function parseGearSection(s: string): Record<number, GearPiece> {
     if (parts.length < 5) continue;
 
     const slot = parseIntSafe(parts[0]);
+    const type = parseIntSafe(parts[1]);
     const setId = parseIntSafe(parts[2]);
     const trait = parseIntSafe(parts[3]);
     const enchant = parseIntSafe(parts[4]);
 
     if (setId <= 0) continue;
 
-    gear[slot] = {
+    const piece: GearPiece = {
       id: resolveSetIdToItemId(setId, slot),
       trait: String(trait),
       enchant: String(enchant),
     };
+    // Deserialize the apparel armor weight CSPS stores in `type` (1/2/3), so a
+    // free set's light/medium choice survives the import instead of defaulting
+    // to heavy. Non-apparel / type 0 → no weight. (Mirrors cspsImport.ts.)
+    if (APPAREL_SLOT_SET.has(slot)) {
+      const weight = esoTypeToArmorWeight(type);
+      if (weight) piece.weight = weight;
+    }
+    gear[slot] = piece;
   }
 
   return gear;
@@ -826,16 +841,23 @@ function parseNativeGear(s: string): Record<number, GearPiece> {
     if (parts.length < 5) continue;
 
     const setId = parseIntSafe(parts[0]);
+    const type = parseIntSafe(parts[1]);
     const trait = parseIntSafe(parts[2]);
     const enchant = parseIntSafe(parts[4]);
     if (setId <= 0) continue;
 
     const esoSlot = NATIVE_GEAR_SLOT_ORDER[i];
-    gear[esoSlot] = {
+    const piece: GearPiece = {
       id: resolveSetIdToItemId(setId, esoSlot),
       trait: String(trait),
       enchant: String(enchant),
     };
+    // Deserialize apparel armor weight from `type` (1/2/3) — see parseGearSection.
+    if (APPAREL_SLOT_SET.has(esoSlot)) {
+      const weight = esoTypeToArmorWeight(type);
+      if (weight) piece.weight = weight;
+    }
+    gear[esoSlot] = piece;
   }
 
   return gear;

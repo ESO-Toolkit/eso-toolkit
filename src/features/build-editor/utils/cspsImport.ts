@@ -35,6 +35,7 @@ import {
 } from '../../loadout-manager/utils/cspsConverter';
 import { parseLuaSavedVariables } from '../../loadout-manager/utils/luaParser';
 import { getDefaultLinesForClass, EQUIP_SLOTS } from '../data/esoStaticData';
+import { esoTypeToArmorWeight } from '../data/setArmorWeights';
 import type {
   Build,
   BuildChampionPoints,
@@ -179,6 +180,11 @@ function resolveSetIdToItemId(setId: number, esoSlot: number): number {
   return setId;
 }
 
+// Apparel slot indices — only these carry an armor weight in CSPS gear `type`.
+const APPAREL_SLOT_SET = new Set<number>(
+  EQUIP_SLOTS.filter((s) => s.category === 'apparel').map((s) => s.slot),
+);
+
 /**
  * Convert parsed CSPS gear entries into the build editor's GearConfig.
  */
@@ -191,11 +197,21 @@ function convertGearToConfig(
     const slot = Number(slotStr);
     if (entry.setId <= 0) continue;
 
-    gear[slot] = {
+    const piece: GearPiece = {
       id: resolveSetIdToItemId(entry.setId, slot),
       trait: String(entry.trait),
       enchant: String(entry.enchant),
     };
+
+    // Deserialize the armor weight CSPS stores in `type` (1/2/3) back onto
+    // apparel pieces, so a free set's light/medium choice survives the round
+    // trip instead of falling back to heavy. Non-apparel / type 0 → no weight.
+    if (APPAREL_SLOT_SET.has(slot)) {
+      const weight = esoTypeToArmorWeight(entry.type);
+      if (weight) piece.weight = weight;
+    }
+
+    gear[slot] = piece;
   }
 
   return gear;

@@ -18,8 +18,10 @@ import {
   fetchIsTwoHandedWeapon,
   GENERIC_WEAPON_SUFFIXES,
   getItemIconUrl,
+  isIconDataReady,
   isTwoHandedFromName,
   isTwoHandedWeapon,
+  isWeaponTypeResolved,
   parseWeaponTypeFromIconUrl,
 } from '../itemIconResolver';
 import { preloadIconData } from '../itemIconResolver';
@@ -29,6 +31,46 @@ beforeAll(async () => {
 });
 
 const CDN = 'https://esoicons.uesp.net/esoui/art/icons';
+
+describe('isIconDataReady', () => {
+  it('reports ready once icon data has been preloaded', () => {
+    // beforeAll awaited preloadIconData, so it must be ready here.
+    expect(isIconDataReady()).toBe(true);
+  });
+});
+
+describe('isWeaponTypeResolved', () => {
+  // Concrete Mother's Sorrow weapon item IDs (slot-specific, full local data).
+  it('resolves specific (non-staff) weapon types', () => {
+    expect(isWeaponTypeResolved(97219, 'weapon')).toBe(true); // Axe
+    expect(isWeaponTypeResolved(97226, 'weapon')).toBe(true); // Bow
+    expect(isWeaponTypeResolved(97224, 'weapon')).toBe(true); // Greatsword
+  });
+
+  it('resolves staff ELEMENTS when weaponType data is present', () => {
+    // 97227-97230 are the inferno/ice/lightning/restoration staves.
+    expect(isWeaponTypeResolved(97227, 'weapon')).toBe(true);
+    expect(isWeaponTypeResolved(97230, 'weapon')).toBe(true);
+  });
+
+  it('treats a non-weapon item as resolved (its name is already specific)', () => {
+    // 59380 = Spawn of Mephala Head (a monster-set head, not a weapon).
+    expect(isWeaponTypeResolved(59380, 'head')).toBe(true);
+  });
+
+  it('returns false for an invalid id', () => {
+    expect(isWeaponTypeResolved(0, 'weapon')).toBe(false);
+    expect(isWeaponTypeResolved(null, 'weapon')).toBe(false);
+  });
+
+  it('the bare "staff" icon token resolves to the generic "Staff" label (the trigger)', () => {
+    // This is the value isWeaponTypeResolved rejects: when a staff has no element
+    // data and only a bare staff icon, its type label is the generic "Staff".
+    expect(parseWeaponTypeFromIconUrl(`${CDN}/gear_argonian_staff_d.png`)).toBe('Staff');
+    // …whereas a non-staff token is specific.
+    expect(parseWeaponTypeFromIconUrl(`${CDN}/gear_argonian_bow_d.png`)).toBe('Bow');
+  });
+});
 
 describe('parseWeaponTypeFromIconUrl', () => {
   it.each([

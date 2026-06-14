@@ -12,8 +12,9 @@ import {
   AutoFixHigh as TraitIcon,
   Close as CloseIcon,
   LocalFireDepartment as EnchantIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
-import { Box, ButtonBase, IconButton, Stack, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -150,6 +151,12 @@ interface GearSlotCardProps {
   isDisabled?: boolean;
   disabledReason?: string;
   weight?: ArmorWeight;
+  /**
+   * When set, the equipped set only exists in this armor weight in-game
+   * (mythic / overland drop). The weight chip renders as a read-only badge
+   * instead of a clickable cycle control.
+   */
+  lockedWeight?: ArmorWeight | null;
   onWeightChange?: (weight: ArmorWeight) => void;
   trait?: string;
   onTraitChange?: (trait: string | undefined) => void;
@@ -169,6 +176,7 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
   isDisabled = false,
   disabledReason,
   weight,
+  lockedWeight,
   onWeightChange,
   trait,
   onTraitChange,
@@ -324,8 +332,9 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
 
   // ── Filled slot ─────────────────────────────────────────────────────────
 
-  const showWeight = slotDef.category === 'apparel' && onWeightChange;
-  const currentWeight = weight ?? 'heavy';
+  const isWeightLocked = Boolean(lockedWeight);
+  const showWeight = slotDef.category === 'apparel' && (onWeightChange || isWeightLocked);
+  const currentWeight = lockedWeight ?? weight ?? 'heavy';
 
   return (
     <>
@@ -450,48 +459,90 @@ const GearSlotCardComponent: React.FC<GearSlotCardProps> = ({
             spacing={0.5}
             sx={{ alignItems: 'center', mt: 0.4, flexWrap: 'wrap', rowGap: 0.35 }}
           >
-            {/* Weight chip — apparel only */}
-            {showWeight && (
-              <ButtonBase
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  const idx = WEIGHT_CYCLE.indexOf(currentWeight);
-                  const next = WEIGHT_CYCLE[(idx + 1) % WEIGHT_CYCLE.length];
-                  onWeightChange(next);
-                }}
-                onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
-                aria-label={`Weight: ${WEIGHT_FULL_LABELS[currentWeight]} — click to cycle`}
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 0.3,
-                  px: 0.6,
-                  py: 0.2,
-                  borderRadius: 1,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  fontFamily: 'Space Grotesk, Inter, system-ui',
-                  lineHeight: 1,
-                  color: WEIGHT_COLORS[currentWeight],
-                  background: isDark
-                    ? `${WEIGHT_COLORS[currentWeight]}14`
-                    : `${WEIGHT_COLORS[currentWeight]}0C`,
-                  border: `1px solid ${
-                    isDark
-                      ? `${WEIGHT_COLORS[currentWeight]}30`
-                      : `${WEIGHT_COLORS[currentWeight]}25`
-                  }`,
-                  transition: 'all 150ms ease',
-                  '&:hover': {
-                    background: isDark
-                      ? `${WEIGHT_COLORS[currentWeight]}28`
-                      : `${WEIGHT_COLORS[currentWeight]}18`,
-                  },
-                }}
-              >
-                {WEIGHT_FULL_LABELS[currentWeight]}
-              </ButtonBase>
-            )}
+            {/* Weight chip — apparel only. Read-only badge when the set is
+                locked to a single armor weight; clickable cycle otherwise. */}
+            {showWeight &&
+              (isWeightLocked ? (
+                <Tooltip
+                  title={`${WEIGHT_FULL_LABELS[currentWeight]} Armor — this set only comes in ${WEIGHT_FULL_LABELS[currentWeight]}`}
+                  placement="top"
+                >
+                  <Box
+                    component="span"
+                    aria-label={`Weight: ${WEIGHT_FULL_LABELS[currentWeight]} (fixed)`}
+                    // Read-only badge: swallow the click so it doesn't bubble to
+                    // the row and open the gear picker (matches the cycle chip).
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.3,
+                      px: 0.6,
+                      py: 0.2,
+                      borderRadius: 1,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      lineHeight: 1,
+                      cursor: 'default',
+                      color: WEIGHT_COLORS[currentWeight],
+                      background: isDark
+                        ? `${WEIGHT_COLORS[currentWeight]}14`
+                        : `${WEIGHT_COLORS[currentWeight]}0C`,
+                      border: `1px solid ${
+                        isDark
+                          ? `${WEIGHT_COLORS[currentWeight]}30`
+                          : `${WEIGHT_COLORS[currentWeight]}25`
+                      }`,
+                    }}
+                  >
+                    <LockIcon sx={{ fontSize: 9, opacity: 0.7 }} />
+                    {WEIGHT_FULL_LABELS[currentWeight]}
+                  </Box>
+                </Tooltip>
+              ) : (
+                onWeightChange && (
+                  <ButtonBase
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      const idx = WEIGHT_CYCLE.indexOf(currentWeight);
+                      const next = WEIGHT_CYCLE[(idx + 1) % WEIGHT_CYCLE.length];
+                      onWeightChange(next);
+                    }}
+                    onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+                    aria-label={`Weight: ${WEIGHT_FULL_LABELS[currentWeight]} — click to cycle`}
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 0.3,
+                      px: 0.6,
+                      py: 0.2,
+                      borderRadius: 1,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      lineHeight: 1,
+                      color: WEIGHT_COLORS[currentWeight],
+                      background: isDark
+                        ? `${WEIGHT_COLORS[currentWeight]}14`
+                        : `${WEIGHT_COLORS[currentWeight]}0C`,
+                      border: `1px solid ${
+                        isDark
+                          ? `${WEIGHT_COLORS[currentWeight]}30`
+                          : `${WEIGHT_COLORS[currentWeight]}25`
+                      }`,
+                      transition: 'all 150ms ease',
+                      '&:hover': {
+                        background: isDark
+                          ? `${WEIGHT_COLORS[currentWeight]}28`
+                          : `${WEIGHT_COLORS[currentWeight]}18`,
+                      },
+                    }}
+                  >
+                    {WEIGHT_FULL_LABELS[currentWeight]}
+                  </ButtonBase>
+                )
+              ))}
 
             {/* Trait chip */}
             {onTraitChange && (

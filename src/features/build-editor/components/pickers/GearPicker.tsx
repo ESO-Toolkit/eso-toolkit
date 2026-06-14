@@ -16,20 +16,45 @@
  *   currentItemId — currently equipped item (nullable)
  */
 
-import { ExpandMore as ExpandIcon, Shield as ShieldIcon } from '@mui/icons-material';
-import { Box, ButtonBase, Chip, Collapse, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Close as CloseIcon,
+  ExpandMore as ExpandIcon,
+  Search as SearchIcon,
+  Shield as ShieldIcon,
+} from '@mui/icons-material';
+import {
+  Box,
+  ButtonBase,
+  Chip,
+  Collapse,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { ItemInfo, SlotType } from '@features/loadout-manager/data/itemIdMap';
+import type { CanonicalKeyFn, ItemInfo, SlotType } from '@features/loadout-manager/data/itemIdMap';
 import {
   getAvailableSetsForSlot,
+  getCanonicalItemsBySlot,
   getItemInfo,
-  getItemsBySlot,
   validateItemForSlot,
 } from '@features/loadout-manager/data/itemIdMap';
-import { deriveItemNameForSlot } from '@features/loadout-manager/utils/itemIconResolver';
+import {
+  deriveItemNameForSlot,
+  isIconDataReady,
+  isWeaponTypeResolved,
+  preloadIconData,
+} from '@features/loadout-manager/utils/itemIconResolver';
 
+import type { ArmorWeight } from '../../../loadout-manager/types/loadout.types';
 import {
   getSetType,
   lookupGearSet,
@@ -37,8 +62,97 @@ import {
   SET_TYPE_ORDER,
   type GearSetType,
 } from '../../data/gearSetRegistry';
+import { getLockedArmorWeight } from '../../data/setArmorWeights';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { PickerDialog } from '../primitives/PickerDialog';
+
+// Shared apparel-weight badge colors/labels (mirror GearSlotCard).
+const WEIGHT_COLORS: Record<ArmorWeight, string> = {
+  light: '#60a5fa',
+  medium: '#4ade80',
+  heavy: '#f87171',
+};
+const WEIGHT_LABELS: Record<ArmorWeight, string> = {
+  light: 'Light',
+  medium: 'Medium',
+  heavy: 'Heavy',
+};
+
+const APPAREL_SLOTS_SET = new Set<SlotType>([
+  'head',
+  'shoulders',
+  'chest',
+  'hand',
+  'waist',
+  'legs',
+  'feet',
+]);
+
+// Weapon slots pack every weapon TYPE of a set (axe/sword/bow/staff/…) under one
+// generic name — see getCanonicalItemsBySlot. For these, the canonical key must
+// fold in the per-item weapon type so each type survives as its own pickable row.
+const WEAPON_SLOTS_SET = new Set<SlotType>(['weapon', 'offhand']);
+
+/**
+ * Canonical dedup key for the gear picker. Weapons key by their slot-aware
+ * display name (which carries the weapon type, incl. staff element), so distinct
+ * weapon types aren't collapsed away. Everything else keys by set name, folding
+ * the ~24 level/quality variants of an apparel/jewelry piece into one row.
+ *
+ * Robustness: if a weapon's type can't be pinned down (icon data missing/stale,
+ * or a regular-gear staff whose element data is absent so it only resolves to a
+ * generic "Staff"), keying by the display name would wrongly collapse distinct
+ * items. Unresolved weapons fall back to a per-itemId key so they never merge,
+ * and getSetGroupsForSlot won't cache such a result — it recomputes the proper
+ * split once the data is present. Resolution is judged by isWeaponTypeResolved,
+ * NOT by name suffixes (a bare "Staff" name has no telltale generic suffix).
+ */
+function makeCanonicalKey(targetSlot: SlotType): CanonicalKeyFn {
+  if (!WEAPON_SLOTS_SET.has(targetSlot)) return (_itemId, info) => info.setName;
+  return (itemId, info) => {
+    const discriminator = isWeaponTypeResolved(itemId, targetSlot)
+      ? deriveItemNameForSlot(itemId, targetSlot)
+      : `#${itemId}`;
+    return `${info.setName} ${discriminator}`;
+  };
+}
+
+/** True when every weapon in the slot resolved to a specific (non-generic) type. */
+function weaponGroupsFullyResolved(targetSlot: SlotType, groups: SetGroup[]): boolean {
+  if (!WEAPON_SLOTS_SET.has(targetSlot)) return true;
+  for (const group of groups) {
+    for (const { itemId } of group.items) {
+      if (!isWeaponTypeResolved(itemId, targetSlot)) return false;
+    }
+  }
+  return true;
+}
+
+const WeightBadge: React.FC<{ weight: ArmorWeight }> = ({ weight }) => {
+  const isDark = useTheme().palette.mode === 'dark';
+  const color = WEIGHT_COLORS[weight];
+  return (
+    <Box
+      component="span"
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        px: 0.5,
+        py: 0.15,
+        borderRadius: 1,
+        fontSize: '0.5rem',
+        fontWeight: 700,
+        fontFamily: 'Space Grotesk, Inter, system-ui',
+        letterSpacing: 0.2,
+        flexShrink: 0,
+        color,
+        background: isDark ? `${color}14` : `${color}0C`,
+        border: `1px solid ${isDark ? `${color}30` : `${color}25`}`,
+      }}
+    >
+      {WEIGHT_LABELS[weight]}
+    </Box>
+  );
+};
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -76,13 +190,29 @@ function getSetGroupsForSlot(targetSlot: SlotType): SetGroupResult {
   const cached = SET_GROUPS_CACHE[targetSlot];
   if (cached) return cached;
   const result = buildSetGroups(targetSlot);
-  SET_GROUPS_CACHE[targetSlot] = result;
+  // Weapon groups key off icon-derived display names (see makeCanonicalKey). Only
+  // cache a weapon result when it's TRUSTWORTHY: icon data loaded AND every weapon
+  // resolved to a specific type. If the data is still loading OR stale/missing for
+  // some items, names stay generic and (despite the per-itemId key fallback) the
+  // result isn't the intended type-split — don't cache it, so a later open
+  // recomputes the correct grouping once the data is present. Non-weapon slots are
+  // icon-independent and always safe to cache.
+  const cacheable =
+    !WEAPON_SLOTS_SET.has(targetSlot) ||
+    (isIconDataReady() && weaponGroupsFullyResolved(targetSlot, result.groups));
+  if (cacheable) {
+    SET_GROUPS_CACHE[targetSlot] = result;
+  }
   return result;
 }
 
 function buildSetGroups(targetSlot: SlotType): SetGroupResult {
   const setSummaries = getAvailableSetsForSlot(targetSlot);
-  const allItems = getItemsBySlot(targetSlot);
+  // Canonical items for this slot. Apparel/jewelry collapse to one row per set
+  // (the ~24 level/quality/trait variants are pure noise); weapons keep one row
+  // per weapon TYPE so a set's bow / staff / greatsword stay individually
+  // selectable. See makeCanonicalKey / getCanonicalItemsBySlot.
+  const allItems = getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot));
 
   // Build item lookup by set name
   const itemsBySet = new Map<string, { itemId: number; info: ItemInfo }[]>();
@@ -178,168 +308,290 @@ const SetBonusPreview: React.FC<{ bonuses: string[] }> = ({ bonuses }) => {
 
 interface SetCategorySectionProps {
   group: SetGroup;
+  /**
+   * Set name of the currently-equipped piece in this slot. Matched by set name
+   * (not item id) so a previously-equipped non-canonical variant still lights up
+   * the canonical row as EQUIPPED.
+   */
+  currentSetName: string | null;
+  /** Exact equipped item id — used to highlight the specific weapon-type row. */
   currentItemId: number | null;
   onSelect: (itemId: number) => void;
   targetSlot: SlotType;
+  /**
+   * Whether the lazily-loaded icon data is ready. Weapon-type splitting depends
+   * on it; until it's true a weapon group can't be trusted to be fully split.
+   */
+  iconReady: boolean;
 }
 
 const SetCategorySection: React.FC<SetCategorySectionProps> = ({
   group,
+  currentSetName,
   currentItemId,
   onSelect,
   targetSlot,
+  iconReady,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
-  const [expanded, setExpanded] = useState(false);
+  const [showBonuses, setShowBonuses] = useState(false);
+  const [showVariants, setShowVariants] = useState(false);
   const catColor = SET_TYPE_COLORS[group.setType];
+
+  const canonical = group.items[0];
+  if (!canonical) return null;
+
+  // Weapon sets carry one canonical item PER weapon TYPE (axe/sword/bow/staff/…),
+  // so the set row expands to its types. Apparel/jewelry collapse to a single
+  // item, so the row itself is directly selectable. See getCanonicalItemsBySlot.
+  //
+  // A weapon's type is trustworthy only once icon data is loaded AND that item
+  // resolves to a SPECIFIC type (not the generic "<Set> Weapon"/"Staff" fallback).
+  // The whole set row is rendered inert (pending) only when NOTHING is usable:
+  //   1. icon data still loading (global !iconReady), or
+  //   2. data loaded but EVERY weapon in the set is unresolvable (stale/missing).
+  // A MIXED group (some resolved, some not) stays expandable — each unresolved
+  // variant row disables itself, but the resolved siblings remain selectable.
+  const isWeaponSlot = WEAPON_SLOTS_SET.has(targetSlot);
+  const resolvedFlags = isWeaponSlot
+    ? group.items.map((item) => isWeaponTypeResolved(item.itemId, targetSlot))
+    : [];
+  const allWeaponsUnresolved = isWeaponSlot && resolvedFlags.every((r) => !r);
+  const weaponTypesPending = isWeaponSlot && (!iconReady || allWeaponsUnresolved);
+  const isMultiVariant = group.items.length > 1;
+  const isSelected = currentSetName === group.setName;
+  const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
+    ? getLockedArmorWeight(group.setName)
+    : null;
+  const hasBonuses = group.bonuses.length > 0;
 
   return (
     <Box>
-      <ButtonBase
-        onClick={() => setExpanded(!expanded)}
+      <Box
         sx={{
-          width: '100%',
-          py: 0.75,
-          px: 1,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
           borderRadius: 1.5,
+          background: isSelected
+            ? isDark
+              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
+              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
+            : 'transparent',
+          border: isSelected
+            ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
+            : '1px solid transparent',
           '&:hover': {
-            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+            background: isSelected
+              ? undefined
+              : isDark
+                ? 'rgba(255,255,255,0.04)'
+                : 'rgba(0,0,0,0.03)',
           },
         }}
       >
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
-          <ShieldIcon
-            sx={{
-              fontSize: 16,
-              color: catColor,
-              opacity: 0.75,
-              flexShrink: 0,
-            }}
-          />
-          <Typography
-            noWrap
-            sx={{
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
-            }}
-          >
-            {group.setName}
-          </Typography>
-          <Chip
-            label={group.setType}
-            size="small"
-            sx={{
-              height: 14,
-              fontSize: '0.5rem',
-              fontWeight: 700,
-              fontFamily: 'Space Grotesk, Inter, system-ui',
-              background: `${catColor}25`,
-              color: catColor,
-              border: 'none',
-              flexShrink: 0,
-            }}
-          />
-        </Stack>
-        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-          <Typography
-            sx={{
-              fontSize: 10,
-              color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-              fontFamily: 'Space Grotesk',
-            }}
-          >
-            {group.items.length}
-          </Typography>
-          <ExpandIcon
-            sx={{
-              fontSize: 16,
-              transition: 'transform 0.2s',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-              color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
-            }}
-          />
-        </Stack>
-      </ButtonBase>
-
-      <Collapse in={expanded} unmountOnExit>
-        {group.bonuses.length > 0 && <SetBonusPreview bonuses={group.bonuses} />}
-        <Stack spacing={0} sx={{ pl: 1, pr: 0.5, pb: 1, pt: 0.25 }}>
-          {group.items.map((item) => {
-            const isSelected = item.itemId === currentItemId;
-            return (
-              <ButtonBase
-                key={item.itemId}
-                onClick={() => onSelect(item.itemId)}
+        {/* Primary action: apparel selects the set's canonical item directly;
+            weapons toggle the per-type variant list open. While a weapon's types
+            are still loading, the row is inert (no select, no toggle) so a fast
+            click can't equip the wrong collapsed variant. */}
+        <ButtonBase
+          disabled={weaponTypesPending}
+          onClick={() => {
+            if (weaponTypesPending) return;
+            if (isMultiVariant) setShowVariants((v) => !v);
+            else onSelect(canonical.itemId);
+          }}
+          aria-label={
+            weaponTypesPending
+              ? `${group.setName} — loading weapon types`
+              : isMultiVariant
+                ? `Choose a ${group.setName} weapon`
+                : `Equip ${group.setName}`
+          }
+          aria-busy={weaponTypesPending || undefined}
+          aria-expanded={isMultiVariant && !weaponTypesPending ? showVariants : undefined}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            py: 0.75,
+            pl: 1,
+            pr: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderRadius: 1.5,
+            textAlign: 'left',
+            opacity: weaponTypesPending ? 0.6 : 1,
+          }}
+        >
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0, flex: 1 }}>
+            <ShieldIcon sx={{ fontSize: 16, color: catColor, opacity: 0.75, flexShrink: 0 }} />
+            <Typography
+              noWrap
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                color: isDark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.75)',
+              }}
+            >
+              {group.setName}
+            </Typography>
+            <Chip
+              label={group.setType}
+              size="small"
+              sx={{
+                height: 14,
+                fontSize: '0.5rem',
+                fontWeight: 700,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                background: `${catColor}25`,
+                color: catColor,
+                border: 'none',
+                flexShrink: 0,
+              }}
+            />
+            {lockedWeight && <WeightBadge weight={lockedWeight} />}
+          </Stack>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexShrink: 0 }}>
+            {weaponTypesPending && (
+              <Typography
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  py: 0.6,
-                  px: 1,
-                  borderRadius: 1.5,
-                  width: '100%',
-                  textAlign: 'left',
-                  background: isSelected
-                    ? isDark
-                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
-                      : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.06)'
-                    : 'transparent',
-                  border: isSelected
-                    ? '1px solid rgba(var(--be-accent-rgb, 56, 189, 248), 0.25)'
-                    : '1px solid transparent',
-                  '&:hover': {
-                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                  },
+                  fontSize: 9,
+                  fontStyle: 'italic',
+                  fontFamily: 'Space Grotesk',
+                  color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
                 }}
               >
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                loading…
+              </Typography>
+            )}
+            {isSelected && (
+              <Chip
+                label="EQUIPPED"
+                size="small"
+                sx={{
+                  height: 14,
+                  fontSize: '0.5rem',
+                  fontWeight: 700,
+                  fontFamily: 'Space Grotesk',
+                  background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
+                  color: 'var(--be-accent, #38bdf8)',
+                  border: 'none',
+                  ml: 0.5,
+                }}
+              />
+            )}
+            {isMultiVariant && !weaponTypesPending && (
+              <ExpandIcon
+                sx={{
+                  fontSize: 16,
+                  transition: 'transform 0.2s',
+                  transform: showVariants ? 'rotate(180deg)' : 'rotate(0deg)',
+                  color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                }}
+              />
+            )}
+          </Stack>
+        </ButtonBase>
+
+        {/* Secondary action: peek the set bonuses without selecting. */}
+        {hasBonuses && (
+          <IconButton
+            size="small"
+            onClick={() => setShowBonuses((v) => !v)}
+            aria-label={showBonuses ? 'Hide set bonuses' : 'Show set bonuses'}
+            aria-expanded={showBonuses}
+            sx={{
+              p: 0.4,
+              mr: 0.4,
+              flexShrink: 0,
+              color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+            }}
+          >
+            <ExpandIcon
+              sx={{
+                fontSize: 16,
+                transition: 'transform 0.2s',
+                transform: showBonuses ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          </IconButton>
+        )}
+      </Box>
+
+      <Collapse in={showBonuses} unmountOnExit>
+        {hasBonuses && <SetBonusPreview bonuses={group.bonuses} />}
+      </Collapse>
+
+      {/* Weapon-type variant list (weapons only). */}
+      {isMultiVariant && (
+        <Collapse in={showVariants} unmountOnExit>
+          <Stack spacing={0} sx={{ pl: 2, pr: 0.5, pb: 0.5, pt: 0.25 }}>
+            {group.items.map((item, idx) => {
+              const variantSelected = currentItemId != null && item.itemId === currentItemId;
+              // A single unresolved-type variant in a MIXED group: keep it inert
+              // (its name is ambiguous) without blocking its resolved siblings.
+              const variantUnresolved = !resolvedFlags[idx];
+              return (
+                <ButtonBase
+                  key={item.itemId}
+                  disabled={variantUnresolved}
+                  onClick={() => {
+                    if (!variantUnresolved) onSelect(item.itemId);
+                  }}
+                  aria-label={
+                    variantUnresolved
+                      ? `${group.setName} weapon — type loading`
+                      : `Equip ${deriveItemNameForSlot(item.itemId, targetSlot)}`
+                  }
+                  aria-busy={variantUnresolved || undefined}
+                  aria-current={variantSelected || undefined}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.75,
+                    py: 0.5,
+                    px: 1,
+                    borderRadius: 1.5,
+                    width: '100%',
+                    textAlign: 'left',
+                    opacity: variantUnresolved ? 0.55 : 1,
+                    background: variantSelected
+                      ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.10)'
+                      : 'transparent',
+                    '&:hover': {
+                      background: variantSelected
+                        ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.14)'
+                        : isDark
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(0,0,0,0.03)',
+                    },
+                  }}
+                >
                   <Typography
                     noWrap
                     sx={{
-                      fontSize: 12,
-                      fontWeight: 600,
+                      fontSize: 11.5,
+                      fontWeight: variantSelected ? 700 : 500,
+                      fontStyle: variantUnresolved ? 'italic' : 'normal',
                       fontFamily: 'Space Grotesk, Inter, system-ui',
-                      lineHeight: 1.3,
+                      color: variantSelected
+                        ? 'var(--be-accent, #38bdf8)'
+                        : isDark
+                          ? 'rgba(255,255,255,0.70)'
+                          : 'rgba(0,0,0,0.65)',
                     }}
                   >
-                    {deriveItemNameForSlot(item.itemId, targetSlot)}
+                    {variantUnresolved
+                      ? 'Loading weapon type…'
+                      : deriveItemNameForSlot(item.itemId, targetSlot)}
                   </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 10,
-                      color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    ID: {item.itemId}
-                    {item.info.type !== 'Gear' ? ` · ${item.info.type}` : ''}
-                  </Typography>
-                </Box>
-                {isSelected && (
-                  <Chip
-                    label="EQUIPPED"
-                    size="small"
-                    sx={{
-                      height: 14,
-                      fontSize: '0.5rem',
-                      fontWeight: 700,
-                      fontFamily: 'Space Grotesk',
-                      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.15)',
-                      color: 'var(--be-accent, #38bdf8)',
-                      border: 'none',
-                    }}
-                  />
-                )}
-              </ButtonBase>
-            );
-          })}
-        </Stack>
-      </Collapse>
+                </ButtonBase>
+              );
+            })}
+          </Stack>
+        </Collapse>
+      )}
     </Box>
   );
 };
@@ -367,17 +619,57 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | GearSetType>('all');
 
-  // Reset state on open
+  // Weapon-type splitting depends on lazily-loaded icon data. Track readiness so
+  // the grouped data recomputes (and re-caches) once it lands, instead of showing
+  // a single collapsed weapon row if the picker opens before icon data settles.
+  const [iconReady, setIconReady] = useState(() => isIconDataReady());
+  // Set when the icon-data load fails. preloadIconData clears its rejected
+  // promise on failure, so reopening the dialog retries the load.
+  const [iconError, setIconError] = useState(false);
+
+  // Reset state on open (incl. clearing a prior load error so the retry fires).
   useEffect(() => {
     if (open) {
       setSearch('');
       setActiveTab('all');
+      setIconError(false);
     }
   }, [open]);
 
+  // While open, make sure icon data is loaded so weapon types split correctly.
+  // On failure, surface a recoverable error (weapon rows stay non-selectable
+  // rather than letting a click equip the wrong collapsed variant); reopening
+  // the dialog clears the error and retries via the resettable promise.
+  useEffect(() => {
+    if (!open || iconReady || iconError) return;
+    let cancelled = false;
+    preloadIconData()
+      .then(() => {
+        if (!cancelled) setIconReady(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Another path may have resolved it; otherwise mark the error.
+        if (isIconDataReady()) setIconReady(true);
+        else setIconError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, iconReady, iconError]);
+
+  // A weapon slot whose types haven't loaded yet — used to suppress collapsed,
+  // mis-selectable weapon rows in both browse and search until icon data lands.
+  const weaponSlotPending = WEAPON_SLOTS_SET.has(targetSlot) && !iconReady;
+
   // Build grouped data for this slot (cached at module scope — per-slot work
-  // runs once per page, not once per picker open).
-  const { groups, byType } = useMemo(() => getSetGroupsForSlot(targetSlot), [targetSlot]);
+  // runs once per page, not once per picker open). `iconReady` is a dep so weapon
+  // groups recompute once icon data lands (apparel results are icon-independent).
+  const { groups, byType } = useMemo(
+    () => getSetGroupsForSlot(targetSlot),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [targetSlot, iconReady],
+  );
 
   // Available type tabs (only show tabs that have sets)
   const availableTabs = useMemo(() => {
@@ -400,23 +692,51 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
   const isSearching = debouncedSearch.trim().length >= MIN_SEARCH_LENGTH;
 
+  // Canonical item list for search — computed once per slot, not per keystroke.
+  // The weapon-aware key recomputes (it isn't module-cached), and for weapons it
+  // scans ~5k items resolving each one's type, so memoize it away from `search`.
+  // `iconReady` is a dep for the same reason as the browse groups above.
+  const canonicalItems = useMemo(
+    () => getCanonicalItemsBySlot(targetSlot, makeCanonicalKey(targetSlot)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [targetSlot, iconReady],
+  );
+
+  const isWeaponTargetSlot = WEAPON_SLOTS_SET.has(targetSlot);
+
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
     const q = debouncedSearch.toLowerCase().trim();
-    const allItems = getItemsBySlot(targetSlot);
-    return allItems
-      .filter(
-        (item) =>
-          item.info.name.toLowerCase().includes(q) || item.info.setName.toLowerCase().includes(q),
-      )
+    return canonicalItems
+      .filter((item) => {
+        // Drop weapon items whose specific type can't be determined (stale/missing
+        // icon data, or a staff with no element data → generic "Staff"): they'd
+        // appear as indistinguishable rows and could be equipped as the wrong
+        // variant. Full pre-load suppression is handled via weaponSlotPending.
+        if (isWeaponTargetSlot && !isWeaponTypeResolved(item.itemId, targetSlot)) {
+          return false;
+        }
+        if (
+          item.info.name.toLowerCase().includes(q) ||
+          item.info.setName.toLowerCase().includes(q)
+        ) {
+          return true;
+        }
+        // Weapons display their derived type name (Bow, Inferno Staff, …), not the
+        // generic info.name — so match that too, or queries like "bow"/"inferno"
+        // find nothing even though the row exists in browse.
+        if (isWeaponTargetSlot) {
+          return deriveItemNameForSlot(item.itemId, targetSlot).toLowerCase().includes(q);
+        }
+        return false;
+      })
       .slice(0, MAX_SEARCH_RESULTS);
-  }, [debouncedSearch, isSearching, targetSlot]);
+  }, [debouncedSearch, isSearching, canonicalItems, isWeaponTargetSlot, targetSlot]);
 
   const handleSelect = useCallback(
     (itemId: number) => {
       const validation = validateItemForSlot(itemId, targetSlot);
       if (!validation.valid) return;
-      navigator.vibrate?.(10);
       onSelect(itemId);
       onClose();
     },
@@ -430,229 +750,401 @@ export const GearPickerDialog: React.FC<GearPickerDialogProps> = ({
   }, [currentItemId]);
 
   return (
-    <PickerDialog open={open} onClose={onClose} title={`Select ${slotName} Gear`}>
-      {/* ── Currently equipped ─────────────────────────────── */}
-      {currentInfo && (
-        <Box
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      className="glass-dialog"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '20px',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98))',
+            backgroundColor: 'transparent',
+            border: isDark ? '1px solid #1f2937' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? '0 8px 30px rgba(0,0,0,0.25)' : '0 4px 12px rgba(15,23,42,0.06)',
+            maxHeight: '90vh',
+          },
+        },
+      }}
+    >
+      {/* ── Header ───────────────────────────────────────────── */}
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pb: 1,
+        }}
+      >
+        <Typography
           sx={{
-            mx: 2,
-            mb: 1.5,
-            p: 1,
-            borderRadius: 2,
-            background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+            fontWeight: 700,
+            fontFamily: 'Space Grotesk, Inter, system-ui',
+            fontSize: '1rem',
+            background: isDark
+              ? 'linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #475569 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
           }}
         >
-          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-            <ShieldIcon
-              sx={{
-                fontSize: 16,
-                color: 'var(--be-accent, #38bdf8)',
-                opacity: 0.6,
-              }}
-            />
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                <Typography
-                  noWrap
-                  sx={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    fontFamily: 'Space Grotesk, Inter, system-ui',
-                    color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
-                  }}
-                >
-                  {currentItemId != null
-                    ? deriveItemNameForSlot(currentItemId, targetSlot)
-                    : currentInfo.name}
-                </Typography>
-                <Chip
-                  label={currentInfo.setName}
-                  size="small"
-                  sx={{
-                    height: 14,
-                    fontSize: '0.5rem',
-                    fontWeight: 700,
-                    fontFamily: 'Space Grotesk',
-                    background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
-                    color: 'var(--be-accent, #38bdf8)',
-                    border: 'none',
-                  }}
-                />
-              </Stack>
-              <Typography
-                sx={{
-                  fontSize: 9,
-                  color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
-                  fontFamily: 'Space Grotesk',
-                }}
-              >
-                Currently equipped · ID: {currentItemId}
-              </Typography>
-            </Box>
-          </Stack>
-        </Box>
-      )}
-
-      {/* ── Search bar ────────────────────────────────────── */}
-      <PickerDialog.Search
-        value={search}
-        onChange={setSearch}
-        placeholder={`Search ${slotName.toLowerCase()} gear by name or set...`}
-        resultCount={isSearching ? searchResults.length : undefined}
-      />
-
-      {isSearching ? (
-        /* ── Search results ───────────────────────────────── */
-        <PickerDialog.Body
-          empty={searchResults.length === 0}
-          emptyMessage={`No gear found for "${search}"`}
+          Select {slotName} Gear
+        </Typography>
+        <IconButton
+          size="small"
+          onClick={onClose}
+          aria-label="Close"
+          sx={{ color: 'text.disabled' }}
         >
-          <Stack spacing={0.5}>
-            {searchResults.map((item) => {
-              const isSelected = item.itemId === currentItemId;
-              const setType = getSetType(item.info.setName);
-              const catColor = SET_TYPE_COLORS[setType];
-              return (
-                <ButtonBase
-                  key={item.itemId}
-                  onClick={() => handleSelect(item.itemId)}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    py: 0.75,
-                    px: 1,
-                    borderRadius: 1.5,
-                    width: '100%',
-                    textAlign: 'left',
-                    background: isSelected
-                      ? isDark
-                        ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
-                        : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
-                      : 'transparent',
-                    '&:hover': {
-                      background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                    },
-                  }}
-                >
-                  <ShieldIcon sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }} />
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
-                      <Typography
-                        noWrap
-                        sx={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {deriveItemNameForSlot(item.itemId, targetSlot)}
-                      </Typography>
-                      <Chip
-                        label={item.info.setName}
-                        size="small"
-                        sx={{
-                          height: 14,
-                          fontSize: '0.5rem',
-                          fontWeight: 700,
-                          fontFamily: 'Space Grotesk',
-                          background: `${catColor}25`,
-                          color: catColor,
-                          border: 'none',
-                        }}
-                      />
-                    </Stack>
-                    <Typography
-                      sx={{
-                        fontSize: 10,
-                        color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {setType} · ID: {item.itemId}
-                    </Typography>
-                  </Box>
-                </ButtonBase>
-              );
-            })}
-          </Stack>
-        </PickerDialog.Body>
-      ) : (
-        <>
-          {/* ── Set type tabs ─────────────────────────────── */}
-          <PickerDialog.Tabs>
-            {availableTabs.map((tab) => {
-              const isActive = activeTab === tab;
-              const label = tab === 'all' ? 'All' : tab;
-              const count =
-                tab === 'all' ? groups.length : (byType.get(tab as GearSetType)?.length ?? 0);
-              const color = tab === 'all' ? undefined : SET_TYPE_COLORS[tab as GearSetType];
-              return (
-                <Tooltip key={tab} title={`${count} set${count !== 1 ? 's' : ''}`} placement="top">
-                  <ButtonBase
-                    onClick={() => setActiveTab(tab)}
+          <CloseIcon sx={{ fontSize: 18 }} />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 0 }}>
+        {/* ── Currently equipped ─────────────────────────────── */}
+        {currentInfo && (
+          <Box
+            sx={{
+              mx: 2,
+              mb: 1.5,
+              p: 1,
+              borderRadius: 2,
+              background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'}`,
+            }}
+          >
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+              <ShieldIcon
+                sx={{
+                  fontSize: 16,
+                  color: 'var(--be-accent, #38bdf8)',
+                  opacity: 0.6,
+                }}
+              />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                  <Typography
+                    noWrap
                     sx={{
-                      px: 1,
-                      py: 0.4,
-                      borderRadius: 1.5,
-                      fontSize: 10,
-                      fontWeight: isActive ? 700 : 500,
+                      fontSize: 11,
+                      fontWeight: 700,
                       fontFamily: 'Space Grotesk, Inter, system-ui',
-                      letterSpacing: 0.3,
-                      flexShrink: 0,
-                      color: isActive
-                        ? (color ?? (isDark ? '#fff' : '#0f172a'))
-                        : isDark
-                          ? 'rgba(255,255,255,0.45)'
-                          : 'rgba(0,0,0,0.45)',
-                      background: isActive
-                        ? color
-                          ? `${color}18`
-                          : isDark
-                            ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)'
-                        : 'transparent',
-                      border: `1px solid ${
-                        isActive
-                          ? color
-                            ? `${color}35`
-                            : isDark
-                              ? 'rgba(255,255,255,0.12)'
-                              : 'rgba(0,0,0,0.10)'
-                          : 'transparent'
-                      }`,
-                      transition: 'all 0.15s',
-                      '&:hover': {
-                        background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                      },
+                      color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.65)',
                     }}
                   >
-                    {label}
-                  </ButtonBase>
-                </Tooltip>
-              );
-            })}
-          </PickerDialog.Tabs>
+                    {currentItemId != null
+                      ? deriveItemNameForSlot(currentItemId, targetSlot)
+                      : currentInfo.name}
+                  </Typography>
+                  <Chip
+                    label={currentInfo.setName}
+                    size="small"
+                    sx={{
+                      height: 14,
+                      fontSize: '0.5rem',
+                      fontWeight: 700,
+                      fontFamily: 'Space Grotesk',
+                      background: 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.12)',
+                      color: 'var(--be-accent, #38bdf8)',
+                      border: 'none',
+                    }}
+                  />
+                </Stack>
+                <Typography
+                  sx={{
+                    fontSize: 9,
+                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                    fontFamily: 'Space Grotesk',
+                  }}
+                >
+                  Currently equipped · ID: {currentItemId}
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+        )}
 
-          {/* ── Browse mode: set groups ──────────────────── */}
-          <PickerDialog.Body
-            empty={visibleGroups.length === 0}
-            emptyMessage="No sets available for this slot"
-          >
-            {visibleGroups.map((group) => (
-              <SetCategorySection
-                key={group.setName}
-                group={group}
-                currentItemId={currentItemId}
-                onSelect={handleSelect}
-                targetSlot={targetSlot}
-              />
-            ))}
-          </PickerDialog.Body>
-        </>
-      )}
-    </PickerDialog>
+        {/* ── Search bar ────────────────────────────────────── */}
+        <Box sx={{ px: 2, pb: 1.5 }}>
+          <TextField
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={`Search ${slotName.toLowerCase()} gear by name or set...`}
+            size="small"
+            fullWidth
+            autoFocus
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ fontSize: 18, opacity: 0.4 }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+                borderRadius: 2,
+                fontSize: 13,
+              },
+            }}
+          />
+        </Box>
+
+        {isSearching ? (
+          /* ── Search results ───────────────────────────────── */
+          <Box sx={{ px: 2, pb: 2, maxHeight: 400, overflowY: 'auto' }}>
+            {weaponSlotPending ? (
+              // Weapon search results collapse to one row per set until icon data
+              // loads — don't show them, or a click could equip the wrong weapon.
+              <Typography
+                role={iconError ? 'alert' : undefined}
+                aria-busy={!iconError || undefined}
+                sx={{
+                  fontSize: 12,
+                  fontStyle: iconError ? 'normal' : 'italic',
+                  color: iconError
+                    ? isDark
+                      ? 'rgba(248,113,113,0.85)'
+                      : 'rgba(220,38,38,0.85)'
+                    : isDark
+                      ? 'rgba(255,255,255,0.35)'
+                      : 'rgba(0,0,0,0.35)',
+                  textAlign: 'center',
+                  py: 3,
+                }}
+              >
+                {iconError
+                  ? 'Couldn’t load weapon types. Close and reopen to retry.'
+                  : 'Loading weapon types…'}
+              </Typography>
+            ) : searchResults.length === 0 ? (
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                  textAlign: 'center',
+                  py: 3,
+                }}
+              >
+                No gear found for &ldquo;{search}&rdquo;
+              </Typography>
+            ) : (
+              <>
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    color: isDark ? 'rgba(255,255,255,0.30)' : 'rgba(0,0,0,0.30)',
+                    fontFamily: 'Space Grotesk',
+                    mb: 0.75,
+                  }}
+                >
+                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                </Typography>
+                <Stack spacing={0.5}>
+                  {searchResults.map((item) => {
+                    // Weapons have one row per type, so match the equipped piece
+                    // by exact item id — set-name matching would light up every
+                    // weapon variant of the set. Apparel/jewelry collapse to one
+                    // row per set, so set-name matching is correct there.
+                    const isSelected = WEAPON_SLOTS_SET.has(targetSlot)
+                      ? currentItemId != null && item.itemId === currentItemId
+                      : currentInfo?.setName != null && item.info.setName === currentInfo.setName;
+                    const setType = getSetType(item.info.setName);
+                    const catColor = SET_TYPE_COLORS[setType];
+                    const lockedWeight = APPAREL_SLOTS_SET.has(targetSlot)
+                      ? getLockedArmorWeight(item.info.setName)
+                      : null;
+                    return (
+                      <ButtonBase
+                        key={item.itemId}
+                        onClick={() => handleSelect(item.itemId)}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          py: 0.75,
+                          px: 1,
+                          borderRadius: 1.5,
+                          width: '100%',
+                          textAlign: 'left',
+                          background: isSelected
+                            ? isDark
+                              ? 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.08)'
+                              : 'rgba(var(--be-accent-rgb, 56, 189, 248), 0.04)'
+                            : 'transparent',
+                          '&:hover': {
+                            background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                          },
+                        }}
+                      >
+                        <ShieldIcon
+                          sx={{ fontSize: 16, color: catColor, opacity: 0.6, flexShrink: 0 }}
+                        />
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                            <Typography
+                              noWrap
+                              sx={{
+                                fontSize: 12,
+                                fontWeight: 600,
+                                fontFamily: 'Space Grotesk, Inter, system-ui',
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              {deriveItemNameForSlot(item.itemId, targetSlot)}
+                            </Typography>
+                            <Chip
+                              label={item.info.setName}
+                              size="small"
+                              sx={{
+                                height: 14,
+                                fontSize: '0.5rem',
+                                fontWeight: 700,
+                                fontFamily: 'Space Grotesk',
+                                background: `${catColor}25`,
+                                color: catColor,
+                                border: 'none',
+                              }}
+                            />
+                            {lockedWeight && <WeightBadge weight={lockedWeight} />}
+                          </Stack>
+                          <Typography
+                            sx={{
+                              fontSize: 10,
+                              color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {setType} · ID: {item.itemId}
+                          </Typography>
+                        </Box>
+                      </ButtonBase>
+                    );
+                  })}
+                </Stack>
+              </>
+            )}
+          </Box>
+        ) : (
+          <>
+            {/* ── Set type tabs ─────────────────────────────── */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 0.5,
+                px: 2,
+                pb: 1.5,
+                flexWrap: 'wrap',
+                rowGap: 0.5,
+              }}
+            >
+              {availableTabs.map((tab) => {
+                const isActive = activeTab === tab;
+                const label = tab === 'all' ? 'All' : tab;
+                const count =
+                  tab === 'all' ? groups.length : (byType.get(tab as GearSetType)?.length ?? 0);
+                const color = tab === 'all' ? undefined : SET_TYPE_COLORS[tab as GearSetType];
+                return (
+                  <Tooltip
+                    key={tab}
+                    title={`${count} set${count !== 1 ? 's' : ''}`}
+                    placement="top"
+                  >
+                    <ButtonBase
+                      onClick={() => setActiveTab(tab)}
+                      sx={{
+                        px: 1,
+                        py: 0.4,
+                        borderRadius: 1.5,
+                        fontSize: 10,
+                        fontWeight: isActive ? 700 : 500,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        letterSpacing: 0.3,
+                        flexShrink: 0,
+                        color: isActive
+                          ? (color ?? (isDark ? '#fff' : '#0f172a'))
+                          : isDark
+                            ? 'rgba(255,255,255,0.45)'
+                            : 'rgba(0,0,0,0.45)',
+                        background: isActive
+                          ? color
+                            ? `${color}18`
+                            : isDark
+                              ? 'rgba(255,255,255,0.08)'
+                              : 'rgba(0,0,0,0.06)'
+                          : 'transparent',
+                        border: `1px solid ${
+                          isActive
+                            ? color
+                              ? `${color}35`
+                              : isDark
+                                ? 'rgba(255,255,255,0.12)'
+                                : 'rgba(0,0,0,0.10)'
+                            : 'transparent'
+                        }`,
+                        transition: 'all 0.15s',
+                        '&:hover': {
+                          background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                        },
+                      }}
+                    >
+                      {label}
+                    </ButtonBase>
+                  </Tooltip>
+                );
+              })}
+            </Box>
+
+            {/* ── Browse mode: set groups ──────────────────── */}
+            <Box sx={{ maxHeight: 400, overflowY: 'auto', px: 1, pb: 1 }}>
+              {WEAPON_SLOTS_SET.has(targetSlot) && iconError && (
+                <Typography
+                  role="alert"
+                  sx={{
+                    fontSize: 11,
+                    color: isDark ? 'rgba(248,113,113,0.85)' : 'rgba(220,38,38,0.85)',
+                    textAlign: 'center',
+                    py: 1,
+                  }}
+                >
+                  Couldn&rsquo;t load weapon types. Close and reopen to retry.
+                </Typography>
+              )}
+              {visibleGroups.length === 0 ? (
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)',
+                    textAlign: 'center',
+                    py: 3,
+                  }}
+                >
+                  No sets available for this slot
+                </Typography>
+              ) : (
+                visibleGroups.map((group) => (
+                  <SetCategorySection
+                    key={group.setName}
+                    group={group}
+                    currentSetName={currentInfo?.setName ?? null}
+                    currentItemId={currentItemId}
+                    onSelect={handleSelect}
+                    targetSlot={targetSlot}
+                    iconReady={iconReady}
+                  />
+                ))
+              )}
+            </Box>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };

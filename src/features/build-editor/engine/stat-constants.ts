@@ -178,8 +178,29 @@ export interface ClassPassive {
   skillLineId: string;
   stat: 'penetration' | 'critDamage' | 'critChance' | 'armor';
   name: string;
+  /**
+   * For most passives this is the final contribution: a flat rating
+   * (penetration/armor) or a percentage (when isPercent). For crit chance set
+   * via `isRating`, `value` is a crit RATING that the engine converts to % by
+   * dividing by CRIT_CHANCE_DIVISOR (mirrors RACE_PASSIVES). For
+   * `percentOfSubtotal`, `value` is a percent applied to the running subtotal
+   * of the other enabled items in that stat (e.g. "+6% Armor").
+   */
   value: number;
+  /** value is already a final percentage (e.g. +12% crit damage). */
   isPercent?: boolean;
+  /** value is a crit RATING to divide by CRIT_CHANCE_DIVISOR (crit chance only). */
+  isRating?: boolean;
+  /** value is a percent multiplier on the subtotal of other items in this stat. */
+  percentOfSubtotal?: boolean;
+  /**
+   * Conditional passives (flank, execute) start unchecked so the user opts in.
+   * Omitted/undefined means always-on auto-applied. When present, the item is a
+   * toggle keyed by `name` in StatOverrides.buffs, defaulting to this value.
+   */
+  defaultEnabled?: boolean;
+  /** Short activation condition shown in the UI, e.g. "while flanking". */
+  condition?: string;
 }
 
 export const CLASS_PASSIVES: ClassPassive[] = [
@@ -232,6 +253,99 @@ export const CLASS_PASSIVES: ClassPassive[] = [
     value: 15,
     isPercent: true,
   },
+
+  // ── U50 base-class passives that grant a modeled stat ──────────────────────
+  // (verified against the live in-game tooltip dump, API 101050)
+
+  // Nightblade — Assassination: Hemorrhage also grants Minor Savagery (the
+  // +10% crit DAMAGE half is modeled above; this is its crit CHANCE half).
+  {
+    skillLineId: 'class.assassination',
+    stat: 'critChance',
+    name: 'Hemorrhage (Minor Savagery)',
+    value: 1314, // Weapon Critical rating
+    isRating: true,
+  },
+  // Sorcerer — Dark Magic: Exploitation grants Minor Prophecy to you + group.
+  {
+    skillLineId: 'class.dark-magic',
+    stat: 'critChance',
+    name: 'Exploitation (Minor Prophecy)',
+    value: 1314, // Spell Critical rating
+    isRating: true,
+  },
+  // Nightblade — Assassination: Pressure Points (+438 crit rating per NB
+  // ability slotted; modeled at the fully-slotted 5 abilities, like the other
+  // per-slot passives above).
+  {
+    skillLineId: 'class.assassination',
+    stat: 'critChance',
+    name: 'Pressure Points',
+    value: 2190, // 438 × 5 slotted
+    isRating: true,
+  },
+  // Nightblade — Assassination: Master Assassin (crit chance only while
+  // flanking — conditional, off by default).
+  {
+    skillLineId: 'class.assassination',
+    stat: 'critChance',
+    name: 'Master Assassin',
+    value: 1448, // crit rating ≈ 6.6%
+    isRating: true,
+    defaultEnabled: false,
+    condition: 'while flanking',
+  },
+  // Necromancer — Grave Lord: Death Knell (+20% crit chance vs enemies under
+  // 33% Health — conditional, off by default).
+  {
+    skillLineId: 'class.grave-lord',
+    stat: 'critChance',
+    name: 'Death Knell',
+    value: 20,
+    isPercent: true,
+    defaultEnabled: false,
+    condition: 'target under 33% Health',
+  },
+  // Templar — Aedric Spear: Balanced Warrior (+6% Armor — a multiplier on the
+  // armor subtotal, not a flat add).
+  {
+    skillLineId: 'class.aedric-spear',
+    stat: 'armor',
+    name: 'Balanced Warrior',
+    value: 6,
+    percentOfSubtotal: true,
+  },
+  // Dragonknight — Earthen Heart: Heart of Stone (+2974 Armor).
+  {
+    skillLineId: 'class.earthen-heart',
+    stat: 'armor',
+    name: 'Heart of Stone',
+    value: 2974,
+  },
+  // Arcanist — Soldier of Apocrypha: Aegis of the Unseen (+3271 Armor while a
+  // beneficial Soldier of Apocrypha ability is active on you).
+  {
+    skillLineId: 'class.soldier-of-apocrypha',
+    stat: 'armor',
+    name: 'Aegis of the Unseen',
+    value: 3271,
+  },
+  // Nightblade — Shadow: Shadow Barrier grants Major Resolve (+5948 resistance)
+  // on casting a Shadow ability.
+  {
+    skillLineId: 'class.shadow',
+    stat: 'armor',
+    name: 'Shadow Barrier (Major Resolve)',
+    value: 5948,
+  },
+  // Warden — Winter's Embrace: Frozen Armor (+1240 resistance per Winter's
+  // Embrace ability slotted; modeled at the fully-slotted 5 abilities).
+  {
+    skillLineId: 'class.winter-s-embrace',
+    stat: 'armor',
+    name: 'Frozen Armor',
+    value: 6200, // 1240 × 5 slotted
+  },
 ];
 
 // ─── Mundus stone bonuses ───────────────────────────────────────────────────
@@ -252,19 +366,27 @@ export interface MundusDef {
 export const MUNDUS_BONUSES: MundusDef[] = [
   { mundusId: 'lover', stat: 'penetration', name: 'The Lover', baseValue: 2752, perDivines: 220 },
   {
+    // The Shadow at CP160 gold is ~11.6% crit damage at 0 Divines, scaling
+    // multiplicatively with Divines (~×1.077 per gold piece). Modeled additively
+    // as base 11.6 + ~1% per Divines, which tracks the real curve within ~1%
+    // across 0–7 Divines. (Was 13 base, which ran ~1.5% high.)
     mundusId: 'shadow',
     stat: 'critDamage',
     name: 'The Shadow',
-    baseValue: 13,
+    baseValue: 11.6,
     perDivines: 1,
     isPercent: true,
   },
   {
+    // The Thief at CP160 gold grants ~1333 Critical rating at 0 Divines
+    // (≈6.1% via the 219 divisor), ~107 more per gold Divines piece. This
+    // matches the gold-quality base convention of the Lover/Lady stones above
+    // (both 2752). Was 1537/123, which over-read by ~1% (and grew with Divines).
     mundusId: 'thief',
     stat: 'critChance',
     name: 'The Thief',
-    baseValue: 1537,
-    perDivines: 123,
+    baseValue: 1333,
+    perDivines: 107,
     isCritRating: true,
   },
   { mundusId: 'lady', stat: 'armor', name: 'The Lady', baseValue: 2752, perDivines: 220 },
@@ -356,6 +478,51 @@ export const TRAIT_NIRNHONED_ARMOR_RESISTANCE = 253;
 
 /** Defending weapon trait: flat resistance per weapon */
 export const TRAIT_DEFENDING_RESISTANCE = 2752;
+
+// ─── Class Mastery passives (U50) that affect crit damage ───────────────────
+
+/**
+ * The build editor's stat engine only models penetration, crit damage, crit
+ * chance, and armor. Of the 35 U50 Class Mastery passives, exactly three move
+ * any of those four stats — all three affect crit damage. The rest grant
+ * weapon/spell damage, max stats, recovery, shields, etc. that this engine
+ * doesn't model, so they stay cosmetic to the calculator.
+ *
+ * Keyed by the passive's ability id (see ClassSkillId). Selecting the passive
+ * in the build auto-applies the effect, exactly like a class skill-line passive
+ * — these are not manual buff toggles.
+ */
+export interface ClassMasteryCritPassive {
+  /** Ability id from ClassSkillId. */
+  id: number;
+  /** Display name of the passive (the picker label). */
+  name: string;
+  /**
+   * If the passive merely supplies an already-modeled named buff (e.g. Major
+   * Force), this is that buff's name in CRIT_DMG_BUFFS. When set, selecting the
+   * passive forces that buff on (auto-detected) instead of adding a second
+   * line, so it can never double-count with the manual buff toggle.
+   */
+  grantsBuff?: string;
+  /**
+   * Crit-damage % the passive adds on its own (only for passives not covered by
+   * an existing buff). PvP value differs for effects reduced vs Battle Spirit.
+   */
+  value?: number;
+  valuePvp?: number;
+  /** Amount this passive raises the crit-damage cap/max by, if any. */
+  capBonus?: number;
+}
+
+export const CLASS_MASTERY_CRIT_PASSIVES: ClassMasteryCritPassive[] = [
+  // Arcanist — Ink-Scribe's Verve: grants Major Force (+20% crit dmg) to the group.
+  { id: 263416, name: "Ink-Scribe's Verve", grantsBuff: 'Major Force' },
+  // Warden — Tundra's Maw: applies Major Brittle (+20% crit dmg taken) on Chill.
+  { id: 263519, name: "Tundra's Maw", grantsBuff: 'Major Brittle' },
+  // Nightblade — Above and Beyond: +25% crit damage (PvE) / +5% vs Battle Spirit,
+  // and raises the maximum crit damage by +30%.
+  { id: 263605, name: 'Above and Beyond', value: 25, valuePvp: 5, capBonus: 30 },
+];
 
 // ─── Armor base values ──────────────────────────────────────────────────────
 
