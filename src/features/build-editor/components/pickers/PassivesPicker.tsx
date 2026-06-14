@@ -288,167 +288,6 @@ const AddPassiveTile: React.FC<AddPassiveTileProps> = ({ onClick }) => {
   );
 };
 
-// ── Picker Tile (inside dialog — multi-select) ────────────────────────────────
-
-interface PickerPassiveTileProps {
-  skill: SkillData;
-  isSelected: boolean;
-  onToggle: (skill: SkillData) => void;
-}
-
-const PickerPassiveTile: React.FC<PickerPassiveTileProps> = ({ skill, isSelected, onToggle }) => {
-  const isDark = useTheme().palette.mode === 'dark';
-  const accent = 'rgba(var(--be-accent-rgb, 56, 189, 248),';
-
-  return (
-    <ButtonBase
-      onClick={() => onToggle(skill)}
-      aria-label={`${skill.name}${isSelected ? ' (selected)' : ''}`}
-      aria-pressed={isSelected}
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 0.5,
-        p: 0.5,
-        borderRadius: '12px',
-        border: `1.5px solid ${
-          isSelected ? `${accent}0.55)` : isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)'
-        }`,
-        background: isSelected
-          ? `${accent}0.10)`
-          : isDark
-            ? 'rgba(255,255,255,0.02)'
-            : 'rgba(0,0,0,0.015)',
-        transition: 'all 150ms',
-        width: 60,
-        '&:hover': {
-          borderColor: `${accent}0.6)`,
-          background: `${accent}0.08)`,
-          transform: 'scale(1.05)',
-        },
-      }}
-    >
-      {/* Icon with check/rank badges */}
-      <Box
-        sx={{
-          position: 'relative',
-          width: 40,
-          height: 40,
-          borderRadius: '8px',
-          overflow: 'hidden',
-          flexShrink: 0,
-        }}
-      >
-        {skill.icon ? (
-          <img
-            src={resolveIconUrl(skill.icon)}
-            alt={skill.name}
-            loading="lazy"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 10,
-                color: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)',
-                userSelect: 'none',
-              }}
-            >
-              ?
-            </Typography>
-          </Box>
-        )}
-
-        {/* Selected check badge */}
-        {isSelected && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 1,
-              right: 1,
-              width: 14,
-              height: 14,
-              borderRadius: '50%',
-              background: `${accent}1)`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <CheckIcon sx={{ fontSize: 10, color: '#fff' }} />
-          </Box>
-        )}
-
-        {/* Rank badge */}
-        {skill.maxRank && skill.maxRank > 1 && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 1,
-              left: 1,
-              background: 'rgba(0,0,0,0.65)',
-              borderRadius: '3px',
-              px: 0.3,
-              py: '1px',
-              lineHeight: 1,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 8,
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.75)',
-                letterSpacing: 0.3,
-              }}
-            >
-              ×{skill.maxRank}
-            </Typography>
-          </Box>
-        )}
-      </Box>
-
-      {/* Name label — always visible, no tooltip needed on mobile */}
-      <Typography
-        sx={{
-          fontSize: 9,
-          fontWeight: 600,
-          fontFamily: 'Space Grotesk, Inter, system-ui',
-          lineHeight: 1.2,
-          textAlign: 'center',
-          color: isSelected
-            ? isDark
-              ? `${accent}0.90)`
-              : `${accent}1)`
-            : isDark
-              ? 'rgba(255,255,255,0.60)'
-              : 'rgba(0,0,0,0.55)',
-          overflow: 'hidden',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical' as const,
-          width: '100%',
-        }}
-      >
-        {skill.name}
-      </Typography>
-    </ButtonBase>
-  );
-};
-
 // ── Passive Line Section (collapsible, inside dialog) ─────────────────────────
 
 interface PassiveLineSectionProps {
@@ -550,20 +389,150 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
       </ButtonBase>
 
       <Collapse in={expanded} unmountOnExit>
-        <Stack
-          direction="row"
-          spacing={0.75}
-          useFlexGap
-          sx={{ flexWrap: 'wrap', pl: 1.5, pr: 0.5, pb: 1.5, pt: 0.5 }}
-        >
-          {passives.map((p) => (
-            <PickerPassiveTile
-              key={p.id}
-              skill={p}
-              isSelected={selectedIds.has(p.id)}
-              onToggle={onToggle}
-            />
-          ))}
+        <Stack spacing={0.25} sx={{ px: 0.5, pb: 1, pt: 0.25 }}>
+          {passives.map((p) => {
+            const selected = selectedIds.has(p.id);
+            const accentRgb = '56,189,248';
+            const muted = isDark ? 'rgba(255,255,255,0.42)' : 'rgba(0,0,0,0.45)';
+            return (
+              <ButtonBase
+                key={p.id}
+                onClick={() => onToggle(p)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 1.25,
+                  py: 0.75,
+                  px: 1,
+                  borderRadius: 1.75,
+                  width: '100%',
+                  textAlign: 'left',
+                  border: `1px solid ${selected ? `rgba(${accentRgb},0.45)` : 'transparent'}`,
+                  background: selected
+                    ? isDark
+                      ? `rgba(${accentRgb},0.10)`
+                      : `rgba(${accentRgb},0.06)`
+                    : 'transparent',
+                  transition: 'all 150ms',
+                  '&:hover': {
+                    background: selected
+                      ? isDark
+                        ? `rgba(${accentRgb},0.14)`
+                        : `rgba(${accentRgb},0.09)`
+                      : isDark
+                        ? 'rgba(255,255,255,0.05)'
+                        : 'rgba(0,0,0,0.035)',
+                  },
+                }}
+              >
+                {/* Icon */}
+                {p.icon ? (
+                  <img
+                    src={resolveIconUrl(p.icon)}
+                    alt=""
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 8,
+                      flexShrink: 0,
+                      objectFit: 'cover',
+                      display: 'block',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+
+                {/* Name + description */}
+                <Box sx={{ minWidth: 0, flex: 1 }}>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        lineHeight: 1.3,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {p.name}
+                    </Typography>
+                    {p.maxRank && p.maxRank > 1 && (
+                      <Typography
+                        component="span"
+                        sx={{
+                          flexShrink: 0,
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          color: isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.30)',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        ×{p.maxRank}
+                      </Typography>
+                    )}
+                  </Stack>
+                  {p.description ? (
+                    <Typography
+                      sx={{
+                        fontSize: 10,
+                        color: muted,
+                        lineHeight: 1.4,
+                        mt: 0.25,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical' as const,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {p.description}
+                    </Typography>
+                  ) : (
+                    <Typography
+                      sx={{ fontSize: 10, color: muted, lineHeight: 1.4, mt: 0.25, fontStyle: 'italic' }}
+                    >
+                      Passive ability
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Selected indicator */}
+                {selected && (
+                  <Stack
+                    direction="row"
+                    spacing={0.25}
+                    sx={{ alignItems: 'center', flexShrink: 0, color: `rgba(${accentRgb},1)` }}
+                  >
+                    <CheckIcon sx={{ fontSize: 12 }} />
+                    <Typography
+                      sx={{
+                        fontSize: 8.5,
+                        fontWeight: 700,
+                        letterSpacing: 0.5,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                      }}
+                    >
+                      SELECTED
+                    </Typography>
+                  </Stack>
+                )}
+              </ButtonBase>
+            );
+          })}
         </Stack>
       </Collapse>
     </Box>
