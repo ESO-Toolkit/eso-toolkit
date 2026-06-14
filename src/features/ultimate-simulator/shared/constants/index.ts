@@ -28,18 +28,33 @@ export const DEFAULT_BASE_SEED = 1;
  * empirical "Half" value pending in-game verification.
  */
 export const DECISIVE_PROC_CHANCE = {
-  fine: 0.191,
-  superior: 0.212,
-  epic: 0.233,
+  normal: 0.191,
+  fine: 0.212,
+  superior: 0.233,
+  epic: 0.254,
   legendary: 0.275,
 } as const;
 
 export type DecisiveQuality = keyof typeof DECISIVE_PROC_CHANCE;
 
 /**
+ * Per-instance chance the Decisive trait grants +1 ultimate, by weapon quality.
+ *
+ * The full FIVE-tier ladder, verified against UESP / ESO-Hub / Hack the Minotaur:
+ * Normal 19.1% / Fine 21.2% / Superior 23.3% / Epic 25.4% / Legendary 27.5%
+ * (each tier +2.1%). Decisive exists from white quality up. The legacy port
+ * omitted the Epic tier and mislabeled the rest one step down — corrected here.
+ * (The historical "0.254 vs 0.275" disagreement was Epic vs Legendary, not two
+ * competing Legendary values.)
+ */
+export const DEFAULT_DECISIVE_QUALITY: DecisiveQuality = 'legendary';
+
+/**
  * Build a DecisiveConfig from quality + whether the weapon is two-handed.
- * 1H / staff / bow = 1 roll per instance; 2H melee = 2 independent rolls
- * (ESO's "two-handed weapons provide twice the bonus").
+ * 1H / restoration & destruction staff & bow each count as their own weapon for
+ * trait purposes (1 roll); a TWO-HANDED melee weapon (greatsword / battle axe /
+ * maul) occupies both bars' weapon slots and "provides twice the bonus" — modeled
+ * as 2 independent rolls per instance (mean = 2 × procChance).
  */
 export function makeDecisiveConfig(quality: DecisiveQuality, twoHanded: boolean): DecisiveConfig {
   return {

@@ -13,13 +13,17 @@
 import type { ResourceChangeEvent } from '../../../types/combatlogEvents';
 
 /**
- * ESO Logs `resourceChangeType` enum values. 0/6 are confirmed in this codebase
- * (RotationAnalysisPanel.tsx); 10 = Ultimate is the ESO Logs / Hodor combat-log
- * convention.
+ * ESO Logs `resourceChangeType` enum values. These are the LEGACY sequential
+ * ESO `POWERTYPE` enum (POWERTYPE_MAGICKA=0, POWERTYPE_STAMINA=6,
+ * POWERTYPE_ULTIMATE=10) — verified against the archived ESO API constants,
+ * where all three appear in the same table and 0/6 match this codebase's
+ * confirmed anchors (RotationAnalysisPanel.tsx, potionDetectionUtils.ts).
  *
- * VERIFY against a real event sample before treating ultimate buckets as ground
- * truth — if a calibration run yields zero ultimate events, this constant is the
- * first thing to check.
+ * TRAP — do NOT "correct" ultimate to 8. ESO also has a MODERN
+ * `CombatMechanicFlags` bitflag enum (magicka=1, stamina=4, ultimate=8). ESO
+ * Logs does not use it (it froze on the legacy sequential values), so following
+ * the live-API alias chain and changing 10→8 would be wrong — magicka would then
+ * be 1, contradicting the confirmed anchor of 0.
  */
 export const RESOURCE_CHANGE_TYPE = {
   magicka: 0,
