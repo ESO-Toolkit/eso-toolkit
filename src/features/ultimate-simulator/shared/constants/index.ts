@@ -40,7 +40,7 @@ export type DecisiveQuality = keyof typeof DECISIVE_PROC_CHANCE;
 /**
  * Per-instance chance the Decisive trait grants +1 ultimate, by weapon quality.
  *
- * The full FIVE-tier ladder, verified against UESP / ESO-Hub / Hack the Minotaur:
+ * The full FIVE-tier ladder, verified against UESP (Online:Decisive):
  * Normal 19.1% / Fine 21.2% / Superior 23.3% / Epic 25.4% / Legendary 27.5%
  * (each tier +2.1%). Decisive exists from white quality up. The legacy port
  * omitted the Epic tier and mislabeled the rest one step down — corrected here.
