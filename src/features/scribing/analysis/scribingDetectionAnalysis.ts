@@ -550,6 +550,13 @@ function detectAffixScripts(
     return Math.min(...candidates);
   };
 
+  // R5: Banner Bearer affixes (Courage / Heroism / Protection) are GROUP buffs the caster
+  // applies to allies — their `targetID` is an ally, not the caster. The default self-only
+  // filter (`targetID === playerId`) would discard every real banner-affix application and
+  // let an unrelated *self* buff win. For the banner grimoire, count source-only; the
+  // per-cast-index Set below collapses one pulse hitting many allies into a single window hit.
+  const allowAllyTargetedBuffs = grimoireKey === BANNER_GRIMOIRE_KEY;
+
   casts.forEach((cast, castIndex) => {
     const triggerStart = getAffixTriggerStartTime(cast, abilityId, playerId);
     const windowStart = triggerStart;
@@ -559,7 +566,7 @@ function detectAffixScripts(
     const windowBuffs = combatEvents.buffs.filter(
       (buff) =>
         buff.sourceID === playerId &&
-        buff.targetID === playerId &&
+        (allowAllyTargetedBuffs || buff.targetID === playerId) &&
         buff.timestamp >= windowStart &&
         buff.timestamp <= buffWindowEnd &&
         !('extraAbilityGameID' in buff && buff.extraAbilityGameID),
@@ -607,8 +614,11 @@ function detectAffixScripts(
         }
         buffCandidates.get(buff.abilityGameID)!.add(castIndex);
 
-        // Track timing information for immediate trigger detection
-        const offsetFromCast = buff.timestamp - cast.timestamp;
+        // Track timing information for immediate trigger detection.
+        // R3: measure from the trigger anchor (triggerStart), not the raw cast — deferred-trigger
+        // abilities (e.g. Ulfsild's Contingency) fire their affix at triggerStart, so anchoring on
+        // cast.timestamp would mis-classify a real immediate affix as delayed.
+        const offsetFromCast = buff.timestamp - triggerStart;
         if (!buffTimings.has(buff.abilityGameID)) {
           buffTimings.set(buff.abilityGameID, { immediateCasts: new Set(), totalCasts: new Set() });
         }
@@ -733,14 +743,10 @@ function detectAffixScripts(
     });
   });
 
-  resourceCandidates.forEach((castSet, id) => {
-    allCandidates.push({
-      id,
-      castSet,
-      consistency: castSet.size / casts.length,
-      type: 'resource',
-    });
-  });
+  // R7a: resource candidates are intentionally NOT added to allCandidates. They are still
+  // collected above (for diagnostics) but can never be emitted — the final emission switch
+  // has no 'resource' case and preferTypeOrder excludes it — so feeding them into the
+  // aggregation only risks polluting another script's consistency via name aggregation.
 
   if (allCandidates.length === 0) {
     logger?.debug?.('Affix detection found no viable candidates', {
@@ -831,10 +837,34 @@ function detectAffixScripts(
     };
   });
 
+  // R2: scribing affixes apply at the SAME instant as their trigger (immediate-trigger ratio
+  // ~1.0), whereas buffs from other sources (gear procs, other skills, light-attack-cadence
+  // effects) drift in at 270-620ms. When ANY buff candidate clears the immediate-trigger gate,
+  // the non-immediate buff candidates are provably from unrelated sources, so drop them rather
+  // than merely sorting them lower (the previous behaviour let a 0.2-consistency non-immediate
+  // buff win when no immediate competitor existed). Gated on the presence of an immediate buff
+  // so that when NO candidate is immediate (some legitimate affixes) consistency still decides,
+  // and scoped to buffs so damage/debuff/heal affixes (structurally immediateRatio 0) survive.
+  const IMMEDIATE_TRIGGER_RATIO_GATE = 0.5;
+  const hasImmediateBuffCandidate = aggregatedCandidates.some(
+    (candidate) =>
+      candidate.dominantType === 'buff' &&
+      candidate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE,
+  );
+  const filteredCandidates = hasImmediateBuffCandidate
+    ? aggregatedCandidates.filter(
+        (candidate) =>
+          candidate.dominantType !== 'buff' ||
+          candidate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE,
+      )
+    : aggregatedCandidates;
+
   logger?.debug?.('Affix detection aggregated candidates', {
     abilityId,
     playerId,
-    aggregatedCandidates: aggregatedCandidates.map((candidate) => ({
+    hasImmediateBuffCandidate,
+    droppedNonImmediateBuffs: aggregatedCandidates.length - filteredCandidates.length,
+    aggregatedCandidates: filteredCandidates.map((candidate) => ({
       key: candidate.key,
       scriptName: candidate.scriptName,
       dominantType: candidate.dominantType,
@@ -845,7 +875,7 @@ function detectAffixScripts(
     })),
   });
 
-  aggregatedCandidates.sort((a, b) => {
+  filteredCandidates.sort((a, b) => {
     // Prioritize candidates with high immediate trigger ratios (>= 0.5 means at least 50% immediate)
     const aHasImmediateTrigger = a.immediateTriggerRatio >= 0.5;
     const bHasImmediateTrigger = b.immediateTriggerRatio >= 0.5;
@@ -875,8 +905,35 @@ function detectAffixScripts(
     return aMin - bMin;
   });
 
-  const topAggregate = aggregatedCandidates[0];
+  const topAggregate = filteredCandidates[0];
   if (!topAggregate) {
+    return [];
+  }
+
+  // R1: minimum-confidence floor. The detector previously emitted its top-ranked candidate
+  // unconditionally, so a buff that landed in windows purely by coincidence (e.g. an unrelated
+  // Minor Berserk at 0.21 consistency / 0 immediate-trigger) was reported as a confident affix.
+  // A candidate that is neither consistent enough NOR immediate-triggered is not plausibly the
+  // scribed affix — return [] so the caller degrades it to "Unknown Affix" rather than naming a
+  // wrong script. For buffs an immediate-trigger signature alone clears the floor (rescues real
+  // affixes with legitimately low uptime, e.g. a banner that only reaches allies on some pulses).
+  const MIN_AFFIX_CONSISTENCY = 0.5; // aligned with detectSignatureScript MIN_CONSISTENCY
+  const passesConfidenceFloor =
+    topAggregate.dominantType === 'buff'
+      ? topAggregate.consistency >= MIN_AFFIX_CONSISTENCY ||
+        topAggregate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE
+      : topAggregate.consistency >= MIN_AFFIX_CONSISTENCY;
+
+  if (!passesConfidenceFloor) {
+    logger?.info?.('Affix detection winner below confidence floor — suppressing to Unknown', {
+      abilityId,
+      playerId,
+      grimoireKey,
+      scriptName: topAggregate.scriptName,
+      dominantType: topAggregate.dominantType,
+      consistency: topAggregate.consistency,
+      immediateTriggerRatio: topAggregate.immediateTriggerRatio,
+    });
     return [];
   }
 
@@ -1067,8 +1124,10 @@ export function computeScribingDetection(
     ? detectedSignature
     : wasCastInFight
       ? {
+          // R6: parity with the Unknown Affix fallback (0.3). We have NO signature evidence here,
+          // so 0.5 overstated confidence and visually tied with genuine detections in the tooltip.
           name: 'Unknown Signature',
-          confidence: 0.5,
+          confidence: 0.3,
           detectionMethod: 'Insufficient combat evidence',
           evidence: ['Unable to reach consistency threshold during detection'],
         }

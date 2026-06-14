@@ -322,28 +322,42 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     // Pull full detection results from Redux for this player
     const scribingResult = useSelector(selectScribingDetectionsResult);
 
-    // Build a full ScribedSkillData lookup keyed by transformation name (matches talent.name)
+    // Build ScribedSkillData lookups. Scribed abilities surface in the log under a COMPOSITE name
+    // like "Shattering Knife (Class Mastery / Berserk)", so keying purely by transformation name
+    // ("Shattering Knife") misses them and the tooltip falls back to a bare header. We therefore
+    // index by (a) ability ID — the most reliable key, since detection results are keyed by it —
+    // and (b) a normalised name with the trailing "(...)" parenthetical stripped.
     const scribedSkillsLookup = React.useMemo(() => {
-      const lookup = new Map<string, ScribedSkillData>();
+      const byName = new Map<string, ScribedSkillData>();
+      const byAbilityId = new Map<number, ScribedSkillData>();
 
       // Primary source: worker detection results (has signature/affix/wasCastInFight)
       if (scribingResult?.players[player.id]) {
-        Object.values(scribingResult.players[player.id]).forEach((detection) => {
+        Object.entries(scribingResult.players[player.id]).forEach(([abilityKey, detection]) => {
           if (
             !detection?.scribedSkillData ||
             detection.schemaVersion !== SCRIBING_DETECTION_SCHEMA_VERSION
           ) {
             return;
           }
-          lookup.set(detection.scribingInfo.transformation, detection.scribedSkillData);
+          byName.set(detection.scribingInfo.transformation, detection.scribedSkillData);
+          // Detection results are keyed by the queried ability id; index both that key and the
+          // resolved effective ability id so a composite-named talent still resolves by guid.
+          const abilityKeyNum = Number(abilityKey);
+          if (Number.isFinite(abilityKeyNum)) {
+            byAbilityId.set(abilityKeyNum, detection.scribedSkillData);
+          }
+          if (typeof detection.effectiveAbilityId === 'number') {
+            byAbilityId.set(detection.effectiveAbilityId, detection.scribedSkillData);
+          }
         });
       }
 
       // Fallback: GrimoireData from the older pipeline (basic fields only)
       scribingSkills.forEach((grimoire) => {
         grimoire.skills.forEach((skill) => {
-          if (!lookup.has(skill.skillName)) {
-            lookup.set(skill.skillName, {
+          if (!byName.has(skill.skillName)) {
+            byName.set(skill.skillName, {
               grimoireName: grimoire.grimoireName,
               effects: skill.effects,
               recipe: skill.recipe,
@@ -352,8 +366,29 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         });
       });
 
-      return lookup;
+      return { byName, byAbilityId };
     }, [scribingResult, player.id, scribingSkills]);
+
+    // Resolve scribed data for a talent: prefer ability-id match, then exact name, then the
+    // composite name with its trailing parenthetical stripped (e.g. "Shattering Knife (…)").
+    const resolveScribedSkillData = React.useCallback(
+      (talentGuid: number, talentName: string): ScribedSkillData | undefined => {
+        const byId = scribedSkillsLookup.byAbilityId.get(talentGuid);
+        if (byId) {
+          return byId;
+        }
+        const exact = scribedSkillsLookup.byName.get(talentName);
+        if (exact) {
+          return exact;
+        }
+        const baseName = talentName.replace(/\s*\(.*\)\s*$/, '').trim();
+        if (baseName && baseName !== talentName) {
+          return scribedSkillsLookup.byName.get(baseName);
+        }
+        return undefined;
+      },
+      [scribedSkillsLookup],
+    );
 
     const tooltipPropsLookup = React.useMemo(() => {
       const lookup = new Map<number, ReturnType<typeof buildTooltipProps>>();
@@ -362,7 +397,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       talents.forEach((talent) => {
         const key = talent.guid;
         if (!lookup.has(key)) {
-          const scribedSkillData = scribedSkillsLookup.get(talent.name);
+          const scribedSkillData = resolveScribedSkillData(talent.guid, talent.name);
 
           const tooltipProps = buildTooltipProps({
             abilityId: talent.guid,
@@ -378,7 +413,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       });
 
       return lookup;
-    }, [talents, player.type, scribedSkillsLookup]);
+    }, [talents, player.type, resolveScribedSkillData]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
@@ -1297,7 +1332,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       abilityId={talent.guid}
                                       scribedSkillData={
                                         rich?.scribedSkillData ??
-                                        scribedSkillsLookup.get(talent.name)
+                                        resolveScribedSkillData(talent.guid, talent.name)
                                       }
                                       fightId={fightId || undefined}
                                       playerId={player.id}
