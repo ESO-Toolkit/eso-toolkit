@@ -2,8 +2,9 @@
  * Ultimate-source CATALOG — the research-sourced data layer.
  *
  * Every entry carries a `provenance` URL and `confidence`. Numbers are from
- * Update 50 / June 2026 research (see .scratch/ult-research-2026.md), sourced
- * primarily from UESP, ESO-Hub, ESO-Skillbook and reputable theorycrafters.
+ * Update 50 / June 2026 research (see .scratch/ult-research-2026.md). Provenance
+ * links point to UESP and ESO-Skillbook (the authoritative community references
+ * this project allows); values were cross-checked across multiple sources.
  *
  * Mechanics summary the catalog encodes:
  *  - There is NO passive ultimate regen. Base income is the light/heavy-attack
@@ -21,19 +22,18 @@
 
 import type { CatalogCostReduction, CatalogSource, UltimateAbility } from '../types/catalog';
 
+// Provenance links — UESP (authoritative) and ESO-Skillbook only.
 const UESP_ULTIMATE = 'https://en.uesp.net/wiki/Online:Ultimate';
 const UESP_DECISIVE = 'https://en.uesp.net/wiki/Online:Decisive';
-const ESOHUB_MINOR_HEROISM = 'https://eso-hub.com/en/buffs-debuffs/minor-heroism';
-const ESOHUB_MAJOR_HEROISM = 'https://eso-hub.com/en/buffs-debuffs/major-heroism';
-const ESOHUB_IMPLACABLE =
-  'https://eso-hub.com/en/skills/arcanist/soldier-of-apocrypha/implacable-outcome';
-const ESOHUB_CORPSE = 'https://eso-hub.com/en/skills/necromancer/living-death/corpse-consumption';
-const ESOHUB_POWERSTONE = 'https://eso-hub.com/en/skills/sorcerer/daedric-summoning/power-stone';
-const ESOHUB_RESTORING_SPIRIT =
-  'https://eso-hub.com/en/skills/templar/dawns-wrath/restoring-spirit';
-const ESOHUB_CRYPTCANON = 'https://eso-hub.com/en/sets/cryptcanon-vestments';
-const ESOHUB_PILLAGERS = 'https://eso-hub.com/en/sets/pillagers-profit';
-const ESOHUB_MINOR_HEROISM_POTION = 'https://eso-hub.com/en/buffs-debuffs/minor-heroism';
+const SRC_MINOR_HEROISM = 'https://en.uesp.net/wiki/Online:Heroism';
+const SRC_MAJOR_HEROISM = 'https://en.uesp.net/wiki/Online:Heroism';
+const SRC_IMPLACABLE = 'https://eso-skillbook.com/skill/implacable-outcome';
+const SRC_CORPSE = 'https://eso-skillbook.com/skill/corpse-consumption';
+const SRC_POWERSTONE = 'https://eso-skillbook.com/skill/power-stone';
+const SRC_RESTORING_SPIRIT = 'https://eso-skillbook.com/skill/restoring-spirit';
+const SRC_CRYPTCANON = 'https://en.uesp.net/wiki/Online:Cryptcanon_Vestments';
+const SRC_PILLAGERS = "https://en.uesp.net/wiki/Online:Pillager's_Profit";
+const SRC_MINOR_HEROISM_POTION = 'https://en.uesp.net/wiki/Online:Heroism';
 
 /**
  * The catalog of toggleable ultimate-generation sources.
@@ -79,7 +79,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     // if your build actually provides it. (Validated against a real trial log: a
     // baseline Arcanist measured ~3.4 ult/s, matching base income + Decisive.)
     defaultEnabled: false,
-    provenance: ESOHUB_MINOR_HEROISM,
+    provenance: SRC_MINOR_HEROISM,
     confidence: 'high',
     description:
       '1 ultimate every 1.5s (0.67/s) in combat. From Heroism potions, Cryptcanon Vestments, certain sets, or scribing — enable it if your build provides it.',
@@ -95,7 +95,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     rollsDecisive: true,
     availableIn: ['groupPve', 'pvp'],
     defaultEnabled: false,
-    provenance: ESOHUB_MAJOR_HEROISM,
+    provenance: SRC_MAJOR_HEROISM,
     confidence: 'high',
     description:
       '3 ultimate every 1.5s (2.0/s) in combat — the strongest sustained source. Usually a group buff (Warden U50 class scrip, certain sets) rather than self-applied.',
@@ -114,7 +114,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     classes: ['arcanist'],
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: true,
-    provenance: ESOHUB_IMPLACABLE,
+    provenance: SRC_IMPLACABLE,
     confidence: 'high',
     description:
       'Arcanist Soldier of Apocrypha passive: +4 ultimate when you consume Crux, once every 8 seconds.',
@@ -131,7 +131,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     classes: ['necromancer'],
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: false,
-    provenance: ESOHUB_CORPSE,
+    provenance: SRC_CORPSE,
     confidence: 'high',
     description:
       'Necromancer Living Death passive: +10 ultimate when you consume a corpse, once every 16 seconds. Uptime depends on corpse availability.',
@@ -149,7 +149,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     rollsDecisive: true,
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: false,
-    provenance: ESOHUB_CRYPTCANON,
+    provenance: SRC_CRYPTCANON,
     confidence: 'high',
     description:
       'Mythic that grants Minor Heroism in combat. CAVEAT: while equipped you cannot cast your own ultimate — casting transfers your ult to group members. A support/battery item, not a self-ult enabler.',
@@ -168,7 +168,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     roles: ['dps'],
     availableIn: ['groupPve'],
     defaultEnabled: false,
-    provenance: ESOHUB_PILLAGERS,
+    provenance: SRC_PILLAGERS,
     confidence: 'medium',
     description:
       "When a group healer wears Pillager's Profit, 2% of ultimate they spend is granted to nearby group members. Modeled as an external trickle to a DPS; exact rate varies with the healer's ultimate usage.",
@@ -186,7 +186,7 @@ export const COST_REDUCTION_CATALOG: readonly CatalogCostReduction[] = [
     classes: ['sorcerer'],
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: true,
-    provenance: ESOHUB_POWERSTONE,
+    provenance: SRC_POWERSTONE,
     confidence: 'high',
     description:
       'Sorcerer Daedric Summoning passive: reduces the cost of your ultimate abilities by 15%.',
@@ -200,7 +200,7 @@ export const COST_REDUCTION_CATALOG: readonly CatalogCostReduction[] = [
     classes: ['templar'],
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: true,
-    provenance: ESOHUB_RESTORING_SPIRIT,
+    provenance: SRC_RESTORING_SPIRIT,
     confidence: 'high',
     description:
       "Templar Dawn's Wrath passive: reduces all ability costs, including ultimate, by 5%.",
@@ -228,7 +228,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Dawnbreaker / Flawless (Fighters Guild)',
     baseCost: 125,
     owner: 'weapon',
-    provenance: 'https://eso-hub.com/en/skills/guild/fighters-guild/flawless-dawnbreaker',
+    provenance: 'https://eso-skillbook.com/skill/flawless-dawnbreaker',
     confidence: 'high',
   },
   // Dragonknight
@@ -237,7 +237,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Standard of Might (Dragonknight)',
     baseCost: 250,
     owner: 'dragonknight',
-    provenance: 'https://eso-hub.com/en/skills/dragonknight/ardent-flame/standard-of-might',
+    provenance: 'https://eso-skillbook.com/skill/standard-of-might',
     confidence: 'high',
   },
   {
@@ -245,7 +245,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Shifting Standard (Dragonknight)',
     baseCost: 200,
     owner: 'dragonknight',
-    provenance: 'https://eso-hub.com/en/skills/dragonknight/ardent-flame/shifting-standard',
+    provenance: 'https://eso-skillbook.com/skill/shifting-standard',
     confidence: 'medium',
   },
   {
@@ -253,7 +253,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Corrosive Armor / Magma Shell (Dragonknight)',
     baseCost: 200,
     owner: 'dragonknight',
-    provenance: 'https://eso-hub.com/en/skills/dragonknight/earthen-heart/corrosive-armor',
+    provenance: 'https://eso-skillbook.com/skill/corrosive-armor',
     confidence: 'medium',
   },
   // Sorcerer
@@ -262,7 +262,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Greater Storm Atronach (Sorcerer)',
     baseCost: 200,
     owner: 'sorcerer',
-    provenance: 'https://eso-hub.com/en/skills/sorcerer/daedric-summoning/greater-storm-atronach',
+    provenance: 'https://eso-skillbook.com/skill/greater-storm-atronach',
     confidence: 'high',
   },
   {
@@ -270,7 +270,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Negate Magic / Suppression Field (Sorcerer)',
     baseCost: 225,
     owner: 'sorcerer',
-    provenance: 'https://eso-hub.com/en/skills/sorcerer/dark-magic/suppression-field',
+    provenance: 'https://eso-skillbook.com/skill/suppression-field',
     confidence: 'high',
   },
   // Nightblade
@@ -297,7 +297,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Permafrost / Northern Storm (Warden)',
     baseCost: 200,
     owner: 'warden',
-    provenance: 'https://eso-hub.com/en/skills/warden/winters-embrace/permafrost',
+    provenance: 'https://eso-skillbook.com/skill/permafrost',
     confidence: 'medium',
   },
   // Necromancer
@@ -306,7 +306,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'Pestilent / Glacial Colossus (Necromancer)',
     baseCost: 175,
     owner: 'necromancer',
-    provenance: 'https://eso-hub.com/en/skills/necromancer/grave-lord/pestilent-colossus',
+    provenance: 'https://eso-skillbook.com/skill/pestilent-colossus',
     confidence: 'high',
   },
   // Arcanist
@@ -315,12 +315,12 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     label: 'The Unblinking Eye (Arcanist)',
     baseCost: 250,
     owner: 'arcanist',
-    provenance: 'https://eso-hub.com/en/skills/arcanist/herald-of-the-tome/the-unblinking-eye',
+    provenance: 'https://eso-skillbook.com/skill/the-unblinking-eye',
     confidence: 'medium',
   },
 ];
 
-export { ESOHUB_MINOR_HEROISM_POTION, UESP_DECISIVE };
+export { SRC_MINOR_HEROISM_POTION, UESP_DECISIVE };
 
 /**
  * The practical sustainable ultimate-per-second ceiling (≈ Warden's best). Used
