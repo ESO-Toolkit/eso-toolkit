@@ -1443,6 +1443,20 @@ interface CalculatorTooltipProps {
   record?: CalculatorTooltipRecord;
 }
 
+// Relative luminance check for an #rrggbb hue — decides whether text on a SOLID
+// fill of that hue should be near-black (light hue) or white (dark/saturated hue).
+const isLightHue = (hex: string): boolean => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return false;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  // Perceived luminance (sRGB-weighted). > 0.6 ≈ a pale chip that needs dark text.
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum > 0.6;
+};
+
 // Shared HTML-string styling for the legacy fallback path (a handful of items
 // still carry rich freeform tooltips that have no structured record yet).
 const useLegacyTooltipSx = (theme: Theme): Record<string, unknown> => ({
@@ -1488,10 +1502,10 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content, r
   if (record) {
     const accentMeta = TOOLTIP_ACCENT_META[record.accent] ?? TOOLTIP_ACCENT_META.neutral;
     const hue = accentMeta.hue;
-    // Tone the raw hue down for the light theme so chips/text keep AA contrast.
-    const accentText = isDark ? hue : alpha(hue, 0.92);
-    const chipBg = isDark ? alpha(hue, 0.18) : alpha(hue, 0.12);
-    const chipBorder = alpha(hue, isDark ? 0.45 : 0.4);
+    // Pick a readable text color to sit on a SOLID accent fill (the value chip).
+    // Light hues (gold/green/cyan) need near-black text; saturated/darker hues
+    // read fine with white.
+    const onAccentText = isLightHue(hue) ? 'rgba(10, 14, 20, 0.92)' : '#ffffff';
 
     return (
       <Card
@@ -1522,14 +1536,14 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content, r
         }}
       >
         <CardContent sx={{ p: 1.5, pl: 1.75, '&:last-child': { pb: 1.5 } }}>
-          {/* Header: name + category chip */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          {/* Header: name + category badge (quiet, OUTLINE-only tag) */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.25 }}>
             <Typography
               component="div"
               sx={{
                 fontWeight: 700,
                 fontSize: '0.9rem',
-                lineHeight: 1.2,
+                lineHeight: 1.25,
                 color: 'text.primary',
                 flex: 1,
                 minWidth: 0,
@@ -1541,45 +1555,62 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content, r
               component="span"
               sx={{
                 flexShrink: 0,
-                fontSize: '0.6rem',
+                mt: '1px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                fontSize: '0.58rem',
                 fontWeight: 700,
-                letterSpacing: '0.04em',
+                letterSpacing: '0.06em',
                 textTransform: 'uppercase',
-                color: accentText,
-                backgroundColor: chipBg,
-                border: `1px solid ${chipBorder}`,
+                // Outline-only, muted text — a quiet category tag, clearly NOT the
+                // filled value chip below.
+                color: 'text.secondary',
+                backgroundColor: 'transparent',
+                border: `1px solid ${alpha(theme.palette.divider, isDark ? 0.9 : 1)}`,
                 borderRadius: 999,
                 px: 0.75,
                 py: 0.125,
-                lineHeight: 1.6,
+                lineHeight: 1.5,
                 whiteSpace: 'nowrap',
               }}
             >
+              {/* tiny accent dot keeps the category color cue without filling the chip */}
+              <Box
+                component="span"
+                sx={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  backgroundColor: hue,
+                  flexShrink: 0,
+                }}
+              />
               {accentMeta.label}
             </Box>
           </Box>
 
-          {/* Value chip — the magnitude the calculator applies */}
+          {/* Value chip — the hero: SOLID accent fill, high-contrast text. */}
           <Box
             sx={{
               display: 'inline-flex',
               alignItems: 'baseline',
-              gap: 0.5,
-              mb: 1,
-              px: 1,
-              py: 0.375,
+              mb: 1.25,
+              px: 1.125,
+              py: 0.5,
               borderRadius: 1.5,
-              backgroundColor: chipBg,
-              border: `1px solid ${chipBorder}`,
+              backgroundColor: hue,
+              boxShadow: isDark ? `0 2px 10px ${alpha(hue, 0.35)}` : `0 2px 8px ${alpha(hue, 0.3)}`,
             }}
           >
             <Typography
               component="span"
               sx={{
                 fontWeight: 800,
-                fontSize: '0.92rem',
+                fontSize: '0.95rem',
                 lineHeight: 1.1,
-                color: accentText,
+                letterSpacing: '0.01em',
+                color: onAccentText,
                 fontFeatureSettings: '"tnum" 1',
                 fontVariantNumeric: 'tabular-nums',
               }}
@@ -1593,7 +1624,7 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content, r
             component="p"
             sx={{
               color: 'text.primary',
-              lineHeight: 1.45,
+              lineHeight: 1.5,
               fontSize: '0.8rem',
               m: 0,
             }}
@@ -1604,28 +1635,26 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content, r
           {/* Footer: source + optional PvE/PvP note */}
           {(record.source || record.modeNote) && (
             <Divider
-              sx={{ my: 1, borderColor: alpha(theme.palette.divider, isDark ? 0.6 : 0.8) }}
+              sx={{ my: 1.25, borderColor: alpha(theme.palette.divider, isDark ? 0.6 : 0.8) }}
             />
           )}
           {record.source && (
-            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'flex-start' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
               <Typography
                 component="span"
                 sx={{
-                  fontSize: '0.68rem',
+                  fontSize: '0.62rem',
                   fontWeight: 700,
-                  color: 'text.secondary',
+                  color: alpha(hue, isDark ? 0.95 : 0.85),
                   textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                  flexShrink: 0,
-                  mt: '1px',
+                  letterSpacing: '0.08em',
                 }}
               >
                 Source
               </Typography>
               <Typography
                 component="span"
-                sx={{ fontSize: '0.72rem', lineHeight: 1.4, color: 'text.secondary' }}
+                sx={{ fontSize: '0.72rem', lineHeight: 1.45, color: 'text.secondary' }}
               >
                 {record.source}
               </Typography>
@@ -3451,7 +3480,36 @@ const CalculatorComponent: React.FC = () => {
                             { name: 'offset', options: { offset: [0, 8] } },
                           ],
                         },
-                        tooltip: { sx: { p: 0 } },
+                        // Strip MUI's default dark grey tooltip surface so it
+                        // doesn't bleed through the rounded corners of our card.
+                        tooltip: {
+                          sx: {
+                            p: 0,
+                            m: 0,
+                            backgroundColor: 'transparent',
+                            backgroundImage: 'none',
+                            boxShadow: 'none',
+                            maxWidth: 'none',
+                            borderRadius: 0,
+                          },
+                        },
+                        // Match the arrow to the card surface (and hide its own
+                        // default dark fill).
+                        arrow: {
+                          sx: {
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(17, 25, 40, 0.96)'
+                                : 'rgba(255, 255, 255, 0.97)',
+                            '&::before': {
+                              border: `1px solid ${
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255,255,255,0.08)'
+                                  : 'rgba(15,23,42,0.10)'
+                              }`,
+                            },
+                          },
+                        },
                       }}
                     >
                       <IconButton
