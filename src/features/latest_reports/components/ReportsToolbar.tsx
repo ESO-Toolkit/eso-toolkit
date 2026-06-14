@@ -32,13 +32,15 @@ interface ReportsToolbarProps {
 /**
  * The filter/search toolbar. `role="search"` landmark.
  *
- * Desktop: a single sticky row with three clusters — CLIENT (text search),
- * SERVER (zone + date, each marked with a filter icon), and VIEW (layout +
- * density) — separated by a divider so the two-tier (client vs server) model is
- * taught by layout.
+ * Desktop: two deliberate tiers. Row 1 = the filters — a grow-to-fill text
+ * search, a vertical divider, then the SERVER cluster (zone + date, each marked
+ * with a filter icon). A hairline separates Row 2 = the view controls (layout +
+ * density), right-aligned. Keeping view controls on their own row avoids the
+ * awkward lone-wrap (and dead space) that a single packed row produces once the
+ * panel is narrower than all controls combined.
  *
- * Mobile: two rows — full-width search, then a "Filters" trigger (opens the
- * bottom-sheet) plus the density toggle. View toggle is hidden (cards forced).
+ * Mobile: full-width search, then a "Filters" trigger (opens the bottom-sheet)
+ * plus the density toggle. View toggle is hidden (cards forced).
  */
 export const ReportsToolbar: React.FC<ReportsToolbarProps> = ({
   isDesktop,
@@ -96,25 +98,34 @@ export const ReportsToolbar: React.FC<ReportsToolbarProps> = ({
     <Box
       role="search"
       aria-label="Filter reports"
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1.5,
-        flexWrap: 'wrap',
-      }}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}
     >
-      {/* CLIENT cluster */}
-      <ReportSearchField value={searchValue} onChange={onSearchChange} inputRef={searchInputRef} />
-
-      <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 28, alignSelf: 'center' }} />
-
-      {/* SERVER cluster */}
+      {/* Row 1 — filters: search grows to fill, then the server cluster.
+          Wraps gracefully (zone/date drop below search) on narrow desktops. */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-        <ZoneFilterSelect value={filters.zoneId} onChange={onZoneChange} />
-        <DateRangeFilter value={dateValue} onChange={onDateChange} />
+        {/* CLIENT cluster */}
+        <ReportSearchField
+          value={searchValue}
+          onChange={onSearchChange}
+          inputRef={searchInputRef}
+          grow
+        />
+
+        <Divider
+          orientation="vertical"
+          flexItem
+          sx={{ mx: 0.5, height: 28, alignSelf: 'center' }}
+        />
+
+        {/* SERVER cluster */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          <ZoneFilterSelect value={filters.zoneId} onChange={onZoneChange} />
+          <DateRangeFilter value={dateValue} onChange={onDateChange} />
+        </Box>
       </Box>
 
-      {/* VIEW cluster (pushed right) */}
+      {/* Hairline separator + Row 2 — view controls, right-aligned. */}
+      <Divider sx={{ borderColor: 'divider', opacity: 0.6 }} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
         <ViewToggle value={viewMode} onChange={onViewModeChange} />
         <DensityToggle value={density} onChange={onDensityChange} />

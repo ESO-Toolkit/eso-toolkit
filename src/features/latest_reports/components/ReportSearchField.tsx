@@ -14,6 +14,8 @@ interface ReportSearchFieldProps {
   /** Render the helper text under the field (desktop). Mobile relies on the tooltip. */
   showHelperText?: boolean;
   fullWidth?: boolean;
+  /** Let the field flex-grow to fill its row (drops the desktop max-width cap). */
+  grow?: boolean;
   /** Forwarded to the input for focus management from the parent. */
   inputRef?: React.Ref<HTMLInputElement>;
 }
@@ -29,6 +31,7 @@ export const ReportSearchField: React.FC<ReportSearchFieldProps> = ({
   onChange,
   showHelperText = false,
   fullWidth = false,
+  grow = false,
   inputRef,
 }) => {
   const theme = useTheme();
@@ -84,8 +87,8 @@ export const ReportSearchField: React.FC<ReportSearchFieldProps> = ({
       }}
       sx={{
         minWidth: { sm: 240 },
-        flex: { sm: '1 1 280px' },
-        maxWidth: { sm: 380 },
+        flex: grow ? '1 1 auto' : { sm: '1 1 280px' },
+        maxWidth: grow ? 'none' : { sm: 380 },
         ...glassOutlinedFieldSx(isDark),
       }}
     />
