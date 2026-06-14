@@ -8,13 +8,19 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { selectActiveSetup } from '../../store/buildEditorSelectors';
+import {
+  selectActiveSetup,
+  selectBuildEsoClass,
+  selectBuildRaces,
+} from '../../store/buildEditorSelectors';
 import { setPassives } from '../../store/buildEditorSlice';
 import { PassivesPicker } from '../pickers/PassivesPicker';
 
 const PassivesSectionComponent: React.FC = () => {
   const dispatch = useDispatch();
   const setup = useSelector(selectActiveSetup);
+  const esoClass = useSelector(selectBuildEsoClass);
+  const races = useSelector(selectBuildRaces);
 
   if (!setup) return null;
 
@@ -22,6 +28,9 @@ const PassivesSectionComponent: React.FC = () => {
     <PassivesPicker
       passives={setup.passives}
       onChange={(updated) => dispatch(setPassives(updated))}
+      esoClass={esoClass}
+      races={races}
+      setupSkills={setup.skills}
     />
   );
 };

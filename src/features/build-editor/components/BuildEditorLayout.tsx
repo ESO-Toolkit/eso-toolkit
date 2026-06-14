@@ -146,10 +146,14 @@ export const BuildEditorLayout: React.FC = () => {
             flex: 1,
             minWidth: 0,
             overflowY: 'auto',
-            p: { xs: 1.5, md: 2.5 },
-            // Extra bottom padding on mobile so content isn't hidden behind
-            // the fixed bottom nav (64px) + iOS home-indicator safe area.
-            pb: isMobile ? 'calc(80px + env(safe-area-inset-bottom))' : 2.5,
+            pt: { xs: 1.5, md: 2.5 },
+            pl: { xs: 1.5, md: 2.5 },
+            pr: { xs: 1.5, md: 2.5 },
+            // Avoid p+pb shorthand conflicts — use explicit paddingBottom so it
+            // never gets overridden by the `padding` shorthand class cascade.
+            // Adds enough clearance for the fixed bottom nav (64px) + iOS home
+            // indicator safe area, with a generous 24px buffer.
+            paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '20px',
           }}
         >
           {/* Setup tab bar at top on mobile — surfaced above sections so users

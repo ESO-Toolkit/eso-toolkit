@@ -6,8 +6,11 @@
  * No Redux coupling — receives passives array and calls onChange on change.
  *
  * Props:
- *   passives  — array of passive ability IDs
- *   onChange  — called with the new passives array
+ *   passives    — array of passive ability IDs
+ *   onChange    — called with the new passives array
+ *   esoClass    — build's class (for smart suggestions)
+ *   races       — build's races (for smart suggestions)
+ *   setupSkills — front/back bar skill slots (for smart suggestions)
  */
 
 import {
@@ -15,6 +18,7 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
   ExpandMore as ExpandIcon,
+  Lightbulb as LightbulbIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -30,6 +34,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { SkillData } from '../../../../data/types/skill-line-types';
+import type { SkillsConfig } from '../../../loadout-manager/types/loadout.types';
 import {
   getPassivesByCategory,
   getSkillById,
@@ -52,6 +57,7 @@ const resolveIconUrl = (icon: string): string =>
   icon.startsWith('http') ? icon : `${ICON_URL}${icon}.png`;
 
 const PASSIVE_PICKER_TABS = [
+  { label: 'Suggested', category: '__suggested__' },
   { label: 'Class', category: 'class' },
   { label: 'Weapon', category: 'weapon' },
   { label: 'Guild', category: 'guild' },
@@ -73,6 +79,72 @@ function deduplicatePassives(passives: SkillData[]): SkillData[] {
   return Array.from(seen.values());
 }
 
+// ── Smart suggestion algorithm ────────────────────────────────────────────────
+
+interface SuggestionGroup {
+  label: string;
+  passives: SkillData[];
+}
+
+function getSuggestedPassiveGroups(
+  esoClass: string | undefined,
+  races: string[] | undefined,
+  setupSkills: SkillsConfig | undefined,
+): SuggestionGroup[] {
+  const lineIndex = getSkillLineIndex();
+  const groups: SuggestionGroup[] = [];
+  const seenLines = new Set<string>();
+
+  // 1. Class passives — match by broadCategory + className
+  if (esoClass) {
+    const classLines = lineIndex.filter(
+      (l) => l.broadCategory === 'class' && l.className.toLowerCase() === esoClass.toLowerCase(),
+    );
+    for (const line of classLines) {
+      if (seenLines.has(line.name)) continue;
+      seenLines.add(line.name);
+      const passives = deduplicatePassives(getPassivesByCategory(line.name));
+      if (passives.length > 0) groups.push({ label: line.name, passives });
+    }
+  }
+
+  // 2. Racial passives — match by broadCategory + name
+  const race = races?.[0];
+  if (race) {
+    const raceLine = lineIndex.find(
+      (l) => l.broadCategory === 'racial' && l.name.toLowerCase() === race.toLowerCase(),
+    );
+    if (raceLine && !seenLines.has(raceLine.name)) {
+      seenLines.add(raceLine.name);
+      const passives = deduplicatePassives(getPassivesByCategory(raceLine.name));
+      if (passives.length > 0) groups.push({ label: raceLine.name, passives });
+    }
+  }
+
+  // 3. Weapon/skill-line passives from slotted active skills on front/back bars
+  if (setupSkills) {
+    const allSlotIds = [
+      ...Object.values(setupSkills[0] ?? {}),
+      ...Object.values(setupSkills[1] ?? {}),
+    ].filter((id): id is number => typeof id === 'number' && id > 0);
+
+    for (const skillId of allSlotIds) {
+      const skill = getSkillById(skillId);
+      if (!skill?.category) continue;
+      if (seenLines.has(skill.category)) continue;
+      const lineInfo = lineIndex.find((l) => l.name === skill.category);
+      if (!lineInfo) continue;
+      // Skip class/racial — already covered above
+      if (lineInfo.broadCategory === 'class' || lineInfo.broadCategory === 'racial') continue;
+      seenLines.add(skill.category);
+      const passives = deduplicatePassives(getPassivesByCategory(skill.category));
+      if (passives.length > 0) groups.push({ label: skill.category, passives });
+    }
+  }
+
+  return groups;
+}
+
 // ── Passive Tile (selected display) ──────────────────────────────────────────
 
 interface PassiveTileProps {
@@ -92,6 +164,11 @@ const PassiveTile: React.FC<PassiveTileProps> = ({ skill, id, onRemove }) => {
             <Typography sx={{ fontWeight: 600, fontSize: 12 }}>{skill.name}</Typography>
             {skill.category && (
               <Typography sx={{ fontSize: 10, opacity: 0.7 }}>{skill.category}</Typography>
+            )}
+            {skill.description && (
+              <Typography sx={{ fontSize: 10, opacity: 0.75, mt: 0.5, lineHeight: 1.4 }}>
+                {skill.description}
+              </Typography>
             )}
           </Box>
         ) : (
@@ -378,6 +455,7 @@ interface PassiveLineSectionProps {
   lineName: string;
   selectedIds: Set<number>;
   onToggle: (skill: SkillData) => void;
+  onAddAll?: (ids: number[]) => void;
   defaultExpanded?: boolean;
 }
 
@@ -385,6 +463,7 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
   lineName,
   selectedIds,
   onToggle,
+  onAddAll,
   defaultExpanded = false,
 }) => {
   const isDark = useTheme().palette.mode === 'dark';
@@ -393,6 +472,8 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
   const passives = useMemo(() => deduplicatePassives(getPassivesByCategory(lineName)), [lineName]);
 
   if (passives.length === 0) return null;
+
+  const unselectedCount = passives.filter((p) => !selectedIds.has(p.id)).length;
 
   return (
     <Box>
@@ -422,6 +503,32 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
           {lineName}
         </Typography>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          {onAddAll && unselectedCount > 0 && (
+            <ButtonBase
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddAll(passives.map((p) => p.id));
+              }}
+              sx={{
+                fontSize: 9,
+                fontWeight: 700,
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                letterSpacing: 0.4,
+                color: 'rgba(56,189,248,0.85)',
+                border: '1px solid rgba(56,189,248,0.30)',
+                borderRadius: '5px',
+                px: 0.75,
+                py: '2px',
+                lineHeight: 1.5,
+                '&:hover': {
+                  background: 'rgba(56,189,248,0.10)',
+                  color: 'rgba(56,189,248,1)',
+                },
+              }}
+            >
+              + Add all
+            </ButtonBase>
+          )}
           <Typography
             sx={{
               fontSize: 10,
@@ -470,6 +577,10 @@ interface PassivePickerDialogProps {
   onClose: () => void;
   selectedIds: Set<number>;
   onToggle: (skillId: number) => void;
+  onAddMany: (ids: number[]) => void;
+  esoClass?: string;
+  races?: string[];
+  setupSkills?: SkillsConfig;
 }
 
 const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
@@ -477,6 +588,10 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
   onClose,
   selectedIds,
   onToggle,
+  onAddMany,
+  esoClass,
+  races,
+  setupSkills,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -492,13 +607,19 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
     [lineIndex],
   );
 
+  // Class tab is now at index 1
   const classLinesByClass = useMemo(() => {
-    const classLines = linesByTab[0];
+    const classLines = linesByTab[1];
     return ESO_CLASSES.map((cls) => ({
       cls,
       lines: classLines.filter((l) => l.className === cls.label),
     })).filter((g) => g.lines.length > 0);
   }, [linesByTab]);
+
+  const suggestedGroups = useMemo(
+    () => getSuggestedPassiveGroups(esoClass, races, setupSkills),
+    [esoClass, races, setupSkills],
+  );
 
   useEffect(() => {
     if (open) setSearch('');
@@ -516,6 +637,13 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
       onToggle(skill.id);
     },
     [onToggle],
+  );
+
+  const handleAddAll = useCallback(
+    (ids: number[]) => {
+      onAddMany(ids);
+    },
+    [onAddMany],
   );
 
   return (
@@ -546,7 +674,7 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                   onClick={() => handleToggle(skill)}
                   sx={{
                     display: 'flex',
-                    alignItems: 'center',
+                    alignItems: 'flex-start',
                     gap: 1.25,
                     py: 0.75,
                     px: 1,
@@ -668,6 +796,22 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
                         {skill.category}
                       </Typography>
                     )}
+                    {skill.description && (
+                      <Typography
+                        sx={{
+                          fontSize: 10,
+                          color: isDark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.38)',
+                          lineHeight: 1.4,
+                          mt: 0.35,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical' as const,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {skill.description}
+                      </Typography>
+                    )}
                   </Box>
                   {selected && (
                     <Stack
@@ -747,59 +891,102 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
           </PickerDialog.Tabs>
 
           <PickerDialog.Body>
-            {activeTab === 0
-              ? classLinesByClass.map(({ cls, lines }) => {
-                  const clsColor = CLASS_COLOR_MAP[cls.id].accent;
-                  return (
-                    <Box key={cls.id}>
-                      <ListSubheader
-                        disableSticky
-                        sx={{
-                          fontSize: 9,
-                          fontWeight: 700,
-                          fontFamily: 'Space Grotesk, Inter, system-ui',
-                          letterSpacing: 1,
-                          textTransform: 'uppercase',
-                          color: clsColor,
-                          lineHeight: '28px',
-                          background: 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.75,
-                          px: 1,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 7,
-                            height: 7,
-                            borderRadius: '50%',
-                            background: clsColor,
-                            boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
-                            flexShrink: 0,
-                          }}
-                        />
-                        {cls.label}
-                      </ListSubheader>
-                      {lines.map((line) => (
-                        <PassiveLineSection
-                          key={line.name}
-                          lineName={line.name}
-                          selectedIds={selectedIds}
-                          onToggle={handleToggle}
-                        />
-                      ))}
-                    </Box>
-                  );
-                })
-              : linesByTab[activeTab].map((line) => (
+            {activeTab === 0 ? (
+              // Suggested tab
+              suggestedGroups.length === 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1,
+                    py: 5,
+                    color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)',
+                  }}
+                >
+                  <LightbulbIcon sx={{ fontSize: 32, opacity: 0.4 }} />
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontFamily: 'Space Grotesk, Inter, system-ui',
+                      textAlign: 'center',
+                      maxWidth: 220,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Set your class, race, and skill bar to get smart passive suggestions
+                  </Typography>
+                </Box>
+              ) : (
+                suggestedGroups.map((group) => (
                   <PassiveLineSection
-                    key={line.name}
-                    lineName={line.name}
+                    key={group.label}
+                    lineName={group.label}
                     selectedIds={selectedIds}
                     onToggle={handleToggle}
+                    onAddAll={handleAddAll}
+                    defaultExpanded
                   />
-                ))}
+                ))
+              )
+            ) : activeTab === 1 ? (
+              // Class tab
+              classLinesByClass.map(({ cls, lines }) => {
+                const clsColor = CLASS_COLOR_MAP[cls.id].accent;
+                return (
+                  <Box key={cls.id}>
+                    <ListSubheader
+                      disableSticky
+                      sx={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        fontFamily: 'Space Grotesk, Inter, system-ui',
+                        letterSpacing: 1,
+                        textTransform: 'uppercase',
+                        color: clsColor,
+                        lineHeight: '28px',
+                        background: 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        px: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: '50%',
+                          background: clsColor,
+                          boxShadow: `0 0 5px ${alpha(clsColor, 0.6)}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      {cls.label}
+                    </ListSubheader>
+                    {lines.map((line) => (
+                      <PassiveLineSection
+                        key={line.name}
+                        lineName={line.name}
+                        selectedIds={selectedIds}
+                        onToggle={handleToggle}
+                      />
+                    ))}
+                  </Box>
+                );
+              })
+            ) : (
+              // All other category tabs
+              linesByTab[activeTab].map((line) => (
+                <PassiveLineSection
+                  key={line.name}
+                  lineName={line.name}
+                  selectedIds={selectedIds}
+                  onToggle={handleToggle}
+                />
+              ))
+            )}
           </PickerDialog.Body>
         </>
       )}
@@ -812,9 +999,18 @@ const PassivePickerDialog: React.FC<PassivePickerDialogProps> = ({
 export interface PassivesPickerProps {
   passives: number[];
   onChange: (passives: number[]) => void;
+  esoClass?: string;
+  races?: string[];
+  setupSkills?: SkillsConfig;
 }
 
-export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChange }) => {
+export const PassivesPicker: React.FC<PassivesPickerProps> = ({
+  passives,
+  onChange,
+  esoClass,
+  races,
+  setupSkills,
+}) => {
   const isDark = useTheme().palette.mode === 'dark';
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -827,6 +1023,14 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
       } else {
         onChange([...passives, skillId]);
       }
+    },
+    [passives, selectedIds, onChange],
+  );
+
+  const handleAddMany = useCallback(
+    (ids: number[]) => {
+      const toAdd = ids.filter((id) => !selectedIds.has(id));
+      if (toAdd.length > 0) onChange([...passives, ...toAdd]);
     },
     [passives, selectedIds, onChange],
   );
@@ -887,6 +1091,10 @@ export const PassivesPicker: React.FC<PassivesPickerProps> = ({ passives, onChan
         onClose={() => setDialogOpen(false)}
         selectedIds={selectedIds}
         onToggle={handleToggle}
+        onAddMany={handleAddMany}
+        esoClass={esoClass}
+        races={races}
+        setupSkills={setupSkills}
       />
     </>
   );
