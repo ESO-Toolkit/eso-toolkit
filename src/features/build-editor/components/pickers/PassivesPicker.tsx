@@ -503,7 +503,13 @@ const PassiveLineSection: React.FC<PassiveLineSectionProps> = ({
                     </Typography>
                   ) : (
                     <Typography
-                      sx={{ fontSize: 10, color: muted, lineHeight: 1.4, mt: 0.25, fontStyle: 'italic' }}
+                      sx={{
+                        fontSize: 10,
+                        color: muted,
+                        lineHeight: 1.4,
+                        mt: 0.25,
+                        fontStyle: 'italic',
+                      }}
                     >
                       Passive ability
                     </Typography>
