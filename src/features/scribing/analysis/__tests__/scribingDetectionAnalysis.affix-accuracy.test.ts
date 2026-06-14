@@ -108,3 +108,33 @@ describe('Scribing affix detection accuracy — blueblaze103 Courage case', () =
     names.forEach((name) => expect(name).toBe('Unknown Affix'));
   });
 });
+
+describe('Scribing signature detection — grimoire-compatibility filter', () => {
+  // Sage's Remedy (214987) is compatible with Banner Bearer; Leeching Thirst (217189) is NOT
+  // (traveling-knife / smash only). Both fire at every banner pulse — the detector must pick the
+  // grimoire-compatible Sage's Remedy and ignore the incompatible Leeching Thirst, even though
+  // both reach the consistency threshold.
+  const SAGES_REMEDY = 214987; // banner-compatible signature effect
+  const LEECHING_THIRST = 217189; // traveling-knife/smash-only signature effect
+
+  it('ignores a signature effect that is not compatible with the skill grimoire', () => {
+    const buffs: BuffEvent[] = [];
+    BANNER_PULSES.forEach((pulse) => {
+      buffs.push(buff(SHOCKING_BANNER, pulse, CASTER, CASTER));
+      // both signatures' effects land shortly after every banner pulse
+      buffs.push(buff(SAGES_REMEDY, pulse + 50, CASTER, ALLY_IDS[0]));
+      buffs.push(buff(LEECHING_THIRST, pulse + 60, CASTER, CASTER));
+    });
+
+    const result = computeScribingDetection({
+      abilityId: SHOCKING_BANNER,
+      playerId: CASTER,
+      combatEvents: { buffs, debuffs: [], damage: [], casts: [], heals: [], resources: [] },
+    });
+
+    expect(result).not.toBeNull();
+    const sig = result?.scribedSkillData?.signatureScript?.name;
+    expect(sig).toBe("Sage's Remedy");
+    expect(sig).not.toBe('Leeching Thirst');
+  });
+});

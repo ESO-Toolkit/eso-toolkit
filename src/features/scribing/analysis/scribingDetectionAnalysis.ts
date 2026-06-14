@@ -312,10 +312,47 @@ function resolveBannerPrimaryAbilityId(
   return info;
 }
 
+// Build the set of signature-script effect IDs compatible with a given grimoire, mirroring the
+// affix-side `compatibleGrimoires` filter. Returns null when the grimoire is unknown or has no
+// declared-compatible signatures, so callers can fall back to the unfiltered global set rather
+// than risk dropping a real signature when the data's compatibility list is incomplete.
+function grimoireCompatibleSignatureIds(grimoireKey?: string): Set<number> | null {
+  if (!grimoireKey) {
+    return null;
+  }
+  const data = scribingData as ScribingDataStructure;
+  const ids = new Set<number>();
+  Object.values(
+    (data.signatureScripts ?? {}) as Record<string, SignatureScriptEntry>,
+  ).forEach((script) => {
+    if (!(script as { compatibleGrimoires?: string[] }).compatibleGrimoires?.includes(grimoireKey)) {
+      return;
+    }
+    script.abilityIds?.forEach((id) => ids.add(id));
+    if (script.grimoireSpecificEffects) {
+      Object.values(script.grimoireSpecificEffects).forEach((config) => {
+        if (config.mainAbilityId) {
+          ids.add(config.mainAbilityId);
+        }
+        config.statusEffects?.forEach((id) => ids.add(id));
+      });
+    }
+  });
+  // Class Flourish's shared extra-effect id is compatible with every grimoire that lists it.
+  const classMastery = data.signatureScripts?.['class-mastery'] as
+    | { compatibleGrimoires?: string[] }
+    | undefined;
+  if (classMastery?.compatibleGrimoires?.includes(grimoireKey)) {
+    CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => ids.add(id));
+  }
+  return ids.size > 0 ? ids : null;
+}
+
 function detectSignatureScript(
   abilityId: number,
   playerId: number,
   combatEvents: CombatEventData,
+  grimoireKey?: string,
 ): ScribedSkillSignatureInfo | null {
   initializeScribingDataset();
 
@@ -327,6 +364,12 @@ function detectSignatureScript(
   if (abilityCasts.length === 0) {
     return null;
   }
+
+  // Only consider signature effects compatible with this skill's grimoire (consistent with the
+  // affix detector). Falls back to the global set when compatibility data is unavailable.
+  const compatibleSignatureIds = grimoireCompatibleSignatureIds(grimoireKey);
+  const isCandidateSignatureId = (id: number): boolean =>
+    compatibleSignatureIds ? compatibleSignatureIds.has(id) : VALID_SIGNATURE_SCRIPT_IDS.has(id);
 
   const SIGNATURE_WINDOW_MS = 1500;
   const signatureEffects = new Map<
@@ -369,14 +412,14 @@ function detectSignatureScript(
     const castIndex = findOwningCastIndex(event.timestamp);
     if (castIndex === null) return;
 
-    if (event.abilityGameID !== abilityId && VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)) {
+    if (event.abilityGameID !== abilityId && isCandidateSignatureId(event.abilityGameID)) {
       recordSignatureHit(event.abilityGameID, eventType, castIndex);
     }
 
     if (
       event.extraAbilityGameID &&
       event.extraAbilityGameID !== abilityId &&
-      VALID_SIGNATURE_SCRIPT_IDS.has(event.extraAbilityGameID)
+      isCandidateSignatureId(event.extraAbilityGameID)
     ) {
       recordSignatureHit(event.extraAbilityGameID, eventType, castIndex);
     }
@@ -1107,7 +1150,7 @@ export function computeScribingDetection(
   const wasCastInFight = abilityCastCount > 0;
 
   const detectedSignature = wasCastInFight
-    ? detectSignatureScript(effectiveAbilityId, playerId, normalizedEvents)
+    ? detectSignatureScript(effectiveAbilityId, playerId, normalizedEvents, scribingInfo.grimoireKey)
     : null;
 
   const detectedAffixes = wasCastInFight
