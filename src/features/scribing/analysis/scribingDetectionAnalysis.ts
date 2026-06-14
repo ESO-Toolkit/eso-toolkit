@@ -1031,10 +1031,18 @@ function detectAffixScripts(
   // wrong script. For buffs an immediate-trigger signature alone clears the floor (rescues real
   // affixes with legitimately low uptime, e.g. a banner that only reaches allies on some pulses).
   const MIN_AFFIX_CONSISTENCY = 0.5; // aligned with detectSignatureScript MIN_CONSISTENCY
+  // The immediate-trigger signature can rescue a real affix that has legitimately low uptime
+  // (e.g. a banner that only reaches allies on some pulses), but a SINGLE coincidental immediate
+  // co-occurrence must not name an affix on its own. Require the immediate signal across at least
+  // two casts before it overrides the consistency floor — unless the whole fight had ≤2 casts,
+  // where one immediate hit is still meaningful evidence.
+  const MIN_IMMEDIATE_CAST_SUPPORT = 2;
+  const immediateRescue =
+    topAggregate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE &&
+    (topAggregate.castSet.size >= MIN_IMMEDIATE_CAST_SUPPORT || casts.length <= 2);
   const passesConfidenceFloor =
     topAggregate.dominantType === 'buff'
-      ? topAggregate.consistency >= MIN_AFFIX_CONSISTENCY ||
-        topAggregate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE
+      ? topAggregate.consistency >= MIN_AFFIX_CONSISTENCY || immediateRescue
       : topAggregate.consistency >= MIN_AFFIX_CONSISTENCY;
 
   if (!passesConfidenceFloor) {

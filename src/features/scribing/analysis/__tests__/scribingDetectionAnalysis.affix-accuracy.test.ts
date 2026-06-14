@@ -139,6 +139,49 @@ describe('Scribing signature detection — grimoire-compatibility filter', () =>
   });
 });
 
+describe('Scribing affix detection — single-immediate-coincidence guard', () => {
+  // A buff that appears in only ONE cast window must not be named as the affix just because that
+  // single appearance happened to be immediate (immediate ratio 1.0 over a sample of 1). Real
+  // affixes show their immediate signature across multiple casts. Here a Smash skill is cast 12
+  // times and Minor Berserk (from e.g. a Two Handed passive) is immediate on exactly one of them.
+  const SMASH_PHYS = 217178; // Smash (physical-damage focus)
+  const MINOR_BERSERK_ID = 61744;
+
+  it('does not name an affix from a single coincidental immediate buff', () => {
+    const casts: import('../../../../types/combatlogEvents').UnifiedCastEvent[] = [];
+    const buffs: BuffEvent[] = [];
+    const castTimes = Array.from({ length: 12 }, (_, i) => 500_000 + i * 2000);
+
+    castTimes.forEach((t, i) => {
+      casts.push({
+        timestamp: t,
+        type: 'cast',
+        sourceID: CASTER,
+        targetID: 200,
+        sourceIsFriendly: true,
+        targetIsFriendly: false,
+        abilityGameID: SMASH_PHYS,
+        fight: 34,
+      } as import('../../../../types/combatlogEvents').UnifiedCastEvent);
+      // Minor Berserk is immediate on only the first cast (1/12 consistency).
+      if (i === 0) {
+        buffs.push(buff(MINOR_BERSERK_ID, t, CASTER, CASTER));
+      }
+    });
+
+    const result = computeScribingDetection({
+      abilityId: SMASH_PHYS,
+      playerId: CASTER,
+      combatEvents: { buffs, debuffs: [], damage: [], casts, heals: [], resources: [] },
+    });
+
+    expect(result).not.toBeNull();
+    const names = (result?.scribedSkillData?.affixScripts ?? []).map((a) => a.name);
+    expect(names).not.toContain('Berserk');
+    names.forEach((name) => expect(name).toBe('Unknown Affix'));
+  });
+});
+
 describe('Scribing affix detection — maintained-group-debuff guard', () => {
   // A Soul Burst caster who keeps Major Breach (61742) up on the boss group-wide would otherwise
   // have it mis-detected as their affix: it lands in nearly every cast window at high consistency
