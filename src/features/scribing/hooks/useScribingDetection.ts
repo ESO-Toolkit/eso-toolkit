@@ -42,7 +42,6 @@ import { isScribingAbility } from '../utils/Scribing';
 
 const moduleLogger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ScribingDetection' });
 
-
 export interface CombatEventData {
   buffs: BuffEvent[];
   debuffs: DebuffEvent[];
@@ -66,7 +65,6 @@ export interface UseScribingDetectionResult {
   error: string | null;
   refetch: () => Promise<void>;
 }
-
 
 /**
  * Hook for scribing detection using the complete scribing database

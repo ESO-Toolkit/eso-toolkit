@@ -322,22 +322,24 @@ function grimoireCompatibleSignatureIds(grimoireKey?: string): Set<number> | nul
   }
   const data = scribingData as ScribingDataStructure;
   const ids = new Set<number>();
-  Object.values(
-    (data.signatureScripts ?? {}) as Record<string, SignatureScriptEntry>,
-  ).forEach((script) => {
-    if (!(script as { compatibleGrimoires?: string[] }).compatibleGrimoires?.includes(grimoireKey)) {
-      return;
-    }
-    script.abilityIds?.forEach((id) => ids.add(id));
-    if (script.grimoireSpecificEffects) {
-      Object.values(script.grimoireSpecificEffects).forEach((config) => {
-        if (config.mainAbilityId) {
-          ids.add(config.mainAbilityId);
-        }
-        config.statusEffects?.forEach((id) => ids.add(id));
-      });
-    }
-  });
+  Object.values((data.signatureScripts ?? {}) as Record<string, SignatureScriptEntry>).forEach(
+    (script) => {
+      if (
+        !(script as { compatibleGrimoires?: string[] }).compatibleGrimoires?.includes(grimoireKey)
+      ) {
+        return;
+      }
+      script.abilityIds?.forEach((id) => ids.add(id));
+      if (script.grimoireSpecificEffects) {
+        Object.values(script.grimoireSpecificEffects).forEach((config) => {
+          if (config.mainAbilityId) {
+            ids.add(config.mainAbilityId);
+          }
+          config.statusEffects?.forEach((id) => ids.add(id));
+        });
+      }
+    },
+  );
   // Class Flourish's shared extra-effect id is compatible with every grimoire that lists it.
   const classMastery = data.signatureScripts?.['class-mastery'] as
     | { compatibleGrimoires?: string[] }
@@ -1150,7 +1152,12 @@ export function computeScribingDetection(
   const wasCastInFight = abilityCastCount > 0;
 
   const detectedSignature = wasCastInFight
-    ? detectSignatureScript(effectiveAbilityId, playerId, normalizedEvents, scribingInfo.grimoireKey)
+    ? detectSignatureScript(
+        effectiveAbilityId,
+        playerId,
+        normalizedEvents,
+        scribingInfo.grimoireKey,
+      )
     : null;
 
   const detectedAffixes = wasCastInFight
