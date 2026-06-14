@@ -2,7 +2,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditLocationAltIcon from '@mui/icons-material/EditLocationAlt';
 import PlaceIcon from '@mui/icons-material/Place';
-import { Alert, Box, Button, Chip, Divider, Snackbar, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Snackbar, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -615,45 +615,46 @@ export const FightReplay: React.FC = () => {
               )}
             </Box>
 
-            {/* Actions. Two intent groups — manage/edit, then export — separated by a hairline on
-                desktop. On mobile the buttons grow to share the row evenly so the cluster reads as
-                a tidy grid rather than ragged wrapping, and every target clears the 44px floor. */}
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                startIcon={<PlaceIcon />}
-                onClick={() => setMarkersModalOpen(true)}
-                type="button"
-                sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
+            {/* Actions. A clear hierarchy instead of three lookalike buttons: the primary entry
+                point (Manage) is filled, Edit is a quiet outlined toggle, and Export is its own
+                grouped split control on the row below. The manage/edit pair share one row with
+                equal flex + `stretch` so they are always the same width AND the same height (no
+                ragged single-vs-double-line wrap); on phones they stack full width. */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  alignItems: 'stretch',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                }}
               >
-                {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
-              </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<PlaceIcon />}
+                  onClick={() => setMarkersModalOpen(true)}
+                  type="button"
+                  sx={{ flex: 1, whiteSpace: 'nowrap' }}
+                >
+                  {markersState ? 'Manage Map Markers' : 'Import Map Markers'}
+                </Button>
 
-              <Button
-                variant={markersEditMode ? 'contained' : 'outlined'}
-                color="secondary"
-                startIcon={<EditLocationAltIcon />}
-                onClick={toggleMarkersEditMode}
-                type="button"
-                aria-pressed={markersEditMode}
-                sx={{ flex: { xs: '1 1 45%', sm: '0 0 auto' } }}
-              >
-                {markersEditMode ? 'Done Editing' : 'Edit Markers'}
-              </Button>
+                <Button
+                  variant={markersEditMode ? 'contained' : 'outlined'}
+                  color="secondary"
+                  startIcon={<EditLocationAltIcon />}
+                  onClick={toggleMarkersEditMode}
+                  type="button"
+                  aria-pressed={markersEditMode}
+                  sx={{ flex: 1, whiteSpace: 'nowrap' }}
+                >
+                  {markersEditMode ? 'Done Editing' : 'Edit Markers'}
+                </Button>
+              </Box>
 
               {markersState && markersState.markers.length > 0 && (
-                <>
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{ display: { xs: 'none', sm: 'block' }, mx: 0.5, borderColor: 'divider' }}
-                  />
-                  <MarkerExportButton
-                    onExport={handleExportMarkers}
-                    sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' } }}
-                  />
-                </>
+                <MarkerExportButton onExport={handleExportMarkers} sx={{ width: '100%' }} />
               )}
             </Box>
 

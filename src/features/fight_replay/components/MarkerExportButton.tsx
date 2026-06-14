@@ -113,15 +113,15 @@ export const MarkerExportButton: React.FC<MarkerExportButtonProps> = ({ onExport
         anchorEl={anchorRef.current}
         placement="bottom-end"
         transition
-        disablePortal
+        // Portalled (NOT disablePortal): the marker deck clips to `overflow: hidden` to keep its
+        // gradient inside the rounded corners, which would otherwise crop this menu. Rendering in
+        // a portal lets the chooser float free of that surface.
+        modifiers={[{ name: 'offset', options: { offset: [0, 6] } }]}
         sx={{ zIndex: (theme) => theme.zIndex.modal }}
       >
         {({ TransitionProps }) => (
           <Grow {...TransitionProps} style={{ transformOrigin: 'right top' }}>
-            <Paper
-              elevation={8}
-              sx={{ mt: 0.75, minWidth: 248, overflow: 'hidden', borderRadius: 2 }}
-            >
+            <Paper elevation={8} sx={{ minWidth: 248, overflow: 'hidden', borderRadius: 2 }}>
               <ClickAwayListener onClickAway={handleClose}>
                 <Box>
                   <Typography
