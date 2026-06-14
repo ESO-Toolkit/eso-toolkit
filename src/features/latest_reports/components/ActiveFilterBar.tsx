@@ -52,7 +52,7 @@ export const ActiveFilterBar: React.FC<ActiveFilterBarProps> = ({
   }
 
   const zoneName = zoneActive
-    ? (zones.find((zone) => zone.id === filters.zoneId)?.name ?? `Zone ${filters.zoneId}`)
+    ? (zones.find((zone) => zone.id === filters.zoneId)?.label ?? `Zone ${filters.zoneId}`)
     : null;
 
   const dateLabel = dateActive

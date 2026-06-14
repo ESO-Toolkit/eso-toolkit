@@ -12,8 +12,10 @@ interface ZoneFilterSelectProps {
 }
 
 /**
- * Server-side zone filter. Backed by `worldData.zones` (all trials/dungeons/
- * arenas). The `FilterAltIcon` marks it as a server filter — changing it
+ * Server-side zone filter. Backed by `worldData.zones`, grouped into
+ * Trials / Arenas / Dungeons. Dungeons are not individually filterable by the
+ * report list API, so they appear as a single "All Dungeons" option (zoneID 10);
+ * the `FilterAltIcon` marks the control as a server filter — changing it
  * re-queries the API, distinct from the client-side text search.
  */
 export const ZoneFilterSelect: React.FC<ZoneFilterSelectProps> = ({
@@ -34,7 +36,8 @@ export const ZoneFilterSelect: React.FC<ZoneFilterSelectProps> = ({
       value={selected}
       loading={loading}
       onChange={(_event, option) => onChange(option ? option.id : null)}
-      getOptionLabel={(option) => option.name}
+      getOptionLabel={(option) => option.label}
+      groupBy={(option) => option.category}
       isOptionEqualToValue={(option, val) => option.id === val.id}
       size="small"
       sx={{ minWidth: fullWidth ? '100%' : 220, width: fullWidth ? '100%' : undefined }}
