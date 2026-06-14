@@ -44,4 +44,6 @@ export type { CalibrationInput, CalibrationResult } from './application/calibrat
 
 // Presentation
 export { useUltimateCalculator } from './presentation/useUltimateCalculator';
+export { useLogCalibration, parseReportCode } from './presentation/useLogCalibration';
 export { UltimateCalculator } from './presentation/components/UltimateCalculator';
+export { LogCalibrationPanel } from './presentation/components/LogCalibrationPanel';

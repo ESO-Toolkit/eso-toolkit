@@ -56,6 +56,8 @@ import {
 } from '../../shared/types/catalog';
 import { useUltimateCalculator } from '../useUltimateCalculator';
 
+import { LogCalibrationPanel } from './LogCalibrationPanel';
+
 const QUALITY_OPTIONS: { value: DecisiveQuality; label: string }[] = [
   { value: 'normal', label: 'Normal (white)' },
   { value: 'fine', label: 'Fine (green)' },
@@ -602,6 +604,9 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               </Box>
             )}
           </Paper>
+
+          {/* Verify against your own ESO Logs report */}
+          <LogCalibrationPanel modeledPerSecond={expected.ultimatePerSecond} />
         </Stack>
       </Box>
     </Box>
