@@ -133,7 +133,6 @@ export const Footer: React.FC = React.memo(() => {
           theme.palette.mode === 'dark'
             ? `radial-gradient(circle, ${alpha(secondaryAccent, 0.28)} 0%, transparent 65%)`
             : `radial-gradient(circle, ${alpha(secondaryAccent, 0.18)} 0%, transparent 65%)`,
-        filter: 'blur(6px)',
         pointerEvents: 'none',
       },
       '& > *': { position: 'relative', zIndex: 1 },
@@ -182,7 +181,6 @@ export const Footer: React.FC = React.memo(() => {
           theme.palette.mode === 'dark'
             ? `radial-gradient(circle, ${alpha(secondaryAccent, 0.25)} 0%, transparent 60%)`
             : `radial-gradient(circle, ${alpha(secondaryAccent, 0.16)} 0%, transparent 60%)`,
-        filter: 'blur(8px)',
         pointerEvents: 'none',
       },
       '& > *': { position: 'relative', zIndex: 1 },
