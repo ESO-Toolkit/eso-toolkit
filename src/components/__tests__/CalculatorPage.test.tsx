@@ -45,9 +45,7 @@ describe('CalculatorPage', () => {
   it('switches to the Ultimate tab and lazy-loads the calculator', async () => {
     renderPage();
     fireEvent.click(screen.getByRole('tab', { name: /Ultimate/i }));
-    await waitFor(() =>
-      expect(screen.getByTestId('ultimate-calculator')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByTestId('ultimate-calculator')).toBeInTheDocument());
   });
 
   it('keeps the stat calculator mounted (hidden) when on the Ultimate tab', async () => {
@@ -62,8 +60,6 @@ describe('CalculatorPage', () => {
   it('honors a #ultimate deep-link on first render', async () => {
     window.location.hash = '#ultimate';
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByTestId('ultimate-calculator')).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByTestId('ultimate-calculator')).toBeInTheDocument());
   });
 });

@@ -81,8 +81,7 @@ describe('Monte Carlo — reconciles the sheet', () => {
       },
       { runs: 20000, baseSeed: 1 },
     );
-    const meanDecisive =
-      result.contributions.reduce((s, c) => s + c.decisiveUltimate, 0);
+    const meanDecisive = result.contributions.reduce((s, c) => s + c.decisiveUltimate, 0);
     expect(meanDecisive).toBeCloseTo(SHEET_DECISIVE_HALF, -1); // within ~5 ult
   });
 

@@ -51,9 +51,7 @@ export function expectedDecisivePerInstance(decisive: DecisiveConfig | null): nu
  * Exact expected ultimate generation over the fight (and per second), with a
  * per-source breakdown split into base vs Decisive contribution.
  */
-export function expectedValue(
-  config: Omit<SimulationConfig, 'seed'>,
-): ExpectedValueResult {
+export function expectedValue(config: Omit<SimulationConfig, 'seed'>): ExpectedValueResult {
   const { fightDurationSeconds, sources, decisive } = config;
   const decisivePerInstance = expectedDecisivePerInstance(decisive);
 
@@ -81,8 +79,7 @@ export function expectedValue(
   // Sort the breakdown by total contribution descending so the dominant sources
   // surface first in the UI.
   contributions.sort(
-    (a, b) =>
-      b.baseUltimate + b.decisiveUltimate - (a.baseUltimate + a.decisiveUltimate),
+    (a, b) => b.baseUltimate + b.decisiveUltimate - (a.baseUltimate + a.decisiveUltimate),
   );
 
   return {

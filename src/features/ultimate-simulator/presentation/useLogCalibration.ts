@@ -180,7 +180,9 @@ export function useLogCalibration(): UseLogCalibration {
       setPhase('reportLoaded');
     } catch (e) {
       setError(
-        e instanceof Error ? `Could not load that report: ${e.message}` : 'Could not load that report.',
+        e instanceof Error
+          ? `Could not load that report: ${e.message}`
+          : 'Could not load that report.',
       );
       setPhase('error');
     }
@@ -210,7 +212,9 @@ export function useLogCalibration(): UseLogCalibration {
       const all: ResourceChangeEvent[] = [];
       type EventsPage = {
         reportData?: {
-          report?: { events?: { data?: unknown[]; nextPageTimestamp?: number | null } | null } | null;
+          report?: {
+            events?: { data?: unknown[]; nextPageTimestamp?: number | null } | null;
+          } | null;
         } | null;
       };
       for (const hostilityType of [HostilityType.Friendlies, HostilityType.Enemies]) {
@@ -247,11 +251,22 @@ export function useLogCalibration(): UseLogCalibration {
       setPhase('measured');
     } catch (e) {
       setError(
-        e instanceof Error ? `Could not measure that fight: ${e.message}` : 'Could not measure that fight.',
+        e instanceof Error
+          ? `Could not measure that fight: ${e.message}`
+          : 'Could not measure that fight.',
       );
       setPhase('error');
     }
-  }, [client, isReady, selectedFightId, selectedPlayerId, fightWindows, fights, players, reportCode]);
+  }, [
+    client,
+    isReady,
+    selectedFightId,
+    selectedPlayerId,
+    fightWindows,
+    fights,
+    players,
+    reportCode,
+  ]);
 
   const clear = useCallback(() => {
     setPhase('idle');

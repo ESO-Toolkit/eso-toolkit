@@ -140,11 +140,13 @@ describe('calibrateFromEvents (snapshot / conservation method)', () => {
 
 describe('isUltimateResourceEvent', () => {
   it('identifies ultimate events by maxResourceAmount === maxUltimate', () => {
-    expect(isUltimateResourceEvent(snapshotEvent(1, 100, { maxResourceAmount: MAX_ULT }))).toBe(true);
+    expect(isUltimateResourceEvent(snapshotEvent(1, 100, { maxResourceAmount: MAX_ULT }))).toBe(
+      true,
+    );
     // maxResourceAmount matching magicka, not ultimate → not an ultimate event.
-    expect(
-      isUltimateResourceEvent(snapshotEvent(1, 100, { maxResourceAmount: 20000 })),
-    ).toBe(false);
+    expect(isUltimateResourceEvent(snapshotEvent(1, 100, { maxResourceAmount: 20000 }))).toBe(
+      false,
+    );
   });
 
   it('falls back to the verified type code (2) when no snapshot is present', () => {

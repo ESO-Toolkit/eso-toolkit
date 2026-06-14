@@ -37,7 +37,13 @@ import {
   ULTIMATE_SOURCE_CATALOG,
 } from '../shared/constants/catalog';
 import type { ExpectedValueResult, MonteCarloResult, TimeToUltimateResult } from '../shared/types';
-import type { CatalogCostReduction, CatalogSource, CombatContext, CombatRole, EsoClass } from '../shared/types/catalog';
+import type {
+  CatalogCostReduction,
+  CatalogSource,
+  CombatContext,
+  CombatRole,
+  EsoClass,
+} from '../shared/types/catalog';
 
 const DEFAULT_MC_RUNS = 20000;
 const MC_BASE_SEED = 1;
@@ -207,15 +213,15 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
   );
 
   // --- setters (each clears any stale distribution) -------------------------
-  const patch = useCallback(
-    (updater: (s: UltimateCalculatorState) => UltimateCalculatorState) => {
-      setState(updater);
-      setDistribution(null);
-    },
-    [],
-  );
+  const patch = useCallback((updater: (s: UltimateCalculatorState) => UltimateCalculatorState) => {
+    setState(updater);
+    setDistribution(null);
+  }, []);
 
-  const setContext = useCallback((context: CombatContext) => patch((s) => ({ ...s, context })), [patch]);
+  const setContext = useCallback(
+    (context: CombatContext) => patch((s) => ({ ...s, context })),
+    [patch],
+  );
   const setClass = useCallback((esoClass: EsoClass) => patch((s) => ({ ...s, esoClass })), [patch]);
   const setRole = useCallback((role: CombatRole) => patch((s) => ({ ...s, role })), [patch]);
   const setFightDuration = useCallback(

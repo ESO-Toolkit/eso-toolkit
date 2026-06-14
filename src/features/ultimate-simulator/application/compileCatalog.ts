@@ -88,7 +88,8 @@ export function compileSources(
     .filter((s) => isEntryEnabled(s.id, s.defaultEnabled, selection.enabledOverrides))
     .map((s) => {
       const uptime = selection.uptimeOverrides[s.id];
-      const resolved = uptime === undefined ? s : { ...s, uptime: Math.min(1, Math.max(0, uptime)) };
+      const resolved =
+        uptime === undefined ? s : { ...s, uptime: Math.min(1, Math.max(0, uptime)) };
       // Strip catalog-only fields down to the engine's UltimateSource shape.
       const {
         id,
@@ -100,7 +101,16 @@ export function compileSources(
         rollsDecisive,
         note,
       } = resolved;
-      return { id, label, kind, amountPerInstance, instancesPerSecond, uptime: up, rollsDecisive, note };
+      return {
+        id,
+        label,
+        kind,
+        amountPerInstance,
+        instancesPerSecond,
+        uptime: up,
+        rollsDecisive,
+        note,
+      };
     });
 }
 
