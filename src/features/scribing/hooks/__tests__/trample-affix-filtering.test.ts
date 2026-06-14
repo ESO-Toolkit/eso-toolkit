@@ -23,26 +23,41 @@ describe('Trample Affix Detection with Grimoire Filtering', () => {
       }
     });
 
-    const EXPECTED_TRAMPLE_AFFIX_ABILITY_IDS = [
-      3929, 5805, 21926, 22233, 24153, 27190, 39168, 46202, 47193, 61662, 61665, 61666, 61667,
-      61685, 61687, 61688, 61689, 61708, 61709, 61721, 61722, 61735, 61736, 68359, 79717, 103570,
-      106754, 111354, 147643, 161716, 186493, 203344,
-    ];
+    // This test guards the grimoire-FILTERING logic, not a frozen ID list (the affix buff-ID
+    // coverage is expanded over time as ESO Logs reveals new internal variant IDs — see v6.4).
+    // The invariants below assert the filter includes the right affixes and excludes the wrong
+    // ones, which is what actually matters for detection accuracy.
 
-    // Ensure set contains exactly the expected ability IDs (10 affixes -> 32 IDs)
+    // The 10 affixes compatible with Trample: off-balance, savagery-and-prophecy, expedition,
+    // brutality-and-sorcery, protection, heroism, vulnerability, cowardice, mangle, defile.
+    const trampleAffixes = Object.values(scribingData.affixScripts as Record<string, any>).filter(
+      (script) => script.compatibleGrimoires?.includes('trample'),
+    );
+    expect(trampleAffixes.length).toBe(10);
+
+    // The compatible-ID set is exactly the union of those 10 affixes' abilityIds (no leakage).
+    const expectedUnion = new Set<number>();
+    trampleAffixes.forEach((script) =>
+      (script.abilityIds ?? []).forEach((id: number) => expectedUnion.add(id)),
+    );
     expect([...GRIMOIRE_COMPATIBLE_AFFIX_IDS].sort((a, b) => a - b)).toEqual(
-      EXPECTED_TRAMPLE_AFFIX_ABILITY_IDS,
+      [...expectedUnion].sort((a, b) => a - b),
     );
 
-    // Should include Heroism IDs
+    // Should include Heroism IDs (compatible)
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(61708)).toBe(true); // Minor Heroism
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(61709)).toBe(true); // Major Heroism
 
-    // Should NOT include Brittle IDs
+    // Should NOT include Brittle IDs (incompatible with Trample)
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(145975)).toBe(false); // Minor Brittle
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(145977)).toBe(false); // Major Brittle
 
-    // Ensure new Minor Protection variants are covered by the affix mapping
+    // Should NOT include Courage/Berserk IDs (NOT compatible with Trample) — guards the
+    // filtering that, combined with the v6.4 coverage fix, prevents the Courage→Berserk mislabel.
+    expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(147417)).toBe(false); // Minor Courage
+    expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(61744)).toBe(false); // Minor Berserk
+
+    // Ensure Minor Protection variants are covered by the affix mapping
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(203344)).toBe(true);
   });
 

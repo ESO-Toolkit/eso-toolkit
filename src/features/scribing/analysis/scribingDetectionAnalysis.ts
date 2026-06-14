@@ -312,10 +312,49 @@ function resolveBannerPrimaryAbilityId(
   return info;
 }
 
+// Build the set of signature-script effect IDs compatible with a given grimoire, mirroring the
+// affix-side `compatibleGrimoires` filter. Returns null when the grimoire is unknown or has no
+// declared-compatible signatures, so callers can fall back to the unfiltered global set rather
+// than risk dropping a real signature when the data's compatibility list is incomplete.
+function grimoireCompatibleSignatureIds(grimoireKey?: string): Set<number> | null {
+  if (!grimoireKey) {
+    return null;
+  }
+  const data = scribingData as ScribingDataStructure;
+  const ids = new Set<number>();
+  Object.values((data.signatureScripts ?? {}) as Record<string, SignatureScriptEntry>).forEach(
+    (script) => {
+      if (
+        !(script as { compatibleGrimoires?: string[] }).compatibleGrimoires?.includes(grimoireKey)
+      ) {
+        return;
+      }
+      script.abilityIds?.forEach((id) => ids.add(id));
+      if (script.grimoireSpecificEffects) {
+        Object.values(script.grimoireSpecificEffects).forEach((config) => {
+          if (config.mainAbilityId) {
+            ids.add(config.mainAbilityId);
+          }
+          config.statusEffects?.forEach((id) => ids.add(id));
+        });
+      }
+    },
+  );
+  // Class Flourish's shared extra-effect id is compatible with every grimoire that lists it.
+  const classMastery = data.signatureScripts?.['class-mastery'] as
+    | { compatibleGrimoires?: string[] }
+    | undefined;
+  if (classMastery?.compatibleGrimoires?.includes(grimoireKey)) {
+    CLASS_MASTERY_EXTRA_EFFECT_IDS.forEach((id) => ids.add(id));
+  }
+  return ids.size > 0 ? ids : null;
+}
+
 function detectSignatureScript(
   abilityId: number,
   playerId: number,
   combatEvents: CombatEventData,
+  grimoireKey?: string,
 ): ScribedSkillSignatureInfo | null {
   initializeScribingDataset();
 
@@ -327,6 +366,12 @@ function detectSignatureScript(
   if (abilityCasts.length === 0) {
     return null;
   }
+
+  // Only consider signature effects compatible with this skill's grimoire (consistent with the
+  // affix detector). Falls back to the global set when compatibility data is unavailable.
+  const compatibleSignatureIds = grimoireCompatibleSignatureIds(grimoireKey);
+  const isCandidateSignatureId = (id: number): boolean =>
+    compatibleSignatureIds ? compatibleSignatureIds.has(id) : VALID_SIGNATURE_SCRIPT_IDS.has(id);
 
   const SIGNATURE_WINDOW_MS = 1500;
   const signatureEffects = new Map<
@@ -369,14 +414,14 @@ function detectSignatureScript(
     const castIndex = findOwningCastIndex(event.timestamp);
     if (castIndex === null) return;
 
-    if (event.abilityGameID !== abilityId && VALID_SIGNATURE_SCRIPT_IDS.has(event.abilityGameID)) {
+    if (event.abilityGameID !== abilityId && isCandidateSignatureId(event.abilityGameID)) {
       recordSignatureHit(event.abilityGameID, eventType, castIndex);
     }
 
     if (
       event.extraAbilityGameID &&
       event.extraAbilityGameID !== abilityId &&
-      VALID_SIGNATURE_SCRIPT_IDS.has(event.extraAbilityGameID)
+      isCandidateSignatureId(event.extraAbilityGameID)
     ) {
       recordSignatureHit(event.extraAbilityGameID, eventType, castIndex);
     }
@@ -497,6 +542,37 @@ function detectAffixScripts(
   // Track timing information for buff candidates to identify immediate triggers
   const buffTimings = new Map<number, { immediateCasts: Set<number>; totalCasts: Set<number> }>();
 
+  // R7c/R4: total in-fight apply events per ability id by this player. A scribed affix triggers
+  // roughly ONCE per cast of the scribed skill; a buff/debuff the player maintains group-wide
+  // (e.g. Major Breach on the boss, applied dozens of times) fires far more often. The ratio of
+  // total applies to scribed casts cleanly separates the real affix (~1×) from a maintained
+  // group effect (≫1×) — the discriminator that window-occurrence consistency cannot see, since
+  // a maintained effect is present in (nearly) every window too. Computed over the whole fight.
+  const totalAppliesById = new Map<number, number>();
+  const countApply = (id: number): void => {
+    totalAppliesById.set(id, (totalAppliesById.get(id) ?? 0) + 1);
+  };
+  combatEvents.buffs.forEach((buff) => {
+    if (
+      buff.sourceID === playerId &&
+      (buff.type === 'applybuff' || buff.type === 'applybuffstack') &&
+      buff.abilityGameID !== abilityId &&
+      GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(buff.abilityGameID)
+    ) {
+      countApply(buff.abilityGameID);
+    }
+  });
+  combatEvents.debuffs.forEach((debuff) => {
+    if (
+      debuff.sourceID === playerId &&
+      (debuff.type === 'applydebuff' || debuff.type === 'applydebuffstack') &&
+      debuff.abilityGameID !== abilityId &&
+      GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(debuff.abilityGameID)
+    ) {
+      countApply(debuff.abilityGameID);
+    }
+  });
+
   const getAffixTriggerStartTime = (
     cast: UnifiedCastEvent,
     ability: number,
@@ -550,6 +626,13 @@ function detectAffixScripts(
     return Math.min(...candidates);
   };
 
+  // R5: Banner Bearer affixes (Courage / Heroism / Protection) are GROUP buffs the caster
+  // applies to allies — their `targetID` is an ally, not the caster. The default self-only
+  // filter (`targetID === playerId`) would discard every real banner-affix application and
+  // let an unrelated *self* buff win. For the banner grimoire, count source-only; the
+  // per-cast-index Set below collapses one pulse hitting many allies into a single window hit.
+  const allowAllyTargetedBuffs = grimoireKey === BANNER_GRIMOIRE_KEY;
+
   casts.forEach((cast, castIndex) => {
     const triggerStart = getAffixTriggerStartTime(cast, abilityId, playerId);
     const windowStart = triggerStart;
@@ -559,7 +642,7 @@ function detectAffixScripts(
     const windowBuffs = combatEvents.buffs.filter(
       (buff) =>
         buff.sourceID === playerId &&
-        buff.targetID === playerId &&
+        (allowAllyTargetedBuffs || buff.targetID === playerId) &&
         buff.timestamp >= windowStart &&
         buff.timestamp <= buffWindowEnd &&
         !('extraAbilityGameID' in buff && buff.extraAbilityGameID),
@@ -607,8 +690,11 @@ function detectAffixScripts(
         }
         buffCandidates.get(buff.abilityGameID)!.add(castIndex);
 
-        // Track timing information for immediate trigger detection
-        const offsetFromCast = buff.timestamp - cast.timestamp;
+        // Track timing information for immediate trigger detection.
+        // R3: measure from the trigger anchor (triggerStart), not the raw cast — deferred-trigger
+        // abilities (e.g. Ulfsild's Contingency) fire their affix at triggerStart, so anchoring on
+        // cast.timestamp would mis-classify a real immediate affix as delayed.
+        const offsetFromCast = buff.timestamp - triggerStart;
         if (!buffTimings.has(buff.abilityGameID)) {
           buffTimings.set(buff.abilityGameID, { immediateCasts: new Set(), totalCasts: new Set() });
         }
@@ -733,14 +819,10 @@ function detectAffixScripts(
     });
   });
 
-  resourceCandidates.forEach((castSet, id) => {
-    allCandidates.push({
-      id,
-      castSet,
-      consistency: castSet.size / casts.length,
-      type: 'resource',
-    });
-  });
+  // R7a: resource candidates are intentionally NOT added to allCandidates. They are still
+  // collected above (for diagnostics) but can never be emitted — the final emission switch
+  // has no 'resource' case and preferTypeOrder excludes it — so feeding them into the
+  // aggregation only risks polluting another script's consistency via name aggregation.
 
   if (allCandidates.length === 0) {
     logger?.debug?.('Affix detection found no viable candidates', {
@@ -820,6 +902,14 @@ function detectAffixScripts(
       }
     }
 
+    // R7c/R4: total in-fight applies of this candidate's effect divided by the number of scribed
+    // casts. A scribed affix fires ~once per cast; a maintained group buff/debuff fires many times.
+    let totalApplies = 0;
+    for (const id of entry.abilityIds) {
+      totalApplies += totalAppliesById.get(id) ?? 0;
+    }
+    const appliesPerCast = totalCasts > 0 ? totalApplies / totalCasts : 0;
+
     return {
       key: entry.key,
       scriptName: entry.scriptName,
@@ -828,13 +918,66 @@ function detectAffixScripts(
       dominantType,
       consistency,
       immediateTriggerRatio,
+      appliesPerCast,
     };
   });
+
+  // R7c/R4: drop "maintained group effect" candidates. A buff/debuff the player applies far more
+  // often than once per scribed cast (e.g. Major Breach kept up on the boss, applied dozens of
+  // times) is not the scribed affix — the scribed affix fires ~once per cast. This is the debuff
+  // (and self-buff) analog of the immediate-trigger guard below: window-occurrence consistency
+  // alone cannot catch it because a maintained effect is present in nearly every window. Banner
+  // affixes are EXEMPT — one banner pulse applies the buff to many allies, so high apply counts
+  // are expected and legitimate there. Threshold is deliberately generous (a real affix is ~1×;
+  // observed false positives run 20×+) to avoid dropping affixes that occasionally re-apply.
+  const OVER_APPLICATION_RATIO = 4;
+  const overApplicationFiltered = allowAllyTargetedBuffs
+    ? aggregatedCandidates
+    : aggregatedCandidates.filter((candidate) => {
+        const overApplied =
+          (candidate.dominantType === 'buff' || candidate.dominantType === 'debuff') &&
+          candidate.appliesPerCast > OVER_APPLICATION_RATIO;
+        if (overApplied) {
+          logger?.debug?.('Affix detection dropped over-applied (maintained) candidate', {
+            abilityId,
+            playerId,
+            grimoireKey,
+            scriptName: candidate.scriptName,
+            dominantType: candidate.dominantType,
+            appliesPerCast: candidate.appliesPerCast,
+          });
+        }
+        return !overApplied;
+      });
+
+  // R2: scribing affixes apply at the SAME instant as their trigger (immediate-trigger ratio
+  // ~1.0), whereas buffs from other sources (gear procs, other skills, light-attack-cadence
+  // effects) drift in at 270-620ms. When ANY buff candidate clears the immediate-trigger gate,
+  // the non-immediate buff candidates are provably from unrelated sources, so drop them rather
+  // than merely sorting them lower (the previous behaviour let a 0.2-consistency non-immediate
+  // buff win when no immediate competitor existed). Gated on the presence of an immediate buff
+  // so that when NO candidate is immediate (some legitimate affixes) consistency still decides,
+  // and scoped to buffs so damage/debuff/heal affixes (structurally immediateRatio 0) survive.
+  const IMMEDIATE_TRIGGER_RATIO_GATE = 0.5;
+  const hasImmediateBuffCandidate = overApplicationFiltered.some(
+    (candidate) =>
+      candidate.dominantType === 'buff' &&
+      candidate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE,
+  );
+  const filteredCandidates = hasImmediateBuffCandidate
+    ? overApplicationFiltered.filter(
+        (candidate) =>
+          candidate.dominantType !== 'buff' ||
+          candidate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE,
+      )
+    : overApplicationFiltered;
 
   logger?.debug?.('Affix detection aggregated candidates', {
     abilityId,
     playerId,
-    aggregatedCandidates: aggregatedCandidates.map((candidate) => ({
+    hasImmediateBuffCandidate,
+    droppedNonImmediateBuffs: aggregatedCandidates.length - filteredCandidates.length,
+    aggregatedCandidates: filteredCandidates.map((candidate) => ({
       key: candidate.key,
       scriptName: candidate.scriptName,
       dominantType: candidate.dominantType,
@@ -845,7 +988,7 @@ function detectAffixScripts(
     })),
   });
 
-  aggregatedCandidates.sort((a, b) => {
+  filteredCandidates.sort((a, b) => {
     // Prioritize candidates with high immediate trigger ratios (>= 0.5 means at least 50% immediate)
     const aHasImmediateTrigger = a.immediateTriggerRatio >= 0.5;
     const bHasImmediateTrigger = b.immediateTriggerRatio >= 0.5;
@@ -875,8 +1018,43 @@ function detectAffixScripts(
     return aMin - bMin;
   });
 
-  const topAggregate = aggregatedCandidates[0];
+  const topAggregate = filteredCandidates[0];
   if (!topAggregate) {
+    return [];
+  }
+
+  // R1: minimum-confidence floor. The detector previously emitted its top-ranked candidate
+  // unconditionally, so a buff that landed in windows purely by coincidence (e.g. an unrelated
+  // Minor Berserk at 0.21 consistency / 0 immediate-trigger) was reported as a confident affix.
+  // A candidate that is neither consistent enough NOR immediate-triggered is not plausibly the
+  // scribed affix — return [] so the caller degrades it to "Unknown Affix" rather than naming a
+  // wrong script. For buffs an immediate-trigger signature alone clears the floor (rescues real
+  // affixes with legitimately low uptime, e.g. a banner that only reaches allies on some pulses).
+  const MIN_AFFIX_CONSISTENCY = 0.5; // aligned with detectSignatureScript MIN_CONSISTENCY
+  // The immediate-trigger signature can rescue a real affix that has legitimately low uptime
+  // (e.g. a banner that only reaches allies on some pulses), but a SINGLE coincidental immediate
+  // co-occurrence must not name an affix on its own. Require the immediate signal across at least
+  // two casts before it overrides the consistency floor — unless the whole fight had ≤2 casts,
+  // where one immediate hit is still meaningful evidence.
+  const MIN_IMMEDIATE_CAST_SUPPORT = 2;
+  const immediateRescue =
+    topAggregate.immediateTriggerRatio >= IMMEDIATE_TRIGGER_RATIO_GATE &&
+    (topAggregate.castSet.size >= MIN_IMMEDIATE_CAST_SUPPORT || casts.length <= 2);
+  const passesConfidenceFloor =
+    topAggregate.dominantType === 'buff'
+      ? topAggregate.consistency >= MIN_AFFIX_CONSISTENCY || immediateRescue
+      : topAggregate.consistency >= MIN_AFFIX_CONSISTENCY;
+
+  if (!passesConfidenceFloor) {
+    logger?.info?.('Affix detection winner below confidence floor — suppressing to Unknown', {
+      abilityId,
+      playerId,
+      grimoireKey,
+      scriptName: topAggregate.scriptName,
+      dominantType: topAggregate.dominantType,
+      consistency: topAggregate.consistency,
+      immediateTriggerRatio: topAggregate.immediateTriggerRatio,
+    });
     return [];
   }
 
@@ -1050,7 +1228,12 @@ export function computeScribingDetection(
   const wasCastInFight = abilityCastCount > 0;
 
   const detectedSignature = wasCastInFight
-    ? detectSignatureScript(effectiveAbilityId, playerId, normalizedEvents)
+    ? detectSignatureScript(
+        effectiveAbilityId,
+        playerId,
+        normalizedEvents,
+        scribingInfo.grimoireKey,
+      )
     : null;
 
   const detectedAffixes = wasCastInFight
@@ -1067,8 +1250,10 @@ export function computeScribingDetection(
     ? detectedSignature
     : wasCastInFight
       ? {
+          // R6: parity with the Unknown Affix fallback (0.3). We have NO signature evidence here,
+          // so 0.5 overstated confidence and visually tied with genuine detections in the tooltip.
           name: 'Unknown Signature',
-          confidence: 0.5,
+          confidence: 0.3,
           detectionMethod: 'Insufficient combat evidence',
           evidence: ['Unable to reach consistency threshold during detection'],
         }

@@ -182,6 +182,18 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const resolvedIconUrl =
     iconUrl ??
     (iconSlug ? `https://assets.rpglogs.com/img/eso/abilities/${iconSlug}.png` : undefined);
+
+  // Scribed abilities surface in logs under a composite name like
+  // "Shattering Knife (Class Mastery / Berserk)". When we have structured scribing data, the
+  // signature/affix appear in their own sections below, so the header shows only the clean
+  // grimoire-transformation name ("Shattering Knife") instead of the cramped parenthetical.
+  const displayName = React.useMemo(() => {
+    if (!finalScribedData) {
+      return name;
+    }
+    const base = name.replace(/\s*\(.*\)\s*$/, '').trim();
+    return base.length > 0 ? base : name;
+  }, [name, finalScribedData]);
   // Stats row layout control: prefer full text by default. If <=3 stats and they overflow, abbreviate.
   // If >3 stats, allow wrapping to second line first; abbreviate only if still overflowing.
   const statsCount = stats?.length ?? 0;
@@ -352,7 +364,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
             )}
             <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.4 }}>
               <Typography variant="subtitle1" sx={nameGradientSx(isDark)}>
-                {name}
+                {displayName}
               </Typography>
               {morphOf && (
                 <Typography
