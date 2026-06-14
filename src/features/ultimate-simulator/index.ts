@@ -35,12 +35,12 @@ export {
 export type { CatalogSelection } from './application/compileCatalog';
 
 // Calibration (log = source of truth)
-export { calibrateFromEvents, RESOURCE_CHANGE_TYPE } from './application/calibration';
-export type {
-  CalibrationInput,
-  CalibrationResult,
-  AbilityUltimateStat,
+export {
+  calibrateFromEvents,
+  isUltimateResourceEvent,
+  RESOURCE_CHANGE_TYPE,
 } from './application/calibration';
+export type { CalibrationInput, CalibrationResult } from './application/calibration';
 
 // Presentation
 export { useUltimateCalculator } from './presentation/useUltimateCalculator';
