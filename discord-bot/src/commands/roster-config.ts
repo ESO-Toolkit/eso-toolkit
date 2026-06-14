@@ -117,13 +117,25 @@ async function handleSetNamePattern(
   guildId: string,
   options: DiscordInteractionOption[],
 ): Promise<InteractionResponse> {
-  const pattern = options.find((o) => o.name === 'pattern')?.value as string | undefined;
+  const rawPattern = options.find((o) => o.name === 'pattern')?.value as string | undefined;
+  const pattern = rawPattern?.trim();
   if (!pattern) {
     return {
       type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
         content:
           '❌ Please provide a pattern. Tokens: `{day-short}`, `{day}`, `{time}`, `{trial}`, `{difficulty}`',
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  // Match the HTTP API's cap (Discord channel names are capped at 100 chars).
+  if (pattern.length > 100) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: '❌ Pattern is too long. Keep it to 100 characters or fewer.',
         flags: MessageFlags.EPHEMERAL,
       },
     };
@@ -179,6 +191,26 @@ async function handleSetRolePings(
   const tank = options.find((o) => o.name === 'tank-role')?.value as string | undefined;
   const healer = options.find((o) => o.name === 'healer-role')?.value as string | undefined;
   const dd = options.find((o) => o.name === 'dd-role')?.value as string | undefined;
+
+  // Defense-in-depth: option values come from Discord role pickers (already
+  // snowflakes), but reject anything malformed so we never store junk that
+  // would later be skipped silently at ping time.
+  const snowflake = /^\d{17,20}$/;
+  for (const [label, value] of [
+    ['tank', tank],
+    ['healer', healer],
+    ['dd', dd],
+  ] as const) {
+    if (value !== undefined && !snowflake.test(value)) {
+      return {
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: {
+          content: `❌ Invalid ${label} role. Please pick a role from the list.`,
+          flags: MessageFlags.EPHEMERAL,
+        },
+      };
+    }
+  }
 
   const config = (await getGuildConfig(env, guildId)) ?? getDefaultGuildConfig(guildId);
   config.rolePingIds = {

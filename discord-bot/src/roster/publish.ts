@@ -18,7 +18,12 @@ import type { DiscordComponent, Env } from '../types.js';
 import { fetchRosterSnapshot } from './api.js';
 import { resolveChannelName } from './channel-name.js';
 import { decodeRosterData } from './decoder.js';
-import { buildRosterText, splitMessages, buildRosterActionRows } from './embed-builder.js';
+import {
+  buildRosterText,
+  splitMessages,
+  buildRosterActionRows,
+  buildRolePingLine,
+} from './embed-builder.js';
 import {
   findMappingsForRoster,
   getMappingByRosterId,
@@ -29,7 +34,13 @@ import {
   releasePublishLock,
   KV_PREFIX,
 } from './kv.js';
-import type { ChannelNameContext, DecodedRoster, RosterMapping, RosterSnapshot } from './types.js';
+import type {
+  ChannelNameContext,
+  DecodedRoster,
+  GuildConfig,
+  RosterMapping,
+  RosterSnapshot,
+} from './types.js';
 
 // ── Snapshot → Channel Name Context ────────────────────────────────────────
 
@@ -125,6 +136,27 @@ async function detectOpenRunsCategory(env: Env, guildId: string): Promise<string
   }
 }
 
+// ── Publish target resolution ───────────────────────────────────────────────
+
+export type PublishTarget = { mode: 'existing'; channelId: string } | { mode: 'create' };
+
+const CHANNEL_SNOWFLAKE = /^\d{17,20}$/;
+
+/**
+ * Decide where a roster should be published:
+ *   - into the guild's configured default channel (when set to a valid
+ *     snowflake) — posting alongside other rosters, no channel created; or
+ *   - a freshly created per-roster channel (the default behaviour).
+ *
+ * Exported for unit testing.
+ */
+export function resolvePublishTarget(config: GuildConfig): PublishTarget {
+  if (config.defaultChannelId && CHANNEL_SNOWFLAKE.test(config.defaultChannelId)) {
+    return { mode: 'existing', channelId: config.defaultChannelId };
+  }
+  return { mode: 'create' };
+}
+
 // ── Publish Request/Response ────────────────────────────────────────────────
 
 export interface PublishRequest {
@@ -212,16 +244,28 @@ async function doPublishRoster(env: Env, req: PublishRequest): Promise<PublishRe
     channelId = refreshed.channelId!;
     messageId = refreshed.messageId!;
   } else {
-    // Create new channel + message
-    const created = await createNewRosterChannel(
-      env,
-      req.guildId,
-      channelName,
-      categoryId,
-      snapshot,
-      decoded,
-      req.eventTime,
-    );
+    // Post into the configured default channel, or create a new channel.
+    const target = resolvePublishTarget(config);
+    const created =
+      target.mode === 'existing'
+        ? await postRosterToDefaultChannel(
+            env,
+            target.channelId,
+            snapshot,
+            decoded,
+            req.eventTime,
+            config.rolePingIds,
+          )
+        : await createNewRosterChannel(
+            env,
+            req.guildId,
+            channelName,
+            categoryId,
+            snapshot,
+            decoded,
+            req.eventTime,
+            config.rolePingIds,
+          );
     if (!created.ok) return created;
     channelId = created.channelId!;
     messageId = created.messageId!;
@@ -253,6 +297,15 @@ export interface RefreshResult {
   refreshedCount?: number | undefined;
 }
 
+export interface RefreshOptions {
+  /**
+   * When a roster's channel/messages are gone, recreate the channel. Defaults
+   * to true for user-initiated refreshes. The hub webhook passes false so an
+   * automatic re-sync never resurrects a channel staff deliberately deleted.
+   */
+  allowRecreate?: boolean;
+}
+
 /**
  * Refresh all Discord channels linked to a roster across all guilds.
  * Called by the webhook from roster-hub-api and by /roster refresh.
@@ -261,7 +314,9 @@ export async function refreshRoster(
   env: Env,
   rosterId: string,
   scopeGuildId?: string,
+  opts: RefreshOptions = {},
 ): Promise<RefreshResult> {
+  const allowRecreate = opts.allowRecreate ?? true;
   // Fetch the latest snapshot — hub API for normal IDs, KV for direct-publish
   const fetchResult = await fetchRosterSnapshot(env, rosterId);
   let snapshot = fetchResult.status === 'ok' ? fetchResult.snapshot : null;
@@ -333,6 +388,8 @@ export async function refreshRoster(
       decoded,
       channelName,
       mapping.categoryId,
+      undefined,
+      allowRecreate,
     );
 
     if (result.ok) {
@@ -387,18 +444,50 @@ export async function publishDirect(env: Env, req: DirectPublishRequest): Promis
     .slice(0, 6);
   const syntheticId = `direct-${Date.now().toString(36)}-${suffix}`;
 
-  // Acquire lock using the synthetic ID (unique, so no contention here —
-  // but guards against rapid double-clicks sending the same request twice)
-  const locked = await acquirePublishLock(env, req.guildId, syntheticId);
+  // Acquire lock keyed on the *content* (not the random synthetic ID): a rapid
+  // double-click sends two identical requests that would each mint a different
+  // synthetic ID, so locking on the ID would never collide and both would
+  // create a channel. Hashing the payload makes duplicate submissions contend.
+  const lockKey = await contentLockKey(req);
+  const locked = await acquirePublishLock(env, req.guildId, lockKey);
   if (!locked) {
-    return { ok: false, error: 'A publish is already in progress. Please wait.' };
+    return { ok: false, error: 'A publish is already in progress for this roster. Please wait.' };
   }
 
   try {
     return await doPublishDirect(env, req, syntheticId);
   } finally {
-    await releasePublishLock(env, req.guildId, syntheticId);
+    await releasePublishLock(env, req.guildId, lockKey);
   }
+}
+
+/**
+ * Derive a stable, collision-resistant lock key from a direct-publish payload.
+ * Includes every field that distinguishes one publish from another, so a rapid
+ * double-click (identical payload) contends on the lock, while genuinely
+ * different submissions — e.g. the same roster scheduled for two event times —
+ * don't falsely block each other. guildId is already in the KV key prefix;
+ * ownerUserId is intentionally excluded so two users submitting identical
+ * content still de-dupe. Fields are NUL-joined so values can't bleed across
+ * boundaries.
+ */
+async function contentLockKey(req: DirectPublishRequest): Promise<string> {
+  const material = [
+    req.title,
+    req.description ?? '',
+    req.trial_id ?? '',
+    (req.tags ?? []).join(','),
+    req.channelNameOverride ?? '',
+    req.categoryId ?? '',
+    req.eventTime ?? '',
+    req.roster_data,
+  ].join(' ');
+  const bytes = new TextEncoder().encode(material);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const hex = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  return `dedupe-${hex.slice(0, 32)}`;
 }
 
 async function doPublishDirect(
@@ -438,15 +527,27 @@ async function doPublishDirect(
   const categoryId =
     req.categoryId ?? config.defaultCategoryId ?? (await detectOpenRunsCategory(env, req.guildId));
 
-  const result = await createNewRosterChannel(
-    env,
-    req.guildId,
-    channelName,
-    categoryId,
-    snapshot,
-    decoded,
-    req.eventTime,
-  );
+  const target = resolvePublishTarget(config);
+  const result =
+    target.mode === 'existing'
+      ? await postRosterToDefaultChannel(
+          env,
+          target.channelId,
+          snapshot,
+          decoded,
+          req.eventTime,
+          config.rolePingIds,
+        )
+      : await createNewRosterChannel(
+          env,
+          req.guildId,
+          channelName,
+          categoryId,
+          snapshot,
+          decoded,
+          req.eventTime,
+          config.rolePingIds,
+        );
 
   if (!result.ok) return result;
 
@@ -490,6 +591,7 @@ async function refreshExistingMapping(
   channelName: string,
   categoryId?: string,
   eventTime?: string,
+  allowRecreate = true,
 ): Promise<InternalRefreshResult> {
   const text = buildRosterText(snapshot, decoded, eventTime);
   const chunks = splitMessages(text);
@@ -525,7 +627,14 @@ async function refreshExistingMapping(
     const messageIds = await sendRosterMessages(env, mapping.channelId, chunks, components);
     return { ok: true, channelId: mapping.channelId, messageId: messageIds };
   } catch (err) {
-    console.warn('[refresh] re-post to existing channel failed, recreating:', err);
+    console.warn('[refresh] re-post to existing channel failed:', err);
+  }
+
+  // The channel/messages are gone. Only recreate for user-initiated refreshes —
+  // an automatic (webhook) re-sync must not resurrect a channel staff deleted on
+  // purpose. The mapping is left intact so a transient failure can recover later.
+  if (!allowRecreate) {
+    return { ok: false, error: 'Channel no longer exists; skipping automatic recreate.' };
   }
 
   // Channel was deleted — recreate
@@ -570,6 +679,74 @@ async function sendRosterMessages(
   return ids.join(',');
 }
 
+// ── Post roster into an existing channel ────────────────────────────────────
+
+/**
+ * Send the role ping (best-effort) + roster messages into an existing channel.
+ * Used both after creating a fresh channel and when posting into a configured
+ * default channel. Does not create or delete channels.
+ */
+async function sendRosterToChannel(
+  env: Env,
+  channelId: string,
+  snapshot: RosterSnapshot,
+  decoded: Awaited<ReturnType<typeof decodeRosterData>>,
+  eventTime?: string,
+  rolePingIds?: GuildConfig['rolePingIds'],
+): Promise<string> {
+  // Best-effort role ping (opt-in via guild config). Sent as its own message
+  // so it's never re-sent on refresh and a ping failure can't block the post.
+  const ping = buildRolePingLine(decoded, rolePingIds);
+  if (ping) {
+    try {
+      await sendMessage(env, channelId, {
+        content: ping.content,
+        allowed_mentions: { parse: [], roles: ping.roleIds },
+      });
+    } catch (pingErr) {
+      console.warn('[publish] role ping failed (non-fatal):', pingErr);
+    }
+  }
+
+  const text = buildRosterText(snapshot, decoded, eventTime);
+  const chunks = splitMessages(text);
+  const components = buildRosterActionRows(snapshot.id);
+  return sendRosterMessages(env, channelId, chunks, components);
+}
+
+/**
+ * Post a roster into the guild's configured default channel (no channel
+ * creation). Returns an error result if the channel rejects the message
+ * (e.g. it was deleted or the bot lost access) — unlike the create path, we
+ * never created the channel so there's nothing to clean up.
+ */
+async function postRosterToDefaultChannel(
+  env: Env,
+  channelId: string,
+  snapshot: RosterSnapshot,
+  decoded: Awaited<ReturnType<typeof decodeRosterData>>,
+  eventTime?: string,
+  rolePingIds?: GuildConfig['rolePingIds'],
+): Promise<InternalRefreshResult> {
+  try {
+    const messageId = await sendRosterToChannel(
+      env,
+      channelId,
+      snapshot,
+      decoded,
+      eventTime,
+      rolePingIds,
+    );
+    return { ok: true, channelId, messageId };
+  } catch (err) {
+    console.error('[publish] post to default channel failed:', err);
+    return {
+      ok: false,
+      error: 'Failed to post into the configured default channel. Check the bot has access to it.',
+    };
+  }
+}
+
 // ── Create a new channel + post roster ──────────────────────────────────────
 
 async function createNewRosterChannel(
@@ -580,6 +757,7 @@ async function createNewRosterChannel(
   snapshot: RosterSnapshot,
   decoded: Awaited<ReturnType<typeof decodeRosterData>>,
   eventTime?: string,
+  rolePingIds?: GuildConfig['rolePingIds'],
 ): Promise<InternalRefreshResult> {
   const channelOptions: Parameters<typeof createChannel>[2] = {
     name: channelName,
@@ -603,11 +781,14 @@ async function createNewRosterChannel(
   }
 
   try {
-    const text = buildRosterText(snapshot, decoded, eventTime);
-    const chunks = splitMessages(text);
-    const components = buildRosterActionRows(snapshot.id);
-    const messageIds = await sendRosterMessages(env, channel.id, chunks, components);
-
+    const messageIds = await sendRosterToChannel(
+      env,
+      channel.id,
+      snapshot,
+      decoded,
+      eventTime,
+      rolePingIds,
+    );
     return { ok: true, channelId: channel.id, messageId: messageIds };
   } catch (err) {
     console.error('[publish] send message failed, cleaning up orphaned channel:', err);

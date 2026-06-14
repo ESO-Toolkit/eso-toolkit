@@ -113,6 +113,13 @@ export interface DecodedRosterSlot {
 export interface DecodedRoster {
   name?: string | undefined;
   trialId?: string | undefined;
+  /**
+   * Slot counts the roster asks for (default 2/2/8). The encoder only stores
+   * *filled* slots, so this — not the array lengths below — reflects how many
+   * tanks/healers/DDs a roster actually wants (e.g. a blank "seeking signups"
+   * roster has empty arrays but a full composition).
+   */
+  composition?: { tanks: number; healers: number; dps: number } | undefined;
   tanks: DecodedRosterSlot[];
   healers: DecodedRosterSlot[];
   dps: DecodedRosterSlot[];

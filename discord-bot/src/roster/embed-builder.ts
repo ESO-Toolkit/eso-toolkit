@@ -217,6 +217,60 @@ export function splitMessages(text: string): string[] {
   return chunks;
 }
 
+// ── Role Pings ──────────────────────────────────────────────────────────────
+
+/** Discord snowflake (17–20 digits). Guards against malformed/injected IDs. */
+const SNOWFLAKE_RE = /^\d{17,20}$/;
+
+export interface RolePingResult {
+  /** Message content with role mentions. */
+  content: string;
+  /** Role IDs to allow in `allowed_mentions.roles` (de-duplicated, validated). */
+  roleIds: string[];
+}
+
+/**
+ * Build a one-off "@role a new run is up" ping for the roles configured in the
+ * guild config. Only pings a role type (tank/healer/dd) when that role is both
+ * configured *and* part of the roster's composition, so members aren't pinged
+ * for slots the roster doesn't contain.
+ *
+ * Slot *counts* (composition) drive this, not filled-entry counts: the encoder
+ * only stores filled slots, so a blank "seeking signups" roster has empty
+ * arrays but still wants its full composition (default 2/2/8) — which is
+ * exactly the case where signup pings matter most.
+ *
+ * Returns `null` when there is nothing to ping — callers should skip sending.
+ */
+export function buildRolePingLine(
+  decoded: DecodedRoster,
+  rolePingIds?: { tank?: string | undefined; healer?: string | undefined; dd?: string | undefined },
+): RolePingResult | null {
+  if (!rolePingIds) return null;
+
+  // Prefer composition (slots requested); fall back to filled-entry counts when
+  // composition is unavailable (e.g. older decoded payloads).
+  const comp = decoded.composition;
+  const tankCount = comp?.tanks ?? decoded.tanks.length;
+  const healerCount = comp?.healers ?? decoded.healers.length;
+  const dpsCount = comp?.dps ?? decoded.dps.length;
+
+  const mentions: string[] = [];
+  const roleIds: string[] = [];
+  const add = (id: string | undefined, present: boolean) => {
+    if (!id || !present || !SNOWFLAKE_RE.test(id) || roleIds.includes(id)) return;
+    roleIds.push(id);
+    mentions.push(`<@&${id}>`);
+  };
+
+  add(rolePingIds.tank, tankCount > 0);
+  add(rolePingIds.healer, healerCount > 0);
+  add(rolePingIds.dd, dpsCount > 0);
+
+  if (roleIds.length === 0) return null;
+  return { content: `📢 A new roster is up — ${mentions.join(' ')}`, roleIds };
+}
+
 // ── Action Rows ─────────────────────────────────────────────────────────────
 
 export function buildRosterActionRows(rosterId: string): DiscordComponent[] {

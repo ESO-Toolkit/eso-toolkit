@@ -169,6 +169,29 @@ export async function releasePublishLock(
   await env.ROSTERS.delete(`${LOCK_PREFIX}:${guildId}:${rosterId}`);
 }
 
+// ── Rate limiting ────────────────────────────────────────────────────────────
+
+/**
+ * Best-effort fixed-window rate limit backed by KV. Returns true if the action
+ * is allowed, false once the caller has hit `max` actions within
+ * `windowSeconds`. Not strictly atomic (KV read-then-write), which is fine for
+ * throttling abuse — it can admit a few extra under a burst but caps runaway
+ * channel/ping creation.
+ */
+export async function checkRosterRateLimit(
+  env: Env,
+  key: string,
+  max: number,
+  windowSeconds: number,
+): Promise<boolean> {
+  const rlKey = `rl:${key}`;
+  const raw = await env.ROSTERS.get(rlKey);
+  const count = raw ? parseInt(raw, 10) : 0;
+  if (count >= max) return false;
+  await env.ROSTERS.put(rlKey, String(count + 1), { expirationTtl: windowSeconds });
+  return true;
+}
+
 // ── Guild Config CRUD ───────────────────────────────────────────────────────
 
 function guildConfigKey(guildId: string): string {

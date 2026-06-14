@@ -1,0 +1,43 @@
+name: Discord Bot CI
+
+# Typechecks and tests the Cloudflare Worker in discord-bot/. This package is
+# separate from the root React app (its own package.json/tsconfig/vitest), so
+# the root PR Checks never covered it — which let typecheck errors reach main.
+# Runs only when discord-bot/ changes.
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'discord-bot/**'
+      - '.github/workflows/discord-bot-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'discord-bot/**'
+      - '.github/workflows/discord-bot-ci.yml'
+
+jobs:
+  discord-bot:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: discord-bot
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: discord-bot/package-lock.json
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test
+        run: npm test

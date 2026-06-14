@@ -432,7 +432,9 @@ async function handleRefresh(
     scopeGuildId = guildId;
   }
 
-  const result = await refreshRoster(env, rosterId, scopeGuildId);
+  // Webhook (server-to-server) refreshes must not resurrect channels that staff
+  // deleted on purpose; user-initiated HTTP refreshes may recreate.
+  const result = await refreshRoster(env, rosterId, scopeGuildId, { allowRecreate: !isWebhook });
   if (!result.ok) {
     return jsonResponse({ error: result.error }, 400);
   }
@@ -528,10 +530,8 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
     const roles = await getGuildRoles(env, guildId);
     // Filter out @everyone (id === guildId) and managed/bot roles
     const filtered = roles
-      .filter(
-        (r) => r.id !== guildId && !('managed' in r && (r as Record<string, unknown>).managed),
-      )
-      .map((r) => ({ id: r.id, name: r.name, color: (r as Record<string, unknown>).color ?? 0 }));
+      .filter((r) => r.id !== guildId && !r.managed)
+      .map((r) => ({ id: r.id, name: r.name, color: r.color ?? 0 }));
     return jsonResponse({ roles: filtered });
   }
 
@@ -552,7 +552,8 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
     const updated = {
       ...existing,
       guildId,
-      ...(typeof body.defaultChannelId === 'string' && { defaultChannelId: body.defaultChannelId }),
+      ...(typeof body.defaultChannelId === 'string' &&
+        /^\d{17,20}$/.test(body.defaultChannelId) && { defaultChannelId: body.defaultChannelId }),
       ...(typeof body.defaultCategoryId === 'string' && {
         defaultCategoryId: body.defaultCategoryId,
       }),
@@ -583,6 +584,9 @@ async function handleGuildApi(request: Request, url: URL, env: Env): Promise<Res
           }
         })() && { timezone: body.timezone }),
     };
+
+    // An explicit empty string clears the default posting channel.
+    if (body.defaultChannelId === '') delete (updated as GuildConfig).defaultChannelId;
 
     await upsertGuildConfig(env, updated);
     return jsonResponse({ ok: true, config: updated });

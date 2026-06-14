@@ -7,7 +7,12 @@
 
 import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
-import { getMappingByChannelId, getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
+import {
+  listMappingsForGuild,
+  getGuildConfig,
+  getDefaultGuildConfig,
+  checkRosterRateLimit,
+} from '../roster/kv.js';
 import { refreshRoster } from '../roster/publish.js';
 import { InteractionResponseType, MessageFlags } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
@@ -50,10 +55,26 @@ export async function handleRosterRefresh(
     };
   }
 
+  const userId = interaction.member?.user?.id ?? 'unknown';
+  const allowed = await checkRosterRateLimit(env, `refresh:${guildId}:${userId}`, 10, 60);
+  if (!allowed) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: "⏳ You're refreshing too quickly. Please wait a minute and try again.",
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
   ctx.waitUntil(
     (async () => {
-      const mapping = await getMappingByChannelId(env, channelId);
-      if (!mapping) {
+      // A channel may host more than one roster (when a default posting channel
+      // is configured), so refresh every roster mapped to this channel.
+      const mappings = (await listMappingsForGuild(env, guildId)).filter(
+        (m) => m.channelId === channelId,
+      );
+      if (mappings.length === 0) {
         await sendFollowup(env, interaction.token, {
           content: '❌ No roster is linked to this channel. Use `/roster link` first.',
           flags: MessageFlags.EPHEMERAL,
@@ -61,15 +82,28 @@ export async function handleRosterRefresh(
         return;
       }
 
-      const result = await refreshRoster(env, mapping.rosterId);
-      if (result.ok) {
+      let okCount = 0;
+      let lastError: string | undefined;
+      for (const mapping of mappings) {
+        const result = await refreshRoster(env, mapping.rosterId, guildId);
+        if (result.ok && (result.refreshedCount ?? 0) > 0) okCount++;
+        else if (!result.ok) lastError = result.error;
+      }
+
+      if (okCount > 0) {
+        const suffix = mappings.length > 1 ? ` (${okCount}/${mappings.length})` : '';
         await sendFollowup(env, interaction.token, {
-          content: '✅ Roster refreshed from ESO Toolkit!',
+          content: `✅ Roster refreshed from ESO Toolkit!${suffix}`,
+          flags: MessageFlags.EPHEMERAL,
+        });
+      } else if (lastError) {
+        await sendFollowup(env, interaction.token, {
+          content: `❌ Refresh failed: ${lastError}`,
           flags: MessageFlags.EPHEMERAL,
         });
       } else {
         await sendFollowup(env, interaction.token, {
-          content: `❌ Refresh failed: ${result.error}`,
+          content: '⚠️ Nothing to refresh — this channel has no live roster posts anymore.',
           flags: MessageFlags.EPHEMERAL,
         });
       }

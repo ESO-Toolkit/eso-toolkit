@@ -7,9 +7,14 @@
 
 import { hasRosterPermission } from '../auth.js';
 import { sendFollowup } from '../discord.js';
-import { getMappingByChannelId, getGuildConfig, getDefaultGuildConfig } from '../roster/kv.js';
+import {
+  getMappingByChannelId,
+  getGuildConfig,
+  getDefaultGuildConfig,
+  checkRosterRateLimit,
+} from '../roster/kv.js';
 import { refreshRoster } from '../roster/publish.js';
-import { InteractionResponseType, MessageFlags } from '../types.js';
+import { InteractionResponseType, MessageFlags, RosterButtonId } from '../types.js';
 import type { DiscordInteraction, Env, InteractionResponse } from '../types.js';
 
 export async function handleRosterRefreshButton(
@@ -50,21 +55,52 @@ export async function handleRosterRefreshButton(
     };
   }
 
+  const userId = interaction.member?.user?.id ?? 'unknown';
+  const allowed = await checkRosterRateLimit(env, `refresh:${guildId}:${userId}`, 10, 60);
+  if (!allowed) {
+    return {
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: "⏳ You're refreshing too quickly. Please wait a minute and try again.",
+        flags: MessageFlags.EPHEMERAL,
+      },
+    };
+  }
+
+  // The button encodes its own roster ID (roster_refresh:<rosterId>), so refresh
+  // that exact roster even when several rosters share one channel. Fall back to
+  // the channel→roster lookup for any older buttons without an encoded ID.
+  const customId = interaction.data?.custom_id ?? '';
+  const prefix = `${RosterButtonId.REFRESH}:`;
+  const encodedRosterId = customId.startsWith(prefix) ? customId.slice(prefix.length) : '';
+
   ctx.waitUntil(
     (async () => {
-      const mapping = await getMappingByChannelId(env, channelId);
-      if (!mapping) {
-        await sendFollowup(env, interaction.token, {
-          content: '❌ No roster is linked to this channel.',
-          flags: MessageFlags.EPHEMERAL,
-        });
-        return;
+      let rosterId = encodedRosterId;
+      if (!rosterId) {
+        const mapping = await getMappingByChannelId(env, channelId);
+        if (!mapping) {
+          await sendFollowup(env, interaction.token, {
+            content: '❌ No roster is linked to this channel.',
+            flags: MessageFlags.EPHEMERAL,
+          });
+          return;
+        }
+        rosterId = mapping.rosterId;
       }
 
-      const result = await refreshRoster(env, mapping.rosterId);
-      if (result.ok) {
+      const result = await refreshRoster(env, rosterId, guildId);
+      if (result.ok && (result.refreshedCount ?? 0) > 0) {
         await sendFollowup(env, interaction.token, {
           content: '✅ Roster refreshed!',
+          flags: MessageFlags.EPHEMERAL,
+        });
+      } else if (result.ok) {
+        // ok but nothing refreshed → this roster has no live post in this server
+        // (mapping removed/expired). Don't claim success.
+        await sendFollowup(env, interaction.token, {
+          content:
+            "⚠️ Couldn't find this roster's post to refresh — it may have been removed. Try re-publishing it.",
           flags: MessageFlags.EPHEMERAL,
         });
       } else {
