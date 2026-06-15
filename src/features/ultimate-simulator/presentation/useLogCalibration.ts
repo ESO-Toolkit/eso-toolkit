@@ -81,6 +81,10 @@ export function useLogCalibration(): UseLogCalibration {
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [reportCode, setReportCodeState] = useState('');
+  // The report code that was actually LOADED (fights/players/windows belong to
+  // it). Measurement must use this, never the live text field — otherwise editing
+  // the input after loading would query a new report with the old fight/player.
+  const [loadedReportCode, setLoadedReportCode] = useState<string | null>(null);
   const [fights, setFights] = useState<readonly LogFight[]>([]);
   const [players, setPlayers] = useState<readonly LogPlayer[]>([]);
   const [selectedFightId, setSelectedFightId] = useState<number | null>(null);
@@ -91,10 +95,26 @@ export function useLogCalibration(): UseLogCalibration {
     new Map(),
   );
 
-  const setReportCode = useCallback((code: string) => {
-    setReportCodeState(code);
-    setError(null);
-  }, []);
+  const setReportCode = useCallback(
+    (code: string) => {
+      setReportCodeState(code);
+      setError(null);
+      // If the entered code no longer matches what was loaded, the loaded
+      // fights/players/windows are stale — drop them so Measure can't run against
+      // a mismatched report. The user must re-load the new code first.
+      if (loadedReportCode != null && parseReportCode(code) !== loadedReportCode) {
+        setLoadedReportCode(null);
+        setFights([]);
+        setPlayers([]);
+        setFightWindows(new Map());
+        setSelectedFightId(null);
+        setSelectedPlayerId(null);
+        setMeasurement(null);
+        setPhase('idle');
+      }
+    },
+    [loadedReportCode],
+  );
 
   const loadReport = useCallback(async () => {
     if (!client || !isReady) {
@@ -177,6 +197,7 @@ export function useLogCalibration(): UseLogCalibration {
       setFightWindows(windows);
       setSelectedFightId(fightList[0].id);
       setSelectedPlayerId(playerList[0]?.id ?? null);
+      setLoadedReportCode(code);
       setPhase('reportLoaded');
     } catch (e) {
       setError(
@@ -200,6 +221,9 @@ export function useLogCalibration(): UseLogCalibration {
   const measure = useCallback(async () => {
     if (!client || !isReady) return;
     if (selectedFightId == null || selectedPlayerId == null) return;
+    // Always measure the LOADED report — never the live text field — so the
+    // fight window/player below refer to the same report being queried.
+    if (loadedReportCode == null) return;
     const window = fightWindows.get(selectedFightId);
     if (!window) return;
     const fight = fights.find((f) => f.id === selectedFightId);
@@ -208,7 +232,7 @@ export function useLogCalibration(): UseLogCalibration {
     setError(null);
     try {
       // Page through the fight's resource events for both hostility scopes.
-      const code = parseReportCode(reportCode);
+      const code = loadedReportCode;
       const all: ResourceChangeEvent[] = [];
       type EventsPage = {
         reportData?: {
@@ -265,13 +289,14 @@ export function useLogCalibration(): UseLogCalibration {
     fightWindows,
     fights,
     players,
-    reportCode,
+    loadedReportCode,
   ]);
 
   const clear = useCallback(() => {
     setPhase('idle');
     setError(null);
     setReportCodeState('');
+    setLoadedReportCode(null);
     setFights([]);
     setPlayers([]);
     setSelectedFightId(null);

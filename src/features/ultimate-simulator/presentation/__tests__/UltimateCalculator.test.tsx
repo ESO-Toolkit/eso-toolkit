@@ -53,4 +53,34 @@ describe('UltimateCalculator', () => {
     // lowers the cost and so the time-to-first-ult.
     expect(screen.getAllByText(/250 ult cost/i).length).toBeGreaterThan(0);
   });
+
+  it('offers a cost-reduction toggle for a class that has one, and applying it lowers the cost', () => {
+    renderCalc();
+    // Switch to Sorcerer — Power Stone (−15%) is a default-on reduction with a toggle.
+    fireEvent.mouseDown(screen.getByLabelText(/Class/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Sorcerer'));
+
+    // The reduction toggle is rendered and on by default.
+    const toggle = screen.getByLabelText(/Power Stone/i);
+    expect(toggle).toBeInTheDocument();
+
+    // With it on, the reduced-cost note is shown; turning it off removes the note.
+    expect(screen.getByText(/Cost reduced/i)).toBeInTheDocument();
+    fireEvent.click(toggle);
+    expect(screen.queryByText(/Cost reduced/i)).not.toBeInTheDocument();
+  });
+
+  it('does not apply class reductions to a custom cost (no double-reduction)', () => {
+    renderCalc();
+    // Sorcerer (Power Stone −15% default-on), then pick a custom cost.
+    fireEvent.mouseDown(screen.getByLabelText(/Class/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Sorcerer'));
+    fireEvent.mouseDown(screen.getByLabelText(/^Ultimate$/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText(/Custom cost/i));
+
+    // A custom cost is taken as already-effective: no "Cost reduced" note and no
+    // reduction toggles (they don't apply to a user-entered effective number).
+    expect(screen.queryByText(/Cost reduced/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Power Stone/i)).not.toBeInTheDocument();
+  });
 });

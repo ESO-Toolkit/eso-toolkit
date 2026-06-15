@@ -31,7 +31,6 @@ const SRC_IMPLACABLE = 'https://eso-skillbook.com/skill/implacable-outcome';
 const SRC_CORPSE = 'https://eso-skillbook.com/skill/corpse-consumption';
 const SRC_POWERSTONE = 'https://eso-skillbook.com/skill/power-stone';
 const SRC_RESTORING_SPIRIT = 'https://eso-skillbook.com/skill/restoring-spirit';
-const SRC_CRYPTCANON = 'https://en.uesp.net/wiki/Online:Cryptcanon_Vestments';
 const SRC_PILLAGERS = "https://en.uesp.net/wiki/Online:Pillager's_Profit";
 const SRC_MINOR_HEROISM_POTION = 'https://en.uesp.net/wiki/Online:Heroism';
 
@@ -79,9 +78,6 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     // if your build actually provides it. (Validated against a real trial log: a
     // baseline Arcanist measured ~3.4 ult/s, matching base income + Decisive.)
     defaultEnabled: false,
-    // Same named buff as the Cryptcanon source — Minor Heroism does not stack
-    // across providers, so enabling both must not double-count.
-    nonStackingGroup: 'minor-heroism',
     provenance: SRC_MINOR_HEROISM,
     confidence: 'high',
     description:
@@ -140,25 +136,11 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
       'Necromancer Living Death passive: +10 ultimate when you consume a corpse, once every 16 seconds. Uptime depends on corpse availability.',
   },
 
-  // ---- Mythic ---------------------------------------------------------------
-  {
-    id: 'cryptcanon-vestments',
-    label: 'Cryptcanon Vestments (Minor Heroism)',
-    category: 'mythic',
-    kind: 'periodic',
-    amountPerInstance: 1,
-    instancesPerSecond: 1 / 1.5,
-    uptime: 0.98,
-    rollsDecisive: true,
-    availableIn: ['soloPve', 'groupPve', 'pvp'],
-    defaultEnabled: false,
-    // Grants the SAME Minor Heroism buff as the generic source — do not stack.
-    nonStackingGroup: 'minor-heroism',
-    provenance: SRC_CRYPTCANON,
-    confidence: 'high',
-    description:
-      'Mythic that grants Minor Heroism in combat. CAVEAT: while equipped you cannot cast your own ultimate — casting transfers your ult to group members. A support/battery item, not a self-ult enabler.',
-  },
+  // NOTE: Cryptcanon Vestments is intentionally NOT modeled as a self-cast
+  // source. It grants Minor Heroism but PREVENTS you from casting your own
+  // ultimate (casting transfers your ult to group members), so counting it in a
+  // "time to YOUR ultimate / casts per fight" calculation would be misleading.
+  // It belongs in a future group-battery view, not here.
 
   // ---- Group support (external) --------------------------------------------
   {
