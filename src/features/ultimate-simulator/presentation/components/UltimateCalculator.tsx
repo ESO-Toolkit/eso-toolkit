@@ -1037,6 +1037,16 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                             sx={{ color: 'text.secondary', fontWeight: 600 }}
                           >
                             {a.baseCost}
+                            {a.confidence !== 'high' ? (
+                              <Tooltip
+                                arrow
+                                title="Cost not fully confirmed for Update 50 — treat as approximate."
+                              >
+                                <Box component="span" sx={{ color: accent, ml: 0.25 }}>
+                                  *
+                                </Box>
+                              </Tooltip>
+                            ) : null}
                           </Typography>
                         </Stack>
                       </MenuItem>

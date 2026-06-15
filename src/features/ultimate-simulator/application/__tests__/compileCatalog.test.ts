@@ -24,8 +24,17 @@ const baseSelection: CatalogSelection = {
 
 describe('isSourceAvailable', () => {
   it('filters group-only sources out of solo context', () => {
+    // Pillager's Profit is an external healer source — group-only.
+    const pillagers = ULTIMATE_SOURCE_CATALOG.find((s) => s.id === 'pillagers-profit-external')!;
+    expect(isSourceAvailable(pillagers, { ...baseSelection, context: 'soloPve' })).toBe(false);
+    expect(isSourceAvailable(pillagers, { ...baseSelection, context: 'groupPve' })).toBe(true);
+  });
+
+  it('keeps Major Heroism available solo (self-applied providers exist)', () => {
+    // Major Heroism is modeled as one buff available in every context — solo it
+    // comes from a self-applied source (e.g. the DK Basalt-Blooded Warrior set).
     const major = ULTIMATE_SOURCE_CATALOG.find((s) => s.id === 'major-heroism')!;
-    expect(isSourceAvailable(major, { ...baseSelection, context: 'soloPve' })).toBe(false);
+    expect(isSourceAvailable(major, { ...baseSelection, context: 'soloPve' })).toBe(true);
     expect(isSourceAvailable(major, { ...baseSelection, context: 'groupPve' })).toBe(true);
   });
 
@@ -246,5 +255,63 @@ describe('catalog data integrity', () => {
     const red = (id: string) => COST_REDUCTION_CATALOG.find((r) => r.id === id);
     expect(red('sorcerer-power-stone')?.fraction).toBeCloseTo(0.15, 6);
     expect(red('templar-restoring-spirit')?.fraction).toBeCloseTo(0.05, 6);
+  });
+
+  // ---- Catalog expansion (sets / class passives / more ultimates) ----------
+  it('encodes the expanded generator rates within the sanity ceiling', () => {
+    const src = (id: string) => ULTIMATE_SOURCE_CATALOG.find((s) => s.id === id);
+    const rate = (id: string): number => {
+      const s = src(id)!;
+      return s.amountPerInstance * s.instancesPerSecond * s.uptime;
+    };
+    // New generators exist and are encoded.
+    expect(src('bloodspawn')).toBeDefined();
+    expect(src('dragonknight-mountains-blessing')?.amountPerInstance).toBe(3);
+    expect(src('templar-prism')?.amountPerInstance).toBe(3);
+    expect(src('nightblade-catalyst')?.amountPerInstance).toBe(22);
+    // Every new generator stays a minor contributor — no Pillager's-style blowup
+    // (a single source far below the base light-attack income of ~2.85 ult/s).
+    for (const id of [
+      'bloodspawn',
+      'dragonknight-mountains-blessing',
+      'templar-prism',
+      'nightblade-catalyst',
+    ]) {
+      expect(rate(id)).toBeLessThan(2);
+    }
+    // Major Heroism is now available solo too (self-applied sources exist), and is
+    // still a single non-stacking entry (no per-provider duplicates).
+    expect(src('major-heroism')?.availableIn).toContain('soloPve');
+    expect(ULTIMATE_SOURCE_CATALOG.filter((s) => s.id === 'major-heroism')).toHaveLength(1);
+  });
+
+  it('makes Templar Prism a default-on generator for Templar only', () => {
+    // Prism is near-always-on Templar income (like Implacable for Arcanist), so it
+    // is default-enabled — but only compiles in for the Templar class.
+    const templar = compileSources(ULTIMATE_SOURCE_CATALOG, {
+      ...baseSelection,
+      esoClass: 'templar',
+    });
+    expect(templar.map((s) => s.id)).toContain('templar-prism');
+    const arcanist = compileSources(ULTIMATE_SOURCE_CATALOG, baseSelection); // arcanist
+    expect(arcanist.map((s) => s.id)).not.toContain('templar-prism');
+  });
+
+  it('adds the expanded ultimate cost-targets (weapon/guild + class bases)', () => {
+    const cost = (id: string): number | undefined =>
+      ULTIMATE_ABILITIES.find((a) => a.id === id)?.baseCost;
+    expect(cost('lacerate')).toBe(150); // Dual Wield
+    expect(cost('rapid-fire')).toBe(175); // Bow
+    expect(cost('meteor')).toBe(200); // Mages Guild
+    expect(cost('war-horn')).toBe(250); // Alliance War
+    expect(cost('radial-sweep')).toBe(75); // Templar (cheapest)
+    expect(cost('reanimate')).toBe(335); // Necromancer (priciest)
+    // Every ability still carries a valid owner the picker can group by.
+    const owners = new Set([
+      'global',
+      'weapon',
+      ...['arcanist', 'dragonknight', 'necromancer', 'nightblade', 'sorcerer', 'templar', 'warden'],
+    ]);
+    for (const a of ULTIMATE_ABILITIES) expect(owners.has(a.owner)).toBe(true);
   });
 });
