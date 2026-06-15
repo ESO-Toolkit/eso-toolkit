@@ -81,7 +81,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     provenance: SRC_MINOR_HEROISM,
     confidence: 'high',
     description:
-      '1 ultimate every 1.5s (0.67/s) in combat. From Heroism potions, Cryptcanon Vestments, certain sets, or scribing — enable it if your build provides it.',
+      '1 ultimate every 1.5s (0.67/s) in combat. From Heroism potions, certain sets, or scribing — enable it if your build provides it. (Cryptcanon Vestments also grants it but blocks casting your own ultimate, so it is not modeled here.)',
   },
   {
     id: 'major-heroism',
