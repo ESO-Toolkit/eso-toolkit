@@ -1453,17 +1453,22 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({ roster, overridesMap,
             <Chip
               key={g.id}
               label={g.trial.shortName}
-              size="small"
               onClick={() => scrollToTrial(g.id)}
               aria-label={`Jump to ${g.trial.name}`}
               sx={{
                 flexShrink: 0,
-                height: 24,
-                fontSize: '0.62rem',
+                // Comfortable touch target on phones (WCAG 2.5.5), compact on desktop.
+                height: { xs: 36, sm: 28 },
+                borderRadius: '999px',
+                fontSize: '0.68rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 backgroundColor: isDarkMode ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)',
                 color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
+                '& .MuiChip-label': { px: { xs: 1.5, sm: 1.25 } },
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(96,165,250,0.2)' : 'rgba(37,99,235,0.14)',
+                },
                 '&:focus-visible': { outline: '2px solid #38bdf8', outlineOffset: '2px' },
               }}
             />

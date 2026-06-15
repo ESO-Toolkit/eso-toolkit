@@ -4,6 +4,7 @@ import {
   RestartAlt as ResetIcon,
   Edit as EditIcon,
   Check as CheckIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import {
   Accordion,
@@ -782,7 +783,11 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
             <Box
               sx={{
                 display: 'grid',
-                gridTemplateColumns: showRail && !isMobile ? '210px 1fr' : '1fr',
+                // minmax(0, …) lets the content track shrink below its intrinsic
+                // width so the encounter timeline scrolls internally instead of
+                // blowing the pane out past the viewport on mobile.
+                gridTemplateColumns:
+                  showRail && !isMobile ? '210px minmax(0, 1fr)' : 'minmax(0, 1fr)',
                 gap: 1.5,
                 alignItems: 'start',
               }}
@@ -984,21 +989,25 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                     {selectedTrial.name}
                   </Typography>
                   {(overrideCountByTrial[selectedTrial.id] ?? 0) > 0 && (
-                    <Typography sx={{ fontSize: '0.65rem', color: 'text.disabled' }}>
-                      {overrideCountByTrial[selectedTrial.id]} fights
+                    <Typography sx={{ fontSize: '0.65rem', color: 'text.disabled', flexShrink: 0 }}>
+                      {overrideCountByTrial[selectedTrial.id]} fight
+                      {overrideCountByTrial[selectedTrial.id] > 1 ? 's' : ''}
                     </Typography>
                   )}
-                  <ExpandMoreIcon sx={{ fontSize: '1.1rem', color: 'text.disabled' }} />
+                  <ExpandMoreIcon
+                    sx={{ fontSize: '1.1rem', color: 'text.disabled', flexShrink: 0 }}
+                  />
                 </Box>
               )}
 
-              {/* DETAIL pane */}
+              {/* DETAIL pane — minWidth:0 so it can shrink within the grid track */}
               <Box
                 role="tabpanel"
                 id={selectedTrialId ? `pft-panel-${selectedTrialId}` : undefined}
                 aria-labelledby={selectedTrialId ? `pft-tab-${selectedTrialId}` : undefined}
+                sx={{ minWidth: 0 }}
               >
-                <Stack spacing={2}>
+                <Stack spacing={2} sx={{ minWidth: 0 }}>
                   {/* Encounter timeline (shown immediately when trial is selected) */}
                   {selectedTrial && (
                     <>
@@ -1261,42 +1270,64 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
             </Box>
           )}
 
-          {/* MOBILE — trial bottom sheet */}
+          {/* MOBILE — trial bottom sheet (content-height, anchored to the bottom) */}
           <Dialog
             open={sheetOpen && isMobile}
             onClose={() => setSheetOpen(false)}
-            fullScreen
+            aria-labelledby="pft-sheet-title"
             slotProps={{
               paper: {
                 sx: {
+                  position: 'fixed',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  m: 0,
+                  width: '100%',
+                  maxWidth: '100%',
+                  maxHeight: '85dvh',
+                  borderRadius: '20px 20px 0 0',
                   background: isDark ? 'rgba(15,23,42,0.98)' : 'rgba(255,255,255,0.98)',
                   backdropFilter: 'blur(16px)',
+                  // Respect the iOS home-indicator safe area.
+                  pb: 'env(safe-area-inset-bottom)',
                 },
               },
             }}
           >
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ px: 2, pt: 1.25, pb: 1.5 }}>
               <Box
                 sx={{
                   width: 36,
                   height: 4,
                   borderRadius: 2,
                   mx: 'auto',
-                  mb: 2,
+                  mb: 1.5,
                   backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
                 }}
               />
-              <Typography
-                sx={{
-                  fontFamily: '"Space Grotesk", sans-serif',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  mb: 1.5,
-                }}
-              >
-                Choose a trial
-              </Typography>
-              <Stack spacing={0.75}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <Typography
+                  id="pft-sheet-title"
+                  sx={{
+                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    flex: 1,
+                  }}
+                >
+                  Choose a trial
+                </Typography>
+                <IconButton
+                  aria-label="Close trial picker"
+                  onClick={() => setSheetOpen(false)}
+                  size="small"
+                  sx={{ color: 'text.secondary' }}
+                >
+                  <CloseIcon sx={{ fontSize: '1.1rem' }} />
+                </IconButton>
+              </Box>
+              <Stack spacing={0.75} sx={{ overflowY: 'auto' }}>
                 {railTrials.map((trial) => {
                   const count = overrideCountByTrial[trial.id] ?? 0;
                   const sameBuild = overridesMap?.[trial.id]?.useSameBuildForAll ?? false;
@@ -1304,18 +1335,28 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                   return (
                     <Box
                       key={trial.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={active}
                       onClick={() => {
                         handleSelectTrial(trial.id);
                         setSheetOpen(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSelectTrial(trial.id);
+                          setSheetOpen(false);
+                        }
                       }}
                       sx={{
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1,
-                        minHeight: 48,
+                        minHeight: 52,
                         px: 1.25,
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         borderLeft: active ? '3px solid #38bdf8' : '3px solid transparent',
                         backgroundColor: active
                           ? isDark
@@ -1324,6 +1365,7 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                           : isDark
                             ? 'rgba(255,255,255,0.03)'
                             : 'rgba(0,0,0,0.02)',
+                        '&:focus-visible': { outline: '2px solid #38bdf8', outlineOffset: '2px' },
                       }}
                     >
                       <Chip
@@ -1333,6 +1375,7 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                           height: 22,
                           fontSize: '0.65rem',
                           fontWeight: 700,
+                          flexShrink: 0,
                           backgroundColor: isDark
                             ? 'rgba(96,165,250,0.12)'
                             : 'rgba(37,99,235,0.08)',
@@ -1340,12 +1383,26 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                         }}
                       />
                       <Typography
-                        sx={{ fontSize: '0.9rem', fontWeight: 600, flex: 1, minWidth: 0 }}
+                        sx={{
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          flex: 1,
+                          minWidth: 0,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
                       >
                         {trial.name}
                       </Typography>
-                      <Typography sx={{ fontSize: '0.7rem', color: 'text.disabled' }}>
-                        {count > 0 ? `${count} fights` : sameBuild ? 'same build' : 'no edits'}
+                      <Typography
+                        sx={{ fontSize: '0.7rem', color: 'text.disabled', flexShrink: 0 }}
+                      >
+                        {count > 0
+                          ? `${count} fight${count > 1 ? 's' : ''}`
+                          : sameBuild
+                            ? 'same build'
+                            : 'no edits'}
                       </Typography>
                       <Tooltip title="Same build for every fight" arrow>
                         <IconButton
@@ -1354,6 +1411,7 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                             e.stopPropagation();
                             handleToggleSameBuild(trial.id);
                           }}
+                          sx={{ flexShrink: 0 }}
                         >
                           <Box
                             component="span"
