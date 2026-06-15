@@ -18,7 +18,9 @@ describe('UltimateSimulator (render smoke)', () => {
   it('renders headline, inputs, and a results table with all raid sources', () => {
     renderSimulator();
 
-    expect(screen.getByRole('heading', { name: /Arcanist Ultimate Simulator/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Arcanist Ultimate Simulator/i }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/Fight duration/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Monte Carlo runs/i)).toBeInTheDocument();
 

@@ -22,11 +22,7 @@ import { ReportActionBar } from '../../components/ReportActionBar';
 import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 import { FightFragment, ReportFragment } from '../../graphql/gql/graphql';
 import { RootState } from '../../store/storeWithHistory';
-import {
-  getDifficultyLabel,
-  getTrialNameFromBoss,
-  isFalsePositiveWipe,
-} from '../../utils/trialClassification';
+import { getDifficultyLabel } from '../../utils/trialClassification';
 
 import { BossAvatar } from './BossAvatar';
 import {
