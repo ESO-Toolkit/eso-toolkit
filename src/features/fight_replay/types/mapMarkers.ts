@@ -14,6 +14,4 @@ export interface MapMarkersState {
   format: MarkerFormat;
   zoneId: number;
   markers: ReplayMarker[];
-  /** Preserve the original encoded string when markers were loaded */
-  originalEncodedString?: string;
 }

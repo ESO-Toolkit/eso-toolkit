@@ -208,7 +208,6 @@ export function parseMarkersInput(encoded: string): MapMarkersState {
       format: 'elms',
       zoneId: decoded.zone,
       markers: markersFromElms(decoded),
-      originalEncodedString: trimmed,
     };
   }
 
@@ -225,7 +224,6 @@ export function parseMarkersInput(encoded: string): MapMarkersState {
     format: 'mor',
     zoneId: decodedMor.zone,
     markers: replayMarkers,
-    originalEncodedString: trimmed,
   };
 }
 

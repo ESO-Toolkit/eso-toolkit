@@ -19,7 +19,7 @@ import {
 } from './mapMarkerConverters';
 
 function stateFromMarkers(markers: ReplayMarker[], zoneId = 636): MapMarkersState {
-  return { format: 'elms', zoneId, markers, originalEncodedString: undefined };
+  return { format: 'elms', zoneId, markers };
 }
 
 function manualMarker(iconKey: number, pos = { x: 100, y: 0, z: 200 }): ReplayMarker {

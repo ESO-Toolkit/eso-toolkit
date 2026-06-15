@@ -198,6 +198,18 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   // grows the transport (which would overlap the player panel / boss-health / control cluster).
   const [moreAnchor, setMoreAnchor] = React.useState<HTMLElement | null>(null);
   const moreOpen = Boolean(moreAnchor);
+  // Move focus INTO the "more" popover on open so keyboard/screen-reader users land on the first
+  // speed option (a bare MUI Popover, unlike a Menu, doesn't auto-focus its content). MUI restores
+  // focus to the trigger (moreAnchor) on close by default, so we only manage the open direction.
+  const firstSpeedRef = React.useRef<HTMLButtonElement | null>(null);
+  React.useEffect(() => {
+    if (moreOpen) {
+      // Defer one frame so the Popover paper has mounted before we focus into it.
+      const id = requestAnimationFrame(() => firstSpeedRef.current?.focus());
+      return () => cancelAnimationFrame(id);
+    }
+    return undefined;
+  }, [moreOpen]);
 
   // Use optimized timeline scrubbing for better performance
   const {
@@ -521,8 +533,13 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
               </Tooltip>
             )}
 
-            {/* Chapters — the fullscreen-reachable boss list. */}
-            {showTrial && trial && (
+            {/* Chapters — the fullscreen-reachable boss list. Gated to fullscreen ONLY: in
+                windowed (and mobile-preview) views the page-shell ChapterRail is already on
+                screen, so showing the popover too is pure duplication of both chapter-nav AND
+                the include-trash toggle. isFullscreen here is fed `isImmersive`
+                (= native fullscreen OR mobile pseudo-fullscreen), so the immersive surfaces —
+                where the rail is NOT reachable — still get the button. */}
+            {showTrial && isFullscreen && trial && (
               <ChaptersPopoverButton
                 chapters={chapterList}
                 currentFightId={trial.currentFightId}
@@ -594,11 +611,12 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
             Speed
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.25 }}>
-            {PLAYBACK_SPEEDS.map((speed) => {
+            {PLAYBACK_SPEEDS.map((speed, index) => {
               const active = speed === playbackSpeed;
               return (
                 <Box
                   key={speed}
+                  ref={index === 0 ? firstSpeedRef : undefined}
                   component="button"
                   type="button"
                   onClick={() => onSpeedChange(speed)}

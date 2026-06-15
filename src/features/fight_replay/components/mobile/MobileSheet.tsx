@@ -27,6 +27,12 @@ interface MobileSheetProps {
   children: React.ReactNode;
   /** Optional element rendered on the right of the title row (e.g. a quick toggle). */
   action?: React.ReactNode;
+  /**
+   * Drag-to-dismiss on the grab strip. Default true. Set false when a sheet overlaps an
+   * interactive arena gesture (e.g. marker edit mode, where dragging a marker can land on the
+   * sheet header and accidentally dismiss it) — close stays available via the X, backdrop, Escape.
+   */
+  draggable?: boolean;
 }
 
 /** Drag distance (fraction of sheet height) past which release dismisses. */
@@ -40,6 +46,7 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
   onClose,
   children,
   action,
+  draggable = true,
 }) => {
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
@@ -97,21 +104,26 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
     active: false,
   });
 
-  const onHeaderPointerDown = useCallback((e: React.PointerEvent) => {
-    // Leave the title-row buttons (close / action) alone.
-    if ((e.target as HTMLElement).closest('button')) return;
-    dragState.current = {
-      startY: e.clientY,
-      startT: performance.now(),
-      lastY: e.clientY,
-      active: true,
-    };
-    try {
-      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    } catch {
-      // Synthetic/inactive pointers can't be captured — the drag still tracks via React events.
-    }
-  }, []);
+  const onHeaderPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      // Drag disabled (e.g. an arena gesture overlaps the header) — never start a dismiss drag.
+      if (!draggable) return;
+      // Leave the title-row buttons (close / action) alone.
+      if ((e.target as HTMLElement).closest('button')) return;
+      dragState.current = {
+        startY: e.clientY,
+        startT: performance.now(),
+        lastY: e.clientY,
+        active: true,
+      };
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+      } catch {
+        // Synthetic/inactive pointers can't be captured — the drag still tracks via React events.
+      }
+    },
+    [draggable],
+  );
 
   const onHeaderPointerMove = useCallback((e: React.PointerEvent) => {
     const drag = dragState.current;
@@ -202,26 +214,29 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
           pointerEvents: open ? 'auto' : 'none',
         })}
       >
-        {/* Grab strip: handle + title row — the drag-to-dismiss surface. */}
+        {/* Grab strip: handle + title row — the drag-to-dismiss surface (when draggable). */}
         <Box
           onPointerDown={onHeaderPointerDown}
-          onPointerMove={onHeaderPointerMove}
-          onPointerUp={() => endDrag(true)}
-          onPointerCancel={() => endDrag(false)}
-          sx={{ touchAction: 'none', cursor: 'grab' }}
+          onPointerMove={draggable ? onHeaderPointerMove : undefined}
+          onPointerUp={draggable ? () => endDrag(true) : undefined}
+          onPointerCancel={draggable ? () => endDrag(false) : undefined}
+          sx={draggable ? { touchAction: 'none', cursor: 'grab' } : undefined}
         >
-          {/* Grab handle */}
-          <Box
-            aria-hidden
-            sx={{
-              width: 40,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: 'divider',
-              mx: 'auto',
-              mt: 1,
-            }}
-          />
+          {/* Grab handle — only shown when drag-to-dismiss is active, so it never implies a
+              gesture that's been disabled. */}
+          {draggable && (
+            <Box
+              aria-hidden
+              sx={{
+                width: 40,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: 'divider',
+                mx: 'auto',
+                mt: 1,
+              }}
+            />
+          )}
           {/* Title row */}
           <Box
             sx={{
@@ -251,18 +266,36 @@ const MobileSheetComponent: React.FC<MobileSheetProps> = ({
           </Box>
         </Box>
         {/* Scrollable content — its OWN max-height is the sheet's effective cap (see note above).
-            Use dvh so the mobile browser's dynamic toolbar can't push the sheet off-screen. */}
-        <Box
-          sx={{
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-            px: 2,
-            pb: 2,
-            maxHeight: 'min(60dvh, 520px)',
-          }}
-        >
-          {children}
+            Use dvh so the mobile browser's dynamic toolbar can't push the sheet off-screen. A
+            bottom fade-gradient overlay hints there's more below when content overflows (the iOS
+            scrollbar is invisible at rest, so without it overflow reads as a hard cut-off). */}
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            sx={{
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              px: 2,
+              pb: 2,
+              maxHeight: 'min(60dvh, 520px)',
+            }}
+          >
+            {children}
+          </Box>
+          <Box
+            aria-hidden
+            sx={(theme) => ({
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 24,
+              pointerEvents: 'none',
+              background: `linear-gradient(to top, ${
+                theme.palette.mode === 'dark' ? 'rgba(13,18,30,0.98)' : '#fff'
+              }, transparent)`,
+            })}
+          />
         </Box>
       </Box>
     </>
