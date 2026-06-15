@@ -1219,6 +1219,29 @@ export function getTrialById(trialId: string): Trial | undefined {
   return TRIAL_ENCOUNTERS.find((t) => t.id === trialId);
 }
 
+/**
+ * Map of a trial's short code (case-normalized) → its full encounter-data id.
+ * The "Built for (Trials)" picker tags rosters with short codes from
+ * loadout-manager's trialConfigs (e.g. 'RG', 'MOL', 'KA'); this bridges those
+ * to the encounter-data slugs used by Per-Fight Builds (e.g. 'rockgrove').
+ */
+const TRIAL_ID_BY_SHORT_NAME = new Map(
+  TRIAL_ENCOUNTERS.map((t) => [t.shortName.toUpperCase(), t.id] as const),
+);
+
+/**
+ * Resolve a "Built for" trial tag (a trialConfigs short code like 'RG' or a
+ * full encounter slug like 'rockgrove') to the encounter-data trial id.
+ * Returns undefined if it doesn't correspond to a trial with encounter data.
+ */
+export function resolveTrialId(tag: string): string | undefined {
+  if (!tag) return undefined;
+  // Already a full encounter-data id?
+  if (TRIAL_ENCOUNTERS.some((t) => t.id === tag)) return tag;
+  // Otherwise treat as a short code (case-insensitive).
+  return TRIAL_ID_BY_SHORT_NAME.get(tag.toUpperCase());
+}
+
 /** Create a default (empty) TrialBuildOverrides for a given trial */
 export function createDefaultTrialOverrides(trialId: string): TrialBuildOverrides {
   return {

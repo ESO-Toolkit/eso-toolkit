@@ -24,7 +24,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 
 import { KnownSetIDs } from '../types/abilities';
 import type { RaidRoster } from '../types/roster';
@@ -38,6 +38,7 @@ import type {
 import {
   TRIAL_ENCOUNTERS,
   getTrialById,
+  resolveTrialId,
   createDefaultTrialOverrides,
   encounterHasOverrides,
   isOverrideEmpty,
@@ -490,6 +491,46 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
       [trialOverrides?.trialId],
     );
 
+    // Trials this roster is tagged "Built for" (top-level picker), resolved to
+    // encounter-data trial ids. Drives which trials the Per-Fight Builds selector
+    // offers, so the two selectors stay in sync.
+    const scopedTrialIds = useMemo<string[]>(() => {
+      const ids = (roster.trials ?? [])
+        .map((tag) => resolveTrialId(tag))
+        .filter((id): id is string => Boolean(id));
+      // Dedupe while preserving order.
+      return Array.from(new Set(ids));
+    }, [roster.trials]);
+
+    // The trials shown in the dropdown: scoped to the "Built for" tags when any
+    // are set, otherwise the full list (backward compatible / untagged rosters).
+    const trialOptions = useMemo<readonly Trial[]>(() => {
+      if (scopedTrialIds.length === 0) return TRIAL_ENCOUNTERS;
+      const scoped = scopedTrialIds
+        .map((id) => getTrialById(id))
+        .filter((t): t is Trial => Boolean(t));
+      // If a per-fight trial is already selected but isn't in the tag set
+      // (e.g. tags changed after customizing), keep it visible so its work isn't hidden.
+      if (selectedTrial && !scoped.some((t) => t.id === selectedTrial.id)) {
+        return [selectedTrial, ...scoped];
+      }
+      return scoped;
+    }, [scopedTrialIds, selectedTrial]);
+
+    // Auto-select the trial when exactly one is tagged and nothing is chosen yet,
+    // so the encounter timeline appears without a redundant second pick. Guarded by
+    // a ref keyed on the scoped-trial set so it fires once per change — otherwise an
+    // explicit "None" pick would be re-selected immediately, making "None" a dead option.
+    const autoSelectedForRef = useRef<string | null>(null);
+    useEffect(() => {
+      const key = scopedTrialIds.join('|');
+      if (autoSelectedForRef.current === key) return; // already handled this set
+      autoSelectedForRef.current = key; // mark as seen regardless of outcome
+      if (scopedTrialIds.length !== 1) return; // only auto-pick the unambiguous case
+      if (trialOverrides?.trialId) return; // user already has a selection
+      onUpdateTrialOverrides(createDefaultTrialOverrides(scopedTrialIds[0]));
+    }, [scopedTrialIds, trialOverrides?.trialId, onUpdateTrialOverrides]);
+
     // Players list derived from roster
     const players = useMemo(() => getPlayersFromRoster(roster), [roster]);
 
@@ -634,7 +675,13 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
 
         <AccordionDetails sx={{ px: 1.5, pt: 1.5, pb: 2 }}>
           <Stack spacing={2}>
-            {/* Trial selector */}
+            {/* Trial selector — scoped to the roster's "Built for" trials when set */}
+            {scopedTrialIds.length > 0 && (
+              <Typography sx={{ fontSize: '0.7rem', color: 'text.secondary', mt: -0.5 }}>
+                Showing the {scopedTrialIds.length === 1 ? 'trial' : 'trials'} this roster is{' '}
+                <strong>built for</strong>. Add more in the “Built for (Trials)” picker above.
+              </Typography>
+            )}
             <FormControl fullWidth size="small">
               <InputLabel>Select Trial</InputLabel>
               <Select
@@ -652,7 +699,7 @@ export const PerFightBuilds: React.FC<PerFightBuildsProps> = React.memo(
                 <MenuItem value="">
                   <em>None — No per-fight customization</em>
                 </MenuItem>
-                {TRIAL_ENCOUNTERS.map((trial) => (
+                {trialOptions.map((trial) => (
                   <MenuItem key={trial.id} value={trial.id}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Chip
