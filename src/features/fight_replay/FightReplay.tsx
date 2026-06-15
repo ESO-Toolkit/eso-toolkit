@@ -97,17 +97,15 @@ export const FightReplay: React.FC = () => {
   const toggleMarkersEditMode = useCallback(() => setMarkersEditMode((prev) => !prev), []);
 
   // Markers tools live behind a collapsed toggle so the deck no longer permanently shoulders the
-  // arena down the page (most viewers never place a marker). Default collapsed; auto-open whenever
-  // there's something to act on — edit mode is active or markers are loaded — so the tools and the
-  // edit-mode gesture hints are never hidden when they're actually needed.
-  const [markersDeckOpen, setMarkersDeckOpen] = useState(false);
-  const toggleMarkersDeck = useCallback(() => setMarkersDeckOpen((prev) => !prev), []);
+  // arena down the page (most viewers never place a marker). Default collapsed, but FORCED open
+  // whenever there's something to act on — edit mode is active or markers are loaded. Deriving the
+  // open state (rather than syncing it via an effect) means the toggle can never collapse the deck
+  // out from under an active edit session and strand the "Done Editing" button.
   const hasMarkers = !!markersState && markersState.markers.length > 0;
-  React.useEffect(() => {
-    if (markersEditMode || hasMarkers) {
-      setMarkersDeckOpen(true);
-    }
-  }, [markersEditMode, hasMarkers]);
+  const deckForcedOpen = markersEditMode || hasMarkers;
+  const [markersDeckUserOpen, setMarkersDeckUserOpen] = useState(false);
+  const markersDeckOpen = deckForcedOpen || markersDeckUserOpen;
+  const toggleMarkersDeck = useCallback(() => setMarkersDeckUserOpen((prev) => !prev), []);
 
   // The marker currently open in the edit dialog (from the context menu or the panel list).
   const [editingMarkerId, setEditingMarkerId] = useState<string | null>(null);
@@ -615,21 +613,26 @@ export const FightReplay: React.FC = () => {
         <Box sx={{ mb: 2 }}>
           {/* Collapsed by default: one quiet toggle keeps the markers tools (a power feature most
               viewers never touch) from permanently pushing the arena down the page. It expands the
-              full deck on demand, and auto-opens while editing / when markers are loaded. */}
+              full deck on demand. While the deck is FORCED open (editing / markers loaded) the
+              toggle is disabled so it can't hide the tools the user is actively working with — and
+              the chevron is dropped, since there's nothing to collapse to. */}
           <Button
             variant="text"
             color="inherit"
             onClick={toggleMarkersDeck}
+            disabled={deckForcedOpen}
             type="button"
             aria-expanded={markersDeckOpen}
             startIcon={<PlaceIcon fontSize="small" sx={{ color: 'secondary.main' }} />}
             endIcon={
-              <KeyboardArrowDownRoundedIcon
-                sx={{
-                  transition: 'transform 0.2s ease',
-                  transform: markersDeckOpen ? 'rotate(180deg)' : 'none',
-                }}
-              />
+              deckForcedOpen ? undefined : (
+                <KeyboardArrowDownRoundedIcon
+                  sx={{
+                    transition: 'transform 0.2s ease',
+                    transform: markersDeckOpen ? 'rotate(180deg)' : 'none',
+                  }}
+                />
+              )
             }
             sx={{
               ml: -1,
@@ -637,6 +640,8 @@ export const FightReplay: React.FC = () => {
               fontWeight: 700,
               letterSpacing: 0.2,
               textTransform: 'none',
+              // Keep the label legible even while disabled (MUI dims disabled text heavily).
+              '&.Mui-disabled': { color: 'text.primary', opacity: 0.85 },
             }}
           >
             Map Markers
