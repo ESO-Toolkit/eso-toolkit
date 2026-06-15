@@ -56,6 +56,10 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onSelect, showOw
         flexDirection: 'column',
         gap: 'var(--report-gap, 12px)',
         height: '100%',
+        // Touch ergonomics: suppress the grey tap flash and double-tap zoom so
+        // the card feels like a native, app-like surface on mobile.
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         // Mirror the page container's cyan gradient (135deg) at a lower opacity
         // so cards read as surfaces ON the container rather than detached panels.
@@ -67,7 +71,7 @@ export const ReportCard: React.FC<ReportCardProps> = ({ report, onSelect, showOw
           boxShadow: (theme: Theme) => theme.shadows[4],
           transform: 'translateY(-2px)',
         },
-        '&:active': { transform: 'translateY(0)' },
+        '&:active': { transform: 'scale(0.99)' },
         '&:focus-visible': {
           outline: (theme: Theme) => `2px solid ${theme.palette.primary.main}`,
           outlineOffset: 2,

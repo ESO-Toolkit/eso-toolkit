@@ -84,17 +84,28 @@ export const ReportsToolbar: React.FC<ReportsToolbarProps> = ({
           inputRef={searchInputRef}
         />
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Badge badgeContent={activeServerFilterCount} color="primary" overlap="rectangular">
+          <Badge
+            badgeContent={activeServerFilterCount}
+            color="primary"
+            overlap="rectangular"
+            sx={{ flex: 1, '& .MuiBadge-badge': { fontWeight: 700 } }}
+          >
             <Button
+              fullWidth
               variant="outlined"
               startIcon={<TuneIcon />}
               onClick={onOpenMobileFilters}
-              sx={{ textTransform: 'none' }}
+              aria-haspopup="dialog"
+              sx={{
+                textTransform: 'none',
+                minHeight: 44,
+                borderRadius: '10px',
+                fontWeight: 600,
+              }}
             >
               Filters
             </Button>
           </Badge>
-          <Box sx={{ flex: 1 }} />
           <DensityToggle value={density} onChange={onDensityChange} />
         </Box>
         {activeFilters}
