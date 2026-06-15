@@ -59,8 +59,8 @@ describe('MarkerEditDialog', () => {
     const onApply = jest.fn();
     render(<MarkerEditDialog marker={marker()} onClose={noop} onApply={onApply} onDelete={noop} />);
 
-    // MT Hex (icon 21): red, text 'MT', default size 1.
-    fireEvent.click(screen.getByRole('button', { name: /use icon mt hex/i }));
+    // MT (icon 21): red hexagon, text 'MT', default size 1.
+    fireEvent.click(screen.getByRole('button', { name: /use icon mt \(main tank\)/i }));
     expect(screen.getByLabelText('Label')).toHaveValue('MT');
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));

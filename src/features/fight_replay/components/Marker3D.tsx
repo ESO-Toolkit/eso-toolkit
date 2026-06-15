@@ -13,35 +13,60 @@ import { LongPressTracker } from '../utils/longPress';
 import { MarkerShape } from './MarkerShape';
 
 /**
- * Creates a canvas texture with text rendered using proper fonts
- * This allows us to render Unicode characters correctly
+ * Screen-heading offset (radians) applied to a ground-facing marker's yaw so that the heading
+ * reads correctly on the displayed map. The map texture is mirrored on X only while the camera
+ * looks straight down, which introduces a fixed offset between a marker's yaw value and "up" on
+ * screen. This constant is MEASURED against the live render (not derivable from code), then held
+ * here as the single source of truth for both the 3D markers and the 2D palette previews.
+ *
+ * MEASURED = π, and verified GLOBAL (not per-map): the value is the composition of two transforms
+ * that are both shared constants — the `arenaX/Z = 100 - …` flip in MapMarkers/MorMarkers, and the
+ * map plane's hardcoded `rotation=[-π/2,0,0]` + `scale=[-1,1,1]` in MapTexture/DynamicMapTexture
+ * (neither is derived per-map). The X-mirror makes the preset headings render reversed on the
+ * displayed map, so a 180° offset lands North→up, East→right, South→down, West→left. Confirmed live
+ * against the rendered scene world-headings and the map texture's UV→world mapping.
+ */
+export const MARKER_YAW_SCREEN_OFFSET = Math.PI;
+
+/**
+ * Creates a canvas texture with crisp, high-contrast text. A heavy dark outline (drawn in two
+ * passes with round joins) keeps short labels — "MT", "H1", "3" — legible over any marker colour
+ * or floor. Trilinear mipmapping + anisotropy keeps the text sharp at distance and at grazing
+ * camera angles.
  */
 function createTextTexture(text: string, fontSize: number): THREE.CanvasTexture {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d')!;
 
-  // Set canvas size (higher resolution for sharper text)
+  // Power-of-two canvas so mipmaps generate cleanly.
   canvas.width = 512;
   canvas.height = 256;
 
-  // Configure text rendering with anti-aliasing and bold weight
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
   context.font = `900 ${fontSize}px Arial, sans-serif`; // 900 = extra bold
   context.textAlign = 'center';
   context.textBaseline = 'middle';
+  context.lineJoin = 'round';
+  context.miterLimit = 2;
 
-  // Draw outline (black, thicker for better readability)
-  context.strokeStyle = 'black';
-  context.lineWidth = fontSize * 0.2;
-  context.strokeText(text, canvas.width / 2, canvas.height / 2);
+  // Two-pass dark outline: a wide soft halo then a tight crisp edge, for contrast on any background.
+  context.strokeStyle = 'rgba(0, 0, 0, 0.92)';
+  context.lineWidth = fontSize * 0.34;
+  context.strokeText(text, cx, cy);
+  context.lineWidth = fontSize * 0.18;
+  context.strokeText(text, cx, cy);
 
-  // Draw fill (white)
-  context.fillStyle = 'white';
-  context.fillText(text, canvas.width / 2, canvas.height / 2);
+  // White fill on top.
+  context.fillStyle = '#ffffff';
+  context.fillText(text, cx, cy);
 
   const texture = new THREE.CanvasTexture(canvas);
-  texture.minFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter; // trilinear: crisp when minified at distance
   texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 16; // Anisotropic filtering for crisp text at angles
+  texture.generateMipmaps = true;
+  texture.anisotropy = 16; // crisp text at grazing angles
   texture.needsUpdate = true;
   return texture;
 }
@@ -472,12 +497,17 @@ export const Marker3D: React.FC<Marker3DProps> = ({
           {content}
         </Billboard>
       ) : (
-        // Ground-facing marker with specific orientation (defined because isFloating is false)
+        // Ground-facing marker with specific orientation (defined because isFloating is false).
+        // yaw goes in the Z slot, NOT the Y slot: after pitch=-90° lays the shape flat, the local
+        // +Y tip lies on the Y axis, so a Y-rotation (the natural-looking [pitch, yaw, 0]) is a
+        // NO-OP — yaw never steered anything. Rotating in the now-horizontal plane is the Z
+        // component of this XYZ Euler. The +MARKER_YAW_SCREEN_OFFSET aligns the heading with the
+        // X-mirrored map so directional arrows point the intended way (North→up, etc.).
         <group
           rotation={[
             (marker.orientation as [number, number])[0],
-            (marker.orientation as [number, number])[1],
             0,
+            (marker.orientation as [number, number])[1] + MARKER_YAW_SCREEN_OFFSET,
           ]}
         >
           {content}

@@ -16,7 +16,7 @@ const COLOR_TOLERANCE = 0.05;
 const SIZE_TOLERANCE = 0.05;
 
 export const COMMON_ELMS_ICON_KEYS: number[] = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 21, 22,
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 21, 18, 72, 73, 74, 75, 76, 77, 14, 15, 16, 17, 20, 22,
 ];
 
 const ICON_LABEL_OVERRIDES: Record<number, string> = {
@@ -30,15 +30,23 @@ const ICON_LABEL_OVERRIDES: Record<number, string> = {
   8: 'Number 8',
   9: 'Number 9',
   10: 'Number 10',
-  13: 'Arrow',
+  // Key 13 (the legacy single down-arrow glyph) was retired in favour of the rotatable
+  // directional arrows (keys 74-77); it is no longer offered in the add-marker menu. Its
+  // ELMS_ICON_MAP entry is kept only so old imported strings referencing it still decode.
   14: 'Chevron',
   15: 'Blue Square',
   16: 'Green Square',
   17: 'Orange Square',
-  18: 'OT Hex',
+  18: 'OT (Off Tank)',
   20: 'Red Square',
-  21: 'MT Hex',
+  21: 'MT (Main Tank)',
   22: 'Yellow Square',
+  72: 'H1 (Healer 1)',
+  73: 'H2 (Healer 2)',
+  74: 'Arrow North',
+  75: 'Arrow East',
+  76: 'Arrow South',
+  77: 'Arrow West',
 };
 
 function deriveLabel(iconKey: number): string {
@@ -70,7 +78,7 @@ export interface MarkerMenuOption {
   sample?: string;
 }
 
-export type MarkerGroupKey = 'numbers' | 'arrows' | 'squares' | 'hexes';
+export type MarkerGroupKey = 'numbers' | 'roles' | 'arrows' | 'shapes' | 'squares';
 
 interface MarkerGroupDefinition {
   key: MarkerGroupKey;
@@ -85,9 +93,10 @@ export interface MarkerGroup {
 
 const GROUP_LABEL_OVERRIDES: Partial<Record<MarkerGroupKey, string>> = {
   numbers: 'Numbers',
-  arrows: 'Arrows & Chevron',
+  roles: 'Roles (Tanks & Healers)',
+  arrows: 'Directional Arrows',
+  shapes: 'Shapes',
   squares: 'Squares',
-  hexes: 'Hexagons',
 };
 
 const MARKER_GROUPS: MarkerGroupDefinition[] = [
@@ -96,16 +105,24 @@ const MARKER_GROUPS: MarkerGroupDefinition[] = [
     iconKeys: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   },
   {
+    // Tank + healer role markers as coloured hexagons: MT, OT, H1, H2.
+    key: 'roles',
+    iconKeys: [21, 18, 72, 73],
+  },
+  {
+    // Rotatable directional arrows: North, East, South, West.
     key: 'arrows',
-    iconKeys: [13, 14],
+    iconKeys: [74, 75, 76, 77],
+  },
+  {
+    // Standalone shape markers (the lime-green chevron). Kept exposed so the prior
+    // "Arrow & Chevron" menu entry isn't silently dropped when arrows became directional.
+    key: 'shapes',
+    iconKeys: [14],
   },
   {
     key: 'squares',
     iconKeys: [15, 16, 17, 20, 22],
-  },
-  {
-    key: 'hexes',
-    iconKeys: [18, 21],
   },
 ];
 
@@ -186,7 +203,9 @@ export function createMarkerFromElmsIcon(
     bgTexture: template.bgTexture,
     colour,
     text: template.text,
-    orientation: undefined,
+    // Carry a ground-facing heading when the template defines one (directional arrows);
+    // everything else stays floating (undefined).
+    orientation: template.orientation ? ([...template.orientation] as [number, number]) : undefined,
     elmsIconKey: iconKey,
   };
 }
@@ -240,6 +259,27 @@ function sizesMatch(a: number, b: number): boolean {
   return Math.abs(a - b) <= SIZE_TOLERANCE;
 }
 
+const ORIENTATION_TOLERANCE = 0.0001;
+
+/** Smallest absolute angular difference between two angles, handling 2π wrap (e.g. 2π ≡ 0). */
+function angularDelta(a: number, b: number): number {
+  return Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+}
+
+function orientationsMatch(
+  a: [number, number] | undefined,
+  b: [number, number] | undefined,
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  // pitch and yaw are angles, so compare modulo 2π — a yaw of 2π or -π must still match its
+  // canonical preset (0 or π) so wrapped headings round-trip to the right arrow icon.
+  return (
+    angularDelta(a[0], b[0]) <= ORIENTATION_TOLERANCE &&
+    angularDelta(a[1], b[1]) <= ORIENTATION_TOLERANCE
+  );
+}
+
 function findElmsIconKeyForMarker(marker: MorMarker): number | null {
   if (typeof marker.elmsIconKey === 'number') {
     return marker.elmsIconKey;
@@ -268,6 +308,14 @@ function findElmsIconKeyForMarker(marker: MorMarker): number | null {
       if (!marker.colour) continue;
       if (!coloursMatch(marker.colour, definition.colour as [number, number, number, number]))
         continue;
+    }
+
+    // Directional arrows share texture+colour and differ only by heading, so the orientation
+    // must match for the marker to round-trip back to the correct arrow icon key.
+    if (
+      !orientationsMatch(marker.orientation, definition.orientation as [number, number] | undefined)
+    ) {
+      continue;
     }
 
     return iconKey;
@@ -542,6 +590,9 @@ export function applyElmsIconTemplate(marker: ReplayMarker, iconKey: number): Re
     bgTexture: template.bgTexture,
     colour,
     text: template.text,
+    // Adopt the new template's orientation: re-skinning to a directional arrow must make the
+    // marker ground-facing, and re-skinning away from one must clear the heading (back to floating).
+    orientation: template.orientation ? ([...template.orientation] as [number, number]) : undefined,
     elmsIconKey: iconKey,
   };
 }

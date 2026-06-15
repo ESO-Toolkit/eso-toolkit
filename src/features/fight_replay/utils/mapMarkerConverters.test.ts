@@ -1,6 +1,7 @@
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
 
 import {
+  COMMON_ELMS_ICON_KEYS,
   COMMON_MARKER_GROUPS,
   COMMON_MARKER_OPTIONS,
   applyElmsIconTemplate,
@@ -34,6 +35,46 @@ describe('createMarkerFromElmsIcon', () => {
     expect(marker.text).toBe('1');
     expect(marker.size).toBe(1.5);
     expect(marker).toMatchObject({ x: 10, y: 20, z: 30 });
+  });
+
+  it('builds H1/H2 healer markers as green hexagons with their label', () => {
+    const h1 = createMarkerFromElmsIcon(72, { x: 0, y: 0, z: 0 });
+    const h2 = createMarkerFromElmsIcon(73, { x: 0, y: 0, z: 0 });
+    expect(h1.bgTexture).toBe('M0RMarkers/textures/hexagon.dds');
+    expect(h1.text).toBe('H1');
+    expect(h2.text).toBe('H2');
+    // Same green for both healer markers.
+    expect(h1.colour).toEqual(h2.colour);
+    expect(h1.orientation).toBeUndefined(); // healer hexes float
+  });
+
+  it('builds directional arrows as ground-facing markers with distinct headings', () => {
+    const north = createMarkerFromElmsIcon(74, { x: 0, y: 0, z: 0 });
+    const east = createMarkerFromElmsIcon(75, { x: 0, y: 0, z: 0 });
+    const south = createMarkerFromElmsIcon(76, { x: 0, y: 0, z: 0 });
+    const west = createMarkerFromElmsIcon(77, { x: 0, y: 0, z: 0 });
+    const arrows = [north, east, south, west];
+
+    for (const arrow of arrows) {
+      expect(arrow.bgTexture).toBe('M0RMarkers/textures/arrow.dds');
+      // pitch = -90° lays the arrow flat on the floor.
+      expect(arrow.orientation?.[0]).toBeCloseTo(-Math.PI / 2, 6);
+    }
+
+    // RELATIVE GUARD (the absolute yaw→screen mapping is a measured constant, not asserted here):
+    // the four headings must be pairwise distinct and exactly 90° apart in the N,E,S,W order.
+    const yaws = arrows.map((a) => a.orientation![1]);
+    const norm = (a: number): number =>
+      (((a % (2 * Math.PI)) + 3 * Math.PI) % (2 * Math.PI)) - Math.PI;
+    for (let i = 0; i < 4; i++) {
+      const delta = norm(yaws[(i + 1) % 4] - yaws[i]);
+      expect(Math.abs(Math.abs(delta) - Math.PI / 2)).toBeLessThan(1e-6);
+    }
+
+    // Mutating one arrow's orientation must not affect the shared template or its siblings.
+    north.orientation![1] = 99;
+    const north2 = createMarkerFromElmsIcon(74, { x: 0, y: 0, z: 0 });
+    expect(north2.orientation?.[1]).toBeCloseTo(0, 6);
   });
 
   it('throws on an unknown icon key', () => {
@@ -75,6 +116,30 @@ describe('encodeMarkersToElms', () => {
   it('throws when there are no markers', () => {
     expect(() => encodeMarkersToElms(stateFromMarkers([]))).toThrow(/No markers/);
   });
+
+  it('matches an arrow marker whose yaw is wrapped by 2π to the right cardinal key', () => {
+    // A North arrow (key 74, yaw 0) carried with yaw = 2π, and a South arrow (key 76, yaw π)
+    // carried with yaw = -π, must still encode back to their cardinal keys (angular compare).
+    const northWrapped: ReplayMarker = {
+      id: 'n',
+      source: 'manual',
+      x: 0,
+      y: 0,
+      z: 0,
+      size: 1,
+      bgTexture: 'M0RMarkers/textures/arrow.dds',
+      colour: [1, 1, 1, 1],
+      orientation: [-Math.PI / 2, Math.PI * 2], // 2π ≡ 0 (North)
+    };
+    const southWrapped: ReplayMarker = {
+      ...northWrapped,
+      id: 's',
+      orientation: [-Math.PI / 2, -Math.PI], // -π ≡ π (South)
+    };
+    const encoded = encodeMarkersToElms(stateFromMarkers([northWrapped, southWrapped]));
+    expect(encoded).toContain(',74/');
+    expect(encoded).toContain(',76/');
+  });
 });
 
 describe('ELMS round-trip (parse -> encode)', () => {
@@ -107,6 +172,25 @@ describe('ELMS round-trip (parse -> encode)', () => {
     // Each segment is /zone//x,y,z,key/ which contains 4 slashes; 3 markers -> 12.
     expect((reEncoded.match(/\//g) || []).length).toBe(12);
     expect(reEncoded).toBe('/636//10,75,20,1//636//30,75,40,2//636//50,75,60,3/');
+  });
+
+  it('round-trips all four directional arrows to their distinct icon keys', () => {
+    // Arrows share texture + colour and differ only by heading, so the orientation match in
+    // findElmsIconKeyForMarker is what keeps each arrow mapping back to its own key.
+    const parsed = parseMarkersInput(
+      '/636//10,0,20,74//636//30,0,40,75//636//50,0,60,76//636//70,0,80,77/',
+    );
+    expect(parsed.markers.map((m) => m.elmsIconKey)).toEqual([74, 75, 76, 77]);
+    // Drop the fast-path elmsIconKey so the matcher must rely on orientation alone.
+    const stripped = parsed.markers.map((m) => {
+      const { elmsIconKey: _drop, ...rest } = m;
+      return rest as ReplayMarker;
+    });
+    const reEncoded = encodeMarkersToElms({ ...parsed, markers: stripped });
+    expect(reEncoded).toContain(',74/');
+    expect(reEncoded).toContain(',75/');
+    expect(reEncoded).toContain(',76/');
+    expect(reEncoded).toContain(',77/');
   });
 });
 
@@ -195,6 +279,51 @@ describe('marker menu metadata', () => {
     const numbers = COMMON_MARKER_GROUPS.find((g) => g.key === 'numbers');
     expect(numbers?.label).toBe('Numbers');
     expect(numbers?.options.map((o) => o.iconKey)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('exposes a roles group with MT, OT, H1 and H2', () => {
+    const roles = COMMON_MARKER_GROUPS.find((g) => g.key === 'roles');
+    expect(roles).toBeDefined();
+    expect(roles?.options.map((o) => o.iconKey)).toEqual([21, 18, 72, 73]);
+    const labels = roles?.options.map((o) => o.label) ?? [];
+    expect(labels).toEqual(['MT (Main Tank)', 'OT (Off Tank)', 'H1 (Healer 1)', 'H2 (Healer 2)']);
+  });
+
+  it('exposes an arrows group with the four cardinal directions', () => {
+    const arrows = COMMON_MARKER_GROUPS.find((g) => g.key === 'arrows');
+    expect(arrows).toBeDefined();
+    expect(arrows?.label).toBe('Directional Arrows');
+    expect(arrows?.options.map((o) => o.iconKey)).toEqual([74, 75, 76, 77]);
+  });
+
+  it('still exposes the chevron (key 14) so it was not dropped when arrows became directional', () => {
+    // Regression guard: every key in COMMON_ELMS_ICON_KEYS must live in some group, otherwise it
+    // is silently missing from the in-arena add-marker menu.
+    const groupedKeys = COMMON_MARKER_GROUPS.flatMap((g) => g.options.map((o) => o.iconKey));
+    const groupedKeySet = new Set(groupedKeys);
+    for (const key of COMMON_ELMS_ICON_KEYS) {
+      expect(groupedKeySet.has(key)).toBe(true);
+    }
+    const shapes = COMMON_MARKER_GROUPS.find((g) => g.key === 'shapes');
+    expect(shapes?.options.map((o) => o.iconKey)).toContain(14);
+  });
+
+  it('does not list any icon key in more than one group (no duplicate menu entries)', () => {
+    // MT/OT (21/18) used to appear in both Roles and a now-removed Hexagons group.
+    const grouped = COMMON_MARKER_GROUPS.flatMap((g) => g.options.map((o) => o.iconKey));
+    expect(grouped.length).toBe(new Set(grouped).size);
+  });
+
+  it('retires the legacy down-arrow (key 13) from the menu but still decodes it', () => {
+    // Key 13 was replaced by the directional arrows; it must not be offered in the add-marker
+    // menu, yet old Elms strings that reference it must still parse for backward compatibility.
+    expect(COMMON_MARKER_OPTIONS.every((o) => o.iconKey !== 13)).toBe(true);
+    const grouped = new Set(COMMON_MARKER_GROUPS.flatMap((g) => g.options.map((o) => o.iconKey)));
+    expect(grouped.has(13)).toBe(false);
+
+    const parsed = parseMarkersInput('/636//10,0,20,13/');
+    expect(parsed.markers).toHaveLength(1);
+    expect(parsed.markers[0].elmsIconKey).toBe(13);
   });
 });
 
@@ -289,6 +418,21 @@ describe('applyElmsIconTemplate / withMarkerEdit', () => {
 
   it('throws on an unknown icon key', () => {
     expect(() => applyElmsIconTemplate(manualMarker(1), 99999)).toThrow(/Unknown Elms icon/);
+  });
+
+  it('adopts the new template orientation when re-skinning to/from a directional arrow', () => {
+    // Floating number (no orientation) -> arrow must become ground-facing with the arrow heading.
+    const floating = manualMarker(1, { x: 0, y: 0, z: 0 });
+    expect(floating.orientation).toBeUndefined();
+    const toArrow = applyElmsIconTemplate(floating, 74); // North arrow
+    expect(toArrow.orientation?.[0]).toBeCloseTo(-Math.PI / 2, 6);
+    expect(toArrow.orientation?.[1]).toBeCloseTo(0, 6);
+
+    // Arrow -> floating hexagon must clear the heading (back to floating), not keep the old arrow's.
+    const arrow = manualMarker(75, { x: 0, y: 0, z: 0 }); // East arrow
+    expect(arrow.orientation).toBeDefined();
+    const toHex = applyElmsIconTemplate(arrow, 72); // H1 hex (floating)
+    expect(toHex.orientation).toBeUndefined();
   });
 
   it('withMarkerEdit applies icon swap then field overrides in one transition', () => {

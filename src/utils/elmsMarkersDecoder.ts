@@ -118,6 +118,37 @@ export const ELMS_ICON_MAP: Record<number, Partial<MorMarker>> = {
 
   // SharkPog equivalent
   71: { bgTexture: 'M0RMarkers/textures/sharkpog.dds', colour: [1, 1, 1, 1] },
+
+  // Healer role markers (green hexagons, mirroring MT key 21 / OT key 18 tank markers).
+  // Not part of any in-game addon's icon set — these are esotk-native palette additions.
+  72: { bgTexture: 'M0RMarkers/textures/hexagon.dds', colour: [0, 0.85, 0.45, 1], text: 'H1' }, // Healer 1
+  73: { bgTexture: 'M0RMarkers/textures/hexagon.dds', colour: [0, 0.85, 0.45, 1], text: 'H2' }, // Healer 2
+
+  // Directional arrows. One rotatable arrow texture; heading is carried in `orientation` as
+  // [pitch, yaw]. pitch = -90° lays the shape flat on the floor; yaw is the heading, spaced 90°
+  // apart for the four cardinal directions. The mapping from yaw to "up on the displayed map" is
+  // a single fixed screen offset measured against the live render (MARKER_YAW_SCREEN_OFFSET in
+  // Marker3D), so these raw yaws only need to be distinct and 90° apart in the intuitive order.
+  74: {
+    bgTexture: 'M0RMarkers/textures/arrow.dds',
+    colour: [1, 1, 1, 1],
+    orientation: [-Math.PI / 2, 0], // North (up)
+  },
+  75: {
+    bgTexture: 'M0RMarkers/textures/arrow.dds',
+    colour: [1, 1, 1, 1],
+    orientation: [-Math.PI / 2, Math.PI / 2], // East (right)
+  },
+  76: {
+    bgTexture: 'M0RMarkers/textures/arrow.dds',
+    colour: [1, 1, 1, 1],
+    orientation: [-Math.PI / 2, Math.PI], // South (down)
+  },
+  77: {
+    bgTexture: 'M0RMarkers/textures/arrow.dds',
+    colour: [1, 1, 1, 1],
+    orientation: [-Math.PI / 2, -Math.PI / 2], // West (left)
+  },
 };
 
 /**
@@ -206,7 +237,11 @@ export function decodeElmsMarkersString(elmsString: string): DecodedElmsMarkers 
       bgTexture: iconTemplate?.bgTexture, // No fallback - undefined means text-only marker
       colour: iconTemplate?.colour || [1, 1, 1, 1],
       text: iconTemplate?.text || undefined, // Ensure undefined instead of any falsy value
-      orientation: undefined, // Elms markers are floating (no orientation)
+      // Most Elms markers float (always face camera). A few esotk-native presets (directional
+      // arrows) are ground-facing and carry an explicit [pitch, yaw] heading in their template.
+      orientation: iconTemplate?.orientation
+        ? ([...iconTemplate.orientation] as [number, number])
+        : undefined,
       elmsIconKey: iconKey,
     };
 

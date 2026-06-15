@@ -1,5 +1,10 @@
 /**
- * Marker shape geometries based on M0RMarkers texture types
+ * Marker shape geometries based on M0RMarkers texture types.
+ *
+ * Shapes are authored in local XY space with +Y pointing "up"/forward (this matters for the
+ * directional arrow: after the parent group applies pitch = -90°, local +Y lays flat on the
+ * floor and yaw rotates the heading). Every shape is rendered with a thin dark outline behind
+ * the fill so markers stay legible on a same-colour floor.
  */
 import React, { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
@@ -25,6 +30,11 @@ interface MarkerShapeProps {
   opacity: number;
 }
 
+/** Fraction of the radius used for the outline ring thickness. */
+const OUTLINE_SCALE = 1.14;
+/** Dark, semi-opaque outline that reads against bright and dark floors alike. */
+const OUTLINE_COLOR = new THREE.Color(0.04, 0.05, 0.08);
+
 /**
  * Extracts the shape type from a texture path
  * @param texturePath - Full texture path (e.g., "M0RMarkers/textures/circle.dds")
@@ -41,27 +51,10 @@ function getShapeFromTexture(texturePath: string): string {
 }
 
 /**
- * Creates a hexagon shape
+ * Creates a regular polygon shape with `sides` vertices, first vertex pointing up (+Y).
  */
-function createHexagonShape(radius: number): ThreeShape {
+function createPolygonShape(radius: number, sides: number): ThreeShape {
   const shape = new ThreeShape();
-  const sides = 6;
-  const angleStep = (Math.PI * 2) / sides;
-
-  shape.moveTo(0, radius);
-  for (let i = 1; i <= sides; i++) {
-    const angle = angleStep * i - Math.PI / 2;
-    shape.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
-  }
-  return shape;
-}
-
-/**
- * Creates an octagon shape
- */
-function createOctagonShape(radius: number): ThreeShape {
-  const shape = new ThreeShape();
-  const sides = 8;
   const angleStep = (Math.PI * 2) / sides;
 
   shape.moveTo(0, radius);
@@ -77,9 +70,6 @@ function createOctagonShape(radius: number): ThreeShape {
  */
 function createDiamondShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
-  // const _halfSize = radius * 0.707; // Adjust for diagonal (unused, kept for reference)
-
-  // Diamond points (top, right, bottom, left)
   shape.moveTo(0, radius);
   shape.lineTo(radius, 0);
   shape.lineTo(0, -radius);
@@ -104,11 +94,10 @@ function createSquareShape(radius: number): ThreeShape {
 }
 
 /**
- * Creates a chevron (arrow/V shape) pointing up
+ * Creates a chevron (arrow/V shape) pointing up (+Y)
  */
 function createChevronShape(radius: number): ThreeShape {
   const shape = new ThreeShape();
-  // const _thickness = radius * 0.25; // Thickness of the chevron arms (unused, kept for reference)
 
   // Outer V shape
   shape.moveTo(0, radius); // Top point
@@ -123,54 +112,111 @@ function createChevronShape(radius: number): ThreeShape {
 }
 
 /**
- * Renders the appropriate marker shape based on texture type
+ * Creates a directional arrow pointing up (+Y): a triangular head over a rectangular shaft.
+ * Proportioned so the head stays readable even when the marker is rendered small.
+ */
+function createArrowShape(radius: number): ThreeShape {
+  const shape = new ThreeShape();
+
+  const headHalfWidth = radius * 0.62;
+  const headBaseY = radius * 0.12; // where the triangular head meets the shaft
+  const shaftHalfWidth = radius * 0.26;
+  const shaftBottomY = -radius * 0.92;
+
+  // Arrowhead (tip at top, +Y)
+  shape.moveTo(0, radius); // tip
+  shape.lineTo(headHalfWidth, headBaseY); // right corner of head
+  shape.lineTo(shaftHalfWidth, headBaseY); // step in to shaft (right)
+  shape.lineTo(shaftHalfWidth, shaftBottomY); // shaft right-bottom
+  shape.lineTo(-shaftHalfWidth, shaftBottomY); // shaft left-bottom
+  shape.lineTo(-shaftHalfWidth, headBaseY); // step out to head (left)
+  shape.lineTo(-headHalfWidth, headBaseY); // left corner of head
+  shape.lineTo(0, radius); // back to tip
+
+  return shape;
+}
+
+type ShapeFactory = (radius: number) => ThreeShape;
+
+/**
+ * Resolves the geometry factory for a given marker shape type. Non-circular shapes return a
+ * factory; circle/blank/sharkpog/unknown return null (rendered as a CircleGeometry instead).
+ */
+function getShapeFactory(shapeType: string): ShapeFactory | null {
+  switch (shapeType) {
+    case 'hexagon':
+      return (r) => createPolygonShape(r, 6);
+    case 'octagon':
+      return (r) => createPolygonShape(r, 8);
+    case 'diamond':
+      return createDiamondShape;
+    case 'square':
+      return createSquareShape;
+    case 'chevron':
+      return createChevronShape;
+    case 'arrow':
+      return createArrowShape;
+    default:
+      return null;
+  }
+}
+
+function buildGeometry(factory: ShapeFactory | null, radius: number): THREE.BufferGeometry {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  if (factory) {
+    return new THREE.ShapeGeometry(factory(radius) as any);
+  }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  return new THREE.CircleGeometry(radius, 48);
+}
+
+/**
+ * Renders the appropriate marker shape based on texture type, with a dark outline backing for
+ * contrast against any floor colour.
  */
 export const MarkerShape: React.FC<MarkerShapeProps> = ({ texturePath, size, color, opacity }) => {
   const radius = size / 2;
   const shapeType = getShapeFromTexture(texturePath);
 
-  const geometry = useMemo(() => {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    switch (shapeType) {
-      case 'hexagon':
-        return new THREE.ShapeGeometry(createHexagonShape(radius) as any);
+  const factory = useMemo(() => getShapeFactory(shapeType), [shapeType]);
 
-      case 'octagon':
-        return new THREE.ShapeGeometry(createOctagonShape(radius) as any);
+  // Fill geometry (foreground).
+  const geometry = useMemo(() => buildGeometry(factory, radius), [factory, radius]);
 
-      case 'diamond':
-        return new THREE.ShapeGeometry(createDiamondShape(radius) as any);
+  // Outline geometry: same shape, slightly larger, rendered behind the fill.
+  const outlineGeometry = useMemo(
+    () => buildGeometry(factory, radius * OUTLINE_SCALE),
+    [factory, radius],
+  );
 
-      case 'square':
-        return new THREE.ShapeGeometry(createSquareShape(radius) as any);
-
-      case 'chevron':
-        return new THREE.ShapeGeometry(createChevronShape(radius) as any);
-      /* eslint-enable @typescript-eslint/no-explicit-any */
-
-      case 'circle':
-      case 'blank':
-      case 'sharkpog':
-      default:
-        return new THREE.CircleGeometry(radius, 32);
-    }
-  }, [shapeType, radius]);
-
-  // Dispose geometry on unmount or when shape/radius changes
+  // Dispose geometries on unmount or when shape/radius changes.
   useEffect(() => {
     return () => {
       geometry.dispose();
+      outlineGeometry.dispose();
     };
-  }, [geometry]);
+  }, [geometry, outlineGeometry]);
 
   return (
-    <mesh geometry={geometry}>
-      <meshBasicMaterial
-        color={color}
-        opacity={opacity}
-        transparent={true}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
+    <group>
+      {/* Outline (slightly behind the fill on the local +Z axis so it never z-fights). */}
+      <mesh geometry={outlineGeometry} position={[0, 0, -0.002]}>
+        <meshBasicMaterial
+          color={OUTLINE_COLOR}
+          opacity={Math.min(1, opacity) * 0.85}
+          transparent={true}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* Fill */}
+      <mesh geometry={geometry}>
+        <meshBasicMaterial
+          color={color}
+          opacity={opacity}
+          transparent={true}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
   );
 };
