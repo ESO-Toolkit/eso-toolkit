@@ -3,6 +3,7 @@
  * Mirrors the roster-hub-api pattern: thin fetch wrappers, auth via Bearer token.
  */
 
+import { getRosterHubBaseUrl } from '../../../utils/envUtils';
 import type {
   HubBuild,
   HubBuildComment,
@@ -10,10 +11,7 @@ import type {
   PublishBuildPayload,
 } from '../types/build-hub.types';
 
-const BASE_URL = (import.meta.env.VITE_ROSTER_HUB_API_URL ?? 'http://localhost:8787').replace(
-  /\/$/,
-  '',
-);
+const BASE_URL = getRosterHubBaseUrl();
 
 async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   const headers: Record<string, string> = {

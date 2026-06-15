@@ -3,10 +3,9 @@
  * Uploads images via the roster-hub-api Worker proxy (keeps ImgBB key server-side).
  */
 
-const BASE_URL = (import.meta.env.VITE_ROSTER_HUB_API_URL ?? 'http://localhost:8787').replace(
-  /\/$/,
-  '',
-);
+import { getRosterHubBaseUrl } from '../../../utils/envUtils';
+
+const BASE_URL = getRosterHubBaseUrl();
 
 export interface ImageUploadResult {
   id: string;

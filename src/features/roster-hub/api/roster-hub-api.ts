@@ -4,7 +4,7 @@
  * during development so the Worker dev server Just Works.
  */
 
-import { getBaseUrl, getEnvVar } from '../../../utils/envUtils';
+import { getBaseUrl, getRosterHubBaseUrl } from '../../../utils/envUtils';
 import type {
   HubRoster,
   ListCommentsResponse,
@@ -38,8 +38,7 @@ function hydrateRoster(roster: HubRoster): HubRoster {
   };
 }
 
-const BASE_URL =
-  getEnvVar('VITE_ROSTER_HUB_API_URL') ?? 'https://roster-hub-api.eso-toolkit.workers.dev';
+const BASE_URL = getRosterHubBaseUrl();
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
