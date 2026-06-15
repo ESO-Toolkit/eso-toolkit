@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { MorMarker, TEXTURE_LOOKUP } from '@/types/mapMarkers';
+import { ZoneScaleData } from '@/types/zoneScaleData';
 import {
   DecodedElmsMarkers,
   ELMS_ICON_MAP,
@@ -498,6 +499,158 @@ export function encodeMarkersToMor(state: MapMarkersState): string {
   ];
 
   return `<${sections.join(']')}>`;
+}
+
+/**
+ * Convert an arena-space point (the 0-100 coordinate system the 3D scene uses) back into
+ * world-space centimeters for the given map. Exact inverse of the transform MapMarkers applies
+ * when rendering, so a marker dropped/dragged at an arena point round-trips to the same spot.
+ */
+export function arenaPointToWorld(
+  mapData: ZoneScaleData,
+  arenaPoint: { x: number; z: number },
+): { x: number; z: number } {
+  const clamp = (value: number): number => Math.min(100, Math.max(0, value));
+
+  const normalizedX = (100 - clamp(arenaPoint.x)) / 100;
+  const normalizedZ = (100 - clamp(arenaPoint.z)) / 100;
+
+  return {
+    x: normalizedX * (mapData.maxX - mapData.minX) + mapData.minX,
+    z: normalizedZ * (mapData.maxZ - mapData.minZ) + mapData.minZ,
+  };
+}
+
+/**
+ * Re-skin an existing marker with a different Elms icon template (shape/text/colour/size),
+ * keeping its position and identity. Used by the marker edit dialog's icon picker.
+ */
+export function applyElmsIconTemplate(marker: ReplayMarker, iconKey: number): ReplayMarker {
+  const template = ELMS_ICON_MAP[iconKey];
+
+  if (!template) {
+    throw new Error(`Unknown Elms icon key: ${iconKey}`);
+  }
+
+  const colour: [number, number, number, number] = template.colour
+    ? ([...template.colour] as [number, number, number, number])
+    : [1, 1, 1, 1];
+
+  return {
+    ...marker,
+    size: template.size ?? 1,
+    bgTexture: template.bgTexture,
+    colour,
+    text: template.text,
+    elmsIconKey: iconKey,
+  };
+}
+
+/** Fields of a marker the edit dialog can change. */
+export interface MarkerEditPatch {
+  text?: string;
+  colour?: [number, number, number, number];
+  size?: number;
+}
+
+/** One edit-dialog submission: optional icon re-skin plus field overrides, applied atomically. */
+export interface MarkerEdit extends MarkerEditPatch {
+  /** When set, re-skin from this Elms template first; patch fields then override the template. */
+  iconKey?: number;
+}
+
+/**
+ * Apply a partial edit (label/colour/size) to one marker by id. Clearing the label and diverging
+ * from the icon template drops `elmsIconKey` so stats/exports stop claiming template fidelity.
+ */
+export function withMarkerPatch(
+  state: MapMarkersState,
+  markerId: string,
+  patch: MarkerEditPatch,
+): MapMarkersState {
+  return {
+    ...state,
+    markers: state.markers.map((marker) => {
+      if (marker.id !== markerId) {
+        return marker;
+      }
+
+      const next: ReplayMarker = { ...cloneMarker(marker), id: marker.id, source: marker.source };
+
+      if (patch.text !== undefined) {
+        next.text = patch.text.trim().length > 0 ? patch.text : undefined;
+      }
+      if (patch.colour !== undefined) {
+        next.colour = [...patch.colour] as [number, number, number, number];
+      }
+      if (patch.size !== undefined && Number.isFinite(patch.size) && patch.size > 0) {
+        next.size = patch.size;
+      }
+
+      // If the marker no longer matches its Elms template, it can only round-trip via M0R.
+      if (typeof next.elmsIconKey === 'number') {
+        const template = ELMS_ICON_MAP[next.elmsIconKey];
+        const stillMatches =
+          template !== undefined &&
+          next.text === template.text &&
+          sizesMatch(next.size, template.size ?? 1) &&
+          coloursMatch(
+            next.colour,
+            (template.colour ?? [1, 1, 1, 1]) as [number, number, number, number],
+          );
+
+        if (!stillMatches) {
+          next.elmsIconKey = undefined;
+        }
+      }
+
+      return next;
+    }),
+  };
+}
+
+/**
+ * Apply one edit-dialog submission to a marker in the state: optional icon template re-skin,
+ * then label/colour/size overrides — as a SINGLE state transition (one undo step).
+ */
+export function withMarkerEdit(
+  state: MapMarkersState,
+  markerId: string,
+  edit: MarkerEdit,
+): MapMarkersState {
+  const target = state.markers.find((marker) => marker.id === markerId);
+  if (!target) {
+    return state;
+  }
+
+  let base = state;
+  if (edit.iconKey !== undefined && edit.iconKey !== target.elmsIconKey) {
+    base = updateMarker(state, applyElmsIconTemplate(target, edit.iconKey));
+  }
+
+  const { iconKey: _iconKey, ...patch } = edit;
+  return withMarkerPatch(base, markerId, patch);
+}
+
+/** Move one marker to new world-space coordinates (drag-to-move commit). */
+export function withMarkerPosition(
+  state: MapMarkersState,
+  markerId: string,
+  position: { x: number; z: number; y?: number },
+): MapMarkersState {
+  return {
+    ...state,
+    markers: state.markers.map((marker) =>
+      marker.id === markerId
+        ? {
+            ...marker,
+            x: position.x,
+            z: position.z,
+            y: position.y ?? marker.y,
+          }
+        : marker,
+    ),
+  };
 }
 
 export function withNewMarker(

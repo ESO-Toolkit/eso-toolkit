@@ -76,8 +76,13 @@ export const usePlaybackAnimation = ({
     timeRef.current = newTime;
 
     // Check for end of playback (only when not looping — the loop never reaches duration's end
-    // unless hi === duration, and even then it wraps above before this).
+    // unless hi === duration, and even then it wraps above before this). Sync React state to the
+    // exact end FIRST: the periodic sync below only fires every ≥100ms real time, so without
+    // this the consumer's currentTime parks up to ~116ms-real × speed short of duration — at
+    // 3–5× that gap exceeded end-of-fight UI gates keyed on currentTime (the parked "Play next"
+    // card simply never mounted).
     if (newTime >= duration) {
+      onTimeUpdate?.(duration);
       onEnd?.();
       return;
     }

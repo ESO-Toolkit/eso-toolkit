@@ -1,13 +1,17 @@
+import AddLocationAlt from '@mui/icons-material/AddLocationAlt';
 import Bolt from '@mui/icons-material/Bolt';
 import CenterFocusStrong from '@mui/icons-material/CenterFocusStrong';
 import Close from '@mui/icons-material/Close';
+import EditLocationAlt from '@mui/icons-material/EditLocationAlt';
 import Insights from '@mui/icons-material/Insights';
 import Label from '@mui/icons-material/Label';
 import LabelOff from '@mui/icons-material/LabelOff';
 import People from '@mui/icons-material/People';
+import Redo from '@mui/icons-material/Redo';
 import RestartAlt from '@mui/icons-material/RestartAlt';
 import Route from '@mui/icons-material/Route';
 import Tune from '@mui/icons-material/Tune';
+import Undo from '@mui/icons-material/Undo';
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React, { useState } from 'react';
@@ -50,6 +54,16 @@ export interface MobileReplayControlsProps {
   following: boolean;
   statsPanelEnabled: boolean;
   onToggleStats: () => void;
+  /** Marker edit mode (long-press to place/edit, drag to move). Omitted = no markers row. */
+  markersEditMode?: boolean;
+  onToggleMarkersEditMode?: () => void;
+  /** Gesture-free marker placement: opens the add-marker menu at the screen center. */
+  onAddMarkerAtCenter?: () => void;
+  /** Undo/redo the last marker change — only shown while edit mode is on. */
+  canUndoMarkers?: boolean;
+  onUndoMarkers?: () => void;
+  canRedoMarkers?: boolean;
+  onRedoMarkers?: () => void;
 }
 
 /** A row in the tools sheet. `closesOnTap` items open another on-screen panel, so the sheet dismisses
@@ -61,6 +75,7 @@ interface ToolItem {
   active: boolean;
   onTap: () => void;
   closesOnTap?: boolean;
+  disabled?: boolean;
 }
 
 export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
@@ -76,6 +91,13 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
   following,
   statsPanelEnabled,
   onToggleStats,
+  markersEditMode = false,
+  onToggleMarkersEditMode,
+  onAddMarkerAtCenter,
+  canUndoMarkers = false,
+  onUndoMarkers,
+  canRedoMarkers = false,
+  onRedoMarkers,
 }) => {
   // The tools sheet anchor — null = closed.
   const [toolsAnchor, setToolsAnchor] = useState<HTMLElement | null>(null);
@@ -106,6 +128,59 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
       active: namesEnabled,
       onTap: onToggleNames,
     },
+    // Marker editing: the touch home for the desktop "Edit Markers" toggle. While on,
+    // long-press the map to place a marker, drag a marker to move it, long-press a marker
+    // to edit/remove it. Undo rides along for recovering from a mis-drag without leaving
+    // the overlay.
+    ...(onToggleMarkersEditMode
+      ? [
+          {
+            key: 'editMarkers',
+            label: markersEditMode ? 'Stop editing markers' : 'Edit markers',
+            icon: <EditLocationAlt fontSize="small" />,
+            active: markersEditMode,
+            onTap: onToggleMarkersEditMode,
+            closesOnTap: true,
+          } as ToolItem,
+        ]
+      : []),
+    // Gesture-free placement: long-press is the fast path, this row always works.
+    ...(markersEditMode && onAddMarkerAtCenter
+      ? [
+          {
+            key: 'addMarker',
+            label: 'Add marker here',
+            icon: <AddLocationAlt fontSize="small" />,
+            active: false,
+            onTap: onAddMarkerAtCenter,
+            closesOnTap: true,
+          } as ToolItem,
+        ]
+      : []),
+    ...(markersEditMode && onUndoMarkers
+      ? [
+          {
+            key: 'undoMarkers',
+            label: 'Undo marker change',
+            icon: <Undo fontSize="small" />,
+            active: false,
+            onTap: onUndoMarkers,
+            disabled: !canUndoMarkers,
+          } as ToolItem,
+        ]
+      : []),
+    ...(markersEditMode && onRedoMarkers
+      ? [
+          {
+            key: 'redoMarkers',
+            label: 'Redo marker change',
+            icon: <Redo fontSize="small" />,
+            active: false,
+            onTap: onRedoMarkers,
+            disabled: !canRedoMarkers,
+          } as ToolItem,
+        ]
+      : []),
     {
       key: 'reset',
       label: 'Reset view',
@@ -215,6 +290,9 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
               backgroundColor: alpha(theme.palette.background.paper, 0.96),
               backdropFilter: 'blur(12px)',
               border: '1px solid rgba(148,210,255,0.25)',
+              // iOS: keep long-presses from text-selecting the sheet rows.
+              userSelect: 'none',
+              WebkitTouchCallout: 'none',
             }),
           },
         }}
@@ -224,6 +302,7 @@ export const MobileReplayControls: React.FC<MobileReplayControlsProps> = ({
             key={item.key}
             onClick={() => handleTap(item)}
             aria-pressed={item.active}
+            disabled={item.disabled}
             sx={{
               minHeight: 44,
               color: item.active ? 'primary.main' : 'text.primary',

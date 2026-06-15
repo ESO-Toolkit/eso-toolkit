@@ -39,7 +39,7 @@ interface PlaybackButtonsProps {
  * - Skip forward 10 seconds
  * - Skip to end
  */
-export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
+const PlaybackButtonsComponent: React.FC<PlaybackButtonsProps> = ({
   isPlaying,
   onPlayPause,
   onSkipToStart,
@@ -176,3 +176,10 @@ export const PlaybackButtons: React.FC<PlaybackButtonsProps> = ({
     </Box>
   );
 };
+
+/**
+ * Memoized: the transport bars (mobile dock + desktop overlay) re-render at the ~10Hz playback
+ * tick to move the scrub playhead, but these buttons depend only on `isPlaying` + stable callbacks.
+ * The memo skips re-evaluating the play orb's heavy gradient/shadow sx 10×/sec while playing.
+ */
+export const PlaybackButtons = React.memo(PlaybackButtonsComponent);

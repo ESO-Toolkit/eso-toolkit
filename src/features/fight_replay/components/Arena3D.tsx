@@ -1,6 +1,5 @@
 import { Fullscreen, FullscreenExit, LockOpen, Videocam } from '@mui/icons-material';
 import Bolt from '@mui/icons-material/Bolt';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import HelpOutline from '@mui/icons-material/HelpOutlineOutlined';
 import Insights from '@mui/icons-material/Insights';
 import Label from '@mui/icons-material/Label';
@@ -10,7 +9,6 @@ import {
   Box,
   Button,
   Chip,
-  ClickAwayListener,
   IconButton,
   Tooltip,
   Typography,
@@ -19,7 +17,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePerfTier } from '../../../hooks/usePerfTier';
@@ -32,16 +30,17 @@ import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
-import { COMMON_MARKER_GROUPS, MarkerGroup, MarkerGroupKey } from '../utils/mapMarkerConverters';
+import { computeRobustActorFraming } from '../utils/cameraFraming';
+import { portalToFullscreen } from '../utils/fullscreenPortal';
 import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
 
-import { Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
+import { ADD_MARKER_AT_CENTER_EVENT, Arena3DScene, GroundContextMenuPayload } from './Arena3DScene';
 import { BossHealthPanel } from './BossHealthPanel';
 import { LockedPlayerStatsPanel } from './LockedPlayerStatsPanel';
 import { MarkerContextMenuPayload } from './Marker3D';
-import { MarkerSpritePreview } from './MarkerSpritePreview';
+import { MarkerIconPicker } from './MarkerIconPicker';
 import { MobileReplayControls } from './MobileReplayControls';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
 import { PlayerListPanel } from './PlayerListPanel';
@@ -107,6 +106,19 @@ interface Arena3DProps {
   markersState?: MapMarkersState | null;
   onAddMarker?: (iconKey: number, arenaPoint: { x: number; y: number; z: number }) => void;
   onRemoveMarker?: (markerId: string) => void;
+  /** Marker edit mode: plain right-click context menus + draggable markers (no Alt chord). */
+  markersEditMode?: boolean;
+  /** Toggle marker edit mode — surfaced in the mobile tools sheet (no page toolbar in immersive). */
+  onToggleMarkersEditMode?: () => void;
+  /** Drag-to-move commit for a marker (arena-space coordinates). */
+  onMarkerMove?: (markerId: string, arenaPoint: { x: number; z: number }) => void;
+  /** Opens the marker edit dialog (owned by FightReplay) for the given marker. */
+  onEditMarker?: (markerId: string) => void;
+  /** Marker undo/redo (mobile tools sheet — Ctrl+Z/Ctrl+Shift+Z have no touch equivalent). */
+  canUndoMarkers?: boolean;
+  onUndoMarkers?: () => void;
+  canRedoMarkers?: boolean;
+  onRedoMarkers?: () => void;
   /** Fight data for zone/map information (required for map markers coordinate transformation) */
   fight: FightFragment;
   /** Selected player IDs for path visualization */
@@ -121,6 +133,19 @@ interface Arena3DProps {
   onTogglePlayerPathsHUD?: () => void;
   /** Toggle player trails (the T key on desktop) — used by the mobile control cluster. */
   onToggleTrails?: () => void;
+  /**
+   * Display settings, controlled by FightReplay3D so the mobile shell's Settings sheet shares one
+   * source of truth with the in-canvas/desktop toggles. Optional: when omitted (defensive — Arena3D
+   * is only rendered by FightReplay3D, which always supplies them) they fall back to internal state.
+   * Name tags (N key), performance mode (drop figure shadows), and the locked-player stats panel
+   * (J key) respectively.
+   */
+  namesEnabled?: boolean;
+  onToggleNames?: () => void;
+  performanceMode?: boolean;
+  onTogglePerformance?: () => void;
+  statsPanelEnabled?: boolean;
+  onToggleStats?: () => void;
   /** True when the replay block is fullscreen/immersive (drives the fill-height layout + toggle icon). */
   isFullscreen?: boolean;
   /** Toggle fullscreen of the whole replay block (owned by FightReplay3D, which holds the target ref). */
@@ -139,6 +164,11 @@ interface Arena3DProps {
    * visibility); when the bar is hidden in fullscreen it passes a tiny value so the panels grow.
    */
   reservedInset?: number;
+  /**
+   * When true, suppress Arena3D's in-canvas mobile control cluster (close + tools). Set by the
+   * dedicated mobile shell, which owns the close button and all controls itself.
+   */
+  hideMobileControls?: boolean;
 }
 
 const Arena3DComponent: React.FC<Arena3DProps> = ({
@@ -156,6 +186,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   markersState,
   onAddMarker,
   onRemoveMarker,
+  markersEditMode = false,
+  onToggleMarkersEditMode,
+  onMarkerMove,
+  onEditMarker,
+  canUndoMarkers = false,
+  onUndoMarkers,
+  canRedoMarkers = false,
+  onRedoMarkers,
   fight,
   selectedPlayerIds,
   onPlayerSelectionChange,
@@ -163,7 +201,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   showPlayerTrails = false,
   onTogglePlayerPathsHUD,
   onToggleTrails,
+  namesEnabled: namesEnabledProp,
+  onToggleNames,
+  performanceMode: performanceModeProp,
+  onTogglePerformance,
+  statsPanelEnabled: statsPanelEnabledProp,
+  onToggleStats,
   reservedInset,
+  hideMobileControls = false,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
 
@@ -185,22 +230,38 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // clobbers the other's keys. initialPrefs is a one-time mount snapshot used only to seed below.
   const { initialPrefs, persistPrefs } = useReplayPrefs();
 
-  // Local override to hide/show the floating name cards, toggled with the N key. ANDs with the
-  // incoming showActorNames prop so turning names off here always wins. Lets you declutter a
-  // crowd to see the player models, then bring identity back. Applies to every variant.
-  const [namesEnabled, setNamesEnabled] = useState(initialPrefs.showNames);
+  // Display settings (name tags, performance mode, stats-panel master) are now CONTROLLED by
+  // FightReplay3D so the mobile Settings sheet shares one source of truth with the in-canvas/desktop
+  // toggles. We keep an internal fallback for the (defensive) uncontrolled case and resolve each to
+  // the prop when supplied. Toggles route to the parent handler when controlled.
+  //  - namesEnabled ANDs with the showActorNames prop so turning names off here always wins (declutter
+  //    a crowd to see the models, then bring identity back). Applies to every variant.
+  //  - performanceMode (off by default): the player figures stop casting shadows — the shadow pass
+  //    re-submits the full humanoid geometry per figure (~75k tris at 23 players), so dropping it
+  //    roughly halves the figure tri load and buys headroom for very large fights.
+  const [namesEnabledLocal, setNamesEnabledLocal] = useState(initialPrefs.showNames);
+  const [performanceModeLocal, setPerformanceModeLocal] = useState(initialPrefs.performanceMode);
+  const [statsPanelEnabledLocal, setStatsPanelEnabledLocal] = useState(
+    initialPrefs.statsPanelEnabled,
+  );
+  const namesEnabled = namesEnabledProp ?? namesEnabledLocal;
+  const performanceMode = performanceModeProp ?? performanceModeLocal;
+  const statsPanelEnabled = statsPanelEnabledProp ?? statsPanelEnabledLocal;
+  const toggleNames = useMemo(
+    () => onToggleNames ?? (() => setNamesEnabledLocal((v) => !v)),
+    [onToggleNames],
+  );
+  const togglePerformance = useMemo(
+    () => onTogglePerformance ?? (() => setPerformanceModeLocal((v) => !v)),
+    [onTogglePerformance],
+  );
+  const toggleStats = useMemo(
+    () => onToggleStats ?? (() => setStatsPanelEnabledLocal((v) => !v)),
+    [onToggleStats],
+  );
 
-  // Performance mode (off by default). When on, the player figures stop casting shadows — the
-  // shadow pass re-submits the full humanoid geometry for every figure (~75k tris at 23 players,
-  // scaling with actor count), so dropping it roughly halves the figure tri load and buys headroom
-  // for very large fights. Purely a fidelity/cost trade; button-only (P/T are already taken by the
-  // player-paths HUD and trails in FightReplay3D).
-  const [performanceMode, setPerformanceMode] = useState(initialPrefs.performanceMode);
-
-  // Locked-player stats panel: master on/off (J key + button) and which sections show (the panel's
-  // gear menu). Owned here because the panel mounts here and this mirrors the names/perf slices.
-  // Disabling unmounts the panel entirely, which stops its inner rAF loops — a real cost saving.
-  const [statsPanelEnabled, setStatsPanelEnabled] = useState(initialPrefs.statsPanelEnabled);
+  // The stats-panel section checklist (the panel's gear menu) stays owned here — it's the panel's own
+  // local config and not surfaced in the mobile Settings sheet.
   const [statsPanelSections, setStatsPanelSections] = useState(initialPrefs.statsPanelSections);
 
   // Per-player visibility of the 3D actor models. Owned here (rather than in Arena3DScene)
@@ -231,24 +292,18 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     });
   }, []);
 
-  // Persist Arena3D's pref slice (names + performance + stats-panel) on change. Read-merge-write in
-  // the hook means this never clobbers the speed/path slice FightReplay3D persists.
+  // Persist only the stats-panel section checklist — Arena3D's remaining own slice. The names /
+  // performance / stats-master prefs are now persisted by FightReplay3D (which owns that state).
+  // Read-merge-write in the hook means this never clobbers the slices the other consumers persist.
   useEffect(() => {
-    persistPrefs({
-      showNames: namesEnabled,
-      performanceMode,
-      statsPanelEnabled,
-      statsPanelSections,
-    });
-  }, [persistPrefs, namesEnabled, performanceMode, statsPanelEnabled, statsPanelSections]);
+    persistPrefs({ statsPanelSections });
+  }, [persistPrefs, statsPanelSections]);
 
   // Player IDs for the DOM player-list overlay (derived from the same lookup the scene uses).
   const availablePlayerIds = useMemo(() => (lookup ? getVisiblePlayerIds(lookup) : []), [lookup]);
+  // Tap detection for the mobile preview teaser (tap expands; a drag scrolls the page).
+  const previewTapRef = useRef<{ x: number; y: number } | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
-  const [submenuState, setSubmenuState] = useState<{
-    key: MarkerGroupKey;
-    anchorEl: HTMLElement | null;
-  } | null>(null);
 
   const markerLookup = useMemo(() => {
     if (!markersState) {
@@ -266,7 +321,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         return;
       }
 
-      setSubmenuState(null);
       setContextMenu({
         type: 'ground',
         anchor: payload.screenPosition,
@@ -278,23 +332,21 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
   const handleMarkerContextMenu = useCallback(
     (payload: MarkerContextMenuPayload) => {
-      if (!onRemoveMarker) {
+      if (!onRemoveMarker && !onEditMarker) {
         return;
       }
 
-      setSubmenuState(null);
       setContextMenu({
         type: 'marker',
         anchor: payload.screenPosition,
         markerId: payload.markerId,
       });
     },
-    [onRemoveMarker],
+    [onRemoveMarker, onEditMarker],
   );
 
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null);
-    setSubmenuState(null);
   }, []);
 
   const handleAddMarkerOption = useCallback(
@@ -305,44 +357,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
       onAddMarker(iconKey, contextMenu.arenaPoint);
       setContextMenu(null);
-      setSubmenuState(null);
     },
     [contextMenu, onAddMarker],
   );
-
-  const handleOpenSubmenu = useCallback(
-    (event: React.MouseEvent<HTMLElement>, groupKey: MarkerGroupKey) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      setSubmenuState({ key: groupKey, anchorEl: event.currentTarget });
-    },
-    [],
-  );
-
-  const handleGroupMouseLeave = useCallback(() => {
-    // Don't close submenu on mouse leave - let it stay open
-    // It will close when clicking outside or when another group is hovered
-  }, []);
-
-  const handleGroupKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLElement>, groupKey: MarkerGroupKey) => {
-      if (event.key !== 'ArrowRight' && event.key !== 'Enter' && event.key !== ' ') {
-        return;
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      const target = event.currentTarget as HTMLElement;
-      setSubmenuState({ key: groupKey, anchorEl: target });
-    },
-    [],
-  );
-
-  const handleCloseSubmenu = useCallback(() => {
-    setSubmenuState(null);
-  }, []);
 
   const handleRemoveMarkerClick = useCallback(() => {
     if (!contextMenu || contextMenu.type !== 'marker' || !onRemoveMarker) {
@@ -353,21 +370,21 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     setContextMenu(null);
   }, [contextMenu, onRemoveMarker]);
 
+  const handleEditMarkerClick = useCallback(() => {
+    if (!contextMenu || contextMenu.type !== 'marker' || !onEditMarker) {
+      return;
+    }
+
+    onEditMarker(contextMenu.markerId);
+    setContextMenu(null);
+  }, [contextMenu, onEditMarker]);
+
   const markerForMenu =
     contextMenu?.type === 'marker' ? (markerLookup.get(contextMenu.markerId) ?? null) : null;
   const markerRemoveLabel =
     markerForMenu && markerForMenu.text && markerForMenu.text.trim().length > 0
       ? `Remove "${markerForMenu.text.trim()}"`
       : 'Remove marker';
-
-  const activeSubmenuGroup: MarkerGroup | null = useMemo(() => {
-    if (!submenuState) {
-      return null;
-    }
-
-    const group = COMMON_MARKER_GROUPS.find((candidate) => candidate.key === submenuState.key);
-    return group && group.options.length > 0 ? group : null;
-  }, [submenuState]);
 
   const handleCanvasContextMenu = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -387,12 +404,6 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     return () => {
       document.removeEventListener('contextmenu', suppressNativeContextMenu);
     };
-  }, [contextMenu]);
-
-  useEffect(() => {
-    if (!contextMenu) {
-      setSubmenuState(null);
-    }
   }, [contextMenu]);
 
   // Show keyboard help on initial mount for 5 seconds
@@ -429,23 +440,23 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
       // N toggles the floating name cards on/off (declutter the crowd).
       if (event.key.toLowerCase() === 'n') {
-        setNamesEnabled((prev) => !prev);
+        toggleNames();
         event.preventDefault();
       }
 
       // J toggles the locked-player stats panel on/off. Gated on actually following someone (read
-      // via the always-current ref, since this effect's deps are []) so the key mirrors the on-screen
-      // button, which only appears while following — no flipping a hidden pref with zero feedback.
+      // via the always-current ref) so the key mirrors the on-screen button, which only appears
+      // while following — no flipping a hidden pref with zero feedback.
       if (event.key.toLowerCase() === 'j' && followingActorIdRef.current != null) {
-        setStatsPanelEnabled((prev) => !prev);
+        toggleStats();
         event.preventDefault();
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-    // followingActorIdRef is a stable ref; listed to satisfy exhaustive-deps without re-binding.
-  }, [followingActorIdRef]);
+    // followingActorIdRef is a stable ref; the toggles are stable when controlled by the parent.
+  }, [followingActorIdRef, toggleNames, toggleStats]);
 
   // Calculate arena dimensions based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -461,7 +472,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
     const { minX, maxX, minY, maxY } = fight.boundingBox;
 
-    if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined) {
+    if (![minX, maxX, minY, maxY].every((v) => Number.isFinite(v))) {
       return defaults;
     }
 
@@ -499,7 +510,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
     const { minX, maxX, minY, maxY } = fight.boundingBox;
 
-    if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined) {
+    if (![minX, maxX, minY, maxY].every((v) => Number.isFinite(v))) {
       return defaults;
     }
 
@@ -514,7 +525,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     const rangeX = arenaMaxX - arenaMinX;
     const rangeZ = arenaMaxZ - arenaMinZ;
     const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    const minDistance = Math.max(5, diagonal * 0.3);
+    // Cap the close-zoom bound so an outlier-inflated whole-fight diagonal can't force the fallback
+    // initial framing absurdly far out (mirrors the cap in Arena3DScene, which owns the live clamp).
+    const minDistance = Math.min(Math.max(5, diagonal * 0.3), 12);
     const maxDistance = Math.min(500, Math.max(50, diagonal * 3));
 
     return {
@@ -636,37 +649,23 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
     }
 
-    // Calculate bounding box of all actors at fight start
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-    let minZ = Infinity;
-    let maxZ = -Infinity;
+    // Frame the actors at fight start with OUTLIER REJECTION — a single stray position (a pet/add at
+    // the zone edge, a teleport, a glitched sample) must not dominate the initial view. Legitimately
+    // spread raids are kept intact. See computeRobustActorFraming.
+    const framing = computeRobustActorFraming(actors.map((actor) => actor.position));
+    if (!framing) {
+      const defaultPosition = computeDefaultCameraPosition(
+        defaultTarget,
+        cameraSettings.minDistance,
+        actorScale,
+      );
+      return { initialCameraTarget: defaultTarget, initialCameraPosition: defaultPosition };
+    }
 
-    actors.forEach((actor) => {
-      const [x, y, z] = actor.position;
-      minX = Math.min(minX, x);
-      maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y);
-      maxY = Math.max(maxY, y);
-      minZ = Math.min(minZ, z);
-      maxZ = Math.max(maxZ, z);
-    });
+    const target: [number, number, number] = [framing.centerX, framing.centerY, framing.centerZ];
 
-    // Calculate the center of the bounding box
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    const centerZ = (minZ + maxZ) / 2;
-
-    const target: [number, number, number] = [centerX, centerY, centerZ];
-
-    // Calculate the dimensions of the bounding box
-    const rangeX = maxX - minX;
-    const rangeZ = maxZ - minZ;
-
-    // Calculate the diagonal distance of the bounding box in the XZ plane
-    const boundingBoxDiagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+    // The diagonal of the (outlier-trimmed) XZ extent — the size measure for the distance calc.
+    const boundingBoxDiagonal = framing.diagonalXZ;
 
     // Calculate camera distance to fit all actors in view
     // Use the bounding box diagonal to determine appropriate distance
@@ -688,21 +687,22 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     // Position camera: southwest of target, elevated for good viewing angle
     const cameraOffset = [-viewDistance * 0.6, viewDistance * 0.5, viewDistance * 0.6];
     const position: [number, number, number] = [
-      centerX + cameraOffset[0],
-      centerY + cameraOffset[1],
-      centerZ + cameraOffset[2],
+      target[0] + cameraOffset[0],
+      target[1] + cameraOffset[1],
+      target[2] + cameraOffset[2],
     ];
 
     return { initialCameraTarget: target, initialCameraPosition: position };
   }, [lookup, fight, arenaDimensions.centerX, arenaDimensions.centerZ, cameraSettings]);
 
-  // Don't render until data is loaded
+  // Don't render until data is loaded. Fill the fullscreen container's height (so the backdrop
+  // doesn't collapse to the windowed clamp during an in-fullscreen fight transition).
   if (isActorPositionsLoading || !lookup) {
     return (
       <div
         style={{
           width: '100%',
-          height: ARENA_HEIGHT,
+          height: isFullscreen ? '100%' : ARENA_HEIGHT,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -722,6 +722,16 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
         // Fill the fullscreen container's height; otherwise the responsive 16:9-ish clamp.
         height: isFullscreen ? '100%' : ARENA_HEIGHT,
         position: 'relative',
+        // Mobile: suppress the OS long-press behaviors (text-selection loupe, Copy/Look Up
+        // callout) across the whole replay block — they hijack the marker long-press/drag
+        // gestures on iOS Safari and select the HUD chrome's text.
+        ...(isMobile
+          ? {
+              userSelect: 'none' as const,
+              WebkitUserSelect: 'none' as const,
+              WebkitTouchCallout: 'none' as const,
+            }
+          : null),
       }}
       role="img"
       aria-label="3D fight replay arena showing player positions over time"
@@ -795,6 +805,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             markersState={markersState}
             onGroundContextMenu={handleGroundContextMenu}
             onMarkerContextMenu={handleMarkerContextMenu}
+            markersEditMode={markersEditMode}
+            onMarkerMove={onMarkerMove}
             fight={fight}
             initialTarget={initialCameraTarget}
             initialPosition={initialCameraPosition}
@@ -810,17 +822,34 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
         {/* Mobile inline PREVIEW scrim — the report page shows a dimmed, non-interactive teaser of the
             3D scene with one clear way in. The scrim is a thin gradient (scene still reads through),
-            sits above the pointer-events:none canvas, and carries the single Expand affordance. Tapping
-            it opens the pseudo-fullscreen interactive mode (onToggleFullscreen → mobilePseudoFullscreen).
-            The scrim itself stays pointer-events:none so a plain drag still scrolls the page; only the
-            button is interactive. Rendered only on mobile while not immersive. */}
+            sits above the pointer-events:none canvas, and carries the Expand affordance. The WHOLE
+            teaser accepts a true tap (≤10px travel — the natural first gesture on a big inviting
+            canvas) while a drag still falls through as page scroll (no preventDefault, no
+            touch-action override: a real scroll fires pointercancel so the tap branch never runs).
+            The button stays the visible affordance + the keyboard/AT path. */}
         {mobilePreview && (
           <Box
             aria-hidden={false}
+            onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest('button')) return;
+              previewTapRef.current = { x: e.clientX, y: e.clientY };
+            }}
+            onPointerUp={(e) => {
+              const start = previewTapRef.current;
+              previewTapRef.current = null;
+              if (!start) return;
+              if ((e.target as HTMLElement).closest('button')) return;
+              if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) return;
+              onToggleFullscreen?.();
+            }}
+            onPointerCancel={() => {
+              previewTapRef.current = null;
+            }}
             sx={{
               position: 'absolute',
               inset: 0,
-              pointerEvents: 'none',
+              pointerEvents: 'auto',
+              cursor: 'pointer',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -911,129 +940,71 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             onPlayerColorChange={handlePlayerColorChange}
             reservedInset={reservedInset}
             isMobile={mobileImmersive}
+            onClose={onTogglePlayerPathsHUD}
           />
         )}
 
         {/* Player-list + boss-health HUDs are DOM overlays (above) rendered as siblings of
             the <Canvas>, not in-canvas textured planes — crisp text, real scroll, native
             MUI styling. */}
-        {contextMenu && (
-          <ClickAwayListener onClickAway={handleCloseContextMenu}>
-            <div>
-              <Menu
-                open={Boolean(contextMenu)}
-                onClose={handleCloseContextMenu}
-                anchorReference="anchorPosition"
-                anchorPosition={
-                  contextMenu
-                    ? { top: contextMenu.anchor.top, left: contextMenu.anchor.left }
-                    : undefined
-                }
-                disableScrollLock
-                slotProps={{
-                  list: {
-                    dense: true,
-                    onContextMenu: (event: React.MouseEvent) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    },
-                  },
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-              >
-                {contextMenu?.type === 'ground' &&
-                  COMMON_MARKER_GROUPS.filter((group) => group.options.length > 0).map((group) => (
-                    <MenuItem
-                      key={group.key}
-                      onMouseEnter={(event: React.MouseEvent<HTMLLIElement>) =>
-                        handleOpenSubmenu(event, group.key)
-                      }
-                      onMouseLeave={handleGroupMouseLeave}
-                      onClick={(event: React.MouseEvent<HTMLLIElement>) =>
-                        handleOpenSubmenu(event, group.key)
-                      }
-                      onContextMenu={(event: React.MouseEvent<HTMLLIElement>) =>
-                        handleOpenSubmenu(event, group.key)
-                      }
-                      onKeyDown={(event: React.KeyboardEvent<HTMLLIElement>) =>
-                        handleGroupKeyDown(event, group.key)
-                      }
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: 1,
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {group.label}
-                      </Typography>
-                      <ChevronRightIcon fontSize="small" />
-                    </MenuItem>
-                  ))}
-                {contextMenu?.type === 'marker' && (
-                  <MenuItem onClick={handleRemoveMarkerClick} disabled={!onRemoveMarker}>
-                    {markerRemoveLabel}
-                  </MenuItem>
-                )}
-              </Menu>
-              <Menu
-                open={Boolean(activeSubmenuGroup && submenuState?.anchorEl)}
-                anchorEl={submenuState?.anchorEl ?? null}
-                onClose={handleCloseSubmenu}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                disableScrollLock
-                disableAutoFocus
-                disableEnforceFocus
-                disableRestoreFocus
-                onContextMenu={(event: React.MouseEvent) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-                slotProps={{
-                  list: {
-                    dense: true,
-                    onContextMenu: (event: React.MouseEvent) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    },
-                    onMouseLeave: handleGroupMouseLeave,
-                    sx: { pointerEvents: 'auto' },
-                  },
-                  paper: {
-                    onMouseLeave: handleGroupMouseLeave,
-                    sx: { pointerEvents: 'auto' },
-                  },
-                  root: {
-                    sx: { pointerEvents: 'none' },
-                  },
-                }}
-              >
-                {activeSubmenuGroup?.options.map((option) => (
-                  <MenuItem
-                    key={option.iconKey}
-                    onClick={(event: React.MouseEvent<HTMLLIElement>) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      handleAddMarkerOption(option.iconKey);
-                    }}
-                    disabled={!onAddMarker}
-                    sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
-                  >
-                    <MarkerSpritePreview iconKey={option.iconKey} label={option.label} />
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {option.label}
-                    </Typography>
-                  </MenuItem>
-                ))}
-              </Menu>
-            </div>
-          </ClickAwayListener>
-        )}
+
+        {/* Add-marker picker: one flat surface with every icon (bottom sheet on touch,
+            popover at the click point on desktop). Kept mounted so close transitions run. */}
+        <MarkerIconPicker
+          open={contextMenu?.type === 'ground'}
+          anchorPosition={contextMenu?.type === 'ground' ? contextMenu.anchor : null}
+          mobile={isMobile}
+          onSelect={handleAddMarkerOption}
+          onClose={handleCloseContextMenu}
+        />
+
+        {/* Marker context menu: edit/remove for an existing marker. */}
+        <Menu
+          open={contextMenu?.type === 'marker'}
+          onClose={handleCloseContextMenu}
+          // Portal into the fullscreen subtree on desktop, else body — otherwise the menu is
+          // invisible in native fullscreen (renders outside the top-layer element).
+          container={portalToFullscreen}
+          anchorReference="anchorPosition"
+          anchorPosition={
+            contextMenu?.type === 'marker'
+              ? { top: contextMenu.anchor.top, left: contextMenu.anchor.left }
+              : undefined
+          }
+          disableScrollLock
+          slotProps={{
+            list: {
+              dense: !isMobile,
+              onContextMenu: (event: React.MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+              },
+            },
+            // Portaled past the replay container, so it needs its own selection
+            // suppression: iOS otherwise text-selects the menu items the long-press
+            // gesture lands on and covers them with the Copy/Look Up callout.
+            paper: {
+              sx: { userSelect: 'none', WebkitTouchCallout: 'none' },
+            },
+          }}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+        >
+          {onEditMarker && (
+            <MenuItem onClick={handleEditMarkerClick} sx={isMobile ? { minHeight: 48 } : undefined}>
+              Edit marker…
+            </MenuItem>
+          )}
+          <MenuItem
+            onClick={handleRemoveMarkerClick}
+            disabled={!onRemoveMarker}
+            sx={isMobile ? { minHeight: 48 } : undefined}
+          >
+            {markerRemoveLabel}
+          </MenuItem>
+        </Menu>
       </ReplayErrorBoundary>
 
       {/* Performance Monitor Overlay - rendered outside Canvas for proper screen-space positioning */}
@@ -1080,7 +1051,8 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             ['+ −', 'Speed up / down'],
             [', .', 'Frame step'],
             ['< >', 'Prev / next event'],
-            ['I O', 'Set loop in / out'],
+            ['I O', 'Set loop in / out · U: Clear'],
+            ['[ ]', 'Prev / next boss'],
           ].map(([k, label]) => (
             <Typography
               key={k}
@@ -1127,7 +1099,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-label={statsPanelEnabled ? 'Hide locked-player stats' : 'Show locked-player stats'}
             aria-pressed={statsPanelEnabled}
             size="small"
-            onClick={() => setStatsPanelEnabled((prev) => !prev)}
+            onClick={toggleStats}
             sx={{
               position: 'absolute',
               bottom: 296,
@@ -1185,7 +1157,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-label={performanceMode ? 'Disable performance mode' : 'Enable performance mode'}
             aria-pressed={performanceMode}
             size="small"
-            onClick={() => setPerformanceMode((prev) => !prev)}
+            onClick={togglePerformance}
             sx={{
               position: 'absolute',
               // Raised to clear the docked control-bar overlay at the bottom of the canvas.
@@ -1211,7 +1183,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
             aria-label={namesEnabled ? 'Hide actor name tags' : 'Show actor name tags'}
             aria-pressed={namesEnabled}
             size="small"
-            onClick={() => setNamesEnabled((prev) => !prev)}
+            onClick={toggleNames}
             sx={{
               position: 'absolute',
               bottom: 152,
@@ -1256,8 +1228,10 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           doesn't overlap the top-left PlayerListPanel DOM overlay. Styled to
           match the elevated transport: dark cyan-glass with a glowing accent border + a
           videocam glyph, so it reads as part of the same designed surface over the 3D scene.
-          Suppressed in the mobile inline preview (it returns in the immersive overlay). */}
-      {!mobilePreview && followingActorId && followingActorName && (
+          Suppressed in the mobile inline preview, AND in the mobile immersive overlay — there the
+          dedicated shell's top bar already shows a "Following ✕" chip, so this would duplicate it
+          (and add another backdrop-blur layer over the canvas). Desktop/immersive keeps it. */}
+      {!mobilePreview && !mobileImmersive && followingActorId && followingActorName && (
         <Tooltip title="Unlock camera from actor">
           <Chip
             icon={<Videocam sx={{ fontSize: '1rem' }} />}
@@ -1331,7 +1305,7 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       {/* Mobile touch control cluster — only inside the immersive overlay, where there's room. Gives
           the keyboard-only controls (P/T/N/R/G/J + perf) a touch home and the only way out (Close),
           since the desktop right-edge stack and the F-key are unavailable on a phone. */}
-      {mobileImmersive && (
+      {mobileImmersive && !hideMobileControls && (
         <MobileReplayControls
           onClose={() => onToggleFullscreen?.()}
           showPlayerList={showPlayerPathsHUD}
@@ -1339,13 +1313,58 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           showTrails={showPlayerTrails}
           onToggleTrails={() => onToggleTrails?.()}
           namesEnabled={namesEnabled}
-          onToggleNames={() => setNamesEnabled((prev) => !prev)}
+          onToggleNames={toggleNames}
           performanceMode={performanceMode}
-          onTogglePerformance={() => setPerformanceMode((prev) => !prev)}
+          onTogglePerformance={togglePerformance}
           following={followingActorId != null}
           statsPanelEnabled={statsPanelEnabled}
-          onToggleStats={() => setStatsPanelEnabled((prev) => !prev)}
+          onToggleStats={toggleStats}
+          markersEditMode={markersEditMode}
+          onToggleMarkersEditMode={onToggleMarkersEditMode}
+          onAddMarkerAtCenter={
+            onAddMarker
+              ? () => window.dispatchEvent(new CustomEvent(ADD_MARKER_AT_CENTER_EVENT))
+              : undefined
+          }
+          canUndoMarkers={canUndoMarkers}
+          onUndoMarkers={onUndoMarkers}
+          canRedoMarkers={canRedoMarkers}
+          onRedoMarkers={onRedoMarkers}
         />
+      )}
+
+      {/* Marker edit-mode hint — touch gestures are invisible, so name them while the mode is on.
+          Anchored bottom-center, just above the transport dock: the top band is taken by the
+          full-width fight-name bar (which would paint over a top-center chip) and the boss HUD
+          (top-right), so the clear horizontal strip is here, above the controls and below the
+          arena. Non-interactive. */}
+      {mobileImmersive && markersEditMode && (
+        <Box
+          sx={{
+            position: 'absolute',
+            // Plain px (no env()) — the immersive overlay container already pads the safe area,
+            // matching the Tools button (bottom: 96) in MobileReplayControls. 150 clears the
+            // transport dock + that button's band.
+            bottom: 150,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2,
+            pointerEvents: 'none',
+            px: 1.5,
+            py: 0.5,
+            borderRadius: '999px',
+            backgroundColor: 'rgba(13,20,48,0.85)',
+            border: '1px solid rgba(148,210,255,0.35)',
+            maxWidth: 'calc(100% - 32px)',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(226,232,240,0.92)', whiteSpace: 'nowrap', fontSize: '0.68rem' }}
+          >
+            Hold map: add · drag marker: move · hold marker: edit
+          </Typography>
+        </Box>
       )}
     </div>
   );
