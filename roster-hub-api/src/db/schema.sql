@@ -28,6 +28,15 @@ CREATE TABLE IF NOT EXISTS roster_tags (
   PRIMARY KEY (roster_id, tag)
 );
 
+-- Trials a roster is built for (for Hub discovery). The primary trial is also
+-- stored on rosters.trial_id; this table holds the full set so a roster can be
+-- found under any of several trials.
+CREATE TABLE IF NOT EXISTS roster_trials (
+  roster_id TEXT NOT NULL REFERENCES rosters(id) ON DELETE CASCADE,
+  trial_id  TEXT NOT NULL,
+  PRIMARY KEY (roster_id, trial_id)
+);
+
 CREATE TABLE IF NOT EXISTS roster_comments (
   id          TEXT PRIMARY KEY,
   roster_id   TEXT NOT NULL REFERENCES rosters(id) ON DELETE CASCADE,
@@ -45,6 +54,7 @@ CREATE INDEX IF NOT EXISTS idx_rosters_votes    ON rosters(vote_count DESC);
 CREATE INDEX IF NOT EXISTS idx_rosters_created  ON rosters(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_rosters_author   ON rosters(author_id);
 CREATE INDEX IF NOT EXISTS idx_tags_tag         ON roster_tags(tag);
+CREATE INDEX IF NOT EXISTS idx_roster_trials     ON roster_trials(trial_id);
 CREATE INDEX IF NOT EXISTS idx_votes_user       ON roster_votes(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_roster  ON roster_comments(roster_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_parent  ON roster_comments(parent_id);

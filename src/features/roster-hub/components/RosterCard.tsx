@@ -203,6 +203,14 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
 
     const trialShort = TRIAL_SHORT[roster.trial_id] ?? roster.trial_id;
     const trialFull = TRIAL_LABELS[roster.trial_id] ?? roster.trial_id;
+    // Additional trials this roster is tagged with (primary is shown as the main
+    // badge; the rest appear as compact secondary badges, capped with a "+N").
+    const allTrialIds =
+      roster.trial_ids && roster.trial_ids.length > 0 ? roster.trial_ids : [roster.trial_id];
+    const extraTrialIds = allTrialIds.slice(1);
+    const MAX_EXTRA_BADGES = 2;
+    const shownExtraTrialIds = extraTrialIds.slice(0, MAX_EXTRA_BADGES);
+    const hiddenTrialCount = extraTrialIds.length - shownExtraTrialIds.length;
     // Gold/yellow accent — signals #1/champion treatment for all roster cards
     const accentColor = '#eab308';
 
@@ -277,44 +285,121 @@ export const RosterCard: React.FC<RosterCardProps> = React.memo(
               pb: '20px !important',
             }}
           >
-            {/* Trial badge */}
-            <Tooltip title={trialFull} placement="top">
-              <Box
-                component="span"
-                sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  mb: 1.75,
-                  px: 1,
-                  py: 0.5,
-                  borderRadius: '6px',
-                  background: isDark
-                    ? `linear-gradient(90deg, ${accentColor}22 0%, ${accentColor}10 100%)`
-                    : `linear-gradient(90deg, ${accentColor}18 0%, ${accentColor}08 100%)`,
-                  border: `1px solid ${accentColor}45`,
-                  boxShadow: `0 0 8px ${accentColor}25`,
-                  alignSelf: 'flex-start',
-                }}
-              >
-                <Typography
+            {/* Trial badges — primary trial, then any additional tagged trials */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 0.625,
+                mb: 1.75,
+              }}
+            >
+              <Tooltip title={trialFull} placement="top">
+                <Box
+                  component="span"
                   sx={{
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.07em',
-                    lineHeight: 1,
-                    textTransform: 'uppercase',
-                    background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc, ${accentColor})`,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    textShadow: `0 0 12px ${accentColor}40`,
-                    filter: isDark ? 'brightness(1.2)' : 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: '6px',
+                    background: isDark
+                      ? `linear-gradient(90deg, ${accentColor}22 0%, ${accentColor}10 100%)`
+                      : `linear-gradient(90deg, ${accentColor}18 0%, ${accentColor}08 100%)`,
+                    border: `1px solid ${accentColor}45`,
+                    boxShadow: `0 0 8px ${accentColor}25`,
                   }}
                 >
-                  {trialShort}
-                </Typography>
-              </Box>
-            </Tooltip>
+                  <Typography
+                    sx={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.07em',
+                      lineHeight: 1,
+                      textTransform: 'uppercase',
+                      background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc, ${accentColor})`,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      textShadow: `0 0 12px ${accentColor}40`,
+                      filter: isDark ? 'brightness(1.2)' : 'none',
+                    }}
+                  >
+                    {trialShort}
+                  </Typography>
+                </Box>
+              </Tooltip>
+
+              {/* Secondary trials — muted badges */}
+              {shownExtraTrialIds.map((id) => (
+                <Tooltip key={id} title={TRIAL_LABELS[id] ?? id} placement="top">
+                  <Box
+                    component="span"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: 0.875,
+                      py: 0.5,
+                      borderRadius: '6px',
+                      background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.12)'
+                        : '1px solid rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.06em',
+                        lineHeight: 1,
+                        textTransform: 'uppercase',
+                        color: isDark ? 'rgba(255,255,255,0.62)' : 'rgba(0,0,0,0.55)',
+                      }}
+                    >
+                      {TRIAL_SHORT[id] ?? id}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              ))}
+
+              {hiddenTrialCount > 0 && (
+                <Tooltip
+                  title={extraTrialIds
+                    .slice(MAX_EXTRA_BADGES)
+                    .map((id) => TRIAL_LABELS[id] ?? id)
+                    .join(', ')}
+                  placement="top"
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      px: 0.75,
+                      py: 0.5,
+                      borderRadius: '6px',
+                      background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.12)'
+                        : '1px solid rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        lineHeight: 1,
+                        color: isDark ? 'rgba(255,255,255,0.62)' : 'rgba(0,0,0,0.55)',
+                      }}
+                    >
+                      +{hiddenTrialCount}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              )}
+            </Box>
 
             {/* Title — clamped to 2 lines */}
             <Typography

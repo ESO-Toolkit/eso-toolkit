@@ -114,6 +114,15 @@ const sanitizeAddonEntry = (a: unknown): RecommendedAddonEntry | null => {
 const isValidTag = (t: string): boolean =>
   typeof t === 'string' && t.length > 0 && t.length <= 30 && /^[\w\s-]+$/.test(t);
 
+// Trial ids are short alphanumeric codes (e.g. "AA", "DSR"). Validate, dedupe,
+// sanitize and cap to 10 so a roster can't be tagged with arbitrary content.
+const isValidTrialId = (t: unknown): t is string =>
+  typeof t === 'string' && t.length > 0 && t.length <= 16 && /^[A-Za-z0-9_-]+$/.test(t);
+const sanitizeTrialIds = (ids: unknown): string[] => {
+  if (!Array.isArray(ids)) return [];
+  return [...new Set(ids.filter(isValidTrialId).map(sanitize))].slice(0, 10);
+};
+
 // ─── Security headers ────────────────────────────────────────────────────────
 
 app.use('*', async (c, next) => {
@@ -260,6 +269,7 @@ app.post('/rosters', async (c) => {
     title: string;
     description?: string;
     trial_id: string;
+    trial_ids?: string[];
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
@@ -277,6 +287,7 @@ app.post('/rosters', async (c) => {
     title,
     description = '',
     trial_id,
+    trial_ids = [],
     roster_data,
     tags = [],
     is_anonymous = false,
@@ -338,6 +349,7 @@ app.post('/rosters', async (c) => {
     title: sanitize(title),
     description: sanitize(description),
     trialId: sanitize(trial_id),
+    trialIds: sanitizeTrialIds(trial_ids),
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: !!is_anonymous,
@@ -358,6 +370,7 @@ app.put('/rosters/:id', async (c) => {
     title: string;
     description?: string;
     trial_id: string;
+    trial_ids?: string[];
     roster_data: string;
     tags?: string[];
     is_anonymous?: boolean;
@@ -371,7 +384,7 @@ app.put('/rosters/:id', async (c) => {
     return c.json({ error: 'Invalid JSON' }, 400);
   }
 
-  const { title, description = '', trial_id, roster_data, tags = [] } = body;
+  const { title, description = '', trial_id, trial_ids = [], roster_data, tags = [] } = body;
   const is_anonymous = 'is_anonymous' in body ? (body.is_anonymous ?? false) : undefined;
   const recommended_addons =
     'recommended_addons' in body ? (body.recommended_addons ?? null) : undefined;
@@ -419,6 +432,7 @@ app.put('/rosters/:id', async (c) => {
     title: sanitize(title),
     description: sanitize(description),
     trialId: sanitize(trial_id),
+    trialIds: sanitizeTrialIds(trial_ids),
     rosterData: roster_data,
     tags: Array.isArray(tags) ? tags.filter(isValidTag).slice(0, 10).map(sanitize) : [],
     isAnonymous: is_anonymous !== undefined ? !!is_anonymous : !!existing?.is_anonymous,
