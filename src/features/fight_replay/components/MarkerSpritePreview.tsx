@@ -3,7 +3,15 @@ import React from 'react';
 import type { MorMarker } from '@/types/mapMarkers';
 import { ELMS_ICON_MAP } from '@/utils/elmsMarkersDecoder';
 
-type MarkerShape = 'blank' | 'circle' | 'square' | 'diamond' | 'hexagon' | 'chevron' | 'octagon';
+type MarkerShape =
+  | 'blank'
+  | 'circle'
+  | 'square'
+  | 'diamond'
+  | 'hexagon'
+  | 'chevron'
+  | 'octagon'
+  | 'arrow';
 
 const TEXTURE_TO_SHAPE: Record<string, MarkerShape> = {
   'M0RMarkers/textures/blank.dds': 'blank',
@@ -14,14 +22,37 @@ const TEXTURE_TO_SHAPE: Record<string, MarkerShape> = {
   'M0RMarkers/textures/chevron.dds': 'chevron',
   'M0RMarkers/textures/octagon.dds': 'octagon',
   'M0RMarkers/textures/sharkpog.dds': 'square',
+  'M0RMarkers/textures/arrow.dds': 'arrow',
 };
+
+// An upward-pointing arrow glyph; rotated per-marker to match its heading.
+const ARROW_CLIP = 'polygon(50% 0%, 90% 45%, 66% 45%, 66% 100%, 34% 100%, 34% 45%, 10% 45%)';
 
 const CLIP_PATHS: Partial<Record<MarkerShape, string>> = {
   diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
   hexagon: 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
   chevron: 'polygon(50% 0%, 95% 90%, 80% 100%, 50% 30%, 20% 100%, 5% 90%)',
   octagon: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
+  arrow: ARROW_CLIP,
 };
+
+/**
+ * On-screen rotation (degrees, clockwise) for an arrow chip so it points the SAME way its 3D
+ * arrow points on the displayed map. Measured against the live render: the preset yaws map to
+ * cardinal directions as N=0 (up), E=+90° (right), S=180° (down), W=-90° (left) — i.e. CSS
+ * clockwise degrees equal the raw yaw in degrees. (The 3D side reaches the same result via the
+ * map's X-mirror + MARKER_YAW_SCREEN_OFFSET; the 2D chip has no mirror, hence the simpler form.)
+ *
+ * NOTE: 2D and 3D use independent formulas that were co-verified only at the four cardinals. If a
+ * diagonal (π/4) heading is ever added, re-verify that chip and on-map arrow still agree.
+ */
+function arrowRotationDeg(yaw: number | undefined): number {
+  if (typeof yaw !== 'number') {
+    return 0;
+  }
+  const deg = (yaw * 180) / Math.PI;
+  return ((deg % 360) + 360) % 360;
+}
 
 const FALLBACK_COLOUR: MorMarker['colour'] = [0.28, 0.43, 0.86, 1];
 const BLANK_BACKGROUND = 'linear-gradient(135deg, rgba(67, 80, 140, 0.9), rgba(38, 46, 82, 0.9))';
@@ -76,6 +107,7 @@ export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKe
     : 'blank';
 
   const isBlank = shape === 'blank';
+  const isArrow = shape === 'arrow';
   const hasColour = Boolean(templateColour);
 
   const backgroundColour = templateColour
@@ -100,6 +132,10 @@ export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKe
   const symbol = typeof template?.text === 'string' ? template.text : undefined;
   const displaySymbol = symbol && symbol.trim().length > 0 ? symbol : undefined;
 
+  // Arrows render the clipped glyph rotated to their heading; everything else is unrotated.
+  const arrowYaw = isArrow ? template?.orientation?.[1] : undefined;
+  const transform = isArrow ? `rotate(${arrowRotationDeg(arrowYaw)}deg)` : undefined;
+
   return (
     <span
       role="img"
@@ -111,11 +147,19 @@ export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKe
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius,
+        borderRadius: isArrow ? undefined : borderRadius,
         clipPath,
-        background: backgroundColour,
-        border: `1px solid ${borderColour}`,
-        boxShadow: hasColour ? '0 1px 0 rgba(0, 0, 0, 0.4)' : '0 0 0 1px rgba(255, 255, 255, 0.12)',
+        transform,
+        // Arrows use a saturated accent fill (not near-white) so the white glyph reads against
+        // both the dark and the light dialog backgrounds.
+        background: isArrow ? 'rgb(46, 122, 214)' : backgroundColour,
+        // A clip-path removes the border anyway; only keep it for unclipped shapes.
+        border: clipPath ? undefined : `1px solid ${borderColour}`,
+        boxShadow: isArrow
+          ? 'none'
+          : hasColour
+            ? '0 1px 0 rgba(0, 0, 0, 0.4)'
+            : '0 0 0 1px rgba(255, 255, 255, 0.12)',
         color: pickTextColour(templateColour),
         fontWeight: 700,
         fontSize: computeFontSize(displaySymbol),
@@ -126,7 +170,7 @@ export const MarkerSpritePreview: React.FC<MarkerSpritePreviewProps> = ({ iconKe
         overflow: 'hidden',
       }}
     >
-      {displaySymbol ?? null}
+      {isArrow ? null : (displaySymbol ?? null)}
     </span>
   );
 };

@@ -26,15 +26,17 @@ describe('MarkerIconPicker', () => {
   it('shows every group and option on one surface (desktop popover)', () => {
     render(<MarkerIconPicker open anchorPosition={anchor} onSelect={noop} onClose={noop} />);
 
-    // All four groups visible at once — no nested submenu to drill into.
+    // All groups visible at once — no nested submenu to drill into.
     expect(screen.getByText('Numbers')).toBeInTheDocument();
-    expect(screen.getByText('Arrows & Chevron')).toBeInTheDocument();
+    expect(screen.getByText('Roles (Tanks & Healers)')).toBeInTheDocument();
+    expect(screen.getByText('Directional Arrows')).toBeInTheDocument();
+    expect(screen.getByText('Shapes')).toBeInTheDocument();
     expect(screen.getByText('Squares')).toBeInTheDocument();
-    expect(screen.getByText('Hexagons')).toBeInTheDocument();
 
-    // Both hexagon variants are individually pickable (no auto-selected first option).
-    expect(screen.getByRole('button', { name: 'Use icon OT Hex' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Use icon MT Hex' })).toBeInTheDocument();
+    // Tank/healer role markers are individually pickable (no auto-selected first option).
+    expect(screen.getByRole('button', { name: 'Use icon OT (Off Tank)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use icon MT (Main Tank)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use icon H1 (Healer 1)' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use icon Number 10' })).toBeInTheDocument();
   });
 
@@ -42,7 +44,7 @@ describe('MarkerIconPicker', () => {
     const onSelect = jest.fn();
     render(<MarkerIconPicker open anchorPosition={anchor} onSelect={onSelect} onClose={noop} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Use icon MT Hex' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use icon MT (Main Tank)' }));
     expect(onSelect).toHaveBeenCalledWith(21);
   });
 
@@ -52,7 +54,7 @@ describe('MarkerIconPicker', () => {
       <MarkerIconPicker open mobile anchorPosition={anchor} onSelect={onSelect} onClose={noop} />,
     );
 
-    const cell = screen.getByRole('button', { name: 'Use icon MT Hex' });
+    const cell = screen.getByRole('button', { name: 'Use icon MT (Main Tank)' });
     // iOS-style sequence: pointer events, then the (sometimes-missing) synthetic click.
     firePointer(cell, 'pointerdown', {
       pointerId: 1,

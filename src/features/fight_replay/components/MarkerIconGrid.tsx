@@ -1,5 +1,6 @@
 /**
- * Grouped grid of the common Elms marker icons (Numbers / Arrows / Squares / Hexagons),
+ * Grouped grid of the common Elms marker icons (Numbers / Roles / Directional Arrows / Shapes /
+ * Squares),
  * shared by the add-marker picker and the marker edit dialog. Every option is visible at
  * once — no nested menus — and each cell is a real button, so the grid works the same for
  * touch, mouse, and keyboard.

@@ -54,4 +54,7 @@ export const TEXTURE_LOOKUP: Record<string, string> = {
   '6': 'M0RMarkers/textures/chevron.dds',
   '7': 'M0RMarkers/textures/blank.dds',
   '8': 'M0RMarkers/textures/sharkpog.dds',
+  // NOTE: the esotk-native directional arrow ("M0RMarkers/textures/arrow.dds") is intentionally
+  // NOT in this table. It is not a real M0R built-in texture, so M0R export must emit its full
+  // path (which still round-trips here) rather than a fake "^9" lookup id that real M0R can't read.
 };
