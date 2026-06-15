@@ -235,7 +235,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
   {
     id: 'standard-of-might',
     label: 'Standard of Might (Dragonknight)',
-    baseCost: 250,
+    baseCost: 200,
     owner: 'dragonknight',
     provenance: 'https://eso-skillbook.com/skill/standard-of-might',
     confidence: 'high',
@@ -246,7 +246,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     baseCost: 200,
     owner: 'dragonknight',
     provenance: 'https://eso-skillbook.com/skill/shifting-standard',
-    confidence: 'medium',
+    confidence: 'high',
   },
   {
     id: 'corrosive-armor',
@@ -254,7 +254,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     baseCost: 200,
     owner: 'dragonknight',
     provenance: 'https://eso-skillbook.com/skill/corrosive-armor',
-    confidence: 'medium',
+    confidence: 'high',
   },
   // Sorcerer
   {
@@ -298,7 +298,7 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
     baseCost: 200,
     owner: 'warden',
     provenance: 'https://eso-skillbook.com/skill/permafrost',
-    confidence: 'medium',
+    confidence: 'high',
   },
   // Necromancer
   {
@@ -313,10 +313,10 @@ export const ULTIMATE_ABILITIES: readonly UltimateAbility[] = [
   {
     id: 'the-unblinking-eye',
     label: 'The Unblinking Eye (Arcanist)',
-    baseCost: 250,
+    baseCost: 175,
     owner: 'arcanist',
     provenance: 'https://eso-skillbook.com/skill/the-unblinking-eye',
-    confidence: 'medium',
+    confidence: 'high',
   },
 ];
 

@@ -115,8 +115,8 @@ function ultimateSnapshot(event: ResourceChangeEvent, actorID: number): number |
  * overcap waste (invisible in snapshots) — flagged via `hitCap`. Equivalently,
  * gen = spent + (final − initial).
  *
- * PRECONDITION: `events` must be in timestamp order (the ESO Logs `events` query
- * returns them sorted, so callers using `fetchResourceEvents` get this for free).
+ * Robust to event ordering: the actor's snapshots are sorted by timestamp here,
+ * so callers may pass events in any order (e.g. concatenated hostility scopes).
  * Validated against a real trial log (Lucent Citadel kZAvqFwYcRTLB97W, fight 2):
  * this exact algorithm yields 627 generated / 186s ≈ 3.37 ult/s for a baseline
  * Arcanist, conservation-closed (627 − 749 spent = 76 − 198 final−initial).
@@ -125,12 +125,16 @@ export function calibrateFromEvents(input: CalibrationInput): CalibrationResult 
   const { events, fightDurationSeconds, targetActorID } = input;
   const safeDuration = fightDurationSeconds > 0 ? fightDurationSeconds : 1;
 
-  // Collect the actor's ultimate snapshots in timestamp order.
-  const series: number[] = [];
+  // Collect the actor's (timestamp, ultimate) snapshots, then sort by time so the
+  // delta walk is correct regardless of the order events were passed in. Sort is
+  // stable on timestamp; equal-timestamp samples keep their original order.
+  const snapshots: { t: number; u: number }[] = [];
   for (const event of events) {
     const u = ultimateSnapshot(event, targetActorID);
-    if (u != null) series.push(u);
+    if (u != null) snapshots.push({ t: event.timestamp, u });
   }
+  snapshots.sort((a, b) => a.t - b.t);
+  const series = snapshots.map((s) => s.u);
 
   let generated = 0;
   let spent = 0;
