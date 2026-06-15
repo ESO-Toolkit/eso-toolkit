@@ -83,4 +83,21 @@ describe('UltimateCalculator', () => {
     expect(screen.queryByText(/Cost reduced/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Power Stone/i)).not.toBeInTheDocument();
   });
+
+  it('does not let the effective cost jump when switching to Custom under a reduction', () => {
+    renderCalc();
+    // Sorcerer has Power Stone (−15%) default-on, so the displayed effective cost
+    // is already reduced. Switching to Custom must SEED with that effective cost,
+    // not the unreduced base — the displayed cost must not change.
+    fireEvent.mouseDown(screen.getByLabelText(/Class/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText('Sorcerer'));
+
+    const costBefore = screen.getByText(/\d+ ult cost/i).textContent;
+
+    fireEvent.mouseDown(screen.getByLabelText(/^Ultimate$/i));
+    fireEvent.click(within(screen.getByRole('listbox')).getByText(/Custom cost/i));
+
+    const costAfter = screen.getByText(/\d+ ult cost/i).textContent;
+    expect(costAfter).toBe(costBefore);
+  });
 });

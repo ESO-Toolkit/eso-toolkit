@@ -493,7 +493,11 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                   label="Ultimate"
                   value={state.customUltimateCost != null ? 'custom' : state.ultimateAbilityId}
                   onChange={(e) => {
-                    if (e.target.value === 'custom') calc.setCustomUltimateCost(baseCost);
+                    // Seed custom cost with the current EFFECTIVE cost (after any
+                    // reductions), since a custom cost is treated as already
+                    // effective — seeding with the unreduced base would make the
+                    // number jump the moment you switch to Custom.
+                    if (e.target.value === 'custom') calc.setCustomUltimateCost(effectiveCost);
                     else calc.setUltimateAbility(e.target.value);
                   }}
                 >
