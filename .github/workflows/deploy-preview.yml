@@ -31,6 +31,12 @@ jobs:
           VITE_BASE_URL: '/dev-previews/pr-${{ github.event.pull_request.number }}/'
           VITE_ROSTER_HUB_API_URL: 'https://roster-hub-api.eso-toolkit.workers.dev'
           VITE_DISCORD_CLIENT_ID: ${{ vars.VITE_DISCORD_CLIENT_ID }}
+          # Serve the AI-upscaled replay map tiles from the R2 bucket (same default as the production
+          # build-and-deploy action). Without this the preview resolves tiles to its own app-relative
+          # /dev-previews/pr-N/maps-hires path — which isn't deployed (tiles are gitignored, R2-bound) —
+          # so every hi-res map 404s and falls back to the 768px RPGLogs CDN. Setting it here lets the
+          # preview show the same crisp tiles production will.
+          VITE_HIRES_MAP_BASE: 'https://pub-87ec3d93bfd4456faec17c57e05093d9.r2.dev'
 
       - name: Generate GitHub App token
         id: app-token

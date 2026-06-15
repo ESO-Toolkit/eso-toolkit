@@ -4,6 +4,7 @@ import { type Controls, Vector3, Box3 } from 'three';
 
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
 import type { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
+import { MIN_FRAME_DIAGONAL_UNITS } from '../utils/mapScaling';
 
 // OrbitControls exposes `target` (Vector3) + `update()` + the EventDispatcher API that three's
 // base Controls type omits; this is the narrowest shape we touch.
@@ -95,7 +96,13 @@ export const CameraResetControls: React.FC<CameraResetControlsProps> = ({
       const size = box.getSize(new Vector3());
       // Fit distance from the bbox diagonal and the camera's vertical FOV; keep the existing
       // SW-and-above viewing offset so framing-all preserves the replay's house angle.
-      const diagonal = Math.max(size.x, size.z, Math.hypot(size.x, size.z)) || 10;
+      // Floor the diagonal at MIN_FRAME_DIAGONAL_UNITS for the same reason the initial fit does:
+      // on a tiny fight (e.g. a ~14×11 m Rockgrove boss) the raw actor diagonal pins the camera
+      // onto the cluster and magnifies a blurry map patch. Flooring keeps a sensible window of map
+      // around the actors; large fights above the floor are unaffected. (Frame-all keeps its own
+      // looser 1.2 factor — a deliberately wider "show me everyone" view than the initial fit.)
+      const rawDiagonal = Math.max(size.x, size.z, Math.hypot(size.x, size.z)) || 10;
+      const diagonal = Math.max(rawDiagonal, MIN_FRAME_DIAGONAL_UNITS);
       const fov = ((camera as { fov?: number }).fov ?? 30) * (Math.PI / 180);
       const distance = Math.max(5, (diagonal / 2 / Math.tan(fov / 2)) * 1.2);
       const position = center

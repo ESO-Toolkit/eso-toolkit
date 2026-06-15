@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 
-import { applyFloorTexture, generateFallbackTexture } from './DynamicMapTexture';
+import {
+  applyFloorTexture,
+  generateFallbackTexture,
+  generateMaplessFloorTexture,
+} from './DynamicMapTexture';
 
 /**
  * generateFallbackTexture backs the "blank floor" fix: when a CDN map texture fails to
@@ -64,6 +68,51 @@ describe('generateFallbackTexture', () => {
     const b = generateFallbackTexture();
     expect(a).not.toBe(b);
     expect(a.image).not.toBe(b.image);
+    a.dispose();
+    b.dispose();
+  });
+});
+
+/**
+ * generateMaplessFloorTexture backs the "deliberate floor for a mapless fight" fix: every trash pull
+ * (encounterID 0 — dungeon/trial trash, Cyrodiil/PvP) has an empty fight.maps, so an empty map
+ * timeline would otherwise leave a bare dark plane that reads as broken. DynamicMapTexture binds this
+ * slate surface instead. Same contract as the error-grid: always a usable, non-null CanvasTexture,
+ * safe in a 2D-context-less environment.
+ */
+describe('generateMaplessFloorTexture', () => {
+  let getContextSpy: jest.SpyInstance;
+  beforeEach(() => {
+    getContextSpy = jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  });
+  afterEach(() => {
+    getContextSpy.mockRestore();
+  });
+
+  it('returns a non-null CanvasTexture (the contract DynamicMapTexture relies on)', () => {
+    const texture = generateMaplessFloorTexture();
+    expect(texture).not.toBeNull();
+    expect(texture).toBeInstanceOf(THREE.CanvasTexture);
+    texture.dispose();
+  });
+
+  it('uses sRGB color space + clamp/linear sampling so it matches the real-map floor', () => {
+    const texture = generateMaplessFloorTexture();
+    expect(texture.colorSpace).toBe(THREE.SRGBColorSpace);
+    expect(texture.wrapS).toBe(THREE.ClampToEdgeWrapping);
+    expect(texture.wrapT).toBe(THREE.ClampToEdgeWrapping);
+    texture.dispose();
+  });
+
+  it('does not throw when a 2D context is unavailable (null-context guard)', () => {
+    expect(() => generateMaplessFloorTexture().dispose()).not.toThrow();
+    expect(getContextSpy).toHaveBeenCalledWith('2d');
+  });
+
+  it('returns a fresh texture each call so per-instance disposal is safe', () => {
+    const a = generateMaplessFloorTexture();
+    const b = generateMaplessFloorTexture();
+    expect(a).not.toBe(b);
     a.dispose();
     b.dispose();
   });

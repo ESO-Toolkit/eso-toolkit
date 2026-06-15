@@ -283,6 +283,40 @@ function getActorIdsFromLookup(lookup: TimestampPositionLookup | null): number[]
   return Array.from(ids).sort((a, b) => a - b);
 }
 
+// Soft radial gradient used as the contact-shadow blob's alphaMap. three.js samples the GREEN
+// channel for alphaMap (diffuseColor.a *= texture.g), NOT the alpha channel, so this is a fully
+// OPAQUE luminance ramp — white (g=1) center → black (g=0) edge — giving an opaque-center →
+// transparent-edge falloff once multiplied by the material's black color + 0.33 opacity. (A
+// white→transparent ramp would reintroduce canvas premultiply ambiguity at the edge and lose the
+// falloff, so it's white→black with alpha=1 throughout.) Built once and shared by the single
+// aoBlob InstancedMesh.
+function createAoBlobAlphaMap(): THREE.CanvasTexture {
+  const SIZE = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    // Degrade gracefully — an empty texture rather than a throw at module load.
+    return new THREE.CanvasTexture(canvas);
+  }
+  const c = SIZE / 2;
+  const gradient = ctx.createRadialGradient(c, c, 0, c, c, c);
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)'); // opaque center → full alpha (g=1)
+  gradient.addColorStop(1, 'rgba(0, 0, 0, 1)'); // opaque edge → zero alpha (g=0)
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  // Data, not color — keep it linear so sRGB doesn't bend the falloff curve.
+  texture.colorSpace = THREE.NoColorSpace;
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 // Flat ground wedge pointing in the actor's facing (+Z local).
 function createVisionCone(scale: number): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
@@ -322,6 +356,7 @@ interface FigureGeometries {
   cap: THREE.CylinderGeometry;
   glyph: THREE.PlaneGeometry;
   vision: THREE.BufferGeometry;
+  aoBlob: THREE.CircleGeometry;
   anchorRing: THREE.RingGeometry;
   selectionRing: THREE.RingGeometry;
   tauntRing: THREE.RingGeometry;
@@ -335,6 +370,11 @@ function createFigureGeometries(scale: number, bodyHeight: number): FigureGeomet
     cap: new THREE.CylinderGeometry(0.14 * scale, 0.14 * scale, 0.04 * scale, 16),
     glyph: new THREE.PlaneGeometry(0.22 * scale, 0.22 * scale),
     vision: createVisionCone(scale),
+    // Soft contact-shadow blob disc: a flat circle a bit larger than the anchor ring so it reads as
+    // a shadow pool under the actor. `scale` is baked in (like `r` above) so it tracks larger
+    // figures on small maps; the per-actor groupScale is applied in the loop. Rotated flat (-PI/2 X)
+    // per-instance in the matrix write, exactly like the anchor ring.
+    aoBlob: new THREE.CircleGeometry(0.55 * scale, 48),
     anchorRing: new THREE.RingGeometry(r * 0.8, r * 1.2, 40),
     selectionRing: new THREE.RingGeometry(r * 1.6, r * 2.0, 48),
     tauntRing: new THREE.RingGeometry(r * 1.1, r * 1.4, 40),
@@ -546,6 +586,8 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   // Invisible fat click/touch target, one instance per actor; the sole hit layer (visual layers no
   // longer carry pointer handlers). instanceId → actorId is uniform with every other layer.
   const hitProxyRef = useRef<THREE.InstancedMesh>(null);
+  // Soft radial contact-shadow blob disc under each actor; one shared InstancedMesh (1 draw call).
+  const aoBlobRef = useRef<THREE.InstancedMesh>(null);
   const anchorRingRef = useRef<THREE.InstancedMesh>(null);
   const selectionRingRef = useRef<THREE.InstancedMesh>(null);
   const tauntRingRef = useRef<THREE.InstancedMesh>(null);
@@ -632,6 +674,22 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         toneMapped: false,
         side: THREE.DoubleSide,
       }),
+      // Soft contact-shadow blob. Black + a radial-gradient alphaMap (opaque center → transparent
+      // edge) reads as a soft shadow pool. NormalBlending (the default) darkens via alpha over the
+      // bright map — additive would LIGHTEN, which we don't want. depthWrite off (it sits just above
+      // the floor; no z-fight, no polygonOffset needed). Shared by one InstancedMesh across all
+      // actors. No vertexColors / per-instance opacity — every blob is the same flat soft black, so
+      // hideInstance (matrix only) is enough to drop hidden/dead actors, like the hit proxy.
+      aoBlob: new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        alphaMap: createAoBlobAlphaMap(),
+        transparent: true,
+        opacity: 0.33,
+        depthWrite: false,
+        blending: THREE.NormalBlending,
+        toneMapped: false,
+        side: THREE.DoubleSide,
+      }),
       anchorRing: new THREE.MeshBasicMaterial({
         vertexColors: true,
         transparent: true,
@@ -696,6 +754,10 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
   useLayoutEffect(() => {
     return () => {
       Object.values(geometries).forEach((g) => g.dispose());
+      // material.dispose() does NOT dispose embedded textures; the aoBlob's alphaMap is created fresh
+      // per mount (unlike the process-global glyph textures), so dispose it explicitly to avoid
+      // leaking a 128² CanvasTexture on every mount/unmount cycle.
+      materials.aoBlob.alphaMap?.dispose();
       Object.values(materials).forEach((m) => m.dispose());
       glyphMaterials.forEach((m) => m.dispose());
     };
@@ -760,6 +822,11 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       return undefined;
     };
 
+    // Contact-shadow blob. renderOrder 9 (BELOW the anchor ring's 10): both layers are
+    // depthWrite:false, so the depth buffer does NOT separate them — paint order decides what reads
+    // on top, and the blob (radius 0.55) fully contains the ring, so it must paint FIRST or it would
+    // dim the ring. No per-instance opacity (flat soft black; hideInstance drops it via matrix).
+    setup(aoBlobRef.current, 9, false);
     o.anchorRing = setup(anchorRingRef.current, 10, true);
     o.vision = setup(visionRef.current, 11, true);
     // The hit proxy draws nothing (colorWrite off), so it needs no per-instance opacity attribute;
@@ -875,6 +942,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           hideInstance(capRef.current, index);
           hideInstance(visionRef.current, index);
           hideInstance(hitProxyRef.current, index);
+          hideInstance(aoBlobRef.current, index);
           hideInstance(anchorRingRef.current, index);
           hideInstance(selectionRingRef.current, index);
           hideInstance(tauntRingRef.current, index);
@@ -1051,6 +1119,14 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
           hideInstance(mesh, index);
         }
       });
+
+      // Contact-shadow blob flat on ground, just UNDER the anchor ring (+0.004 vs the ring's +0.006)
+      // so the ring still reads on top. Same x,z + groupScale as the ring; flat orientation (-PI/2 X).
+      obj.position.set(x, y + GROUND_LEVEL + 0.004, z);
+      obj.rotation.set(-Math.PI / 2, 0, 0);
+      obj.scale.setScalar(groupScale);
+      obj.updateMatrix();
+      aoBlobRef.current?.setMatrixAt(index, obj.matrix);
 
       // Anchor ring flat on ground.
       obj.position.set(x, y + GROUND_LEVEL + 0.006, z);
@@ -1233,6 +1309,7 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
       capRef.current,
       visionRef.current,
       hitProxyRef.current,
+      aoBlobRef.current,
       anchorRingRef.current,
       selectionRingRef.current,
       tauntRingRef.current,
@@ -1389,6 +1466,9 @@ export const InstancedReplayFigures3D: React.FC<InstancedReplayFigures3DProps> =
         onPointerOver={handleOver}
         onPointerOut={handleOut}
       />
+      {/* Soft radial contact-shadow blob disc under each actor (one shared InstancedMesh, 1 draw
+          call). renderOrder 9 (set in the setup effect) paints it UNDER the anchor ring. */}
+      <instancedMesh ref={aoBlobRef} args={[geometries.aoBlob, materials.aoBlob, instanceCount]} />
       <instancedMesh
         ref={anchorRingRef}
         args={[geometries.anchorRing, materials.anchorRing, instanceCount]}

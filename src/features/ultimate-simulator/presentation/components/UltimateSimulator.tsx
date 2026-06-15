@@ -102,9 +102,7 @@ export const UltimateSimulator: React.FC<UltimateSimulatorProps> = ({ className 
                         labelId="decisive-quality-label"
                         label="Weapon quality"
                         value={state.decisiveQuality}
-                        onChange={(e) =>
-                          sim.setDecisiveQuality(e.target.value as DecisiveQuality)
-                        }
+                        onChange={(e) => sim.setDecisiveQuality(e.target.value as DecisiveQuality)}
                       >
                         {QUALITY_OPTIONS.map((opt) => (
                           <MenuItem key={opt.value} value={opt.value}>
@@ -231,10 +229,17 @@ export const UltimateSimulator: React.FC<UltimateSimulatorProps> = ({ className 
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                    {fmt(result.meanTotal - result.contributions.reduce((s, c) => s + c.decisiveUltimate, 0), 0)}
+                    {fmt(
+                      result.meanTotal -
+                        result.contributions.reduce((s, c) => s + c.decisiveUltimate, 0),
+                      0,
+                    )}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                    {fmt(result.contributions.reduce((s, c) => s + c.decisiveUltimate, 0), 1)}
+                    {fmt(
+                      result.contributions.reduce((s, c) => s + c.decisiveUltimate, 0),
+                      1,
+                    )}
                   </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }} data-testid="grand-total">
                     {fmt(result.meanTotal, 1)}

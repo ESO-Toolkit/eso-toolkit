@@ -45,9 +45,21 @@ describe('calibrateFromEvents', () => {
 
   it('ignores non-ultimate resource changes', () => {
     const events = [
-      ultEvent({ abilityGameID: 1, resourceChange: 5, resourceChangeType: RESOURCE_CHANGE_TYPE.magicka }),
-      ultEvent({ abilityGameID: 1, resourceChange: 5, resourceChangeType: RESOURCE_CHANGE_TYPE.stamina }),
-      ultEvent({ abilityGameID: 1, resourceChange: 5, resourceChangeType: RESOURCE_CHANGE_TYPE.ultimate }),
+      ultEvent({
+        abilityGameID: 1,
+        resourceChange: 5,
+        resourceChangeType: RESOURCE_CHANGE_TYPE.magicka,
+      }),
+      ultEvent({
+        abilityGameID: 1,
+        resourceChange: 5,
+        resourceChangeType: RESOURCE_CHANGE_TYPE.stamina,
+      }),
+      ultEvent({
+        abilityGameID: 1,
+        resourceChange: 5,
+        resourceChangeType: RESOURCE_CHANGE_TYPE.ultimate,
+      }),
     ];
     const result = calibrateFromEvents({ events, fightDurationSeconds: 1 });
     expect(result.totalNetUltimate).toBe(5);

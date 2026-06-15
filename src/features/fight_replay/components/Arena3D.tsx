@@ -18,13 +18,13 @@ import {
 } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import * as THREE from 'three';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePerfTier } from '../../../hooks/usePerfTier';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { useReplayPrefs } from '../../../hooks/useReplayPrefs';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
-import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
@@ -32,7 +32,11 @@ import { ARENA_HEIGHT } from '../constants/replayDesign';
 import { MapMarkersState, ReplayMarker } from '../types/mapMarkers';
 import { computeRobustActorFraming } from '../utils/cameraFraming';
 import { portalToFullscreen } from '../utils/fullscreenPortal';
-import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
+import {
+  DEFAULT_ACTOR_SCALE,
+  computeActorScaleFromFightArea,
+  computeInitialViewDistance,
+} from '../utils/mapScaling';
 import { getVisiblePlayerIds } from '../utils/pathUtils';
 import { decidePreviewMode } from '../utils/previewMode';
 
@@ -524,11 +528,18 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
 
     const rangeX = arenaMaxX - arenaMinX;
     const rangeZ = arenaMaxZ - arenaMinZ;
-    const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    // Cap the close-zoom bound so an outlier-inflated whole-fight diagonal can't force the fallback
-    // initial framing absurdly far out (mirrors the cap in Arena3DScene, which owns the live clamp).
+    // Clamp the diagonal to the real arena scale before deriving camera bounds. The actor
+    // coordinate system maps into the fixed ~100-unit arena, so a real diagonal is ≤ ~141 units;
+    // an outlier boundingBox coordinate can otherwise inflate it to thousands, which inverts the
+    // min/max clamp (minDistance > maxDistance) and pins/zooms the camera absurdly far out. The
+    // sibling cameraSettings in Arena3DScene applies the same guard (it owns OrbitControls' bounds).
+    const ARENA_DIAGONAL = 100 * Math.SQRT2; // ~141
+    const diagonal = Math.min(Math.sqrt(rangeX * rangeX + rangeZ * rangeZ), ARENA_DIAGONAL);
+    // Cap the close-zoom bound at 12 so the fallback initial framing can't be forced absurdly far
+    // out (mirrors the cap in Arena3DScene, which owns the live clamp); the maxDistance is floored
+    // strictly above minDistance so the clamp can never invert.
     const minDistance = Math.min(Math.max(5, diagonal * 0.3), 12);
-    const maxDistance = Math.min(500, Math.max(50, diagonal * 3));
+    const maxDistance = Math.max(minDistance + 1, Math.min(500, Math.max(50, diagonal * 3)));
 
     return {
       target: [centerX, 0, centerZ] as [number, number, number],
@@ -566,36 +577,9 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
   // Calculate initial camera target and position based on actor bounding box at fight start
   // MUST be before any early returns to comply with React Hooks rules
   const { initialCameraTarget, initialCameraPosition } = useMemo(() => {
-    // Calculate actor scale based on fight size (same logic as Arena3DScene)
-    let actorScale = DEFAULT_ACTOR_SCALE;
-
-    if (fight) {
-      const zoneId = fight.gameZone?.id;
-      const mapId = fight.maps?.[0]?.id;
-
-      if (zoneId && mapId) {
-        const mapData = getMapScaleData(zoneId, mapId);
-        const mapScale = mapData ? computeActorScaleFromMapData(mapData) : null;
-
-        if (mapScale) {
-          actorScale = mapScale;
-        }
-      }
-
-      if ((!fight.gameZone?.id || !fight.maps?.[0]?.id) && fight.boundingBox) {
-        const { minX, maxX, minY, maxY } = fight.boundingBox;
-        if (minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
-          const rangeX = (maxX - minX) / 100;
-          const rangeZ = (maxY - minY) / 100;
-          const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-
-          if (diagonal > 0) {
-            const relativeFightSize = Math.min(1, diagonal / 141.42);
-            actorScale = 0.5 + relativeFightSize * 0.3;
-          }
-        }
-      }
-    }
+    // Actor scale from the fight's own play area (same basis as Arena3DScene's figures). Only used
+    // by the computeDefaultCameraPosition fallback below when there's no actor lookup to fit to.
+    const actorScale = computeActorScaleFromFightArea(fight?.boundingBox) ?? DEFAULT_ACTOR_SCALE;
 
     // Use arena dimensions center as fallback
     const defaultTarget: [number, number, number] = [
@@ -667,22 +651,22 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
     // The diagonal of the (outlier-trimmed) XZ extent — the size measure for the distance calc.
     const boundingBoxDiagonal = framing.diagonalXZ;
 
-    // Calculate camera distance to fit all actors in view
-    // Use the bounding box diagonal to determine appropriate distance
-    // Camera FOV is 30 degrees, so we need to account for that
-    const fov = 30; // degrees
-    const fovRadians = (fov * Math.PI) / 180;
+    // Distance needed to frame the fight. computeInitialViewDistance floors the diagonal at
+    // MIN_FRAME_DIAGONAL_UNITS so a tiny fight (e.g. a ~14×11 m Rockgrove boss) still frames a
+    // sensible window of surrounding map instead of pinning the camera onto the cluster and
+    // magnifying a blurry map patch — the "too small / zoomed-in" report. Large fights whose real
+    // diagonal exceeds the floor are unaffected.
+    const fitDistance = computeInitialViewDistance(boundingBoxDiagonal);
 
-    // Calculate distance needed to fit the bounding box in view
-    // Use a tight framing multiplier for a closer initial view
-    const requiredDistance = (boundingBoxDiagonal / 2 / Math.tan(fovRadians / 2)) * 0.5;
-
-    // Use our calculated distance, but ensure it's reasonable
-    // Don't use cameraSettings.minDistance as it can be too large for initial view
-    const viewDistance = Math.max(
-      2, // Absolute minimum of 2 units (very close)
-      Math.min(requiredDistance, cameraSettings.maxDistance * 0.3),
-    );
+    // The original "don't start too far out" cap was maxDistance × 0.3. For a TINY fight,
+    // maxDistance is itself small (it tracks the fight size), so that cap (≈16 units for Rockgrove)
+    // sat BELOW the minimum framing distance and silently re-cramped the very view we just widened.
+    // Floor the cap at the minimum framing distance so it can still pull a huge fight in but can
+    // never undercut the floor — large fights (DSR) keep their existing capped framing exactly,
+    // small fights (RG) get the wider window. computeInitialViewDistance(0) is the floor distance.
+    const minFrameDistance = computeInitialViewDistance(0);
+    const startCap = Math.max(cameraSettings.maxDistance * 0.3, minFrameDistance);
+    const viewDistance = Math.min(fitDistance, startCap);
 
     // Position camera: southwest of target, elevated for good viewing angle
     const cameraOffset = [-viewDistance * 0.6, viewDistance * 0.5, viewDistance * 0.6];
@@ -739,6 +723,15 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
       <ReplayErrorBoundary checkWebGL={true}>
         <Canvas
           key={`canvas-${fight.id}`} // Stable key prevents unnecessary recreation
+          // Render resolution scaled by perf tier. R3F's default is already min(devicePixelRatio, 2),
+          // so [1, 2] just makes that explicit for medium/high (HiDPI gets a crisp 2×). Low tier is
+          // capped at 1.5× rather than pinned to 1: detectPerfTier classifies most mid-range PHONES
+          // as 'low' (mobile tier-2 → low), and at dpr=1 on a 2–3× DPR phone the canvas renders at
+          // roughly half resolution — the thin actor figures and SDF name-tags alias badly ("pixelated
+          // models"). 1.5× restores most of that crispness while still trimming the fill cost vs a full
+          // 2× for genuinely weak GPUs. Reactive — changes apply without a remount. (This is a perf
+          // lever, not the floor-sharpness fix; the floor crispness win comes from the unsharp mask.)
+          dpr={perfTier === 'low' ? [1, 1.5] : [1, 2]}
           camera={{
             position: initialCameraPosition,
             fov: 30,
@@ -756,6 +749,14 @@ const Arena3DComponent: React.FC<Arena3DProps> = ({
           onContextMenu={handleCanvasContextMenu}
           onCreated={(state) => {
             const { gl } = state;
+            // Tone mapping: R3F defaults to ACESFilmic, which desaturates bright highlights — it
+            // washes out the colourful ESO map art we just colour-corrected (sRGB). Khronos PBR
+            // Neutral preserves saturation and hue far better while still gracefully rolling off
+            // highlights, so the parchment/terrain/water read vivid (the look chosen from the audit
+            // panels). The small exposure bump compensates for the slight darkening that correct
+            // sRGB colour management introduces. Applies scene-wide (floor + figures cohere).
+            gl.toneMapping = THREE.NeutralToneMapping;
+            gl.toneMappingExposure = 1.15;
             // Dev-only: expose the renderer/scene/camera for perf probing (e.g.
             // gl.info.render.frame, toggling gl.shadowMap.autoUpdate, timing gl.render).
             // R3F keeps these in its own reconciler, unreachable through the main React

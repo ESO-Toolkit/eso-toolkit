@@ -1,21 +1,24 @@
-import { Grid, OrbitControls } from '@react-three/drei';
+import { Environment, Grid, Lightformer, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import React, { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
 import * as THREE from 'three';
+import type { DirectionalLight, Object3D } from 'three';
 
 import { FightFragment } from '@/graphql/gql/graphql';
 
-import { getMapScaleData } from '../../../types/zoneScaleData';
+import { usePerfTier } from '../../../hooks/usePerfTier';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
 import { MapMarkersState } from '../types/mapMarkers';
 import { LongPressTracker } from '../utils/longPress';
-import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
+import { DEFAULT_ACTOR_SCALE, computeActorScaleFromFightArea } from '../utils/mapScaling';
 import { extractPlayerPaths, DEFAULT_PATH_SAMPLING } from '../utils/pathUtils';
 import { getPlayerPathColor } from '../utils/playerColors';
 import { resolveTouchPolicy } from '../utils/touchPolicy';
 
+import { ArenaEnvironmentShell, type CosmicVariant } from './ArenaEnvironmentShell';
+import { BloomComposer, type BloomComposerHandle } from './BloomComposer';
 import { CameraFollower } from './CameraFollower';
 import { CameraResetControls } from './CameraResetControls';
 import { CanvasWheelZoom } from './CanvasWheelZoom';
@@ -31,6 +34,13 @@ import { PlayerPathTrail3D } from './PlayerPathTrail3D';
 // the default would change identity every render and churn child memoization.
 const EMPTY_VISIBILITY: Map<number, boolean> = new Map();
 const EMPTY_COLOR_OVERRIDES: Map<number, string> = new Map();
+
+// Stable empty timeline for when the `mapTimeline` prop is absent. DynamicMapTexture's mapless-floor
+// effect lists `mapTimeline` in its deps and calls onTextureChange (which refills the on-demand render
+// budget) whenever it re-runs; a fresh `{ entries: [], totalMaps: 0 }` literal in the fallback would
+// change identity every render and repaint a paused mapless fight continuously. A frozen singleton
+// keeps the reference stable so the effect fires once.
+const EMPTY_MAP_TIMELINE: MapTimeline = Object.freeze({ entries: [], totalMaps: 0 });
 
 // Create logger instance for Arena3DScene
 const logger = new Logger({
@@ -179,6 +189,11 @@ interface RenderLoopProps {
    * refills it from per-frame signals (time, camera, follow) below.
    */
   renderBudgetRef: React.RefObject<number>;
+  /**
+   * Optional bloom composer. When present (non-performance mode) the gated render goes through the
+   * composer (RenderPass → bloom → OutputPass) so bright celestials glow; otherwise a plain gl.render.
+   */
+  composerRef: React.RefObject<BloomComposerHandle | null>;
 }
 
 /**
@@ -201,6 +216,7 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
   timeRef,
   followingActorIdRef,
   renderBudgetRef,
+  composerRef,
 }) => {
   const { gl, scene, camera, controls } = useThree();
 
@@ -248,11 +264,160 @@ const RenderLoop: React.FC<RenderLoopProps> = ({
     if (renderBudgetRef.current > 0) {
       renderBudgetRef.current -= 1;
       lastRenderedTimeRef.current = currentTime;
-      gl.render(scene, camera);
+      const composer = composerRef.current;
+      if (composer) {
+        composer.render();
+      } else {
+        gl.render(scene, camera);
+      }
     }
   }, 999); // Very low priority to render after all updates
 
   return null;
+};
+
+interface ArenaLightingProps {
+  centerX: number;
+  centerZ: number;
+  size: number;
+  /** When false (performance mode), the key light stops casting shadows (drops the shadow pass). */
+  castShadows: boolean;
+}
+
+/**
+ * Scene lighting + the single directional "sun" that casts actor contact shadows onto the map.
+ *
+ * The shadow frustum and light target are derived from the live arena center/size so they actually
+ * enclose the play area. The previous static `<directionalLight position={[10,10,5]}>` aimed at the
+ * default target (0,0,0) with the default ±5 orthographic shadow frustum — which could not contain
+ * an arena centered near (50,50) at size ~100, so figures cast no (or clipped) shadows. Grounding
+ * the actors on the map starts here.
+ *
+ * Cost note: the shadow map regenerates inside the on-demand `gl.render` (RenderLoop), so it adds no
+ * per-frame work while the scene is idle/paused — it repaints only when the scene is already dirty.
+ */
+const ArenaLighting: React.FC<ArenaLightingProps> = ({ centerX, centerZ, size, castShadows }) => {
+  const lightRef = useRef<DirectionalLight>(null);
+  const targetRef = useRef<Object3D>(null);
+
+  // Point the light at arena center and size the ortho shadow camera to wrap the arena (+margin),
+  // then refresh the projection. Re-runs only when the arena geometry or shadow toggle changes.
+  useEffect(() => {
+    const light = lightRef.current;
+    const target = targetRef.current;
+    if (!light || !target) {
+      return;
+    }
+    light.target = target;
+    const half = size * 0.62; // a little past the arena edge so corner figures aren't clipped
+    const cam = light.shadow.camera;
+    cam.left = -half;
+    cam.right = half;
+    cam.top = half;
+    cam.bottom = -half;
+    cam.near = 1;
+    cam.far = size * 2.5;
+    cam.updateProjectionMatrix();
+    // Soften shadow acne on the near-flat floor without detaching the contact edge.
+    light.shadow.bias = -0.0004;
+    light.shadow.normalBias = 0.02;
+  }, [centerX, centerZ, size, castShadows]);
+
+  // Elevated to the south-west of arena center (matches the default fitted camera offset), high
+  // enough that figures throw a readable shadow across the map rather than straight down.
+  const lightPos: [number, number, number] = [
+    centerX - size * 0.3,
+    size * 0.8,
+    centerZ + size * 0.25,
+  ];
+
+  return (
+    <>
+      <ambientLight intensity={0.45} />
+      {/* A cool fill from the opposite side lifts shadowed figure backs off the floor (soft, no
+          shadow) so they don't read as flat silhouettes — pure static paint, gate-friendly. */}
+      <directionalLight
+        position={[centerX + size * 0.35, size * 0.5, centerZ - size * 0.35]}
+        intensity={0.22}
+        color="#9fc2ff"
+      />
+      <directionalLight
+        ref={lightRef}
+        position={lightPos}
+        intensity={0.95}
+        castShadow={castShadows}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+      />
+      <object3D ref={targetRef} position={[centerX, 0, centerZ]} />
+    </>
+  );
+};
+
+/**
+ * Build the radial vignette texture once: transparent over the central play area, ramping to opaque
+ * dark toward the edges. The clear core is generous (~62% radius) so it never dims the actors; the
+ * ramp lives in the outer rim where it frames the arena and hides the plane edge. Guarded for jsdom
+ * (no 2D context) so unit envs still get a valid texture.
+ */
+function createFloorVignetteTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  const px = 256;
+  canvas.width = px;
+  canvas.height = px;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const c = px / 2;
+    // The vignette plane is 1.15× the arena, so the arena edge sits at radius ≈ px*0.5/1.15 ≈ 0.43.
+    // Keep the clear core out PAST that (start at 0.48) so actors anywhere on the actual play surface
+    // — including the cardinal mid-edges — stay fully lit; the darkening only ramps in the outer ring
+    // beyond the map, where it feathers the hard plane edge into the background. (An earlier, tighter
+    // core dimmed peripheral actors — caught by a live look.)
+    //
+    // The rim is a GENTLE feather, NOT a near-opaque ring. An earlier pass ramped the rim to ~0.97 to
+    // "dissolve" the map edge — that reads fine looking straight down, but this vignette is a FLAT plane,
+    // and at a low/grazing orbit angle (which the user can freely rotate to, and which mobile portrait
+    // frames a lot of) the dark ramp region BEYOND the map edge lies flat toward/away from the camera and
+    // foreshortens into a wide, hard dark BAND arcing across the foreground — read live on mobile as a
+    // "weird circular shadow around the map" (the radial gradient is circular; the map is square). Capping
+    // the rim well below opaque and shortening the ramp keeps a soft edge feather from above while making
+    // that grazing-angle band faint instead of a hard ring. Verified live at both a top-down and a near-
+    // horizon orbit. The gradient is largest at the diagonal corners, which are off-map anyway.
+    const grad = ctx.createRadialGradient(c, c, px * 0.46, c, c, px * 0.5);
+    grad.addColorStop(0, 'rgba(7, 9, 14, 0)');
+    grad.addColorStop(0.6, 'rgba(7, 9, 14, 0.12)');
+    grad.addColorStop(1, 'rgba(7, 9, 14, 0.42)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, px, px);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+interface FloorVignetteProps {
+  centerX: number;
+  centerZ: number;
+  size: number;
+}
+
+/**
+ * A flat, slightly-oversized plane just above the floor carrying the radial vignette texture. Sits
+ * above the map/grid but below the actors' ground rings; transparent + depthWrite off so it darkens
+ * the floor by alpha without occluding anything. One static mesh, zero per-frame cost.
+ */
+const FloorVignette: React.FC<FloorVignetteProps> = ({ centerX, centerZ, size }) => {
+  const texture = useMemo(() => createFloorVignetteTexture(), []);
+  useEffect(() => () => texture.dispose(), [texture]);
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[centerX, 0.03, centerZ]} renderOrder={1}>
+      {/* 1.15× the arena so the dark rim extends a little past the map edge and feathers it out. */}
+      <planeGeometry args={[size * 1.15, size * 1.15]} />
+      <meshBasicMaterial map={texture} transparent depthWrite={false} toneMapped={false} />
+    </mesh>
+  );
 };
 
 /**
@@ -356,6 +521,15 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     renderBudgetRef.current = RENDER_TAIL_FRAMES;
   });
 
+  // Bloom composer handle, published by <BloomComposer> and consumed by RenderLoop. Null in
+  // performance mode (no composer mounted → RenderLoop falls back to a plain gl.render).
+  const composerRef = useRef<BloomComposerHandle | null>(null);
+
+  // MSAA sample count for the composer's HDR target, scaled by perf tier (high 4 / medium 2 / low 0).
+  // Without this the composer target is single-sampled and bloom-on tiers would render aliased edges.
+  const perfTier = usePerfTier();
+  const bloomSamples = perfTier === 'high' ? 4 : perfTier === 'medium' ? 2 : 0;
+
   // Lets scene children that mutate visible three.js state from an ASYNC callback (outside
   // any React commit, time change, camera move, or follow) tell the RenderLoop to repaint —
   // otherwise that mutation would be invisible while paused until the next unrelated dirty
@@ -452,6 +626,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     };
   }, [groundLongPress]);
 
+  // Cosmic backdrop variant. 'tamriel' (Nirn night sky under the two moons) is the canonical default
+  // for all current fights; the other variants exist for future per-zone selection.
+  const cosmicVariant: CosmicVariant = 'tamriel';
+
   // Player visibility is now owned by Arena3D and passed in as a prop, so the DOM
   // PlayerListPanel overlay (which renders the toggle controls) and these in-canvas actors
   // share one source of truth.
@@ -505,20 +683,29 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     const rangeX = arenaMaxX - arenaMinX;
     const rangeZ = arenaMaxZ - arenaMinZ;
 
-    // Set camera distances based on fight area size
-    // Minimum: Allow very close zoom for detailed inspection of actors
-    // With adaptable actor scale (0.8-1.1x), users need to zoom in closer
-    const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    // CAP the close-zoom bound. `diagonal` is the WHOLE-FIGHT bounding box, so a single outlier
-    // position (a pet/add at the zone edge, a teleport, a stray sample) inflates it — and since
-    // OrbitControls clamps the camera to >= minDistance, a ballooned minDistance both forces the
-    // initial framing way out AND blocks dollying in ("really zoomed out, can't zoom in" on certain
-    // fights). No real arena needs a closest-distance above ~6 units to inspect an actor, so cap it
-    // there; normal fights (diagonal*0.05 < 6) are unaffected.
+    // Set camera distances based on fight area size.
+    //
+    // The actor coordinate system always maps into the fixed ~100×100 arena floor, so a real
+    // fight diagonal is at most ~141 units (100·√2). A single outlier boundingBox coordinate
+    // (a stray/teleported actor position far off-map) can blow the raw diagonal up to tens of
+    // thousands of units, which made minDistance (5% of diagonal) exceed the 500-cap maxDistance —
+    // an INVERTED clamp that pins OrbitControls' distance and freezes all zoom (wheel, pinch,
+    // buttons). Clamp the diagonal to the real arena scale first so outliers can't invert the
+    // bounds, then derive min/max from the sane value.
+    const rawDiagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+    const ARENA_DIAGONAL = arenaDimensions.size * Math.SQRT2; // ~141 for the 100-unit arena
+    const diagonal = Math.min(rawDiagonal, ARENA_DIAGONAL);
+
+    // Minimum: allow very close zoom for detailed actor inspection. The diagonal is already
+    // clamped to the arena scale above, but keep the explicit ~6-unit cap as a second guard — no
+    // real arena needs a closest-distance above ~6 units to inspect an actor, and it keeps the
+    // close-zoom bound stable even if the arena-diagonal clamp is later retuned.
     const minDistance = Math.max(0.5, Math.min(diagonal * 0.05, 6));
 
-    // Maximum: 3x the diagonal for good overview, capped at reasonable bounds
-    const maxDistance = Math.min(500, Math.max(50, diagonal * 3));
+    // Maximum: 3× the diagonal for a good overview, floored at 50, capped at 500. Also forced to
+    // stay strictly above minDistance as a final guard so the clamp can never invert even if the
+    // constants are later retuned.
+    const maxDistance = Math.max(minDistance + 1, Math.min(500, Math.max(50, diagonal * 3)));
 
     return {
       // Always use initialTarget if provided (calculated from actor positions)
@@ -527,77 +714,39 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       minDistance,
       maxDistance,
     };
-  }, [fight.boundingBox, initialTarget, arenaDimensions.centerX, arenaDimensions.centerZ]);
+  }, [
+    fight.boundingBox,
+    initialTarget,
+    arenaDimensions.centerX,
+    arenaDimensions.centerZ,
+    arenaDimensions.size,
+  ]);
 
-  // Calculate actor scale based on map dimensions so actors keep a consistent real-world footprint
+  // Actor figure scale, driven by the fight's OWN actor area so figures are a consistent fraction of
+  // the play area in every fight. The previous basis was a zone-map lookup
+  // (getMapScaleData + computeActorScaleFromMapData), but the report's map id resolves into
+  // zoneScaleData only by a numeric collision (e.g. a Rockgrove boss matched the unrelated "Xanmeer
+  // Corridors" entry), so a small-arena fight was sized as if it were a large map and the figures
+  // read oversized next to the same fight on a big arena (Taleria). fight.boundingBox is the real,
+  // per-fight play area, so deriving scale from it makes a tiny Rockgrove arena get proportionally
+  // smaller figures while a sprawling Dreadsail Reef fight keeps roughly its established size.
   const actorScale = useMemo(() => {
-    const zoneId = fight.gameZone?.id;
-    const mapId = fight.maps?.[0]?.id;
-
-    if (!zoneId || !mapId) {
-      logger.warn('Missing zoneId or mapId for map-based actor scaling', { zoneId, mapId });
-      return DEFAULT_ACTOR_SCALE;
-    }
-
-    const mapData = getMapScaleData(zoneId, mapId);
-    if (!mapData) {
-      logger.warn('No map scale data found for map-based actor scaling', { zoneId, mapId });
-      return DEFAULT_ACTOR_SCALE;
-    }
-
-    const mapScale = computeActorScaleFromMapData(mapData);
-    if (mapScale) {
-      logger.info('Actor scale calculation (map-based)', {
+    const fightAreaScale = computeActorScaleFromFightArea(fight.boundingBox);
+    if (fightAreaScale) {
+      logger.info('Actor scale calculation (fight-area-based)', {
         fightId: fight.id,
-        mapName: mapData.name,
-        zoneId,
-        mapId,
-        actorScale: mapScale.toFixed(3),
+        actorScale: fightAreaScale.toFixed(3),
       });
-
-      return mapScale;
+      return fightAreaScale;
     }
 
-    logger.warn('Map data produced invalid actor scale, falling back to default', {
-      fightId: fight.id,
-      mapName: mapData.name,
-    });
-
-    // Fallback: use fight bounding box if available, otherwise default constant
-    const boundingBox = fight.boundingBox;
-    if (boundingBox) {
-      const { minX, maxX, minY, maxY } = boundingBox;
-      const hasBounds = [minX, maxX, minY, maxY].every(
-        (value) => typeof value === 'number' && Number.isFinite(value),
-      );
-
-      if (hasBounds) {
-        const rangeX = ((maxX as number) - (minX as number)) / 100;
-        const rangeZ = ((maxY as number) - (minY as number)) / 100;
-        const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-
-        if (diagonal > 0) {
-          const relativeFightSize = Math.min(1, diagonal / 141.42);
-          const fallbackScale = 0.5 + relativeFightSize * 0.3; // Keep within visibility bounds
-
-          logger.warn('Using bounding-box fallback for actor scale', {
-            fightId: fight.id,
-            diagonal: diagonal.toFixed(2),
-            fallbackScale: fallbackScale.toFixed(3),
-          });
-
-          return fallbackScale;
-        }
-      }
-    }
-
-    logger.warn('Unable to derive actor scale, using default constant', {
+    logger.warn('No usable fight bounding box for actor scaling, using default constant', {
       fightId: fight.id,
       defaultScale: DEFAULT_ACTOR_SCALE,
     });
 
     return DEFAULT_ACTOR_SCALE;
-  }, [fight.boundingBox, fight.gameZone?.id, fight.id, fight.maps]);
+  }, [fight.boundingBox, fight.id]);
 
   // Process player paths for visualization
   const playerPaths = useMemo(() => {
@@ -628,11 +777,15 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         slowFrameThreshold={33}
         maxSlowFrameLogsPerMinute={10}
       />
+      {/* Bloom post-processing (skipped in performance mode). Publishes its render handle to
+          composerRef; RenderLoop routes the gated render through it so bright celestials glow. */}
+      {!performanceMode && <BloomComposer composerRef={composerRef} samples={bloomSamples} />}
       {/* Manual render loop - lowest priority to render after all updates, gated on-demand */}
       <RenderLoop
         timeRef={timeRef}
         followingActorIdRef={followingActorIdRef}
         renderBudgetRef={renderBudgetRef}
+        composerRef={composerRef}
       />
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
@@ -650,14 +803,41 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       )}
       {/* Keyboard camera controls (WASD) - disabled when following an actor */}
       <KeyboardCameraControls enabled={!followingActorIdRef.current} />
-      {/* Lighting */}
-      <ambientLight intensity={0.4} />
-      <directionalLight
-        position={[10, 10, 5]}
-        intensity={0.8}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+      {/* Lighting + the directional shadow caster, sized to the arena. Extracted so the shadow
+          frustum and light target track the real arena center/size — the old fixed light at
+          [10,10,5] aimed at the origin (0,0,0) with the default ±5 ortho frustum, which entirely
+          missed the arena centered near (50,50) at size ~100, so player figures cast no shadow and
+          never read as standing ON the map. */}
+      <ArenaLighting
+        centerX={arenaDimensions.centerX}
+        centerZ={arenaDimensions.centerZ}
+        size={arenaDimensions.size}
+        castShadows={!performanceMode}
+      />
+      {/* Procedural image-based lighting for the actor figures. The body/cap materials are
+          MeshStandard with metalness 0.1–0.2, so without an environment they reflect pure black and
+          read flat/plasticky; a couple of soft Lightformer panels give them gentle directional
+          reflections and lift them off the floor. PROCEDURAL (Lightformer children) — NOT an
+          `Environment preset`, which would fetch an HDR from a CDN. The env cube renders ONCE at
+          mount (no per-frame cost, so it respects the on-demand RenderLoop), and `background={false}`
+          keeps it off the visible backdrop — it only lights the figures. Dropped in performance mode. */}
+      {!performanceMode && (
+        <Environment resolution={64} frames={1} background={false}>
+          <Lightformer intensity={1.6} position={[0, 6, 4]} scale={[12, 12, 1]} color="#fbf3e0" />
+          <Lightformer intensity={0.7} position={[-6, 3, -4]} scale={[8, 8, 1]} color="#9fc2ff" />
+        </Environment>
+      )}
+      {/* Cosmic environment shell — the arena floats in a star-filled void (sky dome + starfield +
+          moons + nebula + fog). Lives entirely OUTSIDE/ABOVE the play footprint (never touches actor
+          X/Z or the coordinate contract). Static backdrop is free under the on-demand RenderLoop; the
+          drei starfield's slow drift advances only while the scene paints. Dropped in performance
+          mode. See ArenaEnvironmentShell + .scratch/3D-WORLD-PLAN.md. */}
+      <ArenaEnvironmentShell
+        size={arenaDimensions.size}
+        centerX={arenaDimensions.centerX}
+        centerZ={arenaDimensions.centerZ}
+        performanceMode={performanceMode}
+        variant={cosmicVariant}
       />
       {/* Map Texture - Arena floor background with dynamic phase-based switching */}
       <Suspense
@@ -668,32 +848,46 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
             receiveShadow
           >
             <planeGeometry args={[arenaDimensions.size, arenaDimensions.size]} />
-            <meshPhongMaterial color="#2a2a2a" transparent opacity={0.8} />
+            {/* Opaque to match the live floor (no dark-bg bleed-through while the CDN map loads). */}
+            <meshPhongMaterial color="#2a2a2a" />
           </mesh>
         }
       >
         <DynamicMapTexture
-          mapTimeline={mapTimeline || { entries: [], totalMaps: 0 }}
+          mapTimeline={mapTimeline || EMPTY_MAP_TIMELINE}
           timeRef={timeRef}
           size={arenaDimensions.size}
           position={[arenaDimensions.centerX, -0.02, arenaDimensions.centerZ]}
           onTextureChange={markSceneDirty}
         />
       </Suspense>
-      {/* Arena Grid - Dynamically sized based on fight area */}
+      {/* Arena Grid — dialed back so the now-vivid map leads and the grid stays a quiet coordinate
+          aid rather than a second visual system competing with the photographic floor (the audit
+          flagged the old near-full-strength grid as fighting the map). Dimmer colors + thinner lines
+          + a stronger fade let it read as faint scaffolding under the map, not over it. */}
       <Grid
         args={[arenaDimensions.size, arenaDimensions.size]}
         position={[arenaDimensions.centerX, -0.01, arenaDimensions.centerZ]}
         cellSize={Math.max(5, arenaDimensions.size / 10)}
-        cellThickness={0.5}
-        cellColor="#6f6f6f"
+        cellThickness={0.4}
+        cellColor="#3f4654"
         sectionSize={arenaDimensions.size / 2}
-        sectionThickness={1.5}
-        sectionColor="#9d9d9d"
-        fadeDistance={arenaDimensions.size * 1.5}
-        fadeStrength={1}
+        sectionThickness={1}
+        sectionColor="#566173"
+        fadeDistance={arenaDimensions.size * 1.3}
+        fadeStrength={1.5}
         followCamera={false}
         infiniteGrid={false}
+      />
+      {/* Edge-fade vignette — a flat ring just above the floor whose radial-gradient alpha is clear
+          over the play area and darkens toward the rim. It frames the arena like a viewfinder and
+          dissolves the hard square plane edge into the background so the map no longer reads as a
+          pasted swatch. Pure static paint (one transparent mesh, no per-frame work) → gate-friendly.
+          Sized to the arena so the clear center always covers where the actors are. */}
+      <FloorVignette
+        centerX={arenaDimensions.centerX}
+        centerZ={arenaDimensions.centerZ}
+        size={arenaDimensions.size}
       />
       {/* Direct useFrame Actors - Each actor uses useFrame independently */}
       <AnimationFrameSceneActors
@@ -808,7 +1002,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
         target={cameraSettings.target as [number, number, number]}
         makeDefault
       />
-      <CanvasWheelZoom />
+      <CanvasWheelZoom followingActorIdRef={followingActorIdRef} />
     </>
   );
 };
