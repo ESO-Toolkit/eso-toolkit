@@ -277,7 +277,9 @@ describe('catalog data integrity', () => {
     };
     // New generators exist and are encoded.
     expect(src('bloodspawn')).toBeDefined();
-    expect(src('dragonknight-mountains-blessing')?.amountPerInstance).toBe(3);
+    // Blessing at the Peak grants +1 ultimate per Earthen Heart cast (verified
+    // against the repo's curated DK skill-line data — NOT the earlier unsourced 3).
+    expect(src('dragonknight-mountains-blessing')?.amountPerInstance).toBe(1);
     expect(src('templar-prism')?.amountPerInstance).toBe(3);
     expect(src('nightblade-catalyst')?.amountPerInstance).toBe(22);
     // Every new generator stays a minor contributor — no Pillager's-style blowup

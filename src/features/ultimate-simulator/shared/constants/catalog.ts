@@ -166,11 +166,17 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
   },
   {
     id: 'dragonknight-mountains-blessing',
-    label: "Mountain's Blessing (Earthen Heart cast)",
+    // U50 name is "Blessing at the Peak" (verified against the repo's curated DK
+    // Earthen Heart skill-line data, src/data/skill-lines/class/earthenHeart.ts —
+    // the project oracle; the old "Mountain's Blessing" name was pre-U50).
+    label: 'Blessing at the Peak (Earthen Heart cast)',
     category: 'classPassive',
     kind: 'triggered',
-    amountPerInstance: 3,
-    instancesPerSecond: 1 / 6, // +3 ult per Earthen Heart cast, once / 6s ICD
+    // Verified value: +1 Ultimate (NOT 3) per Earthen Heart cast/hit, once / 6s.
+    // The earlier "3" was unsourced — the skill-line oracle reads "generate 1
+    // Ultimate ... once every 6 seconds".
+    amountPerInstance: 1,
+    instancesPerSecond: 1 / 6,
     uptime: 0.5, // ~one Earthen Heart cast per ~12s rotation
     rollsDecisive: true,
     classes: ['dragonknight'],
@@ -179,7 +185,7 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     provenance: SRC_MOUNTAINS_BLESSING,
     confidence: 'high',
     description:
-      'Dragonknight Earthen Heart passive: +3 ultimate when you cast an Earthen Heart ability in combat, at most once every 6s. Uptime reflects how often you actually cast one (~0.25 ult/s at one cast / 12s).',
+      'Dragonknight Earthen Heart passive (Blessing at the Peak): +1 ultimate when you cast or deal damage with an Earthen Heart ability in combat, at most once every 6s. Uptime reflects how often you actually use one (~0.08 ult/s at one cast / 12s).',
   },
   {
     id: 'templar-prism',
