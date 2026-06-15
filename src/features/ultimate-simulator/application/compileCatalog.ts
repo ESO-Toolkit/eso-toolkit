@@ -76,48 +76,25 @@ export function availableReductions(
   return catalog.filter((r) => isReductionAvailable(r, selection));
 }
 
-/** Expected raw ult/s a (uptime-resolved) source contributes — for ranking. */
-function expectedRate(source: CatalogSource): number {
-  return source.amountPerInstance * source.instancesPerSecond * source.uptime;
-}
-
 /**
  * Compile enabled, available catalog sources into engine `UltimateSource[]`,
  * applying per-source uptime overrides.
  *
- * Sources that share a `nonStackingGroup` represent the SAME named buff from
- * different providers (e.g. Minor Heroism from a potion vs from Cryptcanon).
- * Such a buff does not stack, so when more than one is enabled only the strongest
- * single contribution is kept — they are never summed.
+ * Note on non-stacking buffs: named buffs like Minor Heroism do not stack across
+ * providers, but the catalog already models each such buff as ONE source (e.g.
+ * the single `minor-heroism` entry represents "Minor Heroism from whatever
+ * provides it"), so no per-provider de-duplication is needed here.
  */
 export function compileSources(
   catalog: readonly CatalogSource[],
   selection: CatalogSelection,
 ): UltimateSource[] {
-  const enabled = availableSources(catalog, selection)
+  return availableSources(catalog, selection)
     .filter((s) => isEntryEnabled(s.id, s.defaultEnabled, selection.enabledOverrides))
     .map((s) => {
       const uptime = selection.uptimeOverrides[s.id];
-      return uptime === undefined ? s : { ...s, uptime: Math.min(1, Math.max(0, uptime)) };
-    });
-
-  // Collapse non-stacking buff groups to their single strongest provider.
-  const strongestInGroup = new Map<string, CatalogSource>();
-  for (const s of enabled) {
-    if (s.nonStackingGroup === undefined) continue;
-    const current = strongestInGroup.get(s.nonStackingGroup);
-    if (current === undefined || expectedRate(s) > expectedRate(current)) {
-      strongestInGroup.set(s.nonStackingGroup, s);
-    }
-  }
-
-  return enabled
-    .filter((s) => {
-      if (s.nonStackingGroup === undefined) return true;
-      // Keep only the winning provider of each non-stacking buff group.
-      return strongestInGroup.get(s.nonStackingGroup) === s;
-    })
-    .map((resolved) => {
+      const resolved =
+        uptime === undefined ? s : { ...s, uptime: Math.min(1, Math.max(0, uptime)) };
       // Strip catalog-only fields down to the engine's UltimateSource shape.
       const {
         id,

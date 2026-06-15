@@ -103,14 +103,6 @@ export interface CatalogSource extends UltimateSource {
   readonly roles?: readonly CombatRole[];
   /** Whether it's enabled by default for its context (typical raid build). */
   readonly defaultEnabled: boolean;
-  /**
-   * Key for a named buff that does NOT stack across providers (e.g. Minor
-   * Heroism from the generic potion/set source AND from Cryptcanon are the same
-   * buff). When more than one enabled source shares this key, only the strongest
-   * single contribution counts — they are not summed. Omit for sources that do
-   * stack independently (base income, class passives, external batteries).
-   */
-  readonly nonStackingGroup?: string;
   /** Source URL the value came from (research provenance — required, no guessing). */
   readonly provenance: string;
   /** Confidence in the encoded numbers. */

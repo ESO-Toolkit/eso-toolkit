@@ -130,6 +130,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
     effectiveCost,
     baseCost,
     appliedReductions,
+    availableReductionEntries,
     availableSourceEntries,
     exceedsSanity,
     sanityMax,
@@ -527,7 +528,33 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 helperText="Banked at fight start"
               />
             </Stack>
-            {reductionFraction > 0 && (
+            {/* Cost-reduction toggles — only meaningful for a catalog ability; a
+                custom cost is taken as already-effective so reductions don't apply. */}
+            {state.customUltimateCost == null && availableReductionEntries.length > 0 && (
+              <Stack spacing={0.5} sx={{ mt: 1.5 }}>
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                  Cost reductions
+                </Typography>
+                {availableReductionEntries.map((r) => (
+                  <FormControlLabel
+                    key={r.id}
+                    control={
+                      <Switch
+                        size="small"
+                        checked={calc.isEnabled(r.id, r.defaultEnabled)}
+                        onChange={(e) => calc.toggleSource(r.id, e.target.checked)}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2">
+                        {r.label} (−{Math.round(r.fraction * 100)}%)
+                      </Typography>
+                    }
+                  />
+                ))}
+              </Stack>
+            )}
+            {state.customUltimateCost == null && reductionFraction > 0 && (
               <Typography
                 variant="caption"
                 sx={{ color: 'text.secondary', display: 'block', mt: 1.5 }}

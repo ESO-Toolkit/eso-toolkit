@@ -177,9 +177,16 @@ export function useUltimateCalculator(): UltimateCalculatorResult {
     return ability?.baseCost ?? 250;
   }, [state.customUltimateCost, state.ultimateAbilityId]);
 
+  // A custom cost is the user's own EFFECTIVE number — applying class reductions
+  // on top would double-count, so reductions only apply to a catalog ability's
+  // base cost.
+  const isCustomCost = state.customUltimateCost != null;
   const effectiveCost = useMemo(
-    () => applyCostReduction(baseCost, appliedReductions),
-    [baseCost, appliedReductions],
+    () =>
+      isCustomCost
+        ? Math.max(0, Math.round(baseCost))
+        : applyCostReduction(baseCost, appliedReductions),
+    [isCustomCost, baseCost, appliedReductions],
   );
 
   const timeToUlt = useMemo<TimeToUltimateResult>(
