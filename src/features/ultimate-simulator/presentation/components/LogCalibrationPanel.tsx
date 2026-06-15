@@ -8,7 +8,7 @@
  * calibration.ts) — so it validates the headline number, not the breakdown.
  */
 
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { ExpandMore as ExpandMoreIcon, FactCheckOutlined } from '@mui/icons-material';
 import {
   Accordion,
   AccordionDetails,
@@ -60,7 +60,24 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
       sx={{ borderRadius: 3, '&:before': { display: 'none' }, overflow: 'hidden' }}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center' }}>
+          <Box
+            aria-hidden
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 30,
+              height: 30,
+              borderRadius: 2,
+              color: accent,
+              background: `${accent}1f`,
+              border: `1px solid ${accent}33`,
+              '& svg': { fontSize: 18 },
+            }}
+          >
+            <FactCheckOutlined />
+          </Box>
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
             Verify against your own log
           </Typography>
@@ -155,13 +172,15 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
 
             {m && cal.phase === 'measured' && (
               <Box
+                className="u-fade-in"
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 3,
                   p: 2,
+                  border: `1px solid ${theme.palette.divider}`,
                   background:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(56,189,248,0.06)'
-                      : 'rgba(40,145,200,0.05)',
+                      ? 'linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(15,23,42,0.3) 100%)'
+                      : 'linear-gradient(135deg, rgba(40,145,200,0.07) 0%, rgba(248,250,252,0.6) 100%)',
                 }}
               >
                 {m.samples === 0 ? (
@@ -173,27 +192,83 @@ export const LogCalibrationPanel: React.FC<LogCalibrationPanelProps> = ({ modele
                 ) : (
                   <>
                     <Stack
-                      direction="row"
-                      spacing={4}
-                      sx={{ flexWrap: 'wrap', rowGap: 2, mb: 1.5 }}
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={1.5}
+                      sx={{ alignItems: { sm: 'stretch' }, mb: 1.5 }}
                     >
-                      <Box>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          p: 1.5,
+                          borderRadius: 2.5,
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(56,189,248,0.08)'
+                              : 'rgba(40,145,200,0.06)',
+                          border: `1px solid ${accent}3a`,
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                            fontWeight: 600,
+                            display: 'block',
+                          }}
+                        >
                           Measured ({m.playerName})
                         </Typography>
-                        <Typography variant="h5" sx={{ fontWeight: 700, color: accent }}>
-                          {fmt(m.perSecond)} ult/s
+                        <Typography
+                          className="u-tabular"
+                          variant="h5"
+                          sx={{ fontWeight: 700, color: accent, lineHeight: 1.15 }}
+                        >
+                          {fmt(m.perSecond)}{' '}
+                          <Box component="span" sx={{ fontSize: '0.6em' }}>
+                            ult/s
+                          </Box>
                         </Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           {Math.round(m.totalGenerated)} generated · {m.approxCasts} casts
                         </Typography>
                       </Box>
-                      <Box>
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          p: 1.5,
+                          borderRadius: 2.5,
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(148,163,184,0.05)'
+                              : 'rgba(255,255,255,0.5)',
+                          border: `1px solid ${theme.palette.divider}`,
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.secondary',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.5,
+                            fontWeight: 600,
+                            display: 'block',
+                          }}
+                        >
                           Modeled (current build)
                         </Typography>
-                        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                          {fmt(modeledPerSecond)} ult/s
+                        <Typography
+                          className="u-tabular"
+                          variant="h5"
+                          sx={{ fontWeight: 700, lineHeight: 1.15 }}
+                        >
+                          {fmt(modeledPerSecond)}{' '}
+                          <Box component="span" sx={{ fontSize: '0.6em' }}>
+                            ult/s
+                          </Box>
                         </Typography>
                         {deltaPct != null && (
                           <Typography variant="caption" sx={{ color: 'text.secondary' }}>

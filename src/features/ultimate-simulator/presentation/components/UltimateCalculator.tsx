@@ -10,6 +10,12 @@
  */
 
 import {
+  BoltOutlined,
+  InsightsOutlined,
+  QueryStatsOutlined,
+  TuneOutlined,
+} from '@mui/icons-material';
+import {
   Alert,
   Box,
   Button,
@@ -37,6 +43,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import React from 'react';
 
 import { totalReductionFraction } from '../../core/cost';
@@ -85,30 +92,122 @@ const fmtSeconds = (n: number): string => {
   return `${m}m ${s}s`;
 };
 
-/** A big headline stat. */
+/**
+ * Shared surface style for the redesigned panels — opts into the app's
+ * signature glass-gradient card look (the same gradient MuiPaper uses) instead
+ * of the flat `variant="outlined"` surface, so the Ultimate tab reads as a
+ * sibling of the rest of the toolkit rather than a bare MUI form.
+ */
+const panelSx = (theme: Theme): SxProps<Theme> => ({
+  p: { xs: 2, sm: 2.5 },
+  borderRadius: 3.5,
+  border: `1px solid ${theme.palette.divider}`,
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+      : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 8px 30px rgba(0, 0, 0, 0.25)'
+      : '0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03)',
+});
+
+/** Accent "eyebrow" label that opens each section, with an icon chip. */
+const SectionHeader: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  accent: string;
+  action?: React.ReactNode;
+}> = ({ icon, title, accent, action }) => (
+  <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.75 }}>
+    <Stack direction="row" spacing={1.25} sx={{ alignItems: 'center', minWidth: 0 }}>
+      <Box
+        aria-hidden
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 30,
+          height: 30,
+          borderRadius: 2,
+          color: accent,
+          background: `${accent}1f`,
+          border: `1px solid ${accent}33`,
+          '& svg': { fontSize: 18 },
+        }}
+      >
+        {icon}
+      </Box>
+      <Typography variant="subtitle1" sx={{ fontWeight: 700, letterSpacing: 0.1, lineHeight: 1.2 }}>
+        {title}
+      </Typography>
+    </Stack>
+    {action}
+  </Stack>
+);
+
+/** A big headline stat tile in the hero strip. */
 const StatBlock: React.FC<{
   label: string;
   value: string;
   sub?: string;
   accent?: string;
-}> = ({ label, value, sub, accent }) => {
+  highlight?: boolean;
+}> = ({ label, value, sub, accent, highlight }) => {
   const theme = useTheme();
   return (
-    <Box sx={{ minWidth: 120 }}>
+    <Box
+      sx={{
+        flex: '1 1 0',
+        minWidth: { xs: 132, sm: 0 },
+        px: { xs: 1.5, sm: 2 },
+        py: { xs: 1.5, sm: 1.25 },
+        borderRadius: 3,
+        position: 'relative',
+        background: highlight
+          ? theme.palette.mode === 'dark'
+            ? 'linear-gradient(160deg, rgba(56,189,248,0.16) 0%, rgba(0,225,255,0.06) 100%)'
+            : 'linear-gradient(160deg, rgba(56,189,248,0.16) 0%, rgba(0,225,255,0.05) 100%)'
+          : theme.palette.mode === 'dark'
+            ? 'rgba(148,163,184,0.05)'
+            : 'rgba(255,255,255,0.5)',
+        border: highlight
+          ? `1px solid ${(accent ?? theme.palette.primary.main) + '55'}`
+          : `1px solid ${theme.palette.divider}`,
+        boxShadow:
+          highlight && theme.palette.mode === 'dark'
+            ? '0 0 28px rgba(56,189,248,0.12) inset'
+            : 'none',
+      }}
+    >
       <Typography
         variant="caption"
-        sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}
+        sx={{
+          color: 'text.secondary',
+          textTransform: 'uppercase',
+          letterSpacing: 0.7,
+          fontWeight: 600,
+          fontSize: 11,
+          display: 'block',
+        }}
       >
         {label}
       </Typography>
       <Typography
-        variant="h4"
-        sx={{ fontWeight: 700, lineHeight: 1.1, color: accent ?? theme.palette.text.primary }}
+        className="u-tabular"
+        sx={{
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontWeight: 700,
+          fontSize: { xs: '1.9rem', sm: '2.15rem' },
+          lineHeight: 1.05,
+          mt: 0.25,
+          color: highlight ? (accent ?? theme.palette.primary.main) : theme.palette.text.primary,
+        }}
       >
         {value}
       </Typography>
       {sub && (
-        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.25 }}>
           {sub}
         </Typography>
       )}
@@ -164,43 +263,100 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
   }, [state.esoClass]);
 
   return (
-    <Box className={className} sx={{ width: '100%' }}>
-      <Typography variant="h5" component="h2" sx={{ fontWeight: 700, mb: 0.5 }}>
-        Ultimate Calculator
-      </Typography>
-      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5 }}>
+    <Box className={`${className ?? ''} u-fade-in`} sx={{ width: '100%' }}>
+      {/* ===================== INTRO ===================== */}
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 0.75 }}>
+        <Box
+          aria-hidden
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
+            borderRadius: 2.5,
+            color: accent,
+            background:
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, rgba(56,189,248,0.22), rgba(0,225,255,0.08))'
+                : 'linear-gradient(135deg, rgba(56,189,248,0.18), rgba(0,225,255,0.06))',
+            border: `1px solid ${accent}40`,
+            boxShadow: theme.palette.mode === 'dark' ? '0 0 22px rgba(56,189,248,0.18)' : 'none',
+            '& svg': { fontSize: 24 },
+          }}
+        >
+          <BoltOutlined />
+        </Box>
+        <Box>
+          <Typography variant="h5" component="h2" sx={{ fontWeight: 700, lineHeight: 1.1 }}>
+            Ultimate Calculator
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}
+          >
+            Update 50 · all classes
+          </Typography>
+        </Box>
+      </Stack>
+      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2.5, maxWidth: 760 }}>
         How fast do you build ultimate, and how often can you cast it? Pick your context and build,
         and get exact ultimate&nbsp;/&nbsp;second, time to your first ultimate, and casts per fight.
-        All numbers use Update&nbsp;50 mechanics.
       </Typography>
 
       {/* ===================== HEADLINE (full width, results-first) ===================== */}
       <Paper
-        variant="outlined"
+        elevation={0}
         sx={{
-          p: { xs: 2, sm: 2.5 },
+          p: { xs: 1.5, sm: 2 },
           mb: 2.5,
-          borderRadius: 3,
+          borderRadius: 4,
+          position: 'relative',
+          overflow: 'hidden',
+          border: `1px solid ${theme.palette.divider}`,
           background:
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(56,189,248,0.12), rgba(15,23,42,0.25))'
-              : 'linear-gradient(135deg, rgba(40,145,200,0.10), rgba(248,250,252,0.6))',
+              ? 'linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(15,23,42,0.55) 55%, rgba(3,7,18,0.6) 100%)'
+              : 'linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(248,250,252,0.85) 60%, rgba(255,255,255,0.95) 100%)',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 10px 40px rgba(0,0,0,0.3), 0 0 60px rgba(56,189,248,0.06)'
+              : '0 6px 20px rgba(15,23,42,0.07)',
+          // Soft accent glow bleeding from the top-left, behind the stats.
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: -80,
+            left: -60,
+            width: 260,
+            height: 260,
+            borderRadius: '50%',
+            background:
+              theme.palette.mode === 'dark'
+                ? 'radial-gradient(circle, rgba(56,189,248,0.18), transparent 70%)'
+                : 'radial-gradient(circle, rgba(56,189,248,0.16), transparent 70%)',
+            pointerEvents: 'none',
+          },
         }}
       >
         <Stack
-          direction="row"
-          spacing={{ xs: 3, sm: 6 }}
-          sx={{
-            flexWrap: 'wrap',
-            rowGap: 2,
-            justifyContent: { xs: 'flex-start', sm: 'space-around' },
-          }}
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={{ xs: 1.25, sm: 1.5 }}
+          divider={
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ display: { xs: 'none', sm: 'block' }, borderColor: theme.palette.divider }}
+            />
+          }
+          sx={{ position: 'relative' }}
         >
           <StatBlock
             label="Ultimate / second"
             value={fmt(expected.ultimatePerSecond, 2)}
             sub={`${fmt(expected.totalUltimate, 0)} over ${state.fightDurationSeconds}s`}
             accent={accent}
+            highlight
           />
           <StatBlock
             label="Time to first ult"
@@ -229,15 +385,21 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, gap: 2.5 }}>
         {/* ============================ INPUTS ============================ */}
-        <Paper variant="outlined" sx={{ p: 2.5, flex: '1 1 420px', minWidth: 0, borderRadius: 3 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
-            Your build
-          </Typography>
+        <Paper elevation={0} sx={{ ...panelSx(theme), flex: '1 1 420px', minWidth: 0 }}>
+          <SectionHeader icon={<TuneOutlined />} title="Your build" accent={accent} />
 
           {/* Context / class / role */}
           <Stack spacing={2}>
             <Box>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                  fontWeight: 600,
+                }}
+              >
                 Context
               </Typography>
               <ToggleButtonGroup
@@ -348,8 +510,16 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               )}
             </Box>
 
-            <Divider textAlign="left">
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Divider textAlign="left" sx={{ '&::before': { width: '0%' }, mt: 0.5 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: accent,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.6,
+                }}
+              >
                 Ultimate sources
               </Typography>
             </Divider>
@@ -357,38 +527,78 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             {/* Source toggles, grouped by category */}
             {grouped.map(([category, entries]) => (
               <Box key={category}>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: accent,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {SOURCE_CATEGORY_LABELS[category]}
-                </Typography>
-                <Stack spacing={1} sx={{ mt: 0.5 }}>
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mb: 0.75 }}>
+                  <Box
+                    aria-hidden
+                    sx={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: '50%',
+                      background: accent,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.6,
+                    }}
+                  >
+                    {SOURCE_CATEGORY_LABELS[category]}
+                  </Typography>
+                </Stack>
+                <Stack spacing={1}>
                   {entries.map((s) => {
                     const enabled = calc.isEnabled(s.id, s.defaultEnabled);
                     return (
                       <Box
                         key={s.id}
                         sx={{
-                          borderRadius: 2,
-                          p: 1,
+                          borderRadius: 2.5,
+                          px: 1.25,
+                          py: 0.75,
+                          position: 'relative',
+                          overflow: 'hidden',
+                          transition:
+                            'background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
                           border: `1px solid ${
                             enabled
                               ? theme.palette.mode === 'dark'
-                                ? 'rgba(56,189,248,0.3)'
-                                : 'rgba(40,145,200,0.25)'
-                              : 'transparent'
+                                ? 'rgba(56,189,248,0.32)'
+                                : 'rgba(40,145,200,0.28)'
+                              : theme.palette.divider
                           }`,
-                          backgroundColor: enabled
+                          background: enabled
                             ? theme.palette.mode === 'dark'
-                              ? 'rgba(56,189,248,0.06)'
-                              : 'rgba(40,145,200,0.04)'
+                              ? 'linear-gradient(135deg, rgba(56,189,248,0.10) 0%, rgba(56,189,248,0.02) 100%)'
+                              : 'linear-gradient(135deg, rgba(40,145,200,0.07) 0%, rgba(40,145,200,0.01) 100%)'
                             : 'transparent',
+                          // Accent rail on the left edge marks an active source.
+                          '&::before': enabled
+                            ? {
+                                content: '""',
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                bottom: 0,
+                                width: 3,
+                                background: `linear-gradient(180deg, ${accent}, ${
+                                  theme.palette.mode === 'dark' ? 'rgba(0,225,255,0.7)' : accent
+                                })`,
+                              }
+                            : undefined,
+                          '&:hover': {
+                            borderColor: enabled
+                              ? theme.palette.mode === 'dark'
+                                ? 'rgba(56,189,248,0.5)'
+                                : 'rgba(40,145,200,0.45)'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(148,163,184,0.4)'
+                                : 'rgba(15,23,42,0.18)',
+                          },
                         }}
                       >
                         <Stack
@@ -396,7 +606,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                           sx={{ justifyContent: 'space-between', alignItems: 'center' }}
                         >
                           <FormControlLabel
-                            sx={{ mr: 0, flex: 1 }}
+                            sx={{ mr: 0, flex: 1, minWidth: 0 }}
                             control={
                               <Switch
                                 size="small"
@@ -406,12 +616,21 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                             }
                             label={
                               <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
-                                <Typography variant="body2">{s.label}</Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: enabled ? 600 : 400 }}
+                                >
+                                  {s.label}
+                                </Typography>
                                 {s.confidence !== 'high' && (
                                   <Chip
                                     label={s.confidence}
                                     size="small"
-                                    sx={{ height: 16, fontSize: 10 }}
+                                    sx={{
+                                      height: 17,
+                                      fontSize: 10,
+                                      textTransform: 'capitalize',
+                                    }}
                                   />
                                 )}
                               </Stack>
@@ -423,22 +642,34 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                               target="_blank"
                               rel="noopener noreferrer"
                               variant="caption"
-                              sx={{ flexShrink: 0 }}
+                              sx={{ flexShrink: 0, fontWeight: 600 }}
                             >
                               source
                             </Link>
                           )}
                         </Stack>
                         {enabled && (
-                          <Box sx={{ pl: 5, pr: 1 }}>
+                          <Box sx={{ pl: 5, pr: 1, pb: 0.5 }}>
                             <Stack
                               direction="row"
                               sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}
                             >
-                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: 'text.secondary',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: 0.4,
+                                  fontSize: 10,
+                                }}
+                              >
                                 Uptime
                               </Typography>
-                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                              <Typography
+                                className="u-tabular"
+                                variant="caption"
+                                sx={{ color: accent, fontWeight: 700 }}
+                              >
                                 {Math.round((state.uptimeOverrides[s.id] ?? s.uptime) * 100)}%
                               </Typography>
                             </Stack>
@@ -449,6 +680,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                               min={0}
                               max={100}
                               aria-label={`${s.label} uptime`}
+                              sx={{ py: 0.5 }}
                             />
                             {s.description && (
                               <Typography
@@ -481,10 +713,8 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
         {/* ============================ RESULTS ============================ */}
         <Stack spacing={2.5} sx={{ flex: '1 1 480px', minWidth: 0 }}>
           {/* Ultimate picker / cost */}
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>
-              Which ultimate?
-            </Typography>
+          <Paper elevation={0} sx={panelSx(theme)}>
+            <SectionHeader icon={<BoltOutlined />} title="Which ultimate?" accent={accent} />
             <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', rowGap: 2 }}>
               <FormControl size="small" sx={{ minWidth: 220, flex: 1 }}>
                 <InputLabel id="ult-ability-label">Ultimate</InputLabel>
@@ -535,8 +765,16 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
             {/* Cost-reduction toggles — only meaningful for a catalog ability; a
                 custom cost is taken as already-effective so reductions don't apply. */}
             {state.customUltimateCost == null && availableReductionEntries.length > 0 && (
-              <Stack spacing={0.5} sx={{ mt: 1.5 }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              <Stack spacing={0.5} sx={{ mt: 2 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    fontWeight: 600,
+                  }}
+                >
                   Cost reductions
                 </Typography>
                 {availableReductionEntries.map((r) => (
@@ -559,98 +797,265 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               </Stack>
             )}
             {state.customUltimateCost == null && reductionFraction > 0 && (
-              <Typography
-                variant="caption"
-                sx={{ color: 'text.secondary', display: 'block', mt: 1.5 }}
+              <Box
+                sx={{
+                  mt: 1.5,
+                  px: 1.5,
+                  py: 1,
+                  borderRadius: 2,
+                  background:
+                    theme.palette.mode === 'dark' ? 'rgba(34,197,94,0.08)' : 'rgba(5,150,105,0.06)',
+                  border: `1px solid ${
+                    theme.palette.mode === 'dark' ? 'rgba(34,197,94,0.25)' : 'rgba(5,150,105,0.2)'
+                  }`,
+                }}
               >
-                Cost reduced {Math.round(reductionFraction * 100)}% ({baseCost} → {effectiveCost})
-                by{' '}
-                {appliedReductions
-                  .filter((r) => r.enabled)
-                  .map((r) => r.label)
-                  .join(', ')}
-                .
-              </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                  Cost reduced{' '}
+                  <Box component="span" sx={{ color: theme.palette.success.main, fontWeight: 700 }}>
+                    {Math.round(reductionFraction * 100)}%
+                  </Box>{' '}
+                  <Box component="span" className="u-tabular">
+                    ({baseCost} → {effectiveCost})
+                  </Box>{' '}
+                  by{' '}
+                  {appliedReductions
+                    .filter((r) => r.enabled)
+                    .map((r) => r.label)
+                    .join(', ')}
+                  .
+                </Typography>
+              </Box>
             )}
           </Paper>
 
           {/* Per-source breakdown */}
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
-            <Stack
-              direction="row"
-              sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
-            >
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                Where it comes from
-              </Typography>
-              <Button size="small" onClick={calc.computeDistribution}>
-                {distribution ? 'Recompute spread' : 'Show spread'}
-              </Button>
-            </Stack>
-            <Table size="small" aria-label="per-source ultimate breakdown">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Source</TableCell>
-                  <TableCell align="right">Base</TableCell>
-                  <TableCell align="right">Decisive</TableCell>
-                  <TableCell align="right">Total</TableCell>
-                  <TableCell align="right">ult/s</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {expected.contributions.map((c) => {
-                  const tot = c.baseUltimate + c.decisiveUltimate;
-                  return (
-                    <TableRow key={c.sourceId}>
-                      <TableCell>{c.label}</TableCell>
-                      <TableCell align="right">{fmt(c.baseUltimate, 0)}</TableCell>
-                      <TableCell align="right">{fmt(c.decisiveUltimate, 1)}</TableCell>
-                      <TableCell align="right">{fmt(tot, 1)}</TableCell>
-                      <TableCell align="right">
-                        {fmt(
-                          state.fightDurationSeconds > 0 ? tot / state.fightDurationSeconds : 0,
-                          2,
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>
-                    {fmt(expected.baseUltimate, 0)}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>
-                    {fmt(expected.decisiveUltimate, 1)}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }} data-testid="ult-grand-total">
-                    {fmt(expected.totalUltimate, 1)}
-                  </TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>
-                    {fmt(expected.ultimatePerSecond, 2)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+          <Paper elevation={0} sx={panelSx(theme)}>
+            <SectionHeader
+              icon={<InsightsOutlined />}
+              title="Where it comes from"
+              accent={accent}
+              action={
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<QueryStatsOutlined sx={{ fontSize: 16 }} />}
+                  onClick={calc.computeDistribution}
+                  sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                >
+                  {distribution ? 'Recompute spread' : 'Show spread'}
+                </Button>
+              }
+            />
+            <Box sx={{ overflowX: 'auto', mx: -0.5 }}>
+              <Table
+                size="small"
+                aria-label="per-source ultimate breakdown"
+                sx={{
+                  '& td, & th': { borderColor: theme.palette.divider },
+                  '& .MuiTableCell-root': { fontVariantNumeric: 'tabular-nums' },
+                  '& tbody tr:nth-of-type(odd) td': {
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(148,163,184,0.03)'
+                        : 'rgba(15,23,42,0.015)',
+                  },
+                  '& tbody tr:hover td': {
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56,189,248,0.06)'
+                        : 'rgba(40,145,200,0.05)',
+                  },
+                }}
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell
+                      sx={{
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      Source
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      Base
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      Decisive
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      Total
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: 'text.secondary',
+                      }}
+                    >
+                      ult/s
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {expected.contributions.map((c) => {
+                    const tot = c.baseUltimate + c.decisiveUltimate;
+                    return (
+                      <TableRow key={c.sourceId}>
+                        <TableCell>{c.label}</TableCell>
+                        <TableCell align="right">{fmt(c.baseUltimate, 0)}</TableCell>
+                        <TableCell align="right">{fmt(c.decisiveUltimate, 1)}</TableCell>
+                        <TableCell align="right">{fmt(tot, 1)}</TableCell>
+                        <TableCell align="right">
+                          {fmt(
+                            state.fightDurationSeconds > 0 ? tot / state.fightDurationSeconds : 0,
+                            2,
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  <TableRow
+                    sx={{
+                      '& td': {
+                        borderTop: `2px solid ${accent}55`,
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56,189,248,0.08) !important'
+                            : 'rgba(40,145,200,0.06) !important',
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      {fmt(expected.baseUltimate, 0)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      {fmt(expected.decisiveUltimate, 1)}
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, color: accent }}
+                      data-testid="ult-grand-total"
+                    >
+                      {fmt(expected.totalUltimate, 1)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: accent }}>
+                      {fmt(expected.ultimatePerSecond, 2)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
 
             {distribution && (
-              <Box sx={{ mt: 2 }}>
-                <Divider sx={{ mb: 1.5 }} />
+              <Box
+                className="u-fade-in"
+                sx={{
+                  mt: 2,
+                  p: 1.75,
+                  borderRadius: 2.5,
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(148,163,184,0.05)'
+                      : 'rgba(15,23,42,0.02)',
+                  border: `1px solid ${theme.palette.divider}`,
+                }}
+              >
                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                   Per-fight spread (Monte Carlo, {distribution.runs.toLocaleString()} runs) —
                   Decisive is random, so a single fight varies around the mean:
                 </Typography>
-                <Stack direction="row" spacing={3} sx={{ mt: 1, flexWrap: 'wrap', rowGap: 1 }}>
-                  <Typography variant="body2">
-                    Mean <strong>{fmt(distribution.meanTotal, 1)}</strong> ±{' '}
-                    {fmt(distribution.ci95HalfWidth, 2)} (95% CI)
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Range {fmt(distribution.minTotal, 0)}–{fmt(distribution.maxTotal, 0)}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Std dev {fmt(distribution.stdDevTotal, 1)}
-                  </Typography>
+                <Stack direction="row" spacing={3} sx={{ mt: 1.25, flexWrap: 'wrap', rowGap: 1.5 }}>
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 10,
+                        display: 'block',
+                      }}
+                    >
+                      Mean (95% CI)
+                    </Typography>
+                    <Typography
+                      className="u-tabular"
+                      variant="body2"
+                      sx={{ fontWeight: 700, color: accent }}
+                    >
+                      {fmt(distribution.meanTotal, 1)} ± {fmt(distribution.ci95HalfWidth, 2)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 10,
+                        display: 'block',
+                      }}
+                    >
+                      Range
+                    </Typography>
+                    <Typography className="u-tabular" variant="body2" sx={{ fontWeight: 600 }}>
+                      {fmt(distribution.minTotal, 0)}–{fmt(distribution.maxTotal, 0)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                        fontSize: 10,
+                        display: 'block',
+                      }}
+                    >
+                      Std dev
+                    </Typography>
+                    <Typography className="u-tabular" variant="body2" sx={{ fontWeight: 600 }}>
+                      {fmt(distribution.stdDevTotal, 1)}
+                    </Typography>
+                  </Box>
                 </Stack>
               </Box>
             )}
