@@ -104,6 +104,12 @@ export const MobileFilterSheet: React.FC<MobileFilterSheetProps> = ({
       onOpen={() => {}}
       disableSwipeToOpen
       disableDiscovery
+      // SwipeableDrawer hardcodes ModalProps.keepMounted=true (so the paper ref
+      // exists for edge swipe-to-open). We disable that gesture, so force the
+      // subtree to UNMOUNT on close — otherwise a still-open Zone autocomplete
+      // listbox (portaled to <body>) would linger, visible and interactive, over
+      // the reports page after the sheet is dismissed.
+      ModalProps={{ keepMounted: false }}
       slotProps={{
         paper: {
           sx: {
