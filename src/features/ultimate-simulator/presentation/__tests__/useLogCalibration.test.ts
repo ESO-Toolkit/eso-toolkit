@@ -1,4 +1,22 @@
-import { parseReportCode } from '../useLogCalibration';
+import { isCursorAdvancing, parseReportCode } from '../useLogCalibration';
+
+describe('isCursorAdvancing', () => {
+  it('advances only for a finite cursor strictly greater than the page start', () => {
+    expect(isCursorAdvancing(100, 200)).toBe(true);
+  });
+
+  it('stops on a repeated or backwards cursor (malformed paginator → no infinite loop)', () => {
+    expect(isCursorAdvancing(100, 100)).toBe(false); // repeated
+    expect(isCursorAdvancing(100, 50)).toBe(false); // backwards
+  });
+
+  it('stops on a null/undefined/non-finite cursor', () => {
+    expect(isCursorAdvancing(100, null)).toBe(false);
+    expect(isCursorAdvancing(100, undefined)).toBe(false);
+    expect(isCursorAdvancing(100, Infinity)).toBe(false);
+    expect(isCursorAdvancing(100, NaN)).toBe(false);
+  });
+});
 
 describe('parseReportCode', () => {
   it('returns a bare 16-char code unchanged', () => {

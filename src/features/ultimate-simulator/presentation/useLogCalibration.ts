@@ -9,7 +9,7 @@
  * Redux flow.
  */
 
-import { useCallback, useContext, useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import { EsoLogsClientContext } from '../../../EsoLogsClientContext';
 import {
@@ -70,6 +70,19 @@ export function parseReportCode(input: string): string {
   return codeMatch ? codeMatch[0] : trimmed;
 }
 
+/** Hard cap on resource-event pages per hostility scope (loop-runaway guard). */
+const MAX_EVENT_PAGES = 100;
+
+/**
+ * Whether a paginator cursor is making forward progress. The events query pages
+ * by `nextPageTimestamp`; a valid next cursor must be a finite number strictly
+ * greater than where this page started. A repeated/equal/backwards cursor (a
+ * malformed paginator) would loop forever, so we treat it as "stop".
+ */
+export function isCursorAdvancing(prevStart: number, next: number | null | undefined): boolean {
+  return typeof next === 'number' && Number.isFinite(next) && next > prevStart;
+}
+
 export function useLogCalibration(): UseLogCalibration {
   // Read the context non-throwingly: the calculator must work even if it ever
   // renders outside the EsoLogsClientProvider (e.g. tests, isolated previews).
@@ -94,6 +107,10 @@ export function useLogCalibration(): UseLogCalibration {
   const [fightWindows, setFightWindows] = useState<Map<number, { start: number; end: number }>>(
     new Map(),
   );
+  // Monotonic id for the latest measure() call — lets a slow measurement detect
+  // that a newer one (or a selection change) has superseded it and bail before
+  // writing a stale result.
+  const measureReqId = useRef(0);
 
   const setReportCode = useCallback(
     (code: string) => {
@@ -210,10 +227,13 @@ export function useLogCalibration(): UseLogCalibration {
   }, [client, isReady, reportCode]);
 
   const setFight = useCallback((fightId: number) => {
+    // Invalidate any in-flight measurement so its (now stale) result is dropped.
+    measureReqId.current += 1;
     setSelectedFightId(fightId);
     setMeasurement(null);
   }, []);
   const setPlayer = useCallback((playerId: number) => {
+    measureReqId.current += 1;
     setSelectedPlayerId(playerId);
     setMeasurement(null);
   }, []);
@@ -228,6 +248,9 @@ export function useLogCalibration(): UseLogCalibration {
     if (!window) return;
     const fight = fights.find((f) => f.id === selectedFightId);
     const player = players.find((p) => p.id === selectedPlayerId);
+    // Claim this measurement; a later measure()/setFight()/setPlayer() bumps the
+    // id so this run knows it has been superseded and must not write its result.
+    const reqId = (measureReqId.current += 1);
     setPhase('measuring');
     setError(null);
     try {
@@ -243,24 +266,41 @@ export function useLogCalibration(): UseLogCalibration {
       };
       for (const hostilityType of [HostilityType.Friendlies, HostilityType.Enemies]) {
         let next: number | null = null;
+        let pages = 0;
         do {
+          const startTime = next ?? window.start;
           const res: EventsPage = await client.query({
             query: GetResourceEventsDocument,
             variables: {
               code,
               fightIds: [selectedFightId],
-              startTime: next ?? window.start,
+              startTime,
               endTime: window.end,
               hostilityType,
               limit: 100000,
             },
+            // Match the existing resource-event fetcher: never cache these large
+            // pages in the Apollo singleton.
+            fetchPolicy: 'no-cache',
           });
+          // Bail if a newer measurement/selection has superseded this one.
+          if (reqId !== measureReqId.current) return;
           const page = res.reportData?.report?.events;
           if (page?.data) all.push(...(page.data as ResourceChangeEvent[]));
-          next = page?.nextPageTimestamp ?? null;
+          const nextCursor = page?.nextPageTimestamp ?? null;
+          // Stop on a non-advancing cursor (repeated/backwards/malformed) or when
+          // the page cap is hit — either would otherwise spin forever.
+          if (!isCursorAdvancing(startTime, nextCursor)) break;
+          next = nextCursor;
+          pages += 1;
+          if (pages >= MAX_EVENT_PAGES) {
+            throw new Error('Fight has too many resource events to measure reliably.');
+          }
         } while (next);
       }
 
+      // Final staleness check before committing the result.
+      if (reqId !== measureReqId.current) return;
       const result = calibrateFromEvents({
         events: all,
         fightDurationSeconds: fight?.durationSeconds ?? 0,
@@ -274,6 +314,8 @@ export function useLogCalibration(): UseLogCalibration {
       });
       setPhase('measured');
     } catch (e) {
+      // A superseded run that happened to throw must not surface an error either.
+      if (reqId !== measureReqId.current) return;
       setError(
         e instanceof Error
           ? `Could not measure that fight: ${e.message}`
