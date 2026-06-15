@@ -35,6 +35,7 @@ import { DECISIVE_PROC_CHANCE, DecisiveQuality } from '../../shared/constants';
 import { useUltimateSimulator } from '../useUltimateSimulator';
 
 const QUALITY_OPTIONS: { value: DecisiveQuality; label: string }[] = [
+  { value: 'normal', label: 'Normal (white)' },
   { value: 'fine', label: 'Fine (green)' },
   { value: 'superior', label: 'Superior (blue)' },
   { value: 'epic', label: 'Epic (purple)' },
