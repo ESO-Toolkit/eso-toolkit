@@ -69,7 +69,7 @@
     "@graphql-codegen/typed-document-node": "^7.0.0",
     "@graphql-codegen/typescript-react-apollo": "^4.4.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@mui/icons-material": "^9.0.1",
+    "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.0.1",
     "@playwright/test": "^1.60.0",
     "@storybook/addon-docs": "^10.4.1",
