@@ -1,4 +1,4 @@
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React from 'react';
 
@@ -46,6 +46,18 @@ export const EncounterTimeline: React.FC<EncounterTimelineProps> = React.memo(
   ({ encounters, selectedEncounterId, onSelectEncounter, overriddenEncounters }) => {
     const theme = useTheme();
     const isDark = theme.palette.mode === 'dark';
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+
+    const handleSelect = (id: string, el: HTMLElement | null): void => {
+      onSelectEncounter(id);
+      // Center the tapped node so the editor below is comfortably in view.
+      el?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      });
+    };
 
     return (
       <Box
@@ -55,6 +67,8 @@ export const EncounterTimeline: React.FC<EncounterTimelineProps> = React.memo(
           gap: 0,
           overflowX: 'auto',
           pb: 1,
+          // Snap nodes into place on mobile for easier fight-to-fight navigation.
+          scrollSnapType: isMobile ? 'x proximity' : 'none',
           // Scrollbar styling
           '&::-webkit-scrollbar': { height: 4 },
           '&::-webkit-scrollbar-track': {
@@ -106,16 +120,20 @@ export const EncounterTimeline: React.FC<EncounterTimelineProps> = React.memo(
                 placement="top"
               >
                 <Box
-                  onClick={() => onSelectEncounter(encounter.id)}
+                  onClick={(e) => handleSelect(encounter.id, e.currentTarget)}
                   sx={{
                     position: 'relative',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
+                    justifyContent: 'center',
                     gap: 0.5,
                     cursor: 'pointer',
                     flexShrink: 0,
                     minWidth: isBoss ? 80 : 64,
+                    scrollSnapAlign: 'center',
+                    // WCAG 2.5.5: ensure a 44px touch target on coarse pointers.
+                    '@media (pointer: coarse)': { minHeight: 44 },
                     transition: 'transform 0.15s ease',
                     '&:hover': {
                       transform: 'translateY(-2px)',

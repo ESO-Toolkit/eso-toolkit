@@ -40,6 +40,7 @@ import type {
   EncounterOverrides,
   PlayerOverride,
 } from '../types/trial-encounters';
+import { encounterHasOverrides } from '../types/trial-encounters';
 
 import { Logger, LogLevel } from './logger';
 import { makeSlotKey } from './slotKey';
@@ -204,11 +205,26 @@ export interface CompactEncounterOverrides {
   dp?: Array<{ sn: number } & CompactPlayerOverride>; // dpsSlots (sparse)
 }
 
-/** Compact representation of TrialBuildOverrides */
+/**
+ * Compact representation of a single trial's TrialBuildOverrides.
+ * LEGACY single-trial form — decoded for backward compat, never encoded anymore.
+ */
 export interface CompactTrialOverrides {
   ti: string; // trialId
   sa: boolean; // useSameBuildForAll
   eb: Record<string, CompactEncounterOverrides>; // encounterBuilds
+}
+
+/**
+ * Compact representation of ONE trial inside the multi-trial map (`tom`).
+ * The map key IS the trialId, so `ti` is dropped here (×10 byte savings).
+ * `sa` and `eb` are both optional and sparse:
+ *   - omit `eb` when sa===true (viewer never reads per-encounter builds then)
+ *   - a whole trial is omitted from `tom` when sa===true && eb is empty
+ */
+export interface CompactTrialOverridesMulti {
+  sa?: boolean; // useSameBuildForAll
+  eb?: Record<string, CompactEncounterOverrides>; // encounterBuilds
 }
 
 /**
@@ -225,7 +241,10 @@ export interface CompactRosterV2 {
   dp?: CompactDPS[];
   ag?: string[];
   no?: string;
+  /** LEGACY single-trial per-fight overrides (decode only). */
   to?: CompactTrialOverrides;
+  /** Multi-trial per-fight overrides, keyed by trialId. */
+  tom?: Record<string, CompactTrialOverridesMulti>;
   dl?: number;
 }
 
@@ -243,7 +262,10 @@ export interface CompactRosterV3 {
   dp?: CompactDPS[];
   ag?: string[];
   no?: string;
+  /** LEGACY single-trial per-fight overrides (decode only). */
   to?: CompactTrialOverrides;
+  /** Multi-trial per-fight overrides, keyed by trialId (current encode form). */
+  tom?: Record<string, CompactTrialOverridesMulti>;
   dl?: number;
   /** Trials this roster is tagged with (for Hub discovery) */
   tr?: string[];
@@ -763,20 +785,91 @@ function expandEncounterOverrides(c: CompactEncounterOverrides): EncounterOverri
   return { slots };
 }
 
-function compactTrialOverrides(t: TrialBuildOverrides): CompactTrialOverrides {
-  const eb: Record<string, CompactEncounterOverrides> = {};
-  for (const [encId, overrides] of Object.entries(t.encounterBuilds)) {
-    eb[encId] = compactEncounterOverrides(overrides);
-  }
-  return { ti: t.trialId, sa: t.useSameBuildForAll, eb };
-}
+// NOTE: legacy single-trial `compactTrialOverrides` was removed — encoding now
+// always writes the multi-trial `tom` map via `compactTrialOverridesMulti`.
+// `expandTrialOverrides` is kept: it decodes legacy `c.to` URLs for back-compat.
 
 function expandTrialOverrides(c: CompactTrialOverrides): TrialBuildOverrides {
   const encounterBuilds: Record<string, EncounterOverrides> = {};
   for (const [encId, compact] of Object.entries(c.eb)) {
     encounterBuilds[encId] = expandEncounterOverrides(compact);
   }
-  return { trialId: c.ti, useSameBuildForAll: c.sa, encounterBuilds };
+  // sa fail-safe: a populated encounterBuilds can never be "same build for all".
+  const hasBuilds = Object.keys(encounterBuilds).length > 0;
+  return { trialId: c.ti, useSameBuildForAll: hasBuilds ? false : c.sa, encounterBuilds };
+}
+
+// ─── Multi-trial per-fight overrides (current format, key `tom`) ──────────────
+
+/**
+ * Compact the multi-trial overrides map for the URL. Sparse: a trial is OMITTED
+ * entirely when it is `useSameBuildForAll` with no real encounter builds (that
+ * state is recoverable from the `tr` roster-tags + base roster), and `eb` is
+ * omitted whenever `useSameBuildForAll` is true. `sa` is always written
+ * explicitly so decode never has to guess. Returns undefined when nothing to write.
+ */
+function compactTrialOverridesMulti(
+  map: Record<string, TrialBuildOverrides>,
+): Record<string, CompactTrialOverridesMulti> | undefined {
+  const out: Record<string, CompactTrialOverridesMulti> = {};
+  for (const [trialId, t] of Object.entries(map)) {
+    const eb: Record<string, CompactEncounterOverrides> = {};
+    for (const [encId, overrides] of Object.entries(t.encounterBuilds)) {
+      if (encounterHasOverrides(overrides)) {
+        eb[encId] = compactEncounterOverrides(overrides);
+      }
+    }
+    const hasBuilds = Object.keys(eb).length > 0;
+    // Omit a trial that is same-build-for-all with no real per-encounter data.
+    if (!hasBuilds && t.useSameBuildForAll) continue;
+    const entry: CompactTrialOverridesMulti = { sa: hasBuilds ? false : t.useSameBuildForAll };
+    if (hasBuilds) entry.eb = eb;
+    out[trialId] = entry;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** Expand a multi-trial overrides map from the URL, capped at MAX_ROSTER_TRIALS. */
+function expandTrialOverridesMulti(
+  c: Record<string, CompactTrialOverridesMulti>,
+): Record<string, TrialBuildOverrides> {
+  const out: Record<string, TrialBuildOverrides> = {};
+  for (const [trialId, ct] of Object.entries(c).slice(0, MAX_ROSTER_TRIALS)) {
+    if (typeof trialId !== 'string' || !trialId) continue;
+    const encounterBuilds: Record<string, EncounterOverrides> = {};
+    for (const [encId, compact] of Object.entries(ct.eb ?? {})) {
+      encounterBuilds[encId] = expandEncounterOverrides(compact);
+    }
+    // sa fail-safe: present encounter builds force useSameBuildForAll=false, so a
+    // missing/stale `sa` flag can never silently hide a populated trial's builds.
+    const hasBuilds = Object.keys(encounterBuilds).length > 0;
+    out[trialId] = {
+      trialId,
+      useSameBuildForAll: hasBuilds ? false : ct.sa !== false,
+      encounterBuilds,
+    };
+  }
+  return out;
+}
+
+/**
+ * Resolve the in-memory multi-trial overrides map from any compact roster form,
+ * applied at every decode site. Precedence:
+ *   1. `tom`  — current multi-trial form
+ *   2. `to`   — legacy single-trial form, wrapped as a one-entry map
+ *   3. undefined
+ */
+function resolveTrialBuilds(c: {
+  tom?: Record<string, CompactTrialOverridesMulti>;
+  to?: CompactTrialOverrides;
+}): Record<string, TrialBuildOverrides> | undefined {
+  if (c.tom && Object.keys(c.tom).length > 0) {
+    return expandTrialOverridesMulti(c.tom);
+  }
+  if (c.to?.ti) {
+    return { [c.to.ti]: expandTrialOverrides(c.to) };
+  }
+  return undefined;
 }
 
 // ============================================================
@@ -834,7 +927,10 @@ export function compactifyRoster(roster: RaidRoster): CompactRosterV3 {
   if (roster.availableGroups?.length) c.ag = roster.availableGroups;
   if (roster.notes) c.no = roster.notes;
   if (roster.trials?.length) c.tr = roster.trials.slice(0, MAX_ROSTER_TRIALS);
-  if (roster.trialOverrides) c.to = compactTrialOverrides(roster.trialOverrides);
+  if (roster.trialOverrides) {
+    const tom = compactTrialOverridesMulti(roster.trialOverrides);
+    if (tom) c.tom = tom;
+  }
   if (roster.rosterDetailLevel) {
     const DL_MAP: Record<RosterDetailLevel, number> = { simple: 0, full: 1 };
     c.dl = DL_MAP[roster.rosterDetailLevel];
@@ -896,7 +992,7 @@ function expandCompactRosterV3(c: CompactRosterV3): RaidRoster {
     availableGroups: c.ag ?? [],
     notes: c.no,
     trials: expandTrials(c.tr),
-    trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
+    trialOverrides: resolveTrialBuilds(c),
     rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
   };
 }
@@ -935,7 +1031,7 @@ function expandCompactRosterV2(c: CompactRosterV2): RaidRoster {
     dpsSlots,
     availableGroups: c.ag ?? [],
     notes: c.no,
-    trialOverrides: c.to ? expandTrialOverrides(c.to) : undefined,
+    trialOverrides: resolveTrialBuilds(c),
     rosterDetailLevel: c.dl != null ? DL_LEVELS[c.dl] : undefined,
   };
 }
@@ -1126,6 +1222,28 @@ function migrateLegacyRoster(raw: Record<string, unknown>): RaidRoster {
     availableGroups: (raw.availableGroups as string[]) ?? [],
     notes: raw.notes as string | undefined,
     rosterDetailLevel: raw.rosterDetailLevel as RosterDetailLevel | undefined,
-    trialOverrides: raw.trialOverrides as TrialBuildOverrides | undefined,
+    trialOverrides: migrateLegacyTrialOverrides(raw.trialOverrides),
   };
+}
+
+/**
+ * Migrate a legacy v1 `trialOverrides` value (full, uncompacted) into the
+ * multi-trial map. Old data was a single object with a `.trialId`; newer data
+ * is already a map. Returns undefined for anything unrecognized.
+ */
+function migrateLegacyTrialOverrides(
+  raw: unknown,
+): Record<string, TrialBuildOverrides> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  // Legacy single-trial object → wrap as a one-entry map.
+  const single = raw as Partial<TrialBuildOverrides>;
+  if (typeof single.trialId === 'string' && single.trialId && single.encounterBuilds) {
+    return { [single.trialId]: single as TrialBuildOverrides };
+  }
+  // Already a map keyed by trialId.
+  const map = raw as Record<string, TrialBuildOverrides>;
+  const valid = Object.values(map).every(
+    (t) => t && typeof t === 'object' && 'encounterBuilds' in t,
+  );
+  return valid && Object.keys(map).length > 0 ? map : undefined;
 }

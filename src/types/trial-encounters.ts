@@ -77,6 +77,30 @@ export function encounterHasOverrides(overrides: EncounterOverrides | undefined)
   return Object.values(overrides.slots).some((o) => !isOverrideEmpty(o));
 }
 
+/**
+ * Does a single trial's overrides contain any real per-encounter data?
+ * `useSameBuildForAll` alone does NOT count as an override — only populated
+ * encounters do. Used to decide whether a trial shows up on the read-only viewer.
+ */
+export function trialHasOverrides(trial: TrialBuildOverrides | undefined): boolean {
+  if (!trial) return false;
+  return Object.values(trial.encounterBuilds).some((eo) => encounterHasOverrides(eo));
+}
+
+/** Does the multi-trial overrides map have any trial with real per-encounter data? */
+export function hasAnyTrialOverrides(
+  map: Record<string, TrialBuildOverrides> | undefined,
+): boolean {
+  if (!map) return false;
+  return Object.values(map).some((t) => trialHasOverrides(t));
+}
+
+/** Count the encounters in a trial that have real overrides (for badges). */
+export function countTrialOverrides(trial: TrialBuildOverrides | undefined): number {
+  if (!trial) return 0;
+  return Object.values(trial.encounterBuilds).filter((eo) => encounterHasOverrides(eo)).length;
+}
+
 /** Merge a base TankSetup with a sparse override */
 export function applyTankOverride(base: TankSetup, override?: PlayerOverride): TankSetup {
   if (!override || isOverrideEmpty(override)) return base;

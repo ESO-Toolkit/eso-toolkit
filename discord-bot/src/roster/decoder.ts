@@ -12,13 +12,27 @@ import type { DecodedRoster, DecodedRosterSlot, DecodedSkillLines } from './type
 // ── Lookup tables (mirror the frontend's encoding tables) ───────────────────
 
 const CLASS_SKILL_LINES = [
-  'Ardent Flame', 'Draconic Power', 'Earthen Heart',
-  'Dark Magic', 'Daedric Summoning', 'Storm Calling',
-  'Assassination', 'Shadow', 'Siphoning',
-  'Aedric Spear', "Dawn's Wrath", 'Restoring Light',
-  'Animal Companions', 'Green Balance', "Winter's Embrace",
-  'Grave Lord', 'Bone Tyrant', 'Living Death',
-  'Herald of the Tome', 'Apocryphal Soldier', 'Curative Runeforms',
+  'Ardent Flame',
+  'Draconic Power',
+  'Earthen Heart',
+  'Dark Magic',
+  'Daedric Summoning',
+  'Storm Calling',
+  'Assassination',
+  'Shadow',
+  'Siphoning',
+  'Aedric Spear',
+  "Dawn's Wrath",
+  'Restoring Light',
+  'Animal Companions',
+  'Green Balance',
+  "Winter's Embrace",
+  'Grave Lord',
+  'Bone Tyrant',
+  'Living Death',
+  'Herald of the Tome',
+  'Apocryphal Soldier',
+  'Curative Runeforms',
 ] as const;
 
 const ULTIMATE_LIST = [
@@ -86,45 +100,109 @@ async function readAllChunks(readable: ReadableStream<Uint8Array>): Promise<Uint
 
 // ── Compact types (matching CompactRosterV3 shape) ──────────────────────────
 
-interface CompactBuildRef { bi?: string; bn?: string; }
-interface CompactGear { s1?: number; s2?: number; ms?: number; a?: number[]; }
-interface CompactSkills { l1?: number | string; l2?: number | string; l3?: number | string; fl?: 1; }
-interface CompactGroup { g?: string; }
+interface CompactBuildRef {
+  bi?: string;
+  bn?: string;
+}
+interface CompactGear {
+  s1?: number;
+  s2?: number;
+  ms?: number;
+  a?: number[];
+}
+interface CompactSkills {
+  l1?: number | string;
+  l2?: number | string;
+  l3?: number | string;
+  fl?: 1;
+}
+interface CompactGroup {
+  g?: string;
+}
 
 interface CompactTank {
-  pn?: string; rl?: string; pt?: string; pi?: string;
-  lb?: string[]; rn?: string; gs?: CompactGear; sl?: CompactSkills;
-  ul?: number | string; grs?: string[]; gr?: CompactGroup;
-  no?: string; br?: CompactBuildRef;
+  pn?: string;
+  rl?: string;
+  pt?: string;
+  pi?: string;
+  lb?: string[];
+  rn?: string;
+  gs?: CompactGear;
+  sl?: CompactSkills;
+  ul?: number | string;
+  grs?: string[];
+  gr?: CompactGroup;
+  no?: string;
+  br?: CompactBuildRef;
 }
 
 interface CompactHealer {
-  pn?: string; rl?: string; pt?: string; pi?: string;
-  lb?: string[]; rn?: string;
-  s1?: number; s2?: number; ms?: number; a?: number[];
-  sl?: CompactSkills; hb?: number; cp?: number;
-  ul?: number | string; grs?: string[]; gr?: CompactGroup;
-  no?: string; br?: CompactBuildRef;
+  pn?: string;
+  rl?: string;
+  pt?: string;
+  pi?: string;
+  lb?: string[];
+  rn?: string;
+  s1?: number;
+  s2?: number;
+  ms?: number;
+  a?: number[];
+  sl?: CompactSkills;
+  hb?: number;
+  cp?: number;
+  ul?: number | string;
+  grs?: string[];
+  gr?: CompactGroup;
+  no?: string;
+  br?: CompactBuildRef;
 }
 
 interface CompactDPS {
-  sn: number; pn?: string; rl?: string; pt?: string; pi?: string;
-  lb?: string[]; rn?: string;
-  s1?: number; s2?: number; ms?: number; as?: number[]; gs?: number[];
+  sn: number;
+  pn?: string;
+  rl?: string;
+  pt?: string;
+  pi?: string;
+  lb?: string[];
+  rn?: string;
+  s1?: number;
+  s2?: number;
+  ms?: number;
+  as?: number[];
+  gs?: number[];
   sl?: CompactSkills;
-  ul?: number | string; grs?: string[]; gr?: CompactGroup;
-  no?: string; jt?: number; cd?: string; br?: CompactBuildRef;
+  ul?: number | string;
+  grs?: string[];
+  gr?: CompactGroup;
+  no?: string;
+  jt?: number;
+  cd?: string;
+  br?: CompactBuildRef;
 }
 
-interface CompactTrialOverrides { ti: string; }
+interface CompactTrialOverrides {
+  ti: string;
+}
+/** Multi-trial overrides: map keyed by trialId (the value shape is irrelevant here). */
+type CompactTrialOverridesMultiMap = Record<string, unknown>;
 
 interface CompactRoster {
-  v: number; n?: string; no?: string;
+  v: number;
+  n?: string;
+  no?: string;
   /** Composition tuple [tanks, healers, dps] (v3 only). Omitted when default 2/2/8. */
   co?: [number, number, number];
-  ts?: CompactTank[]; hs?: CompactHealer[]; dp?: CompactDPS[];
+  ts?: CompactTank[];
+  hs?: CompactHealer[];
+  dp?: CompactDPS[];
+  /** Legacy single-trial per-fight overrides. */
   to?: CompactTrialOverrides;
-  t1?: CompactTank; t2?: CompactTank; h1?: CompactHealer; h2?: CompactHealer;
+  /** Multi-trial per-fight overrides, keyed by trialId (current form). */
+  tom?: CompactTrialOverridesMultiMap;
+  t1?: CompactTank;
+  t2?: CompactTank;
+  h1?: CompactHealer;
+  h2?: CompactHealer;
 }
 
 // Composition defaults/clamps — mirror the frontend's rosterEncoding.ts so the
@@ -148,13 +226,19 @@ function decodeSkillLines(sl?: CompactSkills): DecodedSkillLines | undefined {
   if (!sl) return undefined;
   const result: DecodedSkillLines = {};
   if (sl.fl) result.isFlex = true;
-  if (sl.l1 !== undefined) result.line1 = typeof sl.l1 === 'number' ? CLASS_SKILL_LINES[sl.l1] : sl.l1;
-  if (sl.l2 !== undefined) result.line2 = typeof sl.l2 === 'number' ? CLASS_SKILL_LINES[sl.l2] : sl.l2;
-  if (sl.l3 !== undefined) result.line3 = typeof sl.l3 === 'number' ? CLASS_SKILL_LINES[sl.l3] : sl.l3;
-  return (result.isFlex || result.line1 || result.line2 || result.line3) ? result : undefined;
+  if (sl.l1 !== undefined)
+    result.line1 = typeof sl.l1 === 'number' ? CLASS_SKILL_LINES[sl.l1] : sl.l1;
+  if (sl.l2 !== undefined)
+    result.line2 = typeof sl.l2 === 'number' ? CLASS_SKILL_LINES[sl.l2] : sl.l2;
+  if (sl.l3 !== undefined)
+    result.line3 = typeof sl.l3 === 'number' ? CLASS_SKILL_LINES[sl.l3] : sl.l3;
+  return result.isFlex || result.line1 || result.line2 || result.line3 ? result : undefined;
 }
 
-function decodeGroupName(grs?: string[], gr?: CompactGroup): { groups?: string[]; groupName?: string } {
+function decodeGroupName(
+  grs?: string[],
+  gr?: CompactGroup,
+): { groups?: string[]; groupName?: string } {
   if (grs?.length) return { groups: grs };
   if (gr?.g) return { groupName: gr.g };
   return {};
@@ -301,9 +385,13 @@ export async function decodeRosterData(rosterData: string): Promise<DecodedRoste
         }
       : { ...DEFAULT_COMPOSITION };
 
+  // Prefer the multi-trial form (first trialId), fall back to legacy single-trial.
+  // Only used for channel naming, so one representative trial is sufficient.
+  const trialId = (compact.tom && Object.keys(compact.tom)[0]) || compact.to?.ti || undefined;
+
   return {
     name: compact.n,
-    trialId: compact.to?.ti || undefined,
+    trialId,
     notes: compact.no,
     composition,
     tanks,

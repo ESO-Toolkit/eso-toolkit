@@ -8,6 +8,7 @@
 
 import type { RaidRoster, RoleComposition, TankSetup, HealerSetup, DPSSlot } from '../types/roster';
 import { defaultTankSetup, defaultHealerSetup } from '../types/roster';
+import type { TrialBuildOverrides } from '../types/trial-encounters';
 
 import { makeSlotKey } from './slotKey';
 
@@ -53,7 +54,27 @@ function resizeDPS(dpsSlots: DPSSlot[], newCount: number): DPSSlot[] {
 }
 
 /**
- * Clean up trial overrides to remove references to slots that no longer exist.
+ * Clean up one trial's overrides to remove references to slots that no longer exist.
+ */
+function cleanOneTrial(trial: TrialBuildOverrides, validKeys: Set<string>): TrialBuildOverrides {
+  const newEncounterBuilds: TrialBuildOverrides['encounterBuilds'] = {};
+  for (const [encId, overrides] of Object.entries(trial.encounterBuilds)) {
+    const filteredSlots: Record<string, (typeof overrides.slots)[string]> = {};
+    for (const [slotKey, override] of Object.entries(overrides.slots)) {
+      if (validKeys.has(slotKey)) {
+        filteredSlots[slotKey] = override;
+      }
+    }
+    if (Object.keys(filteredSlots).length > 0) {
+      newEncounterBuilds[encId] = { slots: filteredSlots };
+    }
+  }
+  return { ...trial, encounterBuilds: newEncounterBuilds };
+}
+
+/**
+ * Clean up trial overrides across EVERY trial in the map to remove references
+ * to slots that no longer exist after a composition change.
  */
 function cleanTrialOverrides(
   roster: RaidRoster,
@@ -66,23 +87,11 @@ function cleanTrialOverrides(
   for (let i = 0; i < newComp.healers; i++) validKeys.add(makeSlotKey('healer', i));
   for (let i = 0; i < newComp.dps; i++) validKeys.add(makeSlotKey('dps', i));
 
-  const newEncounterBuilds: typeof roster.trialOverrides.encounterBuilds = {};
-  for (const [encId, overrides] of Object.entries(roster.trialOverrides.encounterBuilds)) {
-    const filteredSlots: Record<string, (typeof overrides.slots)[string]> = {};
-    for (const [slotKey, override] of Object.entries(overrides.slots)) {
-      if (validKeys.has(slotKey)) {
-        filteredSlots[slotKey] = override;
-      }
-    }
-    if (Object.keys(filteredSlots).length > 0) {
-      newEncounterBuilds[encId] = { slots: filteredSlots };
-    }
+  const cleaned: Record<string, TrialBuildOverrides> = {};
+  for (const [trialId, trial] of Object.entries(roster.trialOverrides)) {
+    cleaned[trialId] = cleanOneTrial(trial, validKeys);
   }
-
-  return {
-    ...roster.trialOverrides,
-    encounterBuilds: newEncounterBuilds,
-  };
+  return cleaned;
 }
 
 /**

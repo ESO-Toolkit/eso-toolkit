@@ -32,7 +32,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GearSetTooltip } from '../components/GearSetTooltip';
@@ -58,10 +58,13 @@ import {
   MONSTER_SETS,
   ARENA_WEAPON_SETS,
 } from '../types/roster';
+import type { Trial } from '../types/trial-encounters';
 import {
   TrialBuildOverrides,
   getTrialById,
+  resolveTrialId,
   encounterHasOverrides,
+  trialHasOverrides,
 } from '../types/trial-encounters';
 import { encodeBuildToURL } from '../utils/buildEncoding';
 import { getGearSetTooltipPropsByName } from '../utils/gearSetTooltipMapper';
@@ -1145,20 +1148,20 @@ const SectionLabel: React.FC<{
 // Per-fight builds section
 // ============================================================
 
-interface PerFightSectionProps {
+interface PerFightTrialGroupProps {
   roster: RaidRoster;
+  trial: Trial;
   trialOverrides: TrialBuildOverrides;
   isDarkMode: boolean;
 }
 
-const PerFightSection: React.FC<PerFightSectionProps> = ({
+/** Read-only run-sheet group for ONE trial's per-fight overrides. */
+const PerFightTrialGroup: React.FC<PerFightTrialGroupProps> = ({
   roster,
+  trial,
   trialOverrides,
   isDarkMode,
 }) => {
-  const trial = getTrialById(trialOverrides.trialId);
-  if (!trial) return null;
-
   const encountersWithOverrides = trial.encounters.filter((enc) =>
     encounterHasOverrides(trialOverrides.encounterBuilds[enc.id]),
   );
@@ -1168,13 +1171,36 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({
   const accentColor = isDarkMode ? '#9c88ff' : '#6c5ce7';
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <SectionLabel
-        icon={<PerFightIcon sx={{ fontSize: '0.85rem', color: accentColor }} />}
-        label={`Per-Fight Builds — ${trial.name}`}
-        color={accentColor}
-        isDarkMode={isDarkMode}
-      />
+    <Box id={`pf-${trial.id}`} sx={{ mb: 2.5, scrollMarginTop: '80px' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+        <Chip
+          label={trial.shortName}
+          size="small"
+          sx={{
+            height: 20,
+            fontSize: '0.62rem',
+            fontWeight: 700,
+            backgroundColor: isDarkMode ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)',
+            color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
+          }}
+        />
+        <Typography
+          sx={{
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: 700,
+            fontSize: '0.92rem',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {trial.name}
+        </Typography>
+        {encountersWithOverrides.length > 0 && (
+          <Typography sx={{ fontSize: '0.68rem', color: 'text.disabled', ml: 0.5 }}>
+            {encountersWithOverrides.length} fight
+            {encountersWithOverrides.length > 1 ? 's' : ''}
+          </Typography>
+        )}
+      </Box>
       {trialOverrides.useSameBuildForAll ? (
         <Paper
           elevation={0}
@@ -1187,20 +1213,6 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({
         >
           <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
             Same build used for all encounters.
-          </Typography>
-        </Paper>
-      ) : encountersWithOverrides.length === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 1.5,
-            borderRadius: '10px',
-            backgroundColor: bgColor,
-            border: `1px solid ${borderColor}`,
-          }}
-        >
-          <Typography sx={{ fontSize: '0.78rem', color: 'text.secondary' }}>
-            No per-fight overrides configured.
           </Typography>
         </Paper>
       ) : (
@@ -1224,12 +1236,14 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({
             return (
               <Paper
                 key={enc.id}
+                id={`pf-${trial.id}-${enc.id}`}
                 elevation={0}
                 sx={{
                   p: 1.25,
                   borderRadius: '10px',
                   backgroundColor: bgColor,
                   border: `1px solid ${borderColor}`,
+                  scrollMarginTop: '80px',
                 }}
               >
                 <Typography
@@ -1363,6 +1377,113 @@ const PerFightSection: React.FC<PerFightSectionProps> = ({
   );
 };
 
+interface PerFightSectionProps {
+  roster: RaidRoster;
+  overridesMap: Record<string, TrialBuildOverrides>;
+  isDarkMode: boolean;
+}
+
+/**
+ * Read-only "run sheet" of per-fight builds across every populated trial.
+ * Trials are ordered by `roster.trials` (bridged via resolveTrialId); any trial
+ * that has overrides but lost its tag is appended so its work is never hidden.
+ * A sticky jump-bar appears at 4+ trials.
+ */
+const PerFightSection: React.FC<PerFightSectionProps> = ({ roster, overridesMap, isDarkMode }) => {
+  const accentColor = isDarkMode ? '#9c88ff' : '#6c5ce7';
+
+  // Order: tagged trials first (in roster.trials order), then any orphaned populated trials.
+  const orderedTrialIds: string[] = [];
+  for (const tag of roster.trials ?? []) {
+    const id = resolveTrialId(tag);
+    if (id && overridesMap[id] && !orderedTrialIds.includes(id)) orderedTrialIds.push(id);
+  }
+  for (const id of Object.keys(overridesMap)) {
+    if (!orderedTrialIds.includes(id)) orderedTrialIds.push(id);
+  }
+
+  // Only trials with real, displayable content (overrides or same-build flag).
+  const groups = orderedTrialIds
+    .map((id) => ({ id, trial: getTrialById(id), ov: overridesMap[id] }))
+    .filter(
+      (g): g is { id: string; trial: Trial; ov: TrialBuildOverrides } =>
+        Boolean(g.trial) && (g.ov.useSameBuildForAll || trialHasOverrides(g.ov)),
+    );
+
+  if (groups.length === 0) return null;
+
+  const showJumpBar = groups.length >= 4;
+
+  const scrollToTrial = (trialId: string): void => {
+    const el = document.getElementById(`pf-${trialId}`);
+    if (!el) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  };
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <SectionLabel
+        icon={<PerFightIcon sx={{ fontSize: '0.85rem', color: accentColor }} />}
+        label="Per-Fight Builds"
+        color={accentColor}
+        isDarkMode={isDarkMode}
+      />
+
+      {showJumpBar && (
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+            display: 'flex',
+            gap: 0.5,
+            overflowX: 'auto',
+            overscrollBehavior: 'contain',
+            py: 0.75,
+            mb: 1,
+            backdropFilter: 'blur(8px)',
+            WebkitOverflowScrolling: 'touch',
+            '&::-webkit-scrollbar': { display: 'none' },
+            scrollbarWidth: 'none',
+            maskImage: 'linear-gradient(90deg, #000 92%, transparent)',
+          }}
+        >
+          {groups.map((g) => (
+            <Chip
+              key={g.id}
+              label={g.trial.shortName}
+              size="small"
+              onClick={() => scrollToTrial(g.id)}
+              aria-label={`Jump to ${g.trial.name}`}
+              sx={{
+                flexShrink: 0,
+                height: 24,
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                backgroundColor: isDarkMode ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)',
+                color: isDarkMode ? '#bfdbfe' : '#1d4ed8',
+                '&:focus-visible': { outline: '2px solid #38bdf8', outlineOffset: '2px' },
+              }}
+            />
+          ))}
+        </Box>
+      )}
+
+      {groups.map((g) => (
+        <PerFightTrialGroup
+          key={g.id}
+          roster={roster}
+          trial={g.trial}
+          trialOverrides={g.ov}
+          isDarkMode={isDarkMode}
+        />
+      ))}
+    </Box>
+  );
+};
+
 // ============================================================
 // Main page component
 // ============================================================
@@ -1416,6 +1537,43 @@ export const RosterViewPage: React.FC = () => {
 
   // Clean up deep-link fallback on unmount
   useEffect(() => () => cancelDeepLinkRef.current?.(), []);
+
+  // Deep-link target (?trial=&encounter=) read from the URL — preserved so the
+  // page's own Copy button re-shares the same fight, and used to scroll on load.
+  const [deepLinkTarget] = useState<{ trial?: string; encounter?: string }>(() => {
+    const p = new URLSearchParams(window.location.search);
+    return { trial: p.get('trial') ?? undefined, encounter: p.get('encounter') ?? undefined };
+  });
+
+  // After the roster decodes (async), scroll the deep-linked fight into view.
+  // Native hash/scroll no-ops because the target mounts after decode, so we retry
+  // until the node appears (or give up). Honors prefers-reduced-motion. Runs once
+  // per deep-link target via the scrolledForRef guard so settling re-renders
+  // (addons load, etc.) don't re-trigger it.
+  const scrolledForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!roster) return;
+    const { trial, encounter } = deepLinkTarget;
+    if (!trial) return;
+    const anchorId = encounter ? `pf-${trial}-${encounter}` : `pf-${trial}`;
+    if (scrolledForRef.current === anchorId) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let attempts = 0;
+    let timer: number | undefined;
+    const tryScroll = (): void => {
+      const el = document.getElementById(anchorId);
+      if (el) {
+        scrolledForRef.current = anchorId; // mark done only once we've actually scrolled
+        el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+        return;
+      }
+      if (attempts++ < 20) timer = window.setTimeout(tryScroll, 120);
+    };
+    timer = window.setTimeout(tryScroll, 60);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [roster, deepLinkTarget]);
 
   const loadRoster = React.useCallback(() => {
     let cancelled = false;
@@ -1567,11 +1725,15 @@ export const RosterViewPage: React.FC = () => {
     };
   }, [recommendedAddons?.packId]);
 
-  // Copy this shareable link to clipboard
+  // Copy this shareable link to clipboard, preserving any deep-linked fight so a
+  // recipient lands on the same trial+encounter the sharer was viewing.
   const handleCopyLink = (): void => {
-    const url = hubRosterId
+    let url = hubRosterId
       ? `${window.location.origin}${window.location.pathname}?id=${hubRosterId}`
       : `${window.location.origin}${window.location.pathname}?r=${encodedParam}`;
+    if (deepLinkTarget.trial) url += `&trial=${encodeURIComponent(deepLinkTarget.trial)}`;
+    if (deepLinkTarget.encounter)
+      url += `&encounter=${encodeURIComponent(deepLinkTarget.encounter)}`;
     navigator.clipboard
       .writeText(url)
       .then(() => {
@@ -1860,7 +2022,7 @@ export const RosterViewPage: React.FC = () => {
       {roster.trialOverrides && (
         <PerFightSection
           roster={roster}
-          trialOverrides={roster.trialOverrides}
+          overridesMap={roster.trialOverrides}
           isDarkMode={isDarkMode}
         />
       )}

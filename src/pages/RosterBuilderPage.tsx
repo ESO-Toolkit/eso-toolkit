@@ -702,12 +702,12 @@ export const RosterBuilderPage: React.FC = () => {
     });
   }, []);
 
-  // Update trial per-fight build overrides
+  // Update trial per-fight build overrides (the whole multi-trial map).
   const handleTrialOverridesChange = useCallback(
-    (overrides: TrialBuildOverrides | undefined): void => {
+    (overrides: Record<string, TrialBuildOverrides> | undefined): void => {
       setRoster((prev) => ({
         ...prev,
-        trialOverrides: overrides,
+        trialOverrides: overrides && Object.keys(overrides).length > 0 ? overrides : undefined,
         updatedAt: new Date().toISOString(),
       }));
     },
@@ -2637,7 +2637,7 @@ export const RosterBuilderPage: React.FC = () => {
       <ServerPickerDialog
         open={discordPublishOpen}
         title={roster.rosterName}
-        trialId={roster.trialOverrides?.trialId ?? ''}
+        trialId={roster.trialOverrides ? (Object.keys(roster.trialOverrides)[0] ?? '') : ''}
         rosterData={discordPublishData}
         onClose={() => setDiscordPublishOpen(false)}
         onSuccess={() => {
