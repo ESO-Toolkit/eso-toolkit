@@ -166,6 +166,17 @@ describe('compileSources', () => {
     });
     expect(compiled.filter((s) => s.id === 'minor-heroism')).toHaveLength(1);
   });
+
+  it('keeps source ids and cost-reduction ids disjoint', () => {
+    // Both generation sources and cost reductions are toggled through the SAME
+    // `enabledOverrides` map (keyed by id). That only stays correct while the two
+    // id spaces never collide — a shared id would cross-wire one toggle to flip
+    // both. This guards that invariant so a future catalog addition can't silently
+    // break it (see LOW-1 in the catalog audit).
+    const sourceIds = new Set(ULTIMATE_SOURCE_CATALOG.map((s) => s.id));
+    const collisions = COST_REDUCTION_CATALOG.filter((r) => sourceIds.has(r.id)).map((r) => r.id);
+    expect(collisions).toEqual([]);
+  });
 });
 
 describe('compileReductions', () => {
@@ -285,15 +296,29 @@ describe('catalog data integrity', () => {
     expect(ULTIMATE_SOURCE_CATALOG.filter((s) => s.id === 'major-heroism')).toHaveLength(1);
   });
 
-  it('makes Templar Prism a default-on generator for Templar only', () => {
-    // Prism is near-always-on Templar income (like Implacable for Arcanist), so it
-    // is default-enabled — but only compiles in for the Templar class.
-    const templar = compileSources(ULTIMATE_SOURCE_CATALOG, {
-      ...baseSelection,
-      esoClass: 'templar',
+  it('offers Templar Prism to Templar only, default-OFF until toggled on', () => {
+    // Prism procs on a Dawn's Wrath cast — a loadout choice, not a class-universal
+    // mechanic — so it is available to Templar but NOT default-on (a Templar
+    // tank/healer may run no Dawn's Wrath skills). It must be explicitly enabled.
+    const templarSelection = { ...baseSelection, esoClass: 'templar' as const };
+
+    // Available to Templar...
+    expect(availableSources(ULTIMATE_SOURCE_CATALOG, templarSelection).map((s) => s.id)).toContain(
+      'templar-prism',
+    );
+    // ...but NOT compiled in by default (default-off).
+    expect(
+      compileSources(ULTIMATE_SOURCE_CATALOG, templarSelection).map((s) => s.id),
+    ).not.toContain('templar-prism');
+    // Turning it on compiles it in.
+    const enabled = compileSources(ULTIMATE_SOURCE_CATALOG, {
+      ...templarSelection,
+      enabledOverrides: { 'templar-prism': true },
     });
-    expect(templar.map((s) => s.id)).toContain('templar-prism');
-    const arcanist = compileSources(ULTIMATE_SOURCE_CATALOG, baseSelection); // arcanist
+    expect(enabled.map((s) => s.id)).toContain('templar-prism');
+
+    // Not available to a non-Templar (Arcanist) at all.
+    const arcanist = availableSources(ULTIMATE_SOURCE_CATALOG, baseSelection); // arcanist
     expect(arcanist.map((s) => s.id)).not.toContain('templar-prism');
   });
 

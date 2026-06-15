@@ -119,9 +119,10 @@ export function compileSources(
         rollsDecisive,
         note,
       } = resolved;
-      // Pillager's Profit's per-cast amount scales with the healer's ultimate
-      // cost (10% of it). Parameterize it from the selection when provided so
-      // the user can match their actual healer; otherwise keep the catalog default.
+      // Pillager's Profit's per-cast amount scales with the SET WEARER's ultimate
+      // cost (10% of it) — usually the healer, a different player from the one we
+      // compute time-to-ult for. Parameterize it from the selection when provided
+      // so the user can match the actual wearer; otherwise keep the catalog default.
       const effectiveAmount =
         id === PILLAGERS_PROFIT_SOURCE_ID && selection.pillagerHealerUltCost != null
           ? PILLAGERS_PROFIT_FRACTION_PER_CAST * Math.max(0, selection.pillagerHealerUltCost)

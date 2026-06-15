@@ -56,8 +56,9 @@ export interface UltimateSource {
 /** Weapon configuration governing how Decisive rolls. */
 export interface DecisiveConfig {
   /**
-   * Per-instance proc chance for +1 ultimate (0..1). By weapon quality:
-   * Fine .191 / Superior .212 / Epic .233 / Legendary .254 (some sources .275).
+   * Per-instance proc chance for +1 ultimate (0..1). Full five-tier ladder
+   * (see DECISIVE_PROC_CHANCE in shared/constants — verified against UESP):
+   * Normal .191 / Fine .212 / Superior .233 / Epic .254 / Legendary .275.
    */
   readonly procChance: number;
   /**

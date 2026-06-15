@@ -192,10 +192,14 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
     rollsDecisive: true,
     classes: ['templar'],
     availableIn: ['soloPve', 'groupPve', 'pvp'],
-    // Default-on for Templar: a Templar weaving Dawn's Wrath abilities procs this
-    // almost every window, so it is near-always-on income (like the Arcanist's
-    // Implacable Outcome). The tests assert Arcanist defaults, so this is safe.
-    defaultEnabled: true,
+    // Default OFF: Prism only procs on a Dawn's Wrath cast — a LOADOUT choice, not
+    // a class-universal mechanic. A Templar tank/healer (Aedric Spear / Restoring
+    // Light) may slot no Dawn's Wrath skills at all, so defaulting it on would
+    // over-estimate their generation. This matches the conservative posture of the
+    // other loadout-dependent class procs (Mountain's Blessing, Corpse Consumption,
+    // both default off). Contrast Arcanist Implacable Outcome, which procs on Crux —
+    // every Arcanist generates and spends Crux, so that one is genuinely default-on.
+    defaultEnabled: false,
     provenance: SRC_PRISM,
     confidence: 'high',
     description:
@@ -254,31 +258,32 @@ export const ULTIMATE_SOURCE_CATALOG: readonly CatalogSource[] = [
   // ---- Group support (external) --------------------------------------------
   {
     id: 'pillagers-profit-external',
-    label: "Pillager's Profit (from healer)",
+    label: "Pillager's Profit (from set wearer)",
     category: 'external',
     kind: 'perCast',
-    // Pillager's Profit (Dreadsail Reef, 5pc): when the wearer casts an ultimate
-    // in combat, group members gain 2% of the ultimate SPENT *per tick*, every 2s
-    // over 10s (= 5 ticks → 10% of the cost total), and a member can only be
-    // affected ONCE PER 45s. So one healer-cast grants a DPS 10% of the healer's
-    // ult cost, capped to one bundle / 45s:
+    // Pillager's Profit (Dreadsail Reef, 5pc): when the WEARER (usually your
+    // healer) casts an ultimate in combat, group members gain 2% of the ultimate
+    // SPENT *per tick*, every 2s over 10s (= 5 ticks → 10% of the cost total), and
+    // a member can only be affected ONCE PER 45s. So one wearer-cast grants a group
+    // member 10% of the WEARER'S ult cost, capped to one bundle / 45s:
     //   250-cost ult → 25 ult / 45s ≈ 0.56 ult/s;  500 (max) → 50 ult ≈ 1.1 ult/s.
-    // The per-cast amount scales with the healer's ult cost (set in the UI; see
+    // The per-cast amount scales with the wearer's ult cost (set in the UI; see
     // PILLAGERS_PROFIT_FRACTION_PER_CAST in compileCatalog.ts). amountPerInstance
-    // here is the fallback for a ~250-cost healer ult. The earlier 50/(1/12s)
+    // here is the fallback for a ~250-cost wearer ult. The earlier 50/(1/12s)
     // encoding implied ~4.2 ult/s — ~10× too high — because it ignored the 45s
-    // lockout and applied a flat 50 regardless of the healer's actual ult.
-    amountPerInstance: 25, // 10% of a typical ~250 healer ult (overridden by UI input)
+    // lockout and applied a flat 50 regardless of the wearer's actual ult.
+    amountPerInstance: 25, // 10% of a typical ~250 wearer ult (overridden by UI input)
     instancesPerSecond: 1 / 45, // 45s per-target lockout dominates the cadence
     uptime: 1,
     rollsDecisive: false, // externally granted — does not roll the wearer's Decisive
-    roles: ['dps'],
+    // No role restriction: the Profit bundle is granted to group members in range
+    // regardless of role — a tank or off-healer benefits just as a DPS does.
     availableIn: ['groupPve'],
     defaultEnabled: false,
     provenance: SRC_PILLAGERS,
     confidence: 'medium',
     description:
-      "When a group healer wears Pillager's Profit, casting their ultimate grants you 2% of its cost every 2s for 10s (10% of the cost total) — but only once per 45s. Set your healer's ult cost below; e.g. a 250-cost ult ≈ 25 per cast (~0.55 ult/s), a 500 ult ≈ 50.",
+      "When a group member wears Pillager's Profit (usually your healer), their ultimate cast grants you 2% of ITS cost every 2s for 10s (10% of the cost total) — but only once per 45s. Set the wearer's ult cost below (their ultimate, not yours); e.g. a 250-cost ult ≈ 25 per cast (~0.55 ult/s), a 500 ult ≈ 50.",
   },
   {
     id: 'arkasis-genius-external',
@@ -372,7 +377,6 @@ export const COST_REDUCTION_CATALOG: readonly CatalogCostReduction[] = [
     label: 'Power Stone',
     category: 'classPassive',
     fraction: 0.15,
-    enabled: false,
     classes: ['sorcerer'],
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: true,
@@ -386,7 +390,6 @@ export const COST_REDUCTION_CATALOG: readonly CatalogCostReduction[] = [
     label: 'Restoring Spirit',
     category: 'classPassive',
     fraction: 0.05,
-    enabled: false,
     classes: ['templar'],
     availableIn: ['soloPve', 'groupPve', 'pvp'],
     defaultEnabled: true,

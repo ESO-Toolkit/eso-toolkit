@@ -111,8 +111,15 @@ export interface CatalogSource extends UltimateSource {
   readonly description?: string;
 }
 
-/** A catalog entry for an ultimate-cost reduction (compiles into CostReduction). */
-export interface CatalogCostReduction extends CostReduction {
+/**
+ * A catalog entry for an ultimate-cost reduction (compiles into CostReduction).
+ *
+ * The engine's runtime `enabled` flag is intentionally omitted: the catalog only
+ * declares the DEFAULT (`defaultEnabled`); `compileReductions` synthesizes the
+ * actual `enabled` from the user's toggles. Carrying a literal `enabled` here
+ * would be inert (never read) and could contradict the real default-on behavior.
+ */
+export interface CatalogCostReduction extends Omit<CostReduction, 'enabled'> {
   readonly category: SourceCategory;
   readonly availableIn: readonly CombatContext[];
   readonly classes?: readonly EsoClass[];

@@ -130,6 +130,9 @@ const Swatch: React.FC<{ color: string; square?: boolean; size?: number; glow?: 
       height: size,
       borderRadius: square ? 0.5 : '50%',
       bgcolor: color,
+      // Thin neutral ring so light dots (normal/white, legendary/gold) stay
+      // visible against a light surface; harmless on dark.
+      border: '1px solid rgba(120,130,150,0.45)',
       boxShadow: glow ? `0 0 6px ${color}66` : 'none',
       flexShrink: 0,
     }}
@@ -299,12 +302,21 @@ const StatBlock: React.FC<{
         {info && (
           <Tooltip arrow title={info}>
             <InfoOutlined
+              role="img"
+              aria-label={`${label}: ${info}`}
+              tabIndex={0}
               sx={{
                 fontSize: 13,
                 color: 'text.secondary',
                 opacity: 0.6,
                 cursor: 'help',
+                borderRadius: '50%',
                 '&:hover': { opacity: 1 },
+                '&:focus-visible': {
+                  opacity: 1,
+                  outline: `2px solid ${accent ?? theme.palette.primary.main}`,
+                  outlineOffset: 2,
+                },
               }}
             />
           </Tooltip>
@@ -355,6 +367,11 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
   } = calc;
 
   const accent = theme.palette.mode === 'dark' ? 'rgb(56, 189, 248)' : 'rgb(40, 145, 200)';
+  // `accent` is tuned for borders/glows and LARGE text (the hero number passes
+  // WCAG large-text 3:1). For SMALL accent-colored text it fails AA in light mode
+  // (rgb(40,145,200) ≈ 3.4:1), so use this darker token there (rgb(20,110,160) ≈
+  // 5.3:1 on the panels). Dark mode already passes, so it keeps the bright accent.
+  const accentText = theme.palette.mode === 'dark' ? 'rgb(56, 189, 248)' : 'rgb(20, 110, 160)';
 
   // Group available sources by category for a tidy toggle list.
   const grouped = React.useMemo(() => {
@@ -608,6 +625,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
           <Stack spacing={2}>
             <Box>
               <Typography
+                id="ult-context-label"
                 variant="caption"
                 sx={{
                   color: 'text.secondary',
@@ -624,6 +642,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 size="small"
                 value={state.context}
                 onChange={(_, v) => v && calc.setContext(v as CombatContext)}
+                aria-labelledby="ult-context-label"
                 sx={{ mt: 0.5 }}
               >
                 {CONTEXT_OPTIONS.map((c) => (
@@ -753,7 +772,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
               <Typography
                 variant="caption"
                 sx={{
-                  color: accent,
+                  color: accentText,
                   fontWeight: 700,
                   textTransform: 'uppercase',
                   letterSpacing: 0.6,
@@ -907,7 +926,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                               <Typography
                                 className="u-tabular"
                                 variant="caption"
-                                sx={{ color: accent, fontWeight: 700 }}
+                                sx={{ color: accentText, fontWeight: 700 }}
                               >
                                 {Math.round((state.uptimeOverrides[s.id] ?? s.uptime) * 100)}%
                               </Typography>
@@ -929,31 +948,60 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                                 {s.description}
                               </Typography>
                             )}
-                            {/* Pillager's per-cast amount scales with the healer's
-                                ultimate cost (10% of it) — let the user match theirs. */}
+                            {/* Pillager's per-cast amount scales with the cost of the
+                                ULTIMATE OF WHOEVER WEARS THE SET (usually your healer) —
+                                a different player's ult, NOT your own. You receive 10% of
+                                their ult's cost. Deliberately decoupled from the main
+                                "Which ultimate?" cost above to avoid implying it tracks
+                                your own ultimate. */}
                             {s.id === 'pillagers-profit-external' && (
-                              <Stack
-                                direction="row"
-                                spacing={1}
-                                sx={{ alignItems: 'center', mt: 1 }}
-                              >
-                                <TextField
-                                  label="Healer's ult cost"
-                                  type="number"
-                                  size="small"
-                                  value={state.pillagerHealerUltCost}
-                                  onChange={(e) =>
-                                    calc.setPillagerHealerUltCost(Number(e.target.value))
-                                  }
-                                  slotProps={{ htmlInput: { min: 70, max: 500, step: 5 } }}
-                                  sx={{ width: 150 }}
-                                />
+                              <Stack spacing={0.5} sx={{ mt: 1 }}>
+                                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                                  <TextField
+                                    label="Wearer's ult cost"
+                                    type="number"
+                                    size="small"
+                                    value={state.pillagerHealerUltCost}
+                                    onChange={(e) =>
+                                      calc.setPillagerHealerUltCost(Number(e.target.value))
+                                    }
+                                    slotProps={{ htmlInput: { min: 70, max: 500, step: 5 } }}
+                                    sx={{ width: 160 }}
+                                  />
+                                  <Tooltip
+                                    arrow
+                                    title="The cost of the ULTIMATE CAST BY THE PILLAGER'S WEARER — usually your healer, not you. You receive 10% of their ult's cost (once per 45s). This is separate from the 'Which ultimate?' cost above, which is your own ult."
+                                  >
+                                    <InfoOutlined
+                                      role="img"
+                                      aria-label="About the wearer's ult cost: the cost of the ultimate cast by the Pillager's wearer (usually your healer), not your own. You receive 10% of it, once per 45 seconds."
+                                      tabIndex={0}
+                                      sx={{
+                                        fontSize: 16,
+                                        color: 'text.secondary',
+                                        cursor: 'help',
+                                        borderRadius: '50%',
+                                        '&:focus-visible': {
+                                          outline: `2px solid ${accent}`,
+                                          outlineOffset: 2,
+                                        },
+                                      }}
+                                    />
+                                  </Tooltip>
+                                  <Typography
+                                    variant="caption"
+                                    className="u-tabular"
+                                    sx={{ color: 'text.secondary' }}
+                                  >
+                                    → {Math.round(state.pillagerHealerUltCost * 0.1)} ult / cast
+                                  </Typography>
+                                </Stack>
                                 <Typography
                                   variant="caption"
-                                  className="u-tabular"
-                                  sx={{ color: 'text.secondary' }}
+                                  sx={{ color: 'text.secondary', display: 'block' }}
                                 >
-                                  → {Math.round(state.pillagerHealerUltCost * 0.1)} ult / cast
+                                  Whoever wears Pillager&apos;s (usually your healer) — not your own
+                                  ultimate.
                                 </Typography>
                               </Stack>
                             )}
@@ -1021,7 +1069,18 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                       {g.label}
                     </ListSubheader>,
                     ...g.items.map((a) => (
-                      <MenuItem key={a.id} value={a.id}>
+                      <MenuItem
+                        key={a.id}
+                        value={a.id}
+                        // Fold the approximate-cost note into the item's accessible
+                        // name rather than a hover Tooltip — focus inside a Select
+                        // menu doesn't reliably surface tooltips for keyboard/SR users.
+                        aria-label={
+                          a.confidence !== 'high'
+                            ? `${a.label}, ${a.baseCost} ultimate (cost approximate — not fully confirmed for Update 50)`
+                            : `${a.label}, ${a.baseCost} ultimate`
+                        }
+                      >
                         <Stack
                           direction="row"
                           spacing={1}
@@ -1032,20 +1091,16 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                             {a.label}
                           </Typography>
                           <Typography
+                            aria-hidden
                             variant="caption"
                             className="u-tabular"
                             sx={{ color: 'text.secondary', fontWeight: 600 }}
                           >
                             {a.baseCost}
                             {a.confidence !== 'high' ? (
-                              <Tooltip
-                                arrow
-                                title="Cost not fully confirmed for Update 50 — treat as approximate."
-                              >
-                                <Box component="span" sx={{ color: accent, ml: 0.25 }}>
-                                  *
-                                </Box>
-                              </Tooltip>
+                              <Box component="span" sx={{ color: accentText, ml: 0.25 }}>
+                                *
+                              </Box>
                             ) : null}
                           </Typography>
                         </Stack>
@@ -1082,6 +1137,17 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                 helperText="Banked at fight start"
               />
             </Stack>
+            {state.customUltimateCost == null && (
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', display: 'block', mt: 1 }}
+              >
+                <Box component="span" sx={{ color: accentText, fontWeight: 700 }}>
+                  *
+                </Box>{' '}
+                marks a cost not fully confirmed for Update 50 — treat it as approximate.
+              </Typography>
+            )}
             {/* Cost-reduction toggles — only meaningful for a catalog ability; a
                 custom cost is taken as already-effective so reductions don't apply. */}
             {state.customUltimateCost == null && availableReductionEntries.length > 0 && (
@@ -1324,12 +1390,12 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontWeight: 700, color: accent }}
+                      sx={{ fontWeight: 700, color: accentText }}
                       data-testid="ult-grand-total"
                     >
                       {fmt(expected.totalUltimate, 1)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: accent }}>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: accentText }}>
                       {fmt(expected.ultimatePerSecond, 2)}
                     </TableCell>
                   </TableRow>
@@ -1372,7 +1438,7 @@ export const UltimateCalculator: React.FC<UltimateCalculatorProps> = ({ classNam
                     <Typography
                       className="u-tabular"
                       variant="body2"
-                      sx={{ fontWeight: 700, color: accent }}
+                      sx={{ fontWeight: 700, color: accentText }}
                     >
                       {fmt(distribution.meanTotal, 1)} ± {fmt(distribution.ci95HalfWidth, 2)}
                     </Typography>
